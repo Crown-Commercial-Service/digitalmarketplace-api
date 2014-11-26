@@ -12,5 +12,11 @@ API tier for Digital Marketplace.
 #### Set up env
 	virtualenv venv
 
+#### Activate
+	source venv/bin/activate
+
 #### install flask
 	pip install flask
+
+#### run it
+	./application.py runserver	
