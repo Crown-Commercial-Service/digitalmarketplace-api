@@ -16,10 +16,10 @@ def with_app(func):
 @with_app
 def test_index(app):
     response = app.get('/')
-    assert 'Hello You Dogs' in response.data
+    assert u'Hello You Dogs' in response.data.decode('utf8')
 
 
 @with_app
 def test_404(app):
     response = app.get('/not-found')
-    assert '<h1>404</h1>' in response.data
+    assert u'<h1>404</h1>' in response.data.decode('utf8')
