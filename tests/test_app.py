@@ -18,6 +18,7 @@ def test_index(app):
     response = app.get('/')
     assert 'Hello You Dogs' in response.data
 
+
 @with_app
 def test_404(app):
     response = app.get('/not-found')
