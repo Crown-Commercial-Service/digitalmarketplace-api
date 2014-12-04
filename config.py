@@ -9,6 +9,9 @@ class Config:
 	def init_app(app):
 		pass
 
+class Test(Config):
+	DEBUG = True
+
 class Development(Config):
 	DEBUG = True
 
@@ -17,5 +20,6 @@ class Live(Config):
 
 config = {
 	'live' : Live,
-	'development' : Development
+	'development' : Development,
+    'test' : Test,
 }
