@@ -1,0 +1,92 @@
+{
+   "id" : "G6 Submissions SCS Schema",
+   "$schema" : "http://json-schema.org/schema#",
+   "type" : "object",
+   "properties" :
+      {
+         "id" :
+            {
+               "type" : "integer"
+            },
+         "supplierId" :
+            {
+               "type" : "string",
+               "pattern" : "\\d+"
+            },
+         "lot" :
+            {
+               "type" : "string",
+               "pattern" : "SCS"
+            },
+         "title" :
+            {
+               "type" : "string"
+            },
+         "serviceSubmitted" :
+            {
+               "type" : "boolean"
+            },
+         "lastUpdated" :
+            {
+               "type" : "string"
+            },
+         "lastUpdatedEmail" :
+            {
+               "type" : "string"
+            },
+         "lastCompleted" :
+             {
+                "type" : "string"
+             },
+         "lastCompletedByEmail" :
+            {
+               "type" : "string"
+            },
+         "pageSequence" :
+            {
+               "type" : "array",
+               "items" :
+                  {
+                     "type" : "number",
+                     "uniqueItems" : true
+                  }
+            },
+         "completedPages" :
+            {
+               "type" : "array",
+               "minItems": 8,
+               "maxItems": 8,
+               "uniqueItems": true,
+               "items" :
+                  {
+                     "type" : "object",
+                     "properties" :
+                        {
+                           "id" :
+                              {
+                                 "type" : "integer"
+                              },
+                           "pageNumber" :
+                              {
+                                 "type" : "integer"
+                              },
+                           "listingId" :
+                              {
+                                 "type" : "integer"
+                              },
+                           "responses" :
+                              {
+                                 "type" : "object"
+                              },
+                           "submittedDocuments" :
+                              {
+                                 "type" : "object"
+                              }
+                        },
+                        "required": ["id", "pageNumber", "listingId", "responses", "submittedDocuments"]
+                  }
+            }
+      },
+      "required": ["id", "supplierId", "lot", "title", "serviceSubmitted", "lastUpdated", "lastUpdatedEmail", "lastCompleted",
+                   "lastCompletedByEmail", "pageSequence", "completedPages"]
+}
