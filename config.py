@@ -6,6 +6,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     CONFIG_PROPERTY = "some_property"
     AUTH_TOKENS_PATH = ""
+    AUTH_REQUIRED = True
 
     @staticmethod
     def init_app(app):

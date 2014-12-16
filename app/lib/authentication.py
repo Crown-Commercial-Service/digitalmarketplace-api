@@ -6,13 +6,14 @@ from flask import current_app, abort, request
 def requires_authentication(view):
     @wraps(view)
     def wrapped_view(*args, **kwargs):
-        incoming_token = get_token_from_headers(request.headers)
-        tokens_path = current_app.config['AUTH_TOKENS_PATH']
+        if current_app.config['AUTH_REQUIRED']:
+            incoming_token = get_token_from_headers(request.headers)
+            tokens_path = current_app.config['AUTH_TOKENS_PATH']
 
-        if not incoming_token:
-            abort(401)
-        if not token_is_valid(tokens_path, incoming_token):
-            abort(403)
+            if not incoming_token:
+                abort(401)
+            if not token_is_valid(tokens_path, incoming_token):
+                abort(403)
 
         return view(*args, **kwargs)
 
