@@ -1,37 +1,4 @@
-from functools import wraps
-
-from app import create_app
-
-
-def with_application(func):
-    app = create_app('test').test_client()
-
-    @wraps(func)
-    def wrapped():
-        return func(app)
-
-    return wrapped
-
-
-def provide_access_token(func):
-    """Inject a valid Authorization header for testing"""
-    @wraps(func)
-    def wrapped(app):
-        def method_wrapper(original):
-            def wrapped(*args, **kwargs):
-                headers = kwargs.get('headers', {})
-                headers['Authorization'] = 'Bearer valid-token'
-                kwargs['headers'] = headers
-                return original(*args, **kwargs)
-            return wrapped
-
-        http_methods = (app.get, app.post, app.put, app.delete)
-        (app.get, app.post, app.put, app.delete) = map(
-            method_wrapper, http_methods)
-
-        return func(app)
-
-    return wrapped
+from .helpers import with_application, provide_access_token
 
 
 @with_application

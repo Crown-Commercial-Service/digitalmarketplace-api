@@ -5,7 +5,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     CONFIG_PROPERTY = "some_property"
-    AUTH_TOKENS_PATH = ""
     AUTH_REQUIRED = True
 
     @staticmethod
@@ -15,12 +14,10 @@ class Config:
 
 class Test(Config):
     DEBUG = True
-    AUTH_TOKENS_PATH = "./config/tokens"
 
 
 class Development(Config):
     DEBUG = True
-    AUTH_TOKENS_PATH = "./config/tokens"
 
 
 class Live(Config):

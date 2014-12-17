@@ -1,4 +1,5 @@
 from functools import wraps
+import os
 
 from flask import current_app, abort, request
 
@@ -8,11 +9,10 @@ def requires_authentication(view):
     def wrapped_view(*args, **kwargs):
         if current_app.config['AUTH_REQUIRED']:
             incoming_token = get_token_from_headers(request.headers)
-            tokens_path = current_app.config['AUTH_TOKENS_PATH']
 
             if not incoming_token:
                 abort(401)
-            if not token_is_valid(tokens_path, incoming_token):
+            if not token_is_valid(incoming_token):
                 abort(403)
 
         return view(*args, **kwargs)
@@ -20,13 +20,24 @@ def requires_authentication(view):
     return wrapped_view
 
 
-def token_is_valid(token_path, incoming_token):
-    return incoming_token in get_allowed_tokens(token_path)
+def token_is_valid(incoming_token):
+    return incoming_token in get_allowed_tokens_from_environment()
 
 
-def get_allowed_tokens(token_path):
-    with open(token_path) as f:
-        return [token.strip() for token in f.readlines()]
+def get_allowed_tokens_from_environment():
+    """Return a list of allowed auth tokens from the AUTH_TOKENS env variable
+
+    >>> os.environ['AUTH_TOKENS'] = ''
+    >>> list(get_allowed_tokens_from_environment())
+    []
+    >>> del os.environ['AUTH_TOKENS']
+    >>> list(get_allowed_tokens_from_environment())
+    []
+    >>> os.environ['AUTH_TOKENS'] = 'ab:cd'
+    >>> list(get_allowed_tokens_from_environment())
+    ['ab', 'cd']
+    """
+    return filter(None, os.environ.get('AUTH_TOKENS', '').split(":"))
 
 
 def get_token_from_headers(headers):
