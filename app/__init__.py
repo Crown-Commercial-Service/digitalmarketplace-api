@@ -5,7 +5,7 @@ from flask import Flask
 from flask.ext.bootstrap import Bootstrap
 
 from config import config
-from .lib.helpers import boolify
+from .lib.helpers import convert_to_boolean
 
 bootstrap = Bootstrap()
 
@@ -16,7 +16,7 @@ def create_app(config_name):
 
     for name in config_attrs(config[config_name]):
         if name in os.environ:
-            application.config[name] = boolify(os.environ[name])
+            application.config[name] = convert_to_boolean(os.environ[name])
 
     config[config_name].init_app(application)
 
