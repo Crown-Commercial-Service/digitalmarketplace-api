@@ -1,46 +1,53 @@
-from functools import wraps
 import os
 
-from app import create_app
+from app import create_app, db
 
 
-def with_application(func):
-    app = create_app('test').test_client()
+class WSGIApplicationWithEnvironment(object):
+    def __init__(self, app, **kwargs):
+        self.app = app
+        self.kwargs = kwargs
 
-    @wraps(func)
-    def wrapped():
-        return func(app)
+    def __call__(self, environ, start_response):
+        for key, value in self.kwargs.items():
+            environ[key] = value
+        return self.app(environ, start_response)
 
-    return wrapped
 
+class BaseApplicationTest(object):
+    def setup(self):
+        self.app = create_app('test')
+        self.client = self.app.test_client()
 
-def provide_access_token(func):
-    """Inject a valid Authorization header for testing"""
-    @wraps(func)
-    def wrapped(app):
-        def method_wrapper(original):
-            def wrapped(*args, **kwargs):
-                headers = kwargs.get('headers', {})
-                headers['Authorization'] = 'Bearer valid-token'
-                kwargs['headers'] = headers
-                return original(*args, **kwargs)
-            return wrapped
+        self.setup_authorization()
+        self.setup_database()
 
-        http_methods = (app.get, app.post, app.put, app.delete)
-        (app.get, app.post, app.put, app.delete) = map(
-            method_wrapper, http_methods)
+    def setup_authorization(self):
+        """Set up bearer token and pass on all requests"""
+        valid_token = 'valid-token'
+        self.app.wsgi_app = WSGIApplicationWithEnvironment(
+            self.app.wsgi_app,
+            HTTP_AUTHORIZATION='Bearer {}'.format(valid_token))
+        self._auth_tokens = os.environ.get('AUTH_TOKENS')
+        os.environ['AUTH_TOKENS'] = valid_token
 
-        # set up valid-token as a valid token
-        auth_tokens = os.environ.get('AUTH_TOKENS')
-        os.environ['AUTH_TOKENS'] = 'valid-token'
+    def do_not_provide_access_token(self):
+        self.app.wsgi_app = self.app.wsgi_app.app
 
-        result = func(app)
+    def setup_database(self):
+        with self.app.app_context():
+            db.create_all()
 
-        if auth_tokens is None:
+    def teardown(self):
+        self.teardown_authorization()
+        self.teardown_database()
+
+    def teardown_authorization(self):
+        if self._auth_tokens is None:
             del os.environ['AUTH_TOKENS']
         else:
-            os.environ['AUTH_TOKENS'] = auth_tokens
+            os.environ['AUTH_TOKENS'] = self._auth_tokens
 
-        return result
-
-    return wrapped
+    def teardown_database(self):
+        with self.app.app_context():
+            db.drop_all()

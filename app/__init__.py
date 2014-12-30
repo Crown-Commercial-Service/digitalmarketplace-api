@@ -3,11 +3,13 @@ import os
 
 from flask import Flask
 from flask.ext.bootstrap import Bootstrap
+from flask.ext.sqlalchemy import SQLAlchemy
 
 from config import config
 from .lib.helpers import convert_to_boolean
 
 bootstrap = Bootstrap()
+db = SQLAlchemy()
 
 
 def create_app(config_name):
@@ -21,6 +23,7 @@ def create_app(config_name):
     config[config_name].init_app(application)
 
     bootstrap.init_app(application)
+    db.init_app(application)
 
     from .main import main as main_blueprint
     application.register_blueprint(main_blueprint)
