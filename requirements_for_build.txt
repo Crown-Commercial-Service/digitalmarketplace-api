@@ -1,0 +1,2 @@
+-r requirements_for_test.txt
+-e https://github.com/alphagov/digitalmarketplace-deployment

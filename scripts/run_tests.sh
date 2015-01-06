@@ -20,8 +20,6 @@ function display_result {
   fi
 }
 
-pip install -r requirements_for_test.txt
-
 pep8 .
 display_result $? 1 "Code style check"
 
