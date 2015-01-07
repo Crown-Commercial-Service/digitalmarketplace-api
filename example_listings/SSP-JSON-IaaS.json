@@ -1,0 +1,322 @@
+{
+   "services": [
+      {
+         "id": 2,
+         "supplierId": 1,
+         "lot": "IaaS",
+         "title": "My Iaas Service",
+         "lastUpdated": "2014-12-23T14:46:17Z",
+         "lastUpdatedByEmail": "supplier@digital.cabinet-office.gov.uk",
+         "lastCompleted": "2014-12-23T14:46:22Z",
+         "lastCompletedByEmail": "supplier@digital.cabinet-office.gov.uk",
+         "serviceTypes": [
+            "Compute",
+            "Storage"
+         ],
+         "serviceName": "My Iaas Service",
+         "serviceSummary": "kjg sdffs",
+         "serviceBenefits": [
+            "Free lollipop to every 10th customer",
+            "It\u0027s just lovely"
+         ],
+         "serviceFeatures": [
+            "[To be completed]",
+            "This is my second \"feture\""
+         ],
+         "serviceDefinitionDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
+         "serviceDefinitionDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/2/2-service-definition-document.pdf",
+         "termsAndConditionsDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
+         "minimumContractPeriod": "Month",
+         "terminationCost": true,
+         "termsAndConditionsDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/2/2-terms-and-condtions.pdf",
+         "priceInterval": "",
+         "trialOption": true,
+         "priceUnit": "Person",
+         "educationPricing": true,
+         "vatIncluded": false,
+         "priceString": "£10.0067 per person",
+         "pricingDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
+         "priceMin": 10.0067,
+         "freeOption": false,
+         "pricingDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/2/2-pricing-document.pdf",
+         "openStandardsSupported": true,
+         "supportForThirdParties": false,
+         "supportAvailability": "We \r\n\r\nsupport\r\n\r\nyou \r\n\r\nfully.",
+         "supportResponseTime": "3 weeks.",
+         "incidentEscalation": true,
+         "supportTypes": [
+            "Service desk",
+            "Onsite"
+         ],
+         "serviceOffboarding": true,
+         "serviceOnboarding": false,
+         "analyticsAvailable": false,
+         "persistentStorage": true,
+         "elasticCloud": true,
+         "guaranteedResources": false,
+         "selfServiceProvisioning": false,
+         "provisioningTime": "3 week \"s\"",
+         "deprovisioningTime": "4 day\"s",
+         "openSource": false,
+         "apiType": "SOAP, Rest | JSON",
+         "apiAccess": true,
+         "networksConnected": [
+            "Public Services Network (PSN)",
+            "Government Secure intranet (GSi)"
+         ],
+         "supportedDevices": [
+            "Mac",
+            "Tablet"
+         ],
+         "offlineWorking": true,
+         "supportedBrowsers": [
+            "Internet Explorer 8",
+            "Safari",
+            "Opera"
+         ],
+         "vendorCertifications": [
+            "A level maths",
+            "PGCE",
+            "Another] : \" cert"
+         ],
+         "dataExtractionRemoval": false,
+         "dataBackupRecovery": true,
+         "datacentreTier": "TIA-942 Tier 3",
+         "datacentresSpecifyLocation": true,
+         "datacentresEUCode": false,
+         "dataProtectionBetweenServices": {
+            "value": [
+               "CPA Foundation VPN Gateway"
+            ],
+            "assurance": "Independent testing of implementation"
+         },
+         "dataProtectionWithinService": {
+            "value": [
+               "VPN using TLS, version 1.2 or later"
+            ],
+            "assurance": "Service provider assertion"
+         },
+         "dataProtectionBetweenUserAndService": {
+            "value": [
+               "Encrypted PSN service"
+            ],
+            "assurance": "Service provider assertion"
+         },
+         "dataRedundantEquipmentAccountsRevoked": {
+            "value": true,
+            "assurance": "Independent validation of assertion"
+         },
+         "dataSecureEquipmentDisposal": {
+            "value": false,
+            "assurance": "Contractual commitment"
+         },
+         "dataStorageMediaDisposal": {
+            "value": "CESG-assured destruction service (CAS(T))",
+            "assurance": "Independent validation of assertion"
+         },
+         "dataSecureDeletion": {
+            "value": "CESG or CPNI-approved erasure process",
+            "assurance": "Independent validation of assertion"
+         },
+         "dataAtRestProtections": {
+            "value": [
+               "Secure containers, racks or cages"
+            ],
+            "assurance": "Independent validation of assertion"
+         },
+         "datacentreProtectionDisclosure": {
+            "value": true,
+            "assurance": "Independent validation of assertion"
+         },
+         "legalJurisdiction": {
+            "value": "EU",
+            "assurance": "Independent validation of assertion"
+         },
+         "serviceAvailabilityPercentage": {
+            "value": 34.65,
+            "assurance": "Service provider assertion"
+         },
+         "dataManagementLocations": {
+            "value": [
+               "EU",
+               "USA - Safe Harbor"
+            ],
+            "assurance": "Contractual commitment"
+         },
+         "datacentreLocations": {
+            "value": [
+               "EU",
+               "USA - Safe Harbor",
+               "Other countries with data protection treaties"
+            ],
+            "assurance": "Independent validation of assertion"
+         },
+         "otherConsumers": {
+            "value": "A specific consumer group, eg Police, Defence or Health",
+            "assurance": "Independent validation of assertion"
+         },
+         "servicesSeparation": {
+            "value": true,
+            "assurance": "Independent testing of implementation"
+         },
+         "servicesManagementSeparation": {
+            "value": true,
+            "assurance": "CESG-assured components"
+         },
+         "cloudDeploymentModel": {
+            "value": "Hybrid cloud",
+            "assurance": "Independent validation of assertion"
+         },
+         "governanceFramework": {
+            "value": false,
+            "assurance": "Service provider assertion"
+         },
+         "configurationTracking": {
+            "value": true,
+            "assurance": "Independent validation of assertion"
+         },
+         "changeImpactAssessment": {
+            "value": false,
+            "assurance": "Independent validation of assertion"
+         },
+         "vulnerabilityAssessment": {
+            "value": false,
+            "assurance": "Independent validation of assertion"
+         },
+         "vulnerabilityMonitoring": {
+            "value": true,
+            "assurance": "Service provider assertion"
+         },
+         "vulnerabilityTimescales": {
+            "value": false,
+            "assurance": "Independent validation of assertion"
+         },
+         "vulnerabilityMitigationPrioritisation": {
+            "value": true,
+            "assurance": "Service provider assertion"
+         },
+         "vulnerabilityTracking": {
+            "value": true,
+            "assurance": "Service provider assertion"
+         },
+         "eventMonitoring": {
+            "value": false,
+            "assurance": "Independent validation of assertion"
+         },
+         "incidentDefinitionPublished": {
+            "value": false,
+            "assurance": "Service provider assertion"
+         },
+         "incidentManagementReporting": {
+            "value": true,
+            "assurance": "Independent validation of assertion"
+         },
+         "incidentManagementProcess": {
+            "value": true,
+            "assurance": "Independent validation of assertion"
+         },
+         "personnelSecurityChecks": {
+            "value": [
+               "Security clearance national vetting (SC)",
+               "Baseline personnel security standard (BPSS)"
+            ],
+            "assurance": "Service provider assertion"
+         },
+         "secureDesign": {
+            "value": true,
+            "assurance": "Independent validation of assertion"
+         },
+         "secureConfigurationManagement": {
+            "value": false,
+            "assurance": "Service provider assertion"
+         },
+         "secureDevelopment": {
+            "value": false,
+            "assurance": "Independent validation of assertion"
+         },
+         "hardwareSoftwareVerification": {
+            "value": true,
+            "assurance": "Service provider assertion"
+         },
+         "thirdPartyRiskAssessment": {
+            "value": false,
+            "assurance": "Independent validation of assertion"
+         },
+         "thirdPartyComplianceMonitoring": {
+            "value": true,
+            "assurance": "Independent validation of assertion"
+         },
+         "thirdPartyDataSharingInformation": {
+            "value": true,
+            "assurance": "Independent validation of assertion"
+         },
+         "thirdPartySecurityRequirements": {
+            "value": true,
+            "assurance": "Independent validation of assertion"
+         },
+         "userAuthenticateSupport": {
+            "value": false,
+            "assurance": "Independent validation of assertion"
+         },
+         "userAuthenticateManagement": {
+            "value": false,
+            "assurance": "Service provider assertion"
+         },
+         "managementInterfaceProtection": {
+            "value": true,
+            "assurance": "Independent testing of implementation"
+         },
+         "restrictAdministratorPermissions": {
+            "value": false,
+            "assurance": "Independent testing of implementation"
+         },
+         "userAccessControlManagement": {
+            "value": true,
+            "assurance": "Independent testing of implementation"
+         },
+         "identityAuthenticationControls": {
+            "value": [
+               "Username and TLS client certificate",
+               "Authentication federation",
+               "Limited access over dedicated link, enterprise or community network",
+               "Username and strong password/passphrase enforcement"
+            ],
+            "assurance": "Service provider assertion"
+         },
+         "interconnectionMethods": {
+            "value": [
+               "Encrypted PSN service"
+            ],
+            "assurance": "Independent validation of assertion"
+         },
+         "onboardingGuidance": {
+            "value": false,
+            "assurance": "Service provider assertion"
+         },
+         "serviceManagementModel": {
+            "value": [
+               "Direct service management"
+            ],
+            "assurance": "Service provider assertion"
+         },
+         "auditInformationProvided": {
+            "value": "None",
+            "assurance": "Independent validation of assertion"
+         },
+         "serviceConfigurationGuidance": {
+            "value": false,
+            "assurance": "Service provider assertion"
+         },
+         "deviceAccessMethod": {
+            "value": [
+               "Unknown devices"
+            ],
+            "assurance": "Service provider assertion"
+         },
+         "trainingProvided": {
+            "value": true,
+            "assurance": "Service provider assertion"
+         }
+      }
+   ]
+}
