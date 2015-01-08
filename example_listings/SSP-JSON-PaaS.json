@@ -1,313 +1,309 @@
 {
-   "services": [
-      {
-         "id": 3,
-         "supplierId": 1,
-         "lot": "PaaS",
-         "title": "\"My new PaaS\" Service with \"Quotes\"",
-         "lastUpdated": "2014-12-22T17:32:31Z",
-         "lastUpdatedByEmail": "supplier@digital.cabinet-office.gov.uk",
-         "lastCompleted": "2014-12-22T17:32:37Z",
-         "lastCompletedByEmail": "supplier@digital.cabinet-office.gov.uk",
-         "serviceBenefits": [
-            "Benefit 1"
-         ],
-         "serviceFeatures": [
-            "Feat 1"
-         ],
-         "serviceDefinitionDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
-         "serviceDefinitionDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/3/3-service-definition-document.pdf",
-         "serviceName": "\"My new PaaS\" Service with \"Quotes\"",
-         "serviceSummary": "fsfsdfs \"with quotes\" oh \" yeah",
-         "termsAndConditionsDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
-         "minimumContractPeriod": "Other",
-         "terminationCost": true,
-         "termsAndConditionsDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/3/3-terms-and-condtions.pdf",
-         "priceInterval": "",
-         "trialOption": true,
-         "priceUnit": "Licence",
-         "educationPricing": false,
-         "vatIncluded": true,
-         "priceString": "£10 per licence",
-         "pricingDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
-         "priceMin": 10,
-         "freeOption": true,
-         "pricingDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/3/3-pricing-document.pdf",
-         "openStandardsSupported": false,
-         "supportForThirdParties": true,
-         "supportAvailability": "fsfsdfs \"with quotes\" oh \" yeah",
-         "supportResponseTime": "fsfsdfs \"with quotes\" oh \" yeah",
-         "incidentEscalation": true,
-         "supportTypes": [
-            "Email",
-            "Phone",
-            "Live chat"
-         ],
-         "serviceOffboarding": false,
-         "serviceOnboarding": true,
-         "analyticsAvailable": false,
-         "persistentStorage": true,
-         "elasticCloud": true,
-         "guaranteedResources": false,
-         "selfServiceProvisioning": false,
-         "provisioningTime": "fsfsdfs \"with quotes\" oh \" yeah",
-         "deprovisioningTime": "fsfsdfs \"with quotes\" oh \" yeah",
-         "openSource": true,
-         "apiType": "fsfsdfs \"with quotes\" oh \" yeah",
-         "apiAccess": false,
-         "networksConnected": [
-            "Public Services Network (PSN)",
-            "Government Secure intranet (GSi)",
-            "Police National Network (PNN)"
-         ],
-         "supportedDevices": [
-            "Smartphone",
-            "Tablet"
-         ],
-         "offlineWorking": true,
-         "supportedBrowsers": [
-            "Internet Explorer 6",
-            "Internet Explorer 7",
-            "Internet Explorer 8"
-         ],
-         "vendorCertifications": [
-            "fsfsdfs \"with quotes\" oh \" yeah",
-            "fsfsdfs \"with quotes\" oh \" yeah"
-         ],
-         "dataExtractionRemoval": true,
-         "dataBackupRecovery": false,
-         "datacentreTier": "Uptime Institute Tier 1",
-         "datacentresSpecifyLocation": false,
-         "datacentresEUCode": true,
-         "dataProtectionBetweenServices": {
-            "value": [
-               "CPA Foundation VPN Gateway"
-            ],
-            "assurance": "Service provider assertion"
-         },
-         "dataProtectionWithinService": {
-            "value": [
-               "Bonded fibre optic connections"
-            ],
-            "assurance": "Service provider assertion"
-         },
-         "dataProtectionBetweenUserAndService": {
-            "value": [
-               "CPA Foundation VPN Gateway"
-            ],
-            "assurance": "CESG-assured components"
-         },
-         "dataRedundantEquipmentAccountsRevoked": {
-            "value": false,
-            "assurance": "Service provider assertion"
-         },
-         "dataSecureEquipmentDisposal": {
-            "value": true,
-            "assurance": "CESG-assured components"
-         },
-         "dataStorageMediaDisposal": {
-            "value": "CESG-assured destruction service (CAS(T))",
-            "assurance": "Service provider assertion"
-         },
-         "dataSecureDeletion": {
-            "value": "CPA Foundation-grade erasure product",
-            "assurance": "Service provider assertion"
-         },
-         "dataAtRestProtections": {
-            "value": [
-               "No protection"
-            ],
-            "assurance": "Service provider assertion"
-         },
-         "datacentreProtectionDisclosure": {
-            "value": false,
-            "assurance": "Independent validation of assertion"
-         },
-         "legalJurisdiction": {
-            "value": "UK",
-            "assurance": "Service provider assertion"
-         },
-         "serviceAvailabilityPercentage": {
-            "value": 34,
-            "assurance": "Service provider assertion"
-         },
-         "dataManagementLocations": {
-            "value": [
-               "UK",
-               "EU"
-            ],
-            "assurance": "Independent validation of assertion"
-         },
-         "datacentreLocations": {
-            "value": [
-               "USA - Safe Harbor"
-            ],
-            "assurance": "Independent validation of assertion"
-         },
-         "otherConsumers": {
-            "value": "No other consumer",
-            "assurance": "Contractual commitment"
-         },
-         "servicesSeparation": {
-            "value": true,
-            "assurance": "Independent testing of implementation"
-         },
-         "servicesManagementSeparation": {
-            "value": true,
-            "assurance": "Service provider assertion"
-         },
-         "cloudDeploymentModel": {
-            "value": "Public cloud",
-            "assurance": "Service provider assertion"
-         },
-         "governanceFramework": {
-            "value": true,
-            "assurance": "Independent validation of assertion"
-         },
-         "configurationTracking": {
-            "value": false,
-            "assurance": "Service provider assertion"
-         },
-         "changeImpactAssessment": {
-            "value": false,
-            "assurance": "Service provider assertion"
-         },
-         "vulnerabilityAssessment": {
-            "value": true,
-            "assurance": "Service provider assertion"
-         },
-         "vulnerabilityMonitoring": {
-            "value": true,
-            "assurance": "Independent validation of assertion"
-         },
-         "vulnerabilityTimescales": {
-            "value": false,
-            "assurance": "Independent validation of assertion"
-         },
-         "vulnerabilityMitigationPrioritisation": {
-            "value": false,
-            "assurance": "Independent validation of assertion"
-         },
-         "vulnerabilityTracking": {
-            "value": false,
-            "assurance": "Independent validation of assertion"
-         },
-         "eventMonitoring": {
-            "value": true,
-            "assurance": "Independent validation of assertion"
-         },
-         "incidentDefinitionPublished": {
-            "value": false,
-            "assurance": "Service provider assertion"
-         },
-         "incidentManagementReporting": {
-            "value": true,
-            "assurance": "Service provider assertion"
-         },
-         "incidentManagementProcess": {
-            "value": false,
-            "assurance": "Independent validation of assertion"
-         },
-         "personnelSecurityChecks": {
-            "value": [
-               "Baseline personnel security standard (BPSS)",
-               "Background checks in accordance with BS7858:2012"
-            ],
-            "assurance": "Independent validation of assertion"
-         },
-         "secureDesign": {
-            "value": true,
-            "assurance": "Service provider assertion"
-         },
-         "secureConfigurationManagement": {
-            "value": false,
-            "assurance": "Independent validation of assertion"
-         },
-         "secureDevelopment": {
-            "value": false,
-            "assurance": "Independent validation of assertion"
-         },
-         "hardwareSoftwareVerification": {
-            "value": false,
-            "assurance": "Service provider assertion"
-         },
-         "thirdPartyRiskAssessment": {
-            "value": false,
-            "assurance": "Independent validation of assertion"
-         },
-         "thirdPartyComplianceMonitoring": {
-            "value": true,
-            "assurance": "Independent validation of assertion"
-         },
-         "thirdPartyDataSharingInformation": {
-            "value": true,
-            "assurance": "Service provider assertion"
-         },
-         "thirdPartySecurityRequirements": {
-            "value": true,
-            "assurance": "Independent validation of assertion"
-         },
-         "userAuthenticateSupport": {
-            "value": false,
-            "assurance": "Independent validation of assertion"
-         },
-         "userAuthenticateManagement": {
-            "value": true,
-            "assurance": "Service provider assertion"
-         },
-         "managementInterfaceProtection": {
-            "value": false,
-            "assurance": "Independent validation of assertion"
-         },
-         "restrictAdministratorPermissions": {
-            "value": false,
-            "assurance": "Service provider assertion"
-         },
-         "userAccessControlManagement": {
-            "value": true,
-            "assurance": "Independent validation of assertion"
-         },
-         "identityAuthenticationControls": {
-            "value": [
-               "Username and TLS client certificate",
-               "Limited access over dedicated link, enterprise or community network"
-            ],
-            "assurance": "Independent testing of implementation"
-         },
-         "interconnectionMethods": {
-            "value": [
-               "Internet"
-            ],
-            "assurance": "Service provider assertion"
-         },
-         "onboardingGuidance": {
-            "value": true,
-            "assurance": "Independent validation of assertion"
-         },
-         "serviceManagementModel": {
-            "value": [
-               "Dedicated devices for community service management"
-            ],
-            "assurance": "Service provider assertion"
-         },
-         "auditInformationProvided": {
-            "value": "Data made available by negotiation",
-            "assurance": "Independent validation of assertion"
-         },
-         "serviceConfigurationGuidance": {
-            "value": true,
-            "assurance": "Independent testing of implementation"
-         },
-         "deviceAccessMethod": {
-            "value": [
-               "Partner devices"
-            ],
-            "assurance": "Independent validation of assertion"
-         },
-         "trainingProvided": {
-            "value": false,
-            "assurance": "Independent validation of assertion"
-         }
-      }
-   ]
+   "id": 3,
+   "supplierId": 1,
+   "lot": "PaaS",
+   "title": "\"My new PaaS\" Service with \"Quotes\"",
+   "lastUpdated": "2014-12-22T17:32:31Z",
+   "lastUpdatedByEmail": "supplier@digital.cabinet-office.gov.uk",
+   "lastCompleted": "2014-12-22T17:32:37Z",
+   "lastCompletedByEmail": "supplier@digital.cabinet-office.gov.uk",
+   "serviceBenefits": [
+      "Benefit 1"
+   ],
+   "serviceFeatures": [
+      "Feat 1"
+   ],
+   "serviceDefinitionDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
+   "serviceDefinitionDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/3/3-service-definition-document.pdf",
+   "serviceName": "\"My new PaaS\" Service with \"Quotes\"",
+   "serviceSummary": "fsfsdfs \"with quotes\" oh \" yeah",
+   "termsAndConditionsDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
+   "minimumContractPeriod": "Other",
+   "terminationCost": true,
+   "termsAndConditionsDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/3/3-terms-and-condtions.pdf",
+   "priceInterval": "",
+   "trialOption": true,
+   "priceUnit": "Licence",
+   "educationPricing": false,
+   "vatIncluded": true,
+   "priceString": "£10 per licence",
+   "pricingDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
+   "priceMin": 10,
+   "freeOption": true,
+   "pricingDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/3/3-pricing-document.pdf",
+   "openStandardsSupported": false,
+   "supportForThirdParties": true,
+   "supportAvailability": "fsfsdfs \"with quotes\" oh \" yeah",
+   "supportResponseTime": "fsfsdfs \"with quotes\" oh \" yeah",
+   "incidentEscalation": true,
+   "supportTypes": [
+      "Email",
+      "Phone",
+      "Live chat"
+   ],
+   "serviceOffboarding": false,
+   "serviceOnboarding": true,
+   "analyticsAvailable": false,
+   "persistentStorage": true,
+   "elasticCloud": true,
+   "guaranteedResources": false,
+   "selfServiceProvisioning": false,
+   "provisioningTime": "fsfsdfs \"with quotes\" oh \" yeah",
+   "deprovisioningTime": "fsfsdfs \"with quotes\" oh \" yeah",
+   "openSource": true,
+   "apiType": "fsfsdfs \"with quotes\" oh \" yeah",
+   "apiAccess": false,
+   "networksConnected": [
+      "Public Services Network (PSN)",
+      "Government Secure intranet (GSi)",
+      "Police National Network (PNN)"
+   ],
+   "supportedDevices": [
+      "Smartphone",
+      "Tablet"
+   ],
+   "offlineWorking": true,
+   "supportedBrowsers": [
+      "Internet Explorer 6",
+      "Internet Explorer 7",
+      "Internet Explorer 8"
+   ],
+   "vendorCertifications": [
+      "fsfsdfs \"with quotes\" oh \" yeah",
+      "fsfsdfs \"with quotes\" oh \" yeah"
+   ],
+   "dataExtractionRemoval": true,
+   "dataBackupRecovery": false,
+   "datacentreTier": "Uptime Institute Tier 1",
+   "datacentresSpecifyLocation": false,
+   "datacentresEUCode": true,
+   "dataProtectionBetweenServices": {
+      "value": [
+         "CPA Foundation VPN Gateway"
+      ],
+      "assurance": "Service provider assertion"
+   },
+   "dataProtectionWithinService": {
+      "value": [
+         "Bonded fibre optic connections"
+      ],
+      "assurance": "Service provider assertion"
+   },
+   "dataProtectionBetweenUserAndService": {
+      "value": [
+         "CPA Foundation VPN Gateway"
+      ],
+      "assurance": "CESG-assured components"
+   },
+   "dataRedundantEquipmentAccountsRevoked": {
+      "value": false,
+      "assurance": "Service provider assertion"
+   },
+   "dataSecureEquipmentDisposal": {
+      "value": true,
+      "assurance": "CESG-assured components"
+   },
+   "dataStorageMediaDisposal": {
+      "value": "CESG-assured destruction service (CAS(T))",
+      "assurance": "Service provider assertion"
+   },
+   "dataSecureDeletion": {
+      "value": "CPA Foundation-grade erasure product",
+      "assurance": "Service provider assertion"
+   },
+   "dataAtRestProtections": {
+      "value": [
+         "No protection"
+      ],
+      "assurance": "Service provider assertion"
+   },
+   "datacentreProtectionDisclosure": {
+      "value": false,
+      "assurance": "Independent validation of assertion"
+   },
+   "legalJurisdiction": {
+      "value": "UK",
+      "assurance": "Service provider assertion"
+   },
+   "serviceAvailabilityPercentage": {
+      "value": 34,
+      "assurance": "Service provider assertion"
+   },
+   "dataManagementLocations": {
+      "value": [
+         "UK",
+         "EU"
+      ],
+      "assurance": "Independent validation of assertion"
+   },
+   "datacentreLocations": {
+      "value": [
+         "USA - Safe Harbor"
+      ],
+      "assurance": "Independent validation of assertion"
+   },
+   "otherConsumers": {
+      "value": "No other consumer",
+      "assurance": "Contractual commitment"
+   },
+   "servicesSeparation": {
+      "value": true,
+      "assurance": "Independent testing of implementation"
+   },
+   "servicesManagementSeparation": {
+      "value": true,
+      "assurance": "Service provider assertion"
+   },
+   "cloudDeploymentModel": {
+      "value": "Public cloud",
+      "assurance": "Service provider assertion"
+   },
+   "governanceFramework": {
+      "value": true,
+      "assurance": "Independent validation of assertion"
+   },
+   "configurationTracking": {
+      "value": false,
+      "assurance": "Service provider assertion"
+   },
+   "changeImpactAssessment": {
+      "value": false,
+      "assurance": "Service provider assertion"
+   },
+   "vulnerabilityAssessment": {
+      "value": true,
+      "assurance": "Service provider assertion"
+   },
+   "vulnerabilityMonitoring": {
+      "value": true,
+      "assurance": "Independent validation of assertion"
+   },
+   "vulnerabilityTimescales": {
+      "value": false,
+      "assurance": "Independent validation of assertion"
+   },
+   "vulnerabilityMitigationPrioritisation": {
+      "value": false,
+      "assurance": "Independent validation of assertion"
+   },
+   "vulnerabilityTracking": {
+      "value": false,
+      "assurance": "Independent validation of assertion"
+   },
+   "eventMonitoring": {
+      "value": true,
+      "assurance": "Independent validation of assertion"
+   },
+   "incidentDefinitionPublished": {
+      "value": false,
+      "assurance": "Service provider assertion"
+   },
+   "incidentManagementReporting": {
+      "value": true,
+      "assurance": "Service provider assertion"
+   },
+   "incidentManagementProcess": {
+      "value": false,
+      "assurance": "Independent validation of assertion"
+   },
+   "personnelSecurityChecks": {
+      "value": [
+         "Baseline personnel security standard (BPSS)",
+         "Background checks in accordance with BS7858:2012"
+      ],
+      "assurance": "Independent validation of assertion"
+   },
+   "secureDesign": {
+      "value": true,
+      "assurance": "Service provider assertion"
+   },
+   "secureConfigurationManagement": {
+      "value": false,
+      "assurance": "Independent validation of assertion"
+   },
+   "secureDevelopment": {
+      "value": false,
+      "assurance": "Independent validation of assertion"
+   },
+   "hardwareSoftwareVerification": {
+      "value": false,
+      "assurance": "Service provider assertion"
+   },
+   "thirdPartyRiskAssessment": {
+      "value": false,
+      "assurance": "Independent validation of assertion"
+   },
+   "thirdPartyComplianceMonitoring": {
+      "value": true,
+      "assurance": "Independent validation of assertion"
+   },
+   "thirdPartyDataSharingInformation": {
+      "value": true,
+      "assurance": "Service provider assertion"
+   },
+   "thirdPartySecurityRequirements": {
+      "value": true,
+      "assurance": "Independent validation of assertion"
+   },
+   "userAuthenticateSupport": {
+      "value": false,
+      "assurance": "Independent validation of assertion"
+   },
+   "userAuthenticateManagement": {
+      "value": true,
+      "assurance": "Service provider assertion"
+   },
+   "managementInterfaceProtection": {
+      "value": false,
+      "assurance": "Independent validation of assertion"
+   },
+   "restrictAdministratorPermissions": {
+      "value": false,
+      "assurance": "Service provider assertion"
+   },
+   "userAccessControlManagement": {
+      "value": true,
+      "assurance": "Independent validation of assertion"
+   },
+   "identityAuthenticationControls": {
+      "value": [
+         "Username and TLS client certificate",
+         "Limited access over dedicated link, enterprise or community network"
+      ],
+      "assurance": "Independent testing of implementation"
+   },
+   "interconnectionMethods": {
+      "value": [
+         "Internet"
+      ],
+      "assurance": "Service provider assertion"
+   },
+   "onboardingGuidance": {
+      "value": true,
+      "assurance": "Independent validation of assertion"
+   },
+   "serviceManagementModel": {
+      "value": [
+         "Dedicated devices for community service management"
+      ],
+      "assurance": "Service provider assertion"
+   },
+   "auditInformationProvided": {
+      "value": "Data made available by negotiation",
+      "assurance": "Independent validation of assertion"
+   },
+   "serviceConfigurationGuidance": {
+      "value": true,
+      "assurance": "Independent testing of implementation"
+   },
+   "deviceAccessMethod": {
+      "value": [
+         "Partner devices"
+      ],
+      "assurance": "Independent validation of assertion"
+   },
+   "trainingProvided": {
+      "value": false,
+      "assurance": "Independent validation of assertion"
+   }
 }

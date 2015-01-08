@@ -3,190 +3,187 @@
    "$schema": "http://json-schema.org/schema#",
    "type": "object",
    "properties": {
-      "services": {
-         "type": "array",
-         "items": {
-            "type": "object",
-            "properties": {
-               "id": {
-                  "type": "integer"
-               },
-               "supplierId": {
-                  "type": "integer"
-               },
-               "lot": {
+      "items": {
+         "type": "object",
+         "properties": {
+            "id": {
+               "type": "integer"
+            },
+            "supplierId": {
+               "type": "integer"
+            },
+            "lot": {
+               "type": "string",
+               "pattern": "SCS"
+            },
+            "title": {
+               "type": "string"
+            },
+            "lastUpdated": {
+               "type": "string",
+               "format": "date-time"
+            },
+            "lastUpdatedByEmail": {
+               "type": "string"
+            },
+            "lastCompleted": {
+               "type": "string",
+               "format": "date-time"
+            },
+            "lastCompletedByEmail": {
+               "type": "string"
+            },
+            "serviceTypes": {
+               "type": "array",
+               "uniqueItems": true,
+               "maxItems": 5,
+               "items": {
                   "type": "string",
-                  "pattern": "SCS"
-               },
-               "title": {
-                  "type": "string"
-               },
-               "lastUpdated": {
-                  "type": "string",
-                  "format": "date-time"
-               },
-               "lastUpdatedByEmail": {
-                  "type": "string"
-               },
-               "lastCompleted": {
-                  "type": "string",
-                  "format": "date-time"
-               },
-               "lastCompletedByEmail": {
-                  "type": "string"
-               },
-               "serviceTypes": {
-                  "type": "array",
-                  "uniqueItems": true,
-                  "maxItems": 5,
-                  "items": {
-                     "type": "string",
-                     "pattern": "Implementation|Ongoing support|Planning|Testing|Training"
-                  }
-               },
-               "serviceName": {
-                  "type": "string"
-               },
-               "serviceSummary": {
-                  "type": "string"
-               },
-               "serviceBenefits": {
-                  "type": "array",
-                  "uniqueItems": true,
-                  "maxItems": 10,
-                  "items": {
-                     "type": "string"
-                  }
-               },
-               "serviceFeatures": {
-                  "type": "array",
-                  "uniqueItems": true,
-                  "maxItems": 10,
-                  "items": {
-                     "type": "string"
-                  }
-               },
-               "serviceDefinitionDocument": {
-                  "type": "string"
-               },
-               "serviceDefinitionDocumentURL": {
-                  "type": "string",
-                  "format": "uri"
-               },
-               "termsAndConditionsDocument": {
-                  "type": "string"
-               },
-               "termsAndConditionsDocumentURL": {
-                  "type": "string"
-               },
-               "minimumContractPeriod": {
-                  "type": "string",
-                  "pattern": "Hour|Day|Month|Year|Other"
-               },
-               "terminationCost": {
-                  "type": "boolean"
-               },
-               "priceMin": {
-                  "type": "number"
-               },
-               "priceMax": {
-                  "type": "number"
-               },
-               "priceUnit": {
-                  "type": "string",
-                  "pattern": "Unit|Person|Licence|User|Device|Instance|Server|Virtual machine|Transaction|Megabyte|Gigabyte|Terabyte"
-               },
-               "priceInterval": {
-                  "type": "string",
-                  "pattern": "Second|Minute|Hour|Day|Week|Month|Quarter|6 months|Year"
-               },
-               "priceString": {
-                  "type": "string"
-               },
-               "vatIncluded": {
-                  "type": "boolean"
-               },
-               "educationPricing": {
-                  "type": "boolean"
-               },
-               "pricingDocument": {
-                  "type": "string"
-               },
-               "pricingDocumentURL": {
-                  "type": "string",
-                  "format": "uri"
-               },
-               "sfiaRateDocument": {
-                  "type": "string"
-               },
-               "sfiaRateDocumentURL": {
-                  "type": "string",
-                  "format": "uri"
-               },
-               "supportForThirdParties": {
-                  "type": "boolean"
-               },
-               "supportAvailability": {
-                  "type": "string"
-               },
-               "supportResponseTime": {
-                  "type": "string"
-               },
-               "incidentEscalation": {
-                  "type": "boolean"
-               },
-               "supportTypes": {
-                  "type": "array",
-                  "uniqueItems": true,
-                  "maxItems": 5,
-                  "items": {
-                     "type": "string",
-                     "pattern": "Service desk|Email|Phone|Live chat|Onsite"
-                  }
-               },
-               "vendorCertifications": {
-                  "type": "array",
-                  "uniqueItems": true,
-                  "maxItems": 10,
-                  "items": {
-                     "type": "string"
-                  }
+                  "pattern": "Implementation|Ongoing support|Planning|Testing|Training"
                }
             },
-            "required": [
-               "id",
-               "supplierId",
-               "lot",
-               "title",
-               "lastUpdated",
-               "lastUpdatedByEmail",
-               "lastCompleted",
-               "lastCompletedByEmail",
-               "serviceTypes",
-               "serviceName",
-               "serviceSummary",
-               "serviceBenefits",
-               "serviceFeatures",
-               "serviceDefinitionDocument",
-               "serviceDefinitionDocumentURL",
-               "termsAndConditionsDocument",
-               "termsAndConditionsDocumentURL",
-               "minimumContractPeriod",
-               "terminationCost",
-               "priceMin",
-               "priceUnit",
-               "priceString",
-               "vatIncluded",
-               "educationPricing",
-               "pricingDocument",
-               "pricingDocumentURL",
-               "supportForThirdParties",
-               "supportAvailability",
-               "supportResponseTime",
-               "incidentEscalation",
-               "supportTypes"
-            ]
-         }
+            "serviceName": {
+               "type": "string"
+            },
+            "serviceSummary": {
+               "type": "string"
+            },
+            "serviceBenefits": {
+               "type": "array",
+               "uniqueItems": true,
+               "maxItems": 10,
+               "items": {
+                  "type": "string"
+               }
+            },
+            "serviceFeatures": {
+               "type": "array",
+               "uniqueItems": true,
+               "maxItems": 10,
+               "items": {
+                  "type": "string"
+               }
+            },
+            "serviceDefinitionDocument": {
+               "type": "string"
+            },
+            "serviceDefinitionDocumentURL": {
+               "type": "string",
+               "format": "uri"
+            },
+            "termsAndConditionsDocument": {
+               "type": "string"
+            },
+            "termsAndConditionsDocumentURL": {
+               "type": "string"
+            },
+            "minimumContractPeriod": {
+               "type": "string",
+               "pattern": "Hour|Day|Month|Year|Other"
+            },
+            "terminationCost": {
+               "type": "boolean"
+            },
+            "priceMin": {
+               "type": "number"
+            },
+            "priceMax": {
+               "type": "number"
+            },
+            "priceUnit": {
+               "type": "string",
+               "pattern": "Unit|Person|Licence|User|Device|Instance|Server|Virtual machine|Transaction|Megabyte|Gigabyte|Terabyte"
+            },
+            "priceInterval": {
+               "type": "string",
+               "pattern": "Second|Minute|Hour|Day|Week|Month|Quarter|6 months|Year"
+            },
+            "priceString": {
+               "type": "string"
+            },
+            "vatIncluded": {
+               "type": "boolean"
+            },
+            "educationPricing": {
+               "type": "boolean"
+            },
+            "pricingDocument": {
+               "type": "string"
+            },
+            "pricingDocumentURL": {
+               "type": "string",
+               "format": "uri"
+            },
+            "sfiaRateDocument": {
+               "type": "string"
+            },
+            "sfiaRateDocumentURL": {
+               "type": "string",
+               "format": "uri"
+            },
+            "supportForThirdParties": {
+               "type": "boolean"
+            },
+            "supportAvailability": {
+               "type": "string"
+            },
+            "supportResponseTime": {
+               "type": "string"
+            },
+            "incidentEscalation": {
+               "type": "boolean"
+            },
+            "supportTypes": {
+               "type": "array",
+               "uniqueItems": true,
+               "maxItems": 5,
+               "items": {
+                  "type": "string",
+                  "pattern": "Service desk|Email|Phone|Live chat|Onsite"
+               }
+            },
+            "vendorCertifications": {
+               "type": "array",
+               "uniqueItems": true,
+               "maxItems": 10,
+               "items": {
+                  "type": "string"
+               }
+            }
+         },
+         "required": [
+            "id",
+            "supplierId",
+            "lot",
+            "title",
+            "lastUpdated",
+            "lastUpdatedByEmail",
+            "lastCompleted",
+            "lastCompletedByEmail",
+            "serviceTypes",
+            "serviceName",
+            "serviceSummary",
+            "serviceBenefits",
+            "serviceFeatures",
+            "serviceDefinitionDocument",
+            "serviceDefinitionDocumentURL",
+            "termsAndConditionsDocument",
+            "termsAndConditionsDocumentURL",
+            "minimumContractPeriod",
+            "terminationCost",
+            "priceMin",
+            "priceUnit",
+            "priceString",
+            "vatIncluded",
+            "educationPricing",
+            "pricingDocument",
+            "pricingDocumentURL",
+            "supportForThirdParties",
+            "supportAvailability",
+            "supportResponseTime",
+            "incidentEscalation",
+            "supportTypes"
+         ]
       }
    }
 }

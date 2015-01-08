@@ -62,9 +62,11 @@ def get_service(id):
 
 # Test this locally by running the command:
 # curl -i -H "Content-Type: application/json" \
+# -H "Authorization: Bearer myToken" \
 # -X POST \
-# -d @example_listings/scs-listing.json \
+# -d @example_listings/SSP-JSON-SCS.json \
 # 127.0.0.1:5000/g6/service/add
+
 @main.route('/g6/service/add', methods=['POST'])
 def addSCS():
     if not request.json:
