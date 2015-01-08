@@ -67,11 +67,13 @@ def get_service(id):
 # -d @example_listings/SSP-JSON-SCS.json \
 # 127.0.0.1:5000/g6/service/add
 
-@main.route('/g6/service/add', methods=['POST'])
-def addSCS():
+@main.route('/g6/service', methods=['POST'])
+@requires_authentication
+def validate_service():
     if not request.json:
         abort(400)
-    if services.g6importService.validate_json(request.json):
-        return "JSON Uploaded OK"
+    validationResult = services.g6importService.validate_json(request.json) 
+    if validationResult:
+        return 'JSON validated as %s' % validationResult
     else:
         return make_response("JSON was not a valid format", 422)
