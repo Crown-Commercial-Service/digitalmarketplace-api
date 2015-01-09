@@ -25,7 +25,7 @@ def validate_json(submitted_json):
     elif validates_against_schema(G6_IAAS_SCHEMA,submitted_json):
         return 'G6-IaaS'
     else:
-        print 'Failed validation'
+        print_reason_for_failure(submitted_json)
         return False
 
 
@@ -36,3 +36,28 @@ def validates_against_schema(schema, submitted_json):
         return False
     else:
         return True
+
+
+def print_reason_for_failure(submitted_json):
+    print 'FAILED TO VALIDATE:'
+    print submitted_json
+
+    try:
+        validate(submitted_json, G6_SCS_SCHEMA)
+    except jsonschema.ValidationError as e1:
+        print 'Not SCS: %s' % e1.message
+
+    try:
+        validate(submitted_json, G6_SAAS_SCHEMA)
+    except jsonschema.ValidationError as e2:
+        print 'Not SaaS: %s' % e2.message
+
+    try:
+        validate(submitted_json, G6_PAAS_SCHEMA)
+    except jsonschema.ValidationError as e3:
+        print 'Not PaaS: %s' % e3.message
+
+    try:
+        validate(submitted_json, G6_IAAS_SCHEMA)
+    except jsonschema.ValidationError as e4:
+        print 'Not IaaS: %s' % e4.message
