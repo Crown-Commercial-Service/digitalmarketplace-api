@@ -1,25 +1,44 @@
-digitalmarketplace-api
-======================
+# digitalmarketplace-api
 
 API tier for Digital Marketplace.
 
 - Python app, based on the [Flask framework](http://flask.pocoo.org/)
 
-### Setup (mac)
-#### Get virtualenv
-	sudo easy_install virtualenv
+## Setup
 
-#### Set up env
-	virtualenv venv
+Install [Virtualenv](https://virtualenv.pypa.io/en/latest/)
 
-#### Activate
-	source venv/bin/activate
+```
+sudo easy_install virtualenv
+```
 
-#### Install flask
-	pip install flask
+Bootstrap you development environment
 
-#### Install additional required libraries
-	pip install -r requirements.txt
+```
+./scripts/bootstrap.sh
+```
 
-#### Run it
-	./application.py runserver	
+### Activate the virtual environment
+
+```source ./venv/bin/activate```
+
+### Run the tests
+
+```./scripts/run_tests.sh```
+
+### Run the development server
+
+```python application.py runserver```
+
+### Upgrade database schema
+
+When new database migrations are added you can bring your local database schema
+up to date by running upgrade.
+
+```python applications.py db upgrade```
+
+### Upgrade dependencies
+
+Install new Python dependencies with pip
+
+```pip install -r requirements_for_test.txt```
