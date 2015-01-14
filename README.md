@@ -12,7 +12,7 @@ Install [Virtualenv](https://virtualenv.pypa.io/en/latest/)
 sudo easy_install virtualenv
 ```
 
-Bootstrap you development environment
+Ensure you have Postgres running locally, and then bootstrap your development environment
 
 ```
 ./scripts/bootstrap.sh
@@ -22,18 +22,6 @@ Bootstrap you development environment
 
 ```
 source ./venv/bin/activate
-```
-
-### Run the tests
-
-```
-./scripts/run_tests.sh
-```
-
-### Run the development server
-
-```
-python application.py runserver
 ```
 
 ### Upgrade database schema
@@ -48,6 +36,18 @@ up to date by running upgrade.
 Install new Python dependencies with pip
 
 ```pip install -r requirements_for_test.txt```
+
+### Run the tests
+
+```
+./scripts/run_tests.sh
+```
+
+### Run the development server
+
+```
+python application.py runserver
+```
 
 ### Using the API locally
 
