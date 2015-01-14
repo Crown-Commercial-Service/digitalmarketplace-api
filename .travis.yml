@@ -2,8 +2,14 @@ language: python
 python:
   - "2.7"
   - "3.4"
+addons:
+  postgresql: "9.3"
+env:
+  - SQLALCHEMY_DATABASE_URI=postgresql://postgres:@localhost:5432/digitalmarketplace_test
 install:
   - pip install -r requirements_for_test.txt
+before_script:
+  - psql -c 'create database digitalmarketplace_test;' -U postgres
 script:
   - ./scripts/run_tests.sh
 notifications:

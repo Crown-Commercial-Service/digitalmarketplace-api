@@ -1,28 +1,38 @@
-from .helpers import with_application, provide_access_token
+from app import db
+from app.models import Service
+
+from .helpers import BaseApplicationTest
 
 
-@with_application
-@provide_access_token
-def test_index(app):
-    response = app.get('/')
-    assert u'Hello You Dogs' in response.data.decode('utf8')
+class TestApplication(BaseApplicationTest):
+    def test_index(self):
+        response = self.client.get('/')
+        assert 200 == response.status_code
+        assert u'Hello You Dogs' in response.data.decode('utf8')
 
+    def test_404(self):
+        response = self.client.get('/not-found')
+        assert 404 == response.status_code
 
-@with_application
-@provide_access_token
-def test_404(app):
-    response = app.get('/not-found')
-    assert u'<h1>404</h1>' in response.data.decode('utf8')
+    def test_bearer_token_is_required(self):
+        self.do_not_provide_access_token()
+        response = self.client.get('/')
+        assert 401 == response.status_code
+        assert 'WWW-Authenticate' in response.headers
 
+    def test_invalid_bearer_token_is_required(self):
+        self.do_not_provide_access_token()
+        response = self.client.get(
+            '/',
+            headers={'Authorization': 'Bearer invalid-token'})
+        assert 403 == response.status_code
 
-@with_application
-def test_bearer_token_is_required(app):
-    response = app.get('/')
-    assert 401 == response.status_code
-    assert 'WWW-Authenticate' in response.headers
+    def test_get_non_existent_service(self):
+        response = self.client.get('/services/1')
+        assert 404 == response.status_code
 
-
-@with_application
-def test_invalid_bearer_tokens_not_allowed(app):
-    response = app.get('/', headers={'Authorization': 'Bearer invalid-token'})
-    assert 403 == response.status_code
+    def test_get_service(self):
+        with self.app.app_context():
+            db.session.add(Service(data={'foo': 'bar'}))
+        response = self.client.get('/services/1')
+        assert 200 == response.status_code
