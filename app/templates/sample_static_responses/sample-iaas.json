@@ -1,0 +1,334 @@
+{
+  "services": {
+    "id": 987654321,
+    "supplierId": 123456,
+    "lot": "IaaS",
+    "title": "IaaS a Nice Little Earner",
+    "lastUpdated": "2014-12-16T20:03:07Z",
+    "lastUpdatedByEmail": "kevin.keenoy@digital.cabinet-office.gov.uk",
+    "lastCompleted": "2014-12-16T20:09:29Z",
+    "lastCompletedByEmail": "kevin.keenoy@digital.cabinet-office.gov.uk",
+    "serviceTypes": [
+      "Compute",
+      "Storage"
+    ],
+    "serviceName": "IaaS a Nice Little Earner",
+    "serviceSummary": "The IaaS a Nice Little Earner is a flexible and powerful platform that enables your organisations to innovate quickly while increasing efficiency levels and retaining data sovereignty.\r\nOur IaaS your organisation with a VPC where you are in full control of your\r\ninfrastructure.",
+    "serviceBenefits": [
+      "EC2 compatible APIs, easy to change from Amazon EC2",
+      "Live migration during planned maintenance (no downtime)",
+      "High-availability with failed instances restarted automatically",
+      "Open system with no vendor lock in",
+      "Pay-as-you-go metered services and monitoring",
+      "Triggers and alarms created based on usage",
+      "No minimum spend per month",
+      "Rapid on-boarding",
+      "24/7 support",
+      "\u0027Adequately\u0027 protected overseas data storage"
+    ],
+    "serviceFeatures": [
+      "Quickly launch, manage and terminate compute instances (virtual machines)",
+      "Wide choice of instance sizes",
+      "Console access to your compute instances via the web browser",
+      "Full root access to your compute instances",
+      "Software defined networking",
+      "High-availability with running instances restarted automatically",
+      "High availability block storage",
+      "S3 compatible object storage",
+      "Upload of your own operating system or provided image",
+      "Open API access"
+    ],
+    "termsAndConditionsDocument": "Terms and Conditions.pdf",
+    "minimumContractPeriod": "Hour",
+    "terminationCost": false,
+    "termsAndConditionsDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-live/123456/987654321/987654321-terms-and-condtions.pdf",
+    "openStandardsSupported": true,
+    "serviceOffboarding": true,
+    "serviceOnboarding": true,
+    "analyticsAvailable": true,
+    "persistentStorage": true,
+    "elasticCloud": true,
+    "guaranteedResources": true,
+    "openSource": true,
+    "networksConnected": [
+      "Internet",
+      "Other"
+    ],
+    "supportedDevices": [
+      "PC",
+      "Mac"
+    ],
+    "offlineWorking": false,
+    "supportedBrowsers": [
+      "Internet Explorer 10+",
+      "Firefox",
+      "Chrome"
+    ],
+    "vendorCertifications": [
+      "N/A"
+    ],
+    "governanceFramework": {
+      "value": false,
+      "assurance": "Service provider assertion"
+    },
+    "configurationTracking": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "changeImpactAssessment": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "vulnerabilityAssessment": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "vulnerabilityMonitoring": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "vulnerabilityTimescales": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "vulnerabilityMitigationPrioritisation": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "vulnerabilityTracking": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "eventMonitoring": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "personnelSecurityChecks": {
+      "value": [
+        "Baseline personnel security standard (BPSS)",
+        "Employment checks"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "secureDesign": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "secureConfigurationManagement": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "secureDevelopment": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "userAuthenticateSupport": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "userAuthenticateManagement": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "managementInterfaceProtection": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "restrictAdministratorPermissions": {
+      "value": false,
+      "assurance": "Service provider assertion"
+    },
+    "userAccessControlManagement": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "interconnectionMethods": {
+      "value": [
+        "Private WAN"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "onboardingGuidance": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "serviceConfigurationGuidance": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "deviceAccessMethod": {
+      "value": [
+        "Corporate/enterprise devices"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "trainingProvided": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "selfServiceProvisioning": true,
+    "provisioningTime": "Up to 1 business day",
+    "deprovisioningTime": "Instantly - however billing is by the hour",
+    "apiType": "RESTful",
+    "apiAccess": true,
+    "dataExtractionRemoval": true,
+    "dataBackupRecovery": true,
+    "datacentreTier": "TIA-942 Tier 3",
+    "datacentresSpecifyLocation": false,
+    "datacentresEUCode": true,
+    "dataProtectionBetweenServices": {
+      "value": [
+        "No encryption"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "dataProtectionWithinService": {
+      "value": [
+        "VLAN"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "dataProtectionBetweenUserAndService": {
+      "value": [
+        "No encryption"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "dataRedundantEquipmentAccountsRevoked": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "dataSecureEquipmentDisposal": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "dataStorageMediaDisposal": {
+      "value": "Other destruction/erasure process",
+      "assurance": "Service provider assertion"
+    },
+    "dataSecureDeletion": {
+      "value": "Other secure erasure process",
+      "assurance": "Service provider assertion"
+    },
+    "dataAtRestProtections": {
+      "value": [
+        "Physical access control"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "datacentreProtectionDisclosure": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "legalJurisdiction": {
+      "value": "Rest of world",
+      "assurance": "Service provider assertion"
+    },
+    "serviceAvailabilityPercentage": {
+      "value": 99.95,
+      "assurance": "Service provider assertion"
+    },
+    "dataManagementLocations": {
+      "value": [
+        "UK",
+        "Rest of world"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "datacentreLocations": {
+      "value": [
+        "Rest of world"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "otherConsumers": {
+      "value": "Anyone - public",
+      "assurance": "Service provider assertion"
+    },
+    "servicesSeparation": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "servicesManagementSeparation": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "cloudDeploymentModel": {
+      "value": "Public cloud",
+      "assurance": "Service provider assertion"
+    },
+    "incidentDefinitionPublished": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "incidentManagementReporting": {
+      "value": false,
+      "assurance": "Service provider assertion"
+    },
+    "incidentManagementProcess": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "hardwareSoftwareVerification": {
+      "value": false,
+      "assurance": "Service provider assertion"
+    },
+    "thirdPartyRiskAssessment": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "thirdPartyComplianceMonitoring": {
+      "value": false,
+      "assurance": "Service provider assertion"
+    },
+    "thirdPartyDataSharingInformation": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "thirdPartySecurityRequirements": {
+      "value": false,
+      "assurance": "Service provider assertion"
+    },
+    "identityAuthenticationControls": {
+      "value": [
+        "Username and password"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "serviceManagementModel": {
+      "value": [
+        "Direct service management"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "auditInformationProvided": {
+      "value": "Data made available by negotiation",
+      "assurance": "Service provider assertion"
+    },
+    "supportForThirdParties": true,
+    "supportAvailability": "global 24x7 support is available ",
+    "supportResponseTime": "Critical support (where there is no service) will be provided within 2 hours.  Urgent support within 4 working hours",
+    "incidentEscalation": true,
+    "supportTypes": [
+      "Service desk",
+      "Email",
+      "Phone",
+      "Onsite"
+    ],
+    "serviceDefinitionDocument": "My Definition of IaaS v1.1.pdf",
+    "serviceDefinitionDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-live/123456/987654321/987654321-service-definition-document.pdf",
+    "priceInterval": "Hour",
+    "trialOption": true,
+    "priceUnit": "Instance",
+    "educationPricing": false,
+    "vatIncluded": false,
+    "priceString": "?0.025 per instance per hour",
+    "sfiaRateDocument": "My Rates for of IaaS v1.0.pdf",
+    "pricingDocument": "My Prices for of IaaS v1.0.pdf",
+    "priceMin": 0.025,
+    "freeOption": false,
+    "sfiaRateDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-live/123456/987654321/987654321-sfia-rate-card.pdf",
+    "pricingDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-live/123456/987654321/987654321-pricing-document.pdf"
+  }
+}
+
