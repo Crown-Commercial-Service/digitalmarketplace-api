@@ -1,7 +1,7 @@
-from __future__ import absolute_import
-
-from app import db
-from app.models import Service
+"""
+Tests for the application infrastructure
+"""
+from flask import json
 
 from .helpers import BaseApplicationTest
 
@@ -10,7 +10,7 @@ class TestApplication(BaseApplicationTest):
     def test_index(self):
         response = self.client.get('/')
         assert 200 == response.status_code
-        assert u'Hello You Dogs' in response.data.decode('utf8')
+        assert 'links' in json.loads(response.get_data())
 
     def test_404(self):
         response = self.client.get('/not-found')
@@ -28,13 +28,3 @@ class TestApplication(BaseApplicationTest):
             '/',
             headers={'Authorization': 'Bearer invalid-token'})
         assert 403 == response.status_code
-
-    def test_get_non_existent_service(self):
-        response = self.client.get('/services/1')
-        assert 404 == response.status_code
-
-    def test_get_service(self):
-        with self.app.app_context():
-            db.session.add(Service(data={'foo': 'bar'}))
-        response = self.client.get('/services/1')
-        assert 200 == response.status_code
