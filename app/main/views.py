@@ -2,12 +2,10 @@ from flask import render_template, jsonify, request, abort, url_for, Response
 
 from . import main
 from .. import db
-from ..lib.authentication import requires_authentication
 from ..models import Service
 
 
 @main.route('/')
-@requires_authentication
 def index():
     """Entry point for the API, show the resources that are available."""
     return jsonify(links=[
@@ -55,13 +53,11 @@ def get_iaas():
 
 
 @main.route('/services', methods=['GET'])
-@requires_authentication
 def list_services():
     return jsonify(services=map(jsonify_service, Service.query.all()))
 
 
 @main.route('/services', methods=['POST'])
-@requires_authentication
 def add_service():
     data = get_json_from_request()
 
@@ -73,7 +69,6 @@ def add_service():
 
 
 @main.route('/services/<service_id>', methods=['PUT'])
-@requires_authentication
 def update_service(service_id):
     service = Service.query.filter(Service.id == service_id).first_or_404()
     data = get_json_from_request()
@@ -91,7 +86,6 @@ def update_service(service_id):
 
 
 @main.route('/services/<service_id>', methods=['GET'])
-@requires_authentication
 def get_service(service_id):
     service = Service.query.filter(Service.id == service_id).first_or_404()
 
