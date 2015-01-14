@@ -1,4 +1,5 @@
 import os
+from nose.tools import assert_equal
 
 from app import create_app, db
 
@@ -51,3 +52,38 @@ class BaseApplicationTest(object):
     def teardown_database(self):
         with self.app.app_context():
             db.drop_all()
+
+
+class JSONUpdateTestMixin(object):
+    """
+    Tests to verify that endpoints that accept JSON.
+    """
+    endpoint = None
+    method = None
+    client = None
+
+    def test_non_json_causes_failure(self):
+        response = self.client.open(
+            self.endpoint,
+            method=self.method,
+            data='this is not JSON',
+            content_type='application/json')
+
+        assert_equal(response.status_code, 400)
+
+    def test_invalid_json_causes_failure(self):
+        response = self.client.open(
+            self.endpoint,
+            method=self.method,
+            data='{"not": "valid"}',
+            content_type='application/json')
+
+        assert_equal(response.status_code, 400)
+
+    def test_invalid_content_type_causes_failure(self):
+        response = self.client.open(
+            self.endpoint,
+            method=self.method,
+            data='{"services": {"foo": "bar"}}')
+
+        assert_equal(response.status_code, 400)

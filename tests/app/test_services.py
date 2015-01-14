@@ -1,44 +1,9 @@
 from flask import json
 from nose.tools import assert_equal
+
 from app import db
 from app.models import Service
-
-from .helpers import BaseApplicationTest
-
-
-class JSONUpdateTestMixin(object):
-    """
-    Tests to verify that endpoints that accept JSON.
-    """
-    endpoint = None
-    method = None
-    client = None
-
-    def test_non_json_causes_failure(self):
-        response = self.client.open(
-            self.endpoint,
-            method=self.method,
-            data='this is not JSON',
-            content_type='application/json')
-
-        assert_equal(response.status_code, 400)
-
-    def test_invalid_json_causes_failure(self):
-        response = self.client.open(
-            self.endpoint,
-            method=self.method,
-            data='{"not": "valid"}',
-            content_type='application/json')
-
-        assert_equal(response.status_code, 400)
-
-    def test_invalid_content_type_causes_failure(self):
-        response = self.client.open(
-            self.endpoint,
-            method=self.method,
-            data='{"services": {"foo": "bar"}}')
-
-        assert_equal(response.status_code, 400)
+from .helpers import BaseApplicationTest, JSONUpdateTestMixin
 
 
 class TestListServices(BaseApplicationTest):
