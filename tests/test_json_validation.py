@@ -2,8 +2,10 @@ from __future__ import absolute_import
 
 import os
 import json
+
 from jsonschema import validate, SchemaError, ValidationError
-from app.services.g6importService import validate_json
+
+from app.lib.validation import validate_json
 
 
 def test_all_schemas_are_valid():

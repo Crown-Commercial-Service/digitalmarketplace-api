@@ -1,5 +1,6 @@
 import json
 
+from flask import abort
 from jsonschema import validate, ValidationError
 
 
@@ -14,6 +15,11 @@ with open("schemata/g6-iaas-schema.json") as json_file3:
 
 with open("schemata/g6-paas-schema.json") as json_file4:
     G6_PAAS_SCHEMA = json.load(json_file4)
+
+
+def validate_json_or_400(submitted_json):
+    if not validate_json(submitted_json):
+        abort(400, "JSON was not a valid format")
 
 
 def validate_json(submitted_json):

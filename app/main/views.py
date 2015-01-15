@@ -4,7 +4,7 @@ from flask import (jsonify, Response, abort, render_template,
 from . import main
 from .. import db
 from ..models import Service
-from ..services import g6importService
+from ..lib.validation import validate_json_or_400
 
 
 @main.route('/')
@@ -63,9 +63,7 @@ def list_services():
 def add_service():
     data = get_json_from_request()
 
-    validation_result = g6importService.validate_json(data['services'])
-    if not validation_result:
-        abort(400, "JSON was not a valid format")
+    validate_json_or_400(data['services'])
 
     service = Service(data=data['services'])
     db.session.add(service)
@@ -78,10 +76,8 @@ def add_service():
 def update_service(service_id):
     service = Service.query.filter(Service.id == service_id).first_or_404()
     data = get_json_from_request()
-    validation_result = g6importService.validate_json(data['services'])
 
-    if not validation_result:
-        abort(400, "JSON was not a valid format")
+    validate_json_or_400(data['services'])
 
     if data['services']['id'] != service.id:
         abort(400, "Invalid service ID provided")
