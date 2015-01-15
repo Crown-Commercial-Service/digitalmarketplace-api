@@ -4,20 +4,14 @@ import os
 from flask import current_app, abort, request
 
 
-def requires_authentication(view):
-    @wraps(view)
-    def wrapped_view(*args, **kwargs):
-        if current_app.config['AUTH_REQUIRED']:
-            incoming_token = get_token_from_headers(request.headers)
+def requires_authentication():
+    if current_app.config['AUTH_REQUIRED']:
+        incoming_token = get_token_from_headers(request.headers)
 
-            if not incoming_token:
-                abort(401)
-            if not token_is_valid(incoming_token):
-                abort(403)
-
-        return view(*args, **kwargs)
-
-    return wrapped_view
+        if not incoming_token:
+            abort(401)
+        if not token_is_valid(incoming_token):
+            abort(403)
 
 
 def token_is_valid(incoming_token):
