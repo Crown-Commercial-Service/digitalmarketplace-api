@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import os
+import json
 from nose.tools import assert_equal
 
 from app import create_app, db
@@ -54,6 +55,11 @@ class BaseApplicationTest(object):
     def teardown_database(self):
         with self.app.app_context():
             db.drop_all()
+
+    def load_example_listing(self, name):
+        file_path = os.path.join("example_listings", "{}.json".format(name))
+        with open(file_path) as f:
+            return json.load(f)
 
 
 class JSONUpdateTestMixin(object):

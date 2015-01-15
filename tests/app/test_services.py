@@ -30,9 +30,10 @@ class TestAddNewService(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = "/services"
 
     def test_add_new_service(self):
+        payload = self.load_example_listing("SSP-JSON-IaaS")
         response = self.client.post(
             self.endpoint,
-            data=json.dumps({'services': {'foo': 'bar'}}),
+            data=json.dumps({'services': payload}),
             content_type='application/json')
         data = json.loads(response.get_data())
 
@@ -41,49 +42,41 @@ class TestAddNewService(BaseApplicationTest, JSONUpdateTestMixin):
 
         with self.app.app_context():
             service = Service.query.get(1)
-            assert_equal(service.data, {'foo': 'bar'})
+            assert_equal(service.data['title'], payload['title'])
 
 
 class TestUpdateService(BaseApplicationTest, JSONUpdateTestMixin):
     method = "put"
-    endpoint = "/services/1"
+    endpoint = "/services/2"
 
     def setup(self):
         super(TestUpdateService, self).setup()
 
         with self.app.app_context():
-            db.session.add(Service(data={'foo': 'bar'}))
+            db.session.add(Service(id=2, data={'foo': 'bar'}))
 
     def test_update_a_service(self):
+        payload = self.load_example_listing("SSP-JSON-IaaS")
         response = self.client.put(
-            '/services/1',
-            data=json.dumps({'services': {'foo': 'baaar'}}),
+            '/services/2',
+            data=json.dumps({'services': payload}),
             content_type='application/json')
 
         assert_equal(response.status_code, 200)
 
     def test_when_service_does_not_exist(self):
+        payload = self.load_example_listing("SSP-JSON-IaaS")
         response = self.client.put(
-            '/services/2',
-            data=json.dumps({'services': {'foo': 'bar'}}),
+            '/services/3',
+            data=json.dumps({'services': payload}),
             content_type='application/json')
 
         assert_equal(response.status_code, 404)
 
-    def test_when_service_payload_has_id_that_matches_url(self):
-        response = self.client.put(
-            '/services/1',
-            data=json.dumps({'services': {'id': 1, 'foo': 'bar'}}),
-            content_type='application/json')
-        data = json.loads(response.get_data())
-
-        assert_equal(response.status_code, 200)
-        assert_equal(data['services']['id'], 1)
-
     def test_when_service_payload_has_invalid_id(self):
         response = self.client.put(
-            '/services/1',
-            data=json.dumps({'services': {'id': 2, 'foo': 'bar'}}),
+            '/services/2',
+            data=json.dumps({'services': {'id': 3, 'foo': 'bar'}}),
             content_type='application/json')
 
         assert_equal(response.status_code, 400)

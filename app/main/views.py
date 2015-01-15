@@ -78,13 +78,13 @@ def add_service():
 def update_service(service_id):
     service = Service.query.filter(Service.id == service_id).first_or_404()
     data = get_json_from_request()
-    if 'id' in data['services']:
-        if data['services'].pop('id') != service.id:
-            abort(400, "Invalid service ID provided")
-
     validation_result = g6importService.validate_json(data['services'])
+
     if not validation_result:
         abort(400, "JSON was not a valid format")
+
+    if data['services']['id'] != service.id:
+        abort(400, "Invalid service ID provided")
 
     service.data = data['services']
 
