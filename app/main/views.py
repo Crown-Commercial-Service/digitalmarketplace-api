@@ -19,7 +19,6 @@ def index():
 
 
 @main.route('/services/g6-scs-example')
-@requires_authentication
 def get_scs():
     content = render_template('sample_static_responses/sample-scs.json')
     resp = Response(response=content,
@@ -29,7 +28,6 @@ def get_scs():
 
 
 @main.route('/services/g6-saas-example')
-@requires_authentication
 def get_saas():
     content = render_template('sample_static_responses/sample-saas.json')
     resp = Response(response=content,
@@ -39,7 +37,6 @@ def get_saas():
 
 
 @main.route('/services/g6-paas-example')
-@requires_authentication
 def get_paas():
     content = render_template('sample_static_responses/sample-paas.json')
     resp = Response(response=content,
@@ -49,7 +46,6 @@ def get_paas():
 
 
 @main.route('/services/g6-iaas-example')
-@requires_authentication
 def get_iaas():
     content = render_template('sample_static_responses/sample-iaas.json')
     resp = Response(response=content,
