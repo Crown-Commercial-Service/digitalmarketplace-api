@@ -1,15 +1,10 @@
-from flask import render_template, jsonify, Response
+from flask import (jsonify, Response, abort, make_response, render_template,
+                   request)
 
 from . import main
 from ..lib.authentication import requires_authentication
 from ..models import Service
-from flask import abort
-from flask import make_response
-from flask import render_template
-from flask import request
-
-from app import services
-from app.services import g6importService
+from ..services import g6importService
 
 
 @main.route('/')
@@ -77,7 +72,7 @@ def get_service(id):
 def add_new_service():
     if not request.json:
         abort(400)
-    validationResult = services.g6importService.validate_json(request.json)
+    validationResult = g6importService.validate_json(request.json)
     if validationResult:
         return 'JSON validated as %s' % validationResult
     else:

@@ -1,6 +1,7 @@
 import json
-import jsonschema
-from jsonschema import validate
+
+from jsonschema import validate, ValidationError
+
 
 with open("schemata/g6-scs-schema.json") as json_file1:
     G6_SCS_SCHEMA = json.load(json_file1)
@@ -32,7 +33,7 @@ def validate_json(submitted_json):
 def validates_against_schema(schema, submitted_json):
     try:
         validate(submitted_json, schema)
-    except jsonschema.ValidationError:
+    except ValidationError:
         return False
     else:
         return True
@@ -43,20 +44,20 @@ def print_reason_for_failure(submitted_json):
     print(submitted_json)
     try:
         validate(submitted_json, G6_SCS_SCHEMA)
-    except jsonschema.ValidationError as e1:
+    except ValidationError as e1:
         print('Not SCS: %s' % e1.message)
 
     try:
         validate(submitted_json, G6_SAAS_SCHEMA)
-    except jsonschema.ValidationError as e2:
+    except ValidationError as e2:
         print('Not SaaS: %s' % e2.message)
 
     try:
         validate(submitted_json, G6_PAAS_SCHEMA)
-    except jsonschema.ValidationError as e3:
+    except ValidationError as e3:
         print('Not PaaS: %s' % e3.message)
 
     try:
         validate(submitted_json, G6_IAAS_SCHEMA)
-    except jsonschema.ValidationError as e4:
+    except ValidationError as e4:
         print('Not IaaS: %s' % e4.message)
