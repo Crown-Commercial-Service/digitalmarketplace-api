@@ -1,0 +1,274 @@
+{
+  "services": {
+    "id": 6543210987,
+    "supplierId": 123456,
+    "lot": "SaaS",
+    "title": "My SaaS Brings All The Boys To The Yard",
+    "lastUpdated": "2014-12-17T13:46:12Z",
+    "lastUpdatedByEmail": "kevin.keenoy@digital.cabinet-office.gov.uk",
+    "lastCompleted": "2014-12-17T13:46:22Z",
+    "lastCompletedByEmail": "kevin.keenoy@digital.cabinet-office.gov.uk",
+    "serviceTypes": [
+      "Business intelligence and analytics",
+      "Data management"
+    ],
+    "serviceName": "My SaaS Brings All The Boys To The Yard",
+    "serviceSummary": "Using the power of cognitive computing and IBM Watson empower front of house staff with the right answers, quickly and efficiently based upon operating guides.",
+    "serviceBenefits": [
+      "Use simple questions to make sense of big data",
+      "Find the right answer quickly and efficiently",
+      "Improve corpus (AI), quality over time to improve business processes"
+    ],
+    "serviceFeatures": [
+      "Cognitive computing",
+      "Knowledgebase",
+      "Artificial Intelligence"
+    ],
+    "serviceDefinitionDocument": "SaaSy definition.pdf",
+    "serviceDefinitionDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-live/123456/6543210987/6543210987-service-definition-document.pdf",
+    "termsAndConditionsDocument": "SaaSy_Contract_2014.pdf",
+    "minimumContractPeriod": "Other",
+    "termsAndConditionsDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-live/123456/6543210987/6543210987-terms-and-condtions.pdf",
+    "openStandardsSupported": true,
+    "supportForThirdParties": true,
+    "supportAvailability": "9 to 5",
+    "supportResponseTime": "15 minute response",
+    "incidentEscalation": true,
+    "supportTypes": [
+      "Service desk",
+      "Email",
+      "Phone",
+      "Onsite"
+    ],
+    "serviceOffboarding": false,
+    "serviceOnboarding": true,
+    "analyticsAvailable": true,
+    "persistentStorage": true,
+    "elasticCloud": true,
+    "guaranteedResources": true,
+    "selfServiceProvisioning": true,
+    "provisioningTime": "Possible only after initial creation to increase user licenses",
+    "deprovisioningTime": "Manual control to minimum licenses agreed",
+    "openSource": false,
+    "codeLibraryLanguages": [
+      "JavaScript",
+      "HTML",
+      "Cordova",
+      "Node.JS"
+    ],
+    "apiType": "",
+    "apiAccess": false,
+    "networksConnected": [
+      "Internet"
+    ],
+    "supportedDevices": [
+      "PC",
+      "Mac",
+      "Smartphone",
+      "Tablet"
+    ],
+    "offlineWorking": false,
+    "supportedBrowsers": [
+      "Chrome"
+    ],
+    "vendorCertifications": [
+    ],
+    "identityStandards": [
+    ],
+    "dataExtractionRemoval": true,
+    "dataBackupRecovery": true,
+    "datacentreTier": "TIA-942 Tier 1",
+    "datacentresSpecifyLocation": false,
+    "datacentresEUCode": true,
+    "dataProtectionBetweenUserAndService": {
+      "value": [
+        "VPN using TLS, version 1.2 or later"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "dataSecureDeletion": {
+      "value": "Other erasure process",
+      "assurance": "Service provider assertion"
+    },
+    "dataAtRestProtections": {
+      "value": [
+        "Physical access control"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "datacentreProtectionDisclosure": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "legalJurisdiction": {
+      "value": "UK",
+      "assurance": "Service provider assertion"
+    },
+    "serviceAvailabilityPercentage": {
+      "value": 98.5,
+      "assurance": "Service provider assertion"
+    },
+    "dataManagementLocations": {
+      "value": [
+        "UK"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "datacentreLocations": {
+      "value": [
+        "EU",
+        "USA - Safe Harbor"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "otherConsumers": {
+      "value": "Anyone - public",
+      "assurance": "Service provider assertion"
+    },
+    "servicesSeparation": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "servicesManagementSeparation": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "cloudDeploymentModel": {
+      "value": "Hybrid cloud",
+      "assurance": "Contractual commitment"
+    },
+    "governanceFramework": {
+      "value": false,
+      "assurance": "Service provider assertion"
+    },
+    "changeImpactAssessment": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "vulnerabilityAssessment": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "vulnerabilityMonitoring": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "vulnerabilityTimescales": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "vulnerabilityMitigationPrioritisation": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "vulnerabilityTracking": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "eventMonitoring": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "incidentDefinitionPublished": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "incidentManagementReporting": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "incidentManagementProcess": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "personnelSecurityChecks": {
+      "value": [
+        "Employment checks"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "secureDesign": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "secureConfigurationManagement": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "secureDevelopment": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "thirdPartyRiskAssessment": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "thirdPartyComplianceMonitoring": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "thirdPartyDataSharingInformation": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "thirdPartySecurityRequirements": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "userAuthenticateSupport": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "userAuthenticateManagement": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "restrictAdministratorPermissions": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "userAccessControlManagement": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "identityAuthenticationControls": {
+      "value": [
+        "Username and password"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "serviceManagementModel": {
+      "value": [
+        "Dedicated devices for multiple community service management"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "auditInformationProvided": {
+      "value": "None",
+      "assurance": "Service provider assertion"
+    },
+    "deviceAccessMethod": {
+      "value": [
+        "Corporate/enterprise devices"
+      ],
+      "assurance": "Service provider assertion"
+    },
+    "trainingProvided": {
+      "value": true,
+      "assurance": "Service provider assertion"
+    },
+    "priceInterval": "Year",
+    "trialOption": true,
+    "educationPricing": false,
+    "priceUnit": "Instance",
+    "vatIncluded": false,
+    "priceString": "?250000 per instance per year",
+    "sfiaRateDocument": "Rate Card.pdf",
+    "pricingDocument": "pricing list.pdf",
+    "freeOption": false,
+    "priceMin": 250000,
+    "sfiaRateDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-live/123456/6543210987/6543210987-sfia-rate-card.pdf",
+    "pricingDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-live/123456/6543210987/6543210987-pricing-document.pdf"
+  }
+}
+
