@@ -8,6 +8,7 @@ from app.services.g6importService import validate_json
 def test_all_schemas_are_valid():
     for file_name in os.listdir('schemata'):
         if os.path.isfile('schemata/%s' % file_name):
+            print('Testing schema: %s' % file_name)
             json_schema_file = open('schemata/%s' % file_name)
             assert check_schema(json.load(json_schema_file))
 
@@ -33,7 +34,7 @@ def check_schema(schema):
     try:
         validate({}, schema)
     except jsonschema.SchemaError as ex:
-        print 'Invalid JSON schema: %s' % ex.message
+        print('Invalid JSON schema: %s' % ex.message)
         return False
     except jsonschema.ValidationError:
         return True
