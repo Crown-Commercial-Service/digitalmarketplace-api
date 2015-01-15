@@ -98,7 +98,6 @@ def update_service(service_id):
     return jsonify(services=jsonify_service(service)), 200
 
 
-
 @main.route('/services/<service_id>', methods=['GET'])
 def get_service(service_id):
     service = Service.query.filter(Service.id == service_id).first_or_404()
@@ -111,7 +110,12 @@ def jsonify_service(service):
     data['id'] = service.id
 
     data['links'] = [
-        {"rel": "self", "href": url_for('.get_service', service_id=service.id, _external=True)}
+        {
+            "rel": "self",
+            "href": url_for('.get_service',
+                            service_id=service.id,
+                            _external=True)
+        }
     ]
     return data
 
