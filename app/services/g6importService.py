@@ -16,16 +16,16 @@ with open("schemata/g6-paas-schema.json") as json_file4:
 
 
 def validate_json(submitted_json):
-    if validates_against_schema(G6_SCS_SCHEMA,submitted_json):
+    if validates_against_schema(G6_SCS_SCHEMA, submitted_json):
         return 'G6-SCS'
-    elif validates_against_schema(G6_SAAS_SCHEMA,submitted_json):
+    elif validates_against_schema(G6_SAAS_SCHEMA, submitted_json):
         return 'G6-SaaS'
-    elif validates_against_schema(G6_PAAS_SCHEMA,submitted_json):
+    elif validates_against_schema(G6_PAAS_SCHEMA, submitted_json):
         return 'G6-PaaS'
-    elif validates_against_schema(G6_IAAS_SCHEMA,submitted_json):
+    elif validates_against_schema(G6_IAAS_SCHEMA, submitted_json):
         return 'G6-IaaS'
     else:
-        print_reason_for_failure(submitted_json)
+        # print_reason_for_failure(submitted_json)
         return False
 
 
@@ -41,7 +41,6 @@ def validates_against_schema(schema, submitted_json):
 def print_reason_for_failure(submitted_json):
     print 'FAILED TO VALIDATE:'
     print submitted_json
-
     try:
         validate(submitted_json, G6_SCS_SCHEMA)
     except jsonschema.ValidationError as e1:
