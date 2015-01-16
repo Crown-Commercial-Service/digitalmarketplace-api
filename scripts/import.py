@@ -2,6 +2,7 @@
 import sys
 import os
 import requests
+import multiprocessing
 
 
 def list_files(directory):
@@ -23,7 +24,7 @@ if __name__ == "__main__":
     print("Access token: {}".format(access_token))
     print("Listing dir: {}".format(listing_dir))
 
-    for file_path in list_files(listing_dir):
+    def post_file(file_path):
         with open(file_path) as f:
             response = requests.post(
                 endpoint,
@@ -32,4 +33,9 @@ if __name__ == "__main__":
                     "content-type": "application/json",
                     "authorization": "Bearer {}".format(access_token),
                 })
-            print(response)
+            return response
+
+    pool = multiprocessing.Pool(10)
+
+    for result in pool.imap(post_file, list_files(listing_dir)):
+        print(result)
