@@ -3,9 +3,14 @@ from __future__ import absolute_import
 import os
 import json
 
+from nose.tools import assert_equal, assert_false
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.validation import validate_json
+
+
+EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                    '..', 'example_listings'))
 
 
 def test_all_schemas_are_valid():
@@ -17,25 +22,18 @@ def test_all_schemas_are_valid():
 
 
 def test_example_json_validates_correctly():
-    with open('example_listings/SSP-JSON-SCS.json') as json_file:
-        json_scs = json.load(json_file)
-        assert validate_json(json_scs) == 'G6-SCS'
+    check_example_listing("SSP-JSON-SCS", assert_equal, "G6-SCS")
+    check_example_listing("SSP-JSON-SaaS", assert_equal, "G6-SaaS")
+    check_example_listing("SSP-JSON-PaaS", assert_equal, "G6-PaaS")
+    check_example_listing("SSP-JSON-IaaS", assert_equal, "G6-IaaS")
+    check_example_listing("SSP-INVALID", assert_false)
 
-    with open('example_listings/SSP-JSON-SAAS.json') as json_file:
-        json_scs = json.load(json_file)
-        assert validate_json(json_scs) == 'G6-SaaS'
 
-    with open('example_listings/SSP-JSON-PAAS.json') as json_file:
-        json_scs = json.load(json_file)
-        assert validate_json(json_scs) == 'G6-PaaS'
-
-    with open('example_listings/SSP-JSON-IAAS.json') as json_file:
-        json_scs = json.load(json_file)
-        assert validate_json(json_scs) == 'G6-IaaS'
-
-    with open('example_listings/SSP-INVALID.json') as json_file:
-        json_scs = json.load(json_file)
-        assert validate_json(json_scs) is False
+def check_example_listing(name, assertion, *args):
+    listing_path = os.path.join(EXAMPLE_LISTING_PATH, '{}.json'.format(name))
+    with open(listing_path) as json_file:
+        json_data = json.load(json_file)
+        assertion(validate_json(json_data), *args)
 
 
 def check_schema(schema):
