@@ -1,6 +1,6 @@
 from nose.tools import eq_
 
-from app.lib.authentication import get_token_from_headers
+from app.authentication import get_token_from_headers
 
 
 def test_get_token_from_headers():

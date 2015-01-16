@@ -5,7 +5,7 @@ import json
 
 from jsonschema import validate, SchemaError, ValidationError
 
-from app.lib.validation import validate_json
+from app.validation import validate_json
 
 
 def test_all_schemas_are_valid():

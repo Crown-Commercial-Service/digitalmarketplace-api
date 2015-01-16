@@ -1,6 +1,6 @@
 from flask import Blueprint
 
-from ..lib.authentication import requires_authentication
+from ..authentication import requires_authentication
 
 main = Blueprint('main', __name__)
 

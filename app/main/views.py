@@ -4,7 +4,7 @@ from flask import (jsonify, Response, abort, render_template,
 from . import main
 from .. import db
 from ..models import Service
-from ..lib.validation import validate_json_or_400
+from ..validation import validate_json_or_400
 
 
 @main.route('/')
