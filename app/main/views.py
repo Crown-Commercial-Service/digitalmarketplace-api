@@ -56,7 +56,7 @@ def get_iaas():
 
 @main.route('/services', methods=['GET'])
 def list_services():
-    return jsonify(services=map(jsonify_service, Service.query.all()))
+    return jsonify(services=list(map(jsonify_service, Service.query.all())))
 
 
 @main.route('/services', methods=['POST'])
