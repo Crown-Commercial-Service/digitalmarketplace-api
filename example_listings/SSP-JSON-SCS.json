@@ -1,0 +1,52 @@
+{
+   "id": 15,
+   "supplierId": 1,
+   "lot": "SCS",
+   "title": "Finally, an SCS \"Service\u0027: ]",
+   "lastUpdated": "2014-12-23T14:53:17Z",
+   "lastUpdatedByEmail": "supplier@digital.cabinet-office.gov.uk",
+   "lastCompleted": "2014-12-23T14:53:20Z",
+   "lastCompletedByEmail": "supplier@digital.cabinet-office.gov.uk",
+   "serviceTypes": [
+      "Implementation",
+      "Ongoing support",
+      "Planning"
+   ],
+   "serviceName": "Finally, an SCS \"Service\u0027: ]",
+   "serviceSummary": "\" I have a summary\r\n\r\n]",
+   "serviceBenefits": [
+      "Big jobs!"
+   ],
+   "serviceFeatures": [
+      "[Blah \"Blah\" Kev\u0027s test"
+   ],
+   "serviceDefinitionDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
+   "serviceDefinitionDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/15/15-service-definition-document.pdf",
+   "termsAndConditionsDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
+   "minimumContractPeriod": "Hour",
+   "terminationCost": true,
+   "termsAndConditionsDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/15/15-terms-and-condtions.pdf",
+   "priceInterval": "6 months",
+   "priceUnit": "Licence",
+   "educationPricing": false,
+   "vatIncluded": true,
+   "priceString": "£34.65 per licence per 6 months",
+   "sfiaRateDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
+   "pricingDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
+   "priceMin": 34.65,
+   "sfiaRateDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/15/15-sfia-rate-card.pdf",
+   "pricingDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/15/15-pricing-document.pdf",
+   "supportForThirdParties": true,
+   "supportAvailability": "sjhdgf jhsdgf jhsg fhj gh 6\u0026*%\u0026 \u0026*",
+   "supportResponseTime": "sfsdf ",
+   "incidentEscalation": false,
+   "supportTypes": [
+      "Service desk",
+      "Live chat",
+      "Onsite"
+   ],
+   "vendorCertifications": [
+      "Kev\u0027s test \"Blah\" ] : \u0027",
+      "A-Level maths"
+   ]
+}

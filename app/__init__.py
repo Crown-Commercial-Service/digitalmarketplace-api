@@ -6,7 +6,8 @@ from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
 
 from config import config
-from .lib.helpers import convert_to_boolean
+from .helpers import convert_to_boolean
+
 
 bootstrap = Bootstrap()
 db = SQLAlchemy()

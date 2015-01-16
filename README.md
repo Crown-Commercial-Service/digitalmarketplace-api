@@ -53,7 +53,7 @@ python application.py runserver
 
 Calls to the API require a valid bearer token. Tokens to be accepted can be set using the AUTH_TOKENS environment variable, e.g.:
 
-```set AUTH_TOKENS=myToken```
+```export AUTH_TOKENS=myToken```
 
 and then you can include this token in your request headers, e.g.:
 
