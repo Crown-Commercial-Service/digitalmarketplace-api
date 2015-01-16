@@ -4,16 +4,16 @@ from flask import abort
 from jsonschema import validate, ValidationError
 
 
-with open("schemata/g6-scs-schema.json") as json_file1:
+with open("json_schemas/g6-scs-schema.json") as json_file1:
     G6_SCS_SCHEMA = json.load(json_file1)
 
-with open("schemata/g6-saas-schema.json") as json_file2:
+with open("json_schemas/g6-saas-schema.json") as json_file2:
     G6_SAAS_SCHEMA = json.load(json_file2)
 
-with open("schemata/g6-iaas-schema.json") as json_file3:
+with open("json_schemas/g6-iaas-schema.json") as json_file3:
     G6_IAAS_SCHEMA = json.load(json_file3)
 
-with open("schemata/g6-paas-schema.json") as json_file4:
+with open("json_schemas/g6-paas-schema.json") as json_file4:
     G6_PAAS_SCHEMA = json.load(json_file4)
 
 
