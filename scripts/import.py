@@ -27,37 +27,38 @@ def print_progress(counter, start_time):
                                        counter / time_delta))
 
 
-def file_putter(endpoint, access_token):
+class ServicePutter(object):
+    def __init__(self, endpoint, access_token):
+        self.endpoint = endpoint
+        self.access_token = access_token
 
-    def put_file(file_path):
+    def __call__(self, file_path):
         with open(file_path) as f:
             data = json.load(f)
             data = {'services': data}
-            url = '{}/{}'.format(endpoint, data['services']['id'])
+            url = '{}/{}'.format(self.endpoint, data['services']['id'])
             response = requests.put(
                 url,
                 data=json.dumps(data),
                 headers={
                     "content-type": "application/json",
-                    "authorization": "Bearer {}".format(access_token),
+                    "authorization": "Bearer {}".format(self.access_token),
                 })
             return file_path, response
-
-    return put_file
 
 
 def do_import(base_url, access_token, listing_dir):
     endpoint = "{}/services".format(base_url)
-    put_file = file_putter(endpoint, access_token)
     print("Base URL: {}".format(base_url))
     print("Access token: {}".format(access_token))
     print("Listing dir: {}".format(listing_dir))
 
     pool = multiprocessing.Pool(10)
+    putter = ServicePutter(endpoint, access_token)
 
     counter = 0
     start_time = datetime.now()
-    for file_path, response in pool.imap(put_file, list_files(listing_dir)):
+    for file_path, response in pool.imap(putter, list_files(listing_dir)):
         if response.status_code / 100 != 2:
             print("ERROR: {} on {}".format(response.status_code, file_path),
                   file=sys.stderr)
