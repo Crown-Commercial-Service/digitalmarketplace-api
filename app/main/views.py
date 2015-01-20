@@ -69,7 +69,7 @@ def add_service():
 @main.route('/services/<service_id>', methods=['PUT'])
 def update_service(service_id):
     service = Service.query.filter(Service.service_id == service_id).first()
-    http_status = 200
+    http_status = 204
     if service is None:
         http_status = 201
         service = Service(service_id=service_id)
@@ -85,7 +85,7 @@ def update_service(service_id):
     db.session.add(service)
     db.session.commit()
 
-    return jsonify(services=jsonify_service(service)), http_status
+    return "", http_status
 
 
 @main.route('/services/<service_id>', methods=['GET'])

@@ -56,7 +56,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             data=json.dumps({'services': payload}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 200)
+        assert_equal(response.status_code, 204)
 
     def test_add_a_new_service(self):
         payload = self.load_example_listing("SSP-JSON-IaaS")
