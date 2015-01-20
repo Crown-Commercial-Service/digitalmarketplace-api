@@ -16,7 +16,7 @@ class TestListServices(BaseApplicationTest):
 
     def test_list_services(self):
         with self.app.app_context():
-            db.session.add(Service(data={'foo': 'bar'}))
+            db.session.add(Service(service_id=123, data={'foo': 'bar'}))
 
         response = self.client.get('/services')
         data = json.loads(response.get_data())
@@ -25,35 +25,29 @@ class TestListServices(BaseApplicationTest):
         assert_equal(len(data['services']), 1)
 
 
-class TestAddNewService(BaseApplicationTest, JSONUpdateTestMixin):
+class TestPostService(BaseApplicationTest):
     method = "post"
     endpoint = "/services"
 
-    def test_add_new_service(self):
+    def test_post_is_not_supported(self):
         payload = self.load_example_listing("SSP-JSON-IaaS")
         response = self.client.post(
-            self.endpoint,
+            "/services",
             data=json.dumps({'services': payload}),
             content_type='application/json')
-        data = json.loads(response.get_data())
 
-        assert_equal(response.status_code, 201)
-        assert_equal(data['services']['id'], 1)
-
-        with self.app.app_context():
-            service = Service.query.get(1)
-            assert_equal(service.data['title'], payload['title'])
+        assert_equal(response.status_code, 501)
 
 
-class TestUpdateService(BaseApplicationTest, JSONUpdateTestMixin):
+class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     method = "put"
     endpoint = "/services/2"
 
     def setup(self):
-        super(TestUpdateService, self).setup()
+        super(TestPutService, self).setup()
 
         with self.app.app_context():
-            db.session.add(Service(id=2, data={'foo': 'bar'}))
+            db.session.add(Service(service_id=2, data={'foo': 'bar'}))
 
     def test_update_a_service(self):
         payload = self.load_example_listing("SSP-JSON-IaaS")
@@ -64,14 +58,15 @@ class TestUpdateService(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert_equal(response.status_code, 200)
 
-    def test_when_service_does_not_exist(self):
+    def test_add_a_new_service(self):
         payload = self.load_example_listing("SSP-JSON-IaaS")
+        payload['id'] = 3
         response = self.client.put(
             '/services/3',
             data=json.dumps({'services': payload}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 404)
+        assert_equal(response.status_code, 201)
 
     def test_when_service_payload_has_invalid_id(self):
         response = self.client.put(
@@ -84,11 +79,14 @@ class TestUpdateService(BaseApplicationTest, JSONUpdateTestMixin):
 
 class TestGetService(BaseApplicationTest):
     def test_get_non_existent_service(self):
-        response = self.client.get('/services/1')
-        assert 404 == response.status_code
+        response = self.client.get('/services/123')
+        assert_equal(404, response.status_code)
 
     def test_get_service(self):
         with self.app.app_context():
-            db.session.add(Service(data={'foo': 'bar'}))
-        response = self.client.get('/services/1')
-        assert 200 == response.status_code
+            db.session.add(Service(service_id=123, data={'foo': 'bar'}))
+        response = self.client.get('/services/123')
+
+        data = json.loads(response.get_data())
+        assert_equal(200, response.status_code)
+        assert_equal(123, data['services']['id'])
