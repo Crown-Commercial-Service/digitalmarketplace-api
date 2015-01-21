@@ -1,11 +1,23 @@
 #!/usr/bin/env python
+"""Import SSP export files into the API
+
+Usage:
+    import.py <endpoint> <access_token> <listing_dir> [--cert=<cert>] [--serial]
+
+Options:
+    --cert=<cert>   Path to certificate file to verify against
+    --serial        Do not run in parallel (useful for debugging)
+"""
 from __future__ import print_function
 import sys
 import json
 import os
-import requests
+import itertools
 import multiprocessing
 from datetime import datetime
+
+import requests
+from docopt import docopt
 
 
 def list_files(directory):
@@ -28,9 +40,10 @@ def print_progress(counter, start_time):
 
 
 class ServicePutter(object):
-    def __init__(self, endpoint, access_token):
+    def __init__(self, endpoint, access_token, cert=None):
         self.endpoint = endpoint
         self.access_token = access_token
+        self.cert = cert
 
     def __call__(self, file_path):
         with open(file_path) as f:
@@ -43,22 +56,28 @@ class ServicePutter(object):
                 headers={
                     "content-type": "application/json",
                     "authorization": "Bearer {}".format(self.access_token),
-                })
+                },
+                verify=self.cert if self.cert else True)
             return file_path, response
 
 
-def do_import(base_url, access_token, listing_dir):
+def do_import(base_url, access_token, listing_dir, serial, cert):
     endpoint = "{}/services".format(base_url)
     print("Base URL: {}".format(base_url))
     print("Access token: {}".format(access_token))
     print("Listing dir: {}".format(listing_dir))
 
-    pool = multiprocessing.Pool(10)
-    putter = ServicePutter(endpoint, access_token)
+    if serial:
+        mapper = itertools.imap
+    else:
+        pool = multiprocessing.Pool(10)
+        mapper = pool.imap
+
+    putter = ServicePutter(endpoint, access_token, cert)
 
     counter = 0
     start_time = datetime.now()
-    for file_path, response in pool.imap(putter, list_files(listing_dir)):
+    for file_path, response in mapper(putter, list_files(listing_dir)):
         if response.status_code / 100 != 2:
             print("ERROR: {} on {}".format(response.status_code, file_path),
                   file=sys.stderr)
@@ -69,4 +88,10 @@ def do_import(base_url, access_token, listing_dir):
     print_progress(counter, start_time)
 
 if __name__ == "__main__":
-    do_import(*sys.argv[1:])
+    arguments = docopt(__doc__)
+    do_import(
+        base_url=arguments['<endpoint>'],
+        access_token=arguments['<access_token>'],
+        listing_dir=arguments['<listing_dir>'],
+        serial=arguments['--serial'],
+        cert=arguments['--cert'])
