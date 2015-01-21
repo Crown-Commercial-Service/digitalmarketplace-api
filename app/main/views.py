@@ -61,25 +61,23 @@ def list_services():
 
 @main.route('/services', methods=['POST'])
 def add_service():
-    data = get_json_from_request()
-
-    validate_json_or_400(data['services'])
-
-    service = Service(data=data['services'])
-    db.session.add(service)
-    db.session.commit()
-
-    return jsonify(services=jsonify_service(service)), 201
+    message = "IDs are currently generated externally, new resources should " \
+              "be created with PUT"
+    return jsonify(error=message), 501
 
 
 @main.route('/services/<service_id>', methods=['PUT'])
 def update_service(service_id):
-    service = Service.query.filter(Service.id == service_id).first_or_404()
+    service = Service.query.filter(Service.service_id == service_id).first()
+    http_status = 204
+    if service is None:
+        http_status = 201
+        service = Service(service_id=service_id)
     data = get_json_from_request()
 
     validate_json_or_400(data['services'])
 
-    if data['services']['id'] != service.id:
+    if str(data['services']['id']) != str(service_id):
         abort(400, "Invalid service ID provided")
 
     service.data = data['services']
@@ -87,25 +85,26 @@ def update_service(service_id):
     db.session.add(service)
     db.session.commit()
 
-    return jsonify(services=jsonify_service(service)), 200
+    return "", http_status
 
 
 @main.route('/services/<service_id>', methods=['GET'])
 def get_service(service_id):
-    service = Service.query.filter(Service.id == service_id).first_or_404()
+    service = Service.query.filter(Service.service_id == service_id)\
+                           .first_or_404()
 
     return jsonify(services=jsonify_service(service))
 
 
 def jsonify_service(service):
     data = dict(service.data.items())
-    data['id'] = service.id
+    data['id'] = service.service_id
 
     data['links'] = [
         {
             "rel": "self",
             "href": url_for('.get_service',
-                            service_id=service.id,
+                            service_id=data['id'],
                             _external=True)
         }
     ]
