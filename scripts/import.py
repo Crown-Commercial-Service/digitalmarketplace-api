@@ -2,7 +2,8 @@
 """Import SSP export files into the API
 
 Usage:
-    import.py <endpoint> <access_token> <listing_dir> [--cert=<cert>] [--serial]
+    import.py <endpoint> <access_token> <listing_dir> [--cert=<cert>] \
+[--serial]
 
 Options:
     --cert=<cert>   Path to certificate file to verify against
@@ -22,7 +23,6 @@ from docopt import docopt
 
 def list_files(directory):
     for root, subdirs, files in os.walk(directory):
-        print("ROOT: {}".format(root))
         for filename in files:
             yield os.path.abspath(os.path.join(root, filename))
 
@@ -36,7 +36,7 @@ def print_progress(counter, start_time):
         time_delta = datetime.now() - start_time
         print("{} in {} ({}/s)".format(counter,
                                        time_delta,
-                                       counter / time_delta))
+                                       counter / time_delta.total_seconds()))
 
 
 class ServicePutter(object):
