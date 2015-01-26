@@ -1,31 +1,23 @@
 #!/usr/bin/python
-'''
-Script to process G6 JSON files into elasticsearch
+'''Process G6 JSON files into elasticsearch
 
-- this version reads JSON from disk and transforms this into the format expected by the DM search
-- Next steps:
-        - needs to be updated to READ from the API and perform the same conversion.
-        - needs to be placed into Jenkins and configred to run into live elasticsearch
+This version reads JSON from disk and transforms this into the format expected by the DM search
+
+Next steps:
+    - needs to be updated to READ from the API and perform the same conversion.
+    - needs to be placed into Jenkins and configred to run into live elasticsearch
+
+Usage:
+    process-g6-into-elastic-search.py <es_endpoint> <listing_dir_or_api_endpoint>
+
 '''
 
 import os
+import sys
 import json
 import urllib2
 
-# Mappings
-#    description == serviceSummary
-#    name == serviceName
-#    listingId == id
-#    uniqueName == id
-#    tags == []
-#    enable == true
-
-# globals
-suppliers = {}
-ccs_suppliers = {}
-server = "http://localhost:9200"
-
-category_mappings = {
+CATEGORY_MAPPINGS = {
     'Accounting and finance': '110',
     'Business intelligence and analytics': '111',
     'Collaboration': '112',
@@ -62,45 +54,46 @@ category_mappings = {
 }
 
 
-def map_category_name_to_id(name):
-    return category_mappings[name]
+def category_name_to_id(name):
+    return CATEGORY_MAPPINGS[name]
 
 
-def post_to_es(data):
-    listingId = str(data['id'])
-    name = data['serviceName']
-    description = data['serviceSummary']
-    uniqueName = data['id']
-    supplierId = data['supplierId']
-    categories = []
-    lot = data['lot']
-    method = "POST"
+def g6_to_g5(data):
+    """
+    Mappings
+        description == serviceSummary
+        name == serviceName
+        listingId == id
+        uniqueName == id
+        tags == []
+        enable == true
+    """
+
+    categories = [category_name_to_id(t) for t in data.get('serviceTypes', [])]
+    return {
+        'uniqueName': data['id'],
+        'tags': data['lot'],
+        'name': data['serviceName'],
+        'listingId': str(data['id']),
+        'description': data['serviceSummary'],
+        'enabled': True,
+        'details': {
+            'supplierId': data['supplierId'],
+            'lot': data['lot'],
+            'categories': categories
+        }
+    }
+
+
+def post_to_es(es_endpoint, index, data):
     handler = urllib2.HTTPHandler()
     opener = urllib2.build_opener(handler)
 
-    if 'serviceTypes' in data:
-        for t in data['serviceTypes']:
-                categories.append(map_category_name_to_id(t))
+    json_data = g6_to_g5(data)
 
-    json_data = json.dumps({
-        'uniqueName': uniqueName,
-        'tags': data['lot'],
-        'name': name,
-        'listingId': listingId,
-        'description': description,
-        'enabled': True,
-        'details': {
-            'supplierId': supplierId,
-            'lot': lot,
-            'categories': categories
-        }
-    })
-
-    print json_data
-
-    request = urllib2.Request(server + "/uk.gov.cabinetoffice.digital.gdm/listing/" + str(listingId), data=json_data)
+    request = urllib2.Request(es_endpoint + json_data['listingId'],
+                              data=json.dumps(json_data))
     request.add_header("Content-Type", 'application/json')
-    request.get_method = lambda: method
 
     print request.get_full_url()
     print request.get_data()
@@ -119,13 +112,40 @@ def post_to_es(data):
         print "connection.code = " + str(connection.code)
 
 
-def process_json_in_directories():
-    for filename in os.listdir("/Users/martyninglis/g6-final-json/"):
-        file = open("/Users/martyninglis/g6-final-json/" + filename)
-        data = json.loads(file.read())
-        print "doing " + filename
-        post_to_es(data)
-        file.close()
+def request_services(endpoint):
+    page_url = endpoint
+    while page_url:
+        print "requesting {}".format(page_url)
+        data = json.loads(urllib2.urlopen(page_url).read())
+        for service in data["services"]:
+            yield service
 
-# process json files
-process_json_in_directories()
+        page_url = filter(lambda l: l['rel'] == 'next', data['links'])
+        if page_url:
+            page_url = page_url[0]
+
+
+def process_json_files_in_directory(dirname):
+    for filename in os.listdir(dirname):
+        with open("/Users/martyninglis/g6-final-json/" + filename) as f:
+            data = json.loads(f.read())
+            print "doing " + filename
+            yield data
+
+
+def main():
+    try:
+        es_endpoint, listing_dir_or_endpoint = sys.argv[1:]
+    except ValueError:
+        print __doc__
+        return
+
+    if listing_dir_or_endpoint.startswith('http'):
+        for data in request_services(listing_dir_or_endpoint):
+            post_to_es(es_endpoint, data)
+    else:
+        for data in process_json_files_in_directory(listing_dir_or_endpoint):
+            post_to_es(es_endpoint, data)
+
+if __name__ == '__main__':
+    main()
