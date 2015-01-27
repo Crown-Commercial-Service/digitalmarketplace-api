@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import (jsonify, Response, abort, render_template,
                    request)
 from flask import url_for as base_url_for
@@ -73,11 +74,13 @@ def add_service():
 
 @main.route('/services/<service_id>', methods=['PUT'])
 def update_service(service_id):
+    now = datetime.now()
     service = Service.query.filter(Service.service_id == service_id).first()
     http_status = 204
     if service is None:
         http_status = 201
         service = Service(service_id=service_id)
+        service.created_at = now
     data = get_json_from_request()
 
     validate_json_or_400(data['services'])
@@ -86,7 +89,8 @@ def update_service(service_id):
         abort(400, "Invalid service ID provided")
 
     service.data = data['services']
-
+    service.supplier_id = data['services']['supplierId']
+    service.updated_at = now
     db.session.add(service)
     db.session.commit()
 
