@@ -1,9 +1,10 @@
 from flask import json
-from nose.tools import assert_equal, assert_in, assert_is_none
+from nose.tools import assert_equal, assert_in, assert_not_equal, \
+    assert_almost_equal
 
 from app import db
 from app.models import Service
-from datetime import datetime
+from datetime import datetime, timedelta
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin
 
 
@@ -90,23 +91,36 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                                    data={'foo': 'bar'}))
 
     def test_update_a_service(self):
-        payload = self.load_example_listing("SSP-JSON-IaaS")
-        response = self.client.put(
-            '/services/2',
-            data=json.dumps({'services': payload}),
-            content_type='application/json')
+        with self.app.app_context():
+            payload = self.load_example_listing("SSP-JSON-IaaS")
+            response = self.client.put(
+                '/services/2',
+                data=json.dumps({'services': payload}),
+                content_type='application/json')
 
-        assert_equal(response.status_code, 204)
+            assert_equal(response.status_code, 204)
+            now = datetime.now()
+            service = Service.query.filter(Service.service_id == 2).first()
+            assert_equal(service.data, payload)
+            assert_not_equal(service.created_at, service.updated_at)
+            assert_almost_equal(now, service.updated_at,
+                                delta=timedelta(seconds=2))
 
     def test_add_a_new_service(self):
-        payload = self.load_example_listing("SSP-JSON-IaaS")
-        payload['id'] = 3
-        response = self.client.put(
-            '/services/3',
-            data=json.dumps({'services': payload}),
-            content_type='application/json')
-
-        assert_equal(response.status_code, 201)
+        with self.app.app_context():
+            payload = self.load_example_listing("SSP-JSON-IaaS")
+            payload['id'] = 3
+            response = self.client.put(
+                '/services/3',
+                data=json.dumps({'services': payload}),
+                content_type='application/json')
+            assert_equal(response.status_code, 201)
+            now = datetime.now()
+            service = Service.query.filter(Service.service_id == 3).first()
+            assert_equal(service.data, payload)
+            assert_equal(service.created_at, service.updated_at)
+            assert_almost_equal(now, service.created_at,
+                                delta=timedelta(seconds=2))
 
     def test_when_service_payload_has_invalid_id(self):
         response = self.client.put(
