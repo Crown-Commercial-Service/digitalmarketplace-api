@@ -1,14 +1,16 @@
 #!/usr/bin/python
 '''Process G6 JSON files into elasticsearch
 
-This version reads JSON from disk and transforms this into the format expected by the DM search
-
-Next steps:
-    - needs to be updated to READ from the API and perform the same conversion.
-    - needs to be placed into Jenkins and configred to run into live elasticsearch
+This version reads JSON from disk or DM API and transforms this into the format
+expected by the DM search.
 
 Usage:
-    process-g6-into-elastic-search.py <es_endpoint> <listing_dir_or_api_endpoint>
+    process-g6-into-elastic-search.py <es_endpoint> <dir_or_endpoint> [<token>]
+
+Arguments:
+    es_endpoint      Full ES index URL
+    dir_or_endpoint  Directory path to import or an API URL if token is given
+    token            Digital Marketplace API token
 
 '''
 
@@ -85,12 +87,14 @@ def g6_to_g5(data):
     }
 
 
-def post_to_es(es_endpoint, index, data):
+def post_to_es(es_endpoint, data):
     handler = urllib2.HTTPHandler()
     opener = urllib2.build_opener(handler)
 
     json_data = g6_to_g5(data)
 
+    if not es_endpoint.endswith('/'):
+        es_endpoint += '/'
     request = urllib2.Request(es_endpoint + json_data['listingId'],
                               data=json.dumps(json_data))
     request.add_header("Content-Type", 'application/json')
@@ -112,40 +116,46 @@ def post_to_es(es_endpoint, index, data):
         print "connection.code = " + str(connection.code)
 
 
-def request_services(endpoint):
+def request_services(endpoint, token):
+    handler = urllib2.HTTPBasicAuthHandler()
+    opener = urllib2.build_opener(handler)
+
     page_url = endpoint
     while page_url:
         print "requesting {}".format(page_url)
-        data = json.loads(urllib2.urlopen(page_url).read())
+
+        request = urllib2.Request(page_url)
+        request.add_header("Authorization", "Bearer {}".format(token))
+        response = opener.open(request).read()
+
+        data = json.loads(response)
         for service in data["services"]:
             yield service
 
         page_url = filter(lambda l: l['rel'] == 'next', data['links'])
         if page_url:
-            page_url = page_url[0]
+            page_url = page_url[0]['href']
 
 
 def process_json_files_in_directory(dirname):
     for filename in os.listdir(dirname):
-        with open("/Users/martyninglis/g6-final-json/" + filename) as f:
+        with open(os.path.join(dirname, filename)) as f:
             data = json.loads(f.read())
             print "doing " + filename
             yield data
 
 
 def main():
-    try:
-        es_endpoint, listing_dir_or_endpoint = sys.argv[1:]
-    except ValueError:
-        print __doc__
-        return
-
-    if listing_dir_or_endpoint.startswith('http'):
-        for data in request_services(listing_dir_or_endpoint):
+    if len(sys.argv) == 4:
+        es_endpoint, endpoint, token = sys.argv[1:]
+        for data in request_services(endpoint, token):
+            post_to_es(es_endpoint, data)
+    elif len(sys.argv) == 3:
+        es_endpoint, listing_dir = sys.argv[1:]
+        for data in process_json_files_in_directory(listing_dir):
             post_to_es(es_endpoint, data)
     else:
-        for data in process_json_files_in_directory(listing_dir_or_endpoint):
-            post_to_es(es_endpoint, data)
+        print __doc__
 
 if __name__ == '__main__':
     main()
