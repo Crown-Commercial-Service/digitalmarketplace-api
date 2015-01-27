@@ -147,24 +147,14 @@ def url_for(*args, **kwargs):
 
 
 def pagination_links(pagination, endpoint, args):
-    return list(filter(None, [
-        link("next", paginate_next(pagination, endpoint, args)),
-        link("prev", paginate_prev(pagination, endpoint, args)),
-    ]))
-
-
-def paginate_next(pagination, endpoint, args):
-    if pagination.has_next:
-        args = args.copy()
-        args['page'] = pagination.next_num
-        return url_for(endpoint, **args)
-
-
-def paginate_prev(pagination, endpoint, args):
-    if pagination.has_prev:
-        args = args.copy()
-        args['page'] = pagination.prev_num
-        return url_for(endpoint, **args)
+    return [
+        link(rel, url_for(endpoint,
+                          **dict(list(args.items()) +
+                                 list({'page': page}.items()))))
+        for rel, page in [('next', pagination.next_num),
+                          ('prev', pagination.prev_num)]
+        if 0 < page <= pagination.pages
+    ]
 
 
 def get_json_from_request():
