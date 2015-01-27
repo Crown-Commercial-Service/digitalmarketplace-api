@@ -76,7 +76,7 @@ def list_services():
     services = services.paginate(page=page, per_page=10)
     return jsonify(
         services=list(map(jsonify_service, services.items)),
-        links=pagination_links(services, '.list_services'))
+        links=pagination_links(services, '.list_services', request.args))
 
 
 @main.route('/services', methods=['POST'])
@@ -146,21 +146,25 @@ def url_for(*args, **kwargs):
     return base_url_for(*args, **kwargs)
 
 
-def pagination_links(pagination, endpoint):
+def pagination_links(pagination, endpoint, args):
     return list(filter(None, [
-        link("next", paginate_next(pagination, endpoint)),
-        link("prev", paginate_prev(pagination, endpoint)),
+        link("next", paginate_next(pagination, endpoint, args)),
+        link("prev", paginate_prev(pagination, endpoint, args)),
     ]))
 
 
-def paginate_next(pagination, endpoint):
+def paginate_next(pagination, endpoint, args):
     if pagination.has_next:
-        return url_for(endpoint, page=pagination.next_num)
+        args = args.copy()
+        args['page'] = pagination.next_num
+        return url_for(endpoint, **args)
 
 
-def paginate_prev(pagination, endpoint):
+def paginate_prev(pagination, endpoint, args):
     if pagination.has_prev:
-        return url_for(endpoint, page=pagination.prev_num)
+        args = args.copy()
+        args['page'] = pagination.prev_num
+        return url_for(endpoint, **args)
 
 
 def get_json_from_request():
