@@ -2,6 +2,7 @@
 Tests for the application infrastructure
 """
 from flask import json
+from nose.tools import assert_equal
 
 from .helpers import BaseApplicationTest
 
@@ -28,3 +29,7 @@ class TestApplication(BaseApplicationTest):
             '/',
             headers={'Authorization': 'Bearer invalid-token'})
         assert 403 == response.status_code
+
+    def test_max_age_is_one_day(self):
+        response = self.client.get('/')
+        assert_equal(86400, response.cache_control.max_age)
