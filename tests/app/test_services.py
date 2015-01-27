@@ -3,6 +3,7 @@ from nose.tools import assert_equal, assert_in, assert_is_none
 
 from app import db
 from app.models import Service
+from datetime import datetime
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin
 
 
@@ -16,7 +17,6 @@ class TestListServices(BaseApplicationTest):
 
     def test_list_services(self):
         self.setup_dummy_services(1)
-
         response = self.client.get('/services')
         data = json.loads(response.get_data())
 
@@ -81,9 +81,13 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
     def setup(self):
         super(TestPutService, self).setup()
-
+        now = datetime.now()
         with self.app.app_context():
-            db.session.add(Service(service_id=2, data={'foo': 'bar'}))
+            db.session.add(Service(service_id=2,
+                                   supplier_id=321,
+                                   updated_at=now,
+                                   created_at=now,
+                                   data={'foo': 'bar'}))
 
     def test_update_a_service(self):
         payload = self.load_example_listing("SSP-JSON-IaaS")
@@ -119,8 +123,13 @@ class TestGetService(BaseApplicationTest):
         assert_equal(404, response.status_code)
 
     def test_get_service(self):
+        now = datetime.now()
         with self.app.app_context():
-            db.session.add(Service(service_id=123, data={'foo': 'bar'}))
+            db.session.add(Service(service_id=123,
+                                   supplier_id=321,
+                                   updated_at=now,
+                                   created_at=now,
+                                   data={'foo': 'bar'}))
         response = self.client.get('/services/123')
 
         data = json.loads(response.get_data())
