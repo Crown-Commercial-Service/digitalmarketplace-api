@@ -58,7 +58,11 @@ def get_iaas():
 
 @main.route('/services', methods=['GET'])
 def list_services():
-    page = int(request.args.get('page', 1))
+    try:
+        page = int(request.args.get('page', 1))
+    except ValueError:
+        abort(400, "Invalid page argument")
+
     supplier_id = request.args.get('supplier_id')
     if supplier_id is not None:
         services = Service.query.filter(Service.supplier_id == supplier_id)
