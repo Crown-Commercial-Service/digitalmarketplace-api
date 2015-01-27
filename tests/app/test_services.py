@@ -1,5 +1,5 @@
 from flask import json
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_in, assert_is_none
 
 from app import db
 from app.models import Service
@@ -15,14 +15,50 @@ class TestListServices(BaseApplicationTest):
         assert_equal(data['services'], [])
 
     def test_list_services(self):
-        with self.app.app_context():
-            db.session.add(Service(service_id=123, data={'foo': 'bar'}))
+        self.setup_dummy_services(1)
 
         response = self.client.get('/services')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 1)
+
+    def test_paginated_list_services_page_one(self):
+        self.setup_dummy_services(15)
+
+        response = self.client.get('/services')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 10)
+        next_link = first_by_rel('next', data['links'])
+        assert_in("page=2", next_link['href'])
+
+    def test_paginated_list_services_page_two(self):
+        self.setup_dummy_services(15)
+
+        response = self.client.get('/services?page=2')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 5)
+        prev_link = first_by_rel('prev', data['links'])
+        assert_in("page=1", prev_link['href'])
+
+    def test_paginated_list_services_page_out_of_range(self):
+        self.setup_dummy_services(15)
+
+        response = self.client.get('/services?page=10')
+
+        # TODO: decide whether this is actually correct.
+        #       this is what Flask-SQLAlchemy does by default so is easy
+        assert_equal(response.status_code, 404)
+
+
+def first_by_rel(rel, links):
+    for link in links:
+        if link['rel'] == rel:
+            return link
 
 
 class TestPostService(BaseApplicationTest):
