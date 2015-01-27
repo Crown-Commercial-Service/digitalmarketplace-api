@@ -121,7 +121,10 @@ def get_service(service_id):
 
 def jsonify_service(service):
     data = dict(service.data.items())
-    data['id'] = service.service_id
+    data.update({
+        'id': service.service_id,
+        'supplierId': service.supplier_id,
+    })
 
     data['links'] = [
         link("self", url_for(".get_service",

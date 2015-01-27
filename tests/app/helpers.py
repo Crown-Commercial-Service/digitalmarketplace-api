@@ -49,7 +49,7 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             for i in range(n):
                 db.session.add(Service(service_id=i,
-                                       supplier_id=i,
+                                       supplier_id=i % 3,
                                        updated_at=now,
                                        created_at=now,
                                        data={'foo': 'bar'}))
