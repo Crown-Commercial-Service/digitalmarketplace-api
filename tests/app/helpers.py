@@ -5,6 +5,7 @@ import json
 from nose.tools import assert_equal
 
 from app import create_app, db
+from app.models import Service
 
 
 class WSGIApplicationWithEnvironment(object):
@@ -41,6 +42,12 @@ class BaseApplicationTest(object):
     def setup_database(self):
         with self.app.app_context():
             db.create_all()
+
+    def setup_dummy_services(self, n):
+        with self.app.app_context():
+            for i in range(n):
+                db.session.add(Service(service_id=i,
+                                       data={'foo': 'bar'}))
 
     def teardown(self):
         self.teardown_authorization()

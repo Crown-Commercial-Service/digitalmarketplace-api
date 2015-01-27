@@ -1,5 +1,6 @@
 from flask import (jsonify, Response, abort, render_template,
-                   request, url_for)
+                   request)
+from flask import url_for as base_url_for
 
 from . import main
 from .. import db
@@ -56,7 +57,11 @@ def get_iaas():
 
 @main.route('/services', methods=['GET'])
 def list_services():
-    return jsonify(services=list(map(jsonify_service, Service.query.all())))
+    page = int(request.args.get('page', 1))
+    services = Service.query.paginate(page=page, per_page=10)
+    return jsonify(
+        services=list(map(jsonify_service, services.items)),
+        links=pagination_links(services, '.list_services'))
 
 
 @main.route('/services', methods=['POST'])
@@ -101,14 +106,40 @@ def jsonify_service(service):
     data['id'] = service.service_id
 
     data['links'] = [
-        {
-            "rel": "self",
-            "href": url_for('.get_service',
-                            service_id=data['id'],
-                            _external=True)
-        }
+        link("self", url_for(".get_service",
+                             service_id=data['id']))
     ]
     return data
+
+
+def link(rel, href):
+    if href is not None:
+        return {
+            "rel": rel,
+            "href": href,
+        }
+
+
+def url_for(*args, **kwargs):
+    kwargs.setdefault('_external', True)
+    return base_url_for(*args, **kwargs)
+
+
+def pagination_links(pagination, endpoint):
+    return list(filter(None, [
+        link("next", paginate_next(pagination, endpoint)),
+        link("prev", paginate_prev(pagination, endpoint)),
+    ]))
+
+
+def paginate_next(pagination, endpoint):
+    if pagination.has_next:
+        return url_for(endpoint, page=pagination.next_num)
+
+
+def paginate_prev(pagination, endpoint):
+    if pagination.has_prev:
+        return url_for(endpoint, page=pagination.prev_num)
 
 
 def get_json_from_request():
