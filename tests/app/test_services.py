@@ -54,6 +54,15 @@ class TestListServices(BaseApplicationTest):
         #       this is what Flask-SQLAlchemy does by default so is easy
         assert_equal(response.status_code, 404)
 
+    def test_x_forwarded_proto(self):
+        self.setup_dummy_services(1)
+
+        response = self.client.get('/services',
+                                   headers={'X-Forwarded-Proto': 'https'})
+        data = json.loads(response.get_data())
+
+        assert data['services'][0]['links'][0]['href'].startswith('https://')
+
 
 def first_by_rel(rel, links):
     for link in links:
