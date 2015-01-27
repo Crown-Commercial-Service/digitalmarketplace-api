@@ -64,6 +64,16 @@ class TestListServices(BaseApplicationTest):
 
         assert data['services'][0]['links'][0]['href'].startswith('https://')
 
+    def test_invalid_page_argument(self):
+        response = self.client.get('/services?page=a')
+
+        assert_equal(response.status_code, 400)
+
+    def test_invalid_supplier_id_argument(self):
+        response = self.client.get('/services?supplier_id=a')
+
+        assert_equal(response.status_code, 400)
+
 
 def first_by_rel(rel, links):
     for link in links:
