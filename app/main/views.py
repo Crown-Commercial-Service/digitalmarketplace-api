@@ -73,7 +73,9 @@ def list_services():
     else:
         services = Service.query
 
-    services = services.paginate(page=page, per_page=10)
+    services = services.paginate(page=page, per_page=10, error_out=False)
+    if request.args and not services.items:
+        abort(404)
     return jsonify(
         services=list(map(jsonify_service, services.items)),
         links=pagination_links(services, '.list_services', request.args))
