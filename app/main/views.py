@@ -65,6 +65,10 @@ def list_services():
 
     supplier_id = request.args.get('supplier_id')
     if supplier_id is not None:
+        try:
+            supplier_id = int(supplier_id)
+        except ValueError:
+            abort(400, "Invalid supplier_id")
         services = Service.query.filter(Service.supplier_id == supplier_id)
     else:
         services = Service.query
