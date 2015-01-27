@@ -58,11 +58,27 @@ def get_iaas():
 
 @main.route('/services', methods=['GET'])
 def list_services():
-    page = int(request.args.get('page', 1))
-    services = Service.query.paginate(page=page, per_page=10)
+    try:
+        page = int(request.args.get('page', 1))
+    except ValueError:
+        abort(400, "Invalid page argument")
+
+    supplier_id = request.args.get('supplier_id')
+    if supplier_id is not None:
+        try:
+            supplier_id = int(supplier_id)
+        except ValueError:
+            abort(400, "Invalid supplier_id")
+        services = Service.query.filter(Service.supplier_id == supplier_id)
+    else:
+        services = Service.query
+
+    services = services.paginate(page=page, per_page=10, error_out=False)
+    if request.args and not services.items:
+        abort(404)
     return jsonify(
         services=list(map(jsonify_service, services.items)),
-        links=pagination_links(services, '.list_services'))
+        links=pagination_links(services, '.list_services', request.args))
 
 
 @main.route('/services', methods=['POST'])
@@ -107,7 +123,10 @@ def get_service(service_id):
 
 def jsonify_service(service):
     data = dict(service.data.items())
-    data['id'] = service.service_id
+    data.update({
+        'id': service.service_id,
+        'supplierId': service.supplier_id,
+    })
 
     data['links'] = [
         link("self", url_for(".get_service",
@@ -129,21 +148,15 @@ def url_for(*args, **kwargs):
     return base_url_for(*args, **kwargs)
 
 
-def pagination_links(pagination, endpoint):
-    return list(filter(None, [
-        link("next", paginate_next(pagination, endpoint)),
-        link("prev", paginate_prev(pagination, endpoint)),
-    ]))
-
-
-def paginate_next(pagination, endpoint):
-    if pagination.has_next:
-        return url_for(endpoint, page=pagination.next_num)
-
-
-def paginate_prev(pagination, endpoint):
-    if pagination.has_prev:
-        return url_for(endpoint, page=pagination.prev_num)
+def pagination_links(pagination, endpoint, args):
+    return [
+        link(rel, url_for(endpoint,
+                          **dict(list(args.items()) +
+                                 list({'page': page}.items()))))
+        for rel, page in [('next', pagination.next_num),
+                          ('prev', pagination.prev_num)]
+        if 0 < page <= pagination.pages
+    ]
 
 
 def get_json_from_request():

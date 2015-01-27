@@ -64,6 +64,57 @@ class TestListServices(BaseApplicationTest):
 
         assert data['services'][0]['links'][0]['href'].startswith('https://')
 
+    def test_invalid_page_argument(self):
+        response = self.client.get('/services?page=a')
+
+        assert_equal(response.status_code, 400)
+
+    def test_invalid_supplier_id_argument(self):
+        response = self.client.get('/services?supplier_id=a')
+
+        assert_equal(response.status_code, 400)
+
+    def test_supplier_id_filter(self):
+        self.setup_dummy_services(15)
+
+        response = self.client.get('/services?supplier_id=1')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(
+            list(filter(lambda s: s['supplierId'] == 1, data['services'])),
+            data['services']
+        )
+
+    def test_supplier_id_filter_pagination(self):
+        self.setup_dummy_services(45)
+
+        response = self.client.get('/services?supplier_id=1&page=2')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 5)
+        assert_equal(
+            list(filter(lambda s: s['supplierId'] == 1, data['services'])),
+            data['services']
+        )
+
+    def test_supplier_id_filter_pagination_links(self):
+        self.setup_dummy_services(45)
+
+        response = self.client.get('/services?supplier_id=1&page=1')
+        data = json.loads(response.get_data())
+
+        next_link = first_by_rel('next', data['links'])
+        assert_in("page=2", next_link['href'])
+        assert_in("supplier_id=1", next_link['href'])
+
+    def test_unknown_supplier_id(self):
+        self.setup_dummy_services(15)
+        response = self.client.get('/services?supplier_id=100')
+
+        assert_equal(response.status_code, 404)
+
 
 def first_by_rel(rel, links):
     for link in links:
