@@ -29,7 +29,7 @@ source ./venv/bin/activate
 When new database migrations are added you can bring your local database schema
 up to date by running upgrade.
 
-```python applications.py db upgrade```
+```python application.py db upgrade```
 
 ### Upgrade dependencies
 

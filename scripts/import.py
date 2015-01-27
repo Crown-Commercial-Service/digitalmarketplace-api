@@ -2,12 +2,15 @@
 """Import SSP export files into the API
 
 Usage:
-    import.py <endpoint> <access_token> <listing_dir> [--cert=<cert>] \
+    import.py <root url> <access_token> <listing_dir> [--cert=<cert>] \
 [--serial]
 
 Options:
     --cert=<cert>   Path to certificate file to verify against
     --serial        Do not run in parallel (useful for debugging)
+
+Example:
+    ./import.py --serial http://localhost:5000 myToken ~/myData
 """
 from __future__ import print_function
 import sys
