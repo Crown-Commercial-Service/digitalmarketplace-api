@@ -4,6 +4,7 @@ import os
 from flask import Flask
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
+from werkzeug.contrib.fixers import ProxyFix
 
 from config import config
 from .helpers import convert_to_boolean
@@ -15,6 +16,7 @@ db = SQLAlchemy()
 
 def create_app(config_name):
     application = Flask(__name__)
+    application.wsgi_app = ProxyFix(application.wsgi_app)
     application.config.from_object(config[config_name])
 
     for name in config_attrs(config[config_name]):

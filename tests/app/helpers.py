@@ -6,6 +6,7 @@ from nose.tools import assert_equal
 
 from app import create_app, db
 from app.models import Service
+from datetime import datetime
 
 
 class WSGIApplicationWithEnvironment(object):
@@ -44,9 +45,13 @@ class BaseApplicationTest(object):
             db.create_all()
 
     def setup_dummy_services(self, n):
+        now = datetime.now()
         with self.app.app_context():
             for i in range(n):
                 db.session.add(Service(service_id=i,
+                                       supplier_id=i % 3,
+                                       updated_at=now,
+                                       created_at=now,
                                        data={'foo': 'bar'}))
 
     def teardown(self):
