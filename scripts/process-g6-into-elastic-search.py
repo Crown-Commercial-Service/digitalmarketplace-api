@@ -79,7 +79,7 @@ def g6_to_g5(data):
         'listingId': str(data['id']),
         'description': data['serviceSummary'],
         'enabled': True,
-	'expired':False,
+        'expired': False,
         'details': {
             'supplierId': data['supplierId'],
             'lot': data['lot'],

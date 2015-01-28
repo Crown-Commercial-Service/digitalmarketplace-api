@@ -2,7 +2,7 @@
 """Import SSP export files into the API
 
 Usage:
-    import.py <root url> <access_token> <listing_dir> [--cert=<cert>] \
+    import.py <endpoint> <access_token> <listing_dir> [--cert=<cert>] \
 [--serial]
 
 Options:
