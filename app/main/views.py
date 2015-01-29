@@ -20,6 +20,11 @@ def index():
     ]), 200
 
 
+@main.route('/_status')
+def status():
+    return jsonify(status="ok")
+
+
 @main.route('/services/g6-scs-example')
 def get_scs():
     content = render_template('sample_static_responses/sample-scs.json')
