@@ -14,6 +14,13 @@ def unauthorized(e):
     return jsonify(error=error_message), 401, [('WWW-Authenticate', 'Bearer')]
 
 
+@main.app_errorhandler(403)
+def forbidden(e):
+    error_message = "Forbidden, invalid bearer token provided '{}'".format(
+        e.description)
+    return jsonify(error=error_message), 403
+
+
 @main.app_errorhandler(404)
 def page_not_found(e):
     return jsonify(error="Not found"), 404

@@ -10,7 +10,7 @@ def requires_authentication():
         if not incoming_token:
             abort(401)
         if not token_is_valid(incoming_token):
-            abort(403)
+            abort(403, incoming_token)
 
 
 def token_is_valid(incoming_token):
