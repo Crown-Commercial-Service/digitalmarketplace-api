@@ -20,42 +20,6 @@ def index():
     ]), 200
 
 
-@main.route('/services/g6-scs-example')
-def get_scs():
-    content = render_template('sample_static_responses/sample-scs.json')
-    resp = Response(response=content,
-                    status=200,
-                    mimetype="application/json")
-    return resp
-
-
-@main.route('/services/g6-saas-example')
-def get_saas():
-    content = render_template('sample_static_responses/sample-saas.json')
-    resp = Response(response=content,
-                    status=200,
-                    mimetype="application/json")
-    return resp
-
-
-@main.route('/services/g6-paas-example')
-def get_paas():
-    content = render_template('sample_static_responses/sample-paas.json')
-    resp = Response(response=content,
-                    status=200,
-                    mimetype="application/json")
-    return resp
-
-
-@main.route('/services/g6-iaas-example')
-def get_iaas():
-    content = render_template('sample_static_responses/sample-iaas.json')
-    resp = Response(response=content,
-                    status=200,
-                    mimetype="application/json")
-    return resp
-
-
 @main.route('/services', methods=['GET'])
 def list_services():
     try:
