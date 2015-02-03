@@ -50,18 +50,22 @@ class ServicePutter(object):
 
     def __call__(self, file_path):
         with open(file_path) as f:
-            data = json.load(f)
-            data = {'services': data}
-            url = '{}/{}'.format(self.endpoint, data['services']['id'])
-            response = requests.put(
-                url,
-                data=json.dumps(data),
-                headers={
-                    "content-type": "application/json",
-                    "authorization": "Bearer {}".format(self.access_token),
-                },
-                verify=self.cert if self.cert else True)
-            return file_path, response
+            try:
+                data = json.load(f)
+            except ValueError:
+                print("Skipping {}: not a valid JSON file".format(file_path))
+                return file_path, None
+        data = {'services': data}
+        url = '{}/{}'.format(self.endpoint, data['services']['id'])
+        response = requests.put(
+            url,
+            data=json.dumps(data),
+            headers={
+                "content-type": "application/json",
+                "authorization": "Bearer {}".format(self.access_token),
+            },
+            verify=self.cert if self.cert else True)
+        return file_path, response
 
 
 def do_import(base_url, access_token, listing_dir, serial, cert):
@@ -81,7 +85,10 @@ def do_import(base_url, access_token, listing_dir, serial, cert):
     counter = 0
     start_time = datetime.now()
     for file_path, response in mapper(putter, list_files(listing_dir)):
-        if response.status_code / 100 != 2:
+        if response is None:
+            print("ERROR: {} not imported".format(file_path),
+                  file=sys.stderr)
+        elif response.status_code / 100 != 2:
             print("ERROR: {} on {}".format(response.status_code, file_path),
                   file=sys.stderr)
         else:
