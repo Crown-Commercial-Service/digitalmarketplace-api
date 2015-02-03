@@ -52,7 +52,7 @@ def add_service():
     return jsonify(error=message), 501
 
 
-@main.route('/services/<service_id>', methods=['PUT'])
+@main.route('/services/<int:service_id>', methods=['PUT'])
 def update_service(service_id):
     now = datetime.now()
     service = Service.query.filter(Service.service_id == service_id).first()
@@ -77,7 +77,7 @@ def update_service(service_id):
     return "", http_status
 
 
-@main.route('/services/<service_id>', methods=['GET'])
+@main.route('/services/<int:service_id>', methods=['GET'])
 def get_service(service_id):
     service = Service.query.filter(Service.service_id == service_id)\
                            .first_or_404()
