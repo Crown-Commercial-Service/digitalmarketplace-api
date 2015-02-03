@@ -190,10 +190,22 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert_equal(response.status_code, 400)
 
+    def test_invalid_service_id(self):
+        response = self.client.put(
+            '/services/abc123',
+            data=json.dumps({'services': {'id': 'abc123', 'foo': 'bar'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 404)
+
 
 class TestGetService(BaseApplicationTest):
     def test_get_non_existent_service(self):
         response = self.client.get('/services/123')
+        assert_equal(404, response.status_code)
+
+    def test_invalid_service_id(self):
+        response = self.client.get('/services/abc123')
         assert_equal(404, response.status_code)
 
     def test_get_service(self):
