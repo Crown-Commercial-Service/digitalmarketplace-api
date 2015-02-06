@@ -1,6 +1,6 @@
 import os
 import re
-from .app.helpers import convert_to_boolean
+from app.helpers import convert_to_boolean
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
