@@ -1,6 +1,5 @@
 from datetime import datetime
-from flask import (jsonify, Response, abort, render_template,
-                   request)
+from flask import jsonify, abort, request
 from flask import url_for as base_url_for
 
 from . import main
@@ -28,14 +27,14 @@ def list_services():
         abort(400, "Invalid page argument")
 
     supplier_id = request.args.get('supplier_id')
+
+    services = Service.query
     if supplier_id is not None:
         try:
             supplier_id = int(supplier_id)
         except ValueError:
             abort(400, "Invalid supplier_id")
-        services = Service.query.filter(Service.supplier_id == supplier_id)
-    else:
-        services = Service.query
+        services = services.filter(Service.supplier_id == supplier_id)
 
     services = services.paginate(page=page, per_page=10, error_out=False)
     if request.args and not services.items:
@@ -79,8 +78,9 @@ def update_service(service_id):
 
 @main.route('/services/<int:service_id>', methods=['GET'])
 def get_service(service_id):
-    service = Service.query.filter(Service.service_id == service_id)\
-                           .first_or_404()
+    service = Service.query.filter(
+        Service.service_id == service_id
+    ).first_or_404()
 
     return jsonify(services=jsonify_service(service))
 
@@ -89,7 +89,8 @@ def jsonify_service(service):
     data = dict(service.data.items())
     data.update({
         'id': service.service_id,
-        'supplierId': service.supplier_id,
+        'supplierId': service.supplier.supplier_id,
+        'supplierName': service.supplier.name
     })
 
     data['links'] = [

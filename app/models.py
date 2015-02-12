@@ -2,6 +2,15 @@ from . import db
 from sqlalchemy.dialects.postgresql import JSON
 
 
+class Supplier(db.Model):
+    __tablename__ = 'suppliers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    supplier_id = db.Column(db.BigInteger,
+                            index=True, unique=True, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+
+
 class Service(db.Model):
     __tablename__ = 'services'
 
@@ -17,11 +26,4 @@ class Service(db.Model):
                            nullable=False)
     data = db.Column(JSON)
 
-
-class Supplier(db.Model):
-    __tablename__ = 'suppliers'
-
-    id = db.Column(db.Integer, primary_key=True)
-    supplier_id = db.Column(db.BigInteger,
-                            index=True, unique=True, nullable=False)
-    name = db.Column(db.String(255), nullable=False)
+    supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
