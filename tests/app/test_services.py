@@ -210,6 +210,18 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert_equal(response.status_code, 404)
 
+    def test_add_a_service_with_unknown_supplier_id(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("SSP-JSON-IaaS")
+            payload['id'] = 3
+            payload['supplierId'] = 100
+            response = self.client.put(
+                '/services/3',
+                data=json.dumps({'services': payload}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 400)
+
 
 class TestGetService(BaseApplicationTest):
     def setup(self):

@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask import jsonify, abort, request
 from flask import url_for as base_url_for
+from sqlalchemy.exc import IntegrityError
 
 from . import main
 from .. import db
@@ -70,8 +71,14 @@ def update_service(service_id):
     service.data = data['services']
     service.supplier_id = data['services']['supplierId']
     service.updated_at = now
+
     db.session.add(service)
-    db.session.commit()
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        abort(400, "Unknown supplier ID provided")
 
     return "", http_status
 
