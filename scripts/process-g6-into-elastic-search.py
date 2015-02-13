@@ -83,7 +83,9 @@ def g6_to_g5(data):
         'details': {
             'supplierId': data['supplierId'],
             'lot': data['lot'],
-            'categories': categories
+            'categories': categories,
+            'features': data['serviceFeatures'],
+            'benefits': data['serviceBenefits']
         }
     }
 
