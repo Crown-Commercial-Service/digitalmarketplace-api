@@ -34,6 +34,20 @@ def test_example_json_validates_correctly():
         yield assert_example, example, validate_json(data), expected
 
 
+def test_additional_fields_are_not_allowed():
+    cases = [
+        ("SSP-JSON-SCS", False),
+        ("SSP-JSON-SaaS", False),
+        ("SSP-JSON-PaaS", False),
+        ("SSP-JSON-IaaS", False),
+    ]
+
+    for example, expected in cases:
+        data = load_example_listing(example)
+        data.update({'newKey': 1})
+        yield assert_example, example, validate_json(data), expected
+
+
 def assert_example(name, result, expected):
     assert_equal(result, expected)
 

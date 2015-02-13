@@ -2,6 +2,7 @@
   "id": "G6 Submissions IaaS Schema",
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
+  "additionalProperties": false,
   "properties": {
     "id": {
       "type": "integer"
