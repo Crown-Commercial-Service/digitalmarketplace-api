@@ -222,6 +222,26 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
             assert_equal(response.status_code, 400)
 
+    def test_supplier_name_in_service_data_is_shadowed(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("SSP-JSON-IaaS")
+            payload['id'] = 3
+            payload['supplierId'] = 1
+            payload['supplierName'] = u'New Name'
+
+            response = self.client.put(
+                '/services/3',
+                data=json.dumps({'services': payload}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 201)
+
+            response = self.client.get('/services/3')
+            data = json.loads(response.get_data())
+
+            assert_equal(response.status_code, 200)
+            assert_equal(data['services']['supplierName'], u'Supplier 1')
+
 
 class TestGetService(BaseApplicationTest):
     def setup(self):
