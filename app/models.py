@@ -21,4 +21,6 @@ class Supplier(db.Model):
     __tablename__ = 'suppliers'
 
     id = db.Column(db.Integer, primary_key=True)
+    supplier_id = db.Column(db.BigInteger,
+                            index=True, unique=True, nullable=False)
     name = db.Column(db.String(255), nullable=False)
