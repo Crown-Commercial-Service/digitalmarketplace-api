@@ -112,7 +112,7 @@ def jsonify_service(service):
 
 def drop_foreign_fields(service):
     service = service.copy()
-    for key in ['supplierName']:
+    for key in ['supplierName', 'links']:
         service.pop(key, None)
 
     return service
