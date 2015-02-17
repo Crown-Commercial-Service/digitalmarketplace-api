@@ -1,7 +1,7 @@
 from datetime import datetime
-from flask import (jsonify, Response, abort, render_template,
-                   request)
+from flask import jsonify, abort, request
 from flask import url_for as base_url_for
+from sqlalchemy.exc import IntegrityError
 
 from . import main
 from .. import db
@@ -28,14 +28,14 @@ def list_services():
         abort(400, "Invalid page argument")
 
     supplier_id = request.args.get('supplier_id')
+
+    services = Service.query
     if supplier_id is not None:
         try:
             supplier_id = int(supplier_id)
         except ValueError:
             abort(400, "Invalid supplier_id")
-        services = Service.query.filter(Service.supplier_id == supplier_id)
-    else:
-        services = Service.query
+        services = services.filter(Service.supplier_id == supplier_id)
 
     services = services.paginate(page=page, per_page=10, error_out=False)
     if request.args and not services.items:
@@ -61,26 +61,36 @@ def update_service(service_id):
         http_status = 201
         service = Service(service_id=service_id)
         service.created_at = now
-    data = get_json_from_request()
 
-    validate_json_or_400(data['services'])
+    service_data = drop_foreign_fields(
+        get_json_from_request()['services']
+    )
 
-    if str(data['services']['id']) != str(service_id):
+    validate_json_or_400(service_data)
+
+    if str(service_data['id']) != str(service_id):
         abort(400, "Invalid service ID provided")
 
-    service.data = data['services']
-    service.supplier_id = data['services']['supplierId']
+    service.data = service_data
+    service.supplier_id = service_data['supplierId']
     service.updated_at = now
+
     db.session.add(service)
-    db.session.commit()
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        abort(400, "Unknown supplier ID provided")
 
     return "", http_status
 
 
 @main.route('/services/<int:service_id>', methods=['GET'])
 def get_service(service_id):
-    service = Service.query.filter(Service.service_id == service_id)\
-                           .first_or_404()
+    service = Service.query.filter(
+        Service.service_id == service_id
+    ).first_or_404()
 
     return jsonify(services=jsonify_service(service))
 
@@ -89,7 +99,8 @@ def jsonify_service(service):
     data = dict(service.data.items())
     data.update({
         'id': service.service_id,
-        'supplierId': service.supplier_id,
+        'supplierId': service.supplier.supplier_id,
+        'supplierName': service.supplier.name
     })
 
     data['links'] = [
@@ -97,6 +108,14 @@ def jsonify_service(service):
                              service_id=data['id']))
     ]
     return data
+
+
+def drop_foreign_fields(service):
+    service = service.copy()
+    for key in ['supplierName']:
+        service.pop(key, None)
+
+    return service
 
 
 def link(rel, href):

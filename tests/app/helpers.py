@@ -5,7 +5,7 @@ import json
 from nose.tools import assert_equal
 
 from app import create_app, db
-from app.models import Service
+from app.models import Service, Supplier
 from datetime import datetime
 
 
@@ -46,10 +46,15 @@ class BaseApplicationTest(object):
 
     def setup_dummy_services(self, n):
         now = datetime.now()
+        suppliers_count = 3
         with self.app.app_context():
+            for i in range(suppliers_count):
+                db.session.add(
+                    Supplier(supplier_id=i, name=u"Supplier {}".format(i))
+                )
             for i in range(n):
                 db.session.add(Service(service_id=i,
-                                       supplier_id=i % 3,
+                                       supplier_id=i % suppliers_count,
                                        updated_at=now,
                                        created_at=now,
                                        data={'foo': 'bar'}))
