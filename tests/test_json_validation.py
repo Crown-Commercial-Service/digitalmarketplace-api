@@ -15,25 +15,40 @@ EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 def test_all_schemas_are_valid():
     for file_name in os.listdir('json_schemas'):
-        if os.path.isfile('json_schemas/%s' % file_name):
-            print('Testing schema: %s' % file_name)
-            with open('json_schemas/%s' % file_name) as json_schema_file:
-                assert check_schema(json.load(json_schema_file))
+        file_path = 'json_schemas/%s' % file_name
+        if os.path.isfile(file_path):
+            yield check_schema_file, file_path
 
 
 def test_example_json_validates_correctly():
-    check_example_listing("SSP-JSON-SCS", assert_equal, "G6-SCS")
-    check_example_listing("SSP-JSON-SaaS", assert_equal, "G6-SaaS")
-    check_example_listing("SSP-JSON-PaaS", assert_equal, "G6-PaaS")
-    check_example_listing("SSP-JSON-IaaS", assert_equal, "G6-IaaS")
-    check_example_listing("SSP-INVALID", assert_false)
+    cases = [
+        ("SSP-JSON-SCS", "G6-SCS"),
+        ("SSP-JSON-SaaS", "G6-SaaS"),
+        ("SSP-JSON-PaaS", "G6-PaaS"),
+        ("SSP-JSON-IaaS", "G6-IaaS"),
+        ("SSP-INVALID", False)
+    ]
+
+    for example, expected, in cases:
+        data = load_example_listing(example)
+        yield assert_example, example, validate_json(data), expected
 
 
-def check_example_listing(name, assertion, *args):
+def assert_example(name, result, expected):
+    assert_equal(result, expected)
+
+
+def load_example_listing(name):
     listing_path = os.path.join(EXAMPLE_LISTING_PATH, '{}.json'.format(name))
     with open(listing_path) as json_file:
         json_data = json.load(json_file)
-        assertion(validate_json(json_data), *args)
+
+        return json_data
+
+
+def check_schema_file(file_path):
+    with open(file_path) as json_schema_file:
+        assert check_schema(json.load(json_schema_file))
 
 
 def check_schema(schema):
