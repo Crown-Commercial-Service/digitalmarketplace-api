@@ -61,15 +61,18 @@ def update_service(service_id):
         http_status = 201
         service = Service(service_id=service_id)
         service.created_at = now
-    data = get_json_from_request()
 
-    validate_json_or_400(data['services'])
+    service_data = drop_foreign_fields(
+        get_json_from_request()['services']
+    )
 
-    if str(data['services']['id']) != str(service_id):
+    validate_json_or_400(service_data)
+
+    if str(service_data['id']) != str(service_id):
         abort(400, "Invalid service ID provided")
 
-    service.data = data['services']
-    service.supplier_id = data['services']['supplierId']
+    service.data = service_data
+    service.supplier_id = service_data['supplierId']
     service.updated_at = now
 
     db.session.add(service)
@@ -105,6 +108,14 @@ def jsonify_service(service):
                              service_id=data['id']))
     ]
     return data
+
+
+def drop_foreign_fields(service):
+    service = service.copy()
+    for key in ['supplierName']:
+        service.pop(key, None)
+
+    return service
 
 
 def link(rel, href):
