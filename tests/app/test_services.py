@@ -152,6 +152,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     def setup(self):
         super(TestPutService, self).setup()
         now = datetime.now()
+        payload = self.load_example_listing("SSP-JSON-IaaS")
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
@@ -160,7 +161,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                                    supplier_id=1,
                                    updated_at=now,
                                    created_at=now,
-                                   data={'foo': 'bar'}))
+                                   data=payload))
 
     def test_update_a_service(self):
         with self.app.app_context():
@@ -241,6 +242,16 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
             assert_equal(response.status_code, 200)
             assert_equal(data['services']['supplierName'], u'Supplier 1')
+
+    def test_write_service_response_back(self):
+        response = self.client.get('/services/2')
+
+        response = self.client.put(
+            '/services/2',
+            data=response.get_data(),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 204)
 
 
 class TestGetService(BaseApplicationTest):
