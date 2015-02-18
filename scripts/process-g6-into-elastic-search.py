@@ -102,21 +102,10 @@ def post_to_es(es_endpoint, data):
                               data=json.dumps(json_data))
     request.add_header("Content-Type", 'application/json')
 
-    print request.get_full_url()
-    print request.get_data()
-
     try:
-        connection = opener.open(request)
-    except urllib2.HTTPError, e:
-        connection = e
-        print connection
-
-    # check. Substitute with appropriate HTTP code.
-    if connection.code == 200:
-        data = connection.read()
-        print str(connection.code) + " " + data
-    else:
-        print "connection.code = " + str(connection.code)
+        opener.open(request)
+    except urllib2.HTTPError, error:
+        print error
 
 
 def request_services(endpoint, token):
@@ -125,7 +114,7 @@ def request_services(endpoint, token):
 
     page_url = endpoint
     while page_url:
-        print "requesting {}".format(page_url)
+        print "processing page: {}".format(page_url)
 
         request = urllib2.Request(page_url)
         request.add_header("Authorization", "Bearer {}".format(token))
