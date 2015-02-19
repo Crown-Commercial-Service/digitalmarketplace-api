@@ -80,6 +80,7 @@ def g6_to_g5(data):
         'description': data['serviceSummary'],
         'enabled': True,
         'expired': False,
+        'state': 'published',
         'details': {
             'supplierId': data['supplierId'],
             'lot': data['lot'],
