@@ -88,9 +88,9 @@ def attributes(data):
         if "Private Cloud" in data["cloudDeploymentModel"]:
             attributes.append({"name" : "q18",  "q18" : "private"}) 
         if "Community Cloud" in data["cloudDeploymentModel"]:
-            attributes.append({"name" : "q18",  "q18" : "publicprivate"})      
+            attributes.append({"name" : "q18",  "q18" : "publicprivatehybrid"})      
         if "Hybrid Cloud" in data["cloudDeploymentModel"]:
-            attributes.append({"name" : "q18",  "q18" : "publicprivatehybrid"})                
+            attributes.append({"name" : "q18",  "q18" : "hybrid"})                
 
     ### Networks:
     ### values in G5 are internet | psn | gsi | pnn | n3 | janet | other
