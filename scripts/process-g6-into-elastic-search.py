@@ -169,21 +169,34 @@ def attributes(data):
     ###################
 
     ## multi selects
-    if "guaranteedResources" in data and data["guaranteedResources"]:
+    if "guaranteedResources" in data and data["guaranteedResources"] == True:
         attributes.append({"name" : "lot2q3",  "lot2q3" : "guaranteed"})
-    elif "guaranteedResources" in data and not data["guaranteedResources"]:
-        attributes.append({"name" : "lot2q3",  "lot2q3" : "non-guaranteed"})
+    elif "guaranteedResources" in data and data["guaranteedResources"] == False:
+        attributes.append({"name" : "lot2q3",  "lot2q3" : "nonguaranteed"})
 
     if "persistentStorage" in data and data["persistentStorage"]:
-        attributes.append({"name" : "lot1q4",  "lot1q4" : "persistent"})
+        attributes.append({"name" : "lot2q4",  "lot2q4" : "persistent"})
     elif "persistentStorage" in data and not data["persistentStorage"]:
-        attributes.append({"name" : "lot1q4",  "lot1q4" : "non-persistent"})        
+        attributes.append({"name" : "lot2q4",  "lot2q4" : "nonpersistent"})        
+
+    attributes.append(boolean_attribute("elasticCloud", "lot2q2", attributes, data))
 
     ############
     ### IaaS ###
     ############
 
-    attributes.append(boolean_attribute("elasticCloud", "lot2q2", attributes, data))
+    ## multi selects
+    if "guaranteedResources" in data and data["guaranteedResources"]:
+        attributes.append({"name" : "lot1q3",  "lot1q3" : "guaranteed"})
+    elif "guaranteedResources" in data and not data["guaranteedResources"]:
+        attributes.append({"name" : "lot1q3",  "lot1q3" : "nonguaranteed"})
+
+    if "persistentStorage" in data and data["persistentStorage"]:
+        attributes.append({"name" : "lot1q4",  "lot1q4" : "persistent"})
+    elif "persistentStorage" in data and not data["persistentStorage"]:
+        attributes.append({"name" : "lot1q4",  "lot1q4" : "nonpersistent"})        
+
+    attributes.append(boolean_attribute("elasticCloud", "lot1q2", attributes, data))
 
     return attributes
 
@@ -203,6 +216,7 @@ def g6_to_g5(data):
     """
 
     categories = [category_name_to_id(t) for t in data.get('serviceTypes', [])]
+
     return {
         'uniqueName': data['id'],
         'tags': data['lot'],
@@ -227,8 +241,6 @@ def post_to_es(es_endpoint, data):
     opener = urllib2.build_opener(handler)
 
     json_data = g6_to_g5(data)
-
-    print json_data
 
     if not es_endpoint.endswith('/'):
         es_endpoint += '/'
@@ -256,7 +268,6 @@ def request_services(endpoint, token):
 
         data = json.loads(response)
         for service in data["services"]:
-            print service
             yield service
 
             page_url = filter(lambda l: l['rel'] == 'next', data['links'])
