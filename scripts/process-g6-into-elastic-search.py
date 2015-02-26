@@ -164,33 +164,11 @@ def attributes(data):
         if "Uptime Institute Tier 4" in data["datacentreTier"]:
             attributes.append({"name": "q32", "q32": "tier4uptimeinstitute"})
 
-    # provising time is 1 Day etc in G6, but
+    # provisioning time is 1 Day etc in G6, but
     # the question is "documented?" in G5
     # so any value provokes true
     if "provisioningTime" in data:
         attributes.append({"name": "q40", "q40": "true"})
-
-    #
-    # PaaS
-    #
-
-    if "lot" in data and data["lot"] == "PaaS":
-        # multi selects
-        if ("guaranteedResources" in data and
-                data["guaranteedResources"] is True):
-            attributes.append({"name": "lot2q3", "lot2q3": "guaranteed"})
-        elif ("guaranteedResources" in data and
-                data["guaranteedResources"] is False):
-            attributes.append({
-                "name": "lot2q3",
-                "lot2q3": "nonguaranteed"})
-
-        if "persistentStorage" in data and data["persistentStorage"]:
-            attributes.append({"name": "lot2q4", "lot2q4": "persistent"})
-        elif "persistentStorage" in data and not data["persistentStorage"]:
-            attributes.append({"name": "lot2q4", "lot2q4": "nonpersistent"})
-
-        attributes.append(boolean_attribute("elasticCloud", "lot2q2", data))
 
     #
     # IaaS
@@ -209,6 +187,26 @@ def attributes(data):
             attributes.append({"name": "lot1q4", "lot1q4": "nonpersistent"})
 
         attributes.append(boolean_attribute("elasticCloud", "lot1q2", data))
+
+    #
+    # PaaS
+    #
+
+    if "lot" in data and data["lot"] == "PaaS":
+        # multi selects
+        if ("guaranteedResources" in data and
+                data["guaranteedResources"] is True):
+            attributes.append({"name": "lot2q3", "lot2q3": "guaranteed"})
+        elif ("guaranteedResources" in data and
+                data["guaranteedResources"] is False):
+            attributes.append({"name": "lot2q3", "lot2q3": "nonguaranteed"})
+
+        if "persistentStorage" in data and data["persistentStorage"]:
+            attributes.append({"name": "lot2q4", "lot2q4": "persistent"})
+        elif "persistentStorage" in data and not data["persistentStorage"]:
+            attributes.append({"name": "lot2q4", "lot2q4": "nonpersistent"})
+
+        attributes.append(boolean_attribute("elasticCloud", "lot2q2", data))
 
     # ##############
     # ## Pricing ###
@@ -311,46 +309,6 @@ def attributes(data):
             attributes.append({"name": "q32",  "q32": "tier4tia942"})
         if "Uptime Institute Tier 4" in data["datacentreTier"]:
             attributes.append({"name": "q32",  "q32": "tier4uptimeinstitute"})
-
-    # provising time is 1 Day etc in G6, but the question is
-    # "documented?" in G5 so any value provokes true
-    if "provisioningTime" in data:
-        attributes.append({"name": "q40",  "q40": "true"})
-
-    # ##################
-    # ## PaaS / IaaS ###
-    # ##################
-
-    # # multi selects
-    if "guaranteedResources" in data and data["guaranteedResources"] is True:
-        attributes.append({"name": "lot2q3",  "lot2q3": "guaranteed"})
-    elif "guaranteedResources" in data and data["guaranteedResources"] \
-            is False:
-        attributes.append({"name": "lot2q3",  "lot2q3": "nonguaranteed"})
-
-    if "persistentStorage" in data and data["persistentStorage"]:
-        attributes.append({"name": "lot2q4",  "lot2q4": "persistent"})
-    elif "persistentStorage" in data and not data["persistentStorage"]:
-        attributes.append({"name": "lot2q4",  "lot2q4": "nonpersistent"})
-
-    attributes.append(boolean_attribute("elasticCloud", "lot2q2", data))
-
-    # ###########
-    # ## IaaS ###
-    # ###########
-
-    # # multi selects
-    if "guaranteedResources" in data and data["guaranteedResources"]:
-        attributes.append({"name": "lot1q3",  "lot1q3": "guaranteed"})
-    elif "guaranteedResources" in data and not data["guaranteedResources"]:
-        attributes.append({"name": "lot1q3",  "lot1q3": "nonguaranteed"})
-
-    if "persistentStorage" in data and data["persistentStorage"]:
-        attributes.append({"name": "lot1q4",  "lot1q4": "persistent"})
-    elif "persistentStorage" in data and not data["persistentStorage"]:
-        attributes.append({"name": "lot1q4",  "lot1q4": "nonpersistent"})
-
-    attributes.append(boolean_attribute("elasticCloud", "lot1q2", data))
 
     return attributes
 
