@@ -2,12 +2,11 @@
 """Import SSP export files into the API
 
 Usage:
-    import.py <endpoint> <access_token> <listing_dir> [--cert=<cert>] \
-[--serial]
+    import.py <endpoint> <access_token> <listing_dir> [options]
 
-Options:
     --cert=<cert>   Path to certificate file to verify against
     --serial        Do not run in parallel (useful for debugging)
+    -v, --verbose   Enable verbose output for errors
 
 Example:
     ./import.py --serial http://localhost:5000 myToken ~/myData
@@ -68,7 +67,7 @@ class ServicePutter(object):
         return file_path, response
 
 
-def do_import(base_url, access_token, listing_dir, serial, cert):
+def do_import(base_url, access_token, listing_dir, serial, cert, verbose):
     endpoint = "{}/services".format(base_url)
     print("Base URL: {}".format(base_url))
     print("Access token: {}".format(access_token))
@@ -91,6 +90,8 @@ def do_import(base_url, access_token, listing_dir, serial, cert):
         elif response.status_code / 100 != 2:
             print("ERROR: {} on {}".format(response.status_code, file_path),
                   file=sys.stderr)
+            if verbose:
+                print(response.text, file=sys.stderr)
         else:
             counter += 1
             print_progress(counter, start_time)
@@ -104,4 +105,6 @@ if __name__ == "__main__":
         access_token=arguments['<access_token>'],
         listing_dir=arguments['<listing_dir>'],
         serial=arguments['--serial'],
-        cert=arguments['--cert'])
+        cert=arguments['--cert'],
+        verbose=arguments['--verbose'],
+    )

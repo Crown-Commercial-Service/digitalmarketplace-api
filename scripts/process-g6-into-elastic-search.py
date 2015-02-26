@@ -224,7 +224,7 @@ def g6_to_g5(data):
         'listingId': str(data['id']),
         'description': data['serviceSummary'],
         'expired': False,
-        'state' : 'published',
+        'state': 'published',
         'details': {
             'supplierId': data['supplierId'],
             'lot': data['lot'],
