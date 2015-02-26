@@ -55,154 +55,177 @@ CATEGORY_MAPPINGS = {
     'Specialist Cloud Services': '142'
 }
 
+
 def category_name_to_id(name):
     return CATEGORY_MAPPINGS[name]
+
 
 def attributes(data):
     attributes = []
 
-    ###############
-    ### Pricing ###
-    ###############
+    # ##############
+    # ## Pricing ###
+    # ##############
 
     attributes.append(boolean_attribute("freeOption", "q45", attributes, data))
-    attributes.append(boolean_attribute("trialOption", "q46", attributes, data))
-    attributes.append(boolean_attribute("educationPricing", "has_education_pricing", attributes, data))
-    attributes.append(boolean_attribute("terminationCost", "q47", attributes, data))
-    
+    attributes.append(boolean_attribute("trialOption", "q46", attributes,
+                                        data))
+    attributes.append(boolean_attribute("educationPricing",
+                                        "has_education_pricing",
+                                        attributes, data))
+    attributes.append(boolean_attribute("terminationCost", "q47", attributes,
+                                        data))
+
     # Value on G5 has a predixed "/"
     if "minimumContractPeriod" in data:
-        attributes.append({"name" : "q44",  "q44" : "/" + data["minimumContractPeriod"]})        
+        attributes.append({"name": "q44",  "q44": "/" +
+                                                  data["minimumContractPeriod"]
+                           })
 
-    #############################
-    ### Technical Information ###
-    #############################     
+    # ############################
+    # ## Technical Information ###
+    # ############################
 
-    ### cloud:
-    ### values in G5 are public | private | hybrid | publicprivate | publichybrid | publicprivatehybrid
-    ### map G6 to these
+    # ## cloud:
+    # ## values in G5 are public | private | hybrid | publicprivate |
+    # ##                  publichybrid | publicprivatehybrid
+    # ## map G6 to these
 
     if "cloudDeploymentModel" in data:
         if "Public Cloud" in data["cloudDeploymentModel"]:
-            attributes.append({"name" : "q18",  "q18" : "public"})
+            attributes.append({"name": "q18",  "q18": "public"})
         if "Private Cloud" in data["cloudDeploymentModel"]:
-            attributes.append({"name" : "q18",  "q18" : "private"}) 
+            attributes.append({"name": "q18",  "q18": "private"})
         if "Community Cloud" in data["cloudDeploymentModel"]:
-            attributes.append({"name" : "q18",  "q18" : "publicprivatehybrid"})      
+            attributes.append({"name": "q18",  "q18": "publicprivatehybrid"})
         if "Hybrid Cloud" in data["cloudDeploymentModel"]:
-            attributes.append({"name" : "q18",  "q18" : "hybrid"})                
+            attributes.append({"name": "q18",  "q18": "hybrid"})
 
-    ### Networks:
-    ### values in G5 are internet | psn | gsi | pnn | n3 | janet | other
-    ### map G6 to these
+    # ## Networks:
+    # ## values in G5 are internet | psn | gsi | pnn | n3 | janet | other
+    # ## map G6 to these
 
     if "networksConnected" in data:
         if "Internet" in data["networksConnected"]:
-            attributes.append({"name" : "q19",  "q19" : "internet"})
+            attributes.append({"name": "q19",  "q19": "internet"})
         if "Public Services Network (PSN)" in data["networksConnected"]:
-            attributes.append({"name" : "q19",  "q19" : "psn"}) 
+            attributes.append({"name": "q19",  "q19": "psn"})
         if "Government Secure intranet (GSi)" in data["networksConnected"]:
-            attributes.append({"name" : "q19",  "q19" : "gsi"})      
+            attributes.append({"name": "q19",  "q19": "gsi"})
         if "Police National Network (PNN)" in data["networksConnected"]:
-            attributes.append({"name" : "q19",  "q19" : "pnn"}) 
+            attributes.append({"name": "q19",  "q19": "pnn"})
         if "New NHS Network (N3)" in data["networksConnected"]:
-            attributes.append({"name" : "q19",  "q19" : "n3"})
+            attributes.append({"name": "q19",  "q19": "n3"})
         if "Joint Academic Network (JANET)" in data["networksConnected"]:
-            attributes.append({"name" : "q19",  "q19" : "janet"})
+            attributes.append({"name": "q19",  "q19": "janet"})
         if "Other" in data["networksConnected"]:
-            attributes.append({"name" : "q19",  "q19" : "other"})                        
+            attributes.append({"name": "q19",  "q19": "other"})
 
     attributes.append(boolean_attribute("apiAccess", "q20", attributes, data))
-    attributes.append(boolean_attribute("openStandardsSupported", "q21", attributes, data))
+    attributes.append(boolean_attribute("openStandardsSupported", "q21",
+                                        attributes, data))
     attributes.append(boolean_attribute("openSource", "q22", attributes, data))
 
+    # #########################
+    # ## service management ###
+    # #########################
 
-    ##########################
-    ### service management ###
-    ##########################
-
-    # support types is array in G6, boolean in G5 - any G6 value sets G5 to true
+    # support types is array in G6, boolean in G5
+    # - any G6 value sets G5 to true
     if "supportTypes" in data and len(data["supportTypes"]) > 0:
-        attributes.append({"name" : "q25",  "q25" : "true"})  
-    
-    attributes.append(boolean_attribute("serviceOnboarding", "q26", attributes, data))
-    attributes.append(boolean_attribute("serviceOffboarding", "q27", attributes, data))
-    attributes.append(boolean_attribute("dataExtractionRemoval", "q28", attributes, data))
-    attributes.append(boolean_attribute("datacentresEUCode", "q31", attributes, data))
-    attributes.append(boolean_attribute("dataBackupRecovery", "q36", attributes, data))
-    attributes.append(boolean_attribute("selfServiceProvisioning", "q39", attributes, data))
-    attributes.append(boolean_attribute("supportForThirdParties", "q41", attributes, data))
-    attributes.append(boolean_attribute("supportForThirdParties", "q41", attributes, data))
+        attributes.append({"name": "q25",  "q25": "true"})
+
+    attributes.append(boolean_attribute("serviceOnboarding", "q26",
+                                        attributes, data))
+    attributes.append(boolean_attribute("serviceOffboarding", "q27",
+                                        attributes, data))
+    attributes.append(boolean_attribute("dataExtractionRemoval", "q28",
+                                        attributes, data))
+    attributes.append(boolean_attribute("datacentresEUCode", "q31",
+                                        attributes, data))
+    attributes.append(boolean_attribute("dataBackupRecovery", "q36",
+                                        attributes, data))
+    attributes.append(boolean_attribute("selfServiceProvisioning", "q39",
+                                        attributes, data))
+    attributes.append(boolean_attribute("supportForThirdParties", "q41",
+                                        attributes, data))
+    attributes.append(boolean_attribute("supportForThirdParties", "q41",
+                                        attributes, data))
 
     if "datacentreTier" in data:
-        attributes.append({"name" : "q32",  "q32" : data["datacentreTier"]})  
-    
-    ### Data centre tiers:
-    ### map G6 to these
+        attributes.append({"name": "q32",  "q32": data["datacentreTier"]})
+
+    # ## Data centre tiers:
+    # ## map G6 to these
 
     if "datacentreTier" in data:
         if "TIA-942 Tier 1" in data["datacentreTier"]:
-            attributes.append({"name" : "q32",  "q32" : "tier1tia942"})
+            attributes.append({"name": "q32",  "q32": "tier1tia942"})
         if "Uptime Institute Tier 1" in data["datacentreTier"]:
-            attributes.append({"name" : "q32",  "q32" : "tier1uptimeinstitute"}) 
+            attributes.append({"name": "q32",  "q32": "tier1uptimeinstitute"})
         if "TIA-942 Tier 2" in data["datacentreTier"]:
-            attributes.append({"name" : "q32",  "q32" : "tier2tia942"})      
+            attributes.append({"name": "q32",  "q32": "tier2tia942"})
         if "Uptime Institute Tier 2" in data["datacentreTier"]:
-            attributes.append({"name" : "q32",  "q32" : "tier2uptimeinstitute"}) 
+            attributes.append({"name": "q32",  "q32": "tier2uptimeinstitute"})
         if "TIA-942 Tier 3" in data["datacentreTier"]:
-            attributes.append({"name" : "q32",  "q32" : "tier3tia942"})
+            attributes.append({"name": "q32",  "q32": "tier3tia942"})
         if "Uptime Institute Tier 3" in data["datacentreTier"]:
-            attributes.append({"name" : "q32",  "q32" : "tier3uptimeinstitute"})
+            attributes.append({"name": "q32",  "q32": "tier3uptimeinstitute"})
         if "TIA-942 Tier 4" in data["datacentreTier"]:
-            attributes.append({"name" : "q32",  "q32" : "tier4tia942"})
+            attributes.append({"name": "q32",  "q32": "tier4tia942"})
         if "Uptime Institute Tier 4" in data["datacentreTier"]:
-            attributes.append({"name" : "q32",  "q32" : "tier4uptimeinstitute"})     
+            attributes.append({"name": "q32",  "q32": "tier4uptimeinstitute"})
 
-
-    # provising time is 1 Day etc in G6, but the question is "documented?" in G5
-    # so any value provokes true
+    # provising time is 1 Day etc in G6, but the question is
+    # "documented?" in G5 so any value provokes true
     if "provisioningTime" in data:
-        attributes.append({"name" : "q40",  "q40" : "true"})       
-   
-    ###################
-    ### PaaS / IaaS ###
-    ###################
+        attributes.append({"name": "q40",  "q40": "true"})
 
-    ## multi selects
-    if "guaranteedResources" in data and data["guaranteedResources"] == True:
-        attributes.append({"name" : "lot2q3",  "lot2q3" : "guaranteed"})
-    elif "guaranteedResources" in data and data["guaranteedResources"] == False:
-        attributes.append({"name" : "lot2q3",  "lot2q3" : "nonguaranteed"})
+    # ##################
+    # ## PaaS / IaaS ###
+    # ##################
+
+    # # multi selects
+    if "guaranteedResources" in data and data["guaranteedResources"] is True:
+        attributes.append({"name": "lot2q3",  "lot2q3": "guaranteed"})
+    elif "guaranteedResources" in data and data["guaranteedResources"] \
+            is False:
+        attributes.append({"name": "lot2q3",  "lot2q3": "nonguaranteed"})
 
     if "persistentStorage" in data and data["persistentStorage"]:
-        attributes.append({"name" : "lot2q4",  "lot2q4" : "persistent"})
+        attributes.append({"name": "lot2q4",  "lot2q4": "persistent"})
     elif "persistentStorage" in data and not data["persistentStorage"]:
-        attributes.append({"name" : "lot2q4",  "lot2q4" : "nonpersistent"})        
+        attributes.append({"name": "lot2q4",  "lot2q4": "nonpersistent"})
 
-    attributes.append(boolean_attribute("elasticCloud", "lot2q2", attributes, data))
+    attributes.append(boolean_attribute("elasticCloud", "lot2q2",
+                                        attributes, data))
 
-    ############
-    ### IaaS ###
-    ############
+    # ###########
+    # ## IaaS ###
+    # ###########
 
-    ## multi selects
+    # # multi selects
     if "guaranteedResources" in data and data["guaranteedResources"]:
-        attributes.append({"name" : "lot1q3",  "lot1q3" : "guaranteed"})
+        attributes.append({"name": "lot1q3",  "lot1q3": "guaranteed"})
     elif "guaranteedResources" in data and not data["guaranteedResources"]:
-        attributes.append({"name" : "lot1q3",  "lot1q3" : "nonguaranteed"})
+        attributes.append({"name": "lot1q3",  "lot1q3": "nonguaranteed"})
 
     if "persistentStorage" in data and data["persistentStorage"]:
-        attributes.append({"name" : "lot1q4",  "lot1q4" : "persistent"})
+        attributes.append({"name": "lot1q4",  "lot1q4": "persistent"})
     elif "persistentStorage" in data and not data["persistentStorage"]:
-        attributes.append({"name" : "lot1q4",  "lot1q4" : "nonpersistent"})        
+        attributes.append({"name": "lot1q4",  "lot1q4": "nonpersistent"})
 
-    attributes.append(boolean_attribute("elasticCloud", "lot1q2", attributes, data))
+    attributes.append(boolean_attribute("elasticCloud", "lot1q2",
+                                        attributes, data))
 
     return attributes
 
+
 def boolean_attribute(g6_field_name, g5_field_name, attributes, data):
     if g6_field_name in data:
-        return {"name" : g5_field_name,  g5_field_name: str(data[g6_field_name]).lower()}
+        return {"name": g5_field_name,
+                g5_field_name: str(data[g6_field_name]).lower()}
+
 
 def g6_to_g5(data):
     """
@@ -231,7 +254,7 @@ def g6_to_g5(data):
             'categories': categories,
             'features': data['serviceFeatures'],
             'benefits': data['serviceBenefits'],
-            'attributes' : attributes(data)
+            'attributes': attributes(data)
         }
     }
 
