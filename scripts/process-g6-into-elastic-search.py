@@ -182,7 +182,7 @@ def attributes(data):
         elif "guaranteedResources" in data and
         data["guaranteedResources"] is False:
                 attributes.append({
-                    "name": "lot2q3", 
+                    "name": "lot2q3",
                     "lot2q3": "nonguaranteed"})
 
         if "persistentStorage" in data and data["persistentStorage"]:
@@ -213,7 +213,7 @@ def attributes(data):
     return attributes
 
 
-def boolean_attribute(g6_field_name, g5_field_name, attributes, data):
+def boolean_attribute(g6_field_name, g5_field_name, data):
     if g6_field_name in data:
         return {
             "name": g5_field_name,
