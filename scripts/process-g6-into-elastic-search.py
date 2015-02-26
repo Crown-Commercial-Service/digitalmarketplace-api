@@ -214,14 +214,11 @@ def attributes(data):
     # ## Pricing ###
     # ##############
 
-    attributes.append(boolean_attribute("freeOption", "q45", attributes, data))
-    attributes.append(boolean_attribute("trialOption", "q46", attributes,
-                                        data))
+    attributes.append(boolean_attribute("freeOption", "q45", data))
+    attributes.append(boolean_attribute("trialOption", "q46", data))
     attributes.append(boolean_attribute("educationPricing",
-                                        "has_education_pricing",
-                                        attributes, data))
-    attributes.append(boolean_attribute("terminationCost", "q47", attributes,
-                                        data))
+                                        "has_education_pricing", data))
+    attributes.append(boolean_attribute("terminationCost", "q47", data))
 
     # Value on G5 has a predixed "/"
     if "minimumContractPeriod" in data:
@@ -268,10 +265,9 @@ def attributes(data):
         if "Other" in data["networksConnected"]:
             attributes.append({"name": "q19",  "q19": "other"})
 
-    attributes.append(boolean_attribute("apiAccess", "q20", attributes, data))
-    attributes.append(boolean_attribute("openStandardsSupported", "q21",
-                                        attributes, data))
-    attributes.append(boolean_attribute("openSource", "q22", attributes, data))
+    attributes.append(boolean_attribute("apiAccess", "q20", data))
+    attributes.append(boolean_attribute("openStandardsSupported", "q21", data))
+    attributes.append(boolean_attribute("openSource", "q22", data))
 
     # #########################
     # ## service management ###
@@ -282,22 +278,15 @@ def attributes(data):
     if "supportTypes" in data and len(data["supportTypes"]) > 0:
         attributes.append({"name": "q25",  "q25": "true"})
 
-    attributes.append(boolean_attribute("serviceOnboarding", "q26",
-                                        attributes, data))
-    attributes.append(boolean_attribute("serviceOffboarding", "q27",
-                                        attributes, data))
-    attributes.append(boolean_attribute("dataExtractionRemoval", "q28",
-                                        attributes, data))
-    attributes.append(boolean_attribute("datacentresEUCode", "q31",
-                                        attributes, data))
-    attributes.append(boolean_attribute("dataBackupRecovery", "q36",
-                                        attributes, data))
-    attributes.append(boolean_attribute("selfServiceProvisioning", "q39",
-                                        attributes, data))
-    attributes.append(boolean_attribute("supportForThirdParties", "q41",
-                                        attributes, data))
-    attributes.append(boolean_attribute("supportForThirdParties", "q41",
-                                        attributes, data))
+    attributes.append(boolean_attribute("serviceOnboarding", "q26", data))
+    attributes.append(boolean_attribute("serviceOffboarding", "q27", data))
+    attributes.append(boolean_attribute("dataExtractionRemoval", "q28", data))
+    attributes.append(boolean_attribute("datacentresEUCode", "q31", data))
+    attributes.append(boolean_attribute("dataBackupRecovery", "q36", data))
+    attributes.append(boolean_attribute(
+        "selfServiceProvisioning", "q39", data))
+    attributes.append(boolean_attribute("supportForThirdParties", "q41", data))
+    attributes.append(boolean_attribute("supportForThirdParties", "q41", data))
 
     if "datacentreTier" in data:
         attributes.append({"name": "q32",  "q32": data["datacentreTier"]})
@@ -344,8 +333,7 @@ def attributes(data):
     elif "persistentStorage" in data and not data["persistentStorage"]:
         attributes.append({"name": "lot2q4",  "lot2q4": "nonpersistent"})
 
-    attributes.append(boolean_attribute("elasticCloud", "lot2q2",
-                                        attributes, data))
+    attributes.append(boolean_attribute("elasticCloud", "lot2q2", data))
 
     # ###########
     # ## IaaS ###
@@ -362,8 +350,7 @@ def attributes(data):
     elif "persistentStorage" in data and not data["persistentStorage"]:
         attributes.append({"name": "lot1q4",  "lot1q4": "nonpersistent"})
 
-    attributes.append(boolean_attribute("elasticCloud", "lot1q2",
-                                        attributes, data))
+    attributes.append(boolean_attribute("elasticCloud", "lot1q2", data))
 
     return attributes
 
