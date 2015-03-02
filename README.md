@@ -51,7 +51,7 @@ python application.py runserver
 
 ### Using the API locally
 
-Calls to the API require a valid bearer token. Tokens to be accepted can be set using the AUTH_TOKENS environment variable, e.g.:
+The API runs on port 5000. Calls to the API require a valid bearer token. Tokens to be accepted can be set using the AUTH_TOKENS environment variable, e.g.:
 
 ```export AUTH_TOKENS=myToken```
 
