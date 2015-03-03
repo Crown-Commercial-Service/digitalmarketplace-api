@@ -220,9 +220,8 @@ def attributes(data):
 
     # Value on G5 has a predixed "/"
     if "minimumContractPeriod" in data:
-        attributes.append({"name": "q44",  "q44": "/" +
-                                                  data["minimumContractPeriod"]
-                           })
+        attributes.append({"name": "q44",
+                           "q44": "/" + data["minimumContractPeriod"]})
 
     # ############################
     # ## Technical Information ###
@@ -235,13 +234,13 @@ def attributes(data):
 
     if "cloudDeploymentModel" in data:
         if "Public Cloud" in data["cloudDeploymentModel"]:
-            attributes.append({"name": "q18",  "q18": "public"})
+            attributes.append({"name": "q18", "q18": "public"})
         if "Private Cloud" in data["cloudDeploymentModel"]:
-            attributes.append({"name": "q18",  "q18": "private"})
+            attributes.append({"name": "q18", "q18": "private"})
         if "Community Cloud" in data["cloudDeploymentModel"]:
-            attributes.append({"name": "q18",  "q18": "publicprivatehybrid"})
+            attributes.append({"name": "q18", "q18": "publicprivatehybrid"})
         if "Hybrid Cloud" in data["cloudDeploymentModel"]:
-            attributes.append({"name": "q18",  "q18": "hybrid"})
+            attributes.append({"name": "q18", "q18": "hybrid"})
 
     # ## Networks:
     # ## values in G5 are internet | psn | gsi | pnn | n3 | janet | other
@@ -249,19 +248,19 @@ def attributes(data):
 
     if "networksConnected" in data:
         if "Internet" in data["networksConnected"]:
-            attributes.append({"name": "q19",  "q19": "internet"})
+            attributes.append({"name": "q19", "q19": "internet"})
         if "Public Services Network (PSN)" in data["networksConnected"]:
-            attributes.append({"name": "q19",  "q19": "psn"})
+            attributes.append({"name": "q19", "q19": "psn"})
         if "Government Secure intranet (GSi)" in data["networksConnected"]:
-            attributes.append({"name": "q19",  "q19": "gsi"})
+            attributes.append({"name": "q19", "q19": "gsi"})
         if "Police National Network (PNN)" in data["networksConnected"]:
-            attributes.append({"name": "q19",  "q19": "pnn"})
+            attributes.append({"name": "q19", "q19": "pnn"})
         if "New NHS Network (N3)" in data["networksConnected"]:
-            attributes.append({"name": "q19",  "q19": "n3"})
+            attributes.append({"name": "q19", "q19": "n3"})
         if "Joint Academic Network (JANET)" in data["networksConnected"]:
-            attributes.append({"name": "q19",  "q19": "janet"})
+            attributes.append({"name": "q19", "q19": "janet"})
         if "Other" in data["networksConnected"]:
-            attributes.append({"name": "q19",  "q19": "other"})
+            attributes.append({"name": "q19", "q19": "other"})
 
     attributes.append(boolean_attribute("apiAccess", "q20", data))
     attributes.append(boolean_attribute("openStandardsSupported", "q21", data))
@@ -274,7 +273,7 @@ def attributes(data):
     # support types is array in G6, boolean in G5
     # - any G6 value sets G5 to true
     if "supportTypes" in data and len(data["supportTypes"]) > 0:
-        attributes.append({"name": "q25",  "q25": "true"})
+        attributes.append({"name": "q25", "q25": "true"})
 
     attributes.append(boolean_attribute("serviceOnboarding", "q26", data))
     attributes.append(boolean_attribute("serviceOffboarding", "q27", data))
@@ -287,28 +286,28 @@ def attributes(data):
     attributes.append(boolean_attribute("supportForThirdParties", "q41", data))
 
     if "datacentreTier" in data:
-        attributes.append({"name": "q32",  "q32": data["datacentreTier"]})
+        attributes.append({"name": "q32", "q32": data["datacentreTier"]})
 
     # ## Data centre tiers:
     # ## map G6 to these
 
     if "datacentreTier" in data:
         if "TIA-942 Tier 1" in data["datacentreTier"]:
-            attributes.append({"name": "q32",  "q32": "tier1tia942"})
+            attributes.append({"name": "q32", "q32": "tier1tia942"})
         if "Uptime Institute Tier 1" in data["datacentreTier"]:
-            attributes.append({"name": "q32",  "q32": "tier1uptimeinstitute"})
+            attributes.append({"name": "q32", "q32": "tier1uptimeinstitute"})
         if "TIA-942 Tier 2" in data["datacentreTier"]:
-            attributes.append({"name": "q32",  "q32": "tier2tia942"})
+            attributes.append({"name": "q32", "q32": "tier2tia942"})
         if "Uptime Institute Tier 2" in data["datacentreTier"]:
-            attributes.append({"name": "q32",  "q32": "tier2uptimeinstitute"})
+            attributes.append({"name": "q32", "q32": "tier2uptimeinstitute"})
         if "TIA-942 Tier 3" in data["datacentreTier"]:
-            attributes.append({"name": "q32",  "q32": "tier3tia942"})
+            attributes.append({"name": "q32", "q32": "tier3tia942"})
         if "Uptime Institute Tier 3" in data["datacentreTier"]:
-            attributes.append({"name": "q32",  "q32": "tier3uptimeinstitute"})
+            attributes.append({"name": "q32", "q32": "tier3uptimeinstitute"})
         if "TIA-942 Tier 4" in data["datacentreTier"]:
-            attributes.append({"name": "q32",  "q32": "tier4tia942"})
+            attributes.append({"name": "q32", "q32": "tier4tia942"})
         if "Uptime Institute Tier 4" in data["datacentreTier"]:
-            attributes.append({"name": "q32",  "q32": "tier4uptimeinstitute"})
+            attributes.append({"name": "q32", "q32": "tier4uptimeinstitute"})
 
     return filter(None, attributes)
 
