@@ -49,7 +49,7 @@ To run the API for local development you can use the convenient run script,
 which sets the environment variables required for local development: 
 
 ```
-./run_api.sh
+./run_app.sh
 ```
 
 More generally, the command to start the server is:
