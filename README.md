@@ -59,7 +59,6 @@ Tokens to be accepted can be set using the DM_AUTH_TOKENS environment variable
 
 If ``DM_AUTH_TOKENS`` is not explicitly set then the run_api.sh script sets it to 
 ``myToken``. You should include a valid token in your request headers, e.g.:
->>>>>>> Stashed changes
 
 ```
 curl -i -H "Authorization: Bearer myToken" 127.0.0.1:5000/services/123456789
