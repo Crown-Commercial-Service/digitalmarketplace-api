@@ -310,7 +310,7 @@ def attributes(data):
         if "Uptime Institute Tier 4" in data["datacentreTier"]:
             attributes.append({"name": "q32",  "q32": "tier4uptimeinstitute"})
 
-    return attributes
+    return filter(None, attributes)
 
 
 def boolean_attribute(g6_field_name, g5_field_name, data):
