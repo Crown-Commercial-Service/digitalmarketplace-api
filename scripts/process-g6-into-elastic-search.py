@@ -174,7 +174,7 @@ def attributes(data):
     # IaaS
     #
 
-    if "lot" in data and data["lot"] is "IaaS":
+    if data.get("lot") == "IaaS":
         # multi selects
         if "guaranteedResources" in data and data["guaranteedResources"]:
             attributes.append({"name": "lot1q3", "lot1q3": "guaranteed"})
@@ -192,13 +192,11 @@ def attributes(data):
     # PaaS
     #
 
-    if "lot" in data and data["lot"] == "PaaS":
+    if data.get("lot") == "PaaS":
         # multi selects
-        if ("guaranteedResources" in data and
-                data["guaranteedResources"] is True):
+        if "guaranteedResources" in data and data["guaranteedResources"]:
             attributes.append({"name": "lot2q3", "lot2q3": "guaranteed"})
-        elif ("guaranteedResources" in data and
-                data["guaranteedResources"] is False):
+        elif "guaranteedResources" in data and not data["guaranteedResources"]:
             attributes.append({"name": "lot2q3", "lot2q3": "nonguaranteed"})
 
         if "persistentStorage" in data and data["persistentStorage"]:
