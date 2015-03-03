@@ -45,6 +45,15 @@ Install new Python dependencies with pip
 
 ### Run the development server
 
+To run the API for local development you can use the convenient run script, 
+which sets the environment variables required for local development: 
+
+```
+./run_api.sh
+```
+
+More generally, the command to start the server is:
+
 ```
 python application.py runserver
 ```
@@ -59,7 +68,6 @@ Tokens to be accepted can be set using the DM_AUTH_TOKENS environment variable
 
 If ``DM_AUTH_TOKENS`` is not explicitly set then the run_api.sh script sets it to 
 ``myToken``. You should include a valid token in your request headers, e.g.:
->>>>>>> Stashed changes
 
 ```
 curl -i -H "Authorization: Bearer myToken" 127.0.0.1:5000/services/123456789
