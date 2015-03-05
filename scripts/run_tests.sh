@@ -5,6 +5,9 @@
 # NOTE: This script expects to be run from the project root with
 # ./scripts/run_tests.sh
 
+# Use default environment vars for localhost if not already set
+export DM_API_AUTH_TOKENS=${DM_API_AUTH_TOKENS:=myToken}
+
 set -o pipefail
 
 function display_result {
