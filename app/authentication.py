@@ -18,19 +18,20 @@ def token_is_valid(incoming_token):
 
 
 def get_allowed_tokens_from_environment():
-    """Return a list of allowed auth tokens from the DM_AUTH_TOKENS env variable
+    """Return a list of allowed auth tokens from the DM_API_AUTH_TOKENS env
+       variable
 
-    >>> os.environ['DM_AUTH_TOKENS'] = ''
+    >>> os.environ['DM_API_AUTH_TOKENS'] = ''
     >>> list(get_allowed_tokens_from_environment())
     []
-    >>> del os.environ['DM_AUTH_TOKENS']
+    >>> del os.environ['DM_API_AUTH_TOKENS']
     >>> list(get_allowed_tokens_from_environment())
     []
-    >>> os.environ['DM_AUTH_TOKENS'] = 'ab:cd'
+    >>> os.environ['DM_API_AUTH_TOKENS'] = 'ab:cd'
     >>> list(get_allowed_tokens_from_environment())
     ['ab', 'cd']
     """
-    return filter(None, os.environ.get('DM_AUTH_TOKENS', '').split(":"))
+    return filter(None, os.environ.get('DM_API_AUTH_TOKENS', '').split(":"))
 
 
 def get_token_from_headers(headers):
