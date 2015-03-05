@@ -34,24 +34,24 @@ class TestListServices(BaseApplicationTest):
         assert_equal(service['supplierName'], u'Supplier 0')
 
     def test_paginated_list_services_page_one(self):
-        self.setup_dummy_services(15)
+        self.setup_dummy_services(150)
 
         response = self.client.get('/services')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
-        assert_equal(len(data['services']), 10)
+        assert_equal(len(data['services']), 100)
         next_link = first_by_rel('next', data['links'])
         assert_in("page=2", next_link['href'])
 
     def test_paginated_list_services_page_two(self):
-        self.setup_dummy_services(15)
+        self.setup_dummy_services(150)
 
         response = self.client.get('/services?page=2')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
-        assert_equal(len(data['services']), 5)
+        assert_equal(len(data['services']), 50)
         prev_link = first_by_rel('prev', data['links'])
         assert_in("page=1", prev_link['href'])
 
@@ -96,20 +96,20 @@ class TestListServices(BaseApplicationTest):
         )
 
     def test_supplier_id_filter_pagination(self):
-        self.setup_dummy_services(45)
+        self.setup_dummy_services(450)
 
         response = self.client.get('/services?supplier_id=1&page=2')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
-        assert_equal(len(data['services']), 5)
+        assert_equal(len(data['services']), 50)
         assert_equal(
             list(filter(lambda s: s['supplierId'] == 1, data['services'])),
             data['services']
         )
 
     def test_supplier_id_filter_pagination_links(self):
-        self.setup_dummy_services(45)
+        self.setup_dummy_services(450)
 
         response = self.client.get('/services?supplier_id=1&page=1')
         data = json.loads(response.get_data())

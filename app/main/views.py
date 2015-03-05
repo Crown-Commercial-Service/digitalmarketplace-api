@@ -9,6 +9,9 @@ from ..models import Service
 from ..validation import validate_json_or_400
 
 
+API_FETCH_PAGE_SIZE = 100
+
+
 @main.route('/')
 def index():
     """Entry point for the API, show the resources that are available."""
@@ -37,7 +40,8 @@ def list_services():
             abort(400, "Invalid supplier_id")
         services = services.filter(Service.supplier_id == supplier_id)
 
-    services = services.paginate(page=page, per_page=10, error_out=False)
+    services = services.paginate(page=page, per_page=API_FETCH_PAGE_SIZE,
+                                 error_out=False)
     if request.args and not services.items:
         abort(404)
     return jsonify(
