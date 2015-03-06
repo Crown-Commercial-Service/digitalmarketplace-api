@@ -34,8 +34,8 @@ class BaseApplicationTest(object):
         self.app.wsgi_app = WSGIApplicationWithEnvironment(
             self.app.wsgi_app,
             HTTP_AUTHORIZATION='Bearer {}'.format(valid_token))
-        self._auth_tokens = os.environ.get('AUTH_TOKENS')
-        os.environ['AUTH_TOKENS'] = valid_token
+        self._auth_tokens = os.environ.get('DM_API_AUTH_TOKENS')
+        os.environ['DM_API_AUTH_TOKENS'] = valid_token
 
     def do_not_provide_access_token(self):
         self.app.wsgi_app = self.app.wsgi_app.app
@@ -65,9 +65,9 @@ class BaseApplicationTest(object):
 
     def teardown_authorization(self):
         if self._auth_tokens is None:
-            del os.environ['AUTH_TOKENS']
+            del os.environ['DM_API_AUTH_TOKENS']
         else:
-            os.environ['AUTH_TOKENS'] = self._auth_tokens
+            os.environ['DM_API_AUTH_TOKENS'] = self._auth_tokens
 
     def teardown_database(self):
         with self.app.app_context():

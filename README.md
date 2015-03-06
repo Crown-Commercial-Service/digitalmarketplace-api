@@ -12,7 +12,8 @@ Install [Virtualenv](https://virtualenv.pypa.io/en/latest/)
 sudo easy_install virtualenv
 ```
 
-Ensure you have Postgres running locally, and then bootstrap your development environment
+Ensure you have Postgres running locally, and then bootstrap your development
+environment
 
 ```
 ./scripts/bootstrap.sh
@@ -45,17 +46,30 @@ Install new Python dependencies with pip
 
 ### Run the development server
 
+To run the API for local development you can use the convenient run script, 
+which sets the environment variables required for local development: 
+
+```
+./scripts/run_app.sh
+```
+
+More generally, the command to start the server is:
+
 ```
 python application.py runserver
 ```
 
 ### Using the API locally
 
-The API runs on port 5000. Calls to the API require a valid bearer token. Tokens to be accepted can be set using the AUTH_TOKENS environment variable, e.g.:
+By default the API runs on port 5000. Calls to the API require a valid bearer 
+token. Tokens to be accepted can be set using the DM_AUTH_TOKENS environment
+variable (a colon-separated list), e.g.:
 
-```export AUTH_TOKENS=myToken```
+```export DM_API_AUTH_TOKENS=myToken1:myToken2```
 
-and then you can include this token in your request headers, e.g.:
+If ``DM_API_AUTH_TOKENS`` is not explicitly set then the run_api.sh script sets
+it to ``myToken``. You should include a valid token in your request headers, 
+e.g.:
 
 ```
 curl -i -H "Authorization: Bearer myToken" 127.0.0.1:5000/services/123456789
