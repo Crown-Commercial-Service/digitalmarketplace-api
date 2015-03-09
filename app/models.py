@@ -31,3 +31,25 @@ class Service(db.Model):
     data = db.Column(JSON)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
+
+
+class ServiceArchive(db.Model):
+    __tablename__ = 'services_archive'
+
+    id = db.Column(db.Integer, primary_key=True)
+    service_id = db.Column(db.BigInteger,
+                           index=True, unique=False, nullable=False)
+    supplier_id = db.Column(db.BigInteger,
+                            db.ForeignKey('suppliers.supplier_id'),
+                            index=True, unique=False, nullable=False)
+    created_at = db.Column(db.DateTime, index=False, unique=False,
+                           nullable=False)
+    updated_at = db.Column(db.DateTime, index=False, unique=False,
+                           nullable=False)
+    updated_by = db.Column(db.String, index=False, unique=False,
+                           nullable=False)
+    updated_reason = db.Column(db.String, index=False, unique=False,
+                               nullable=False)
+    data = db.Column(JSON)
+
+    supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)

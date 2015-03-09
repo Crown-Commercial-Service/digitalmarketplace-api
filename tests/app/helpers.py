@@ -65,6 +65,8 @@ class BaseApplicationTest(object):
                                        supplier_id=i % suppliers_count,
                                        updated_at=now,
                                        created_at=now,
+                                       updated_by='tests',
+                                       updated_reason='test data',
                                        data={'foo': 'bar'}))
 
     def teardown(self):

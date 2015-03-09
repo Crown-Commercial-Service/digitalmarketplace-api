@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError, DatabaseError
 
 from . import main
 from .. import db
-from ..models import Service
+from ..models import Service, ServiceArchive
 from ..validation import validate_json_or_400, validate_updater_json_or_400
 
 
@@ -48,6 +48,29 @@ def list_services():
         services=list(map(jsonify_service, services.items)),
         links=pagination_links(services, '.list_services', request.args))
 
+@main.route('/services-archive', methods=['GET'])
+def list_archived_services_by_service_id():
+
+    try:
+        service_id = int(request.args.get("service-id", "no service id"))
+    except ValueError:
+        abort(400, "Invalid service id supplied")
+
+    try:
+        page = int(request.args.get('page', 1))
+    except ValueError:
+        abort(400, "Invalid page argument")
+
+    services = ServiceArchive.query.filter(Service.service_id == service_id)
+
+    services = services.paginate(page=page, per_page=API_FETCH_PAGE_SIZE,
+                                 error_out=False)
+
+    if request.args and not services.items:
+        abort(404)
+    return jsonify(
+        services=list(map(jsonify_service, services.items)),
+        links=pagination_links(services, '.list_services', request.args))
 
 @main.route('/services/<int:service_id>', methods=['POST'])
 def update_service(service_id):
@@ -59,15 +82,24 @@ def update_service(service_id):
         Service.service_id == service_id
     ).first_or_404()
 
+    service_to_archive = prepare_archived_service(service)
     validate_updater_json_or_400(get_json_from_request('updater')['updater'])
     service_update = get_json_from_request('serviceUpdate')['serviceUpdate']
 
     data = dict(service.data.items())
     data.update(service_update)
-
     validate_json_or_400(data)
+
+    now = datetime.now()
     service.data = data
+    service.updated_at = now
+    service.updated_by = \
+        get_json_from_request('updater')['updater']['username']
+    service.updated_reason = \
+        get_json_from_request('updater')['updater']['reason']
+
     db.session.add(service)
+    db.session.add(service_to_archive)
 
     try:
         db.session.commit()
@@ -100,6 +132,8 @@ def import_service(service_id):
     service.data = service_data
     service.supplier_id = service_data['supplierId']
     service.updated_at = now
+    service.updated_by = 'importer'
+    service.updated_reason = 'initial import'
 
     db.session.add(service)
 
@@ -114,11 +148,31 @@ def import_service(service_id):
 
 @main.route('/services/<int:service_id>', methods=['GET'])
 def get_service(service_id):
+    print service_id
     service = Service.query.filter(
         Service.service_id == service_id
     ).first_or_404()
 
     return jsonify(services=jsonify_service(service))
+
+@main.route('/services-archive/<int:service_archive_id>', methods=['GET'])
+def get_archived_service(service_archive_id):
+    service = ServiceArchive.query.filter(
+        ServiceArchive.id == service_archive_id
+    ).first_or_404()
+
+    return jsonify(services=jsonify_service(service))
+
+def prepare_archived_service(service):
+    return ServiceArchive(
+        service_id=service.service_id,
+        supplier_id=service.supplier_id,
+        created_at=service.created_at,
+        updated_at=service.updated_at,
+        updated_by=service.updated_by,
+        updated_reason=service.updated_reason,
+        data=service.data
+    )
 
 
 def jsonify_service(service):
@@ -176,5 +230,4 @@ def get_json_from_request(key):
         abort(400, "Invalid JSON; must be a valid JSON object")
     if key not in data:
         abort(400, "Invalid JSON must have a '%s' key" % key)
-
     return data
