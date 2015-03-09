@@ -1,0 +1,18 @@
+{
+  "id": "API Updater Schema",
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "username": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "username",
+    "reason"
+  ]
+}

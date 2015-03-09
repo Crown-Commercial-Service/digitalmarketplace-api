@@ -6,7 +6,8 @@ import json
 from nose.tools import assert_equal, assert_false
 from jsonschema import validate, SchemaError, ValidationError
 
-from app.validation import validate_json
+from app.validation import validate_json, \
+    validates_against_schema, UPDATER_SCHEMA
 
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -18,6 +19,22 @@ def test_all_schemas_are_valid():
         file_path = 'json_schemas/%s' % file_name
         if os.path.isfile(file_path):
             yield check_schema_file, file_path
+
+
+def test_updater_json_validates_correctly():
+    invalid_updater_no_reason = {'username': 'this'}
+    invalid_updater_no_username = {'reason': 'this'}
+    invalid_updater_no_fields = {'invalid': 'this'}
+    valid_updater = {'username': 'this', 'reason': 'hi'}
+
+    assert_equal(validates_against_schema(
+        UPDATER_SCHEMA, invalid_updater_no_reason), False)
+    assert_equal(validates_against_schema(
+        UPDATER_SCHEMA, invalid_updater_no_username), False)
+    assert_equal(validates_against_schema(
+        UPDATER_SCHEMA, invalid_updater_no_fields), False)
+    assert_equal(validates_against_schema(
+        UPDATER_SCHEMA, valid_updater), True)
 
 
 def test_example_json_validates_correctly():

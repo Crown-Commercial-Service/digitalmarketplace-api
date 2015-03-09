@@ -1,12 +1,12 @@
 from datetime import datetime
 from flask import jsonify, abort, request
 from flask import url_for as base_url_for
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DatabaseError
 
 from . import main
 from .. import db
 from ..models import Service
-from ..validation import validate_json_or_400
+from ..validation import validate_json_or_400, validate_updater_json_or_400
 
 
 API_FETCH_PAGE_SIZE = 100
@@ -49,15 +49,37 @@ def list_services():
         links=pagination_links(services, '.list_services', request.args))
 
 
-@main.route('/services', methods=['POST'])
-def add_service():
-    message = "IDs are currently generated externally, new resources should " \
-              "be created with PUT"
-    return jsonify(error=message), 501
+@main.route('/services/<int:service_id>', methods=['POST'])
+def update_service(service_id):
+    """
+        Update a service. Looks service up in DB, and updates the JSON listing.
+        Uses existing JSON Parse routines for validation
+    """
+    service = Service.query.filter(
+        Service.service_id == service_id
+    ).first_or_404()
+
+    validate_updater_json_or_400(get_json_from_request('updater')['updater'])
+    service_update = get_json_from_request('serviceUpdate')['serviceUpdate']
+
+    data = dict(service.data.items())
+    data.update(service_update)
+
+    validate_json_or_400(data)
+    service.data = data
+    db.session.add(service)
+
+    try:
+        db.session.commit()
+    except DatabaseError:
+        db.session.rollback()
+        abort(500, "Database error")
+
+    return jsonify(message="done"), 200
 
 
 @main.route('/services/<int:service_id>', methods=['PUT'])
-def update_service(service_id):
+def import_service(service_id):
     now = datetime.now()
     service = Service.query.filter(Service.service_id == service_id).first()
     http_status = 204
@@ -67,7 +89,7 @@ def update_service(service_id):
         service.created_at = now
 
     service_data = drop_foreign_fields(
-        get_json_from_request()['services']
+        get_json_from_request('services')['services']
     )
 
     validate_json_or_400(service_data)
@@ -146,13 +168,13 @@ def pagination_links(pagination, endpoint, args):
     ]
 
 
-def get_json_from_request():
+def get_json_from_request(key):
     if request.content_type != 'application/json':
         abort(400, "Unexpected Content-Type, expecting 'application/json'")
     data = request.get_json()
     if data is None:
         abort(400, "Invalid JSON; must be a valid JSON object")
-    if 'services' not in data:
-        abort(400, "Invalid JSON must have a 'services' key")
+    if key not in data:
+        abort(400, "Invalid JSON must have a '%s' key" % key)
 
     return data
