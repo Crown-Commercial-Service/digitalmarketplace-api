@@ -24,6 +24,10 @@ class Service(db.Model):
                            nullable=False)
     updated_at = db.Column(db.DateTime, index=False, unique=False,
                            nullable=False)
+    updated_by = db.Column(db.String, index=False, unique=False,
+                           nullable=False)
+    updated_reason = db.Column(db.String, index=False, unique=False,
+                               nullable=False)
     data = db.Column(JSON)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
