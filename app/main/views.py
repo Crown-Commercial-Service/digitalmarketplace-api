@@ -91,8 +91,9 @@ def update_service(service_id):
     ).first_or_404()
 
     service_to_archive = prepare_archived_service(service)
-    validate_updater_json_or_400(get_json_from_request('updater')['updater'])
-    service_update = get_json_from_request('serviceUpdate')['serviceUpdate']
+    update_json = get_json_from_request('update_details')['update_details']
+    validate_updater_json_or_400(update_json)
+    service_update = get_json_from_request('services')['services']
 
     data = dict(service.data.items())
     data.update(service_update)
@@ -101,10 +102,8 @@ def update_service(service_id):
     now = datetime.now()
     service.data = data
     service.updated_at = now
-    service.updated_by = \
-        get_json_from_request('updater')['updater']['username']
-    service.updated_reason = \
-        get_json_from_request('updater')['updater']['reason']
+    service.updated_by = update_json['updated_by']
+    service.updated_reason = update_json['update_reason']
 
     db.session.add(service)
     db.session.add(service_to_archive)

@@ -4,15 +4,15 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "username": {
+    "updated_by": {
       "type": "string"
     },
-    "reason": {
+    "update_reason": {
       "type": "string"
     }
   },
   "required": [
-    "username",
-    "reason"
+    "updated_by",
+    "update_reason"
   ]
 }

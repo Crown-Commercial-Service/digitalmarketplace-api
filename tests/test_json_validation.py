@@ -22,10 +22,10 @@ def test_all_schemas_are_valid():
 
 
 def test_updater_json_validates_correctly():
-    invalid_updater_no_reason = {'username': 'this'}
-    invalid_updater_no_username = {'reason': 'this'}
+    invalid_updater_no_reason = {'updated_by': 'this'}
+    invalid_updater_no_username = {'update_reason': 'this'}
     invalid_updater_no_fields = {'invalid': 'this'}
-    valid_updater = {'username': 'this', 'reason': 'hi'}
+    valid_updater = {'updated_by': 'this', 'update_reason': 'hi'}
 
     assert_equal(validates_against_schema(
         UPDATER_SCHEMA, invalid_updater_no_reason), False)

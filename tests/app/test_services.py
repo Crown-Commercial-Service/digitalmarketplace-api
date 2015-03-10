@@ -146,10 +146,10 @@ class TestPostService(BaseApplicationTest):
         response = self.client.post(
             "/services",
             data=json.dumps(
-                {'updater': {
-                    'username': 'joeblogs',
-                    'reason': 'whateves'},
-                 'serviceUpdate': {
+                {'update_details': {
+                    'updated_by': 'joeblogs',
+                    'update_reason': 'whateves'},
+                 'services': {
                      'serviceName': 'new service name'}}),
             content_type='application/json')
 
@@ -159,10 +159,10 @@ class TestPostService(BaseApplicationTest):
         response = self.client.post(
             "/services/99999",
             data=json.dumps(
-                {'updater': {
-                    'username': 'joeblogs',
-                    'reason': 'whateves'},
-                 'serviceUpdate': {
+                {'update_details': {
+                    'updated_by': 'joeblogs',
+                    'update_reason': 'whateves'},
+                 'services': {
                      'serviceName': 'new service name'}}),
             content_type='application/json')
 
@@ -181,13 +181,13 @@ class TestPostService(BaseApplicationTest):
             response = self.client.post(
                 '/services/%s' % service_id,
                 data=json.dumps(
-                    {'serviceUpdate': {
+                    {'services': {
                         'serviceName': 'new service name'}}),
                 content_type='application/json')
 
             data = json.loads(response.get_data())
             assert_equal(data['error'],
-                         "Invalid JSON must have a 'updater' key")
+                         "Invalid JSON must have a 'update_details' key")
             assert_equal(response.status_code, 400)
 
     def test_can_post_a_valid_service_update(self):
@@ -204,10 +204,10 @@ class TestPostService(BaseApplicationTest):
         response = self.client.post(
             '/services/%s' % service_id,
             data=json.dumps(
-                {'updater': {
-                    'username': 'joeblogs',
-                    'reason': 'whateves'},
-                 'serviceUpdate': {
+                {'update_details': {
+                    'updated_by': 'joeblogs',
+                    'update_reason': 'whateves'},
+                 'services': {
                      'serviceName': 'new service name'}}),
             content_type='application/json')
 
@@ -235,10 +235,10 @@ class TestPostService(BaseApplicationTest):
             response = self.client.post(
                 '/services/%s' % service_id,
                 data=json.dumps(
-                    {'updater': {
-                        'username': 'joeblogs',
-                        'reason': 'whateves'},
-                     'serviceUpdate': {
+                    {'update_details': {
+                        'updated_by': 'joeblogs',
+                        'update_reason': 'whateves'},
+                     'services': {
                          'supportTypes': support_types}}),
                 content_type='application/json')
 
@@ -272,10 +272,10 @@ class TestPostService(BaseApplicationTest):
             response = self.client.post(
                 '/services/%s' % service_id,
                 data=json.dumps(
-                    {'updater': {
-                        'username': 'joeblogs',
-                        'reason': 'whateves'},
-                     'serviceUpdate': {
+                    {'update_details': {
+                        'updated_by': 'joeblogs',
+                        'update_reason': 'whateves'},
+                     'services': {
                          'identityAuthenticationControls':
                              identity_authentication_controls}}),
                 content_type='application/json')
@@ -307,10 +307,10 @@ class TestPostService(BaseApplicationTest):
             response = self.client.post(
                 "/services/" + str(payload['id']),
                 data=json.dumps(
-                    {'updater': {
-                        'username': 'joeblogs',
-                        'reason': 'whateves'},
-                     'serviceUpdate': {
+                    {'update_details': {
+                        'updated_by': 'joeblogs',
+                        'update_reason': 'whateves'},
+                     'services': {
                          'this is invalid': 'so I should never see this'}}),
                 content_type='application/json')
 
@@ -331,10 +331,10 @@ class TestPostService(BaseApplicationTest):
             response = self.client.post(
                 "/services/" + str(payload['id']),
                 data=json.dumps(
-                    {'updater': {
-                        'username': 'joeblogs',
-                        'reason': 'whateves'},
-                     'serviceUpdate': {
+                    {'update_details': {
+                        'updated_by': 'joeblogs',
+                        'update_reason': 'whateves'},
+                     'services': {
                          'this is invalid': 'so I should never see this'}}),
                 content_type='application/json')
 
@@ -356,10 +356,10 @@ class TestPostService(BaseApplicationTest):
             response = self.client.post(
                 "/services/" + str(payload['id']),
                 data=json.dumps(
-                    {'updater': {
-                        'username': 'joeblogs',
-                        'reason': 'whateves'},
-                     'serviceUpdate': {
+                    {'update_details': {
+                        'updated_by': 'joeblogs',
+                        'update_reason': 'whateves'},
+                     'services': {
                          'this is invalid': 'so I should never see this'}}),
                 content_type='application/json')
 
@@ -381,10 +381,10 @@ class TestPostService(BaseApplicationTest):
             response = self.client.post(
                 "/services/" + str(payload['id']),
                 data=json.dumps(
-                    {'updater': {
-                        'username': 'joeblogs',
-                        'reason': 'whateves'},
-                     'serviceUpdate': {
+                    {'update_details': {
+                        'updated_by': 'joeblogs',
+                        'update_reason': 'whateves'},
+                     'services': {
                          'this is invalid': 'so I should never see this'}}),
                 content_type='application/json')
 
@@ -405,9 +405,9 @@ class TestPostService(BaseApplicationTest):
             response = self.client.post(
                 "/services/" + str(payload['id']),
                 data=json.dumps(
-                    {'updater': {
-                        'username': 'joeblogs',
-                        'reason': 'whateves'}, 'serviceUpdate': {
+                    {'update_details': {
+                        'updated_by': 'joeblogs',
+                        'update_reason': 'whateves'}, 'services': {
                         'priceUnit': 'euros'}}),
                 content_type='application/json')
 
@@ -428,10 +428,10 @@ class TestPostService(BaseApplicationTest):
             response = self.client.post(
                 '/services/%s' % str(payload['id']),
                 data=json.dumps(
-                    {'updater': {
-                        'username': 'joeblogs',
-                        'reason': 'whateves'},
-                     'serviceUpdate': {
+                    {'update_details': {
+                        'updated_by': 'joeblogs',
+                        'update_reason': 'whateves'},
+                     'services': {
                          'serviceName': 'new service name'}}),
                 content_type='application/json')
 
@@ -459,10 +459,10 @@ class TestPostService(BaseApplicationTest):
                 response = self.client.post(
                     '/services/%s' % str(payload['id']),
                     data=json.dumps(
-                        {'updater': {
-                            'username': 'joeblogs',
-                            'reason': 'whateves'},
-                         'serviceUpdate': {
+                        {'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                         'services': {
                              'serviceName': 'new service name' + str(i)}}),
                     content_type='application/json')
 

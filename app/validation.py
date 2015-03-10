@@ -16,7 +16,7 @@ with open("json_schemas/g6-iaas-schema.json") as json_file3:
 with open("json_schemas/g6-paas-schema.json") as json_file4:
     G6_PAAS_SCHEMA = json.load(json_file4)
 
-with open("json_schemas/updater.json") as json_file5:
+with open("json_schemas/update-details.json") as json_file5:
     UPDATER_SCHEMA = json.load(json_file5)
 
 
