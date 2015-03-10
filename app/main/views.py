@@ -247,7 +247,8 @@ def pagination_links(pagination, endpoint, args):
 
 
 def get_json_from_request(key):
-    if request.content_type != 'application/json':
+    if request.content_type not in ['application/json',
+                                    'application/json; charset=UTF-8']:
         abort(400, "Unexpected Content-Type, expecting 'application/json'")
     data = request.get_json()
     if data is None:
