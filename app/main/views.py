@@ -121,26 +121,29 @@ def update_service(service_id):
 def import_service(service_id):
     now = datetime.now()
     service = Service.query.filter(Service.service_id == service_id).first()
-    http_status = 204
-    if service is None:
-        http_status = 201
-        service = Service(service_id=service_id)
-        service.created_at = now
+
+    if service is not None:
+        abort(409, "Service already exists")
 
     service_data = drop_foreign_fields(
         get_json_from_request('services')['services']
     )
+
+    update_json = get_json_from_request('update_details')['update_details']
+    validate_updater_json_or_400(update_json)
 
     validate_json_or_400(service_data)
 
     if str(service_data['id']) != str(service_id):
         abort(400, "Invalid service ID provided")
 
+    service = Service(service_id=service_id)
     service.data = service_data
     service.supplier_id = service_data['supplierId']
     service.updated_at = now
-    service.updated_by = 'importer'
-    service.updated_reason = 'initial import'
+    service.created_at = now
+    service.updated_by = update_json['updated_by']
+    service.updated_reason = update_json['update_reason']
 
     db.session.add(service)
 
@@ -150,7 +153,7 @@ def import_service(service_id):
         db.session.rollback()
         abort(400, "Unknown supplier ID provided")
 
-    return "", http_status
+    return "", 201
 
 
 @main.route('/services/<int:service_id>', methods=['GET'])

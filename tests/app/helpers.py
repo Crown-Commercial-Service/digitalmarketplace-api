@@ -21,7 +21,6 @@ class WSGIApplicationWithEnvironment(object):
 
 
 class BaseApplicationTest(object):
-
     lots = {
         "iaas": "SSP-JSON-IaaS.json",
         "saas": "SSP-JSON-SaaS.json",
@@ -99,7 +98,7 @@ class JSONUpdateTestMixin(object):
 
     def test_non_json_causes_failure(self):
         response = self.client.open(
-            self.endpoint,
+            'services/1000',
             method=self.method,
             data='this is not JSON',
             content_type='application/json')
@@ -108,7 +107,7 @@ class JSONUpdateTestMixin(object):
 
     def test_invalid_json_causes_failure(self):
         response = self.client.open(
-            self.endpoint,
+            'services/1000',
             method=self.method,
             data='{"not": "valid"}',
             content_type='application/json')
@@ -117,7 +116,7 @@ class JSONUpdateTestMixin(object):
 
     def test_invalid_content_type_causes_failure(self):
         response = self.client.open(
-            self.endpoint,
+            'services/1000',
             method=self.method,
             data='{"services": {"foo": "bar"}}')
 
