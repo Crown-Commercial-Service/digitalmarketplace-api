@@ -91,9 +91,13 @@ def update_service(service_id):
     ).first_or_404()
 
     service_to_archive = ServiceArchive.from_service(service)
-    update_json = get_json_from_request('update_details')['update_details']
+
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ["update_details", "services"])
+
+    update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
-    service_update = get_json_from_request('services')['services']
+    service_update = json_payload['services']
 
     data = dict(service.data.items())
     data.update(service_update)
@@ -125,11 +129,14 @@ def import_service(service_id):
     if service is not None:
         abort(409, "Service already exists")
 
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['services', 'update_details'])
+
     service_data = drop_foreign_fields(
-        get_json_from_request('services')['services']
+        json_payload['services']
     )
 
-    update_json = get_json_from_request('update_details')['update_details']
+    update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
 
     validate_json_or_400(service_data)
@@ -227,13 +234,17 @@ def pagination_links(pagination, endpoint, args):
     ]
 
 
-def get_json_from_request(key):
+def get_json_from_request():
     if request.content_type not in ['application/json',
                                     'application/json; charset=UTF-8']:
         abort(400, "Unexpected Content-Type, expecting 'application/json'")
     data = request.get_json()
     if data is None:
         abort(400, "Invalid JSON; must be a valid JSON object")
-    if key not in data:
-        abort(400, "Invalid JSON must have a '%s' key" % key)
     return data
+
+
+def json_has_required_keys(data, keys):
+    for key in keys:
+        if key not in data.keys():
+            abort(400, "Invalid JSON must have '%s' key(s)" % keys)

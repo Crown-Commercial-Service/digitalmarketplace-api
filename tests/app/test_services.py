@@ -190,7 +190,8 @@ class TestPostService(BaseApplicationTest):
 
             data = json.loads(response.get_data())
             assert_equal(data['error'],
-                         "Invalid JSON must have a 'update_details' key")
+                         "Invalid JSON must have '['update_details', "
+                         "'services']' key(s)")
             assert_equal(response.status_code, 400)
 
     def test_non_json_causes_failure(self):
@@ -710,7 +711,8 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         assert_equal(json.loads(response.get_data())['error'],
-                     "Invalid JSON must have a 'update_details' key")
+                     "Invalid JSON must have '['services', "
+                     "'update_details']' key(s)")
         assert_equal(response.status_code, 400)
 
     def test_invalid_service_id(self):
