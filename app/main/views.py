@@ -90,7 +90,7 @@ def update_service(service_id):
         Service.service_id == service_id
     ).first_or_404()
 
-    service_to_archive = prepare_archived_service(service)
+    service_to_archive = ServiceArchive.from_service(service)
     update_json = get_json_from_request('update_details')['update_details']
     validate_updater_json_or_400(update_json)
     service_update = get_json_from_request('services')['services']
@@ -178,23 +178,6 @@ def get_archived_service(service_archive_id):
     ).first_or_404()
 
     return jsonify(services=jsonify_service(service))
-
-
-def prepare_archived_service(service):
-    """
-    Makes a servicearchive instance based on this service
-    :param Service:
-    :return: ServiceArchive
-    """
-    return ServiceArchive(
-        service_id=service.service_id,
-        supplier_id=service.supplier_id,
-        created_at=service.created_at,
-        updated_at=service.updated_at,
-        updated_by=service.updated_by,
-        updated_reason=service.updated_reason,
-        data=service.data
-    )
 
 
 def jsonify_service(service):

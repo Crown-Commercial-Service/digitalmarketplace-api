@@ -53,3 +53,15 @@ class ServiceArchive(db.Model):
     data = db.Column(JSON)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
+
+    @staticmethod
+    def from_service(service):
+        return ServiceArchive(
+            service_id=service.service_id,
+            supplier_id=service.supplier_id,
+            created_at=service.created_at,
+            updated_at=service.updated_at,
+            updated_by=service.updated_by,
+            updated_reason=service.updated_reason,
+            data=service.data
+        )
