@@ -126,8 +126,11 @@ def import_service(service_id):
     now = datetime.now()
     service = Service.query.filter(Service.service_id == service_id).first()
 
-    if service is not None:
-        abort(409, "Service already exists")
+    http_status = 204
+    if service is None:
+        http_status = 201
+        service = Service(service_id=service_id)
+        service.created_at = now
 
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['services', 'update_details'])
@@ -144,7 +147,6 @@ def import_service(service_id):
     if str(service_data['id']) != str(service_id):
         abort(400, "Invalid service ID provided")
 
-    service = Service(service_id=service_id)
     service.data = service_data
     service.supplier_id = service_data['supplierId']
     service.updated_at = now

@@ -692,6 +692,30 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             assert_almost_equal(now, service.created_at,
                                 delta=timedelta(seconds=2))
 
+        def test_update_a_service(self):
+            with self.app.app_context():
+                payload = self.load_example_listing("SSP-JSON-IaaS")
+                response = self.client.put(
+                    '/services/2',
+                    data=json.dumps(
+                        {
+                            'update_details': {
+                                'updated_by': 'joeblogs',
+                                'update_reason': 'whateves'},
+                            'services': payload}
+                    ),
+                    content_type='application/json')
+
+                print response.get_data()
+
+                assert_equal(response.status_code, 204)
+                now = datetime.now()
+                service = Service.query.filter(Service.service_id == 2).first()
+                assert_equal(service.data, payload)
+                assert_not_equal(service.created_at, service.updated_at)
+                assert_almost_equal(now, service.updated_at,
+                                    delta=timedelta(seconds=2))
+
     def test_when_service_payload_has_invalid_id(self):
         response = self.client.put(
             '/services/999',
@@ -770,16 +794,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
             assert_equal(response.status_code, 200)
             assert_equal(data['services']['supplierName'], u'Supplier 1')
-
-    def test_should_deny_repeated_puts_of_a_service(self):
-        response = self.client.get('/services/2')
-
-        response = self.client.put(
-            '/services/2',
-            data=response.get_data(),
-            content_type='application/json')
-
-        assert_equal(response.status_code, 409)
 
 
 class TestGetService(BaseApplicationTest):
