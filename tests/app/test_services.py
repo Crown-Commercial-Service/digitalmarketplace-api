@@ -588,7 +588,7 @@ class TestPostService(BaseApplicationTest):
             assert_equal(response.status_code, 200)
 
             archived_state = self.client.get(
-                '/services-archive?service-id=' +
+                '/archived-services?service-id=' +
                 str(payload['id'])).get_data()
             archived_service_json = json.loads(archived_state)['services'][0]
 
@@ -623,30 +623,30 @@ class TestPostService(BaseApplicationTest):
                 assert_equal(response.status_code, 200)
 
             archived_state = self.client.get(
-                '/services-archive?service-id=' +
+                '/archived-services?service-id=' +
                 str(payload['id'])).get_data()
             assert_equal(len(json.loads(archived_state)['services']), 5)
 
     def test_should_404_if_no_archived_service_found_by_pk(self):
-        response = self.client.get('/services-archive/123')
+        response = self.client.get('/archived-services/123')
         assert_equal(response.status_code, 404)
 
     def test_return_empty_list_if_no_archived_service_by_service_id(self):
-        response = self.client.get('/services-archive?service-id=123')
+        response = self.client.get('/archived-services?service-id=123')
         assert_equal(response.status_code, 404)
 
     def test_should_404_if_non_int_pk(self):
-        response = self.client.get('/services-archive/aaa')
+        response = self.client.get('/archived-services/aaa')
         assert_equal(response.status_code, 404)
 
     def test_should_400_if_invalid_service_id(self):
-        response = self.client.get('/services-archive?service-id=aaa')
+        response = self.client.get('/archived-services?service-id=aaa')
         assert_equal(response.status_code, 400)
-        response = self.client.get('/services-archive?service-id=123.1')
+        response = self.client.get('/archived-services?service-id=123.1')
         assert_equal(response.status_code, 400)
-        response = self.client.get('/services-archive?service-id=')
+        response = self.client.get('/archived-services?service-id=')
         assert_equal(response.status_code, 400)
-        response = self.client.get('/services-archive')
+        response = self.client.get('/archived-services')
         assert_equal(response.status_code, 400)
 
 

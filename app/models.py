@@ -33,8 +33,8 @@ class Service(db.Model):
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
 
 
-class ServiceArchive(db.Model):
-    __tablename__ = 'services_archive'
+class ArchivedService(db.Model):
+    __tablename__ = 'archived_services'
 
     id = db.Column(db.Integer, primary_key=True)
     service_id = db.Column(db.BigInteger,
@@ -56,7 +56,7 @@ class ServiceArchive(db.Model):
 
     @staticmethod
     def from_service(service):
-        return ServiceArchive(
+        return ArchivedService(
             service_id=service.service_id,
             supplier_id=service.supplier_id,
             created_at=service.created_at,

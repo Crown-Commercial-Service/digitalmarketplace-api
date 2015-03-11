@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError, DatabaseError
 
 from . import main
 from .. import db
-from ..models import Service, ServiceArchive
+from ..models import Service, ArchivedService
 from ..validation import validate_json_or_400, validate_updater_json_or_400
 
 
@@ -49,10 +49,10 @@ def list_services():
         links=pagination_links(services, '.list_services', request.args))
 
 
-@main.route('/services-archive', methods=['GET'])
+@main.route('/archived-services', methods=['GET'])
 def list_archived_services_by_service_id():
     """
-    Retrieves a list of services from the service_archive table
+    Retrieves a list of services from the archived_services table
     for the supplied service_id
     :query_param service_id:
     :return: List[service]
@@ -68,7 +68,7 @@ def list_archived_services_by_service_id():
     except ValueError:
         abort(400, "Invalid page argument")
 
-    services = ServiceArchive.query.filter(Service.service_id == service_id)
+    services = ArchivedService.query.filter(Service.service_id == service_id)
 
     services = services.paginate(page=page, per_page=API_FETCH_PAGE_SIZE,
                                  error_out=False)
@@ -90,7 +90,7 @@ def update_service(service_id):
         Service.service_id == service_id
     ).first_or_404()
 
-    service_to_archive = ServiceArchive.from_service(service)
+    service_to_archive = ArchivedService.from_service(service)
 
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ["update_details", "services"])
@@ -172,16 +172,16 @@ def get_service(service_id):
     return jsonify(services=jsonify_service(service))
 
 
-@main.route('/services-archive/<int:service_archive_id>', methods=['GET'])
-def get_archived_service(service_archive_id):
+@main.route('/archived-services/<int:archived_service_id>', methods=['GET'])
+def get_archived_service(archived_service_id):
     """
-    Retrieves a service from the service_archive by PK
-    :param service_archive_id:
+    Retrieves a service from the archived_service by PK
+    :param archived_service_id:
     :return: service
     """
 
-    service = ServiceArchive.query.filter(
-        ServiceArchive.id == service_archive_id
+    service = ArchivedService.query.filter(
+        ArchivedService.id == archived_service_id
     ).first_or_404()
 
     return jsonify(services=jsonify_service(service))

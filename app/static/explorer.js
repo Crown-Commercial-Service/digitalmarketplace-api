@@ -21,7 +21,7 @@ function fetchService() {
 
 function fetchArchivedService() {
     var request = $.ajax({
-           url: "/services-archive?service-id=" + $('#service_id').val(),
+           url: "/archived-services?service-id=" + $('#service_id').val(),
            type: "GET",
            contentType: "application/json",
            headers: commonHeaders()
@@ -65,8 +65,13 @@ function updateService() {
 }
 
 function importService() {
+    var update_details = {}
+    var services = {}
+    update_details['updated_by'] = 'joeblogs'
+    update_details['update_reason'] = 'whateves'
     var service = {}
     service['services'] = JSON.parse($('#import-json').val())
+    service['update_details'] = update_details
     var request = $.ajax({
            url: "/services/" + $('#service_id').val(),
            type: "PUT",
