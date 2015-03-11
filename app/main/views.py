@@ -173,11 +173,6 @@ def get_archived_service(service_archive_id):
     :return: service
     """
 
-    try:
-        int(service_archive_id)
-    except ValueError:
-        abort(400, "Invalid service id supplied")
-
     service = ServiceArchive.query.filter(
         ServiceArchive.id == service_archive_id
     ).first_or_404()
