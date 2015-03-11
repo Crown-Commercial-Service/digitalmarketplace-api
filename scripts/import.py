@@ -67,7 +67,6 @@ class ServicePutter(object):
                 "authorization": "Bearer {}".format(self.access_token),
             },
             verify=self.cert if self.cert else True)
-        print(response.text)
         return file_path, response
 
 
