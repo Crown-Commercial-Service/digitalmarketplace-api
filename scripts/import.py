@@ -55,7 +55,9 @@ class ServicePutter(object):
             except ValueError:
                 print("Skipping {}: not a valid JSON file".format(file_path))
                 return file_path, None
-        data = {'update_details': {'updated_by': getpass.getuser(), 'update_reason': 'service import'}, 'services': data}
+        data = {'update_details': {'updated_by': getpass.getuser(),
+                                   'update_reason': 'service import'},
+                'services': data}
         url = '{}/{}'.format(self.endpoint, data['services']['id'])
         response = requests.put(
             url,
