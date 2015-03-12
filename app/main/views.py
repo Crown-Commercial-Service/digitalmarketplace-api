@@ -1,12 +1,12 @@
 from datetime import datetime
 from flask import jsonify, abort, request
 from flask import url_for as base_url_for
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DatabaseError
 
 from . import main
 from .. import db
-from ..models import Service
-from ..validation import validate_json_or_400
+from ..models import Service, ArchivedService
+from ..validation import validate_json_or_400, validate_updater_json_or_400
 
 
 API_FETCH_PAGE_SIZE = 100
@@ -49,26 +49,98 @@ def list_services():
         links=pagination_links(services, '.list_services', request.args))
 
 
-@main.route('/services', methods=['POST'])
-def add_service():
-    message = "IDs are currently generated externally, new resources should " \
-              "be created with PUT"
-    return jsonify(error=message), 501
+@main.route('/archived-services', methods=['GET'])
+def list_archived_services_by_service_id():
+    """
+    Retrieves a list of services from the archived_services table
+    for the supplied service_id
+    :query_param service_id:
+    :return: List[service]
+    """
+
+    try:
+        service_id = int(request.args.get("service-id", "no service id"))
+    except ValueError:
+        abort(400, "Invalid service id supplied")
+
+    try:
+        page = int(request.args.get('page', 1))
+    except ValueError:
+        abort(400, "Invalid page argument")
+
+    services = ArchivedService.query.filter(Service.service_id == service_id)
+
+    services = services.paginate(page=page, per_page=API_FETCH_PAGE_SIZE,
+                                 error_out=False)
+
+    if request.args and not services.items:
+        abort(404)
+    return jsonify(
+        services=list(map(jsonify_service, services.items)),
+        links=pagination_links(services, '.list_services', request.args))
+
+
+@main.route('/services/<int:service_id>', methods=['POST'])
+def update_service(service_id):
+    """
+        Update a service. Looks service up in DB, and updates the JSON listing.
+        Uses existing JSON Parse routines for validation
+    """
+    service = Service.query.filter(
+        Service.service_id == service_id
+    ).first_or_404()
+
+    service_to_archive = ArchivedService.from_service(service)
+
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ["update_details", "services"])
+
+    update_json = json_payload['update_details']
+    validate_updater_json_or_400(update_json)
+    service_update = json_payload['services']
+
+    data = dict(service.data.items())
+    data.update(service_update)
+    validate_json_or_400(data)
+
+    now = datetime.now()
+    service.data = data
+    service.updated_at = now
+    service.updated_by = update_json['updated_by']
+    service.updated_reason = update_json['update_reason']
+
+    db.session.add(service)
+    db.session.add(service_to_archive)
+
+    try:
+        db.session.commit()
+    except DatabaseError:
+        db.session.rollback()
+        abort(500, "Database error")
+
+    return jsonify(message="done"), 200
 
 
 @main.route('/services/<int:service_id>', methods=['PUT'])
-def update_service(service_id):
+def import_service(service_id):
     now = datetime.now()
     service = Service.query.filter(Service.service_id == service_id).first()
+
     http_status = 204
     if service is None:
         http_status = 201
         service = Service(service_id=service_id)
         service.created_at = now
 
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['services', 'update_details'])
+
     service_data = drop_foreign_fields(
-        get_json_from_request()['services']
+        json_payload['services']
     )
+
+    update_json = json_payload['update_details']
+    validate_updater_json_or_400(update_json)
 
     validate_json_or_400(service_data)
 
@@ -78,6 +150,9 @@ def update_service(service_id):
     service.data = service_data
     service.supplier_id = service_data['supplierId']
     service.updated_at = now
+    service.created_at = now
+    service.updated_by = update_json['updated_by']
+    service.updated_reason = update_json['update_reason']
 
     db.session.add(service)
 
@@ -87,13 +162,28 @@ def update_service(service_id):
         db.session.rollback()
         abort(400, "Unknown supplier ID provided")
 
-    return "", http_status
+    return "", 201
 
 
 @main.route('/services/<int:service_id>', methods=['GET'])
 def get_service(service_id):
     service = Service.query.filter(
         Service.service_id == service_id
+    ).first_or_404()
+
+    return jsonify(services=jsonify_service(service))
+
+
+@main.route('/archived-services/<int:archived_service_id>', methods=['GET'])
+def get_archived_service(archived_service_id):
+    """
+    Retrieves a service from the archived_service by PK
+    :param archived_service_id:
+    :return: service
+    """
+
+    service = ArchivedService.query.filter(
+        ArchivedService.id == archived_service_id
     ).first_or_404()
 
     return jsonify(services=jsonify_service(service))
@@ -147,12 +237,16 @@ def pagination_links(pagination, endpoint, args):
 
 
 def get_json_from_request():
-    if request.content_type != 'application/json':
+    if request.content_type not in ['application/json',
+                                    'application/json; charset=UTF-8']:
         abort(400, "Unexpected Content-Type, expecting 'application/json'")
     data = request.get_json()
     if data is None:
         abort(400, "Invalid JSON; must be a valid JSON object")
-    if 'services' not in data:
-        abort(400, "Invalid JSON must have a 'services' key")
-
     return data
+
+
+def json_has_required_keys(data, keys):
+    for key in keys:
+        if key not in data.keys():
+            abort(400, "Invalid JSON must have '%s' key(s)" % keys)

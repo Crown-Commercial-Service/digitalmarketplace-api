@@ -4,6 +4,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
+    ALLOW_EXPLORER = True
     AUTH_REQUIRED = True
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_RECORD_QUERIES = True
@@ -25,6 +26,7 @@ class Development(Config):
 
 class Live(Config):
     DEBUG = False
+    ALLOW_EXPLORER = False
 
 
 config = {
