@@ -470,6 +470,10 @@ class TestPostService(BaseApplicationTest):
         response = self.client.get('/archived-services')
         assert_equal(response.status_code, 400)
 
+    @staticmethod
+    def response_is_404(status_code):
+        assert_equal(status_code, 400)
+
 
 class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     method = "put"
@@ -526,8 +530,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                             'services': payload}
                     ),
                     content_type='application/json')
-
-                print response.get_data()
 
                 assert_equal(response.status_code, 204)
                 now = datetime.now()
