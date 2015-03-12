@@ -132,14 +132,24 @@ def first_by_rel(rel, links):
 
 
 class TestPostService(BaseApplicationTest):
+    service_id = None
+
     def setup(self):
         super(TestPostService, self).setup()
-        now = datetime.now()
         payload = self.load_example_listing("SSP-JSON-IaaS")
+        self.service_id = str(payload['id'])
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
+        self.client.put(
+            '/services/%s' % self.service_id,
+            data=json.dumps(
+                {'update_details': {
+                    'updated_by': 'joeblogs',
+                    'update_reason': 'whateves'},
+                 'services': payload}),
+            content_type='application/json')
 
     def test_can_not_post_to_root_services_url(self):
         response = self.client.post(
@@ -169,20 +179,8 @@ class TestPostService(BaseApplicationTest):
 
     def test_can_not_update_without_updater_details(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
-            service_id = str(payload['id'])
-            response = self.client.put(
-                '/services/%s' % service_id,
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
             response = self.client.post(
-                '/services/%s' % service_id,
+                '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'services': {
                         'serviceName': 'new service name'}}),
@@ -196,21 +194,8 @@ class TestPostService(BaseApplicationTest):
 
     def test_non_json_causes_failure(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
-            service_id = str(payload['id'])
-            response = self.client.put(
-                '/services/%s' % service_id,
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
             response = self.client.post(
-                '/services/%s' % service_id,
+                '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
                         'updated_by': 'joeblogs',
@@ -222,21 +207,8 @@ class TestPostService(BaseApplicationTest):
 
     def test_invalid_content_type_causes_failure(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
-            service_id = str(payload['id'])
-            response = self.client.put(
-                '/services/%s' % service_id,
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
             response = self.client.post(
-                '/services/%s' % service_id,
+                '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
                         'updated_by': 'joeblogs',
@@ -248,114 +220,62 @@ class TestPostService(BaseApplicationTest):
 
     def test_invalid_json_causes_failure(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
-            service_id = str(payload['id'])
-            response = self.client.put(
-                '/services/%s' % service_id,
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
             response = self.client.post(
-                '/services/%s' % service_id,
+                '/services/%s' % self.service_id,
                 data="ouiehdfiouerhfuehr")
 
             assert_equal(response.status_code, 400)
 
     def test_can_post_a_valid_service_update(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
-            service_id = str(payload['id'])
-            response = self.client.put(
-                '/services/%s' % service_id,
+            response = self.client.post(
+                '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
                         'updated_by': 'joeblogs',
                         'update_reason': 'whateves'},
-                     'services': payload}),
+                     'services': {
+                         'serviceName': 'new service name'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 201)
+            assert_equal(response.status_code, 200)
 
-        response = self.client.post(
-            '/services/%s' % service_id,
-            data=json.dumps(
-                {'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
-                 'services': {
-                     'serviceName': 'new service name'}}),
-            content_type='application/json')
+            response = self.client.get('/services/%s' % self.service_id)
 
-        assert_equal(response.status_code, 200)
-
-        response = self.client.get('/services/%s' % service_id)
-
-        data = json.loads(response.get_data())
-        assert_equal(data['services']['serviceName'], 'new service name')
-        assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())
+            assert_equal(data['services']['serviceName'], 'new service name')
+            assert_equal(response.status_code, 200)
 
     def test_can_post_a_valid_service_update_on_several_fields(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
-            service_id = str(payload['id'])
-            response = self.client.put(
-                '/services/%s' % service_id,
+            response = self.client.post(
+                '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
                         'updated_by': 'joeblogs',
                         'update_reason': 'whateves'},
-                     'services': payload}),
+                     'services': {
+                         'serviceName': 'new service name',
+                         'incidentEscalation': False,
+                         'serviceTypes': ['Compute']}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 201)
+            assert_equal(response.status_code, 200)
 
-        response = self.client.post(
-            '/services/%s' % service_id,
-            data=json.dumps(
-                {'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
-                 'services': {
-                     'serviceName': 'new service name',
-                     'incidentEscalation': False,
-                     'serviceTypes': ['Compute']}}),
-            content_type='application/json')
+            response = self.client.get('/services/%s' % self.service_id)
 
-        assert_equal(response.status_code, 200)
-
-        response = self.client.get('/services/%s' % service_id)
-
-        data = json.loads(response.get_data())
-        assert_equal(data['services']['serviceName'], 'new service name')
-        assert_equal(data['services']['incidentEscalation'], False)
-        assert_equal(data['services']['serviceTypes'][0], 'Compute')
-        assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())
+            assert_equal(data['services']['serviceName'], 'new service name')
+            assert_equal(data['services']['incidentEscalation'], False)
+            assert_equal(data['services']['serviceTypes'][0], 'Compute')
+            assert_equal(response.status_code, 200)
 
     def test_can_post_a_valid_service_update_with_list(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
-            service_id = str(payload['id'])
-            response = self.client.put(
-                '/services/%s' % service_id,
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
             support_types = ['Service desk', 'Email',
                              'Phone', 'Live chat', 'Onsite']
             response = self.client.post(
-                '/services/%s' % service_id,
+                '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
                         'updated_by': 'joeblogs',
@@ -366,7 +286,7 @@ class TestPostService(BaseApplicationTest):
 
             assert_equal(response.status_code, 200)
 
-            response = self.client.get('/services/%s' % service_id)
+            response = self.client.get('/services/%s' % self.service_id)
             data = json.loads(response.get_data())
 
             assert_equal(all(i in support_types for i in
@@ -375,19 +295,6 @@ class TestPostService(BaseApplicationTest):
 
     def test_can_post_a_valid_service_update_with_object(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
-            service_id = str(payload['id'])
-            response = self.client.put(
-                '/services/%s' % service_id,
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
             identity_authentication_controls = {
                 "value": [
                     "Authentication federation"
@@ -396,7 +303,7 @@ class TestPostService(BaseApplicationTest):
             }
 
             response = self.client.post(
-                '/services/%s' % service_id,
+                '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
                         'updated_by': 'joeblogs',
@@ -408,7 +315,7 @@ class TestPostService(BaseApplicationTest):
 
             assert_equal(response.status_code, 200)
 
-            response = self.client.get('/services/%s' % service_id)
+            response = self.client.get('/services/%s' % self.service_id)
             data = json.loads(response.get_data())
 
             updated_auth_controls = \
@@ -422,20 +329,8 @@ class TestPostService(BaseApplicationTest):
 
     def test_invalid_field_not_accepted_on_update_for_iaas(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
-            response = self.client.put(
-                '/services/' + str(payload['id']),
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
             response = self.client.post(
-                "/services/" + str(payload['id']),
+                "/services/" + self.service_id,
                 data=json.dumps(
                     {'update_details': {
                         'updated_by': 'joeblogs',
@@ -450,20 +345,8 @@ class TestPostService(BaseApplicationTest):
 
     def test_invalid_field_not_accepted_on_update_for_saas(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-SaaS")
-            response = self.client.put(
-                '/services/' + str(payload['id']),
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
             response = self.client.post(
-                "/services/" + str(payload['id']),
+                "/services/" + self.service_id,
                 data=json.dumps(
                     {'update_details': {
                         'updated_by': 'joeblogs',
@@ -478,21 +361,8 @@ class TestPostService(BaseApplicationTest):
 
     def test_invalid_field_not_accepted_on_update_for_paas(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-PaaS")
-
-            response = self.client.put(
-                '/services/' + str(payload['id']),
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
             response = self.client.post(
-                "/services/" + str(payload['id']),
+                "/services/" + self.service_id,
                 data=json.dumps(
                     {'update_details': {
                         'updated_by': 'joeblogs',
@@ -507,21 +377,8 @@ class TestPostService(BaseApplicationTest):
 
     def test_invalid_field_not_accepted_on_update_for_scs(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-SCS")
-
-            response = self.client.put(
-                '/services/' + str(payload['id']),
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
             response = self.client.post(
-                "/services/" + str(payload['id']),
+                "/services/" + self.service_id,
                 data=json.dumps(
                     {'update_details': {
                         'updated_by': 'joeblogs',
@@ -536,20 +393,8 @@ class TestPostService(BaseApplicationTest):
 
     def test_invalid_field_value_not_accepted_on_update_for(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
-            response = self.client.put(
-                '/services/' + str(payload['id']),
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
             response = self.client.post(
-                "/services/" + str(payload['id']),
+                "/services/" + self.service_id,
                 data=json.dumps(
                     {'update_details': {
                         'updated_by': 'joeblogs',
@@ -563,20 +408,8 @@ class TestPostService(BaseApplicationTest):
 
     def test_updated_service_should_be_archived(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
-            response = self.client.put(
-                '/services/' + str(payload['id']),
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
             response = self.client.post(
-                '/services/%s' % str(payload['id']),
+                '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
                         'updated_by': 'joeblogs',
@@ -589,7 +422,7 @@ class TestPostService(BaseApplicationTest):
 
             archived_state = self.client.get(
                 '/archived-services?service-id=' +
-                str(payload['id'])).get_data()
+                self.service_id).get_data()
             archived_service_json = json.loads(archived_state)['services'][0]
 
             assert_equal(
@@ -597,21 +430,9 @@ class TestPostService(BaseApplicationTest):
 
     def test_updated_service_should_be_archived_on_each_update(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
-            response = self.client.put(
-                '/services/' + str(payload['id']),
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': payload}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
             for i in range(5):
                 response = self.client.post(
-                    '/services/%s' % str(payload['id']),
+                    '/services/%s' % self.service_id,
                     data=json.dumps(
                         {'update_details': {
                             'updated_by': 'joeblogs',
@@ -624,7 +445,7 @@ class TestPostService(BaseApplicationTest):
 
             archived_state = self.client.get(
                 '/archived-services?service-id=' +
-                str(payload['id'])).get_data()
+                self.service_id).get_data()
             assert_equal(len(json.loads(archived_state)['services']), 5)
 
     def test_should_404_if_no_archived_service_found_by_pk(self):
