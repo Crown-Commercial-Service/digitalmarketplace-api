@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError, DatabaseError
 
 from . import main
 from .. import db
-from ..models import Service, ArchivedService
+from ..models import ArchivedService, Service, Supplier
 from ..validation import validate_json_or_400, validate_updater_json_or_400
 
 
@@ -38,12 +38,18 @@ def list_services():
             supplier_id = int(supplier_id)
         except ValueError:
             abort(400, "Invalid supplier_id")
+
+        supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id) \
+            .all()
+        if not supplier:
+            abort(404, "supplier_id '%d' not found" % supplier_id)
+
         services = services.filter(Service.supplier_id == supplier_id)
 
     services = services.paginate(page=page, per_page=API_FETCH_PAGE_SIZE,
                                  error_out=False)
-    if request.args and not services.items:
-        abort(404)
+    if page > 1 and not services.items:
+        abort(404, "Page number out of range")
     return jsonify(
         services=list(map(jsonify_service, services.items)),
         links=pagination_links(services, '.list_services', request.args))

@@ -9,6 +9,9 @@ from app.models import Service, Supplier
 from datetime import datetime
 
 
+TEST_SUPPLIERS_COUNT = 3
+
+
 class WSGIApplicationWithEnvironment(object):
     def __init__(self, app, **kwargs):
         self.app = app
@@ -53,20 +56,24 @@ class BaseApplicationTest(object):
 
     def setup_dummy_services(self, n):
         now = datetime.now()
-        suppliers_count = 3
         with self.app.app_context():
-            for i in range(suppliers_count):
+            for i in range(TEST_SUPPLIERS_COUNT):
                 db.session.add(
                     Supplier(supplier_id=i, name=u"Supplier {}".format(i))
                 )
             for i in range(n):
                 db.session.add(Service(service_id=i,
-                                       supplier_id=i % suppliers_count,
+                                       supplier_id=i % TEST_SUPPLIERS_COUNT,
                                        updated_at=now,
                                        created_at=now,
                                        updated_by='tests',
                                        updated_reason='test data',
                                        data={'foo': 'bar'}))
+            # Add an extra supplier that will have no services
+            db.session.add(
+                Supplier(supplier_id=TEST_SUPPLIERS_COUNT, name=u"Supplier {}"
+                         .format(TEST_SUPPLIERS_COUNT))
+            )
 
     def teardown(self):
         self.teardown_authorization()
