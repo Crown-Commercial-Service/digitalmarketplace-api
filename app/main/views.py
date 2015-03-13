@@ -65,7 +65,7 @@ def list_archived_services_by_service_id():
     """
 
     try:
-        service_id = int(request.args.get("service-id", "no service id"))
+        service_id = int(request.args.get("service_id", "no service id"))
     except ValueError:
         abort(400, "Invalid service id supplied")
 

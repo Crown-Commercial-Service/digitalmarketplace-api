@@ -439,7 +439,7 @@ class TestPostService(BaseApplicationTest):
             assert_equal(response.status_code, 200)
 
             archived_state = self.client.get(
-                '/archived-services?service-id=' +
+                '/archived-services?service_id=' +
                 self.service_id).get_data()
             archived_service_json = json.loads(archived_state)['services'][0]
 
@@ -462,7 +462,7 @@ class TestPostService(BaseApplicationTest):
                 assert_equal(response.status_code, 200)
 
             archived_state = self.client.get(
-                '/archived-services?service-id=' +
+                '/archived-services?service_id=' +
                 self.service_id).get_data()
             assert_equal(len(json.loads(archived_state)['services']), 5)
 
@@ -471,7 +471,7 @@ class TestPostService(BaseApplicationTest):
         assert_equal(response.status_code, 404)
 
     def test_return_empty_list_if_no_archived_service_by_service_id(self):
-        response = self.client.get('/archived-services?service-id=123')
+        response = self.client.get('/archived-services?service_id=123')
         assert_equal(response.status_code, 404)
 
     def test_should_404_if_non_int_pk(self):
