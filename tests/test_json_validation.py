@@ -3,11 +3,11 @@ from __future__ import absolute_import
 import os
 import json
 
-from nose.tools import assert_equal, assert_false
+from nose.tools import assert_equal
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.validation import validate_json, \
-    validates_against_schema, UPDATER_SCHEMA
+    validates_against_schema, UPDATER_VALIDATOR
 
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -28,13 +28,13 @@ def test_updater_json_validates_correctly():
     valid_updater = {'updated_by': 'this', 'update_reason': 'hi'}
 
     assert_equal(validates_against_schema(
-        UPDATER_SCHEMA, invalid_updater_no_reason), False)
+        UPDATER_VALIDATOR, invalid_updater_no_reason), False)
     assert_equal(validates_against_schema(
-        UPDATER_SCHEMA, invalid_updater_no_username), False)
+        UPDATER_VALIDATOR, invalid_updater_no_username), False)
     assert_equal(validates_against_schema(
-        UPDATER_SCHEMA, invalid_updater_no_fields), False)
+        UPDATER_VALIDATOR, invalid_updater_no_fields), False)
     assert_equal(validates_against_schema(
-        UPDATER_SCHEMA, valid_updater), True)
+        UPDATER_VALIDATOR, valid_updater), True)
 
 
 def test_example_json_validates_correctly():
