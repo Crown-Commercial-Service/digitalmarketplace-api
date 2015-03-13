@@ -5,7 +5,8 @@ from nose.tools import assert_equal, assert_in, assert_not_equal, \
 from app import db
 from app.models import Service, Supplier
 from datetime import datetime, timedelta
-from .helpers import BaseApplicationTest, JSONUpdateTestMixin
+from .helpers import BaseApplicationTest, JSONUpdateTestMixin, \
+    TEST_SUPPLIERS_COUNT
 
 
 class TestListServices(BaseApplicationTest):
@@ -60,8 +61,6 @@ class TestListServices(BaseApplicationTest):
 
         response = self.client.get('/services?page=10')
 
-        # TODO: decide whether this is actually correct.
-        # this is what Flask-SQLAlchemy does by default so is easy
         assert_equal(response.status_code, 404)
 
     def test_x_forwarded_proto(self):
@@ -83,6 +82,11 @@ class TestListServices(BaseApplicationTest):
 
         assert_equal(response.status_code, 400)
 
+    def test_non_existent_supplier_id_argument(self):
+        response = self.client.get('/services?supplier_id=54321')
+
+        assert_equal(response.status_code, 404)
+
     def test_supplier_id_filter(self):
         self.setup_dummy_services(15)
 
@@ -92,6 +96,20 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         assert_equal(
             list(filter(lambda s: s['supplierId'] == 1, data['services'])),
+            data['services']
+        )
+
+    def test_supplier_id_with_no_services_filter(self):
+        self.setup_dummy_services(15)
+
+        response = self.client.get(
+            '/services?supplier_id=%d' % TEST_SUPPLIERS_COUNT
+        )
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(
+            list(),
             data['services']
         )
 
