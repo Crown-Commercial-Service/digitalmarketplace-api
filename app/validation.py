@@ -2,26 +2,42 @@ import json
 
 from flask import abort
 from jsonschema import validate, ValidationError
+from jsonschema.validators import validator_for
 
 
 with open("json_schemas/g6-scs-schema.json") as json_file1:
     G6_SCS_SCHEMA = json.load(json_file1)
+    G6_SCS_VALIDATOR = validator_for(G6_SCS_SCHEMA)
+    G6_SCS_VALIDATOR.check_schema(G6_SCS_SCHEMA)
+    G6_SCS_VALIDATOR = G6_SCS_VALIDATOR(G6_SCS_SCHEMA)
 
 with open("json_schemas/g6-saas-schema.json") as json_file2:
     G6_SAAS_SCHEMA = json.load(json_file2)
+    G6_SAAS_VALIDATOR = validator_for(G6_SAAS_SCHEMA)
+    G6_SAAS_VALIDATOR.check_schema(G6_SAAS_SCHEMA)
+    G6_SAAS_VALIDATOR = G6_SAAS_VALIDATOR(G6_SAAS_SCHEMA)
 
 with open("json_schemas/g6-iaas-schema.json") as json_file3:
     G6_IAAS_SCHEMA = json.load(json_file3)
+    G6_IAAS_VALIDATOR = validator_for(G6_IAAS_SCHEMA)
+    G6_IAAS_VALIDATOR.check_schema(G6_IAAS_SCHEMA)
+    G6_IAAS_VALIDATOR = G6_IAAS_VALIDATOR(G6_IAAS_SCHEMA)
 
 with open("json_schemas/g6-paas-schema.json") as json_file4:
     G6_PAAS_SCHEMA = json.load(json_file4)
+    G6_PAAS_VALIDATOR = validator_for(G6_PAAS_SCHEMA)
+    G6_PAAS_VALIDATOR.check_schema(G6_PAAS_SCHEMA)
+    G6_PAAS_VALIDATOR = G6_PAAS_VALIDATOR(G6_PAAS_SCHEMA)
 
 with open("json_schemas/update-details.json") as json_file5:
     UPDATER_SCHEMA = json.load(json_file5)
+    UPDATER_VALIDATOR = validator_for(UPDATER_SCHEMA)
+    UPDATER_VALIDATOR.check_schema(UPDATER_SCHEMA)
+    UPDATER_VALIDATOR = UPDATER_VALIDATOR(UPDATER_SCHEMA)
 
 
 def validate_updater_json_or_400(submitted_json):
-    if not validates_against_schema(UPDATER_SCHEMA, submitted_json):
+    if not validates_against_schema(UPDATER_VALIDATOR, submitted_json):
         abort(400, "JSON was not a valid format")
 
 
@@ -31,22 +47,22 @@ def validate_json_or_400(submitted_json):
 
 
 def validate_json(submitted_json):
-    if validates_against_schema(G6_SCS_SCHEMA, submitted_json):
+    if validates_against_schema(G6_SCS_VALIDATOR, submitted_json):
         return 'G6-SCS'
-    elif validates_against_schema(G6_SAAS_SCHEMA, submitted_json):
+    elif validates_against_schema(G6_SAAS_VALIDATOR, submitted_json):
         return 'G6-SaaS'
-    elif validates_against_schema(G6_PAAS_SCHEMA, submitted_json):
+    elif validates_against_schema(G6_PAAS_VALIDATOR, submitted_json):
         return 'G6-PaaS'
-    elif validates_against_schema(G6_IAAS_SCHEMA, submitted_json):
+    elif validates_against_schema(G6_IAAS_VALIDATOR, submitted_json):
         return 'G6-IaaS'
     else:
         # print_reason_for_failure(submitted_json)
         return False
 
 
-def validates_against_schema(schema, submitted_json):
+def validates_against_schema(validator, submitted_json):
     try:
-        validate(submitted_json, schema)
+        validator.validate(submitted_json)
     except ValidationError:
         return False
     else:
