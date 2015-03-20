@@ -43,7 +43,9 @@ def validate_updater_json_or_400(submitted_json):
 
 def validate_json_or_400(submitted_json):
     if not validate_json(submitted_json):
-        abort(400, "JSON was not a valid format")
+        abort(400, "JSON was not a valid format. {}".format(
+            reason_for_failure(submitted_json))
+        )
 
 
 def validate_json(submitted_json):
@@ -56,7 +58,6 @@ def validate_json(submitted_json):
     elif validates_against_schema(G6_IAAS_VALIDATOR, submitted_json):
         return 'G6-IaaS'
     else:
-        # print_reason_for_failure(submitted_json)
         return False
 
 
@@ -69,25 +70,26 @@ def validates_against_schema(validator, submitted_json):
         return True
 
 
-def print_reason_for_failure(submitted_json):
-    print('FAILED TO VALIDATE:')
-    print(submitted_json)
+def reason_for_failure(submitted_json):
+    response = []
     try:
         validate(submitted_json, G6_SCS_SCHEMA)
     except ValidationError as e1:
-        print('Not SCS: %s' % e1.message)
+        response.append('Not SCS: %s' % e1.message)
 
     try:
         validate(submitted_json, G6_SAAS_SCHEMA)
     except ValidationError as e2:
-        print('Not SaaS: %s' % e2.message)
+        response.append('Not SaaS: %s' % e2.message)
 
     try:
         validate(submitted_json, G6_PAAS_SCHEMA)
     except ValidationError as e3:
-        print('Not PaaS: %s' % e3.message)
+        response.append('Not PaaS: %s' % e3.message)
 
     try:
         validate(submitted_json, G6_IAAS_SCHEMA)
     except ValidationError as e4:
-        print('Not IaaS: %s' % e4.message)
+        response.append('Not IaaS: %s' % e4.message)
+
+    return '. '.join(response)
