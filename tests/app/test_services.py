@@ -466,6 +466,25 @@ class TestPostService(BaseApplicationTest):
                 self.service_id).get_data()
             assert_equal(len(json.loads(archived_state)['services']), 5)
 
+    def test_writing_full_service_back(self):
+        with self.app.app_context():
+            response = self.client.get('/services/%s' % self.service_id)
+            data = json.loads(response.get_data())
+
+            response = self.client.post(
+                '/services/%s' % self.service_id,
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': data['services']
+                    }
+                ),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+
     def test_should_404_if_no_archived_service_found_by_pk(self):
         response = self.client.get('/archived-services/123')
         assert_equal(response.status_code, 404)
