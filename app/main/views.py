@@ -103,7 +103,9 @@ def update_service(service_id):
 
     update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
-    service_update = json_payload['services']
+    service_update = drop_foreign_fields(
+        json_payload['services']
+    )
 
     data = dict(service.data.items())
     data.update(service_update)

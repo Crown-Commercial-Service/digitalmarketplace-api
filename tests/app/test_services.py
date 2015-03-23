@@ -357,8 +357,8 @@ class TestPostService(BaseApplicationTest):
                          'this is invalid': 'so I should never see this'}}),
                 content_type='application/json')
 
-            assert_equal(json.loads(
-                response.get_data())['error'], 'JSON was not a valid format')
+            assert_in('JSON was not a valid format',
+                      json.loads(response.get_data())['error'])
             assert_equal(response.status_code, 400)
 
     def test_invalid_field_not_accepted_on_update_for_saas(self):
@@ -373,8 +373,8 @@ class TestPostService(BaseApplicationTest):
                          'this is invalid': 'so I should never see this'}}),
                 content_type='application/json')
 
-            assert_equal(json.loads(
-                response.get_data())['error'], 'JSON was not a valid format')
+            assert_in('JSON was not a valid format',
+                      json.loads(response.get_data())['error'])
             assert_equal(response.status_code, 400)
 
     def test_invalid_field_not_accepted_on_update_for_paas(self):
@@ -389,8 +389,8 @@ class TestPostService(BaseApplicationTest):
                          'this is invalid': 'so I should never see this'}}),
                 content_type='application/json')
 
-            assert_equal(json.loads(
-                response.get_data())['error'], 'JSON was not a valid format')
+            assert_in('JSON was not a valid format',
+                      json.loads(response.get_data())['error'])
             assert_equal(response.status_code, 400)
 
     def test_invalid_field_not_accepted_on_update_for_scs(self):
@@ -405,8 +405,8 @@ class TestPostService(BaseApplicationTest):
                          'this is invalid': 'so I should never see this'}}),
                 content_type='application/json')
 
-            assert_equal(json.loads(
-                response.get_data())['error'], 'JSON was not a valid format')
+            assert_in('JSON was not a valid format',
+                      json.loads(response.get_data())['error'])
         assert_equal(response.status_code, 400)
 
     def test_invalid_field_value_not_accepted_on_update_for(self):
@@ -420,8 +420,8 @@ class TestPostService(BaseApplicationTest):
                         'priceUnit': 'euros'}}),
                 content_type='application/json')
 
-            assert_equal(json.loads(
-                response.get_data())['error'], 'JSON was not a valid format')
+            assert_in('JSON was not a valid format',
+                      json.loads(response.get_data())['error'])
             assert_equal(response.status_code, 400)
 
     def test_updated_service_should_be_archived(self):
@@ -465,6 +465,25 @@ class TestPostService(BaseApplicationTest):
                 '/archived-services?service_id=' +
                 self.service_id).get_data()
             assert_equal(len(json.loads(archived_state)['services']), 5)
+
+    def test_writing_full_service_back(self):
+        with self.app.app_context():
+            response = self.client.get('/services/%s' % self.service_id)
+            data = json.loads(response.get_data())
+
+            response = self.client.post(
+                '/services/%s' % self.service_id,
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': data['services']
+                    }
+                ),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
 
     def test_should_404_if_no_archived_service_found_by_pk(self):
         response = self.client.get('/archived-services/123')
