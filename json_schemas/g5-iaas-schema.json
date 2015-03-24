@@ -1,0 +1,180 @@
+{
+  "id": "G5 IaaS Schema",
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "pattern": "disabled|enabled|published"
+    },
+    "supplierId": {
+      "type": "integer"
+    },
+    "lot": {
+      "type": "string",
+      "pattern": "IaaS"
+    },
+    "title": {
+      "type": "string"
+    },
+    "serviceTypes": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "pattern": "Compute|Storage"
+      }
+    },
+    "serviceName": {
+      "type": "string"
+    },
+    "serviceSummary": {
+      "type": "string"
+    },
+    "serviceBenefits": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string"
+      }
+    },
+    "serviceFeatures": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string"
+      }
+    },
+    "serviceDefinitionDocumentURL": {
+      "type": "string",
+      "format": "uri"
+    },
+    "termsAndConditionsDocumentURL": {
+      "type": "string"
+    },
+    "pricingDocumentURL": {
+      "type": "string",
+      "format": "uri"
+    },
+    "sfiaRateDocumentURL": {
+      "type": "string",
+      "format": "uri"
+    },
+    "additionalDocumentURLs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "minimumContractPeriod": {
+      "type": "string",
+      "pattern": "hour|day|month|year|other"
+    },
+    "freeOption": {
+      "type": "boolean"
+    },
+    "trialOption": {
+      "type": "boolean"
+    },
+    "terminationCost": {
+      "type": "boolean"
+    },
+    "priceMin": {
+      "type": "number"
+    },
+    "priceUnit": {
+      "type": "string"
+    },
+    "priceString": {
+      "type": "string"
+    },
+    "educationPricing": {
+      "type": "boolean"
+    },
+    "networksConnected": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 7,
+      "items": {
+        "type": "string",
+        "pattern": "Internet|Public Services Network \\(PSN\\)|Government Secure intranet \\(GSi\\)|Police National Network \\(PNN\\)|New NHS Network \\(N3\\)|Joint Academic Network \\(JANET\\)|Other"
+      }
+    },
+    "elasticCloud": {
+      "type": "boolean"
+    },
+    "guaranteedResources": {
+      "type": "boolean"
+    },
+    "persistentStorage": {
+      "type": "boolean"
+    },
+    "openStandardsSupported": {
+      "type": "boolean"
+    },
+    "openSource": {
+      "type": "boolean"
+    },
+    "serviceOnboarding": {
+      "type": "boolean"
+    },
+    "serviceOffboarding": {
+      "type": "boolean"
+    },
+    "dataExtractionRemoval": {
+      "type": "boolean"
+    },
+    "datacentresEUCode": {
+      "type": "boolean"
+    },
+    "dataBackupRecovery": {
+      "type": "boolean"
+    },
+    "selfServiceProvisioning": {
+      "type": "boolean"
+    },
+    "supportForThirdParties": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "state",
+    "supplierId",
+    "lot",
+    "title",
+    "serviceTypes",
+    "serviceName",
+    "serviceSummary",
+    "serviceDefinitionDocumentURL",
+    "termsAndConditionsDocumentURL",
+    "pricingDocumentURL",
+    "minimumContractPeriod",
+    "trialOption",
+    "freeOption",
+    "terminationCost",
+    "priceMin",
+    "priceUnit",
+    "priceString",
+    "educationPricing",
+    "networksConnected",
+    "elasticCloud",
+    "guaranteedResources",
+    "persistentStorage",
+    "openStandardsSupported",
+    "openSource",
+    "serviceOnboarding",
+    "serviceOffboarding",
+    "dataExtractionRemoval",
+    "datacentresEUCode",
+    "dataBackupRecovery",
+    "selfServiceProvisioning",
+    "supportForThirdParties"
+  ]
+}

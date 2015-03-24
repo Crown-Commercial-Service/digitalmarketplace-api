@@ -1,0 +1,104 @@
+{
+   "id": "G5 No-Lot Schema",
+   "$schema": "http://json-schema.org/schema#",
+   "type": "object",
+   "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "pattern": "disabled|enabled|published"
+    },
+    "supplierId": {
+      "type": "integer"
+    },
+    "title": {
+      "type": "string"
+    },
+    "serviceName": {
+      "type": "string"
+    },
+    "serviceSummary": {
+      "type": "string"
+    },
+    "serviceBenefits": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string"
+      }
+    },
+    "serviceFeatures": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string"
+      }
+    },
+    "serviceDefinitionDocumentURL": {
+      "type": "string",
+      "format": "uri"
+    },
+    "termsAndConditionsDocumentURL": {
+      "type": "string"
+    },
+    "pricingDocumentURL": {
+      "type": "string",
+      "format": "uri"
+    },
+    "sfiaRateDocumentURL": {
+      "type": "string",
+      "format": "uri"
+    },
+    "additionalDocumentURLs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "minimumContractPeriod": {
+      "type": "string",
+      "pattern": "hour|day|month|year|other"
+    },
+    "freeOption": {
+      "type": "boolean"
+    },
+    "trialOption": {
+      "type": "boolean"
+    },
+    "terminationCost": {
+      "type": "boolean"
+    },
+    "priceMin": {
+      "type": "number"
+    },
+    "priceUnit": {
+      "type": "string"
+    },
+    "priceString": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "state",
+    "supplierId",
+    "title",
+    "serviceName",
+    "serviceSummary",
+    "serviceDefinitionDocumentURL",
+    "termsAndConditionsDocumentURL",
+    "pricingDocumentURL",
+    "sfiaRateDocumentURL",
+    "minimumContractPeriod",
+    "freeOption",
+    "trialOption",
+    "terminationCost",
+    "priceMin",
+    "priceUnit",
+    "priceString"
+  ]
+}
