@@ -166,9 +166,7 @@ def import_service(service_id):
     now = datetime.now()
     service = Service.query.filter(Service.service_id == service_id).first()
 
-    http_status = 204
     if service is None:
-        http_status = 201
         service = Service(service_id=service_id)
         service.created_at = now
 
