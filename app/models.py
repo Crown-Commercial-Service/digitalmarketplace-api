@@ -1,6 +1,8 @@
 from . import db
 from sqlalchemy.dialects.postgresql import JSON
 
+from sqlalchemy import *
+
 
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
@@ -15,7 +17,7 @@ class Service(db.Model):
     __tablename__ = 'services'
 
     id = db.Column(db.Integer, primary_key=True)
-    service_id = db.Column(db.BigInteger,
+    service_id = db.Column(db.String,
                            index=True, unique=True, nullable=False)
     supplier_id = db.Column(db.BigInteger,
                             db.ForeignKey('suppliers.supplier_id'),
@@ -30,6 +32,8 @@ class Service(db.Model):
                                nullable=False)
     data = db.Column(JSON)
 
+    status = db.Column(db.String, index=False, unique=False, nullable=False)
+
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
 
 
@@ -37,7 +41,7 @@ class ArchivedService(db.Model):
     __tablename__ = 'archived_services'
 
     id = db.Column(db.Integer, primary_key=True)
-    service_id = db.Column(db.BigInteger,
+    service_id = db.Column(db.String,
                            index=True, unique=False, nullable=False)
     supplier_id = db.Column(db.BigInteger,
                             db.ForeignKey('suppliers.supplier_id'),
@@ -51,6 +55,8 @@ class ArchivedService(db.Model):
     updated_reason = db.Column(db.String, index=False, unique=False,
                                nullable=False)
     data = db.Column(JSON)
+
+    status = db.Column(db.String, index=False, unique=False, nullable=False)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
 
