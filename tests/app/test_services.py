@@ -184,7 +184,7 @@ class TestPostService(BaseApplicationTest):
 
     def test_returns_404_if_no_service_found(self):
         response = self.client.post(
-            "/services/99999",
+            "/services/9999999999",
             data=json.dumps(
                 {'update_details': {
                     'updated_by': 'joeblogs',
@@ -486,21 +486,17 @@ class TestPostService(BaseApplicationTest):
             assert_equal(response.status_code, 200)
 
     def test_should_404_if_no_archived_service_found_by_pk(self):
-        response = self.client.get('/archived-services/123')
+        response = self.client.get('/archived-services/5')
         assert_equal(response.status_code, 404)
 
     def test_return_empty_list_if_no_archived_service_by_service_id(self):
-        response = self.client.get('/archived-services?service_id=123')
-        assert_equal(response.status_code, 404)
-
-    def test_should_404_if_non_int_pk(self):
-        response = self.client.get('/archived-services/aaa')
+        response = self.client.get(
+            '/archived-services?service_id=12345678901234')
         assert_equal(response.status_code, 404)
 
     def test_should_400_if_invalid_service_id(self):
-        response = self.client.get('/archived-services?service-id=aaa')
-        assert_equal(response.status_code, 400)
-        response = self.client.get('/archived-services?service-id=123.1')
+        response = self.client.get(
+            '/archived-services?service-id=1234567890.1')
         assert_equal(response.status_code, 400)
         response = self.client.get('/archived-services?service-id=')
         assert_equal(response.status_code, 400)
@@ -514,7 +510,7 @@ class TestPostService(BaseApplicationTest):
 
 class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     method = "put"
-    endpoint = "/services/2"
+    endpoint = "/services/1234567890"
 
     def setup(self):
         super(TestPutService, self).setup()
@@ -524,7 +520,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
-            db.session.add(Service(service_id=2,
+            db.session.add(Service(service_id=1234567890,
                                    supplier_id=1,
                                    updated_at=now,
                                    created_at=now,
@@ -535,9 +531,9 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     def test_add_a_new_service(self):
         with self.app.app_context():
             payload = self.load_example_listing("SSP-JSON-IaaS")
-            payload['id'] = 3
+            payload['id'] = "1234567890"
             response = self.client.put(
-                '/services/3',
+                '/services/1234567890',
                 data=json.dumps(
                     {
                         'update_details': {
@@ -548,7 +544,8 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 content_type='application/json')
             assert_equal(response.status_code, 201)
             now = datetime.now()
-            service = Service.query.filter(Service.service_id == 3).first()
+            service = Service.query.filter(Service.service_id ==
+                                           "1234567890").first()
             assert_equal(service.data, payload)
             assert_equal(service.created_at, service.updated_at)
             assert_almost_equal(now, service.created_at,
@@ -558,7 +555,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             with self.app.app_context():
                 payload = self.load_example_listing("SSP-JSON-IaaS")
                 response = self.client.put(
-                    '/services/2',
+                    '/services/1234567890',
                     data=json.dumps(
                         {
                             'update_details': {
@@ -578,20 +575,20 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_when_service_payload_has_invalid_id(self):
         response = self.client.put(
-            '/services/999',
+            '/services/1234567890',
             data=json.dumps({
                 'update_details': {
                     'updated_by': 'joeblogs',
                     'update_reason': 'whateves'},
-                'services': {'id': 3, 'foo': 'bar'}}),
+                'services': {'id': 1234567890, 'foo': 'bar'}}),
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
 
     def test_when_no_update_details(self):
         response = self.client.put(
-            '/services/999',
-            data=json.dumps({'services': {'id': 3, 'foo': 'bar'}}),
+            '/services/1234567890',
+            data=json.dumps({'services': {'id': 1234567890, 'foo': 'bar'}}),
             content_type='application/json')
 
         assert_equal(json.loads(response.get_data())['error'],
@@ -609,7 +606,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 'services': {'id': 'abc123', 'foo': 'bar'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 404)
+        assert_equal(response.status_code, 400)
 
     def test_add_a_service_with_unknown_supplier_id(self):
         with self.app.app_context():
@@ -617,7 +614,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             payload['id'] = 3
             payload['supplierId'] = 100
             response = self.client.put(
-                '/services/3',
+                '/services/1234567890',
                 data=json.dumps(
                     {
                         'update_details': {
@@ -632,12 +629,12 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     def test_supplier_name_in_service_data_is_shadowed(self):
         with self.app.app_context():
             payload = self.load_example_listing("SSP-JSON-IaaS")
-            payload['id'] = 3
+            payload['id'] = "1234567890"
             payload['supplierId'] = 1
             payload['supplierName'] = u'New Name'
 
             response = self.client.put(
-                '/services/3',
+                '/services/1234567890',
                 data=json.dumps(
                     {
                         'update_details': {
@@ -649,7 +646,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
             assert_equal(response.status_code, 201)
 
-            response = self.client.get('/services/3')
+            response = self.client.get('/services/1234567890')
             data = json.loads(response.get_data())
 
             assert_equal(response.status_code, 200)
@@ -664,7 +661,7 @@ class TestGetService(BaseApplicationTest):
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
-            db.session.add(Service(service_id=123,
+            db.session.add(Service(service_id=1234567890,
                                    supplier_id=1,
                                    updated_at=now,
                                    created_at=now,
@@ -673,22 +670,22 @@ class TestGetService(BaseApplicationTest):
                                    data={'foo': 'bar'}))
 
     def test_get_non_existent_service(self):
-        response = self.client.get('/services/100')
+        response = self.client.get('/services/9999999999')
         assert_equal(404, response.status_code)
 
     def test_invalid_service_id(self):
         response = self.client.get('/services/abc123')
-        assert_equal(404, response.status_code)
+        assert_equal(400, response.status_code)
 
     def test_get_service(self):
-        response = self.client.get('/services/123')
+        response = self.client.get('/services/1234567890')
 
         data = json.loads(response.get_data())
         assert_equal(200, response.status_code)
-        assert_equal(123, data['services']['id'])
+        assert_equal("1234567890", data['services']['id'])
 
     def test_get_service_returns_supplier_info(self):
-        response = self.client.get('/services/123')
+        response = self.client.get('/services/1234567890')
 
         data = json.loads(response.get_data())
         assert_equal(data['services']['supplierId'], 1)

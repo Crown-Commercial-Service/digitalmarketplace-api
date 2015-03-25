@@ -7,11 +7,30 @@ from nose.tools import assert_equal
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.validation import validate_json, \
-    validates_against_schema, UPDATER_VALIDATOR
+    validates_against_schema, UPDATER_VALIDATOR, is_valid_service_id
 
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                     '..', 'example_listings'))
+
+
+def test_for_valid_service_id():
+    cases = [
+        ("valid-service-id", True),
+        ("5-g5-0379-325", True),
+        ("1234567890123456", True),
+        ("VALID-service-id", True),
+        ("invalid.service.id", False),
+        ("invalid*service-id", False),
+        ("", False),
+        ("0123456789", True),
+        ("012345678", False),
+        ("01234567890123456789", True),
+        ("012345678901234567890", False)
+    ]
+
+    for example, expected in cases:
+        yield assert_equal, is_valid_service_id(example), expected, example
 
 
 def test_all_schemas_are_valid():
