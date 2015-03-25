@@ -106,8 +106,13 @@ def is_valid_service_id(service_id):
     :return True|False:
     """
 
+<<<<<<< HEAD
     if len(service_id) > MAXIMUM_SERVICE_ID_LENGTH or \
             len(service_id) < MINIMUM_SERVICE_ID_LENGTH or \
+=======
+    if len(service_id) > maximum_service_id_length or \
+            len(service_id) < minimum_service_id_length or \
+>>>>>>> Updated the services table to have a string type for the service id, G6 services have int IDs, but G5/G4 use strings.
             re.search(r"[^A-z0-9-]", service_id):
         return False
     return True

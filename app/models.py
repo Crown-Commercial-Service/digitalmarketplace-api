@@ -1,6 +1,8 @@
 from . import db
 from sqlalchemy.dialects.postgresql import JSON
 
+from sqlalchemy import *
+
 
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
