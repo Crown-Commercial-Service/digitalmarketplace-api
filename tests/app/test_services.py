@@ -523,6 +523,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             db.session.add(Service(service_id=1234567890,
                                    supplier_id=1,
                                    updated_at=now,
+                                   status='enabled',
                                    created_at=now,
                                    updated_by="tests",
                                    updated_reason="test data",
@@ -665,6 +666,7 @@ class TestGetService(BaseApplicationTest):
                                    supplier_id=1,
                                    updated_at=now,
                                    created_at=now,
+                                   status='enabled',
                                    updated_by="tests",
                                    updated_reason="test data",
                                    data={'foo': 'bar'}))
