@@ -169,6 +169,7 @@ def import_service(service_id):
     service.supplier_id = service_data['supplierId']
     service.updated_at = now
     service.created_at = now
+    service.status = "enabled"
     service.updated_by = update_json['updated_by']
     service.updated_reason = update_json['update_reason']
 

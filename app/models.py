@@ -69,5 +69,6 @@ class ArchivedService(db.Model):
             updated_at=service.updated_at,
             updated_by=service.updated_by,
             updated_reason=service.updated_reason,
-            data=service.data
+            data=service.data,
+            status=service.status
         )
