@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import JSON
 
 
 class Framework(db.Model):
-    __tablename__ = 'framework'
+    __tablename__ = 'frameworks'
 
     id = db.Column(db.Integer, primary_key=True)
 
