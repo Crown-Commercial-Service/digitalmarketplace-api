@@ -7,7 +7,7 @@ from . import main
 from .. import db
 from ..models import ArchivedService, Service, Supplier
 from ..validation import validate_json_or_400, validate_updater_json_or_400
-
+import traceback
 
 API_FETCH_PAGE_SIZE = 100
 
@@ -123,6 +123,7 @@ def update_service(service_id):
     try:
         db.session.commit()
     except DatabaseError:
+        traceback.print_exc()
         db.session.rollback()
         abort(500, "Database error")
 

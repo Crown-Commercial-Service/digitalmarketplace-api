@@ -44,6 +44,10 @@ function updateService() {
     var value = $('#value').val()
     if(!isNaN(value)) {
         value = parseInt(value,10)
+    } else if(value == "true") {
+        value = true
+    } else if(value == "false") {
+        value = false
     }
     services[$('#key').val()] = value
 
