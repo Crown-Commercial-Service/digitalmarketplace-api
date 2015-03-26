@@ -2,7 +2,7 @@ from . import db
 from sqlalchemy.dialects.postgresql import JSON
 
 
-class Frameworks(db.Model):
+class Framework(db.Model):
     __tablename__ = 'frameworks'
 
     id = db.Column(db.Integer, primary_key=True)
