@@ -2,6 +2,17 @@ from . import db
 from sqlalchemy.dialects.postgresql import JSON
 
 
+class Framework(db.Model):
+    __tablename__ = 'framework'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    name = db.Column(db.String(255), nullable=False)
+
+    expired = db.Column(db.Boolean, index=False, unique=False,
+                        nullable=False)
+
+
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
 
