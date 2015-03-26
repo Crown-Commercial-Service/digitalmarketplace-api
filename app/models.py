@@ -75,11 +75,7 @@ class ArchivedService(db.Model):
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
 
-<<<<<<< HEAD
-    framework = db.relationship(Frameworks, lazy='joined', innerjoin=True)
-=======
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
->>>>>>> Added a foreign key reference between the service and archive_service tables and the new framework table.
 
     @staticmethod
     def from_service(service):
