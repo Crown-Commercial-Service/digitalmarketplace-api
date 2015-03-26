@@ -3,7 +3,7 @@ from nose.tools import assert_equal, assert_in, assert_not_equal, \
     assert_almost_equal
 
 from app import db
-from app.models import Service, Supplier
+from app.models import Service, Supplier, Frameworks
 from datetime import datetime, timedelta
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
@@ -157,6 +157,9 @@ class TestPostService(BaseApplicationTest):
         payload = self.load_example_listing("SSP-JSON-IaaS")
         self.service_id = str(payload['id'])
         with self.app.app_context():
+            db.session.add(
+                Frameworks(id=1, expired=False, name=u"G-Cloud 6")
+            )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
@@ -522,6 +525,9 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         payload = self.load_example_listing("SSP-JSON-IaaS")
         with self.app.app_context():
             db.session.add(
+                Frameworks(id=1, expired=False, name="G-Cloud 6")
+            )
+            db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
             db.session.add(Service(service_id=2,
@@ -529,6 +535,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                                    updated_at=now,
                                    created_at=now,
                                    updated_by="tests",
+                                   framework_id=1,
                                    updated_reason="test data",
                                    data=payload))
 
@@ -662,6 +669,9 @@ class TestGetService(BaseApplicationTest):
         now = datetime.now()
         with self.app.app_context():
             db.session.add(
+                Frameworks(id=1, expired=False, name="G-Cloud 6")
+            )
+            db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
             db.session.add(Service(service_id=123,
@@ -670,7 +680,8 @@ class TestGetService(BaseApplicationTest):
                                    created_at=now,
                                    updated_by="tests",
                                    updated_reason="test data",
-                                   data={'foo': 'bar'}))
+                                   data={'foo': 'bar'},
+                                   framework_id=1))
 
     def test_get_non_existent_service(self):
         response = self.client.get('/services/100')

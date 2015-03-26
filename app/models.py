@@ -2,7 +2,7 @@ from . import db
 from sqlalchemy.dialects.postgresql import JSON
 
 
-class Framework(db.Model):
+class Frameworks(db.Model):
     __tablename__ = 'frameworks'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -47,7 +47,7 @@ class Service(db.Model):
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
 
-    framework = db.relationship(Framework, lazy='joined', innerjoin=True)
+    framework = db.relationship(Frameworks, lazy='joined', innerjoin=True)
 
 
 class ArchivedService(db.Model):
@@ -75,7 +75,7 @@ class ArchivedService(db.Model):
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
 
-    framework = db.relationship(Framework, lazy='joined', innerjoin=True)
+    framework = db.relationship(Frameworks, lazy='joined', innerjoin=True)
 
     @staticmethod
     def from_service(service):
