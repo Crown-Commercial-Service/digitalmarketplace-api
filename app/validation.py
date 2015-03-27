@@ -118,20 +118,19 @@ def reason_for_failure(submitted_json):
 def is_valid_service_id(service_id):
     """
     Validate that service ids contain only letters
-    numbers and dashes. [A-z0-9-]
+    numbers and dashes ([A-z0-9-]) and that they're
+    less than | equal to `MINIMUM_SERVICE_ID_LENGTH`
+    greater than | equal to `MAXIMUM_SERVICE_ID_LENGTH`
     :param service_id:
     :return True|False:
     """
 
-    if len(service_id) > MAXIMUM_SERVICE_ID_LENGTH or \
-            len(service_id) < MINIMUM_SERVICE_ID_LENGTH or \
-            re.search(r"[^A-z0-9-]", service_id):
-        return False
-    return True
+    regex_match_valid_service_id = r"^[A-z0-9-]{%s,%s}$" % (
+        MINIMUM_SERVICE_ID_LENGTH,
+        MAXIMUM_SERVICE_ID_LENGTH
+    )
 
-
-def is_valid_service_id_or_400(service_id):
-    if is_valid_service_id(service_id):
+    if re.search(regex_match_valid_service_id, service_id):
         return True
-    else:
-        abort(400, "Invalid service ID supplied: %s" % service_id)
+
+    return False
