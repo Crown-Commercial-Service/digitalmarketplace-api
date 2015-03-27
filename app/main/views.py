@@ -200,15 +200,6 @@ def get_service(service_id):
     return jsonify(services=jsonify_service(service))
 
 
-@main.route('/suppliers/<int:supplier_id>', methods=['GET'])
-def get_supplier(supplier_id):
-    supplier = Supplier.query.filter(
-        Supplier.supplier_id == supplier_id
-    ).first_or_404()
-
-    return jsonify(suppliers=jsonify_supplier(supplier))
-
-
 @main.route('/archived-services/<int:archived_service_id>', methods=['GET'])
 def get_archived_service(archived_service_id):
     """
@@ -236,16 +227,6 @@ def jsonify_service(service):
         link("self", url_for(".get_service",
                              service_id=data['id']))
     ]
-    return data
-
-
-def jsonify_supplier(supplier):
-    data = {
-        'id': supplier.id,
-        'supplier_id': supplier.supplier_id,
-        'name': supplier.name
-    }
-
     return data
 
 
