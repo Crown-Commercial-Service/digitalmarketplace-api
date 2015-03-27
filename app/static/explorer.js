@@ -2,6 +2,26 @@ function do_i_work() {
     console.log("yes i do");
 }
 
+//if enter key is clicked and input fields are not empty, click event is triggered on first visible button
+function enter_key_clicks_first_visible_button_if_inputs_not_empty() {
+    $(document).keyup(function (e) {
+        //if 'enter' key is pressed'
+        if (e.keyCode == 13) {
+
+            $empty_inputs = $('.input-group input').filter(function() { return $(this).val() == ""; });
+
+            if( $empty_inputs.length === 0 )
+                $('.btn.btn-primary:visible').first().trigger('click');
+
+        }
+    });
+}
+
+$( document ).ready(function() {
+
+    enter_key_clicks_first_visible_button_if_inputs_not_empty();
+});
+
 function fetchService() {
     var request = $.ajax({
            url: "/services/" + $('#service_id').val(),
@@ -22,6 +42,23 @@ function fetchService() {
 function fetchArchivedService() {
     var request = $.ajax({
            url: "/archived-services?service-id=" + $('#service_id').val(),
+           type: "GET",
+           contentType: "application/json",
+           headers: commonHeaders()
+           });
+    request.fail(function (jqXHR, textStatus, errorThrown){
+             var obj = JSON.parse(jqXHR.responseText);
+             $("#response").html(printHTMLResponse(jqXHR, obj));
+         });
+    request.done(function (response, textStatus, jqXHR){
+              var obj = JSON.parse(jqXHR.responseText);
+              $("#response").html(printHTMLResponse(jqXHR, obj));
+         });
+}
+
+function fetchSupplier() {
+    var request = $.ajax({
+           url: "/suppliers/" + $('#service_id').val(),
            type: "GET",
            contentType: "application/json",
            headers: commonHeaders()
