@@ -12,11 +12,15 @@ def get_supplier(supplier_id):
 
     return jsonify(suppliers=row2dict(supplier))
 
-"""
-Creates a dictionary from sqlAlchemy query object's {column_name}:{value}
-@see http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict#comment12704946_1960546
-"""
-row2dict = lambda row: dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
+
+def row2dict(row):
+    """
+    Creates a dictionary object from the {column_name}:{value} pairs of an sqlAlchemy query object
+    @see http://stackoverflow.com/questions/1958219/
+            convert-sqlalchemy-row-object-to-python-dict#comment12704946_1960546
+    """
+    return dict((col, getattr(row, col))
+                for col in row.__table__.columns.keys())
 
 
 def jsonify_supplier(supplier):
