@@ -41,7 +41,15 @@ function updateService() {
     var services = {}
     update_details['updated_by'] = 'joeblogs'
     update_details['update_reason'] = 'whateves'
-    services[$('#key').val()] = $('#value').val()
+    var value = $('#value').val()
+    if(!isNaN(value)) {
+        value = parseInt(value,10)
+    } else if(value == "true") {
+        value = true
+    } else if(value == "false") {
+        value = false
+    }
+    services[$('#key').val()] = value
 
     var update = {}
     update['update_details'] = update_details
