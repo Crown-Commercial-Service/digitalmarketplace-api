@@ -5,8 +5,8 @@ from jsonschema import validate, ValidationError
 from jsonschema.validators import validator_for
 import re
 
-minimum_service_id_length = 10
-maximum_service_id_length = 20
+MINIMUM_SERVICE_ID_LENGTH = 10
+MAXIMUM_SERVICE_ID_LENGTH = 20
 
 with open("json_schemas/g6-scs-schema.json") as json_file1:
     G6_SCS_SCHEMA = json.load(json_file1)
@@ -106,8 +106,8 @@ def is_valid_service_id(service_id):
     :return True|False:
     """
 
-    if len(service_id) > maximum_service_id_length or \
-            len(service_id) < minimum_service_id_length or \
+    if len(service_id) > MAXIMUM_SERVICE_ID_LENGTH or \
+            len(service_id) < MINIMUM_SERVICE_ID_LENGTH or \
             re.search(r"[^A-z0-9-]", service_id):
         return False
     return True

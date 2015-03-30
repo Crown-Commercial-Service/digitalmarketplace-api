@@ -197,7 +197,7 @@ def get_service(service_id):
     return jsonify(services=jsonify_service(service))
 
 
-@main.route('/archived-services/<string:archived_service_id>', methods=['GET'])
+@main.route('/archived-services/<int:archived_service_id>', methods=['GET'])
 def get_archived_service(archived_service_id):
     """
     Retrieves a service from the archived_service by PK
