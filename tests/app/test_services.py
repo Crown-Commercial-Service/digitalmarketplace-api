@@ -496,7 +496,7 @@ class TestPostService(BaseApplicationTest):
 
     def test_should_400_if_invalid_service_id(self):
         response = self.client.get('/archived-services?service-id=not-valid')
-        assert_equal(response.status_code, 404)
+        assert_equal(response.status_code, 400)
         response = self.client.get(
             '/archived-services?service-id=1234567890.1')
         assert_equal(response.status_code, 400)
