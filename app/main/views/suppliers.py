@@ -15,7 +15,8 @@ def get_supplier(supplier_id):
 
 def row2dict(row):
     """
-    Creates a dictionary object from the {column_name}:{value} pairs of an sqlAlchemy query object
+    Creates a dictionary object from the {column_name}:{value} pairs
+    of an sqlAlchemy query object
     @see http://stackoverflow.com/questions/1958219/
             convert-sqlalchemy-row-object-to-python-dict#comment12704946_1960546
     """
