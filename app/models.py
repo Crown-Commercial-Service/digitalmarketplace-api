@@ -1,7 +1,13 @@
 from . import db
 from sqlalchemy.dialects.postgresql import JSON
 
-from sqlalchemy import *
+from enum import Enum
+
+class Status(Enum):
+    published = 1
+    disabled = 2
+    enabled = 3
+
 
 
 class Supplier(db.Model):
