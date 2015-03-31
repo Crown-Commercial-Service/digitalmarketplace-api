@@ -1,5 +1,6 @@
 from flask import json
 from nose.tools import assert_equal, assert_not_equal
+
 from app import db
 from app.models import User
 from datetime import datetime
@@ -217,4 +218,4 @@ class TestUsersGet(BaseApplicationTest):
 
     def test_returns_404_for_non_int_id(self):
         response = self.client.get("/users/bogus")
-        assert_equal(response.status_code, 404)
+        assert_equal(response.status_code, 201)
