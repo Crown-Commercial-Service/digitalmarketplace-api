@@ -3,7 +3,10 @@ import json
 from flask import abort
 from jsonschema import validate, ValidationError
 from jsonschema.validators import validator_for
+import re
 
+MINIMUM_SERVICE_ID_LENGTH = 10
+MAXIMUM_SERVICE_ID_LENGTH = 20
 
 with open("json_schemas/g6-scs-schema.json") as json_file1:
     G6_SCS_SCHEMA = json.load(json_file1)
@@ -93,3 +96,18 @@ def reason_for_failure(submitted_json):
         response.append('Not IaaS: %s' % e4.message)
 
     return '. '.join(response)
+
+
+def is_valid_service_id(service_id):
+    """
+    Validate that service ids contain only letters
+    numbers and dashes. [A-z0-9-]
+    :param service_id:
+    :return True|False:
+    """
+
+    if len(service_id) > MAXIMUM_SERVICE_ID_LENGTH or \
+            len(service_id) < MINIMUM_SERVICE_ID_LENGTH or \
+            re.search(r"[^A-z0-9-]", service_id):
+        return False
+    return True

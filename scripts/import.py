@@ -52,6 +52,7 @@ class ServicePutter(object):
         with open(file_path) as f:
             try:
                 data = json.load(f)
+                data["id"] = str(data["id"])
             except ValueError:
                 print("Skipping {}: not a valid JSON file".format(file_path))
                 return file_path, None
