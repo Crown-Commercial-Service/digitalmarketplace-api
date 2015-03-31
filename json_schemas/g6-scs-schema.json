@@ -4,9 +4,10 @@
    "type": "object",
    "additionalProperties": false,
    "properties": {
-      "id": {
-         "type": "string"
-      },
+    "id": {
+      "type": "string",
+      "pattern": "^([0-9]{16})$"
+    },
       "supplierId": {
          "type": "integer"
       },

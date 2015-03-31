@@ -534,9 +534,9 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     def test_add_a_new_service(self):
         with self.app.app_context():
             payload = self.load_example_listing("SSP-JSON-IaaS")
-            payload['id'] = "1234567890"
+            payload['id'] = "1234567890123456"
             response = self.client.put(
-                '/services/1234567890',
+                '/services/1234567890123456',
                 data=json.dumps(
                     {
                         'update_details': {
@@ -545,10 +545,11 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                         'services': payload}
                 ),
                 content_type='application/json')
+
             assert_equal(response.status_code, 201)
             now = datetime.now()
             service = Service.query.filter(Service.service_id ==
-                                           "1234567890").first()
+                                           "1234567890123456").first()
             assert_equal(service.data, payload)
             assert_equal(service.created_at, service.updated_at)
             assert_almost_equal(now, service.created_at,
@@ -611,6 +612,30 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert_equal(response.status_code, 400)
 
+    def test_invalid_length_g6_service_id_too_short(self):
+        response = self.client.put(
+            '/services/12345',
+            data=json.dumps({
+                'update_details': {
+                    'updated_by': 'joeblogs',
+                    'update_reason': 'whateves'},
+                'services': {'id': 'abc123', 'foo': 'bar'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 400)
+
+    def test_invalid_length_g6_service_id_too_short_long(self):
+        response = self.client.put(
+            '/services/12345678901234567',
+            data=json.dumps({
+                'update_details': {
+                    'updated_by': 'joeblogs',
+                    'update_reason': 'whateves'},
+                'services': {'id': 'abc123', 'foo': 'bar'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 400)
+
     def test_add_a_service_with_unknown_supplier_id(self):
         with self.app.app_context():
             payload = self.load_example_listing("SSP-JSON-IaaS")
@@ -632,12 +657,12 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     def test_supplier_name_in_service_data_is_shadowed(self):
         with self.app.app_context():
             payload = self.load_example_listing("SSP-JSON-IaaS")
-            payload['id'] = "1234567890"
+            payload['id'] = "1234567890123456"
             payload['supplierId'] = 1
             payload['supplierName'] = u'New Name'
 
             response = self.client.put(
-                '/services/1234567890',
+                '/services/1234567890123456',
                 data=json.dumps(
                     {
                         'update_details': {
@@ -649,7 +674,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
             assert_equal(response.status_code, 201)
 
-            response = self.client.get('/services/1234567890')
+            response = self.client.get('/services/1234567890123456')
             data = json.loads(response.get_data())
 
             assert_equal(response.status_code, 200)
