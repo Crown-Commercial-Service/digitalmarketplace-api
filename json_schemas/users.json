@@ -1,0 +1,22 @@
+{
+  "id": "API Updater Schema",
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "email_address": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "email_address",
+    "password"
+  ]
+}
