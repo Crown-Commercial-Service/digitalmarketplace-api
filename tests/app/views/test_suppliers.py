@@ -28,5 +28,5 @@ class TestGetSupplier(BaseApplicationTest):
 
         data = json.loads(response.get_data())
         assert_equal(200, response.status_code)
-        assert_equal(585274, data['suppliers']['supplier_id'])
+        assert_equal(585274, data['suppliers']['id'])
         assert_equal(u"Supplier 585274", data['suppliers']['name'])
