@@ -5,13 +5,18 @@
   "additionalProperties": false,
   "properties": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255,
+      "minLength": 1
     },
     "email_address": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^[^@^\\s]+@[^@^\\.^\\s]+(\\.[^@^\\.^\\s]+)+$"
     },
     "password": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255,
+      "minLength": 10
     }
   },
   "required": [

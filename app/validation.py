@@ -38,6 +38,11 @@ with open("json_schemas/update-details.json") as json_file5:
     UPDATER_VALIDATOR.check_schema(UPDATER_SCHEMA)
     UPDATER_VALIDATOR = UPDATER_VALIDATOR(UPDATER_SCHEMA)
 
+with open("json_schemas/users.json") as json_file6:
+    USERS_SCHEMA = json.load(json_file6)
+    USERS_VALIDATOR = validator_for(USERS_SCHEMA)
+    USERS_VALIDATOR.check_schema(UPDATER_SCHEMA)
+    USERS_VALIDATOR = USERS_VALIDATOR(USERS_SCHEMA)
 
 def validate_updater_json_or_400(submitted_json):
     if not validates_against_schema(UPDATER_VALIDATOR, submitted_json):
