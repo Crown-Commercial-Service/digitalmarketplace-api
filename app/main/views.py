@@ -6,8 +6,9 @@ from sqlalchemy.exc import IntegrityError, DatabaseError
 from . import main
 from .. import db
 from ..models import ArchivedService, Service, Supplier, Framework
-from ..validation import validate_json_or_400, validate_updater_json_or_400
 import traceback
+from ..validation import validate_json_or_400, \
+    validate_updater_json_or_400, is_valid_service_id
 
 API_FETCH_PAGE_SIZE = 100
 
@@ -64,10 +65,11 @@ def list_archived_services_by_service_id():
     :return: List[service]
     """
 
-    try:
-        service_id = int(request.args.get("service_id", "no service id"))
-    except ValueError:
+    if not is_valid_service_id(
+            request.args.get("service_id", "no service id")):
         abort(400, "Invalid service id supplied")
+    else:
+        service_id = request.args.get("service_id", "no service id")
 
     try:
         page = int(request.args.get('page', 1))
@@ -86,12 +88,16 @@ def list_archived_services_by_service_id():
         links=pagination_links(services, '.list_services', request.args))
 
 
-@main.route('/services/<int:service_id>', methods=['POST'])
+@main.route('/services/<string:service_id>', methods=['POST'])
 def update_service(service_id):
     """
         Update a service. Looks service up in DB, and updates the JSON listing.
         Uses existing JSON Parse routines for validation
     """
+
+    if not is_valid_service_id(service_id):
+        abort(400, "Invalid service id supplied")
+
     service = Service.query.filter(
         Service.service_id == service_id
     ).first_or_404()
@@ -130,8 +136,12 @@ def update_service(service_id):
     return jsonify(message="done"), 200
 
 
-@main.route('/services/<int:service_id>', methods=['PUT'])
+@main.route('/services/<string:service_id>', methods=['PUT'])
 def import_service(service_id):
+
+    if not is_valid_service_id(service_id):
+        abort(400, "Invalid service id supplied")
+
     now = datetime.now()
     service = Service.query.filter(Service.service_id == service_id).first()
 
@@ -162,6 +172,7 @@ def import_service(service_id):
         Framework.name == "G-Cloud 6").first().id
     service.updated_at = now
     service.created_at = now
+    service.status = "enabled"
     service.updated_by = update_json['updated_by']
     service.updated_reason = update_json['update_reason']
 
@@ -176,8 +187,12 @@ def import_service(service_id):
     return "", 201
 
 
-@main.route('/services/<int:service_id>', methods=['GET'])
+@main.route('/services/<string:service_id>', methods=['GET'])
 def get_service(service_id):
+
+    if not is_valid_service_id(service_id):
+        abort(400, "Invalid service id supplied")
+
     service = Service.query.filter(
         Service.service_id == service_id
     ).first_or_404()
