@@ -1,5 +1,4 @@
-from flask import jsonify
-from flask import request
+from flask import jsonify, abort, request
 
 from .. import main
 from ...models import Supplier
@@ -11,20 +10,17 @@ def get_suppliers_by_prefix():
     prefix = request.args.get('prefix', '')
 
     if not prefix:
-        return '<h1>Oops, please include a query with a `prefix` key</h1>'
+        abort(400, "No supplier name prefix provided")
 
+    # case insensitive LIKE comparison for matching supplier names
     suppliers = Supplier.query.filter(
         Supplier.name.ilike(prefix + '%')
     ).all()
 
     if not suppliers:
-        return '<h1>Oops, no suppliers found with names that start with "' \
-               + prefix + '"</h1>'
+        abort(404, "No suppliers found for \'%s\'" % prefix)
 
-    suppliers_json = []
-
-    for supplier in suppliers:
-        suppliers_json.append(jsonify_supplier(supplier))
+    suppliers_json = [supplier.serialize() for supplier in suppliers]
 
     return jsonify(suppliers=suppliers_json)
 
