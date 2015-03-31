@@ -44,8 +44,14 @@ with open("json_schemas/users.json") as json_file6:
     USERS_VALIDATOR.check_schema(UPDATER_SCHEMA)
     USERS_VALIDATOR = USERS_VALIDATOR(USERS_SCHEMA)
 
+
 def validate_updater_json_or_400(submitted_json):
     if not validates_against_schema(UPDATER_VALIDATOR, submitted_json):
+        abort(400, "JSON was not a valid format")
+
+
+def validate_user_json_or_400(submitted_json):
+    if not validates_against_schema(USERS_VALIDATOR, submitted_json):
         abort(400, "JSON was not a valid format")
 
 

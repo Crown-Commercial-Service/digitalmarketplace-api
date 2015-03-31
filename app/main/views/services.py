@@ -121,8 +121,9 @@ def update_service(service_id):
 
     service_to_archive = ArchivedService.from_service(service)
 
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ["update_details", "services"])
+    json_payload = helpers.get_json_from_request(request)
+    helpers.json_has_required_keys(json_payload,
+                                   ["update_details", "services"])
 
     update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
@@ -169,8 +170,9 @@ def import_service(service_id):
         service = Service(service_id=service_id)
         service.created_at = now
 
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ['services', 'update_details'])
+    json_payload = helpers.get_json_from_request(request)
+    helpers.json_has_required_keys(json_payload,
+                                   ['services', 'update_details'])
 
     service_data = drop_foreign_fields(
         json_payload['services'],
@@ -232,3 +234,50 @@ def get_archived_service(archived_service_id):
     ).first_or_404()
 
     return jsonify(services=service.serialize())
+
+
+def jsonify_service(service):
+    data = dict(service.data.items())
+    data.update({
+        'id': service.service_id,
+        'supplierId': service.supplier.supplier_id,
+        'supplierName': service.supplier.name
+    })
+
+    data['links'] = [
+        link("self", url_for(".get_service",
+                             service_id=data['id']))
+    ]
+    return data
+
+
+def drop_foreign_fields(service):
+    service = service.copy()
+    for key in ['supplierName', 'links']:
+        service.pop(key, None)
+
+    return service
+
+
+def link(rel, href):
+    if href is not None:
+        return {
+            "rel": rel,
+            "href": href,
+        }
+
+
+def url_for(*args, **kwargs):
+    kwargs.setdefault('_external', True)
+    return base_url_for(*args, **kwargs)
+
+
+def pagination_links(pagination, endpoint, args):
+    return [
+        link(rel, url_for(endpoint,
+                          **dict(list(args.items()) +
+                                 list({'page': page}.items()))))
+        for rel, page in [('next', pagination.next_num),
+                          ('prev', pagination.prev_num)]
+        if 0 < page <= pagination.pages
+    ]

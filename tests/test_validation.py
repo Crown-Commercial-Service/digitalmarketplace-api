@@ -60,21 +60,42 @@ def test_user_creation_validates():
     longer_than_255 = "a" * 256
     exactly_255 = "a" * 255
     case = [
-        ({'email_address': 'this@that.com', 'name': exactly_255, 'password': exactly_255}, True, "valid"),
-        ({'email_address': 'thisthat.com', 'name': exactly_255, 'password': exactly_255}, False, "invalid email thisthat.com"),
-        ({'email_address': 'this@that', 'name': exactly_255, 'password': exactly_255}, False, "invalid email this@that"),
-        ({'email_address': 'this@t@hat.com', 'name': exactly_255, 'password': exactly_255}, False, "invalid email this@t@hat.com"),
-        ({'email_address': '', 'name': exactly_255, 'password': exactly_255}, False, "Missing email"),
-        ({'email_address': 'this@that.com', 'password': exactly_255}, False, "missing name"),
-        ({'email_address': 'this@that.com', 'name': exactly_255}, False, "missing password"),
-        ({'email_address': 'this@that.com', 'name': exactly_255, 'password': longer_than_255}, False, "too long password"),
-        ({'email_address': 'this@that.com', 'name': exactly_255, 'password': longer_than_255}, False, "too short password"),
-        ({'email_address': 'this@that.com', 'name': exactly_255, 'password': ''}, False, "too short password"),
-        ({'email_address': 'this@that.com', 'name': '', 'password': exactly_255}, False, "too short name")
+        ({'email_address': 'this@that.com',
+          'name': exactly_255,
+          'password': exactly_255}, True, "valid"),
+        ({'email_address': 'thisthat.com',
+          'name': exactly_255,
+          'password': exactly_255}, False, "invalid email thisthat.com"),
+        ({'email_address': 'this@that',
+          'name': exactly_255,
+          'password': exactly_255}, False, "invalid email this@that"),
+        ({'email_address': 'this@t@hat.com',
+          'name': exactly_255,
+          'password': exactly_255}, False, "invalid email this@t@hat.com"),
+        ({'email_address': '',
+          'name': exactly_255,
+          'password': exactly_255}, False, "Missing email"),
+        ({'email_address': 'this@that.com',
+          'password': exactly_255}, False, "missing name"),
+        ({'email_address': 'this@that.com',
+          'name': exactly_255}, False, "missing password"),
+        ({'email_address': 'this@that.com',
+          'name': exactly_255,
+          'password': longer_than_255}, False, "too long password"),
+        ({'email_address': 'this@that.com',
+          'name': exactly_255,
+          'password': longer_than_255}, False, "too short password"),
+        ({'email_address': 'this@that.com',
+          'name': exactly_255,
+          'password': ''}, False, "too short password"),
+        ({'email_address': 'this@that.com',
+          'name': '',
+          'password': exactly_255}, False, "too short name")
     ]
 
     for example, expected, message in case:
-        yield assert_equal, validates_against_schema(USERS_VALIDATOR, example), expected, message
+        result = validates_against_schema(USERS_VALIDATOR, example)
+        yield assert_equal, result, expected, message
 
 
 def test_example_json_validates_correctly():
