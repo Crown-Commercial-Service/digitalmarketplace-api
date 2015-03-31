@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError, DatabaseError
 
 from . import main
 from .. import db
-from ..models import ArchivedService, Service, Supplier
+from ..models import ArchivedService, Service, Supplier, Framework
 import traceback
 from ..validation import validate_json_or_400, \
     validate_updater_json_or_400, is_valid_service_id
@@ -66,10 +66,10 @@ def list_archived_services_by_service_id():
     """
 
     if not is_valid_service_id(
-            request.args.get("service_id", "no service id")):
+            request.args.get("service-id", "no service id")):
         abort(400, "Invalid service id supplied")
     else:
-        service_id = request.args.get("service_id", "no service id")
+        service_id = request.args.get("service-id", "no service id")
 
     try:
         page = int(request.args.get('page', 1))
@@ -168,6 +168,8 @@ def import_service(service_id):
 
     service.data = service_data
     service.supplier_id = service_data['supplierId']
+    service.framework_id = Framework.query.filter(
+        Framework.name == "G-Cloud 6").first().id
     service.updated_at = now
     service.created_at = now
     service.status = "enabled"

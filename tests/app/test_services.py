@@ -3,7 +3,7 @@ from nose.tools import assert_equal, assert_in, assert_not_equal, \
     assert_almost_equal
 
 from app import db
-from app.models import Service, Supplier
+from app.models import Service, Supplier, Framework
 from datetime import datetime, timedelta
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
@@ -157,6 +157,9 @@ class TestPostService(BaseApplicationTest):
         payload = self.load_example_listing("SSP-JSON-IaaS")
         self.service_id = str(payload['id'])
         with self.app.app_context():
+            db.session.add(
+                Framework(id=1, expired=False, name=u"G-Cloud 6")
+            )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
@@ -439,7 +442,7 @@ class TestPostService(BaseApplicationTest):
             assert_equal(response.status_code, 200)
 
             archived_state = self.client.get(
-                '/archived-services?service_id=' +
+                '/archived-services?service-id=' +
                 self.service_id).get_data()
             archived_service_json = json.loads(archived_state)['services'][0]
 
@@ -462,7 +465,7 @@ class TestPostService(BaseApplicationTest):
                 assert_equal(response.status_code, 200)
 
             archived_state = self.client.get(
-                '/archived-services?service_id=' +
+                '/archived-services?service-id=' +
                 self.service_id).get_data()
             assert_equal(len(json.loads(archived_state)['services']), 5)
 
@@ -491,7 +494,7 @@ class TestPostService(BaseApplicationTest):
 
     def test_return_empty_list_if_no_archived_service_by_service_id(self):
         response = self.client.get(
-            '/archived-services?service_id=12345678901234')
+            '/archived-services?service-id=12345678901234')
         assert_equal(response.status_code, 404)
 
     def test_should_400_if_invalid_service_id(self):
@@ -520,6 +523,9 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         payload = self.load_example_listing("SSP-JSON-IaaS")
         with self.app.app_context():
             db.session.add(
+                Framework(id=1, expired=False, name="G-Cloud 6")
+            )
+            db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
             db.session.add(Service(service_id=1234567890,
@@ -528,6 +534,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                                    status='enabled',
                                    created_at=now,
                                    updated_by="tests",
+                                   framework_id=1,
                                    updated_reason="test data",
                                    data=payload))
 
@@ -687,6 +694,9 @@ class TestGetService(BaseApplicationTest):
         now = datetime.now()
         with self.app.app_context():
             db.session.add(
+                Framework(id=1, expired=False, name="G-Cloud 6")
+            )
+            db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
             db.session.add(Service(service_id=1234567890,
@@ -696,7 +706,8 @@ class TestGetService(BaseApplicationTest):
                                    status='enabled',
                                    updated_by="tests",
                                    updated_reason="test data",
-                                   data={'foo': 'bar'}))
+                                   data={'foo': 'bar'},
+                                   framework_id=1))
 
     def test_get_non_existent_service(self):
         response = self.client.get('/services/9999999999')

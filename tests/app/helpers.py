@@ -5,7 +5,7 @@ import json
 from nose.tools import assert_equal
 
 from app import create_app, db
-from app.models import Service, Supplier
+from app.models import Service, Supplier, Framework
 from datetime import datetime
 
 
@@ -57,6 +57,9 @@ class BaseApplicationTest(object):
     def setup_dummy_services(self, n):
         now = datetime.now()
         with self.app.app_context():
+            db.session.add(
+                Framework(id=1, expired=False, name="G-Cloud 6")
+            )
             for i in range(TEST_SUPPLIERS_COUNT):
                 db.session.add(
                     Supplier(supplier_id=i, name=u"Supplier {}".format(i))
@@ -69,7 +72,8 @@ class BaseApplicationTest(object):
                                        created_at=now,
                                        updated_by='tests',
                                        updated_reason='test data',
-                                       data={'foo': 'bar'}))
+                                       data={'foo': 'bar'},
+                                       framework_id=1))
             # Add an extra supplier that will have no services
             db.session.add(
                 Supplier(supplier_id=TEST_SUPPLIERS_COUNT, name=u"Supplier {}"
