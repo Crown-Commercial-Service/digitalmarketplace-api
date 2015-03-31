@@ -5,7 +5,7 @@ import json
 from nose.tools import assert_equal
 
 from app import create_app, db
-from app.models import Service, Supplier, Frameworks
+from app.models import Service, Supplier, Framework
 from datetime import datetime
 
 
@@ -58,7 +58,7 @@ class BaseApplicationTest(object):
         now = datetime.now()
         with self.app.app_context():
             db.session.add(
-                Frameworks(id=1, expired=False, name="G-Cloud 6")
+                Framework(id=1, expired=False, name="G-Cloud 6")
             )
             for i in range(TEST_SUPPLIERS_COUNT):
                 db.session.add(

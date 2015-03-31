@@ -66,10 +66,10 @@ def list_archived_services_by_service_id():
     """
 
     if not is_valid_service_id(
-            request.args.get("service_id", "no service id")):
+            request.args.get("service-id", "no service id")):
         abort(400, "Invalid service id supplied")
     else:
-        service_id = request.args.get("service_id", "no service id")
+        service_id = request.args.get("service-id", "no service id")
 
     try:
         page = int(request.args.get('page', 1))
