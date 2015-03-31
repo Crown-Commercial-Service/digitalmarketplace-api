@@ -10,10 +10,10 @@ from app.main import helpers
 from app.validation import validate_user_json_or_400
 
 
-@main.route('/users/<string:email_address>', methods=['GET'])
-def get_user_by_email(email_address):
+@main.route('/users/<int:user_id>', methods=['GET'])
+def get_user_by_email(user_id):
     user = User.query.filter(
-        User.email_address == email_address
+        User.id == user_id
     ).first_or_404()
     return jsonify(users=user.serialize())
 
@@ -23,35 +23,32 @@ def create_user():
     now = datetime.now()
     json_payload = get_json_from_request()
 
-    try:
-        user = User.query.filter(
-            User.email_address == json_payload['email_address']) \
-            .all()
-        now = datetime.now()
-    except Exception as e:
-        print e.message
-        return
+    user = User.query.filter(
+        User.email_address == json_payload['email_address']) \
+        .first()
 
     http_status = 204
-    # if user is None:
-    http_status = 201
-    user = User(
-        email_address=json_payload['email_address'],
-        name=json_payload['name'],
-        password=json_payload['password'],
-        created_at=now,
-        last_updated_at=now,
-        password_changed_at=now
-    )
+    if user is None:
+        http_status = 201
+        user = User(
+            email_address=json_payload['email_address'],
+            name=json_payload['name'],
+            password=json_payload['password'],
+            active=True,
+            locked=False,
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now
+        )
 
     db.session.add(user)
 
     try:
         db.session.commit()
-        return http_status
-    except IntegrityError:
+        return "", http_status
+    except IntegrityError as ex:
         db.session.rollback()
-        abort(400, "Unknown supplier ID provided")
+        abort(400, ex.message)
 
 
 def get_json_from_request():
