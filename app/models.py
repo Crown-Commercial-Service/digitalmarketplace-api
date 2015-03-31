@@ -18,6 +18,9 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
+    name = db.Column(db.String, index=False, unique=False,
+                     nullable=False)
+
     email_address = db.Column(db.String, index=True, unique=True,
                               nullable=False)
 
@@ -39,6 +42,16 @@ class User(db.Model):
     password_changed_at = db.Column(db.DateTime, index=False, unique=False,
                                     nullable=False)
 
+    def serialize(self):
+        return {
+            'id': self.id,
+            'email_address': self.email_address,
+            'active': self.active,
+            'locked': self.locked,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at,
+            'password_changed_at': self.password_changed_at,
+        }
 
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
