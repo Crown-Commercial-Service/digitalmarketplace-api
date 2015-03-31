@@ -12,6 +12,32 @@ class Framework(db.Model):
     expired = db.Column(db.Boolean, index=False, unique=False,
                         nullable=False)
 
+class User(db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    email_address = db.Column(db.String, index=True, unique=True,
+                              nullable=False)
+
+    password = db.Column(db.String, index=False, unique=False,
+                         nullable=False)
+
+    active = db.Column(db.Boolean, index=False, unique=False,
+                       nullable=False)
+
+    locked = db.Column(db.Boolean, index=False, unique=False,
+                       nullable=False)
+
+    created_at = db.Column(db.DateTime, index=False, unique=False,
+                           nullable=False)
+
+    updated_at = db.Column(db.DateTime, index=False, unique=False,
+                           nullable=False)
+
+    password_changed_at = db.Column(db.DateTime, index=False, unique=False,
+                                    nullable=False)
+
 
 class User(db.Model):
     __tablename__ = 'users'
