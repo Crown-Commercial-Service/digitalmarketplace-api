@@ -10,14 +10,4 @@ def get_supplier(supplier_id):
         Supplier.supplier_id == supplier_id
     ).first_or_404()
 
-    return jsonify(suppliers=jsonify_supplier(supplier))
-
-
-def jsonify_supplier(supplier):
-    data = {
-        'id': supplier.id,
-        'supplier_id': supplier.supplier_id,
-        'name': supplier.name
-    }
-
-    return data
+    return jsonify(suppliers=supplier.serialize())

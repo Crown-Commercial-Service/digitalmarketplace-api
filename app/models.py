@@ -21,6 +21,12 @@ class Supplier(db.Model):
                             index=True, unique=True, nullable=False)
     name = db.Column(db.String(255), nullable=False)
 
+    def serialize(self):
+        return {
+            'supplier_id': self.supplier_id,
+            'name': self.name
+        }
+
 
 class Service(db.Model):
     __tablename__ = 'services'
