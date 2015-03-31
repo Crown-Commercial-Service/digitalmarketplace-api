@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError, DatabaseError
 
 from . import main
 from .. import db
-from ..models import ArchivedService, Service, Supplier, Frameworks
+from ..models import ArchivedService, Service, Supplier, Framework
 from ..validation import validate_json_or_400, validate_updater_json_or_400
 import traceback
 
@@ -158,8 +158,8 @@ def import_service(service_id):
 
     service.data = service_data
     service.supplier_id = service_data['supplierId']
-    service.framework_id = Frameworks.query.filter(
-        Frameworks.name == "G-Cloud 6").first().id
+    service.framework_id = Framework.query.filter(
+        Framework.name == "G-Cloud 6").first().id
     service.updated_at = now
     service.created_at = now
     service.updated_by = update_json['updated_by']
