@@ -23,7 +23,7 @@ class Supplier(db.Model):
 
     def serialize(self):
         return {
-            'supplier_id': self.supplier_id,
+            'id': self.supplier_id,
             'name': self.name
         }
 
