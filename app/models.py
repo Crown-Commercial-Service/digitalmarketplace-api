@@ -2,28 +2,6 @@ from . import db
 from flask import url_for as base_url_for
 from sqlalchemy.dialects.postgresql import JSON
 
-# get this copy+pasted code outta here
-def link(rel, href):
-    if href is not None:
-        return {
-            "rel": rel,
-            "href": href,
-        }
-
-def url_for(*args, **kwargs):
-    kwargs.setdefault('_external', True)
-    return base_url_for(*args, **kwargs)
-
-
-def pagination_links(pagination, endpoint, args):
-    return [
-        link(rel, url_for(endpoint,
-                          **dict(list(args.items()) +
-                                 list({'page': page}.items()))))
-        for rel, page in [('next', pagination.next_num),
-                          ('prev', pagination.prev_num)]
-        if 0 < page <= pagination.pages
-    ]
 
 class DbModelExtended(db.Model):
     """
@@ -77,11 +55,14 @@ class Supplier(DbModelExtended):
     name = db.Column(db.String(255), nullable=False)
 
     def serialize(self):
-
         links = [
             self.link(
                 "self",
                 self.url_for(".get_supplier", supplier_id=self.supplier_id)
+            ),
+            self.link(
+                "suppliers.list",
+                self.url_for(".get_suppliers_by_prefix")
             )
         ]
 
@@ -93,6 +74,7 @@ class Supplier(DbModelExtended):
 
 
 class Service(DbModelExtended):
+
     __tablename__ = 'services'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -143,6 +125,7 @@ class Service(DbModelExtended):
 
 
 class ArchivedService(DbModelExtended):
+
     __tablename__ = 'archived_services'
 
     id = db.Column(db.Integer, primary_key=True)
