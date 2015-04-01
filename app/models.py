@@ -46,7 +46,6 @@ class Framework(db.Model):
 
 
 class Supplier(DbModelExtended):
-
     __tablename__ = 'suppliers'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -74,7 +73,6 @@ class Supplier(DbModelExtended):
 
 
 class Service(DbModelExtended):
-
     __tablename__ = 'services'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -125,7 +123,6 @@ class Service(DbModelExtended):
 
 
 class ArchivedService(DbModelExtended):
-
     __tablename__ = 'archived_services'
 
     id = db.Column(db.Integer, primary_key=True)
