@@ -1,10 +1,37 @@
 from flask import jsonify, abort, request
+from flask import url_for as base_url_for
 
 from .. import main
 from ...models import Supplier
 
 # TODO: This should probably not be here
 API_FETCH_PAGE_SIZE = 100
+
+
+API_FETCH_PAGE_SIZE = 2
+
+# get this copy+pasted code outta here
+def link(rel, href):
+    if href is not None:
+        return {
+            "rel": rel,
+            "href": href,
+        }
+
+def url_for(*args, **kwargs):
+    kwargs.setdefault('_external', True)
+    return base_url_for(*args, **kwargs)
+
+
+def pagination_links(pagination, endpoint, args):
+    return [
+        link(rel, url_for(endpoint,
+                          **dict(list(args.items()) +
+                                 list({'page': page}.items()))))
+        for rel, page in [('next', pagination.next_num),
+                          ('prev', pagination.prev_num)]
+        if 0 < page <= pagination.pages
+    ]
 
 
 @main.route('/suppliers', methods=['GET'])
