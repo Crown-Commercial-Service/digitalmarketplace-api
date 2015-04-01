@@ -24,7 +24,7 @@ def get_suppliers_by_prefix():
         Supplier.name.ilike(prefix + '%')
     )
 
-    if not suppliers:
+    if not suppliers.all():
         abort(404, "No suppliers found for \'{0}\'".format(prefix))
 
     # suppliers_json = [supplier.serialize() for supplier in suppliers]

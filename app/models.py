@@ -3,9 +3,9 @@ from flask import url_for as base_url_for
 from sqlalchemy.dialects.postgresql import JSON
 
 
-class ModelExtended(db.Model):
+class DbModelExtended(db.Model):
     """
-    Wrapper for db.Model to fill it up with methods
+    Wrapper for db.Model that can be extended with other methods
     """
     __abstract__ = True
 
@@ -45,7 +45,8 @@ class Framework(db.Model):
                         nullable=False)
 
 
-class Supplier(ModelExtended):
+class Supplier(DbModelExtended):
+
     __tablename__ = 'suppliers'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -72,7 +73,7 @@ class Supplier(ModelExtended):
         }
 
 
-class Service(ModelExtended):
+class Service(DbModelExtended):
     __tablename__ = 'services'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -122,7 +123,7 @@ class Service(ModelExtended):
         }
     
 
-class ArchivedService(ModelExtended):
+class ArchivedService(DbModelExtended):
     __tablename__ = 'archived_services'
 
     id = db.Column(db.Integer, primary_key=True)
