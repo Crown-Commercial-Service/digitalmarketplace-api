@@ -1,9 +1,34 @@
 from flask import json
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_not_equal
 from app import db
 from app.models import User
 from datetime import datetime
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin
+
+
+class TestUsersAuth(BaseApplicationTest):
+    def test_should_validate_credentials(self):
+        response = self.client.put(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'hashpw': True,
+                    'email_address': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 201)
+
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'auth_users': {
+                    'email_address': 'joeblogs@email.com',
+                    'password': '1234567890'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 200)
 
 
 class TestUsersPut(BaseApplicationTest, JSONUpdateTestMixin):
@@ -21,6 +46,42 @@ class TestUsersPut(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         assert_equal(response.status_code, 201)
+
+    def test_can_put_a_user_with_hashed_password(self):
+        with self.app.app_context():
+            response = self.client.put(
+                '/users',
+                data=json.dumps({
+                    'users': {
+                        'hashpw': True,
+                        'email_address': 'joeblogs@email.com',
+                        'password': '1234567890',
+                        'name': 'joe bloggs'}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 201)
+            user = User.query.filter(
+                User.email_address == 'joeblogs@email.com') \
+                .first()
+            assert_not_equal(user.password, '1234567890')
+
+    def test_can_put_a_user_without_hashed_password(self):
+        with self.app.app_context():
+            response = self.client.put(
+                '/users',
+                data=json.dumps({
+                    'users': {
+                        'hashpw': False,
+                        'email_address': 'joeblogs@email.com',
+                        'password': '1234567890',
+                        'name': 'joe bloggs'}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 201)
+            user = User.query.filter(
+                User.email_address == 'joeblogs@email.com') \
+                .first()
+            assert_equal(user.password, '1234567890')
 
     def test_can_replace_a_user(self):
         response = self.client.put(

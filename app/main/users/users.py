@@ -3,11 +3,26 @@ from datetime import datetime
 
 from app.main import main
 from app.models import User
+from app.main import encryption
 from app import db
 from sqlalchemy.exc import IntegrityError
 
 from app.main import helpers
-from app.validation import validate_user_json_or_400
+from app.validation import validate_user_json_or_400, \
+    validate_user_auth_json_or_400
+
+
+@main.route('/users/auth', methods=['POST'])
+def auth_user():
+    json_payload = get_json_from_request('auth_users')
+    validate_user_auth_json_or_400(json_payload)
+    user = User.query.filter(
+        User.email_address == json_payload['email_address'] and
+        User.password == encryption.hashpw(json_payload['password'])
+    ).first()
+    if user is None:
+        return jsonify(authorization=False), 403
+    return jsonify(authorization=True), 200
 
 
 @main.route('/users/<int:user_id>', methods=['GET'])
@@ -21,11 +36,17 @@ def get_user_by_email(user_id):
 @main.route('/users', methods=['PUT'])
 def create_user():
     now = datetime.now()
-    json_payload = get_json_from_request()
+    json_payload = get_json_from_request('users')
+    validate_user_json_or_400(json_payload)
 
     user = User.query.filter(
         User.email_address == json_payload['email_address']) \
         .first()
+
+    if 'hashpw' in json_payload and not json_payload['hashpw']:
+        password = json_payload['password']
+    else:
+        password = encryption.hashpw(json_payload['password'])
 
     http_status = 204
     if user is None:
@@ -33,7 +54,7 @@ def create_user():
         user = User(
             email_address=json_payload['email_address'],
             name=json_payload['name'],
-            password=json_payload['password'],
+            password=password,
             active=True,
             locked=False,
             created_at=now,
@@ -51,9 +72,8 @@ def create_user():
         abort(400, ex.message)
 
 
-def get_json_from_request():
+def get_json_from_request(root_field):
     payload = helpers.get_json_from_request(request)
-    helpers.json_has_required_keys(payload, ['users'])
-    update_json = payload['users']
-    validate_user_json_or_400(update_json)
+    helpers.json_has_required_keys(payload, [root_field])
+    update_json = payload[root_field]
     return update_json

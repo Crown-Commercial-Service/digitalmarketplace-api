@@ -7,7 +7,8 @@ from nose.tools import assert_equal
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.validation import validate_json, \
-    validates_against_schema, UPDATER_VALIDATOR, is_valid_service_id, USERS_VALIDATOR
+    validates_against_schema, UPDATER_VALIDATOR, is_valid_service_id, \
+    USERS_VALIDATOR, AUTH_USERS_VALIDATOR
 
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -90,11 +91,52 @@ def test_user_creation_validates():
           'password': ''}, False, "too short password"),
         ({'email_address': 'this@that.com',
           'name': '',
-          'password': exactly_255}, False, "too short name")
+          'password': exactly_255}, False, "too short name"),
+        ({'email_address': 'this@that.com',
+          'name': exactly_255,
+          'password': exactly_255,
+          'hashpw': True}, True, "valid with hashpw"),
+        ({'email_address': 'this@that.com',
+          'name': exactly_255,
+          'password': exactly_255,
+          'hashpw': False}, True, "valid with dont hashpw"),
+        ({'email_address': 'this@that.com',
+          'name': exactly_255,
+          'password': exactly_255,
+          'hashpw': 'dewdew'}, False, "invalid hashpw")
     ]
 
     for example, expected, message in case:
         result = validates_against_schema(USERS_VALIDATOR, example)
+        yield assert_equal, result, expected, message
+
+
+def test_auth_user_validates():
+    longer_than_255 = "a" * 256
+    exactly_255 = "a" * 255
+    case = [
+        ({'email_address': 'this@that.com',
+          'password': exactly_255}, True, "valid"),
+        ({'email_address': 'thisthat.com',
+          'password': exactly_255}, False, "invalid email thisthat.com"),
+        ({'email_address': 'this@that',
+          'password': exactly_255}, False, "invalid email this@that"),
+        ({'email_address': 'this@t@hat.com',
+          'password': exactly_255}, False, "invalid email this@t@hat.com"),
+        ({'email_address': '',
+          'password': exactly_255}, False, "Missing email"),
+        ({'email_address': 'this@that.com',
+          'name': exactly_255}, False, "missing password"),
+        ({'email_address': 'this@that.com',
+          'password': longer_than_255}, False, "too long password"),
+        ({'email_address': 'this@that.com',
+          'password': longer_than_255}, False, "too short password"),
+        ({'email_address': 'this@that.com',
+          'password': ''}, False, "too short password")
+    ]
+
+    for example, expected, message in case:
+        result = validates_against_schema(AUTH_USERS_VALIDATOR, example)
         yield assert_equal, result, expected, message
 
 

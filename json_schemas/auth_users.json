@@ -4,11 +4,6 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "name": {
-      "type": "string",
-      "maxLength": 255,
-      "minLength": 1
-    },
     "email_address": {
       "type": "string",
       "pattern": "^[^@^\\s]+@[^@^\\.^\\s]+(\\.[^@^\\.^\\s]+)+$"
@@ -17,13 +12,9 @@
       "type": "string",
       "maxLength": 255,
       "minLength": 10
-    },
-    "hashpw": {
-      "type": "boolean"
     }
   },
   "required": [
-    "name",
     "email_address",
     "password"
   ]
