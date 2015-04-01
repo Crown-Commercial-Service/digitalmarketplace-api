@@ -13,7 +13,7 @@
     },
     "lot": {
       "type": "string",
-      "pattern": "PaaS"
+      "pattern": "^PaaS$"
     },
     "title": {
       "type": "string"
@@ -67,7 +67,7 @@
     },
     "minimumContractPeriod": {
       "type": "string",
-      "pattern": "Hour|Day|Month|Year|Other"
+      "pattern": "^(Hour|Day|Month|Year|Other)$"
     },
     "terminationCost": {
       "type": "boolean"
@@ -80,11 +80,11 @@
     },
     "priceUnit": {
       "type": "string",
-      "pattern": "Unit|Person|Licence|User|Device|Instance|Server|Virtual machine|Transaction|Megabyte|Gigabyte|Terabyte"
+      "pattern": "^(Unit|Person|Licence|User|Device|Instance|Server|Virtual machine|Transaction|Megabyte|Gigabyte|Terabyte)$"
     },
     "priceInterval": {
       "type": "string",
-      "pattern": "^$|Second|Minute|Hour|Day|Week|Month|Quarter|6 months|Year"
+      "pattern": "^(||Second|Minute|Hour|Day|Week|Month|Quarter|6 months|Year)$"
     },
     "priceString": {
       "type": "string"
@@ -136,7 +136,7 @@
       "maxItems": 5,
       "items": {
         "type": "string",
-        "pattern": "Service desk|Email|Phone|Live chat|Onsite"
+        "pattern": "^(Service desk|Email|Phone|Live chat|Onsite)$"
       }
     },
     "serviceOnboarding": {
@@ -181,7 +181,7 @@
       "maxItems": 7,
       "items": {
         "type": "string",
-        "pattern": "Internet|Public Services Network \\(PSN\\)|Government Secure intranet \\(GSi\\)|Police National Network \\(PNN\\)|New NHS Network \\(N3\\)|Joint Academic Network \\(JANET\\)|Other"
+        "pattern": "^(Internet|Public Services Network \\(PSN\\)|Government Secure intranet \\(GSi\\)|Police National Network \\(PNN\\)|New NHS Network \\(N3\\)|Joint Academic Network \\(JANET\\)|Other)$"
       }
     },
     "supportedBrowsers": {
@@ -190,7 +190,7 @@
       "maxItems": 9,
       "items": {
         "type": "string",
-        "pattern": "Internet Explorer 6|Internet Explorer 7|Internet Explorer 8|Internet Explorer 9|Internet Explorer 10\\+|Firefox|Chrome|Safari|Opera"
+        "pattern": "^(Internet Explorer 6|Internet Explorer 7|Internet Explorer 8|Internet Explorer 9|Internet Explorer 10\\+|Firefox|Chrome|Safari|Opera)$"
       }
     },
     "offlineWorking": {
@@ -202,7 +202,7 @@
       "maxItems": 4,
       "items": {
         "type": "string",
-        "pattern": "PC|Mac|Smartphone|Tablet"
+        "pattern": "^(PC|Mac|Smartphone|Tablet)$"
       }
     },
     "vendorCertifications": {
@@ -236,12 +236,12 @@
           "maxItems": 6,
           "items": {
             "type": "string",
-            "pattern": "Encrypted PSN service|PSN service|CPA Foundation VPN Gateway|VPN using TLS, version 1\\.2 or later|VPN using legacy SSL or TLS|No encryption"
+            "pattern": "^(Encrypted PSN service|PSN service|CPA Foundation VPN Gateway|VPN using TLS, version 1\\.2 or later|VPN using legacy SSL or TLS|No encryption)$"
           }
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components"
+          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components)$"
         }
       }
     },
@@ -254,12 +254,12 @@
           "maxItems": 6,
           "items": {
             "type": "string",
-            "pattern": "VPN using TLS, version 1\\.2 or later|VPN using legacy SSL or TLS|VLAN|Bonded fibre optic connections|Other network protection|No encryption"
+            "pattern": "^(VPN using TLS, version 1\\.2 or later|VPN using legacy SSL or TLS|VLAN|Bonded fibre optic connections|Other network protection|No encryption)$"
           }
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components"
+          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components)$"
         }
       }
     },
@@ -272,12 +272,12 @@
           "maxItems": 6,
           "items": {
             "type": "string",
-            "pattern": "Encrypted PSN service|PSN service|CPA Foundation VPN Gateway|VPN using TLS, version 1\\.2 or later|VPN using legacy SSL or TLS|No encryption"
+            "pattern": "^(Encrypted PSN service|PSN service|CPA Foundation VPN Gateway|VPN using TLS, version 1\\.2 or later|VPN using legacy SSL or TLS|No encryption)$"
           }
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components"
+          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components)$"
         }
       }
     },
@@ -290,12 +290,12 @@
           "maxItems": 5,
           "items": {
             "type": "string",
-            "pattern": "UK|EU|USA - Safe Harbor|Other countries with data protection treaties|Rest of world"
+            "pattern": "^(UK|EU|USA - Safe Harbor|Other countries with data protection treaties|Rest of world)$"
           }
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Contractual commitment|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
         }
       }
     },
@@ -308,12 +308,12 @@
           "maxItems": 5,
           "items": {
             "type": "string",
-            "pattern": "UK|EU|USA - Safe Harbor|Other countries with data protection treaties|Rest of world"
+            "pattern": "^(UK|EU|USA - Safe Harbor|Other countries with data protection treaties|Rest of world)$"
           }
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Contractual commitment|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
         }
       }
     },
@@ -322,11 +322,11 @@
       "properties": {
         "value": {
           "type": "string",
-          "pattern": "UK|EU|USA - Safe Harbor|Other countries with data protection treaties|Rest of world"
+          "pattern": "^(UK|EU|USA - Safe Harbor|Other countries with data protection treaties|Rest of world)$"
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Contractual commitment|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
         }
       }
     },
@@ -338,7 +338,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Contractual commitment|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
         }
       }
     },
@@ -351,12 +351,12 @@
           "maxItems": 6,
           "items": {
             "type": "string",
-            "pattern": "CPA Foundation-grade assured components|FIPS-assured encryption|Other encryption|Secure containers, racks or cages|Physical access control|No protection"
+            "pattern": "^(CPA Foundation-grade assured components|FIPS-assured encryption|Other encryption|Secure containers, racks or cages|Physical access control|No protection)$"
           }
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components"
+          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components)$"
         }
       }
     },
@@ -365,11 +365,11 @@
       "properties": {
         "value": {
           "type": "string",
-          "pattern": "CPA Foundation-grade erasure product|CESG or CPNI-approved erasure process|Other secure erasure process|Other erasure process"
+          "pattern": "^(CPA Foundation-grade erasure product|CESG or CPNI-approved erasure process|Other secure erasure process|Other erasure process)$"
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components"
+          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components)$"
         }
       }
     },
@@ -378,11 +378,11 @@
       "properties": {
         "value": {
           "type": "string",
-          "pattern": "CESG-assured destruction service \\(CAS\\(T\\)\\)|CPA Foundation-assured product|CPNI-approved destruction service|BS EN 151713:2009-compliant destruction|CESG or CPNI-approved erasure process|Other secure erasure process|Other destruction/erasure process"
+          "pattern": "^(CESG-assured destruction service \\(CAS\\(T\\)\\)|CPA Foundation-assured product|CPNI-approved destruction service|BS EN 151713:2009-compliant destruction|CESG or CPNI-approved erasure process|Other secure erasure process|Other destruction/erasure process)$"
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Contractual commitment|Independent validation of assertion|Independent testing of implementation|CESG-assured components"
+          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion|Independent testing of implementation|CESG-assured components)$"
         }
       }
     },
@@ -394,7 +394,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Contractual commitment|Independent validation of assertion|CESG-assured components"
+          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion|CESG-assured components)$"
         }
       }
     },
@@ -406,7 +406,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Contractual commitment|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
         }
       }
     },
@@ -418,7 +418,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Contractual commitment|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
         }
       }
     },
@@ -427,11 +427,11 @@
       "properties": {
         "value": {
           "type": "string",
-          "pattern": "Public cloud|Community cloud|Private cloud|Hybrid cloud"
+          "pattern": "^(Public cloud|Community cloud|Private cloud|Hybrid cloud)$"
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Contractual commitment|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
         }
       }
     },
@@ -440,11 +440,11 @@
       "properties": {
         "value": {
           "type": "string",
-          "pattern": "No other consumer|Only government consumers|A specific consumer group, eg Police, Defence or Health|Anyone - public"
+          "pattern": "^(No other consumer|Only government consumers|A specific consumer group, eg Police, Defence or Health|Anyone - public)$"
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Contractual commitment|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
         }
       }
     },
@@ -456,7 +456,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent testing of implementation|Assurance of service design|CESG-assured components"
+          "pattern": "^(Service provider assertion|Independent testing of implementation|Assurance of service design|CESG-assured components)$"
         }
       }
     },
@@ -468,7 +468,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent testing of implementation|Assurance of service design|CESG-assured components"
+          "pattern": "^(Service provider assertion|Independent testing of implementation|Assurance of service design|CESG-assured components)$"
         }
       }
     },
@@ -480,7 +480,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -492,7 +492,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -504,7 +504,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -516,7 +516,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -528,7 +528,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -540,7 +540,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -552,7 +552,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -564,7 +564,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -576,7 +576,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -588,7 +588,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -600,7 +600,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -612,7 +612,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -625,12 +625,12 @@
           "maxItems": 4,
           "items": {
             "type": "string",
-            "pattern": "Security clearance national vetting \\(SC\\)|Baseline personnel security standard \\(BPSS\\)|Background checks in accordance with BS7858:2012|Employment checks"
+            "pattern": "^(Security clearance national vetting \\(SC\\)|Baseline personnel security standard \\(BPSS\\)|Background checks in accordance with BS7858:2012|Employment checks)$"
           }
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -642,7 +642,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -654,7 +654,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -666,7 +666,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -678,7 +678,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -690,7 +690,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -702,7 +702,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -714,7 +714,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -726,7 +726,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -738,7 +738,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion|Independent testing of implementation"
+          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation)$"
         }
       }
     },
@@ -750,7 +750,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion|Independent testing of implementation"
+          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation)$"
         }
       }
     },
@@ -762,7 +762,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion|Independent testing of implementation"
+          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation)$"
         }
       }
     },
@@ -774,7 +774,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion|Independent testing of implementation"
+          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation)$"
         }
       }
     },
@@ -786,7 +786,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion|Independent testing of implementation"
+          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation)$"
         }
       }
     },
@@ -799,12 +799,12 @@
           "maxItems": 7,
           "items": {
             "type": "string",
-            "pattern": "Username and two-factor authentication|Username and TLS client certificate|Authentication federation|Limited access over dedicated link, enterprise or community network|Username and password|Username and strong password/passphrase enforcement|Other mechanism"
+            "pattern": "^(Username and two-factor authentication|Username and TLS client certificate|Authentication federation|Limited access over dedicated link, enterprise or community network|Username and password|Username and strong password/passphrase enforcement|Other mechanism)$"
           }
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent testing of implementation|CESG-assured components"
+          "pattern": "^(Service provider assertion|Independent testing of implementation|CESG-assured components)$"
         }
       }
     },
@@ -816,7 +816,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -829,12 +829,12 @@
           "maxItems": 4,
           "items": {
             "type": "string",
-            "pattern": "Encrypted PSN service|PSN service|Private WAN|Internet"
+            "pattern": "^(Encrypted PSN service|PSN service|Private WAN|Internet)$"
           }
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -847,12 +847,12 @@
           "maxItems": 5,
           "items": {
             "type": "string",
-            "pattern": "Dedicated devices on a segregated network|Dedicated devices for community service management|Dedicated devices for multiple community service management|Service management via bastion hosts|Direct service management"
+            "pattern": "^(Dedicated devices on a segregated network|Dedicated devices for community service management|Dedicated devices for multiple community service management|Service management via bastion hosts|Direct service management)$"
           }
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -861,11 +861,11 @@
       "properties": {
         "value": {
           "type": "string",
-          "pattern": "None|Data made available|Data made available by negotiation"
+          "pattern": "^(None|Data made available|Data made available by negotiation)$"
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -878,12 +878,12 @@
           "maxItems": 3,
           "items": {
             "type": "string",
-            "pattern": "Corporate/enterprise devices|Partner devices|Unknown devices"
+            "pattern": "^(Corporate/enterprise devices|Partner devices|Unknown devices)$"
           }
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     },
@@ -895,7 +895,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion|Independent testing of implementation"
+          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation)$"
         }
       }
     },
@@ -907,7 +907,7 @@
         },
         "assurance": {
           "type": "string",
-          "pattern": "Service provider assertion|Independent validation of assertion"
+          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
         }
       }
     }
