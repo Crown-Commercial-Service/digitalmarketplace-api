@@ -2,28 +2,37 @@ from . import db
 from flask import url_for as base_url_for
 from sqlalchemy.dialects.postgresql import JSON
 
-# get this copy+pasted code outta here
-def link(rel, href):
-    if href is not None:
-        return {
-            "rel": rel,
-            "href": href,
-        }
 
-def url_for(*args, **kwargs):
-    kwargs.setdefault('_external', True)
-    return base_url_for(*args, **kwargs)
+class ModelExtended(db.Model):
+    """
+    Wrapper for db.Model to fill it up with methods
+    """
+    __abstract__ = True
 
+    @staticmethod
+    def link(rel, href):
+        if href is not None:
+            return {
+                "rel": rel,
+                "href": href,
+            }
 
-def pagination_links(pagination, endpoint, args):
-    return [
-        link(rel, url_for(endpoint,
-                          **dict(list(args.items()) +
-                                 list({'page': page}.items()))))
-        for rel, page in [('next', pagination.next_num),
-                          ('prev', pagination.prev_num)]
-        if 0 < page <= pagination.pages
-    ]
+    @staticmethod
+    def url_for(*args, **kwargs):
+        kwargs.setdefault('_external', True)
+        return base_url_for(*args, **kwargs)
+
+    @classmethod
+    def pagination_links(cls, pagination, endpoint, args):
+        return [
+            cls.link(rel, cls.url_for(endpoint,
+                                      **dict(list(args.items()) +
+                                             list({'page': page}.items()))))
+            for rel, page in [('next', pagination.next_num),
+                              ('prev', pagination.prev_num)]
+            if 0 < page <= pagination.pages
+        ]
+
 
 class Framework(db.Model):
     __tablename__ = 'frameworks'
@@ -36,7 +45,7 @@ class Framework(db.Model):
                         nullable=False)
 
 
-class Supplier(db.Model):
+class Supplier(ModelExtended):
     __tablename__ = 'suppliers'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -45,11 +54,15 @@ class Supplier(db.Model):
     name = db.Column(db.String(255), nullable=False)
 
     def serialize(self):
-
         links = [
-            link("self", url_for(".get_supplier",
-                                 supplier_id=self.supplier_id)),
-            link("suppliers.list", url_for(".get_suppliers_by_prefix"))
+            self.link(
+                "self",
+                self.url_for(".get_supplier", supplier_id=self.supplier_id)
+            ),
+            self.link(
+                "suppliers.list",
+                self.url_for(".get_suppliers_by_prefix")
+            )
         ]
 
         return {
@@ -59,7 +72,7 @@ class Supplier(db.Model):
         }
 
 
-class Service(db.Model):
+class Service(ModelExtended):
     __tablename__ = 'services'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -88,8 +101,28 @@ class Service(db.Model):
 
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
+    def serialize(self):
+        links = [
+            self.link(
+                "self",
+                self.url_for(".get_service", service_id=self.data['id'])
+            ),
+        ]
 
-class ArchivedService(db.Model):
+        return {
+            'id': self.service_id,
+            'supplierId': self.supplier.supplier_id,
+            'supplierName': self.supplier.name,
+            'createdAt': self.created_at,
+            'updatedAt': self.updated_at,
+            'updatedBy': self.updated_by,
+            'updatedReason': self.updated_reason,
+            'data': self.data,
+            'links': links
+        }
+    
+
+class ArchivedService(ModelExtended):
     __tablename__ = 'archived_services'
 
     id = db.Column(db.Integer, primary_key=True)
