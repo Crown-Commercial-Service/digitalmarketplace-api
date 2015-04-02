@@ -58,10 +58,6 @@ class Supplier(DbModelExtended):
             self.link(
                 "self",
                 self.url_for(".get_supplier", supplier_id=self.supplier_id)
-            ),
-            self.link(
-                "suppliers.list",
-                self.url_for(".get_suppliers_by_prefix")
             )
         ]
 
