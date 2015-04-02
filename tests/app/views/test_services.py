@@ -148,7 +148,7 @@ class TestPostService(BaseApplicationTest):
 
     def setup(self):
         super(TestPostService, self).setup()
-        payload = self.load_example_listing("SSP-JSON-IaaS")
+        payload = self.load_example_listing("G6-IaaS")
         self.service_id = str(payload['id'])
         with self.app.app_context():
             db.session.add(
@@ -514,7 +514,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     def setup(self):
         super(TestPutService, self).setup()
         now = datetime.now()
-        payload = self.load_example_listing("SSP-JSON-IaaS")
+        payload = self.load_example_listing("G6-IaaS")
         with self.app.app_context():
             db.session.add(
                 Framework(id=1, expired=False, name="G-Cloud 6")
@@ -534,7 +534,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_add_a_new_service(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
+            payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             response = self.client.put(
                 '/services/1234567890123456',
@@ -558,7 +558,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
         def test_update_a_service(self):
             with self.app.app_context():
-                payload = self.load_example_listing("SSP-JSON-IaaS")
+                payload = self.load_example_listing("G6-IaaS")
                 response = self.client.put(
                     '/services/1234567890',
                     data=json.dumps(
@@ -639,7 +639,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_add_a_service_with_unknown_supplier_id(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
+            payload = self.load_example_listing("G6-IaaS")
             payload['id'] = 3
             payload['supplierId'] = 100
             response = self.client.put(
@@ -657,7 +657,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_supplier_name_in_service_data_is_shadowed(self):
         with self.app.app_context():
-            payload = self.load_example_listing("SSP-JSON-IaaS")
+            payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             payload['supplierId'] = 1
             payload['supplierName'] = u'New Name'

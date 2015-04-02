@@ -1,0 +1,42 @@
+{
+  "id":"5.G2.0123.456",
+  "serviceName":"Some G5 Data Collection",
+  "title":"Some G5 Data Collection",
+  "serviceSummary":"A simple and easy solution for G5 data stuff.",
+  "priceMin":20.0,
+  "priceUnit":"Per User / Month",
+  "priceString":"20.0 Per User / Month",
+  "supplierId":1,
+  "state":"published",
+  "lot":"SaaS",
+  "serviceTypes":[
+    "Marketing",
+    "Software development tools"
+  ],
+  "minimumContractPeriod":"year",
+  "freeOption":false,
+  "trialOption":false,
+  "terminationCost":false,
+  "networksConnected":[
+    "Internet"
+  ],
+  "apiAccess":false,
+  "openStandardsSupported":false,
+  "openSource":false,
+  "serviceOnBoarding":true,
+  "serviceOffBoarding":true,
+  "dataExtractionRemoval":true,
+  "datacentresEUCode":true,
+  "dataBackupRecovery":true,
+  "selfServiceProvisioning":false,
+  "supportForThirdParties":true,
+  "educationPricing":false,
+  "pricingDocumentURL":"http://assets-production.govstore.service.gov.uk/G5/Supplier/someId/Pricing Document.docx",
+  "serviceDefinitionDocumentURL":"http://assets-production.govstore.service.gov.uk/G5/Supplier/someId/Service Definition.docx",
+  "sfiaRateDocumentURL":"http://assets-production.govstore.service.gov.uk/G5/Supplier/someId/Rate card.docx",
+  "termsAndConditionsDocumentURL":"http://assets-production.govstore.service.gov.uk/G5/Supplier/someId/TandC_data_collection.doc",
+  "additionalDocumentURLs": [
+    "http://assets-production.govstore.service.gov.uk/G5/Supplier/someId/Appendix 1.pdf",
+    "http://assets-production.govstore.service.gov.uk/G5/Supplier/someId/Appendix 2.pdf"
+  ]
+}
