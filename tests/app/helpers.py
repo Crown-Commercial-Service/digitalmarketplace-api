@@ -26,10 +26,10 @@ class WSGIApplicationWithEnvironment(object):
 
 class BaseApplicationTest(object):
     lots = {
-        "iaas": "SSP-JSON-IaaS.json",
-        "saas": "SSP-JSON-SaaS.json",
-        "paas": "SSP-JSON-PaaS.json",
-        "scs": "SSP-JSON-SCS.json"
+        "iaas": "G6-IaaS.json",
+        "saas": "G6-SaaS.json",
+        "paas": "G6-PaaS.json",
+        "scs": "G6-SCS.json"
     }
 
     def setup(self):

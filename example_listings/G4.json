@@ -1,0 +1,39 @@
+{
+  "id": "4.G2.0123.456",
+  "serviceName": "G4 Stuff as a Service",
+  "title": "G4 Stuff as a Service",
+  "serviceSummary": "The G4 Stuff as a Service offering provides a stuff backup service for servers.",
+  "priceMin": 0.45,
+  "priceUnit": "GB/Month",
+  "priceString": "0.45 GB/Month",
+  "supplierId": 1,
+  "state": "disabled",
+  "lot": "IaaS",
+  "serviceTypes": [
+    "Storage"
+  ],
+  "minimumContractPeriod": "month",
+  "freeOption": true,
+  "trialOption": true,
+  "terminationCost": false,
+  "elasticCloud": false,
+  "guaranteedResources": false,
+  "persistentStorage": true,
+  "networksConnected": [
+    "Internet",
+    "Other"
+  ],
+  "apiAccess": true,
+  "openStandardsSupported": true,
+  "openSource": false,
+  "serviceOnBoarding": true,
+  "serviceOffBoarding": true,
+  "dataExtractionRemoval": true,
+  "datacentresEUCode": true,
+  "dataBackupRecovery": true,
+  "selfServiceProvisioning": true,
+  "supportForThirdParties": true,
+  "termsAndConditionsDocumentURL": "http://assets-production.govstore.service.gov.uk/G4/Supplier/someId/Cloud Service Agreement.pdf",
+  "pricingDocumentURL": "http://assets-production.govstore.service.gov.uk/G4/Supplier/someId/Pricing Schedule.pdf",
+  "serviceDefinitionDocumentURL": "http://assets-production.govstore.service.gov.uk/G4/Supplier/someId/ONI plc Service Definition - BaaS.doc"
+}
