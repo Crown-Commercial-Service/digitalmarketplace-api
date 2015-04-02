@@ -1,6 +1,5 @@
 from datetime import datetime
 from flask import jsonify, abort, request
-from flask import url_for as base_url_for
 from sqlalchemy.exc import IntegrityError, DatabaseError
 
 from .. import main
@@ -10,6 +9,7 @@ import traceback
 from ...validation import validate_json_or_400, \
     validate_updater_json_or_400, is_valid_service_id
 
+# TODO: This should probably not be here
 API_FETCH_PAGE_SIZE = 100
 
 
@@ -56,8 +56,13 @@ def list_services():
     if page > 1 and not services.items:
         abort(404, "Page number out of range")
     return jsonify(
-        services=list(map(jsonify_service, services.items)),
-        links=pagination_links(services, '.list_services', request.args))
+        services=[service.serialize() for service in services.items],
+        links=Service.pagination_links(
+            services,
+            '.list_services',
+            request.args
+        )
+    )
 
 
 @main.route('/archived-services', methods=['GET'])
@@ -88,8 +93,13 @@ def list_archived_services_by_service_id():
     if request.args and not services.items:
         abort(404)
     return jsonify(
-        services=list(map(jsonify_service, services.items)),
-        links=pagination_links(services, '.list_services', request.args))
+        services=[service.serialize() for service in services.items],
+        links=ArchivedService.pagination_links(
+            services,
+            '.list_services',
+            request.args
+        )
+    )
 
 
 @main.route('/services/<string:service_id>', methods=['POST'])
@@ -201,7 +211,7 @@ def get_service(service_id):
         Service.service_id == service_id
     ).first_or_404()
 
-    return jsonify(services=jsonify_service(service))
+    return jsonify(services=service.serialize())
 
 
 @main.route('/archived-services/<int:archived_service_id>', methods=['GET'])
@@ -216,22 +226,7 @@ def get_archived_service(archived_service_id):
         ArchivedService.id == archived_service_id
     ).first_or_404()
 
-    return jsonify(services=jsonify_service(service))
-
-
-def jsonify_service(service):
-    data = dict(service.data.items())
-    data.update({
-        'id': service.service_id,
-        'supplierId': service.supplier.supplier_id,
-        'supplierName': service.supplier.name
-    })
-
-    data['links'] = [
-        link("self", url_for(".get_service",
-                             service_id=data['id']))
-    ]
-    return data
+    return jsonify(services=service.serialize())
 
 
 def drop_foreign_fields(service):
@@ -240,30 +235,6 @@ def drop_foreign_fields(service):
         service.pop(key, None)
 
     return service
-
-
-def link(rel, href):
-    if href is not None:
-        return {
-            "rel": rel,
-            "href": href,
-        }
-
-
-def url_for(*args, **kwargs):
-    kwargs.setdefault('_external', True)
-    return base_url_for(*args, **kwargs)
-
-
-def pagination_links(pagination, endpoint, args):
-    return [
-        link(rel, url_for(endpoint,
-                          **dict(list(args.items()) +
-                                 list({'page': page}.items()))))
-        for rel, page in [('next', pagination.next_num),
-                          ('prev', pagination.prev_num)]
-        if 0 < page <= pagination.pages
-    ]
 
 
 def get_json_from_request():
