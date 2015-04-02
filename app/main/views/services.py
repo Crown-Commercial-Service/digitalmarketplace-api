@@ -7,7 +7,7 @@ from .. import main
 from ... import db
 from ...models import ArchivedService, Service, Supplier, Framework
 import traceback
-from ..validation import detect_framework_or_400, \
+from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id
 
 API_FETCH_PAGE_SIZE = 100
@@ -37,7 +37,7 @@ def list_services():
 
     supplier_id = request.args.get('supplier_id')
 
-    services = Service.query
+    services = Service.query.filter(Service.status == 'published')
     if supplier_id is not None:
         try:
             supplier_id = int(supplier_id)
@@ -196,7 +196,7 @@ def get_service(service_id):
 
     service = Service.query.filter(
         Service.service_id == service_id
-    ).first_or_404()
+    ).filter(Service.status == 'published').first_or_404()
 
     return jsonify(services=jsonify_service(service))
 
