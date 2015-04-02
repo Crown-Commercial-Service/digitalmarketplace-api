@@ -7,7 +7,7 @@ from .. import main
 from ... import db
 from ...models import ArchivedService, Service, Supplier, Framework
 import traceback
-from ...validation import validate_json_or_400, \
+from ..validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id
 
 API_FETCH_PAGE_SIZE = 100
@@ -119,7 +119,7 @@ def update_service(service_id):
 
     data = dict(service.data.items())
     data.update(service_update)
-    validate_json_or_400(data)
+    detect_framework_or_400(data)
 
     now = datetime.now()
     service.data = data
@@ -163,7 +163,7 @@ def import_service(service_id):
     update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
 
-    validate_json_or_400(service_data)
+    framework = detect_framework_or_400(service_data)
 
     if str(service_data['id']) != str(service_id):
         abort(400, "Invalid service ID provided")
@@ -171,7 +171,7 @@ def import_service(service_id):
     service.data = service_data
     service.supplier_id = service_data['supplierId']
     service.framework_id = Framework.query.filter(
-        Framework.name == "G-Cloud 6").first().id
+        Framework.name == framework).first().id
     service.updated_at = now
     service.created_at = now
     service.status = "enabled"
