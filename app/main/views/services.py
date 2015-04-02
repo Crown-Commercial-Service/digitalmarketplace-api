@@ -134,6 +134,7 @@ def update_service(service_id):
         json_payload['services'],
         ['supplierName', 'links']
     )
+    json_has_matching_id(service_update, service_id)
 
     data = dict(service.data.items())
     data.update(service_update)
@@ -179,14 +180,12 @@ def import_service(service_id):
         json_payload['services'],
         ['supplierName', 'links']
     )
+    json_has_matching_id(service_data, service_id)
 
     update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
 
     framework = detect_framework_or_400(service_data)
-
-    if str(service_data['id']) != str(service_id):
-        abort(400, "Invalid service ID provided")
 
     service.data = service_data
     service.supplier_id = service_data['supplierId']
