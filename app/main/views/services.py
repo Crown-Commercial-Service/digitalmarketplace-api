@@ -116,6 +116,7 @@ def update_service(service_id):
     service_update = drop_foreign_fields(
         json_payload['services']
     )
+    json_has_matching_id(service_update, service_id)
 
     data = dict(service.data.items())
     data.update(service_update)
@@ -159,14 +160,12 @@ def import_service(service_id):
     service_data = drop_foreign_fields(
         json_payload['services']
     )
+    json_has_matching_id(service_data, service_id)
 
     update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
 
     framework = detect_framework_or_400(service_data)
-
-    if str(service_data['id']) != str(service_id):
-        abort(400, "Invalid service ID provided")
 
     service.data = service_data
     service.supplier_id = service_data['supplierId']
@@ -278,3 +277,8 @@ def json_has_required_keys(data, keys):
     for key in keys:
         if key not in data.keys():
             abort(400, "Invalid JSON must have '%s' key(s)" % keys)
+
+
+def json_has_matching_id(data, id):
+    if 'id' in data and not id == data['id']:
+        abort(400, "service_id parameter must match service_id in data")
