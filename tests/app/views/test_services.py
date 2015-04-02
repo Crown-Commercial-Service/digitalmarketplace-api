@@ -10,6 +10,12 @@ from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
 
 
+def first_by_rel(rel, links):
+    for link in links:
+        if link['rel'] == rel:
+            return link
+
+
 class TestListServices(BaseApplicationTest):
     def test_list_services_with_no_services(self):
         response = self.client.get('/services')
@@ -180,7 +186,7 @@ class TestPostService(BaseApplicationTest):
 
         assert_equal(response.status_code, 405)
 
-    def test_returns_404_if_no_service_found(self):
+    def test_post_returns_404_if_no_service_to_update(self):
         response = self.client.post(
             "/services/9999999999",
             data=json.dumps(
@@ -208,7 +214,7 @@ class TestPostService(BaseApplicationTest):
                          "'services']' key(s)")
             assert_equal(response.status_code, 400)
 
-    def test_non_json_causes_failure(self):
+    def test_no_content_type_causes_failure(self):
         with self.app.app_context():
             response = self.client.post(
                 '/services/%s' % self.service_id,
@@ -230,7 +236,8 @@ class TestPostService(BaseApplicationTest):
                         'updated_by': 'joeblogs',
                         'update_reason': 'whateves'},
                      'services': {
-                         'serviceName': 'new service name'}}))
+                         'serviceName': 'new service name'}}),
+                content_type='application/octet-stream')
 
             assert_equal(response.status_code, 400)
 
@@ -238,7 +245,8 @@ class TestPostService(BaseApplicationTest):
         with self.app.app_context():
             response = self.client.post(
                 '/services/%s' % self.service_id,
-                data="ouiehdfiouerhfuehr")
+                data="ouiehdfiouerhfuehr",
+                content_type='application/json')
 
             assert_equal(response.status_code, 400)
 
@@ -343,7 +351,7 @@ class TestPostService(BaseApplicationTest):
             assert_equal('Authentication federation' in
                          updated_auth_controls['value'], True)
 
-    def test_invalid_field_not_accepted_on_update_for_iaas(self):
+    def test_invalid_field_not_accepted_on_update(self):
         with self.app.app_context():
             response = self.client.post(
                 "/services/" + self.service_id,
@@ -352,62 +360,14 @@ class TestPostService(BaseApplicationTest):
                         'updated_by': 'joeblogs',
                         'update_reason': 'whateves'},
                      'services': {
-                         'this is invalid': 'so I should never see this'}}),
+                         'thisIsInvalid': 'so I should never see this'}}),
                 content_type='application/json')
 
             assert_in('JSON was not a valid format',
                       json.loads(response.get_data())['error'])
             assert_equal(response.status_code, 400)
 
-    def test_invalid_field_not_accepted_on_update_for_saas(self):
-        with self.app.app_context():
-            response = self.client.post(
-                "/services/" + self.service_id,
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': {
-                         'this is invalid': 'so I should never see this'}}),
-                content_type='application/json')
-
-            assert_in('JSON was not a valid format',
-                      json.loads(response.get_data())['error'])
-            assert_equal(response.status_code, 400)
-
-    def test_invalid_field_not_accepted_on_update_for_paas(self):
-        with self.app.app_context():
-            response = self.client.post(
-                "/services/" + self.service_id,
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': {
-                         'this is invalid': 'so I should never see this'}}),
-                content_type='application/json')
-
-            assert_in('JSON was not a valid format',
-                      json.loads(response.get_data())['error'])
-            assert_equal(response.status_code, 400)
-
-    def test_invalid_field_not_accepted_on_update_for_scs(self):
-        with self.app.app_context():
-            response = self.client.post(
-                "/services/" + self.service_id,
-                data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
-                     'services': {
-                         'this is invalid': 'so I should never see this'}}),
-                content_type='application/json')
-
-            assert_in('JSON was not a valid format',
-                      json.loads(response.get_data())['error'])
-        assert_equal(response.status_code, 400)
-
-    def test_invalid_field_value_not_accepted_on_update_for(self):
+    def test_invalid_field_value_not_accepted_on_update(self):
         with self.app.app_context():
             response = self.client.post(
                 "/services/" + self.service_id,
@@ -415,7 +375,7 @@ class TestPostService(BaseApplicationTest):
                     {'update_details': {
                         'updated_by': 'joeblogs',
                         'update_reason': 'whateves'}, 'services': {
-                        'priceUnit': 'euros'}}),
+                        'priceUnit': 'per Truth'}}),
                 content_type='application/json')
 
             assert_in('JSON was not a valid format',
@@ -487,7 +447,7 @@ class TestPostService(BaseApplicationTest):
         response = self.client.get('/archived-services/5')
         assert_equal(response.status_code, 404)
 
-    def test_return_empty_list_if_no_archived_service_by_service_id(self):
+    def test_return_404_if_no_archived_service_by_service_id(self):
         response = self.client.get(
             '/archived-services?service-id=12345678901234')
         assert_equal(response.status_code, 404)
@@ -503,14 +463,23 @@ class TestPostService(BaseApplicationTest):
         response = self.client.get('/archived-services')
         assert_equal(response.status_code, 400)
 
-    @staticmethod
-    def response_is_404(status_code):
-        assert_equal(status_code, 400)
+    def test_should_400_if_mismatched_service_id(self):
+        response = self.client.post(
+            '/services/%s' % self.service_id,
+            data=json.dumps(
+                {'update_details': {
+                    'updated_by': 'joeblogs',
+                    'update_reason': 'whateves'},
+                 'services': {
+                     'serviceName': 'new service name', 'id': 'differentId'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 400)
 
 
 class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     method = "put"
-    endpoint = "/services/1234567890"
+    endpoint = "/services/1234567890123456"
 
     def setup(self):
         super(TestPutService, self).setup()
@@ -523,7 +492,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
-            db.session.add(Service(service_id=1234567890,
+            db.session.add(Service(service_id="1234567890123456",
                                    supplier_id=1,
                                    updated_at=now,
                                    status='enabled',
@@ -557,44 +526,46 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             assert_almost_equal(now, service.created_at,
                                 delta=timedelta(seconds=2))
 
-        def test_update_a_service(self):
-            with self.app.app_context():
-                payload = self.load_example_listing("G6-IaaS")
-                response = self.client.put(
-                    '/services/1234567890',
-                    data=json.dumps(
-                        {
-                            'update_details': {
-                                'updated_by': 'joeblogs',
-                                'update_reason': 'whateves'},
-                            'services': payload}
-                    ),
-                    content_type='application/json')
+    def test_update_a_service(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("G6-IaaS")
+            response = self.client.post(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+            assert_equal(response.status_code, 200)
+            assert_equal(json.loads(response.get_data()), {"message": "done"})
+            now = datetime.now()
+            service = Service.query.filter(Service.service_id ==
+                                           "1234567890123456").first()
+            assert_equal(service.data, payload)
+            assert_not_equal(service.created_at, service.updated_at)
+            assert_almost_equal(now, service.updated_at,
+                                delta=timedelta(seconds=2))
 
-                assert_equal(response.status_code, 204)
-                now = datetime.now()
-                service = Service.query.filter(Service.service_id == 2).first()
-                assert_equal(service.data, payload)
-                assert_not_equal(service.created_at, service.updated_at)
-                assert_almost_equal(now, service.updated_at,
-                                    delta=timedelta(seconds=2))
-
-    def test_when_service_payload_has_invalid_id(self):
+    def test_when_service_payload_has_mismatched_id(self):
         response = self.client.put(
-            '/services/1234567890',
+            '/services/1234567890123456',
             data=json.dumps({
                 'update_details': {
                     'updated_by': 'joeblogs',
                     'update_reason': 'whateves'},
-                'services': {'id': 1234567890, 'foo': 'bar'}}),
+                'services': {'id': "1234567890123457", 'foo': 'bar'}}),
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
 
     def test_when_no_update_details(self):
         response = self.client.put(
-            '/services/1234567890',
-            data=json.dumps({'services': {'id': 1234567890, 'foo': 'bar'}}),
+            '/services/1234567890123456',
+            data=json.dumps({'services': {'id': "1234567890123456",
+                                          'foo': 'bar'}}),
             content_type='application/json')
 
         assert_equal(json.loads(response.get_data())['error'],
@@ -602,38 +573,26 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                      "'update_details']' key(s)")
         assert_equal(response.status_code, 400)
 
-    def test_invalid_service_id(self):
+    def test_invalid_service_id_too_short(self):
         response = self.client.put(
-            '/services/abc123',
+            '/services/abc123456',
             data=json.dumps({
                 'update_details': {
                     'updated_by': 'joeblogs',
                     'update_reason': 'whateves'},
-                'services': {'id': 'abc123', 'foo': 'bar'}}),
+                'services': {'id': 'abc123456', 'foo': 'bar'}}),
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
 
-    def test_invalid_length_g6_service_id_too_short(self):
+    def test_invalid_service_id_too_long(self):
         response = self.client.put(
-            '/services/12345',
+            '/services/abcdefghij12345678901',
             data=json.dumps({
                 'update_details': {
                     'updated_by': 'joeblogs',
                     'update_reason': 'whateves'},
-                'services': {'id': 'abc123', 'foo': 'bar'}}),
-            content_type='application/json')
-
-        assert_equal(response.status_code, 400)
-
-    def test_invalid_length_g6_service_id_too_short_long(self):
-        response = self.client.put(
-            '/services/12345678901234567',
-            data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
-                'services': {'id': 'abc123', 'foo': 'bar'}}),
+                'services': {'id': 'abcdefghij12345678901', 'foo': 'bar'}}),
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
@@ -641,10 +600,10 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     def test_add_a_service_with_unknown_supplier_id(self):
         with self.app.app_context():
             payload = self.load_example_listing("G6-IaaS")
-            payload['id'] = 3
+            payload['id'] = "6543210987654321"
             payload['supplierId'] = 100
             response = self.client.put(
-                '/services/1234567890',
+                '/services/6543210987654321',
                 data=json.dumps(
                     {
                         'update_details': {
@@ -694,7 +653,7 @@ class TestGetService(BaseApplicationTest):
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
-            db.session.add(Service(service_id=1234567890,
+            db.session.add(Service(service_id="1234567890123456",
                                    supplier_id=1,
                                    updated_at=now,
                                    created_at=now,
@@ -713,14 +672,14 @@ class TestGetService(BaseApplicationTest):
         assert_equal(400, response.status_code)
 
     def test_get_service(self):
-        response = self.client.get('/services/1234567890')
+        response = self.client.get('/services/1234567890123456')
 
         data = json.loads(response.get_data())
         assert_equal(200, response.status_code)
-        assert_equal("1234567890", data['services']['id'])
+        assert_equal("1234567890123456", data['services']['id'])
 
     def test_get_service_returns_supplier_info(self):
-        response = self.client.get('/services/1234567890')
+        response = self.client.get('/services/1234567890123456')
 
         data = json.loads(response.get_data())
         assert_equal(data['services']['supplierId'], 1)
