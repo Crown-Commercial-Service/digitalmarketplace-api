@@ -4,7 +4,7 @@ from .. import main
 from ...models import Supplier
 
 # TODO: This should probably not be here
-API_FETCH_PAGE_SIZE = 2
+API_FETCH_PAGE_SIZE = 100
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -27,8 +27,6 @@ def get_suppliers_by_prefix():
 
     if not suppliers.all():
         abort(404, "No suppliers found for \'{0}\'".format(prefix))
-
-    # suppliers_json = [supplier.serialize() for supplier in suppliers]
 
     suppliers = suppliers.paginate(
         page=page,

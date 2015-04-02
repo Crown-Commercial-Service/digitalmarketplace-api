@@ -42,7 +42,7 @@ class TestListServices(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 100)
-        next_link = first_by_rel('next', data['links'])
+        next_link = self.first_by_rel('next', data['links'])
         assert_in("page=2", next_link['href'])
 
     def test_paginated_list_services_page_two(self):
@@ -53,7 +53,7 @@ class TestListServices(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 50)
-        prev_link = first_by_rel('prev', data['links'])
+        prev_link = self.first_by_rel('prev', data['links'])
         assert_in("page=1", prev_link['href'])
 
     def test_paginated_list_services_page_out_of_range(self):
@@ -132,7 +132,7 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services?supplier_id=1&page=1')
         data = json.loads(response.get_data())
 
-        next_link = first_by_rel('next', data['links'])
+        next_link = self.first_by_rel('next', data['links'])
         assert_in("page=2", next_link['href'])
         assert_in("supplier_id=1", next_link['href'])
 
@@ -141,12 +141,6 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services?supplier_id=100')
 
         assert_equal(response.status_code, 404)
-
-
-def first_by_rel(rel, links):
-    for link in links:
-        if link['rel'] == rel:
-            return link
 
 
 class TestPostService(BaseApplicationTest):

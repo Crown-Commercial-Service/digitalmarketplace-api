@@ -54,16 +54,21 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             db.create_all()
 
+    def setup_dummy_suppliers(self, n):
+        with self.app.app_context():
+
+            for i in range(n):
+                db.session.add(
+                    Supplier(supplier_id=i, name=u"Supplier {}".format(i))
+                )
+
     def setup_dummy_services(self, n):
         now = datetime.now()
         with self.app.app_context():
             db.session.add(
                 Framework(id=1, expired=False, name="G-Cloud 6")
             )
-            for i in range(TEST_SUPPLIERS_COUNT):
-                db.session.add(
-                    Supplier(supplier_id=i, name=u"Supplier {}".format(i))
-                )
+            self.setup_dummy_suppliers(TEST_SUPPLIERS_COUNT)
             for i in range(n):
                 db.session.add(Service(service_id=i,
                                        supplier_id=i % TEST_SUPPLIERS_COUNT,
@@ -98,6 +103,11 @@ class BaseApplicationTest(object):
         file_path = os.path.join("example_listings", "{}.json".format(name))
         with open(file_path) as f:
             return json.load(f)
+
+    def first_by_rel(self, rel, links):
+        for link in links:
+            if link['rel'] == rel:
+                return link
 
 
 class JSONUpdateTestMixin(object):
