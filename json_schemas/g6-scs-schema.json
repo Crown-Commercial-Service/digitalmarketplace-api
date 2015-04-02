@@ -13,7 +13,7 @@
       },
       "lot": {
          "type": "string",
-         "pattern": "SCS"
+         "pattern": "^SCS$"
       },
       "title": {
          "type": "string"
@@ -38,7 +38,7 @@
          "maxItems": 5,
          "items": {
             "type": "string",
-            "pattern": "Implementation|Ongoing support|Planning|Testing|Training"
+            "pattern": "^(Implementation|Ongoing support|Planning|Testing|Training)$"
          }
       },
       "serviceName": {
@@ -76,7 +76,7 @@
       },
       "minimumContractPeriod": {
          "type": "string",
-         "pattern": "Hour|Day|Month|Year|Other"
+         "pattern": "^(Hour|Day|Month|Year|Other)$"
       },
       "terminationCost": {
          "type": "boolean"
@@ -89,11 +89,11 @@
       },
       "priceUnit": {
          "type": "string",
-         "pattern": "Unit|Person|Licence|User|Device|Instance|Server|Virtual machine|Transaction|Megabyte|Gigabyte|Terabyte"
+         "pattern": "^(Unit|Person|Licence|User|Device|Instance|Server|Virtual machine|Transaction|Megabyte|Gigabyte|Terabyte)$"
       },
       "priceInterval": {
          "type": "string",
-         "pattern": "^$|Second|Minute|Hour|Day|Week|Month|Quarter|6 months|Year"
+        "pattern": "^(||Second|Minute|Hour|Day|Week|Month|Quarter|6 months|Year)$"
       },
       "priceString": {
          "type": "string"
@@ -136,7 +136,7 @@
          "maxItems": 5,
          "items": {
             "type": "string",
-            "pattern": "Service desk|Email|Phone|Live chat|Onsite"
+            "pattern": "^(Service desk|Email|Phone|Live chat|Onsite)$"
          }
       },
       "vendorCertifications": {
