@@ -98,24 +98,27 @@ class Service(DbModelExtended):
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
     def serialize(self):
-        links = [
-            self.link(
-                "self",
-                self.url_for(".get_service", service_id=self.data['id'])
-            ),
-        ]
+        """
+        Pretty much a direct translation of the old `jsonify_service` function
+        :return: dictionary representation of a service
+        """
 
-        return {
+        data = dict(self.data.items())
+
+        data.update({
             'id': self.service_id,
             'supplierId': self.supplier.supplier_id,
             'supplierName': self.supplier.name,
-            'createdAt': self.created_at,
-            'updatedAt': self.updated_at,
-            'updatedBy': self.updated_by,
-            'updatedReason': self.updated_reason,
-            'data': self.data,
-            'links': links
-        }
+        })
+
+        data['links'] = [
+            self.link(
+                "self",
+                self.url_for(".get_service", service_id=data['id'])
+            )
+        ]
+
+        return data
 
 
 class ArchivedService(DbModelExtended):
@@ -160,3 +163,26 @@ class ArchivedService(DbModelExtended):
             data=service.data,
             status=service.status
         )
+
+    def serialize(self):
+        """
+        Pretty much a direct translation of the old `jsonify_service` function
+        :return: dictionary representation of a service
+        """
+
+        data = dict(self.data.items())
+
+        data.update({
+            'id': self.service_id,
+            'supplierId': self.supplier.supplier_id,
+            'supplierName': self.supplier.name,
+        })
+
+        data['links'] = [
+            self.link(
+                "self",
+                self.url_for(".get_service", service_id=data['id'])
+            )
+        ]
+
+        return data
