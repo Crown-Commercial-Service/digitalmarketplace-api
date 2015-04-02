@@ -1,0 +1,36 @@
+{
+  "id": 93481,
+  "name": "Open Credo Limited",
+  "description": "OpenCredo is a high-end software consultancy; delivering software using leading edge technologies to gain competitive advantage. We invest in building internal knowledge that will change software development tomorrow. We build innovative solutions using a range of Cloud and NoSQL/Big Data technologies such as Cloud Foundry, Cassandra and Neo4J.",
+  "contactInformation": [
+    {
+      "website": "www.opencredo.com",
+      "contactName": "Don Cleeve",
+      "email": "don.cleeve@opencredo.com",
+      "phoneNumber": "020 7928 9200",
+      "address": {
+          "address1": "4 Snow Hill",
+          "address2": "true",
+          "city": "London",
+          "country": "United Kingdom",
+          "postcode": "EC1A 2DJ"
+      }
+    },
+    {
+      "website": "www.don.com",
+      "contactName": "Don",
+      "email": "don@don.com",
+      "phoneNumber": "020 7918 9200",
+      "address": {
+          "address1": "4 Don Hill",
+          "address2": "true",
+          "city": "LonDon",
+          "country": "United KingDon",
+          "postcode": "EC1A D0N"
+      }
+    }
+  ],
+  "dunsNumber": "239547040",
+  "eSourcingId": "677330",
+  "clientsString": "UK Ministry of Defence,Astula Ltd,SA Capabilities Ltd,Bedrock Communications Ltd"
+}

@@ -3,7 +3,7 @@ from nose.tools import assert_equal, assert_in
 
 from app import db
 from app.models import Supplier
-from ..helpers import BaseApplicationTest
+from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 
 
 class TestGetSupplier(BaseApplicationTest):
@@ -117,10 +117,52 @@ class TestListSuppliersPaginated(BaseApplicationTest):
     def test_query_string_prefix_page_out_of_range(self):
         response = self.client.get('/suppliers?prefix=s&page=10')
 
-        assert_equal(response.status_code, 404)
+        assert_equal(response.status_code, 400)
+        assert_in(b'Invalid page argument', response.get_data())
 
     def test_query_string_prefix_invalid_page_argument(self):
         response = self.client.get('/suppliers?prefix=s&page=a')
 
         assert_equal(response.status_code, 400)
-        assert_in(b'Invalid page argument', response.get_data())
+
+"""
+class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
+    method = "put"
+    endpoint = "/suppliers/585274"
+
+    def setup(self):
+        super(TestPutSupplier, self).setup()
+
+    def test_add_a_new_supplier(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("SSP-JSON-Supplier")
+            response = self.client.put(
+                '/suppliers/585274',
+                data=json.dumps(payload),
+                content_type='application/json')
+            assert_equal(response.status_code, 201)
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 585274
+            ).first()
+            assert_equal(supplier.name, payload['name'])
+
+    def test_when_supplier_payload_has_invalid_id(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("SSP-JSON-Supplier")
+            payload['id'] = '123abc'
+            response = self.client.put(
+                '/suppliers/585274',
+                data=json.dumps(payload),
+                content_type='application/json')
+            assert_equal(response.status_code, 400)
+
+    def test_when_supplier_payload_and_route_have_mismatching_ids(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("SSP-JSON-Supplier")
+            payload['id'] = 585275
+            response = self.client.put(
+                '/suppliers/585274',
+                data=json.dumps(payload),
+                content_type='application/json')
+            assert_equal(response.status_code, 400)
+"""

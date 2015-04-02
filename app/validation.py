@@ -39,6 +39,12 @@ def load_schemas(schemas_path, schema_names):
 
 SCHEMAS = load_schemas(JSON_SCHEMAS_PATH, SCHEMA_NAMES)
 
+with open("json_schemas/g6-supplier-schema.json") as json_file6:
+    G6_SUPPLIER_SCHEMA = json.load(json_file6)
+    G6_SUPPLIER_VALIDATOR = validator_for(G6_SUPPLIER_SCHEMA)
+    G6_SUPPLIER_VALIDATOR.check_schema(G6_SUPPLIER_SCHEMA)
+    G6_SUPPLIER_VALIDATOR = G6_SUPPLIER_VALIDATOR(G6_SUPPLIER_SCHEMA)
+
 
 def validate_updater_json_or_400(submitted_json):
     if not validates_against_schema('services-update', submitted_json):
@@ -63,6 +69,7 @@ def detect_framework_or_400(submitted_json):
         abort(400, "JSON was not a valid format. {}".format(
             reason_for_failure(submitted_json))
         )
+
     return framework
 
 
@@ -76,6 +83,22 @@ def detect_framework(submitted_json):
             validates_against_schema('services-g6-paas', submitted_json) or \
             validates_against_schema('services-g6-iaas', submitted_json):
         return 'G-Cloud 6'
+
+
+def validate_supplier_json_or_400(submitted_json):
+    if not validates_against_schema(G6_SUPPLIER_VALIDATOR, submitted_json):
+        abort(400, "JSON was not a valid format")
+
+
+def validate_json(submitted_json):
+    if validates_against_schema(G6_SCS_VALIDATOR, submitted_json):
+        return 'G6-SCS'
+    elif validates_against_schema(G6_SAAS_VALIDATOR, submitted_json):
+        return 'G6-SaaS'
+    elif validates_against_schema(G6_PAAS_VALIDATOR, submitted_json):
+        return 'G6-PaaS'
+    elif validates_against_schema(G6_IAAS_VALIDATOR, submitted_json):
+        return 'G6-IaaS'
     else:
         return False
 
@@ -134,3 +157,10 @@ def is_valid_service_id(service_id):
         return True
 
     return False
+
+
+def is_valid_service_id_or_400(service_id):
+    if is_valid_service_id(service_id):
+        return True
+    else:
+        abort(400, "Invalid service ID supplied: %s" % service_id)

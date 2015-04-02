@@ -208,7 +208,6 @@ def import_service(service_id):
 
     return "", 201
 
-
 @main.route('/services/<string:service_id>', methods=['GET'])
 def get_service(service_id):
 
@@ -234,18 +233,3 @@ def get_archived_service(archived_service_id):
     ).first_or_404()
 
     return jsonify(services=service.serialize())
-
-
-def jsonify_service(service):
-    data = dict(service.data.items())
-    data.update({
-        'id': service.service_id,
-        'supplierId': service.supplier.supplier_id,
-        'supplierName': service.supplier.name
-    })
-
-    data['links'] = [
-        link("self", url_for(".get_service",
-                             service_id=data['id']))
-    ]
-    return data

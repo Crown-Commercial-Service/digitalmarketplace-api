@@ -1,0 +1,48 @@
+{
+  "id": "G6 Supplier Schema",
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "contactInformation": {
+      "type": "array",
+      "items": {
+        "$ref": "file:json_schemas/g6-contact-schema.json"
+      },
+      "minItems": 1
+    },
+    "dunsNumber": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "eSourcingId": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "clientsString": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 0
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "description",
+    "contactInformation",
+    "dunsNumber",
+    "eSourcingId",
+    "clientsString"
+  ]
+}
