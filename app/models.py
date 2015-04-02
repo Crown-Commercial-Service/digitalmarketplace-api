@@ -59,10 +59,6 @@ class Supplier(DbModelExtended):
             self.link(
                 "self",
                 self.url_for(".get_supplier", supplier_id=self.supplier_id)
-            ),
-            self.link(
-                "suppliers.list",
-                self.url_for(".get_suppliers_by_prefix")
             )
         ]
 
@@ -121,7 +117,7 @@ class Service(DbModelExtended):
             'data': self.data,
             'links': links
         }
-    
+
 
 class ArchivedService(DbModelExtended):
     __tablename__ = 'archived_services'

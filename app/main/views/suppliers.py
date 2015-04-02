@@ -3,6 +3,7 @@ from flask import jsonify, abort, request
 from .. import main
 from ...models import Supplier
 
+# TODO: This should probably not be here
 API_FETCH_PAGE_SIZE = 2
 
 
