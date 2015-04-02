@@ -82,7 +82,7 @@
       "type": "number"
     },
     "priceMax": {
-      "type": "number"
+      "type": ["number", "null"]
     },
     "priceUnit": {
       "type": "string",
