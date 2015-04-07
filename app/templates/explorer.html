@@ -25,6 +25,7 @@
                 <li><a href="#" id="update-link" data-toggle="collapse" data-target="#update-block">Update</a></li>
                 <li><a href="#" id="fetch-link" data-toggle="collapse" data-target="#fetch-block">Fetch</a></li>
                 <li><a href="#" id="fetch-archive-link" data-toggle="collapse" data-target="#fetch-archive-block">Fetch Archive</a></li>
+                <li><a href="#" id="fetch-supplier-link" data-toggle="collapse" data-target="#fetch-supplier-block">Fetch Supplier</a></li>
             </ul>
         </div>
     </div>
@@ -41,14 +42,16 @@
     <div class="input-group">
         <p>
             <span class="input-group-token" id="token">Bearer Token</span>
-            <input id="bearer-token" type="text" class="form-control" placeholder="enter you're bearer token here"
+            <input id="bearer-token" type="text" class="form-control" placeholder="enter your bearer token here"
                    aria-describedby="bearer token">
         </p>
         <p>
-            <label><h6>Service ID</h6></label>
+            <label><h6>Service/Supplier ID</h6></label>
             <input id="service_id" type="text"/>
         </p>
     </div>
+
+    <hr>
 
     <div class="container collapse" id="import-block">
         <h3>Import a new service</h3>
@@ -63,7 +66,7 @@
         <div class="row">
             <div class="span12">
                 <p>
-                    <button class="btn btn-primary" type="button"
+                        <button class="btn btn-primary" type="button"
                             onclick='importService()'>Import It!
                     </button>
                 </p>
@@ -116,6 +119,20 @@
                 <p>
                     <button class="btn btn-primary" type="button"
                             onclick='fetchArchivedService();'>Fetch It!
+                    </button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container collapse" id="fetch-supplier-block">
+        <h3>Fetch a supplier</h3>
+
+        <div class="row">
+            <div class="span12">
+                <p>
+                    <button class="btn btn-primary" type="button"
+                            onclick='fetchSupplier();'>Fetch It!
                     </button>
                 </p>
             </div>
