@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import os
 import json
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
 from app.models import Service, Supplier, Framework
@@ -145,6 +145,8 @@ class JSONUpdateTestMixin(object):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
+        assert_in('a request that this server could not understand',
+                  response.get_data())
 
     def test_invalid_json_causes_failure(self):
         response = self.client.open(
@@ -154,6 +156,7 @@ class JSONUpdateTestMixin(object):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
+        assert_in('Invalid JSON', response.get_data())
 
     def test_invalid_content_type_causes_failure(self):
         response = self.client.open(
@@ -162,3 +165,4 @@ class JSONUpdateTestMixin(object):
             data='{"services": {"foo": "bar"}}')
 
         assert_equal(response.status_code, 400)
+        assert_in('Unexpected Content-Type', response.get_data())
