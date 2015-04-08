@@ -23,16 +23,17 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         assert_equal(data['services'], [])
 
-    def test_list_services(self):
-        self.setup_dummy_services(1)
+    def test_list_services_only_returns_published(self):
+        self.setup_dummy_services_including_unpublished(1)
         response = self.client.get('/services')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 1)
+        assert_equal(data['services'][0]['id'], '0')
 
     def test_list_services_returns_supplier_info(self):
-        self.setup_dummy_services(1)
+        self.setup_dummy_services_including_unpublished(1)
         response = self.client.get('/services')
         data = json.loads(response.get_data())
         service = data['services'][0]
@@ -41,7 +42,7 @@ class TestListServices(BaseApplicationTest):
         assert_equal(service['supplierName'], u'Supplier 0')
 
     def test_paginated_list_services_page_one(self):
-        self.setup_dummy_services(150)
+        self.setup_dummy_services_including_unpublished(150)
 
         response = self.client.get('/services')
         data = json.loads(response.get_data())
@@ -52,7 +53,7 @@ class TestListServices(BaseApplicationTest):
         assert_in("page=2", next_link['href'])
 
     def test_paginated_list_services_page_two(self):
-        self.setup_dummy_services(150)
+        self.setup_dummy_services_including_unpublished(150)
 
         response = self.client.get('/services?page=2')
         data = json.loads(response.get_data())
@@ -63,14 +64,14 @@ class TestListServices(BaseApplicationTest):
         assert_in("page=1", prev_link['href'])
 
     def test_paginated_list_services_page_out_of_range(self):
-        self.setup_dummy_services(15)
+        self.setup_dummy_services_including_unpublished(15)
 
         response = self.client.get('/services?page=10')
 
         assert_equal(response.status_code, 404)
 
     def test_x_forwarded_proto(self):
-        self.setup_dummy_services(1)
+        self.setup_dummy_services_including_unpublished(1)
 
         response = self.client.get('/services',
                                    headers={'X-Forwarded-Proto': 'https'})
@@ -94,7 +95,7 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 404)
 
     def test_supplier_id_filter(self):
-        self.setup_dummy_services(15)
+        self.setup_dummy_services_including_unpublished(15)
 
         response = self.client.get('/services?supplier_id=1')
         data = json.loads(response.get_data())
@@ -106,7 +107,7 @@ class TestListServices(BaseApplicationTest):
         )
 
     def test_supplier_id_with_no_services_filter(self):
-        self.setup_dummy_services(15)
+        self.setup_dummy_services_including_unpublished(15)
 
         response = self.client.get(
             '/services?supplier_id=%d' % TEST_SUPPLIERS_COUNT
@@ -120,7 +121,7 @@ class TestListServices(BaseApplicationTest):
         )
 
     def test_supplier_id_filter_pagination(self):
-        self.setup_dummy_services(450)
+        self.setup_dummy_services_including_unpublished(450)
 
         response = self.client.get('/services?supplier_id=1&page=2')
         data = json.loads(response.get_data())
@@ -133,7 +134,7 @@ class TestListServices(BaseApplicationTest):
         )
 
     def test_supplier_id_filter_pagination_links(self):
-        self.setup_dummy_services(450)
+        self.setup_dummy_services_including_unpublished(450)
 
         response = self.client.get('/services?supplier_id=1&page=1')
         data = json.loads(response.get_data())
@@ -143,7 +144,7 @@ class TestListServices(BaseApplicationTest):
         assert_in("supplier_id=1", next_link['href'])
 
     def test_unknown_supplier_id(self):
-        self.setup_dummy_services(15)
+        self.setup_dummy_services_including_unpublished(15)
         response = self.client.get('/services?supplier_id=100')
 
         assert_equal(response.status_code, 404)
@@ -652,11 +653,29 @@ class TestGetService(BaseApplicationTest):
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
-            db.session.add(Service(service_id="1234567890123456",
+            db.session.add(Service(service_id="123-published-456",
                                    supplier_id=1,
                                    updated_at=now,
                                    created_at=now,
                                    status='published',
+                                   updated_by="tests",
+                                   updated_reason="test data",
+                                   data={'foo': 'bar'},
+                                   framework_id=1))
+            db.session.add(Service(service_id="123-disabled-456",
+                                   supplier_id=1,
+                                   updated_at=now,
+                                   created_at=now,
+                                   status='disabled',
+                                   updated_by="tests",
+                                   updated_reason="test data",
+                                   data={'foo': 'bar'},
+                                   framework_id=1))
+            db.session.add(Service(service_id="123-enabled-456",
+                                   supplier_id=1,
+                                   updated_at=now,
+                                   created_at=now,
+                                   status='enabled',
                                    updated_by="tests",
                                    updated_reason="test data",
                                    data={'foo': 'bar'},
@@ -670,16 +689,22 @@ class TestGetService(BaseApplicationTest):
         response = self.client.get('/services/abc123')
         assert_equal(400, response.status_code)
 
-    def test_get_service(self):
-        response = self.client.get('/services/1234567890123456')
-
+    def test_get_published_service(self):
+        response = self.client.get('/services/123-published-456')
         data = json.loads(response.get_data())
         assert_equal(200, response.status_code)
-        assert_equal("1234567890123456", data['services']['id'])
+        assert_equal("123-published-456", data['services']['id'])
+
+    def test_get_disabled_service(self):
+        response = self.client.get('/services/123-disabled-456')
+        assert_equal(404, response.status_code)
+
+    def test_get_enabled_service(self):
+        response = self.client.get('/services/123-enabled-456')
+        assert_equal(404, response.status_code)
 
     def test_get_service_returns_supplier_info(self):
-        response = self.client.get('/services/1234567890123456')
-
+        response = self.client.get('/services/123-published-456')
         data = json.loads(response.get_data())
         assert_equal(data['services']['supplierId'], 1)
         assert_equal(data['services']['supplierName'], u'Supplier 1')
