@@ -1,5 +1,5 @@
 {
-  "id":"5.G2.0123.456",
+  "id":"5-G2-0123-456",
   "serviceName":"Some G5 Data Collection",
   "title":"Some G5 Data Collection",
   "serviceSummary":"A simple and easy solution for G5 data stuff.",
@@ -7,7 +7,7 @@
   "priceUnit":"Per User / Month",
   "priceString":"20.0 Per User / Month",
   "supplierId":1,
-  "state":"published",
+  "status":"published",
   "lot":"SaaS",
   "serviceTypes":[
     "Marketing",

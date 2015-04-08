@@ -6,9 +6,9 @@
   "properties": {
     "id": {
       "type": "string",
-      "pattern": "^5\\..*"
+      "pattern": "^5\\-.*"
     },
-    "state": {
+    "status": {
       "type": "string",
       "pattern": "^(disabled|enabled|published)$"
     },
@@ -204,7 +204,7 @@
   },
   "required": [
     "id",
-    "state",
+    "status",
     "supplierId",
     "lot",
     "title",

@@ -1,5 +1,5 @@
 {
-  "id": "4.G2.0123.456",
+  "id": "4-G2-0123-456",
   "serviceName": "G4 Stuff as a Service",
   "title": "G4 Stuff as a Service",
   "serviceSummary": "The G4 Stuff as a Service offering provides a stuff backup service for servers.",
@@ -7,7 +7,7 @@
   "priceUnit": "GB/Month",
   "priceString": "0.45 GB/Month",
   "supplierId": 1,
-  "state": "disabled",
+  "status": "disabled",
   "lot": "IaaS",
   "serviceTypes": [
     "Storage"
