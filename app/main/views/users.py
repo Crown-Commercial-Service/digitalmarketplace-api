@@ -59,6 +59,7 @@ def create_user():
     user = User(
         email_address=json_payload['email_address'].lower(),
         name=json_payload['name'],
+        role=json_payload['role'],
         password=password,
         active=True,
         locked=False,

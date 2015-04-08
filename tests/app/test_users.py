@@ -16,6 +16,7 @@ class TestUsersAuth(BaseApplicationTest):
                     'users': {
                         'email_address': 'joeblogs@email.com',
                         'password': '1234567890',
+                        'role': 'buyer',
                         'name': 'joe bloggs'}}),
                 content_type='application/json')
 
@@ -41,6 +42,7 @@ class TestUsersAuth(BaseApplicationTest):
                     'users': {
                         'email_address': 'joEblogS@EMAIL.com',
                         'password': '1234567890',
+                        'role': 'buyer',
                         'name': 'joe bloggs'}}),
                 content_type='application/json')
 
@@ -80,6 +82,7 @@ class TestUsersAuth(BaseApplicationTest):
                     'users': {
                         'email_address': 'joeblogs@email.com',
                         'password': '1234567890',
+                        'role': 'buyer',
                         'name': 'joe bloggs'}}),
                 content_type='application/json')
 
@@ -109,6 +112,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                 'users': {
                     'email_address': 'joeblogs@email.com',
                     'password': '1234567890',
+                    'role': 'buyer',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
@@ -125,6 +129,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                         'hashpw': True,
                         'email_address': 'joeblogs@email.com',
                         'password': '1234567890',
+                        'role': 'buyer',
                         'name': 'joe bloggs'}}),
                 content_type='application/json')
 
@@ -143,6 +148,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                         'hashpw': False,
                         'email_address': 'joeblogs@email.com',
                         'password': '1234567890',
+                        'role': 'buyer',
                         'name': 'joe bloggs'}}),
                 content_type='application/json')
 
@@ -159,6 +165,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                 'users': {
                     'email_address': 'joeblogs@email.com',
                     'password': '1234567890',
+                    'role': 'buyer',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
@@ -170,6 +177,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                 'users': {
                     'email_address': 'joeblogs@email.com',
                     'password': '1234567890',
+                    'role': 'buyer',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
@@ -182,6 +190,20 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                 'users': {
                     'email_address': 'joeblogs@email.com',
                     'password': '',
+                    'role': 'buyer',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 400)
+
+    def test_return_400_for_invalid_user_role(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'email_address': 'joeblogs@email.com',
+                    'password': '0000000000',
+                    'role': 'invalid',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
@@ -200,6 +222,7 @@ class TestUsersGet(BaseApplicationTest):
                 password="my long password",
                 active=True,
                 locked=False,
+                role='buyer',
                 created_at=now,
                 updated_at=now,
                 password_changed_at=now
@@ -211,6 +234,7 @@ class TestUsersGet(BaseApplicationTest):
         data = json.loads(response.get_data())["users"]
         assert_equal(data['email_address'], "test@test.com")
         assert_equal(data['name'], "my name")
+        assert_equal(data['role'], "buyer")
         assert_equal(data['active'], True)
         assert_equal(data['locked'], False)
         assert_equal('password' in data, False)
