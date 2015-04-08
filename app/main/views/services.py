@@ -193,7 +193,10 @@ def import_service(service_id):
         Framework.name == framework).first().id
     service.updated_at = now
     service.created_at = now
-    service.status = "enabled"
+    if 'status' in service_data:
+        service.status = service_data['status']
+    else:
+        service.status = 'published'
     service.updated_by = update_json['updated_by']
     service.updated_reason = update_json['update_reason']
 
