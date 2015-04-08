@@ -32,9 +32,9 @@ class TestGetSupplier(BaseApplicationTest):
         assert_equal(u"Supplier 585274", data['suppliers']['name'])
 
 
-class TestGetSuppliers(BaseApplicationTest):
+class TestListSuppliers(BaseApplicationTest):
     def setup(self):
-        super(TestGetSuppliers, self).setup()
+        super(TestListSuppliers, self).setup()
 
         with self.app.app_context():
             db.session.add(
@@ -52,11 +52,11 @@ class TestGetSuppliers(BaseApplicationTest):
 
     def test_query_string_missing(self):
         response = self.client.get('/suppliers')
-        assert_equal(400, response.status_code)
+        assert_equal(200, response.status_code)
 
     def test_query_string_prefix_empty(self):
         response = self.client.get('/suppliers?prefix=')
-        assert_equal(400, response.status_code)
+        assert_equal(200, response.status_code)
 
     def test_query_string_prefix_returns_none(self):
         response = self.client.get('/suppliers?prefix=canada')
@@ -89,9 +89,9 @@ class TestGetSuppliers(BaseApplicationTest):
         assert_equal(u"Supplier 123456", data['suppliers'][1]['name'])
 
 
-class TestGetSuppliersPaginated(BaseApplicationTest):
+class TestListSuppliersPaginated(BaseApplicationTest):
     def setup(self):
-        super(TestGetSuppliersPaginated, self).setup()
+        super(TestListSuppliersPaginated, self).setup()
 
         # Supplier names like u"Supplier {n}"
         self.setup_dummy_suppliers(150)
@@ -117,7 +117,7 @@ class TestGetSuppliersPaginated(BaseApplicationTest):
     def test_query_string_prefix_page_out_of_range(self):
         response = self.client.get('/suppliers?prefix=s&page=10')
 
-        assert_equal(response.status_code, 200)
+        assert_equal(response.status_code, 404)
 
     def test_query_string_prefix_invalid_page_argument(self):
         response = self.client.get('/suppliers?prefix=s&page=a')
