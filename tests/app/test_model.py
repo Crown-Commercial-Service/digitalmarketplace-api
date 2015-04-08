@@ -1,5 +1,4 @@
-from nose.tools\
-    import assert_equal
+from nose.tools import assert_equal
 from app.models import User
 from datetime import datetime
 
@@ -17,4 +16,5 @@ def test_should_not_return_password_on_user():
         password_changed_at=now
     )
 
-    assert_equal(user.serialize()['email'], "email")
+    assert_equal(user.serialize()['email_address'], "email")
+    assert_equal('password' in user.serialize(), False)

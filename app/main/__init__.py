@@ -14,6 +14,5 @@ def add_cache_control(response):
 
 
 from . import errors
-from .views import suppliers, services
+from .views import suppliers, services, users
 from . import views, errors
-from app.main.users import users
