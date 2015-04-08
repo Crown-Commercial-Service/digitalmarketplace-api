@@ -19,8 +19,12 @@ def index():
     return jsonify(links=[
         {
             "rel": "services.list",
-            "href": url_for('.list_services', _external=True)
-        }
+            "href": url_for('.list_services', _external=True),
+        },
+        {
+            "rel": "suppliers.list",
+            "href": url_for('.list_suppliers', _external=True),
+        },
     ]), 200
 
 
