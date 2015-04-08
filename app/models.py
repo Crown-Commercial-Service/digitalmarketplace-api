@@ -11,6 +11,7 @@ class Framework(db.Model):
     expired = db.Column(db.Boolean, index=False, unique=False,
                         nullable=False)
 
+
 class User(db.Model):
     __tablename__ = 'users'
 
