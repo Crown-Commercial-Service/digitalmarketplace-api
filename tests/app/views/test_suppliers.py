@@ -123,3 +123,4 @@ class TestListSuppliersPaginated(BaseApplicationTest):
         response = self.client.get('/suppliers?prefix=s&page=a')
 
         assert_equal(response.status_code, 400)
+        assert_in('Invalid page argument', response.get_data())
