@@ -22,38 +22,35 @@ $( document ).ready(function() {
     enter_key_clicks_first_visible_button_if_inputs_not_empty();
 });
 
+function fetchByUserId() {
+    fetch("/users/" + $('#user_id').val())
+}
+
+function authUser(){
+    data = {}
+    auth_users = {}
+    auth_users["email_address"] = $('#auth_email_address').val()
+    auth_users["password"] = $('#auth_password').val()
+    data["auth_users"] = auth_users
+    submit("/users/auth", data, "POST")
+}
+
+function createUser(){
+    data = {}
+    users = {}
+    users["email_address"] = $('#email_address').val()
+    users["name"] = $('#name').val()
+    users["password"] = $('#password').val()
+    data["users"] = users
+    submit("/users", data, "POST")
+}
+
 function fetchService() {
-    var request = $.ajax({
-           url: "/services/" + $('#service_id').val(),
-           type: "GET",
-           contentType: "application/json",
-           headers: commonHeaders()
-           });
-    request.fail(function (jqXHR, textStatus, errorThrown){
-             var obj = JSON.parse(jqXHR.responseText);
-             $("#response").html(printHTMLResponse(jqXHR, obj));
-         });
-    request.done(function (response, textStatus, jqXHR){
-              var obj = JSON.parse(jqXHR.responseText);
-              $("#response").html(printHTMLResponse(jqXHR, obj));
-         });
+    fetch("/services/" + $('#service_id').val())
 }
 
 function fetchArchivedService() {
-    var request = $.ajax({
-           url: "/archived-services?service-id=" + $('#service_id').val(),
-           type: "GET",
-           contentType: "application/json",
-           headers: commonHeaders()
-           });
-    request.fail(function (jqXHR, textStatus, errorThrown){
-             var obj = JSON.parse(jqXHR.responseText);
-             $("#response").html(printHTMLResponse(jqXHR, obj));
-         });
-    request.done(function (response, textStatus, jqXHR){
-              var obj = JSON.parse(jqXHR.responseText);
-              $("#response").html(printHTMLResponse(jqXHR, obj));
-         });
+    fetch("/archived-services?service-id=" + $('#service_id').val())
 }
 
 function fetchSupplier() {
@@ -91,13 +88,27 @@ function updateService() {
     var update = {}
     update['update_details'] = update_details
     update['services'] = services
+    submit("/services/" + $('#service_id').val(), update, "POST")
+}
 
+function importService() {
+    var update_details = {}
+    var services = {}
+    update_details['updated_by'] = 'joeblogs'
+    update_details['update_reason'] = 'whateves'
+    var service = {}
+    service['services'] = JSON.parse($('#import-json').val())
+    service['update_details'] = update_details
+    submit("/services/" + $('#service_id').val(), service, "PUT")
+}
+
+
+function fetch(url) {
     var request = $.ajax({
-           url: "/services/" + $('#service_id').val(),
-           type: "POST",
+           url: url,
+           type: "GET",
            contentType: "application/json",
-            data : JSON.stringify(update),
-           headers: commonHeaders("application/json")
+           headers: commonHeaders()
            });
     request.fail(function (jqXHR, textStatus, errorThrown){
              var obj = JSON.parse(jqXHR.responseText);
@@ -109,18 +120,11 @@ function updateService() {
          });
 }
 
-function importService() {
-    var update_details = {}
-    var services = {}
-    update_details['updated_by'] = 'joeblogs'
-    update_details['update_reason'] = 'whateves'
-    var service = {}
-    service['services'] = JSON.parse($('#import-json').val())
-    service['update_details'] = update_details
-    var request = $.ajax({
-           url: "/services/" + $('#service_id').val(),
-           type: "PUT",
-           data : JSON.stringify(service),
+function submit(url, data, method) {
+  var request = $.ajax({
+           url: url,
+           type: method,
+           data : JSON.stringify(data),
            headers: commonHeaders("application/json")
            });
     request.fail(function (jqXHR, textStatus, errorThrown){
@@ -128,7 +132,8 @@ function importService() {
              $("#response").html(printHTMLResponse(jqXHR, obj));
          });
     request.done(function (response, textStatus, jqXHR){
-              $("#response").html("done");
+             var obj = JSON.parse(jqXHR.responseText);
+             $("#response").html(printHTMLResponse(jqXHR, obj));
          });
 }
 

@@ -8,4 +8,4 @@ def hashpw(password):
 
 def checkpw(password, hashed_password):
     return bcrypt.hashpw(password.encode('UTF-8'),
-                         hashed_password) == hashed_password
+                         hashed_password.encode('UTF-8')) == hashed_password

@@ -62,8 +62,10 @@ def validate_user_json_or_400(submitted_json):
 
 
 def validate_user_auth_json_or_400(submitted_json):
-    if not validates_against_schema(AUTH_USERS_VALIDATOR, submitted_json):
-        abort(400, "JSON was not a valid format")
+    try:
+        validates_against_schema(AUTH_USERS_VALIDATOR, submitted_json)
+    except ValidationError as e:
+        abort(400, "JSON was not a valid format. {}".format(e.message))
 
 
 def validate_json_or_400(submitted_json):
