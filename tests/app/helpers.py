@@ -73,7 +73,7 @@ class BaseApplicationTest(object):
                 db.session.add(Service(service_id=i,
                                        supplier_id=i % TEST_SUPPLIERS_COUNT,
                                        updated_at=now,
-                                       status='enabled',
+                                       status='published',
                                        created_at=now,
                                        updated_by='tests',
                                        updated_reason='test data',
