@@ -32,6 +32,31 @@ class TestUsersAuth(BaseApplicationTest):
             data = json.loads(response.get_data())['users']
             assert_equal(data['email_address'], 'joeblogs@email.com')
 
+    def test_should_validate_mixedcase_credentials(self):
+        with self.app.app_context():
+            response = self.client.post(
+                '/users',
+                data=json.dumps({
+                    'users': {
+                        'email_address': 'joEblogS@EMAIL.com',
+                        'password': '1234567890',
+                        'name': 'joe bloggs'}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+
+            response = self.client.post(
+                '/users/auth',
+                data=json.dumps({
+                    'auth_users': {
+                        'email_address': 'JOEbloGS@email.com',
+                        'password': '1234567890'}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['email_address'], 'joeblogs@email.com')
+
     def test_should_return_404_for_no_user(self):
         with self.app.app_context():
             response = self.client.post(

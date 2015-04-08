@@ -17,7 +17,7 @@ def auth_user():
     validate_user_auth_json_or_400(json_payload)
 
     user = User.query.filter(
-        User.email_address == json_payload['email_address']).first()
+        User.email_address == json_payload['email_address'].lower()).first()
 
     if user is None:
         return jsonify(authorization=False), 404
@@ -53,7 +53,7 @@ def create_user():
 
     now = datetime.now()
     user = User(
-        email_address=json_payload['email_address'],
+        email_address=json_payload['email_address'].lower(),
         name=json_payload['name'],
         password=password,
         active=True,
