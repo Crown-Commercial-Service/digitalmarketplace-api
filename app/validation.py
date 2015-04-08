@@ -150,3 +150,10 @@ def is_valid_service_id(service_id):
             re.search(r"[^A-z0-9-]", service_id):
         return False
     return True
+
+
+def is_valid_service_id_or_400(service_id):
+    if is_valid_service_id(service_id):
+        return True
+    else:
+        abort(400, "Invalid service ID supplied: %s" % service_id)
