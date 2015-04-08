@@ -63,7 +63,7 @@ class BaseApplicationTest(object):
                     Supplier(supplier_id=i, name=u"Supplier {}".format(i))
                 )
 
-    def setup_dummy_services(self, n):
+    def setup_dummy_services_including_unpublished(self, n):
         now = datetime.now()
         with self.app.app_context():
             db.session.add(
@@ -80,6 +80,25 @@ class BaseApplicationTest(object):
                                        updated_reason='test data',
                                        data={'foo': 'bar'},
                                        framework_id=1))
+            # Add extra 'enabled' and 'disabled' services
+            db.session.add(Service(service_id=n + 1,
+                                   supplier_id=n % TEST_SUPPLIERS_COUNT,
+                                   updated_at=now,
+                                   status='disabled',
+                                   created_at=now,
+                                   updated_by='tests',
+                                   updated_reason='test data',
+                                   data={'foo': 'bar'},
+                                   framework_id=1))
+            db.session.add(Service(service_id=n + 2,
+                                   supplier_id=n % TEST_SUPPLIERS_COUNT,
+                                   updated_at=now,
+                                   status='enabled',
+                                   created_at=now,
+                                   updated_by='tests',
+                                   updated_reason='test data',
+                                   data={'foo': 'bar'},
+                                   framework_id=1))
             # Add an extra supplier that will have no services
             db.session.add(
                 Supplier(supplier_id=TEST_SUPPLIERS_COUNT, name=u"Supplier {}"
