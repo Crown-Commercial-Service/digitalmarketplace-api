@@ -9,8 +9,7 @@ from ...models import ArchivedService, Service, Supplier, Framework
 import traceback
 from ...validation import validate_json_or_400, \
     validate_updater_json_or_400, is_valid_service_id
-from ..utils import url_for, pagination_links, drop_foreign_fields, \
-    get_json_from_request, json_has_required_keys
+from ..utils import url_for, pagination_links, drop_foreign_fields, link
 
 
 # TODO: This should probably not be here
@@ -59,6 +58,7 @@ def list_services():
                                  error_out=False)
     if page > 1 and not services.items:
         abort(404, "Page number out of range")
+
     return jsonify(
         services=[service.serialize() for service in services.items],
         links=pagination_links(
@@ -250,35 +250,3 @@ def jsonify_service(service):
                              service_id=data['id']))
     ]
     return data
-
-
-def drop_foreign_fields(service):
-    service = service.copy()
-    for key in ['supplierName', 'links']:
-        service.pop(key, None)
-
-    return service
-
-
-def link(rel, href):
-    if href is not None:
-        return {
-            "rel": rel,
-            "href": href,
-        }
-
-
-def url_for(*args, **kwargs):
-    kwargs.setdefault('_external', True)
-    return base_url_for(*args, **kwargs)
-
-
-def pagination_links(pagination, endpoint, args):
-    return [
-        link(rel, url_for(endpoint,
-                          **dict(list(args.items()) +
-                                 list({'page': page}.items()))))
-        for rel, page in [('next', pagination.next_num),
-                          ('prev', pagination.prev_num)]
-        if 0 < page <= pagination.pages
-    ]
