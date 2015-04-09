@@ -1,6 +1,7 @@
+from sqlalchemy.dialects.postgresql import JSON
+
 from . import db
 from .main.utils import link, url_for
-from sqlalchemy.dialects.postgresql import JSON
 
 
 class Framework(db.Model):

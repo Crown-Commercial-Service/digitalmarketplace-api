@@ -1,10 +1,11 @@
+from datetime import datetime, timedelta
+
 from flask import json
 from nose.tools import assert_equal, assert_in, assert_not_equal, \
     assert_almost_equal
 
 from app import db
 from app.models import Service, Supplier, Framework
-from datetime import datetime, timedelta
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
 

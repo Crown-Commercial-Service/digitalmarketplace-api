@@ -1,9 +1,9 @@
 import json
+import re
 
 from flask import abort
 from jsonschema import validate, ValidationError
 from jsonschema.validators import validator_for
-import re
 
 MINIMUM_SERVICE_ID_LENGTH = 10
 MAXIMUM_SERVICE_ID_LENGTH = 20

@@ -1,11 +1,12 @@
 from datetime import datetime
+import traceback
+
 from flask import jsonify, abort, request
 from sqlalchemy.exc import IntegrityError, DatabaseError
 
 from .. import main
 from ... import db
 from ...models import ArchivedService, Service, Supplier, Framework
-import traceback
 from ...validation import validate_json_or_400, \
     validate_updater_json_or_400, is_valid_service_id
 from ..utils import url_for, pagination_links, drop_foreign_fields, \
