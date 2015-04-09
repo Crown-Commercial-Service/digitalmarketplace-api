@@ -41,7 +41,7 @@ def create_user():
     validate_user_json_or_400(json_payload)
 
     user = User.query.filter(
-        User.email_address == 'joeblogs@email.com').first()
+        User.email_address == json_payload['email_address'].lower()).first()
 
     if user:
         abort(409, "User already exists")
