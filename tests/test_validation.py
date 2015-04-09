@@ -6,7 +6,7 @@ import json
 from nose.tools import assert_equal
 from jsonschema import validate, SchemaError, ValidationError
 
-from app.validation import validate_json, \
+from app.validation import detect_framework, \
     validates_against_schema, UPDATER_VALIDATOR, is_valid_service_id, \
     USERS_VALIDATOR, AUTH_USERS_VALIDATOR
 
@@ -142,30 +142,34 @@ def test_auth_user_validates():
 
 def test_example_json_validates_correctly():
     cases = [
-        ("SSP-JSON-SCS", "G6-SCS"),
-        ("SSP-JSON-SaaS", "G6-SaaS"),
-        ("SSP-JSON-PaaS", "G6-PaaS"),
-        ("SSP-JSON-IaaS", "G6-IaaS"),
-        ("SSP-INVALID", False)
+        ("G4", "G-Cloud 4"),
+        ("G5", "G-Cloud 5"),
+        ("G6-SCS", "G-Cloud 6"),
+        ("G6-SaaS", "G-Cloud 6"),
+        ("G6-PaaS", "G-Cloud 6"),
+        ("G6-IaaS", "G-Cloud 6"),
+        ("G6-INVALID", False)
     ]
 
     for example, expected, in cases:
         data = load_example_listing(example)
-        yield assert_example, example, validate_json(data), expected
+        yield assert_example, example, detect_framework(data), expected
 
 
 def test_additional_fields_are_not_allowed():
     cases = [
-        ("SSP-JSON-SCS", False),
-        ("SSP-JSON-SaaS", False),
-        ("SSP-JSON-PaaS", False),
-        ("SSP-JSON-IaaS", False),
+        ("G4", False),
+        ("G5", False),
+        ("G6-SCS", False),
+        ("G6-SaaS", False),
+        ("G6-PaaS", False),
+        ("G6-IaaS", False)
     ]
 
     for example, expected in cases:
         data = load_example_listing(example)
         data.update({'newKey': 1})
-        yield assert_example, example, validate_json(data), expected
+        yield assert_example, example, detect_framework(data), expected
 
 
 def assert_example(name, result, expected):
