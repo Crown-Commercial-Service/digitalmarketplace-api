@@ -50,7 +50,7 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 100)
         next_link = self.first_by_rel('next', data['links'])
-        assert_in(b'page=2', next_link['href'])
+        assert_in('page=2', next_link['href'])
 
     def test_paginated_list_services_page_two(self):
         self.setup_dummy_services_including_unpublished(150)
@@ -61,7 +61,7 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 50)
         prev_link = self.first_by_rel('prev', data['links'])
-        assert_in(b'page=1', prev_link['href'])
+        assert_in('page=1', prev_link['href'])
 
     def test_paginated_list_services_page_out_of_range(self):
         self.setup_dummy_services_including_unpublished(15)
@@ -142,8 +142,8 @@ class TestListServices(BaseApplicationTest):
         data = json.loads(response.get_data())
 
         next_link = self.first_by_rel('next', data['links'])
-        assert_in(b'page=2', next_link['href'])
-        assert_in(b'supplier_id=1', next_link['href'])
+        assert_in('page=2', next_link['href'])
+        assert_in('supplier_id=1', next_link['href'])
 
     def test_unknown_supplier_id(self):
         self.setup_dummy_services_including_unpublished(15)
@@ -370,7 +370,7 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            assert_in(b'JSON was not a valid format',
+            assert_in('JSON was not a valid format',
                       json.loads(response.get_data())['error'])
 
     def test_invalid_field_value_not_accepted_on_update(self):
@@ -385,7 +385,7 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            assert_in(b'JSON was not a valid format',
+            assert_in('JSON was not a valid format',
                       json.loads(response.get_data())['error'])
 
     def test_updated_service_should_be_archived(self):
