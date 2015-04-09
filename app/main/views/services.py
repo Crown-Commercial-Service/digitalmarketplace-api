@@ -1,15 +1,18 @@
 from datetime import datetime
 from flask import jsonify, abort, request
-from flask import url_for as base_url_for
 from sqlalchemy.exc import IntegrityError, DatabaseError
 
 from .. import main
+from app.main import helpers
 from ... import db
 from ...models import ArchivedService, Service, Supplier, Framework
 import traceback
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
+from ..utils import url_for, pagination_links, drop_foreign_fields, link
 
+
+# TODO: This should probably not be here
 API_FETCH_PAGE_SIZE = 100
 
 
@@ -55,9 +58,15 @@ def list_services():
                                  error_out=False)
     if page > 1 and not services.items:
         abort(404, "Page number out of range")
+
     return jsonify(
-        services=list(map(jsonify_service, services.items)),
-        links=pagination_links(services, '.list_services', request.args))
+        services=[service.serialize() for service in services.items],
+        links=pagination_links(
+            services,
+            '.list_services',
+            request.args
+        )
+    )
 
 
 @main.route('/archived-services', methods=['GET'])
@@ -85,8 +94,13 @@ def list_archived_services_by_service_id():
     if request.args and not services.items:
         abort(404)
     return jsonify(
-        services=list(map(jsonify_service, services.items)),
-        links=pagination_links(services, '.list_services', request.args))
+        services=[service.serialize() for service in services.items],
+        links=pagination_links(
+            services,
+            '.list_services',
+            request.args
+        )
+    )
 
 
 @main.route('/services/<string:service_id>', methods=['POST'])
@@ -104,13 +118,15 @@ def update_service(service_id):
 
     service_to_archive = ArchivedService.from_service(service)
 
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ["update_details", "services"])
+    json_payload = helpers.get_json_from_request(request)
+    helpers.json_has_required_keys(json_payload,
+                                   ["update_details", "services"])
 
     update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
     service_update = drop_foreign_fields(
-        json_payload['services']
+        json_payload['services'],
+        ['supplierName', 'links']
     )
     json_has_matching_id(service_update, service_id)
 
@@ -149,11 +165,13 @@ def import_service(service_id):
         service = Service(service_id=service_id)
         service.created_at = now
 
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ['services', 'update_details'])
+    json_payload = helpers.get_json_from_request(request)
+    helpers.json_has_required_keys(json_payload,
+                                   ['services', 'update_details'])
 
     service_data = drop_foreign_fields(
-        json_payload['services']
+        json_payload['services'],
+        ['supplierName', 'links']
     )
     json_has_matching_id(service_data, service_id)
 
@@ -196,7 +214,7 @@ def get_service(service_id):
         Service.service_id == service_id
     ).filter(Service.status == 'published').first_or_404()
 
-    return jsonify(services=jsonify_service(service))
+    return jsonify(services=service.serialize())
 
 
 @main.route('/archived-services/<int:archived_service_id>', methods=['GET'])
@@ -211,7 +229,7 @@ def get_archived_service(archived_service_id):
         ArchivedService.id == archived_service_id
     ).first_or_404()
 
-    return jsonify(services=jsonify_service(service))
+    return jsonify(services=service.serialize())
 
 
 def jsonify_service(service):
@@ -229,52 +247,12 @@ def jsonify_service(service):
     return data
 
 
-def drop_foreign_fields(service):
-    service = service.copy()
-    for key in ['supplierName', 'links']:
-        service.pop(key, None)
-
-    return service
-
-
 def link(rel, href):
     if href is not None:
         return {
             "rel": rel,
             "href": href,
         }
-
-
-def url_for(*args, **kwargs):
-    kwargs.setdefault('_external', True)
-    return base_url_for(*args, **kwargs)
-
-
-def pagination_links(pagination, endpoint, args):
-    return [
-        link(rel, url_for(endpoint,
-                          **dict(list(args.items()) +
-                                 list({'page': page}.items()))))
-        for rel, page in [('next', pagination.next_num),
-                          ('prev', pagination.prev_num)]
-        if 0 < page <= pagination.pages
-    ]
-
-
-def get_json_from_request():
-    if request.content_type not in ['application/json',
-                                    'application/json; charset=UTF-8']:
-        abort(400, "Unexpected Content-Type, expecting 'application/json'")
-    data = request.get_json()
-    if data is None:
-        abort(400, "Invalid JSON; must be a valid JSON object")
-    return data
-
-
-def json_has_required_keys(data, keys):
-    for key in keys:
-        if key not in data.keys():
-            abort(400, "Invalid JSON must have '%s' key(s)" % keys)
 
 
 def json_has_matching_id(data, id):
