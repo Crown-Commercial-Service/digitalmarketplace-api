@@ -2,11 +2,12 @@ from __future__ import absolute_import
 
 import os
 import json
+from datetime import datetime
+
 from nose.tools import assert_equal
 
 from app import create_app, db
 from app.models import Service, Supplier, Framework
-from datetime import datetime
 
 
 TEST_SUPPLIERS_COUNT = 3
