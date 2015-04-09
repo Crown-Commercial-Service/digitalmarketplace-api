@@ -24,8 +24,11 @@
                 <li><a href="#" id="import-link" data-toggle="collapse" data-target="#import-block">Import</a></li>
                 <li><a href="#" id="update-link" data-toggle="collapse" data-target="#update-block">Update</a></li>
                 <li><a href="#" id="fetch-link" data-toggle="collapse" data-target="#fetch-block">Fetch</a></li>
-                <li><a href="#" id="fetch-archive-link" data-toggle="collapse" data-target="#fetch-archive-block">Fetch Archive</a></li>
-                <li><a href="#" id="fetch-supplier-link" data-toggle="collapse" data-target="#fetch-supplier-block">Fetch Supplier</a></li>
+                <li><a href="#" id="fetch-archive-link" data-toggle="collapse" data-target="#fetch-archive-block">Fetch
+                    Archive</a></li>
+                <li><a href="#" id="fetch-supplier-link" data-toggle="collapse" data-target="#fetch-supplier-block">Fetch
+                    Supplier</a></li>
+                <li><a href="#" id="users-link" data-toggle="collapse" data-target="#users-block">Users</a></li>
             </ul>
         </div>
     </div>
@@ -42,9 +45,10 @@
     <div class="input-group">
         <p>
             <span class="input-group-token" id="token">Bearer Token</span>
-            <input id="bearer-token" type="text" class="form-control" placeholder="enter your bearer token here"
-                   aria-describedby="bearer token">
+            <input id="bearer-token" type="text" class="form-control" placeholder="enter you're bearer token here"
+                   aria-describedby="bearer token" value="myToken">
         </p>
+
         <p>
             <label><h6>Service/Supplier ID</h6></label>
             <input id="service_id" type="text"/>
@@ -66,7 +70,7 @@
         <div class="row">
             <div class="span12">
                 <p>
-                        <button class="btn btn-primary" type="button"
+                    <button class="btn btn-primary" type="button"
                             onclick='importService()'>Import It!
                     </button>
                 </p>
@@ -111,7 +115,7 @@
         </div>
     </div>
 
-     <div class="container collapse" id="fetch-archive-block">
+    <div class="container collapse" id="fetch-archive-block">
         <h3>Fetch a service</h3>
 
         <div class="row">
@@ -133,6 +137,68 @@
                 <p>
                     <button class="btn btn-primary" type="button"
                             onclick='fetchSupplier();'>Fetch It!
+                    </button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container collapse" id="users-block">
+        <h3>Create User</h3>
+
+        <div class="row">
+            <div class="span12">
+                <p>
+                        <label><h6>Email Address</h6></label>
+                        <input id="email_address" type="email"/>
+                        <label><h6>Name</h6></label>
+                        <input id="name" type="text"/>
+                        <label><h6>Password</h6></label>
+                        <input id="password" type="password"/>
+                </p>
+            </div>
+            <div class="span12">
+                <p>
+                    <button class="btn btn-primary" type="button"
+                            onclick='createUser();'>Create User
+                    </button>
+                </p>
+            </div>
+        </div>
+
+        <h3>Auth User</h3>
+
+        <div class="row">
+            <div class="span12">
+                <p>
+                    <label><h6>Email Address</h6></label>
+                    <input id="auth_email_address" type="email"/>
+                    <label><h6>Password</h6></label>
+                    <input id="auth_password" type="password"/>
+                </p>
+            </div>
+            <div class="span12">
+                <p>
+                    <button class="btn btn-primary" type="button"
+                            onclick='authUser();'>Auth User
+                    </button>
+                </p>
+            </div>
+        </div>
+
+        <h3>Get User By Id</h3>
+
+        <div class="row">
+            <div class="span12">
+                <p>
+                    <label><h6>User ID</h6></label>
+                    <input id="user_id" type="text"/>
+                </p>
+            </div>
+            <div class="span12">
+                <p>
+                    <button class="btn btn-primary" type="button"
+                            onclick='fetchByUserId();'>Get User By Id
                     </button>
                 </p>
             </div>

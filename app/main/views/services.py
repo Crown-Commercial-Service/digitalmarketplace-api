@@ -5,12 +5,12 @@ from flask import jsonify, abort, request
 from sqlalchemy.exc import IntegrityError, DatabaseError
 
 from .. import main
+from app.main import helpers
 from ... import db
 from ...models import ArchivedService, Service, Supplier, Framework
 from ...validation import validate_json_or_400, \
     validate_updater_json_or_400, is_valid_service_id
-from ..utils import url_for, pagination_links, drop_foreign_fields, \
-    get_json_from_request, json_has_required_keys
+from ..utils import url_for, pagination_links, drop_foreign_fields, link
 
 
 # TODO: This should probably not be here
@@ -59,6 +59,7 @@ def list_services():
                                  error_out=False)
     if page > 1 and not services.items:
         abort(404, "Page number out of range")
+
     return jsonify(
         services=[service.serialize() for service in services.items],
         links=pagination_links(
@@ -122,8 +123,9 @@ def update_service(service_id):
 
     service_to_archive = ArchivedService.from_service(service)
 
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ["update_details", "services"])
+    json_payload = helpers.get_json_from_request(request)
+    helpers.json_has_required_keys(json_payload,
+                                   ["update_details", "services"])
 
     update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
@@ -170,8 +172,9 @@ def import_service(service_id):
         service = Service(service_id=service_id)
         service.created_at = now
 
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ['services', 'update_details'])
+    json_payload = helpers.get_json_from_request(request)
+    helpers.json_has_required_keys(json_payload,
+                                   ['services', 'update_details'])
 
     service_data = drop_foreign_fields(
         json_payload['services'],
@@ -233,3 +236,18 @@ def get_archived_service(archived_service_id):
     ).first_or_404()
 
     return jsonify(services=service.serialize())
+
+
+def jsonify_service(service):
+    data = dict(service.data.items())
+    data.update({
+        'id': service.service_id,
+        'supplierId': service.supplier.supplier_id,
+        'supplierName': service.supplier.name
+    })
+
+    data['links'] = [
+        link("self", url_for(".get_service",
+                             service_id=data['id']))
+    ]
+    return data

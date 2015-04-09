@@ -38,10 +38,34 @@ with open("json_schemas/update-details.json") as json_file5:
     UPDATER_VALIDATOR.check_schema(UPDATER_SCHEMA)
     UPDATER_VALIDATOR = UPDATER_VALIDATOR(UPDATER_SCHEMA)
 
+with open("json_schemas/users.json") as json_file6:
+    USERS_SCHEMA = json.load(json_file6)
+    USERS_VALIDATOR = validator_for(USERS_SCHEMA)
+    USERS_VALIDATOR.check_schema(USERS_SCHEMA)
+    USERS_VALIDATOR = USERS_VALIDATOR(USERS_SCHEMA)
+
+with open("json_schemas/auth_users.json") as json_file7:
+    AUTH_USERS_SCHEMA = json.load(json_file7)
+    AUTH_USERS_VALIDATOR = validator_for(AUTH_USERS_SCHEMA)
+    AUTH_USERS_VALIDATOR.check_schema(AUTH_USERS_SCHEMA)
+    AUTH_USERS_VALIDATOR = AUTH_USERS_VALIDATOR(AUTH_USERS_SCHEMA)
+
 
 def validate_updater_json_or_400(submitted_json):
     if not validates_against_schema(UPDATER_VALIDATOR, submitted_json):
         abort(400, "JSON was not a valid format")
+
+
+def validate_user_json_or_400(submitted_json):
+    if not validates_against_schema(USERS_VALIDATOR, submitted_json):
+        abort(400, "JSON was not a valid format")
+
+
+def validate_user_auth_json_or_400(submitted_json):
+    try:
+        validates_against_schema(AUTH_USERS_VALIDATOR, submitted_json)
+    except ValidationError as e:
+        abort(400, "JSON was not a valid format. {}".format(e.message))
 
 
 def validate_json_or_400(submitted_json):
