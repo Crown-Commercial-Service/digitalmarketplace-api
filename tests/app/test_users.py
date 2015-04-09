@@ -242,4 +242,4 @@ class TestUsersGet(BaseApplicationTest):
 
     def test_returns_404_for_non_int_id(self):
         response = self.client.get("/users/bogus")
-        assert_equal(response.status_code, 201)
+        assert_equal(response.status_code, 404)
