@@ -6,9 +6,9 @@ import json
 from nose.tools import assert_equal
 from jsonschema import validate, SchemaError, ValidationError
 
-from app.validation import validate_json, detect_framework, \
-    validates_against_schema, UPDATER_VALIDATOR, is_valid_service_id, \
-    USERS_VALIDATOR, AUTH_USERS_VALIDATOR
+from app.validation import detect_framework, validates_against_schema, \
+    is_valid_service_id, UPDATER_VALIDATOR, USERS_VALIDATOR, \
+    AUTH_USERS_VALIDATOR
 
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),

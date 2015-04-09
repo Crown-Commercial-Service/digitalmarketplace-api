@@ -11,7 +11,8 @@ from ...models import ArchivedService, Service, Supplier, Framework
 import traceback
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
-from ..utils import url_for, pagination_links, drop_foreign_fields, link
+from ..utils import url_for, pagination_links, drop_foreign_fields, link, \
+    json_has_matching_id
 
 
 # TODO: This should probably not be here
@@ -204,7 +205,7 @@ def import_service(service_id):
         db.session.rollback()
         abort(400, "Unknown supplier ID provided")
 
-    return "", http_status
+    return "", 201
 
 
 @main.route('/services/<string:service_id>', methods=['GET'])

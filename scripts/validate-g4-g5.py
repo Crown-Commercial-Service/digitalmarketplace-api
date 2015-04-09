@@ -1,10 +1,10 @@
-'''Process G5 JSON export file and validate the services in it
+'''Reads a G4-G5 JSON export file and validates the services in it
 
 Usage:
-    python validate-g5.py <g5_export_file>
+    python validate-g4-g5.py <g4_g5_export_file>
 
 Arguments:
-    g5_export_file   The file to process
+    g4_g5_export_file   The file to process
 
 '''
 
