@@ -1,12 +1,12 @@
 from datetime import datetime
 
 from flask import jsonify, request, abort
-from app.main import main
-from app.models import User
-from app import db, encryption
 from sqlalchemy.exc import IntegrityError
-from app.main import helpers
-from app.validation import validate_user_json_or_400, \
+
+from .. import main, helpers
+from ... import db, encryption
+from ...models import User
+from ...validation import validate_user_json_or_400, \
     validate_user_auth_json_or_400
 
 

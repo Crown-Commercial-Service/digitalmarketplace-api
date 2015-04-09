@@ -4,8 +4,7 @@ import traceback
 from flask import jsonify, abort, request
 from sqlalchemy.exc import IntegrityError, DatabaseError
 
-from .. import main
-from app.main import helpers
+from .. import main, helpers
 from ... import db
 from ...models import ArchivedService, Service, Supplier, Framework
 import traceback
