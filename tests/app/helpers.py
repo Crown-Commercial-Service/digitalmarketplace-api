@@ -146,7 +146,7 @@ class JSONUpdateTestMixin(object):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
-        assert_in('a request that this server could not understand',
+        assert_in(b'a request that this server could not understand',
                   response.get_data())
 
     def test_invalid_json_causes_failure(self):
@@ -157,7 +157,7 @@ class JSONUpdateTestMixin(object):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
-        assert_in('Invalid JSON', response.get_data())
+        assert_in(b'Invalid JSON', response.get_data())
 
     def test_invalid_content_type_causes_failure(self):
         response = self.client.open(
@@ -166,4 +166,4 @@ class JSONUpdateTestMixin(object):
             data='{"services": {"foo": "bar"}}')
 
         assert_equal(response.status_code, 400)
-        assert_in('Unexpected Content-Type', response.get_data())
+        assert_in(b'Unexpected Content-Type', response.get_data())

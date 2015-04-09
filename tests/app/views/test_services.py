@@ -51,7 +51,7 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 100)
         next_link = self.first_by_rel('next', data['links'])
-        assert_in("page=2", next_link['href'])
+        assert_in(b'page=2', next_link['href'])
 
     def test_paginated_list_services_page_two(self):
         self.setup_dummy_services_including_unpublished(150)
@@ -62,7 +62,7 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 50)
         prev_link = self.first_by_rel('prev', data['links'])
-        assert_in("page=1", prev_link['href'])
+        assert_in(b'page=1', prev_link['href'])
 
     def test_paginated_list_services_page_out_of_range(self):
         self.setup_dummy_services_including_unpublished(15)
@@ -84,13 +84,13 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services?page=a')
 
         assert_equal(response.status_code, 400)
-        assert_in('Invalid page argument', response.get_data())
+        assert_in(b'Invalid page argument', response.get_data())
 
     def test_invalid_supplier_id_argument(self):
         response = self.client.get('/services?supplier_id=a')
 
         assert_equal(response.status_code, 400)
-        assert_in('Invalid supplier_id', response.get_data())
+        assert_in(b'Invalid supplier_id', response.get_data())
 
     def test_non_existent_supplier_id_argument(self):
         response = self.client.get('/services?supplier_id=54321')
@@ -143,8 +143,8 @@ class TestListServices(BaseApplicationTest):
         data = json.loads(response.get_data())
 
         next_link = self.first_by_rel('next', data['links'])
-        assert_in("page=2", next_link['href'])
-        assert_in("supplier_id=1", next_link['href'])
+        assert_in(b'page=2', next_link['href'])
+        assert_in(b'supplier_id=1', next_link['href'])
 
     def test_unknown_supplier_id(self):
         self.setup_dummy_services_including_unpublished(15)
@@ -229,7 +229,7 @@ class TestPostService(BaseApplicationTest):
                          'serviceName': 'new service name'}}))
 
             assert_equal(response.status_code, 400)
-            assert_in('Unexpected Content-Type', response.get_data())
+            assert_in(b'Unexpected Content-Type', response.get_data())
 
     def test_invalid_content_type_causes_failure(self):
         with self.app.app_context():
@@ -244,7 +244,7 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/octet-stream')
 
             assert_equal(response.status_code, 400)
-            assert_in('Unexpected Content-Type', response.get_data())
+            assert_in(b'Unexpected Content-Type', response.get_data())
 
     def test_invalid_json_causes_failure(self):
         with self.app.app_context():
@@ -254,7 +254,7 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            assert_in('a request that this server could not understand',
+            assert_in(b'a request that this server could not understand',
                       response.get_data())
 
     def test_can_post_a_valid_service_update(self):
@@ -371,7 +371,7 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            assert_in('JSON was not a valid format',
+            assert_in(b'JSON was not a valid format',
                       json.loads(response.get_data())['error'])
 
     def test_invalid_field_value_not_accepted_on_update(self):
@@ -386,7 +386,7 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            assert_in('JSON was not a valid format',
+            assert_in(b'JSON was not a valid format',
                       json.loads(response.get_data())['error'])
 
     def test_updated_service_should_be_archived(self):
@@ -462,17 +462,17 @@ class TestPostService(BaseApplicationTest):
     def test_should_400_if_invalid_service_id(self):
         response = self.client.get('/archived-services?service-id=not-valid')
         assert_equal(response.status_code, 400)
-        assert_in('Invalid service ID supplied', response.get_data())
+        assert_in(b'Invalid service ID supplied', response.get_data())
         response = self.client.get(
             '/archived-services?service-id=1234567890.1')
         assert_equal(response.status_code, 400)
-        assert_in('Invalid service ID supplied', response.get_data())
+        assert_in(b'Invalid service ID supplied', response.get_data())
         response = self.client.get('/archived-services?service-id=')
         assert_equal(response.status_code, 400)
-        assert_in('Invalid service ID supplied', response.get_data())
+        assert_in(b'Invalid service ID supplied', response.get_data())
         response = self.client.get('/archived-services')
         assert_equal(response.status_code, 400)
-        assert_in('Invalid service ID supplied', response.get_data())
+        assert_in(b'Invalid service ID supplied', response.get_data())
 
     def test_should_400_if_mismatched_service_id(self):
         response = self.client.post(
@@ -486,7 +486,7 @@ class TestPostService(BaseApplicationTest):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
-        assert_in('service_id parameter must match service_id in data',
+        assert_in(b'service_id parameter must match service_id in data',
                   response.get_data())
 
 
@@ -603,7 +603,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
-        assert_in('service_id parameter must match service_id in data',
+        assert_in(b'service_id parameter must match service_id in data',
                   response.get_data())
 
     def test_when_no_update_details(self):
@@ -617,7 +617,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                      "Invalid JSON must have '['services', "
                      "'update_details']' key(s)")
         assert_equal(response.status_code, 400)
-        assert_in('Invalid JSON', response.get_data())
+        assert_in(b'Invalid JSON', response.get_data())
 
     def test_invalid_service_id_too_short(self):
         response = self.client.put(
@@ -630,7 +630,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
-        assert_in('Invalid service ID supplied', response.get_data())
+        assert_in(b'Invalid service ID supplied', response.get_data())
 
     def test_invalid_service_id_too_long(self):
         response = self.client.put(
@@ -643,7 +643,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
-        assert_in('Invalid service ID supplied', response.get_data())
+        assert_in(b'Invalid service ID supplied', response.get_data())
 
     def test_add_a_service_with_unknown_supplier_id(self):
         with self.app.app_context():
@@ -662,7 +662,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            assert_in('Unknown supplier ID provided', response.get_data())
+            assert_in(b'Unknown supplier ID provided', response.get_data())
 
     def test_supplier_name_in_service_data_is_shadowed(self):
         with self.app.app_context():
@@ -737,7 +737,7 @@ class TestGetService(BaseApplicationTest):
     def test_invalid_service_id(self):
         response = self.client.get('/services/abc123')
         assert_equal(400, response.status_code)
-        assert_in('Invalid service ID supplied', response.get_data())
+        assert_in(b'Invalid service ID supplied', response.get_data())
 
     def test_get_published_service(self):
         response = self.client.get('/services/123-published-456')
