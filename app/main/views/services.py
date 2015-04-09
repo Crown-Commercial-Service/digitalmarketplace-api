@@ -1,5 +1,4 @@
 from datetime import datetime
-from app.main.utils import url_for, pagination_links
 from flask import jsonify, abort, request
 from sqlalchemy.exc import IntegrityError, DatabaseError
 
@@ -9,6 +8,9 @@ from ...models import ArchivedService, Service, Supplier, Framework
 import traceback
 from ...validation import validate_json_or_400, \
     validate_updater_json_or_400, is_valid_service_id
+from ..utils import url_for, pagination_links, drop_foreign_fields, \
+    get_json_from_request, json_has_required_keys
+
 
 # TODO: This should probably not be here
 API_FETCH_PAGE_SIZE = 100
@@ -125,7 +127,8 @@ def update_service(service_id):
     update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
     service_update = drop_foreign_fields(
-        json_payload['services']
+        json_payload['services'],
+        ['supplierName', 'links']
     )
 
     data = dict(service.data.items())
@@ -170,7 +173,8 @@ def import_service(service_id):
     json_has_required_keys(json_payload, ['services', 'update_details'])
 
     service_data = drop_foreign_fields(
-        json_payload['services']
+        json_payload['services'],
+        ['supplierName', 'links']
     )
 
     update_json = json_payload['update_details']
@@ -228,27 +232,3 @@ def get_archived_service(archived_service_id):
     ).first_or_404()
 
     return jsonify(services=service.serialize())
-
-
-def drop_foreign_fields(service):
-    service = service.copy()
-    for key in ['supplierName', 'links']:
-        service.pop(key, None)
-
-    return service
-
-
-def get_json_from_request():
-    if request.content_type not in ['application/json',
-                                    'application/json; charset=UTF-8']:
-        abort(400, "Unexpected Content-Type, expecting 'application/json'")
-    data = request.get_json()
-    if data is None:
-        abort(400, "Invalid JSON; must be a valid JSON object")
-    return data
-
-
-def json_has_required_keys(data, keys):
-    for key in keys:
-        if key not in data.keys():
-            abort(400, "Invalid JSON must have '%s' key(s)" % keys)

@@ -2,7 +2,7 @@ from flask import jsonify, abort, request
 
 from .. import main
 from ...models import Supplier
-from app.main.utils import pagination_links
+from ..utils import pagination_links
 
 # TODO: This should probably not be here
 API_FETCH_PAGE_SIZE = 100

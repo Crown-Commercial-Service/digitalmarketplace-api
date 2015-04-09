@@ -1,5 +1,5 @@
 from . import db
-from app.main.utils import link, url_for
+from .main.utils import link, url_for
 from sqlalchemy.dialects.postgresql import JSON
 
 
