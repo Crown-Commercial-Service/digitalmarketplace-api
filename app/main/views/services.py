@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.main.utils import url_for, pagination_links
 from flask import jsonify, abort, request
 from sqlalchemy.exc import IntegrityError, DatabaseError
 
@@ -57,7 +58,7 @@ def list_services():
         abort(404, "Page number out of range")
     return jsonify(
         services=[service.serialize() for service in services.items],
-        links=Service.pagination_links(
+        links=pagination_links(
             services,
             '.list_services',
             request.args
@@ -94,7 +95,7 @@ def list_archived_services_by_service_id():
         abort(404)
     return jsonify(
         services=[service.serialize() for service in services.items],
-        links=ArchivedService.pagination_links(
+        links=pagination_links(
             services,
             '.list_services',
             request.args
@@ -198,7 +199,7 @@ def import_service(service_id):
         db.session.rollback()
         abort(400, "Unknown supplier ID provided")
 
-    return "", 201
+    return "", http_status
 
 
 @main.route('/services/<string:service_id>', methods=['GET'])

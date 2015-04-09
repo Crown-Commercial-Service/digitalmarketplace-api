@@ -1,37 +1,6 @@
 from . import db
-from flask import url_for as base_url_for
+from app.main.utils import link, url_for
 from sqlalchemy.dialects.postgresql import JSON
-
-
-class DbModelExtended(db.Model):
-    """
-    Wrapper for db.Model that can be extended with other methods
-    """
-    __abstract__ = True
-
-    @staticmethod
-    def link(rel, href):
-        if href is not None:
-            return {
-                "rel": rel,
-                "href": href,
-            }
-
-    @staticmethod
-    def url_for(*args, **kwargs):
-        kwargs.setdefault('_external', True)
-        return base_url_for(*args, **kwargs)
-
-    @classmethod
-    def pagination_links(cls, pagination, endpoint, args):
-        return [
-            cls.link(rel, cls.url_for(endpoint,
-                                      **dict(list(args.items()) +
-                                             list({'page': page}.items()))))
-            for rel, page in [('next', pagination.next_num),
-                              ('prev', pagination.prev_num)]
-            if 0 < page <= pagination.pages
-        ]
 
 
 class Framework(db.Model):
@@ -45,7 +14,7 @@ class Framework(db.Model):
                         nullable=False)
 
 
-class Supplier(DbModelExtended):
+class Supplier(db.Model):
     __tablename__ = 'suppliers'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -55,9 +24,9 @@ class Supplier(DbModelExtended):
 
     def serialize(self):
         links = [
-            self.link(
+            link(
                 "self",
-                self.url_for(".get_supplier", supplier_id=self.supplier_id)
+                url_for(".get_supplier", supplier_id=self.supplier_id)
             )
         ]
 
@@ -68,7 +37,7 @@ class Supplier(DbModelExtended):
         }
 
 
-class Service(DbModelExtended):
+class Service(db.Model):
     __tablename__ = 'services'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -112,16 +81,16 @@ class Service(DbModelExtended):
         })
 
         data['links'] = [
-            self.link(
+            link(
                 "self",
-                self.url_for(".get_service", service_id=data['id'])
+                url_for(".get_service", service_id=data['id'])
             )
         ]
 
         return data
 
 
-class ArchivedService(DbModelExtended):
+class ArchivedService(db.Model):
     __tablename__ = 'archived_services'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -179,9 +148,9 @@ class ArchivedService(DbModelExtended):
         })
 
         data['links'] = [
-            self.link(
+            link(
                 "self",
-                self.url_for(".get_service", service_id=data['id'])
+                url_for(".get_service", service_id=data['id'])
             )
         ]
 

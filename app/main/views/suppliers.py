@@ -2,6 +2,7 @@ from flask import jsonify, abort, request
 
 from .. import main
 from ...models import Supplier
+from app.main.utils import pagination_links
 
 # TODO: This should probably not be here
 API_FETCH_PAGE_SIZE = 100
@@ -38,7 +39,7 @@ def list_suppliers():
 
     return jsonify(
         suppliers=[supplier.serialize() for supplier in suppliers.items],
-        links=Supplier.pagination_links(
+        links=pagination_links(
             suppliers,
             '.list_suppliers',
             request.args
