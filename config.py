@@ -6,6 +6,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     ALLOW_EXPLORER = True
     AUTH_REQUIRED = True
+    DM_API_SERVICES_PAGE_SIZE = 100
+    DM_API_SUPPLIERS_PAGE_SIZE = 100
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace'

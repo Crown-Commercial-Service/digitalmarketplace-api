@@ -1,11 +1,8 @@
-from flask import jsonify, abort, request
+from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ...models import Supplier
 from ..utils import pagination_links
-
-# TODO: This should probably not be here
-API_FETCH_PAGE_SIZE = 100
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -27,7 +24,7 @@ def list_suppliers():
 
     suppliers = suppliers.paginate(
         page=page,
-        per_page=API_FETCH_PAGE_SIZE,
+        per_page=current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'],
         error_out=False,
     )
 
