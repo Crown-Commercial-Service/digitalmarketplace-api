@@ -1,13 +1,11 @@
 from datetime import datetime
-import traceback
 
 from flask import jsonify, abort, request
-from sqlalchemy.exc import IntegrityError, DatabaseError
+from sqlalchemy.exc import IntegrityError
 
 from .. import main, helpers
 from ... import db
 from ...models import ArchivedService, Service, Supplier, Framework
-import traceback
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
 from ..utils import url_for, pagination_links, drop_foreign_fields, link, \
@@ -145,12 +143,7 @@ def update_service(service_id):
     db.session.add(service)
     db.session.add(service_to_archive)
 
-    try:
-        db.session.commit()
-    except DatabaseError:
-        traceback.print_exc()
-        db.session.rollback()
-        abort(500, "Database error")
+    db.session.commit()
 
     return jsonify(message="done"), 200
 

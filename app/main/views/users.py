@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from flask import jsonify, request, abort
-from sqlalchemy.exc import IntegrityError
 
 from .. import main, helpers
 from ... import db, encryption
@@ -65,11 +64,7 @@ def create_user():
 
     db.session.add(user)
 
-    try:
-        db.session.commit()
-    except IntegrityError as ex:
-        db.session.rollback()
-        abort(400, ex.message)
+    db.session.commit()
 
     return jsonify(users=user.serialize()), 200
 
