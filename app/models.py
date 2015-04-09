@@ -45,6 +45,7 @@ class User(db.Model):
             'password_changed_at': self.password_changed_at,
         }
 
+
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
 
