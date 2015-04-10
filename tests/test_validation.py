@@ -6,9 +6,8 @@ import json
 from nose.tools import assert_equal
 from jsonschema import validate, SchemaError, ValidationError
 
-from app.validation import detect_framework, validates_against_schema, \
-    is_valid_service_id, UPDATER_VALIDATOR, USERS_VALIDATOR, \
-    AUTH_USERS_VALIDATOR
+from app.validation import detect_framework, SCHEMAS, \
+    validates_against_schema, is_valid_service_id
 
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -48,13 +47,13 @@ def test_updater_json_validates_correctly():
     valid_updater = {'updated_by': 'this', 'update_reason': 'hi'}
 
     assert_equal(validates_against_schema(
-        UPDATER_VALIDATOR, invalid_updater_no_reason), False)
+        SCHEMAS['services-update'], invalid_updater_no_reason), False)
     assert_equal(validates_against_schema(
-        UPDATER_VALIDATOR, invalid_updater_no_username), False)
+        SCHEMAS['services-update'], invalid_updater_no_username), False)
     assert_equal(validates_against_schema(
-        UPDATER_VALIDATOR, invalid_updater_no_fields), False)
+        SCHEMAS['services-update'], invalid_updater_no_fields), False)
     assert_equal(validates_against_schema(
-        UPDATER_VALIDATOR, valid_updater), True)
+        SCHEMAS['services-update'], valid_updater), True)
 
 
 def test_user_creation_validates():
@@ -105,9 +104,10 @@ def test_user_creation_validates():
           'password': exactly_255,
           'hashpw': 'dewdew'}, False, "invalid hashpw")
     ]
+    validator = SCHEMAS['users']
 
     for example, expected, message in case:
-        result = validates_against_schema(USERS_VALIDATOR, example)
+        result = validates_against_schema(validator, example)
         yield assert_equal, result, expected, message
 
 
@@ -134,9 +134,10 @@ def test_auth_user_validates():
         ({'email_address': 'this@that.com',
           'password': ''}, False, "too short password")
     ]
+    validator = SCHEMAS['users-auth']
 
     for example, expected, message in case:
-        result = validates_against_schema(AUTH_USERS_VALIDATOR, example)
+        result = validates_against_schema(validator, example)
         yield assert_equal, result, expected, message
 
 
