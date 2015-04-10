@@ -8,7 +8,6 @@ from .. import main
 from app.main import helpers
 from ... import db
 from ...models import ArchivedService, Service, Supplier, Framework
-import traceback
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
 from ..utils import url_for, pagination_links, drop_foreign_fields, link, \
@@ -136,6 +135,7 @@ def update_service(service_id):
     data = dict(service.data.items())
     data.update(service_update)
     detect_framework_or_400(data)
+    data["id"] = str(data["id"])
 
     now = datetime.now()
     service.data = data
