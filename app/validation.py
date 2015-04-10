@@ -80,15 +80,9 @@ def detect_framework(submitted_json):
         return False
 
 
-def validates_against_schema(validator, submitted_json):
+def validates_against_schema(validator_name, submitted_json):
     try:
-        if isinstance(validator, basestring):
-            validator = SCHEMAS[validator]
-    except NameError:
-        if isinstance(validator, str):
-            validator = SCHEMAS[validator]
-
-    try:
+        validator = SCHEMAS[validator_name]
         validator.validate(submitted_json)
     except ValidationError:
         return False
