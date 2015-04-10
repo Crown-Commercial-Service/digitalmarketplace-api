@@ -134,8 +134,13 @@ def update_service(service_id):
 
     data = dict(service.data.items())
     data.update(service_update)
+    if "id" in data:
+        # It is an old-style service JSON with an id field
+        data["id"] = str(data["id"])
+    else:
+        # It is a new service JSON with id removed from payload already
+        data["id"] = service_id
     detect_framework_or_400(data)
-    data["id"] = str(data["id"])
 
     data = drop_foreign_fields(data, ['id'])
     now = datetime.now()
