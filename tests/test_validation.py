@@ -47,13 +47,13 @@ def test_updater_json_validates_correctly():
     valid_updater = {'updated_by': 'this', 'update_reason': 'hi'}
 
     assert_equal(validates_against_schema(
-        SCHEMAS['update-details'], invalid_updater_no_reason), False)
+        SCHEMAS['services-update'], invalid_updater_no_reason), False)
     assert_equal(validates_against_schema(
-        SCHEMAS['update-details'], invalid_updater_no_username), False)
+        SCHEMAS['services-update'], invalid_updater_no_username), False)
     assert_equal(validates_against_schema(
-        SCHEMAS['update-details'], invalid_updater_no_fields), False)
+        SCHEMAS['services-update'], invalid_updater_no_fields), False)
     assert_equal(validates_against_schema(
-        SCHEMAS['update-details'], valid_updater), True)
+        SCHEMAS['services-update'], valid_updater), True)
 
 
 def test_user_creation_validates():
@@ -134,7 +134,7 @@ def test_auth_user_validates():
         ({'email_address': 'this@that.com',
           'password': ''}, False, "too short password")
     ]
-    validator = SCHEMAS['auth_users']
+    validator = SCHEMAS['users-auth']
 
     for example, expected, message in case:
         result = validates_against_schema(validator, example)

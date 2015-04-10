@@ -14,7 +14,7 @@ from jsonschema import validate, ValidationError
 from jsonschema.validators import validator_for
 
 
-with open("../json_schemas/g5-services-schema.json") as json_schema:
+with open("../json_schemas/services-g5.json") as json_schema:
     G5_SCHEMA = json.load(json_schema)
     print("Loaded Schema")
     G5_VALIDATOR = validator_for(G5_SCHEMA)
@@ -24,7 +24,7 @@ with open("../json_schemas/g5-services-schema.json") as json_schema:
     G5_VALIDATOR = G5_VALIDATOR(G5_SCHEMA)
     print("G5 Schema is GO!")
 
-with open("../json_schemas/g4-services-schema.json") as json_schema2:
+with open("../json_schemas/services-g4.json") as json_schema2:
     G4_SCHEMA = json.load(json_schema2)
     print("Loaded Schema")
     G4_VALIDATOR = validator_for(G4_SCHEMA)
