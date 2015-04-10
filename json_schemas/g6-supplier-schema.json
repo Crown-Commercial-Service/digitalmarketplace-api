@@ -28,7 +28,7 @@
       "type": "string",
       "pattern": "^[0-9]+$"
     },
-    "clientsString": {
+    "clients": {
       "type": "array",
       "items": {
         "type": "string"
@@ -43,6 +43,6 @@
     "contactInformation",
     "dunsNumber",
     "eSourcingId",
-    "clientsString"
+    "clients"
   ]
 }

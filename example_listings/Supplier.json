@@ -8,29 +8,31 @@
       "contactName": "Don Cleeve",
       "email": "don.cleeve@opencredo.com",
       "phoneNumber": "020 7928 9200",
-      "address": {
-          "address1": "4 Snow Hill",
-          "address2": "true",
-          "city": "London",
-          "country": "United Kingdom",
-          "postcode": "EC1A 2DJ"
-      }
+      "address1": "4 Snow Hill",
+      "address2": null,
+      "city": "London",
+      "country": "United Kingdom",
+      "postcode": "EC1A 2DJ"
     },
     {
-      "website": "www.don.com",
+      "website": "http://www.don.com?fref=ts",
       "contactName": "Don",
       "email": "don@don.com",
       "phoneNumber": "020 7918 9200",
-      "address": {
-          "address1": "4 Don Hill",
-          "address2": "true",
-          "city": "LonDon",
-          "country": "United KingDon",
-          "postcode": "EC1A D0N"
-      }
+      "address1": "4 Don Hill",
+      "address2": "Flat 1",
+      "city": "London",
+      "country": "UK",
+      "postcode": "EC1A D0N"
     }
   ],
   "dunsNumber": "239547040",
   "eSourcingId": "677330",
-  "clientsString": "UK Ministry of Defence,Astula Ltd,SA Capabilities Ltd,Bedrock Communications Ltd"
+  "clients":
+  [
+    "UK Ministry of Defence",
+    "Astula Ltd",
+    "SA Capabilities Ltd",
+    "Bedrock Communications Ltd"
+  ]
 }
