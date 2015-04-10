@@ -117,6 +117,7 @@ class BaseApplicationTest(object):
 
     def teardown_database(self):
         with self.app.app_context():
+            db.session.remove()
             db.drop_all()
 
     def load_example_listing(self, name):
