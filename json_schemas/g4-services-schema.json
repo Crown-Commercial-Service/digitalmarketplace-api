@@ -1,0 +1,225 @@
+{
+  "id": "G4 Services Schema",
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^4\\-.*"
+    },
+    "status": {
+      "type": "string",
+      "pattern": "^(disabled|enabled|published)$"
+    },
+    "supplierId": {
+      "type": "integer"
+    },
+    "lot": {
+      "type": "string",
+      "pattern": "^(SaaS|PaaS|IaaS|SCS|missing)$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "serviceName": {
+      "type": "string"
+    },
+    "serviceSummary": {
+      "type": "string"
+    },
+    "serviceBenefits": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string"
+      }
+    },
+    "serviceFeatures": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string"
+      }
+    },
+    "serviceDefinitionDocumentURL": {
+      "type": "string",
+      "format": "uri"
+    },
+    "termsAndConditionsDocumentURL": {
+      "type": "string"
+    },
+    "pricingDocumentURL": {
+      "type": "string",
+      "format": "uri"
+    },
+    "sfiaRateDocumentURL": {
+      "type": "string",
+      "format": "uri"
+    },
+    "additionalDocumentURLs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "minimumContractPeriod": {
+      "type": "string",
+      "pattern": "^(hour|day|month|year|other)$"
+    },
+    "freeOption": {
+      "type": "boolean"
+    },
+    "trialOption": {
+      "type": "boolean"
+    },
+    "terminationCost": {
+      "type": "boolean"
+    },
+    "priceMin": {
+      "type": "number"
+    },
+    "priceUnit": {
+      "type": "string"
+    },
+    "priceString": {
+      "type": "string"
+    },
+    "serviceTypes": {
+      "oneOf": [
+        {
+          "id": "SaaS - G4",
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 25,
+          "items": {
+            "type": "string",
+            "pattern": "^(Accessibility|Agile Tools|Analytics|Antispam / CAPTCHA|Asset Management|Content Management Systems \\(CMS\\)|Customer Relationship Management \\(CRM\\)|Data Visualisation|EDRM / Collaboration|Email|End User Device \\(EUD\\)|Enterprise Resource Planning|Forms|Gamification|Geographic Search|Identity|Learning Management Systems \\(LMS\\)|Office Productivity|Polls/Surveys|Search|Service Monitoring|Simulation & Training|Un-listed|User Alerts)$"
+          }
+        },
+        {
+          "id": "SaaS - Updated to G6",
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 25,
+          "items": {
+            "type": "string",
+            "pattern": "^(Accounting and finance|Business intelligence and analytics|Collaboration|Customer relationship management \\(CRM\\)|Creative and design|Data management|Electronic document and records management \\(EDRM\\)|Energy and environment|Healthcare|Human resources and employee management|IT management|Legal|Libraries|Marketing|Operations management|Project management and planning|Sales|Schools and education|Security|Software development tools|Telecoms|Transport and logistics)$"
+          }
+        },
+        {
+          "id": "PaaS - G4",
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 25,
+          "items": {
+            "type": "string",
+            "pattern": "^(Application Deployment|Components)$"
+          }
+        },
+        {
+          "id": "IaaS - G4",
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 25,
+          "items": {
+            "type": "string",
+            "pattern": "^(Compute|Content Delivery Network \\(CDN\\)|Storage|Other)$"
+          }
+        },
+        {
+          "id": "SCS - G4",
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 25,
+          "items": {
+            "type": "string",
+            "pattern": "^(Business Analysis|Deployment|Design and Development|Design Authority|Enterprise Architecture|Helpdesk|Onboarding services|Project Management, Programme Management and Governance|Project Specification and Selection|Service Integration and Management Services \\(SIAM\\)|Service Management|Software Support|Specialist Cloud Services|Transition Management|User Management)$"
+             
+          }
+        },
+        {
+          "id": "SCS - Updated to G6",
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 25,
+          "items": {
+            "type": "string",
+            "pattern": "^(Implementation|Ongoing Support|Planning|Testing|Training)$"
+          }
+        }
+      ]
+    },
+    "educationPricing": {
+      "type": "boolean"
+    },
+    "networksConnected": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 7,
+      "items": {
+        "type": "string",
+        "pattern": "^(Internet|Public Services Network \\(PSN\\)|Government Secure intranet \\(GSi\\)|Police National Network \\(PNN\\)|New NHS Network \\(N3\\)|Joint Academic Network \\(JANET\\)|Other)$"
+      }
+    },
+    "apiAccess": {
+      "type": "boolean"
+    },
+    "elasticCloud": {
+      "type": "boolean"
+    },
+    "guaranteedResources": {
+      "type": "boolean"
+    },
+    "persistentStorage": {
+      "type": "boolean"
+    },
+    "openStandardsSupported": {
+      "type": "boolean"
+    },
+    "openSource": {
+      "type": "boolean"
+    },
+    "serviceOnBoarding": {
+      "type": "boolean"
+    },
+    "serviceOffBoarding": {
+      "type": "boolean"
+    },
+    "dataExtractionRemoval": {
+      "type": "boolean"
+    },
+    "datacentresEUCode": {
+      "type": "boolean"
+    },
+    "dataBackupRecovery": {
+      "type": "boolean"
+    },
+    "selfServiceProvisioning": {
+      "type": "boolean"
+    },
+    "supportForThirdParties": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "status",
+    "supplierId",
+    "lot",
+    "title",
+    "serviceName",
+    "serviceSummary",
+    "serviceDefinitionDocumentURL",
+    "termsAndConditionsDocumentURL",
+    "pricingDocumentURL",
+    "minimumContractPeriod",
+    "freeOption",
+    "trialOption",
+    "terminationCost",
+    "priceMin",
+    "priceUnit",
+    "priceString"
+  ]
+}

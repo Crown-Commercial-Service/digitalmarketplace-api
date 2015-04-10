@@ -8,9 +8,11 @@ from .. import main
 from app.main import helpers
 from ... import db
 from ...models import ArchivedService, Service, Supplier, Framework
-from ...validation import validate_json_or_400, \
-    validate_updater_json_or_400, is_valid_service_id
-from ..utils import url_for, pagination_links, drop_foreign_fields, link
+import traceback
+from ...validation import detect_framework_or_400, \
+    validate_updater_json_or_400, is_valid_service_id_or_400
+from ..utils import url_for, pagination_links, drop_foreign_fields, link, \
+    json_has_matching_id
 
 
 # TODO: This should probably not be here
@@ -41,12 +43,12 @@ def list_services():
 
     supplier_id = request.args.get('supplier_id')
 
-    services = Service.query
+    services = Service.query.filter(Service.status == 'published')
     if supplier_id is not None:
         try:
             supplier_id = int(supplier_id)
         except ValueError:
-            abort(400, "Invalid supplier_id")
+            abort(400, "Invalid supplier_id: %s" % supplier_id)
 
         supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id) \
             .all()
@@ -79,11 +81,8 @@ def list_archived_services_by_service_id():
     :return: List[service]
     """
 
-    if not is_valid_service_id(
-            request.args.get("service-id", "no service id")):
-        abort(400, "Invalid service id supplied")
-    else:
-        service_id = request.args.get("service-id", "no service id")
+    is_valid_service_id_or_400(request.args.get("service-id", "no service id"))
+    service_id = request.args.get("service-id", "no service id")
 
     try:
         page = int(request.args.get('page', 1))
@@ -114,8 +113,7 @@ def update_service(service_id):
         Uses existing JSON Parse routines for validation
     """
 
-    if not is_valid_service_id(service_id):
-        abort(400, "Invalid service id supplied")
+    is_valid_service_id_or_400(service_id)
 
     service = Service.query.filter(
         Service.service_id == service_id
@@ -133,10 +131,11 @@ def update_service(service_id):
         json_payload['services'],
         ['supplierName', 'links']
     )
+    json_has_matching_id(service_update, service_id)
 
     data = dict(service.data.items())
     data.update(service_update)
-    validate_json_or_400(data)
+    detect_framework_or_400(data)
 
     now = datetime.now()
     service.data = data
@@ -160,15 +159,12 @@ def update_service(service_id):
 @main.route('/services/<string:service_id>', methods=['PUT'])
 def import_service(service_id):
 
-    if not is_valid_service_id(service_id):
-        abort(400, "Invalid service id supplied")
+    is_valid_service_id_or_400(service_id)
 
     now = datetime.now()
     service = Service.query.filter(Service.service_id == service_id).first()
 
-    http_status = 204
     if service is None:
-        http_status = 201
         service = Service(service_id=service_id)
         service.created_at = now
 
@@ -180,24 +176,26 @@ def import_service(service_id):
         json_payload['services'],
         ['supplierName', 'links']
     )
+    json_has_matching_id(service_data, service_id)
 
     update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
 
-    validate_json_or_400(service_data)
+    framework = detect_framework_or_400(service_data)
 
-    if str(service_data['id']) != str(service_id):
-        abort(400, "Invalid service ID provided")
-
-    service.data = service_data
     service.supplier_id = service_data['supplierId']
     service.framework_id = Framework.query.filter(
-        Framework.name == "G-Cloud 6").first().id
+        Framework.name == framework).first().id
     service.updated_at = now
     service.created_at = now
-    service.status = "enabled"
+    if 'status' in service_data:
+        service.status = service_data['status']
+        service_data.pop('status', None)
+    else:
+        service.status = 'published'
     service.updated_by = update_json['updated_by']
     service.updated_reason = update_json['update_reason']
+    service.data = service_data
 
     db.session.add(service)
 
@@ -207,18 +205,17 @@ def import_service(service_id):
         db.session.rollback()
         abort(400, "Unknown supplier ID provided")
 
-    return "", http_status
+    return "", 201
 
 
 @main.route('/services/<string:service_id>', methods=['GET'])
 def get_service(service_id):
 
-    if not is_valid_service_id(service_id):
-        abort(400, "Invalid service id supplied")
+    is_valid_service_id_or_400(service_id)
 
     service = Service.query.filter(
         Service.service_id == service_id
-    ).first_or_404()
+    ).filter(Service.status == 'published').first_or_404()
 
     return jsonify(services=service.serialize())
 

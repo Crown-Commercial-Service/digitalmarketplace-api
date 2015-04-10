@@ -4,7 +4,7 @@ import os
 import json
 from datetime import datetime
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
 from app.models import Service, Supplier, Framework
@@ -26,10 +26,10 @@ class WSGIApplicationWithEnvironment(object):
 
 class BaseApplicationTest(object):
     lots = {
-        "iaas": "SSP-JSON-IaaS.json",
-        "saas": "SSP-JSON-SaaS.json",
-        "paas": "SSP-JSON-PaaS.json",
-        "scs": "SSP-JSON-SCS.json"
+        "iaas": "G6-IaaS.json",
+        "saas": "G6-SaaS.json",
+        "paas": "G6-PaaS.json",
+        "scs": "G6-SCS.json"
     }
 
     def setup(self):
@@ -63,7 +63,7 @@ class BaseApplicationTest(object):
                     Supplier(supplier_id=i, name=u"Supplier {}".format(i))
                 )
 
-    def setup_dummy_services(self, n):
+    def setup_dummy_services_including_unpublished(self, n):
         now = datetime.now()
         with self.app.app_context():
             db.session.add(
@@ -74,12 +74,31 @@ class BaseApplicationTest(object):
                 db.session.add(Service(service_id=i,
                                        supplier_id=i % TEST_SUPPLIERS_COUNT,
                                        updated_at=now,
-                                       status='enabled',
+                                       status='published',
                                        created_at=now,
                                        updated_by='tests',
                                        updated_reason='test data',
                                        data={'foo': 'bar'},
                                        framework_id=1))
+            # Add extra 'enabled' and 'disabled' services
+            db.session.add(Service(service_id=n + 1,
+                                   supplier_id=n % TEST_SUPPLIERS_COUNT,
+                                   updated_at=now,
+                                   status='disabled',
+                                   created_at=now,
+                                   updated_by='tests',
+                                   updated_reason='test data',
+                                   data={'foo': 'bar'},
+                                   framework_id=1))
+            db.session.add(Service(service_id=n + 2,
+                                   supplier_id=n % TEST_SUPPLIERS_COUNT,
+                                   updated_at=now,
+                                   status='enabled',
+                                   created_at=now,
+                                   updated_by='tests',
+                                   updated_reason='test data',
+                                   data={'foo': 'bar'},
+                                   framework_id=1))
             # Add an extra supplier that will have no services
             db.session.add(
                 Supplier(supplier_id=TEST_SUPPLIERS_COUNT, name=u"Supplier {}"
@@ -127,6 +146,8 @@ class JSONUpdateTestMixin(object):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
+        assert_in(b'a request that this server could not understand',
+                  response.get_data())
 
     def test_invalid_json_causes_failure(self):
         response = self.client.open(
@@ -136,6 +157,7 @@ class JSONUpdateTestMixin(object):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
+        assert_in(b'Invalid JSON', response.get_data())
 
     def test_invalid_content_type_causes_failure(self):
         response = self.client.open(
@@ -144,3 +166,4 @@ class JSONUpdateTestMixin(object):
             data='{"services": {"foo": "bar"}}')
 
         assert_equal(response.status_code, 400)
+        assert_in(b'Unexpected Content-Type', response.get_data())

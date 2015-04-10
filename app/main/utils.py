@@ -48,3 +48,8 @@ def drop_foreign_fields(json_object, list_of_keys):
         json_object.pop(key, None)
 
     return json_object
+
+
+def json_has_matching_id(data, id):
+    if 'id' in data and not id == data['id']:
+        abort(400, "service_id parameter must match service_id in data")
