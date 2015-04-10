@@ -4,8 +4,7 @@
   "additionalProperties": false,
   "properties": {
     "website": {
-      "type": "string",
-      "format": "uri"
+      "type": "string"
     },
     "contactName": {
       "type": "string"
@@ -21,7 +20,7 @@
       "type": "string"
     },
     "address2": {
-      "type": ["string", "null"]
+      "type": "string"
     },
     "city": {
       "type": "string"
@@ -34,14 +33,8 @@
     }
   },
   "required": [
-    "website",
     "contactName",
     "email",
-    "phoneNumber",
-    "address1",
-    "address2",
-    "city",
-    "country",
     "postcode"
   ]
 }

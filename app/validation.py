@@ -20,6 +20,7 @@ SCHEMA_NAMES = [
     'services-update',
     'users',
     'users-auth',
+    'suppliers'
 ]
 FORMAT_CHECKER = FormatChecker()
 
@@ -38,12 +39,6 @@ def load_schemas(schemas_path, schema_names):
     return loaded_schemas
 
 SCHEMAS = load_schemas(JSON_SCHEMAS_PATH, SCHEMA_NAMES)
-
-with open("json_schemas/g6-supplier-schema.json") as json_file6:
-    G6_SUPPLIER_SCHEMA = json.load(json_file6)
-    G6_SUPPLIER_VALIDATOR = validator_for(G6_SUPPLIER_SCHEMA)
-    G6_SUPPLIER_VALIDATOR.check_schema(G6_SUPPLIER_SCHEMA)
-    G6_SUPPLIER_VALIDATOR = G6_SUPPLIER_VALIDATOR(G6_SUPPLIER_SCHEMA)
 
 
 def validate_updater_json_or_400(submitted_json):
@@ -86,21 +81,10 @@ def detect_framework(submitted_json):
 
 
 def validate_supplier_json_or_400(submitted_json):
-    if not validates_against_schema(G6_SUPPLIER_VALIDATOR, submitted_json):
-        abort(400, "JSON was not a valid format")
-
-
-def validate_json(submitted_json):
-    if validates_against_schema(G6_SCS_VALIDATOR, submitted_json):
-        return 'G6-SCS'
-    elif validates_against_schema(G6_SAAS_VALIDATOR, submitted_json):
-        return 'G6-SaaS'
-    elif validates_against_schema(G6_PAAS_VALIDATOR, submitted_json):
-        return 'G6-PaaS'
-    elif validates_against_schema(G6_IAAS_VALIDATOR, submitted_json):
-        return 'G6-IaaS'
-    else:
-        return False
+    try:
+        SCHEMAS['suppliers'].validate(submitted_json)
+    except ValidationError as e:
+        abort(400, "JSON was not a valid format. {}".format(e.message))
 
 
 def validates_against_schema(validator_name, submitted_json):

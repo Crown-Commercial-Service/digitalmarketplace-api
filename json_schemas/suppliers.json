@@ -2,7 +2,7 @@
   "id": "G6 Supplier Schema",
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
   "properties": {
     "id": {
       "type": "integer"
@@ -16,7 +16,7 @@
     "contactInformation": {
       "type": "array",
       "items": {
-        "$ref": "file:json_schemas/g6-contact-schema.json"
+        "$ref": "file:json_schemas/contact-information.json"
       },
       "minItems": 1
     },
@@ -39,10 +39,6 @@
   "required": [
     "id",
     "name",
-    "description",
-    "contactInformation",
-    "dunsNumber",
-    "eSourcingId",
-    "clients"
+    "contactInformation"
   ]
 }

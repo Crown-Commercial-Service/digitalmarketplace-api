@@ -49,13 +49,67 @@ class User(db.Model):
         }
 
 
+class ContactInformation(db.Model):
+    __tablename__ = 'contact_information'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    supplier_id = db.Column(db.Integer,
+                            db.ForeignKey('suppliers.supplier_id'))
+
+    contact_name = db.Column(db.String, index=False,
+                             unique=False, nullable=False)
+
+    phone_number = db.Column(db.String, index=False,
+                             unique=False, nullable=True)
+
+    email = db.Column(db.String, index=False,
+                      unique=False, nullable=False)
+
+    website = db.Column(db.String, index=False,
+                        unique=False, nullable=True)
+
+    address1 = db.Column(db.String, index=False,
+                         unique=False, nullable=True)
+
+    address2 = db.Column(db.String, index=False,
+                         unique=False, nullable=True)
+
+    city = db.Column(db.String, index=False,
+                     unique=False, nullable=True)
+
+    country = db.Column(db.String, index=False,
+                        unique=False, nullable=True)
+
+    postcode = db.Column(db.String, index=False,
+                         unique=False, nullable=False)
+
+
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
 
     id = db.Column(db.Integer, primary_key=True)
+
     supplier_id = db.Column(db.BigInteger,
                             index=True, unique=True, nullable=False)
+
     name = db.Column(db.String(255), nullable=False)
+
+    description = db.Column(db.String, index=False,
+                            unique=False, nullable=True)
+
+    contact_information = db.relationship(ContactInformation,
+                                          backref='supplier',
+                                          lazy='joined',
+                                          innerjoin=True)
+
+    duns_number = db.Column(db.String, index=False,
+                            unique=True, nullable=True)
+
+    esourcing_id = db.Column(db.String, index=False,
+                             unique=True, nullable=True)
+
+    clients = db.Column(JSON)
 
     def serialize(self):
         links = [
@@ -103,7 +157,6 @@ class Service(db.Model):
 
     def serialize(self):
         """
-        Pretty much a direct translation of the old `jsonify_service` function
         :return: dictionary representation of a service
         """
 
@@ -170,7 +223,6 @@ class ArchivedService(db.Model):
 
     def serialize(self):
         """
-        Pretty much a direct translation of the old `jsonify_service` function
         :return: dictionary representation of a service
         """
 

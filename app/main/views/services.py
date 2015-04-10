@@ -208,6 +208,7 @@ def import_service(service_id):
 
     return "", 201
 
+
 @main.route('/services/<string:service_id>', methods=['GET'])
 def get_service(service_id):
 

@@ -1,13 +1,16 @@
 from flask import jsonify, abort, request, current_app
+from sqlalchemy.exc import IntegrityError
 
 from .. import main
-from ...models import Supplier
-from ...utils import pagination_links
+from ... import db
+from ...models import Supplier, ContactInformation
+from ...validation import validate_supplier_json_or_400
+from ...utils import pagination_links, drop_foreign_fields, \
+    get_json_from_request, json_has_required_keys
 
 
 @main.route('/suppliers', methods=['GET'])
 def list_suppliers():
-
 
     try:
         page = int(request.args.get('page', 1))
@@ -52,39 +55,57 @@ def get_supplier(supplier_id):
 
     return jsonify(suppliers=supplier.serialize())
 
-# Route to insert new Suppliers, yeah?
+
+# Route to insert new Suppliers
 @main.route('/suppliers', methods=['POST'])
 def import_supplier():
 
-    html_string = ''
-
     supplier_data = get_json_from_request()
+    supplier_data = supplier_data.get('suppliers', None)
 
-    html_string += '<h1>received json</h1><pre>' + dump(supplier_data) + '</pre><br><br>'
-
-    json_has_required_keys(supplier_data, ['clientsString', 'contactInformation'])
-
-    # Break the 'clientsString' into an array, because this is what our model (will) expect
-    supplier_data['clientsString'] = supplier_data['clientsString'].split(',')
-
-    # address is nested an extra level.  No longer.
-    for index, val in enumerate(supplier_data['contactInformation']):
-        supplier_data['contactInformation'][index] = un_nest_key_value_pairs(
-            supplier_data['contactInformation'][index],
-            'address'
-        )
+    json_has_required_keys(supplier_data, ['contactInformation'])
 
     validate_supplier_json_or_400(supplier_data)
 
-    html_string += '<h1>processed json</h1><pre>' + dump(supplier_data) + '</pre><br><br>'
+    contact_informations_data = supplier_data['contactInformation']
 
-    return html_string
+    supplier_data = drop_foreign_fields(
+        supplier_data,
+        ['contactInformation']
+    )
 
-    """
+    supplier = Supplier(supplier_id=supplier_data['id'])
+    supplier.name = supplier_data.get('name', None)
+    supplier.description = supplier_data.get('description', None)
+    supplier.contact_information = []
+    supplier.duns_number = supplier_data.get('dunsNumber', None)
+    supplier.esourcing_id = supplier_data.get('eSourcingId', None)
+    supplier.clients = supplier_data.get('clients', None)
 
-    # Graceless way to imply that this is a placeholder.
-    supplier = Supplier(supplier_id=19999191919191919191911982918291829182918)
-    supplier.name = supplier_data['name']
+    for contact_information_data in contact_informations_data:
+
+        contact_information = ContactInformation()
+
+        contact_information.contact_name = \
+            contact_information_data.get('contactName', None)
+        contact_information.phone_number = \
+            contact_information_data.get('phoneNumber', None)
+        contact_information.email = \
+            contact_information_data.get('email', None)
+        contact_information.website = \
+            contact_information_data.get('website', None)
+        contact_information.address1 = \
+            contact_information_data.get('address1', None)
+        contact_information.address2 = \
+            contact_information_data.get('address2', None)
+        contact_information.city = \
+            contact_information_data.get('city', None)
+        contact_information.country = \
+            contact_information_data.get('country', None)
+        contact_information.postcode = \
+            contact_information_data.get('postcode', None)
+
+        supplier.contact_information.append(contact_information)
 
     db.session.add(supplier)
 
@@ -92,51 +113,6 @@ def import_supplier():
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.message)
+        abort(400, "Database Error: {0}".format(e.message))
 
-    """
     return "", 201
-
-
-def un_nest_key_value_pairs(obj, key_of_nested_obj):
-
-    if key_of_nested_obj not in obj.keys():
-        abort(400, "No '{0}' key found to un-nest.".format(key_of_nested_obj))
-
-    nested_obj = obj[key_of_nested_obj]
-
-    obj = drop_foreign_fields(
-        obj,
-        [key_of_nested_obj]
-    )
-
-    for key in nested_obj.keys():
-        obj[key] = nested_obj[key]
-
-    return obj
-
-# @see http://stackoverflow.com/questions/15785719/how-to-print-a-dictionary-line-by-line-in-python
-def dump(obj, nested_level=0):
-    output_string = ''
-    spacing = '   '
-    if type(obj) == dict:
-        output_string += '<br>%s{' % ((nested_level) * spacing)
-        for k, v in obj.items():
-            if hasattr(v, '__iter__'):
-                output_string += '<br>%s%s:' % ((nested_level + 1) * spacing, k)
-                output_string += dump(v, nested_level + 1)
-            else:
-                output_string += '<br>%s%s: %s' % ((nested_level + 1) * spacing, k, v)
-        output_string += '<br>%s}' % (nested_level * spacing)
-    elif type(obj) == list:
-        output_string += '<br>%s[' % ((nested_level) * spacing)
-        for v in obj:
-            if hasattr(v, '__iter__'):
-                output_string += dump(v, nested_level + 1)
-            else:
-                output_string += '<br>%s%s' % ((nested_level + 1) * spacing, v)
-        output_string += '<br>%s]' % ((nested_level) * spacing)
-    else:
-        output_string += '<br>%s%s' % (nested_level * spacing, obj)
-
-    return output_string
