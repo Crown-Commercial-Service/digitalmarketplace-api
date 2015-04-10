@@ -535,6 +535,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
             assert_equal(response.status_code, 201)
             now = datetime.now()
+            payload.pop('id', None)
             service = Service.query.filter(Service.service_id ==
                                            "1234567890123456").first()
             assert_equal(service.data, payload)
@@ -561,6 +562,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             payload.pop('status', None)
             assert_equal(response.status_code, 201)
             now = datetime.now()
+            payload.pop('id', None)
             service = Service.query.filter(Service.service_id ==
                                            "4-disabled").first()
             assert_equal(service.status, 'disabled')
@@ -585,6 +587,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(response.status_code, 200)
             assert_equal(json.loads(response.get_data()), {"message": "done"})
             now = datetime.now()
+            payload.pop('id', None)
             service = Service.query.filter(Service.service_id ==
                                            "1234567890123456").first()
             assert_equal(service.data, payload)
