@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import jsonify, abort, request
+from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
 
 from .. import main, helpers
@@ -10,10 +10,6 @@ from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
 from ..utils import url_for, pagination_links, drop_foreign_fields, link, \
     json_has_matching_id
-
-
-# TODO: This should probably not be here
-API_FETCH_PAGE_SIZE = 100
 
 
 @main.route('/')
@@ -54,8 +50,11 @@ def list_services():
 
         services = services.filter(Service.supplier_id == supplier_id)
 
-    services = services.paginate(page=page, per_page=API_FETCH_PAGE_SIZE,
-                                 error_out=False)
+    services = services.paginate(
+        page=page,
+        per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
+        error_out=False,
+    )
     if page > 1 and not services.items:
         abort(404, "Page number out of range")
 
@@ -88,8 +87,10 @@ def list_archived_services_by_service_id():
 
     services = ArchivedService.query.filter(Service.service_id == service_id)
 
-    services = services.paginate(page=page, per_page=API_FETCH_PAGE_SIZE,
-                                 error_out=False)
+    services = services.paginate(
+        page=page,
+        per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
+        error_out=False)
 
     if request.args and not services.items:
         abort(404)
