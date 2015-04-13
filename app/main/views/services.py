@@ -132,8 +132,15 @@ def update_service(service_id):
 
     data = dict(service.data.items())
     data.update(service_update)
+    if "id" in data:
+        # It is an old-style service JSON with an id field
+        data["id"] = str(data["id"])
+    else:
+        # It is a new service JSON with id removed from payload already
+        data["id"] = service_id
     detect_framework_or_400(data)
 
+    data = drop_foreign_fields(data, ['id'])
     now = datetime.now()
     service.data = data
     service.updated_at = now
@@ -175,6 +182,7 @@ def import_service(service_id):
 
     framework = detect_framework_or_400(service_data)
 
+    service_data = drop_foreign_fields(service_data, ['id'])
     service.supplier_id = service_data['supplierId']
     service.framework_id = Framework.query.filter(
         Framework.name == framework).first().id
