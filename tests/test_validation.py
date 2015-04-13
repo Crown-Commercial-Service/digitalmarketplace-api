@@ -6,9 +6,8 @@ import json
 from nose.tools import assert_equal
 from jsonschema import validate, SchemaError, ValidationError
 
-from app.validation import detect_framework, validates_against_schema, \
-    is_valid_service_id, UPDATER_VALIDATOR, USERS_VALIDATOR, \
-    AUTH_USERS_VALIDATOR
+from app.validation import detect_framework, SCHEMAS, \
+    validates_against_schema, is_valid_service_id
 
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -48,13 +47,13 @@ def test_updater_json_validates_correctly():
     valid_updater = {'updated_by': 'this', 'update_reason': 'hi'}
 
     assert_equal(validates_against_schema(
-        UPDATER_VALIDATOR, invalid_updater_no_reason), False)
+        'services-update', invalid_updater_no_reason), False)
     assert_equal(validates_against_schema(
-        UPDATER_VALIDATOR, invalid_updater_no_username), False)
+        'services-update', invalid_updater_no_username), False)
     assert_equal(validates_against_schema(
-        UPDATER_VALIDATOR, invalid_updater_no_fields), False)
+        'services-update', invalid_updater_no_fields), False)
     assert_equal(validates_against_schema(
-        UPDATER_VALIDATOR, valid_updater), True)
+        'services-update', valid_updater), True)
 
 
 def test_user_creation_validates():
@@ -107,7 +106,7 @@ def test_user_creation_validates():
     ]
 
     for example, expected, message in case:
-        result = validates_against_schema(USERS_VALIDATOR, example)
+        result = validates_against_schema('users', example)
         yield assert_equal, result, expected, message
 
 
@@ -136,7 +135,7 @@ def test_auth_user_validates():
     ]
 
     for example, expected, message in case:
-        result = validates_against_schema(AUTH_USERS_VALIDATOR, example)
+        result = validates_against_schema('users-auth', example)
         yield assert_equal, result, expected, message
 
 
