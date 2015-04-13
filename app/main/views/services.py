@@ -8,7 +8,7 @@ from ... import db
 from ...models import ArchivedService, Service, Supplier, Framework
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
-from ..utils import url_for, pagination_links, drop_foreign_fields, link, \
+from ...utils import url_for, pagination_links, drop_foreign_fields, link, \
     json_has_matching_id, get_json_from_request, json_has_required_keys
 
 

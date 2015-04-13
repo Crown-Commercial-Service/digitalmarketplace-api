@@ -5,7 +5,7 @@ from flask import jsonify, abort
 from .. import main
 from ... import db, encryption
 from ...models import User
-from ..utils import get_json_from_request, json_has_required_keys
+from ...utils import get_json_from_request, json_has_required_keys
 from ...validation import validate_user_json_or_400, \
     validate_user_auth_json_or_400
 

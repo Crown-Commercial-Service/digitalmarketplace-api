@@ -2,7 +2,7 @@ from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ...models import Supplier
-from ..utils import pagination_links
+from ...utils import pagination_links
 
 
 @main.route('/suppliers', methods=['GET'])
