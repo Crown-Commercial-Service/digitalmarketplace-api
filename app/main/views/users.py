@@ -1,18 +1,20 @@
 from datetime import datetime
 
-from flask import jsonify, request, abort
+from flask import jsonify, abort
 
-from .. import main, helpers
+from .. import main
 from ... import db, encryption
 from ...models import User
+from ..utils import get_json_from_request, json_has_required_keys
 from ...validation import validate_user_json_or_400, \
     validate_user_auth_json_or_400
 
 
 @main.route('/users/auth', methods=['POST'])
 def auth_user():
-    json_payload = get_json_from_request('auth_users')
-
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ["auth_users"])
+    json_payload = json_payload["auth_users"]
     validate_user_auth_json_or_400(json_payload)
 
     user = User.query.filter(
@@ -36,7 +38,10 @@ def get_user_by_email(user_id):
 
 @main.route('/users', methods=['POST'])
 def create_user():
-    json_payload = get_json_from_request('users')
+
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ["users"])
+    json_payload = json_payload["users"]
     validate_user_json_or_400(json_payload)
 
     user = User.query.filter(
@@ -67,10 +72,3 @@ def create_user():
     db.session.commit()
 
     return jsonify(users=user.serialize()), 200
-
-
-def get_json_from_request(root_field):
-    payload = helpers.get_json_from_request(request)
-    helpers.json_has_required_keys(payload, [root_field])
-    update_json = payload[root_field]
-    return update_json
