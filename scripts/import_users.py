@@ -58,7 +58,7 @@ class UserPutter(object):
 
         for i in json_from_file['users']:
             data = {'users': self.make_user_json(i)}
-            response = requests.put(
+            response = requests.post(
                 self.endpoint,
                 data=json.dumps(data),
                 headers={
