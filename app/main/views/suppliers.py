@@ -63,11 +63,19 @@ def import_supplier():
     supplier_data = get_json_from_request()
     supplier_data = supplier_data.get('suppliers', None)
 
-    json_has_required_keys(supplier_data, ['contactInformation'])
+    contact_informations_data = supplier_data['contactInformation']
+
+    json_has_required_keys(
+        supplier_data,
+        ['id', 'name']
+    )
+    for contact_information_data in contact_informations_data:
+        json_has_required_keys(
+            contact_information_data,
+            ['contactName', 'email', 'postcode']
+        )
 
     validate_supplier_json_or_400(supplier_data)
-
-    contact_informations_data = supplier_data['contactInformation']
 
     supplier_data = drop_foreign_fields(
         supplier_data,

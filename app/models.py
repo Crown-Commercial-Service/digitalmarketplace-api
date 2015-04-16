@@ -84,6 +84,22 @@ class ContactInformation(db.Model):
     postcode = db.Column(db.String, index=False,
                          unique=False, nullable=False)
 
+    def serialize(self):
+        # Should there be links for the associated service(s) / supplier?
+
+        return {
+            # 'supplierId': self.supplier_id,
+            'contactName': self.contact_name,
+            'phoneNumber': self.phone_number,
+            'email': self.email,
+            'website': self.website,
+            'address1': self.address1,
+            'address2': self.address2,
+            'city': self.city,
+            'country': self.country,
+            'postcode': self.postcode
+        }
+
 
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
@@ -119,9 +135,17 @@ class Supplier(db.Model):
             )
         ]
 
+        contactInformation = []
+        for contact_information_instance in self.contact_information:
+            contactInformation.append(contact_information_instance.serialize())
+
         return {
             'id': self.supplier_id,
             'name': self.name,
+            'description': self.description,
+            'dunsNumber': self.duns_number,
+            'eSourcingId': self.esourcing_id,
+            'contactInformation': contactInformation,
             'links': links
         }
 
