@@ -18,6 +18,10 @@
       "maxLength": 255,
       "minLength": 10
     },
+    "role": {
+      "type": "string",
+      "pattern": "^(buyer|supplier|admin)$"
+    },
     "hashpw": {
       "type": "boolean"
     }

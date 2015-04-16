@@ -33,12 +33,14 @@ class User(db.Model):
                            nullable=False)
     password_changed_at = db.Column(db.DateTime, index=False, unique=False,
                                     nullable=False)
+    role = db.Column(db.String, index=False, unique=False, nullable=False)
 
     def serialize(self):
         return {
             'id': self.id,
             'email_address': self.email_address,
             'name': self.name,
+            'role': self.role,
             'active': self.active,
             'locked': self.locked,
             'created_at': self.created_at,

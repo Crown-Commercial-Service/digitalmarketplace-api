@@ -2,26 +2,25 @@
 """Import SSP export files into the API
 
 Usage:
-    import_users.py <endpoint> <access_token> <listing_dir> [options]
+    import_users.py <endpoint> <access_token> <filename> [options]
 
     --cert=<cert>   Path to certificate file to verify against
-    --serial        Do not run in parallel (useful for debugging)
     -v, --verbose   Enable verbose output for errors
 
 Example:
-    ./import_users.py --serial http://localhost:5000 myToken ~/myData
+    ./import_users.py --serial http://localhost:5000 myToken ~/myData.file.dat
 """
 from __future__ import print_function
 import sys
 import json
 import os
-import getpass
-import itertools
-import multiprocessing
 from datetime import datetime
 
 import requests
 from docopt import docopt
+
+
+roles = {}
 
 
 def list_files(directory):
@@ -48,61 +47,71 @@ class UserPutter(object):
         self.access_token = access_token
         self.cert = cert
 
-    def __call__(self, file_path):
-        with open(file_path) as f:
-            try:
-                json_from_file = json.load(f)
-            except ValueError:
-                print("Skipping {}: not a valid JSON file".format(file_path))
-                return file_path, None
+    def post_user(self, user):
+        for role in user['roles']:
+            if role in roles:
+                user[role] += 1
+            else:
+                user[role] = 1
 
-        for i in json_from_file['users']:
-            data = {'users': self.make_user_json(i)}
-            response = requests.post(
-                self.endpoint,
-                data=json.dumps(data),
-                headers={
-                    "content-type": "application/json",
-                    "authorization": "Bearer {}".format(self.access_token),
-                },
-                verify=self.cert if self.cert else True)
-            print(response)
+        user = self.make_user_json(user)
+        data = {'users': user}
+        print("sending {}".format(user['email_address']))
+        response = requests.post(
+            self.endpoint,
+            data=json.dumps(data),
+            headers={
+                "content-type": "application/json",
+                "authorization": "Bearer {}".format(self.access_token),
+            },
+            verify=self.cert if self.cert else True)
 
-        return file_path, 200
+        if response.status_code is not 200:
+            print("failed: {}".format(user['email_address']))
+
+        return user['email_address'], response
 
     @staticmethod
     def make_user_json(json_from_file):
         name = json_from_file['firstName'] + " " + json_from_file['lastName']
+        if "ROLE_SUPPLIER" in json_from_file['roles']:
+            role = "supplier"
+        else:
+            role = "buyer"
+
         return {
             'hashpw': False,
             'name': name,
+            'role': role,
             'email_address': json_from_file['email'],
             'password': json_from_file['password']
         }
 
 
-def do_import(base_url, access_token, listing_dir, serial, cert, verbose):
+def do_import(base_url, access_token, filename, cert, verbose):
     endpoint = "{}/users".format(base_url)
     print("Base URL: {}".format(base_url))
     print("Access token: {}".format(access_token))
-    print("Listing dir: {}".format(listing_dir))
-
-    if serial:
-        mapper = itertools.imap
-    else:
-        pool = multiprocessing.Pool(10)
-        mapper = pool.imap
+    print("Filename: {}".format(filename))
 
     putter = UserPutter(endpoint, access_token, cert)
 
     counter = 0
     start_time = datetime.now()
-    for file_path, response in mapper(putter, list_files(listing_dir)):
+
+    with open(filename) as data_file:
+        try:
+            json_from_file = json.load(data_file)
+        except ValueError:
+            print("Skipping {}: not a valid JSON file".format(filename))
+
+    for user in json_from_file['users']:
+        username, response = putter.post_user(user)
         if response is None:
-            print("ERROR: {} not imported".format(file_path),
+            print("ERROR: {} not imported".format(username),
                   file=sys.stderr)
         elif response.status_code / 100 != 2:
-            print("ERROR: {} on {}".format(response.status_code, file_path),
+            print("ERROR: {} on {}".format(response.status_code, username),
                   file=sys.stderr)
             if verbose:
                 print(response.text, file=sys.stderr)
@@ -118,8 +127,7 @@ if __name__ == "__main__":
     do_import(
         base_url=arguments['<endpoint>'],
         access_token=arguments['<access_token>'],
-        listing_dir=arguments['<listing_dir>'],
-        serial=arguments['--serial'],
+        filename=arguments['<filename>'],
         cert=arguments['--cert'],
         verbose=arguments['--verbose'],
     )

@@ -1,0 +1,20 @@
+This is a record of the order of migrations:
+
+8d2b9dcce09   -  first version - add 'services' table
+4cb7869866dc  -  add 'services.service_id'
+c8bce0740af   -  add 'supplier_id', 'created_at' and 'updated_at'
+1e74a2d74d2d  -  create 'suppliers' table
+21eb9b29c651  -  make 'supplier_id' a foreign key
+178754d7108a  -  add 'services.updated_by' column
+12e3e673a7b   -  make 'services.updated_by' not null
+12f9dcc2e36c  -  add 'archived_services'
+56b57f01c4b4  -  make 'service_id' a string
+597e346723ee  -  add 'services.status'
+3d3fb04d1a98  -  set 'services.status' not null
+178762dff445  -  create 'frameworks' table
+48a5caa0a762  -  add 'services.framework_id'
+3acf60608a7d  -  set 'services.framework_id' not null
+3e6c454a6fc7  -  add G4 and G5 frameworks
+3a5eba38e4e8  -  set G6 services to be 'published'
+407e74de5553  -  add 'users' table
+3d5aabf7d291  -  add 'role' to 'users'
