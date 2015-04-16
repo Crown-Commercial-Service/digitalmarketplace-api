@@ -99,11 +99,11 @@ def do_import(base_url, access_token, filename, cert, verbose):
     counter = 0
     start_time = datetime.now()
 
-    data_file = open(filename)
-    try:
-        json_from_file = json.load(data_file)
-    except ValueError:
-        print("Skipping {}: not a valid JSON file".format(filename))
+    with open(filename) as data_file:
+        try:
+            json_from_file = json.load(data_file)
+        except ValueError:
+            print("Skipping {}: not a valid JSON file".format(filename))
 
     for user in json_from_file['users']:
         username, response = putter.post_user(user)
