@@ -225,8 +225,8 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
-        assert_equal(response.get_data(),
-                     '{\n  "error": "JSON was not a valid format"\n}')
+        data = json.loads(response.get_data())["error"]
+        assert_equal(data, "JSON was not a valid format")
 
     def test_return_400_for_invalid_user_role(self):
         response = self.client.post(
@@ -240,8 +240,8 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
-        assert_equal(response.get_data(),
-                     '{\n  "error": "JSON was not a valid format"\n}')
+        data = json.loads(response.get_data())["error"]
+        assert_equal(data, "JSON was not a valid format")
 
 
 class TestUsersGet(BaseApplicationTest):
