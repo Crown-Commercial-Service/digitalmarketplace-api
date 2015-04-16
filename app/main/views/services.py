@@ -3,13 +3,13 @@ from datetime import datetime
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
 
-from .. import main, helpers
+from .. import main
 from ... import db
 from ...models import ArchivedService, Service, Supplier, Framework
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
-from ..utils import url_for, pagination_links, drop_foreign_fields, link, \
-    json_has_matching_id
+from ...utils import url_for, pagination_links, drop_foreign_fields, link, \
+    json_has_matching_id, get_json_from_request, json_has_required_keys
 
 
 @main.route('/')
@@ -119,9 +119,9 @@ def update_service(service_id):
 
     service_to_archive = ArchivedService.from_service(service)
 
-    json_payload = helpers.get_json_from_request(request)
-    helpers.json_has_required_keys(json_payload,
-                                   ["update_details", "services"])
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload,
+                           ["update_details", "services"])
 
     update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
@@ -168,9 +168,9 @@ def import_service(service_id):
         service = Service(service_id=service_id)
         service.created_at = now
 
-    json_payload = helpers.get_json_from_request(request)
-    helpers.json_has_required_keys(json_payload,
-                                   ['services', 'update_details'])
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload,
+                           ['services', 'update_details'])
 
     service_data = drop_foreign_fields(
         json_payload['services'],

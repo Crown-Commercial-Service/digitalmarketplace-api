@@ -486,7 +486,7 @@ class TestPostService(BaseApplicationTest):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
-        assert_in(b'service_id parameter must match service_id in data',
+        assert_in(b'id parameter must match id in data',
                   response.get_data())
 
 
@@ -606,7 +606,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
-        assert_in(b'service_id parameter must match service_id in data',
+        assert_in(b'id parameter must match id in data',
                   response.get_data())
 
     def test_when_no_update_details(self):
