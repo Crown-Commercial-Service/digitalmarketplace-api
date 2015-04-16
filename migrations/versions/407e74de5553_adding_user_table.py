@@ -1,14 +1,14 @@
 """adding user table
 
 Revision ID: 407e74de5553
-Revises: 12f9dcc2e36c
+Revises: 3a5eba38e4e8
 Create Date: 2015-03-31 07:53:28.662125
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '407e74de5553'
-down_revision = '12f9dcc2e36c'
+down_revision = '3a5eba38e4e8'
 
 from alembic import op
 import sqlalchemy as sa
