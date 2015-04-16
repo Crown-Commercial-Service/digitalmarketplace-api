@@ -120,6 +120,36 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
         data = json.loads(response.get_data())["users"]
         assert_equal(data["email_address"], "joeblogs@email.com")
 
+    def test_can_post_an_admin_user(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'email_address': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'role': 'admin',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 200)
+        data = json.loads(response.get_data())["users"]
+        assert_equal(data["email_address"], "joeblogs@email.com")
+
+    def test_can_post_a_supplier_user(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'email_address': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'role': 'supplier',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 200)
+        data = json.loads(response.get_data())["users"]
+        assert_equal(data["email_address"], "joeblogs@email.com")
+
     def test_can_post_a_user_with_hashed_password(self):
         with self.app.app_context():
             response = self.client.post(
@@ -195,6 +225,8 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
+        assert_equal(response.get_data(),
+                     '{\n  "error": "JSON was not a valid format"\n}')
 
     def test_return_400_for_invalid_user_role(self):
         response = self.client.post(
@@ -208,6 +240,8 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
+        assert_equal(response.get_data(),
+                     '{\n  "error": "JSON was not a valid format"\n}')
 
 
 class TestUsersGet(BaseApplicationTest):
