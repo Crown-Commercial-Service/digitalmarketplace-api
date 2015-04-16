@@ -78,6 +78,8 @@ def detect_framework(submitted_json):
             validates_against_schema('services-g6-paas', submitted_json) or \
             validates_against_schema('services-g6-iaas', submitted_json):
         return 'G-Cloud 6'
+    else:
+        return False
 
 
 def validate_supplier_json_or_400(submitted_json):

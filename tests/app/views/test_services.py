@@ -5,7 +5,7 @@ from nose.tools import assert_equal, assert_in, assert_not_equal, \
     assert_almost_equal
 
 from app import db
-from app.models import Service, Supplier, Framework
+from app.models import Service, Supplier, ContactInformation, Framework
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
 
@@ -166,6 +166,14 @@ class TestPostService(BaseApplicationTest):
             )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+            db.session.add(
+                ContactInformation(
+                    supplier_id=1,
+                    contact_name=u"Liz",
+                    email=u"liz@royal.gov.uk",
+                    postcode=u"SW1A 1AA"
+                )
             )
         self.client.put(
             '/services/%s' % self.service_id,
@@ -508,6 +516,14 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
+            db.session.add(
+                ContactInformation(
+                    supplier_id=1,
+                    contact_name=u"Liz",
+                    email=u"liz@royal.gov.uk",
+                    postcode=u"SW1A 1AA"
+                )
+            )
             db.session.add(Service(service_id="1234567890123456",
                                    supplier_id=1,
                                    updated_at=now,
@@ -704,6 +720,14 @@ class TestGetService(BaseApplicationTest):
             )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+            db.session.add(
+                ContactInformation(
+                    supplier_id=1,
+                    contact_name=u"Liz",
+                    email=u"liz@royal.gov.uk",
+                    postcode=u"SW1A 1AA"
+                )
             )
             db.session.add(Service(service_id="123-published-456",
                                    supplier_id=1,

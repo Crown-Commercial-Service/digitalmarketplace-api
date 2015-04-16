@@ -2,8 +2,8 @@ from flask import json
 from nose.tools import assert_equal, assert_in
 
 from app import db
-from app.models import Supplier
-from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
+from app.models import Supplier, ContactInformation
+from ..helpers import BaseApplicationTest
 
 
 class TestGetSupplier(BaseApplicationTest):
@@ -12,7 +12,18 @@ class TestGetSupplier(BaseApplicationTest):
 
         with self.app.app_context():
             db.session.add(
-                Supplier(supplier_id=585274, name=u"Supplier 585274")
+                Supplier(
+                    supplier_id=585274,
+                    name=u"Supplier 585274"
+                )
+            )
+            db.session.add(
+                ContactInformation(
+                    supplier_id=585274,
+                    contact_name=u"Liz",
+                    email=u"liz@royal.gov.uk",
+                    postcode=u"SW1A 1AA"
+                )
             )
 
     def test_get_non_existent_supplier(self):
@@ -36,19 +47,8 @@ class TestListSuppliers(BaseApplicationTest):
     def setup(self):
         super(TestListSuppliers, self).setup()
 
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=585274, name=u"Supplier 585274")
-            )
-            db.session.add(
-                Supplier(supplier_id=123456, name=u"Supplier 123456")
-            )
-            db.session.add(
-                Supplier(
-                    supplier_id=3,
-                    name=u"Cloudy Clouds Inc Clouded Hosting"
-                )
-            )
+        # Supplier names like u"Supplier {n}"
+        self.setup_dummy_suppliers(150)
 
     def test_query_string_missing(self):
         response = self.client.get('/suppliers')
@@ -68,33 +68,16 @@ class TestListSuppliers(BaseApplicationTest):
         assert_equal(404, response.status_code)
 
     def test_query_string_prefix_returns_single(self):
-        response = self.client.get('/suppliers?prefix=cloud')
+        response = self.client.get('/suppliers?prefix=supplier%20149')
 
         data = json.loads(response.get_data())
         assert_equal(200, response.status_code)
         assert_equal(1, len(data['suppliers']))
-        assert_equal(3, data['suppliers'][0]['id'])
+        assert_equal(149, data['suppliers'][0]['id'])
         assert_equal(
-            u"Cloudy Clouds Inc Clouded Hosting",
+            u"Supplier 149",
             data['suppliers'][0]['name']
         )
-
-    def test_query_string_prefix_returns_multiple(self):
-        response = self.client.get('/suppliers?prefix=s')
-
-        data = json.loads(response.get_data())
-        assert_equal(200, response.status_code)
-        assert_equal(2, len(data['suppliers']))
-        assert_equal(585274, data['suppliers'][0]['id'])
-        assert_equal(u"Supplier 123456", data['suppliers'][1]['name'])
-
-
-class TestListSuppliersPaginated(BaseApplicationTest):
-    def setup(self):
-        super(TestListSuppliersPaginated, self).setup()
-
-        # Supplier names like u"Supplier {n}"
-        self.setup_dummy_suppliers(150)
 
     def test_query_string_prefix_returns_paginated_page_one(self):
         response = self.client.get('/suppliers?prefix=s')
@@ -117,8 +100,8 @@ class TestListSuppliersPaginated(BaseApplicationTest):
     def test_query_string_prefix_page_out_of_range(self):
         response = self.client.get('/suppliers?prefix=s&page=10')
 
-        assert_equal(response.status_code, 400)
-        assert_in(b'Invalid page argument', response.get_data())
+        assert_equal(response.status_code, 404)
+        assert_in(b'Page number out of range', response.get_data())
 
     def test_query_string_prefix_invalid_page_argument(self):
         response = self.client.get('/suppliers?prefix=s&page=a')
