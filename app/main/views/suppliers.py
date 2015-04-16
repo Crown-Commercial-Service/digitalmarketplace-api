@@ -61,14 +61,21 @@ def get_supplier(supplier_id):
 def import_supplier():
 
     supplier_data = get_json_from_request()
-    supplier_data = supplier_data.get('suppliers', None)
-
-    contact_informations_data = supplier_data['contactInformation']
 
     json_has_required_keys(
         supplier_data,
-        ['id', 'name']
+        ['suppliers']
     )
+
+    supplier_data = supplier_data['suppliers']
+
+    json_has_required_keys(
+        supplier_data,
+        ['id', 'name', 'contactInformation']
+    )
+
+    contact_informations_data = supplier_data['contactInformation']
+
     for contact_information_data in contact_informations_data:
         json_has_required_keys(
             contact_information_data,

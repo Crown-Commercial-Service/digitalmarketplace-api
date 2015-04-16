@@ -87,8 +87,7 @@ class ContactInformation(db.Model):
     def serialize(self):
         # Should there be links for the associated service(s) / supplier?
 
-        return {
-            # 'supplierId': self.supplier_id,
+        serialized = {
             'contactName': self.contact_name,
             'phoneNumber': self.phone_number,
             'email': self.email,
@@ -99,6 +98,8 @@ class ContactInformation(db.Model):
             'country': self.country,
             'postcode': self.postcode
         }
+
+        return filter_null_value_fields(serialized)
 
 
 class Supplier(db.Model):
@@ -135,19 +136,23 @@ class Supplier(db.Model):
             )
         ]
 
-        contactInformation = []
+        contact_information_list = []
         for contact_information_instance in self.contact_information:
-            contactInformation.append(contact_information_instance.serialize())
+            contact_information_list.append(
+                contact_information_instance.serialize()
+            )
 
-        return {
+        serialized = {
             'id': self.supplier_id,
             'name': self.name,
             'description': self.description,
-            'dunsNumber': self.duns_number,
+            # 'dunsNumber': self.duns_number,
             'eSourcingId': self.esourcing_id,
-            'contactInformation': contactInformation,
+            'contactInformation': contact_information_list,
             'links': links
         }
+
+        return filter_null_value_fields(serialized)
 
 
 class Service(db.Model):
@@ -266,3 +271,9 @@ class ArchivedService(db.Model):
         ]
 
         return data
+
+
+def filter_null_value_fields(obj):
+    return dict(
+        filter(lambda x: x[1] is not None, obj.items())
+    )
