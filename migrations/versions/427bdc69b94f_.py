@@ -1,4 +1,4 @@
-"""empty message
+"""add 'description' to suppliers & make 'email' and 'postcode' required fields
 
 Revision ID: 427bdc69b94f
 Revises: 550715127385

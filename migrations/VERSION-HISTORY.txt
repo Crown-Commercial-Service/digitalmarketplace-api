@@ -18,3 +18,6 @@ c8bce0740af   -  add 'supplier_id', 'created_at' and 'updated_at'
 3a5eba38e4e8  -  set G6 services to be 'published'
 407e74de5553  -  add 'users' table
 3d5aabf7d291  -  add 'role' to 'users'
+550715127385  -  add 'contact_information' table and flesh out 'suppliers'
+427bdc69b94f  -  add 'description' to suppliers & make 'email' and 'postcode' required fields
+44b66d53c52   -  remove unique constraint on 'duns_number' and 'esourcing_id' fields

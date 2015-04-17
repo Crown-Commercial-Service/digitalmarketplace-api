@@ -1,4 +1,4 @@
-"""empty message
+"""remove unique constraint on 'duns_number' and 'esourcing_id' fields
 
 Revision ID: 44b66d53c52
 Revises: 427bdc69b94f
