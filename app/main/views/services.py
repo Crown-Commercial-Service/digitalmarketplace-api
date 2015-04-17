@@ -158,7 +158,6 @@ def update_service(service_id):
 
 @main.route('/services/<string:service_id>', methods=['PUT'])
 def import_service(service_id):
-
     is_valid_service_id_or_400(service_id)
 
     now = datetime.now()
@@ -203,15 +202,20 @@ def import_service(service_id):
     try:
         db.session.commit()
     except IntegrityError as e:
+        # elastic_search(search_api_client.index, "123", service)
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
     return "", 201
 
 
+def elastic_search(method, service_id, body):
+    if current_app.config["ES_ENABLED"]:
+        method(service_id, body)
+
+
 @main.route('/services/<string:service_id>', methods=['GET'])
 def get_service(service_id):
-
     is_valid_service_id_or_400(service_id)
 
     service = Service.query.filter(
