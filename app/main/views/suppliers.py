@@ -57,8 +57,8 @@ def get_supplier(supplier_id):
 
 
 # Route to insert new Suppliers
-@main.route('/suppliers', methods=['POST'])
-def import_supplier():
+@main.route('/suppliers/<int:supplier_id>', methods=['PUT'])
+def import_supplier(supplier_id):
 
     supplier_data = get_json_from_request()
 
@@ -83,6 +83,15 @@ def import_supplier():
         )
 
     validate_supplier_json_or_400(supplier_data)
+
+    # Check that `supplier_id` matches the JSON-supplied `id`
+    if str(supplier_data['id']) != str(supplier_id):
+        abort(400,
+              'Unfortunately, the id in your JSON file ({0}) '
+              'doesn\'t match the route id ({1})'.format(
+                  supplier_data['id'],
+                  supplier_id
+              ))
 
     supplier_data = drop_foreign_fields(
         supplier_data,

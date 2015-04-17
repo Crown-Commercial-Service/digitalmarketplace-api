@@ -121,10 +121,10 @@ class Supplier(db.Model):
                                           innerjoin=True)
 
     duns_number = db.Column(db.String, index=False,
-                            unique=True, nullable=True)
+                            unique=False, nullable=True)
 
     esourcing_id = db.Column(db.String, index=False,
-                             unique=True, nullable=True)
+                             unique=False, nullable=True)
 
     clients = db.Column(JSON)
 
@@ -147,7 +147,7 @@ class Supplier(db.Model):
             'name': self.name,
             'description': self.description,
             # 'dunsNumber': self.duns_number,
-            'eSourcingId': self.esourcing_id,
+            # 'eSourcingId': self.esourcing_id,
             'contactInformation': contact_information_list,
             'links': links
         }

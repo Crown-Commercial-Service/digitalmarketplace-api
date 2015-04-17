@@ -1,17 +1,17 @@
 {
-  "id": 93481,
-  "name": "Open Credo Limited",
-  "description": "OpenCredo is a high-end software consultancy; delivering software using leading edge technologies to gain competitive advantage. We invest in building internal knowledge that will change software development tomorrow. We build innovative solutions using a range of Cloud and NoSQL/Big Data technologies such as Cloud Foundry, Cassandra and Neo4J.",
+  "id": 123456,
+  "name": "Example Company Limited",
+  "description": "Example Company Limited is an innovation station sensation; we deliver software so bleeding edge you literally won't be able to run any of it on your systems.",
   "contactInformation": [
     {
-      "website": "www.opencredo.com",
-      "contactName": "Don Cleeve",
-      "email": "don.cleeve@opencredo.com",
-      "phoneNumber": "020 7928 9200",
-      "address1": "4 Snow Hill",
+      "website": "www.examplecompany.biz",
+      "contactName": "John Example",
+      "email": "j@examplecompany.biz",
+      "phoneNumber": "07309404738",
+      "address1": "123 Fake Street",
       "city": "London",
       "country": "United Kingdom",
-      "postcode": "EC1A 2DJ"
+      "postcode": "F4 K1E"
     },
     {
       "website": "http://www.don.com?fref=ts",
@@ -25,13 +25,12 @@
       "postcode": "EC1A D0N"
     }
   ],
-  "dunsNumber": "239547040",
-  "eSourcingId": "677330",
+  "dunsNumber": "333333333",
+  "eSourcingId": "333333",
   "clients":
   [
     "UK Ministry of Defence",
     "Astula Ltd",
-    "SA Capabilities Ltd",
     "Bedrock Communications Ltd"
   ]
 }

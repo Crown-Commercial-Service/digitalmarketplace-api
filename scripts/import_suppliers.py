@@ -59,8 +59,10 @@ class SupplierPutter(object):
 
         for i in json_from_file['suppliers']:
             data = {'suppliers': self.make_supplier_json(i)}
-            response = requests.post(
-                self.endpoint,
+            url = '{0}/{1}'.format(self.endpoint, data['suppliers']['id'])
+
+            response = requests.put(
+                url,
                 data=json.dumps(data),
                 headers={
                     "content-type": "application/json",

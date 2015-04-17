@@ -114,17 +114,17 @@ class TestListSuppliers(BaseApplicationTest):
         assert_equal(response.status_code, 400)
 
 
-class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
-    method = "post"
-    endpoint = "/suppliers"
+class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
+    method = "put"
+    endpoint = "/suppliers/123456"
 
     def setup(self):
-        super(TestPostSupplier, self).setup()
+        super(TestPutSupplier, self).setup()
 
-    def post_import_supplier(self, supplier):
+    def put_import_supplier(self, supplier):
         with self.app.app_context():
-            return self.client.post(
-                '/suppliers',
+            return self.client.put(
+                '/suppliers/' + str(supplier.get('id', 0)),
                 data=json.dumps({
                     'suppliers': supplier
                 }),
@@ -133,18 +133,43 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
     def test_add_a_new_supplier(self):
         with self.app.app_context():
             payload = self.load_example_listing("Supplier")
-            response = self.post_import_supplier(payload)
+            response = self.put_import_supplier(payload)
             assert_equal(response.status_code, 201)
             supplier = Supplier.query.filter(
-                Supplier.supplier_id == 93481
+                Supplier.supplier_id == 123456
             ).first()
+            print(supplier)
             assert_equal(supplier.name, payload['name'])
+
+    def test_cannot_put_to_root_suppliers_url(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            response = self.client.put(
+                '/suppliers',
+                data=json.dumps({
+                    'suppliers': payload
+                }),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 405)
+
+    def test_supplier_json_id_does_not_match_route_id_parameter(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            response = self.client.put(
+                '/suppliers/12345678901234567890',
+                data=json.dumps({
+                    'suppliers': payload
+                }),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 400)
 
     def test_when_supplier_has_missing_contact_information(self):
         with self.app.app_context():
             payload = self.load_example_listing("Supplier")
             payload.pop('contactInformation')
-            response = self.post_import_supplier(payload)
+            response = self.put_import_supplier(payload)
 
             assert_equal(response.status_code, 400)
 
@@ -153,7 +178,7 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             payload = self.load_example_listing("Supplier")
             payload.pop('id')
             payload.pop('name')
-            response = self.post_import_supplier(payload)
+            response = self.put_import_supplier(payload)
             assert_equal(response.status_code, 400)
 
     def test_when_supplier_contact_information_has_missing_keys(self):
@@ -164,7 +189,7 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             payload['contactInformation'][0].pop('postcode')
             payload['contactInformation'][0].pop('contactName')
 
-            response = self.post_import_supplier(payload)
+            response = self.put_import_supplier(payload)
             assert_equal(response.status_code, 400)
 
     def test_when_supplier_has_extra_keys(self):
@@ -173,7 +198,7 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
             payload.update({'newKey': 1})
 
-            response = self.post_import_supplier(payload)
+            response = self.put_import_supplier(payload)
             assert_equal(response.status_code, 400)
 
     def test_when_supplier_contact_information_has_extra_keys(self):
@@ -182,7 +207,7 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
             payload['contactInformation'][0].update({'newKey': 1})
 
-            response = self.post_import_supplier(payload)
+            response = self.put_import_supplier(payload)
             assert_equal(response.status_code, 400)
 
     def test_supplier_duns_number_invalid(self):
@@ -190,7 +215,7 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
             payload.update({'dunsNumber': "only-digits-permitted"})
 
-            response = self.post_import_supplier(payload)
+            response = self.put_import_supplier(payload)
             assert_equal(response.status_code, 400)
 
     def test_supplier_esourcing_id_invalid(self):
@@ -198,45 +223,7 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
             payload.update({'eSourcingId': "only-digits-permitted"})
 
-            response = self.post_import_supplier(payload)
-            assert_equal(response.status_code, 400)
-
-    def test_supplier_duns_number_duplicated(self):
-            payload = self.load_example_listing("Supplier")
-
-            response = self.post_import_supplier(payload)
-            assert_equal(response.status_code, 201)
-
-            new_supplier = {
-                'id': 123456,
-                'name': 'Cloudy Cloud Vendor',
-                'dunsNumber': payload.get('dunsNumber'),
-                'contactInformation': [{
-                    'contactName': 'James Bond',
-                    'email': '007@m16.gov.uk',
-                    'postcode': 'SE1 7TP'
-                }]
-            }
-            response = self.post_import_supplier(new_supplier)
-            assert_equal(response.status_code, 400)
-
-    def test_supplier_esourcing_id_duplicated(self):
-            payload = self.load_example_listing("Supplier")
-
-            response = self.post_import_supplier(payload)
-            assert_equal(response.status_code, 201)
-
-            new_supplier = {
-                'id': 123456,
-                'name': 'Cloudy Cloud Vendor',
-                'eSourcingId': payload.get('eSourcingId'),
-                'contactInformation': [{
-                    'contactName': 'James Bond',
-                    'email': '007@m16.gov.uk',
-                    'postcode': 'SE1 7TP'
-                }]
-            }
-            response = self.post_import_supplier(new_supplier)
+            response = self.put_import_supplier(payload)
             assert_equal(response.status_code, 400)
 
     def test_when_supplier_contact_information_email_invalid(self):
@@ -244,5 +231,5 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
             payload['contactInformation'][0].update({'email': 'bad-email-99'})
 
-            response = self.post_import_supplier(payload)
+            response = self.put_import_supplier(payload)
             assert_equal(response.status_code, 400)
