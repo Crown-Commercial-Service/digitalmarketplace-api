@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 from .. import main
 from ... import db
+from ... import search_api_client
 from ...models import ArchivedService, Service, Supplier, Framework
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
@@ -152,6 +153,7 @@ def update_service(service_id):
     db.session.add(service_to_archive)
 
     db.session.commit()
+    search_api_client.index(service_id, service.data, "supplier")
 
     return jsonify(message="done"), 200
 
@@ -201,8 +203,8 @@ def import_service(service_id):
 
     try:
         db.session.commit()
-    except IntegrityError as e:
-        # elastic_search(search_api_client.index, "123", service)
+        search_api_client.index(service_id, service.data, "supplier")
+    except IntegrityError:
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 

@@ -70,6 +70,7 @@ class BaseApplicationTest(object):
                         postcode=u"SW1A 1AA"
                     )
                 )
+            db.session.commit()
 
     def setup_dummy_services_including_unpublished(self, n):
         now = datetime.now()
@@ -120,6 +121,7 @@ class BaseApplicationTest(object):
                     postcode=u"SW1A 1AA"
                 )
             )
+            db.session.commit()
 
     def teardown(self):
         self.teardown_authorization()

@@ -1,16 +1,20 @@
-from app.main.services.search_api_client import SearchApiClient
+from app.flask_search_api_client.search_api_client import SearchApiClient
 from nose.tools import assert_equal
 import requests
 import requests_mock
 import os
 from flask import json
+from app import create_app
 
 
 class TestSearchApiClient():
 
+    search_api_client = None
+
     def __init__(self):
-        os.environ['DM_SEARCH_API_URL'] = "http://localhost"
-        self.search_api_client = SearchApiClient()
+        os.environ['ES_ENABLED'] = 'True'
+        app = create_app('test')
+        self.search_api_client = SearchApiClient(app)
         self.session = requests.Session()
         self.adapter = requests_mock.Adapter()
         self.session.mount('mock', self.adapter)
@@ -69,7 +73,7 @@ class TestSearchApiClient():
     def test_post_to_index_with_type_and_service_id(self):
         with requests_mock.mock() as m:
             m.post(
-                'http://localhost/g-cloud/services/12345',
+                'http://localhost/g-cloud/flask_search_api_client/12345',
                 json={'message': 'acknowledged'},
                 status_code=200)
             payload = self.load_example_listing("G6-IaaS")
@@ -78,13 +82,32 @@ class TestSearchApiClient():
                 payload,
                 "Supplier Name"
             )
-            assert_equal(res.status_code, 200)
-            assert_equal(res.json(), {'message': 'acknowledged'})
+            assert_equal(res, True)
+
+    def test_should_not_call_search_api_is_es_disabled(self):
+        with requests_mock.mock() as m:
+            os.environ['ES_ENABLED'] = 'False'
+            local_app = create_app('test')
+            local_search_api_client = SearchApiClient(local_app)
+
+            m.post(
+                'http://localhost/g-cloud/flask_search_api_client/12345',
+                json={'message': 'acknowledged'},
+                status_code=200)
+            payload = self.load_example_listing("G6-IaaS")
+            res = local_search_api_client.index(
+                "12345",
+                payload,
+                "Supplier Name"
+            )
+
+            assert_equal(res, True)
+            assert_equal(m.called, False)
 
     def test_should_return_response_from_es_to_caller(self):
         with requests_mock.mock() as m:
             m.post(
-                'http://localhost/g-cloud/services/12345',
+                'http://localhost/g-cloud/flask_search_api_client/12345',
                 json={'error': 'some error'},
                 status_code=400)
             payload = self.load_example_listing("G6-IaaS")
@@ -93,8 +116,7 @@ class TestSearchApiClient():
                 payload,
                 "Supplier Name"
             )
-            assert_equal(res.status_code, 400)
-            assert_equal(res.json(), {'error': 'some error'})
+            assert_equal(res, False)
 
     @staticmethod
     def load_example_listing(name):

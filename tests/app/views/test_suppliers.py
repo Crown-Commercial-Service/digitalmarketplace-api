@@ -25,6 +25,7 @@ class TestGetSupplier(BaseApplicationTest):
                     postcode=u"SW1A 1AA"
                 )
             )
+            db.session.commit()
 
     def test_get_non_existent_supplier(self):
         response = self.client.get('/suppliers/100')
@@ -49,6 +50,20 @@ class TestListSuppliers(BaseApplicationTest):
 
         # Supplier names like u"Supplier {n}"
         self.setup_dummy_suppliers(7)
+        with self.app.app_context():
+            db.session.add(
+                Supplier(supplier_id=585274, name=u"Supplier 585274")
+            )
+            db.session.add(
+                Supplier(supplier_id=123456, name=u"Supplier 123456")
+            )
+            db.session.add(
+                Supplier(
+                    supplier_id=3,
+                    name=u"Cloudy Clouds Inc Clouded Hosting"
+                )
+            )
+            db.session.commit()
 
     def test_query_string_missing(self):
         response = self.client.get('/suppliers')

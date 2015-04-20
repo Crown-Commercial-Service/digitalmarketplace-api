@@ -262,6 +262,7 @@ class TestUsersGet(BaseApplicationTest):
                 password_changed_at=now
             )
             db.session.add(user)
+            db.session.commit()
 
     def test_can_get_a_user(self):
         response = self.client.get("/users/123")
