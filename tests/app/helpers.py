@@ -135,6 +135,7 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             db.session.remove()
             db.drop_all()
+            db.get_engine(self.app).dispose()
 
     def load_example_listing(self, name):
         file_path = os.path.join("example_listings", "{}.json".format(name))

@@ -34,11 +34,15 @@ def load_schemas(schemas_path, schema_names):
             schema = json.load(f)
             validator = validator_for(schema)
             validator.check_schema(schema)
-            loaded_schemas[schema_name] = validator(
-                schema, format_checker=FORMAT_CHECKER)
+            loaded_schemas[schema_name] = schema
     return loaded_schemas
 
-SCHEMAS = load_schemas(JSON_SCHEMAS_PATH, SCHEMA_NAMES)
+_SCHEMAS = load_schemas(JSON_SCHEMAS_PATH, SCHEMA_NAMES)
+
+
+def get_validator(schema_name):
+    schema = _SCHEMAS[schema_name]
+    return validator_for(schema)(schema, format_checker=FORMAT_CHECKER)
 
 
 def validate_updater_json_or_400(submitted_json):
@@ -84,15 +88,14 @@ def detect_framework(submitted_json):
 
 def validate_supplier_json_or_400(submitted_json):
     try:
-        SCHEMAS['suppliers'].validate(submitted_json)
+        get_validator('suppliers').validate(submitted_json)
     except ValidationError as e:
         abort(400, "JSON was not a valid format. {}".format(e.message))
 
 
 def validates_against_schema(validator_name, submitted_json):
     try:
-        validator = SCHEMAS[validator_name]
-        validator.validate(submitted_json)
+        get_validator(validator_name).validate(submitted_json)
     except ValidationError:
         return False
     else:
@@ -102,22 +105,22 @@ def validates_against_schema(validator_name, submitted_json):
 def reason_for_failure(submitted_json):
     response = []
     try:
-        SCHEMAS['services-g6-scs'].validate(submitted_json)
+        get_validator('services-g6-scs').validate(submitted_json)
     except ValidationError as e1:
         response.append('Not SCS: %s' % e1.message)
 
     try:
-        SCHEMAS['services-g6-saas'].validate(submitted_json)
+        get_validator('services-g6-saas').validate(submitted_json)
     except ValidationError as e2:
         response.append('Not SaaS: %s' % e2.message)
 
     try:
-        SCHEMAS['services-g6-paas'].validate(submitted_json)
+        get_validator('services-g6-paas').validate(submitted_json)
     except ValidationError as e3:
         response.append('Not PaaS: %s' % e3.message)
 
     try:
-        SCHEMAS['services-g6-iaas'].validate(submitted_json)
+        get_validator('services-g6-iaas').validate(submitted_json)
     except ValidationError as e4:
         response.append('Not IaaS: %s' % e4.message)
 

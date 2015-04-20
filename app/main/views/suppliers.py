@@ -56,7 +56,7 @@ def get_supplier(supplier_id):
     return jsonify(suppliers=supplier.serialize())
 
 
-# Route to insert new Suppliers
+# Route to insert new Suppliers, not update existing ones
 @main.route('/suppliers/<int:supplier_id>', methods=['PUT'])
 def import_supplier(supplier_id):
 
