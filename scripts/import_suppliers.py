@@ -72,7 +72,7 @@ class SupplierPutter(object):
 
             if response.status_code is not 201:
                 print("{0} supplier_id={1}".format(
-                    response,
+                    response.text,
                     i.get('id', None)
                 ))
 
