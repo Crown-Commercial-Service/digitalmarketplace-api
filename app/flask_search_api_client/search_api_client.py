@@ -4,7 +4,7 @@ from flask import json
 
 class SearchApiClient:
     __INDEX_NAME__ = "g-cloud"
-    __DOC_TYPE__ = "flask_search_api_client"
+    __DOC_TYPE__ = "services"
     root_url = None
     token = None
     enabled = False

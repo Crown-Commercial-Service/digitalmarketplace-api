@@ -73,7 +73,7 @@ class TestSearchApiClient():
     def test_post_to_index_with_type_and_service_id(self):
         with requests_mock.mock() as m:
             m.post(
-                'http://localhost/g-cloud/flask_search_api_client/12345',
+                'http://localhost/g-cloud/services/12345',
                 json={'message': 'acknowledged'},
                 status_code=200)
             payload = self.load_example_listing("G6-IaaS")
@@ -91,7 +91,7 @@ class TestSearchApiClient():
             local_search_api_client = SearchApiClient(local_app)
 
             m.post(
-                'http://localhost/g-cloud/flask_search_api_client/12345',
+                'http://localhost/g-cloud/services/12345',
                 json={'message': 'acknowledged'},
                 status_code=200)
             payload = self.load_example_listing("G6-IaaS")
@@ -107,7 +107,7 @@ class TestSearchApiClient():
     def test_should_return_response_from_es_to_caller(self):
         with requests_mock.mock() as m:
             m.post(
-                'http://localhost/g-cloud/flask_search_api_client/12345',
+                'http://localhost/g-cloud/services/12345',
                 json={'error': 'some error'},
                 status_code=400)
             payload = self.load_example_listing("G6-IaaS")
