@@ -1,7 +1,7 @@
 from flask import jsonify
 
 from . import status
-from .. import utils
+from . import utils
 
 
 @status.route('/_status')
