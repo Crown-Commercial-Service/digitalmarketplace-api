@@ -153,7 +153,7 @@ def update_service(service_id):
     db.session.add(service_to_archive)
 
     db.session.commit()
-    search_api_client.index(service_id, service.data, "supplier")
+    search_api_client.index(service_id, service.data, service.supplier.name)
 
     return jsonify(message="done"), 200
 
@@ -163,11 +163,6 @@ def import_service(service_id):
     is_valid_service_id_or_400(service_id)
 
     now = datetime.now()
-    service = Service.query.filter(Service.service_id == service_id).first()
-
-    if service is None:
-        service = Service(service_id=service_id)
-        service.created_at = now
 
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload,
@@ -183,8 +178,19 @@ def import_service(service_id):
     validate_updater_json_or_400(update_json)
 
     framework = detect_framework_or_400(service_data)
-
     service_data = drop_foreign_fields(service_data, ['id'])
+
+    service = Service.query.filter(Service.service_id == service_id).first()
+
+    if service is None:
+        service = Service(service_id=service_id)
+        service.created_at = now
+        supplier = Supplier.query.filter(Supplier.supplier_id == service_data['supplierId']).first()
+        if supplier is None:
+            abort(400, "Unknown supplier ID provided")
+    else:
+        supplier = service.supplier
+
     service.supplier_id = service_data['supplierId']
     service.framework_id = Framework.query.filter(
         Framework.name == framework).first().id

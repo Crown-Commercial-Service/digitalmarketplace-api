@@ -502,9 +502,48 @@ class TestPostService(BaseApplicationTest):
                   response.get_data())
 
 
-class TestShouldCallSearchApiOnPut(BaseApplicationTest):
+class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
     def setup(self):
-        super(TestShouldCallSearchApiOnPut, self).setup()
+        super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
+        with self.app.app_context():
+            db.session.add(
+                Framework(id=1, expired=False, name="G-Cloud 6")
+            )
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+
+            db.session.commit()
+
+    def test_should_index_on_service_put(self):
+        with self.app.app_context():
+            search_api_client.index = Mock(return_value=True)
+
+            payload = self.load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+            self.client.put(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            service = Service.query.filter(Service.service_id ==
+                                           "1234567890123456").first()
+            search_api_client.index.assert_called_with(
+                "1234567890123456",
+                service.data,
+                "Supplier 1"
+            )
+
+
+class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
+    def setup(self):
+        super(TestShouldCallSearchApiOnPutToReplaceService, self).setup()
         now = datetime.now()
         payload = self.load_example_listing("G6-IaaS")
         with self.app.app_context():
@@ -547,7 +586,7 @@ class TestShouldCallSearchApiOnPut(BaseApplicationTest):
             search_api_client.index.assert_called_with(
                 "1234567890123456",
                 service.data,
-                "supplier"
+                "Supplier 1"
             )
 
     def test_should_not_index_on_service_put_if_db_exception(self):
@@ -624,7 +663,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
             search_api_client.index.assert_called_with(
                 "1234567890123456",
                 service.data,
-                "supplier"
+                "Supplier 1"
             )
 
     def test_should_not_index_on_service_post_if_db_exception(self):
