@@ -8,7 +8,7 @@ from flask.ext.migrate import Migrate, MigrateCommand
 from app import create_app, db
 
 
-application = create_app(os.getenv('FLASH_CONFIG') or 'development')
+application = create_app(os.getenv('DM_ENVIRONMENT') or 'development')
 manager = Manager(application)
 manager.add_command("runserver", Server(port=5000))
 migrate = Migrate(application, db)
