@@ -79,13 +79,18 @@ class UserPutter(object):
         else:
             role = "buyer"
 
-        return {
+        user = {
             'hashpw': False,
             'name': name,
             'role': role,
             'email_address': json_from_file['email'],
             'password': json_from_file['password']
         }
+
+        if role == 'supplier':
+            user['supplier_id'] = json_from_file['supplierId']
+
+        return user
 
 
 def do_import(base_url, access_token, filename, cert, verbose):

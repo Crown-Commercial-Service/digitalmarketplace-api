@@ -153,6 +153,8 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(response.status_code, 200)
         data = json.loads(response.get_data())["users"]
         assert_equal(data["email_address"], "joeblogs@email.com")
+        assert_equal(data["supplier"]["name"], "Supplier 1")
+        assert_equal(data["supplier"]["supplier_id"], 1)
 
     def test_should_reject_a_supplier_user_with_invalid_supplier_id(self):
         response = self.client.post(
@@ -183,7 +185,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
 
         data = json.loads(response.get_data())["error"]
         assert_equal(response.status_code, 400)
-        assert_equal(data, "Invalid supplier id")
+        assert_equal(data, "No supplier id provided for supplier user")
 
     def test_can_post_a_user_with_hashed_password(self):
         with self.app.app_context():

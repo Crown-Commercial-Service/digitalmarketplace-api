@@ -65,7 +65,7 @@ class User(db.Model):
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
 
     def serialize(self):
-        return {
+        user = {
             'id': self.id,
             'email_address': self.email_address,
             'name': self.name,
@@ -74,8 +74,15 @@ class User(db.Model):
             'locked': self.locked,
             'created_at': self.created_at,
             'updated_at': self.updated_at,
-            'password_changed_at': self.password_changed_at,
+            'password_changed_at': self.password_changed_at
         }
+        if self.role == 'supplier':
+            supplier = {
+                "supplier_id": self.supplier.supplier_id,
+                "name": self.supplier.name
+            }
+            user['supplier'] = supplier
+        return user
 
 
 class Service(db.Model):
