@@ -1,8 +1,7 @@
 from flask import json
 from nose.tools import assert_equal, assert_not_equal
-import time
 from app import db
-from app.models import User
+from app.models import User, Supplier
 from datetime import datetime
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin
 
@@ -136,6 +135,42 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(data["email_address"], "joeblogs@email.com")
 
     def test_can_post_a_supplier_user(self):
+        with self.app.app_context():
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'email_address': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'supplier_id': '1',
+                    'role': 'supplier',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 200)
+        data = json.loads(response.get_data())["users"]
+        assert_equal(data["email_address"], "joeblogs@email.com")
+
+    def test_should_reject_a_supplier_user_with_invalid_supplier_id(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'email_address': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'supplier_id': '999',
+                    'role': 'supplier',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        data = json.loads(response.get_data())["error"]
+        assert_equal(response.status_code, 400)
+        assert_equal(data, "Invalid supplier id")
+
+    def test_should_reject_a_supplier_user_with_no_supplier_id(self):
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -146,9 +181,9 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 200)
-        data = json.loads(response.get_data())["users"]
-        assert_equal(data["email_address"], "joeblogs@email.com")
+        data = json.loads(response.get_data())["error"]
+        assert_equal(response.status_code, 400)
+        assert_equal(data, "Invalid supplier id")
 
     def test_can_post_a_user_with_hashed_password(self):
         with self.app.app_context():

@@ -3,12 +3,13 @@ import os
 
 from flask import Flask
 from flask._compat import string_types
+from flask.ext.script import Manager
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
 from werkzeug.contrib.fixers import ProxyFix
+from flask.ext.migrate import Migrate, MigrateCommand
 
 from config import config
-
 
 bootstrap = Bootstrap()
 db = SQLAlchemy()
@@ -18,6 +19,9 @@ def create_app(config_name):
     application = Flask(__name__)
     application.wsgi_app = ProxyFix(application.wsgi_app)
     application.config.from_object(config[config_name])
+    migrate = Migrate(application, db)
+
+    manager = Manager(db, MigrateCommand)
 
     for name in config_attrs(config[config_name]):
         if name in os.environ:
