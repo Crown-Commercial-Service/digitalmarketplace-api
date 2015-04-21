@@ -2,35 +2,21 @@
 """Import SSP export files into the API
 
 Usage:
-    import_suppliers.py <endpoint> <access_token> <listing_dir> [options]
+        import_suppliers.py <endpoint> <access_token> <filename> [options]
 
     --cert=<cert>   Path to certificate file to verify against
-    --serial        Do not run in parallel (useful for debugging)
     -v, --verbose   Enable verbose output for errors
 
 Example:
-    ./import_suppliers.py --serial http://localhost:5000 myToken ~/myData
+    ./import_suppliers.py http://localhost:5000 myToken ~/myData/myData.json
 """
 from __future__ import print_function
 import sys
-import os
 import json
 import requests
-import itertools
-import multiprocessing
 from datetime import datetime
 
 from docopt import docopt
-
-
-def list_files(directory):
-    for root, subdirs, files in os.walk(directory):
-        for filename in files:
-            yield os.path.abspath(os.path.join(root, filename))
-
-        for subdir in subdirs:
-            for subfile in list_files(subdir):
-                yield subfile
 
 
 def print_progress(counter, start_time):
@@ -47,36 +33,22 @@ class SupplierPutter(object):
         self.access_token = access_token
         self.cert = cert
 
-    def __call__(self, file_path):
-        with open(file_path) as f:
-            try:
-                json_from_file = json.load(f)
-            except ValueError:
-                print("Skipping {}: not a valid JSON file".format(file_path))
-                return file_path, None
+    def import_supplier(self, supplier):
 
-        response = 400
+        data = {'suppliers': self.make_supplier_json(supplier)}
+        supplier_id = data['suppliers']['id']
+        url = '{0}/{1}'.format(self.endpoint, supplier_id)
 
-        for i in json_from_file['suppliers']:
-            data = {'suppliers': self.make_supplier_json(i)}
-            url = '{0}/{1}'.format(self.endpoint, data['suppliers']['id'])
+        response = requests.put(
+            url,
+            data=json.dumps(data),
+            headers={
+                "content-type": "application/json",
+                "authorization": "Bearer {}".format(self.access_token),
+                },
+            verify=self.cert if self.cert else True)
 
-            response = requests.put(
-                url,
-                data=json.dumps(data),
-                headers={
-                    "content-type": "application/json",
-                    "authorization": "Bearer {}".format(self.access_token),
-                    },
-                verify=self.cert if self.cert else True)
-
-            if response.status_code is not 201:
-                print("{0} supplier_id={1}".format(
-                    response.text,
-                    i.get('id', None)
-                ))
-
-        return file_path, response
+        return supplier_id, response
 
     @staticmethod
     def make_supplier_json(json_from_file):
@@ -277,29 +249,35 @@ def drop_foreign_fields(json_object, list_of_keys):
     return json_object
 
 
-def do_import(base_url, access_token, listing_dir, serial, cert, verbose):
+def do_import(base_url, access_token, filename, cert, verbose):
     endpoint = "{}/suppliers".format(base_url)
     print("Base URL: {}".format(base_url))
     print("Access token: {}".format(access_token))
-    print("Listing dir: {}".format(listing_dir))
-
-    if serial:
-        mapper = itertools.imap
-    else:
-        pool = multiprocessing.Pool(10)
-        mapper = pool.imap
+    print("Filename: {}".format(filename))
 
     putter = SupplierPutter(endpoint, access_token, cert)
 
     counter = 0
     start_time = datetime.now()
-    for file_path, response in mapper(putter, list_files(listing_dir)):
+
+    with open(filename) as data_file:
+        try:
+            json_from_file = json.load(data_file)
+        except ValueError:
+            print("Skipping {}: not a valid JSON file".format(filename))
+
+    for supplier in json_from_file['suppliers']:
+        supplier_id, response = putter.import_supplier(supplier)
+
         if response is None:
-            print("ERROR: {} not imported".format(file_path),
+            print("ERROR: Supplier (id={}) not imported".format(supplier_id),
                   file=sys.stderr)
         elif response.status_code / 100 != 2:
-            print("ERROR: {} on {}".format(response.status_code, file_path),
-                  file=sys.stderr)
+            print("ERROR: {} on Supplier (id={})".format(
+                response.status_code,
+                supplier_id
+            ),
+                file=sys.stderr)
             if verbose:
                 print(response.text, file=sys.stderr)
         else:
@@ -314,8 +292,7 @@ if __name__ == "__main__":
     do_import(
         base_url=arguments['<endpoint>'],
         access_token=arguments['<access_token>'],
-        listing_dir=arguments['<listing_dir>'],
-        serial=arguments['--serial'],
+        filename=arguments['<filename>'],
         cert=arguments['--cert'],
         verbose=arguments['--verbose'],
     )
