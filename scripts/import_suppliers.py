@@ -208,8 +208,6 @@ class SupplierPutter(object):
     @staticmethod
     def un_nest_key_value_pairs(obj, key_of_nested_obj):
         if key_of_nested_obj not in obj.keys():
-            # abort(400, "No '{0}' key found".format(key_of_nested_obj))
-            # TODO: FAIL LOUDLY
             return obj
 
         nested_obj = obj[key_of_nested_obj]
@@ -241,11 +239,12 @@ class SupplierPutter(object):
     def change_key_names(obj, list_of_lists_of_key_pairs):
 
         for key_pair in list_of_lists_of_key_pairs:
-            if len(key_pair) is not 2:
-                # TODO: FAIL LOUDLY
-                return obj
-
-            obj = SupplierPutter.change_key_name(obj, key_pair[0], key_pair[1])
+            if len(key_pair) is 2:
+                obj = SupplierPutter.change_key_name(
+                    obj,
+                    key_pair[0],
+                    key_pair[1]
+                )
 
         return obj
 
@@ -269,7 +268,7 @@ class SupplierPutter(object):
         return obj
 
 
-# TODO this is copied + pasted from app/main/utils.py
+# this is copied + pasted from app/main/utils.py
 def drop_foreign_fields(json_object, list_of_keys):
     json_object = json_object.copy()
     for key in list_of_keys:

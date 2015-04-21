@@ -6,7 +6,7 @@ from ... import db
 from ...models import Supplier, ContactInformation
 from ...validation import validate_supplier_json_or_400
 from ...utils import pagination_links, drop_foreign_fields, \
-    get_json_from_request, json_has_required_keys
+    get_json_from_request, json_has_required_keys, json_has_matching_id
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -85,13 +85,7 @@ def import_supplier(supplier_id):
     validate_supplier_json_or_400(supplier_data)
 
     # Check that `supplier_id` matches the JSON-supplied `id`
-    if str(supplier_data['id']) != str(supplier_id):
-        abort(400,
-              'Unfortunately, the id in your JSON file ({0}) '
-              'doesn\'t match the route id ({1})'.format(
-                  supplier_data['id'],
-                  supplier_id
-              ))
+    json_has_matching_id(supplier_data, supplier_id)
 
     supplier_data = drop_foreign_fields(
         supplier_data,
