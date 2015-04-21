@@ -1,6 +1,6 @@
 from flask import json
 from nose.tools import assert_equal, assert_not_equal
-
+import time
 from app import db
 from app.models import User
 from datetime import datetime
@@ -264,15 +264,16 @@ class TestUsersGet(BaseApplicationTest):
             db.session.add(user)
 
     def test_can_get_a_user(self):
-        response = self.client.get("/users/123")
-        data = json.loads(response.get_data())["users"]
-        assert_equal(data['email_address'], "test@test.com")
-        assert_equal(data['name'], "my name")
-        assert_equal(data['role'], "buyer")
-        assert_equal(data['active'], True)
-        assert_equal(data['locked'], False)
-        assert_equal('password' in data, False)
-        assert_equal(response.status_code, 200)
+        with self.app.app_context():
+            response = self.client.get("/users/123")
+            data = json.loads(response.get_data())["users"]
+            assert_equal(data['email_address'], "test@test.com")
+            assert_equal(data['name'], "my name")
+            assert_equal(data['role'], "buyer")
+            assert_equal(data['active'], True)
+            assert_equal(data['locked'], False)
+            assert_equal('password' in data, False)
+            assert_equal(response.status_code, 200)
 
     def test_returns_404_for_non_int_id(self):
         response = self.client.get("/users/bogus")

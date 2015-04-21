@@ -120,7 +120,22 @@ def test_user_creation_validates():
         ({'email_address': 'this@that.com',
           'role': 'invalid',
           'name': exactly_255,
-          'password': exactly_255}, False, "invalid role")
+          'password': exactly_255}, False, "invalid role"),
+        ({'email_address': 'this@that.com',
+          'role': 'buyer',
+          'name': exactly_255,
+          'supplier_id': exactly_255,
+          'password': exactly_255}, True, "valid supplier id"),
+        ({'email_address': 'this@that.com',
+          'role': 'buyer',
+          'name': exactly_255,
+          'supplier_id': '',
+          'password': exactly_255}, False, "invalid supplier id (to short)"),
+        ({'email_address': 'this@that.com',
+          'role': 'buyer',
+          'name': exactly_255,
+          'supplier_id': longer_than_255,
+          'password': exactly_255}, False, "invalid supplier id (to long)")
     ]
 
     for example, expected, message in case:

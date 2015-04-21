@@ -29,7 +29,7 @@ def auth_user():
 
 
 @main.route('/users/<int:user_id>', methods=['GET'])
-def get_user_by_email(user_id):
+def get_user_by_id(user_id):
     user = User.query.filter(
         User.id == user_id
     ).first_or_404()

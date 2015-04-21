@@ -62,7 +62,7 @@ class User(db.Model):
                             db.ForeignKey('suppliers.supplier_id'),
                             index=True, unique=False, nullable=True)
 
-    supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
+    supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
 
     def serialize(self):
         return {
