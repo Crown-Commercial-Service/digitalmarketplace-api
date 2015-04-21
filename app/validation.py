@@ -48,7 +48,8 @@ def validate_updater_json_or_400(submitted_json):
 def validate_user_json_or_400(submitted_json):
     if not validates_against_schema('users', submitted_json):
         abort(400, "JSON was not a valid format")
-    if submitted_json['role'] == 'supplier' and 'supplier_id' not in submitted_json:
+    if submitted_json['role'] == 'supplier' \
+            and 'supplier_id' not in submitted_json:
         abort(400, "No supplier id provided for supplier user")
 
 
