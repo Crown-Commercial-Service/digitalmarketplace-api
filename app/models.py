@@ -13,6 +13,29 @@ class Framework(db.Model):
                         nullable=False)
 
 
+class Supplier(db.Model):
+    __tablename__ = 'suppliers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    supplier_id = db.Column(db.BigInteger,
+                            index=True, unique=True, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+
+    def serialize(self):
+        links = [
+            link(
+                "self",
+                url_for(".get_supplier", supplier_id=self.supplier_id)
+            )
+        ]
+
+        return {
+            'id': self.supplier_id,
+            'name': self.name,
+            'links': links
+        }
+
+
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -35,6 +58,12 @@ class User(db.Model):
                                     nullable=False)
     role = db.Column(db.String, index=False, unique=False, nullable=False)
 
+    supplier_id = db.Column(db.BigInteger,
+                            db.ForeignKey('suppliers.supplier_id'),
+                            index=True, unique=False, nullable=True)
+
+    supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
+
     def serialize(self):
         return {
             'id': self.id,
@@ -46,29 +75,6 @@ class User(db.Model):
             'created_at': self.created_at,
             'updated_at': self.updated_at,
             'password_changed_at': self.password_changed_at,
-        }
-
-
-class Supplier(db.Model):
-    __tablename__ = 'suppliers'
-
-    id = db.Column(db.Integer, primary_key=True)
-    supplier_id = db.Column(db.BigInteger,
-                            index=True, unique=True, nullable=False)
-    name = db.Column(db.String(255), nullable=False)
-
-    def serialize(self):
-        links = [
-            link(
-                "self",
-                url_for(".get_supplier", supplier_id=self.supplier_id)
-            )
-        ]
-
-        return {
-            'id': self.supplier_id,
-            'name': self.name,
-            'links': links
         }
 
 
