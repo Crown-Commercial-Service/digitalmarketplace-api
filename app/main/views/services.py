@@ -184,7 +184,8 @@ def import_service(service_id):
     if service is None:
         service = Service(service_id=service_id)
         service.created_at = now
-        supplier = Supplier.query.filter(Supplier.supplier_id == service_data['supplierId']).first()
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == service_data['supplierId']).first()
         if supplier is None:
             abort(400, "Unknown supplier ID provided")
     else:
@@ -214,11 +215,6 @@ def import_service(service_id):
         abort(400, "Database Error: {0}".format(e))
 
     return "", 201
-
-
-def elastic_search(method, service_id, body):
-    if current_app.config["ES_ENABLED"]:
-        method(service_id, body)
 
 
 @main.route('/services/<string:service_id>', methods=['GET'])
