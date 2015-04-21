@@ -8,7 +8,7 @@ Usage:
     -v, --verbose   Enable verbose output for errors
 
 Example:
-    ./import_users.py --serial http://localhost:5000 myToken ~/myData.file.dat
+    ./import_users.py http://localhost:5000 myToken ~/myData.file.dat
 """
 from __future__ import print_function
 import sys
@@ -20,7 +20,7 @@ import requests
 from docopt import docopt
 
 
-roles = {}
+user_roles = {}
 
 
 def list_files(directory):
@@ -48,12 +48,6 @@ class UserPutter(object):
         self.cert = cert
 
     def post_user(self, user):
-        for role in user['roles']:
-            if role in roles:
-                user[role] += 1
-            else:
-                user[role] = 1
-
         user = self.make_user_json(user)
         data = {'users': user}
         print("sending {}".format(user['email_address']))
@@ -73,18 +67,15 @@ class UserPutter(object):
 
     @staticmethod
     def make_user_json(json_from_file):
+        email = json_from_file['email'].lower()
         name = json_from_file['firstName'] + " " + json_from_file['lastName']
-        if "ROLE_SUPPLIER" in json_from_file['roles']:
-            role = "supplier"
-        else:
-            role = "buyer"
 
         return {
             'hashpw': False,
             'name': name,
-            'role': role,
-            'email_address': json_from_file['email'],
-            'password': json_from_file['password']
+            'role': user_roles[email]['role'],
+            'email_address': email,
+            'password': user_roles[email]['password']
         }
 
 
@@ -104,6 +95,19 @@ def do_import(base_url, access_token, filename, cert, verbose):
             json_from_file = json.load(data_file)
         except ValueError:
             print("Skipping {}: not a valid JSON file".format(filename))
+
+    for user in json_from_file['users']:
+        email = user['email'].lower()
+
+        role = "buyer"
+        if "ROLE_SUPPLIER" in user['roles']:
+            role = "supplier"
+
+        temp = user_roles.get(email, None)
+
+        if role == "supplier" or temp is None:
+            user_roles[email] = {"role": role,
+                                 "password": user['password']}
 
     for user in json_from_file['users']:
         username, response = putter.post_user(user)
