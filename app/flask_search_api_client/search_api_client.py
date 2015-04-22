@@ -49,7 +49,10 @@ class SearchApiClient:
             return True
 
     @staticmethod
-    def prepare_service_json_for_indexing(json_to_index, supplier_name, service_id):
+    def prepare_service_json_for_indexing(
+            json_to_index,
+            supplier_name,
+            service_id):
         # TODO fields here matches same in Search API
         # TODO need to extract to common place
         fields = [
