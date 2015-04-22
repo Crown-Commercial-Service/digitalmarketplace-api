@@ -6,7 +6,7 @@ from flask._compat import string_types
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
 from werkzeug.contrib.fixers import ProxyFix
-from flask_search_api_client.search_api_client import SearchApiClient
+from .flask_search_api_client.search_api_client import SearchApiClient
 import os
 
 from config import config
