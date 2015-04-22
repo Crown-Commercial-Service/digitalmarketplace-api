@@ -676,19 +676,16 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
 
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
-            try:
-                self.client.post(
-                    '/services/1234567890123456',
-                    data=json.dumps(
-                        {
-                            'update_details': {
-                                'updated_by': 'joeblogs',
-                                'update_reason': 'whateves'},
-                            'services': payload}
-                    ),
-                    content_type='application/json')
-            except IntegrityError:
-                pass
+            self.client.post(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
             assert_equal(search_api_client.index.called, False)
             db.session.commit = Mock(side_effect=c)
 

@@ -12,8 +12,8 @@ class TestSearchApiClient():
     search_api_client = None
 
     def __init__(self):
-        os.environ['ES_ENABLED'] = 'True'
         app = create_app('test')
+        app.config['ES_ENABLED'] = True
         self.search_api_client = SearchApiClient(app)
         self.session = requests.Session()
         self.adapter = requests_mock.Adapter()
