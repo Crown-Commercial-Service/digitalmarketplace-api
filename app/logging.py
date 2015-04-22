@@ -19,7 +19,7 @@ def init_app(app):
     handler = get_handler(app)
 
     app.logger.addHandler(handler)
-    app.logger.setLevel(logging_level(app.config['DM_LOG_LEVEL']))
+    app.logger.setLevel(logging.getLevelName(app.config['DM_LOG_LEVEL']))
 
     request_id_header = app.config['DM_REQUEST_ID_HEADER']
     downstream_header = app.config['DM_DOWNSTREAM_REQUEST_ID_HEADER']
@@ -39,19 +39,10 @@ def get_handler(app):
     formatter = CustomFormatter(LOG_FORMAT, app.config['DM_APP_NAME'])
 
     handler = logging.FileHandler(app.config['DM_LOG_PATH'])
-    handler.setLevel(logging_level(app.config['DM_LOG_LEVEL']))
+    handler.setLevel(logging.getLevelName(app.config['DM_LOG_LEVEL']))
     handler.setFormatter(formatter)
 
     return handler
-
-
-def logging_level(name):
-    """Return logging level number from name
-
-    >>> logging_level('DEBUG')
-    10
-    """
-    return logging._levelNames[name]
 
 
 def get_request_id(request, request_id_header, downstream_header):
