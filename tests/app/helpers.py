@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from flask.ext.migrate import Migrate, MigrateCommand
+from flask.ext.script import Manager
 
 import os
 import json
@@ -44,6 +46,9 @@ class BaseApplicationTest(object):
     def setup(self):
         self.app = create_app('test')
         self.client = self.app.test_client()
+
+        Migrate(self.app, db)
+        Manager(db, MigrateCommand)
 
         """Applies all alembic migrations."""
         self.config = Config(self.ALEMBIC_CONFIG)
