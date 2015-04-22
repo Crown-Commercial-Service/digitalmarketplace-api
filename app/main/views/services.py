@@ -154,7 +154,8 @@ def update_service(service_id):
 
     try:
         db.session.commit()
-        search_api_client.index(service_id, service.data, service.supplier.name)
+        search_api_client.index(service_id, service.data,
+                                service.supplier.name)
         return jsonify(message="done"), 200
     except IntegrityError as e:
         db.session.rollback()
