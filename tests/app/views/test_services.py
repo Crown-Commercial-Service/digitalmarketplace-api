@@ -5,7 +5,7 @@ from nose.tools import assert_equal, assert_in, assert_not_equal, \
     assert_almost_equal
 
 from app import db
-from app.models import Service, Supplier, Framework
+from app.models import Service, Supplier, ContactInformation, Framework
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
 
@@ -43,29 +43,29 @@ class TestListServices(BaseApplicationTest):
         assert_equal(service['supplierName'], u'Supplier 0')
 
     def test_paginated_list_services_page_one(self):
-        self.setup_dummy_services_including_unpublished(150)
+        self.setup_dummy_services_including_unpublished(7)
 
         response = self.client.get('/services')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
-        assert_equal(len(data['services']), 100)
+        assert_equal(len(data['services']), 5)
         next_link = self.first_by_rel('next', data['links'])
         assert_in('page=2', next_link['href'])
 
     def test_paginated_list_services_page_two(self):
-        self.setup_dummy_services_including_unpublished(150)
+        self.setup_dummy_services_including_unpublished(7)
 
         response = self.client.get('/services?page=2')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
-        assert_equal(len(data['services']), 50)
+        assert_equal(len(data['services']), 2)
         prev_link = self.first_by_rel('prev', data['links'])
         assert_in('page=1', prev_link['href'])
 
     def test_paginated_list_services_page_out_of_range(self):
-        self.setup_dummy_services_including_unpublished(15)
+        self.setup_dummy_services_including_unpublished(10)
 
         response = self.client.get('/services?page=10')
 
@@ -124,20 +124,20 @@ class TestListServices(BaseApplicationTest):
         )
 
     def test_supplier_id_filter_pagination(self):
-        self.setup_dummy_services_including_unpublished(450)
+        self.setup_dummy_services_including_unpublished(21)
 
         response = self.client.get('/services?supplier_id=1&page=2')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
-        assert_equal(len(data['services']), 50)
+        assert_equal(len(data['services']), 2)
         assert_equal(
             list(filter(lambda s: s['supplierId'] == 1, data['services'])),
             data['services']
         )
 
     def test_supplier_id_filter_pagination_links(self):
-        self.setup_dummy_services_including_unpublished(450)
+        self.setup_dummy_services_including_unpublished(21)
 
         response = self.client.get('/services?supplier_id=1&page=1')
         data = json.loads(response.get_data())
@@ -166,6 +166,14 @@ class TestPostService(BaseApplicationTest):
             )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+            db.session.add(
+                ContactInformation(
+                    supplier_id=1,
+                    contact_name=u"Liz",
+                    email=u"liz@royal.gov.uk",
+                    postcode=u"SW1A 1AA"
+                )
             )
         self.client.put(
             '/services/%s' % self.service_id,
@@ -508,6 +516,14 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
+            db.session.add(
+                ContactInformation(
+                    supplier_id=1,
+                    contact_name=u"Liz",
+                    email=u"liz@royal.gov.uk",
+                    postcode=u"SW1A 1AA"
+                )
+            )
             db.session.add(Service(service_id="1234567890123456",
                                    supplier_id=1,
                                    updated_at=now,
@@ -704,6 +720,14 @@ class TestGetService(BaseApplicationTest):
             )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+            db.session.add(
+                ContactInformation(
+                    supplier_id=1,
+                    contact_name=u"Liz",
+                    email=u"liz@royal.gov.uk",
+                    postcode=u"SW1A 1AA"
+                )
             )
             db.session.add(Service(service_id="123-published-456",
                                    supplier_id=1,

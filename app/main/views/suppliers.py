@@ -1,8 +1,12 @@
 from flask import jsonify, abort, request, current_app
+from sqlalchemy.exc import IntegrityError
 
 from .. import main
-from ...models import Supplier
-from ...utils import pagination_links
+from ... import db
+from ...models import Supplier, ContactInformation
+from ...validation import validate_supplier_json_or_400
+from ...utils import pagination_links, drop_foreign_fields, \
+    get_json_from_request, json_has_required_keys, json_has_matching_id
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -50,3 +54,91 @@ def get_supplier(supplier_id):
     ).first_or_404()
 
     return jsonify(suppliers=supplier.serialize())
+
+
+# Route to insert new Suppliers, not update existing ones
+@main.route('/suppliers/<int:supplier_id>', methods=['PUT'])
+def import_supplier(supplier_id):
+
+    supplier_data = get_json_from_request()
+
+    json_has_required_keys(
+        supplier_data,
+        ['suppliers']
+    )
+
+    supplier_data = supplier_data['suppliers']
+
+    json_has_required_keys(
+        supplier_data,
+        ['id', 'name', 'contactInformation']
+    )
+
+    contact_informations_data = supplier_data['contactInformation']
+
+    for contact_information_data in contact_informations_data:
+        json_has_required_keys(
+            contact_information_data,
+            ['contactName', 'email', 'postcode']
+        )
+
+    validate_supplier_json_or_400(supplier_data)
+
+    # Check that `supplier_id` matches the JSON-supplied `id`
+    json_has_matching_id(supplier_data, supplier_id)
+
+    supplier_data = drop_foreign_fields(
+        supplier_data,
+        ['contactInformation']
+    )
+
+    supplier = Supplier.query.filter(
+        Supplier.supplier_id == supplier_data['id']
+    ).first()
+
+    if supplier is None:
+            supplier = Supplier(supplier_id=supplier_data['id'])
+
+    supplier.name = supplier_data.get('name', None)
+    supplier.description = supplier_data.get('description', None)
+
+    # TODO: this erases all prior contact information :/
+    supplier.contact_information = []
+    supplier.duns_number = supplier_data.get('dunsNumber', None)
+    supplier.esourcing_id = supplier_data.get('eSourcingId', None)
+    supplier.clients = supplier_data.get('clients', None)
+
+    for contact_information_data in contact_informations_data:
+
+        contact_information = ContactInformation()
+
+        contact_information.contact_name = \
+            contact_information_data.get('contactName', None)
+        contact_information.phone_number = \
+            contact_information_data.get('phoneNumber', None)
+        contact_information.email = \
+            contact_information_data.get('email', None)
+        contact_information.website = \
+            contact_information_data.get('website', None)
+        contact_information.address1 = \
+            contact_information_data.get('address1', None)
+        contact_information.address2 = \
+            contact_information_data.get('address2', None)
+        contact_information.city = \
+            contact_information_data.get('city', None)
+        contact_information.country = \
+            contact_information_data.get('country', None)
+        contact_information.postcode = \
+            contact_information_data.get('postcode', None)
+
+        supplier.contact_information.append(contact_information)
+
+    db.session.add(supplier)
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e.message))
+
+    return "", 201
