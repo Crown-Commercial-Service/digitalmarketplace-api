@@ -146,10 +146,8 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
     def test_cannot_put_to_root_suppliers_url(self):
         payload = self.load_example_listing("Supplier")
 
-        response = self.put_import_supplier(payload, '')
+        response = self.put_import_supplier(payload, "")
         assert_equal(response.status_code, 405)
-        assert_in('The method is not allowed for the requested URL',
-                  response.get_data())
 
     def test_supplier_json_id_does_not_match_route_id_parameter(self):
         payload = self.load_example_listing("Supplier")
@@ -165,9 +163,9 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
         response = self.put_import_supplier(payload)
         assert_equal(response.status_code, 400)
-        assert_in('Invalid JSON must have '
-                  '\'[\'id\', \'name\', \'contactInformation\']\' key(s)',
-                  json.loads(response.get_data())['error'])
+        for item in ['Invalid JSON must have', 'contactInformation']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
 
     def test_when_supplier_has_missing_keys(self):
         payload = self.load_example_listing("Supplier")
@@ -176,9 +174,9 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
         response = self.put_import_supplier(payload)
         assert_equal(response.status_code, 400)
-        assert_in('Invalid JSON must have '
-                  '\'[\'id\', \'name\', \'contactInformation\']\' key(s)',
-                  json.loads(response.get_data())['error'])
+        for item in ['Invalid JSON must have', 'id', 'name']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
 
     def test_when_supplier_contact_information_has_missing_keys(self):
         payload = self.load_example_listing("Supplier")
@@ -189,9 +187,12 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
         response = self.put_import_supplier(payload)
         assert_equal(response.status_code, 400)
-        assert_in('Invalid JSON must have '
-                  '\'[\'contactName\', \'email\', \'postcode\']\' key(s)',
-                  json.loads(response.get_data())['error'])
+        for item in ['Invalid JSON must have',
+                     'contactName',
+                     'email',
+                     'postcode']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
 
     def test_when_supplier_has_extra_keys(self):
         payload = self.load_example_listing("Supplier")
@@ -220,8 +221,9 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
         response = self.put_import_supplier(payload)
         assert_equal(response.status_code, 400)
-        assert_in('u\'only-digits-permitted\' does not match u\'^[0-9]+$\'',
-                  json.loads(response.get_data())['error'])
+        for item in ['only-digits-permitted', 'does not match']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
 
     def test_supplier_esourcing_id_invalid(self):
         payload = self.load_example_listing("Supplier")
@@ -230,8 +232,9 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
         response = self.put_import_supplier(payload)
         assert_equal(response.status_code, 400)
-        assert_in('u\'only-digits-permitted\' does not match u\'^[0-9]+$\'',
-                  json.loads(response.get_data())['error'])
+        for item in ['only-digits-permitted', 'does not match']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
 
     def test_when_supplier_contact_information_email_invalid(self):
         payload = self.load_example_listing("Supplier")
@@ -240,5 +243,6 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
         response = self.put_import_supplier(payload)
         assert_equal(response.status_code, 400)
-        assert_in('u\'bad-email-99\' is not a u\'email\'',
-                  json.loads(response.get_data())['error'])
+        for item in ['bad-email-99', 'is not a']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
