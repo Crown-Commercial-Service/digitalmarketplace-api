@@ -6,6 +6,7 @@ from .. import main
 from ... import db
 from ... import search_api_client
 from ...models import ArchivedService, Service, Supplier, Framework
+from sqlalchemy.exc import IntegrityError
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
 from ...utils import url_for, pagination_links, drop_foreign_fields, link, \
@@ -209,7 +210,7 @@ def import_service(service_id):
 
     try:
         db.session.commit()
-        search_api_client.index(service_id, service.data, "supplier")
+        search_api_client.index(service_id, service.data, supplier.name)
     except IntegrityError:
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
