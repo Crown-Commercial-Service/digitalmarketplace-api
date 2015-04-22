@@ -23,9 +23,7 @@
       "pattern": "^(buyer|supplier|admin)$"
     },
     "supplier_id": {
-      "type": "string",
-      "maxLength": 255,
-      "minLength": 1
+      "type": "integer"
     },
     "hashpw": {
       "type": "boolean"

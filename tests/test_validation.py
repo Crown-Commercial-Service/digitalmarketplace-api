@@ -124,7 +124,7 @@ def test_user_creation_validates():
         ({'email_address': 'this@that.com',
           'role': 'buyer',
           'name': exactly_255,
-          'supplier_id': exactly_255,
+          'supplier_id': 123,
           'password': exactly_255}, True, "valid supplier id"),
         ({'email_address': 'this@that.com',
           'role': 'buyer',

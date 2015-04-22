@@ -145,7 +145,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                 'users': {
                     'email_address': 'joeblogs@email.com',
                     'password': '1234567890',
-                    'supplier_id': '1',
+                    'supplier_id': 1,
                     'role': 'supplier',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
@@ -163,7 +163,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                 'users': {
                     'email_address': 'joeblogs@email.com',
                     'password': '1234567890',
-                    'supplier_id': '999',
+                    'supplier_id': 999,
                     'role': 'supplier',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
