@@ -159,7 +159,7 @@ def update_service(service_id):
         return jsonify(message="done"), 200
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig.message)
+        abort(400, e.orig)
 
 
 @main.route('/services/<string:service_id>', methods=['PUT'])
