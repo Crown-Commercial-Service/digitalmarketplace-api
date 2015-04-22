@@ -152,10 +152,13 @@ def update_service(service_id):
     db.session.add(service)
     db.session.add(service_to_archive)
 
-    db.session.commit()
-    search_api_client.index(service_id, service.data, service.supplier.name)
-
-    return jsonify(message="done"), 200
+    try:
+        db.session.commit()
+        search_api_client.index(service_id, service.data, service.supplier.name)
+        return jsonify(message="done"), 200
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.message)
 
 
 @main.route('/services/<string:service_id>', methods=['PUT'])
