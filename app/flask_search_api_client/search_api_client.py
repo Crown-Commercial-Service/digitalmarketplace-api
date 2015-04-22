@@ -39,21 +39,20 @@ class SearchApiClient:
                 data=json.dumps(
                     self.prepare_service_json_for_indexing(
                         index_data,
-                        supplier_name)
+                        supplier_name,
+                        service_id)
                 ),
                 headers=self.headers()
             )
-
             return res.status_code is 200
         else:
             return True
 
     @staticmethod
-    def prepare_service_json_for_indexing(json_to_index, supplier_name):
+    def prepare_service_json_for_indexing(json_to_index, supplier_name, service_id):
         # TODO fields here matches same in Search API
         # TODO need to extract to common place
         fields = [
-            "id",
             "lot",
             "serviceName",
             "serviceSummary",
@@ -66,6 +65,7 @@ class SearchApiClient:
             [(k, json_to_index[k]) for k in fields if k in json_to_index]
         )
         service["supplierName"] = supplier_name
+        service["id"] = service_id
         return {
             "service": service
         }

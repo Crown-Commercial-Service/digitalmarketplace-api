@@ -23,7 +23,8 @@ class TestSearchApiClient():
         listing = self.load_example_listing("G6-IaaS")
         converted = self.search_api_client.prepare_service_json_for_indexing(
             listing,
-            "Supplier Name"
+            "Supplier Name",
+            listing['id']
         )
         assert_equal("service" in converted, True)
         assert_equal(converted["service"]["id"], "1234567890123456")
@@ -55,7 +56,8 @@ class TestSearchApiClient():
 
         converted = self.search_api_client.prepare_service_json_for_indexing(
             listing,
-            "Supplier Name"
+            "Supplier Name",
+            listing['id']
         )
         assert_equal("service" in converted, True)
         assert_equal(converted["service"]["id"], "1234567890123456")
