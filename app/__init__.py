@@ -4,9 +4,9 @@ from flask import Flask
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
 from werkzeug.contrib.fixers import ProxyFix
+from dmutils import logging
 
 from config import config
-from . import logging
 
 
 bootstrap = Bootstrap()

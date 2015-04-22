@@ -6,6 +6,7 @@ Flask-Script==2.0.5
 Flask-SQLAlchemy==2.0
 psycopg2==2.5.4
 jsonschema==2.3.0
+-e git+git@github.com:alphagov/digitalmarketplace-utils.git#egg=digitalmarketplace-utils
 # For the import script
 requests==2.5.1
 docopt==0.6.2
