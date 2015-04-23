@@ -42,16 +42,6 @@ class TestGetSupplier(BaseApplicationTest):
         assert_equal(585274, data['suppliers']['id'])
         assert_equal(u"Supplier 585274", data['suppliers']['name'])
 
-    def test_supplier_without_contact_information_cannot_be_returned(self):
-        with self.app.app_context():
-            db.session.delete(
-                ContactInformation.query.filter(
-                    ContactInformation.supplier_id == 585274
-                ).first())
-
-        response = self.client.get('/suppliers/585274')
-        assert_equal(404, response.status_code)
-
 
 class TestListSuppliers(BaseApplicationTest):
     def setup(self):
