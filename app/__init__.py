@@ -6,12 +6,15 @@ from flask._compat import string_types
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
 from werkzeug.contrib.fixers import ProxyFix
+from .flask_search_api_client.search_api_client import SearchApiClient
+import os
 
 from config import config
 
 
 bootstrap = Bootstrap()
 db = SQLAlchemy()
+search_api_client = SearchApiClient()
 
 
 def create_app(config_name):
@@ -27,6 +30,7 @@ def create_app(config_name):
 
     bootstrap.init_app(application)
     db.init_app(application)
+    search_api_client.init_app(application)
 
     from .main import main as main_blueprint
     application.register_blueprint(main_blueprint)

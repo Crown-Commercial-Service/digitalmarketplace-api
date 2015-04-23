@@ -25,6 +25,7 @@ class TestGetSupplier(BaseApplicationTest):
                     postcode=u"SW1A 1AA"
                 )
             )
+            db.session.commit()
 
     def test_get_non_existent_supplier(self):
         response = self.client.get('/suppliers/100')

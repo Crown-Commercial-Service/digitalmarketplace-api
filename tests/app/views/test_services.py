@@ -4,10 +4,12 @@ from flask import json
 from nose.tools import assert_equal, assert_in, assert_not_equal, \
     assert_almost_equal
 
-from app import db
 from app.models import Service, Supplier, ContactInformation, Framework
+from mock import Mock
+from app import db, search_api_client
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
+from sqlalchemy.exc import IntegrityError
 
 
 def first_by_rel(rel, links):
@@ -175,6 +177,8 @@ class TestPostService(BaseApplicationTest):
                     postcode=u"SW1A 1AA"
                 )
             )
+            db.session.commit()
+
         self.client.put(
             '/services/%s' % self.service_id,
             data=json.dumps(
@@ -498,6 +502,191 @@ class TestPostService(BaseApplicationTest):
                   response.get_data())
 
 
+class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
+    def setup(self):
+        super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
+        with self.app.app_context():
+            db.session.add(
+                Framework(id=1, expired=False, name="G-Cloud 6")
+            )
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+
+            db.session.commit()
+
+    def test_should_index_on_service_put(self):
+        with self.app.app_context():
+            search_api_client.index = Mock(return_value=True)
+
+            payload = self.load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+            self.client.put(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            service = Service.query.filter(Service.service_id ==
+                                           "1234567890123456").first()
+            search_api_client.index.assert_called_with(
+                "1234567890123456",
+                service.data,
+                "Supplier 1"
+            )
+
+
+class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
+    def setup(self):
+        super(TestShouldCallSearchApiOnPutToReplaceService, self).setup()
+        now = datetime.now()
+        payload = self.load_example_listing("G6-IaaS")
+        with self.app.app_context():
+            db.session.add(
+                Framework(id=1, expired=False, name="G-Cloud 6")
+            )
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+            db.session.add(Service(service_id="1234567890123456",
+                                   supplier_id=1,
+                                   updated_at=now,
+                                   status='published',
+                                   created_at=now,
+                                   updated_by="tests",
+                                   framework_id=1,
+                                   updated_reason="test data",
+                                   data=payload))
+            db.session.commit()
+
+    def test_should_index_on_service_put(self):
+        with self.app.app_context():
+            search_api_client.index = Mock(return_value=True)
+
+            payload = self.load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+            self.client.put(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            service = Service.query.filter(Service.service_id ==
+                                           "1234567890123456").first()
+            search_api_client.index.assert_called_with(
+                "1234567890123456",
+                service.data,
+                "Supplier 1"
+            )
+
+    def test_should_not_index_on_service_put_if_db_exception(self):
+        with self.app.app_context():
+            search_api_client.index = Mock(return_value=True)
+            c = db.session.commit
+            db.session.commit = Mock(
+                side_effect=IntegrityError(
+                    'message', 'statement', 'params', 'orig'))
+
+            payload = self.load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+            payload['supplierId'] = "1234567890123456"
+            self.client.put(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            assert_equal(search_api_client.index.called, False)
+            db.session.commit = Mock(side_effect=c)
+
+
+class TestShouldCallSearchApiOnPost(BaseApplicationTest):
+    def setup(self):
+        super(TestShouldCallSearchApiOnPost, self).setup()
+        now = datetime.now()
+        payload = self.load_example_listing("G6-IaaS")
+        with self.app.app_context():
+            db.session.add(
+                Framework(id=1, expired=False, name="G-Cloud 6")
+            )
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+            db.session.add(Service(service_id="1234567890123456",
+                                   supplier_id=1,
+                                   updated_at=now,
+                                   status='published',
+                                   created_at=now,
+                                   updated_by="tests",
+                                   framework_id=1,
+                                   updated_reason="test data",
+                                   data=payload))
+            db.session.commit()
+
+    def test_should_index_on_service_post(self):
+        with self.app.app_context():
+            search_api_client.index = Mock(return_value=True)
+
+            payload = self.load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+            self.client.post(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            service = Service.query.filter(Service.service_id ==
+                                           "1234567890123456").first()
+            search_api_client.index.assert_called_with(
+                "1234567890123456",
+                service.data,
+                "Supplier 1"
+            )
+
+    def test_should_not_index_on_service_post_if_db_exception(self):
+        with self.app.app_context():
+            search_api_client.index = Mock(return_value=True)
+            c = db.session.commit
+            db.session.commit = Mock(
+                side_effect=IntegrityError(
+                    'message', 'statement', 'params', 'orig'))
+
+            payload = self.load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+            self.client.post(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+            assert_equal(search_api_client.index.called, False)
+            db.session.commit = Mock(side_effect=c)
+
+
 class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     method = "put"
     endpoint = "/services/1234567890123456"
@@ -533,9 +722,12 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                                    framework_id=1,
                                    updated_reason="test data",
                                    data=payload))
+            db.session.commit()
 
     def test_add_a_new_service(self):
         with self.app.app_context():
+            search_api_client.index = Mock(return_value="bar")
+
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             response = self.client.put(
@@ -757,6 +949,7 @@ class TestGetService(BaseApplicationTest):
                                    updated_reason="test data",
                                    data={'foo': 'bar'},
                                    framework_id=1))
+            db.session.commit()
 
     def test_get_non_existent_service(self):
         response = self.client.get('/services/9999999999')

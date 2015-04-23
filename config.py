@@ -4,11 +4,14 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
+    DM_SEARCH_API_URL = None
+    DM_SEARCH_API_AUTH_TOKEN = None
+    ES_ENABLED = True
     ALLOW_EXPLORER = True
     AUTH_REQUIRED = True
     DM_API_SERVICES_PAGE_SIZE = 100
     DM_API_SUPPLIERS_PAGE_SIZE = 100
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace'
 
@@ -18,7 +21,10 @@ class Config:
 
 
 class Test(Config):
+    DM_SEARCH_API_AUTH_TOKEN = 'test'
+    DM_SEARCH_API_URL = 'http://localhost'
     DEBUG = True
+    ES_ENABLED = False
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace_test'
     DM_API_SERVICES_PAGE_SIZE = 5
     DM_API_SUPPLIERS_PAGE_SIZE = 5
