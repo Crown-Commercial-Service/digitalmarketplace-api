@@ -202,9 +202,9 @@ def import_service(service_id):
 
     try:
         db.session.commit()
-    except IntegrityError:
+    except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Unknown supplier ID provided")
+        abort(400, "Database Error: {0}".format(e.message))
 
     return "", 201
 

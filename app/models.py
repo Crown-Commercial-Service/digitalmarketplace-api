@@ -118,7 +118,7 @@ class Supplier(db.Model):
     contact_information = db.relationship(ContactInformation,
                                           backref='supplier',
                                           lazy='joined',
-                                          innerjoin=True)
+                                          innerjoin=False)
 
     duns_number = db.Column(db.String, index=False,
                             unique=False, nullable=True)
