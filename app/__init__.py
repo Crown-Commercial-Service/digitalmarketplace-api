@@ -21,8 +21,7 @@ def create_app(config_name):
 
     config[config_name].init_app(application)
 
-    if not application.debug:
-        logging.init_app(application)
+    logging.init_app(application)
 
     bootstrap.init_app(application)
     db.init_app(application)
