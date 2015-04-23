@@ -143,6 +143,43 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             ).first()
             assert_equal(supplier.name, payload['name'])
 
+    def test_reinserting_the_same_supplier(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            example_listing_contact_information = payload['contactInformation']
+
+            # Exact loop number is arbitrary
+            for i in range(3):
+
+                response = self.put_import_supplier(payload)
+
+                assert_equal(response.status_code, 201)
+
+                supplier = Supplier.query.filter(
+                    Supplier.supplier_id == 123456
+                ).first()
+                assert_equal(supplier.name, payload['name'])
+
+                contact_informations = ContactInformation.query.filter(
+                    ContactInformation.supplier_id == supplier.supplier_id
+                ).all()
+
+                assert_equal(
+                    len(example_listing_contact_information),
+                    len(contact_informations)
+                )
+
+                # Contact Information without a supplier_id should not exist
+                contact_informations_no_supplier_id = \
+                    ContactInformation.query.filter(
+                        ContactInformation.supplier_id == None  # noqa
+                    ).all()
+
+                assert_equal(
+                    0,
+                    len(contact_informations_no_supplier_id)
+                )
+
     def test_cannot_put_to_root_suppliers_url(self):
         payload = self.load_example_listing("Supplier")
 
