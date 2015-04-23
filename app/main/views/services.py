@@ -192,7 +192,9 @@ def import_service(service_id):
         supplier = Supplier.query.filter(
             Supplier.supplier_id == service_data['supplierId']).first()
         if supplier is None:
-            abort(400, "Unknown supplier ID provided")
+            abort(400,
+                  "Key (supplier_id)=({}) is not present"
+                  .format(service_data['supplierId']))
     else:
         supplier = service.supplier
 
@@ -215,7 +217,7 @@ def import_service(service_id):
     try:
         db.session.commit()
         search_api_client.index(service_id, service.data, supplier.name)
-    except IntegrityError:
+    except IntegrityError as e:
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
