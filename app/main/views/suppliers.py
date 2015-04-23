@@ -97,13 +97,15 @@ def import_supplier(supplier_id):
     ).first()
 
     if supplier is None:
-            supplier = Supplier(supplier_id=supplier_data['id'])
+        supplier = Supplier(supplier_id=supplier_data['id'])
+
+    # if a supplier was found, remove all contact information
+    else:
+        for contact in supplier.contact_information:
+            db.session.delete(contact)
 
     supplier.name = supplier_data.get('name', None)
     supplier.description = supplier_data.get('description', None)
-
-    # TODO: this erases all prior contact information :/
-    supplier.contact_information = []
     supplier.duns_number = supplier_data.get('dunsNumber', None)
     supplier.esourcing_id = supplier_data.get('eSourcingId', None)
     supplier.clients = supplier_data.get('clients', None)
