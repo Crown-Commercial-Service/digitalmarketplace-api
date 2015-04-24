@@ -20,12 +20,12 @@ def index():
         {
             "rel": "services.list",
             "href": url_for('.list_services', _external=True),
-        },
+            },
         {
             "rel": "suppliers.list",
             "href": url_for('.list_suppliers', _external=True),
-        },
-    ]), 200
+            },
+        ]), 200
 
 
 @main.route('/services', methods=['GET'])
@@ -254,3 +254,38 @@ def get_archived_service(archived_service_id):
     ).first_or_404()
 
     return jsonify(services=service.serialize())
+
+
+@main.route(
+    '/services/<string:service_id>/status/<string:status>',
+    methods=['POST']
+)
+def update_service_status(service_id, status):
+
+    # Statuses are defined in the Supplier model
+    valid_statuses = [
+        "published",
+        "enabled",
+        "disabled"
+    ]
+
+    is_valid_service_id_or_400(service_id)
+
+    service = Service.query.filter(
+        Service.service_id == service_id
+    ).first_or_404()
+
+    if status not in valid_statuses:
+        abort(400, "'{0}' is not a valid status.".format(status))
+
+    service.status = status
+    db.session.add(service)
+
+    try:
+        db.session.commit()
+        search_api_client.index(service_id, service.data,
+                                service.supplier.name)
+        return jsonify(services=service.serialize()), 200
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)

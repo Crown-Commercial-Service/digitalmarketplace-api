@@ -552,6 +552,54 @@ class TestPostService(BaseApplicationTest):
         assert_in(b'id parameter must match id in data',
                   response.get_data())
 
+    def test_should_update_service_with_valid_statuses(self):
+
+        # Statuses are defined in the Supplier model
+        valid_statuses = [
+            "published",
+            "enabled",
+            "disabled"
+        ]
+
+        for status in valid_statuses:
+            response = self.client.post(
+                '/services/{0}/status/{1}'.format(
+                    self.service_id,
+                    status
+                )
+            )
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())
+            assert_equal(status, data['services']['status'])
+
+    def test_should_400_with_invalid_statuses(self):
+        invalid_statuses = [
+            "unpublished",  # not a permissible state
+            "enabeld",  # typo
+        ]
+
+        for status in invalid_statuses:
+            response = self.client.post(
+                '/services/{0}/status/{1}'.format(
+                    self.service_id,
+                    status
+                )
+            )
+
+            assert_equal(response.status_code, 400)
+            assert_in('is not a valid status',
+                      json.loads(response.get_data())['error'])
+
+    def test_should_404_without_status_parameter(self):
+        response = self.client.post(
+            '/services/{0}/status/'.format(
+                self.service_id
+            )
+        )
+
+        assert_equal(response.status_code, 404)
+
 
 class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
     def setup(self):
