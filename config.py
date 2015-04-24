@@ -1,9 +1,3 @@
-import os
-import re
-
-from flask._compat import string_types
-
-basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
@@ -26,12 +20,6 @@ class Config:
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace'
 
-    @classmethod
-    def init_app(cls, app):
-        for name in config_attrs(cls):
-            if name in os.environ:
-                app.config[name] = convert_to_boolean(os.environ[name])
-
 
 class Test(Config):
     DM_SEARCH_API_AUTH_TOKEN = 'test'
@@ -52,40 +40,10 @@ class Live(Config):
     ALLOW_EXPLORER = False
 
 
-config = {
+configs = {
     'development': Development,
     'preview': Live,
     'staging': Live,
     'production': Live,
     'test': Test,
 }
-
-
-def config_attrs(config):
-    """Returns config attributes from a Config object"""
-    p = re.compile('^[A-Z_]+$')
-    return filter(lambda attr: bool(p.match(attr)), dir(config))
-
-
-def convert_to_boolean(value):
-    """Turn strings to bools if they look like them
-
-    Truthy things should be True
-    >>> for truthy in ['true', 'on', 'yes', '1']:
-    ...   assert convert_to_boolean(truthy) == True
-
-    Falsey things should be False
-    >>> for falsey in ['false', 'off', 'no', '0']:
-    ...   assert convert_to_boolean(falsey) == False
-
-    Other things should be unchanged
-    >>> for value in ['falsey', 'other', True, 0]:
-    ...   assert convert_to_boolean(value) == value
-    """
-    if isinstance(value, string_types):
-        if value.lower() in ['t', 'true', 'on', 'yes', '1']:
-            return True
-        elif value.lower() in ['f', 'false', 'off', 'no', '0']:
-            return False
-
-    return value
