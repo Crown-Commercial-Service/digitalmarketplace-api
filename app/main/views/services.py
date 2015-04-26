@@ -128,7 +128,7 @@ def update_service(service_id):
     validate_updater_json_or_400(update_json)
     service_update = drop_foreign_fields(
         json_payload['services'],
-        ['supplierName', 'links','frameworkName','status']
+        ['supplierName', 'links', 'frameworkName', 'status']
     )
     json_has_matching_id(service_update, service_id)
 
