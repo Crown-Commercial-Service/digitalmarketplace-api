@@ -13,13 +13,84 @@ class Framework(db.Model):
                         nullable=False)
 
 
+class ContactInformation(db.Model):
+    __tablename__ = 'contact_information'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    supplier_id = db.Column(db.Integer,
+                            db.ForeignKey('suppliers.supplier_id'))
+
+    contact_name = db.Column(db.String, index=False,
+                             unique=False, nullable=False)
+
+    phone_number = db.Column(db.String, index=False,
+                             unique=False, nullable=True)
+
+    email = db.Column(db.String, index=False,
+                      unique=False, nullable=False)
+
+    website = db.Column(db.String, index=False,
+                        unique=False, nullable=True)
+
+    address1 = db.Column(db.String, index=False,
+                         unique=False, nullable=True)
+
+    address2 = db.Column(db.String, index=False,
+                         unique=False, nullable=True)
+
+    city = db.Column(db.String, index=False,
+                     unique=False, nullable=True)
+
+    country = db.Column(db.String, index=False,
+                        unique=False, nullable=True)
+
+    postcode = db.Column(db.String, index=False,
+                         unique=False, nullable=False)
+
+    def serialize(self):
+        # Should there be links for the associated service(s) / supplier?
+
+        serialized = {
+            'contactName': self.contact_name,
+            'phoneNumber': self.phone_number,
+            'email': self.email,
+            'website': self.website,
+            'address1': self.address1,
+            'address2': self.address2,
+            'city': self.city,
+            'country': self.country,
+            'postcode': self.postcode
+        }
+
+        return filter_null_value_fields(serialized)
+
+
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
 
     id = db.Column(db.Integer, primary_key=True)
+
     supplier_id = db.Column(db.BigInteger,
                             index=True, unique=True, nullable=False)
+
     name = db.Column(db.String(255), nullable=False)
+
+    description = db.Column(db.String, index=False,
+                            unique=False, nullable=True)
+
+    contact_information = db.relationship(ContactInformation,
+                                          backref='supplier',
+                                          lazy='joined',
+                                          innerjoin=False)
+
+    duns_number = db.Column(db.String, index=False,
+                            unique=False, nullable=True)
+
+    esourcing_id = db.Column(db.String, index=False,
+                             unique=False, nullable=True)
+
+    clients = db.Column(JSON)
 
     def serialize(self):
         links = [
@@ -29,11 +100,23 @@ class Supplier(db.Model):
             )
         ]
 
-        return {
+        contact_information_list = []
+        for contact_information_instance in self.contact_information:
+            contact_information_list.append(
+                contact_information_instance.serialize()
+            )
+
+        serialized = {
             'id': self.supplier_id,
             'name': self.name,
+            'description': self.description,
+            # 'dunsNumber': self.duns_number,
+            # 'eSourcingId': self.esourcing_id,
+            'contactInformation': contact_information_list,
             'links': links
         }
+
+        return filter_null_value_fields(serialized)
 
 
 class User(db.Model):
@@ -76,12 +159,14 @@ class User(db.Model):
             'updated_at': self.updated_at,
             'password_changed_at': self.password_changed_at
         }
+
         if self.role == 'supplier':
             supplier = {
                 "supplier_id": self.supplier.supplier_id,
                 "name": self.supplier.name
             }
             user['supplier'] = supplier
+
         return user
 
 
@@ -116,7 +201,6 @@ class Service(db.Model):
 
     def serialize(self):
         """
-        Pretty much a direct translation of the old `jsonify_service` function
         :return: dictionary representation of a service
         """
 
@@ -183,7 +267,6 @@ class ArchivedService(db.Model):
 
     def serialize(self):
         """
-        Pretty much a direct translation of the old `jsonify_service` function
         :return: dictionary representation of a service
         """
 
@@ -203,3 +286,9 @@ class ArchivedService(db.Model):
         ]
 
         return data
+
+
+def filter_null_value_fields(obj):
+    return dict(
+        filter(lambda x: x[1] is not None, obj.items())
+    )

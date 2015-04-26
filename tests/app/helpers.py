@@ -9,7 +9,7 @@ from datetime import datetime
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Service, Supplier, Framework
+from app.models import Service, Supplier, ContactInformation, Framework
 
 from alembic.command import upgrade, downgrade
 from alembic.config import Config
@@ -81,6 +81,15 @@ class BaseApplicationTest(object):
                 db.session.add(
                     Supplier(supplier_id=i, name=u"Supplier {}".format(i))
                 )
+                db.session.add(
+                    ContactInformation(
+                        supplier_id=i,
+                        contact_name=u"Contact for Supplier {}".format(i),
+                        email=u"{}@contact.com".format(i),
+                        postcode=u"SW1A 1AA"
+                    )
+                )
+            db.session.commit()
 
     def setup_dummy_services_including_unpublished(self, n):
         now = datetime.now()
@@ -120,6 +129,15 @@ class BaseApplicationTest(object):
                 Supplier(supplier_id=TEST_SUPPLIERS_COUNT, name=u"Supplier {}"
                          .format(TEST_SUPPLIERS_COUNT))
             )
+            db.session.add(
+                ContactInformation(
+                    supplier_id=TEST_SUPPLIERS_COUNT,
+                    contact_name=u"Contact for Supplier {}".format(i),
+                    email=u"{}@contact.com".format(i),
+                    postcode=u"SW1A 1AA"
+                )
+            )
+            db.session.commit()
 
     def teardown(self):
         self.teardown_authorization()
@@ -136,6 +154,7 @@ class BaseApplicationTest(object):
             db.session.remove()
             db.drop_all()
             db.engine.execute("drop table alembic_version")
+            db.get_engine(self.app).dispose()
 
     def load_example_listing(self, name):
         file_path = os.path.join("example_listings", "{}.json".format(name))

@@ -1,0 +1,40 @@
+{
+  "id": "G6 Contact Information Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "website": {
+      "type": "string"
+    },
+    "contactName": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phoneNumber": {
+      "type": "string"
+    },
+    "address1": {
+      "type": "string"
+    },
+    "address2": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "postcode": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "contactName",
+    "email",
+    "postcode"
+  ]
+}

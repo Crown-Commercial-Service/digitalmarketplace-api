@@ -1,11 +1,12 @@
 from datetime import datetime
 
 from flask import jsonify, abort, request, current_app
-from sqlalchemy.exc import IntegrityError
 
 from .. import main
 from ... import db
+from ... import search_api_client
 from ...models import ArchivedService, Service, Supplier, Framework
+from sqlalchemy.exc import IntegrityError
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
 from ...utils import url_for, pagination_links, drop_foreign_fields, link, \
@@ -151,22 +152,21 @@ def update_service(service_id):
     db.session.add(service)
     db.session.add(service_to_archive)
 
-    db.session.commit()
-
-    return jsonify(message="done"), 200
+    try:
+        db.session.commit()
+        search_api_client.index(service_id, service.data,
+                                service.supplier.name)
+        return jsonify(message="done"), 200
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
 
 
 @main.route('/services/<string:service_id>', methods=['PUT'])
 def import_service(service_id):
-
     is_valid_service_id_or_400(service_id)
 
     now = datetime.now()
-    service = Service.query.filter(Service.service_id == service_id).first()
-
-    if service is None:
-        service = Service(service_id=service_id)
-        service.created_at = now
 
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload,
@@ -182,8 +182,22 @@ def import_service(service_id):
     validate_updater_json_or_400(update_json)
 
     framework = detect_framework_or_400(service_data)
-
     service_data = drop_foreign_fields(service_data, ['id'])
+
+    service = Service.query.filter(Service.service_id == service_id).first()
+
+    if service is None:
+        service = Service(service_id=service_id)
+        service.created_at = now
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == service_data['supplierId']).first()
+        if supplier is None:
+            abort(400,
+                  "Key (supplier_id)=({}) is not present"
+                  .format(service_data['supplierId']))
+    else:
+        supplier = service.supplier
+
     service.supplier_id = service_data['supplierId']
     service.framework_id = Framework.query.filter(
         Framework.name == framework).first().id
@@ -202,16 +216,16 @@ def import_service(service_id):
 
     try:
         db.session.commit()
-    except IntegrityError:
+        search_api_client.index(service_id, service.data, supplier.name)
+    except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Unknown supplier ID provided")
+        abort(400, "Database Error: {0}".format(e))
 
     return "", 201
 
 
 @main.route('/services/<string:service_id>', methods=['GET'])
 def get_service(service_id):
-
     is_valid_service_id_or_400(service_id)
 
     service = Service.query.filter(
@@ -234,18 +248,3 @@ def get_archived_service(archived_service_id):
     ).first_or_404()
 
     return jsonify(services=service.serialize())
-
-
-def jsonify_service(service):
-    data = dict(service.data.items())
-    data.update({
-        'id': service.service_id,
-        'supplierId': service.supplier.supplier_id,
-        'supplierName': service.supplier.name
-    })
-
-    data['links'] = [
-        link("self", url_for(".get_service",
-                             service_id=data['id']))
-    ]
-    return data

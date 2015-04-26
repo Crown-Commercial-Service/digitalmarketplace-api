@@ -6,7 +6,7 @@ import json
 from nose.tools import assert_equal
 from jsonschema import validate, SchemaError, ValidationError
 
-from app.validation import detect_framework, SCHEMAS, \
+from app.validation import detect_framework, \
     validates_against_schema, is_valid_service_id
 
 
