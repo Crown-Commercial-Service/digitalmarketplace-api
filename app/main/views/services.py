@@ -37,7 +37,13 @@ def list_services():
 
     supplier_id = request.args.get('supplier_id')
 
-    services = Service.query.filter(Service.status == 'published')
+    services = Service.query
+
+    if request.args.get('status'):
+        services = Service.query.filter(
+            Service.status.in_(request.values.getlist('status'))
+        )
+
     if supplier_id is not None:
         try:
             supplier_id = int(supplier_id)

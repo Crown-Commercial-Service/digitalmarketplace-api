@@ -26,14 +26,60 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         assert_equal(data['services'], [])
 
-    def test_list_services_only_returns_published(self):
+    def test_list_services_gets_all_statuses(self):
         self.setup_dummy_services_including_unpublished(1)
         response = self.client.get('/services')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 3)
+
+    def test_list_services_gets_only_published(self):
+        self.setup_dummy_services_including_unpublished(1)
+        response = self.client.get('/services?status=published')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 1)
         assert_equal(data['services'][0]['id'], '0')
+
+    def test_list_services_gets_only_enabled(self):
+        self.setup_dummy_services_including_unpublished(1)
+        response = self.client.get('/services?status=enabled')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 1)
+        assert_equal(data['services'][0]['id'], '3')
+
+    def test_list_services_gets_only_disabled(self):
+        self.setup_dummy_services_including_unpublished(1)
+        response = self.client.get('/services?status=disabled')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 1)
+        assert_equal(data['services'][0]['id'], '2')
+
+    def test_list_services_gets_combination_of_enabled_and_disabled(self):
+        self.setup_dummy_services_including_unpublished(1)
+        response = self.client.get('/services?status=disabled&status=enabled')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 2)
+        assert_equal(data['services'][0]['id'], '3')
+        assert_equal(data['services'][1]['id'], '2')
+
+    def test_list_services_gets_combination_of_enabled_and_published(self):
+        self.setup_dummy_services_including_unpublished(1)
+        response = self.client.get('/services?status=published&status=enabled')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 2)
+        assert_equal(data['services'][0]['id'], '0')
+        assert_equal(data['services'][1]['id'], '3')
 
     def test_list_services_returns_supplier_info(self):
         self.setup_dummy_services_including_unpublished(1)
@@ -62,7 +108,7 @@ class TestListServices(BaseApplicationTest):
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
-        assert_equal(len(data['services']), 2)
+        assert_equal(len(data['services']), 4)
         prev_link = self.first_by_rel('prev', data['links'])
         assert_in('page=1', prev_link['href'])
 
