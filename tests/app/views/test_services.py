@@ -504,9 +504,6 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
         super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
         with self.app.app_context():
             db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
-            db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
 
@@ -544,9 +541,6 @@ class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
         now = datetime.now()
         payload = self.load_example_listing("G6-IaaS")
         with self.app.app_context():
-            db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
@@ -618,9 +612,6 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
         now = datetime.now()
         payload = self.load_example_listing("G6-IaaS")
         with self.app.app_context():
-            db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )

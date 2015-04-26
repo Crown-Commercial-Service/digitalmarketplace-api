@@ -1,14 +1,14 @@
 """empty message
 
 Revision ID: 10_adding_supplier_to_user_table
-Revises: 3d5aabf7d291
+Revises: 550715127385
 Create Date: 2015-04-21 07:45:29.958447
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '10_adding_supplier_to_user_table'
-down_revision = '3d5aabf7d291'
+down_revision = '550715127385'
 
 from alembic import op
 import sqlalchemy as sa

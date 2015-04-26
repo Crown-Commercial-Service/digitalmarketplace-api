@@ -4,6 +4,7 @@ from app import db
 from app.models import User, Supplier
 from datetime import datetime
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin
+import time
 
 
 class TestUsersAuth(BaseApplicationTest):
@@ -139,6 +140,8 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
+            db.session.commit()
+
         response = self.client.post(
             '/users',
             data=json.dumps({
