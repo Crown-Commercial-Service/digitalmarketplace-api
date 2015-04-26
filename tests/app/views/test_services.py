@@ -35,6 +35,22 @@ class TestListServices(BaseApplicationTest):
         assert_equal(len(data['services']), 1)
         assert_equal(data['services'][0]['id'], '0')
 
+    def test_list_services_returns_status(self):
+        self.setup_dummy_services_including_unpublished(1)
+        response = self.client.get('/services')
+        data = json.loads(response.get_data())
+        service = data['services'][0]
+
+        assert_equal(service['status'], u'published')
+
+    def test_list_services_returns_framework(self):
+        self.setup_dummy_services_including_unpublished(1)
+        response = self.client.get('/services')
+        data = json.loads(response.get_data())
+        service = data['services'][0]
+
+        assert_equal(service['frameworkName'], u'G-Cloud 6')
+
     def test_list_services_returns_supplier_info(self):
         self.setup_dummy_services_including_unpublished(1)
         response = self.client.get('/services')
