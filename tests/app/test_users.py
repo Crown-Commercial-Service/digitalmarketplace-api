@@ -4,7 +4,6 @@ from app import db, encryption
 from app.models import User, Supplier
 from datetime import datetime
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin
-import time
 
 
 class TestUsersAuth(BaseApplicationTest):
@@ -14,7 +13,7 @@ class TestUsersAuth(BaseApplicationTest):
                 '/users',
                 data=json.dumps({
                     'users': {
-                        'email_address': 'joeblogs@email.com',
+                        'emailAddress': 'joeblogs@email.com',
                         'password': '1234567890',
                         'role': 'buyer',
                         'name': 'joe bloggs'}}),
@@ -25,14 +24,14 @@ class TestUsersAuth(BaseApplicationTest):
             response = self.client.post(
                 '/users/auth',
                 data=json.dumps({
-                    'auth_users': {
-                        'email_address': 'joeblogs@email.com',
+                    'authUsers': {
+                        'emailAddress': 'joeblogs@email.com',
                         'password': '1234567890'}}),
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
-            assert_equal(data['email_address'], 'joeblogs@email.com')
+            assert_equal(data['emailAddress'], 'joeblogs@email.com')
 
     def test_should_validate_mixedcase_credentials(self):
         with self.app.app_context():
@@ -40,7 +39,7 @@ class TestUsersAuth(BaseApplicationTest):
                 '/users',
                 data=json.dumps({
                     'users': {
-                        'email_address': 'joEblogS@EMAIL.com',
+                        'emailAddress': 'joEblogS@EMAIL.com',
                         'password': '1234567890',
                         'role': 'buyer',
                         'name': 'joe bloggs'}}),
@@ -51,22 +50,22 @@ class TestUsersAuth(BaseApplicationTest):
             response = self.client.post(
                 '/users/auth',
                 data=json.dumps({
-                    'auth_users': {
-                        'email_address': 'JOEbloGS@email.com',
+                    'authUsers': {
+                        'emailAddress': 'JOEbloGS@email.com',
                         'password': '1234567890'}}),
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
-            assert_equal(data['email_address'], 'joeblogs@email.com')
+            assert_equal(data['emailAddress'], 'joeblogs@email.com')
 
     def test_should_return_404_for_no_user(self):
         with self.app.app_context():
             response = self.client.post(
                 '/users/auth',
                 data=json.dumps({
-                    'auth_users': {
-                        'email_address': 'joeblogs@email.com',
+                    'authUsers': {
+                        'emailAddress': 'joeblogs@email.com',
                         'password': '1234567890'}}),
                 content_type='application/json')
 
@@ -80,7 +79,7 @@ class TestUsersAuth(BaseApplicationTest):
                 '/users',
                 data=json.dumps({
                     'users': {
-                        'email_address': 'joeblogs@email.com',
+                        'emailAddress': 'joeblogs@email.com',
                         'password': '1234567890',
                         'role': 'buyer',
                         'name': 'joe bloggs'}}),
@@ -91,8 +90,8 @@ class TestUsersAuth(BaseApplicationTest):
             response = self.client.post(
                 '/users/auth',
                 data=json.dumps({
-                    'auth_users': {
-                        'email_address': 'joeblogs@email.com',
+                    'authUsers': {
+                        'emailAddress': 'joeblogs@email.com',
                         'password': 'this is not right'}}),
                 content_type='application/json')
 
@@ -110,7 +109,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'email_address': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@email.com',
                     'password': '1234567890',
                     'role': 'buyer',
                     'name': 'joe bloggs'}}),
@@ -118,14 +117,14 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert_equal(response.status_code, 200)
         data = json.loads(response.get_data())["users"]
-        assert_equal(data["email_address"], "joeblogs@email.com")
+        assert_equal(data["emailAddress"], "joeblogs@email.com")
 
     def test_can_post_an_admin_user(self):
         response = self.client.post(
             '/users',
             data=json.dumps({
                 'users': {
-                    'email_address': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@email.com',
                     'password': '1234567890',
                     'role': 'admin',
                     'name': 'joe bloggs'}}),
@@ -133,7 +132,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert_equal(response.status_code, 200)
         data = json.loads(response.get_data())["users"]
-        assert_equal(data["email_address"], "joeblogs@email.com")
+        assert_equal(data["emailAddress"], "joeblogs@email.com")
 
     def test_can_post_a_supplier_user(self):
         with self.app.app_context():
@@ -146,27 +145,27 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'email_address': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@email.com',
                     'password': '1234567890',
-                    'supplier_id': 1,
+                    'supplierId': 1,
                     'role': 'supplier',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
         assert_equal(response.status_code, 200)
         data = json.loads(response.get_data())["users"]
-        assert_equal(data["email_address"], "joeblogs@email.com")
+        assert_equal(data["emailAddress"], "joeblogs@email.com")
         assert_equal(data["supplier"]["name"], "Supplier 1")
-        assert_equal(data["supplier"]["supplier_id"], 1)
+        assert_equal(data["supplier"]["supplierId"], 1)
 
     def test_should_reject_a_supplier_user_with_invalid_supplier_id(self):
         response = self.client.post(
             '/users',
             data=json.dumps({
                 'users': {
-                    'email_address': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@email.com',
                     'password': '1234567890',
-                    'supplier_id': 999,
+                    'supplierId': 999,
                     'role': 'supplier',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
@@ -180,7 +179,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'email_address': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@email.com',
                     'password': '1234567890',
                     'role': 'supplier',
                     'name': 'joe bloggs'}}),
@@ -197,7 +196,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                 data=json.dumps({
                     'users': {
                         'hashpw': True,
-                        'email_address': 'joeblogs@email.com',
+                        'emailAddress': 'joeblogs@email.com',
                         'password': '1234567890',
                         'role': 'buyer',
                         'name': 'joe bloggs'}}),
@@ -216,7 +215,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                 data=json.dumps({
                     'users': {
                         'hashpw': False,
-                        'email_address': 'joeblogs@email.com',
+                        'emailAddress': 'joeblogs@email.com',
                         'password': '1234567890',
                         'role': 'buyer',
                         'name': 'joe bloggs'}}),
@@ -233,7 +232,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'email_address': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@email.com',
                     'password': '1234567890',
                     'role': 'buyer',
                     'name': 'joe bloggs'}}),
@@ -245,7 +244,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'email_address': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@email.com',
                     'password': '1234567890',
                     'role': 'buyer',
                     'name': 'joe bloggs'}}),
@@ -258,7 +257,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'email_address': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@email.com',
                     'password': '',
                     'role': 'buyer',
                     'name': 'joe bloggs'}}),
@@ -273,7 +272,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'email_address': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@email.com',
                     'password': '0000000000',
                     'role': 'invalid',
                     'name': 'joe bloggs'}}),
@@ -325,14 +324,14 @@ class TestUsersUpdate(BaseApplicationTest):
             response = self.client.post(
                 '/users/auth',
                 data=json.dumps({
-                    'auth_users': {
-                        'email_address': 'test@test.com',
+                    'authUsers': {
+                        'emailAddress': 'test@test.com',
                         'password': '1234567890'}}),
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
-            assert_equal(data['email_address'], 'test@test.com')
+            assert_equal(data['emailAddress'], 'test@test.com')
 
     def test_can_update_active(self):
         with self.app.app_context():
@@ -494,7 +493,7 @@ class TestUsersGet(BaseApplicationTest):
         with self.app.app_context():
             response = self.client.get("/users/123")
             data = json.loads(response.get_data())["users"]
-            assert_equal(data['email_address'], "test@test.com")
+            assert_equal(data['emailAddress'], "test@test.com")
             assert_equal(data['name'], "my name")
             assert_equal(data['role'], "buyer")
             assert_equal(data['active'], True)
@@ -506,7 +505,7 @@ class TestUsersGet(BaseApplicationTest):
         with self.app.app_context():
             response = self.client.get("/users?email=test@test.com")
             data = json.loads(response.get_data())["users"]
-            assert_equal(data['email_address'], "test@test.com")
+            assert_equal(data['emailAddress'], "test@test.com")
             assert_equal(data['name'], "my name")
             assert_equal(data['role'], "buyer")
             assert_equal(data['active'], True)

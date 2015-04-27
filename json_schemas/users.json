@@ -9,7 +9,7 @@
       "maxLength": 255,
       "minLength": 1
     },
-    "email_address": {
+    "emailAddress": {
       "type": "string",
       "pattern": "^[^@^\\s]+@[^@^\\.^\\s]+(\\.[^@^\\.^\\s]+)+$"
     },
@@ -22,7 +22,7 @@
       "type": "string",
       "pattern": "^(buyer|supplier|admin)$"
     },
-    "supplier_id": {
+    "supplierId": {
       "type": "integer"
     },
     "hashpw": {
@@ -31,7 +31,7 @@
   },
   "required": [
     "name",
-    "email_address",
+    "emailAddress",
     "password"
   ]
 }

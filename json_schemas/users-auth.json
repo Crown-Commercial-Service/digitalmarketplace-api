@@ -4,7 +4,7 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "email_address": {
+    "emailAddress": {
       "type": "string",
       "pattern": "^[^@^\\s]+@[^@^\\.^\\s]+(\\.[^@^\\.^\\s]+)+$"
     },
@@ -15,7 +15,7 @@
     }
   },
   "required": [
-    "email_address",
+    "emailAddress",
     "password"
   ]
 }

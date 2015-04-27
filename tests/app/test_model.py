@@ -17,7 +17,7 @@ def test_should_not_return_password_on_user():
         password_changed_at=now
     )
 
-    assert_equal(user.serialize()['email_address'], "email")
+    assert_equal(user.serialize()['emailAddress'], "email")
     assert_equal(user.serialize()['name'], "name")
     assert_equal(user.serialize()['role'], "buyer")
     assert_equal('password' in user.serialize(), False)

@@ -14,12 +14,12 @@ from ...validation import validate_user_json_or_400, \
 @main.route('/users/auth', methods=['POST'])
 def auth_user():
     json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ["auth_users"])
-    json_payload = json_payload["auth_users"]
+    json_has_required_keys(json_payload, ["authUsers"])
+    json_payload = json_payload["authUsers"]
     validate_user_auth_json_or_400(json_payload)
 
     user = User.query.filter(
-        User.email_address == json_payload['email_address'].lower()).first()
+        User.email_address == json_payload['emailAddress'].lower()).first()
 
     if user is None:
         return jsonify(authorization=False), 404
@@ -55,7 +55,7 @@ def create_user():
     validate_user_json_or_400(json_payload)
 
     user = User.query.filter(
-        User.email_address == json_payload['email_address'].lower()).first()
+        User.email_address == json_payload['emailAddress'].lower()).first()
 
     if user:
         abort(409, "User already exists")
@@ -67,7 +67,7 @@ def create_user():
 
     now = datetime.now()
     user = User(
-        email_address=json_payload['email_address'].lower(),
+        email_address=json_payload['emailAddress'].lower(),
         name=json_payload['name'],
         role=json_payload['role'],
         password=password,
@@ -78,8 +78,8 @@ def create_user():
         password_changed_at=now
     )
 
-    if "supplier_id" in json_payload:
-        user.supplier_id = json_payload['supplier_id']
+    if "supplierId" in json_payload:
+        user.supplier_id = json_payload['supplierId']
 
     db.session.add(user)
     try:

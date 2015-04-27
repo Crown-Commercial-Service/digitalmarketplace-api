@@ -60,9 +60,9 @@ class UserPutter(object):
             verify=self.cert if self.cert else True)
 
         if response.status_code is not 200:
-            print("failed: {}".format(user['email_address']))
+            print("failed: {}".format(user['emailAddress']))
 
-        return user['email_address'], response
+        return user['emailAddress'], response
 
     @staticmethod
     def make_user_json(json_from_file):
@@ -78,12 +78,12 @@ class UserPutter(object):
             'hashpw': False,
             'name': name,
             'role': role,
-            'email_address': email,
+            'emailAddress': email,
             'password': json_from_file['password']
         }
 
         if role == 'supplier':
-            user['supplier_id'] = json_from_file['supplierId']
+            user['supplierId'] = json_from_file['supplierId']
 
         return user
 
