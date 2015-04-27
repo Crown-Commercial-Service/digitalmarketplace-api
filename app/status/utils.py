@@ -1,4 +1,5 @@
 import os
+from .. import db
 
 
 def get_version_label():
@@ -9,3 +10,10 @@ def get_version_label():
             return f.read().strip()
     except IOError:
         return None
+
+
+def get_db_version():
+
+    return db.engine.execute(
+        "SELECT version_num FROM alembic_version"
+    ).scalar()
