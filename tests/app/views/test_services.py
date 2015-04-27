@@ -81,6 +81,14 @@ class TestListServices(BaseApplicationTest):
         assert_equal(data['services'][0]['id'], '0')
         assert_equal(data['services'][1]['id'], '3')
 
+    def test_list_services_returns_framework(self):
+        self.setup_dummy_services_including_unpublished(1)
+        response = self.client.get('/services')
+        data = json.loads(response.get_data())
+        service = data['services'][0]
+
+        assert_equal(service['frameworkName'], u'G-Cloud 6')
+
     def test_list_services_returns_supplier_info(self):
         self.setup_dummy_services_including_unpublished(1)
         response = self.client.get('/services')
@@ -209,9 +217,6 @@ class TestPostService(BaseApplicationTest):
         payload = self.load_example_listing("G6-IaaS")
         self.service_id = str(payload['id'])
         with self.app.app_context():
-            db.session.add(
-                Framework(id=1, expired=False, name=u"G-Cloud 6")
-            )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
@@ -553,9 +558,6 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
         super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
         with self.app.app_context():
             db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
-            db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
 
@@ -593,9 +595,6 @@ class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
         now = datetime.now()
         payload = self.load_example_listing("G6-IaaS")
         with self.app.app_context():
-            db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
@@ -668,9 +667,6 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
         payload = self.load_example_listing("G6-IaaS")
         with self.app.app_context():
             db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
-            db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
             db.session.add(Service(service_id="1234567890123456",
@@ -742,12 +738,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         now = datetime.now()
         payload = self.load_example_listing("G6-IaaS")
         with self.app.app_context():
-            db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
-            db.session.add(
-                Framework(id=2, expired=False, name="G-Cloud 4")
-            )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
@@ -954,9 +944,6 @@ class TestGetService(BaseApplicationTest):
         super(TestGetService, self).setup()
         now = datetime.now()
         with self.app.app_context():
-            db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )

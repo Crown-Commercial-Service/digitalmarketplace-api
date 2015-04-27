@@ -13,42 +13,6 @@ class Framework(db.Model):
                         nullable=False)
 
 
-class User(db.Model):
-    __tablename__ = 'users'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, index=False, unique=False,
-                     nullable=False)
-    email_address = db.Column(db.String, index=True, unique=True,
-                              nullable=False)
-    password = db.Column(db.String, index=False, unique=False,
-                         nullable=False)
-    active = db.Column(db.Boolean, index=False, unique=False,
-                       nullable=False)
-    locked = db.Column(db.Boolean, index=False, unique=False,
-                       nullable=False)
-    created_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False)
-    updated_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False)
-    password_changed_at = db.Column(db.DateTime, index=False, unique=False,
-                                    nullable=False)
-    role = db.Column(db.String, index=False, unique=False, nullable=False)
-
-    def serialize(self):
-        return {
-            'id': self.id,
-            'email_address': self.email_address,
-            'name': self.name,
-            'role': self.role,
-            'active': self.active,
-            'locked': self.locked,
-            'created_at': self.created_at,
-            'updated_at': self.updated_at,
-            'password_changed_at': self.password_changed_at,
-        }
-
-
 class ContactInformation(db.Model):
     __tablename__ = 'contact_information'
 
@@ -155,6 +119,57 @@ class Supplier(db.Model):
         return filter_null_value_fields(serialized)
 
 
+class User(db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, index=False, unique=False,
+                     nullable=False)
+    email_address = db.Column(db.String, index=True, unique=True,
+                              nullable=False)
+    password = db.Column(db.String, index=False, unique=False,
+                         nullable=False)
+    active = db.Column(db.Boolean, index=False, unique=False,
+                       nullable=False)
+    locked = db.Column(db.Boolean, index=False, unique=False,
+                       nullable=False)
+    created_at = db.Column(db.DateTime, index=False, unique=False,
+                           nullable=False)
+    updated_at = db.Column(db.DateTime, index=False, unique=False,
+                           nullable=False)
+    password_changed_at = db.Column(db.DateTime, index=False, unique=False,
+                                    nullable=False)
+    role = db.Column(db.String, index=False, unique=False, nullable=False)
+
+    supplier_id = db.Column(db.BigInteger,
+                            db.ForeignKey('suppliers.supplier_id'),
+                            index=True, unique=False, nullable=True)
+
+    supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
+
+    def serialize(self):
+        user = {
+            'id': self.id,
+            'email_address': self.email_address,
+            'name': self.name,
+            'role': self.role,
+            'active': self.active,
+            'locked': self.locked,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at,
+            'password_changed_at': self.password_changed_at
+        }
+
+        if self.role == 'supplier':
+            supplier = {
+                "supplier_id": self.supplier.supplier_id,
+                "name": self.supplier.name
+            }
+            user['supplier'] = supplier
+
+        return user
+
+
 class Service(db.Model):
     __tablename__ = 'services'
 
@@ -195,6 +210,8 @@ class Service(db.Model):
             'id': self.service_id,
             'supplierId': self.supplier.supplier_id,
             'supplierName': self.supplier.name,
+            'frameworkName': self.framework.name,
+            'status': self.status
         })
 
         data['links'] = [

@@ -1,10 +1,10 @@
 from flask import json
 from nose.tools import assert_equal, assert_not_equal
-
 from app import db
-from app.models import User
+from app.models import User, Supplier
 from datetime import datetime
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin
+import time
 
 
 class TestUsersAuth(BaseApplicationTest):
@@ -136,6 +136,46 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(data["email_address"], "joeblogs@email.com")
 
     def test_can_post_a_supplier_user(self):
+        with self.app.app_context():
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+            db.session.commit()
+
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'email_address': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'supplier_id': 1,
+                    'role': 'supplier',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 200)
+        data = json.loads(response.get_data())["users"]
+        assert_equal(data["email_address"], "joeblogs@email.com")
+        assert_equal(data["supplier"]["name"], "Supplier 1")
+        assert_equal(data["supplier"]["supplier_id"], 1)
+
+    def test_should_reject_a_supplier_user_with_invalid_supplier_id(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'email_address': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'supplier_id': 999,
+                    'role': 'supplier',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        data = json.loads(response.get_data())["error"]
+        assert_equal(response.status_code, 400)
+        assert_equal(data, "Invalid supplier id")
+
+    def test_should_reject_a_supplier_user_with_no_supplier_id(self):
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -146,9 +186,9 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 200)
-        data = json.loads(response.get_data())["users"]
-        assert_equal(data["email_address"], "joeblogs@email.com")
+        data = json.loads(response.get_data())["error"]
+        assert_equal(response.status_code, 400)
+        assert_equal(data, "No supplier id provided for supplier user")
 
     def test_can_post_a_user_with_hashed_password(self):
         with self.app.app_context():
@@ -265,15 +305,16 @@ class TestUsersGet(BaseApplicationTest):
             db.session.commit()
 
     def test_can_get_a_user(self):
-        response = self.client.get("/users/123")
-        data = json.loads(response.get_data())["users"]
-        assert_equal(data['email_address'], "test@test.com")
-        assert_equal(data['name'], "my name")
-        assert_equal(data['role'], "buyer")
-        assert_equal(data['active'], True)
-        assert_equal(data['locked'], False)
-        assert_equal('password' in data, False)
-        assert_equal(response.status_code, 200)
+        with self.app.app_context():
+            response = self.client.get("/users/123")
+            data = json.loads(response.get_data())["users"]
+            assert_equal(data['email_address'], "test@test.com")
+            assert_equal(data['name'], "my name")
+            assert_equal(data['role'], "buyer")
+            assert_equal(data['active'], True)
+            assert_equal(data['locked'], False)
+            assert_equal('password' in data, False)
+            assert_equal(response.status_code, 200)
 
     def test_returns_404_for_non_int_id(self):
         response = self.client.get("/users/bogus")
