@@ -195,6 +195,8 @@ class Service(db.Model):
             'id': self.service_id,
             'supplierId': self.supplier.supplier_id,
             'supplierName': self.supplier.name,
+            'frameworkName': self.framework.name,
+            'status': self.status
         })
 
         data['links'] = [
