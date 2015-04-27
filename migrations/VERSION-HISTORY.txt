@@ -19,3 +19,4 @@ c8bce0740af   -  add 'supplier_id', 'created_at' and 'updated_at'
 407e74de5553  -  add 'users' table
 3d5aabf7d291  -  add 'role' to 'users'
 550715127385  -  add 'contact_information' table and extend 'suppliers'
+10_adding_supplier_to_user_table - add 'supplier_id' to users table
