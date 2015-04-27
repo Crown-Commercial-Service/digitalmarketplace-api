@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from flask.ext.migrate import Migrate, MigrateCommand
+from flask.ext.script import Manager
 
 import os
 import json
@@ -9,6 +11,9 @@ from nose.tools import assert_equal, assert_in
 from app import create_app, db
 from app.models import Service, Supplier, ContactInformation, Framework
 
+from alembic.command import upgrade, downgrade
+from alembic.config import Config
+from sqlalchemy.exc import ProgrammingError
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -32,12 +37,27 @@ class BaseApplicationTest(object):
         "scs": "G6-SCS.json"
     }
 
+    ALEMBIC_CONFIG = \
+        os.path.join(os.path.dirname(__file__),
+                     '../../migrations/alembic.ini')
+
+    config = None
+
     def setup(self):
         self.app = create_app('test')
         self.client = self.app.test_client()
 
+        Migrate(self.app, db)
+        Manager(db, MigrateCommand)
+
+        """Applies all alembic migrations."""
+        self.config = Config(self.ALEMBIC_CONFIG)
+        self.config.set_main_option(
+            "script_location",
+            "migrations")
+
         self.setup_authorization()
-        self.setup_database()
+        self.apply_migrations()
 
     def setup_authorization(self):
         """Set up bearer token and pass on all requests"""
@@ -51,13 +71,12 @@ class BaseApplicationTest(object):
     def do_not_provide_access_token(self):
         self.app.wsgi_app = self.app.wsgi_app.app
 
-    def setup_database(self):
+    def apply_migrations(self):
         with self.app.app_context():
-            db.create_all()
+            upgrade(self.config, 'head')
 
     def setup_dummy_suppliers(self, n):
         with self.app.app_context():
-
             for i in range(n):
                 db.session.add(
                     Supplier(supplier_id=i, name=u"Supplier {}".format(i))
@@ -75,9 +94,6 @@ class BaseApplicationTest(object):
     def setup_dummy_services_including_unpublished(self, n):
         now = datetime.now()
         with self.app.app_context():
-            db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
             self.setup_dummy_suppliers(TEST_SUPPLIERS_COUNT)
             for i in range(n):
                 db.session.add(Service(service_id=i,
@@ -137,6 +153,7 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             db.session.remove()
             db.drop_all()
+            db.engine.execute("drop table alembic_version")
             db.get_engine(self.app).dispose()
 
     def load_example_listing(self, name):

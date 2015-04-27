@@ -7,7 +7,6 @@ from dmutils import logging
 
 from config import config
 
-
 bootstrap = Bootstrap()
 db = SQLAlchemy()
 search_api_client = SearchApiClient()

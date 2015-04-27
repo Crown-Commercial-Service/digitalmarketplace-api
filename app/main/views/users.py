@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from sqlalchemy.exc import IntegrityError
 from flask import jsonify, abort
 
 from .. import main
@@ -29,7 +29,7 @@ def auth_user():
 
 
 @main.route('/users/<int:user_id>', methods=['GET'])
-def get_user_by_email(user_id):
+def get_user_by_id(user_id):
     user = User.query.filter(
         User.id == user_id
     ).first_or_404()
@@ -68,8 +68,14 @@ def create_user():
         password_changed_at=now
     )
 
-    db.session.add(user)
+    if "supplier_id" in json_payload:
+        user.supplier_id = json_payload['supplier_id']
 
-    db.session.commit()
+    db.session.add(user)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        abort(400, "Invalid supplier id")
 
     return jsonify(users=user.serialize()), 200

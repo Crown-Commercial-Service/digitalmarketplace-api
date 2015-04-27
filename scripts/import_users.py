@@ -70,13 +70,18 @@ class UserPutter(object):
         email = json_from_file['email'].lower()
         name = json_from_file['firstName'] + " " + json_from_file['lastName']
 
-        return {
+        user = {
             'hashpw': False,
             'name': name,
             'role': user_roles[email]['role'],
             'email_address': email,
             'password': user_roles[email]['password']
         }
+
+        if role == 'supplier':
+            user['supplier_id'] = json_from_file['supplierId']
+
+        return user
 
 
 def do_import(base_url, access_token, filename, cert, verbose):

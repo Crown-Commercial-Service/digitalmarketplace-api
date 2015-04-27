@@ -180,9 +180,6 @@ class TestPostService(BaseApplicationTest):
         self.service_id = str(payload['id'])
         with self.app.app_context():
             db.session.add(
-                Framework(id=1, expired=False, name=u"G-Cloud 6")
-            )
-            db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
             db.session.add(
@@ -523,9 +520,6 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
         super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
         with self.app.app_context():
             db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
-            db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
 
@@ -563,9 +557,6 @@ class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
         now = datetime.now()
         payload = self.load_example_listing("G6-IaaS")
         with self.app.app_context():
-            db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
@@ -638,9 +629,6 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
         payload = self.load_example_listing("G6-IaaS")
         with self.app.app_context():
             db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
-            db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
             db.session.add(Service(service_id="1234567890123456",
@@ -712,12 +700,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         now = datetime.now()
         payload = self.load_example_listing("G6-IaaS")
         with self.app.app_context():
-            db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
-            db.session.add(
-                Framework(id=2, expired=False, name="G-Cloud 4")
-            )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
@@ -924,9 +906,6 @@ class TestGetService(BaseApplicationTest):
         super(TestGetService, self).setup()
         now = datetime.now()
         with self.app.app_context():
-            db.session.add(
-                Framework(id=1, expired=False, name="G-Cloud 6")
-            )
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
