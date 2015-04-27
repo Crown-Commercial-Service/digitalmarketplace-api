@@ -50,7 +50,6 @@ class UserPutter(object):
     def post_user(self, user):
         user = self.make_user_json(user)
         data = {'users': user}
-        print("sending {}".format(user['email_address']))
         response = requests.post(
             self.endpoint,
             data=json.dumps(data),
@@ -70,12 +69,17 @@ class UserPutter(object):
         email = json_from_file['email'].lower()
         name = json_from_file['firstName'] + " " + json_from_file['lastName']
 
+        if "ROLE_SUPPLIER" in json_from_file['roles']:
+            role = "supplier"
+        else:
+            role = "buyer"
+
         user = {
             'hashpw': False,
             'name': name,
-            'role': user_roles[email]['role'],
+            'role': role,
             'email_address': email,
-            'password': user_roles[email]['password']
+            'password': json_from_file['password']
         }
 
         if role == 'supplier':
