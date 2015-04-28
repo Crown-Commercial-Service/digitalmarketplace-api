@@ -11,6 +11,7 @@ from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
 from ...utils import url_for, pagination_links, drop_foreign_fields, link, \
     json_has_matching_id, get_json_from_request, json_has_required_keys
+from sqlalchemy.types import String
 
 
 @main.route('/')
@@ -37,7 +38,11 @@ def list_services():
 
     supplier_id = request.args.get('supplier_id')
 
-    services = Service.query
+    services = Service.query.order_by(
+        Service.framework_id.asc(),
+        Service.data['lot'].cast(String),
+        Service.data['serviceName'].cast(String)
+    )
 
     if request.args.get('status'):
         services = Service.query.filter(
