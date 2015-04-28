@@ -516,3 +516,9 @@ class TestUsersGet(BaseApplicationTest):
     def test_returns_404_for_non_int_id(self):
         response = self.client.get("/users/bogus")
         assert_equal(response.status_code, 404)
+
+    def test_returns_404_for_no_email_supplied(self):
+        response = self.client.get("/users?notemail=test@test.com")
+        data = json.loads(response.get_data())["error"]
+        assert_equal(response.status_code, 404)
+        assert_equal(data, "'email' is a required parameter")

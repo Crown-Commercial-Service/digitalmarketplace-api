@@ -40,6 +40,8 @@ def get_user_by_id(user_id):
 @main.route('/users', methods=['GET'])
 def get_user_by_email():
     email_address = request.args.get('email')
+    if email_address is None:
+        abort(404, "'email' is a required parameter")
     user = User.query.filter(
         User.email_address == email_address.lower()
     ).first_or_404()
