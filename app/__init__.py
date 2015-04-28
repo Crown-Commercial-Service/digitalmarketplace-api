@@ -30,7 +30,7 @@ def create_app(config_name):
     from .status import status as status_blueprint
     application.register_blueprint(status_blueprint)
 
-    if config[config_name].ALLOW_EXPLORER:
+    if application.config['ALLOW_EXPLORER']:
         from .explorer import explorer as explorer_blueprint
         application.register_blueprint(explorer_blueprint)
 
