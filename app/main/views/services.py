@@ -37,8 +37,6 @@ def list_services():
     except ValueError:
         abort(400, "Invalid page argument")
 
-    supplier_id = request.args.get('supplier_id')
-
     services = Service.query.order_by(
         asc(Service.framework_id),
         asc(Service.data['lot'].cast(String)),
@@ -50,18 +48,20 @@ def list_services():
             Service.status.in_(request.values.getlist('status'))
         )
 
+    supplier_id = request.args.get('supplier_id')
+
     if supplier_id is not None:
         try:
             supplier_id = int(supplier_id)
         except ValueError:
             abort(400, "Invalid supplier_id: %s" % supplier_id)
 
-    supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id) \
-        .all()
-    if not supplier:
-        abort(404, "supplier_id '%d' not found" % supplier_id)
+        supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id) \
+            .all()
+        if not supplier:
+            abort(404, "supplier_id '%d' not found" % supplier_id)
 
-    services = services.filter(Service.supplier_id == supplier_id)
+        services = services.filter(Service.supplier_id == supplier_id)
 
     services = services.paginate(
         page=page,
