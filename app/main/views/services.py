@@ -6,6 +6,7 @@ from .. import main
 from ... import db
 from ... import search_api_client
 from ...models import ArchivedService, Service, Supplier, Framework
+from sqlalchemy import asc
 from sqlalchemy.exc import IntegrityError
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
@@ -39,9 +40,9 @@ def list_services():
     supplier_id = request.args.get('supplier_id')
 
     services = Service.query.order_by(
-        Service.framework_id.asc(),
-        Service.data['lot'].cast(String),
-        Service.data['serviceName'].cast(String)
+        asc(Service.framework_id),
+        asc(Service.data['lot'].cast(String)),
+        asc(Service.data['serviceName'].cast(String))
     )
 
     if request.args.get('status'):
@@ -55,18 +56,19 @@ def list_services():
         except ValueError:
             abort(400, "Invalid supplier_id: %s" % supplier_id)
 
-        supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id) \
-            .all()
-        if not supplier:
-            abort(404, "supplier_id '%d' not found" % supplier_id)
+    supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id) \
+        .all()
+    if not supplier:
+        abort(404, "supplier_id '%d' not found" % supplier_id)
 
-        services = services.filter(Service.supplier_id == supplier_id)
+    services = services.filter(Service.supplier_id == supplier_id)
 
     services = services.paginate(
         page=page,
         per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
         error_out=False,
     )
+
     if page > 1 and not services.items:
         abort(404, "Page number out of range")
 

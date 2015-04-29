@@ -25,13 +25,13 @@ class TestListServicesOrdering(BaseApplicationTest):
             now = datetime.now()
 
             g5_saas = self.load_example_listing("G5")
-            g5_paas = self.load_example_listing("G5")
-            g6_iaas_1 = self.load_example_listing("G6-IaaS")
-            g6_iaas_2 = self.load_example_listing("G6-IaaS")
-            g6_paas_1 = self.load_example_listing("G6-PaaS")
-            g6_paas_2 = self.load_example_listing("G6-PaaS")
-            g6_saas = self.load_example_listing("G6-SaaS")
             g6_scs = self.load_example_listing("G6-SCS")
+            g5_paas = self.load_example_listing("G5")
+            g6_paas_2 = self.load_example_listing("G6-PaaS")
+            g6_iaas_1 = self.load_example_listing("G6-IaaS")
+            g6_paas_1 = self.load_example_listing("G6-PaaS")
+            g6_saas = self.load_example_listing("G6-SaaS")
+            g6_iaas_2 = self.load_example_listing("G6-IaaS")
 
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
