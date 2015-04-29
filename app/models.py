@@ -150,19 +150,19 @@ class User(db.Model):
     def serialize(self):
         user = {
             'id': self.id,
-            'email_address': self.email_address,
+            'emailAddress': self.email_address,
             'name': self.name,
             'role': self.role,
             'active': self.active,
             'locked': self.locked,
-            'created_at': self.created_at,
-            'updated_at': self.updated_at,
-            'password_changed_at': self.password_changed_at
+            'createdAt': self.created_at,
+            'updatedAt': self.updated_at,
+            'passwordChangedAt': self.password_changed_at
         }
 
         if self.role == 'supplier':
             supplier = {
-                "supplier_id": self.supplier.supplier_id,
+                "supplierId": self.supplier.supplier_id,
                 "name": self.supplier.name
             }
             user['supplier'] = supplier

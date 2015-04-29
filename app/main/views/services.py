@@ -199,7 +199,7 @@ def import_service(service_id):
             Supplier.supplier_id == service_data['supplierId']).first()
         if supplier is None:
             abort(400,
-                  "Key (supplier_id)=({}) is not present"
+                  "Key (supplierId)=({}) is not present"
                   .format(service_data['supplierId']))
     else:
         supplier = service.supplier
