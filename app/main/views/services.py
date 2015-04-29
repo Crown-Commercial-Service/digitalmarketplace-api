@@ -6,11 +6,13 @@ from .. import main
 from ... import db
 from ... import search_api_client
 from ...models import ArchivedService, Service, Supplier, Framework
+from sqlalchemy import asc
 from sqlalchemy.exc import IntegrityError
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
 from ...utils import url_for, pagination_links, drop_foreign_fields, link, \
     json_has_matching_id, get_json_from_request, json_has_required_keys
+from sqlalchemy.types import String
 
 
 @main.route('/')
@@ -35,14 +37,18 @@ def list_services():
     except ValueError:
         abort(400, "Invalid page argument")
 
-    supplier_id = request.args.get('supplier_id')
-
-    services = Service.query
+    services = Service.query.order_by(
+        asc(Service.framework_id),
+        asc(Service.data['lot'].cast(String)),
+        asc(Service.data['serviceName'].cast(String))
+    )
 
     if request.args.get('status'):
         services = Service.query.filter(
             Service.status.in_(request.values.getlist('status'))
         )
+
+    supplier_id = request.args.get('supplier_id')
 
     if supplier_id is not None:
         try:
@@ -62,6 +68,7 @@ def list_services():
         per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
         error_out=False,
     )
+
     if page > 1 and not services.items:
         abort(404, "Page number out of range")
 
