@@ -2,14 +2,13 @@ from flask import Flask
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
 from werkzeug.contrib.fixers import ProxyFix
-from .flask_search_api_client.search_api_client import SearchApiClient
-from dmutils import logging, config
+from dmutils import logging, config, apiclient
 
 from config import configs
 
 bootstrap = Bootstrap()
 db = SQLAlchemy()
-search_api_client = SearchApiClient()
+search_api_client = apiclient.SearchAPIClient()
 
 
 def create_app(config_name):
