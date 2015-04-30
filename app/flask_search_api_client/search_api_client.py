@@ -62,7 +62,22 @@ class SearchApiClient:
             "serviceBenefits",
             "serviceFeatures",
             "serviceTypes",
-            "supplierName"
+            "supplierName",
+            "freeOption",
+            "trialOption",
+            "minimumContractPeriod",
+            "supportForThirdParties",
+            "selfServiceProvisioning",
+            "datacentresEUCode",
+            "dataBackupRecovery",
+            "dataExtractionRemoval",
+            "networksConnected",
+            "apiAccess",
+            "openStandardsSupported",
+            "openSource",
+            "persistentStorage",
+            "guaranteedResources",
+            "elasticCloud"
         ]
         service = dict(
             [(k, json_to_index[k]) for k in fields if k in json_to_index]

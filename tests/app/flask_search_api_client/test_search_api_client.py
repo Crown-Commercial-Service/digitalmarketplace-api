@@ -8,7 +8,6 @@ from app import create_app
 
 
 class TestSearchApiClient():
-
     search_api_client = None
 
     def __init__(self):
@@ -42,11 +41,31 @@ class TestSearchApiClient():
             "[To be completed]",
             "This is my second \"feture\""
         ]),
-        assert_equal(converted["service"]["serviceTypes"],  [
+        assert_equal(converted["service"]["serviceTypes"], [
             "Compute",
             "Storage"
         ]),
         assert_equal(converted["service"]["supplierName"], "Supplier Name")
+
+        assert_equal(converted["service"]["freeOption"], False)
+        assert_equal(converted["service"]["trialOption"], True)
+        assert_equal(converted["service"]["minimumContractPeriod"], "Month")
+        assert_equal(converted["service"]["supportForThirdParties"], False)
+        assert_equal(converted["service"]["selfServiceProvisioning"], False)
+        assert_equal(converted["service"]["datacentresEUCode"], False)
+        assert_equal(converted["service"]["dataBackupRecovery"], True)
+        assert_equal(converted["service"]["dataExtractionRemoval"], False)
+        assert_equal(converted["service"]["networksConnected"], [
+            "Public Services Network (PSN)",
+            "Government Secure intranet (GSi)"
+        ])
+        assert_equal(converted["service"]["apiAccess"], True)
+        assert_equal(converted["service"]["openStandardsSupported"], True)
+        assert_equal(converted["service"]["openSource"], False)
+        assert_equal(converted["service"]["persistentStorage"], True)
+        assert_equal(converted["service"]["guaranteedResources"], False)
+        assert_equal(converted["service"]["elasticCloud"], True)
+
 
     def test_should_convert_listing_with_minimum_fields_for_indexing(self):
         listing = self.load_example_listing("G6-IaaS")
