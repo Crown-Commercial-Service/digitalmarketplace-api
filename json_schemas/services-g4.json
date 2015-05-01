@@ -193,6 +193,9 @@
     "datacentresEUCode": {
       "type": "boolean"
     },
+    "datacentreTier": {
+      "type": "string"
+    },
     "dataBackupRecovery": {
       "type": "boolean"
     },
