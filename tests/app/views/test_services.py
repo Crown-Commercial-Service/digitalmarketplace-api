@@ -566,7 +566,13 @@ class TestPostService(BaseApplicationTest):
                 '/services/{0}/status/{1}'.format(
                     self.service_id,
                     status
-                )
+                ),
+                data=json.dumps(
+                    {'update_details': {
+                        'updated_by': 'joeblogs',
+                        'update_reason': 'Change status for unit test'}
+                     }),
+                content_type='application/json'
             )
 
             assert_equal(response.status_code, 200)
@@ -579,23 +585,60 @@ class TestPostService(BaseApplicationTest):
             "enabeld",  # typo
         ]
 
+        valid_statuses = [
+            "published",
+            "enabled",
+            "disabled"
+        ]
+
         for status in invalid_statuses:
             response = self.client.post(
                 '/services/{0}/status/{1}'.format(
                     self.service_id,
                     status
-                )
+                ),
+                data=json.dumps(
+                    {'update_details': {
+                        'updated_by': 'joeblogs',
+                        'update_reason': 'Change status for unit test'}
+                     }),
+                content_type='application/json'
             )
 
             assert_equal(response.status_code, 400)
             assert_in('is not a valid status',
                       json.loads(response.get_data())['error'])
+            # assert that valid status names are returned in the response
+            for valid_status in valid_statuses:
+                assert_in(valid_status,
+                          json.loads(response.get_data())['error'])
+
+    def test_should_400_without_update_details(self):
+        response = self.client.post(
+            '/services/{0}/status/{1}'.format(
+                self.service_id,
+                'enabled'
+            ),
+            data=json.dumps(
+                {}),
+            content_type='application/json'
+        )
+
+        assert_equal(response.status_code, 400)
+        assert_in('update_details',
+                  json.loads(response.get_data())['error'])
 
     def test_should_404_without_status_parameter(self):
         response = self.client.post(
             '/services/{0}/status/'.format(
-                self.service_id
-            )
+                self.service_id,
+            ),
+            data=json.dumps(
+                {'update_details': {
+                    'updated_by': 'joeblogs',
+                    'update_reason': 'Change status for unit test'}
+                 }),
+            content_type='application/json'
         )
 
         assert_equal(response.status_code, 404)
