@@ -61,10 +61,7 @@ def list_services():
     services = services.paginate(
         page=page,
         per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
-        error_out=False,
     )
-    if page > 1 and not services.items:
-        abort(404, "Page number out of range")
 
     return jsonify(
         services=[service.serialize() for service in services.items],
@@ -98,7 +95,7 @@ def list_archived_services_by_service_id():
     services = services.paginate(
         page=page,
         per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
-        error_out=False)
+    )
 
     if request.args and not services.items:
         abort(404)

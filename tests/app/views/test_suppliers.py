@@ -97,12 +97,16 @@ class TestListSuppliers(BaseApplicationTest):
         response = self.client.get('/suppliers?prefix=s&page=10')
 
         assert_equal(response.status_code, 404)
-        assert_in(b'Page number out of range', response.get_data())
 
     def test_query_string_prefix_invalid_page_argument(self):
         response = self.client.get('/suppliers?prefix=s&page=a')
 
         assert_equal(response.status_code, 400)
+
+    def test_below_one_page_number_is_404(self):
+        response = self.client.get('/suppliers?page=0')
+
+        assert_equal(response.status_code, 404)
 
 
 class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
