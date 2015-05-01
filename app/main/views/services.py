@@ -262,6 +262,12 @@ def get_archived_service(archived_service_id):
     methods=['POST']
 )
 def update_service_status(service_id, status):
+    """
+    Updates the status parameter of a service, and archives the old one.
+    :param service_id:
+    :param status:
+    :return: the newly updated service in the response
+    """
 
     # Statuses are defined in the Supplier model
     valid_statuses = [
@@ -276,6 +282,14 @@ def update_service_status(service_id, status):
         Service.service_id == service_id
     ).first_or_404()
 
+    service_to_archive = ArchivedService.from_service(service)
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload,
+                           ["update_details"])
+
+    update_json = json_payload['update_details']
+    validate_updater_json_or_400(update_json)
+
     if status not in valid_statuses:
 
         valid_statuses_single_quotes = display_list(
@@ -286,8 +300,14 @@ def update_service_status(service_id, status):
               .format(status, valid_statuses_single_quotes)
               )
 
+    now = datetime.now()
     service.status = status
+    service.updated_at = now
+    service.updated_by = update_json['updated_by']
+    service.updated_reason = update_json['update_reason']
+
     db.session.add(service)
+    db.session.add(service_to_archive)
 
     try:
         db.session.commit()
