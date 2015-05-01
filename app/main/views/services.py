@@ -10,7 +10,8 @@ from sqlalchemy.exc import IntegrityError
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
 from ...utils import url_for, pagination_links, drop_foreign_fields, link, \
-    json_has_matching_id, get_json_from_request, json_has_required_keys
+    json_has_matching_id, get_json_from_request, json_has_required_keys, \
+    display_list
 
 
 @main.route('/')
@@ -20,12 +21,12 @@ def index():
         {
             "rel": "services.list",
             "href": url_for('.list_services', _external=True),
-        },
+            },
         {
             "rel": "suppliers.list",
             "href": url_for('.list_suppliers', _external=True),
-        },
-    ]), 200
+            },
+        ]), 200
 
 
 @main.route('/services', methods=['GET'])
@@ -254,3 +255,65 @@ def get_archived_service(archived_service_id):
     ).first_or_404()
 
     return jsonify(services=service.serialize())
+
+
+@main.route(
+    '/services/<string:service_id>/status/<string:status>',
+    methods=['POST']
+)
+def update_service_status(service_id, status):
+    """
+    Updates the status parameter of a service, and archives the old one.
+    :param service_id:
+    :param status:
+    :return: the newly updated service in the response
+    """
+
+    # Statuses are defined in the Supplier model
+    valid_statuses = [
+        "published",
+        "enabled",
+        "disabled"
+    ]
+
+    is_valid_service_id_or_400(service_id)
+
+    service = Service.query.filter(
+        Service.service_id == service_id
+    ).first_or_404()
+
+    service_to_archive = ArchivedService.from_service(service)
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload,
+                           ["update_details"])
+
+    update_json = json_payload['update_details']
+    validate_updater_json_or_400(update_json)
+
+    if status not in valid_statuses:
+
+        valid_statuses_single_quotes = display_list(
+            ["\'{}\'".format(status) for status in valid_statuses]
+        )
+        abort(400, "\'{0}\' is not a valid status. "
+                   "Valid statuses are {1}"
+              .format(status, valid_statuses_single_quotes)
+              )
+
+    now = datetime.now()
+    service.status = status
+    service.updated_at = now
+    service.updated_by = update_json['updated_by']
+    service.updated_reason = update_json['update_reason']
+
+    db.session.add(service)
+    db.session.add(service_to_archive)
+
+    try:
+        db.session.commit()
+        search_api_client.index(service_id, service.data,
+                                service.supplier.name)
+        return jsonify(services=service.serialize()), 200
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)

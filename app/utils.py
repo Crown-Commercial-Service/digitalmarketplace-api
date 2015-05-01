@@ -53,3 +53,12 @@ def drop_foreign_fields(json_object, list_of_keys):
 def json_has_matching_id(data, id):
     if 'id' in data and not id == data['id']:
         abort(400, "id parameter must match id in data")
+
+
+def display_list(l):
+    length = len(l)
+    if length <= 2:
+        return " and ".join(l)
+    else:
+        # oxford comma
+        return ", ".join(l[:-1]) + ", and " + l[-1]
