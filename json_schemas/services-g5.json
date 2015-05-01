@@ -180,10 +180,10 @@
     "openSource": {
       "type": "boolean"
     },
-    "serviceOnBoarding": {
+    "serviceOnboarding": {
       "type": "boolean"
     },
-    "serviceOffBoarding": {
+    "serviceOffboarding": {
       "type": "boolean"
     },
     "dataExtractionRemoval": {
