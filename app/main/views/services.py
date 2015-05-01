@@ -10,7 +10,8 @@ from sqlalchemy.exc import IntegrityError
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
 from ...utils import url_for, pagination_links, drop_foreign_fields, link, \
-    json_has_matching_id, get_json_from_request, json_has_required_keys
+    json_has_matching_id, get_json_from_request, json_has_required_keys, \
+    display_list
 
 
 @main.route('/')
@@ -276,7 +277,14 @@ def update_service_status(service_id, status):
     ).first_or_404()
 
     if status not in valid_statuses:
-        abort(400, "'{0}' is not a valid status.".format(status))
+
+        valid_statuses_single_quotes = display_list(
+            ["\'{}\'".format(status) for status in valid_statuses]
+        )
+        abort(400, "\'{0}\' is not a valid status. "
+                   "Valid statuses are {1}"
+              .format(status, valid_statuses_single_quotes)
+              )
 
     service.status = status
     db.session.add(service)
