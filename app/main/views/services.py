@@ -147,6 +147,7 @@ def update_service(service_id):
     else:
         # It is a new service JSON with id removed from payload already
         data["id"] = service_id
+
     detect_framework_or_400(data)
 
     data = drop_foreign_fields(data, ['id'])
@@ -161,8 +162,11 @@ def update_service(service_id):
 
     try:
         db.session.commit()
-        search_api_client.index(service_id, service.data,
-                                service.supplier.name)
+        if not service.framework.expired:
+            search_api_client.index(
+                service_id,
+                service.data,
+                service.supplier.name)
         return jsonify(message="done"), 200
     except IntegrityError as e:
         db.session.rollback()
