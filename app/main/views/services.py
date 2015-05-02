@@ -21,12 +21,12 @@ def index():
         {
             "rel": "services.list",
             "href": url_for('.list_services', _external=True),
-            },
+        },
         {
             "rel": "suppliers.list",
             "href": url_for('.list_suppliers', _external=True),
-            },
-        ]), 200
+        },
+    ]), 200
 
 
 @main.route('/services', methods=['GET'])
@@ -205,9 +205,11 @@ def import_service(service_id):
     else:
         supplier = service.supplier
 
+    framework = Framework.query.filter(
+        Framework.name == framework).first()
+
     service.supplier_id = service_data['supplierId']
-    service.framework_id = Framework.query.filter(
-        Framework.name == framework).first().id
+    service.framework_id = framework.id
     service.updated_at = now
     service.created_at = now
     if 'status' in service_data:
@@ -223,7 +225,8 @@ def import_service(service_id):
 
     try:
         db.session.commit()
-        search_api_client.index(service_id, service.data, supplier.name)
+        if not framework.expired:
+            search_api_client.index(service_id, service.data, supplier.name)
     except IntegrityError as e:
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
@@ -291,7 +294,6 @@ def update_service_status(service_id, status):
     validate_updater_json_or_400(update_json)
 
     if status not in valid_statuses:
-
         valid_statuses_single_quotes = display_list(
             ["\'{}\'".format(status) for status in valid_statuses]
         )

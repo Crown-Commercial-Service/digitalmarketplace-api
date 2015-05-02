@@ -2,9 +2,9 @@ from datetime import datetime, timedelta
 
 from flask import json
 from nose.tools import assert_equal, assert_in, assert_not_equal, \
-    assert_almost_equal
+    assert_almost_equal, assert_false
 
-from app.models import Service, Supplier, ContactInformation, Framework
+from app.models import Service, Supplier, ContactInformation
 from mock import Mock
 from app import db, search_api_client
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
@@ -679,6 +679,27 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 "Supplier 1"
             )
 
+    def test_should_not_index_on_service_on_expired_frameworks(self):
+        with self.app.app_context():
+            search_api_client.index = Mock(return_value=True)
+
+            payload = self.load_example_listing("G4")
+            payload['id'] = "1234567890123456"
+            self.client.put(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            Service.query.filter(Service.service_id ==
+                                 "1234567890123456").first()
+            assert_false(search_api_client.index.called)
+
 
 class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
     def setup(self):
@@ -749,6 +770,28 @@ class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
 
             assert_equal(search_api_client.index.called, False)
             db.session.commit = Mock(side_effect=c)
+
+    def test_should_not_index_on_service_on_expired_frameworks(self):
+        with self.app.app_context():
+            search_api_client.index = Mock(return_value=True)
+
+            payload = self.load_example_listing("G4")
+            payload['id'] = "1234567890123456"
+            payload['supplierId'] = "1234567890123456"
+            self.client.put(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            Service.query.filter(Service.service_id ==
+                                 "1234567890123456").first()
+            assert_false(search_api_client.index.called)
 
 
 class TestShouldCallSearchApiOnPost(BaseApplicationTest):
