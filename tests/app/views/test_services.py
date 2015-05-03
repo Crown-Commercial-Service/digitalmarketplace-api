@@ -787,7 +787,6 @@ class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
                 ),
                 content_type='application/json')
 
-            print res.get_data()
             assert_equal(res.status_code, 201)
             assert_is_not_none(Service.query.filter(
                 Service.service_id == payload["id"]).first())
