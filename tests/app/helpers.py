@@ -9,7 +9,7 @@ from datetime import datetime
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Service, Supplier, ContactInformation, Framework
+from app.models import Service, Supplier, ContactInformation
 
 from alembic.command import upgrade, downgrade
 from alembic.config import Config
