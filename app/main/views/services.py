@@ -150,6 +150,7 @@ def update_service(service_id):
     else:
         # It is a new service JSON with id removed from payload already
         data["id"] = service_id
+
     detect_framework_or_400(data)
 
     data = drop_foreign_fields(data, ['id'])
@@ -164,8 +165,11 @@ def update_service(service_id):
 
     try:
         db.session.commit()
-        search_api_client.index(service_id, service.data,
-                                service.supplier.name)
+        if not service.framework.expired:
+            search_api_client.index(
+                service_id,
+                service.data,
+                service.supplier.name)
         return jsonify(message="done"), 200
     except IntegrityError as e:
         db.session.rollback()
@@ -208,9 +212,11 @@ def import_service(service_id):
     else:
         supplier = service.supplier
 
+    framework = Framework.query.filter(
+        Framework.name == framework).first()
+
     service.supplier_id = service_data['supplierId']
-    service.framework_id = Framework.query.filter(
-        Framework.name == framework).first().id
+    service.framework_id = framework.id
     service.updated_at = now
     service.created_at = now
     if 'status' in service_data:
@@ -226,7 +232,8 @@ def import_service(service_id):
 
     try:
         db.session.commit()
-        search_api_client.index(service_id, service.data, supplier.name)
+        if not framework.expired:
+            search_api_client.index(service_id, service.data, supplier.name)
     except IntegrityError as e:
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
