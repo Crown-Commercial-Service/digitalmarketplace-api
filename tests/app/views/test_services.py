@@ -4,7 +4,7 @@ from flask import json
 from nose.tools import assert_equal, assert_in, assert_not_equal, \
     assert_almost_equal, assert_false, assert_is_not_none
 
-from app.models import Service, Supplier, ContactInformation
+from app.models import Service, Supplier, ContactInformation, Framework
 from mock import Mock
 from app import db, search_api_client
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
