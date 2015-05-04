@@ -34,6 +34,32 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 3)
 
+    def test_list_services_gets_only_active_frameworks(self):
+        with self.app.app_context():
+            now = datetime.now()
+            db.session.add(Framework(
+                id=123,
+                name="expired",
+                expired=True
+            ))
+
+            db.session.add(Service(service_id="999",
+                                   supplier_id=1,
+                                   updated_at=now,
+                                   status='published',
+                                   created_at=now,
+                                   updated_by='tests',
+                                   updated_reason='test data',
+                                   data={'foo': 'bar'},
+                                   framework_id=123))
+
+            self.setup_dummy_services_including_unpublished(1)
+            response = self.client.get('/services')
+            data = json.loads(response.get_data())
+
+            assert_equal(response.status_code, 200)
+            assert_equal(len(data['services']), 3)
+
     def test_list_services_gets_only_published(self):
         self.setup_dummy_services_including_unpublished(1)
         response = self.client.get('/services?status=published')
@@ -1106,6 +1132,11 @@ class TestGetService(BaseApplicationTest):
         super(TestGetService, self).setup()
         now = datetime.now()
         with self.app.app_context():
+            db.session.add(Framework(
+                id=123,
+                name="expired",
+                expired=True
+            ))
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
@@ -1144,6 +1175,15 @@ class TestGetService(BaseApplicationTest):
                                    updated_reason="test data",
                                    data={'foo': 'bar'},
                                    framework_id=1))
+            db.session.add(Service(service_id="123-expired-456",
+                                   supplier_id=1,
+                                   updated_at=now,
+                                   created_at=now,
+                                   status='enabled',
+                                   updated_by="tests",
+                                   updated_reason="test data",
+                                   data={'foo': 'bar'},
+                                   framework_id=123))
             db.session.commit()
 
     def test_get_non_existent_service(self):
@@ -1163,10 +1203,18 @@ class TestGetService(BaseApplicationTest):
 
     def test_get_disabled_service(self):
         response = self.client.get('/services/123-disabled-456')
-        assert_equal(404, response.status_code)
+        data = json.loads(response.get_data())
+        assert_equal(200, response.status_code)
+        assert_equal("123-disabled-456", data['services']['id'])
 
     def test_get_enabled_service(self):
         response = self.client.get('/services/123-enabled-456')
+        data = json.loads(response.get_data())
+        assert_equal(200, response.status_code)
+        assert_equal("123-enabled-456", data['services']['id'])
+
+    def test_get_expired_service(self):
+        response = self.client.get('/services/123-expired-456')
         assert_equal(404, response.status_code)
 
     def test_get_service_returns_supplier_info(self):

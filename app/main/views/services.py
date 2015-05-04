@@ -6,6 +6,7 @@ from .. import main
 from ... import db
 from ... import search_api_client
 from ...models import ArchivedService, Service, Supplier, Framework
+from sqlalchemy.sql.expression import false
 from sqlalchemy.exc import IntegrityError
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
@@ -38,7 +39,9 @@ def list_services():
 
     supplier_id = request.args.get('supplier_id')
 
-    services = Service.query
+    services = Service.query.filter(
+        Service.framework.has(Framework.expired == false())
+    )
 
     if request.args.get('status'):
         services = Service.query.filter(
@@ -243,8 +246,9 @@ def get_service(service_id):
     is_valid_service_id_or_400(service_id)
 
     service = Service.query.filter(
-        Service.service_id == service_id
-    ).filter(Service.status == 'published').first_or_404()
+        Service.service_id == service_id)\
+        .filter(Service.framework.has(Framework.expired == false()))\
+        .first_or_404()
 
     return jsonify(services=service.serialize())
 

@@ -19,7 +19,7 @@ def list_suppliers():
 
     prefix = request.args.get('prefix', '')
 
-    suppliers = Supplier.query
+    suppliers = Supplier.query.order_by(Supplier.name)
 
     if prefix:
         # case insensitive LIKE comparison for matching supplier names
