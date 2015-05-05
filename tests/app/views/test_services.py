@@ -153,6 +153,11 @@ class TestListServices(BaseApplicationTest):
 
         assert_equal(response.status_code, 404)
 
+    def test_below_one_page_number_is_404(self):
+        response = self.client.get('/services?page=0')
+
+        assert_equal(response.status_code, 404)
+
     def test_x_forwarded_proto(self):
         self.setup_dummy_services_including_unpublished(1)
 

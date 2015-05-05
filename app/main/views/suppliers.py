@@ -29,14 +29,10 @@ def list_suppliers():
     suppliers = suppliers.paginate(
         page=page,
         per_page=current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'],
-        error_out=False,
     )
 
     if not suppliers.items:
-        if page > 1:
-            abort(404, "Page number out of range")
-        else:
-            abort(404, "No suppliers found for '{0}'".format(prefix))
+        abort(404, "No suppliers found for '{0}'".format(prefix))
 
     return jsonify(
         suppliers=[supplier.serialize() for supplier in suppliers.items],
