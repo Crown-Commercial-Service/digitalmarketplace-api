@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from flask import json
 from nose.tools import assert_equal, assert_in, assert_not_equal, \
-    assert_almost_equal
+    assert_almost_equal, assert_false, assert_is_not_none
 
 from app.models import Service, Supplier, ContactInformation, Framework
 from mock import Mock
@@ -710,6 +710,27 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 "Supplier 1"
             )
 
+    def test_should_not_index_on_service_on_expired_frameworks(self):
+        with self.app.app_context():
+            search_api_client.index = Mock(return_value=True)
+
+            payload = self.load_example_listing("G4")
+            res = self.client.put(
+                '/services/' + payload["id"],
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            assert_equal(res.status_code, 201)
+            assert_is_not_none(Service.query.filter(
+                Service.service_id == payload["id"]).first())
+            assert_false(search_api_client.index.called)
+
 
 class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
     def setup(self):
@@ -781,12 +802,34 @@ class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
             assert_equal(search_api_client.index.called, False)
             db.session.commit = Mock(side_effect=c)
 
+    def test_should_not_index_on_service_on_expired_frameworks(self):
+        with self.app.app_context():
+            search_api_client.index = Mock(return_value=True)
+
+            payload = self.load_example_listing("G4")
+            res = self.client.put(
+                '/services/' + payload["id"],
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            assert_equal(res.status_code, 201)
+            assert_is_not_none(Service.query.filter(
+                Service.service_id == payload["id"]).first())
+            assert_false(search_api_client.index.called)
+
 
 class TestShouldCallSearchApiOnPost(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPost, self).setup()
         now = datetime.now()
         payload = self.load_example_listing("G6-IaaS")
+        g4_payload = self.load_example_listing("G4")
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
@@ -800,6 +843,15 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                                    framework_id=1,
                                    updated_reason="test data",
                                    data=payload))
+            db.session.add(Service(service_id="4-G2-0123-456",
+                                   supplier_id=1,
+                                   updated_at=now,
+                                   status='published',
+                                   created_at=now,
+                                   updated_by="tests",
+                                   framework_id=2,  # G-Cloud 4
+                                   updated_reason="test data",
+                                   data=g4_payload))
             db.session.commit()
 
     def test_should_index_on_service_post(self):
@@ -849,6 +901,25 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 content_type='application/json')
             assert_equal(search_api_client.index.called, False)
             db.session.commit = Mock(side_effect=c)
+
+    def test_should_not_index_on_service_on_expired_frameworks(self):
+        with self.app.app_context():
+            search_api_client.index = Mock(return_value=True)
+
+            payload = self.load_example_listing("G4")
+            res = self.client.post(
+                '/services/4-G2-0123-456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            assert_equal(res.status_code, 200)
+            assert_false(search_api_client.index.called)
 
 
 class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
