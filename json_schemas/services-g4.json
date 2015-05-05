@@ -181,10 +181,10 @@
     "openSource": {
       "type": "boolean"
     },
-    "serviceOnBoarding": {
+    "serviceOnboarding": {
       "type": "boolean"
     },
-    "serviceOffBoarding": {
+    "serviceOffboarding": {
       "type": "boolean"
     },
     "dataExtractionRemoval": {
@@ -192,6 +192,9 @@
     },
     "datacentresEUCode": {
       "type": "boolean"
+    },
+    "datacentreTier": {
+      "type": "string"
     },
     "dataBackupRecovery": {
       "type": "boolean"
