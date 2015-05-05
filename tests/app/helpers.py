@@ -79,7 +79,12 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             for i in range(n):
                 db.session.add(
-                    Supplier(supplier_id=i, name=u"Supplier {}".format(i))
+                    Supplier(
+                        supplier_id=i,
+                        name=u"Supplier {}".format(i),
+                        description="",
+                        clients=[]
+                    )
                 )
                 db.session.add(
                     ContactInformation(
