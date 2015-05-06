@@ -70,14 +70,16 @@ class TestListServicesOrdering(BaseApplicationTest):
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
-        assert_equal(data['services'][0]['id'], 'g6_iaas_2')
-        assert_equal(data['services'][1]['id'], 'g6_iaas_1')
-        assert_equal(data['services'][2]['id'], 'g6_paas_2')
-        assert_equal(data['services'][3]['id'], 'g6_paas_1')
-        assert_equal(data['services'][4]['id'], 'g6_scs')
-        assert_equal(data['services'][5]['id'], 'g6_saas')
-        assert_equal(data['services'][6]['id'], 'g5_paas')
-        assert_equal(data['services'][7]['id'], 'g5_saas')
+        assert_equal([d['id'] for d in data['services']], [
+            'g6_iaas_2',
+            'g6_iaas_1',
+            'g6_paas_2',
+            'g6_paas_1',
+            'g6_scs',
+            'g6_saas',
+            'g5_paas',
+            'g5_saas',
+        ])
 
 
 class TestListServices(BaseApplicationTest):
