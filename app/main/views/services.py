@@ -45,8 +45,8 @@ def list_services():
         Service.framework.has(Framework.expired == false())
     ).order_by(
         asc(Service.framework_id),
-        asc(Service.data['lot'].cast(String)),
-        asc(Service.data['serviceName'].cast(String))
+        asc(Service.data['lot'].cast(String).label('data_lot')),
+        asc(Service.data['serviceName'].cast(String).label('data_servicename'))
     )
 
     if request.args.get('status'):
