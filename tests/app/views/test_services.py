@@ -25,7 +25,6 @@ class TestListServicesOrdering(BaseApplicationTest):
             now = datetime.now()
 
             g5_saas = self.load_example_listing("G5")
-            g6_scs = self.load_example_listing("G6-SCS")
             g5_paas = self.load_example_listing("G5")
             g6_paas_2 = self.load_example_listing("G6-PaaS")
             g6_iaas_1 = self.load_example_listing("G6-IaaS")
@@ -62,7 +61,6 @@ class TestListServicesOrdering(BaseApplicationTest):
             insert_service(g6_paas_1, "g6_paas_1", 1)
             insert_service(g6_paas_2, "g6_paas_2", 1)
             insert_service(g6_saas, "g6_saas", 1)
-            insert_service(g6_scs, "g6_scs", 1)
 
             db.session.commit()
 
@@ -75,7 +73,6 @@ class TestListServicesOrdering(BaseApplicationTest):
             'g6_iaas_1',
             'g6_paas_2',
             'g6_paas_1',
-            'g6_scs',
             'g6_saas',
             'g5_paas',
             'g5_saas',
