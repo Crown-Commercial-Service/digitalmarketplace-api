@@ -11,21 +11,17 @@ class TestGetSupplier(BaseApplicationTest):
         super(TestGetSupplier, self).setup()
 
         with self.app.app_context():
-            db.session.add(
-                Supplier(
-                    supplier_id=585274,
-                    name=u"Supplier 585274"
-                )
-            )
-            db.session.add(
-                ContactInformation(
-                    supplier_id=585274,
-                    contact_name=u"Liz",
-                    email=u"liz@royal.gov.uk",
-                    postcode=u"SW1A 1AA"
-                )
-            )
-            db.session.commit()
+            payload = self.load_example_listing("Supplier")
+            self.supplier = payload
+            self.supplier_id = payload['id']
+
+            response = self.client.put(
+                '/suppliers/{}'.format(self.supplier_id),
+                data=json.dumps({
+                    'suppliers': self.supplier
+                }),
+                content_type='application/json')
+            assert_equal(response.status_code, 201)
 
     def test_get_non_existent_supplier(self):
         response = self.client.get('/suppliers/100')
@@ -36,12 +32,42 @@ class TestGetSupplier(BaseApplicationTest):
         assert_equal(404, response.status_code)
 
     def test_get_supplier(self):
-        response = self.client.get('/suppliers/585274')
+        response = self.client.get('/suppliers/{}'.format(self.supplier_id))
 
         data = json.loads(response.get_data())
         assert_equal(200, response.status_code)
-        assert_equal(585274, data['suppliers']['id'])
-        assert_equal(u"Supplier 585274", data['suppliers']['name'])
+        assert_equal(self.supplier_id, data['suppliers']['id'])
+        assert_equal(self.supplier['name'], data['suppliers']['name'])
+
+    def test_supplier_clients_exist(self):
+        response = self.client.get('/suppliers/{}'.format(self.supplier_id))
+
+        data = json.loads(response.get_data())
+        assert_equal(200, response.status_code)
+        assert_in('clients', data['suppliers'].keys())
+        assert_equal(3, len(data['suppliers']['clients']))
+
+    def test_supplier_client_key_still_exists_even_without_clients(self):
+        # Insert a new supplier with a different id and no clients
+        with self.app.app_context():
+            new_payload = self.load_example_listing("Supplier")
+            new_payload['id'] = 111111
+            new_payload['clients'] = []
+
+            response = self.client.put(
+                '/suppliers/{}'.format(new_payload['id']),
+                data=json.dumps({
+                    'suppliers': new_payload
+                }),
+                content_type='application/json')
+            assert_equal(response.status_code, 201)
+
+        response = self.client.get('/suppliers/{}'.format(new_payload['id']))
+
+        data = json.loads(response.get_data())
+        assert_equal(200, response.status_code)
+        assert_in('clients', data['suppliers'].keys())
+        assert_equal(0, len(data['suppliers']['clients']))
 
 
 class TestListSuppliers(BaseApplicationTest):

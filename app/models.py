@@ -113,7 +113,8 @@ class Supplier(db.Model):
             # 'dunsNumber': self.duns_number,
             # 'eSourcingId': self.esourcing_id,
             'contactInformation': contact_information_list,
-            'links': links
+            'links': links,
+            'clients': self.clients
         }
 
         return filter_null_value_fields(serialized)
