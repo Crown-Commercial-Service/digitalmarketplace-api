@@ -6,13 +6,15 @@ from .. import main
 from ... import db
 from ... import search_api_client
 from ...models import ArchivedService, Service, Supplier, Framework
-from sqlalchemy.sql.expression import false
+from sqlalchemy import asc
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql.expression import false
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
 from ...utils import url_for, pagination_links, drop_foreign_fields, link, \
     json_has_matching_id, get_json_from_request, json_has_required_keys, \
     display_list
+from sqlalchemy.types import String
 
 
 @main.route('/')
@@ -41,6 +43,10 @@ def list_services():
 
     services = Service.query.filter(
         Service.framework.has(Framework.expired == false())
+    ).order_by(
+        asc(Service.framework_id),
+        asc(Service.data['lot'].cast(String).label('data_lot')),
+        asc(Service.data['serviceName'].cast(String).label('data_servicename'))
     )
 
     if request.args.get('status'):

@@ -18,6 +18,67 @@ def first_by_rel(rel, links):
             return link
 
 
+class TestListServicesOrdering(BaseApplicationTest):
+    def test_should_order_services_by_framework_lot_name(self):
+        with self.app.app_context():
+            self.app.config['DM_API_SERVICES_PAGE_SIZE'] = 10
+            now = datetime.now()
+
+            g5_saas = self.load_example_listing("G5")
+            g5_paas = self.load_example_listing("G5")
+            g6_paas_2 = self.load_example_listing("G6-PaaS")
+            g6_iaas_1 = self.load_example_listing("G6-IaaS")
+            g6_paas_1 = self.load_example_listing("G6-PaaS")
+            g6_saas = self.load_example_listing("G6-SaaS")
+            g6_iaas_2 = self.load_example_listing("G6-IaaS")
+
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+
+            def insert_service(listing, service_id, framework_id):
+                db.session.add(Service(service_id=service_id,
+                                       supplier_id=1,
+                                       updated_at=now,
+                                       status='published',
+                                       created_at=now,
+                                       updated_by="tests",
+                                       framework_id=framework_id,
+                                       updated_reason="test data",
+                                       data=listing))
+
+            # override certain fields to create ordering difference
+            g6_iaas_1['serviceName'] = "b service name"
+            g6_iaas_2['serviceName'] = "a service name"
+            g6_paas_1['serviceName'] = "b service name"
+            g6_paas_2['serviceName'] = "a service name"
+            g5_paas['lot'] = "PaaS"
+
+            insert_service(g5_paas, "g5_paas", 3)
+            insert_service(g5_saas, "g5_saas", 3)
+            insert_service(g6_iaas_1, "g6_iaas_1", 1)
+            insert_service(g6_iaas_2, "g6_iaas_2", 1)
+            insert_service(g6_paas_1, "g6_paas_1", 1)
+            insert_service(g6_paas_2, "g6_paas_2", 1)
+            insert_service(g6_saas, "g6_saas", 1)
+
+            db.session.commit()
+
+        response = self.client.get('/services')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal([d['id'] for d in data['services']], [
+            'g6_iaas_2',
+            'g6_iaas_1',
+            'g6_paas_2',
+            'g6_paas_1',
+            'g6_saas',
+            'g5_paas',
+            'g5_saas',
+        ])
+
+
 class TestListServices(BaseApplicationTest):
     def test_list_services_with_no_services(self):
         response = self.client.get('/services')
