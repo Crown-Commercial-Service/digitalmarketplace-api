@@ -768,7 +768,8 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
             search_api_client.index.assert_called_with(
                 "1234567890123456",
                 service.data,
-                "Supplier 1"
+                "Supplier 1",
+                "G-Cloud 6"
             )
 
     def test_should_not_index_on_service_on_expired_frameworks(self):
@@ -835,7 +836,8 @@ class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
             search_api_client.index.assert_called_with(
                 "1234567890123456",
                 service.data,
-                "Supplier 1"
+                "Supplier 1",
+                "G-Cloud 6"
             )
 
     def test_should_not_index_on_service_put_if_db_exception(self):
@@ -937,7 +939,8 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
             search_api_client.index.assert_called_with(
                 "1234567890123456",
                 service.data,
-                "Supplier 1"
+                "Supplier 1",
+                "G-Cloud 6"
             )
 
     def test_should_not_index_on_service_post_if_db_exception(self):

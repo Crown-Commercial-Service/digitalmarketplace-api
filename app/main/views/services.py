@@ -172,7 +172,8 @@ def update_service(service_id):
             search_api_client.index(
                 service_id,
                 service.data,
-                service.supplier.name)
+                service.supplier.name,
+                service.framework.name)
         return jsonify(message="done"), 200
     except IntegrityError as e:
         db.session.rollback()
@@ -236,7 +237,11 @@ def import_service(service_id):
     try:
         db.session.commit()
         if not framework.expired:
-            search_api_client.index(service_id, service.data, supplier.name)
+            search_api_client.index(
+                service_id,
+                service.data,
+                supplier.name,
+                framework.name)
     except IntegrityError as e:
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
@@ -249,8 +254,8 @@ def get_service(service_id):
     is_valid_service_id_or_400(service_id)
 
     service = Service.query.filter(
-        Service.service_id == service_id)\
-        .filter(Service.framework.has(Framework.expired == false()))\
+        Service.service_id == service_id) \
+        .filter(Service.framework.has(Framework.expired == false())) \
         .first_or_404()
 
     return jsonify(services=service.serialize())
@@ -324,8 +329,11 @@ def update_service_status(service_id, status):
 
     try:
         db.session.commit()
-        search_api_client.index(service_id, service.data,
-                                service.supplier.name)
+        search_api_client.index(
+            service_id,
+            service.data,
+            service.supplier.name,
+            service.framework.name)
         return jsonify(services=service.serialize()), 200
     except IntegrityError as e:
         db.session.rollback()
