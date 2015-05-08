@@ -168,17 +168,18 @@ def update_service(service_id):
 
     try:
         db.session.commit()
-        if not service.framework.expired:
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
+
+    if not service.framework.expired:
             search_api_client.index(
                 service_id,
                 service.data,
                 service.supplier.name,
                 service.framework.name)
-        return jsonify(message="done"), 200
-    except IntegrityError as e:
-        db.session.rollback()
-        abort(400, e.orig)
 
+    return jsonify(message="done"), 200
 
 @main.route('/services/<string:service_id>', methods=['PUT'])
 def import_service(service_id):
@@ -236,15 +237,16 @@ def import_service(service_id):
 
     try:
         db.session.commit()
-        if not framework.expired:
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+
+    if not framework.expired:
             search_api_client.index(
                 service_id,
                 service.data,
                 supplier.name,
                 framework.name)
-    except IntegrityError as e:
-        db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
 
     return "", 201
 
@@ -319,6 +321,7 @@ def update_service_status(service_id, status):
               )
 
     now = datetime.now()
+    prior_status = service.status
     service.status = status
     service.updated_at = now
     service.updated_by = update_json['updated_by']
@@ -329,12 +332,22 @@ def update_service_status(service_id, status):
 
     try:
         db.session.commit()
-        search_api_client.index(
-            service_id,
-            service.data,
-            service.supplier.name,
-            service.framework.name)
-        return jsonify(services=service.serialize()), 200
     except IntegrityError as e:
         db.session.rollback()
         abort(400, e.orig)
+
+    if prior_status != status:
+
+        # If it's being unpublished, delete it from the search api.
+        if prior_status == 'published':
+            search_api_client.delete(service_id)
+
+        # If it's being published, index in the search api.
+        if status == 'published':
+            search_api_client.index(
+                service_id,
+                service.data,
+                service.supplier.name,
+                service.framework.name)
+
+    return jsonify(services=service.serialize()), 200
