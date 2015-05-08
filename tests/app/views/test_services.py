@@ -76,7 +76,7 @@ class TestListServicesOrdering(BaseApplicationTest):
             'g6_saas',
             'g5_paas',
             'g5_saas',
-        ])
+            ])
 
 
 class TestListServices(BaseApplicationTest):
@@ -984,6 +984,185 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
 
             assert_equal(res.status_code, 200)
             assert_false(search_api_client.index.called)
+
+
+class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
+    def setup(self):
+        super(TestShouldCallSearchApiOnPostStatusUpdate, self).setup()
+        now = datetime.now()
+        self.services = {}
+
+        valid_statuses = [
+            'published',
+            'enabled',
+            'disabled'
+        ]
+
+        with self.app.app_context():
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+
+            for index, status in enumerate(valid_statuses):
+                payload = self.load_example_listing("G6-IaaS")
+
+                # give each service a different id.
+                new_id = int(payload['id']) + index
+                payload['id'] = "{}".format(new_id)
+
+                self.services[status] = payload
+
+                db.session.add(Service(service_id=self.services[status]['id'],
+                                       supplier_id=1,
+                                       updated_at=now,
+                                       status=status,
+                                       created_at=now,
+                                       updated_by="tests",
+                                       framework_id=1,
+                                       updated_reason="test data",
+                                       data=self.services[status]))
+
+            db.session.commit()
+            assert_equal(3, db.session.query(Service).count())
+
+    def _post_update_status(self, service_id, new_status):
+        return self.client.post(
+            '/services/{0}/status/{1}'.format(
+                service_id,
+                new_status
+            ),
+            data=json.dumps(
+                {'update_details': {
+                    'updated_by': 'joeblogs',
+                    'update_reason': 'Change status for unit test'}
+                 }),
+            content_type='application/json'
+        )
+
+    def test_should_index_on_service_status_changed_to_published(self):
+
+        old_status = 'enabled'
+        new_status = 'published'
+
+        search_api_client.index = Mock(return_value=True)
+        search_api_client.delete = Mock(return_value=True)
+
+        response = self._post_update_status(
+            self.services[old_status]['id'],
+            new_status
+        )
+
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+
+            service = Service.query.filter(
+                Service.service_id == self.services[old_status]['id']).first()
+
+            assert_equal(new_status, service.status)
+            search_api_client.index.assert_called_with(
+                service.service_id,
+                service.data,
+                service.supplier.name,
+                service.framework.name
+            )
+            assert_false(search_api_client.delete.called)
+
+    def test_should_not_index_on_service_status_was_already_published(self):
+
+        old_status = 'published'
+        new_status = 'published'
+
+        search_api_client.index = Mock(return_value=True)
+        search_api_client.delete = Mock(return_value=True)
+
+        response = self._post_update_status(
+            self.services[old_status]['id'],
+            new_status
+        )
+
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+
+            service = Service.query.filter(
+                Service.service_id == self.services[old_status]['id']).first()
+
+            assert_equal(new_status, service.status)
+            assert_false(search_api_client.index.called)
+            assert_false(search_api_client.delete.called)
+
+    def test_should_delete_on_update_service_status_to_not_published(self):
+
+        old_status = 'published'
+        new_status = 'enabled'
+
+        search_api_client.index = Mock(return_value=True)
+        search_api_client.delete = Mock(return_value=True)
+
+        response = self._post_update_status(
+            self.services[old_status]['id'],
+            new_status
+        )
+
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+
+            service = Service.query.filter(
+                Service.service_id == self.services[old_status]['id']).first()
+
+            assert_equal(new_status, service.status)
+            assert_false(search_api_client.index.called)
+            search_api_client.delete.assert_called_with(service.service_id)
+
+    def test_should_not_delete_on_service_status_was_never_published(self):
+        old_status = 'disabled'
+        new_status = 'enabled'
+
+        search_api_client.index = Mock(return_value=True)
+        search_api_client.delete = Mock(return_value=True)
+
+        response = self._post_update_status(
+            self.services[old_status]['id'],
+            new_status
+        )
+
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+
+            service = Service.query.filter(
+                Service.service_id == self.services[old_status]['id']).first()
+
+            assert_equal(new_status, service.status)
+            assert_false(search_api_client.index.called)
+            assert_false(search_api_client.delete.called)
+
+    def test_should_not_index_or_delete_if_db_exception(self):
+
+        old_status = 'published'
+        new_status = 'enabled'
+
+        search_api_client.index = Mock(return_value=True)
+        search_api_client.delete = Mock(return_value=True)
+
+        with self.app.app_context():
+
+            c = db.session.commit
+            db.session.commit = Mock(
+                side_effect=IntegrityError(
+                    'message', 'statement', 'params', 'orig'))
+
+            response = self._post_update_status(
+                self.services[old_status]['id'],
+                new_status
+            )
+
+            assert_equal(response.status_code, 400)
+            assert_equal(search_api_client.index.called, False)
+            assert_equal(search_api_client.delete.called, False)
+            db.session.commit = Mock(side_effect=c)
 
 
 class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):

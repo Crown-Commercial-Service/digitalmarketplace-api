@@ -181,6 +181,7 @@ def update_service(service_id):
 
     return jsonify(message="done"), 200
 
+
 @main.route('/services/<string:service_id>', methods=['PUT'])
 def import_service(service_id):
     is_valid_service_id_or_400(service_id)
