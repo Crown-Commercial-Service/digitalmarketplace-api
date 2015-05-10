@@ -93,7 +93,7 @@
     },
     "priceInterval": {
       "type": "string",
-      "pattern": "^(||Second|Minute|Hour|Day|Week|Month|Quarter|6 months|Year)$"
+      "pattern": "^(Second|Minute|Hour|Day|Week|Month|Quarter|6 months|Year)?$"
     },
     "priceString": {
       "type": "string"
