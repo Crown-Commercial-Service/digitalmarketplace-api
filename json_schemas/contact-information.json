@@ -1,5 +1,5 @@
 {
-  "id": "G6 Contact Information Schema",
+  "title": "G6 Contact Information Schema",
   "type": "object",
   "additionalProperties": false,
   "properties": {

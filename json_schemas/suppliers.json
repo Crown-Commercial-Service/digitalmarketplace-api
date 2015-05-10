@@ -1,5 +1,5 @@
 {
-  "id": "G6 Supplier Schema",
+  "title": "G6 Supplier Schema",
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
   "additionalProperties": false,

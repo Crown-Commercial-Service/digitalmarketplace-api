@@ -1,5 +1,5 @@
 {
-   "id": "G6 Submissions SCS Schema",
+   "title": "G6 Submissions SCS Schema",
    "$schema": "http://json-schema.org/schema#",
    "type": "object",
    "additionalProperties": false,

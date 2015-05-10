@@ -1,5 +1,5 @@
 {
-  "id": "API Updater Schema",
+  "title": "API Updater Schema",
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
   "additionalProperties": false,
