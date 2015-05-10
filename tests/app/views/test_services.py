@@ -864,6 +864,7 @@ class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
 
             assert_equal(search_api_client.index.called, False)
             db.session.commit = Mock(side_effect=c)
+            db.session.rollback()
 
     def test_should_not_index_on_service_on_expired_frameworks(self):
         with self.app.app_context():
