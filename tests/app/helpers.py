@@ -37,7 +37,6 @@ class BaseApplicationTest(object):
         self.app = create_app('test')
         self.client = self.app.test_client()
         self.setup_authorization()
-        self.setup_frameworks()
 
     def setup_authorization(self):
         """Set up bearer token and pass on all requests"""
@@ -50,17 +49,6 @@ class BaseApplicationTest(object):
 
     def do_not_provide_access_token(self):
         self.app.wsgi_app = self.app.wsgi_app.app
-
-    def setup_frameworks(self):
-        with self.app.app_context():
-            if Framework.query.count() == 0:
-                db.session.add(
-                    Framework(id=1, name="G-Cloud 6", expired=False))
-                db.session.add(
-                    Framework(id=2, name="G-Cloud 4", expired=True))
-                db.session.add(
-                    Framework(id=3, name="G-Cloud 5", expired=False))
-                db.session.commit()
 
     def setup_dummy_suppliers(self, n):
         with self.app.app_context():
@@ -145,7 +133,10 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             db.session.remove()
             for table in reversed(db.metadata.sorted_tables):
-                db.engine.execute(table.delete())
+                if table.name != "frameworks":
+                    db.engine.execute(table.delete())
+            Framework.query.filter(Framework.id >= 100).delete()
+            db.session.commit()
             db.get_engine(self.app).dispose()
 
     def load_example_listing(self, name):
