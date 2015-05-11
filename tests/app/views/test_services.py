@@ -6,8 +6,7 @@ from nose.tools import assert_equal, assert_in, assert_not_equal, \
 
 from app.models import Service, Supplier, ContactInformation, Framework
 import mock
-from mock import Mock
-from app import db, search_api_client
+from app import db
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
 from sqlalchemy.exc import IntegrityError
@@ -737,6 +736,7 @@ class TestPostService(BaseApplicationTest):
         assert_equal(response.status_code, 404)
 
 
+@mock.patch('app.main.views.services.search_api_client')
 class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
@@ -747,9 +747,9 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
 
             db.session.commit()
 
-    def test_should_index_on_service_put(self):
+    def test_should_index_on_service_put(self, search_api_client):
         with self.app.app_context():
-            search_api_client.index = Mock(return_value=True)
+            search_api_client.index.return_value = True
 
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
@@ -773,9 +773,11 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 "G-Cloud 6"
             )
 
-    def test_should_not_index_on_service_on_expired_frameworks(self):
+    def test_should_not_index_on_service_on_expired_frameworks(
+            self, search_api_client
+    ):
         with self.app.app_context():
-            search_api_client.index = Mock(return_value=True)
+            search_api_client.index.return_value = True
 
             payload = self.load_example_listing("G4")
             res = self.client.put(
@@ -795,6 +797,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
             assert_false(search_api_client.index.called)
 
 
+@mock.patch('app.main.views.services.search_api_client')
 class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPutToReplaceService, self).setup()
@@ -815,9 +818,9 @@ class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
                                    data=payload))
             db.session.commit()
 
-    def test_should_index_on_service_put(self):
+    def test_should_index_on_service_put(self, search_api_client):
         with self.app.app_context():
-            search_api_client.index = Mock(return_value=True)
+            search_api_client.index.return_value = True
 
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
@@ -841,13 +844,14 @@ class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
                 "G-Cloud 6"
             )
 
-    def test_should_not_index_on_service_put_if_db_exception(self):
+    @mock.patch('app.main.views.services.db.session.commit')
+    def test_should_not_index_on_service_put_if_db_exception(
+            self, search_api_client, db_session_commit
+    ):
         with self.app.app_context():
-            search_api_client.index = Mock(return_value=True)
-            c = db.session.commit
-            db.session.commit = Mock(
-                side_effect=IntegrityError(
-                    'message', 'statement', 'params', 'orig'))
+            search_api_client.index.return_value = True
+            db_session_commit.side_effect = IntegrityError(
+                'message', 'statement', 'params', 'orig')
 
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
@@ -864,12 +868,12 @@ class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(search_api_client.index.called, False)
-            db.session.commit = Mock(side_effect=c)
-            db.session.rollback()
 
-    def test_should_not_index_on_service_on_expired_frameworks(self):
+    def test_should_not_index_on_service_on_expired_frameworks(
+            self, search_api_client
+    ):
         with self.app.app_context():
-            search_api_client.index = Mock(return_value=True)
+            search_api_client.index.return_value = True
 
             payload = self.load_example_listing("G4")
             res = self.client.put(
@@ -889,6 +893,7 @@ class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
             assert_false(search_api_client.index.called)
 
 
+@mock.patch('app.main.views.services.search_api_client')
 class TestShouldCallSearchApiOnPost(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPost, self).setup()
@@ -919,9 +924,9 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                                    data=g4_payload))
             db.session.commit()
 
-    def test_should_index_on_service_post(self):
+    def test_should_index_on_service_post(self, search_api_client):
         with self.app.app_context():
-            search_api_client.index = Mock(return_value=True)
+            search_api_client.index.return_value = True
 
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
@@ -945,13 +950,14 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 "G-Cloud 6"
             )
 
-    def test_should_not_index_on_service_post_if_db_exception(self):
+    @mock.patch('app.main.views.services.db.session.commit')
+    def test_should_not_index_on_service_post_if_db_exception(
+            self, search_api_client, db_session_commit
+    ):
         with self.app.app_context():
-            search_api_client.index = Mock(return_value=True)
-            c = db.session.commit
-            db.session.commit = Mock(
-                side_effect=IntegrityError(
-                    'message', 'statement', 'params', 'orig'))
+            search_api_client.index.return_value = True
+            db_session_commit.side_effect = IntegrityError(
+                'message', 'statement', 'params', 'orig')
 
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
@@ -966,11 +972,12 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 ),
                 content_type='application/json')
             assert_equal(search_api_client.index.called, False)
-            db.session.commit = Mock(side_effect=c)
 
-    def test_should_not_index_on_service_on_expired_frameworks(self):
+    def test_should_not_index_on_service_on_expired_frameworks(
+            self, search_api_client
+    ):
         with self.app.app_context():
-            search_api_client.index = Mock(return_value=True)
+            search_api_client.index.return_value = True
 
             payload = self.load_example_listing("G4")
             res = self.client.post(
@@ -1156,9 +1163,10 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                                    data=payload))
             db.session.commit()
 
-    def test_add_a_new_service(self):
+    @mock.patch('app.main.views.services.search_api_client')
+    def test_add_a_new_service(self, search_api_client):
         with self.app.app_context():
-            search_api_client.index = Mock(return_value="bar")
+            search_api_client.index.return_value = "bar"
 
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
