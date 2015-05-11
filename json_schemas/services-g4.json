@@ -1,5 +1,5 @@
 {
-  "id": "G4 Services Schema",
+  "title": "G4 Services Schema",
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
   "additionalProperties": false,

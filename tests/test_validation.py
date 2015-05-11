@@ -36,7 +36,7 @@ def test_for_valid_service_id():
 def test_all_schemas_are_valid():
     for file_name in os.listdir('json_schemas'):
         file_path = 'json_schemas/%s' % file_name
-        if os.path.isfile(file_path):
+        if os.path.isfile(file_path) and file_path.endswith(".json"):
             yield check_schema_file, file_path
 
 
