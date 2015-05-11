@@ -331,11 +331,7 @@ def update_service_status(service_id, status):
     db.session.add(service)
     db.session.add(service_to_archive)
 
-    try:
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        abort(400, e.orig)
+    db.session.commit()
 
     if prior_status != status:
 
