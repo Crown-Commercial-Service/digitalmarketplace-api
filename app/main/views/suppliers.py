@@ -1,5 +1,6 @@
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import not_
 
 from .. import main
 from ... import db
@@ -11,7 +12,6 @@ from ...utils import pagination_links, drop_foreign_fields, \
 
 @main.route('/suppliers', methods=['GET'])
 def list_suppliers():
-
     try:
         page = int(request.args.get('page', 1))
     except ValueError:
@@ -22,9 +22,13 @@ def list_suppliers():
     suppliers = Supplier.query.order_by(Supplier.name)
 
     if prefix:
-        # case insensitive LIKE comparison for matching supplier names
-        suppliers = suppliers.filter(
-            Supplier.name.ilike(prefix + '%'))
+        if prefix == 'other':
+            suppliers = suppliers.filter(
+                Supplier.name.op('~')('^[^A-Za-z]'))
+        else:
+            # case insensitive LIKE comparison for matching supplier names
+            suppliers = suppliers.filter(
+                Supplier.name.ilike(prefix + '%'))
 
     suppliers = suppliers.paginate(
         page=page,
@@ -55,7 +59,6 @@ def get_supplier(supplier_id):
 # Route to insert new Suppliers, not update existing ones
 @main.route('/suppliers/<int:supplier_id>', methods=['PUT'])
 def import_supplier(supplier_id):
-
     supplier_data = get_json_from_request()
 
     json_has_required_keys(
@@ -107,7 +110,6 @@ def import_supplier(supplier_id):
     supplier.clients = supplier_data.get('clients', None)
 
     for contact_information_data in contact_informations_data:
-
         contact_information = ContactInformation()
 
         contact_information.contact_name = \

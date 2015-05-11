@@ -101,6 +101,24 @@ class TestListSuppliers(BaseApplicationTest):
             data['suppliers'][0]['name']
         )
 
+    def test_other_prefix_returns_non_alphanumeric_suppliers(self):
+        with self.app.app_context():
+            db.session.add(
+                Supplier(supplier_id=999, name=u"123 Supplier")
+            )
+            db.session.commit()
+
+            response = self.client.get('/suppliers?prefix=other')
+
+            data = json.loads(response.get_data())
+            assert_equal(200, response.status_code)
+            assert_equal(1, len(data['suppliers']))
+            assert_equal(999, data['suppliers'][0]['id'])
+            assert_equal(
+                u"123 Supplier",
+                data['suppliers'][0]['name']
+            )
+
     def test_query_string_prefix_returns_paginated_page_one(self):
         response = self.client.get('/suppliers?prefix=s')
         data = json.loads(response.get_data())
@@ -171,7 +189,6 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
             # Exact loop number is arbitrary
             for i in range(3):
-
                 response = self.put_import_supplier(payload)
 
                 assert_equal(response.status_code, 201)
