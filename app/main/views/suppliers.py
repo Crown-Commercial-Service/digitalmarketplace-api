@@ -24,7 +24,7 @@ def list_suppliers():
     if prefix:
         if prefix == 'other':
             suppliers = suppliers.filter(
-                Supplier.name.op('~')('^[^A-z]+'))
+                Supplier.name.op('~')('^[^A-Za-z]'))
         else:
             # case insensitive LIKE comparison for matching supplier names
             suppliers = suppliers.filter(
