@@ -1,6 +1,4 @@
 from __future__ import absolute_import
-from flask.ext.migrate import Migrate, MigrateCommand
-from flask.ext.script import Manager
 
 import os
 import json
@@ -9,11 +7,7 @@ from datetime import datetime
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Service, Supplier, ContactInformation
-
-from alembic.command import upgrade, downgrade
-from alembic.config import Config
-from sqlalchemy.exc import ProgrammingError
+from app.models import Service, Supplier, ContactInformation, Framework
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -37,27 +31,12 @@ class BaseApplicationTest(object):
         "scs": "G6-SCS.json"
     }
 
-    ALEMBIC_CONFIG = \
-        os.path.join(os.path.dirname(__file__),
-                     '../../migrations/alembic.ini')
-
     config = None
 
     def setup(self):
         self.app = create_app('test')
         self.client = self.app.test_client()
-
-        Migrate(self.app, db)
-        Manager(db, MigrateCommand)
-
-        """Applies all alembic migrations."""
-        self.config = Config(self.ALEMBIC_CONFIG)
-        self.config.set_main_option(
-            "script_location",
-            "migrations")
-
         self.setup_authorization()
-        self.apply_migrations()
 
     def setup_authorization(self):
         """Set up bearer token and pass on all requests"""
@@ -70,10 +49,6 @@ class BaseApplicationTest(object):
 
     def do_not_provide_access_token(self):
         self.app.wsgi_app = self.app.wsgi_app.app
-
-    def apply_migrations(self):
-        with self.app.app_context():
-            upgrade(self.config, 'head')
 
     def setup_dummy_suppliers(self, n):
         with self.app.app_context():
@@ -157,8 +132,11 @@ class BaseApplicationTest(object):
     def teardown_database(self):
         with self.app.app_context():
             db.session.remove()
-            db.drop_all()
-            db.engine.execute("drop table alembic_version")
+            for table in reversed(db.metadata.sorted_tables):
+                if table.name != "frameworks":
+                    db.engine.execute(table.delete())
+            Framework.query.filter(Framework.id >= 100).delete()
+            db.session.commit()
             db.get_engine(self.app).dispose()
 
     def load_example_listing(self, name):
