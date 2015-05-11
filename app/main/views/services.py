@@ -194,7 +194,7 @@ def import_service(service_id):
 
     service_data = drop_foreign_fields(
         json_payload['services'],
-        ['supplierName', 'links']
+        ['supplierName', 'links', 'frameworkName']
     )
     json_has_matching_id(service_data, service_id)
 
