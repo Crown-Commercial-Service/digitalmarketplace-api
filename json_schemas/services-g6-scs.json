@@ -8,6 +8,10 @@
       "type": "string",
       "pattern": "^([0-9]{16})$"
     },
+    "status": {
+      "type": "string",
+      "pattern": "^(disabled|enabled|published)$"
+    },
       "supplierId": {
          "type": "integer"
       },
