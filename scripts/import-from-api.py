@@ -13,10 +13,10 @@ Example:
     ./import.py --serial http://localhost:5000 myToken http://source-api token
 """
 from __future__ import print_function
+from six.moves import map
 import sys
 import json
 import getpass
-import itertools
 import multiprocessing
 from datetime import datetime
 
@@ -38,7 +38,8 @@ def request_services(api_url, api_access_token, page=1):
         for service in services_page['services']:
             yield service
 
-        page_url = filter(lambda l: l['rel'] == 'next', services_page['links'])
+        page_url = list(
+            filter(lambda l: l['rel'] == 'next', services_page['links']))
         if page_url:
             page_url = page_url[0]['href']
 
@@ -81,7 +82,7 @@ def do_import(base_url, access_token, source_api_base_url,
     print("Source API: {}".format(source_api_base_url))
 
     if serial:
-        mapper = itertools.imap
+        mapper = map
     else:
         pool = multiprocessing.Pool(10)
         mapper = pool.imap
@@ -96,7 +97,7 @@ def do_import(base_url, access_token, source_api_base_url,
         if response is None:
             print("ERROR: {} not imported".format(service.get('id')),
                   file=sys.stderr)
-        elif response.status_code / 100 != 2:
+        elif int(response.status_code / 100) != 2:
             print("ERROR: {} on {}".format(response.status_code,
                                            service.get('id')),
                   file=sys.stderr)
