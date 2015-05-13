@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from flask import json
 from nose.tools import assert_equal, assert_in, assert_not_equal, \
-    assert_almost_equal, assert_false, assert_is_not_none
+    assert_almost_equal, assert_false, assert_is_not_none, assert_not_in
 
 from app.models import Service, Supplier, ContactInformation, Framework
 import mock
@@ -645,7 +645,6 @@ class TestPostService(BaseApplicationTest):
                   response.get_data())
 
     def test_should_update_service_with_valid_statuses(self):
-
         # Statuses are defined in the Supplier model
         valid_statuses = [
             "published",
@@ -734,6 +733,33 @@ class TestPostService(BaseApplicationTest):
         )
 
         assert_equal(response.status_code, 404)
+
+    def test_json_postgres_field_should_not_include_column_fields(self):
+        non_json_fields = [
+            'supplierName', 'links', 'frameworkName', 'status', 'id']
+        with self.app.app_context():
+            response = self.client.get('/services/{}'.format(self.service_id))
+            data = json.loads(response.get_data())
+
+            response = self.client.post(
+                '/services/{}'.format(self.service_id),
+                data=json.dumps({
+                    'update_details': {
+                        'updated_by': 'joeblogs',
+                        'update_reason': 'whatevs',
+                    },
+                    'services': data['services'],
+                }),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+
+            service = Service.query.filter(
+                Service.service_id == self.service_id
+            ).first()
+
+            for key in non_json_fields:
+                assert_not_in(key, service.data)
 
 
 @mock.patch('app.main.views.services.search_api_client')
@@ -1162,6 +1188,32 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                                    updated_reason="test data",
                                    data=payload))
             db.session.commit()
+
+    def test_json_postgres_field_should_not_include_column_fields(self):
+        non_json_fields = [
+            'supplierName', 'links', 'frameworkName', 'status', 'id']
+        with self.app.app_context():
+            payload = self.load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+
+            response = self.client.put(
+                '/services/1234567890123456',
+                data=json.dumps({
+                    'update_details': {
+                        'updated_by': 'joeblogs',
+                        'update_reason': 'whateves'},
+                    'services': payload,
+                }),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 201)
+
+            service = Service.query.filter(
+                Service.service_id == "1234567890123456"
+            ).first()
+
+            for key in non_json_fields:
+                assert_not_in(key, service.data)
 
     @mock.patch('app.main.views.services.search_api_client')
     def test_add_a_new_service(self, search_api_client):
