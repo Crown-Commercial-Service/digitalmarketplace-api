@@ -14,10 +14,10 @@ def create_app(config_name):
     application = Flask(__name__)
     application.config['DM_ENVIRONMENT'] = config_name
     application.config.from_object(configs[config_name])
+    config.init_app(application)
 
     proxy_fix.init_app(application)
     logging.init_app(application)
-    config.init_app(application)
 
     bootstrap.init_app(application)
     db.init_app(application)

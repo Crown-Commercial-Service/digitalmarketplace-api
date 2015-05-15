@@ -6,6 +6,7 @@ class Config:
     ES_ENABLED = True
     ALLOW_EXPLORER = True
     AUTH_REQUIRED = True
+    DM_HTTP_PROTO = 'http'
 
     # Logging
     DM_LOG_LEVEL = 'DEBUG'
