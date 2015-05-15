@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import os
 
 from flask import json
 from nose.tools import assert_equal, assert_in, assert_not_equal, \
@@ -6,7 +7,7 @@ from nose.tools import assert_equal, assert_in, assert_not_equal, \
 
 from app.models import Service, Supplier, ContactInformation, Framework
 import mock
-from app import db
+from app import db, create_app
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
 from sqlalchemy.exc import IntegrityError
@@ -220,13 +221,22 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 404)
 
     def test_x_forwarded_proto(self):
-        self.setup_dummy_services_including_unpublished(1)
+        prev_environ = os.environ.get('DM_HTTP_PROTO')
+        os.environ['DM_HTTP_PROTO'] = 'https'
+        app = create_app('test')
 
-        response = self.client.get('/services',
-                                   headers={'X-Forwarded-Proto': 'https'})
-        data = json.loads(response.get_data())
+        with app.app_context():
+            client = app.test_client()
+            self.setup_authorization(app)
+            response = client.get('/')
+            data = json.loads(response.get_data())
 
-        assert data['services'][0]['links'][0]['href'].startswith('https://')
+        if prev_environ is None:
+            del os.environ['DM_HTTP_PROTO']
+        else:
+            os.environ['DM_HTTP_PROTO'] = prev_environ
+
+        assert data['links'][0]['href'].startswith('https://')
 
     def test_invalid_page_argument(self):
         response = self.client.get('/services?page=a')
