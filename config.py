@@ -38,6 +38,7 @@ class Development(Config):
 class Live(Config):
     DEBUG = False
     ALLOW_EXPLORER = False
+    DM_HTTP_PROTO = 'https'
 
 
 configs = {
