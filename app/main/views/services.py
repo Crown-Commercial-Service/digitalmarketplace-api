@@ -122,7 +122,6 @@ def list_archived_services_by_service_id():
 def update_service(service_id):
     """
         Update a service. Looks service up in DB, and updates the JSON listing.
-        Uses existing JSON Parse routines for validation
     """
 
     is_valid_service_id_or_400(service_id)
@@ -139,29 +138,16 @@ def update_service(service_id):
 
     update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
-    service_update = drop_foreign_fields(
-        json_payload['services'],
-        ['supplierName', 'links', 'frameworkName', 'status']
-    )
-    json_has_matching_id(service_update, service_id)
+    json_has_matching_id(json_payload['services'], service_id)
 
-    data = dict(service.data.items())
-    data.update(service_update)
-    if "id" in data:
-        # It is an old-style service JSON with an id field
-        data["id"] = str(data["id"])
-    else:
-        # It is a new service JSON with id removed from payload already
-        data["id"] = service_id
+    service.update_from_json(json_payload['services'],
+                             updated_by=update_json['updated_by'],
+                             updated_reason=update_json['update_reason'])
 
+    data = service.serialize()
+    data = drop_foreign_fields(data,
+                               ['supplierName', 'links', 'frameworkName'])
     detect_framework_or_400(data)
-
-    data = drop_foreign_fields(data, ['id'])
-    now = datetime.now()
-    service.data = data
-    service.updated_at = now
-    service.updated_by = update_json['updated_by']
-    service.updated_reason = update_json['update_reason']
 
     db.session.add(service)
     db.session.add(service_to_archive)
