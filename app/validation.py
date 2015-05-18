@@ -108,6 +108,16 @@ def validates_against_schema(validator_name, submitted_json):
 def reason_for_failure(submitted_json):
     response = []
     try:
+        get_validator('services-g4').validate(submitted_json)
+    except ValidationError as e1:
+        response.append('Not G4: %s' % e1.message)
+
+    try:
+        get_validator('services-g5').validate(submitted_json)
+    except ValidationError as e1:
+        response.append('Not G5: %s' % e1.message)
+
+    try:
         get_validator('services-g6-scs').validate(submitted_json)
     except ValidationError as e1:
         response.append('Not SCS: %s' % e1.message)
