@@ -134,10 +134,11 @@ def update_service(service_id):
 
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload,
-                           ["update_details", "services"])
+                           ['services', 'update_details'])
 
     update_json = json_payload['update_details']
     validate_updater_json_or_400(update_json)
+
     json_has_matching_id(json_payload['services'], service_id)
 
     service.update_from_json(json_payload['services'],
@@ -170,6 +171,11 @@ def update_service(service_id):
 
 @main.route('/services/<string:service_id>', methods=['PUT'])
 def import_service(service_id):
+    """Import services from legacy digital marketplace
+
+    This endpoint creates new services where we have an existing ID, it
+    should not be used as a model for how we add new services.
+    """
     is_valid_service_id_or_400(service_id)
 
     now = datetime.now()
@@ -178,44 +184,42 @@ def import_service(service_id):
     json_has_required_keys(json_payload,
                            ['services', 'update_details'])
 
+    update_json = json_payload['update_details']
+    validate_updater_json_or_400(update_json)
+
+    json_has_matching_id(json_payload['services'], service_id)
     service_data = drop_foreign_fields(
         json_payload['services'],
         ['supplierName', 'links', 'frameworkName']
     )
-    json_has_matching_id(service_data, service_id)
-
-    update_json = json_payload['update_details']
-    validate_updater_json_or_400(update_json)
 
     framework = detect_framework_or_400(service_data)
     service_data = drop_foreign_fields(service_data, ['id'])
 
-    service = Service.query.filter(Service.service_id == service_id).first()
+    service = Service.query.filter(
+        Service.service_id == service_id
+    ).first()
 
-    if service is None:
-        service = Service(service_id=service_id)
-        service.created_at = now
-        supplier = Supplier.query.filter(
-            Supplier.supplier_id == service_data['supplierId']).first()
-        if supplier is None:
-            abort(400,
-                  "Key (supplierId)=({}) is not present"
-                  .format(service_data['supplierId']))
-    else:
-        supplier = service.supplier
+    if service is not None:
+        abort(400, "Cannot update service by PUT")
+
+    supplier_id = service_data.pop('supplierId')
+    supplier = Supplier.query.filter(
+        Supplier.supplier_id == supplier_id
+    ).first()
+    if supplier is None:
+        abort(400, "Key (supplierId)=({}) is not present".format(supplier_id))
 
     framework = Framework.query.filter(
-        Framework.name == framework).first()
+        Framework.name == framework
+    ).first()
 
-    service.supplier_id = service_data['supplierId']
+    service = Service(service_id=service_id)
+    service.supplier_id = supplier.supplier_id
     service.framework_id = framework.id
     service.updated_at = now
     service.created_at = now
-    if 'status' in service_data:
-        service.status = service_data['status']
-        service_data.pop('status', None)
-    else:
-        service.status = 'published'
+    service.status = service_data.pop('status', 'published')
     service.updated_by = update_json['updated_by']
     service.updated_reason = update_json['update_reason']
     service.data = service_data

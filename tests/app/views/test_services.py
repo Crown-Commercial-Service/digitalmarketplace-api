@@ -377,9 +377,7 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             data = json.loads(response.get_data())
-            assert_equal(data['error'],
-                         "Invalid JSON must have '['update_details', "
-                         "'services']' key(s)")
+            assert_in('Invalid JSON', data['error'])
             assert_equal(response.status_code, 400)
 
     def test_no_content_type_causes_failure(self):
@@ -862,102 +860,6 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
 
 
 @mock.patch('app.main.views.services.search_api_client')
-class TestShouldCallSearchApiOnPutToReplaceService(BaseApplicationTest):
-    def setup(self):
-        super(TestShouldCallSearchApiOnPutToReplaceService, self).setup()
-        now = datetime.now()
-        payload = self.load_example_listing("G6-IaaS")
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
-            )
-            db.session.add(Service(service_id="1234567890123456",
-                                   supplier_id=1,
-                                   updated_at=now,
-                                   status='published',
-                                   created_at=now,
-                                   updated_by="tests",
-                                   framework_id=1,
-                                   updated_reason="test data",
-                                   data=payload))
-            db.session.commit()
-
-    def test_should_index_on_service_put(self, search_api_client):
-        with self.app.app_context():
-            search_api_client.index.return_value = True
-
-            payload = self.load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
-            self.client.put(
-                '/services/1234567890123456',
-                data=json.dumps(
-                    {
-                        'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            service = Service.query.filter(Service.service_id ==
-                                           "1234567890123456").first()
-            search_api_client.index.assert_called_with(
-                "1234567890123456",
-                service.data,
-                "Supplier 1",
-                "G-Cloud 6"
-            )
-
-    @mock.patch('app.main.views.services.db.session.commit')
-    def test_should_not_index_on_service_put_if_db_exception(
-            self, search_api_client, db_session_commit
-    ):
-        with self.app.app_context():
-            search_api_client.index.return_value = True
-            db_session_commit.side_effect = IntegrityError(
-                'message', 'statement', 'params', 'orig')
-
-            payload = self.load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
-            payload['supplierId'] = "1234567890123456"
-            self.client.put(
-                '/services/1234567890123456',
-                data=json.dumps(
-                    {
-                        'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            assert_equal(search_api_client.index.called, False)
-
-    def test_should_not_index_on_service_on_expired_frameworks(
-            self, search_api_client
-    ):
-        with self.app.app_context():
-            search_api_client.index.return_value = True
-
-            payload = self.load_example_listing("G4")
-            res = self.client.put(
-                '/services/' + payload["id"],
-                data=json.dumps(
-                    {
-                        'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            assert_equal(res.status_code, 201)
-            assert_is_not_none(Service.query.filter(
-                Service.service_id == payload["id"]).first())
-            assert_false(search_api_client.index.called)
-
-
-@mock.patch('app.main.views.services.search_api_client')
 class TestShouldCallSearchApiOnPost(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPost, self).setup()
@@ -1202,7 +1104,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
     def setup(self):
         super(TestPutService, self).setup()
-        now = datetime.now()
         payload = self.load_example_listing("G6-IaaS")
         del payload['id']
         with self.app.app_context():
@@ -1217,20 +1118,12 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                     postcode=u"SW1A 1AA"
                 )
             )
-            db.session.add(Service(service_id="1234567890123456",
-                                   supplier_id=1,
-                                   updated_at=now,
-                                   status='published',
-                                   created_at=now,
-                                   updated_by="tests",
-                                   framework_id=1,
-                                   updated_reason="test data",
-                                   data=payload))
             db.session.commit()
 
     def test_json_postgres_field_should_not_include_column_fields(self):
         non_json_fields = [
-            'supplierName', 'links', 'frameworkName', 'status', 'id']
+            'supplierName', 'links', 'frameworkName', 'status', 'id',
+            'supplierId']
         with self.app.app_context():
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
@@ -1275,6 +1168,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(response.status_code, 201)
             now = datetime.now()
             payload.pop('id', None)
+            payload.pop('supplierId', None)
             service = Service.query.filter(Service.service_id ==
                                            "1234567890123456").first()
             assert_equal(service.data, payload)
@@ -1302,36 +1196,13 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(response.status_code, 201)
             now = datetime.now()
             payload.pop('id', None)
+            payload.pop('supplierId', None)
             service = Service.query.filter(Service.service_id ==
                                            "4-disabled").first()
             assert_equal(service.status, 'disabled')
             assert_equal(service.data, payload)
             assert_equal(service.created_at, service.updated_at)
             assert_almost_equal(now, service.created_at,
-                                delta=timedelta(seconds=2))
-
-    def test_update_a_service(self):
-        with self.app.app_context():
-            payload = self.load_example_listing("G6-IaaS")
-            response = self.client.post(
-                '/services/1234567890123456',
-                data=json.dumps(
-                    {
-                        'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
-                        'services': payload}
-                ),
-                content_type='application/json')
-            assert_equal(response.status_code, 200)
-            assert_equal(json.loads(response.get_data()), {"message": "done"})
-            now = datetime.now()
-            payload.pop('id', None)
-            service = Service.query.filter(Service.service_id ==
-                                           "1234567890123456").first()
-            assert_equal(service.data, payload)
-            assert_not_equal(service.created_at, service.updated_at)
-            assert_almost_equal(now, service.updated_at,
                                 delta=timedelta(seconds=2))
 
     def test_when_service_payload_has_mismatched_id(self):
