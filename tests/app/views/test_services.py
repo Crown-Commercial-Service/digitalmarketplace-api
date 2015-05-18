@@ -771,6 +771,34 @@ class TestPostService(BaseApplicationTest):
             for key in non_json_fields:
                 assert_not_in(key, service.data)
 
+    def test_update_g5_service(self):
+        with self.app.app_context():
+            payload = self.load_example_listing('G5')
+
+            response = self.client.put('/services/{}'.format(payload['id']),
+                                       data=json.dumps({
+                                           'services': payload,
+                                           "update_details": {
+                                               "updated_by": "joeblogs",
+                                               "update_reason": "whatevs",
+                                           },
+                                       }),
+                                       content_type='application/json')
+            assert_equal(response.status_code, 201)
+
+            response = self.client.post('/services/{}'.format(payload['id']),
+                                        data=json.dumps({
+                                            "services": {
+                                                "serviceName": "fooo",
+                                            },
+                                            "update_details": {
+                                                "updated_by": "joeblogs",
+                                                "update_reason": "whatevs",
+                                            },
+                                        }),
+                                        content_type='application/json')
+            assert_equal(response.status_code, 200)
+
 
 @mock.patch('app.main.views.services.search_api_client')
 class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
@@ -1176,6 +1204,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         super(TestPutService, self).setup()
         now = datetime.now()
         payload = self.load_example_listing("G6-IaaS")
+        del payload['id']
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
