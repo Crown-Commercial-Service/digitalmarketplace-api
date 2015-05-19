@@ -66,7 +66,7 @@
     },
     "minimumContractPeriod": {
       "type": "string",
-      "pattern": "^(hour|day|month|year|other)$"
+      "pattern": "^([Hh]our|[Dd]ay|[Mm]onth|[Yy]ear|[Oo]ther)$"
     },
     "freeOption": {
       "type": "boolean"
@@ -85,6 +85,16 @@
     },
     "priceString": {
       "type": "string"
+    },
+    "priceMax": {
+      "type": ["number", "null"]
+    },
+    "priceInterval": {
+      "type": "string",
+      "pattern": "^(Second|Minute|Hour|Day|Week|Month|Quarter|6 months|Year)?$"
+    },
+    "vatIncluded": {
+      "type": "boolean"
     },
     "serviceTypes": {
       "oneOf": [
