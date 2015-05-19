@@ -652,6 +652,24 @@ class TestPostService(BaseApplicationTest):
         assert_in(b'id parameter must match id in data',
                   response.get_data())
 
+    def test_should_not_update_status_through_service_post(self):
+        response = self.client.post(
+            '/services/%s' % self.service_id,
+            data=json.dumps(
+                {'update_details': {
+                    'updated_by': 'joeblogs',
+                    'update_reason': 'whateves'},
+                 'services': {
+                     'status': 'enabled'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 200)
+
+        response = self.client.get('/services/%s' % self.service_id)
+        data = json.loads(response.get_data())
+
+        assert_equal(data['services']['status'], 'published')
+
     def test_should_update_service_with_valid_statuses(self):
         # Statuses are defined in the Supplier model
         valid_statuses = [

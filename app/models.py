@@ -228,11 +228,11 @@ class Service(db.Model):
 
     def update_from_json(self, data, updated_by=None, updated_reason=None):
         self.service_id = str(data.pop('id', self.service_id))
-        self.status = data.pop('status', self.status)
 
         data.pop('supplierId', None)
         data.pop('supplierName', None)
         data.pop('frameworkName', None)
+        data.pop('status', None)
         data.pop('links', None)
 
         current_data = dict(self.data.items())
