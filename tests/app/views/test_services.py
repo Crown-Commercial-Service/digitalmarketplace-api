@@ -11,6 +11,7 @@ from app import db, create_app
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
 from sqlalchemy.exc import IntegrityError
+from dmutils.apiclient import HTTPError
 
 
 def first_by_rel(rel, links):
@@ -876,6 +877,25 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 Service.service_id == payload["id"]).first())
             assert_false(search_api_client.index.called)
 
+    def test_should_ignore_index_error_on_service_put(self, search_api_client):
+        with self.app.app_context():
+            search_api_client.index.side_effect = HTTPError()
+
+            payload = self.load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+            response = self.client.put(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 201)
+
 
 @mock.patch('app.main.views.services.search_api_client')
 class TestShouldCallSearchApiOnPost(BaseApplicationTest):
@@ -977,6 +997,25 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
 
             assert_equal(res.status_code, 200)
             assert_false(search_api_client.index.called)
+
+    def test_should_ignore_index_error(self, search_api_client):
+        with self.app.app_context():
+            search_api_client.index.side_effect = HTTPError()
+
+            payload = self.load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+            response = self.client.post(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs',
+                            'update_reason': 'whateves'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
 
 
 class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
@@ -1114,6 +1153,42 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
             service_is_deleted=False,
             expected_status_code=200,
         )
+
+    @mock.patch('app.main.views.services.search_api_client')
+    def test_should_ignore_index_error(self, search_api_client):
+        search_api_client.index.side_effect = HTTPError()
+
+        response = self.client.post(
+            '/services/{0}/status/{1}'.format(
+                self.services['enabled']['id'],
+                'published'
+            ),
+            data=json.dumps(
+                {'update_details': {
+                    'updated_by': 'joeblogs',
+                    'update_reason': 'Change status for unit test'}}),
+            content_type='application/json'
+        )
+
+        assert_equal(response.status_code, 200)
+
+    @mock.patch('app.main.views.services.search_api_client')
+    def test_should_ignore_index_delete_error(self, search_api_client):
+        search_api_client.delete.side_effect = HTTPError()
+
+        response = self.client.post(
+            '/services/{0}/status/{1}'.format(
+                self.services['published']['id'],
+                'enabled'
+            ),
+            data=json.dumps(
+                {'update_details': {
+                    'updated_by': 'joeblogs',
+                    'update_reason': 'Change status for unit test'}}),
+            content_type='application/json'
+        )
+
+        assert_equal(response.status_code, 200)
 
 
 class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
