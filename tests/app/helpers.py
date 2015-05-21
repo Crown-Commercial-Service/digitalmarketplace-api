@@ -144,11 +144,6 @@ class BaseApplicationTest(object):
         with open(file_path) as f:
             return json.load(f)
 
-    def first_by_rel(self, rel, links):
-        for link in links:
-            if link['rel'] == rel:
-                return link
-
 
 class JSONUpdateTestMixin(object):
     """
