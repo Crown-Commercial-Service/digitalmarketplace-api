@@ -9,15 +9,13 @@
       "pattern": "^([0-9]{16})$"
     },
     "status": {
-      "type": "string",
-      "pattern": "^(disabled|enabled|published)$"
+      "enum": ["disabled", "enabled", "published"]
     },
     "supplierId": {
       "type": "integer"
     },
     "lot": {
-      "type": "string",
-      "pattern": "^PaaS$"
+      "enum": ["PaaS"]
     },
     "title": {
       "type": "string"
@@ -70,8 +68,7 @@
       "type": "string"
     },
     "minimumContractPeriod": {
-      "type": "string",
-      "pattern": "^(Hour|Day|Month|Year|Other)$"
+      "enum": ["Hour", "Day", "Month", "Year", "Other"]
     },
     "terminationCost": {
       "type": "boolean"
@@ -83,12 +80,10 @@
       "type": ["number", "null"]
     },
     "priceUnit": {
-      "type": "string",
-      "pattern": "^(Unit|Person|Licence|User|Device|Instance|Server|Virtual machine|Transaction|Megabyte|Gigabyte|Terabyte)$"
+      "enum": ["Unit", "Person", "Licence", "User", "Device", "Instance", "Server", "Virtual machine", "Transaction", "Megabyte", "Gigabyte", "Terabyte"]
     },
     "priceInterval": {
-      "type": "string",
-      "pattern": "^(||Second|Minute|Hour|Day|Week|Month|Quarter|6 months|Year)$"
+      "enum": ["", "Second", "Minute", "Hour", "Day", "Week", "Month", "Quarter", "6 months", "Year"]
     },
     "priceString": {
       "type": "string"
@@ -139,8 +134,7 @@
       "uniqueItems": true,
       "maxItems": 5,
       "items": {
-        "type": "string",
-        "pattern": "^(Service desk|Email|Phone|Live chat|Onsite)$"
+        "enum": ["Service desk", "Email", "Phone", "Live chat", "Onsite"]
       }
     },
     "serviceOnboarding": {
@@ -184,8 +178,7 @@
       "uniqueItems": true,
       "maxItems": 7,
       "items": {
-        "type": "string",
-        "pattern": "^(Internet|Public Services Network \\(PSN\\)|Government Secure intranet \\(GSi\\)|Police National Network \\(PNN\\)|New NHS Network \\(N3\\)|Joint Academic Network \\(JANET\\)|Other)$"
+        "enum": ["Internet", "Public Services Network (PSN)", "Government Secure intranet (GSi)", "Police National Network (PNN)", "New NHS Network (N3)", "Joint Academic Network (JANET)", "Other"]
       }
     },
     "supportedBrowsers": {
@@ -193,8 +186,7 @@
       "uniqueItems": true,
       "maxItems": 9,
       "items": {
-        "type": "string",
-        "pattern": "^(Internet Explorer 6|Internet Explorer 7|Internet Explorer 8|Internet Explorer 9|Internet Explorer 10\\+|Firefox|Chrome|Safari|Opera)$"
+        "enum": ["Internet Explorer 6", "Internet Explorer 7", "Internet Explorer 8", "Internet Explorer 9", "Internet Explorer 10+", "Firefox", "Chrome", "Safari", "Opera"]
       }
     },
     "offlineWorking": {
@@ -205,8 +197,7 @@
       "uniqueItems": true,
       "maxItems": 4,
       "items": {
-        "type": "string",
-        "pattern": "^(PC|Mac|Smartphone|Tablet)$"
+        "enum": ["PC", "Mac", "Smartphone", "Tablet"]
       }
     },
     "vendorCertifications": {
@@ -239,13 +230,11 @@
           "uniqueItems": true,
           "maxItems": 6,
           "items": {
-            "type": "string",
-            "pattern": "^(Encrypted PSN service|PSN service|CPA Foundation VPN Gateway|VPN using TLS, version 1\\.2 or later|VPN using legacy SSL or TLS|No encryption)$"
+            "enum": ["Encrypted PSN service", "PSN service", "CPA Foundation VPN Gateway", "VPN using TLS, version 1.2 or later", "VPN using legacy SSL or TLS", "No encryption"]
           }
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation", "CESG-assured components"]
         }
       }
     },
@@ -257,13 +246,11 @@
           "uniqueItems": true,
           "maxItems": 6,
           "items": {
-            "type": "string",
-            "pattern": "^(VPN using TLS, version 1\\.2 or later|VPN using legacy SSL or TLS|VLAN|Bonded fibre optic connections|Other network protection|No encryption)$"
+            "enum": ["VPN using TLS, version 1.2 or later", "VPN using legacy SSL or TLS", "VLAN", "Bonded fibre optic connections", "Other network protection", "No encryption"]
           }
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation", "CESG-assured components"]
         }
       }
     },
@@ -275,13 +262,11 @@
           "uniqueItems": true,
           "maxItems": 6,
           "items": {
-            "type": "string",
-            "pattern": "^(Encrypted PSN service|PSN service|CPA Foundation VPN Gateway|VPN using TLS, version 1\\.2 or later|VPN using legacy SSL or TLS|No encryption)$"
+            "enum": ["Encrypted PSN service", "PSN service", "CPA Foundation VPN Gateway", "VPN using TLS, version 1.2 or later", "VPN using legacy SSL or TLS", "No encryption"]
           }
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation", "CESG-assured components"]
         }
       }
     },
@@ -293,13 +278,11 @@
           "uniqueItems": true,
           "maxItems": 5,
           "items": {
-            "type": "string",
-            "pattern": "^(UK|EU|USA - Safe Harbor|Other countries with data protection treaties|Rest of world)$"
+            "enum": ["UK", "EU", "USA - Safe Harbor", "Other countries with data protection treaties", "Rest of world"]
           }
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
       }
     },
@@ -311,13 +294,11 @@
           "uniqueItems": true,
           "maxItems": 5,
           "items": {
-            "type": "string",
-            "pattern": "^(UK|EU|USA - Safe Harbor|Other countries with data protection treaties|Rest of world)$"
+            "enum": ["UK", "EU", "USA - Safe Harbor", "Other countries with data protection treaties", "Rest of world"]
           }
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
       }
     },
@@ -325,12 +306,10 @@
       "type": "object",
       "properties": {
         "value": {
-          "type": "string",
-          "pattern": "^(UK|EU|USA - Safe Harbor|Other countries with data protection treaties|Rest of world)$"
+          "enum": ["UK", "EU", "USA - Safe Harbor", "Other countries with data protection treaties", "Rest of world"]
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
       }
     },
@@ -341,8 +320,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
       }
     },
@@ -354,13 +332,11 @@
           "uniqueItems": true,
           "maxItems": 6,
           "items": {
-            "type": "string",
-            "pattern": "^(CPA Foundation-grade assured components|FIPS-assured encryption|Other encryption|Secure containers, racks or cages|Physical access control|No protection)$"
+            "enum": ["CPA Foundation-grade assured components", "FIPS-assured encryption", "Other encryption", "Secure containers, racks or cages", "Physical access control", "No protection"]
           }
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation", "CESG-assured components"]
         }
       }
     },
@@ -368,12 +344,10 @@
       "type": "object",
       "properties": {
         "value": {
-          "type": "string",
-          "pattern": "^(CPA Foundation-grade erasure product|CESG or CPNI-approved erasure process|Other secure erasure process|Other erasure process)$"
+          "enum": ["CPA Foundation-grade erasure product", "CESG or CPNI-approved erasure process", "Other secure erasure process", "Other erasure process"]
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation|CESG-assured components)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation", "CESG-assured components"]
         }
       }
     },
@@ -381,12 +355,10 @@
       "type": "object",
       "properties": {
         "value": {
-          "type": "string",
-          "pattern": "^(CESG-assured destruction service \\(CAS\\(T\\)\\)|CPA Foundation-assured product|CPNI-approved destruction service|BS EN 151713:2009-compliant destruction|CESG or CPNI-approved erasure process|Other secure erasure process|Other destruction/erasure process)$"
+          "enum": ["CESG-assured destruction service (CAS(T))", "CPA Foundation-assured product", "CPNI-approved destruction service", "BS EN 151713:2009-compliant destruction", "CESG or CPNI-approved erasure process", "Other secure erasure process", "Other destruction/erasure process"]
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion|Independent testing of implementation|CESG-assured components)$"
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion", "Independent testing of implementation", "CESG-assured components"]
         }
       }
     },
@@ -397,8 +369,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion|CESG-assured components)$"
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion", "CESG-assured components"]
         }
       }
     },
@@ -409,8 +380,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
       }
     },
@@ -421,8 +391,7 @@
           "type": "number"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
       }
     },
@@ -430,12 +399,10 @@
       "type": "object",
       "properties": {
         "value": {
-          "type": "string",
-          "pattern": "^(Public cloud|Community cloud|Private cloud|Hybrid cloud)$"
+          "enum": ["Public cloud", "Community cloud", "Private cloud", "Hybrid cloud"]
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
       }
     },
@@ -443,12 +410,10 @@
       "type": "object",
       "properties": {
         "value": {
-          "type": "string",
-          "pattern": "^(No other consumer|Only government consumers|A specific consumer group, eg Police, Defence or Health|Anyone - public)$"
+          "enum": ["No other consumer", "Only government consumers", "A specific consumer group, eg Police, Defence or Health", "Anyone - public"]
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Contractual commitment|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
       }
     },
@@ -459,8 +424,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent testing of implementation|Assurance of service design|CESG-assured components)$"
+          "enum": ["Service provider assertion", "Independent testing of implementation", "Assurance of service design", "CESG-assured components"]
         }
       }
     },
@@ -471,8 +435,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent testing of implementation|Assurance of service design|CESG-assured components)$"
+          "enum": ["Service provider assertion", "Independent testing of implementation", "Assurance of service design", "CESG-assured components"]
         }
       }
     },
@@ -483,8 +446,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -495,8 +457,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -507,8 +468,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -519,8 +479,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -531,8 +490,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -543,8 +501,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -555,8 +512,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -567,8 +523,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -579,8 +534,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -591,8 +545,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -603,8 +556,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -615,8 +567,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -628,13 +579,11 @@
           "uniqueItems": true,
           "maxItems": 4,
           "items": {
-            "type": "string",
-            "pattern": "^(Security clearance national vetting \\(SC\\)|Baseline personnel security standard \\(BPSS\\)|Background checks in accordance with BS7858:2012|Employment checks)$"
+            "enum": ["Security clearance national vetting (SC)", "Baseline personnel security standard (BPSS)", "Background checks in accordance with BS7858:2012", "Employment checks"]
           }
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -645,8 +594,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -657,8 +605,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -669,8 +616,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -681,8 +627,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -693,8 +638,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -705,8 +649,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -717,8 +660,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -729,8 +671,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -741,8 +682,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation"]
         }
       }
     },
@@ -753,8 +693,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation"]
         }
       }
     },
@@ -765,8 +704,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation"]
         }
       }
     },
@@ -777,8 +715,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation"]
         }
       }
     },
@@ -789,8 +726,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation"]
         }
       }
     },
@@ -802,13 +738,11 @@
           "uniqueItems": true,
           "maxItems": 7,
           "items": {
-            "type": "string",
-            "pattern": "^(Username and two-factor authentication|Username and TLS client certificate|Authentication federation|Limited access over dedicated link, enterprise or community network|Username and password|Username and strong password/passphrase enforcement|Other mechanism)$"
+            "enum": ["Username and two-factor authentication", "Username and TLS client certificate", "Authentication federation", "Limited access over dedicated link, enterprise or community network", "Username and password", "Username and strong password/passphrase enforcement", "Other mechanism"]
           }
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent testing of implementation|CESG-assured components)$"
+          "enum": ["Service provider assertion", "Independent testing of implementation", "CESG-assured components"]
         }
       }
     },
@@ -819,8 +753,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -832,13 +765,11 @@
           "uniqueItems": true,
           "maxItems": 4,
           "items": {
-            "type": "string",
-            "pattern": "^(Encrypted PSN service|PSN service|Private WAN|Internet)$"
+            "enum": ["Encrypted PSN service", "PSN service", "Private WAN", "Internet"]
           }
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -850,13 +781,11 @@
           "uniqueItems": true,
           "maxItems": 5,
           "items": {
-            "type": "string",
-            "pattern": "^(Dedicated devices on a segregated network|Dedicated devices for community service management|Dedicated devices for multiple community service management|Service management via bastion hosts|Direct service management)$"
+            "enum": ["Dedicated devices on a segregated network", "Dedicated devices for community service management", "Dedicated devices for multiple community service management", "Service management via bastion hosts", "Direct service management"]
           }
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -864,12 +793,10 @@
       "type": "object",
       "properties": {
         "value": {
-          "type": "string",
-          "pattern": "^(None|Data made available|Data made available by negotiation)$"
+          "enum": ["None", "Data made available", "Data made available by negotiation"]
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -881,13 +808,11 @@
           "uniqueItems": true,
           "maxItems": 3,
           "items": {
-            "type": "string",
-            "pattern": "^(Corporate/enterprise devices|Partner devices|Unknown devices)$"
+            "enum": ["Corporate/enterprise devices", "Partner devices", "Unknown devices"]
           }
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -898,8 +823,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion|Independent testing of implementation)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation"]
         }
       }
     },
@@ -910,8 +834,7 @@
           "type": "boolean"
         },
         "assurance": {
-          "type": "string",
-          "pattern": "^(Service provider assertion|Independent validation of assertion)$"
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     }

@@ -9,15 +9,13 @@
       "pattern": "^([0-9]{16})$"
     },
     "status": {
-      "type": "string",
-      "pattern": "^(disabled|enabled|published)$"
+      "enum": ["disabled", "enabled", "published"]
     },
       "supplierId": {
          "type": "integer"
       },
       "lot": {
-         "type": "string",
-         "pattern": "^SCS$"
+         "enum": ["SCS"]
       },
       "title": {
          "type": "string"
@@ -41,8 +39,7 @@
          "uniqueItems": true,
          "maxItems": 5,
          "items": {
-            "type": "string",
-            "pattern": "^(Implementation|Ongoing support|Planning|Testing|Training)$"
+            "enum": ["Implementation", "Ongoing support", "Planning", "Testing", "Training"]
          }
       },
       "serviceName": {
@@ -79,8 +76,7 @@
          "type": "string"
       },
       "minimumContractPeriod": {
-         "type": "string",
-         "pattern": "^(Hour|Day|Month|Year|Other)$"
+         "enum": ["Hour", "Day", "Month", "Year", "Other"]
       },
       "terminationCost": {
          "type": "boolean"
@@ -92,12 +88,10 @@
          "type": ["number", "null"]
       },
       "priceUnit": {
-         "type": "string",
-         "pattern": "^(Unit|Person|Licence|User|Device|Instance|Server|Virtual machine|Transaction|Megabyte|Gigabyte|Terabyte)$"
+         "enum": ["Unit", "Person", "Licence", "User", "Device", "Instance", "Server", "Virtual machine", "Transaction", "Megabyte", "Gigabyte", "Terabyte"]
       },
       "priceInterval": {
-         "type": "string",
-        "pattern": "^(||Second|Minute|Hour|Day|Week|Month|Quarter|6 months|Year)$"
+         "enum": ["", "Second", "Minute", "Hour", "Day", "Week", "Month", "Quarter", "6 months", "Year"]
       },
       "priceString": {
          "type": "string"
@@ -139,8 +133,7 @@
          "uniqueItems": true,
          "maxItems": 5,
          "items": {
-            "type": "string",
-            "pattern": "^(Service desk|Email|Phone|Live chat|Onsite)$"
+            "enum": ["Service desk", "Email", "Phone", "Live chat", "Onsite"]
          }
       },
       "vendorCertifications": {

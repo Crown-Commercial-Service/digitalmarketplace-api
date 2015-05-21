@@ -19,8 +19,7 @@
       "minLength": 10
     },
     "role": {
-      "type": "string",
-      "pattern": "^(buyer|supplier|admin)$"
+      "enum": ["buyer", "supplier", "admin"]
     },
     "supplierId": {
       "type": "integer"

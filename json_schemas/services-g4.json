@@ -9,15 +9,13 @@
       "pattern": "^4\\-.*"
     },
     "status": {
-      "type": "string",
-      "pattern": "^(disabled|enabled|published)$"
+      "enum": ["disabled", "enabled", "published"]
     },
     "supplierId": {
       "type": "integer"
     },
     "lot": {
-      "type": "string",
-      "pattern": "^(SaaS|PaaS|IaaS|SCS|missing)$"
+      "enum": ["SaaS", "PaaS", "IaaS", "SCS", "missing"]
     },
     "title": {
       "type": "string"
@@ -65,8 +63,7 @@
       }
     },
     "minimumContractPeriod": {
-      "type": "string",
-      "pattern": "^(hour|day|month|year|other)$"
+      "enum": ["hour", "day", "month", "year", "other"]
     },
     "freeOption": {
       "type": "boolean"
@@ -94,8 +91,7 @@
           "uniqueItems": true,
           "maxItems": 25,
           "items": {
-            "type": "string",
-            "pattern": "^(Accessibility|Agile Tools|Analytics|Antispam / CAPTCHA|Asset Management|Content Management Systems \\(CMS\\)|Customer Relationship Management \\(CRM\\)|Data Visualisation|EDRM / Collaboration|Email|End User Device \\(EUD\\)|Enterprise Resource Planning|Forms|Gamification|Geographic Search|Identity|Learning Management Systems \\(LMS\\)|Office Productivity|Polls/Surveys|Search|Service Monitoring|Simulation & Training|Un-listed|User Alerts)$"
+            "enum": ["Accessibility", "Agile Tools", "Analytics", "Antispam / CAPTCHA", "Asset Management", "Content Management Systems (CMS)", "Customer Relationship Management (CRM)", "Data Visualisation", "EDRM / Collaboration", "Email", "End User Device (EUD)", "Enterprise Resource Planning", "Forms", "Gamification", "Geographic Search", "Identity", "Learning Management Systems (LMS)", "Office Productivity", "Polls/Surveys", "Search", "Service Monitoring", "Simulation & Training", "Un-listed", "User Alerts"]
           }
         },
         {
@@ -104,8 +100,7 @@
           "uniqueItems": true,
           "maxItems": 25,
           "items": {
-            "type": "string",
-            "pattern": "^(Accounting and finance|Business intelligence and analytics|Collaboration|Customer relationship management \\(CRM\\)|Creative and design|Data management|Electronic document and records management \\(EDRM\\)|Energy and environment|Healthcare|Human resources and employee management|IT management|Legal|Libraries|Marketing|Operations management|Project management and planning|Sales|Schools and education|Security|Software development tools|Telecoms|Transport and logistics)$"
+            "enum": ["Accounting and finance", "Business intelligence and analytics", "Collaboration", "Customer relationship management (CRM)", "Creative and design", "Data management", "Electronic document and records management (EDRM)", "Energy and environment", "Healthcare", "Human resources and employee management", "IT management", "Legal", "Libraries", "Marketing", "Operations management", "Project management and planning", "Sales", "Schools and education", "Security", "Software development tools", "Telecoms", "Transport and logistics"]
           }
         },
         {
@@ -114,8 +109,7 @@
           "uniqueItems": true,
           "maxItems": 25,
           "items": {
-            "type": "string",
-            "pattern": "^(Application Deployment|Components)$"
+            "enum": ["Application Deployment", "Components"]
           }
         },
         {
@@ -124,8 +118,7 @@
           "uniqueItems": true,
           "maxItems": 25,
           "items": {
-            "type": "string",
-            "pattern": "^(Compute|Content Delivery Network \\(CDN\\)|Storage|Other)$"
+            "enum": ["Compute", "Content Delivery Network (CDN)", "Storage", "Other"]
           }
         },
         {
@@ -134,8 +127,7 @@
           "uniqueItems": true,
           "maxItems": 25,
           "items": {
-            "type": "string",
-            "pattern": "^(Business Analysis|Deployment|Design and Development|Design Authority|Enterprise Architecture|Helpdesk|Onboarding services|Project Management, Programme Management and Governance|Project Specification and Selection|Service Integration and Management Services \\(SIAM\\)|Service Management|Software Support|Specialist Cloud Services|Transition Management|User Management)$"
+            "enum": ["Business Analysis", "Deployment", "Design and Development", "Design Authority", "Enterprise Architecture", "Helpdesk", "Onboarding services", "Project Management, Programme Management and Governance", "Project Specification and Selection", "Service Integration and Management Services (SIAM)", "Service Management", "Software Support", "Specialist Cloud Services", "Transition Management", "User Management"]
              
           }
         },
@@ -145,8 +137,7 @@
           "uniqueItems": true,
           "maxItems": 25,
           "items": {
-            "type": "string",
-            "pattern": "^(Implementation|Ongoing Support|Planning|Testing|Training)$"
+            "enum": ["Implementation", "Ongoing Support", "Planning", "Testing", "Training"]
           }
         }
       ]
@@ -159,8 +150,7 @@
       "uniqueItems": true,
       "maxItems": 7,
       "items": {
-        "type": "string",
-        "pattern": "^(Internet|Public Services Network \\(PSN\\)|Government Secure intranet \\(GSi\\)|Police National Network \\(PNN\\)|New NHS Network \\(N3\\)|Joint Academic Network \\(JANET\\)|Other)$"
+        "enum": ["Internet", "Public Services Network (PSN)", "Government Secure intranet (GSi)", "Police National Network (PNN)", "New NHS Network (N3)", "Joint Academic Network (JANET)", "Other"]
       }
     },
     "apiAccess": {
