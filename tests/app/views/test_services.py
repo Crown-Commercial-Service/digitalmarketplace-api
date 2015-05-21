@@ -230,7 +230,7 @@ class TestListServices(BaseApplicationTest):
         else:
             os.environ['DM_HTTP_PROTO'] = prev_environ
 
-        assert data['links'][0]['href'].startswith('https://')
+        assert data['links']['services.list'].startswith('https://')
 
     def test_invalid_page_argument(self):
         response = self.client.get('/services?page=a')
