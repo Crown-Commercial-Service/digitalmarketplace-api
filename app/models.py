@@ -95,12 +95,9 @@ class Supplier(db.Model):
     clients = db.Column(JSON)
 
     def serialize(self):
-        links = [
-            link(
-                "self",
-                url_for(".get_supplier", supplier_id=self.supplier_id)
-            )
-        ]
+        links = link(
+            "self", url_for(".get_supplier", supplier_id=self.supplier_id)
+        )
 
         contact_information_list = []
         for contact_information_instance in self.contact_information:
@@ -217,12 +214,9 @@ class Service(db.Model):
             'status': self.status
         })
 
-        data['links'] = [
-            link(
-                "self",
-                url_for(".get_service", service_id=data['id'])
-            )
-        ]
+        data['links'] = link(
+            "self", url_for(".get_service", service_id=data['id'])
+        )
 
         return data
 
@@ -301,12 +295,9 @@ class ArchivedService(db.Model):
             'supplierName': self.supplier.name,
         })
 
-        data['links'] = [
-            link(
-                "self",
-                url_for(".get_service", service_id=data['id'])
-            )
-        ]
+        data['links'] = link(
+            "self", url_for(".get_service", service_id=data['id'])
+        )
 
         return data
 
