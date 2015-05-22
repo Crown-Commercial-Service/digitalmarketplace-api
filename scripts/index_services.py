@@ -38,7 +38,7 @@ def request_services(api_url, api_access_token, page=1):
         for service in services_page['services']:
             yield service
 
-        if list(filter(lambda l: l['rel'] == 'next', services_page['links'])):
+        if list(filter(lambda l: l == 'next', services_page['links'])):
             page += 1
         else:
             break

@@ -39,7 +39,7 @@ def request_services(api_url, api_access_token, page=1):
             yield service
 
         page_url = list(
-            filter(lambda l: l['rel'] == 'next', services_page['links']))
+            filter(lambda l: l == 'next', services_page['links']))
         if page_url:
             page_url = page_url[0]['href']
 

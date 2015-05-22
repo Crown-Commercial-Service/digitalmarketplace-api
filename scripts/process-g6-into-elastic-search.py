@@ -384,7 +384,7 @@ def request_services(endpoint, token):
         for service in data["services"]:
             yield service
 
-            page_url = filter(lambda l: l['rel'] == 'next', data['links'])
+            page_url = filter(lambda l: l == 'next', data['links'])
             if page_url:
                 page_url = page_url[0]['href']
 
