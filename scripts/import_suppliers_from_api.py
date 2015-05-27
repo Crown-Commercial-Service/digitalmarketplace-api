@@ -7,6 +7,8 @@ Usage:
                                 [options]
 
     --serial        Do not run in parallel (useful for debugging)
+    --users=<PASS>  Create user accounts for each supplier and set the
+                    passwords to PASS
 
 Example:
     ./import_suppliers_from_api.py http://api myToken http://source-api token
@@ -59,20 +61,41 @@ def print_progress(counter, start_time):
 
 
 class SupplierUpdater(object):
-    def __init__(self, endpoint, access_token):
+    def __init__(self, endpoint, access_token, user_password=None):
         self.endpoint = endpoint
         self.access_token = access_token
+        self.user_password = user_password
 
     def __call__(self, supplier):
         client = apiclient.DataAPIClient(self.endpoint, self.access_token)
         try:
             client.create_supplier(supplier['id'], self.clean_data(supplier))
-            return True
         except apiclient.APIError as e:
             print("ERROR: {}. {} not imported".format(e.message,
                                                       supplier.get('id')),
                   file=sys.stderr)
             return False
+
+        if not self.user_password:
+            return True
+
+        try:
+            client.create_user({
+                'role': 'supplier',
+                'emailAddress': 'supplier-{}@user.dmdev'.format(
+                    supplier['id']
+                ),
+                'password': self.user_password,
+                'name': supplier['name'],
+                'supplierId': supplier['id'],
+            })
+        except apiclient.APIError as e:
+            if e.status_code != 409:
+                print("ERROR: {}. Could not create user account for {}".format(
+                    e.message, supplier.get('id')), file=sys.stderr)
+                return False
+
+        return True
 
     def clean_data(self, supplier):
         for field in supplier:
@@ -90,7 +113,7 @@ class SupplierUpdater(object):
 
 
 def do_index(api_url, api_access_token, source_api_url,
-             source_api_access_token, serial):
+             source_api_access_token, serial, users):
     print("Data API URL: {}".format(api_url))
     print("Source Data API URL: {}".format(source_api_url))
 
@@ -101,7 +124,7 @@ def do_index(api_url, api_access_token, source_api_url,
         pool = multiprocessing.Pool(10)
         mapper = pool.imap
 
-    indexer = SupplierUpdater(api_url, api_access_token)
+    indexer = SupplierUpdater(api_url, api_access_token, user_password=users)
 
     counter = 0
     start_time = datetime.now()
@@ -133,6 +156,7 @@ if __name__ == "__main__":
         source_api_url=arguments['<source_api_endpoint>'],
         source_api_access_token=arguments['<source_api_access_token>'],
         serial=arguments['--serial'],
+        users=arguments['--users'],
     )
 
     if not ok:
