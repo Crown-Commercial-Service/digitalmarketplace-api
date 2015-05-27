@@ -6,15 +6,18 @@ from .. import main
 from ... import db
 from ... import search_api_client
 from ...models import ArchivedService, Service, Supplier, Framework
+
 from sqlalchemy import asc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import false
 from ...validation import detect_framework_or_400, \
     validate_updater_json_or_400, is_valid_service_id_or_400
-from ...utils import url_for, pagination_links, drop_foreign_fields, link, \
+from ...utils import url_for, pagination_links, drop_foreign_fields, \
     json_has_matching_id, get_json_from_request, json_has_required_keys, \
     display_list
 from sqlalchemy.types import String
+
+from dmutils import apiclient
 
 
 @main.route('/')
@@ -160,11 +163,16 @@ def update_service(service_id):
         abort(400, e.orig)
 
     if not service.framework.expired:
+        try:
             search_api_client.index(
                 service_id,
                 service.data,
                 service.supplier.name,
                 service.framework.name)
+        except apiclient.HTTPError as e:
+            current_app.logger.warning(
+                'Failed to add {} to search index: {}'.format(
+                    service_id, e.message))
 
     return jsonify(message="done"), 200
 
@@ -233,11 +241,16 @@ def import_service(service_id):
         abort(400, "Database Error: {0}".format(e))
 
     if not framework.expired:
+        try:
             search_api_client.index(
                 service_id,
                 service.data,
                 supplier.name,
                 framework.name)
+        except apiclient.HTTPError as e:
+            current_app.logger.warning(
+                'Failed to add {} to search index: {}'.format(
+                    service_id, e.message))
 
     return "", 201
 
@@ -304,7 +317,7 @@ def update_service_status(service_id, status):
 
     if status not in valid_statuses:
         valid_statuses_single_quotes = display_list(
-            ["\'{}\'".format(status) for status in valid_statuses]
+            ["\'{}\'".format(vstatus) for vstatus in valid_statuses]
         )
         abort(400, "\'{0}\' is not a valid status. "
                    "Valid statuses are {1}"
@@ -327,14 +340,24 @@ def update_service_status(service_id, status):
 
         # If it's being unpublished, delete it from the search api.
         if prior_status == 'published':
-            search_api_client.delete(service_id)
+            try:
+                search_api_client.delete(service_id)
+            except apiclient.HTTPError as e:
+                current_app.logger.warning(
+                    'Failed to delete {} from search index: {}'.format(
+                        service_id, e.message))
 
         # If it's being published, index in the search api.
         if status == 'published':
-            search_api_client.index(
-                service_id,
-                service.data,
-                service.supplier.name,
-                service.framework.name)
+            try:
+                search_api_client.index(
+                    service_id,
+                    service.data,
+                    service.supplier.name,
+                    service.framework.name)
+            except apiclient.HTTPError as e:
+                current_app.logger.warning(
+                    'Failed to add {} to search index: {}'.format(
+                        service_id, e.message))
 
     return jsonify(services=service.serialize()), 200

@@ -15,6 +15,7 @@ from __future__ import print_function
 from six.moves import map
 import sys
 import multiprocessing
+from itertools import islice
 from datetime import datetime
 
 from docopt import docopt
@@ -29,11 +30,7 @@ def request_services(api_url, api_access_token, page=1):
     )
 
     while page:
-        try:
-            services_page = data_client.find_services(page=page)
-        except apiclient.APIError as e:
-            print('API request failed: {}'.format(e.message), file=sys.stderr)
-            return
+        services_page = data_client.find_services(page=page)
 
         for service in services_page['services']:
             yield service
@@ -68,10 +65,12 @@ class ServiceIndexer(object):
                     service['frameworkName'])
             else:
                 client.delete(service['id'])
+            return True
         except apiclient.APIError as e:
             print("ERROR: {}. {} not indexed".format(e.message,
                                                      service.get('id')),
                   file=sys.stderr)
+            return False
 
 
 def do_index(search_api_url, search_api_access_token, data_api_url,
@@ -80,6 +79,7 @@ def do_index(search_api_url, search_api_access_token, data_api_url,
     print("Data API URL: {}".format(data_api_url))
 
     if serial:
+        pool = None
         mapper = map
     else:
         pool = multiprocessing.Pool(10)
@@ -89,19 +89,35 @@ def do_index(search_api_url, search_api_access_token, data_api_url,
 
     counter = 0
     start_time = datetime.now()
-    for _ in mapper(indexer, request_services(data_api_url,
-                                              data_api_access_token)):
-        counter += 1
-        print_progress(counter, start_time)
+    status = True
+
+    iter_services = request_services(data_api_url, data_api_access_token)
+    services = True
+    while services:
+        try:
+            services = list(islice(iter_services, 0, 100))
+        except apiclient.APIError as e:
+            print('API request failed: {}'.format(e.message), file=sys.stderr)
+            return False
+
+        for result in mapper(indexer, services):
+            counter += 1
+            status = status and result
+            print_progress(counter, start_time)
+
+    return status
 
     print_progress(counter, start_time)
 
 if __name__ == "__main__":
     arguments = docopt(__doc__)
-    do_index(
+    ok = do_index(
         search_api_url=arguments['<search_endpoint>'],
         search_api_access_token=arguments['<search_access_token>'],
         data_api_url=arguments['<api_endpoint>'],
         data_api_access_token=arguments['<api_access_token>'],
         serial=arguments['--serial'],
     )
+
+    if not ok:
+        sys.exit(1)
