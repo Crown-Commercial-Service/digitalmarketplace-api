@@ -67,6 +67,7 @@ def import_supplier(supplier_id):
     )
 
     supplier_data = supplier_data['suppliers']
+    supplier_data = drop_foreign_fields(supplier_data, ['links'])
 
     json_has_required_keys(
         supplier_data,
