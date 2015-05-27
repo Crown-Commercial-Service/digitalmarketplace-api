@@ -142,4 +142,4 @@ def import_supplier(supplier_id):
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
-    return "", 201
+    return jsonify(suppliers=supplier.serialize()), 201
