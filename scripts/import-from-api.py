@@ -34,14 +34,9 @@ def request_services(api_url, api_access_token, page=1):
                 'Authorization': 'Bearer {}'.format(api_access_token),
             }
         ).json()
-
         for service in services_page['services']:
             yield service
-
-        page_url = list(
-            filter(lambda l: l == 'next', services_page['links']))
-        if page_url:
-            page_url = page_url[0]['href']
+        page_url = services_page['links'].get('next')
 
 
 def print_progress(counter, start_time):
