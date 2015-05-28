@@ -23,16 +23,11 @@ from dmutils import apiclient
 @main.route('/')
 def index():
     """Entry point for the API, show the resources that are available."""
-    return jsonify(links=[
-        {
-            "rel": "services.list",
-            "href": url_for('.list_services', _external=True),
-        },
-        {
-            "rel": "suppliers.list",
-            "href": url_for('.list_suppliers', _external=True),
-        },
-    ]), 200
+    return jsonify(links={
+        "services.list": url_for('.list_services', _external=True),
+        "suppliers.list": url_for('.list_suppliers', _external=True)
+        }
+    ), 200
 
 
 @main.route('/services', methods=['GET'])

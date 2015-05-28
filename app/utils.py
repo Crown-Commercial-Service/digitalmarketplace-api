@@ -4,10 +4,7 @@ from flask import abort, request
 
 def link(rel, href):
     if href is not None:
-        return {
-            "rel": rel,
-            "href": href,
-            }
+        return {rel: href}
 
 
 def url_for(*args, **kwargs):
@@ -16,14 +13,20 @@ def url_for(*args, **kwargs):
 
 
 def pagination_links(pagination, endpoint, args):
-    return [
-        link(rel, url_for(endpoint,
-                          **dict(list(args.items()) +
-                                 list({'page': page}.items()))))
-        for rel, page in [('next', pagination.next_num),
-                          ('prev', pagination.prev_num)]
-        if 0 < page <= pagination.pages
-    ]
+    links = dict()
+    if pagination.has_prev:
+        links['prev'] = url_for(endpoint,
+                                **dict(list(args.items()) +
+                                       list({'page': pagination.prev_num}
+                                            .items()
+                                            )))
+    if pagination.has_next:
+        links['next'] = url_for(endpoint,
+                                **dict(list(args.items()) +
+                                       list({'page': pagination.next_num}
+                                            .items()
+                                            )))
+    return links
 
 
 def get_json_from_request():

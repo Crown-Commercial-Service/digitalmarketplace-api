@@ -14,12 +14,6 @@ from sqlalchemy.exc import IntegrityError
 from dmutils.apiclient import HTTPError
 
 
-def first_by_rel(rel, links):
-    for link in links:
-        if link['rel'] == rel:
-            return link
-
-
 class TestListServicesOrdering(BaseApplicationTest):
     def test_should_order_services_by_framework_lot_name(self):
         with self.app.app_context():
@@ -195,8 +189,8 @@ class TestListServices(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 5)
-        next_link = self.first_by_rel('next', data['links'])
-        assert_in('page=2', next_link['href'])
+        next_link = data['links']['next']
+        assert_in('page=2', next_link)
 
     def test_paginated_list_services_page_two(self):
         self.setup_dummy_services_including_unpublished(7)
@@ -206,8 +200,8 @@ class TestListServices(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 4)
-        prev_link = self.first_by_rel('prev', data['links'])
-        assert_in('page=1', prev_link['href'])
+        prev_link = data['links']['prev']
+        assert_in('page=1', prev_link)
 
     def test_paginated_list_services_page_out_of_range(self):
         self.setup_dummy_services_including_unpublished(10)
@@ -237,7 +231,7 @@ class TestListServices(BaseApplicationTest):
         else:
             os.environ['DM_HTTP_PROTO'] = prev_environ
 
-        assert data['links'][0]['href'].startswith('https://')
+        assert data['links']['services.list'].startswith('https://')
 
     def test_invalid_page_argument(self):
         response = self.client.get('/services?page=a')
@@ -301,9 +295,9 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services?supplier_id=1&page=1')
         data = json.loads(response.get_data())
 
-        next_link = self.first_by_rel('next', data['links'])
-        assert_in('page=2', next_link['href'])
-        assert_in('supplier_id=1', next_link['href'])
+        next_link = data['links']['next']
+        assert_in('page=2', next_link)
+        assert_in('supplier_id=1', next_link)
 
     def test_unknown_supplier_id(self):
         self.setup_dummy_services_including_unpublished(15)

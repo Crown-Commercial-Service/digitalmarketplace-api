@@ -125,8 +125,8 @@ class TestListSuppliers(BaseApplicationTest):
 
         assert_equal(200, response.status_code)
         assert_equal(5, len(data['suppliers']))
-        next_link = self.first_by_rel('next', data['links'])
-        assert_in('page=2', next_link['href'])
+        next_link = data['links']['next']
+        assert_in('page=2', next_link)
 
     def test_query_string_prefix_returns_paginated_page_two(self):
         response = self.client.get('/suppliers?prefix=s&page=2')
@@ -134,8 +134,8 @@ class TestListSuppliers(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
         assert_equal(len(data['suppliers']), 2)
-        prev_link = self.first_by_rel('prev', data['links'])
-        assert_in('page=1', prev_link['href'])
+        prev_link = data['links']['prev']
+        assert_in('page=1', prev_link)
 
     def test_query_string_prefix_page_out_of_range(self):
         response = self.client.get('/suppliers?prefix=s&page=10')
