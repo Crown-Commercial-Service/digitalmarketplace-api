@@ -27,8 +27,8 @@ from dmutils import apiclient
 
 
 CLEAN_FIELDS = {
-    'email': 'supplier@example.com',
-    'phoneNumber': '0000000000'
+    'email': 'supplier-{}@user.dmdev',
+    'phoneNumber': '00000{}'
 
 }
 
@@ -69,7 +69,8 @@ class SupplierUpdater(object):
     def __call__(self, supplier):
         client = apiclient.DataAPIClient(self.endpoint, self.access_token)
         try:
-            client.create_supplier(supplier['id'], self.clean_data(supplier))
+            client.create_supplier(supplier['id'],
+                                   self.clean_data(supplier, supplier['id']))
         except apiclient.APIError as e:
             print("ERROR: {}. {} not imported".format(e.message,
                                                       supplier.get('id')),
@@ -82,7 +83,7 @@ class SupplierUpdater(object):
         try:
             client.create_user({
                 'role': 'supplier',
-                'emailAddress': 'supplier-{}@user.dmdev'.format(
+                'emailAddress': CLEAN_FIELDS['email'].format(
                     supplier['id']
                 ),
                 'password': self.user_password,
@@ -97,15 +98,16 @@ class SupplierUpdater(object):
 
         return True
 
-    def clean_data(self, supplier):
+    def clean_data(self, supplier, *format_data):
         for field in supplier:
             if field in CLEAN_FIELDS:
-                supplier[field] = CLEAN_FIELDS[field]
+                supplier[field] = CLEAN_FIELDS[field].format(*format_data)
             elif isinstance(supplier[field], dict):
-                supplier[field] = self.clean_data(supplier[field].copy())
+                supplier[field] = self.clean_data(supplier[field].copy(),
+                                                  *format_data)
             elif isinstance(supplier[field], list):
                 supplier[field] = [
-                    self.clean_data(item.copy())
+                    self.clean_data(item.copy(), *format_data)
                     if isinstance(item, dict) else item
                     for item in supplier[field]
                 ]
