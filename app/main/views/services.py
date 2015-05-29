@@ -247,7 +247,7 @@ def import_service(service_id):
                 'Failed to add {} to search index: {}'.format(
                     service_id, e.message))
 
-    return "", 201
+    return jsonify(services=service.serialize()), 201
 
 
 @main.route('/services/<string:service_id>', methods=['GET'])
