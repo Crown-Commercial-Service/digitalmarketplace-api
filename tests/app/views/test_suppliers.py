@@ -435,3 +435,130 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         }})
 
         assert_equal(response.status_code, 400)
+
+
+class TestUpdateContactInformation(BaseApplicationTest):
+    def setup(self):
+        super(TestUpdateContactInformation, self).setup()
+
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            self.supplier = payload
+            self.supplier_id = payload['id']
+
+            response = self.client.put(
+                '/suppliers/{}'.format(self.supplier_id),
+                data=json.dumps({'suppliers': self.supplier}),
+                content_type='application/json')
+            supplier = json.loads(response.get_data())['suppliers']
+            self.contact_id = supplier['contactInformation'][0]['id']
+
+    def update_request(self, data):
+        return self.client.post(
+            '/suppliers/123456/contact-information/{}'.format(self.contact_id),
+            data=json.dumps(data),
+            content_type='application/json',
+        )
+
+    def test_empty_update(self):
+        response = self.update_request({'contactInformation': {}})
+        assert_equal(response.status_code, 200)
+
+    def test_simple_field_update(self):
+        response = self.update_request({'contactInformation': {
+            'city': "New City"
+        }})
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+            contact = ContactInformation.query.filter(
+                ContactInformation.id == self.contact_id
+            ).first()
+
+            assert_equal(contact.city, "New City")
+
+    def test_update_response_matches_payload(self):
+        payload = self.load_example_listing("Supplier")
+        response = self.update_request({'contactInformation': {
+            'city': "New City"
+        }})
+        assert_equal(response.status_code, 200)
+
+        payload = payload['contactInformation'][0]
+        payload.update({'city': 'New City'})
+        contact = json.loads(response.get_data())['contactInformation']
+        contact.pop('id')
+
+        assert_equal(contact, payload)
+
+    def test_update_all_fields(self):
+        response = self.update_request({'contactInformation': {
+            "contactName": "New Value",
+            "phoneNumber": "New Value",
+            "email": "new-value@example.com",
+            "website": "example.com",
+            "address1": "New Value",
+            "address2": "New Value",
+            "city": "New Value",
+            "country": "New Value",
+            "postcode": "New Value",
+        }})
+
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+            contact = ContactInformation.query.filter(
+                ContactInformation.id == self.contact_id
+            ).first()
+
+        assert_equal(contact.contact_name, "New Value")
+        assert_equal(contact.phone_number, "New Value")
+        assert_equal(contact.email, "new-value@example.com")
+        assert_equal(contact.website, "example.com")
+        assert_equal(contact.address1, "New Value")
+        assert_equal(contact.address2, "New Value")
+        assert_equal(contact.city, "New Value")
+        assert_equal(contact.country, "New Value")
+        assert_equal(contact.postcode, "New Value")
+
+    def test_supplier_json_id_does_not_match_oiginal_id(self):
+        response = self.update_request({'contactInformation': {
+            'supplierId': 234567,
+            'city': "New City"
+        }})
+
+        assert_equal(response.status_code, 400)
+
+    def test_json_id_does_not_match_oiginal_id(self):
+        response = self.update_request({'contactInformation': {
+            'id': 2,
+            'city': "New City"
+        }})
+
+        assert_equal(response.status_code, 400)
+
+    def test_update_missing_supplier(self):
+        response = self.client.post(
+            '/suppliers/234567/contact-information/%s' % self.contact_id,
+            data=json.dumps({'contactInformation': {}}),
+            content_type='application/json',
+        )
+
+        assert_equal(response.status_code, 404)
+
+    def test_update_missing_contact_information(self):
+        response = self.client.post(
+            '/suppliers/123456/contact-information/100000',
+            data=json.dumps({'contactInformation': {}}),
+            content_type='application/json',
+        )
+
+        assert_equal(response.status_code, 404)
+
+    def test_update_with_unexpected_keys(self):
+        response = self.update_request({'contactInformation': {
+            'new_key': "value",
+            'city': "New City"
+        }})
+
+        assert_equal(response.status_code, 400)
