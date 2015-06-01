@@ -118,6 +118,15 @@ class Supplier(db.Model):
 
         return filter_null_value_fields(serialized)
 
+    def update(self, data):
+        self.name = data.get('name')
+        self.description = data.get('description')
+        self.duns_number = data.get('dunsNumber')
+        self.esourcing_id = data.get('eSourcingId')
+        self.clients = data.get('clients')
+
+        return self
+
 
 class User(db.Model):
     __tablename__ = 'users'
