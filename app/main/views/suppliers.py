@@ -1,11 +1,13 @@
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import not_
 
 from .. import main
 from ... import db
 from ...models import Supplier, ContactInformation
-from ...validation import validate_supplier_json_or_400
+from ...validation import (
+    validate_supplier_json_or_400,
+    validate_contact_information_json_or_400
+)
 from ...utils import pagination_links, drop_foreign_fields, \
     get_json_from_request, json_has_required_keys, json_has_matching_id
 
@@ -175,3 +177,42 @@ def update_supplier(supplier_id):
         abort(400, "Database Error: {0}".format(e))
 
     return jsonify(suppliers=supplier.serialize())
+
+
+@main.route(
+    '/suppliers/<int:supplier_id>/contact-information/<int:contact_id>',
+    methods=['POST'])
+def update_contact_information(supplier_id, contact_id):
+    request_data = get_json_from_request()
+
+    contact = ContactInformation.query.filter(
+        ContactInformation.id == contact_id,
+        ContactInformation.supplier_id == supplier_id,
+    ).first()
+
+    if contact is None:
+        abort(404, "contact_id '%d' not found" % contact_id)
+
+    json_has_required_keys(request_data, ['contactInformation'])
+
+    contact_data = contact.serialize()
+    contact_data.update(request_data['contactInformation'])
+    contact_data = drop_foreign_fields(
+        contact_data,
+        ['links']
+    )
+
+    validate_contact_information_json_or_400(contact_data)
+    json_has_matching_id(contact_data, contact_id)
+
+    contact.update(contact_data)
+
+    db.session.add(contact)
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+
+    return jsonify(contactInformation=contact.serialize())
