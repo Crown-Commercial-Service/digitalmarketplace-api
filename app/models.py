@@ -54,6 +54,7 @@ class ContactInformation(db.Model):
         # Should there be links for the associated service(s) / supplier?
 
         serialized = {
+            'id': self.id,
             'contactName': self.contact_name,
             'phoneNumber': self.phone_number,
             'email': self.email,
