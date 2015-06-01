@@ -46,8 +46,10 @@ def get_validator(schema_name):
 
 
 def validate_updater_json_or_400(submitted_json):
-    if not validates_against_schema('services-update', submitted_json):
-        abort(400, "JSON was not a valid format")
+    try:
+        get_validator('services-update').validate(submitted_json)
+    except ValidationError as e1:
+        abort(400, "JSON validation error: {}".format(e1.message))
 
 
 def validate_user_json_or_400(submitted_json):
