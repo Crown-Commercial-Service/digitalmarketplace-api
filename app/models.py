@@ -50,6 +50,19 @@ class ContactInformation(db.Model):
     postcode = db.Column(db.String, index=False,
                          unique=False, nullable=False)
 
+    def update_from_json(self, data):
+        self.contact_name = data.get("contactName")
+        self.phone_number = data.get("phoneNumber")
+        self.email = data.get("email")
+        self.website = data.get("website")
+        self.address1 = data.get("address1")
+        self.address2 = data.get("address2")
+        self.city = data.get("city")
+        self.country = data.get("country")
+        self.postcode = data.get("postcode")
+
+        return self
+
     def serialize(self):
         # Should there be links for the associated service(s) / supplier?
 
