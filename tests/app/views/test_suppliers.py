@@ -321,3 +321,117 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         for item in ['bad-email-99', 'is not a']:
             assert_in(item,
                       json.loads(response.get_data())['error'])
+
+
+class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
+    method = "post"
+    endpoint = "/suppliers/123456"
+
+    def setup(self):
+        super(TestUpdateSupplier, self).setup()
+
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            self.supplier = payload
+            self.supplier_id = payload['id']
+
+            self.client.put('/suppliers/{}'.format(self.supplier_id),
+                            data=json.dumps({'suppliers': self.supplier}),
+                            content_type='application/json')
+
+    def update_request(self, data):
+        return self.client.post(
+            self.endpoint,
+            data=json.dumps(data),
+            content_type='application/json',
+        )
+
+    def test_empty_update_supplier(self):
+        response = self.update_request({'suppliers': {}})
+        assert_equal(response.status_code, 200)
+
+    def test_name_update(self):
+        response = self.update_request({'suppliers': {'name': "New Name"}})
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+            assert_equal(supplier.name, "New Name")
+
+    def test_update_response_matches_payload(self):
+        payload = self.load_example_listing("Supplier")
+        response = self.update_request({'suppliers': {'name': "New Name"}})
+        assert_equal(response.status_code, 200)
+
+        payload.update({'name': 'New Name'})
+        supplier = json.loads(response.get_data())['suppliers']
+
+        payload.pop('contactInformation')
+        supplier.pop('contactInformation')
+        supplier.pop('links')
+
+        assert_equal(supplier, payload)
+
+    def test_update_all_fields(self):
+        response = self.update_request({'suppliers': {
+            'name': "New Name",
+            'description': "New Description",
+            'dunsNumber': "010101",
+            'eSourcingId': "010101",
+            'clients': ["Client1", "Client2"]
+        }})
+
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+        assert_equal(supplier.name, 'New Name')
+        assert_equal(supplier.description, "New Description")
+        assert_equal(supplier.duns_number, "010101")
+        assert_equal(supplier.esourcing_id, "010101")
+        assert_equal(supplier.clients, ["Client1", "Client2"])
+
+    def test_supplier_json_id_does_not_match_oiginal_id(self):
+        response = self.update_request({'suppliers': {
+            'id': 234567,
+            'name': "New Name"
+        }})
+
+        assert_equal(response.status_code, 400)
+
+    def test_update_missing_supplier(self):
+        response = self.client.post(
+            '/suppliers/234567',
+            data=json.dumps({'suppliers': {}}),
+            content_type='application/json',
+        )
+
+        assert_equal(response.status_code, 404)
+
+    def test_links_and_contact_information_are_ignored(self):
+        response = self.update_request({'suppliers': {
+            'name': "New Name",
+            'contactInformation': []
+        }, 'links': []})
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(supplier.contact_information), 2)
+
+    def test_update_with_unexpected_keys(self):
+        response = self.update_request({'suppliers': {
+            'new_key': "value",
+            'name': "New Name"
+        }})
+
+        assert_equal(response.status_code, 400)

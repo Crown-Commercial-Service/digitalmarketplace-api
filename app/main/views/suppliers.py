@@ -139,3 +139,39 @@ def import_supplier(supplier_id):
         abort(400, "Database Error: {0}".format(e))
 
     return jsonify(suppliers=supplier.serialize()), 201
+
+
+@main.route('/suppliers/<int:supplier_id>', methods=['POST'])
+def update_supplier(supplier_id):
+    request_data = get_json_from_request()
+
+    supplier = Supplier.query.filter(
+        Supplier.supplier_id == supplier_id
+    ).first()
+
+    if supplier is None:
+        abort(404, "supplier_id '%d' not found" % supplier_id)
+
+    json_has_required_keys(request_data, ['suppliers'])
+
+    supplier_data = supplier.serialize()
+    supplier_data.update(request_data['suppliers'])
+    supplier_data = drop_foreign_fields(
+        supplier_data,
+        ['links', 'contactInformation']
+    )
+
+    validate_supplier_json_or_400(supplier_data)
+    json_has_matching_id(supplier_data, supplier_id)
+
+    supplier.update_from_json(supplier_data)
+
+    db.session.add(supplier)
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+
+    return jsonify(suppliers=supplier.serialize())
