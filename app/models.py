@@ -109,8 +109,8 @@ class Supplier(db.Model):
             'id': self.supplier_id,
             'name': self.name,
             'description': self.description,
-            # 'dunsNumber': self.duns_number,
-            # 'eSourcingId': self.esourcing_id,
+            'dunsNumber': self.duns_number,
+            'eSourcingId': self.esourcing_id,
             'contactInformation': contact_information_list,
             'links': links,
             'clients': self.clients
