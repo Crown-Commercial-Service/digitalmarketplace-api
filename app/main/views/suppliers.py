@@ -104,11 +104,7 @@ def import_supplier(supplier_id):
         for contact in supplier.contact_information:
             db.session.delete(contact)
 
-    supplier.name = supplier_data.get('name', None)
-    supplier.description = supplier_data.get('description', None)
-    supplier.duns_number = supplier_data.get('dunsNumber', None)
-    supplier.esourcing_id = supplier_data.get('eSourcingId', None)
-    supplier.clients = supplier_data.get('clients', None)
+    supplier.update_from_json(supplier_data)
 
     for contact_information_data in contact_informations_data:
         contact_information = ContactInformation()
