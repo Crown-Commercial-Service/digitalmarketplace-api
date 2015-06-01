@@ -22,3 +22,4 @@ c8bce0740af   -  add 'supplier_id', 'created_at' and 'updated_at'
 10_adding_supplier_to_user_table - add 'supplier_id' to users table
 20_adding_json_index_to_services - add JSON index for services order_by
 30_add_versioning_to_suppliers - add versioning tables from SQLAlchemy-Continuum
+40_add_activity_model - creates tables used by ActivityPlugin
