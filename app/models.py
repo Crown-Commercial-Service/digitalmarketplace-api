@@ -1,9 +1,13 @@
 from datetime import datetime
 
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy_continuum import make_versioned
 
 from . import db
 from .utils import link, url_for
+
+
+make_versioned(options={}, plugins=[], user_cls=None)
 
 
 class Framework(db.Model):
@@ -17,6 +21,7 @@ class Framework(db.Model):
 
 class ContactInformation(db.Model):
     __tablename__ = 'contact_information'
+    __versioned__ = {}
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -84,6 +89,7 @@ class ContactInformation(db.Model):
 
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
+    __versioned__ = {}
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -329,3 +335,5 @@ def filter_null_value_fields(obj):
     return dict(
         filter(lambda x: x[1] is not None, obj.items())
     )
+
+db.configure_mappers()
