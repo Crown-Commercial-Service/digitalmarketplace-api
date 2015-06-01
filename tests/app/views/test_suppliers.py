@@ -1,8 +1,9 @@
+import mock
 from flask import json
 from nose.tools import assert_equal, assert_in
 
 from app import db
-from app.models import Supplier, ContactInformation
+from app.models import Supplier, ContactInformation, Activity
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 
 
@@ -562,3 +563,96 @@ class TestUpdateContactInformation(BaseApplicationTest):
         }})
 
         assert_equal(response.status_code, 400)
+
+
+class TestSupplierAudit(BaseApplicationTest, JSONUpdateTestMixin):
+    method = "post"
+    endpoint = "/suppliers/123456"
+
+    def setup(self):
+        super(TestSupplierAudit, self).setup()
+
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            self.supplier = payload
+            self.supplier_id = payload['id']
+
+            self.client.put('/suppliers/{}'.format(self.supplier_id),
+                            data=json.dumps({'suppliers': self.supplier}),
+                            content_type='application/json')
+
+    def update_request(self, data):
+        return self.client.post(
+            self.endpoint,
+            data=json.dumps(data),
+            content_type='application/json',
+        )
+
+    def test_update_creates_version(self):
+        self.update_request({'suppliers': {'name': "New Name"}})
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+            assert_equal(supplier.versions[-1].changeset,
+                         {'name': [mock.ANY, 'New Name']})
+
+    def test_update_creates_activity_record(self):
+        self.update_request({'suppliers': {'name': "New Name"}})
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+            audit = Activity.query.filter(Activity.object == supplier).first()
+
+            assert_equal(audit.object, supplier)
+
+    def test_activity_record_is_versioned_when_supplier_changes(self):
+        self.update_request({'suppliers': {'name': "New Name"}})
+        self.update_request({'suppliers': {'name': "New New Name"}})
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+            audit = Activity.query.filter(Activity.object == supplier).first()
+
+            assert_equal(audit.object.name, "New New Name")
+            assert_equal(audit.object_version.name, "New Name")
+
+    def test_changing_contact_details_doesnt_create_supplier_version(self):
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+            assert_equal(len(list(supplier.versions)), 1)
+
+            contact = supplier.contact_information[0]
+            contact.city = 'New City'
+            db.session.add(contact)
+            db.session.commit()
+
+            assert_equal(len(list(supplier.versions)), 1)
+
+    def test_changing_supplier_creates_contact_information_version(self):
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+            contact = supplier.contact_information[0]
+
+            assert_equal(len(list(supplier.versions)), 1)
+            assert_equal(len(list(contact.versions)), 1)
+
+            supplier.name = 'New Name'
+            db.session.add(supplier)
+            db.session.commit()
+
+            assert_equal(len(list(supplier.versions)), 2)
+            assert_equal(len(list(contact.versions)), 1)
