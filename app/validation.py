@@ -20,7 +20,8 @@ SCHEMA_NAMES = [
     'services-update',
     'users',
     'users-auth',
-    'suppliers'
+    'suppliers',
+    'contact-information',
 ]
 FORMAT_CHECKER = FormatChecker()
 
@@ -94,6 +95,13 @@ def detect_framework(submitted_json):
 def validate_supplier_json_or_400(submitted_json):
     try:
         get_validator('suppliers').validate(submitted_json)
+    except ValidationError as e:
+        abort(400, "JSON was not a valid format. {}".format(e.message))
+
+
+def validate_contact_information_json_or_400(submitted_json):
+    try:
+        get_validator('contact-information').validate(submitted_json)
     except ValidationError as e:
         abort(400, "JSON was not a valid format. {}".format(e.message))
 
