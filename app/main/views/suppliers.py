@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 
 from .. import main
 from ... import db
-from ...models import Supplier, ContactInformation
+from ...models import Supplier, ContactInformation, Activity
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400
@@ -171,6 +171,9 @@ def update_supplier(supplier_id):
     db.session.add(supplier)
 
     try:
+        db.session.flush()
+        activity = Activity(verb=u'update', object=supplier)
+        db.session.add(activity)
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
@@ -210,6 +213,9 @@ def update_contact_information(supplier_id, contact_id):
     db.session.add(contact)
 
     try:
+        db.session.flush()
+        activity = Activity(verb=u'update', object=contact)
+        db.session.add(activity)
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
