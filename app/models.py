@@ -2,12 +2,14 @@ from datetime import datetime
 
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy_continuum import make_versioned
+from sqlalchemy_continuum.plugins import ActivityPlugin
 
 from . import db
 from .utils import link, url_for
 
 
-make_versioned(options={}, plugins=[], user_cls=None)
+activity_plugin = ActivityPlugin()
+make_versioned(options={}, plugins=[activity_plugin], user_cls=None)
 
 
 class Framework(db.Model):
@@ -337,3 +339,4 @@ def filter_null_value_fields(obj):
     )
 
 db.configure_mappers()
+Activity = activity_plugin.activity_cls
