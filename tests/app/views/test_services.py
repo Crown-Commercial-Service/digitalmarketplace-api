@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import os
 
 from flask import json
-from nose.tools import assert_equal, assert_in, assert_not_equal, \
+from nose.tools import assert_equal, assert_in, \
     assert_almost_equal, assert_false, assert_is_not_none, assert_not_in
 
 from app.models import Service, Supplier, ContactInformation, Framework
