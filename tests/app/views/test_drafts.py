@@ -23,3 +23,8 @@ class TestDraftServices(BaseApplicationTest):
         res = self.client.get('/services/invalid-id!/draft')
 
         assert_equal(res.status_code, 400)
+
+    def test_should_404_if_service_does_not_exist_on_create_draft(self):
+        res = self.client.put('/services/does-not-exist/draft')
+
+        assert_equal(res.status_code, 404)
