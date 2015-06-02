@@ -1,11 +1,13 @@
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import not_
 
 from .. import main
 from ... import db
-from ...models import Supplier, ContactInformation
-from ...validation import validate_supplier_json_or_400
+from ...models import Supplier, ContactInformation, Activity
+from ...validation import (
+    validate_supplier_json_or_400,
+    validate_contact_information_json_or_400
+)
 from ...utils import pagination_links, drop_foreign_fields, \
     get_json_from_request, json_has_required_keys, json_has_matching_id
 
@@ -104,11 +106,7 @@ def import_supplier(supplier_id):
         for contact in supplier.contact_information:
             db.session.delete(contact)
 
-    supplier.name = supplier_data.get('name', None)
-    supplier.description = supplier_data.get('description', None)
-    supplier.duns_number = supplier_data.get('dunsNumber', None)
-    supplier.esourcing_id = supplier_data.get('eSourcingId', None)
-    supplier.clients = supplier_data.get('clients', None)
+    supplier.update(supplier_data)
 
     for contact_information_data in contact_informations_data:
         contact_information = ContactInformation()
@@ -143,3 +141,84 @@ def import_supplier(supplier_id):
         abort(400, "Database Error: {0}".format(e))
 
     return jsonify(suppliers=supplier.serialize()), 201
+
+
+@main.route('/suppliers/<int:supplier_id>', methods=['POST'])
+def update_supplier(supplier_id):
+    request_data = get_json_from_request()
+
+    supplier = Supplier.query.filter(
+        Supplier.supplier_id == supplier_id
+    ).first()
+
+    if supplier is None:
+        abort(404, "supplier_id '%d' not found" % supplier_id)
+
+    json_has_required_keys(request_data, ['suppliers'])
+
+    supplier_data = supplier.serialize()
+    supplier_data.update(request_data['suppliers'])
+    supplier_data = drop_foreign_fields(
+        supplier_data,
+        ['links', 'contactInformation']
+    )
+
+    validate_supplier_json_or_400(supplier_data)
+    json_has_matching_id(supplier_data, supplier_id)
+
+    supplier.update(supplier_data)
+
+    db.session.add(supplier)
+
+    try:
+        db.session.flush()
+        activity = Activity(verb=u'update', object=supplier)
+        db.session.add(activity)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+
+    return jsonify(suppliers=supplier.serialize())
+
+
+@main.route(
+    '/suppliers/<int:supplier_id>/contact-information/<int:contact_id>',
+    methods=['POST'])
+def update_contact_information(supplier_id, contact_id):
+    request_data = get_json_from_request()
+
+    contact = ContactInformation.query.filter(
+        ContactInformation.id == contact_id,
+        ContactInformation.supplier_id == supplier_id,
+    ).first()
+
+    if contact is None:
+        abort(404, "contact_id '%d' not found" % contact_id)
+
+    json_has_required_keys(request_data, ['contactInformation'])
+
+    contact_data = contact.serialize()
+    contact_data.update(request_data['contactInformation'])
+    contact_data = drop_foreign_fields(
+        contact_data,
+        ['links']
+    )
+
+    validate_contact_information_json_or_400(contact_data)
+    json_has_matching_id(contact_data, contact_id)
+
+    contact.update(contact_data)
+
+    db.session.add(contact)
+
+    try:
+        db.session.flush()
+        activity = Activity(verb=u'update', object=contact)
+        db.session.add(activity)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+
+    return jsonify(contactInformation=contact.serialize())

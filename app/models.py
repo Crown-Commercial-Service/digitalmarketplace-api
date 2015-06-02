@@ -1,9 +1,15 @@
 from datetime import datetime
 
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy_continuum import make_versioned
+from sqlalchemy_continuum.plugins import ActivityPlugin
 
 from . import db
 from .utils import link, url_for
+
+
+activity_plugin = ActivityPlugin()
+make_versioned(options={}, plugins=[activity_plugin], user_cls=None)
 
 
 class Framework(db.Model):
@@ -17,6 +23,7 @@ class Framework(db.Model):
 
 class ContactInformation(db.Model):
     __tablename__ = 'contact_information'
+    __versioned__ = {}
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -50,10 +57,24 @@ class ContactInformation(db.Model):
     postcode = db.Column(db.String, index=False,
                          unique=False, nullable=False)
 
+    def update(self, data):
+        self.contact_name = data.get("contactName")
+        self.phone_number = data.get("phoneNumber")
+        self.email = data.get("email")
+        self.website = data.get("website")
+        self.address1 = data.get("address1")
+        self.address2 = data.get("address2")
+        self.city = data.get("city")
+        self.country = data.get("country")
+        self.postcode = data.get("postcode")
+
+        return self
+
     def serialize(self):
         # Should there be links for the associated service(s) / supplier?
 
         serialized = {
+            'id': self.id,
             'contactName': self.contact_name,
             'phoneNumber': self.phone_number,
             'email': self.email,
@@ -70,6 +91,7 @@ class ContactInformation(db.Model):
 
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
+    __versioned__ = {}
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -109,14 +131,23 @@ class Supplier(db.Model):
             'id': self.supplier_id,
             'name': self.name,
             'description': self.description,
-            # 'dunsNumber': self.duns_number,
-            # 'eSourcingId': self.esourcing_id,
+            'dunsNumber': self.duns_number,
+            'eSourcingId': self.esourcing_id,
             'contactInformation': contact_information_list,
             'links': links,
             'clients': self.clients
         }
 
         return filter_null_value_fields(serialized)
+
+    def update(self, data):
+        self.name = data.get('name')
+        self.description = data.get('description')
+        self.duns_number = data.get('dunsNumber')
+        self.esourcing_id = data.get('eSourcingId')
+        self.clients = data.get('clients')
+
+        return self
 
 
 class User(db.Model):
@@ -306,3 +337,6 @@ def filter_null_value_fields(obj):
     return dict(
         filter(lambda x: x[1] is not None, obj.items())
     )
+
+db.configure_mappers()
+Activity = activity_plugin.activity_cls
