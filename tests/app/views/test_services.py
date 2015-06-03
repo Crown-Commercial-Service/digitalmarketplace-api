@@ -294,7 +294,6 @@ class TestListServices(BaseApplicationTest):
 
         response = self.client.get('/services?supplier_id=1&page=1')
         data = json.loads(response.get_data())
-
         next_link = data['links']['next']
         assert_in('page=2', next_link)
         assert_in('supplier_id=1', next_link)
@@ -811,7 +810,7 @@ class TestPostService(BaseApplicationTest):
             assert_equal(response.status_code, 200)
 
 
-@mock.patch('app.main.views.services.search_api_client')
+@mock.patch('app.service_utils.search_api_client')
 class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
@@ -891,7 +890,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
             assert_equal(response.status_code, 201)
 
 
-@mock.patch('app.main.views.services.search_api_client')
+@mock.patch('app.service_utils.search_api_client')
 class TestShouldCallSearchApiOnPost(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPost, self).setup()
@@ -1060,7 +1059,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
                             service_is_indexed, service_is_deleted,
                             expected_status_code):
 
-        with mock.patch('app.main.views.services.search_api_client') \
+        with mock.patch('app.service_utils.search_api_client') \
                 as search_api_client:
 
             search_api_client.index.return_value = True
@@ -1148,7 +1147,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
             expected_status_code=200,
         )
 
-    @mock.patch('app.main.views.services.search_api_client')
+    @mock.patch('app.search_api_client')
     def test_should_ignore_index_error(self, search_api_client):
         search_api_client.index.side_effect = HTTPError()
 
@@ -1166,7 +1165,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
 
-    @mock.patch('app.main.views.services.search_api_client')
+    @mock.patch('app.search_api_client')
     def test_should_ignore_index_delete_error(self, search_api_client):
         search_api_client.delete.side_effect = HTTPError()
 
@@ -1234,7 +1233,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             for key in non_json_fields:
                 assert_not_in(key, service.data)
 
-    @mock.patch('app.main.views.services.search_api_client')
+    @mock.patch('app.search_api_client')
     def test_add_a_new_service(self, search_api_client):
         with self.app.app_context():
             search_api_client.index.return_value = "bar"
@@ -1314,7 +1313,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         assert_equal(json.loads(response.get_data())['error'],
-                     "Invalid JSON must have '['services', "
+                     "Invalid JSON must have '["
                      "'update_details']' key(s)")
         assert_equal(response.status_code, 400)
         assert_in(b'Invalid JSON', response.get_data())

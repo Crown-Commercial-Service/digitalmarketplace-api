@@ -28,6 +28,8 @@ class Test(Config):
     DEBUG = True
     ES_ENABLED = False
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace_test'
+    DM_API_SERVICES_PAGE_SIZE = 5
+    DM_API_SUPPLIERS_PAGE_SIZE = 5
 
 
 class Development(Config):
