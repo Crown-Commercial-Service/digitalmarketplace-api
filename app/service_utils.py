@@ -28,7 +28,8 @@ def update_and_validate_service(service, service_payload, updater_payload):
     data = service.serialize()
 
     data = drop_foreign_fields(data,
-                               ['supplierName', 'links', 'frameworkName'])
+                               ['service_id', 'supplierName', 'links', 'frameworkName'])
+
     detect_framework_or_400(data)
     return service
 

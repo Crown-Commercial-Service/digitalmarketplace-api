@@ -1,14 +1,16 @@
-from flask import jsonify, abort, request, current_app
+from flask import jsonify, abort
 
 from sqlalchemy.exc import IntegrityError
 
 from .. import main
 from ... import db
 from ...validation import is_valid_service_id_or_400
-from ...models import Service, DraftService
+from ...models import Service, DraftService, ArchivedService
+from ...service_utils import validate_and_return_updater_request, \
+    update_and_validate_service, validate_and_return_service_request, index_service
 
 
-@main.route('/services/<string:service_id>/draft',  methods=['PUT'])
+@main.route('/services/<string:service_id>/draft', methods=['PUT'])
 def create_draft_service(service_id):
     """
     Create a draft service from an existing service
@@ -16,6 +18,7 @@ def create_draft_service(service_id):
     :return:
     """
     is_valid_service_id_or_400(service_id)
+    updater_json = validate_and_return_updater_request()
 
     service = Service.query.filter(
         Service.service_id == service_id
@@ -33,7 +36,7 @@ def create_draft_service(service_id):
         abort(400, e.orig.message)
 
 
-@main.route('/services/<string:service_id>/draft',  methods=['POST'])
+@main.route('/services/<string:service_id>/draft', methods=['POST'])
 def edit_draft_service(service_id):
     """
     Edit a draft service
@@ -43,10 +46,30 @@ def edit_draft_service(service_id):
 
     is_valid_service_id_or_400(service_id)
 
-    return "things"
+    updater_json = validate_and_return_updater_request()
+    update_json = validate_and_return_service_request(service_id)
+
+    service = DraftService.query.filter(
+        DraftService.service_id == service_id
+    ).first_or_404()
+
+    service.update_from_json(
+        update_json,
+        updated_by=updater_json['updated_by'],
+        updated_reason=updater_json['update_reason'])
+
+    db.session.add(service)
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
+
+    return jsonify(services=service.serialize()), 200
 
 
-@main.route('/services/<string:service_id>/draft',  methods=['GET'])
+@main.route('/services/<string:service_id>/draft', methods=['GET'])
 def fetch_draft_service(service_id):
     """
     Return a draft service
@@ -63,7 +86,7 @@ def fetch_draft_service(service_id):
     return jsonify(services=service.serialize())
 
 
-@main.route('/services/<string:service_id>/draft',  methods=['DELETE'])
+@main.route('/services/<string:service_id>/draft', methods=['DELETE'])
 def delete_draft_service(service_id):
     """
     Delete a draft service
@@ -72,6 +95,8 @@ def delete_draft_service(service_id):
     """
 
     is_valid_service_id_or_400(service_id)
+
+    updater_json = validate_and_return_updater_request()
 
     service = DraftService.query.filter(
         DraftService.service_id == service_id
@@ -83,7 +108,7 @@ def delete_draft_service(service_id):
     return jsonify(message="done"), 200
 
 
-@main.route('/services/<string:service_id>/draft/publish',  methods=['POST'])
+@main.route('/services/<string:service_id>/draft/publish', methods=['POST'])
 def publish_draft_service(service_id):
     """
     Delete a draft service
@@ -93,8 +118,29 @@ def publish_draft_service(service_id):
 
     is_valid_service_id_or_400(service_id)
 
-    service = DraftService.query.filter(
+    updater_json = validate_and_return_updater_request()
+
+    draft = DraftService.query.filter(
         DraftService.service_id == service_id
     ).first_or_404()
 
-    return jsonify(services=service.serialize()), 401
+    service = Service.query.filter(
+        Service.service_id == draft.service_id
+    ).first_or_404()
+
+    archived_service = ArchivedService.from_service(service)
+    new_service = update_and_validate_service(service, draft.data, updater_json)
+
+    db.session.add(archived_service)
+    db.session.add(new_service)
+    db.session.delete(draft)
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
+
+    index_service(new_service)
+
+    return jsonify(services=draft.serialize()), 200

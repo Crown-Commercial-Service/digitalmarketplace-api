@@ -365,6 +365,24 @@ class DraftService(db.Model):
 
         return data
 
+    def update_from_json(self, data, updated_by=None, updated_reason=None):
+        self.service_id = str(data.pop('id', self.service_id))
+
+        data.pop('supplierId', None)
+        data.pop('supplierName', None)
+        data.pop('frameworkName', None)
+        data.pop('status', None)
+        data.pop('links', None)
+
+        current_data = dict(self.data.items())
+        current_data.update(data)
+        self.data = current_data
+
+        now = datetime.now()
+        self.updated_at = now
+        self.updated_by = updated_by
+        self.updated_reason = updated_reason
+
 
 def filter_null_value_fields(obj):
     return dict(
