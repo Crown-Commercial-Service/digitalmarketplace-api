@@ -302,6 +302,70 @@ class ArchivedService(db.Model):
         return data
 
 
+class DraftService(db.Model):
+    __tablename__ = 'draft_services'
+
+    id = db.Column(db.Integer, primary_key=True)
+    service_id = db.Column(db.String,
+                           index=True, unique=True, nullable=False)
+    supplier_id = db.Column(db.BigInteger,
+                            db.ForeignKey('suppliers.supplier_id'),
+                            index=True, unique=False, nullable=False)
+    created_at = db.Column(db.DateTime, index=False, unique=False,
+                           nullable=False)
+    updated_at = db.Column(db.DateTime, index=False, unique=False,
+                           nullable=False)
+    updated_by = db.Column(db.String, index=False, unique=False,
+                           nullable=False)
+    updated_reason = db.Column(db.String, index=False, unique=False,
+                               nullable=False)
+    data = db.Column(JSON)
+
+    framework_id = db.Column(db.BigInteger,
+                             db.ForeignKey('frameworks.id'),
+                             index=True, unique=False, nullable=False)
+
+    status = db.Column(db.String, index=False, unique=False, nullable=False)
+
+    supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
+
+    framework = db.relationship(Framework, lazy='joined', innerjoin=True)
+
+    @staticmethod
+    def from_service(service):
+        return DraftService(
+            framework_id=service.framework_id,
+            service_id=service.service_id,
+            supplier_id=service.supplier_id,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+            updated_by=service.updated_by,
+            updated_reason=service.updated_reason,
+            data=service.data,
+            status=service.status
+        )
+
+    def serialize(self):
+        """
+        :return: dictionary representation of a draft service
+        """
+
+        data = dict(self.data.items())
+
+        data.update({
+            'id': self.id,
+            'service_id': self.service_id,
+            'supplierId': self.supplier.supplier_id,
+            'status': self.status
+        })
+
+        data['links'] = link(
+            "self", url_for(".fetch_draft_service", service_id=self.service_id)
+        )
+
+        return data
+
+
 def filter_null_value_fields(obj):
     return dict(
         filter(lambda x: x[1] is not None, obj.items())
