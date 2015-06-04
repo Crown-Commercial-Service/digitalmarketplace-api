@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy_utils import generic_relationship
 
 from . import db
 from .utils import link, url_for
@@ -406,6 +407,24 @@ class DraftService(db.Model):
         self.updated_at = now
         self.updated_by = updated_by
         self.updated_reason = updated_reason
+
+
+class AuditEvent(db.Model):
+    __tablename__ = 'audit_events'
+
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False,
+                           default=datetime.utcnow)
+    user = db.Column(db.String)
+    data = db.Column(JSON)
+
+    object_type = db.Column(db.String)
+    object_id = db.Column(db.BigInteger)
+
+    object = generic_relationship(
+        object_type, object_id
+    )
 
 
 def filter_null_value_fields(obj):
