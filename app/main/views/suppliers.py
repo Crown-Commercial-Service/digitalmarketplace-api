@@ -76,7 +76,12 @@ def import_supplier(supplier_id):
         ['id', 'name', 'contactInformation']
     )
 
-    contact_informations_data = supplier_data['contactInformation']
+    contact_informations_data = [
+        drop_foreign_fields(contact_data, ['links'])
+        for contact_data in supplier_data['contactInformation']
+    ]
+
+    supplier_data['contactInformation'] = contact_informations_data
 
     for contact_information_data in contact_informations_data:
         json_has_required_keys(

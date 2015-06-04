@@ -65,7 +65,11 @@ class ContactInformation(db.Model):
         return self
 
     def serialize(self):
-        # Should there be links for the associated service(s) / supplier?
+        links = link(
+            "self", url_for(".update_contact_information",
+                            supplier_id=self.supplier_id,
+                            contact_id=self.id)
+        )
 
         serialized = {
             'id': self.id,
@@ -77,7 +81,8 @@ class ContactInformation(db.Model):
             'address2': self.address2,
             'city': self.city,
             'country': self.country,
-            'postcode': self.postcode
+            'postcode': self.postcode,
+            'links': links,
         }
 
         return filter_null_value_fields(serialized)

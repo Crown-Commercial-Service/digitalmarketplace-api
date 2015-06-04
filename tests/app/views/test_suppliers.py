@@ -536,8 +536,10 @@ class TestUpdateContactInformation(BaseApplicationTest):
 
         payload = payload['contactInformation'][0]
         payload.update({'city': 'New City'})
+        payload.pop('links')
         contact = json.loads(response.get_data())['contactInformation']
         contact.pop('id')
+        contact.pop('links')
 
         assert_equal(contact, payload)
 
