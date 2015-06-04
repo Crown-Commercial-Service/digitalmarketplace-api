@@ -7,7 +7,8 @@ from ... import db
 from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, ArchivedService
 from ...service_utils import validate_and_return_updater_request, \
-    update_and_validate_service, validate_and_return_service_request, index_service
+    update_and_validate_service, validate_and_return_service_request, \
+    index_service
 
 
 @main.route('/services/<string:service_id>/draft', methods=['PUT'])
@@ -129,7 +130,10 @@ def publish_draft_service(service_id):
     ).first_or_404()
 
     archived_service = ArchivedService.from_service(service)
-    new_service = update_and_validate_service(service, draft.data, updater_json)
+    new_service = update_and_validate_service(
+        service,
+        draft.data,
+        updater_json)
 
     db.session.add(archived_service)
     db.session.add(new_service)

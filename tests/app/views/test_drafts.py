@@ -269,16 +269,21 @@ class TestDraftServices(BaseApplicationTest):
     def test_should_be_able_to_launch_valid_service(self):
         initial = self.client.get('/services/{}'.format(self.service_id))
         assert_equal(initial.status_code, 200)
-        assert_equal(json.loads(initial.get_data())['services']['serviceName'], 'My Iaas Service')
+        assert_equal(
+            json.loads(initial.get_data())['services']['serviceName'],
+            'My Iaas Service')
 
         self.client.put(
             '/services/{}/draft'.format(self.service_id),
             data=json.dumps(self.updater_json),
             content_type='application/json')
 
-        first_draft = self.client.get('/services/{}/draft'.format(self.service_id))
+        first_draft = self.client.get(
+            '/services/{}/draft'.format(self.service_id))
         assert_equal(first_draft.status_code, 200)
-        assert_equal(json.loads(first_draft.get_data())['services']['serviceName'], 'My Iaas Service')
+        assert_equal(
+            json.loads(first_draft.get_data())['services']['serviceName'],
+            'My Iaas Service')
 
         self.client.post(
             '/services/{}/draft'.format(self.service_id),
@@ -292,9 +297,12 @@ class TestDraftServices(BaseApplicationTest):
             }),
             content_type='application/json')
 
-        updated_draft = self.client.get('/services/{}/draft'.format(self.service_id))
+        updated_draft = self.client.get(
+            '/services/{}/draft'.format(self.service_id))
         assert_equal(updated_draft.status_code, 200)
-        assert_equal(json.loads(updated_draft.get_data())['services']['serviceName'], 'chickens')
+        assert_equal(
+            json.loads(updated_draft.get_data())['services']['serviceName'],
+            'chickens')
 
         res = self.client.post(
             '/services/{}/draft/publish'.format(self.service_id),
@@ -314,9 +322,14 @@ class TestDraftServices(BaseApplicationTest):
         # published should be updated
         updated_draft = self.client.get('/services/{}'.format(self.service_id))
         assert_equal(updated_draft.status_code, 200)
-        assert_equal(json.loads(updated_draft.get_data())['services']['serviceName'], 'chickens')
+        assert_equal(
+            json.loads(updated_draft.get_data())['services']['serviceName'],
+            'chickens')
 
         # archive should be updated
-        archives = self.client.get('/archived-services?service-id={}'.format(self.service_id))
+        archives = self.client.get(
+            '/archived-services?service-id={}'.format(self.service_id))
         assert_equal(archives.status_code, 200)
-        assert_equal(json.loads(archives.get_data())['services'][0]['serviceName'], 'My Iaas Service')
+        assert_equal(
+            json.loads(archives.get_data())['services'][0]['serviceName'],
+            'My Iaas Service')
