@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 
 from .. import main
 from ... import db
-from ...models import Supplier, ContactInformation
+from ...models import Supplier, ContactInformation, AuditEvent
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400
@@ -169,6 +169,10 @@ def update_supplier(supplier_id):
     supplier.update_from_json(supplier_data)
 
     db.session.add(supplier)
+    db.session.add(
+        AuditEvent(type='supplier_update', object=supplier,
+                   data={'request': request_data})
+    )
 
     try:
         db.session.commit()
@@ -208,6 +212,10 @@ def update_contact_information(supplier_id, contact_id):
     contact.update_from_json(contact_data)
 
     db.session.add(contact)
+    db.session.add(
+        AuditEvent(type='contact_update', object=contact.supplier,
+                   data={'request': request_data})
+    )
 
     try:
         db.session.commit()

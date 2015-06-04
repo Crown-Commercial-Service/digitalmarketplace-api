@@ -2,7 +2,7 @@ from flask import json
 from nose.tools import assert_equal, assert_in
 
 from app import db
-from app.models import Supplier, ContactInformation
+from app.models import Supplier, ContactInformation, AuditEvent
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 
 
@@ -375,6 +375,22 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
             assert_equal(supplier.name, "New Name")
 
+    def test_supplier_update_creates_audit_event(self):
+        self.update_request({'suppliers': {'name': "Name"}})
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == supplier
+            ).first()
+
+            assert_equal(audit.type, "supplier_update")
+            assert_equal(audit.data,
+                         {"request": {'suppliers': {'name': "Name"}}})
+
     def test_update_response_matches_payload(self):
         payload = self.load_example_listing("Supplier")
         response = self.update_request({'suppliers': {'name': "New Name"}})
@@ -490,6 +506,26 @@ class TestUpdateContactInformation(BaseApplicationTest):
             ).first()
 
             assert_equal(contact.city, "New City")
+
+    def test_update_creates_audit_event(self):
+        self.update_request({'contactInformation': {
+            'city': "New City"
+        }})
+
+        with self.app.app_context():
+            contact = ContactInformation.query.filter(
+                ContactInformation.id == self.contact_id
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == contact.supplier
+            ).first()
+
+            assert_equal(audit.type, "contact_update")
+            assert_equal(
+                audit.data,
+                {"request": {'contactInformation': {'city': "New City"}}}
+            )
 
     def test_update_response_matches_payload(self):
         payload = self.load_example_listing("Supplier")
