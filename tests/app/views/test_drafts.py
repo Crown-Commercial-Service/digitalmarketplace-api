@@ -3,7 +3,7 @@ from flask import json
 from app.models import Supplier, ContactInformation
 from app import db
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_in
 
 
 class TestDraftServices(BaseApplicationTest):
@@ -134,8 +134,9 @@ class TestDraftServices(BaseApplicationTest):
         data = json.loads(res.get_data())
 
         assert_equal(res.status_code, 400)
-        assert_equal(data['error'],
-                     'duplicate key value violates unique constraint "ix_draft_services_service_id"\nDETAIL:  Key (service_id)=(1234567890123456) already exists.\n')  # noqa
+        assert_in(
+            'duplicate key value violates unique constraint "ix_draft_services_service_id"\nDETAIL:  Key (service_id)=(1234567890123456) already exists.',  # noqa
+            data['error'])
 
     def test_should_fetch_a_draft(self):
         res = self.client.put(

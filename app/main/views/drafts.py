@@ -34,7 +34,7 @@ def create_draft_service(service_id):
         return jsonify(services=draft.serialize()), 201
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig.message)
+        abort(400, "Database Error: {0}".format(e))
 
 
 @main.route('/services/<string:service_id>/draft', methods=['POST'])
@@ -65,7 +65,7 @@ def edit_draft_service(service_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, "Database Error: {0}".format(e))
 
     return jsonify(services=service.serialize()), 200
 
@@ -104,7 +104,11 @@ def delete_draft_service(service_id):
     ).first_or_404()
 
     db.session.delete(service)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
 
     return jsonify(message="done"), 200
 
@@ -143,8 +147,8 @@ def publish_draft_service(service_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, "Database Error: {0}".format(e))
 
     index_service(new_service)
 
-    return jsonify(services=draft.serialize()), 200
+    return jsonify(services=new_service.serialize()), 200
