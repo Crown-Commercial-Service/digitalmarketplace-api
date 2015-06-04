@@ -106,7 +106,7 @@ class Supplier(db.Model):
     esourcing_id = db.Column(db.String, index=False,
                              unique=False, nullable=True)
 
-    clients = db.Column(JSON)
+    clients = db.Column(JSON, default=list)
 
     def serialize(self):
         links = link(

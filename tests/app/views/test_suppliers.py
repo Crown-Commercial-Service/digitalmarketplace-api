@@ -182,6 +182,20 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             ).first()
             assert_equal(supplier.name, payload['name'])
 
+    def test_null_clients_list(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            del payload['clients']
+
+            response = self.put_import_supplier(payload)
+            assert_equal(response.status_code, 201)
+
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+            assert_equal(supplier.clients, [])
+
     def test_reinserting_the_same_supplier(self):
         with self.app.app_context():
             payload = self.load_example_listing("Supplier")
