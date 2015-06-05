@@ -262,7 +262,7 @@ class Service(db.Model):
         current_data.update(data)
         self.data = current_data
 
-        now = datetime.now()
+        now = datetime.utcnow()
         self.updated_at = now
         self.updated_by = updated_by
         self.updated_reason = updated_reason
