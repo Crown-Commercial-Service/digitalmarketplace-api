@@ -159,7 +159,10 @@ def update_supplier(supplier_id):
     if supplier is None:
         abort(404, "supplier_id '%d' not found" % supplier_id)
 
-    json_has_required_keys(request_data, ['suppliers'])
+    json_has_required_keys(
+        request_data,
+        ['suppliers', 'updated_by']
+    )
 
     supplier_data = supplier.serialize()
     supplier_data.update(request_data['suppliers'])
@@ -176,6 +179,7 @@ def update_supplier(supplier_id):
     db.session.add(supplier)
     db.session.add(
         AuditEvent(type='supplier_update', object=supplier,
+                   user=request_data['updated_by'],
                    data={'request': request_data})
     )
 
@@ -202,7 +206,9 @@ def update_contact_information(supplier_id, contact_id):
     if contact is None:
         abort(404, "contact_id '%d' not found" % contact_id)
 
-    json_has_required_keys(request_data, ['contactInformation'])
+    json_has_required_keys(request_data, [
+        'contactInformation', 'updated_by'
+    ])
 
     contact_data = contact.serialize()
     contact_data.update(request_data['contactInformation'])
@@ -219,6 +225,7 @@ def update_contact_information(supplier_id, contact_id):
     db.session.add(contact)
     db.session.add(
         AuditEvent(type='contact_update', object=contact.supplier,
+                   user=request_data['updated_by'],
                    data={'request': request_data})
     )
 
