@@ -34,8 +34,6 @@ class Test(Config):
 
 class Development(Config):
     DEBUG = True
-    DM_API_SERVICES_PAGE_SIZE = 5
-    DM_API_SUPPLIERS_PAGE_SIZE = 5
 
 
 class Live(Config):

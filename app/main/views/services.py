@@ -4,20 +4,18 @@ from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ... import db
-from ... import search_api_client
 from ...models import ArchivedService, Service, Supplier, Framework
 
 from sqlalchemy import asc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import false
-from ...validation import detect_framework_or_400, \
-    validate_updater_json_or_400, is_valid_service_id_or_400
-from ...utils import url_for, pagination_links, drop_foreign_fields, \
-    json_has_matching_id, get_json_from_request, json_has_required_keys, \
-    display_list
+from ...validation import detect_framework_or_400, is_valid_service_id_or_400
+from ...utils import url_for, pagination_links, \
+    drop_foreign_fields, display_list
+from ...service_utils import validate_and_return_service_request, \
+    update_and_validate_service, index_service, \
+    delete_service_from_index, validate_and_return_updater_request
 from sqlalchemy.types import String
-
-from dmutils import apiclient
 
 
 @main.route('/')
@@ -26,7 +24,7 @@ def index():
     return jsonify(links={
         "services.list": url_for('.list_services', _external=True),
         "suppliers.list": url_for('.list_suppliers', _external=True)
-        }
+    }
     ), 200
 
 
@@ -130,25 +128,13 @@ def update_service(service_id):
 
     service_to_archive = ArchivedService.from_service(service)
 
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload,
-                           ['services', 'update_details'])
-
-    update_json = json_payload['update_details']
-    validate_updater_json_or_400(update_json)
-
-    json_has_matching_id(json_payload['services'], service_id)
-
-    service.update_from_json(json_payload['services'],
-                             updated_by=update_json['updated_by'],
-                             updated_reason=update_json['update_reason'])
-
-    data = service.serialize()
-    data = drop_foreign_fields(data,
-                               ['supplierName', 'links', 'frameworkName'])
-    detect_framework_or_400(data)
-
-    db.session.add(service)
+    db.session.add(
+        update_and_validate_service(
+            service,
+            validate_and_return_service_request(service_id),
+            validate_and_return_updater_request()
+        )
+    )
     db.session.add(service_to_archive)
 
     try:
@@ -157,17 +143,7 @@ def update_service(service_id):
         db.session.rollback()
         abort(400, e.orig)
 
-    if not service.framework.expired:
-        try:
-            search_api_client.index(
-                service_id,
-                service.data,
-                service.supplier.name,
-                service.framework.name)
-        except apiclient.HTTPError as e:
-            current_app.logger.warning(
-                'Failed to add {} to search index: {}'.format(
-                    service_id, e.message))
+    index_service(service)
 
     return jsonify(message="done"), 200
 
@@ -181,30 +157,25 @@ def import_service(service_id):
     """
     is_valid_service_id_or_400(service_id)
 
-    now = datetime.now()
-
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload,
-                           ['services', 'update_details'])
-
-    update_json = json_payload['update_details']
-    validate_updater_json_or_400(update_json)
-
-    json_has_matching_id(json_payload['services'], service_id)
-    service_data = drop_foreign_fields(
-        json_payload['services'],
-        ['supplierName', 'links', 'frameworkName']
-    )
-
-    framework = detect_framework_or_400(service_data)
-    service_data = drop_foreign_fields(service_data, ['id'])
-
     service = Service.query.filter(
         Service.service_id == service_id
     ).first()
 
     if service is not None:
         abort(400, "Cannot update service by PUT")
+
+    now = datetime.now()
+
+    updater_json = validate_and_return_updater_request()
+    service_json = validate_and_return_service_request(service_id)
+
+    service_data = drop_foreign_fields(
+        service_json,
+        ['supplierName', 'links', 'frameworkName']
+    )
+
+    framework = detect_framework_or_400(service_data)
+    service_data = drop_foreign_fields(service_data, ['id'])
 
     supplier_id = service_data.pop('supplierId')
     supplier = Supplier.query.filter(
@@ -218,13 +189,13 @@ def import_service(service_id):
     ).first()
 
     service = Service(service_id=service_id)
-    service.supplier_id = supplier.supplier_id
+    service.supplier_id = supplier_id
     service.framework_id = framework.id
     service.updated_at = now
     service.created_at = now
     service.status = service_data.pop('status', 'published')
-    service.updated_by = update_json['updated_by']
-    service.updated_reason = update_json['update_reason']
+    service.updated_by = updater_json['updated_by']
+    service.updated_reason = updater_json['update_reason']
     service.data = service_data
 
     db.session.add(service)
@@ -235,17 +206,7 @@ def import_service(service_id):
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
-    if not framework.expired:
-        try:
-            search_api_client.index(
-                service_id,
-                service.data,
-                supplier.name,
-                framework.name)
-        except apiclient.HTTPError as e:
-            current_app.logger.warning(
-                'Failed to add {} to search index: {}'.format(
-                    service_id, e.message))
+    index_service(service)
 
     return jsonify(services=service.serialize()), 201
 
@@ -303,12 +264,7 @@ def update_service_status(service_id, status):
     ).first_or_404()
 
     service_to_archive = ArchivedService.from_service(service)
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload,
-                           ["update_details"])
-
-    update_json = json_payload['update_details']
-    validate_updater_json_or_400(update_json)
+    update_json = validate_and_return_updater_request()
 
     if status not in valid_statuses:
         valid_statuses_single_quotes = display_list(
@@ -335,24 +291,9 @@ def update_service_status(service_id, status):
 
         # If it's being unpublished, delete it from the search api.
         if prior_status == 'published':
-            try:
-                search_api_client.delete(service_id)
-            except apiclient.HTTPError as e:
-                current_app.logger.warning(
-                    'Failed to delete {} from search index: {}'.format(
-                        service_id, e.message))
-
-        # If it's being published, index in the search api.
-        if status == 'published':
-            try:
-                search_api_client.index(
-                    service_id,
-                    service.data,
-                    service.supplier.name,
-                    service.framework.name)
-            except apiclient.HTTPError as e:
-                current_app.logger.warning(
-                    'Failed to add {} to search index: {}'.format(
-                        service_id, e.message))
+            delete_service_from_index(service)
+        else:
+            # If it's being published, index in the search api.
+            index_service(service)
 
     return jsonify(services=service.serialize()), 200
