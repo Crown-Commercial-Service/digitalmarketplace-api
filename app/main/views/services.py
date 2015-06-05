@@ -292,9 +292,8 @@ def update_service_status(service_id, status):
         # If it's being unpublished, delete it from the search api.
         if prior_status == 'published':
             delete_service_from_index(service)
-
-        # If it's being published, index in the search api.
-        if status == 'published':
+        else:
+            # If it's being published, index in the search api.
             index_service(service)
 
     return jsonify(services=service.serialize()), 200

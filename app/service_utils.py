@@ -36,7 +36,7 @@ def update_and_validate_service(service, service_payload, updater_payload):
 
 
 def index_service(service):
-    if not service.framework.expired:
+    if not service.framework.expired and service.status == 'published':
         try:
             search_api_client.index(
                 service.service_id,
@@ -54,5 +54,5 @@ def delete_service_from_index(service):
         search_api_client.delete(service.service_id)
     except apiclient.HTTPError as e:
         current_app.logger.warning(
-            'Failed to add {} to search index: {}'.format(
+            'Failed to remove {} to search index: {}'.format(
                 service.service_id, e.message))

@@ -7,7 +7,7 @@ Create Date: 2015-06-02 18:32:08.399213
 """
 
 # revision identifiers, used by Alembic.
-revision = '37ac005a48c3_add_draft_services'
+revision = '40_add_draft_services'
 down_revision = '20_adding_json_index_to_services'
 
 from alembic import op

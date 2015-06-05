@@ -31,10 +31,11 @@ def create_draft_service(service_id):
 
     try:
         db.session.commit()
-        return jsonify(services=draft.serialize()), 201
     except IntegrityError as e:
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
+
+    return jsonify(services=draft.serialize()), 201
 
 
 @main.route('/services/<string:service_id>/draft', methods=['POST'])
@@ -50,16 +51,16 @@ def edit_draft_service(service_id):
     updater_json = validate_and_return_updater_request()
     update_json = validate_and_return_service_request(service_id)
 
-    service = DraftService.query.filter(
+    draft = DraftService.query.filter(
         DraftService.service_id == service_id
     ).first_or_404()
 
-    service.update_from_json(
+    draft.update_from_json(
         update_json,
         updated_by=updater_json['updated_by'],
         updated_reason=updater_json['update_reason'])
 
-    db.session.add(service)
+    db.session.add(draft)
 
     try:
         db.session.commit()
@@ -67,7 +68,7 @@ def edit_draft_service(service_id):
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
-    return jsonify(services=service.serialize()), 200
+    return jsonify(services=draft.serialize()), 200
 
 
 @main.route('/services/<string:service_id>/draft', methods=['GET'])
@@ -80,11 +81,11 @@ def fetch_draft_service(service_id):
 
     is_valid_service_id_or_400(service_id)
 
-    service = DraftService.query.filter(
+    draft = DraftService.query.filter(
         DraftService.service_id == service_id
     ).first_or_404()
 
-    return jsonify(services=service.serialize())
+    return jsonify(services=draft.serialize())
 
 
 @main.route('/services/<string:service_id>/draft', methods=['DELETE'])
@@ -99,11 +100,11 @@ def delete_draft_service(service_id):
 
     updater_json = validate_and_return_updater_request()
 
-    service = DraftService.query.filter(
+    draft = DraftService.query.filter(
         DraftService.service_id == service_id
     ).first_or_404()
 
-    db.session.delete(service)
+    db.session.delete(draft)
     try:
         db.session.commit()
     except IntegrityError as e:
@@ -116,7 +117,7 @@ def delete_draft_service(service_id):
 @main.route('/services/<string:service_id>/draft/publish', methods=['POST'])
 def publish_draft_service(service_id):
     """
-    Delete a draft service
+    Publish a draft service
     :param service_id:
     :return:
     """

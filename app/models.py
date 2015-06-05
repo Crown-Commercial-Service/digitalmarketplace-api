@@ -333,12 +333,13 @@ class DraftService(db.Model):
 
     @staticmethod
     def from_service(service):
+        now = datetime.now(),
         return DraftService(
             framework_id=service.framework_id,
             service_id=service.service_id,
             supplier_id=service.supplier_id,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
+            created_at=now,
+            updated_at=now,
             updated_by=service.updated_by,
             updated_reason=service.updated_reason,
             data=service.data,

@@ -255,7 +255,7 @@ class TestDraftServices(BaseApplicationTest):
 
         assert_equal(res.status_code, 400)
 
-    def test_should_not_be_able_to_a_draft_if_service_doesnt_exist(self):
+    def test_should_not_be_able_to_publish_a_draft_if_no_service(self):
         res = self.client.post(
             '/services/{}/draft/publish'.format(self.service_id),
             data=json.dumps({
