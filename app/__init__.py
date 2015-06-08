@@ -1,14 +1,14 @@
 from flask import Flask
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
-from dmutils import apiclient, init_app, FeatureFlag
+from dmutils import apiclient, init_app, flask_featureflags
 
 from config import configs
 
 bootstrap = Bootstrap()
 db = SQLAlchemy()
 search_api_client = apiclient.SearchAPIClient()
-feature_flags = FeatureFlag()
+feature_flags = flask_featureflags.FeatureFlag()
 
 
 def create_app(config_name):
