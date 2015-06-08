@@ -1,7 +1,12 @@
-from dmutils.status import enabled_since
+import os
+from dmutils.status import enabled_since, get_version_label
 
 
 class Config:
+
+    VERSION = get_version_label(
+        os.path.abspath(os.path.dirname(__file__))
+    )
     DM_SEARCH_API_URL = None
     DM_SEARCH_API_AUTH_TOKEN = None
     ES_ENABLED = True
