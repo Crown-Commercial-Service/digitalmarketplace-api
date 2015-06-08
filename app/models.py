@@ -211,6 +211,7 @@ class Service(db.Model):
             'supplierId': self.supplier.supplier_id,
             'supplierName': self.supplier.name,
             'frameworkName': self.framework.name,
+            'updatedAt': self.updated_at.strftime("%Y-%m-%dT%H:%M:%S%Z"),
             'status': self.status
         })
 
