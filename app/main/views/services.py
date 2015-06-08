@@ -164,7 +164,7 @@ def import_service(service_id):
     if service is not None:
         abort(400, "Cannot update service by PUT")
 
-    now = datetime.now()
+    now = datetime.utcnow()
 
     updater_json = validate_and_return_updater_request()
     service_json = validate_and_return_service_request(service_id)
@@ -275,7 +275,7 @@ def update_service_status(service_id, status):
               .format(status, valid_statuses_single_quotes)
               )
 
-    now = datetime.now()
+    now = datetime.utcnow()
     prior_status = service.status
     service.status = status
     service.updated_at = now

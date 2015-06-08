@@ -72,7 +72,7 @@ class BaseApplicationTest(object):
             db.session.commit()
 
     def setup_dummy_services_including_unpublished(self, n):
-        now = datetime.now()
+        now = datetime.utcnow()
         with self.app.app_context():
             self.setup_dummy_suppliers(TEST_SUPPLIERS_COUNT)
             for i in range(n):

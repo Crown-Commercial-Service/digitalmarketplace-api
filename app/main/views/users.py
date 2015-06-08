@@ -67,7 +67,7 @@ def create_user():
     else:
         password = encryption.hashpw(json_payload['password'])
 
-    now = datetime.now()
+    now = datetime.utcnow()
     user = User(
         email_address=json_payload['emailAddress'].lower(),
         name=json_payload['name'],
@@ -109,7 +109,7 @@ def update_user(user_id):
 
     json_has_matching_id(user_update, user_id)
 
-    now = datetime.now()
+    now = datetime.utcnow()
     user.updated_at = now
     if 'password' in user_update:
         user.password = encryption.hashpw(user_update['password'])

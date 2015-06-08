@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy_utils import generic_relationship
 
 from . import db
 from .utils import link, url_for
@@ -50,10 +51,28 @@ class ContactInformation(db.Model):
     postcode = db.Column(db.String, index=False,
                          unique=False, nullable=False)
 
+    def update_from_json(self, data):
+        self.contact_name = data.get("contactName")
+        self.phone_number = data.get("phoneNumber")
+        self.email = data.get("email")
+        self.website = data.get("website")
+        self.address1 = data.get("address1")
+        self.address2 = data.get("address2")
+        self.city = data.get("city")
+        self.country = data.get("country")
+        self.postcode = data.get("postcode")
+
+        return self
+
     def serialize(self):
-        # Should there be links for the associated service(s) / supplier?
+        links = link(
+            "self", url_for(".update_contact_information",
+                            supplier_id=self.supplier_id,
+                            contact_id=self.id)
+        )
 
         serialized = {
+            'id': self.id,
             'contactName': self.contact_name,
             'phoneNumber': self.phone_number,
             'email': self.email,
@@ -62,7 +81,8 @@ class ContactInformation(db.Model):
             'address2': self.address2,
             'city': self.city,
             'country': self.country,
-            'postcode': self.postcode
+            'postcode': self.postcode,
+            'links': links,
         }
 
         return filter_null_value_fields(serialized)
@@ -92,7 +112,7 @@ class Supplier(db.Model):
     esourcing_id = db.Column(db.String, index=False,
                              unique=False, nullable=True)
 
-    clients = db.Column(JSON)
+    clients = db.Column(JSON, default=list)
 
     def serialize(self):
         links = link(
@@ -109,14 +129,23 @@ class Supplier(db.Model):
             'id': self.supplier_id,
             'name': self.name,
             'description': self.description,
-            # 'dunsNumber': self.duns_number,
-            # 'eSourcingId': self.esourcing_id,
+            'dunsNumber': self.duns_number,
+            'eSourcingId': self.esourcing_id,
             'contactInformation': contact_information_list,
             'links': links,
             'clients': self.clients
         }
 
         return filter_null_value_fields(serialized)
+
+    def update_from_json(self, data):
+        self.name = data.get('name')
+        self.description = data.get('description')
+        self.duns_number = data.get('dunsNumber')
+        self.esourcing_id = data.get('eSourcingId')
+        self.clients = data.get('clients')
+
+        return self
 
 
 class User(db.Model):
@@ -233,7 +262,7 @@ class Service(db.Model):
         current_data.update(data)
         self.data = current_data
 
-        now = datetime.now()
+        now = datetime.utcnow()
         self.updated_at = now
         self.updated_by = updated_by
         self.updated_reason = updated_reason
@@ -383,6 +412,24 @@ class DraftService(db.Model):
         self.updated_at = now
         self.updated_by = updated_by
         self.updated_reason = updated_reason
+
+
+class AuditEvent(db.Model):
+    __tablename__ = 'audit_events'
+
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False,
+                           default=datetime.utcnow)
+    user = db.Column(db.String)
+    data = db.Column(JSON)
+
+    object_type = db.Column(db.String)
+    object_id = db.Column(db.BigInteger)
+
+    object = generic_relationship(
+        object_type, object_id
+    )
 
 
 def filter_null_value_fields(obj):

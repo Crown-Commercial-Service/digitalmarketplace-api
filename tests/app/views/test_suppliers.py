@@ -2,7 +2,7 @@ from flask import json
 from nose.tools import assert_equal, assert_in
 
 from app import db
-from app.models import Supplier, ContactInformation
+from app.models import Supplier, ContactInformation, AuditEvent
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 
 
@@ -182,6 +182,20 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             ).first()
             assert_equal(supplier.name, payload['name'])
 
+    def test_null_clients_list(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            del payload['clients']
+
+            response = self.put_import_supplier(payload)
+            assert_equal(response.status_code, 201)
+
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+            assert_equal(supplier.clients, [])
+
     def test_reinserting_the_same_supplier(self):
         with self.app.app_context():
             payload = self.load_example_listing("Supplier")
@@ -321,3 +335,327 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         for item in ['bad-email-99', 'is not a']:
             assert_in(item,
                       json.loads(response.get_data())['error'])
+
+
+class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
+    method = "post"
+    endpoint = "/suppliers/123456"
+
+    def setup(self):
+        super(TestUpdateSupplier, self).setup()
+
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            self.supplier = payload
+            self.supplier_id = payload['id']
+
+            self.client.put('/suppliers/{}'.format(self.supplier_id),
+                            data=json.dumps({'suppliers': self.supplier}),
+                            content_type='application/json')
+
+    def update_request(self, data=None, user=None, full_data=None):
+        return self.client.post(
+            self.endpoint,
+            data=json.dumps({
+                'suppliers': data,
+                'updated_by': user or 'supplier@user.dmdev',
+            } if full_data is None else full_data),
+            content_type='application/json',
+        )
+
+    def test_empty_update_request(self):
+        response = self.update_request(full_data={})
+        assert_equal(response.status_code, 400)
+
+    def test_empty_update_supplier(self):
+        response = self.update_request({})
+        assert_equal(response.status_code, 200)
+
+    def test_name_update(self):
+        response = self.update_request({'name': "New Name"})
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+            assert_equal(supplier.name, "New Name")
+
+    def test_supplier_update_creates_audit_event(self):
+        self.update_request({'name': "Name"})
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == supplier
+            ).first()
+
+            assert_equal(audit.type, "supplier_update")
+            assert_equal(audit.user, "supplier@user.dmdev")
+            assert_equal(audit.data, {
+                "request": {
+                    'suppliers': {'name': "Name"},
+                    'updated_by': 'supplier@user.dmdev',
+                },
+            })
+
+    def test_update_response_matches_payload(self):
+        payload = self.load_example_listing("Supplier")
+        response = self.update_request({'name': "New Name"})
+        assert_equal(response.status_code, 200)
+
+        payload.update({'name': 'New Name'})
+        supplier = json.loads(response.get_data())['suppliers']
+
+        payload.pop('contactInformation')
+        supplier.pop('contactInformation')
+        supplier.pop('links')
+
+        assert_equal(supplier, payload)
+
+    def test_update_all_fields(self):
+        response = self.update_request({
+            'name': "New Name",
+            'description': "New Description",
+            'dunsNumber': "010101",
+            'eSourcingId': "010101",
+            'clients': ["Client1", "Client2"]
+        })
+
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+        assert_equal(supplier.name, 'New Name')
+        assert_equal(supplier.description, "New Description")
+        assert_equal(supplier.duns_number, "010101")
+        assert_equal(supplier.esourcing_id, "010101")
+        assert_equal(supplier.clients, ["Client1", "Client2"])
+
+    def test_supplier_json_id_does_not_match_oiginal_id(self):
+        response = self.update_request({
+            'id': 234567,
+            'name': "New Name"
+        })
+
+        assert_equal(response.status_code, 400)
+
+    def test_update_missing_supplier(self):
+        response = self.client.post(
+            '/suppliers/234567',
+            data=json.dumps({'suppliers': {}}),
+            content_type='application/json',
+        )
+
+        assert_equal(response.status_code, 404)
+
+    def test_links_and_contact_information_are_ignored(self):
+        response = self.update_request(full_data={'suppliers': {
+            'name': "New Name",
+            'contactInformation': [],
+            'links': [],
+        }, 'links': [], 'updated_by': 'supplier@user.dmdev'})
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 123456
+            ).first()
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(supplier.contact_information), 2)
+
+    def test_update_with_unexpected_keys(self):
+        response = self.update_request({
+            'new_key': "value",
+            'name': "New Name"
+        })
+
+        assert_equal(response.status_code, 400)
+
+    def test_update_without_updated_by(self):
+        response = self.update_request(full_data={
+            'suppliers': {'name': "New Name"},
+        })
+
+        assert_equal(response.status_code, 400)
+
+
+class TestUpdateContactInformation(BaseApplicationTest):
+    def setup(self):
+        super(TestUpdateContactInformation, self).setup()
+
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            self.supplier = payload
+            self.supplier_id = payload['id']
+
+            response = self.client.put(
+                '/suppliers/{}'.format(self.supplier_id),
+                data=json.dumps({'suppliers': self.supplier}),
+                content_type='application/json')
+            supplier = json.loads(response.get_data())['suppliers']
+            self.contact_id = supplier['contactInformation'][0]['id']
+
+    def update_request(self, data=None, user=None, full_data=None):
+        return self.client.post(
+            '/suppliers/123456/contact-information/{}'.format(self.contact_id),
+            data=json.dumps({
+                'contactInformation': data,
+                'updated_by': user or 'supplier@user.dmdev',
+            } if full_data is None else full_data),
+            content_type='application/json',
+        )
+
+    def test_empty_update_request(self):
+        response = self.update_request(full_data={})
+        assert_equal(response.status_code, 400)
+
+    def test_empty_update(self):
+        response = self.update_request({})
+        assert_equal(response.status_code, 200)
+
+    def test_simple_field_update(self):
+        response = self.update_request({
+            'city': "New City"
+        })
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+            contact = ContactInformation.query.filter(
+                ContactInformation.id == self.contact_id
+            ).first()
+
+            assert_equal(contact.city, "New City")
+
+    def test_update_creates_audit_event(self):
+        self.update_request({
+            'city': "New City"
+        })
+
+        with self.app.app_context():
+            contact = ContactInformation.query.filter(
+                ContactInformation.id == self.contact_id
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == contact.supplier
+            ).first()
+
+            assert_equal(audit.type, "contact_update")
+            assert_equal(audit.user, "supplier@user.dmdev")
+            assert_equal(audit.data, {
+                "request": {
+                    'contactInformation': {'city': "New City"},
+                    'updated_by': 'supplier@user.dmdev'
+                }
+            })
+
+    def test_update_response_matches_payload(self):
+        payload = self.load_example_listing("Supplier")
+        response = self.update_request({
+            'city': "New City"
+        })
+        assert_equal(response.status_code, 200)
+
+        payload = payload['contactInformation'][0]
+        payload.update({'city': 'New City'})
+        payload.pop('links')
+        contact = json.loads(response.get_data())['contactInformation']
+        contact.pop('id')
+        contact.pop('links')
+
+        assert_equal(contact, payload)
+
+    def test_update_all_fields(self):
+        response = self.update_request({
+            "contactName": "New contact",
+            "phoneNumber": "New phone",
+            "email": "new-value@example.com",
+            "website": "example.com",
+            "address1": "New address1",
+            "address2": "New address2",
+            "city": "New city",
+            "country": "New country",
+            "postcode": "New postcode",
+        })
+
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+            contact = ContactInformation.query.filter(
+                ContactInformation.id == self.contact_id
+            ).first()
+
+        assert_equal(contact.contact_name, "New contact")
+        assert_equal(contact.phone_number, "New phone")
+        assert_equal(contact.email, "new-value@example.com")
+        assert_equal(contact.website, "example.com")
+        assert_equal(contact.address1, "New address1")
+        assert_equal(contact.address2, "New address2")
+        assert_equal(contact.city, "New city")
+        assert_equal(contact.country, "New country")
+        assert_equal(contact.postcode, "New postcode")
+
+    def test_supplier_json_id_does_not_match_oiginal_id(self):
+        response = self.update_request({
+            'supplierId': 234567,
+            'city': "New City"
+        })
+
+        assert_equal(response.status_code, 400)
+
+    def test_json_id_does_not_match_oiginal_id(self):
+        response = self.update_request({
+            'id': 2,
+            'city': "New City"
+        })
+
+        assert_equal(response.status_code, 400)
+
+    def test_update_missing_supplier(self):
+        response = self.client.post(
+            '/suppliers/234567/contact-information/%s' % self.contact_id,
+            data=json.dumps({}),
+            content_type='application/json',
+        )
+
+        assert_equal(response.status_code, 404)
+
+    def test_update_missing_contact_information(self):
+        response = self.client.post(
+            '/suppliers/123456/contact-information/100000',
+            data=json.dumps({'contactInformation': {}}),
+            content_type='application/json',
+        )
+
+        assert_equal(response.status_code, 404)
+
+    def test_update_with_unexpected_keys(self):
+        response = self.update_request({
+            'new_key': "value",
+            'city': "New City"
+        })
+
+        assert_equal(response.status_code, 400)
+
+    def test_update_ignores_links(self):
+        response = self.update_request({
+            'links': "value",
+            'city': "New City"
+        })
+
+        assert_equal(response.status_code, 200)
+
+    def test_update_without_updated_by(self):
+        response = self.update_request(full_data={
+            'contactInformation': {'city': "New City"},
+        })
+
+        assert_equal(response.status_code, 400)

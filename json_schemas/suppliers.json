@@ -33,12 +33,12 @@
       "items": {
         "type": "string"
       },
-      "minItems": 0
+      "minItems": 0,
+      "maxItems": 10
     }
   },
   "required": [
     "id",
-    "name",
-    "contactInformation"
+    "name"
   ]
 }

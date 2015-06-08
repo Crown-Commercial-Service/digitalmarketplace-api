@@ -18,7 +18,7 @@ class TestListServicesOrdering(BaseApplicationTest):
     def test_should_order_services_by_framework_lot_name(self):
         with self.app.app_context():
             self.app.config['DM_API_SERVICES_PAGE_SIZE'] = 10
-            now = datetime.now()
+            now = datetime.utcnow()
 
             g5_saas = self.load_example_listing("G5")
             g5_paas = self.load_example_listing("G5")
@@ -93,7 +93,7 @@ class TestListServices(BaseApplicationTest):
 
     def test_list_services_gets_only_active_frameworks(self):
         with self.app.app_context():
-            now = datetime.now()
+            now = datetime.utcnow()
             db.session.add(Framework(
                 id=123,
                 name="expired",
@@ -894,7 +894,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
 class TestShouldCallSearchApiOnPost(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPost, self).setup()
-        now = datetime.now()
+        now = datetime.utcnow()
         payload = self.load_example_listing("G6-IaaS")
         g4_payload = self.load_example_listing("G4")
         with self.app.app_context():
@@ -1014,7 +1014,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
 class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPostStatusUpdate, self).setup()
-        now = datetime.now()
+        now = datetime.utcnow()
         self.services = {}
 
         valid_statuses = [
@@ -1252,7 +1252,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 content_type='application/json')
 
             assert_equal(response.status_code, 201)
-            now = datetime.now()
+            now = datetime.utcnow()
             payload.pop('id', None)
             payload.pop('supplierId', None)
             service = Service.query.filter(Service.service_id ==
@@ -1280,7 +1280,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
             payload.pop('status', None)
             assert_equal(response.status_code, 201)
-            now = datetime.now()
+            now = datetime.utcnow()
             payload.pop('id', None)
             payload.pop('supplierId', None)
             service = Service.query.filter(Service.service_id ==
@@ -1394,7 +1394,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 class TestGetService(BaseApplicationTest):
     def setup(self):
         super(TestGetService, self).setup()
-        now = datetime.now()
+        now = datetime.utcnow()
         with self.app.app_context():
             db.session.add(Framework(
                 id=123,

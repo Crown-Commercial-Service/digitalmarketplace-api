@@ -11,9 +11,11 @@
       "address1": "123 Fake Street",
       "city": "London",
       "country": "United Kingdom",
-      "postcode": "F4 K1E"
+      "postcode": "F4 K1E",
+      "links": {"self": "http://localhost/suppliers/123456/contact-information/1"}
     },
     {
+      "id": 1,
       "website": "http://www.don.com?fref=ts",
       "contactName": "Don",
       "email": "don@don.com",
