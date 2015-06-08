@@ -1,6 +1,7 @@
 from tests.app.helpers import BaseApplicationTest
+from datetime import datetime
 from flask import json
-from app.models import Supplier, ContactInformation
+from app.models import Supplier, ContactInformation, Service
 from app import db
 
 from nose.tools import assert_equal, assert_in
@@ -44,6 +45,86 @@ class TestDraftServices(BaseApplicationTest):
                     'update_reason': 'whateves'},
                  'services': payload}),
             content_type='application/json')
+
+    def test_reject_list_drafts_no_supplier_id(self):
+        res = self.client.get('/services/draft')
+        assert_equal(res.status_code, 400)
+
+    def test_reject_list_drafts_invalid_supplier_id(self):
+        res = self.client.get('/services/draft?supplier_id=invalid')
+        assert_equal(res.status_code, 400)
+
+    def test_reject_list_drafts_if_no_supplier_for_id(self):
+        res = self.client.get('/draft-services?supplier_id=12345667')
+        assert_equal(res.status_code, 404)
+
+    def test_returns_empty_list_if_no_drafts(self):
+        res = self.client.get('/draft-services?supplier_id=1')
+        assert_equal(res.status_code, 200)
+        drafts = json.loads(res.get_data())
+        assert_equal(len(drafts['services']), 0)
+
+    def test_returns_drafts_for_supplier(self):
+        self.client.put(
+            '/services/{}/draft'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        res = self.client.get('/draft-services?supplier_id=1')
+        assert_equal(res.status_code, 200)
+        drafts = json.loads(res.get_data())
+        assert_equal(len(drafts['services']), 1)
+
+    def test_returns_all_drafts_for_supplier_on_single_page(self):
+        with self.app.app_context():
+
+            now = datetime.now()
+            service_ids = [
+                1234567890123411,
+                1234567890123412,
+                1234567890123413,
+                1234567890123414,
+                1234567890123415,
+                1234567890123416,
+                1234567890123417,
+                1234567890123418,
+                1234567890123419,
+                1234567890123410
+            ]
+
+            for service_id in service_ids:
+                db.session.add(
+                    Service(
+                        service_id=service_id,
+                        supplier_id=1,
+                        updated_at=now,
+                        status='published',
+                        created_at=now,
+                        updated_by='tests',
+                        updated_reason='test data',
+                        data={'foo': 'bar'},
+                        framework_id=1)
+                )
+
+            for service_id in service_ids:
+                self.client.put(
+                    '/services/{}/draft'.format(service_id),
+                    data=json.dumps(self.updater_json),
+                    content_type='application/json')
+
+            res = self.client.get('/draft-services?supplier_id=1')
+            assert_equal(res.status_code, 200)
+            drafts = json.loads(res.get_data())
+            assert_equal(len(drafts['services']), 10)
+
+    def test_returns_drafts_for_supplier_has_no_links(self):
+        self.client.put(
+            '/services/{}/draft'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        res = self.client.get('/draft-services?supplier_id=1')
+        assert_equal(res.status_code, 200)
+        drafts = json.loads(res.get_data())
+        assert_equal(len(drafts['links']), 0)
 
     def test_reject_invalid_service_id_on_update(self):
         res = self.client.post(

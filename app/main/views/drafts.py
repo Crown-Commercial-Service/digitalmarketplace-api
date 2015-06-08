@@ -1,11 +1,13 @@
-from flask import jsonify, abort
+from flask import jsonify, abort, request
 
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import asc
+from sqlalchemy.types import String
 
 from .. import main
 from ... import db
 from ...validation import is_valid_service_id_or_400
-from ...models import Service, DraftService, ArchivedService
+from ...models import Service, DraftService, ArchivedService, Supplier
 from ...service_utils import validate_and_return_updater_request, \
     update_and_validate_service, validate_and_return_service_request, \
     index_service
@@ -69,6 +71,34 @@ def edit_draft_service(service_id):
         abort(400, "Database Error: {0}".format(e))
 
     return jsonify(services=draft.serialize()), 200
+
+
+@main.route('/draft-services', methods=['GET'])
+def list_drafts():
+    supplier_id = request.args.get('supplier_id')
+    if supplier_id is None:
+        abort(400, "Invalid page argument")
+    try:
+        supplier_id = int(supplier_id)
+    except ValueError:
+        abort(400, "Invalid supplier_id: %s" % supplier_id)
+
+    supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id) \
+        .all()
+    if not supplier:
+        abort(404, "supplier_id '%d' not found" % supplier_id)
+
+    services = DraftService.query.order_by(
+        asc(DraftService.framework_id),
+        asc(DraftService.data['lot'].cast(String).label('data_lot')),
+        asc(DraftService.data['serviceName'].cast(String).label('data_servicename'))
+    )
+
+    items = services.filter(DraftService.supplier_id == supplier_id).all()
+    return jsonify(
+        services=[service.serialize() for service in items],
+        links=dict()
+    )
 
 
 @main.route('/services/<string:service_id>/draft', methods=['GET'])
