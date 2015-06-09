@@ -91,7 +91,8 @@ def list_drafts():
     services = DraftService.query.order_by(
         asc(DraftService.framework_id),
         asc(DraftService.data['lot'].cast(String).label('data_lot')),
-        asc(DraftService.data['serviceName'].cast(String).label('data_servicename'))
+        asc(DraftService.data['serviceName'].
+            cast(String).label('data_servicename'))
     )
 
     items = services.filter(DraftService.supplier_id == supplier_id).all()
