@@ -194,8 +194,6 @@ def import_service(service_id):
     service.updated_at = now
     service.created_at = now
     service.status = service_data.pop('status', 'published')
-    service.updated_by = updater_json['updated_by']
-    service.updated_reason = updater_json['update_reason']
     service.data = service_data
 
     db.session.add(service)
@@ -279,8 +277,6 @@ def update_service_status(service_id, status):
     prior_status = service.status
     service.status = status
     service.updated_at = now
-    service.updated_by = update_json['updated_by']
-    service.updated_reason = update_json['update_reason']
 
     db.session.add(service)
     db.session.add(service_to_archive)

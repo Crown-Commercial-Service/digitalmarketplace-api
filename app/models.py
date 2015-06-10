@@ -245,7 +245,7 @@ class Service(db.Model):
 
         return data
 
-    def update_from_json(self, data, updated_by=None, updated_reason=None):
+    def update_from_json(self, data):
         self.service_id = str(data.pop('id', self.service_id))
 
         data.pop('supplierId', None)
@@ -377,7 +377,7 @@ class DraftService(db.Model):
 
         return data
 
-    def update_from_json(self, data, updated_by=None, updated_reason=None):
+    def update_from_json(self, data):
         self.service_id = str(data.pop('id', self.service_id))
 
         data.pop('supplierId', None)

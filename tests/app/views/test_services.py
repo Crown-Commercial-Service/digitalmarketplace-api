@@ -326,8 +326,7 @@ class TestPostService(BaseApplicationTest):
             '/services/%s' % self.service_id,
             data=json.dumps(
                 {'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                  'services': payload}),
             content_type='application/json')
 
@@ -336,8 +335,7 @@ class TestPostService(BaseApplicationTest):
             "/services",
             data=json.dumps(
                 {'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                  'services': {
                      'serviceName': 'new service name'}}),
             content_type='application/json')
@@ -349,8 +347,7 @@ class TestPostService(BaseApplicationTest):
             "/services/9999999999",
             data=json.dumps(
                 {'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                  'services': {
                      'serviceName': 'new service name'}}),
             content_type='application/json')
@@ -376,8 +373,7 @@ class TestPostService(BaseApplicationTest):
                 '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
+                        'updated_by': 'joeblogs'},
                      'services': {
                          'serviceName': 'new service name'}}))
 
@@ -390,8 +386,7 @@ class TestPostService(BaseApplicationTest):
                 '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
+                        'updated_by': 'joeblogs'},
                      'services': {
                          'serviceName': 'new service name'}}),
                 content_type='application/octet-stream')
@@ -416,8 +411,7 @@ class TestPostService(BaseApplicationTest):
                 '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
+                        'updated_by': 'joeblogs'},
                      'services': {
                          'serviceName': 'new service name'}}),
                 content_type='application/json')
@@ -436,8 +430,7 @@ class TestPostService(BaseApplicationTest):
                 '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
+                        'updated_by': 'joeblogs'},
                      'services': {
                          'serviceName': 'new service name',
                          'incidentEscalation': False,
@@ -462,8 +455,7 @@ class TestPostService(BaseApplicationTest):
                 '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
+                        'updated_by': 'joeblogs'},
                      'services': {
                          'supportTypes': support_types}}),
                 content_type='application/json')
@@ -490,8 +482,7 @@ class TestPostService(BaseApplicationTest):
                 '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
+                        'updated_by': 'joeblogs'},
                      'services': {
                          'identityAuthenticationControls':
                              identity_authentication_controls}}),
@@ -517,8 +508,7 @@ class TestPostService(BaseApplicationTest):
                 "/services/" + self.service_id,
                 data=json.dumps(
                     {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
+                        'updated_by': 'joeblogs'},
                      'services': {
                          'thisIsInvalid': 'so I should never see this'}}),
                 content_type='application/json')
@@ -533,8 +523,8 @@ class TestPostService(BaseApplicationTest):
                 "/services/" + self.service_id,
                 data=json.dumps(
                     {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'}, 'services': {
+                        'updated_by': 'joeblogs'},
+                     'services': {
                         'priceUnit': 'per Truth'}}),
                 content_type='application/json')
 
@@ -548,8 +538,7 @@ class TestPostService(BaseApplicationTest):
                 '/services/%s' % self.service_id,
                 data=json.dumps(
                     {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
+                        'updated_by': 'joeblogs'},
                      'services': {
                          'serviceName': 'new service name'}}),
                 content_type='application/json')
@@ -571,8 +560,7 @@ class TestPostService(BaseApplicationTest):
                     '/services/%s' % self.service_id,
                     data=json.dumps(
                         {'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                          'services': {
                              'serviceName': 'new service name' + str(i)}}),
                     content_type='application/json')
@@ -594,8 +582,7 @@ class TestPostService(BaseApplicationTest):
                 data=json.dumps(
                     {
                         'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                         'services': data['services']
                     }
                 ),
@@ -632,8 +619,7 @@ class TestPostService(BaseApplicationTest):
             '/services/%s' % self.service_id,
             data=json.dumps(
                 {'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                  'services': {
                      'serviceName': 'new service name', 'id': 'differentId'}}),
             content_type='application/json')
@@ -647,8 +633,7 @@ class TestPostService(BaseApplicationTest):
             '/services/%s' % self.service_id,
             data=json.dumps(
                 {'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                  'services': {
                      'status': 'enabled'}}),
             content_type='application/json')
@@ -676,8 +661,7 @@ class TestPostService(BaseApplicationTest):
                 ),
                 data=json.dumps(
                     {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'Change status for unit test'}
+                        'updated_by': 'joeblogs'}
                      }),
                 content_type='application/json'
             )
@@ -706,8 +690,7 @@ class TestPostService(BaseApplicationTest):
                 ),
                 data=json.dumps(
                     {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'Change status for unit test'}
+                        'updated_by': 'joeblogs'}
                      }),
                 content_type='application/json'
             )
@@ -742,8 +725,7 @@ class TestPostService(BaseApplicationTest):
             ),
             data=json.dumps(
                 {'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'Change status for unit test'}
+                    'updated_by': 'joeblogs'}
                  }),
             content_type='application/json'
         )
@@ -762,7 +744,6 @@ class TestPostService(BaseApplicationTest):
                 data=json.dumps({
                     'update_details': {
                         'updated_by': 'joeblogs',
-                        'update_reason': 'whatevs',
                     },
                     'services': data['services'],
                 }),
@@ -786,7 +767,6 @@ class TestPostService(BaseApplicationTest):
                                            'services': payload,
                                            "update_details": {
                                                "updated_by": "joeblogs",
-                                               "update_reason": "whatevs",
                                            },
                                        }),
                                        content_type='application/json')
@@ -799,7 +779,6 @@ class TestPostService(BaseApplicationTest):
                                             },
                                             "update_details": {
                                                 "updated_by": "joeblogs",
-                                                "update_reason": "whatevs",
                                             },
                                         }),
                                         content_type='application/json')
@@ -828,8 +807,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 data=json.dumps(
                     {
                         'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -855,8 +833,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 data=json.dumps(
                     {
                         'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -877,8 +854,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 data=json.dumps(
                     {
                         'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -924,8 +900,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 data=json.dumps(
                     {
                         'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -955,8 +930,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 data=json.dumps(
                     {
                         'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -974,8 +948,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 data=json.dumps(
                     {
                         'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -994,8 +967,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 data=json.dumps(
                     {
                         'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1062,8 +1034,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
                 ),
                 data=json.dumps(
                     {'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'Change status for unit test'}
+                        'updated_by': 'joeblogs'}
                      }),
                 content_type='application/json'
             )
@@ -1148,8 +1119,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
             ),
             data=json.dumps(
                 {'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'Change status for unit test'}}),
+                    'updated_by': 'joeblogs'}}),
             content_type='application/json'
         )
 
@@ -1166,8 +1136,8 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
             ),
             data=json.dumps(
                 {'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'Change status for unit test'}}),
+                    'updated_by': 'joeblogs'}
+                 }),
             content_type='application/json'
         )
 
@@ -1208,8 +1178,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 '/services/1234567890123456',
                 data=json.dumps({
                     'update_details': {
-                        'updated_by': 'joeblogs',
-                        'update_reason': 'whateves'},
+                        'updated_by': 'joeblogs'},
                     'services': payload,
                 }),
                 content_type='application/json')
@@ -1235,8 +1204,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 data=json.dumps(
                     {
                         'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1262,8 +1230,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 data=json.dumps(
                     {
                         'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1286,8 +1253,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             '/services/1234567890123456',
             data=json.dumps({
                 'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                 'services': {'id': "1234567890123457", 'foo': 'bar'}}),
             content_type='application/json')
 
@@ -1313,8 +1279,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             '/services/abc123456',
             data=json.dumps({
                 'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                 'services': {'id': 'abc123456', 'foo': 'bar'}}),
             content_type='application/json')
 
@@ -1326,8 +1291,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             '/services/abcdefghij12345678901',
             data=json.dumps({
                 'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                 'services': {'id': 'abcdefghij12345678901', 'foo': 'bar'}}),
             content_type='application/json')
 
@@ -1344,8 +1308,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 data=json.dumps(
                     {
                         'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1366,8 +1329,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 data=json.dumps(
                     {
                         'update_details': {
-                            'updated_by': 'joeblogs',
-                            'update_reason': 'whateves'},
+                            'updated_by': 'joeblogs'},
                         'services': payload}
                 ),
                 content_type='application/json')

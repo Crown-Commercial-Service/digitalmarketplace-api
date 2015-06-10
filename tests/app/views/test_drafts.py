@@ -18,8 +18,7 @@ class TestDraftServices(BaseApplicationTest):
         self.service_id = str(payload['id'])
         self.updater_json = {
             'update_details': {
-                'updated_by': 'joeblogs',
-                'update_reason': 'whateves'}
+                'updated_by': 'joeblogs'}
         }
 
         with self.app.app_context():
@@ -40,8 +39,7 @@ class TestDraftServices(BaseApplicationTest):
             '/services/%s' % self.service_id,
             data=json.dumps(
                 {'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                  'services': payload}),
             content_type='application/json')
 
@@ -190,8 +188,7 @@ class TestDraftServices(BaseApplicationTest):
             '/services/{}/draft'.format(self.service_id),
             data=json.dumps({
                 'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                 'services': {
                     'serviceName': 'new service name'
                 }
@@ -217,8 +214,7 @@ class TestDraftServices(BaseApplicationTest):
             '/services/{}/draft'.format(self.service_id),
             data=json.dumps({
                 'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'}
+                    'updated_by': 'joeblogs'}
             }),
             content_type='application/json')
 
@@ -234,8 +230,7 @@ class TestDraftServices(BaseApplicationTest):
             '/services/{}/draft'.format(self.service_id),
             data=json.dumps({
                 'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                 'services': {
                     'badField': 'new service name',
                     'priceUnit': 'chickens'
@@ -248,7 +243,6 @@ class TestDraftServices(BaseApplicationTest):
             data=json.dumps({
                 'update_details': {
                     'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'
                 }
             }),
             content_type='application/json')
@@ -261,7 +255,6 @@ class TestDraftServices(BaseApplicationTest):
             data=json.dumps({
                 'update_details': {
                     'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'
                 }
             }),
             content_type='application/json')
@@ -290,8 +283,7 @@ class TestDraftServices(BaseApplicationTest):
             '/services/{}/draft'.format(self.service_id),
             data=json.dumps({
                 'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                 'services': {
                     'serviceName': 'chickens'
                 }
@@ -310,7 +302,6 @@ class TestDraftServices(BaseApplicationTest):
             data=json.dumps({
                 'update_details': {
                     'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'
                 }
             }),
             content_type='application/json')

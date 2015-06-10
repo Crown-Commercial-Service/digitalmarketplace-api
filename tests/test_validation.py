@@ -41,17 +41,17 @@ def test_all_schemas_are_valid():
 
 
 def test_updater_json_validates_correctly():
-    invalid_updater_no_reason = {'updated_by': 'this'}
-    invalid_updater_no_username = {'update_reason': 'this'}
-    invalid_updater_no_fields = {'invalid': 'this'}
-    valid_updater = {'updated_by': 'this', 'update_reason': 'hi'}
+    invalid_updater_no_fields = {}
+    invalid_updater_extra_fields = {'updated_by': 'this', 'invalid': 'this'}
+    invalid_updater_only_invalid_fields = {'invalid': 'this'}
+    valid_updater = {'updated_by': 'this'}
 
     assert_equal(validates_against_schema(
-        'services-update', invalid_updater_no_reason), False)
-    assert_equal(validates_against_schema(
-        'services-update', invalid_updater_no_username), False)
-    assert_equal(validates_against_schema(
         'services-update', invalid_updater_no_fields), False)
+    assert_equal(validates_against_schema(
+        'services-update', invalid_updater_extra_fields), False)
+    assert_equal(validates_against_schema(
+        'services-update', invalid_updater_only_invalid_fields), False)
     assert_equal(validates_against_schema(
         'services-update', valid_updater), True)
 

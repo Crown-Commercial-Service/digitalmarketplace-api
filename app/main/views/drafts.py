@@ -55,10 +55,7 @@ def edit_draft_service(service_id):
         DraftService.service_id == service_id
     ).first_or_404()
 
-    draft.update_from_json(
-        update_json,
-        updated_by=updater_json['updated_by'],
-        updated_reason=updater_json['update_reason'])
+    draft.update_from_json(update_json)
 
     db.session.add(draft)
 
