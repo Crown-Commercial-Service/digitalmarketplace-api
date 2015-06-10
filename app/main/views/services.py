@@ -22,6 +22,7 @@ from sqlalchemy.types import String
 def index():
     """Entry point for the API, show the resources that are available."""
     return jsonify(links={
+        "audits.list": url_for('.list_audits', _external=True),
         "services.list": url_for('.list_services', _external=True),
         "suppliers.list": url_for('.list_suppliers', _external=True)
     }

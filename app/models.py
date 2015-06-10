@@ -411,6 +411,25 @@ class AuditEvent(db.Model):
         object_type, object_id
     )
 
+    def serialize(self):
+        """
+        :return: dictionary representation of an audit event
+        """
+
+        data = dict()
+
+        data.update({
+            'id': self.id,
+            'type': self.type,
+            'user': self.user,
+            'created_at': self.status
+        })
+
+        data['links'] = link(
+            "self", url_for(".fetch_draft_service", service_id=self.service_id)
+        )
+
+        return data
 
 def filter_null_value_fields(obj):
     return dict(
