@@ -38,9 +38,7 @@ class TestListServicesOrdering(BaseApplicationTest):
                                        updated_at=now,
                                        status='published',
                                        created_at=now,
-                                       updated_by="tests",
                                        framework_id=framework_id,
-                                       updated_reason="test data",
                                        data=listing))
 
             # override certain fields to create ordering difference
@@ -105,8 +103,6 @@ class TestListServices(BaseApplicationTest):
                                    updated_at=now,
                                    status='published',
                                    created_at=now,
-                                   updated_by='tests',
-                                   updated_reason='test data',
                                    data={'foo': 'bar'},
                                    framework_id=123))
 
@@ -906,18 +902,14 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                                    updated_at=now,
                                    status='published',
                                    created_at=now,
-                                   updated_by="tests",
                                    framework_id=1,
-                                   updated_reason="test data",
                                    data=payload))
             db.session.add(Service(service_id="4-G2-0123-456",
                                    supplier_id=1,
                                    updated_at=now,
                                    status='published',
                                    created_at=now,
-                                   updated_by="tests",
                                    framework_id=2,  # G-Cloud 4
-                                   updated_reason="test data",
                                    data=g4_payload))
             db.session.commit()
 
@@ -1042,9 +1034,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
                                        updated_at=now,
                                        status=status,
                                        created_at=now,
-                                       updated_by="tests",
                                        framework_id=1,
-                                       updated_reason="test data",
                                        data=self.services[status]))
 
             db.session.commit()
@@ -1417,8 +1407,6 @@ class TestGetService(BaseApplicationTest):
                                    updated_at=now,
                                    created_at=now,
                                    status='published',
-                                   updated_by="tests",
-                                   updated_reason="test data",
                                    data={'foo': 'bar'},
                                    framework_id=1))
             db.session.add(Service(service_id="123-disabled-456",
@@ -1426,8 +1414,6 @@ class TestGetService(BaseApplicationTest):
                                    updated_at=now,
                                    created_at=now,
                                    status='disabled',
-                                   updated_by="tests",
-                                   updated_reason="test data",
                                    data={'foo': 'bar'},
                                    framework_id=1))
             db.session.add(Service(service_id="123-enabled-456",
@@ -1435,8 +1421,6 @@ class TestGetService(BaseApplicationTest):
                                    updated_at=now,
                                    created_at=now,
                                    status='enabled',
-                                   updated_by="tests",
-                                   updated_reason="test data",
                                    data={'foo': 'bar'},
                                    framework_id=1))
             db.session.add(Service(service_id="123-expired-456",
@@ -1444,8 +1428,6 @@ class TestGetService(BaseApplicationTest):
                                    updated_at=now,
                                    created_at=now,
                                    status='enabled',
-                                   updated_by="tests",
-                                   updated_reason="test data",
                                    data={'foo': 'bar'},
                                    framework_id=123))
             db.session.commit()

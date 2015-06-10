@@ -212,10 +212,6 @@ class Service(db.Model):
                            nullable=False)
     updated_at = db.Column(db.DateTime, index=False, unique=False,
                            nullable=False)
-    updated_by = db.Column(db.String, index=False, unique=False,
-                           nullable=False)
-    updated_reason = db.Column(db.String, index=False, unique=False,
-                               nullable=False)
     data = db.Column(JSON)
 
     framework_id = db.Column(db.BigInteger,
@@ -264,8 +260,6 @@ class Service(db.Model):
 
         now = datetime.utcnow()
         self.updated_at = now
-        self.updated_by = updated_by
-        self.updated_reason = updated_reason
 
 
 class ArchivedService(db.Model):
@@ -281,10 +275,6 @@ class ArchivedService(db.Model):
                            nullable=False)
     updated_at = db.Column(db.DateTime, index=False, unique=False,
                            nullable=False)
-    updated_by = db.Column(db.String, index=False, unique=False,
-                           nullable=False)
-    updated_reason = db.Column(db.String, index=False, unique=False,
-                               nullable=False)
     data = db.Column(JSON)
 
     framework_id = db.Column(db.BigInteger,
@@ -305,8 +295,6 @@ class ArchivedService(db.Model):
             supplier_id=service.supplier_id,
             created_at=service.created_at,
             updated_at=service.updated_at,
-            updated_by=service.updated_by,
-            updated_reason=service.updated_reason,
             data=service.data,
             status=service.status
         )
@@ -344,10 +332,6 @@ class DraftService(db.Model):
                            nullable=False)
     updated_at = db.Column(db.DateTime, index=False, unique=False,
                            nullable=False)
-    updated_by = db.Column(db.String, index=False, unique=False,
-                           nullable=False)
-    updated_reason = db.Column(db.String, index=False, unique=False,
-                               nullable=False)
     data = db.Column(JSON)
 
     framework_id = db.Column(db.BigInteger,
@@ -369,8 +353,6 @@ class DraftService(db.Model):
             supplier_id=service.supplier_id,
             created_at=now,
             updated_at=now,
-            updated_by=service.updated_by,
-            updated_reason=service.updated_reason,
             data=service.data,
             status=service.status
         )
@@ -410,8 +392,6 @@ class DraftService(db.Model):
 
         now = datetime.now()
         self.updated_at = now
-        self.updated_by = updated_by
-        self.updated_reason = updated_reason
 
 
 class AuditEvent(db.Model):
