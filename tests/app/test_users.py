@@ -158,6 +158,34 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(data["supplier"]["name"], "Supplier 1")
         assert_equal(data["supplier"]["supplierId"], 1)
 
+    def test_post_a_user_creates_audit_event(self):
+        with self.app.app_context():
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+            db.session.commit()
+
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'supplierId': 1,
+                    'role': 'supplier',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 200)
+
+        audit_response = self.client.get('/audit-events')
+        assert_equal(audit_response.status_code, 200)
+        data = json.loads(audit_response.get_data())
+
+        assert_equal(len(data['auditEvents']), 1)
+        assert_equal(data['auditEvents'][0]['type'], 'create_user')
+        assert_equal(data['auditEvents'][0]['data']['supplier_id'], 1)
+
     def test_should_reject_a_supplier_user_with_invalid_supplier_id(self):
         response = self.client.post(
             '/users',
@@ -404,6 +432,26 @@ class TestUsersUpdate(BaseApplicationTest):
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
             assert_equal(data['name'], 'I Just Got Married')
+
+    def test_update_creates_audit_event(self):
+        with self.app.app_context():
+            response = self.client.post(
+                '/users/123',
+                data=json.dumps({
+                    'users': {
+                        'name': 'I Just Got Married'
+                    }}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+
+            audit_response = self.client.get('/audit-events')
+            assert_equal(audit_response.status_code, 200)
+            data = json.loads(audit_response.get_data())
+
+            assert_equal(len(data['auditEvents']), 1)
+            assert_equal(data['auditEvents'][0]['type'], 'update_user')
+            assert_equal(data['auditEvents'][0]['data']['name'], 'I Just Got Married')
 
     def test_can_update_role_and_suppler_id(self):
         with self.app.app_context():
