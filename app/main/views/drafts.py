@@ -1,3 +1,4 @@
+from dmutils.audit import AuditTypes
 from flask import jsonify, abort
 
 from sqlalchemy.exc import IntegrityError
@@ -5,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from .. import main
 from ... import db
 from ...validation import is_valid_service_id_or_400
-from ...models import Service, DraftService, ArchivedService
+from ...models import Service, DraftService, ArchivedService, AuditEvent
 from ...service_utils import validate_and_return_updater_request, \
     update_and_validate_service, validate_and_return_service_request, \
     index_service
@@ -26,8 +27,17 @@ def create_draft_service(service_id):
     ).first_or_404()
 
     draft = DraftService.from_service(service)
+    audit = AuditEvent(
+        type=AuditTypes.create_draft_service.value,
+        user=updater_json['updated_by'],
+        data={
+            "service_id": service_id
+        },
+        object=service
+    )
 
     db.session.add(draft)
+    db.session.add(audit)
 
     try:
         db.session.commit()
@@ -57,7 +67,18 @@ def edit_draft_service(service_id):
 
     draft.update_from_json(update_json)
 
+    audit = AuditEvent(
+        type=AuditTypes.update_draft_service.value,
+        user=updater_json['updated_by'],
+        data={
+            "service_id": service_id,
+            "update_json": update_json
+        },
+        object=draft
+    )
+
     db.session.add(draft)
+    db.session.add(audit)
 
     try:
         db.session.commit()
@@ -101,7 +122,17 @@ def delete_draft_service(service_id):
         DraftService.service_id == service_id
     ).first_or_404()
 
+    audit = AuditEvent(
+        type=AuditTypes.delete_draft_service.value,
+        user=updater_json['updated_by'],
+        data={
+            "service_id": service_id
+        },
+        object=None
+    )
+
     db.session.delete(draft)
+    db.session.add(audit)
     try:
         db.session.commit()
     except IntegrityError as e:
@@ -137,6 +168,16 @@ def publish_draft_service(service_id):
         draft.data,
         updater_json)
 
+    audit = AuditEvent(
+        type=AuditTypes.publish_draft_service.value,
+        user=updater_json['updated_by'],
+        data={
+            "service_id": service_id
+        },
+        object=new_service
+    )
+
+    db.session.add(audit)
     db.session.add(archived_service)
     db.session.add(new_service)
     db.session.delete(draft)
