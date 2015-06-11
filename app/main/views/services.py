@@ -1,10 +1,11 @@
 from datetime import datetime
+from dmutils.audit import AuditTypes
 
 from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ... import db
-from ...models import ArchivedService, Service, Supplier, Framework
+from ...models import ArchivedService, Service, Supplier, Framework, AuditEvent
 
 from sqlalchemy import asc
 from sqlalchemy.exc import IntegrityError
@@ -128,15 +129,27 @@ def update_service(service_id):
     ).first_or_404()
 
     service_to_archive = ArchivedService.from_service(service)
+    update_details = validate_and_return_updater_request()
+    update =  validate_and_return_service_request(service_id)
 
     db.session.add(
         update_and_validate_service(
             service,
-            validate_and_return_service_request(service_id),
-            validate_and_return_updater_request()
+            update,
+            update_details
         )
     )
+
     db.session.add(service_to_archive)
+
+    audit = AuditEvent(
+        type=AuditTypes.update_service.value,
+        user=update_details['updated_by'],
+        data=update,
+        object=service
+    )
+
+    db.session.add(audit)
 
     try:
         db.session.commit()
@@ -197,7 +210,15 @@ def import_service(service_id):
     service.status = service_data.pop('status', 'published')
     service.data = service_data
 
+    audit = AuditEvent(
+        type=AuditTypes.import_service.value,
+        user=updater_json['updated_by'],
+        data=service_json,
+        object=None
+    )
+
     db.session.add(service)
+    db.session.add(audit)
 
     try:
         db.session.commit()
@@ -279,7 +300,19 @@ def update_service_status(service_id, status):
     service.status = status
     service.updated_at = now
 
+    audit = AuditEvent(
+        type=AuditTypes.update_service_status.value,
+        user=update_json['updated_by'],
+        data={
+            "service_id": service_id,
+            "new_status": status,
+            "old_status": prior_status,
+        },
+        object=None
+    )
+
     db.session.add(service)
+    db.session.add(audit)
     db.session.add(service_to_archive)
 
     db.session.commit()

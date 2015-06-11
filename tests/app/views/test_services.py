@@ -424,6 +424,29 @@ class TestPostService(BaseApplicationTest):
             assert_equal(data['services']['serviceName'], 'new service name')
             assert_equal(response.status_code, 200)
 
+    def test_valid_service_update_creates_audit_event(self):
+        with self.app.app_context():
+            response = self.client.post(
+                '/services/%s' % self.service_id,
+                data=json.dumps(
+                    {'update_details': {
+                        'updated_by': 'joeblogs'},
+                     'services': {
+                         'serviceName': 'new service name'}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+
+            audit_response = self.client.get('/audit-events')
+            assert_equal(audit_response.status_code, 200)
+            data = json.loads(audit_response.get_data())
+
+            assert_equal(len(data['auditEvents']), 2)
+            assert_equal(data['auditEvents'][0]['type'], 'import_service')
+            assert_equal(data['auditEvents'][1]['type'], 'update_service')
+            assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
+            assert_equal(data['auditEvents'][1]['data']['serviceName'], 'new service name')
+
     def test_can_post_a_valid_service_update_on_several_fields(self):
         with self.app.app_context():
             response = self.client.post(
@@ -669,6 +692,33 @@ class TestPostService(BaseApplicationTest):
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())
             assert_equal(status, data['services']['status'])
+
+    def test_update_service_creates_audit_event(self):
+        response = self.client.post(
+            '/services/{0}/status/{1}'.format(
+                self.service_id,
+                "disabled"
+            ),
+            data=json.dumps(
+                {'update_details': {
+                    'updated_by': 'joeblogs'}
+                 }),
+            content_type='application/json'
+        )
+
+        assert_equal(response.status_code, 200)
+
+        audit_response = self.client.get('/audit-events')
+        assert_equal(audit_response.status_code, 200)
+        data = json.loads(audit_response.get_data())
+
+        assert_equal(len(data['auditEvents']), 2)
+        assert_equal(data['auditEvents'][0]['type'], 'import_service')
+        assert_equal(data['auditEvents'][1]['type'], 'update_service_status')
+        assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][1]['data']['service_id'], self.service_id)
+        assert_equal(data['auditEvents'][1]['data']['new_status'], 'disabled')
+        assert_equal(data['auditEvents'][1]['data']['old_status'], 'published')
 
     def test_should_400_with_invalid_statuses(self):
         invalid_statuses = [
@@ -1219,6 +1269,35 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(service.created_at, service.updated_at)
             assert_almost_equal(now, service.created_at,
                                 delta=timedelta(seconds=2))
+
+
+    @mock.patch('app.search_api_client')
+    def test_add_a_new_service_creates_audit_event(self, search_api_client):
+        with self.app.app_context():
+            search_api_client.index.return_value = "bar"
+
+            payload = self.load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+            response = self.client.put(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 201)
+
+            audit_response = self.client.get('/audit-events')
+            assert_equal(audit_response.status_code, 200)
+            data = json.loads(audit_response.get_data())
+
+            assert_equal(len(data['auditEvents']), 1)
+            assert_equal(data['auditEvents'][0]['type'], 'import_service')
+            assert_equal(data['auditEvents'][0]['user'], 'joeblogs')
+            assert_equal(data['auditEvents'][0]['data'], payload)
 
     def test_add_a_new_service_with_status_disabled(self):
         with self.app.app_context():
