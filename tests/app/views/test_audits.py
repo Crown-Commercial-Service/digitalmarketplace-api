@@ -15,8 +15,8 @@ class TestAudits(BaseApplicationTest):
     @staticmethod
     def audit_event(user, type):
         return AuditEvent(
-            type=type,
-            object=None,
+            audit_type=type,
+            db_object=None,
             user=user,
             data={'request': "data"}
         )

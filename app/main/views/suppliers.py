@@ -179,9 +179,11 @@ def update_supplier(supplier_id):
 
     db.session.add(supplier)
     db.session.add(
-        AuditEvent(type=AuditTypes.supplier_update.value, object=supplier,
-                   user=request_data['updated_by'],
-                   data={'request': request_data})
+        AuditEvent(
+            audit_type=AuditTypes.supplier_update.value,
+            db_object=supplier,
+            user=request_data['updated_by'],
+            data={'request': request_data})
     )
 
     try:
@@ -225,10 +227,11 @@ def update_contact_information(supplier_id, contact_id):
 
     db.session.add(contact)
     db.session.add(
-        AuditEvent(type=AuditTypes.contact_update.value,
-                   object=contact.supplier,
-                   user=request_data['updated_by'],
-                   data={'request': request_data})
+        AuditEvent(
+            audit_type=AuditTypes.contact_update.value,
+            db_object=contact.supplier,
+            user=request_data['updated_by'],
+            data={'request': request_data})
     )
 
     try:

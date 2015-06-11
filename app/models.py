@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy_utils import generic_relationship
+from dmutils.audit import AuditTypes
 
 from . import db
 from .utils import link, url_for
@@ -410,6 +411,14 @@ class AuditEvent(db.Model):
     object = generic_relationship(
         object_type, object_id
     )
+
+    def __init__(self, audit_type, user, data, db_object):
+        if not AuditTypes.is_valid_audit_type(audit_type):
+            raise ValueError("{} is not a valid audit type".format(audit_type))
+        self.type = audit_type
+        self.data = data
+        self.object = db_object
+        self.user = user
 
     def serialize(self):
         """

@@ -88,10 +88,10 @@ def create_user():
         audit_data['supplier_id'] = user.supplier_id
 
     audit = AuditEvent(
-        type=AuditTypes.create_user.value,
+        audit_type=AuditTypes.create_user.value,
         user=json_payload['emailAddress'].lower(),
         data=audit_data,
-        object=None
+        db_object=None
     )
 
     db.session.add(user)
@@ -140,10 +140,10 @@ def update_user(user_id):
         user.email_address = user_update['emailAddress']
 
     audit = AuditEvent(
-        type=AuditTypes.update_user.value,
+        audit_type=AuditTypes.update_user.value,
         user=user.email_address,
         data=user_update,
-        object=user
+        db_object=user
     )
 
     db.session.add(user)

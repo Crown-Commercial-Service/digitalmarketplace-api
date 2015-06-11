@@ -1,5 +1,6 @@
-from nose.tools import assert_equal
-from app.models import User
+from dmutils.audit import AuditTypes
+from nose.tools import assert_equal, assert_raises
+from app.models import User, AuditEvent
 from datetime import datetime
 
 
@@ -21,3 +22,13 @@ def test_should_not_return_password_on_user():
     assert_equal(user.serialize()['name'], "name")
     assert_equal(user.serialize()['role'], "buyer")
     assert_equal('password' in user.serialize(), False)
+
+
+def test_should_raise_error_on_invalid_audit_type():
+    with assert_raises(ValueError):
+        AuditEvent(
+            audit_type="nonsense",
+            user='tests',
+            data={},
+            db_object=None
+        )

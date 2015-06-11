@@ -28,12 +28,12 @@ def create_draft_service(service_id):
 
     draft = DraftService.from_service(service)
     audit = AuditEvent(
-        type=AuditTypes.create_draft_service.value,
+        audit_type=AuditTypes.create_draft_service.value,
         user=updater_json['updated_by'],
         data={
             "service_id": service_id
         },
-        object=service
+        db_object=service
     )
 
     db.session.add(draft)
@@ -68,13 +68,13 @@ def edit_draft_service(service_id):
     draft.update_from_json(update_json)
 
     audit = AuditEvent(
-        type=AuditTypes.update_draft_service.value,
+        audit_type=AuditTypes.update_draft_service.value,
         user=updater_json['updated_by'],
         data={
             "service_id": service_id,
             "update_json": update_json
         },
-        object=draft
+        db_object=draft
     )
 
     db.session.add(draft)
@@ -123,12 +123,12 @@ def delete_draft_service(service_id):
     ).first_or_404()
 
     audit = AuditEvent(
-        type=AuditTypes.delete_draft_service.value,
+        audit_type=AuditTypes.delete_draft_service.value,
         user=updater_json['updated_by'],
         data={
             "service_id": service_id
         },
-        object=None
+        db_object=None
     )
 
     db.session.delete(draft)
@@ -169,12 +169,12 @@ def publish_draft_service(service_id):
         updater_json)
 
     audit = AuditEvent(
-        type=AuditTypes.publish_draft_service.value,
+        audit_type=AuditTypes.publish_draft_service.value,
         user=updater_json['updated_by'],
         data={
             "service_id": service_id
         },
-        object=new_service
+        db_object=new_service
     )
 
     db.session.add(audit)
