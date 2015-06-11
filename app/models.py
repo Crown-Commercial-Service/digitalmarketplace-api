@@ -422,14 +422,16 @@ class AuditEvent(db.Model):
             'id': self.id,
             'type': self.type,
             'user': self.user,
-            'created_at': self.status
+            'data': self.data,
+            'createdAt': self.created_at.strftime("%Y-%m-%dT%H:%M:%S%Z"),
         })
 
         data['links'] = link(
-            "self", url_for(".fetch_draft_service", service_id=self.service_id)
+            "self", url_for(".list_audits")
         )
 
         return data
+
 
 def filter_null_value_fields(obj):
     return dict(

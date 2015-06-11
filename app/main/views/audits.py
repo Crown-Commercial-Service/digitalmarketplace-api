@@ -3,9 +3,10 @@ from ...models import AuditEvent
 from sqlalchemy import asc
 from ...utils import pagination_links
 from .. import main
+from dmutils.audit import AuditTypes
 
 
-@main.route('/audits', methods=['GET'])
+@main.route('/audit-events', methods=['GET'])
 def list_audits():
 
     try:
@@ -13,9 +14,15 @@ def list_audits():
     except ValueError:
         abort(400, "Invalid page argument")
 
-    audits = AuditEvent.query.filter.order_by(
+    audits = AuditEvent.query.order_by(
         asc(AuditEvent.created_at)
     )
+
+    if request.args.get('audit-type'):
+        if AuditTypes.is_valid_audit_type(request.args.get('audit-type')):
+            audits = audits.filter(AuditEvent.type == request.args.get('audit-type'))
+        else:
+            abort(400, "Invalid audit type")
 
     audits = audits.paginate(
         page=page,
@@ -23,7 +30,7 @@ def list_audits():
     )
 
     return jsonify(
-        services=[audits.serialize() for audits in audits.items],
+        auditEvents=[audit.serialize() for audit in audits.items],
         links=pagination_links(
             audits,
             '.list_audits',
