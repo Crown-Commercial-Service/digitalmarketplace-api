@@ -130,7 +130,7 @@ def update_service(service_id):
 
     service_to_archive = ArchivedService.from_service(service)
     update_details = validate_and_return_updater_request()
-    update =  validate_and_return_service_request(service_id)
+    update = validate_and_return_service_request(service_id)
 
     db.session.add(
         update_and_validate_service(

@@ -444,8 +444,13 @@ class TestPostService(BaseApplicationTest):
             assert_equal(len(data['auditEvents']), 2)
             assert_equal(data['auditEvents'][0]['type'], 'import_service')
             assert_equal(data['auditEvents'][1]['type'], 'update_service')
-            assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
-            assert_equal(data['auditEvents'][1]['data']['serviceName'], 'new service name')
+            assert_equal(
+                data['auditEvents'][1]['user'], 'joeblogs'
+            )
+            assert_equal(
+                data['auditEvents'][1]['data']['serviceName'],
+                'new service name'
+            )
 
     def test_can_post_a_valid_service_update_on_several_fields(self):
         with self.app.app_context():
@@ -716,7 +721,9 @@ class TestPostService(BaseApplicationTest):
         assert_equal(data['auditEvents'][0]['type'], 'import_service')
         assert_equal(data['auditEvents'][1]['type'], 'update_service_status')
         assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
-        assert_equal(data['auditEvents'][1]['data']['service_id'], self.service_id)
+        assert_equal(
+            data['auditEvents'][1]['data']['service_id'], self.service_id
+        )
         assert_equal(data['auditEvents'][1]['data']['new_status'], 'disabled')
         assert_equal(data['auditEvents'][1]['data']['old_status'], 'published')
 
@@ -1269,7 +1276,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(service.created_at, service.updated_at)
             assert_almost_equal(now, service.created_at,
                                 delta=timedelta(seconds=2))
-
 
     @mock.patch('app.search_api_client')
     def test_add_a_new_service_creates_audit_event(self, search_api_client):

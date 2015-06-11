@@ -20,7 +20,9 @@ def list_audits():
 
     if request.args.get('audit-type'):
         if AuditTypes.is_valid_audit_type(request.args.get('audit-type')):
-            audits = audits.filter(AuditEvent.type == request.args.get('audit-type'))
+            audits = audits.filter(
+                AuditEvent.type == request.args.get('audit-type')
+            )
         else:
             abort(400, "Invalid audit type")
 
