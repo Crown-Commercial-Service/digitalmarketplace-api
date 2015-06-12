@@ -29,7 +29,7 @@ def update_and_validate_service(service, service_payload, updater_payload):
 
     data = drop_foreign_fields(
         data,
-        ['service_id', 'supplierName', 'links', 'frameworkName'])
+        ['service_id', 'supplierName', 'links', 'frameworkName', 'updatedAt'])
 
     detect_framework_or_400(data)
     return service

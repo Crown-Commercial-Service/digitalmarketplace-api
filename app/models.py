@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy_utils import generic_relationship
 
 from . import db
+from . import formats
 from .utils import link, url_for
 
 
@@ -184,8 +185,8 @@ class User(db.Model):
             'role': self.role,
             'active': self.active,
             'locked': self.locked,
-            'createdAt': self.created_at,
-            'updatedAt': self.updated_at,
+            'createdAt': self.created_at.strftime(formats.DATE_FORMAT),
+            'updatedAt': self.updated_at.strftime(formats.DATE_FORMAT),
             'passwordChangedAt': self.password_changed_at
         }
 
@@ -240,6 +241,7 @@ class Service(db.Model):
             'supplierId': self.supplier.supplier_id,
             'supplierName': self.supplier.name,
             'frameworkName': self.framework.name,
+            'updatedAt': self.updated_at.strftime(formats.DATE_FORMAT),
             'status': self.status
         })
 
