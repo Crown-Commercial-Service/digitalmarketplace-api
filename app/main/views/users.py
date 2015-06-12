@@ -87,16 +87,18 @@ def create_user():
         user.supplier_id = json_payload['supplierId']
         audit_data['supplier_id'] = user.supplier_id
 
-    audit = AuditEvent(
-        audit_type=AuditTypes.create_user,
-        user=json_payload['emailAddress'].lower(),
-        data=audit_data,
-        db_object=None
-    )
-
-    db.session.add(user)
-    db.session.add(audit)
     try:
+        db.session.add(user)
+        db.session.flush()
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.create_user,
+            user=json_payload['emailAddress'].lower(),
+            data=audit_data,
+            db_object=user
+        )
+
+        db.session.add(audit)
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
