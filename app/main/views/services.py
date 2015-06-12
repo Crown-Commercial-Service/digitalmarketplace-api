@@ -139,9 +139,6 @@ def update_service(service_id):
             update_details
         )
     )
-
-
-
     try:
         db.session.add(service_to_archive)
 
