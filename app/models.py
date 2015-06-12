@@ -423,19 +423,15 @@ class AuditEvent(db.Model):
         :return: dictionary representation of an audit event
         """
 
-        data = dict()
-
-        data.update({
+        data = {
             'id': self.id,
             'type': self.type,
             'user': self.user,
             'data': self.data,
             'createdAt': self.created_at.strftime("%Y-%m-%dT%H:%M:%S%Z"),
-        })
-
-        data['links'] = link(
-            "self", url_for(".list_audits")
-        )
+            'links': link(
+                "self", url_for(".list_audits"))
+        }
 
         return data
 
