@@ -143,7 +143,7 @@ def update_service(service_id):
     db.session.add(service_to_archive)
 
     audit = AuditEvent(
-        audit_type=AuditTypes.update_service.value,
+        audit_type=AuditTypes.update_service,
         user=update_details['updated_by'],
         data=update,
         db_object=service
@@ -211,7 +211,7 @@ def import_service(service_id):
     service.data = service_data
 
     audit = AuditEvent(
-        audit_type=AuditTypes.import_service.value,
+        audit_type=AuditTypes.import_service,
         user=updater_json['updated_by'],
         data=service_json,
         db_object=None
@@ -301,7 +301,7 @@ def update_service_status(service_id, status):
     service.updated_at = now
 
     audit = AuditEvent(
-        audit_type=AuditTypes.update_service_status.value,
+        audit_type=AuditTypes.update_service_status,
         user=update_json['updated_by'],
         data={
             "service_id": service_id,

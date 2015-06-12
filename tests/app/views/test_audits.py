@@ -21,7 +21,7 @@ class TestAudits(BaseApplicationTest):
             data={'request': "data"}
         )
 
-    def add_audit_events(self, number, type="supplier_update"):
+    def add_audit_events(self, number, type=AuditTypes.supplier_update):
         with self.app.app_context():
             for i in range(number):
                 db.session.add(
@@ -40,8 +40,8 @@ class TestAudits(BaseApplicationTest):
         assert_equal(data['auditEvents'][0]['data']['request'], 'data')
 
     def test_should_get_audit_event_by_type(self):
-        self.add_audit_events(1, AuditTypes.contact_update.value)
-        self.add_audit_events(1, AuditTypes.supplier_update.value)
+        self.add_audit_events(1, AuditTypes.contact_update)
+        self.add_audit_events(1, AuditTypes.supplier_update)
         response = self.client.get('/audit-events?audit-type=contact_update')
         data = json.loads(response.get_data())
 

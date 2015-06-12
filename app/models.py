@@ -413,9 +413,7 @@ class AuditEvent(db.Model):
     )
 
     def __init__(self, audit_type, user, data, db_object):
-        if not AuditTypes.is_valid_audit_type(audit_type):
-            raise ValueError("{} is not a valid audit type".format(audit_type))
-        self.type = audit_type
+        self.type = audit_type.value
         self.data = data
         self.object = db_object
         self.user = user
