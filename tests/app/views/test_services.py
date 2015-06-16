@@ -109,6 +109,8 @@ class TestListServices(BaseApplicationTest):
             db.session.add(Framework(
                 id=123,
                 name="expired",
+                framework="gcloud",
+                status="expired",
                 expired=True
             ))
 
@@ -161,8 +163,8 @@ class TestListServices(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 2)
-        assert_equal(data['services'][0]['id'], '3')
-        assert_equal(data['services'][1]['id'], '2')
+        assert_equal(data['services'][0]['id'], '2')
+        assert_equal(data['services'][1]['id'], '3')
 
     def test_list_services_gets_combination_of_enabled_and_published(self):
         self.setup_dummy_services_including_unpublished(1)
@@ -1476,7 +1478,9 @@ class TestGetService(BaseApplicationTest):
             db.session.add(Framework(
                 id=123,
                 name="expired",
-                expired=True
+                framework="gcloud",
+                status="expired",
+                expired=True,
             ))
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")

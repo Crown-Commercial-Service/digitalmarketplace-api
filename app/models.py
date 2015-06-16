@@ -13,8 +13,17 @@ from .utils import link, url_for
 class Framework(db.Model):
     __tablename__ = 'frameworks'
 
+    STATUSES = [
+        'pending', 'live', 'expired'
+    ]
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
+    framework = db.Column(db.Enum('gcloud', name='frameworks_enum'),
+                          index=True, nullable=False)
+    status = db.Column(db.Enum(STATUSES, name='framework_status_enum'),
+                       index=True, nullable=False,
+                       server_default='pending')
     expired = db.Column(db.Boolean, index=False, unique=False,
                         nullable=False)
 
