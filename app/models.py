@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy_utils import generic_relationship
 from dmutils.audit import AuditTypes
 
@@ -210,33 +211,33 @@ class User(db.Model):
         return user
 
 
-class Service(db.Model):
-    __tablename__ = 'services'
-
+class ServiceTableMixin(object):
     id = db.Column(db.Integer, primary_key=True)
-    service_id = db.Column(db.String,
-                           index=True, unique=True, nullable=False)
-    supplier_id = db.Column(db.BigInteger,
-                            db.ForeignKey('suppliers.supplier_id'),
-                            index=True, unique=False, nullable=False)
-    created_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False)
-    updated_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False)
+    service_id = db.Column(db.String, index=True, unique=True, nullable=False)
+
     data = db.Column(JSON)
-
-    framework_id = db.Column(db.BigInteger,
-                             db.ForeignKey('frameworks.id'),
-                             index=True, unique=False, nullable=False)
-
     status = db.Column(db.String, index=False, unique=False, nullable=False)
 
-    supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
+    created_at = db.Column(db.DateTime, index=False, nullable=False)
+    updated_at = db.Column(db.DateTime, index=False, nullable=False)
 
-    framework = db.relationship(Framework, lazy='joined', innerjoin=True)
+    @declared_attr
+    def supplier_id(cls):
+        return db.Column(db.BigInteger, db.ForeignKey('suppliers.supplier_id'),
+                         index=True, unique=False, nullable=False)
 
-    def get_link(self):
-        return url_for(".get_service", service_id=self.service_id)
+    @declared_attr
+    def framework_id(cls):
+        return db.Column(db.BigInteger, db.ForeignKey('frameworks.id'),
+                         index=True, unique=False, nullable=False)
+
+    @declared_attr
+    def supplier(cls):
+        return db.relationship(Supplier, lazy='joined', innerjoin=True)
+
+    @declared_attr
+    def framework(cls):
+        return db.relationship(Framework, lazy='joined', innerjoin=True)
 
     def serialize(self):
         """
@@ -277,30 +278,18 @@ class Service(db.Model):
         self.updated_at = now
 
 
-class ArchivedService(db.Model):
+class Service(db.Model, ServiceTableMixin):
+    __tablename__ = 'services'
+
+    def get_link(self):
+        return url_for(".get_service", service_id=self.service_id)
+
+
+class ArchivedService(db.Model, ServiceTableMixin):
     __tablename__ = 'archived_services'
 
-    id = db.Column(db.Integer, primary_key=True)
-    service_id = db.Column(db.String,
-                           index=True, unique=False, nullable=False)
-    supplier_id = db.Column(db.BigInteger,
-                            db.ForeignKey('suppliers.supplier_id'),
-                            index=True, unique=False, nullable=False)
-    created_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False)
-    updated_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False)
-    data = db.Column(JSON)
-
-    framework_id = db.Column(db.BigInteger,
-                             db.ForeignKey('frameworks.id'),
-                             index=True, unique=False, nullable=False)
-
-    status = db.Column(db.String, index=False, unique=False, nullable=False)
-
-    supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
-
-    framework = db.relationship(Framework, lazy='joined', innerjoin=True)
+    # Overwrites service_id column to remove uniqueness constraint
+    service_id = db.Column(db.String, index=True, unique=False, nullable=False)
 
     @staticmethod
     def from_service(service):
@@ -318,50 +307,12 @@ class ArchivedService(db.Model):
         return url_for(".get_archived_service",
                        archived_service_id=self.id)
 
-    def serialize(self):
-        """
-        :return: dictionary representation of a service
-        """
-
-        data = dict(self.data.items())
-
-        data.update({
-            'id': self.service_id,
-            'supplierId': self.supplier.supplier_id,
-            'supplierName': self.supplier.name,
-        })
-
-        data['links'] = link(
-            "self", self.get_link()
-        )
-
-        return data
+    def update_from_json(self, data):
+        raise NotImplementedError('Archived services should not be changed')
 
 
-class DraftService(db.Model):
+class DraftService(db.Model, ServiceTableMixin):
     __tablename__ = 'draft_services'
-
-    id = db.Column(db.Integer, primary_key=True)
-    service_id = db.Column(db.String,
-                           index=True, unique=True, nullable=False)
-    supplier_id = db.Column(db.BigInteger,
-                            db.ForeignKey('suppliers.supplier_id'),
-                            index=True, unique=False, nullable=False)
-    created_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False)
-    updated_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False)
-    data = db.Column(JSON)
-
-    framework_id = db.Column(db.BigInteger,
-                             db.ForeignKey('frameworks.id'),
-                             index=True, unique=False, nullable=False)
-
-    status = db.Column(db.String, index=False, unique=False, nullable=False)
-
-    supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
-
-    framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
     @staticmethod
     def from_service(service):
@@ -376,44 +327,14 @@ class DraftService(db.Model):
             status=service.status
         )
 
-    def get_link(self):
-        return url_for(".fetch_draft_service", service_id=self.service_id)
-
     def serialize(self):
-        """
-        :return: dictionary representation of a draft service
-        """
-
-        data = dict(self.data.items())
-
-        data.update({
-            'id': self.id,
-            'service_id': self.service_id,
-            'supplierId': self.supplier.supplier_id,
-            'status': self.status
-        })
-
-        data['links'] = link(
-            "self", self.get_link()
-        )
+        data = super(DraftService, self).serialize()
+        data['service_id'] = self.service_id
 
         return data
 
-    def update_from_json(self, data):
-        self.service_id = str(data.pop('id', self.service_id))
-
-        data.pop('supplierId', None)
-        data.pop('supplierName', None)
-        data.pop('frameworkName', None)
-        data.pop('status', None)
-        data.pop('links', None)
-
-        current_data = dict(self.data.items())
-        current_data.update(data)
-        self.data = current_data
-
-        now = datetime.now()
-        self.updated_at = now
+    def get_link(self):
+        return url_for(".fetch_draft_service", service_id=self.service_id)
 
 
 class AuditEvent(db.Model):
