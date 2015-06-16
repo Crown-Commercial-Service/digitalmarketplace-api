@@ -24,8 +24,6 @@ class Framework(db.Model):
     status = db.Column(db.Enum(STATUSES, name='framework_status_enum'),
                        index=True, nullable=False,
                        server_default='pending')
-    expired = db.Column(db.Boolean, index=False, unique=False,
-                        nullable=False)
 
 
 class ContactInformation(db.Model):

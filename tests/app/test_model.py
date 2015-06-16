@@ -34,7 +34,6 @@ def test_framework_should_not_accept_invalid_status():
             name='foo',
             framework='gcloud',
             status='invalid',
-            expired=False,
         )
         db.session.add(f)
         db.session.commit()
@@ -48,7 +47,6 @@ def test_framework_should_accept_valid_statuses():
                 name='foo',
                 framework='gcloud',
                 status=status,
-                expired=False,
             )
             db.session.add(f)
             db.session.commit()

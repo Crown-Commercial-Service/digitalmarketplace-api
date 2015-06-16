@@ -111,7 +111,6 @@ class TestListServices(BaseApplicationTest):
                 name="expired",
                 framework="gcloud",
                 status="expired",
-                expired=True
             ))
 
             db.session.add(Service(service_id="999",
@@ -1502,7 +1501,6 @@ class TestGetService(BaseApplicationTest):
                 name="expired",
                 framework="gcloud",
                 status="expired",
-                expired=True,
             ))
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")

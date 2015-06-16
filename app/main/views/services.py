@@ -44,7 +44,7 @@ def list_services():
     supplier_id = request.args.get('supplier_id')
 
     services = Service.query.filter(
-        Service.framework.has(Framework.expired == false())
+        Service.framework.has(Framework.status == 'live')
     ).order_by(
         asc(Service.framework_id),
         asc(Service.data['lot'].cast(String).label('data_lot')),
@@ -213,7 +213,7 @@ def get_service(service_id):
 
     service = Service.query.filter(
         Service.service_id == service_id) \
-        .filter(Service.framework.has(Framework.expired == false())) \
+        .filter(Service.framework.has(Framework.status == 'live')) \
         .first_or_404()
 
     return jsonify(services=service.serialize())
