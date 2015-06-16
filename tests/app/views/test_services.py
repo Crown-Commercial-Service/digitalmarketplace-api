@@ -451,6 +451,14 @@ class TestPostService(BaseApplicationTest):
                 data['auditEvents'][1]['data']['serviceName'],
                 'new service name'
             )
+            assert_equal(
+                data['auditEvents'][1]['data']['supplierName'],
+                'Supplier 1'
+            )
+            assert_equal(
+                data['auditEvents'][1]['data']['supplierId'],
+                '1'
+            )
 
     def test_can_post_a_valid_service_update_on_several_fields(self):
         with self.app.app_context():

@@ -146,10 +146,16 @@ def update_service(service_id):
     try:
         db.session.add(service_to_archive)
 
+        audit_data = update.copy()
+        audit_data.update({
+            'supplierName': service.supplier.name,
+            'supplierId': service.supplier.supplier_id
+        })
+
         audit = AuditEvent(
             audit_type=AuditTypes.update_service,
             user=update_details['updated_by'],
-            data=update,
+            data=audit_data,
             db_object=service
         )
 
@@ -212,6 +218,12 @@ def import_service(service_id):
     service.status = service_data.pop('status', 'published')
     service.data = service_data
 
+    audit_data = service_data.copy()
+    audit_data.update({
+        'supplierName': supplier.name,
+        'supplierId': supplier.id
+    })
+
     try:
         db.session.add(service)
         db.session.flush()
@@ -219,7 +231,7 @@ def import_service(service_id):
         audit = AuditEvent(
             audit_type=AuditTypes.import_service,
             user=updater_json['updated_by'],
-            data=service_json,
+            data=audit_data,
             db_object=service
         )
 
