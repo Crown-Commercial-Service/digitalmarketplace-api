@@ -457,7 +457,7 @@ class TestPostService(BaseApplicationTest):
             )
             assert_equal(
                 data['auditEvents'][1]['data']['supplierId'],
-                '1'
+                1
             )
 
     def test_can_post_a_valid_service_update_on_several_fields(self):
@@ -1288,6 +1288,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     @mock.patch('app.search_api_client')
     def test_add_a_new_service_creates_audit_event(self, search_api_client):
         with self.app.app_context():
+            assert_equal.im_class.maxDiff = None
             search_api_client.index.return_value = "bar"
 
             payload = self.load_example_listing("G6-IaaS")
@@ -1308,10 +1309,18 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(audit_response.status_code, 200)
             data = json.loads(audit_response.get_data())
 
+            audit_payload = payload.copy()
+            audit_payload.pop("id", None)
+            audit_payload.update({
+                u'supplierName': u'Supplier 1',
+                'supplierId': 1
+            })
+
             assert_equal(len(data['auditEvents']), 1)
             assert_equal(data['auditEvents'][0]['type'], 'import_service')
             assert_equal(data['auditEvents'][0]['user'], 'joeblogs')
-            assert_equal(data['auditEvents'][0]['data'], payload)
+
+            assert_equal(data['auditEvents'][0]['data'], audit_payload)
 
     def test_add_a_new_service_with_status_disabled(self):
         with self.app.app_context():

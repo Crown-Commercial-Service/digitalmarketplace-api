@@ -221,7 +221,7 @@ def import_service(service_id):
     audit_data = service_data.copy()
     audit_data.update({
         'supplierName': supplier.name,
-        'supplierId': supplier.id
+        'supplierId': supplier.supplier_id
     })
 
     try:
