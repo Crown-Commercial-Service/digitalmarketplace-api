@@ -41,6 +41,12 @@ def test_all_schemas_are_valid():
 
 
 def test_updater_json_validates_correctly():
+    """
+    This schema currently allows extra fields as part of a 2 stage
+    migration of API validatiopn rules. This test will change back to
+    not allowing the invalid fields when the utils is updated.
+    :return:
+    """
     invalid_updater_no_fields = {}
     invalid_updater_extra_fields = {'updated_by': 'this', 'invalid': 'this'}
     invalid_updater_only_invalid_fields = {'invalid': 'this'}
@@ -49,7 +55,7 @@ def test_updater_json_validates_correctly():
     assert_equal(validates_against_schema(
         'services-update', invalid_updater_no_fields), False)
     assert_equal(validates_against_schema(
-        'services-update', invalid_updater_extra_fields), False)
+        'services-update', invalid_updater_extra_fields), True)
     assert_equal(validates_against_schema(
         'services-update', invalid_updater_only_invalid_fields), False)
     assert_equal(validates_against_schema(

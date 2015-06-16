@@ -8,7 +8,7 @@ Create Date: 2015-06-10 08:04:00.175499
 
 # revision identifiers, used by Alembic.
 revision = '50_remove_updated_details'
-down_revision = '30_add_audit_events'
+down_revision = '50_add_audit_events'
 
 from alembic import op
 import sqlalchemy as sa
