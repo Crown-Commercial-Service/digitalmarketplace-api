@@ -22,4 +22,5 @@ c8bce0740af   -  add 'supplier_id', 'created_at' and 'updated_at'
 10_adding_supplier_to_user_table - add 'supplier_id' to users table
 20_adding_json_index_to_services - add JSON index for services order_by
 40_add_draft_services
-50_add_audit_events - add 'AuditEvent' table
+30_add_audit_events - add 'AuditEvent' table
+50_remove_updated_details

@@ -1,13 +1,13 @@
 """Add audit events
 
 Revision ID: 30_add_audit_events
-Revises: 20_adding_json_index_to_services
+Revises: 40_add_draft_services
 Create Date: 2015-06-05 11:30:26.425563
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '50_add_audit_events'
+revision = '30_add_audit_events'
 down_revision = '40_add_draft_services'
 
 from alembic import op
