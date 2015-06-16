@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy_utils import generic_relationship
+from dmutils.audit import AuditTypes
 
 from . import db
 from . import formats
@@ -213,10 +214,6 @@ class Service(db.Model):
                            nullable=False)
     updated_at = db.Column(db.DateTime, index=False, unique=False,
                            nullable=False)
-    updated_by = db.Column(db.String, index=False, unique=False,
-                           nullable=False)
-    updated_reason = db.Column(db.String, index=False, unique=False,
-                               nullable=False)
     data = db.Column(JSON)
 
     framework_id = db.Column(db.BigInteger,
@@ -251,7 +248,7 @@ class Service(db.Model):
 
         return data
 
-    def update_from_json(self, data, updated_by=None, updated_reason=None):
+    def update_from_json(self, data):
         self.service_id = str(data.pop('id', self.service_id))
 
         data.pop('supplierId', None)
@@ -266,8 +263,6 @@ class Service(db.Model):
 
         now = datetime.utcnow()
         self.updated_at = now
-        self.updated_by = updated_by
-        self.updated_reason = updated_reason
 
 
 class ArchivedService(db.Model):
@@ -283,10 +278,6 @@ class ArchivedService(db.Model):
                            nullable=False)
     updated_at = db.Column(db.DateTime, index=False, unique=False,
                            nullable=False)
-    updated_by = db.Column(db.String, index=False, unique=False,
-                           nullable=False)
-    updated_reason = db.Column(db.String, index=False, unique=False,
-                               nullable=False)
     data = db.Column(JSON)
 
     framework_id = db.Column(db.BigInteger,
@@ -307,8 +298,6 @@ class ArchivedService(db.Model):
             supplier_id=service.supplier_id,
             created_at=service.created_at,
             updated_at=service.updated_at,
-            updated_by=service.updated_by,
-            updated_reason=service.updated_reason,
             data=service.data,
             status=service.status
         )
@@ -346,10 +335,6 @@ class DraftService(db.Model):
                            nullable=False)
     updated_at = db.Column(db.DateTime, index=False, unique=False,
                            nullable=False)
-    updated_by = db.Column(db.String, index=False, unique=False,
-                           nullable=False)
-    updated_reason = db.Column(db.String, index=False, unique=False,
-                               nullable=False)
     data = db.Column(JSON)
 
     framework_id = db.Column(db.BigInteger,
@@ -371,8 +356,6 @@ class DraftService(db.Model):
             supplier_id=service.supplier_id,
             created_at=now,
             updated_at=now,
-            updated_by=service.updated_by,
-            updated_reason=service.updated_reason,
             data=service.data,
             status=service.status
         )
@@ -397,7 +380,7 @@ class DraftService(db.Model):
 
         return data
 
-    def update_from_json(self, data, updated_by=None, updated_reason=None):
+    def update_from_json(self, data):
         self.service_id = str(data.pop('id', self.service_id))
 
         data.pop('supplierId', None)
@@ -412,8 +395,6 @@ class DraftService(db.Model):
 
         now = datetime.now()
         self.updated_at = now
-        self.updated_by = updated_by
-        self.updated_reason = updated_reason
 
 
 class AuditEvent(db.Model):
@@ -432,6 +413,29 @@ class AuditEvent(db.Model):
     object = generic_relationship(
         object_type, object_id
     )
+
+    def __init__(self, audit_type, user, data, db_object):
+        self.type = audit_type.value
+        self.data = data
+        self.object = db_object
+        self.user = user
+
+    def serialize(self):
+        """
+        :return: dictionary representation of an audit event
+        """
+
+        data = {
+            'id': self.id,
+            'type': self.type,
+            'user': self.user,
+            'data': self.data,
+            'createdAt': self.created_at.strftime("%Y-%m-%dT%H:%M:%S%Z"),
+            'links': link(
+                "self", url_for(".list_audits"))
+        }
+
+        return data
 
 
 def filter_null_value_fields(obj):

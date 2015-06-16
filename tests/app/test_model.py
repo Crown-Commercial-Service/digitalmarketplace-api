@@ -1,5 +1,6 @@
-from nose.tools import assert_equal
-from app.models import User
+from dmutils.audit import AuditTypes
+from nose.tools import assert_equal, assert_raises
+from app.models import User, AuditEvent
 from datetime import datetime
 
 

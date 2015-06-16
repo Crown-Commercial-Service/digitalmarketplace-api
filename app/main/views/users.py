@@ -1,10 +1,11 @@
 from datetime import datetime
+from dmutils.audit import AuditTypes
 from sqlalchemy.exc import IntegrityError
 from flask import jsonify, abort, request
 
 from .. import main
 from ... import db, encryption
-from ...models import User
+from ...models import User, AuditEvent
 from ...utils import get_json_from_request, json_has_required_keys, \
     json_has_matching_id
 from ...validation import validate_user_json_or_400, \
@@ -80,11 +81,24 @@ def create_user():
         password_changed_at=now
     )
 
+    audit_data = {}
+
     if "supplierId" in json_payload:
         user.supplier_id = json_payload['supplierId']
+        audit_data['supplier_id'] = user.supplier_id
 
-    db.session.add(user)
     try:
+        db.session.add(user)
+        db.session.flush()
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.create_user,
+            user=json_payload['emailAddress'].lower(),
+            data=audit_data,
+            db_object=user
+        )
+
+        db.session.add(audit)
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
@@ -127,7 +141,15 @@ def update_user(user_id):
     if 'emailAddress' in user_update:
         user.email_address = user_update['emailAddress']
 
+    audit = AuditEvent(
+        audit_type=AuditTypes.update_user,
+        user=user.email_address,
+        data=user_update,
+        db_object=user
+    )
+
     db.session.add(user)
+    db.session.add(audit)
 
     try:
         db.session.commit()

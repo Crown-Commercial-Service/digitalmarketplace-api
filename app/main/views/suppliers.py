@@ -10,6 +10,7 @@ from ...validation import (
 )
 from ...utils import pagination_links, drop_foreign_fields, \
     get_json_from_request, json_has_required_keys, json_has_matching_id
+from dmutils.audit import AuditTypes
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -178,9 +179,11 @@ def update_supplier(supplier_id):
 
     db.session.add(supplier)
     db.session.add(
-        AuditEvent(type='supplier_update', object=supplier,
-                   user=request_data['updated_by'],
-                   data={'request': request_data})
+        AuditEvent(
+            audit_type=AuditTypes.supplier_update,
+            db_object=supplier,
+            user=request_data['updated_by'],
+            data={'request': request_data})
     )
 
     try:
@@ -224,9 +227,11 @@ def update_contact_information(supplier_id, contact_id):
 
     db.session.add(contact)
     db.session.add(
-        AuditEvent(type='contact_update', object=contact.supplier,
-                   user=request_data['updated_by'],
-                   data={'request': request_data})
+        AuditEvent(
+            audit_type=AuditTypes.contact_update,
+            db_object=contact.supplier,
+            user=request_data['updated_by'],
+            data={'request': request_data})
     )
 
     try:

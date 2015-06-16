@@ -20,10 +20,7 @@ def validate_and_return_service_request(service_id):
 
 
 def update_and_validate_service(service, service_payload, updater_payload):
-    service.update_from_json(
-        service_payload,
-        updated_by=updater_payload['updated_by'],
-        updated_reason=updater_payload['update_reason'])
+    service.update_from_json(service_payload)
 
     data = service.serialize()
 

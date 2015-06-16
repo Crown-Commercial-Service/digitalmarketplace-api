@@ -1,10 +1,11 @@
 from datetime import datetime
+from dmutils.audit import AuditTypes
 
 from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ... import db
-from ...models import ArchivedService, Service, Supplier, Framework
+from ...models import ArchivedService, Service, Supplier, Framework, AuditEvent
 
 from sqlalchemy import asc
 from sqlalchemy.exc import IntegrityError
@@ -22,6 +23,7 @@ from sqlalchemy.types import String
 def index():
     """Entry point for the API, show the resources that are available."""
     return jsonify(links={
+        "audits.list": url_for('.list_audits', _external=True),
         "services.list": url_for('.list_services', _external=True),
         "suppliers.list": url_for('.list_suppliers', _external=True)
     }
@@ -131,17 +133,27 @@ def update_service(service_id):
     ).first_or_404()
 
     service_to_archive = ArchivedService.from_service(service)
+    update_details = validate_and_return_updater_request()
+    update = validate_and_return_service_request(service_id)
 
     db.session.add(
         update_and_validate_service(
             service,
-            validate_and_return_service_request(service_id),
-            validate_and_return_updater_request()
+            update,
+            update_details
         )
     )
-    db.session.add(service_to_archive)
-
     try:
+        db.session.add(service_to_archive)
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.update_service,
+            user=update_details['updated_by'],
+            data=update,
+            db_object=service
+        )
+
+        db.session.add(audit)
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
@@ -198,13 +210,20 @@ def import_service(service_id):
     service.updated_at = now
     service.created_at = now
     service.status = service_data.pop('status', 'published')
-    service.updated_by = updater_json['updated_by']
-    service.updated_reason = updater_json['update_reason']
     service.data = service_data
 
-    db.session.add(service)
-
     try:
+        db.session.add(service)
+        db.session.flush()
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.import_service,
+            user=updater_json['updated_by'],
+            data=service_json,
+            db_object=service
+        )
+
+        db.session.add(audit)
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
@@ -283,10 +302,20 @@ def update_service_status(service_id, status):
     prior_status = service.status
     service.status = status
     service.updated_at = now
-    service.updated_by = update_json['updated_by']
-    service.updated_reason = update_json['update_reason']
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.update_service_status,
+        user=update_json['updated_by'],
+        data={
+            "service_id": service_id,
+            "new_status": status,
+            "old_status": prior_status,
+        },
+        db_object=None
+    )
 
     db.session.add(service)
+    db.session.add(audit)
     db.session.add(service_to_archive)
 
     db.session.commit()

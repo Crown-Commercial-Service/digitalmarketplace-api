@@ -1,3 +1,4 @@
+from dmutils.audit import AuditTypes
 from flask import jsonify, abort, request
 
 from sqlalchemy.exc import IntegrityError
@@ -7,7 +8,8 @@ from sqlalchemy.types import String
 from .. import main
 from ... import db
 from ...validation import is_valid_service_id_or_400
-from ...models import Service, DraftService, ArchivedService, Supplier
+from ...models import Service, DraftService, ArchivedService, \
+    Supplier, AuditEvent
 from ...service_utils import validate_and_return_updater_request, \
     update_and_validate_service, validate_and_return_service_request, \
     index_service
@@ -28,8 +30,17 @@ def create_draft_service(service_id):
     ).first_or_404()
 
     draft = DraftService.from_service(service)
+    audit = AuditEvent(
+        audit_type=AuditTypes.create_draft_service,
+        user=updater_json['updated_by'],
+        data={
+            "service_id": service_id
+        },
+        db_object=service
+    )
 
     db.session.add(draft)
+    db.session.add(audit)
 
     try:
         db.session.commit()
@@ -57,12 +68,20 @@ def edit_draft_service(service_id):
         DraftService.service_id == service_id
     ).first_or_404()
 
-    draft.update_from_json(
-        update_json,
-        updated_by=updater_json['updated_by'],
-        updated_reason=updater_json['update_reason'])
+    draft.update_from_json(update_json)
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.update_draft_service,
+        user=updater_json['updated_by'],
+        data={
+            "service_id": service_id,
+            "update_json": update_json
+        },
+        db_object=draft
+    )
 
     db.session.add(draft)
+    db.session.add(audit)
 
     try:
         db.session.commit()
@@ -135,7 +154,17 @@ def delete_draft_service(service_id):
         DraftService.service_id == service_id
     ).first_or_404()
 
+    audit = AuditEvent(
+        audit_type=AuditTypes.delete_draft_service,
+        user=updater_json['updated_by'],
+        data={
+            "service_id": service_id
+        },
+        db_object=None
+    )
+
     db.session.delete(draft)
+    db.session.add(audit)
     try:
         db.session.commit()
     except IntegrityError as e:
@@ -171,6 +200,16 @@ def publish_draft_service(service_id):
         draft.data,
         updater_json)
 
+    audit = AuditEvent(
+        audit_type=AuditTypes.publish_draft_service,
+        user=updater_json['updated_by'],
+        data={
+            "service_id": service_id
+        },
+        db_object=new_service
+    )
+
+    db.session.add(audit)
     db.session.add(archived_service)
     db.session.add(new_service)
     db.session.delete(draft)

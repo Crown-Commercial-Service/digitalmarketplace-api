@@ -19,8 +19,7 @@ class TestDraftServices(BaseApplicationTest):
         self.service_id = str(payload['id'])
         self.updater_json = {
             'update_details': {
-                'updated_by': 'joeblogs',
-                'update_reason': 'whateves'}
+                'updated_by': 'joeblogs'}
         }
 
         with self.app.app_context():
@@ -41,8 +40,7 @@ class TestDraftServices(BaseApplicationTest):
             '/services/%s' % self.service_id,
             data=json.dumps(
                 {'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                  'services': payload}),
             content_type='application/json')
 
@@ -99,8 +97,6 @@ class TestDraftServices(BaseApplicationTest):
                         updated_at=now,
                         status='published',
                         created_at=now,
-                        updated_by='tests',
-                        updated_reason='test data',
                         data={'foo': 'bar'},
                         framework_id=1)
                 )
@@ -202,6 +198,26 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(res.status_code, 201)
         assert_equal(data['services']['service_id'], self.service_id)
 
+    def test_should_create_draft_should_create_audit_event(self):
+        res = self.client.put(
+            '/services/{}/draft'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 201)
+
+        audit_response = self.client.get('/audit-events')
+        assert_equal(audit_response.status_code, 200)
+        data = json.loads(audit_response.get_data())
+
+        assert_equal(len(data['auditEvents']), 2)
+        assert_equal(data['auditEvents'][0]['type'], 'import_service')
+        assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
+        assert_equal(
+            data['auditEvents'][1]['data']['service_id'], self.service_id
+        )
+
     def test_should_not_create_two_drafts_from_existing_service(self):
         self.client.put(
             '/services/{}/draft'.format(self.service_id),
@@ -255,6 +271,20 @@ class TestDraftServices(BaseApplicationTest):
             data=json.dumps(self.updater_json),
             content_type='application/json')
         assert_equal(delete.status_code, 200)
+
+        audit_response = self.client.get('/audit-events')
+        assert_equal(audit_response.status_code, 200)
+        data = json.loads(audit_response.get_data())
+
+        assert_equal(len(data['auditEvents']), 3)
+        assert_equal(data['auditEvents'][0]['type'], 'import_service')
+        assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
+        assert_equal(data['auditEvents'][2]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][2]['type'], 'delete_draft_service')
+        assert_equal(
+            data['auditEvents'][2]['data']['service_id'], self.service_id
+        )
+
         fetch_again = self.client.get(
             '/services/{}/draft'.format(self.service_id),
             data=json.dumps(self.updater_json),
@@ -271,8 +301,7 @@ class TestDraftServices(BaseApplicationTest):
             '/services/{}/draft'.format(self.service_id),
             data=json.dumps({
                 'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                 'services': {
                     'serviceName': 'new service name'
                 }
@@ -288,6 +317,40 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(fetch.status_code, 200)
         assert_equal(data['services']['serviceName'], 'new service name')
 
+    def test_should_edit_draft_with_audit_event(self):
+        self.client.put(
+            '/services/{}/draft'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        update = self.client.post(
+            '/services/{}/draft'.format(self.service_id),
+            data=json.dumps({
+                'update_details': {
+                    'updated_by': 'joeblogs'},
+                'services': {
+                    'serviceName': 'new service name'
+                }
+            }),
+            content_type='application/json')
+        assert_equal(update.status_code, 200)
+
+        audit_response = self.client.get('/audit-events')
+        assert_equal(audit_response.status_code, 200)
+        data = json.loads(audit_response.get_data())
+
+        assert_equal(len(data['auditEvents']), 3)
+        assert_equal(data['auditEvents'][0]['type'], 'import_service')
+        assert_equal(data['auditEvents'][2]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][2]['type'], 'update_draft_service')
+        assert_equal(
+            data['auditEvents'][2]['data']['service_id'], self.service_id
+        )
+        assert_equal(
+            data['auditEvents'][2]['data']['update_json']['serviceName'],
+            'new service name'
+        )
+
     def test_should_be_a_400_if_no_service_block_in_update(self):
         self.client.put(
             '/services/{}/draft'.format(self.service_id),
@@ -298,8 +361,7 @@ class TestDraftServices(BaseApplicationTest):
             '/services/{}/draft'.format(self.service_id),
             data=json.dumps({
                 'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'}
+                    'updated_by': 'joeblogs'}
             }),
             content_type='application/json')
 
@@ -315,8 +377,7 @@ class TestDraftServices(BaseApplicationTest):
             '/services/{}/draft'.format(self.service_id),
             data=json.dumps({
                 'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                 'services': {
                     'badField': 'new service name',
                     'priceUnit': 'chickens'
@@ -329,7 +390,6 @@ class TestDraftServices(BaseApplicationTest):
             data=json.dumps({
                 'update_details': {
                     'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'
                 }
             }),
             content_type='application/json')
@@ -342,7 +402,6 @@ class TestDraftServices(BaseApplicationTest):
             data=json.dumps({
                 'update_details': {
                     'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'
                 }
             }),
             content_type='application/json')
@@ -371,8 +430,7 @@ class TestDraftServices(BaseApplicationTest):
             '/services/{}/draft'.format(self.service_id),
             data=json.dumps({
                 'update_details': {
-                    'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'},
+                    'updated_by': 'joeblogs'},
                 'services': {
                     'serviceName': 'chickens'
                 }
@@ -391,11 +449,20 @@ class TestDraftServices(BaseApplicationTest):
             data=json.dumps({
                 'update_details': {
                     'updated_by': 'joeblogs',
-                    'update_reason': 'whateves'
                 }
             }),
             content_type='application/json')
         assert_equal(res.status_code, 200)
+
+        audit_response = self.client.get('/audit-events')
+        assert_equal(audit_response.status_code, 200)
+        data = json.loads(audit_response.get_data())
+
+        assert_equal(len(data['auditEvents']), 4)
+        assert_equal(data['auditEvents'][0]['type'], 'import_service')
+        assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
+        assert_equal(data['auditEvents'][2]['type'], 'update_draft_service')
+        assert_equal(data['auditEvents'][3]['type'], 'publish_draft_service')
 
         # draft should no longer exist
         fetch = self.client.get('/services/{}/draft'.format(self.service_id))
