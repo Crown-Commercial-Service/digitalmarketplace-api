@@ -66,11 +66,14 @@ class ContactInformation(db.Model):
 
         return self
 
+    def get_link(self):
+        return url_for(".update_contact_information",
+                       supplier_id=self.supplier_id,
+                       contact_id=self.id)
+
     def serialize(self):
         links = link(
-            "self", url_for(".update_contact_information",
-                            supplier_id=self.supplier_id,
-                            contact_id=self.id)
+            "self", self.get_link()
         )
 
         serialized = {
@@ -116,9 +119,12 @@ class Supplier(db.Model):
 
     clients = db.Column(JSON, default=list)
 
+    def get_link(self):
+        return url_for(".get_supplier", supplier_id=self.supplier_id)
+
     def serialize(self):
         links = link(
-            "self", url_for(".get_supplier", supplier_id=self.supplier_id)
+            "self", self.get_link()
         )
 
         contact_information_list = []
@@ -178,6 +184,9 @@ class User(db.Model):
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
 
+    def get_link(self):
+        return url_for('.get_user_by_id', user_id=self.id)
+
     def serialize(self):
         user = {
             'id': self.id,
@@ -226,6 +235,9 @@ class Service(db.Model):
 
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
+    def get_link(self):
+        return url_for(".get_service", service_id=self.service_id)
+
     def serialize(self):
         """
         :return: dictionary representation of a service
@@ -243,7 +255,7 @@ class Service(db.Model):
         })
 
         data['links'] = link(
-            "self", url_for(".get_service", service_id=data['id'])
+            "self", self.get_link()
         )
 
         return data
@@ -302,6 +314,10 @@ class ArchivedService(db.Model):
             status=service.status
         )
 
+    def get_link(self):
+        return url_for(".get_archived_service",
+                       archived_service_id=self.id)
+
     def serialize(self):
         """
         :return: dictionary representation of a service
@@ -316,7 +332,7 @@ class ArchivedService(db.Model):
         })
 
         data['links'] = link(
-            "self", url_for(".get_service", service_id=data['id'])
+            "self", self.get_link()
         )
 
         return data
@@ -360,6 +376,9 @@ class DraftService(db.Model):
             status=service.status
         )
 
+    def get_link(self):
+        return url_for(".fetch_draft_service", service_id=self.service_id)
+
     def serialize(self):
         """
         :return: dictionary representation of a draft service
@@ -375,7 +394,7 @@ class DraftService(db.Model):
         })
 
         data['links'] = link(
-            "self", url_for(".fetch_draft_service", service_id=self.service_id)
+            "self", self.get_link()
         )
 
         return data
