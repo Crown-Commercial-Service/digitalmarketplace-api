@@ -4,18 +4,22 @@ from dmutils.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 
 from .. import main
-from ... import db
-from ...models import ArchivedService, Service, Supplier, Framework, AuditEvent
+from ...models import ArchivedService, Service, Supplier, Framework
 
 from sqlalchemy import asc
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import false
 from ...validation import detect_framework_or_400, is_valid_service_id_or_400
 from ...utils import url_for, pagination_links, \
     drop_foreign_fields, display_list
-from ...service_utils import validate_and_return_service_request, \
-    update_and_validate_service, index_service, \
-    delete_service_from_index, validate_and_return_updater_request
+
+from ...service_utils import (
+    validate_and_return_service_request,
+    update_and_validate_service,
+    index_service,
+    delete_service_from_index,
+    validate_and_return_updater_request,
+    commit_and_archive_service,
+)
 from sqlalchemy.types import String
 
 
@@ -132,34 +136,16 @@ def update_service(service_id):
         Service.service_id == service_id
     ).first_or_404()
 
-    service_to_archive = ArchivedService.from_service(service)
     update_details = validate_and_return_updater_request()
     update = validate_and_return_service_request(service_id)
 
-    db.session.add(
-        update_and_validate_service(
-            service,
-            update,
-            update_details
-        )
+    updated_service = update_and_validate_service(
+        service, update, update_details
     )
-    try:
-        db.session.add(service_to_archive)
 
-        audit = AuditEvent(
-            audit_type=AuditTypes.update_service,
-            user=update_details['updated_by'],
-            data=update,
-            db_object=service
-        )
-
-        db.session.add(audit)
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        abort(400, e.orig)
-
-    index_service(service)
+    commit_and_archive_service(updated_service, update_details,
+                               AuditTypes.update_service)
+    index_service(updated_service)
 
     return jsonify(message="done"), 200
 
@@ -212,22 +198,8 @@ def import_service(service_id):
     service.status = service_data.pop('status', 'published')
     service.data = service_data
 
-    try:
-        db.session.add(service)
-        db.session.flush()
-
-        audit = AuditEvent(
-            audit_type=AuditTypes.import_service,
-            user=updater_json['updated_by'],
-            data=service_json,
-            db_object=service
-        )
-
-        db.session.add(audit)
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+    commit_and_archive_service(service, updater_json,
+                               AuditTypes.import_service)
 
     index_service(service)
 
@@ -286,39 +258,23 @@ def update_service_status(service_id, status):
         Service.service_id == service_id
     ).first_or_404()
 
-    service_to_archive = ArchivedService.from_service(service)
-    update_json = validate_and_return_updater_request()
-
     if status not in valid_statuses:
         valid_statuses_single_quotes = display_list(
             ["\'{}\'".format(vstatus) for vstatus in valid_statuses]
         )
-        abort(400, "\'{0}\' is not a valid status. "
-                   "Valid statuses are {1}"
-              .format(status, valid_statuses_single_quotes)
-              )
+        abort(400, "'{}' is not a valid status. Valid statuses are {}".format(
+            status, valid_statuses_single_quotes
+        ))
 
-    now = datetime.utcnow()
-    prior_status = service.status
-    service.status = status
-    service.updated_at = now
+    update_json = validate_and_return_updater_request()
 
-    audit = AuditEvent(
-        audit_type=AuditTypes.update_service_status,
-        user=update_json['updated_by'],
-        data={
-            "service_id": service_id,
-            "new_status": status,
-            "old_status": prior_status,
-        },
-        db_object=None
-    )
+    prior_status, service.status = service.status, status
+    service.updated_at = datetime.utcnow()
 
-    db.session.add(service)
-    db.session.add(audit)
-    db.session.add(service_to_archive)
-
-    db.session.commit()
+    commit_and_archive_service(service, update_json,
+                               AuditTypes.update_service_status,
+                               audit_data={'old_status': prior_status,
+                                           'new_status': status})
 
     if prior_status != status:
 
