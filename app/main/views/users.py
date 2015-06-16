@@ -144,7 +144,7 @@ def update_user(user_id):
     audit = AuditEvent(
         audit_type=AuditTypes.update_user,
         user=user.email_address,
-        data=user_update,
+        data={'update': user_update},
         db_object=user
     )
 
