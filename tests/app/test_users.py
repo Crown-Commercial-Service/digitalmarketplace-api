@@ -1,6 +1,6 @@
 from flask import json
 from nose.tools import assert_equal, assert_not_equal, assert_in
-from app import db, encryption
+from app import db, encryption, formats
 from app.models import User, Supplier
 from datetime import datetime
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin
@@ -521,7 +521,7 @@ class TestUsersUpdate(BaseApplicationTest):
 
 class TestUsersGet(BaseApplicationTest):
     def setup(self):
-        now = datetime.now()
+        self.now = datetime.now()
         super(TestUsersGet, self).setup()
         with self.app.app_context():
             user = User(
@@ -532,15 +532,16 @@ class TestUsersGet(BaseApplicationTest):
                 active=True,
                 locked=False,
                 role='buyer',
-                created_at=now,
-                updated_at=now,
-                password_changed_at=now
+                created_at=self.now,
+                updated_at=self.now,
+                password_changed_at=self.now
             )
             db.session.add(user)
             db.session.commit()
 
     def test_can_get_a_user_by_id(self):
         with self.app.app_context():
+            now_as_text = self.now.strftime("%Y-%m-%dT%H:%M:%S%Z")
             response = self.client.get("/users/123")
             data = json.loads(response.get_data())["users"]
             assert_equal(data['emailAddress'], "test@test.com")
@@ -548,6 +549,8 @@ class TestUsersGet(BaseApplicationTest):
             assert_equal(data['role'], "buyer")
             assert_equal(data['active'], True)
             assert_equal(data['locked'], False)
+            assert_equal(data['createdAt'], now_as_text)
+            assert_equal(data['updatedAt'], now_as_text)
             assert_equal('password' in data, False)
             assert_equal(response.status_code, 200)
 

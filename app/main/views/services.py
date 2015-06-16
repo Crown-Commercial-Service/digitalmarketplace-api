@@ -63,7 +63,11 @@ def list_services():
         if not supplier:
             abort(404, "supplier_id '%d' not found" % supplier_id)
 
-        services = services.filter(Service.supplier_id == supplier_id)
+        items = services.filter(Service.supplier_id == supplier_id).all()
+        return jsonify(
+            services=[service.serialize() for service in items],
+            links=dict()
+        )
 
     services = services.paginate(
         page=page,

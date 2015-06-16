@@ -89,6 +89,20 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 3)
 
+    def test_list_services_returns_updated_date(self):
+        self.setup_dummy_services_including_unpublished(1)
+        response = self.client.get('/services')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        try:
+            datetime.strptime(
+                data['services'][0]['updatedAt'],
+                "%Y-%m-%dT%H:%M:%S")
+            assert True, "Parsed date"
+        except ValueError:
+            assert False, "Should be able to parse date"
+
     def test_list_services_gets_only_active_frameworks(self):
         with self.app.app_context():
             now = datetime.utcnow()
@@ -272,27 +286,13 @@ class TestListServices(BaseApplicationTest):
             data['services']
         )
 
-    def test_supplier_id_filter_pagination(self):
+    def test_supplier_should_get_all_service_on_one_page(self):
         self.setup_dummy_services_including_unpublished(21)
 
-        response = self.client.get('/services?supplier_id=1&page=2')
+        response = self.client.get('/services?supplier_id=1')
         data = json.loads(response.get_data())
-
-        assert_equal(response.status_code, 200)
-        assert_equal(len(data['services']), 2)
-        assert_equal(
-            list(filter(lambda s: s['supplierId'] == 1, data['services'])),
-            data['services']
-        )
-
-    def test_supplier_id_filter_pagination_links(self):
-        self.setup_dummy_services_including_unpublished(21)
-
-        response = self.client.get('/services?supplier_id=1&page=1')
-        data = json.loads(response.get_data())
-        next_link = data['links']['next']
-        assert_in('page=2', next_link)
-        assert_in('supplier_id=1', next_link)
+        assert_not_in('next', data['links'])
+        assert_equal(len(data['services']), 7)
 
     def test_unknown_supplier_id(self):
         self.setup_dummy_services_including_unpublished(15)
