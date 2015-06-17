@@ -183,7 +183,7 @@ def update_supplier(supplier_id):
             audit_type=AuditTypes.supplier_update,
             db_object=supplier,
             user=request_data['updated_by'],
-            data={'request': request_data})
+            data={'update': request_data['suppliers']})
     )
 
     try:
@@ -231,7 +231,7 @@ def update_contact_information(supplier_id, contact_id):
             audit_type=AuditTypes.contact_update,
             db_object=contact.supplier,
             user=request_data['updated_by'],
-            data={'request': request_data})
+            data={'update': request_data['contactInformation']})
     )
 
     try:

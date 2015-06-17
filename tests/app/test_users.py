@@ -1,6 +1,6 @@
 from flask import json
 from nose.tools import assert_equal, assert_not_equal, assert_in
-from app import db, encryption, formats
+from app import db, encryption
 from app.models import User, Supplier
 from datetime import datetime
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin
@@ -452,7 +452,8 @@ class TestUsersUpdate(BaseApplicationTest):
             assert_equal(len(data['auditEvents']), 1)
             assert_equal(data['auditEvents'][0]['type'], 'update_user')
             assert_equal(
-                data['auditEvents'][0]['data']['name'], 'I Just Got Married'
+                data['auditEvents'][0]['data']['update']['name'],
+                'I Just Got Married'
             )
 
     def test_can_update_role_and_suppler_id(self):

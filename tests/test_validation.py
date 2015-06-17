@@ -36,7 +36,7 @@ def test_for_valid_acknowledged_state():
     ]
 
     for example, expected in cases:
-        yield assert_equal, is_valid_acknowledged_state, expected, example
+        yield assert_equal, is_valid_acknowledged_state(example), expected
 
 
 def test_for_valid_service_id():

@@ -4,6 +4,7 @@ from flask.ext.migrate import Migrate, MigrateCommand
 from flask.ext.script import Manager
 from alembic.command import upgrade
 from alembic.config import Config
+from sqlalchemy import inspect
 
 
 def setup():
@@ -29,4 +30,7 @@ def teardown():
         db.session.remove()
         db.drop_all()
         db.engine.execute("drop table alembic_version")
+        insp = inspect(db.engine)
+        for enum in insp.get_enums():
+            db.Enum(name=enum['name']).drop(db.engine)
         db.get_engine(app).dispose()

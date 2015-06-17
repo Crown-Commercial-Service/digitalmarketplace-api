@@ -109,6 +109,8 @@ class TestListServices(BaseApplicationTest):
             db.session.add(Framework(
                 id=123,
                 name="expired",
+                framework="gcloud",
+                status="expired",
                 expired=True
             ))
 
@@ -161,8 +163,8 @@ class TestListServices(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 2)
-        assert_equal(data['services'][0]['id'], '3')
-        assert_equal(data['services'][1]['id'], '2')
+        assert_equal(data['services'][0]['id'], '2')
+        assert_equal(data['services'][1]['id'], '3')
 
     def test_list_services_gets_combination_of_enabled_and_published(self):
         self.setup_dummy_services_including_unpublished(1)
@@ -443,13 +445,43 @@ class TestPostService(BaseApplicationTest):
 
             assert_equal(len(data['auditEvents']), 2)
             assert_equal(data['auditEvents'][1]['type'], 'import_service')
-            assert_equal(data['auditEvents'][0]['type'], 'update_service')
+
+            update_event = data['auditEvents'][0]
+            assert_equal(update_event['type'], 'update_service')
+            assert_equal(update_event['user'], 'joeblogs')
+            assert_equal(update_event['data']['service_id'], self.service_id)
+
+    def test_service_update_audit_event_links_to_both_archived_services(self):
+        with self.app.app_context():
+            self.client.post(
+                '/services/%s' % self.service_id,
+                data=json.dumps(
+                    {'update_details': {'updated_by': 'joeblogs'},
+                     'services': {'serviceName': 'new service name'}}),
+                content_type='application/json')
+
+            self.client.post(
+                '/services/%s' % self.service_id,
+                data=json.dumps(
+                    {'update_details': {'updated_by': 'joeblogs'},
+                     'services': {'serviceName': 'new new service name'}}),
+                content_type='application/json')
+
+            audit_response = self.client.get('/audit-events')
+            assert_equal(audit_response.status_code, 200)
+            data = json.loads(audit_response.get_data())
+
+            assert_equal(len(data['auditEvents']), 3)
+            update_event = data['auditEvents'][1]
+
+            old_version = update_event['data']['old_archived_service']
+            new_version = update_event['data']['new_archived_service']
+
+            assert_in('/archived-services/', old_version)
+            assert_in('/archived-services/', new_version)
             assert_equal(
-                data['auditEvents'][0]['user'], 'joeblogs'
-            )
-            assert_equal(
-                data['auditEvents'][0]['data']['serviceName'],
-                'new service name'
+                int(old_version.split('/')[-1]) + 1,
+                int(new_version.split('/')[-1])
             )
             assert_equal(
                 data['auditEvents'][0]['data']['supplierName'],
@@ -568,7 +600,7 @@ class TestPostService(BaseApplicationTest):
             assert_in('JSON was not a valid format',
                       json.loads(response.get_data())['error'])
 
-    def test_updated_service_should_be_archived(self):
+    def test_updated_service_is_archived_right_away(self):
         with self.app.app_context():
             response = self.client.post(
                 '/services/%s' % self.service_id,
@@ -584,10 +616,32 @@ class TestPostService(BaseApplicationTest):
             archived_state = self.client.get(
                 '/archived-services?service-id=' +
                 self.service_id).get_data()
-            archived_service_json = json.loads(archived_state)['services'][0]
+            archived_service_json = json.loads(archived_state)['services'][-1]
+
+            assert_equal(archived_service_json['serviceName'],
+                         'new service name')
+
+    def test_updated_service_archive_is_listed_in_chronological_order(self):
+        with self.app.app_context():
+            response = self.client.post(
+                '/services/%s' % self.service_id,
+                data=json.dumps(
+                    {'update_details': {
+                        'updated_by': 'joeblogs'},
+                     'services': {
+                         'serviceName': 'new service name'}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+
+            archived_state = self.client.get(
+                '/archived-services?service-id=' +
+                self.service_id).get_data()
+            archived_service_json = json.loads(archived_state)['services']
 
             assert_equal(
-                archived_service_json['serviceName'], "My Iaas Service")
+                [s['serviceName'] for s in archived_service_json],
+                ['My Iaas Service', 'new service name'])
 
     def test_updated_service_should_be_archived_on_each_update(self):
         with self.app.app_context():
@@ -706,7 +760,7 @@ class TestPostService(BaseApplicationTest):
             data = json.loads(response.get_data())
             assert_equal(status, data['services']['status'])
 
-    def test_update_service_creates_audit_event(self):
+    def test_update_service_status_creates_audit_event(self):
         response = self.client.post(
             '/services/{0}/status/{1}'.format(
                 self.service_id,
@@ -734,6 +788,10 @@ class TestPostService(BaseApplicationTest):
         )
         assert_equal(data['auditEvents'][0]['data']['new_status'], 'disabled')
         assert_equal(data['auditEvents'][0]['data']['old_status'], 'published')
+        assert_in('/archived-services/',
+                  data['auditEvents'][0]['data']['old_archived_service'])
+        assert_in('/archived-services/',
+                  data['auditEvents'][0]['data']['new_archived_service'])
 
     def test_should_400_with_invalid_statuses(self):
         invalid_statuses = [
@@ -979,7 +1037,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 "G-Cloud 6"
             )
 
-    @mock.patch('app.main.views.services.db.session.commit')
+    @mock.patch('app.service_utils.db.session.commit')
     def test_should_not_index_on_service_post_if_db_exception(
             self, search_api_client, db_session_commit
     ):
@@ -1309,18 +1367,20 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(audit_response.status_code, 200)
             data = json.loads(audit_response.get_data())
 
-            audit_payload = payload.copy()
-            audit_payload.pop("id", None)
-            audit_payload.update({
-                u'supplierName': u'Supplier 1',
-                'supplierId': 1
-            })
-
             assert_equal(len(data['auditEvents']), 1)
             assert_equal(data['auditEvents'][0]['type'], 'import_service')
             assert_equal(data['auditEvents'][0]['user'], 'joeblogs')
-
-            assert_equal(data['auditEvents'][0]['data'], audit_payload)
+            assert_equal(data['auditEvents'][0]['data']['service_id'],
+                         "1234567890123456")
+            assert_equal(data['auditEvents'][0]['data']['supplierName'],
+                         "Supplier 1")
+            assert_equal(data['auditEvents'][0]['data']['supplierId'],
+                         1)
+            assert_equal(
+                data['auditEvents'][0]['data']['old_archived_service'], None
+            )
+            assert_in('/archived-services/',
+                      data['auditEvents'][0]['data']['new_archived_service'])
 
     def test_add_a_new_service_with_status_disabled(self):
         with self.app.app_context():
@@ -1453,7 +1513,9 @@ class TestGetService(BaseApplicationTest):
             db.session.add(Framework(
                 id=123,
                 name="expired",
-                expired=True
+                framework="gcloud",
+                status="expired",
+                expired=True,
             ))
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
