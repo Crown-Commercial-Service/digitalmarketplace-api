@@ -1,7 +1,7 @@
 from flask import jsonify, abort, request, current_app
 from datetime import datetime
 from ...models import AuditEvent
-from sqlalchemy import desc, Date, cast
+from sqlalchemy import asc, Date, cast
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import true, false
 from ...utils import pagination_links
@@ -20,7 +20,7 @@ def list_audits():
         abort(400, "Invalid page argument")
 
     audits = AuditEvent.query.order_by(
-        desc(AuditEvent.created_at)
+        asc(AuditEvent.created_at)
     )
 
     audit_date = request.args.get('audit-date', None)

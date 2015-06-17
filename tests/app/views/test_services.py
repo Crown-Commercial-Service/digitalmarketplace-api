@@ -444,9 +444,9 @@ class TestPostService(BaseApplicationTest):
             data = json.loads(audit_response.get_data())
 
             assert_equal(len(data['auditEvents']), 2)
-            assert_equal(data['auditEvents'][1]['type'], 'import_service')
+            assert_equal(data['auditEvents'][0]['type'], 'import_service')
 
-            update_event = data['auditEvents'][0]
+            update_event = data['auditEvents'][1]
             assert_equal(update_event['type'], 'update_service')
             assert_equal(update_event['user'], 'joeblogs')
             assert_equal(update_event['data']['service_id'], self.service_id)
@@ -780,18 +780,18 @@ class TestPostService(BaseApplicationTest):
         data = json.loads(audit_response.get_data())
 
         assert_equal(len(data['auditEvents']), 2)
-        assert_equal(data['auditEvents'][1]['type'], 'import_service')
-        assert_equal(data['auditEvents'][0]['type'], 'update_service_status')
-        assert_equal(data['auditEvents'][0]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][0]['type'], 'import_service')
+        assert_equal(data['auditEvents'][1]['type'], 'update_service_status')
+        assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
         assert_equal(
-            data['auditEvents'][0]['data']['service_id'], self.service_id
+            data['auditEvents'][1]['data']['service_id'], self.service_id
         )
-        assert_equal(data['auditEvents'][0]['data']['new_status'], 'disabled')
-        assert_equal(data['auditEvents'][0]['data']['old_status'], 'published')
+        assert_equal(data['auditEvents'][1]['data']['new_status'], 'disabled')
+        assert_equal(data['auditEvents'][1]['data']['old_status'], 'published')
         assert_in('/archived-services/',
-                  data['auditEvents'][0]['data']['old_archived_service'])
+                  data['auditEvents'][1]['data']['old_archived_service'])
         assert_in('/archived-services/',
-                  data['auditEvents'][0]['data']['new_archived_service'])
+                  data['auditEvents'][1]['data']['new_archived_service'])
 
     def test_should_400_with_invalid_statuses(self):
         invalid_statuses = [
