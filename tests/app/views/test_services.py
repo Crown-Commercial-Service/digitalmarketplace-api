@@ -1346,7 +1346,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     @mock.patch('app.search_api_client')
     def test_add_a_new_service_creates_audit_event(self, search_api_client):
         with self.app.app_context():
-            assert_equal.im_class.maxDiff = None
             search_api_client.index.return_value = "bar"
 
             payload = self.load_example_listing("G6-IaaS")
