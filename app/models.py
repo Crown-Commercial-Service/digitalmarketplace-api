@@ -313,9 +313,15 @@ class ArchivedService(db.Model, ServiceTableMixin):
             status=service.status
         )
 
-    def get_link(self):
+    @staticmethod
+    def link_object(service_id):
+        if service_id is None:
+            return None
         return url_for(".get_archived_service",
-                       archived_service_id=self.id)
+                       archived_service_id=service_id)
+
+    def get_link(self):
+        return self.link_object(self.id)
 
     def update_from_json(self, data):
         raise NotImplementedError('Archived services should not be changed')
@@ -381,8 +387,15 @@ class AuditEvent(db.Model):
             'user': self.user,
             'data': self.data,
             'createdAt': self.created_at.strftime("%Y-%m-%dT%H:%M:%S%Z"),
-            'links': link(
-                "self", url_for(".list_audits"))
+            'links': filter_null_value_fields({
+                "self": url_for(".list_audits"),
+                "old_archived_service": ArchivedService.link_object(
+                    self.data.get('old_archived_service_id')
+                ),
+                "new_archived_service": ArchivedService.link_object(
+                    self.data.get('new_archived_service_id')
+                )
+            })
         }
 
         return data

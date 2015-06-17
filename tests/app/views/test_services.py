@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import os
 
 from flask import json
-from nose.tools import assert_equal, assert_in, \
+from nose.tools import assert_equal, assert_in, assert_true, \
     assert_almost_equal, assert_false, assert_is_not_none, assert_not_in
 
 from app.models import Service, Supplier, ContactInformation, Framework
@@ -474,8 +474,8 @@ class TestPostService(BaseApplicationTest):
             assert_equal(len(data['auditEvents']), 3)
             update_event = data['auditEvents'][2]
 
-            old_version = update_event['data']['old_archived_service']
-            new_version = update_event['data']['new_archived_service']
+            old_version = update_event['links']['old_archived_service']
+            new_version = update_event['links']['new_archived_service']
 
             assert_in('/archived-services/', old_version)
             assert_in('/archived-services/', new_version)
@@ -781,9 +781,9 @@ class TestPostService(BaseApplicationTest):
         assert_equal(data['auditEvents'][1]['data']['new_status'], 'disabled')
         assert_equal(data['auditEvents'][1]['data']['old_status'], 'published')
         assert_in('/archived-services/',
-                  data['auditEvents'][1]['data']['old_archived_service'])
+                  data['auditEvents'][1]['links']['old_archived_service'])
         assert_in('/archived-services/',
-                  data['auditEvents'][1]['data']['new_archived_service'])
+                  data['auditEvents'][1]['links']['new_archived_service'])
 
     def test_should_400_with_invalid_statuses(self):
         invalid_statuses = [
@@ -1364,10 +1364,15 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(data['auditEvents'][0]['data']['service_id'],
                          "1234567890123456")
             assert_equal(
-                data['auditEvents'][0]['data']['old_archived_service'], None
+                data['auditEvents'][0]['data']['old_archived_service_id'], None
             )
-            assert_in('/archived-services/',
-                      data['auditEvents'][0]['data']['new_archived_service'])
+            assert_not_in('old_archived_service',
+                          data['auditEvents'][0]['links'])
+
+            assert_true(isinstance(
+                data['auditEvents'][0]['data']['new_archived_service_id'], int
+            ))
+            assert_in('new_archived_service', data['auditEvents'][0]['links'])
 
     def test_add_a_new_service_with_status_disabled(self):
         with self.app.app_context():
