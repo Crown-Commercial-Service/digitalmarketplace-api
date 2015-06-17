@@ -128,12 +128,15 @@ def get_validation_errors(validator_name, json_data,
         validator = get_validator(validator_name, enforce_required,
                                   required_fields)
         errors = sorted(validator.iter_errors(json_data), key=lambda e: e.path)
+        form_errors = []
         for index, error in enumerate(errors):
             if error.path:
                 key = error.path.pop()
+                error_map[key] = error.message
             else:
-                key = "_form_{}".format(index)
-            error_map[key] = error.message
+                form_errors.append(error.message)
+        if form_errors:
+            error_map['_form'] = form_errors
         return error_map
     except:
         raise

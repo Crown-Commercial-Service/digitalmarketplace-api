@@ -237,7 +237,9 @@ def test_g7_missing_required_field_has_validation_error():
     data = load_example_listing("G7-SCS")
     data.pop("serviceSummary", None)
     errs = get_validation_errors("services-g7-scs", data)
-    assert "'serviceSummary' is a required property" in errs['_form_0']
+    print("1: {}".format(errs['_form']))
+    assert "'serviceSummary' is a required property" \
+           in "{}".format(errs['_form'])
 
 
 def test_enforce_required_false_allows_missing_fields():
@@ -256,7 +258,9 @@ def test_required_fields_param_requires_specified_fields():
     errs = get_validation_errors("services-g7-scs", data,
                                  enforce_required=False,
                                  required_fields=['serviceSummary'])
-    assert "'serviceSummary' is a required property" in errs['_form_0']
+    print("2: {}".format(errs['_form']))
+    assert "'serviceSummary' is a required property" \
+           in "{}".format(errs['_form'])
 
 
 def test_additional_properties_has_validation_error():
@@ -264,7 +268,7 @@ def test_additional_properties_has_validation_error():
     data.update({'newKey': 1})
     errs = get_validation_errors("services-g7-scs", data)
     assert "Additional properties are not allowed ('newKey' was unexpected)" \
-           in errs['_form_0']
+           in "{}".format(errs['_form'])
 
 
 def test_invalid_enum_values_has_validation_error():
