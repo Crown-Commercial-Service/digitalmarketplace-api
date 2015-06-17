@@ -81,7 +81,10 @@ class BaseApplicationTest(object):
                                        updated_at=now,
                                        status='published',
                                        created_at=now,
-                                       data={'foo': 'bar'},
+                                       data={
+                                           'serviceName': 'Service {}'.
+                                                          format(i),
+                                       },
                                        framework_id=1))
             # Add extra 'enabled' and 'disabled' services
             db.session.add(Service(service_id=n + 1,
@@ -89,14 +92,18 @@ class BaseApplicationTest(object):
                                    updated_at=now,
                                    status='disabled',
                                    created_at=now,
-                                   data={'foo': 'bar'},
+                                   data={
+                                       'serviceName': 'Service {}'.format(n),
+                                   },
                                    framework_id=1))
             db.session.add(Service(service_id=n + 2,
                                    supplier_id=n % TEST_SUPPLIERS_COUNT,
                                    updated_at=now,
                                    status='enabled',
                                    created_at=now,
-                                   data={'foo': 'bar'},
+                                   data={
+                                       'serviceName': 'Service {}'.format(n),
+                                   },
                                    framework_id=1))
             # Add an extra supplier that will have no services
             db.session.add(

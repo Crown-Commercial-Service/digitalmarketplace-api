@@ -105,7 +105,8 @@ def list_archived_services_by_service_id():
     except ValueError:
         abort(400, "Invalid page argument")
 
-    services = ArchivedService.query.filter(Service.service_id == service_id)
+    services = ArchivedService.query.filter(Service.service_id == service_id) \
+                                    .order_by(asc(ArchivedService.id))
 
     services = services.paginate(
         page=page,
