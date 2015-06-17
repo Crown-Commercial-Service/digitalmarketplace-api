@@ -1,0 +1,42 @@
+{
+   "id": "7234567890123456",
+   "supplierId": 1,
+   "lot": "SCS",
+   "serviceDefinitionDocumentURL": "https://assets.digitalmarketplace.service.gov.uk/documents/1/7234567890123456-service-definition-document.pdf",
+   "termsAndConditionsDocumentURL": "https://assets.digitalmarketplace.service.gov.uk/documents/1/7234567890123456-terms-and-condtions.pdf",
+   "pricingDocumentURL": "https://assets.digitalmarketplace.service.gov.uk/documents/1/7234567890123456-pricing-document.pdf",
+   "sfiaRateDocumentURL": "https://assets.digitalmarketplace.service.gov.uk/documents/1/7234567890123456-sfia-rate-card.pdf",
+   "serviceTypes": [
+      "Implementation",
+      "Ongoing support",
+      "Planning"
+   ],
+   "serviceName": "An example G-7 SCS Service",
+   "serviceSummary": "Probably the best cloud service in the world",
+   "serviceBenefits": [
+      "Good for hard-working people"
+   ],
+   "serviceFeatures": [
+      "Useful to your organisation"
+   ],
+   "minimumContractPeriod": "Hour",
+   "terminationCost": true,
+   "priceMin": 34.65,
+   "priceUnit": "Licence",
+   "priceInterval": "6 months",
+   "priceString": "£34.65 per licence per 6 months",
+   "vatIncluded": true,
+   "educationPricing": false,
+   "supportForThirdParties": true,
+   "supportAvailability": "Monday-Wednesday only",
+   "supportResponseTime": "48 Hours",
+   "incidentEscalation": false,
+   "supportTypes": [
+      "Service desk",
+      "Live chat",
+      "Onsite"
+   ],
+   "vendorCertifications": [
+      "ISO 27107"
+   ]
+}
