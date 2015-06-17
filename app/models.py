@@ -414,11 +414,17 @@ class AuditEvent(db.Model):
         object_type, object_id
     )
 
+    acknowledged = db.Column(db.Boolean, index=True, unique=False,
+                        nullable=False)
+
+    acknowledged_by = db.Column(db.String)
+
     def __init__(self, audit_type, user, data, db_object):
         self.type = audit_type.value
         self.data = data
         self.object = db_object
         self.user = user
+        self.acknowledged = False
 
     def serialize(self):
         """
