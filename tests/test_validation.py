@@ -7,8 +7,7 @@ from nose.tools import assert_equal
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.validation import detect_framework, \
-    validates_against_schema, is_valid_service_id
-
+    validates_against_schema, is_valid_service_id, get_validation_errors
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                     '..', 'example_listings'))
@@ -208,6 +207,67 @@ def test_additional_fields_are_not_allowed():
         data = load_example_listing(example)
         data.update({'newKey': 1})
         yield assert_example, example, detect_framework(data), expected
+
+
+def test_valid_g4_service_has_no_validation_errors():
+    data = load_example_listing("G4")
+    errs = get_validation_errors("services-g4", data)
+    assert not errs
+
+
+def test_valid_g5_service_has_no_validation_errors():
+    data = load_example_listing("G5")
+    errs = get_validation_errors("services-g5", data)
+    assert not errs
+
+
+def test_valid_g6_service_has_no_validation_errors():
+    data = load_example_listing("G6-PaaS")
+    errs = get_validation_errors("services-g6-paas", data)
+    assert not errs
+
+
+def test_valid_g7_service_has_no_validation_errors():
+    data = load_example_listing("G7-SCS")
+    errs = get_validation_errors("services-g7-scs", data)
+    assert not errs
+
+
+def test_g7_missing_required_field_has_validation_error():
+    data = load_example_listing("G7-SCS")
+    data.pop("serviceSummary", None)
+    errs = get_validation_errors("services-g7-scs", data)
+    assert_equal(errs, {"err_0": "u\'serviceSummary\' is a required property"})  # noqa
+
+
+def test_enforce_required_false_allows_missing_fields():
+    data = load_example_listing("G7-SCS")
+    data.pop("serviceSummary", None)
+    data.pop("serviceDefinitionDocumentURL", None)
+    errs = get_validation_errors("services-g7-scs", data,
+                                 enforce_required=False)
+    assert not errs
+
+
+def test_additional_properties_has_validation_error():
+    data = load_example_listing("G7-SCS")
+    data.update({'newKey': 1})
+    errs = get_validation_errors("services-g7-scs", data)
+    assert_equal(errs, {"err_0": "Additional properties are not allowed (\'newKey\' was unexpected)"})  # noqa
+
+
+def test_invalid_enum_values_has_validation_error():
+    data = load_example_listing("G7-SCS")
+    data.update({'minimumContractPeriod': 'Fortnight'})
+    errs = get_validation_errors("services-g7-scs", data)
+    assert_equal(errs, {u'minimumContractPeriod': "'Fortnight' is not one of [u'Hour', u'Day', u'Month', u'Year', u'Other']"})  # noqa
+
+
+def test_invalid_url_field_has_validation_error():
+    data = load_example_listing("G7-SCS")
+    data.update({'serviceDefinitionDocumentURL': 'not_a_url'})
+    errs = get_validation_errors("services-g7-scs", data)
+    assert_equal(errs, {u'serviceDefinitionDocumentURL': "'not_a_url' is not a u'uri'"})  # noqa
 
 
 def assert_example(name, result, expected):
