@@ -28,7 +28,7 @@ FORMAT_CHECKER = FormatChecker()
 
 
 def load_schemas(schemas_path, schema_names):
-    loaded_schemas, optional_schemas = {}, {}
+    loaded_schemas = {}
     for schema_name in schema_names:
         schema_path = os.path.join(schemas_path, '{}.json'.format(schema_name))
 
@@ -37,22 +37,17 @@ def load_schemas(schemas_path, schema_names):
             validator = validator_for(schema)
             validator.check_schema(schema)
             loaded_schemas[schema_name] = schema
+    return loaded_schemas
 
-            optional_schema = {}
-            optional_schema.update((key, val)
-                                   for (key, val) in schema.items()
-                                   if key != 'required')
-            optional_schemas[schema_name] = optional_schema
-    return loaded_schemas, optional_schemas
-
-_SCHEMAS, _OPTIONAL_SCHEMAS = load_schemas(JSON_SCHEMAS_PATH, SCHEMA_NAMES)
+_SCHEMAS = load_schemas(JSON_SCHEMAS_PATH, SCHEMA_NAMES)
 
 
-def get_validator(schema_name, enforce_required=True):
+def get_validator(schema_name, enforce_required=True, required_fields=[]):
     if enforce_required:
         schema = _SCHEMAS[schema_name]
     else:
-        schema = _OPTIONAL_SCHEMAS[schema_name]
+        schema = _SCHEMAS[schema_name].copy()
+        schema['required'] = required_fields
     return validator_for(schema)(schema, format_checker=FORMAT_CHECKER)
 
 
@@ -125,16 +120,19 @@ def validates_against_schema(validator_name, submitted_json):
         return True
 
 
-def get_validation_errors(validator_name, json_data, enforce_required=True):
+def get_validation_errors(validator_name, json_data,
+                          enforce_required=True,
+                          required_fields=[]):
     error_map = {}
     try:
-        validator = get_validator(validator_name, enforce_required)
+        validator = get_validator(validator_name, enforce_required,
+                                  required_fields)
         errors = sorted(validator.iter_errors(json_data), key=lambda e: e.path)
         for index, error in enumerate(errors):
             if error.path:
                 key = error.path.pop()
             else:
-                key = "err_{}".format(index)
+                key = "_form_{}".format(index)
             error_map[key] = error.message
         return error_map
     except:
