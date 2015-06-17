@@ -608,10 +608,32 @@ class TestPostService(BaseApplicationTest):
             archived_state = self.client.get(
                 '/archived-services?service-id=' +
                 self.service_id).get_data()
-            archived_service_json = json.loads(archived_state)['services'][0]
+            archived_service_json = json.loads(archived_state)['services'][-1]
 
             assert_equal(archived_service_json['serviceName'],
-                         "new service name")
+                         'new service name')
+
+    def test_updated_service_archive_is_listed_in_chronological_order(self):
+        with self.app.app_context():
+            response = self.client.post(
+                '/services/%s' % self.service_id,
+                data=json.dumps(
+                    {'update_details': {
+                        'updated_by': 'joeblogs'},
+                     'services': {
+                         'serviceName': 'new service name'}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+
+            archived_state = self.client.get(
+                '/archived-services?service-id=' +
+                self.service_id).get_data()
+            archived_service_json = json.loads(archived_state)['services']
+
+            assert_equal(
+                [s['serviceName'] for s in archived_service_json],
+                ['My Iaas Service', 'new service name'])
 
     def test_updated_service_should_be_archived_on_each_update(self):
         with self.app.app_context():
