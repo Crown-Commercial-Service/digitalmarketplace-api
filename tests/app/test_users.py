@@ -1,6 +1,6 @@
 from flask import json
 from nose.tools import assert_equal, assert_not_equal, assert_in
-from app import db, encryption, formats
+from app import db, encryption
 from app.models import User, Supplier
 from datetime import datetime
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin
