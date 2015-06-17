@@ -7,7 +7,7 @@ from ...utils import pagination_links
 from .. import main
 from ... import db
 from dmutils.audit import AuditTypes
-from ...validation import is_valid_date
+from ...validation import is_valid_date, is_valid_acknowledged_state
 from ...service_utils import validate_and_return_updater_request
 
 
@@ -38,6 +38,20 @@ def list_audits():
             )
         else:
             abort(400, "Invalid audit type")
+
+    acknowledged = request.args.get('acknowledged', None)
+    if acknowledged:
+        if is_valid_acknowledged_state(acknowledged):
+            if acknowledged == 'acknowledged':
+                audits = audits.filter(
+                    AuditEvent.acknowledged == True
+                )
+            elif acknowledged == 'not-acknowledged':
+                audits = audits.filter(
+                    AuditEvent.acknowledged == False
+                )
+        else:
+            abort(400, 'invalid acknowledged state supplied')
 
     audits = audits.paginate(
         page=page,

@@ -442,14 +442,20 @@ class AuditEvent(db.Model):
             'id': self.id,
             'type': self.type,
             'acknowledged': self.acknowledged,
-            'acknowledged_at': self.acknowledged_at.strftime("%Y-%m-%dT%H:%M:%S%Z"),
-            'acknowledged_by': self.acknowledged_by,
             'user': self.user,
             'data': self.data,
             'createdAt': self.created_at.strftime("%Y-%m-%dT%H:%M:%S%Z"),
             'links': link(
                 "self", url_for(".list_audits"))
         }
+
+        if self.acknowledged:
+            data.update({
+                'acknowledged_at':
+                    self.acknowledged_at.strftime("%Y-%m-%dT%H:%M:%S%Z"),
+                'acknowledged_by':
+                    self.acknowledged_by,
+            })
 
         return data
 

@@ -186,3 +186,9 @@ def is_valid_date(date, default_format='%Y-%m-%d'):
         return True
     except ValueError:
         return False
+
+
+def is_valid_acknowledged_state(acknowledged):
+    if acknowledged in ['all', 'acknowledged', 'not-acknowledged']:
+        return True
+    return False

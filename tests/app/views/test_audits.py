@@ -165,15 +165,76 @@ class TestAudits(BaseApplicationTest):
         data = json.loads(response.get_data())
 
         res = self.client.post(
-            '/audit-events/{}/acknowledge'.format(data['auditEvents'][0]['id']),
+            '/audit-events/{}/acknowledge'.format(
+                data['auditEvents'][0]['id']
+            ),
             data=json.dumps({
                 'update_details': {'updated_by': 'tests'}
             }),
             content_type='application/json')
-        # refect to get updated data
+        # re-fetch to get updated data
         new_response = self.client.get('/audit-events')
         new_data = json.loads(new_response.get_data())
         assert_equal(res.status_code, 200)
         assert_equal(new_data['auditEvents'][0]['acknowledged'], True)
         assert_equal(new_data['auditEvents'][0]['acknowledged_by'], 'tests')
+
+    def test_should_get_all_audit_events(self):
+        self.add_audit_events(2)
+        response = self.client.get('/audit-events')
+        data = json.loads(response.get_data())
+
+        res = self.client.post(
+            '/audit-events/{}/acknowledge'.format(
+                data['auditEvents'][0]['id']
+            ),
+            data=json.dumps({
+                'update_details': {'updated_by': 'tests'}
+            }),
+            content_type='application/json')
+        # re-fetch to get updated data
+        new_response = self.client.get('/audit-events')
+        new_data = json.loads(new_response.get_data())
+        assert_equal(res.status_code, 200)
+        assert_equal(len(new_data['auditEvents']), 2)
+
+    def test_should_get_only_acknowledged_audit_events(self):
+        self.add_audit_events(2)
+        response = self.client.get('/audit-events')
+        data = json.loads(response.get_data())
+
+        res = self.client.post(
+            '/audit-events/{}/acknowledge'.format(
+                data['auditEvents'][0]['id']
+            ),
+            data=json.dumps({
+                'update_details': {'updated_by': 'tests'}
+            }),
+            content_type='application/json')
+        # re-fetch to get updated data
+        new_response = self.client.get('/audit-events?acknowledged=acknowledged')
+        new_data = json.loads(new_response.get_data())
+        assert_equal(res.status_code, 200)
+        assert_equal(len(new_data['auditEvents']), 1)
+        assert_equal(new_data['auditEvents'][0]['id'], data['auditEvents'][0]['id'])
+
+    def test_should_get_only_not_acknowledged_audit_events(self):
+        self.add_audit_events(2)
+        response = self.client.get('/audit-events')
+        data = json.loads(response.get_data())
+
+        res = self.client.post(
+            '/audit-events/{}/acknowledge'.format(
+                data['auditEvents'][0]['id']
+            ),
+            data=json.dumps({
+                'update_details': {'updated_by': 'tests'}
+            }),
+            content_type='application/json')
+        # re-fetch to get updated data
+        new_response = self.client.get('/audit-events?acknowledged=not-acknowledged')
+        new_data = json.loads(new_response.get_data())
+        assert_equal(res.status_code, 200)
+        assert_equal(len(new_data['auditEvents']), 1)
+        assert_equal(new_data['auditEvents'][0]['id'], data['auditEvents'][1]['id'])
 
