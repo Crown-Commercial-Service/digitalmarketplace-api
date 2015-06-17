@@ -44,7 +44,7 @@ def commit_and_archive_service(updated_service, update_details,
         ArchivedService.service_id == updated_service.service_id
     ).order_by(ArchivedService.id.desc()).first()
 
-    last_archive_link = last_archive.get_link() if last_archive else None
+    last_archive = last_archive.id if last_archive else None
 
     if audit_data is None:
         audit_data = {}
@@ -57,8 +57,8 @@ def commit_and_archive_service(updated_service, update_details,
 
         audit_data.update({
             'service_id': updated_service.service_id,
-            'old_archived_service': last_archive_link,
-            'new_archived_service': service_to_archive.get_link(),
+            'old_archived_service_id': last_archive,
+            'new_archived_service_id': service_to_archive.id,
         })
 
         audit = AuditEvent(
