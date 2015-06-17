@@ -91,11 +91,11 @@ class TestAudits(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         assert_equal(len(data['auditEvents']), 5)
 
-        assert_equal(data['auditEvents'][0]['user'], '0')
-        assert_equal(data['auditEvents'][1]['user'], '1')
+        assert_equal(data['auditEvents'][0]['user'], '4')
+        assert_equal(data['auditEvents'][1]['user'], '3')
         assert_equal(data['auditEvents'][2]['user'], '2')
-        assert_equal(data['auditEvents'][3]['user'], '3')
-        assert_equal(data['auditEvents'][4]['user'], '4')
+        assert_equal(data['auditEvents'][3]['user'], '1')
+        assert_equal(data['auditEvents'][4]['user'], '0')
 
     def test_should_reject_invalid_page(self):
         self.add_audit_events(1)
@@ -124,11 +124,11 @@ class TestAudits(BaseApplicationTest):
         assert_equal(len(data['auditEvents']), 5)
         next_link = data['links']['next']
         assert_in('page=2', next_link)
-        assert_equal(data['auditEvents'][0]['user'], '0')
-        assert_equal(data['auditEvents'][1]['user'], '1')
-        assert_equal(data['auditEvents'][2]['user'], '2')
+        assert_equal(data['auditEvents'][0]['user'], '6')
+        assert_equal(data['auditEvents'][1]['user'], '5')
+        assert_equal(data['auditEvents'][2]['user'], '4')
         assert_equal(data['auditEvents'][3]['user'], '3')
-        assert_equal(data['auditEvents'][4]['user'], '4')
+        assert_equal(data['auditEvents'][4]['user'], '2')
 
     def test_paginated_audit_events_page_two(self):
         self.add_audit_events(7)
@@ -140,8 +140,8 @@ class TestAudits(BaseApplicationTest):
         assert_equal(len(data['auditEvents']), 2)
         prev_link = data['links']['prev']
         assert_in('page=1', prev_link)
-        assert_equal(data['auditEvents'][0]['user'], '5')
-        assert_equal(data['auditEvents'][1]['user'], '6')
+        assert_equal(data['auditEvents'][0]['user'], '1')
+        assert_equal(data['auditEvents'][1]['user'], '0')
 
     def test_reject_invalid_audit_id_on_acknowledgement(self):
         res = self.client.post(
@@ -212,11 +212,15 @@ class TestAudits(BaseApplicationTest):
             }),
             content_type='application/json')
         # re-fetch to get updated data
-        new_response = self.client.get('/audit-events?acknowledged=acknowledged')
+        new_response = self.client.get(
+            '/audit-events?acknowledged=acknowledged'
+        )
         new_data = json.loads(new_response.get_data())
         assert_equal(res.status_code, 200)
         assert_equal(len(new_data['auditEvents']), 1)
-        assert_equal(new_data['auditEvents'][0]['id'], data['auditEvents'][0]['id'])
+        assert_equal(
+            new_data['auditEvents'][0]['id'],
+            data['auditEvents'][0]['id'])
 
     def test_should_get_only_not_acknowledged_audit_events(self):
         self.add_audit_events(2)
@@ -232,9 +236,13 @@ class TestAudits(BaseApplicationTest):
             }),
             content_type='application/json')
         # re-fetch to get updated data
-        new_response = self.client.get('/audit-events?acknowledged=not-acknowledged')
+        new_response = self.client.get(
+            '/audit-events?acknowledged=not-acknowledged'
+        )
         new_data = json.loads(new_response.get_data())
         assert_equal(res.status_code, 200)
         assert_equal(len(new_data['auditEvents']), 1)
-        assert_equal(new_data['auditEvents'][0]['id'], data['auditEvents'][1]['id'])
-
+        assert_equal(
+            new_data['auditEvents'][0]['id'],
+            data['auditEvents'][1]['id']
+        )

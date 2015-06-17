@@ -442,21 +442,21 @@ class TestPostService(BaseApplicationTest):
             data = json.loads(audit_response.get_data())
 
             assert_equal(len(data['auditEvents']), 2)
-            assert_equal(data['auditEvents'][0]['type'], 'import_service')
-            assert_equal(data['auditEvents'][1]['type'], 'update_service')
+            assert_equal(data['auditEvents'][1]['type'], 'import_service')
+            assert_equal(data['auditEvents'][0]['type'], 'update_service')
             assert_equal(
-                data['auditEvents'][1]['user'], 'joeblogs'
+                data['auditEvents'][0]['user'], 'joeblogs'
             )
             assert_equal(
-                data['auditEvents'][1]['data']['serviceName'],
+                data['auditEvents'][0]['data']['serviceName'],
                 'new service name'
             )
             assert_equal(
-                data['auditEvents'][1]['data']['supplierName'],
+                data['auditEvents'][0]['data']['supplierName'],
                 'Supplier 1'
             )
             assert_equal(
-                data['auditEvents'][1]['data']['supplierId'],
+                data['auditEvents'][0]['data']['supplierId'],
                 1
             )
 
@@ -726,14 +726,14 @@ class TestPostService(BaseApplicationTest):
         data = json.loads(audit_response.get_data())
 
         assert_equal(len(data['auditEvents']), 2)
-        assert_equal(data['auditEvents'][0]['type'], 'import_service')
-        assert_equal(data['auditEvents'][1]['type'], 'update_service_status')
-        assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][1]['type'], 'import_service')
+        assert_equal(data['auditEvents'][0]['type'], 'update_service_status')
+        assert_equal(data['auditEvents'][0]['user'], 'joeblogs')
         assert_equal(
-            data['auditEvents'][1]['data']['service_id'], self.service_id
+            data['auditEvents'][0]['data']['service_id'], self.service_id
         )
-        assert_equal(data['auditEvents'][1]['data']['new_status'], 'disabled')
-        assert_equal(data['auditEvents'][1]['data']['old_status'], 'published')
+        assert_equal(data['auditEvents'][0]['data']['new_status'], 'disabled')
+        assert_equal(data['auditEvents'][0]['data']['old_status'], 'published')
 
     def test_should_400_with_invalid_statuses(self):
         invalid_statuses = [

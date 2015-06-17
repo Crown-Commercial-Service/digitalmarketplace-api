@@ -211,11 +211,11 @@ class TestDraftServices(BaseApplicationTest):
         data = json.loads(audit_response.get_data())
 
         assert_equal(len(data['auditEvents']), 2)
-        assert_equal(data['auditEvents'][0]['type'], 'import_service')
-        assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
-        assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
+        assert_equal(data['auditEvents'][1]['type'], 'import_service')
+        assert_equal(data['auditEvents'][0]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][0]['type'], 'create_draft_service')
         assert_equal(
-            data['auditEvents'][1]['data']['service_id'], self.service_id
+            data['auditEvents'][0]['data']['service_id'], self.service_id
         )
 
     def test_should_not_create_two_drafts_from_existing_service(self):
@@ -277,12 +277,12 @@ class TestDraftServices(BaseApplicationTest):
         data = json.loads(audit_response.get_data())
 
         assert_equal(len(data['auditEvents']), 3)
-        assert_equal(data['auditEvents'][0]['type'], 'import_service')
+        assert_equal(data['auditEvents'][2]['type'], 'import_service')
         assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
-        assert_equal(data['auditEvents'][2]['user'], 'joeblogs')
-        assert_equal(data['auditEvents'][2]['type'], 'delete_draft_service')
+        assert_equal(data['auditEvents'][0]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][0]['type'], 'delete_draft_service')
         assert_equal(
-            data['auditEvents'][2]['data']['service_id'], self.service_id
+            data['auditEvents'][0]['data']['service_id'], self.service_id
         )
 
         fetch_again = self.client.get(
@@ -340,14 +340,14 @@ class TestDraftServices(BaseApplicationTest):
         data = json.loads(audit_response.get_data())
 
         assert_equal(len(data['auditEvents']), 3)
-        assert_equal(data['auditEvents'][0]['type'], 'import_service')
-        assert_equal(data['auditEvents'][2]['user'], 'joeblogs')
-        assert_equal(data['auditEvents'][2]['type'], 'update_draft_service')
+        assert_equal(data['auditEvents'][2]['type'], 'import_service')
+        assert_equal(data['auditEvents'][0]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][0]['type'], 'update_draft_service')
         assert_equal(
-            data['auditEvents'][2]['data']['service_id'], self.service_id
+            data['auditEvents'][0]['data']['service_id'], self.service_id
         )
         assert_equal(
-            data['auditEvents'][2]['data']['update_json']['serviceName'],
+            data['auditEvents'][0]['data']['update_json']['serviceName'],
             'new service name'
         )
 
@@ -459,10 +459,10 @@ class TestDraftServices(BaseApplicationTest):
         data = json.loads(audit_response.get_data())
 
         assert_equal(len(data['auditEvents']), 4)
-        assert_equal(data['auditEvents'][0]['type'], 'import_service')
-        assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
-        assert_equal(data['auditEvents'][2]['type'], 'update_draft_service')
-        assert_equal(data['auditEvents'][3]['type'], 'publish_draft_service')
+        assert_equal(data['auditEvents'][3]['type'], 'import_service')
+        assert_equal(data['auditEvents'][2]['type'], 'create_draft_service')
+        assert_equal(data['auditEvents'][1]['type'], 'update_draft_service')
+        assert_equal(data['auditEvents'][0]['type'], 'publish_draft_service')
 
         # draft should no longer exist
         fetch = self.client.get('/services/{}/draft'.format(self.service_id))
