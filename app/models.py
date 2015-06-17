@@ -414,10 +414,17 @@ class AuditEvent(db.Model):
         object_type, object_id
     )
 
-    acknowledged = db.Column(db.Boolean, index=True, unique=False,
-                        nullable=False)
+    acknowledged = db.Column(
+        db.Boolean,
+        index=True,
+        unique=False,
+        nullable=False)
 
     acknowledged_by = db.Column(db.String)
+    acknowledged_at = db.Column(
+        db.DateTime,
+        nullable=True,
+        default=datetime.utcnow)
 
     def __init__(self, audit_type, user, data, db_object):
         self.type = audit_type.value
@@ -434,6 +441,9 @@ class AuditEvent(db.Model):
         data = {
             'id': self.id,
             'type': self.type,
+            'acknowledged': self.acknowledged,
+            'acknowledged_at': self.acknowledged_at.strftime("%Y-%m-%dT%H:%M:%S%Z"),
+            'acknowledged_by': self.acknowledged_by,
             'user': self.user,
             'data': self.data,
             'createdAt': self.created_at.strftime("%Y-%m-%dT%H:%M:%S%Z"),

@@ -9,7 +9,6 @@ from nose.tools import assert_equal, assert_in
 
 
 class TestAudits(BaseApplicationTest):
-
     def setup(self):
         super(TestAudits, self).setup()
 
@@ -143,3 +142,38 @@ class TestAudits(BaseApplicationTest):
         assert_in('page=1', prev_link)
         assert_equal(data['auditEvents'][0]['user'], '5')
         assert_equal(data['auditEvents'][1]['user'], '6')
+
+    def test_reject_invalid_audit_id_on_acknowledgement(self):
+        res = self.client.post(
+            '/audit-events/invalid-id!/acknowledge',
+            data=json.dumps({'key': 'value'}),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 400)
+
+    def test_reject_if_no_updater_details_on_acknowledgement(self):
+        res = self.client.post(
+            '/audit-events/123/acknowledge',
+            data={},
+            content_type='application/json')
+
+        assert_equal(res.status_code, 400)
+
+    def test_should_update_audit_event(self):
+        self.add_audit_events(1)
+        response = self.client.get('/audit-events')
+        data = json.loads(response.get_data())
+
+        res = self.client.post(
+            '/audit-events/{}/acknowledge'.format(data['auditEvents'][0]['id']),
+            data=json.dumps({
+                'update_details': {'updated_by': 'tests'}
+            }),
+            content_type='application/json')
+        # refect to get updated data
+        new_response = self.client.get('/audit-events')
+        new_data = json.loads(new_response.get_data())
+        assert_equal(res.status_code, 200)
+        assert_equal(new_data['auditEvents'][0]['acknowledged'], True)
+        assert_equal(new_data['auditEvents'][0]['acknowledged_by'], 'tests')
+

@@ -1,15 +1,18 @@
 from flask import jsonify, abort, request, current_app
+from datetime import datetime
 from ...models import AuditEvent
 from sqlalchemy import asc, Date, cast
+from sqlalchemy.exc import IntegrityError
 from ...utils import pagination_links
 from .. import main
+from ... import db
 from dmutils.audit import AuditTypes
 from ...validation import is_valid_date
+from ...service_utils import validate_and_return_updater_request
 
 
 @main.route('/audit-events', methods=['GET'])
 def list_audits():
-
     try:
         page = int(request.args.get('page', 1))
     except ValueError:
@@ -49,3 +52,34 @@ def list_audits():
             request.args
         )
     )
+
+
+@main.route('/audit-events/<string:audit_id>/acknowledge', methods=['POST'])
+def acknowledge_audit(audit_id):
+    try:
+        audit_id = int(audit_id)
+    except ValueError:
+        abort(400, "Invalid audit id argument")
+
+    updater_json = validate_and_return_updater_request()
+
+    audit_event = AuditEvent.query.filter(
+        AuditEvent.id == audit_id
+    ).first()
+
+    if audit_event is None:
+        abort(404, "No audit event with this id")
+
+    audit_event.acknowledged = True
+    audit_event.acknowledged_at = datetime.now()
+    audit_event.acknowledged_by = updater_json['updated_by']
+
+    try:
+        db.session.add(audit_event)
+        db.session.commit()
+
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
+
+    return jsonify(auditEvents=audit_event.serialize()), 200
