@@ -105,28 +105,31 @@ class TestListServices(BaseApplicationTest):
 
     def test_list_services_gets_only_active_frameworks(self):
         with self.app.app_context():
-            now = datetime.utcnow()
-            db.session.add(Framework(
-                id=123,
-                name="expired",
-                framework="gcloud",
-                status="expired",
-            ))
-
-            db.session.add(Service(service_id="999",
-                                   supplier_id=1,
-                                   updated_at=now,
-                                   status='published',
-                                   created_at=now,
-                                   data={'foo': 'bar'},
-                                   framework_id=123))
-
+            self.setup_dummy_service(
+                service_id='999',
+                status='published',
+                framework_id=self.setup_dummy_framework())
             self.setup_dummy_services_including_unpublished(1)
+
             response = self.client.get('/services')
             data = json.loads(response.get_data())
 
             assert_equal(response.status_code, 200)
             assert_equal(len(data['services']), 3)
+
+    def test_gets_only_active_frameworks_with_status_filter(self):
+        with self.app.app_context():
+            self.setup_dummy_service(
+                service_id='999',
+                status='published',
+                framework_id=self.setup_dummy_framework())
+            self.setup_dummy_services_including_unpublished(1)
+
+            response = self.client.get('/services?status=published')
+            data = json.loads(response.get_data())
+
+            assert_equal(response.status_code, 200)
+            assert_equal(len(data['services']), 1)
 
     def test_list_services_gets_only_published(self):
         self.setup_dummy_services_including_unpublished(1)

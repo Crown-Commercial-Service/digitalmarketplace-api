@@ -7,7 +7,6 @@ from .. import main
 from ...models import ArchivedService, Service, Supplier, Framework
 
 from sqlalchemy import asc
-from sqlalchemy.sql.expression import false
 from ...validation import detect_framework_or_400, is_valid_service_id_or_400
 from ...utils import url_for, pagination_links, \
     drop_foreign_fields, display_list
@@ -20,7 +19,6 @@ from ...service_utils import (
     validate_and_return_updater_request,
     commit_and_archive_service,
 )
-from sqlalchemy.types import String
 
 
 @main.route('/')
@@ -43,18 +41,10 @@ def list_services():
 
     supplier_id = request.args.get('supplier_id')
 
-    services = Service.query.filter(
-        Service.framework.has(Framework.status == 'live')
-    ).order_by(
-        asc(Service.framework_id),
-        asc(Service.data['lot'].cast(String).label('data_lot')),
-        asc(Service.data['serviceName'].cast(String).label('data_servicename'))
-    )
+    services = Service.query.framework_is_live().default_order()
 
     if request.args.get('status'):
-        services = Service.query.filter(
-            Service.status.in_(request.values.getlist('status'))
-        )
+        services = services.has_statuses(*request.values.getlist('status'))
 
     if supplier_id is not None:
         try:
@@ -212,9 +202,8 @@ def get_service(service_id):
     is_valid_service_id_or_400(service_id)
 
     service = Service.query.filter(
-        Service.service_id == service_id) \
-        .filter(Service.framework.has(Framework.status == 'live')) \
-        .first_or_404()
+        Service.service_id == service_id
+    ).framework_is_live().first_or_404()
 
     return jsonify(services=service.serialize())
 

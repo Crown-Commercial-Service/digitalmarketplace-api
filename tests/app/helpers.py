@@ -71,40 +71,46 @@ class BaseApplicationTest(object):
                 )
             db.session.commit()
 
-    def setup_dummy_services_including_unpublished(self, n):
+    def setup_dummy_framework(self, id=123, name='expired', framework='gcloud',
+                              status='expired'):
+        db.session.add(Framework(
+            id=id,
+            name=name,
+            framework=framework,
+            status=status))
+
+        return id
+
+    def setup_dummy_service(self, service_id, supplier_id=1, data=None,
+                            status='published', framework_id=1):
         now = datetime.utcnow()
+        db.session.add(Service(service_id=service_id,
+                               supplier_id=supplier_id,
+                               status=status,
+                               data=data or {
+                                   'serviceName': 'Service {}'.
+                                                  format(service_id)
+                               },
+                               framework_id=framework_id,
+                               created_at=now,
+                               updated_at=now))
+
+    def setup_dummy_services_including_unpublished(self, n):
         with self.app.app_context():
             self.setup_dummy_suppliers(TEST_SUPPLIERS_COUNT)
             for i in range(n):
-                db.session.add(Service(service_id=i,
-                                       supplier_id=i % TEST_SUPPLIERS_COUNT,
-                                       updated_at=now,
-                                       status='published',
-                                       created_at=now,
-                                       data={
-                                           'serviceName': 'Service {}'.
-                                                          format(i),
-                                       },
-                                       framework_id=1))
+                self.setup_dummy_service(
+                    service_id=i,
+                    supplier_id=i % TEST_SUPPLIERS_COUNT)
             # Add extra 'enabled' and 'disabled' services
-            db.session.add(Service(service_id=n + 1,
-                                   supplier_id=n % TEST_SUPPLIERS_COUNT,
-                                   updated_at=now,
-                                   status='disabled',
-                                   created_at=now,
-                                   data={
-                                       'serviceName': 'Service {}'.format(n),
-                                   },
-                                   framework_id=1))
-            db.session.add(Service(service_id=n + 2,
-                                   supplier_id=n % TEST_SUPPLIERS_COUNT,
-                                   updated_at=now,
-                                   status='enabled',
-                                   created_at=now,
-                                   data={
-                                       'serviceName': 'Service {}'.format(n),
-                                   },
-                                   framework_id=1))
+            self.setup_dummy_service(
+                service_id=n + 1,
+                supplier_id=n % TEST_SUPPLIERS_COUNT,
+                status='disabled')
+            self.setup_dummy_service(
+                service_id=n + 2,
+                supplier_id=n % TEST_SUPPLIERS_COUNT,
+                status='enabled')
             # Add an extra supplier that will have no services
             db.session.add(
                 Supplier(supplier_id=TEST_SUPPLIERS_COUNT, name=u"Supplier {}"
