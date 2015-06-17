@@ -4,6 +4,7 @@ from flask import json
 from nose.tools import assert_equal
 
 from ..helpers import BaseApplicationTest
+from app.models import Framework
 
 
 class TestListFrameworks(BaseApplicationTest):
@@ -13,4 +14,5 @@ class TestListFrameworks(BaseApplicationTest):
             data = json.loads(response.get_data())
 
             assert_equal(response.status_code, 200)
-            assert_equal(len(data['frameworks']), 3)
+            assert_equal(len(data['frameworks']),
+                         len(Framework.query.all()))
