@@ -28,6 +28,14 @@ class Framework(db.Model):
                        index=True, nullable=False,
                        server_default='pending')
 
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'framework': self.framework,
+            'status': self.status,
+        }
+
 
 class ContactInformation(db.Model):
     __tablename__ = 'contact_information'

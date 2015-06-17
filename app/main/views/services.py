@@ -27,7 +27,8 @@ def index():
     return jsonify(links={
         "audits.list": url_for('.list_audits', _external=True),
         "services.list": url_for('.list_services', _external=True),
-        "suppliers.list": url_for('.list_suppliers', _external=True)
+        "suppliers.list": url_for('.list_suppliers', _external=True),
+        "frameworks.list": url_for('.list_frameworks', _external=True),
     }
     ), 200
 
