@@ -5,6 +5,7 @@ import os
 from flask import abort
 from jsonschema import ValidationError, FormatChecker
 from jsonschema.validators import validator_for
+from datetime import datetime
 
 MINIMUM_SERVICE_ID_LENGTH = 10
 MAXIMUM_SERVICE_ID_LENGTH = 20
@@ -37,6 +38,7 @@ def load_schemas(schemas_path, schema_names):
             validator.check_schema(schema)
             loaded_schemas[schema_name] = schema
     return loaded_schemas
+
 
 _SCHEMAS = load_schemas(JSON_SCHEMAS_PATH, SCHEMA_NAMES)
 
@@ -176,3 +178,11 @@ def is_valid_service_id_or_400(service_id):
         return True
     else:
         abort(400, "Invalid service ID supplied: %s" % service_id)
+
+
+def is_valid_date(date, default_format='%Y-%m-%d'):
+    try:
+        datetime.strptime(date, default_format)
+        return True
+    except ValueError:
+        return False

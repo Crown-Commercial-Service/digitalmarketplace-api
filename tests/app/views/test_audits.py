@@ -1,5 +1,6 @@
 from tests.app.helpers import BaseApplicationTest
 from flask import json
+from datetime import datetime
 from app.models import AuditEvent
 from app import db
 from dmutils.audit import AuditTypes
@@ -38,6 +39,32 @@ class TestAudits(BaseApplicationTest):
         assert_equal(len(data['auditEvents']), 1)
         assert_equal(data['auditEvents'][0]['user'], '0')
         assert_equal(data['auditEvents'][0]['data']['request'], 'data')
+
+    def test_should_get_audit_event_using_audit_date(self):
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        self.add_audit_events(1)
+        response = self.client.get('/audit-events?audit-date={}'.format(today))
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['auditEvents']), 1)
+        assert_equal(data['auditEvents'][0]['user'], '0')
+        assert_equal(data['auditEvents'][0]['data']['request'], 'data')
+
+    def test_should_not_get_audit_event_for_date_with_no_events(self):
+        self.add_audit_events(1)
+        response = self.client.get('/audit-events?audit-date=2000-01-01')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['auditEvents']), 0)
+
+    def test_should_reject_invalid_audit_dates(self):
+        self.add_audit_events(1)
+        response = self.client.get('/audit-events?audit-date=invalid')
+
+        assert_equal(response.status_code, 400)
 
     def test_should_get_audit_event_by_type(self):
         self.add_audit_events(1, AuditTypes.contact_update)

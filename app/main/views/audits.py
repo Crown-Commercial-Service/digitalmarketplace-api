@@ -1,9 +1,10 @@
 from flask import jsonify, abort, request, current_app
 from ...models import AuditEvent
-from sqlalchemy import asc
+from sqlalchemy import asc, Date, cast
 from ...utils import pagination_links
 from .. import main
 from dmutils.audit import AuditTypes
+from ...validation import is_valid_date
 
 
 @main.route('/audit-events', methods=['GET'])
@@ -17,6 +18,15 @@ def list_audits():
     audits = AuditEvent.query.order_by(
         asc(AuditEvent.created_at)
     )
+
+    audit_date = request.args.get('audit-date', None)
+    if audit_date:
+        if is_valid_date(audit_date):
+            audits = audits.filter(
+                cast(AuditEvent.created_at, Date) == audit_date
+            )
+        else:
+            abort(400, 'invalid audit date supplied')
 
     if request.args.get('audit-type'):
         if AuditTypes.is_valid_audit_type(request.args.get('audit-type')):
