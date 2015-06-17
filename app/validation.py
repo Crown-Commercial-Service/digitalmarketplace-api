@@ -126,22 +126,19 @@ def get_validation_errors(validator_name, json_data,
                           enforce_required=True,
                           required_fields=None):
     error_map = {}
-    try:
-        validator = get_validator(validator_name, enforce_required,
-                                  required_fields)
-        errors = sorted(validator.iter_errors(json_data), key=lambda e: e.path)
-        form_errors = []
-        for index, error in enumerate(errors):
-            if error.path:
-                key = error.path.pop()
-                error_map[key] = error.message
-            else:
-                form_errors.append(error.message)
-        if form_errors:
-            error_map['_form'] = form_errors
-        return error_map
-    except:
-        raise
+    validator = get_validator(validator_name, enforce_required,
+                              required_fields)
+    errors = validator.iter_errors(json_data)
+    form_errors = []
+    for error in errors:
+        if error.path:
+            key = error.path.pop()
+            error_map[key] = error.message
+        else:
+            form_errors.append(error.message)
+    if form_errors:
+        error_map['_form'] = form_errors
+    return error_map
 
 
 def reason_for_failure(submitted_json):
