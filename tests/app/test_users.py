@@ -452,7 +452,8 @@ class TestUsersUpdate(BaseApplicationTest):
             assert_equal(len(data['auditEvents']), 1)
             assert_equal(data['auditEvents'][0]['type'], 'update_user')
             assert_equal(
-                data['auditEvents'][0]['data']['name'], 'I Just Got Married'
+                data['auditEvents'][0]['data']['update']['name'],
+                'I Just Got Married'
             )
 
     def test_can_update_role_and_suppler_id(self):

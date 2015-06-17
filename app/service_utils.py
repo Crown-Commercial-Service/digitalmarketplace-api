@@ -1,8 +1,12 @@
-from flask import current_app
+from flask import current_app, abort
+from sqlalchemy.exc import IntegrityError
+
 from .utils import get_json_from_request, \
     json_has_matching_id, json_has_required_keys, drop_foreign_fields
 from .validation import validate_updater_json_or_400, detect_framework_or_400
 from . import search_api_client, apiclient
+from . import db
+from .models import ArchivedService, AuditEvent
 
 
 def validate_and_return_updater_request():
@@ -30,6 +34,45 @@ def update_and_validate_service(service, service_payload, updater_payload):
 
     detect_framework_or_400(data)
     return service
+
+
+def commit_and_archive_service(updated_service, update_details,
+                               audit_type, audit_data=None):
+    service_to_archive = ArchivedService.from_service(updated_service)
+
+    last_archive = ArchivedService.query.filter(
+        ArchivedService.service_id == updated_service.service_id
+    ).order_by(ArchivedService.id.desc()).first()
+
+    last_archive_link = last_archive.get_link() if last_archive else None
+
+    if audit_data is None:
+        audit_data = {}
+
+    db.session.add(updated_service)
+    db.session.add(service_to_archive)
+
+    try:
+        db.session.flush()
+
+        audit_data.update({
+            'service_id': updated_service.service_id,
+            'old_archived_service': last_archive_link,
+            'new_archived_service': service_to_archive.get_link(),
+        })
+
+        audit = AuditEvent(
+            audit_type=audit_type,
+            user=update_details['updated_by'],
+            data=audit_data,
+            db_object=updated_service,
+        )
+
+        db.session.add(audit)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
 
 
 def index_service(service):

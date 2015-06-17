@@ -397,10 +397,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(audit.type, "supplier_update")
             assert_equal(audit.user, "supplier@user.dmdev")
             assert_equal(audit.data, {
-                "request": {
-                    'suppliers': {'name': "Name"},
-                    'updated_by': 'supplier@user.dmdev',
-                },
+                'update': {'name': "Name"},
             })
 
     def test_update_response_matches_payload(self):
@@ -551,10 +548,7 @@ class TestUpdateContactInformation(BaseApplicationTest):
             assert_equal(audit.type, "contact_update")
             assert_equal(audit.user, "supplier@user.dmdev")
             assert_equal(audit.data, {
-                "request": {
-                    'contactInformation': {'city': "New City"},
-                    'updated_by': 'supplier@user.dmdev'
-                }
+                'update': {'city': "New City"},
             })
 
     def test_update_response_matches_payload(self):
