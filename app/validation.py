@@ -42,7 +42,9 @@ def load_schemas(schemas_path, schema_names):
 _SCHEMAS = load_schemas(JSON_SCHEMAS_PATH, SCHEMA_NAMES)
 
 
-def get_validator(schema_name, enforce_required=True, required_fields=[]):
+def get_validator(schema_name, enforce_required=True, required_fields=None):
+    if required_fields is None:
+        required_fields = []
     if enforce_required:
         schema = _SCHEMAS[schema_name]
     else:
@@ -122,7 +124,7 @@ def validates_against_schema(validator_name, submitted_json):
 
 def get_validation_errors(validator_name, json_data,
                           enforce_required=True,
-                          required_fields=[]):
+                          required_fields=None):
     error_map = {}
     try:
         validator = get_validator(validator_name, enforce_required,
