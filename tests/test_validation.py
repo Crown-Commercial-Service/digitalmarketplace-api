@@ -237,7 +237,7 @@ def test_g7_missing_required_field_has_validation_error():
     data = load_example_listing("G7-SCS")
     data.pop("serviceSummary", None)
     errs = get_validation_errors("services-g7-scs", data)
-    assert_equal(errs, {"err_0": "u\'serviceSummary\' is a required property"})  # noqa
+    assert "'serviceSummary' is a required property" in errs['err_0']
 
 
 def test_enforce_required_false_allows_missing_fields():
@@ -253,21 +253,22 @@ def test_additional_properties_has_validation_error():
     data = load_example_listing("G7-SCS")
     data.update({'newKey': 1})
     errs = get_validation_errors("services-g7-scs", data)
-    assert_equal(errs, {"err_0": "Additional properties are not allowed (\'newKey\' was unexpected)"})  # noqa
+    assert "Additional properties are not allowed ('newKey' was unexpected)" \
+           in errs['err_0']
 
 
 def test_invalid_enum_values_has_validation_error():
     data = load_example_listing("G7-SCS")
     data.update({'minimumContractPeriod': 'Fortnight'})
     errs = get_validation_errors("services-g7-scs", data)
-    assert_equal(errs, {u'minimumContractPeriod': "'Fortnight' is not one of [u'Hour', u'Day', u'Month', u'Year', u'Other']"})  # noqa
+    assert "'Fortnight' is not one of" in errs['minimumContractPeriod']
 
 
 def test_invalid_url_field_has_validation_error():
     data = load_example_listing("G7-SCS")
     data.update({'serviceDefinitionDocumentURL': 'not_a_url'})
     errs = get_validation_errors("services-g7-scs", data)
-    assert_equal(errs, {u'serviceDefinitionDocumentURL': "'not_a_url' is not a u'uri'"})  # noqa
+    assert "'not_a_url' is not" in errs['serviceDefinitionDocumentURL']
 
 
 def assert_example(name, result, expected):
