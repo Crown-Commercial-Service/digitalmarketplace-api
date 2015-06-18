@@ -56,7 +56,11 @@ def get_supplier(supplier_id):
         Supplier.supplier_id == supplier_id
     ).first_or_404()
 
-    return jsonify(suppliers=supplier.serialize())
+    service_counts = supplier.get_service_counts()
+
+    return jsonify(suppliers=supplier.serialize({
+        'service_counts': service_counts
+    }))
 
 
 # Route to insert new Suppliers, not update existing ones

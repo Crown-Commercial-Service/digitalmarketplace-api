@@ -2,11 +2,11 @@ from datetime import datetime
 from flask_sqlalchemy import BaseQuery
 
 from sqlalchemy import asc
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.types import String
 from sqlalchemy_utils import generic_relationship
-from dmutils.audit import AuditTypes
 from dmutils.formats import DATETIME_FORMAT
 
 from . import db
@@ -138,10 +138,21 @@ class Supplier(db.Model):
 
     clients = db.Column(JSON, default=list)
 
+    def get_service_counts(self):
+        services = db.session.query(
+            Framework.name, func.count(Framework.name)
+        ).join(Service.framework).filter(
+            Framework.status == 'live',
+            Service.status == 'published',
+            Service.supplier_id == self.supplier_id
+        ).group_by(Framework.name).all()
+
+        return dict(services)
+
     def get_link(self):
         return url_for(".get_supplier", supplier_id=self.supplier_id)
 
-    def serialize(self):
+    def serialize(self, data=None):
         links = link(
             "self", self.get_link()
         )
@@ -162,6 +173,8 @@ class Supplier(db.Model):
             'links': links,
             'clients': self.clients
         }
+
+        serialized.update(data or {})
 
         return filter_null_value_fields(serialized)
 
