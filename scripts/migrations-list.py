@@ -15,4 +15,4 @@ def version_history(migrations_path):
 
 if __name__ == '__main__':
     for version in version_history(sys.argv[1]):
-        print version
+        print(version)

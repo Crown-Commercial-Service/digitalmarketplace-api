@@ -76,7 +76,7 @@ def commit_and_archive_service(updated_service, update_details,
 
 
 def index_service(service):
-    if not service.framework.expired and service.status == 'published':
+    if service.framework.status == 'live' and service.status == 'published':
         try:
             search_api_client.index(
                 service.service_id,

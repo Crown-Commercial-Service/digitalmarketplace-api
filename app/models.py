@@ -1,7 +1,10 @@
 from datetime import datetime
+from flask_sqlalchemy import BaseQuery
 
+from sqlalchemy import asc
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.types import String
 from sqlalchemy_utils import generic_relationship
 from dmutils.audit import AuditTypes
 from dmutils.formats import DATETIME_FORMAT
@@ -14,7 +17,7 @@ class Framework(db.Model):
     __tablename__ = 'frameworks'
 
     STATUSES = [
-        'pending', 'live', 'expired'
+        'pending', 'open', 'live', 'expired'
     ]
 
     id = db.Column(db.Integer, primary_key=True)
@@ -24,8 +27,14 @@ class Framework(db.Model):
     status = db.Column(db.Enum(STATUSES, name='framework_status_enum'),
                        index=True, nullable=False,
                        server_default='pending')
-    expired = db.Column(db.Boolean, index=False, unique=False,
-                        nullable=False)
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'framework': self.framework,
+            'status': self.status,
+        }
 
 
 class ContactInformation(db.Model):
@@ -290,6 +299,26 @@ class ServiceTableMixin(object):
 
 class Service(db.Model, ServiceTableMixin):
     __tablename__ = 'services'
+
+    class query_class(BaseQuery):
+        def framework_is_live(self):
+            return self.filter(
+                Service.framework.has(Framework.status == 'live'))
+
+        def default_order(self):
+            lot = Service.data['lot'] \
+                         .cast(String) \
+                         .label('data_lot')
+            service_name = Service.data['serviceName'] \
+                                  .cast(String) \
+                                  .label('data_servicename')
+            return self.order_by(
+                asc(Service.framework_id),
+                asc(lot),
+                asc(service_name))
+
+        def has_statuses(self, *statuses):
+            return self.filter(Service.status.in_(statuses))
 
     def get_link(self):
         return url_for(".get_service", service_id=self.service_id)
