@@ -71,16 +71,6 @@ class BaseApplicationTest(object):
                 )
             db.session.commit()
 
-    def setup_dummy_framework(self, id=123, name='expired', framework='gcloud',
-                              status='expired'):
-        db.session.add(Framework(
-            id=id,
-            name=name,
-            framework=framework,
-            status=status))
-
-        return id
-
     def setup_dummy_service(self, service_id, supplier_id=1, data=None,
                             status='published', framework_id=1):
         now = datetime.utcnow()

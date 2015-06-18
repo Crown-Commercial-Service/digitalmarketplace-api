@@ -59,7 +59,7 @@ class TestServices(BaseApplicationTest):
             self.setup_dummy_service(
                 service_id='999',
                 status='published',
-                framework_id=self.setup_dummy_framework())
+                framework_id=2)
             self.setup_dummy_services_including_unpublished(1)
 
             services = Service.query.framework_is_live()

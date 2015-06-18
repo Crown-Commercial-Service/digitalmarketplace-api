@@ -108,7 +108,7 @@ class TestListServices(BaseApplicationTest):
             self.setup_dummy_service(
                 service_id='999',
                 status='published',
-                framework_id=self.setup_dummy_framework())
+                framework_id=2)
             self.setup_dummy_services_including_unpublished(1)
 
             response = self.client.get('/services')
@@ -122,7 +122,7 @@ class TestListServices(BaseApplicationTest):
             self.setup_dummy_service(
                 service_id='999',
                 status='published',
-                framework_id=self.setup_dummy_framework())
+                framework_id=2)
             self.setup_dummy_services_including_unpublished(1)
 
             response = self.client.get('/services?status=published')
