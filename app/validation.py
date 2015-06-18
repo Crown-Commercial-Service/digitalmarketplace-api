@@ -17,6 +17,7 @@ SCHEMA_NAMES = [
     'services-g6-saas',
     'services-g6-paas',
     'services-g6-iaas',
+    'services-g7-scs',
     'services-update',
     'users',
     'users-auth',
@@ -41,8 +42,14 @@ def load_schemas(schemas_path, schema_names):
 _SCHEMAS = load_schemas(JSON_SCHEMAS_PATH, SCHEMA_NAMES)
 
 
-def get_validator(schema_name):
-    schema = _SCHEMAS[schema_name]
+def get_validator(schema_name, enforce_required=True, required_fields=None):
+    if required_fields is None:
+        required_fields = []
+    if enforce_required:
+        schema = _SCHEMAS[schema_name]
+    else:
+        schema = _SCHEMAS[schema_name].copy()
+        schema['required'] = required_fields
     return validator_for(schema)(schema, format_checker=FORMAT_CHECKER)
 
 
@@ -113,6 +120,25 @@ def validates_against_schema(validator_name, submitted_json):
         return False
     else:
         return True
+
+
+def get_validation_errors(validator_name, json_data,
+                          enforce_required=True,
+                          required_fields=None):
+    error_map = {}
+    validator = get_validator(validator_name, enforce_required,
+                              required_fields)
+    errors = validator.iter_errors(json_data)
+    form_errors = []
+    for error in errors:
+        if error.path:
+            key = error.path.pop()
+            error_map[key] = error.message
+        else:
+            form_errors.append(error.message)
+    if form_errors:
+        error_map['_form'] = form_errors
+    return error_map
 
 
 def reason_for_failure(submitted_json):

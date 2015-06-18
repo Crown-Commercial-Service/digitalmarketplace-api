@@ -73,7 +73,8 @@
          "type": "string"
       },
       "termsAndConditionsDocumentURL": {
-         "type": "string"
+         "type": "string",
+        "format": "uri"
       },
       "minimumContractPeriod": {
          "enum": ["Hour", "Day", "Month", "Year", "Other"]

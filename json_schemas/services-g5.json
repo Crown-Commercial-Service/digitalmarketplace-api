@@ -45,7 +45,8 @@
       "format": "uri"
     },
     "termsAndConditionsDocumentURL": {
-      "type": "string"
+      "type": "string",
+      "format": "uri"
     },
     "pricingDocumentURL": {
       "type": "string",
@@ -59,7 +60,8 @@
       "type": "array",
       "uniqueItems": true,
       "items": {
-        "type": "string"
+        "type": "string",
+        "format": "uri"
       }
     },
     "minimumContractPeriod": {
