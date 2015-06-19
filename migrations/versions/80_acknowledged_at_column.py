@@ -8,7 +8,7 @@ Create Date: 2015-06-17 12:55:16.630026
 
 # revision identifiers, used by Alembic.
 revision = '80_acknowledged_at_column'
-down_revision = '70_add_framework_status'
+down_revision = '60_add_acknowledged_column'
 
 from alembic import op
 import sqlalchemy as sa
