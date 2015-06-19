@@ -78,9 +78,7 @@ def acknowledge_audit(audit_id):
 
     updater_json = validate_and_return_updater_request()
 
-    audit_event = AuditEvent.query.filter(
-        AuditEvent.id == audit_id
-    ).first()
+    audit_event = AuditEvent.query.get(audit_id)
 
     if audit_event is None:
         abort(404, "No audit event with this id")
