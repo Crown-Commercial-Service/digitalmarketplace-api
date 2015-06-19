@@ -428,7 +428,7 @@ class AuditEvent(db.Model):
             'type': self.type,
             'user': self.user,
             'data': self.data,
-            'createdAt': self.created_at.strftime("%Y-%m-%dT%H:%M:%S%Z"),
+            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'links': filter_null_value_fields({
                 "self": url_for(".list_audits"),
                 "old_archived_service": ArchivedService.link_object(
