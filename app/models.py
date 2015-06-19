@@ -188,6 +188,18 @@ class Supplier(db.Model):
         return self
 
 
+class FrameworkApplication(db.Model):
+    __tablename__ = 'framework_applications'
+
+    supplier_id = db.Column(db.Integer,
+                            db.ForeignKey('suppliers.supplier_id'),
+                            primary_key=True)
+    framework_id = db.Column(db.Integer,
+                             db.ForeignKey('frameworks.id'),
+                             primary_key=True)
+    data = db.Column(JSON)
+
+
 class User(db.Model):
     __tablename__ = 'users'
 
