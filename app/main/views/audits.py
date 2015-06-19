@@ -84,7 +84,7 @@ def acknowledge_audit(audit_id):
         abort(404, "No audit event with this id")
 
     audit_event.acknowledged = True
-    audit_event.acknowledged_at = datetime.now()
+    audit_event.acknowledged_at = datetime.utcnow()
     audit_event.acknowledged_by = updater_json['updated_by']
 
     try:
