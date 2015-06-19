@@ -195,11 +195,10 @@ def import_service(service_id):
     service.status = service_data.pop('status', 'published')
     service.data = service_data
 
-    audit_data = service_data.copy()
-    audit_data.update({
+    audit_data = {
         'supplierName': supplier.name,
         'supplierId': supplier.supplier_id
-    })
+    }
 
     commit_and_archive_service(service, updater_json,
                                AuditTypes.import_service, audit_data)
