@@ -149,7 +149,7 @@ class TestAudits(BaseApplicationTest):
             data=json.dumps({'key': 'value'}),
             content_type='application/json')
 
-        assert_equal(res.status_code, 400)
+        assert_equal(res.status_code, 404)
 
     def test_reject_if_no_updater_details_on_acknowledgement(self):
         res = self.client.post(

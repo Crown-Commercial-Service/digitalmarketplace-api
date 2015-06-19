@@ -70,13 +70,8 @@ def list_audits():
     )
 
 
-@main.route('/audit-events/<string:audit_id>/acknowledge', methods=['POST'])
+@main.route('/audit-events/<int:audit_id>/acknowledge', methods=['POST'])
 def acknowledge_audit(audit_id):
-    try:
-        audit_id = int(audit_id)
-    except ValueError:
-        abort(400, "Invalid audit id argument")
-
     updater_json = validate_and_return_updater_request()
 
     audit_event = AuditEvent.query.get(audit_id)
