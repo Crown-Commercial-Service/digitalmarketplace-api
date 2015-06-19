@@ -314,7 +314,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
 
 class TestUsersUpdate(BaseApplicationTest):
     def setup(self):
-        now = datetime.now()
+        now = datetime.utcnow()
         super(TestUsersUpdate, self).setup()
         with self.app.app_context():
             user = User(
@@ -523,7 +523,7 @@ class TestUsersUpdate(BaseApplicationTest):
 
 class TestUsersGet(BaseApplicationTest):
     def setup(self):
-        self.now = datetime.now()
+        self.now = datetime.utcnow()
         super(TestUsersGet, self).setup()
         with self.app.app_context():
             user = User(

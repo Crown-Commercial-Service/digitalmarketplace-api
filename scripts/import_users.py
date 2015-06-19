@@ -35,7 +35,7 @@ def list_files(directory):
 
 def print_progress(counter, start_time):
     if counter % 100 == 0:
-        time_delta = datetime.now() - start_time
+        time_delta = datetime.utcnow() - start_time
         print("{} in {} ({}/s)".format(counter,
                                        time_delta,
                                        counter / time_delta.total_seconds()))
@@ -97,7 +97,7 @@ def do_import(base_url, access_token, filename, cert, verbose):
     putter = UserPutter(endpoint, access_token, cert)
 
     counter = 0
-    start_time = datetime.now()
+    start_time = datetime.utcnow()
 
     with open(filename) as data_file:
         try:

@@ -374,7 +374,7 @@ class DraftService(db.Model, ServiceTableMixin):
 
     @staticmethod
     def from_service(service):
-        now = datetime.now(),
+        now = datetime.utcnow(),
         return DraftService(
             framework_id=service.framework_id,
             service_id=service.service_id,
