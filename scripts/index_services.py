@@ -43,7 +43,7 @@ def request_services(api_url, api_access_token, page=1):
 
 def print_progress(counter, start_time):
     if counter % 100 == 0:
-        time_delta = datetime.now() - start_time
+        time_delta = datetime.utcnow() - start_time
         print("{} in {} ({}/s)".format(counter,
                                        time_delta,
                                        counter / time_delta.total_seconds()))
@@ -88,7 +88,7 @@ def do_index(search_api_url, search_api_access_token, data_api_url,
     indexer = ServiceIndexer(search_api_url, search_api_access_token)
 
     counter = 0
-    start_time = datetime.now()
+    start_time = datetime.utcnow()
     status = True
 
     iter_services = request_services(data_api_url, data_api_access_token)
