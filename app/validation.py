@@ -6,6 +6,7 @@ from flask import abort
 from jsonschema import ValidationError, FormatChecker
 from jsonschema.validators import validator_for
 from datetime import datetime
+from dmutils.formats import DATE_FORMAT
 
 MINIMUM_SERVICE_ID_LENGTH = 10
 MAXIMUM_SERVICE_ID_LENGTH = 20
@@ -206,7 +207,7 @@ def is_valid_service_id_or_400(service_id):
         abort(400, "Invalid service ID supplied: %s" % service_id)
 
 
-def is_valid_date(date, default_format='%Y-%m-%d'):
+def is_valid_date(date, default_format=DATE_FORMAT):
     try:
         datetime.strptime(date, default_format)
         return True
