@@ -8,8 +8,7 @@ from jsonschema import validate, SchemaError, ValidationError
 
 from app.validation import detect_framework, \
     validates_against_schema, is_valid_service_id, \
-    is_valid_date, is_valid_acknowledged_state
-
+    is_valid_date, is_valid_acknowledged_state, get_validation_errors
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                     '..', 'example_listings'))
@@ -233,6 +232,82 @@ def test_additional_fields_are_not_allowed():
         data = load_example_listing(example)
         data.update({'newKey': 1})
         yield assert_example, example, detect_framework(data), expected
+
+
+def test_valid_g4_service_has_no_validation_errors():
+    data = load_example_listing("G4")
+    errs = get_validation_errors("services-g4", data)
+    assert not errs
+
+
+def test_valid_g5_service_has_no_validation_errors():
+    data = load_example_listing("G5")
+    errs = get_validation_errors("services-g5", data)
+    assert not errs
+
+
+def test_valid_g6_service_has_no_validation_errors():
+    data = load_example_listing("G6-PaaS")
+    errs = get_validation_errors("services-g6-paas", data)
+    assert not errs
+
+
+def test_valid_g7_service_has_no_validation_errors():
+    data = load_example_listing("G7-SCS")
+    errs = get_validation_errors("services-g7-scs", data)
+    assert not errs
+
+
+def test_g7_missing_required_field_has_validation_error():
+    data = load_example_listing("G7-SCS")
+    data.pop("serviceSummary", None)
+    errs = get_validation_errors("services-g7-scs", data)
+    print("1: {}".format(errs['_form']))
+    assert "'serviceSummary' is a required property" \
+           in "{}".format(errs['_form'])
+
+
+def test_enforce_required_false_allows_missing_fields():
+    data = load_example_listing("G7-SCS")
+    data.pop("serviceSummary", None)
+    data.pop("serviceDefinitionDocumentURL", None)
+    errs = get_validation_errors("services-g7-scs", data,
+                                 enforce_required=False)
+    assert not errs
+
+
+def test_required_fields_param_requires_specified_fields():
+    data = load_example_listing("G7-SCS")
+    data.pop("serviceSummary", None)
+    data.pop("serviceDefinitionDocumentURL", None)
+    errs = get_validation_errors("services-g7-scs", data,
+                                 enforce_required=False,
+                                 required_fields=['serviceSummary'])
+    print("2: {}".format(errs['_form']))
+    assert "'serviceSummary' is a required property" \
+           in "{}".format(errs['_form'])
+
+
+def test_additional_properties_has_validation_error():
+    data = load_example_listing("G7-SCS")
+    data.update({'newKey': 1})
+    errs = get_validation_errors("services-g7-scs", data)
+    assert "Additional properties are not allowed ('newKey' was unexpected)" \
+           in "{}".format(errs['_form'])
+
+
+def test_invalid_enum_values_has_validation_error():
+    data = load_example_listing("G7-SCS")
+    data.update({'minimumContractPeriod': 'Fortnight'})
+    errs = get_validation_errors("services-g7-scs", data)
+    assert "'Fortnight' is not one of" in errs['minimumContractPeriod']
+
+
+def test_invalid_url_field_has_validation_error():
+    data = load_example_listing("G7-SCS")
+    data.update({'serviceDefinitionDocumentURL': 'not_a_url'})
+    errs = get_validation_errors("services-g7-scs", data)
+    assert "'not_a_url' is not" in errs['serviceDefinitionDocumentURL']
 
 
 def assert_example(name, result, expected):

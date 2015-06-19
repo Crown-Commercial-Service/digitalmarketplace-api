@@ -69,6 +69,25 @@ class TestGetSupplier(BaseApplicationTest):
         assert_in('clients', data['suppliers'].keys())
         assert_equal(0, len(data['suppliers']['clients']))
 
+    def test_get_supplier_returns_service_counts(self):
+        self.setup_dummy_services(
+            5, supplier_id=self.supplier_id, framework_id=1
+        )
+        self.setup_dummy_services(
+            10, start_id=5, supplier_id=self.supplier_id, framework_id=2
+        )
+        self.setup_dummy_services(
+            15, start_id=15, supplier_id=self.supplier_id, framework_id=3
+        )
+
+        response = self.client.get('/suppliers/{}'.format(self.supplier_id))
+
+        data = json.loads(response.get_data())
+        assert_equal(data['suppliers']['service_counts'], {
+            u'G-Cloud 5': 15,
+            u'G-Cloud 6': 5
+        })
+
 
 class TestListSuppliers(BaseApplicationTest):
     def setup(self):

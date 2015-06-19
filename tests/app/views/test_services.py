@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import os
 
 from flask import json
-from nose.tools import assert_equal, assert_in, \
+from nose.tools import assert_equal, assert_in, assert_true, \
     assert_almost_equal, assert_false, assert_is_not_none, assert_not_in
 
 from app.models import Service, Supplier, ContactInformation, Framework
@@ -105,29 +105,31 @@ class TestListServices(BaseApplicationTest):
 
     def test_list_services_gets_only_active_frameworks(self):
         with self.app.app_context():
-            now = datetime.utcnow()
-            db.session.add(Framework(
-                id=123,
-                name="expired",
-                framework="gcloud",
-                status="expired",
-                expired=True
-            ))
-
-            db.session.add(Service(service_id="999",
-                                   supplier_id=1,
-                                   updated_at=now,
-                                   status='published',
-                                   created_at=now,
-                                   data={'foo': 'bar'},
-                                   framework_id=123))
-
+            self.setup_dummy_service(
+                service_id='999',
+                status='published',
+                framework_id=2)
             self.setup_dummy_services_including_unpublished(1)
+
             response = self.client.get('/services')
             data = json.loads(response.get_data())
 
             assert_equal(response.status_code, 200)
             assert_equal(len(data['services']), 3)
+
+    def test_gets_only_active_frameworks_with_status_filter(self):
+        with self.app.app_context():
+            self.setup_dummy_service(
+                service_id='999',
+                status='published',
+                framework_id=2)
+            self.setup_dummy_services_including_unpublished(1)
+
+            response = self.client.get('/services?status=published')
+            data = json.loads(response.get_data())
+
+            assert_equal(response.status_code, 200)
+            assert_equal(len(data['services']), 1)
 
     def test_list_services_gets_only_published(self):
         self.setup_dummy_services_including_unpublished(1)
@@ -474,8 +476,8 @@ class TestPostService(BaseApplicationTest):
             assert_equal(len(data['auditEvents']), 3)
             update_event = data['auditEvents'][1]
 
-            old_version = update_event['data']['old_archived_service']
-            new_version = update_event['data']['new_archived_service']
+            old_version = update_event['links']['old_archived_service']
+            new_version = update_event['links']['new_archived_service']
 
             assert_in('/archived-services/', old_version)
             assert_in('/archived-services/', new_version)
@@ -789,9 +791,9 @@ class TestPostService(BaseApplicationTest):
         assert_equal(data['auditEvents'][1]['data']['new_status'], 'disabled')
         assert_equal(data['auditEvents'][1]['data']['old_status'], 'published')
         assert_in('/archived-services/',
-                  data['auditEvents'][1]['data']['old_archived_service'])
+                  data['auditEvents'][1]['links']['old_archived_service'])
         assert_in('/archived-services/',
-                  data['auditEvents'][1]['data']['new_archived_service'])
+                  data['auditEvents'][1]['links']['new_archived_service'])
 
     def test_should_400_with_invalid_statuses(self):
         invalid_statuses = [
@@ -1376,10 +1378,15 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(data['auditEvents'][0]['data']['supplierId'],
                          1)
             assert_equal(
-                data['auditEvents'][0]['data']['old_archived_service'], None
+                data['auditEvents'][0]['data']['old_archived_service_id'], None
             )
-            assert_in('/archived-services/',
-                      data['auditEvents'][0]['data']['new_archived_service'])
+            assert_not_in('old_archived_service',
+                          data['auditEvents'][0]['links'])
+
+            assert_true(isinstance(
+                data['auditEvents'][0]['data']['new_archived_service_id'], int
+            ))
+            assert_in('new_archived_service', data['auditEvents'][0]['links'])
 
     def test_add_a_new_service_with_status_disabled(self):
         with self.app.app_context():
@@ -1514,7 +1521,6 @@ class TestGetService(BaseApplicationTest):
                 name="expired",
                 framework="gcloud",
                 status="expired",
-                expired=True,
             ))
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")

@@ -1,9 +1,12 @@
 from datetime import datetime
+from flask_sqlalchemy import BaseQuery
 
+from sqlalchemy import asc
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.types import String
 from sqlalchemy_utils import generic_relationship
-from dmutils.audit import AuditTypes
 from dmutils.formats import DATETIME_FORMAT
 
 from . import db
@@ -14,7 +17,7 @@ class Framework(db.Model):
     __tablename__ = 'frameworks'
 
     STATUSES = [
-        'pending', 'live', 'expired'
+        'pending', 'open', 'live', 'expired'
     ]
 
     id = db.Column(db.Integer, primary_key=True)
@@ -24,8 +27,14 @@ class Framework(db.Model):
     status = db.Column(db.Enum(STATUSES, name='framework_status_enum'),
                        index=True, nullable=False,
                        server_default='pending')
-    expired = db.Column(db.Boolean, index=False, unique=False,
-                        nullable=False)
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'framework': self.framework,
+            'status': self.status,
+        }
 
 
 class ContactInformation(db.Model):
@@ -129,10 +138,21 @@ class Supplier(db.Model):
 
     clients = db.Column(JSON, default=list)
 
+    def get_service_counts(self):
+        services = db.session.query(
+            Framework.name, func.count(Framework.name)
+        ).join(Service.framework).filter(
+            Framework.status == 'live',
+            Service.status == 'published',
+            Service.supplier_id == self.supplier_id
+        ).group_by(Framework.name).all()
+
+        return dict(services)
+
     def get_link(self):
         return url_for(".get_supplier", supplier_id=self.supplier_id)
 
-    def serialize(self):
+    def serialize(self, data=None):
         links = link(
             "self", self.get_link()
         )
@@ -153,6 +173,8 @@ class Supplier(db.Model):
             'links': links,
             'clients': self.clients
         }
+
+        serialized.update(data or {})
 
         return filter_null_value_fields(serialized)
 
@@ -291,6 +313,26 @@ class ServiceTableMixin(object):
 class Service(db.Model, ServiceTableMixin):
     __tablename__ = 'services'
 
+    class query_class(BaseQuery):
+        def framework_is_live(self):
+            return self.filter(
+                Service.framework.has(Framework.status == 'live'))
+
+        def default_order(self):
+            lot = Service.data['lot'] \
+                         .cast(String) \
+                         .label('data_lot')
+            service_name = Service.data['serviceName'] \
+                                  .cast(String) \
+                                  .label('data_servicename')
+            return self.order_by(
+                asc(Service.framework_id),
+                asc(lot),
+                asc(service_name))
+
+        def has_statuses(self, *statuses):
+            return self.filter(Service.status.in_(statuses))
+
     def get_link(self):
         return url_for(".get_service", service_id=self.service_id)
 
@@ -313,9 +355,15 @@ class ArchivedService(db.Model, ServiceTableMixin):
             status=service.status
         )
 
-    def get_link(self):
+    @staticmethod
+    def link_object(service_id):
+        if service_id is None:
+            return None
         return url_for(".get_archived_service",
-                       archived_service_id=self.id)
+                       archived_service_id=service_id)
+
+    def get_link(self):
+        return self.link_object(self.id)
 
     def update_from_json(self, data):
         raise NotImplementedError('Archived services should not be changed')
@@ -394,8 +442,15 @@ class AuditEvent(db.Model):
             'user': self.user,
             'data': self.data,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
-            'links': link(
-                "self", url_for(".list_audits"))
+            'links': filter_null_value_fields({
+                "self": url_for(".list_audits"),
+                "old_archived_service": ArchivedService.link_object(
+                    self.data.get('old_archived_service_id')
+                ),
+                "new_archived_service": ArchivedService.link_object(
+                    self.data.get('new_archived_service_id')
+                )
+            })
         }
 
         if self.acknowledged:
