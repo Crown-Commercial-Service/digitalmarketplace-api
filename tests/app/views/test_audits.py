@@ -213,7 +213,7 @@ class TestAudits(BaseApplicationTest):
             content_type='application/json')
         # re-fetch to get updated data
         new_response = self.client.get(
-            '/audit-events?acknowledged=acknowledged'
+            '/audit-events?acknowledged=true'
         )
         new_data = json.loads(new_response.get_data())
         assert_equal(res.status_code, 200)
@@ -237,7 +237,7 @@ class TestAudits(BaseApplicationTest):
             content_type='application/json')
         # re-fetch to get updated data
         new_response = self.client.get(
-            '/audit-events?acknowledged=not-acknowledged'
+            '/audit-events?acknowledged=false'
         )
         new_data = json.loads(new_response.get_data())
         assert_equal(res.status_code, 200)

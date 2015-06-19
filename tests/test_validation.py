@@ -28,8 +28,8 @@ def test_for_valid_date():
 def test_for_valid_acknowledged_state():
     cases = [
         ("all", True),
-        ("acknowledged", True),
-        ("not-acknowledged", True),
+        ("true", True),
+        ("false", True),
         ("2010-02-29", False),
         ("invalid", False)
     ]

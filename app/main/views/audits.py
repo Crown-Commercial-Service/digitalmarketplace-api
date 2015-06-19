@@ -8,6 +8,7 @@ from ...utils import pagination_links
 from .. import main
 from ... import db
 from dmutils.audit import AuditTypes
+from dmutils.config import convert_to_boolean
 from ...validation import is_valid_date, is_valid_acknowledged_state
 from ...service_utils import validate_and_return_updater_request
 
@@ -43,11 +44,11 @@ def list_audits():
     acknowledged = request.args.get('acknowledged', None)
     if acknowledged:
         if is_valid_acknowledged_state(acknowledged):
-            if acknowledged == 'acknowledged':
+            if convert_to_boolean(acknowledged):
                 audits = audits.filter(
                     AuditEvent.acknowledged == true()
                 )
-            elif acknowledged == 'not-acknowledged':
+            elif not convert_to_boolean(acknowledged):
                 audits = audits.filter(
                     AuditEvent.acknowledged == false()
                 )

@@ -216,4 +216,4 @@ def is_valid_date(date, default_format=DATE_FORMAT):
 
 
 def is_valid_acknowledged_state(acknowledged):
-    return acknowledged in ['all', 'acknowledged', 'not-acknowledged']
+    return acknowledged in ['all', 'true', 'false']
