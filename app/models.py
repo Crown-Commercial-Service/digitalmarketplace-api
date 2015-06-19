@@ -21,6 +21,7 @@ class Framework(db.Model):
     ]
 
     id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String, nullable=False, unique=True, index=True)
     name = db.Column(db.String(255), nullable=False)
     framework = db.Column(db.Enum('gcloud', name='frameworks_enum'),
                           index=True, nullable=False)
