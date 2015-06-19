@@ -444,11 +444,11 @@ class AuditEvent(db.Model):
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'links': filter_null_value_fields({
                 "self": url_for(".list_audits"),
-                "old_archived_service": ArchivedService.link_object(
-                    self.data.get('old_archived_service_id')
+                "oldArchivedService": ArchivedService.link_object(
+                    self.data.get('oldArchivedServiceId')
                 ),
-                "new_archived_service": ArchivedService.link_object(
-                    self.data.get('new_archived_service_id')
+                "newArchivedService": ArchivedService.link_object(
+                    self.data.get('newArchivedServiceId')
                 )
             })
         }
