@@ -6,7 +6,7 @@ from flask import abort
 from jsonschema import ValidationError, FormatChecker
 from jsonschema.validators import validator_for
 from datetime import datetime
-from .dmutils.formats import DATE_FORMAT
+from dmutils.formats import DATE_FORMAT
 
 MINIMUM_SERVICE_ID_LENGTH = 10
 MAXIMUM_SERVICE_ID_LENGTH = 20
