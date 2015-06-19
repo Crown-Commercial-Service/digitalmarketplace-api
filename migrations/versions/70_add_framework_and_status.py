@@ -7,7 +7,7 @@ Create Date: 2015-06-16 09:18:05.389816
 """
 
 # revision identifiers, used by Alembic.
-revision = '70_add_framework_status'
+revision = '70_add_framework_and_status'
 down_revision = '60_archive_current_services'
 
 from alembic import op
