@@ -85,13 +85,22 @@ class BaseApplicationTest(object):
                                created_at=now,
                                updated_at=now))
 
-    def setup_dummy_services_including_unpublished(self, n):
+    def setup_dummy_services(self, n, supplier_id=None, framework_id=None,
+                             start_id=0):
         with self.app.app_context():
-            self.setup_dummy_suppliers(TEST_SUPPLIERS_COUNT)
-            for i in range(n):
+            for i in range(start_id, start_id + n):
                 self.setup_dummy_service(
                     service_id=i,
-                    supplier_id=i % TEST_SUPPLIERS_COUNT)
+                    supplier_id=supplier_id or (i % TEST_SUPPLIERS_COUNT),
+                    framework_id=framework_id or 1
+                )
+
+            db.session.commit()
+
+    def setup_dummy_services_including_unpublished(self, n):
+        self.setup_dummy_suppliers(TEST_SUPPLIERS_COUNT)
+        self.setup_dummy_services(n)
+        with self.app.app_context():
             # Add extra 'enabled' and 'disabled' services
             self.setup_dummy_service(
                 service_id=n + 1,
@@ -109,8 +118,9 @@ class BaseApplicationTest(object):
             db.session.add(
                 ContactInformation(
                     supplier_id=TEST_SUPPLIERS_COUNT,
-                    contact_name=u"Contact for Supplier {}".format(i),
-                    email=u"{}@contact.com".format(i),
+                    contact_name=u"Contact for Supplier {}".format(
+                        TEST_SUPPLIERS_COUNT),
+                    email=u"{}@contact.com".format(TEST_SUPPLIERS_COUNT),
                     postcode=u"SW1A 1AA"
                 )
             )
