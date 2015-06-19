@@ -4,6 +4,7 @@ from app import db, encryption
 from app.models import User, Supplier
 from datetime import datetime
 from .helpers import BaseApplicationTest, JSONUpdateTestMixin
+from dmutils.formats import DATETIME_FORMAT
 
 
 class TestUsersAuth(BaseApplicationTest):
@@ -313,7 +314,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
 
 class TestUsersUpdate(BaseApplicationTest):
     def setup(self):
-        now = datetime.now()
+        now = datetime.utcnow()
         super(TestUsersUpdate, self).setup()
         with self.app.app_context():
             user = User(
@@ -522,7 +523,7 @@ class TestUsersUpdate(BaseApplicationTest):
 
 class TestUsersGet(BaseApplicationTest):
     def setup(self):
-        self.now = datetime.now()
+        self.now = datetime.utcnow()
         super(TestUsersGet, self).setup()
         with self.app.app_context():
             user = User(
@@ -542,7 +543,7 @@ class TestUsersGet(BaseApplicationTest):
 
     def test_can_get_a_user_by_id(self):
         with self.app.app_context():
-            now_as_text = self.now.strftime("%Y-%m-%dT%H:%M:%S%Z")
+            now_as_text = self.now.strftime(DATETIME_FORMAT)
             response = self.client.get("/users/123")
             data = json.loads(response.get_data())["users"]
             assert_equal(data['emailAddress'], "test@test.com")

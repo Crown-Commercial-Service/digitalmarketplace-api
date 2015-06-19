@@ -75,7 +75,7 @@ class TestDraftServices(BaseApplicationTest):
     def test_returns_all_drafts_for_supplier_on_single_page(self):
         with self.app.app_context():
 
-            now = datetime.now()
+            now = datetime.utcnow()
             service_ids = [
                 1234567890123411,
                 1234567890123412,

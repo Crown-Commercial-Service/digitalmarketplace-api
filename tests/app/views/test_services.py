@@ -12,6 +12,7 @@ from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
 from sqlalchemy.exc import IntegrityError
 from dmutils.apiclient import HTTPError
+from dmutils.formats import DATETIME_FORMAT
 
 
 class TestListServicesOrdering(BaseApplicationTest):
@@ -97,8 +98,7 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         try:
             datetime.strptime(
-                data['services'][0]['updatedAt'],
-                "%Y-%m-%dT%H:%M:%S")
+                data['services'][0]['updatedAt'], DATETIME_FORMAT)
             assert True, "Parsed date"
         except ValueError:
             assert False, "Should be able to parse date"

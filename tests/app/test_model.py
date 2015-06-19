@@ -9,7 +9,7 @@ from .helpers import BaseApplicationTest
 
 
 def test_should_not_return_password_on_user():
-    now = datetime.now()
+    now = datetime.utcnow()
     user = User(
         email_address='email',
         name='name',
