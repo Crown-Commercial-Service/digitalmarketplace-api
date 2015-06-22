@@ -131,9 +131,7 @@ def update_service(service_id):
     update_details = validate_and_return_updater_request()
     update = validate_and_return_service_request(service_id)
 
-    updated_service = update_and_validate_service(
-        service, update, update_details
-    )
+    updated_service = update_and_validate_service(service, update)
 
     audit_data = {
         'supplierName': service.supplier.name,

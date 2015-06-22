@@ -23,17 +23,19 @@ def validate_and_return_service_request(service_id):
     return json_payload['services']
 
 
-def update_and_validate_service(service, service_payload, updater_payload):
+def update_and_validate_service(service, service_payload):
     service.update_from_json(service_payload)
+    validate_service(service)
+    return service
 
+
+def validate_service(service):
     data = service.serialize()
-
     data = drop_foreign_fields(
         data,
         ['service_id', 'supplierName', 'links', 'frameworkName', 'updatedAt'])
-
     detect_framework_or_400(data)
-    return service
+    return
 
 
 def commit_and_archive_service(updated_service, update_details,

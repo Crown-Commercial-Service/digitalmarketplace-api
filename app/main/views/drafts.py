@@ -1,3 +1,4 @@
+from datetime import datetime
 from dmutils.audit import AuditTypes
 from flask import jsonify, abort, request
 
@@ -7,15 +8,19 @@ from sqlalchemy.types import String
 
 from .. import main
 from ... import db
+from ...utils import get_json_from_request, json_has_required_keys, \
+    drop_foreign_fields
 from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, ArchivedService, \
     Supplier, AuditEvent
 from ...service_utils import validate_and_return_updater_request, \
     update_and_validate_service, validate_and_return_service_request, \
-    index_service
+    index_service, validate_service
+from ...draft_utils import validate_and_return_draft_request, \
+    get_draft_validation_errors
 
 
-@main.route('/services/<string:service_id>/draft', methods=['PUT'])
+@main.route('/draft-services/copy-from/<string:service_id>', methods=['PUT'])
 def create_draft_service(service_id):
     """
     Create a draft service from an existing service
@@ -40,9 +45,10 @@ def create_draft_service(service_id):
         audit_type=AuditTypes.create_draft_service,
         user=updater_json['updated_by'],
         data={
+            "draft_id": draft.id,
             "service_id": service_id
         },
-        db_object=service
+        db_object=draft
     )
 
     db.session.add(draft)
@@ -57,21 +63,19 @@ def create_draft_service(service_id):
     return jsonify(services=draft.serialize()), 201
 
 
-@main.route('/services/<string:service_id>/draft', methods=['POST'])
-def edit_draft_service(service_id):
+@main.route('/draft-services/<int:draft_id>', methods=['POST'])
+def edit_draft_service(draft_id):
     """
     Edit a draft service
-    :param service_id:
+    :param draft_id:
     :return:
     """
 
-    is_valid_service_id_or_400(service_id)
-
     updater_json = validate_and_return_updater_request()
-    update_json = validate_and_return_service_request(service_id)
+    update_json = validate_and_return_draft_request()
 
     draft = DraftService.query.filter(
-        DraftService.service_id == service_id
+        DraftService.id == draft_id
     ).first_or_404()
 
     draft.update_from_json(update_json)
@@ -80,7 +84,8 @@ def edit_draft_service(service_id):
         audit_type=AuditTypes.update_draft_service,
         user=updater_json['updated_by'],
         data={
-            "service_id": service_id,
+            "draft_id": draft_id,
+            "service_id": draft.service_id,
             "update_json": update_json
         },
         db_object=draft
@@ -101,6 +106,7 @@ def edit_draft_service(service_id):
 @main.route('/draft-services', methods=['GET'])
 def list_drafts():
     supplier_id = request.args.get('supplier_id')
+    service_id = request.args.get('service_id')
     if supplier_id is None:
         abort(400, "Invalid page argument")
     try:
@@ -120,6 +126,10 @@ def list_drafts():
             cast(String).label('data_servicename'))
     )
 
+    if service_id:
+        is_valid_service_id_or_400(service_id)
+        services = services.filter(DraftService.service_id == service_id)
+
     items = services.filter(DraftService.supplier_id == supplier_id).all()
     return jsonify(
         services=[service.serialize() for service in items],
@@ -127,44 +137,41 @@ def list_drafts():
     )
 
 
-@main.route('/services/<string:service_id>/draft', methods=['GET'])
-def fetch_draft_service(service_id):
+@main.route('/draft-services/<int:draft_id>', methods=['GET'])
+def fetch_draft_service(draft_id):
     """
     Return a draft service
-    :param service_id:
+    :param draft_id:
     :return:
     """
 
-    is_valid_service_id_or_400(service_id)
-
     draft = DraftService.query.filter(
-        DraftService.service_id == service_id
+        DraftService.id == draft_id
     ).first_or_404()
 
     return jsonify(services=draft.serialize())
 
 
-@main.route('/services/<string:service_id>/draft', methods=['DELETE'])
-def delete_draft_service(service_id):
+@main.route('/draft-services/<int:draft_id>', methods=['DELETE'])
+def delete_draft_service(draft_id):
     """
     Delete a draft service
-    :param service_id:
+    :param draft_id:
     :return:
     """
-
-    is_valid_service_id_or_400(service_id)
 
     updater_json = validate_and_return_updater_request()
 
     draft = DraftService.query.filter(
-        DraftService.service_id == service_id
+        DraftService.id == draft_id
     ).first_or_404()
 
     audit = AuditEvent(
         audit_type=AuditTypes.delete_draft_service,
         user=updater_json['updated_by'],
         data={
-            "service_id": service_id
+            "draft_id": draft_id,
+            "service_id": draft.service_id
         },
         db_object=None
     )
@@ -180,37 +187,40 @@ def delete_draft_service(service_id):
     return jsonify(message="done"), 200
 
 
-@main.route('/services/<string:service_id>/draft/publish', methods=['POST'])
-def publish_draft_service(service_id):
+@main.route('/draft-services/<int:draft_id>/publish', methods=['POST'])
+def publish_draft_service(draft_id):
     """
     Publish a draft service
-    :param service_id:
+    :param draft_id:
     :return:
     """
-
-    is_valid_service_id_or_400(service_id)
 
     updater_json = validate_and_return_updater_request()
 
     draft = DraftService.query.filter(
-        DraftService.service_id == service_id
+        DraftService.id == draft_id
     ).first_or_404()
 
-    service = Service.query.filter(
-        Service.service_id == draft.service_id
-    ).first_or_404()
+    if draft.service_id:
+        service = Service.query.filter(
+            Service.service_id == draft.service_id
+        ).first_or_404()
 
-    archived_service = ArchivedService.from_service(service)
-    new_service = update_and_validate_service(
-        service,
-        draft.data,
-        updater_json)
+        archived_service = ArchivedService.from_service(service)
+        new_service = update_and_validate_service(
+            service,
+            draft.data)
+
+    else:
+        new_service = Service.create_from_draft(draft, "enabled")
+        validate_service(new_service)
 
     audit = AuditEvent(
         audit_type=AuditTypes.publish_draft_service,
         user=updater_json['updated_by'],
         data={
-            "service_id": service_id
+            "draft_id": draft_id,
+            "service_id": new_service.service_id
         },
         db_object=new_service
     )
@@ -229,3 +239,50 @@ def publish_draft_service(service_id):
     index_service(new_service)
 
     return jsonify(services=new_service.serialize()), 200
+
+
+@main.route('/draft-services/create', methods=['POST'])
+def create_new_draft_service():
+    """
+    Create a new draft service with lot, supplier_id, draft_id, framework_id
+    :return: the new draft id and location e.g.
+    HTTP/1.1 201 Created Location: /draft-services/63636
+    """
+    updater_json = validate_and_return_updater_request()
+    new_draft_json = validate_and_return_draft_request()
+    framework_id = new_draft_json['frameworkId']
+    supplier_id = new_draft_json['supplierId']
+    lot = new_draft_json['lot']
+    new_draft_json = drop_foreign_fields(
+        new_draft_json,
+        ['frameworkId', 'supplierId']
+    )
+    errs = get_draft_validation_errors(new_draft_json, framework_id, lot)
+    if errs:
+        print("ERROR CREATING A NEW DRAFT:{}".format(errs))
+        return jsonify(errors=errs), 400
+    now = datetime.utcnow()
+    draft = DraftService(
+        framework_id=framework_id,
+        supplier_id=supplier_id,
+        created_at=now,
+        updated_at=now,
+        data={},
+        status="not-submitted"
+    )
+    audit = AuditEvent(
+        audit_type=AuditTypes.create_draft_service,
+        user=updater_json['updated_by'],
+        data={
+            "draft_id": draft.id
+        },
+        db_object=draft
+    )
+    db.session.add(draft)
+    db.session.add(audit)
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+    return jsonify(services=draft.serialize()), 201
