@@ -412,11 +412,23 @@ class AuditEvent(db.Model):
         object_type, object_id
     )
 
+    acknowledged = db.Column(
+        db.Boolean,
+        index=True,
+        unique=False,
+        nullable=False)
+
+    acknowledged_by = db.Column(db.String)
+    acknowledged_at = db.Column(
+        db.DateTime,
+        nullable=True)
+
     def __init__(self, audit_type, user, data, db_object):
         self.type = audit_type.value
         self.data = data
         self.object = db_object
         self.user = user
+        self.acknowledged = False
 
     def serialize(self):
         """
@@ -426,19 +438,28 @@ class AuditEvent(db.Model):
         data = {
             'id': self.id,
             'type': self.type,
+            'acknowledged': self.acknowledged,
             'user': self.user,
             'data': self.data,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'links': filter_null_value_fields({
                 "self": url_for(".list_audits"),
-                "old_archived_service": ArchivedService.link_object(
-                    self.data.get('old_archived_service_id')
+                "oldArchivedService": ArchivedService.link_object(
+                    self.data.get('oldArchivedServiceId')
                 ),
-                "new_archived_service": ArchivedService.link_object(
-                    self.data.get('new_archived_service_id')
+                "newArchivedService": ArchivedService.link_object(
+                    self.data.get('newArchivedServiceId')
                 )
             })
         }
+
+        if self.acknowledged:
+            data.update({
+                'acknowledgedAt':
+                    self.acknowledged_at.strftime(DATETIME_FORMAT),
+                'acknowledgedBy':
+                    self.acknowledged_by,
+            })
 
         return data
 

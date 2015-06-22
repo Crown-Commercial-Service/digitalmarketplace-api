@@ -56,9 +56,9 @@ def commit_and_archive_service(updated_service, update_details,
         db.session.flush()
 
         audit_data.update({
-            'service_id': updated_service.service_id,
-            'old_archived_service_id': last_archive,
-            'new_archived_service_id': service_to_archive.id,
+            'serviceId': updated_service.service_id,
+            'oldArchivedServiceId': last_archive,
+            'newArchivedServiceId': service_to_archive.id,
         })
 
         audit = AuditEvent(

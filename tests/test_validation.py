@@ -7,10 +7,35 @@ from nose.tools import assert_equal
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.validation import detect_framework, \
-    validates_against_schema, is_valid_service_id, get_validation_errors
+    validates_against_schema, is_valid_service_id, \
+    is_valid_date, is_valid_acknowledged_state, get_validation_errors
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                     '..', 'example_listings'))
+
+
+def test_for_valid_date():
+    cases = [
+        ("2010-01-01", True),
+        ("2010-02-29", False),
+        ("invalid", False)
+    ]
+
+    for example, expected in cases:
+        yield assert_equal, is_valid_date(example), expected, example
+
+
+def test_for_valid_acknowledged_state():
+    cases = [
+        ("all", True),
+        ("true", True),
+        ("false", True),
+        ("2010-02-29", False),
+        ("invalid", False)
+    ]
+
+    for example, expected in cases:
+        yield assert_equal, is_valid_acknowledged_state(example), expected
 
 
 def test_for_valid_service_id():

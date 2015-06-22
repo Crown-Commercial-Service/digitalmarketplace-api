@@ -135,8 +135,13 @@ def update_service(service_id):
         service, update, update_details
     )
 
+    audit_data = {
+        'supplierName': service.supplier.name,
+        'supplierId': service.supplier.supplier_id
+    }
+
     commit_and_archive_service(updated_service, update_details,
-                               AuditTypes.update_service)
+                               AuditTypes.update_service, audit_data)
     index_service(updated_service)
 
     return jsonify(message="done"), 200
@@ -190,8 +195,13 @@ def import_service(service_id):
     service.status = service_data.pop('status', 'published')
     service.data = service_data
 
+    audit_data = {
+        'supplierName': supplier.name,
+        'supplierId': supplier.supplier_id
+    }
+
     commit_and_archive_service(service, updater_json,
-                               AuditTypes.import_service)
+                               AuditTypes.import_service, audit_data)
 
     index_service(service)
 

@@ -451,7 +451,7 @@ class TestPostService(BaseApplicationTest):
             update_event = data['auditEvents'][1]
             assert_equal(update_event['type'], 'update_service')
             assert_equal(update_event['user'], 'joeblogs')
-            assert_equal(update_event['data']['service_id'], self.service_id)
+            assert_equal(update_event['data']['serviceId'], self.service_id)
 
     def test_service_update_audit_event_links_to_both_archived_services(self):
         with self.app.app_context():
@@ -474,16 +474,24 @@ class TestPostService(BaseApplicationTest):
             data = json.loads(audit_response.get_data())
 
             assert_equal(len(data['auditEvents']), 3)
-            update_event = data['auditEvents'][2]
+            update_event = data['auditEvents'][1]
 
-            old_version = update_event['links']['old_archived_service']
-            new_version = update_event['links']['new_archived_service']
+            old_version = update_event['links']['oldArchivedService']
+            new_version = update_event['links']['newArchivedService']
 
             assert_in('/archived-services/', old_version)
             assert_in('/archived-services/', new_version)
             assert_equal(
                 int(old_version.split('/')[-1]) + 1,
                 int(new_version.split('/')[-1])
+            )
+            assert_equal(
+                data['auditEvents'][0]['data']['supplierName'],
+                'Supplier 1'
+            )
+            assert_equal(
+                data['auditEvents'][0]['data']['supplierId'],
+                1
             )
 
     def test_can_post_a_valid_service_update_on_several_fields(self):
@@ -778,14 +786,14 @@ class TestPostService(BaseApplicationTest):
         assert_equal(data['auditEvents'][1]['type'], 'update_service_status')
         assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
         assert_equal(
-            data['auditEvents'][1]['data']['service_id'], self.service_id
+            data['auditEvents'][1]['data']['serviceId'], self.service_id
         )
         assert_equal(data['auditEvents'][1]['data']['new_status'], 'disabled')
         assert_equal(data['auditEvents'][1]['data']['old_status'], 'published')
         assert_in('/archived-services/',
-                  data['auditEvents'][1]['links']['old_archived_service'])
+                  data['auditEvents'][1]['links']['oldArchivedService'])
         assert_in('/archived-services/',
-                  data['auditEvents'][1]['links']['new_archived_service'])
+                  data['auditEvents'][1]['links']['newArchivedService'])
 
     def test_should_400_with_invalid_statuses(self):
         invalid_statuses = [
@@ -1363,18 +1371,22 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(len(data['auditEvents']), 1)
             assert_equal(data['auditEvents'][0]['type'], 'import_service')
             assert_equal(data['auditEvents'][0]['user'], 'joeblogs')
-            assert_equal(data['auditEvents'][0]['data']['service_id'],
+            assert_equal(data['auditEvents'][0]['data']['serviceId'],
                          "1234567890123456")
+            assert_equal(data['auditEvents'][0]['data']['supplierName'],
+                         "Supplier 1")
+            assert_equal(data['auditEvents'][0]['data']['supplierId'],
+                         1)
             assert_equal(
-                data['auditEvents'][0]['data']['old_archived_service_id'], None
+                data['auditEvents'][0]['data']['oldArchivedServiceId'], None
             )
             assert_not_in('old_archived_service',
                           data['auditEvents'][0]['links'])
 
             assert_true(isinstance(
-                data['auditEvents'][0]['data']['new_archived_service_id'], int
+                data['auditEvents'][0]['data']['newArchivedServiceId'], int
             ))
-            assert_in('new_archived_service', data['auditEvents'][0]['links'])
+            assert_in('newArchivedService', data['auditEvents'][0]['links'])
 
     def test_add_a_new_service_with_status_disabled(self):
         with self.app.app_context():
