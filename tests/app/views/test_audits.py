@@ -198,6 +198,12 @@ class TestAudits(BaseApplicationTest):
         assert_equal(res.status_code, 200)
         assert_equal(len(new_data['auditEvents']), 2)
 
+        # all should return both
+        new_response = self.client.get('/audit-events?acknowledged=all')
+        new_data = json.loads(new_response.get_data())
+        assert_equal(res.status_code, 200)
+        assert_equal(len(new_data['auditEvents']), 2)
+
     def test_should_get_only_acknowledged_audit_events(self):
         self.add_audit_events(2)
         response = self.client.get('/audit-events')

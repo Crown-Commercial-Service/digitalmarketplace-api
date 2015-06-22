@@ -42,7 +42,7 @@ def list_audits():
             abort(400, "Invalid audit type")
 
     acknowledged = request.args.get('acknowledged', None)
-    if acknowledged:
+    if acknowledged and acknowledged != 'all':
         if is_valid_acknowledged_state(acknowledged):
             if convert_to_boolean(acknowledged):
                 audits = audits.filter(
