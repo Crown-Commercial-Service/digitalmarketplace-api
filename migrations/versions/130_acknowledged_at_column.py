@@ -1,7 +1,7 @@
 """empty message
 
-Revision ID: 3a0090458cd3
-Revises: 130_acknowledged_not_null
+Revision ID: 130_acknowledged_at_column
+Revises: 120_acknowledged_not_null
 Create Date: 2015-06-17 12:55:16.630026
 
 """

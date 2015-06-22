@@ -1,7 +1,7 @@
 """empty message
 
-Revision ID: 2d2309ce61f
-Revises: 110_add_acknowledged_column
+Revision ID: 110_add_acknowledged_column
+Revises: 100_add_open_status
 Create Date: 2015-06-17 11:40:51.427138
 
 """
