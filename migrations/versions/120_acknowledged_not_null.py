@@ -1,14 +1,14 @@
 """empty message
 
 Revision ID: 130db5101c2b
-Revises: 60_add_acknowledged_column
+Revises: 120_add_acknowledged_column
 Create Date: 2015-06-17 11:44:15.535439
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '70_acknowledged_not_null'
-down_revision = '60_add_acknowledged_column'
+revision = '120_acknowledged_not_null'
+down_revision = '110_add_acknowledged_column'
 
 from alembic import op
 import sqlalchemy as sa

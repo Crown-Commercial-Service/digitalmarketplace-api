@@ -177,7 +177,7 @@ class TestAudits(BaseApplicationTest):
         new_data = json.loads(new_response.get_data())
         assert_equal(res.status_code, 200)
         assert_equal(new_data['auditEvents'][0]['acknowledged'], True)
-        assert_equal(new_data['auditEvents'][0]['acknowledged_by'], 'tests')
+        assert_equal(new_data['auditEvents'][0]['acknowledgedBy'], 'tests')
 
     def test_should_get_all_audit_events(self):
         self.add_audit_events(2)

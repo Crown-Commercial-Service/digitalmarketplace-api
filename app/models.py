@@ -455,9 +455,9 @@ class AuditEvent(db.Model):
 
         if self.acknowledged:
             data.update({
-                'acknowledged_at':
+                'acknowledgedAt':
                     self.acknowledged_at.strftime(DATETIME_FORMAT),
-                'acknowledged_by':
+                'acknowledgedBy':
                     self.acknowledged_by,
             })
 

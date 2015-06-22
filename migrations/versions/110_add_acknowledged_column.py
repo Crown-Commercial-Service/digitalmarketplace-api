@@ -1,13 +1,13 @@
 """empty message
 
 Revision ID: 2d2309ce61f
-Revises: 50_remove_updated_details
+Revises: 110_add_acknowledged_column
 Create Date: 2015-06-17 11:40:51.427138
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '60_add_acknowledged_column'
+revision = '110_add_acknowledged_column'
 down_revision = '100_add_open_status'
 
 from alembic import op
