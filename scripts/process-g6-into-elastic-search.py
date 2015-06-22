@@ -389,6 +389,7 @@ def request_services(endpoint, token):
                 if link['rel'] == 'next':
                     page_url = link['href']
 
+
 def process_json_files_in_directory(dirname):
     for filename in os.listdir(dirname):
         with open(os.path.join(dirname, filename)) as f:
