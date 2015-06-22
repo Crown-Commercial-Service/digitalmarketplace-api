@@ -24,3 +24,12 @@ c8bce0740af   -  add 'supplier_id', 'created_at' and 'updated_at'
 40_add_draft_services
 30_add_audit_events - add 'AuditEvent' table
 50_remove_updated_details
+60_archive_current_services
+70_add_framework_status
+80_remove_framework_expired
+90_add_gcloud_7
+100_add_open_status
+110_add_acknowledged_column
+120_acknowledged_not_null
+130_acknowledged_at_column
+140_service_id_null_for_drafts
