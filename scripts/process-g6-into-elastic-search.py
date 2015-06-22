@@ -384,7 +384,10 @@ def request_services(endpoint, token):
         for service in data["services"]:
             yield service
 
-            page_url = data['links'].get('next')
+            page_url = None
+            for link in data['links']:
+                if link['rel'] == 'next':
+                    page_url = link['href']
 
 
 def process_json_files_in_directory(dirname):
