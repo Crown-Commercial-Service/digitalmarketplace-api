@@ -29,6 +29,10 @@ def create_draft_service(service_id):
         Service.service_id == service_id
     ).first_or_404()
 
+    if DraftService.query.filter(
+        DraftService.service_id == service_id
+    ).first():
+        abort(400, "Draft already exists for service {}".format(service_id))
     draft = DraftService.from_service(service)
     audit = AuditEvent(
         audit_type=AuditTypes.create_draft_service,
