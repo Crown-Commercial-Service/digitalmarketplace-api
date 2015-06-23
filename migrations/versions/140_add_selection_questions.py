@@ -1,14 +1,14 @@
-"""Add framework application
+"""Add selection questions
 
-Revision ID: 110_add_selection_questions
-Revises: 100_add_open_status
+Revision ID: 140_add_selection_questions
+Revises: 130_acknowledged_at_column
 Create Date: 2015-06-19 16:22:21.510509
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '110_add_selection_questions'
-down_revision = '100_add_open_status'
+revision = '140_add_selection_questions'
+down_revision = '130_acknowledged_at_column'
 
 from alembic import op
 import sqlalchemy as sa
