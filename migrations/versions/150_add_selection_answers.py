@@ -1,14 +1,14 @@
 """Add selection answers
 
-Revision ID: 140_add_selection_answers
-Revises: 130_acknowledged_at_column
+Revision ID: 150_add_selection_answers
+Revises: 140_service_id_null_for_drafts
 Create Date: 2015-06-19 16:22:21.510509
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '140_add_selection_answers'
-down_revision = '130_acknowledged_at_column'
+revision = '150_add_selection_answers'
+down_revision = '140_service_id_null_for_drafts'
 
 from alembic import op
 import sqlalchemy as sa
