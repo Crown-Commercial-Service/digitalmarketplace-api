@@ -25,7 +25,6 @@ class TestDraftServices(BaseApplicationTest):
         self.create_draft_json = self.updater_json.copy()
         self.create_draft_json['services'] = {
             'lot': 'SCS',
-            'frameworkId': 4,
             'supplierId': 1
         }
 
@@ -140,7 +139,7 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(res.status_code, 400)
 
     def test_reject_create_with_no_update_details(self):
-        res = self.client.post('/draft-services/create')
+        res = self.client.post('/draft-services/g-cloud-7/create')
 
         assert_equal(res.status_code, 400)
 
@@ -151,6 +150,14 @@ class TestDraftServices(BaseApplicationTest):
             content_type='application/json')
 
         assert_equal(res.status_code, 400)
+
+    def test_should_404_if_service_does_not_exist_on_copy(self):
+        res = self.client.put(
+            '/draft-services/copy-from/0000000000',
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 404)
 
     def test_reject_invalid_service_id_on_get(self):
         res = self.client.get('/draft-services?service_id=invalid-id!')
@@ -167,17 +174,9 @@ class TestDraftServices(BaseApplicationTest):
 
         assert_equal(res.status_code, 400)
 
-    def test_should_404_if_service_does_not_exist_on_create_draft(self):
-        res = self.client.put(
-            '/draft-services/copy-from/0000000000',
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-
-        assert_equal(res.status_code, 404)
-
     def test_should_create_draft_with_minimal_data(self):
         res = self.client.post(
-            '/draft-services/create',
+            '/draft-services/g-cloud-7/create',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
 
@@ -186,6 +185,88 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data['services']['frameworkName'], 'G-Cloud 7')
         assert_equal(data['services']['status'], 'not-submitted')
         assert_equal(data['services']['supplierId'], 1)
+        assert_equal(data['services']['lot'], 'SCS')
+
+    def test_should_not_create_draft_with_invalid_data(self):
+        invalid_create_json = self.create_draft_json.copy()
+        invalid_create_json['services']['supplierId'] = "ShouldBeInt"
+        res = self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(invalid_create_json),
+            content_type='application/json')
+
+        data = json.loads(res.get_data())
+        assert_equal(res.status_code, 400)
+        assert_in("'ShouldBeInt' is not of type", data['errors']['supplierId'])
+
+    def test_can_save_additional_fields_to_draft(self):
+        res = self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+        draft_id = data['services']['id']
+        draft_update_json = self.updater_json.copy()
+        draft_update_json['services'] = {
+            'serviceTypes': ['Implementation'],
+            'serviceBenefits': ['Tests pass']
+        }
+
+        res2 = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(draft_update_json),
+            content_type='application/json')
+        data2 = json.loads(res2.get_data())
+        assert_equal(res2.status_code, 200)
+        assert_equal(data2['services']['frameworkName'], 'G-Cloud 7')
+        assert_equal(data2['services']['status'], 'not-submitted')
+        assert_equal(data2['services']['supplierId'], 1)
+        assert_equal(data2['services']['serviceTypes'], ['Implementation'])
+        assert_equal(data2['services']['serviceBenefits'], ['Tests pass'])
+
+    def test_validation_errors_returned_for_invalid_update_of_new_draft(self):
+        res = self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+        draft_id = data['services']['id']
+        draft_update_json = self.updater_json.copy()
+        draft_update_json['services'] = {
+            'serviceTypes': ['Bad Type'],
+            'serviceBenefits': ['Too many words 4 5 6 7 8 9 10 11']
+        }
+
+        res2 = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(draft_update_json),
+            content_type='application/json')
+        data2 = json.loads(res2.get_data())
+        assert_equal(res2.status_code, 400)
+        assert_in("'Bad Type' is not one of", data2['errors']['serviceTypes'])
+        # 'Invalid value' is not one of
+
+    def test_validation_errors_returned_for_invalid_update_of_copy(self):
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        draft_id = json.loads(res.get_data())['services']['id']
+        res = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps({
+                'update_details': {
+                    'updated_by': 'joeblogs'},
+                'services': {
+                    'badField': 'new service name',
+                    'priceUnit': 'chickens'
+                }
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+        assert_equal(res.status_code, 400)
+        assert_in("'badField' was unexpected", str(data['errors']['_form']))
+        assert_in("'chickens' is not one of", data['errors']['priceUnit'])
 
     def test_should_create_draft_from_existing_service(self):
         res = self.client.put(
@@ -368,38 +449,9 @@ class TestDraftServices(BaseApplicationTest):
 
         assert_equal(update.status_code, 400)
 
-    def test_should_not_be_able_to_launch_invalid_service(self):
-        res = self.client.put(
-            '/draft-services/copy-from/{}'.format(self.service_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-        draft_id = json.loads(res.get_data())['services']['id']
-        self.client.post(
-            '/draft-services/{}'.format(draft_id),
-            data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
-                'services': {
-                    'badField': 'new service name',
-                    'priceUnit': 'chickens'
-                }
-            }),
-            content_type='application/json')
-
+    def test_should_not_be_able_to_publish_if_no_draft_exists(self):
         res = self.client.post(
-            '/draft-services/{}/publish'.format(draft_id),
-            data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs',
-                }
-            }),
-            content_type='application/json')
-
-        assert_equal(res.status_code, 400)
-
-    def test_should_not_be_able_to_publish_a_draft_if_no_service(self):
-        res = self.client.post(
-            '/draft-services/{}/publish'.format(self.service_id),
+            '/draft-services/98765/publish',
             data=json.dumps({
                 'update_details': {
                     'updated_by': 'joeblogs',
