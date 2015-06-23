@@ -255,7 +255,7 @@ def get_selection_questions(supplier_id, framework_slug):
         supplier_id, framework_slug
     ).first_or_404()
 
-    return jsonify(selectionQuestions=application.serialize())
+    return jsonify(selectionAnswers=application.serialize())
 
 
 @main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>',
@@ -284,13 +284,20 @@ def set_selection_questions(supplier_id, framework_slug):
         )
         status_code = 201
 
-    data = get_json_from_request()
-    json_has_required_keys(data, ['selectionAnswers'])
-    data = data['selectionAnswers']
-    json_has_required_keys(data, ['questionAnswers'])
+    request_data = get_json_from_request()
+    json_has_required_keys(request_data, ['selectionAnswers', 'updated_by'])
+    answers_data = request_data['selectionAnswers']
+    json_has_required_keys(answers_data, ['questionAnswers'])
 
-    answers.question_answers = data['questionAnswers']
+    answers.question_answers = answers_data['questionAnswers']
     db.session.add(answers)
+    db.session.add(
+        AuditEvent(
+            audit_type=AuditTypes.answer_selection_questions,
+            db_object=answers,
+            user=request_data['updated_by'],
+            data={'update': answers_data})
+    )
 
     try:
         db.session.commit()

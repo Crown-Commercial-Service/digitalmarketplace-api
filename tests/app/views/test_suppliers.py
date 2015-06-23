@@ -683,7 +683,7 @@ class TestGetSupplierSelectionAnswers(BaseApplicationTest):
         with self.app.app_context():
             answers = SelectionAnswers(
                 supplier_id=0, framework_id=2,
-                data={})
+                question_answers={})
             db.session.add(answers)
             db.session.commit()
 
@@ -741,6 +741,7 @@ class TestSetSupplierSelectionAnswers(BaseApplicationTest):
             response = self.client.put(
                 '/suppliers/0/selection-answers/test-open',
                 data=json.dumps({
+                    'updated_by': 'testing',
                     'selectionAnswers': {
                         'supplierId': 0,
                         'frameworkSlug': 'test-open',
@@ -770,6 +771,7 @@ class TestSetSupplierSelectionAnswers(BaseApplicationTest):
             response = self.client.put(
                 '/suppliers/0/selection-answers/test-open',
                 data=json.dumps({
+                    'updated_by': 'testing',
                     'selectionAnswers': {
                         'supplierId': 0,
                         'frameworkSlug': 'test-open',
@@ -798,6 +800,7 @@ class TestSetSupplierSelectionAnswers(BaseApplicationTest):
             response = self.client.put(
                 '/suppliers/0/selection-answers/test-pending',
                 data=json.dumps({
+                    'updated_by': 'testing',
                     'selectionAnswers': {
                         'supplierId': 0,
                         'frameworkSlug': 'test-pending',
