@@ -39,6 +39,10 @@ def copy_draft_service_from_existing_service(service_id):
         abort(400, "Draft already exists for service {}".format(service_id))
 
     draft = DraftService.from_service(service)
+
+    db.session.add(draft)
+    db.session.flush()
+
     audit = AuditEvent(
         audit_type=AuditTypes.create_draft_service,
         user=updater_json['updated_by'],
@@ -48,8 +52,6 @@ def copy_draft_service_from_existing_service(service_id):
         },
         db_object=draft
     )
-
-    db.session.add(draft)
     db.session.add(audit)
 
     try:
@@ -278,6 +280,9 @@ def create_new_draft_service(framework_slug):
         data=draft_json,
         status="not-submitted"
     )
+    db.session.add(draft)
+    db.session.flush()
+
     audit = AuditEvent(
         audit_type=AuditTypes.create_draft_service,
         user=updater_json['updated_by'],
@@ -286,11 +291,12 @@ def create_new_draft_service(framework_slug):
         },
         db_object=draft
     )
-    db.session.add(draft)
     db.session.add(audit)
+
     try:
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
+
     return jsonify(services=draft.serialize()), 201

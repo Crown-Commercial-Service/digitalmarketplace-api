@@ -187,6 +187,27 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data['services']['supplierId'], 1)
         assert_equal(data['services']['lot'], 'SCS')
 
+    def test_create_draft_should_create_audit_event(self):
+        res = self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 201)
+        data = json.loads(res.get_data())
+        draft_id = data['services']['id']
+
+        audit_response = self.client.get('/audit-events')
+        assert_equal(audit_response.status_code, 200)
+        data = json.loads(audit_response.get_data())
+        assert_equal(len(data['auditEvents']), 2)
+        assert_equal(data['auditEvents'][0]['type'], 'import_service')
+        assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
+        assert_equal(
+            data['auditEvents'][1]['data']['draft_id'], draft_id
+        )
+
     def test_should_not_create_draft_with_invalid_data(self):
         invalid_create_json = self.create_draft_json.copy()
         invalid_create_json['services']['supplierId'] = "ShouldBeInt"
@@ -223,6 +244,41 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data2['services']['supplierId'], 1)
         assert_equal(data2['services']['serviceTypes'], ['Implementation'])
         assert_equal(data2['services']['serviceBenefits'], ['Tests pass'])
+
+    def test_update_draft_should_create_audit_event(self):
+        res = self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+        draft_id = data['services']['id']
+        draft_update_json = self.updater_json.copy()
+        draft_update_json['services'] = {
+            'serviceTypes': ['Implementation'],
+            'serviceBenefits': ['Tests pass']
+        }
+
+        res2 = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(draft_update_json),
+            content_type='application/json')
+        assert_equal(res2.status_code, 200)
+
+        audit_response = self.client.get('/audit-events')
+        assert_equal(audit_response.status_code, 200)
+        data = json.loads(audit_response.get_data())
+        assert_equal(len(data['auditEvents']), 3)
+        assert_equal(data['auditEvents'][0]['type'], 'import_service')
+        assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
+        assert_equal(
+            data['auditEvents'][1]['data']['draft_id'], draft_id
+        )
+        assert_equal(data['auditEvents'][2]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][2]['type'], 'update_draft_service')
+        assert_equal(
+            data['auditEvents'][2]['data']['draft_id'], draft_id
+        )
 
     def test_validation_errors_returned_for_invalid_update_of_new_draft(self):
         res = self.client.post(
@@ -279,7 +335,7 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(res.status_code, 201)
         assert_equal(data['services']['service_id'], self.service_id)
 
-    def test_should_create_draft_should_create_audit_event(self):
+    def test_create_draft_from_existing_should_create_audit_event(self):
         res = self.client.put(
             '/draft-services/copy-from/{}'.format(self.service_id),
             data=json.dumps(self.updater_json),
