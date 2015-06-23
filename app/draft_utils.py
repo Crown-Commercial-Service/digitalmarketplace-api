@@ -1,7 +1,7 @@
-from models import Framework
-from utils import get_json_from_request, json_has_required_keys, \
+from .models import Framework
+from .utils import get_json_from_request, json_has_required_keys, \
     json_has_matching_id
-from validation import get_validation_errors
+from .validation import get_validation_errors
 
 
 def validate_and_return_draft_request(draft_id=0):
