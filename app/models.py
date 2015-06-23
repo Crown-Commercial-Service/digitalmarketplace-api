@@ -372,6 +372,9 @@ class ArchivedService(db.Model, ServiceTableMixin):
 class DraftService(db.Model, ServiceTableMixin):
     __tablename__ = 'draft_services'
 
+    # Overwrites service_id column to remove uniqueness and nullable constraint
+    service_id = db.Column(db.String, index=True, unique=False, nullable=True)
+
     @staticmethod
     def from_service(service):
         now = datetime.utcnow(),

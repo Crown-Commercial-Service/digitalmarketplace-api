@@ -232,7 +232,7 @@ class TestDraftServices(BaseApplicationTest):
 
         assert_equal(res.status_code, 400)
         assert_in(
-            'duplicate key value violates unique constraint "ix_draft_services_service_id"\nDETAIL:  Key (service_id)=(1234567890123456) already exists.',  # noqa
+            'Draft already exists for service {}'.format(self.service_id),
             data['error'])
 
     def test_should_fetch_a_draft(self):
