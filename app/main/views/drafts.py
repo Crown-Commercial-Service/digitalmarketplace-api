@@ -113,8 +113,9 @@ def edit_draft_service(draft_id):
 def list_drafts():
     supplier_id = request.args.get('supplier_id')
     service_id = request.args.get('service_id')
+    framework_slug = request.args.get('framework')
     if supplier_id is None:
-        abort(400, "Invalid page argument")
+        abort(400, "Invalid page argument: supplier_id is required")
     try:
         supplier_id = int(supplier_id)
     except ValueError:
@@ -135,6 +136,16 @@ def list_drafts():
     if service_id:
         is_valid_service_id_or_400(service_id)
         services = services.filter(DraftService.service_id == service_id)
+
+    if framework_slug:
+        # TODO: Get framework id by matching the slug once in Framework table.
+        if framework_slug == "g-cloud-6":
+            framework_id = 1
+        else:
+            framework_id = Framework.query.filter(
+                Framework.name == 'G-Cloud 7'
+            ).first_or_404().id
+        services = services.filter(DraftService.framework_id == framework_id)
 
     items = services.filter(DraftService.supplier_id == supplier_id).all()
     return jsonify(

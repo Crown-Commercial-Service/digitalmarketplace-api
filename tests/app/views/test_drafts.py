@@ -78,6 +78,30 @@ class TestDraftServices(BaseApplicationTest):
         drafts = json.loads(res.get_data())
         assert_equal(len(drafts['services']), 1)
 
+    def test_returns_drafts_for_framework_with_drafts(self):
+        self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        res = self.client.get(
+            '/draft-services?supplier_id=1&framework=g-cloud-6'
+        )
+        assert_equal(res.status_code, 200)
+        drafts = json.loads(res.get_data())
+        assert_equal(len(drafts['services']), 1)
+
+    def test_does_not_return_drafts_for_framework_with_no_drafts(self):
+        self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        res = self.client.get(
+            '/draft-services?supplier_id=1&framework=g-cloud-7'
+        )
+        assert_equal(res.status_code, 200)
+        drafts = json.loads(res.get_data())
+        assert_equal(len(drafts['services']), 0)
+
     def test_returns_all_drafts_for_supplier_on_single_page(self):
         with self.app.app_context():
 
