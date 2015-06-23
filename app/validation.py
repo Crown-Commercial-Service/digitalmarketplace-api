@@ -135,7 +135,7 @@ def get_validation_errors(validator_name, json_data,
     form_errors = []
     for error in errors:
         if error.path:
-            key = error.path.pop()
+            key = error.path[0]
             error_map[key] = error.message
         else:
             form_errors.append(error.message)
