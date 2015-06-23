@@ -262,7 +262,6 @@ def test_g7_missing_required_field_has_validation_error():
     data = load_example_listing("G7-SCS")
     data.pop("serviceSummary", None)
     errs = get_validation_errors("services-g-cloud-7-scs", data)
-    print("1: {}".format(errs['_form']))
     assert "'serviceSummary' is a required property" \
            in "{}".format(errs['_form'])
 
@@ -283,7 +282,6 @@ def test_required_fields_param_requires_specified_fields():
     errs = get_validation_errors("services-g-cloud-7-scs", data,
                                  enforce_required=False,
                                  required_fields=['serviceSummary'])
-    print("2: {}".format(errs['_form']))
     assert "'serviceSummary' is a required property" \
            in "{}".format(errs['_form'])
 
