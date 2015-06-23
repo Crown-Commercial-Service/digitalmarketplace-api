@@ -200,6 +200,25 @@ class FrameworkApplication(db.Model):
                              primary_key=True)
     data = db.Column(JSON)
 
+    supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
+    framework = db.relationship(Framework, lazy='joined', innerjoin=True)
+
+    class query_class(BaseQuery):
+        def find_by_supplier_and_framework(self, supplier_id, framework_slug):
+            return FrameworkApplication.query.filter(
+                FrameworkApplication.framework.has(
+                    Framework.slug == framework_slug)
+            ).filter(
+                FrameworkApplication.supplier_id == supplier_id
+            )
+
+    def serialize(self):
+        return {
+            "supplierId": self.supplier_id,
+            "frameworkSlug": self.framework.slug,
+            "questionAnswers": self.data,
+        }
+
 
 class User(db.Model):
     __tablename__ = 'users'
