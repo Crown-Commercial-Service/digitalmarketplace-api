@@ -1,5 +1,5 @@
 {
-  "title":"G-Cloud SCS Service Schema",
+  "title":"G-Cloud 7 SCS Service Schema",
   "$schema":"http://json-schema.org/schema#",
   "type":"object",
   "additionalProperties":false,
