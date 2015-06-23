@@ -1,14 +1,14 @@
 """Add framework slug
 
-Revision ID: 120_add_framework_slug
-Revises: 110_add_selection_questions
+Revision ID: 150_add_framework_slug
+Revises: 140_add_selection_questions
 Create Date: 2015-06-19 16:24:33.894377
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '120_add_framework_slug'
-down_revision = '110_add_selection_questions'
+revision = '150_add_framework_slug'
+down_revision = '140_add_selection_questions'
 
 from alembic import op
 import sqlalchemy as sa
