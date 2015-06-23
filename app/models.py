@@ -189,8 +189,8 @@ class Supplier(db.Model):
         return self
 
 
-class FrameworkApplication(db.Model):
-    __tablename__ = 'framework_applications'
+class SelectionQuestions(db.Model):
+    __tablename__ = 'selection_questions'
 
     supplier_id = db.Column(db.Integer,
                             db.ForeignKey('suppliers.supplier_id'),
@@ -205,11 +205,11 @@ class FrameworkApplication(db.Model):
 
     class query_class(BaseQuery):
         def find_by_supplier_and_framework(self, supplier_id, framework_slug):
-            return FrameworkApplication.query.filter(
-                FrameworkApplication.framework.has(
+            return SelectionQuestions.query.filter(
+                SelectionQuestions.framework.has(
                     Framework.slug == framework_slug)
             ).filter(
-                FrameworkApplication.supplier_id == supplier_id
+                SelectionQuestions.supplier_id == supplier_id
             )
 
     def serialize(self):

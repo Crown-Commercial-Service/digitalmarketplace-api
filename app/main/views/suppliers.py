@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from .. import main
 from ... import db
 from ...models import Supplier, ContactInformation, AuditEvent, \
-    FrameworkApplication, Framework
+    SelectionQuestions, Framework
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400
@@ -248,26 +248,26 @@ def update_contact_information(supplier_id, contact_id):
     return jsonify(contactInformation=contact.serialize())
 
 
-@main.route('/suppliers/<supplier_id>/applications/<framework_slug>',
+@main.route('/suppliers/<supplier_id>/selection-questions/<framework_slug>',
             methods=['GET'])
-def get_framework_application(supplier_id, framework_slug):
-    application = FrameworkApplication.query.find_by_supplier_and_framework(
+def get_selection_questions(supplier_id, framework_slug):
+    application = SelectionQuestions.query.find_by_supplier_and_framework(
         supplier_id, framework_slug
     ).first_or_404()
 
-    return jsonify(frameworkApplications=application.serialize())
+    return jsonify(selectionQuestions=application.serialize())
 
 
-@main.route('/suppliers/<supplier_id>/applications/<framework_slug>',
+@main.route('/suppliers/<supplier_id>/selection-questions/<framework_slug>',
             methods=['PUT'])
-def set_framework_application(supplier_id, framework_slug):
+def set_selection_questions(supplier_id, framework_slug):
     framework = Framework.query.filter(
         Framework.slug == framework_slug
     ).first_or_404()
     if framework.status != 'open':
         abort(400, 'Framework must be open')
 
-    application = FrameworkApplication.query.find_by_supplier_and_framework(
+    application = SelectionQuestions.query.find_by_supplier_and_framework(
         supplier_id, framework_slug
     ).first()
     if application is not None:
@@ -277,7 +277,7 @@ def set_framework_application(supplier_id, framework_slug):
             Supplier.supplier_id == supplier_id
         ).first_or_404()
 
-        application = FrameworkApplication(
+        application = SelectionQuestions(
             supplier_id=supplier.supplier_id,
             framework_id=framework.id,
             data={}
@@ -285,8 +285,8 @@ def set_framework_application(supplier_id, framework_slug):
         status_code = 201
 
     data = get_json_from_request()
-    json_has_required_keys(data, ['frameworkApplications'])
-    data = data['frameworkApplications']
+    json_has_required_keys(data, ['selectionQuestions'])
+    data = data['selectionQuestions']
     data = drop_foreign_fields(data, ['supplierId', 'frameworkSlug'])
 
     application.data = data
@@ -298,4 +298,4 @@ def set_framework_application(supplier_id, framework_slug):
         db.session.rollback()
         abort(400, "Database Error: {}".format(e))
 
-    return jsonify(frameworkApplications=application.serialize()), status_code
+    return jsonify(selectionQuestions=application.serialize()), status_code
