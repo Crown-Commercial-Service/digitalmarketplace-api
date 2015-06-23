@@ -3,7 +3,7 @@ from nose.tools import assert_equal, assert_in
 
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
-    SelectionQuestions, Framework
+    SelectionAnswers, Framework
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 
 
@@ -675,47 +675,47 @@ class TestUpdateContactInformation(BaseApplicationTest):
         assert_equal(response.status_code, 400)
 
 
-class TestGetSupplierSelectionQuestions(BaseApplicationTest):
+class TestGetSupplierSelectionAnswers(BaseApplicationTest):
     def setup(self):
-        super(TestGetSupplierSelectionQuestions, self).setup()
+        super(TestGetSupplierSelectionAnswers, self).setup()
         self.setup_dummy_suppliers(1)
 
         with self.app.app_context():
-            questions = SelectionQuestions(
+            answers = SelectionAnswers(
                 supplier_id=0, framework_id=2,
                 data={})
-            db.session.add(questions)
+            db.session.add(answers)
             db.session.commit()
 
-    def test_get_selection_questions(self):
+    def test_get_selection_answers(self):
         response = self.client.get(
-            '/suppliers/0/selection-questions/g-cloud-4')
+            '/suppliers/0/selection-answers/g-cloud-4')
 
         data = json.loads(response.get_data())
         assert_equal(response.status_code, 200)
-        assert_equal(data['selectionQuestions']['supplierId'], 0)
-        assert_equal(data['selectionQuestions']['frameworkSlug'],
+        assert_equal(data['selectionAnswers']['supplierId'], 0)
+        assert_equal(data['selectionAnswers']['frameworkSlug'],
                      'g-cloud-4')
 
     def test_get_non_existent_by_framework(self):
         response = self.client.get(
-            '/suppliers/0/selection-questions/g-cloud-5')
+            '/suppliers/0/selection-answers/g-cloud-5')
 
         assert_equal(response.status_code, 404)
 
     def test_get_non_existent_by_supplier(self):
         response = self.client.get(
-            '/suppliers/123/selection-questions/g-cloud-4')
+            '/suppliers/123/selection-answers/g-cloud-4')
 
         assert_equal(response.status_code, 404)
 
 
-class TestSetSupplierSelectionQuestions(BaseApplicationTest):
+class TestSetSupplierSelectionAnswers(BaseApplicationTest):
     method = 'put'
-    endpoint = '/suppliers/0/selection-questions/g-cloud-4'
+    endpoint = '/suppliers/0/selection-answers/g-cloud-4'
 
     def setup(self):
-        super(TestSetSupplierSelectionQuestions, self).setup()
+        super(TestSetSupplierSelectionAnswers, self).setup()
         with self.app.app_context():
             framework = Framework(
                 slug='test-open',
@@ -727,7 +727,7 @@ class TestSetSupplierSelectionQuestions(BaseApplicationTest):
         self.setup_dummy_suppliers(1)
 
     def teardown(self):
-        super(TestSetSupplierSelectionQuestions, self).teardown()
+        super(TestSetSupplierSelectionAnswers, self).teardown()
         with self.app.app_context():
             frameworks = Framework.query.filter(
                 Framework.slug.like('test-%')
@@ -736,50 +736,54 @@ class TestSetSupplierSelectionQuestions(BaseApplicationTest):
                 db.session.delete(framework)
             db.session.commit()
 
-    def test_add_new_selection_questions(self):
+    def test_add_new_selection_answers(self):
         with self.app.app_context():
             response = self.client.put(
-                '/suppliers/0/selection-questions/test-open',
+                '/suppliers/0/selection-answers/test-open',
                 data=json.dumps({
-                    'selectionQuestions': {
+                    'selectionAnswers': {
                         'supplierId': 0,
                         'frameworkSlug': 'test-open',
-                        'question': 'answer'
+                        'questionAnswers': {
+                            'question': 'answer'
+                        }
                     }
                 }),
                 content_type='application/json')
 
             assert_equal(response.status_code, 201)
-            questions = SelectionQuestions.query \
+            answers = SelectionAnswers.query \
                 .find_by_supplier_and_framework(0, 'test-open').first()
-            assert_equal(questions.data['question'], 'answer')
+            assert_equal(answers.question_answers['question'], 'answer')
 
-    def test_update_existing_selection_questions(self):
+    def test_update_existing_selection_answers(self):
         with self.app.app_context():
             framework_id = Framework.query.filter(
                 Framework.slug == 'test-open').first().id
-            questions = SelectionQuestions(
+            answers = SelectionAnswers(
                 supplier_id=0,
                 framework_id=framework_id,
-                data={'question': 'answer'})
-            db.session.add(questions)
+                question_answers={'question': 'answer'})
+            db.session.add(answers)
             db.session.commit()
 
             response = self.client.put(
-                '/suppliers/0/selection-questions/test-open',
+                '/suppliers/0/selection-answers/test-open',
                 data=json.dumps({
-                    'selectionQuestions': {
+                    'selectionAnswers': {
                         'supplierId': 0,
                         'frameworkSlug': 'test-open',
-                        'question': 'answer2',
+                        'questionAnswers': {
+                            'question': 'answer2',
+                        }
                     }
                 }),
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
-            questions = SelectionQuestions.query \
+            answers = SelectionAnswers.query \
                 .find_by_supplier_and_framework(0, 'test-open').first()
-            assert_equal(questions.data['question'], 'answer2')
+            assert_equal(answers.question_answers['question'], 'answer2')
 
     def test_can_only_set_questions_on_open_framework(self):
         with self.app.app_context():
@@ -792,12 +796,29 @@ class TestSetSupplierSelectionQuestions(BaseApplicationTest):
             db.session.commit()
 
             response = self.client.put(
-                '/suppliers/0/selection-questions/test-pending',
+                '/suppliers/0/selection-answers/test-pending',
                 data=json.dumps({
-                    'selectionQuestions': {
+                    'selectionAnswers': {
                         'supplierId': 0,
                         'frameworkSlug': 'test-pending',
-                        'question': 'answer'}}),
+                        'questionAnswers': {
+                            'question': 'answer'
+                        }}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 400)
+
+    def test_invalid_payload_fails(self):
+        with self.app.app_context():
+            response = self.client.put(
+                '/suppliers/0/selection-answers/test-open',
+                data=json.dumps({
+                    'selectionAnswers': {
+                        'invalid': {
+                            'question': 'answer'
+                        }
+                    }
+                }),
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)

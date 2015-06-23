@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from .. import main
 from ... import db
 from ...models import Supplier, ContactInformation, AuditEvent, \
-    SelectionQuestions, Framework
+    SelectionAnswers, Framework
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400
@@ -248,17 +248,17 @@ def update_contact_information(supplier_id, contact_id):
     return jsonify(contactInformation=contact.serialize())
 
 
-@main.route('/suppliers/<supplier_id>/selection-questions/<framework_slug>',
+@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>',
             methods=['GET'])
 def get_selection_questions(supplier_id, framework_slug):
-    application = SelectionQuestions.query.find_by_supplier_and_framework(
+    application = SelectionAnswers.query.find_by_supplier_and_framework(
         supplier_id, framework_slug
     ).first_or_404()
 
     return jsonify(selectionQuestions=application.serialize())
 
 
-@main.route('/suppliers/<supplier_id>/selection-questions/<framework_slug>',
+@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>',
             methods=['PUT'])
 def set_selection_questions(supplier_id, framework_slug):
     framework = Framework.query.filter(
@@ -267,30 +267,30 @@ def set_selection_questions(supplier_id, framework_slug):
     if framework.status != 'open':
         abort(400, 'Framework must be open')
 
-    application = SelectionQuestions.query.find_by_supplier_and_framework(
+    answers = SelectionAnswers.query.find_by_supplier_and_framework(
         supplier_id, framework_slug
     ).first()
-    if application is not None:
+    if answers is not None:
         status_code = 200
     else:
         supplier = Supplier.query.filter(
             Supplier.supplier_id == supplier_id
         ).first_or_404()
 
-        application = SelectionQuestions(
+        answers = SelectionAnswers(
             supplier_id=supplier.supplier_id,
             framework_id=framework.id,
-            data={}
+            question_answers={}
         )
         status_code = 201
 
     data = get_json_from_request()
-    json_has_required_keys(data, ['selectionQuestions'])
-    data = data['selectionQuestions']
-    data = drop_foreign_fields(data, ['supplierId', 'frameworkSlug'])
+    json_has_required_keys(data, ['selectionAnswers'])
+    data = data['selectionAnswers']
+    json_has_required_keys(data, ['questionAnswers'])
 
-    application.data = data
-    db.session.add(application)
+    answers.question_answers = data['questionAnswers']
+    db.session.add(answers)
 
     try:
         db.session.commit()
@@ -298,4 +298,4 @@ def set_selection_questions(supplier_id, framework_slug):
         db.session.rollback()
         abort(400, "Database Error: {}".format(e))
 
-    return jsonify(selectionQuestions=application.serialize()), status_code
+    return jsonify(selectionAnswers=answers.serialize()), status_code

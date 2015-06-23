@@ -189,8 +189,8 @@ class Supplier(db.Model):
         return self
 
 
-class SelectionQuestions(db.Model):
-    __tablename__ = 'selection_questions'
+class SelectionAnswers(db.Model):
+    __tablename__ = 'selection_answers'
 
     supplier_id = db.Column(db.Integer,
                             db.ForeignKey('suppliers.supplier_id'),
@@ -198,25 +198,25 @@ class SelectionQuestions(db.Model):
     framework_id = db.Column(db.Integer,
                              db.ForeignKey('frameworks.id'),
                              primary_key=True)
-    data = db.Column(JSON)
+    question_answers = db.Column(JSON)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
     class query_class(BaseQuery):
         def find_by_supplier_and_framework(self, supplier_id, framework_slug):
-            return SelectionQuestions.query.filter(
-                SelectionQuestions.framework.has(
+            return SelectionAnswers.query.filter(
+                SelectionAnswers.framework.has(
                     Framework.slug == framework_slug)
             ).filter(
-                SelectionQuestions.supplier_id == supplier_id
+                SelectionAnswers.supplier_id == supplier_id
             )
 
     def serialize(self):
         return {
             "supplierId": self.supplier_id,
             "frameworkSlug": self.framework.slug,
-            "questionAnswers": self.data,
+            "questionAnswers": self.question_answers,
         }
 
 
