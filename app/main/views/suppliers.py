@@ -3,7 +3,8 @@ from sqlalchemy.exc import IntegrityError
 
 from .. import main
 from ... import db
-from ...models import Supplier, ContactInformation, AuditEvent
+from ...models import Supplier, ContactInformation, AuditEvent, \
+    SelectionQuestions, Framework
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400
@@ -245,3 +246,56 @@ def update_contact_information(supplier_id, contact_id):
         abort(400, "Database Error: {0}".format(e))
 
     return jsonify(contactInformation=contact.serialize())
+
+
+@main.route('/suppliers/<supplier_id>/selection-questions/<framework_slug>',
+            methods=['GET'])
+def get_selection_questions(supplier_id, framework_slug):
+    application = SelectionQuestions.query.find_by_supplier_and_framework(
+        supplier_id, framework_slug
+    ).first_or_404()
+
+    return jsonify(selectionQuestions=application.serialize())
+
+
+@main.route('/suppliers/<supplier_id>/selection-questions/<framework_slug>',
+            methods=['PUT'])
+def set_selection_questions(supplier_id, framework_slug):
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first_or_404()
+    if framework.status != 'open':
+        abort(400, 'Framework must be open')
+
+    application = SelectionQuestions.query.find_by_supplier_and_framework(
+        supplier_id, framework_slug
+    ).first()
+    if application is not None:
+        status_code = 200
+    else:
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == supplier_id
+        ).first_or_404()
+
+        application = SelectionQuestions(
+            supplier_id=supplier.supplier_id,
+            framework_id=framework.id,
+            data={}
+        )
+        status_code = 201
+
+    data = get_json_from_request()
+    json_has_required_keys(data, ['selectionQuestions'])
+    data = data['selectionQuestions']
+    data = drop_foreign_fields(data, ['supplierId', 'frameworkSlug'])
+
+    application.data = data
+    db.session.add(application)
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {}".format(e))
+
+    return jsonify(selectionQuestions=application.serialize()), status_code

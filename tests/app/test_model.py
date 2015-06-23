@@ -33,6 +33,7 @@ def test_framework_should_not_accept_invalid_status():
     with app.app_context(), assert_raises(DataError):
         f = Framework(
             name='foo',
+            slug='foo',
             framework='gcloud',
             status='invalid',
         )
@@ -46,6 +47,7 @@ def test_framework_should_accept_valid_statuses():
         for i, status in enumerate(Framework.STATUSES):
             f = Framework(
                 name='foo',
+                slug='foo-{}'.format(i),
                 framework='gcloud',
                 status=status,
             )
