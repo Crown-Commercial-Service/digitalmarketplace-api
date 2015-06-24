@@ -1,5 +1,5 @@
 {
-  "title": "G6 Submissions SaaS Schema",
+  "title": "G6 Submissions IaaS Schema",
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
   "additionalProperties": false,
@@ -15,7 +15,7 @@
       "type": "integer"
     },
     "lot": {
-      "enum": ["SaaS"]
+      "enum": ["IaaS"]
     },
     "title": {
       "type": "string"
@@ -37,29 +37,39 @@
     "serviceTypes": {
       "type": "array",
       "uniqueItems": true,
-      "maxItems": 22,
+      "maxItems": 2,
       "items": {
-        "enum": ["Accounting and finance", "Business intelligence and analytics", "Collaboration", "Creative and design", "Customer relationship management (CRM)", "Data management", "Electronic document and records management (EDRM)", "Energy and environment", "Healthcare", "Human resources and employee management", "IT management", "Legal", "Libraries", "Marketing", "Operations management", "Project management and planning", "Sales", "Schools and education", "Security", "Software development tools", "Telecoms", "Transport and logistics"]
+        "enum": ["Compute", "Storage"]
       }
     },
-    "serviceName": {
-      "type": "string"
+    "serviceName":{
+      "type":"string",
+      "minLength":1,
+      "maxLength":100
     },
-    "serviceSummary": {
-      "type": "string"
+    "serviceSummary":{
+      "type":"string",
+      "maxLength":500,
+      "pattern":"^\\s?(\\S+\\s*){1,50}$"
     },
-    "serviceBenefits": {
-      "type": "array",
-      "maxItems": 10,
-      "items": {
-        "type": "string"
+    "serviceBenefits":{
+      "type":"array",
+      "minItems":1,
+      "maxItems":10,
+      "items":{
+        "type":"string",
+        "maxLength":100,
+        "pattern":"^\\s?(\\S+\\s*){1,10}$"
       }
     },
-    "serviceFeatures": {
-      "type": "array",
-      "maxItems": 10,
-      "items": {
-        "type": "string"
+    "serviceFeatures":{
+      "type":"array",
+      "minItems":1,
+      "maxItems":10,
+      "items":{
+        "type":"string",
+        "maxLength":100,
+        "pattern":"^\\s?(\\S+\\s*){1,10}$"
       }
     },
     "serviceDefinitionDocument": {
@@ -78,6 +88,9 @@
     },
     "minimumContractPeriod": {
       "enum": ["Hour", "Day", "Month", "Year", "Other"]
+    },
+    "terminationCost": {
+      "type": "boolean"
     },
     "priceMin": {
       "type": "number"
@@ -173,13 +186,6 @@
     "openSource": {
       "type": "boolean"
     },
-    "codeLibraryLanguages": {
-      "type": "array",
-      "maxItems": 10,
-      "items": {
-        "type": "string"
-      }
-    },
     "apiAccess": {
       "type": "boolean"
     },
@@ -220,13 +226,6 @@
         "type": "string"
       }
     },
-    "identityStandards": {
-      "type": "array",
-      "maxItems": 10,
-      "items": {
-        "type": "string"
-      }
-    },
     "datacentresEUCode": {
       "type": "boolean"
     },
@@ -243,6 +242,38 @@
       "type": "boolean"
     },
     "dataProtectionBetweenUserAndService": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 6,
+          "items": {
+            "enum": ["Encrypted PSN service", "PSN service", "CPA Foundation VPN Gateway", "VPN using TLS, version 1.2 or later", "VPN using legacy SSL or TLS", "No encryption"]
+          }
+        },
+        "assurance": {
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation", "CESG-assured components"]
+        }
+      }
+    },
+    "dataProtectionWithinService": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 6,
+          "items": {
+            "enum": ["VPN using TLS, version 1.2 or later", "VPN using legacy SSL or TLS", "VLAN", "Bonded fibre optic connections", "Other network protection", "No encryption"]
+          }
+        },
+        "assurance": {
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation", "CESG-assured components"]
+        }
+      }
+    },
+    "dataProtectionBetweenServices": {
       "type": "object",
       "properties": {
         "value": {
@@ -339,6 +370,39 @@
         }
       }
     },
+    "dataStorageMediaDisposal": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "enum": ["CESG-assured destruction service (CAS(T))", "CPA Foundation-assured product", "CPNI-approved destruction service", "BS EN 151713:2009-compliant destruction", "CESG or CPNI-approved erasure process", "Other secure erasure process", "Other destruction/erasure process"]
+        },
+        "assurance": {
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion", "Independent testing of implementation", "CESG-assured components"]
+        }
+      }
+    },
+    "dataSecureEquipmentDisposal": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "boolean"
+        },
+        "assurance": {
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion", "CESG-assured components"]
+        }
+      }
+    },
+    "dataRedundantEquipmentAccountsRevoked": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "boolean"
+        },
+        "assurance": {
+          "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
+        }
+      }
+    },
     "serviceAvailabilityPercentage": {
       "type": "object",
       "properties": {
@@ -395,6 +459,17 @@
       }
     },
     "governanceFramework": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "boolean"
+        },
+        "assurance": {
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
+        }
+      }
+    },
+    "configurationTracking": {
       "type": "object",
       "properties": {
         "value": {
@@ -608,6 +683,17 @@
         }
       }
     },
+    "hardwareSoftwareVerification": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "boolean"
+        },
+        "assurance": {
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
+        }
+      }
+    },
     "userAuthenticateManagement": {
       "type": "object",
       "properties": {
@@ -652,6 +738,17 @@
         }
       }
     },
+    "managementInterfaceProtection": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "boolean"
+        },
+        "assurance": {
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation"]
+        }
+      }
+    },
     "identityAuthenticationControls": {
       "type": "object",
       "properties": {
@@ -665,6 +762,33 @@
         },
         "assurance": {
           "enum": ["Service provider assertion", "Independent testing of implementation", "CESG-assured components"]
+        }
+      }
+    },
+    "onboardingGuidance": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "boolean"
+        },
+        "assurance": {
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
+        }
+      }
+    },
+    "interconnectionMethods": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 4,
+          "items": {
+            "enum": ["Encrypted PSN service", "PSN service", "Private WAN", "Internet"]
+          }
+        },
+        "assurance": {
+          "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
       }
     },
@@ -711,6 +835,17 @@
         }
       }
     },
+    "serviceConfigurationGuidance": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "boolean"
+        },
+        "assurance": {
+          "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation"]
+        }
+      }
+    },
     "trainingProvided": {
       "type": "object",
       "properties": {
@@ -742,6 +877,7 @@
     "termsAndConditionsDocument",
     "termsAndConditionsDocumentURL",
     "minimumContractPeriod",
+    "terminationCost",
     "priceMin",
     "priceUnit",
     "priceString",
@@ -778,18 +914,24 @@
     "dataBackupRecovery",
     "dataExtractionRemoval",
     "dataProtectionBetweenUserAndService",
+    "dataProtectionWithinService",
+    "dataProtectionBetweenServices",
     "datacentreLocations",
     "dataManagementLocations",
     "legalJurisdiction",
     "datacentreProtectionDisclosure",
     "dataAtRestProtections",
     "dataSecureDeletion",
+    "dataStorageMediaDisposal",
+    "dataSecureEquipmentDisposal",
+    "dataRedundantEquipmentAccountsRevoked",
     "serviceAvailabilityPercentage",
     "cloudDeploymentModel",
     "otherConsumers",
     "servicesSeparation",
     "servicesManagementSeparation",
     "governanceFramework",
+    "configurationTracking",
     "changeImpactAssessment",
     "vulnerabilityAssessment",
     "vulnerabilityMonitoring",
@@ -812,10 +954,14 @@
     "userAuthenticateSupport",
     "userAccessControlManagement",
     "restrictAdministratorPermissions",
+    "managementInterfaceProtection",
     "identityAuthenticationControls",
+    "onboardingGuidance",
+    "interconnectionMethods",
     "serviceManagementModel",
     "auditInformationProvided",
     "deviceAccessMethod",
+    "serviceConfigurationGuidance",
     "trainingProvided"
   ]
 }

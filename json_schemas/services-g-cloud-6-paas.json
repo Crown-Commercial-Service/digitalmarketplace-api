@@ -1,5 +1,5 @@
 {
-  "title": "G6 Submissions IaaS Schema",
+  "title": "G6 Submissions PaaS Schema",
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
   "additionalProperties": false,
@@ -15,7 +15,7 @@
       "type": "integer"
     },
     "lot": {
-      "enum": ["IaaS"]
+      "enum": ["PaaS"]
     },
     "title": {
       "type": "string"
@@ -34,32 +34,34 @@
     "lastCompletedByEmail": {
       "type": "string"
     },
-    "serviceTypes": {
-      "type": "array",
-      "uniqueItems": true,
-      "maxItems": 2,
-      "items": {
-        "enum": ["Compute", "Storage"]
+    "serviceName":{
+      "type":"string",
+      "minLength":1,
+      "maxLength":100
+    },
+    "serviceSummary":{
+      "type":"string",
+      "maxLength":500,
+      "pattern":"^\\s?(\\S+\\s*){1,50}$"
+    },
+    "serviceBenefits":{
+      "type":"array",
+      "minItems":1,
+      "maxItems":10,
+      "items":{
+        "type":"string",
+        "maxLength":100,
+        "pattern":"^\\s?(\\S+\\s*){1,10}$"
       }
     },
-    "serviceName": {
-      "type": "string"
-    },
-    "serviceSummary": {
-      "type": "string"
-    },
-    "serviceBenefits": {
-      "type": "array",
-      "maxItems": 10,
-      "items": {
-        "type": "string"
-      }
-    },
-    "serviceFeatures": {
-      "type": "array",
-      "maxItems": 10,
-      "items": {
-        "type": "string"
+    "serviceFeatures":{
+      "type":"array",
+      "minItems":1,
+      "maxItems":10,
+      "items":{
+        "type":"string",
+        "maxLength":100,
+        "pattern":"^\\s?(\\S+\\s*){1,10}$"
       }
     },
     "serviceDefinitionDocument": {
@@ -857,7 +859,6 @@
     "lastUpdatedByEmail",
     "lastCompleted",
     "lastCompletedByEmail",
-    "serviceTypes",
     "serviceName",
     "serviceSummary",
     "serviceBenefits",

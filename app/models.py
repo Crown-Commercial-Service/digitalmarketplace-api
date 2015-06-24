@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from flask_sqlalchemy import BaseQuery
 
@@ -313,6 +314,19 @@ class ServiceTableMixin(object):
 class Service(db.Model, ServiceTableMixin):
     __tablename__ = 'services'
 
+    @staticmethod
+    def create_from_draft(draft, status):
+        now = datetime.utcnow(),
+        return Service(
+            framework_id=draft.framework_id,
+            service_id=generate_new_service_id(),
+            supplier_id=draft.supplier_id,
+            created_at=now,
+            updated_at=now,
+            data=draft.data,
+            status=status
+        )
+
     class query_class(BaseQuery):
         def framework_is_live(self):
             return self.filter(
@@ -390,12 +404,13 @@ class DraftService(db.Model, ServiceTableMixin):
 
     def serialize(self):
         data = super(DraftService, self).serialize()
-        data['service_id'] = self.service_id
+        data['id'] = self.id
+        data['serviceId'] = self.service_id
 
         return data
 
     def get_link(self):
-        return url_for(".fetch_draft_service", service_id=self.service_id)
+        return url_for(".fetch_draft_service", draft_id=self.id)
 
 
 class AuditEvent(db.Model):
@@ -471,3 +486,8 @@ def filter_null_value_fields(obj):
     return dict(
         filter(lambda x: x[1] is not None, obj.items())
     )
+
+
+def generate_new_service_id():
+    # TODO: Decide what we want G7 service IDs to look like and implement
+    return str(uuid.uuid4())

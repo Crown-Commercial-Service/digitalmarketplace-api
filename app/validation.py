@@ -13,13 +13,13 @@ MAXIMUM_SERVICE_ID_LENGTH = 20
 
 JSON_SCHEMAS_PATH = './json_schemas'
 SCHEMA_NAMES = [
-    'services-g4',
-    'services-g5',
-    'services-g6-scs',
-    'services-g6-saas',
-    'services-g6-paas',
-    'services-g6-iaas',
-    'services-g7-scs',
+    'services-g-cloud-4',
+    'services-g-cloud-5',
+    'services-g-cloud-6-scs',
+    'services-g-cloud-6-saas',
+    'services-g-cloud-6-paas',
+    'services-g-cloud-6-iaas',
+    'services-g-cloud-7-scs',
     'services-update',
     'users',
     'users-auth',
@@ -89,14 +89,16 @@ def detect_framework_or_400(submitted_json):
 
 
 def detect_framework(submitted_json):
-    if validates_against_schema('services-g4', submitted_json):
+    if validates_against_schema('services-g-cloud-4', submitted_json):
         return 'G-Cloud 4'
-    elif validates_against_schema('services-g5', submitted_json):
+    elif validates_against_schema('services-g-cloud-5', submitted_json):
         return 'G-Cloud 5'
-    elif validates_against_schema('services-g6-scs', submitted_json) or \
-            validates_against_schema('services-g6-saas', submitted_json) or \
-            validates_against_schema('services-g6-paas', submitted_json) or \
-            validates_against_schema('services-g6-iaas', submitted_json):
+    elif (
+        validates_against_schema('services-g-cloud-6-scs', submitted_json) or
+        validates_against_schema('services-g-cloud-6-saas', submitted_json) or
+        validates_against_schema('services-g-cloud-6-paas', submitted_json) or
+        validates_against_schema('services-g-cloud-6-iaas', submitted_json)
+    ):
         return 'G-Cloud 6'
     else:
         return False
@@ -135,7 +137,7 @@ def get_validation_errors(validator_name, json_data,
     form_errors = []
     for error in errors:
         if error.path:
-            key = error.path.pop()
+            key = error.path[0]
             error_map[key] = error.message
         else:
             form_errors.append(error.message)
@@ -147,32 +149,32 @@ def get_validation_errors(validator_name, json_data,
 def reason_for_failure(submitted_json):
     response = []
     try:
-        get_validator('services-g4').validate(submitted_json)
+        get_validator('services-g-cloud-4').validate(submitted_json)
     except ValidationError as e1:
         response.append('Not G4: %s' % e1.message)
 
     try:
-        get_validator('services-g5').validate(submitted_json)
+        get_validator('services-g-cloud-5').validate(submitted_json)
     except ValidationError as e1:
         response.append('Not G5: %s' % e1.message)
 
     try:
-        get_validator('services-g6-scs').validate(submitted_json)
+        get_validator('services-g-cloud-6-scs').validate(submitted_json)
     except ValidationError as e1:
         response.append('Not SCS: %s' % e1.message)
 
     try:
-        get_validator('services-g6-saas').validate(submitted_json)
+        get_validator('services-g-cloud-6-saas').validate(submitted_json)
     except ValidationError as e2:
         response.append('Not SaaS: %s' % e2.message)
 
     try:
-        get_validator('services-g6-paas').validate(submitted_json)
+        get_validator('services-g-cloud-6-paas').validate(submitted_json)
     except ValidationError as e3:
         response.append('Not PaaS: %s' % e3.message)
 
     try:
-        get_validator('services-g6-iaas').validate(submitted_json)
+        get_validator('services-g-cloud-6-iaas').validate(submitted_json)
     except ValidationError as e4:
         response.append('Not IaaS: %s' % e4.message)
 

@@ -1,5 +1,5 @@
 {
-  "title":"G-Cloud SCS Service Schema",
+  "title":"G-Cloud 7 SCS Service Schema",
   "$schema":"http://json-schema.org/schema#",
   "type":"object",
   "additionalProperties":false,
@@ -54,7 +54,7 @@
     "serviceSummary":{
       "type":"string",
       "maxLength":500,
-      "pattern":"^\\s?(\\S*\\s*){1,50}$"
+      "pattern":"^\\s?(\\S+\\s*){1,50}$"
     },
     "serviceBenefits":{
       "type":"array",
@@ -63,7 +63,7 @@
       "items":{
         "type":"string",
         "maxLength":100,
-        "pattern":"^\\s?(\\S*\\s*){1,10}$"
+        "pattern":"^\\s?(\\S+\\s*){1,10}$"
       }
     },
     "serviceFeatures":{
@@ -73,7 +73,7 @@
       "items":{
         "type":"string",
         "maxLength":100,
-        "pattern":"^\\s?(\\S*\\s*){1,10}$"
+        "pattern":"^\\s?(\\S+\\s*){1,10}$"
       }
     },
     "minimumContractPeriod":{
@@ -143,12 +143,12 @@
     "supportAvailability":{
       "type":"string",
       "maxLength":200,
-      "pattern":"^\\s?(\\S*\\s*){1,20}$"
+      "pattern":"^\\s?(\\S+\\s*){1,20}$"
     },
     "supportResponseTime":{
       "type":"string",
       "maxLength":200,
-      "pattern":"^\\s?(\\S*\\s*){1,20}$"
+      "pattern":"^\\s?(\\S+\\s*){1,20}$"
     },
     "incidentEscalation":{
       "type":"boolean"
@@ -174,7 +174,7 @@
       "items":{
         "type":"string",
         "maxLength":100,
-        "pattern":"^\\s?(\\S*\\s*){1,10}$"
+        "pattern":"^\\s?(\\S+\\s*){1,10}$"
       }
     }
   },
