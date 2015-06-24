@@ -8,7 +8,8 @@ from jsonschema import validate, SchemaError, ValidationError
 
 from app.validation import detect_framework, \
     validates_against_schema, is_valid_service_id, \
-    is_valid_date, is_valid_acknowledged_state, get_validation_errors
+    is_valid_date, is_valid_acknowledged_state, get_validation_errors, \
+    is_valid_string
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                     '..', 'example_listings'))
@@ -55,6 +56,24 @@ def test_for_valid_service_id():
 
     for example, expected in cases:
         yield assert_equal, is_valid_service_id(example), expected, example
+
+
+def test_for_valid_string():
+    cases = [
+        ("valid-string", 1, 200, True),
+        ("tooshort", 100, 200, False),
+        ("toolong", 1, 1, False),
+        ("1234567890123456", 1, 200, True),
+        ("THIS-IS-VALID-id", 1, 200, True),
+        ("invalid%chars&here", 1, 200, False),
+        ("no spaces", 1, 200, False),
+        ("no\nnewlines", 1, 200, False),
+        ("123-and-strings", 1, 200, True),
+    ]
+
+    for example, min, max, expected in cases:
+        yield assert_equal, is_valid_string(
+            example, min, max), expected, example
 
 
 def test_all_schemas_are_valid():

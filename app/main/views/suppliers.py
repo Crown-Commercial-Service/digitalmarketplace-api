@@ -3,11 +3,12 @@ from sqlalchemy.exc import IntegrityError
 
 from .. import main
 from ... import db
-from ...models import Supplier, ContactInformation, AuditEvent, \
+from ...models import Supplier, ContactInformation, AuditEvent, Service, \
     SelectionAnswers, Framework
 from ...validation import (
     validate_supplier_json_or_400,
-    validate_contact_information_json_or_400
+    validate_contact_information_json_or_400,
+    is_valid_string_or_400
 )
 from ...utils import pagination_links, drop_foreign_fields, \
     get_json_from_request, json_has_required_keys, json_has_matching_id
@@ -23,7 +24,26 @@ def list_suppliers():
 
     prefix = request.args.get('prefix', '')
 
-    suppliers = Supplier.query.order_by(Supplier.name)
+    framework = request.args.get('framework')
+
+    if framework:
+        is_valid_string_or_400(framework)
+
+    active_services = Service.query.join(
+        Service.framework
+    ).filter(
+        Framework.status == 'live',
+        Framework.framework == framework,
+        Service.status == 'published'
+    ).distinct('supplier_id').subquery()
+
+    if framework:
+        suppliers = Supplier.query.join(
+            active_services,
+            Supplier.supplier_id == active_services.c.supplier_id
+        ).order_by(Supplier.name)
+    else:
+        suppliers = Supplier.query.order_by(Supplier.name)
 
     if prefix:
         if prefix == '123':
@@ -38,9 +58,6 @@ def list_suppliers():
         page=page,
         per_page=current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'],
     )
-
-    if not suppliers.items:
-        abort(404, "No suppliers found for '{0}'".format(prefix))
 
     return jsonify(
         suppliers=[supplier.serialize() for supplier in suppliers.items],
@@ -85,7 +102,7 @@ def import_supplier(supplier_id):
     contact_informations_data = [
         drop_foreign_fields(contact_data, ['links'])
         for contact_data in supplier_data['contactInformation']
-    ]
+        ]
 
     supplier_data['contactInformation'] = contact_informations_data
 

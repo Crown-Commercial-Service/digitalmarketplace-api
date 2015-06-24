@@ -198,15 +198,11 @@ def is_valid_service_id(service_id):
     :return True|False:
     """
 
-    regex_match_valid_service_id = r"^[A-z0-9-]{%s,%s}$" % (
+    return is_valid_string(
+        service_id,
         MINIMUM_SERVICE_ID_LENGTH,
         MAXIMUM_SERVICE_ID_LENGTH
     )
-
-    if re.search(regex_match_valid_service_id, service_id):
-        return True
-
-    return False
 
 
 def is_valid_service_id_or_400(service_id):
@@ -226,3 +222,20 @@ def is_valid_date(date, default_format=DATE_FORMAT):
 
 def is_valid_acknowledged_state(acknowledged):
     return acknowledged in ['all', 'true', 'false']
+
+
+def is_valid_string_or_400(string):
+    if not is_valid_string(string):
+        abort(400, "invalid value {}".format(string))
+
+
+def is_valid_string(string, minlength=1, maxlength=255):
+    regex_match_valid_service_id = r"^[A-z0-9-]{%s,%s}$" % (
+        minlength,
+        maxlength
+    )
+
+    if re.search(regex_match_valid_service_id, string):
+        return True
+
+    return False
