@@ -42,7 +42,7 @@
     "serviceSummary":{
       "type":"string",
       "maxLength":500,
-      "pattern":"^\\s?(\\S*\\s*){1,50}$"
+      "pattern":"^\\s?(\\S+\\s*){1,50}$"
     },
     "serviceBenefits":{
       "type":"array",
@@ -51,7 +51,7 @@
       "items":{
         "type":"string",
         "maxLength":100,
-        "pattern":"^\\s?(\\S*\\s*){1,10}$"
+        "pattern":"^\\s?(\\S+\\s*){1,10}$"
       }
     },
     "serviceFeatures":{
@@ -61,7 +61,7 @@
       "items":{
         "type":"string",
         "maxLength":100,
-        "pattern":"^\\s?(\\S*\\s*){1,10}$"
+        "pattern":"^\\s?(\\S+\\s*){1,10}$"
       }
     },
     "serviceDefinitionDocument": {
