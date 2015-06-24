@@ -128,7 +128,7 @@ class TestListSuppliers(BaseApplicationTest):
             )
             db.session.commit()
 
-            response = self.client.get('/suppliers?prefix=other')
+            response = self.client.get('/suppliers?prefix=123')
 
             data = json.loads(response.get_data())
             assert_equal(200, response.status_code)

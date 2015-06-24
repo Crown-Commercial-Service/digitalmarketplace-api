@@ -26,7 +26,7 @@ def list_suppliers():
     suppliers = Supplier.query.order_by(Supplier.name)
 
     if prefix:
-        if prefix == 'other':
+        if prefix == '123':
             suppliers = suppliers.filter(
                 Supplier.name.op('~')('^[^A-Za-z]'))
         else:
