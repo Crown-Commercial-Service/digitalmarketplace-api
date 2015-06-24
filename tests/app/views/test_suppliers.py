@@ -201,6 +201,10 @@ class TestListSuppliersOnFramework(BaseApplicationTest):
         assert_equal(1, len(data['suppliers']))
         assert_equal('Active', data['suppliers'][0]['name'])
 
+    def test_should_return_no_suppliers_no_framework(self):
+        response = self.client.get('/suppliers?framework=bad')
+        assert_equal(400, response.status_code)
+
     def test_should_return_all_suppliers_if_no_framework(self):
         response = self.client.get('/suppliers')
         assert_equal(200, response.status_code)

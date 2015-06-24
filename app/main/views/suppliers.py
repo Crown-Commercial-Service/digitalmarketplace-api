@@ -1,6 +1,5 @@
 from flask import jsonify, abort, request, current_app
-from sqlalchemy.exc import IntegrityError
-
+from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
 from ...models import Supplier, ContactInformation, AuditEvent, Service, \
@@ -54,18 +53,22 @@ def list_suppliers():
             suppliers = suppliers.filter(
                 Supplier.name.ilike(prefix + '%'))
 
-    suppliers = suppliers.paginate(
-        page=page,
-        per_page=current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'],
-    )
+    try:
+        suppliers = suppliers.paginate(
+            page=page,
+            per_page=current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'],
+        )
 
-    return jsonify(
-        suppliers=[supplier.serialize() for supplier in suppliers.items],
-        links=pagination_links(
-            suppliers,
-            '.list_suppliers',
-            request.args
-        ))
+        return jsonify(
+            suppliers=[supplier.serialize() for supplier in suppliers.items],
+            links=pagination_links(
+                suppliers,
+                '.list_suppliers',
+                request.args
+            ))
+    except DataError:
+        abort(400, 'invalid framework')
+
 
 
 @main.route('/suppliers/<int:supplier_id>', methods=['GET'])
