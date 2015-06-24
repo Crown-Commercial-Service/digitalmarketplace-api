@@ -405,7 +405,7 @@ class DraftService(db.Model, ServiceTableMixin):
     def serialize(self):
         data = super(DraftService, self).serialize()
         data['id'] = self.id
-        data['service_id'] = self.service_id
+        data['serviceId'] = self.service_id
 
         return data
 

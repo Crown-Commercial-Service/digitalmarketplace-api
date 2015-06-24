@@ -229,7 +229,7 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
         assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
         assert_equal(
-            data['auditEvents'][1]['data']['draft_id'], draft_id
+            data['auditEvents'][1]['data']['draftId'], draft_id
         )
 
     def test_should_not_create_draft_with_invalid_data(self):
@@ -296,12 +296,12 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
         assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
         assert_equal(
-            data['auditEvents'][1]['data']['draft_id'], draft_id
+            data['auditEvents'][1]['data']['draftId'], draft_id
         )
         assert_equal(data['auditEvents'][2]['user'], 'joeblogs')
         assert_equal(data['auditEvents'][2]['type'], 'update_draft_service')
         assert_equal(
-            data['auditEvents'][2]['data']['draft_id'], draft_id
+            data['auditEvents'][2]['data']['draftId'], draft_id
         )
 
     def test_validation_errors_returned_for_invalid_update_of_new_draft(self):
@@ -357,7 +357,7 @@ class TestDraftServices(BaseApplicationTest):
         data = json.loads(res.get_data())
 
         assert_equal(res.status_code, 201)
-        assert_equal(data['services']['service_id'], self.service_id)
+        assert_equal(data['services']['serviceId'], self.service_id)
 
     def test_create_draft_from_existing_should_create_audit_event(self):
         res = self.client.put(
@@ -376,7 +376,7 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
         assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
         assert_equal(
-            data['auditEvents'][1]['data']['service_id'], self.service_id
+            data['auditEvents'][1]['data']['serviceId'], self.service_id
         )
 
     def test_should_not_create_two_drafts_from_existing_service(self):
@@ -406,7 +406,7 @@ class TestDraftServices(BaseApplicationTest):
         fetch = self.client.get('/draft-services/{}'.format(draft_id))
         assert_equal(fetch.status_code, 200)
         data = json.loads(res.get_data())
-        assert_equal(data['services']['service_id'], self.service_id)
+        assert_equal(data['services']['serviceId'], self.service_id)
 
     def test_should_404_on_fetch_a_draft_that_doesnt_exist(self):
         fetch = self.client.get('/draft-services/0000000000')
@@ -444,7 +444,7 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data['auditEvents'][2]['user'], 'joeblogs')
         assert_equal(data['auditEvents'][2]['type'], 'delete_draft_service')
         assert_equal(
-            data['auditEvents'][2]['data']['service_id'], self.service_id
+            data['auditEvents'][2]['data']['serviceId'], self.service_id
         )
 
         fetch_again = self.client.get(
@@ -506,10 +506,10 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data['auditEvents'][2]['user'], 'joeblogs')
         assert_equal(data['auditEvents'][2]['type'], 'update_draft_service')
         assert_equal(
-            data['auditEvents'][2]['data']['service_id'], self.service_id
+            data['auditEvents'][2]['data']['serviceId'], self.service_id
         )
         assert_equal(
-            data['auditEvents'][2]['data']['update_json']['serviceName'],
+            data['auditEvents'][2]['data']['updateJson']['serviceName'],
             'new service name'
         )
 

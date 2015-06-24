@@ -1,6 +1,6 @@
 from datetime import datetime
 from dmutils.audit import AuditTypes
-from flask import jsonify, abort, request
+from flask import jsonify, abort, request, current_app
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import asc
@@ -8,12 +8,12 @@ from sqlalchemy.types import String
 
 from .. import main
 from ... import db
-from ...utils import drop_foreign_fields
+from ...utils import drop_foreign_fields, json_has_required_keys
 from ...validation import is_valid_service_id_or_400
-from ...models import Service, DraftService, ArchivedService, \
-    Supplier, AuditEvent, Framework
+from ...models import Service, DraftService, Supplier, AuditEvent, Framework
 from ...service_utils import validate_and_return_updater_request, \
-    update_and_validate_service, index_service, validate_service
+    update_and_validate_service, index_service, validate_service, \
+    commit_and_archive_service
 from ...draft_utils import validate_and_return_draft_request, \
     get_draft_validation_errors
 
@@ -47,8 +47,8 @@ def copy_draft_service_from_existing_service(service_id):
         audit_type=AuditTypes.create_draft_service,
         user=updater_json['updated_by'],
         data={
-            "draft_id": draft.id,
-            "service_id": service_id
+            "draftId": draft.id,
+            "serviceId": service_id
         },
         db_object=draft
     )
@@ -90,9 +90,9 @@ def edit_draft_service(draft_id):
         audit_type=AuditTypes.update_draft_service,
         user=updater_json['updated_by'],
         data={
-            "draft_id": draft_id,
-            "service_id": draft.service_id,
-            "update_json": update_json
+            "draftId": draft_id,
+            "serviceId": draft.service_id,
+            "updateJson": update_json
         },
         db_object=draft
     )
@@ -110,7 +110,7 @@ def edit_draft_service(draft_id):
 
 
 @main.route('/draft-services', methods=['GET'])
-def list_drafts():
+def list_draft_services():
     supplier_id = request.args.get('supplier_id')
     service_id = request.args.get('service_id')
     framework_slug = request.args.get('framework')
@@ -187,8 +187,8 @@ def delete_draft_service(draft_id):
         audit_type=AuditTypes.delete_draft_service,
         user=updater_json['updated_by'],
         data={
-            "draft_id": draft_id,
-            "service_id": draft.service_id
+            "draftId": draft_id,
+            "serviceId": draft.service_id
         },
         db_object=None
     )
@@ -212,7 +212,7 @@ def publish_draft_service(draft_id):
     :return:
     """
 
-    updater_json = validate_and_return_updater_request()
+    update_details = validate_and_return_updater_request()
 
     draft = DraftService.query.filter(
         DraftService.id == draft_id
@@ -223,39 +223,36 @@ def publish_draft_service(draft_id):
             Service.service_id == draft.service_id
         ).first_or_404()
 
-        archived_service = ArchivedService.from_service(service)
-        new_service = update_and_validate_service(
+        service_from_draft = update_and_validate_service(
             service,
             draft.data)
 
     else:
-        new_service = Service.create_from_draft(draft, "enabled")
-        validate_service(new_service)
+        service_from_draft = Service.create_from_draft(draft, "enabled")
+        validate_service(service_from_draft)
 
-    audit = AuditEvent(
-        audit_type=AuditTypes.publish_draft_service,
-        user=updater_json['updated_by'],
-        data={
-            "draft_id": draft_id,
-            "service_id": new_service.service_id
-        },
-        db_object=new_service
-    )
+    audit_data = {
+        'supplierName': service.supplier.name,
+        'supplierId': service.supplier.supplier_id,
+        'draftId': draft_id
+    }
 
-    db.session.add(audit)
-    db.session.add(archived_service)
-    db.session.add(new_service)
-    db.session.delete(draft)
+    commit_and_archive_service(service_from_draft, update_details,
+                               AuditTypes.publish_draft_service, audit_data)
 
     try:
+        db.session.delete(draft)
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        current_app.logger.warning(
+            'Failed to delete draft {} after publishing service {}: {}'.format(
+                draft_id, service_from_draft.service_id, e.message)
+        )
 
-    index_service(new_service)
+    index_service(service_from_draft)
 
-    return jsonify(services=new_service.serialize()), 200
+    return jsonify(services=service_from_draft.serialize()), 200
 
 
 @main.route('/draft-services/<string:framework_slug>/create', methods=['POST'])
@@ -267,6 +264,7 @@ def create_new_draft_service(framework_slug):
     """
     updater_json = validate_and_return_updater_request()
     draft_json = validate_and_return_draft_request()
+    json_has_required_keys(draft_json, ['lot', 'supplierId'])
 
     # TODO: Get framework id by matching the slug once in Framework table.
     framework_id = Framework.query.filter(
@@ -291,20 +289,20 @@ def create_new_draft_service(framework_slug):
         data=draft_json,
         status="not-submitted"
     )
-    db.session.add(draft)
-    db.session.flush()
-
-    audit = AuditEvent(
-        audit_type=AuditTypes.create_draft_service,
-        user=updater_json['updated_by'],
-        data={
-            "draft_id": draft.id
-        },
-        db_object=draft
-    )
-    db.session.add(audit)
-
     try:
+        db.session.add(draft)
+        db.session.flush()
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.create_draft_service,
+            user=updater_json['updated_by'],
+            data={
+                "draftId": draft.id
+            },
+            db_object=draft
+        )
+        db.session.add(audit)
+
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
