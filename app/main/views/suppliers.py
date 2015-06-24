@@ -70,7 +70,6 @@ def list_suppliers():
         abort(400, 'invalid framework')
 
 
-
 @main.route('/suppliers/<int:supplier_id>', methods=['GET'])
 def get_supplier(supplier_id):
     supplier = Supplier.query.filter(
