@@ -28,15 +28,14 @@ def list_suppliers():
     if framework:
         is_valid_string_or_400(framework)
 
-    active_services = Service.query.join(
-        Service.framework
-    ).filter(
-        Framework.status == 'live',
-        Framework.framework == framework,
-        Service.status == 'published'
-    ).distinct('supplier_id').subquery()
+        active_services = Service.query.join(
+            Service.framework
+        ).filter(
+            Framework.status == 'live',
+            Framework.framework == framework,
+            Service.status == 'published'
+        ).distinct('supplier_id').subquery()
 
-    if framework:
         suppliers = Supplier.query.join(
             active_services,
             Supplier.supplier_id == active_services.c.supplier_id
