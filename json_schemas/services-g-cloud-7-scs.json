@@ -57,7 +57,7 @@
     "serviceSummary":{
       "type":"string",
       "maxLength":500,
-      "pattern":"^\\s?(\\S*\\s*){1,50}$"
+      "pattern":"^\\s?(?:\\S+\\s+){0,49}\\S+\\s?$"
     },
     "serviceBenefits":{
       "type":"array",
@@ -66,7 +66,7 @@
       "items":{
         "type":"string",
         "maxLength":100,
-        "pattern":"^\\s?(\\S*\\s*){1,10}$"
+        "pattern":"^\\s?(?:\\S+\\s+){0,9}\\S+\\s?$"
       }
     },
     "serviceFeatures":{
@@ -76,7 +76,7 @@
       "items":{
         "type":"string",
         "maxLength":100,
-        "pattern":"^\\s?(\\S*\\s*){1,10}$"
+        "pattern":"^\\s?(?:\\S+\\s+){0,9}\\S+\\s?$"
       }
     },
     "minimumContractPeriod":{
@@ -146,12 +146,12 @@
     "supportAvailability":{
       "type":"string",
       "maxLength":200,
-      "pattern":"^\\s?(\\S*\\s*){1,20}$"
+      "pattern":"^\\s?(?:\\S+\\s+){0,19}\\S+\\s?$"
     },
     "supportResponseTime":{
       "type":"string",
       "maxLength":200,
-      "pattern":"^\\s?(\\S*\\s*){1,20}$"
+      "pattern":"^\\s?(?:\\S+\\s+){0,19}\\S+\\s?$"
     },
     "incidentEscalation":{
       "type":"boolean"
@@ -177,7 +177,7 @@
       "items":{
         "type":"string",
         "maxLength":100,
-        "pattern":"^\\s?(\\S*\\s*){1,10}$"
+        "pattern":"^\\s?(?:\\S+\\s+){0,9}\\S+\\s?$"
       }
     }
   },
