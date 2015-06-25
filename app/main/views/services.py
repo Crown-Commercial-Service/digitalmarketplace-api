@@ -161,8 +161,6 @@ def import_service(service_id):
     if service is not None:
         abort(400, "Cannot update service by PUT")
 
-    now = datetime.utcnow()
-
     updater_json = validate_and_return_updater_request()
     service_json = validate_and_return_service_request(service_id)
 
@@ -188,8 +186,6 @@ def import_service(service_id):
     service = Service(service_id=service_id)
     service.supplier_id = supplier_id
     service.framework_id = framework.id
-    service.updated_at = now
-    service.created_at = now
     service.status = service_data.pop('status', 'published')
     service.data = service_data
 
@@ -268,7 +264,6 @@ def update_service_status(service_id, status):
     update_json = validate_and_return_updater_request()
 
     prior_status, service.status = service.status, status
-    service.updated_at = datetime.utcnow()
 
     commit_and_archive_service(service, update_json,
                                AuditTypes.update_service_status,

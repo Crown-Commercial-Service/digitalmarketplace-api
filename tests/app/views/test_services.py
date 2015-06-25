@@ -1341,7 +1341,8 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             service = Service.query.filter(Service.service_id ==
                                            "1234567890123456").first()
             assert_equal(service.data, payload)
-            assert_equal(service.created_at, service.updated_at)
+            assert_almost_equal(service.created_at, service.updated_at,
+                                delta=timedelta(seconds=0.5))
             assert_almost_equal(now, service.created_at,
                                 delta=timedelta(seconds=2))
 
@@ -1412,7 +1413,8 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                                            "4-disabled").first()
             assert_equal(service.status, 'disabled')
             assert_equal(service.data, payload)
-            assert_equal(service.created_at, service.updated_at)
+            assert_almost_equal(service.created_at, service.updated_at,
+                                delta=timedelta(seconds=0.5))
             assert_almost_equal(now, service.created_at,
                                 delta=timedelta(seconds=2))
 

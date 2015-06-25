@@ -204,9 +204,10 @@ class User(db.Model):
     locked = db.Column(db.Boolean, index=False, unique=False,
                        nullable=False)
     created_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False)
+                           nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False)
+                           nullable=False, default=datetime.utcnow,
+                           onupdate=datetime.utcnow)
     password_changed_at = db.Column(db.DateTime, index=False, unique=False,
                                     nullable=False)
     role = db.Column(db.String, index=False, unique=False, nullable=False)
@@ -251,8 +252,10 @@ class ServiceTableMixin(object):
     data = db.Column(JSON)
     status = db.Column(db.String, index=False, unique=False, nullable=False)
 
-    created_at = db.Column(db.DateTime, index=False, nullable=False)
-    updated_at = db.Column(db.DateTime, index=False, nullable=False)
+    created_at = db.Column(db.DateTime, index=False, nullable=False,
+                           default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, index=False, nullable=False,
+                           default=datetime.utcnow, onupdate=datetime.utcnow)
 
     @declared_attr
     def supplier_id(cls):
@@ -316,13 +319,10 @@ class Service(db.Model, ServiceTableMixin):
 
     @staticmethod
     def create_from_draft(draft, status):
-        now = datetime.utcnow(),
         return Service(
             framework_id=draft.framework_id,
             service_id=generate_new_service_id(),
             supplier_id=draft.supplier_id,
-            created_at=now,
-            updated_at=now,
             data=draft.data,
             status=status
         )
@@ -391,13 +391,10 @@ class DraftService(db.Model, ServiceTableMixin):
 
     @staticmethod
     def from_service(service):
-        now = datetime.utcnow(),
         return DraftService(
             framework_id=service.framework_id,
             service_id=service.service_id,
             supplier_id=service.supplier_id,
-            created_at=now,
-            updated_at=now,
             data=service.data,
             status=service.status
         )

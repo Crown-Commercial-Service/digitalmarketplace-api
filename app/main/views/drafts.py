@@ -280,12 +280,9 @@ def create_new_draft_service(framework_slug):
         return jsonify(errors=errs), 400
 
     draft_json = drop_foreign_fields(draft_json, ['supplierId'])
-    now = datetime.utcnow()
     draft = DraftService(
         framework_id=framework_id,
         supplier_id=supplier_id,
-        created_at=now,
-        updated_at=now,
         data=draft_json,
         status="not-submitted"
     )
