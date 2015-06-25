@@ -251,9 +251,11 @@ def update_contact_information(supplier_id, contact_id):
 @main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>',
             methods=['GET'])
 def get_selection_questions(supplier_id, framework_slug):
-    application = SelectionAnswers.query.find_by_supplier_and_framework(
+    application = SelectionAnswers.find_by_supplier_and_framework(
         supplier_id, framework_slug
-    ).first_or_404()
+    )
+    if application is None:
+        abort(404)
 
     return jsonify(selectionAnswers=application.serialize())
 
@@ -267,9 +269,9 @@ def set_selection_questions(supplier_id, framework_slug):
     if framework.status != 'open':
         abort(400, 'Framework must be open')
 
-    answers = SelectionAnswers.query.find_by_supplier_and_framework(
+    answers = SelectionAnswers.find_by_supplier_and_framework(
         supplier_id, framework_slug
-    ).first()
+    )
     if answers is not None:
         status_code = 200
     else:

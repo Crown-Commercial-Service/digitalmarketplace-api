@@ -203,14 +203,14 @@ class SelectionAnswers(db.Model):
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
-    class query_class(BaseQuery):
-        def find_by_supplier_and_framework(self, supplier_id, framework_slug):
-            return SelectionAnswers.query.filter(
-                SelectionAnswers.framework.has(
-                    Framework.slug == framework_slug)
-            ).filter(
-                SelectionAnswers.supplier_id == supplier_id
-            )
+    @staticmethod
+    def find_by_supplier_and_framework(supplier_id, framework_slug):
+        return SelectionAnswers.query.filter(
+            SelectionAnswers.framework.has(
+                Framework.slug == framework_slug)
+        ).filter(
+            SelectionAnswers.supplier_id == supplier_id
+        ).first()
 
     def serialize(self):
         return {

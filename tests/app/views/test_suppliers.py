@@ -753,8 +753,8 @@ class TestSetSupplierSelectionAnswers(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 201)
-            answers = SelectionAnswers.query \
-                .find_by_supplier_and_framework(0, 'test-open').first()
+            answers = SelectionAnswers \
+                .find_by_supplier_and_framework(0, 'test-open')
             assert_equal(answers.question_answers['question'], 'answer')
 
     def test_update_existing_selection_answers(self):
@@ -783,8 +783,8 @@ class TestSetSupplierSelectionAnswers(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
-            answers = SelectionAnswers.query \
-                .find_by_supplier_and_framework(0, 'test-open').first()
+            answers = SelectionAnswers \
+                .find_by_supplier_and_framework(0, 'test-open')
             assert_equal(answers.question_answers['question'], 'answer2')
 
     def test_can_only_set_questions_on_open_framework(self):
