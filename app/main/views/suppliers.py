@@ -3,7 +3,8 @@ from sqlalchemy.exc import IntegrityError
 
 from .. import main
 from ... import db
-from ...models import Supplier, ContactInformation, AuditEvent
+from ...models import Supplier, ContactInformation, AuditEvent, \
+    SelectionAnswers, Framework
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400
@@ -245,3 +246,65 @@ def update_contact_information(supplier_id, contact_id):
         abort(400, "Database Error: {0}".format(e))
 
     return jsonify(contactInformation=contact.serialize())
+
+
+@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>',
+            methods=['GET'])
+def get_selection_questions(supplier_id, framework_slug):
+    application = SelectionAnswers.find_by_supplier_and_framework(
+        supplier_id, framework_slug
+    )
+    if application is None:
+        abort(404)
+
+    return jsonify(selectionAnswers=application.serialize())
+
+
+@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>',
+            methods=['PUT'])
+def set_selection_questions(supplier_id, framework_slug):
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first_or_404()
+    if framework.status != 'open':
+        abort(400, 'Framework must be open')
+
+    answers = SelectionAnswers.find_by_supplier_and_framework(
+        supplier_id, framework_slug
+    )
+    if answers is not None:
+        status_code = 200
+    else:
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == supplier_id
+        ).first_or_404()
+
+        answers = SelectionAnswers(
+            supplier_id=supplier.supplier_id,
+            framework_id=framework.id,
+            question_answers={}
+        )
+        status_code = 201
+
+    request_data = get_json_from_request()
+    json_has_required_keys(request_data, ['selectionAnswers', 'updated_by'])
+    answers_data = request_data['selectionAnswers']
+    json_has_required_keys(answers_data, ['questionAnswers'])
+
+    answers.question_answers = answers_data['questionAnswers']
+    db.session.add(answers)
+    db.session.add(
+        AuditEvent(
+            audit_type=AuditTypes.answer_selection_questions,
+            db_object=answers,
+            user=request_data['updated_by'],
+            data={'update': answers_data})
+    )
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {}".format(e))
+
+    return jsonify(selectionAnswers=answers.serialize()), status_code

@@ -21,6 +21,7 @@ class Framework(db.Model):
     ]
 
     id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String, nullable=False, unique=True, index=True)
     name = db.Column(db.String(255), nullable=False)
     framework = db.Column(db.Enum('gcloud', name='frameworks_enum'),
                           index=True, nullable=False)
@@ -186,6 +187,37 @@ class Supplier(db.Model):
         self.clients = data.get('clients')
 
         return self
+
+
+class SelectionAnswers(db.Model):
+    __tablename__ = 'selection_answers'
+
+    supplier_id = db.Column(db.Integer,
+                            db.ForeignKey('suppliers.supplier_id'),
+                            primary_key=True)
+    framework_id = db.Column(db.Integer,
+                             db.ForeignKey('frameworks.id'),
+                             primary_key=True)
+    question_answers = db.Column(JSON)
+
+    supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
+    framework = db.relationship(Framework, lazy='joined', innerjoin=True)
+
+    @staticmethod
+    def find_by_supplier_and_framework(supplier_id, framework_slug):
+        return SelectionAnswers.query.filter(
+            SelectionAnswers.framework.has(
+                Framework.slug == framework_slug)
+        ).filter(
+            SelectionAnswers.supplier_id == supplier_id
+        ).first()
+
+    def serialize(self):
+        return {
+            "supplierId": self.supplier_id,
+            "frameworkSlug": self.framework.slug,
+            "questionAnswers": self.question_answers,
+        }
 
 
 class User(db.Model):
