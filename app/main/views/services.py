@@ -1,4 +1,3 @@
-from datetime import datetime
 from dmutils.audit import AuditTypes
 
 from flask import jsonify, abort, request, current_app
@@ -96,8 +95,9 @@ def list_archived_services_by_service_id():
     except ValueError:
         abort(400, "Invalid page argument")
 
-    services = ArchivedService.query.filter(Service.service_id == service_id) \
-                                    .order_by(asc(ArchivedService.id))
+    services = ArchivedService.query.filter(
+        ArchivedService.service_id == service_id) \
+        .order_by(asc(ArchivedService.id))
 
     services = services.paginate(
         page=page,
@@ -133,13 +133,8 @@ def update_service(service_id):
 
     updated_service = update_and_validate_service(service, update)
 
-    audit_data = {
-        'supplierName': service.supplier.name,
-        'supplierId': service.supplier.supplier_id
-    }
-
     commit_and_archive_service(updated_service, update_details,
-                               AuditTypes.update_service, audit_data)
+                               AuditTypes.update_service)
     index_service(updated_service)
 
     return jsonify(message="done"), 200
@@ -189,13 +184,8 @@ def import_service(service_id):
     service.status = service_data.pop('status', 'published')
     service.data = service_data
 
-    audit_data = {
-        'supplierName': supplier.name,
-        'supplierId': supplier.supplier_id
-    }
-
     commit_and_archive_service(service, updater_json,
-                               AuditTypes.import_service, audit_data)
+                               AuditTypes.import_service)
 
     index_service(service)
 

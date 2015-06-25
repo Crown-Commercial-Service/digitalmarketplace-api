@@ -30,7 +30,12 @@ def update_and_validate_service(service, service_payload):
 
 
 def validate_service(service):
-    data = service.serialize()
+    data = dict(service.data.items())
+    data.update({
+        'id': service.service_id,
+        'supplierId': service.supplier_id,
+    })
+
     data = drop_foreign_fields(
         data,
         ['service_id', 'supplierName', 'links', 'frameworkName', 'updatedAt'])
@@ -58,6 +63,8 @@ def commit_and_archive_service(updated_service, update_details,
         db.session.flush()
 
         audit_data.update({
+            'supplierName': updated_service.supplier.name,
+            'supplierId': updated_service.supplier.supplier_id,
             'serviceId': updated_service.service_id,
             'oldArchivedServiceId': last_archive,
             'newArchivedServiceId': service_to_archive.id,

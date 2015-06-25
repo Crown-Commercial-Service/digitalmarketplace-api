@@ -1,4 +1,3 @@
-from datetime import datetime
 from dmutils.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 
@@ -231,14 +230,9 @@ def publish_draft_service(draft_id):
         service_from_draft = Service.create_from_draft(draft, "enabled")
         validate_service(service_from_draft)
 
-    audit_data = {
-        'supplierName': service.supplier.name,
-        'supplierId': service.supplier.supplier_id,
-        'draftId': draft_id
-    }
-
     commit_and_archive_service(service_from_draft, update_details,
-                               AuditTypes.publish_draft_service, audit_data)
+                               AuditTypes.publish_draft_service,
+                               audit_data={'draftId': draft_id})
 
     try:
         db.session.delete(draft)

@@ -298,7 +298,9 @@ class ServiceTableMixin(object):
         return data
 
     def update_from_json(self, data):
-        self.service_id = str(data.pop('id', self.service_id))
+        sid = data.pop('id', self.service_id)
+        if sid:
+            self.service_id = str(sid)
 
         data.pop('supplierId', None)
         data.pop('supplierName', None)
@@ -387,7 +389,8 @@ class DraftService(db.Model, ServiceTableMixin):
     __tablename__ = 'draft_services'
 
     # Overwrites service_id column to remove uniqueness and nullable constraint
-    service_id = db.Column(db.String, index=True, unique=False, nullable=True)
+    service_id = db.Column(db.String, index=True, unique=False, nullable=True,
+                           default=None)
 
     @staticmethod
     def from_service(service):
@@ -402,7 +405,8 @@ class DraftService(db.Model, ServiceTableMixin):
     def serialize(self):
         data = super(DraftService, self).serialize()
         data['id'] = self.id
-        data['serviceId'] = self.service_id
+        if self.service_id:
+            data['serviceId'] = self.service_id
 
         return data
 
@@ -487,4 +491,6 @@ def filter_null_value_fields(obj):
 
 def generate_new_service_id():
     # TODO: Decide what we want G7 service IDs to look like and implement
-    return str(uuid.uuid4())
+    u = uuid.uuid4()
+    id = str(u.int)[-16:]
+    return id

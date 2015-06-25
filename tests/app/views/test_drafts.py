@@ -540,7 +540,7 @@ class TestDraftServices(BaseApplicationTest):
             content_type='application/json')
         assert_equal(res.status_code, 404)
 
-    def test_should_be_able_to_launch_valid_draft_service(self):
+    def test_should_be_able_to_publish_valid_copied_draft_service(self):
         initial = self.client.get('/services/{}'.format(self.service_id))
         assert_equal(initial.status_code, 200)
         assert_equal(
@@ -615,3 +615,71 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(
             json.loads(archives.get_data())['services'][0]['serviceName'],
             'My Iaas Service')
+
+    def test_should_be_able_to_publish_valid_new_draft_service(self):
+        res = self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+        draft_data = json.loads(res.get_data())
+        draft_id = draft_data['services']['id']
+        g7_complete = self.load_example_listing("G7-SCS")
+        g7_complete.pop('id', None)
+        draft_update_json = {'services': g7_complete,
+                             'update_details': {'updated_by': 'joeblogs'}}
+        res2 = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(draft_update_json),
+            content_type='application/json')
+        complete_draft = json.loads(res2.get_data())
+        print("COMPLETE: {}".format(json.dumps(complete_draft)))
+
+        res = self.client.post(
+            '/draft-services/{}/publish'.format(draft_id),
+            data=json.dumps({
+                'update_details': {
+                    'updated_by': 'joeblogs',
+                }
+            }),
+            content_type='application/json')
+        assert_equal(res.status_code, 200)
+        created_service_data = json.loads(res.get_data())
+        new_service_id = created_service_data['services']['id']
+
+        audit_response = self.client.get('/audit-events')
+        assert_equal(audit_response.status_code, 200)
+        data = json.loads(audit_response.get_data())
+        print("AUDIT: {}".format(json.dumps(data)))
+        assert_equal(len(data['auditEvents']), 4)
+        assert_equal(data['auditEvents'][0]['type'], 'import_service')
+        assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
+        assert_equal(data['auditEvents'][2]['type'], 'update_draft_service')
+        assert_equal(data['auditEvents'][3]['type'], 'publish_draft_service')
+
+        # draft should no longer exist
+        fetch = self.client.get('/draft-services/{}'.format(draft_id))
+        assert_equal(fetch.status_code, 404)
+
+        # G-Cloud 7 service should not be visible yet
+        fetch2 = self.client.get('/services/{}'.format(new_service_id))
+        assert_equal(fetch2.status_code, 404)
+
+        # published should be visible when G7 goes live
+        with self.app.app_context():
+            fw = Framework.query.filter_by(name='G-Cloud 7').first()
+            fw.status = 'live'
+            db.session.commit()
+        updated_draft = self.client.get('/services/{}'.format(new_service_id))
+        assert_equal(updated_draft.status_code, 200)
+        assert_equal(
+            json.loads(updated_draft.get_data())['services']['serviceName'],
+            'An example G-7 SCS Service')
+
+        # archive should be updated
+        archives = self.client.get(
+            '/archived-services?service-id={}'.format(new_service_id))
+        assert_equal(archives.status_code, 200)
+        print("ARCHIVES: {}".format(archives.get_data()))
+        assert_equal(
+            json.loads(archives.get_data())['services'][0]['serviceName'],
+            'An example G-7 SCS Service')

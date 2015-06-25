@@ -100,6 +100,8 @@ def detect_framework(submitted_json):
         validates_against_schema('services-g-cloud-6-iaas', submitted_json)
     ):
         return 'G-Cloud 6'
+    elif validates_against_schema('services-g-cloud-7-scs', submitted_json):
+        return 'G-Cloud 7'
     else:
         return False
 
@@ -177,6 +179,11 @@ def reason_for_failure(submitted_json):
         get_validator('services-g-cloud-6-iaas').validate(submitted_json)
     except ValidationError as e4:
         response.append('Not IaaS: %s' % e4.message)
+
+    try:
+        get_validator('services-g-cloud-7-scs').validate(submitted_json)
+    except ValidationError as e5:
+        response.append('Not 7-SCS: %s' % e5.message)
 
     return '. '.join(response)
 
