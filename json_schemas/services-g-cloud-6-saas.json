@@ -50,7 +50,7 @@
     "serviceSummary":{
       "type":"string",
       "maxLength":500,
-      "pattern":"^\\s?(?:\\S+\\s+){0,49}\\S+\\s?$"
+      "pattern":"^\\s*(?:\\S+\\s+){0,49}\\S+\\s*$"
     },
     "serviceBenefits":{
       "type":"array",
@@ -59,7 +59,7 @@
       "items":{
         "type":"string",
         "maxLength":100,
-        "pattern":"^\\s?(?:\\S+\\s+){0,9}\\S+\\s?$"
+        "pattern":"^\\s*(?:\\S+\\s+){0,9}\\S+\\s*$"
       }
     },
     "serviceFeatures":{
@@ -69,7 +69,7 @@
       "items":{
         "type":"string",
         "maxLength":100,
-        "pattern":"^\\s?(?:\\S+\\s+){0,9}\\S+\\s?$"
+        "pattern":"^\\s*(?:\\S+\\s+){0,9}\\S+\\s*$"
       }
     },
     "serviceDefinitionDocument": {
