@@ -632,7 +632,6 @@ class TestDraftServices(BaseApplicationTest):
             data=json.dumps(draft_update_json),
             content_type='application/json')
         complete_draft = json.loads(res2.get_data())
-        print("COMPLETE: {}".format(json.dumps(complete_draft)))
 
         res = self.client.post(
             '/draft-services/{}/publish'.format(draft_id),
@@ -649,7 +648,6 @@ class TestDraftServices(BaseApplicationTest):
         audit_response = self.client.get('/audit-events')
         assert_equal(audit_response.status_code, 200)
         data = json.loads(audit_response.get_data())
-        print("AUDIT: {}".format(json.dumps(data)))
         assert_equal(len(data['auditEvents']), 4)
         assert_equal(data['auditEvents'][0]['type'], 'import_service')
         assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
@@ -679,7 +677,6 @@ class TestDraftServices(BaseApplicationTest):
         archives = self.client.get(
             '/archived-services?service-id={}'.format(new_service_id))
         assert_equal(archives.status_code, 200)
-        print("ARCHIVES: {}".format(archives.get_data()))
         assert_equal(
             json.loads(archives.get_data())['services'][0]['serviceName'],
             'An example G-7 SCS Service')

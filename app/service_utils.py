@@ -34,6 +34,7 @@ def validate_service(service):
     data.update({
         'id': service.service_id,
         'supplierId': service.supplier_id,
+        'status': service.status
     })
 
     data = drop_foreign_fields(

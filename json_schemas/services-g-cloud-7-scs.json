@@ -8,6 +8,9 @@
       "type":"string",
       "pattern":"^([0-9]{16})$"
     },
+    "status": {
+      "enum": ["disabled", "enabled", "published", "submitted", "not-submitted"]
+    },
     "supplierId":{
       "type":"integer"
     },
