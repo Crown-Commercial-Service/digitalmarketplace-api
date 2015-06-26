@@ -23,17 +23,25 @@ def validate_and_return_service_request(service_id):
     return json_payload['services']
 
 
-def update_and_validate_service(service, service_payload, updater_payload):
+def update_and_validate_service(service, service_payload):
     service.update_from_json(service_payload)
+    validate_service(service)
+    return service
 
-    data = service.serialize()
+
+def validate_service(service):
+    data = dict(service.data.items())
+    data.update({
+        'id': service.service_id,
+        'supplierId': service.supplier_id,
+        'status': service.status
+    })
 
     data = drop_foreign_fields(
         data,
         ['service_id', 'supplierName', 'links', 'frameworkName', 'updatedAt'])
-
     detect_framework_or_400(data)
-    return service
+    return
 
 
 def commit_and_archive_service(updated_service, update_details,
@@ -56,6 +64,8 @@ def commit_and_archive_service(updated_service, update_details,
         db.session.flush()
 
         audit_data.update({
+            'supplierName': updated_service.supplier.name,
+            'supplierId': updated_service.supplier.supplier_id,
             'serviceId': updated_service.service_id,
             'oldArchivedServiceId': last_archive,
             'newArchivedServiceId': service_to_archive.id,

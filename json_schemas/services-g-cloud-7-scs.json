@@ -1,5 +1,5 @@
 {
-  "title":"G-Cloud SCS Service Schema",
+  "title":"G-Cloud 7 SCS Service Schema",
   "$schema":"http://json-schema.org/schema#",
   "type":"object",
   "additionalProperties":false,
@@ -7,6 +7,9 @@
     "id":{
       "type":"string",
       "pattern":"^([0-9]{16})$"
+    },
+    "status": {
+      "enum": ["disabled", "enabled", "published", "submitted", "not-submitted"]
     },
     "supplierId":{
       "type":"integer"

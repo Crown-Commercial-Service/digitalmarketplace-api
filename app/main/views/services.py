@@ -1,4 +1,3 @@
-from datetime import datetime
 from dmutils.audit import AuditTypes
 
 from flask import jsonify, abort, request, current_app
@@ -96,8 +95,9 @@ def list_archived_services_by_service_id():
     except ValueError:
         abort(400, "Invalid page argument")
 
-    services = ArchivedService.query.filter(Service.service_id == service_id) \
-                                    .order_by(asc(ArchivedService.id))
+    services = ArchivedService.query.filter(
+        ArchivedService.service_id == service_id) \
+        .order_by(asc(ArchivedService.id))
 
     services = services.paginate(
         page=page,
@@ -131,17 +131,10 @@ def update_service(service_id):
     update_details = validate_and_return_updater_request()
     update = validate_and_return_service_request(service_id)
 
-    updated_service = update_and_validate_service(
-        service, update, update_details
-    )
-
-    audit_data = {
-        'supplierName': service.supplier.name,
-        'supplierId': service.supplier.supplier_id
-    }
+    updated_service = update_and_validate_service(service, update)
 
     commit_and_archive_service(updated_service, update_details,
-                               AuditTypes.update_service, audit_data)
+                               AuditTypes.update_service)
     index_service(updated_service)
 
     return jsonify(message="done"), 200
@@ -162,8 +155,6 @@ def import_service(service_id):
 
     if service is not None:
         abort(400, "Cannot update service by PUT")
-
-    now = datetime.utcnow()
 
     updater_json = validate_and_return_updater_request()
     service_json = validate_and_return_service_request(service_id)
@@ -190,18 +181,11 @@ def import_service(service_id):
     service = Service(service_id=service_id)
     service.supplier_id = supplier_id
     service.framework_id = framework.id
-    service.updated_at = now
-    service.created_at = now
     service.status = service_data.pop('status', 'published')
     service.data = service_data
 
-    audit_data = {
-        'supplierName': supplier.name,
-        'supplierId': supplier.supplier_id
-    }
-
     commit_and_archive_service(service, updater_json,
-                               AuditTypes.import_service, audit_data)
+                               AuditTypes.import_service)
 
     index_service(service)
 
@@ -270,7 +254,6 @@ def update_service_status(service_id, status):
     update_json = validate_and_return_updater_request()
 
     prior_status, service.status = service.status, status
-    service.updated_at = datetime.utcnow()
 
     commit_and_archive_service(service, update_json,
                                AuditTypes.update_service_status,

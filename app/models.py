@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from flask_sqlalchemy import BaseQuery
 
@@ -235,9 +236,10 @@ class User(db.Model):
     locked = db.Column(db.Boolean, index=False, unique=False,
                        nullable=False)
     created_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False)
+                           nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False)
+                           nullable=False, default=datetime.utcnow,
+                           onupdate=datetime.utcnow)
     password_changed_at = db.Column(db.DateTime, index=False, unique=False,
                                     nullable=False)
     role = db.Column(db.String, index=False, unique=False, nullable=False)
@@ -282,8 +284,10 @@ class ServiceTableMixin(object):
     data = db.Column(JSON)
     status = db.Column(db.String, index=False, unique=False, nullable=False)
 
-    created_at = db.Column(db.DateTime, index=False, nullable=False)
-    updated_at = db.Column(db.DateTime, index=False, nullable=False)
+    created_at = db.Column(db.DateTime, index=False, nullable=False,
+                           default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, index=False, nullable=False,
+                           default=datetime.utcnow, onupdate=datetime.utcnow)
 
     @declared_attr
     def supplier_id(cls):
@@ -326,7 +330,9 @@ class ServiceTableMixin(object):
         return data
 
     def update_from_json(self, data):
-        self.service_id = str(data.pop('id', self.service_id))
+        sid = data.pop('id', self.service_id)
+        if sid:
+            self.service_id = str(sid)
 
         data.pop('supplierId', None)
         data.pop('supplierName', None)
@@ -344,6 +350,16 @@ class ServiceTableMixin(object):
 
 class Service(db.Model, ServiceTableMixin):
     __tablename__ = 'services'
+
+    @staticmethod
+    def create_from_draft(draft, status):
+        return Service(
+            framework_id=draft.framework_id,
+            service_id=generate_new_service_id(),
+            supplier_id=draft.supplier_id,
+            data=draft.data,
+            status=status
+        )
 
     class query_class(BaseQuery):
         def framework_is_live(self):
@@ -405,29 +421,29 @@ class DraftService(db.Model, ServiceTableMixin):
     __tablename__ = 'draft_services'
 
     # Overwrites service_id column to remove uniqueness and nullable constraint
-    service_id = db.Column(db.String, index=True, unique=False, nullable=True)
+    service_id = db.Column(db.String, index=True, unique=False, nullable=True,
+                           default=None)
 
     @staticmethod
     def from_service(service):
-        now = datetime.utcnow(),
         return DraftService(
             framework_id=service.framework_id,
             service_id=service.service_id,
             supplier_id=service.supplier_id,
-            created_at=now,
-            updated_at=now,
             data=service.data,
             status=service.status
         )
 
     def serialize(self):
         data = super(DraftService, self).serialize()
-        data['service_id'] = self.service_id
+        data['id'] = self.id
+        if self.service_id:
+            data['serviceId'] = self.service_id
 
         return data
 
     def get_link(self):
-        return url_for(".fetch_draft_service", service_id=self.service_id)
+        return url_for(".fetch_draft_service", draft_id=self.id)
 
 
 class AuditEvent(db.Model):
@@ -503,3 +519,10 @@ def filter_null_value_fields(obj):
     return dict(
         filter(lambda x: x[1] is not None, obj.items())
     )
+
+
+def generate_new_service_id():
+    # TODO: Decide what we want G7 service IDs to look like and implement
+    u = uuid.uuid4()
+    id = str(u.int)[-16:]
+    return id

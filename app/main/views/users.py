@@ -123,11 +123,9 @@ def update_user(user_id):
 
     json_has_matching_id(user_update, user_id)
 
-    now = datetime.utcnow()
-    user.updated_at = now
     if 'password' in user_update:
         user.password = encryption.hashpw(user_update['password'])
-        user.password_changed_at = now
+        user.password_changed_at = datetime.utcnow()
     if 'active' in user_update:
         user.active = user_update['active']
     if 'locked' in user_update:
