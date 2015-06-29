@@ -3,10 +3,7 @@
    "supplierId": 1,
    "lot": "PaaS",
    "title": "\"My new PaaS\" Service with \"Quotes\"",
-   "lastUpdated": "2014-12-22T17:32:31Z",
-   "lastUpdatedByEmail": "supplier@digital.cabinet-office.gov.uk",
-   "lastCompleted": "2014-12-22T17:32:37Z",
-   "lastCompletedByEmail": "supplier@digital.cabinet-office.gov.uk",
+   "createdAt": "2014-12-22T17:32:37Z",
    "serviceBenefits": [
       "Benefit 1"
    ],

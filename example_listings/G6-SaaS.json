@@ -3,10 +3,7 @@
    "supplierId": 1,
    "lot": "SaaS",
    "title": "A SaaS with lots of options",
-   "lastUpdated": "2014-12-23T14:51:15Z",
-   "lastUpdatedByEmail": "supplier@digital.cabinet-office.gov.uk",
-   "lastCompleted": "2014-12-23T14:51:19Z",
-   "lastCompletedByEmail": "supplier@digital.cabinet-office.gov.uk",
+   "createdAt": "2014-12-23T14:51:19Z",
    "serviceTypes": [
       "Accounting and finance",
       "Business intelligence and analytics",

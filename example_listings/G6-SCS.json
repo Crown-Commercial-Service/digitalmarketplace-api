@@ -3,10 +3,7 @@
    "supplierId": 1,
    "lot": "SCS",
    "title": "Finally, an SCS \"Service\u0027: ]",
-   "lastUpdated": "2014-12-23T14:53:17Z",
-   "lastUpdatedByEmail": "supplier@digital.cabinet-office.gov.uk",
-   "lastCompleted": "2014-12-23T14:53:20Z",
-   "lastCompletedByEmail": "supplier@digital.cabinet-office.gov.uk",
+   "createdAt": "2014-12-23T14:53:20Z",
    "serviceTypes": [
       "Implementation",
       "Ongoing support",

@@ -4,7 +4,6 @@ import os
 from flask import json
 from nose.tools import assert_equal, assert_in, assert_true, \
     assert_almost_equal, assert_false, assert_is_not_none, assert_not_in
-
 from app.models import Service, Supplier, ContactInformation, Framework
 import mock
 from app import db, create_app
@@ -1291,10 +1290,10 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             )
             db.session.commit()
 
-    def test_json_postgres_field_should_not_include_column_fields(self):
+    def test_json_postgres_data_column_should_not_include_column_fields(self):
         non_json_fields = [
             'supplierName', 'links', 'frameworkName', 'status', 'id',
-            'supplierId']
+            'supplierId', 'updatedAt', 'createdAt']
         with self.app.app_context():
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
@@ -1319,6 +1318,8 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
     @mock.patch('app.search_api_client')
     def test_add_a_new_service(self, search_api_client):
+        assert_equal.im_class.maxDiff = None
+
         with self.app.app_context():
             search_api_client.index.return_value = "bar"
 
@@ -1336,15 +1337,29 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
             assert_equal(response.status_code, 201)
             now = datetime.utcnow()
-            payload.pop('id', None)
-            payload.pop('supplierId', None)
-            service = Service.query.filter(Service.service_id ==
-                                           "1234567890123456").first()
-            assert_equal(service.data, payload)
-            assert_almost_equal(service.created_at, service.updated_at,
-                                delta=timedelta(seconds=0.5))
-            assert_almost_equal(now, service.created_at,
-                                delta=timedelta(seconds=2))
+
+            response = self.client.get("/services/1234567890123456")
+            service = json.loads(response.get_data())["services"]
+
+            assert_equal(
+                service["id"],
+                payload['id'])
+
+            assert_equal(
+                service["supplierId"],
+                payload['supplierId'])
+
+            assert_equal(
+                self.string_to_time_to_string(
+                    service["createdAt"],
+                    DATETIME_FORMAT,
+                    "%Y-%m-%dT%H:%M:%SZ"),
+                payload['createdAt'])
+
+            assert_almost_equal(
+                self.string_to_time(service["updatedAt"], DATETIME_FORMAT),
+                now,
+                delta=timedelta(seconds=2))
 
     @mock.patch('app.search_api_client')
     def test_add_a_new_service_creates_audit_event(self, search_api_client):
@@ -1371,7 +1386,9 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
             assert_equal(len(data['auditEvents']), 1)
             assert_equal(data['auditEvents'][0]['type'], 'import_service')
-            assert_equal(data['auditEvents'][0]['user'], 'joeblogs')
+            assert_equal(
+                data['auditEvents'][0]['user'],
+                'joeblogs')
             assert_equal(data['auditEvents'][0]['data']['serviceId'],
                          "1234567890123456")
             assert_equal(data['auditEvents'][0]['data']['supplierName'],
