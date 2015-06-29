@@ -62,15 +62,38 @@ class ServiceUpdater(object):
 
     def __call__(self, service):
         client = apiclient.DataAPIClient(self.endpoint, self.access_token)
+
+        user = self.get_user(service)
+        fix_data = self.update_data(service)
+        cleaned_data = self.clean_data(fix_data)
+
         try:
-            client.create_service(service['id'], self.clean_data(service),
-                                  'service import from API', getpass.getuser())
+            client.create_service(
+                service['id'],
+                cleaned_data,
+                user,
+                None
+            )
             return True
         except apiclient.APIError as e:
             print("ERROR: {}. {} not imported".format(e.message,
                                                       service.get('id')),
                   file=sys.stderr)
             return False
+
+    def get_user(self, service):
+        if 'lastCompletedByEmail' in service:
+            return service['lastCompletedByEmail']
+        return getpass.getuser()
+
+    def update_data(self, service):
+        if 'lastCompleted' in service:
+            service['createdAt'] = service['lastCompleted']
+        service.pop('lastCompletedByEmail', None)
+        service.pop('lastCompleted', None)
+        service.pop('lastUpdated', None)
+        service.pop('lastUpdatedByEmail', None)
+        return service
 
     def clean_data(self, service):
         for field in CLEAN_FIELDS:
@@ -110,6 +133,7 @@ def do_index(api_url, api_access_token, source_api_url,
             counter += 1
             status = status and result
             print_progress(counter, start_time)
+        services = None
 
     print_progress(counter, start_time)
     return status
