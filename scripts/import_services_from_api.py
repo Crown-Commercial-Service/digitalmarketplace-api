@@ -41,11 +41,27 @@ def request_services(api_url, api_access_token, page=1):
         for service in services_page['services']:
             yield service
 
-        if services_page['links'].get('next'):
-            page += 1
+        if 'links' in services_page:
+            links = services_page['links']
+
+            if isinstance(links, list):
+                found = False
+                for link in links:
+                    if 'rel' in link:
+                        if link['rel'] == 'next':
+                            page += 1
+                            found = True
+
+                if not found:
+                    return
+
+            else:
+                if 'next' in links:
+                    page += 1
+                else:
+                    return
         else:
             return
-
 
 def print_progress(counter, start_time):
     if counter % 100 == 0:
