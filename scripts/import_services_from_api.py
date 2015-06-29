@@ -133,7 +133,6 @@ def do_index(api_url, api_access_token, source_api_url,
             counter += 1
             status = status and result
             print_progress(counter, start_time)
-        services = None
 
     print_progress(counter, start_time)
     return status
