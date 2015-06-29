@@ -56,9 +56,22 @@ class ServicePutter(object):
             except ValueError:
                 print("Skipping {}: not a valid JSON file".format(file_path))
                 return file_path, None
-        data = {'update_details': {'updated_by': getpass.getuser(),
-                                   'update_reason': 'service import'},
-                'services': data}
+
+        # set the createdAt date from the lastcompleted field
+        data['createdAt'] = data['lastCompleted']
+        # updated by user who last completed the service
+        updater_json = {'updated_by': data['lastCompletedByEmail']}
+
+        # clean out unused metadata
+        del data['lastCompleted']
+        del data['lastCompletedByEmail']
+        del data['lastUpdated']
+        del data['lastUpdatedByEmail']
+
+        data = {
+            'update_details': updater_json,
+            'services': data
+        }
         url = '{}/{}'.format(self.endpoint, data['services']['id'])
         response = requests.put(
             url,

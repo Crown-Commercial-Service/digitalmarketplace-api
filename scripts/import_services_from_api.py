@@ -111,9 +111,9 @@ def do_index(api_url, api_access_token, source_api_url,
             status = status and result
             print_progress(counter, start_time)
 
+    print_progress(counter, start_time)
     return status
 
-    print_progress(counter, start_time)
 
 if __name__ == "__main__":
     arguments = docopt(__doc__)
