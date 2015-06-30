@@ -3,8 +3,7 @@ from sqlalchemy.exc import IntegrityError
 
 from .utils import get_json_from_request, \
     json_has_matching_id, json_has_required_keys, drop_foreign_fields
-from .validation import validate_updater_json_or_400, detect_framework_or_400, \
-    get_validation_errors
+from .validation import validate_updater_json_or_400, get_validation_errors
 from . import search_api_client, apiclient
 from . import db
 from .models import ArchivedService, AuditEvent
@@ -62,7 +61,6 @@ def validate_service(service):
     errs = get_validation_errors(validator_name, data, enforce_required=True)
     if errs:
         abort(400, errs)
-    # detect_framework_or_400(data)
     return
 
 
