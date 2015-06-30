@@ -242,6 +242,8 @@ class User(db.Model):
                            onupdate=datetime.utcnow)
     password_changed_at = db.Column(db.DateTime, index=False, unique=False,
                                     nullable=False)
+    logged_in_at = db.Column(db.DateTime, nullable=True)
+    failed_login_count = db.Column(db.Integer, nullable=False, default=0)
     role = db.Column(db.String, index=False, unique=False, nullable=False)
 
     supplier_id = db.Column(db.BigInteger,
@@ -264,7 +266,9 @@ class User(db.Model):
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
             'passwordChangedAt':
-                self.password_changed_at.strftime(DATETIME_FORMAT)
+                self.password_changed_at.strftime(DATETIME_FORMAT),
+            'loggedInAt': self.logged_in_at.strftime(DATETIME_FORMAT),
+            'failedLoginCount': self.failed_login_count,
         }
 
         if self.role == 'supplier':
