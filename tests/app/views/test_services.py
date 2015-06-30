@@ -583,8 +583,9 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            assert_in('JSON was not a valid format',
-                      json.loads(response.get_data())['error'])
+            assert_in('Additional properties are not allowed',
+                      "{}".format(
+                          json.loads(response.get_data())['error']['_form']))
 
     def test_invalid_field_value_not_accepted_on_update(self):
         with self.app.app_context():
@@ -598,8 +599,8 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            assert_in('JSON was not a valid format',
-                      json.loads(response.get_data())['error'])
+            assert_in("'per Truth' is not one of",
+                      json.loads(response.get_data())['error']['priceUnit'])
 
     def test_updated_service_is_archived_right_away(self):
         with self.app.app_context():
