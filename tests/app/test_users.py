@@ -1,4 +1,5 @@
 from flask import json
+from freezegun import freeze_time
 from nose.tools import assert_equal, assert_not_equal, assert_in
 from app import db, encryption
 from app.models import User, Supplier
@@ -8,7 +9,7 @@ from dmutils.formats import DATETIME_FORMAT
 
 
 class TestUsersAuth(BaseApplicationTest):
-    def test_should_validate_credentials(self):
+    def create_user(self):
         with self.app.app_context():
             response = self.client.post(
                 '/users',
@@ -19,9 +20,11 @@ class TestUsersAuth(BaseApplicationTest):
                         'role': 'buyer',
                         'name': 'joe bloggs'}}),
                 content_type='application/json')
-
             assert_equal(response.status_code, 200)
 
+    def test_should_validate_credentials(self):
+        self.create_user()
+        with self.app.app_context():
             response = self.client.post(
                 '/users/auth',
                 data=json.dumps({
@@ -35,19 +38,8 @@ class TestUsersAuth(BaseApplicationTest):
             assert_equal(data['emailAddress'], 'joeblogs@email.com')
 
     def test_should_validate_mixedcase_credentials(self):
+        self.create_user()
         with self.app.app_context():
-            response = self.client.post(
-                '/users',
-                data=json.dumps({
-                    'users': {
-                        'emailAddress': 'joEblogS@EMAIL.com',
-                        'password': '1234567890',
-                        'role': 'buyer',
-                        'name': 'joe bloggs'}}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 200)
-
             response = self.client.post(
                 '/users/auth',
                 data=json.dumps({
@@ -75,19 +67,8 @@ class TestUsersAuth(BaseApplicationTest):
             assert_equal(data['authorization'], False)
 
     def test_should_return_403_for_bad_password(self):
+        self.create_user()
         with self.app.app_context():
-            response = self.client.post(
-                '/users',
-                data=json.dumps({
-                    'users': {
-                        'emailAddress': 'joeblogs@email.com',
-                        'password': '1234567890',
-                        'role': 'buyer',
-                        'name': 'joe bloggs'}}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 200)
-
             response = self.client.post(
                 '/users/auth',
                 data=json.dumps({
@@ -99,6 +80,36 @@ class TestUsersAuth(BaseApplicationTest):
             assert_equal(response.status_code, 403)
             data = json.loads(response.get_data())
             assert_equal(data['authorization'], False)
+
+    def test_logged_in_at_is_updated_on_successful_login(self):
+        self.create_user()
+        with self.app.app_context(), freeze_time('2015-06-06'):
+            self.client.post(
+                '/users/auth',
+                data=json.dumps({
+                    'authUsers': {
+                        'emailAddress': 'joeblogs@email.com',
+                        'password': '1234567890'}}),
+                content_type='application/json')
+
+            user = User.get_by_email_address('joeblogs@email.com')
+
+            assert_equal(user.logged_in_at, datetime(2015, 6, 6))
+
+    def test_logged_in_at_is_not_updated_on_failed_login(self):
+        self.create_user()
+        with self.app.app_context(), freeze_time('2015-06-06'):
+            self.client.post(
+                '/users/auth',
+                data=json.dumps({
+                    'authUsers': {
+                        'emailAddress': 'joeblogs@email.com',
+                        'password': 'invalid'}}),
+                content_type='application/json')
+
+            user = User.get_by_email_address('joeblogs@email.com')
+
+            assert_equal(user.logged_in_at, None)
 
 
 class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):

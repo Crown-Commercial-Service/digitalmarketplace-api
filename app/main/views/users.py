@@ -19,12 +19,16 @@ def auth_user():
     json_payload = json_payload["authUsers"]
     validate_user_auth_json_or_400(json_payload)
 
-    user = User.query.filter(
-        User.email_address == json_payload['emailAddress'].lower()).first()
+    user = User.get_by_email_address(json_payload['emailAddress'].lower())
 
     if user is None:
         return jsonify(authorization=False), 404
     elif encryption.checkpw(json_payload['password'], user.password):
+
+        user.logged_in_at = datetime.utcnow()
+        db.session.add(user)
+        db.session.commit()
+
         return jsonify(users=user.serialize()), 200
     else:
         return jsonify(authorization=False), 403

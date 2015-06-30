@@ -252,6 +252,12 @@ class User(db.Model):
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
 
+    @staticmethod
+    def get_by_email_address(email_address):
+        return User.query.filter(
+            User.email_address == email_address
+        ).first()
+
     def get_link(self):
         return url_for('.get_user_by_id', user_id=self.id)
 
