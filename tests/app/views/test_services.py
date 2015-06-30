@@ -1318,8 +1318,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
     @mock.patch('app.search_api_client')
     def test_add_a_new_service(self, search_api_client):
-        assert_equal.im_class.maxDiff = None
-
         with self.app.app_context():
             search_api_client.index.return_value = "bar"
 
