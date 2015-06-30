@@ -339,7 +339,10 @@ class ServiceTableMixin(object):
         data.pop('frameworkName', None)
         data.pop('status', None)
         data.pop('links', None)
-
+        for key, value in data.items():
+            if isinstance(value, list):
+                # Remove empty items from lists
+                data[key] = list(filter(None, value))
         current_data = dict(self.data.items())
         current_data.update(data)
         self.data = current_data

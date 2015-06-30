@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 
 from .utils import get_json_from_request, \
     json_has_matching_id, json_has_required_keys, drop_foreign_fields
-from .validation import validate_updater_json_or_400, detect_framework_or_400
+from .validation import validate_updater_json_or_400, get_validation_errors
 from . import search_api_client, apiclient
 from . import db
 from .models import ArchivedService, AuditEvent
@@ -30,6 +30,24 @@ def update_and_validate_service(service, service_payload):
 
 
 def validate_service(service):
+
+    # TODO: Get framework slug from Framework table once it exists.
+    # framework = Framework.query.filter(
+    #     Framework.id == service.framework_id
+    # ).first()
+    # slug = framework.slug
+
+    if service.framework_id == 1:
+        validator_name = "services-g-cloud-6-{}".format(
+            service.data['lot'].lower())
+    elif service.framework_id == 2:
+        validator_name = "services-g-cloud-4"
+    elif service.framework_id == 3:
+        validator_name = "services-g-cloud-5"
+    else:
+        validator_name = "services-g-cloud-7-{}".format(
+            service.data['lot'].lower())
+
     data = dict(service.data.items())
     data.update({
         'id': service.service_id,
@@ -40,7 +58,9 @@ def validate_service(service):
     data = drop_foreign_fields(
         data,
         ['service_id', 'supplierName', 'links', 'frameworkName', 'updatedAt'])
-    detect_framework_or_400(data)
+    errs = get_validation_errors(validator_name, data, enforce_required=True)
+    if errs:
+        abort(400, errs)
     return
 
 

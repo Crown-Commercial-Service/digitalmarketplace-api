@@ -42,24 +42,34 @@
         "enum": ["Compute", "Storage"]
       }
     },
-    "serviceName": {
-      "type": "string"
+    "serviceName":{
+      "type":"string",
+      "minLength":1,
+      "maxLength":100
     },
-    "serviceSummary": {
-      "type": "string"
+    "serviceSummary":{
+      "type":"string",
+      "maxLength":500,
+      "pattern":"^\\s*(?:\\S+\\s+){0,49}\\S+\\s*$"
     },
-    "serviceBenefits": {
-      "type": "array",
-      "maxItems": 10,
-      "items": {
-        "type": "string"
+    "serviceBenefits":{
+      "type":"array",
+      "minItems":1,
+      "maxItems":10,
+      "items":{
+        "type":"string",
+        "maxLength":100,
+        "pattern":"^\\s*(?:\\S+\\s+){0,9}\\S+\\s*$"
       }
     },
-    "serviceFeatures": {
-      "type": "array",
-      "maxItems": 10,
-      "items": {
-        "type": "string"
+    "serviceFeatures":{
+      "type":"array",
+      "minItems":1,
+      "maxItems":10,
+      "items":{
+        "type":"string",
+        "maxLength":100,
+        "pattern":"^\\s*(?:\\S+\\s+){0,9}\\S+\\s*$"
       }
     },
     "serviceDefinitionDocument": {
