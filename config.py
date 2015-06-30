@@ -13,7 +13,6 @@ class Config:
     ALLOW_EXPLORER = True
     AUTH_REQUIRED = True
     DM_HTTP_PROTO = 'http'
-
     # Logging
     DM_LOG_LEVEL = 'DEBUG'
     DM_APP_NAME = 'api'

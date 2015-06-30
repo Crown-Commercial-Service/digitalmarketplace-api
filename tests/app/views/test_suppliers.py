@@ -107,28 +107,19 @@ class TestListSuppliers(BaseApplicationTest):
 
     def test_query_string_prefix_returns_none(self):
         response = self.client.get('/suppliers?prefix=canada')
-        assert_equal(404, response.status_code)
-
-    def test_query_string_prefix_returns_single(self):
-        response = self.client.get('/suppliers?prefix=supplier%201')
-
-        data = json.loads(response.get_data())
         assert_equal(200, response.status_code)
-        assert_equal(1, len(data['suppliers']))
-        assert_equal(1, data['suppliers'][0]['id'])
-        assert_equal(
-            u"Supplier 1",
-            data['suppliers'][0]['name']
-        )
+        data = json.loads(response.get_data())
+        assert_equal(0, len(data['suppliers']))
 
     def test_other_prefix_returns_non_alphanumeric_suppliers(self):
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=999, name=u"123 Supplier")
             )
+            self.setup_dummy_service(service_id=123, supplier_id=999)
             db.session.commit()
 
-            response = self.client.get('/suppliers?prefix=other')
+            response = self.client.get('/suppliers?prefix=123')
 
             data = json.loads(response.get_data())
             assert_equal(200, response.status_code)
@@ -171,6 +162,54 @@ class TestListSuppliers(BaseApplicationTest):
         response = self.client.get('/suppliers?page=0')
 
         assert_equal(response.status_code, 404)
+
+
+class TestListSuppliersOnFramework(BaseApplicationTest):
+
+    def setup(self):
+        super(TestListSuppliersOnFramework, self).setup()
+
+        with self.app.app_context():
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Active")
+            )
+            db.session.add(
+                Supplier(supplier_id=2, name=u"Inactive Framework")
+            )
+            db.session.add(
+                Supplier(supplier_id=3, name=u"Unpublished Service")
+            )
+            self.setup_dummy_service(
+                service_id=1, supplier_id=1
+            )
+            self.setup_dummy_service(
+                service_id=2, supplier_id=2, framework_id=2
+            )
+            self.setup_dummy_service(
+                service_id=3, supplier_id=3, status='enabled'
+            )
+            db.session.commit()
+
+    def test_invalid_framework_returns_400(self):
+        response = self.client.get('/suppliers?framework=invalid!')
+        assert_equal(400, response.status_code)
+
+    def test_should_return_suppliers_on_framework(self):
+        response = self.client.get('/suppliers?framework=gcloud')
+        assert_equal(200, response.status_code)
+        data = json.loads(response.get_data())
+        assert_equal(1, len(data['suppliers']))
+        assert_equal('Active', data['suppliers'][0]['name'])
+
+    def test_should_return_no_suppliers_no_framework(self):
+        response = self.client.get('/suppliers?framework=bad')
+        assert_equal(400, response.status_code)
+
+    def test_should_return_all_suppliers_if_no_framework(self):
+        response = self.client.get('/suppliers')
+        assert_equal(200, response.status_code)
+        data = json.loads(response.get_data())
+        assert_equal(3, len(data['suppliers']))
 
 
 class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):

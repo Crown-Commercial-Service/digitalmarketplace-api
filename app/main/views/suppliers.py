@@ -1,13 +1,13 @@
 from flask import jsonify, abort, request, current_app
-from sqlalchemy.exc import IntegrityError
-
+from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
-from ...models import Supplier, ContactInformation, AuditEvent, \
+from ...models import Supplier, ContactInformation, AuditEvent, Service, \
     SelectionAnswers, Framework
 from ...validation import (
     validate_supplier_json_or_400,
-    validate_contact_information_json_or_400
+    validate_contact_information_json_or_400,
+    is_valid_string_or_400
 )
 from ...utils import pagination_links, drop_foreign_fields, \
     get_json_from_request, json_has_required_keys, json_has_matching_id
@@ -23,10 +23,28 @@ def list_suppliers():
 
     prefix = request.args.get('prefix', '')
 
-    suppliers = Supplier.query.order_by(Supplier.name)
+    framework = request.args.get('framework')
+
+    if framework:
+        is_valid_string_or_400(framework)
+
+        active_services = Service.query.join(
+            Service.framework
+        ).filter(
+            Framework.status == 'live',
+            Framework.framework == framework,
+            Service.status == 'published'
+        ).distinct('supplier_id').subquery()
+
+        suppliers = Supplier.query.join(
+            active_services,
+            Supplier.supplier_id == active_services.c.supplier_id
+        ).order_by(Supplier.name)
+    else:
+        suppliers = Supplier.query.order_by(Supplier.name)
 
     if prefix:
-        if prefix == 'other':
+        if prefix == '123':
             suppliers = suppliers.filter(
                 Supplier.name.op('~')('^[^A-Za-z]'))
         else:
@@ -34,21 +52,21 @@ def list_suppliers():
             suppliers = suppliers.filter(
                 Supplier.name.ilike(prefix + '%'))
 
-    suppliers = suppliers.paginate(
-        page=page,
-        per_page=current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'],
-    )
+    try:
+        suppliers = suppliers.paginate(
+            page=page,
+            per_page=current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'],
+        )
 
-    if not suppliers.items:
-        abort(404, "No suppliers found for '{0}'".format(prefix))
-
-    return jsonify(
-        suppliers=[supplier.serialize() for supplier in suppliers.items],
-        links=pagination_links(
-            suppliers,
-            '.list_suppliers',
-            request.args
-        ))
+        return jsonify(
+            suppliers=[supplier.serialize() for supplier in suppliers.items],
+            links=pagination_links(
+                suppliers,
+                '.list_suppliers',
+                request.args
+            ))
+    except DataError:
+        abort(400, 'invalid framework')
 
 
 @main.route('/suppliers/<int:supplier_id>', methods=['GET'])
@@ -85,7 +103,7 @@ def import_supplier(supplier_id):
     contact_informations_data = [
         drop_foreign_fields(contact_data, ['links'])
         for contact_data in supplier_data['contactInformation']
-    ]
+        ]
 
     supplier_data['contactInformation'] = contact_informations_data
 
