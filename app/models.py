@@ -273,7 +273,8 @@ class User(db.Model):
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
             'passwordChangedAt':
                 self.password_changed_at.strftime(DATETIME_FORMAT),
-            'loggedInAt': self.logged_in_at.strftime(DATETIME_FORMAT),
+            'loggedInAt': self.logged_in_at.strftime(DATETIME_FORMAT)
+                if self.logged_in_at else None,
             'failedLoginCount': self.failed_login_count,
         }
 

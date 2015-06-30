@@ -31,6 +31,11 @@ def auth_user():
 
         return jsonify(users=user.serialize()), 200
     else:
+
+        user.failed_login_count += 1
+        db.session.add(user)
+        db.session.commit()
+
         return jsonify(authorization=False), 403
 
 

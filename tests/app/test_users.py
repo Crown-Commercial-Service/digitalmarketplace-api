@@ -111,6 +111,21 @@ class TestUsersAuth(BaseApplicationTest):
 
             assert_equal(user.logged_in_at, None)
 
+    def test_failed_login_should_increment_failed_login_counter(self):
+        self.create_user()
+        with self.app.app_context():
+            self.client.post(
+                '/users/auth',
+                data=json.dumps({
+                    'authUsers': {
+                        'emailAddress': 'joeblogs@email.com',
+                        'password': 'invalid'}}),
+                content_type='application/json')
+
+            user = User.get_by_email_address('joeblogs@email.com')
+
+            assert_equal(user.failed_login_count, 1)
+
 
 class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
     method = "post"
