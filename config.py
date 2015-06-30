@@ -29,6 +29,8 @@ class Config:
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace'
 
+    DM_FAILED_LOGIN_LIMIT = 5
+
 
 class Test(Config):
     DM_SEARCH_API_AUTH_TOKEN = 'test'

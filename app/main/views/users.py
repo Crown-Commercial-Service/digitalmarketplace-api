@@ -1,7 +1,7 @@
 from datetime import datetime
 from dmutils.audit import AuditTypes
 from sqlalchemy.exc import IntegrityError
-from flask import jsonify, abort, request
+from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ... import db, encryption
@@ -23,16 +23,22 @@ def auth_user():
 
     if user is None:
         return jsonify(authorization=False), 404
-    elif encryption.checkpw(json_payload['password'], user.password):
+    elif (
+        not user.locked and
+        encryption.checkpw(json_payload['password'], user.password)
+    ):
 
         user.logged_in_at = datetime.utcnow()
+        user.failed_login_count = 0
         db.session.add(user)
         db.session.commit()
 
         return jsonify(users=user.serialize()), 200
     else:
-
+        login_limit = current_app.config['DM_FAILED_LOGIN_LIMIT']
         user.failed_login_count += 1
+        if user.failed_login_count >= login_limit:
+            user.locked = True
         db.session.add(user)
         db.session.commit()
 
