@@ -342,7 +342,7 @@ class ServiceTableMixin(object):
         for key, value in data.items():
             if isinstance(value, list):
                 # Remove empty items from lists
-                data[key] = filter(None, value)
+                data[key] = list(filter(None, value))
         current_data = dict(self.data.items())
         current_data.update(data)
         self.data = current_data
