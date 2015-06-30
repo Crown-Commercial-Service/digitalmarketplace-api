@@ -63,6 +63,7 @@ def request_services(api_url, api_access_token, page=1):
         else:
             return
 
+
 def print_progress(counter, start_time):
     if counter % 100 == 0:
         time_delta = datetime.utcnow() - start_time
