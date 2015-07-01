@@ -17,15 +17,10 @@ def get_draft_validation_errors(draft_json, lot,
     if not slug and not framework_id:
         raise Exception('Validation requires either framework_id or slug')
     if not slug:
-        # TODO: Get framework slug from Framework table once it exists.
-        # framework = Framework.query.filter(
-        #     Framework.id == framework_id
-        # ).first()
-        # slug = framework.slug
-        if framework_id == 1:
-            slug = "g-cloud-6"
-        else:
-            slug = "g-cloud-7"
+        framework = Framework.query.filter(
+            Framework.id == framework_id
+        ).first()
+        slug = framework.slug
     errs = get_validation_errors(
         "services-{0}-{1}".format(slug, lot.lower()),
         draft_json,

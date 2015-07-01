@@ -40,6 +40,10 @@ class TestDraftServices(BaseApplicationTest):
                     postcode=u"SW1A 1AA"
                 )
             )
+            Framework.query.filter_by(slug='g-cloud-5') \
+                .update(dict(status='live'))
+            Framework.query.filter_by(slug='g-cloud-7') \
+                .update(dict(status='open'))
             db.session.commit()
 
         self.client.put(
@@ -243,6 +247,16 @@ class TestDraftServices(BaseApplicationTest):
         data = json.loads(res.get_data())
         assert_equal(res.status_code, 400)
         assert_in("'ShouldBeInt' is not of type", data['errors']['supplierId'])
+
+    def test_should_not_create_draft_on_not_open_framework(self):
+        res = self.client.post(
+            '/draft-services/g-cloud-5/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+
+        data = json.loads(res.get_data())
+        assert_equal(res.status_code, 400)
+        assert_in("'g-cloud-5' is not open for submissions", data['error'])
 
     def test_can_save_additional_fields_to_draft(self):
         res = self.client.post(

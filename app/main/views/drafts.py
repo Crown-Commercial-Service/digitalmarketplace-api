@@ -137,14 +137,10 @@ def list_draft_services():
         services = services.filter(DraftService.service_id == service_id)
 
     if framework_slug:
-        # TODO: Get framework id by matching the slug once in Framework table.
-        if framework_slug == "g-cloud-6":
-            framework_id = 1
-        else:
-            framework_id = Framework.query.filter(
-                Framework.name == 'G-Cloud 7'
-            ).first_or_404().id
-        services = services.filter(DraftService.framework_id == framework_id)
+        framework = Framework.query.filter(
+            Framework.slug == framework_slug
+        ).first()
+        services = services.filter(DraftService.framework_id == framework.id)
 
     items = services.filter(DraftService.supplier_id == supplier_id).all()
     return jsonify(
@@ -260,12 +256,12 @@ def create_new_draft_service(framework_slug):
     draft_json = validate_and_return_draft_request()
     json_has_required_keys(draft_json, ['lot', 'supplierId'])
 
-    # TODO: Get framework id by matching the slug once in Framework table.
-    framework_id = Framework.query.filter(
-        Framework.name == 'G-Cloud 7'
-    ).first_or_404().id
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first()
 
-    # TODO: Reject any requests on a Framework that is not currently 'open'
+    if framework.status != 'open':
+        abort(400, "'{}' is not open for submissions".format(framework_slug))
 
     supplier_id = draft_json['supplierId']
     lot = draft_json['lot']
@@ -275,7 +271,7 @@ def create_new_draft_service(framework_slug):
 
     draft_json = drop_foreign_fields(draft_json, ['supplierId'])
     draft = DraftService(
-        framework_id=framework_id,
+        framework_id=framework.id,
         supplier_id=supplier_id,
         data=draft_json,
         status="not-submitted"
