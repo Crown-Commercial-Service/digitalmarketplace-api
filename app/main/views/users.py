@@ -23,11 +23,7 @@ def auth_user():
 
     if user is None:
         return jsonify(authorization=False), 404
-    elif (
-        not user.locked and
-        encryption.checkpw(json_payload['password'], user.password)
-    ):
-
+    elif encryption.authenticate_user(json_payload['password'], user):
         user.logged_in_at = datetime.utcnow()
         user.failed_login_count = 0
         db.session.add(user)

@@ -154,7 +154,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
     method = "post"
     endpoint = "/users"
 
-    def test_can_post_a_user(self):
+    def test_can_post_a_buyer_user(self):
         response = self.client.post(
             '/users',
             data=json.dumps({
