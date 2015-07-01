@@ -43,8 +43,7 @@ class ServicePutter(object):
         except ValueError:
             print("Skipping {}: could not get ID".format(service_json))
             return service_id, None
-        data = {'update_details': {'updated_by': getpass.getuser(),
-                                   'update_reason': 'service import'},
+        data = {'update_details': {'updated_by': getpass.getuser()},
                 'services': service_json}
         url = '{}/{}'.format(self.endpoint, data['services']['id'])
         response = requests.put(

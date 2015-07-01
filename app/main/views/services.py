@@ -1,6 +1,7 @@
 from dmutils.audit import AuditTypes
 
 from flask import jsonify, abort, request, current_app
+from datetime import datetime
 
 from .. import main
 from ...models import ArchivedService, Service, Supplier, Framework
@@ -161,7 +162,7 @@ def import_service(service_id):
 
     service_data = drop_foreign_fields(
         service_json,
-        ['supplierName', 'links', 'frameworkName', 'updatedAt']
+        ['supplierName', 'links', 'frameworkName']
     )
 
     framework = detect_framework_or_400(service_data)
@@ -182,6 +183,17 @@ def import_service(service_id):
     service.supplier_id = supplier_id
     service.framework_id = framework.id
     service.status = service_data.pop('status', 'published')
+    now = datetime.utcnow()
+    if 'createdAt' in service_data:
+        service.created_at = service_data['createdAt']
+    else:
+        service.created_at = now
+    service.updated_at = now
+
+    service_data = drop_foreign_fields(
+        service_data,
+        ['createdAt', 'updatedAt']
+    )
     service.data = service_data
 
     commit_and_archive_service(service, updater_json,

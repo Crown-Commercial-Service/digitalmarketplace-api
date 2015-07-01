@@ -20,19 +20,9 @@
       "title": {
          "type": "string"
       },
-      "lastUpdated": {
+      "createdAt": {
          "type": "string",
          "format": "date-time"
-      },
-      "lastUpdatedByEmail": {
-         "type": "string"
-      },
-      "lastCompleted": {
-         "type": "string",
-         "format": "date-time"
-      },
-      "lastCompletedByEmail": {
-         "type": "string"
       },
       "serviceTypes": {
          "type": "array",
@@ -160,10 +150,6 @@
       "supplierId",
       "lot",
       "title",
-      "lastUpdated",
-      "lastUpdatedByEmail",
-      "lastCompleted",
-      "lastCompletedByEmail",
       "serviceTypes",
       "serviceName",
       "serviceSummary",

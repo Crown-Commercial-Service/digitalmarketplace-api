@@ -151,6 +151,14 @@ class BaseApplicationTest(object):
         with open(file_path) as f:
             return json.load(f)
 
+    def string_to_time_to_string(self, value, from_format, to_format):
+        return datetime.strptime(
+            value, from_format).strftime(to_format)
+
+    def string_to_time(self, value, from_format):
+        return datetime.strptime(
+            value, from_format)
+
 
 class JSONUpdateTestMixin(object):
     """
