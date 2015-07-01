@@ -1,4 +1,4 @@
-import uuid
+import random
 from datetime import datetime
 from flask_sqlalchemy import BaseQuery
 
@@ -526,7 +526,4 @@ def filter_null_value_fields(obj):
 
 
 def generate_new_service_id():
-    # TODO: Decide what we want G7 service IDs to look like and implement
-    u = uuid.uuid4()
-    id = str(u.int)[-16:]
-    return id
+    return str(random.randint(7e15, 8e15-1))
