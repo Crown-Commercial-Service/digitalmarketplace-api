@@ -6,7 +6,7 @@ from .utils import get_json_from_request, \
 from .validation import validate_updater_json_or_400, get_validation_errors
 from . import search_api_client, apiclient
 from . import db
-from .models import ArchivedService, AuditEvent
+from .models import ArchivedService, AuditEvent, Framework
 
 
 def validate_and_return_updater_request():
@@ -31,22 +31,18 @@ def update_and_validate_service(service, service_payload):
 
 def validate_service(service):
 
-    # TODO: Get framework slug from Framework table once it exists.
-    # framework = Framework.query.filter(
-    #     Framework.id == service.framework_id
-    # ).first()
-    # slug = framework.slug
+    framework = Framework.query.filter(
+        Framework.id == service.framework_id
+    ).first()
+    slug = framework.slug
 
-    if service.framework_id == 1:
-        validator_name = "services-g-cloud-6-{}".format(
-            service.data['lot'].lower())
-    elif service.framework_id == 2:
+    if slug == 'g-cloud-4':
         validator_name = "services-g-cloud-4"
-    elif service.framework_id == 3:
+    elif slug == 'g-cloud-5':
         validator_name = "services-g-cloud-5"
     else:
-        validator_name = "services-g-cloud-7-{}".format(
-            service.data['lot'].lower())
+        validator_name = "services-{0}-{1}".format(
+            slug, service.data['lot'].lower())
 
     data = dict(service.data.items())
     data.update({
