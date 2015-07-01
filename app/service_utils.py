@@ -6,7 +6,7 @@ from .utils import get_json_from_request, \
 from .validation import validate_updater_json_or_400, get_validation_errors
 from . import search_api_client, apiclient
 from . import db
-from .models import ArchivedService, AuditEvent, Framework
+from .models import ArchivedService, AuditEvent, Framework, Service
 
 
 def validate_and_return_updater_request():
@@ -122,3 +122,22 @@ def delete_service_from_index(service):
         current_app.logger.warning(
             'Failed to remove {} to search index: {}'.format(
                 service.service_id, e.message))
+
+
+def create_service_from_draft(draft, status):
+    counter = 0
+    while True:
+        db.session.begin_nested()
+        service = Service.create_from_draft(draft, status)
+        try:
+            validate_service(service)
+            db.session.add(service)
+            db.session.commit()
+            return service
+        except IntegrityError:
+            current_app.logger.warning(
+                "Service ID collision on {}".format(service.service_id))
+            counter += 1
+            db.session.rollback()
+            if counter >= 5:
+                raise
