@@ -22,16 +22,28 @@ class TestUsersAuth(BaseApplicationTest):
                 content_type='application/json')
             assert_equal(response.status_code, 200)
 
+    def valid_login(self):
+        return self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': '1234567890'}}),
+            content_type='application/json')
+
+    def invalid_password(self):
+        return self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': 'invalid'}}),
+            content_type='application/json')
+
     def test_should_validate_credentials(self):
         self.create_user()
         with self.app.app_context():
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'joeblogs@email.com',
-                        'password': '1234567890'}}),
-                content_type='application/json')
+            response = self.valid_login()
 
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
@@ -84,14 +96,7 @@ class TestUsersAuth(BaseApplicationTest):
     def test_logged_in_at_is_updated_on_successful_login(self):
         self.create_user()
         with self.app.app_context(), freeze_time('2015-06-06'):
-            self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'joeblogs@email.com',
-                        'password': '1234567890'}}),
-                content_type='application/json')
-
+            self.valid_login()
             user = User.get_by_email_address('joeblogs@email.com')
 
             assert_equal(user.logged_in_at, datetime(2015, 6, 6))
@@ -99,14 +104,7 @@ class TestUsersAuth(BaseApplicationTest):
     def test_logged_in_at_is_not_updated_on_failed_login(self):
         self.create_user()
         with self.app.app_context(), freeze_time('2015-06-06'):
-            self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'joeblogs@email.com',
-                        'password': 'invalid'}}),
-                content_type='application/json')
-
+            self.invalid_password()
             user = User.get_by_email_address('joeblogs@email.com')
 
             assert_equal(user.logged_in_at, None)
@@ -114,14 +112,7 @@ class TestUsersAuth(BaseApplicationTest):
     def test_failed_login_should_increment_failed_login_counter(self):
         self.create_user()
         with self.app.app_context():
-            self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'joeblogs@email.com',
-                        'password': 'invalid'}}),
-                content_type='application/json')
-
+            self.invalid_password()
             user = User.get_by_email_address('joeblogs@email.com')
 
             assert_equal(user.failed_login_count, 1)
@@ -129,23 +120,10 @@ class TestUsersAuth(BaseApplicationTest):
     def test_successful_login_resets_failed_login_counter(self):
         self.create_user()
         with self.app.app_context():
-            self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'joeblogs@email.com',
-                        'password': 'invalid'}}),
-                content_type='application/json')
-            self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'joeblogs@email.com',
-                        'password': '1234567890'}}),
-                content_type='application/json')
+            self.invalid_password()
+            self.valid_login()
 
             user = User.get_by_email_address('joeblogs@email.com')
-
             assert_equal(user.failed_login_count, 0)
 
     def test_user_is_locked_after_too_many_failed_login_attempts(self):
@@ -154,14 +132,7 @@ class TestUsersAuth(BaseApplicationTest):
         self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
 
         with self.app.app_context():
-            self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'joeblogs@email.com',
-                        'password': 'invalid'}}),
-                content_type='application/json')
-
+            self.invalid_password()
             user = User.get_by_email_address('joeblogs@email.com')
 
             assert_equal(user.locked, True)
@@ -174,14 +145,7 @@ class TestUsersAuth(BaseApplicationTest):
             user.locked = True
             db.session.add(user)
             db.session.commit()
-
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'joeblogs@email.com',
-                        'password': '1234567890'}}),
-                content_type='application/json')
+            response = self.valid_login()
 
             assert_equal(response.status_code, 403)
 
