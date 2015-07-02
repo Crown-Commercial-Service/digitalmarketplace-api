@@ -1,10 +1,13 @@
 from tests.app.helpers import BaseApplicationTest
 from datetime import datetime
 from flask import json
-from app.models import Supplier, ContactInformation, Service, Framework
+import mock
+from sqlalchemy.exc import IntegrityError
+from app.models import Supplier, ContactInformation, Service, Framework, \
+    DraftService
 from app import db
 
-from nose.tools import assert_equal, assert_in
+from nose.tools import assert_equal, assert_in, assert_raises
 
 
 class TestDraftServices(BaseApplicationTest):
@@ -694,3 +697,74 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(
             json.loads(archives.get_data())['services'][0]['serviceName'],
             'An example G-7 SCS Service')
+
+    def publish_new_draft_service(self):
+        res = self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+        draft_data = json.loads(res.get_data())
+        draft_id = draft_data['services']['id']
+        g7_complete = self.load_example_listing('G7-SCS')
+        g7_complete.pop('id')
+        draft_update_json = {'services': g7_complete,
+                             'update_details': {'updated_by': 'joeblogs'}}
+        res2 = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(draft_update_json),
+            content_type='application/json')
+        json.loads(res2.get_data())
+
+        return self.client.post(
+            '/draft-services/{}/publish'.format(draft_id),
+            data=json.dumps({
+                'update_details': {
+                    'updated_by': 'joeblogs',
+                }
+            }),
+            content_type='application/json')
+
+    @mock.patch('app.models.generate_new_service_id')
+    def test_service_id_collisions_should_be_handled(self,
+                                                     generate_new_service_id):
+        # Return the same ID a few times (cause collisions) and then return
+        # a different one.
+        generate_new_service_id.side_effect = [
+            '1234567890123457',
+            '1234567890123457',
+            '1234567890123457',
+            '1234567890123458',
+        ]
+
+        res = self.publish_new_draft_service()
+        assert_equal(res.status_code, 200)
+        res = self.publish_new_draft_service()
+        assert_equal(res.status_code, 200)
+
+        with self.app.app_context():
+            # Count is 3 because we create on in the setup
+            assert_equal(Service.query.count(), 3)
+            assert_equal(DraftService.query.count(), 0)
+
+    @mock.patch('app.models.generate_new_service_id')
+    def test_draft_service_should_be_left_on_service_id_collision_failure(
+            self, generate_new_service_id):
+        generate_new_service_id.side_effect = [
+            '1234567890123457',
+            '1234567890123457',
+            '1234567890123457',
+            '1234567890123457',
+            '1234567890123457',
+            '1234567890123457',
+            '1234567890123457',
+        ]
+
+        res = self.publish_new_draft_service()
+        assert_equal(res.status_code, 200)
+        with assert_raises(IntegrityError):
+            res = self.publish_new_draft_service()
+
+        with self.app.app_context():
+            db.session.rollback()
+            assert_equal(Service.query.count(), 2)
+            assert_equal(DraftService.query.count(), 1)

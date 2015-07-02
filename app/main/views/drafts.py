@@ -12,7 +12,7 @@ from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, Supplier, AuditEvent, Framework
 from ...service_utils import validate_and_return_updater_request, \
     update_and_validate_service, index_service, validate_service, \
-    commit_and_archive_service
+    commit_and_archive_service, create_service_from_draft
 from ...draft_utils import validate_and_return_draft_request, \
     get_draft_validation_errors
 
@@ -223,8 +223,7 @@ def publish_draft_service(draft_id):
             draft.data)
 
     else:
-        service_from_draft = Service.create_from_draft(draft, "enabled")
-        validate_service(service_from_draft)
+        service_from_draft = create_service_from_draft(draft, "enabled")
 
     commit_and_archive_service(service_from_draft, update_details,
                                AuditTypes.publish_draft_service,
