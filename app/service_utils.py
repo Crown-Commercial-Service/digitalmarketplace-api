@@ -104,11 +104,7 @@ def commit_and_archive_service(updated_service, update_details,
 def index_service(service):
     if service.framework.status == 'live' and service.status == 'published':
         try:
-            search_api_client.index(
-                service.service_id,
-                service.data,
-                service.supplier.name,
-                service.framework.name)
+            search_api_client.index(service.service_id, service.data)
         except apiclient.HTTPError as e:
             current_app.logger.warning(
                 'Failed to add {} to search index: {}'.format(

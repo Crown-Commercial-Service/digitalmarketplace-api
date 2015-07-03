@@ -941,9 +941,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                                            "1234567890123456").first()
             search_api_client.index.assert_called_with(
                 "1234567890123456",
-                service.data,
-                "Supplier 1",
-                "G-Cloud 6"
+                service.data
             )
 
     def test_should_not_index_on_service_on_expired_frameworks(
@@ -1034,9 +1032,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                                            "1234567890123456").first()
             search_api_client.index.assert_called_with(
                 "1234567890123456",
-                service.data,
-                "Supplier 1",
-                "G-Cloud 6"
+                service.data
             )
 
     @mock.patch('app.service_utils.db.session.commit')
@@ -1181,9 +1177,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
             if service_is_indexed:
                 search_api_client.index.assert_called_with(
                     service.service_id,
-                    service.data,
-                    service.supplier.name,
-                    service.framework.name
+                    service.data
                 )
             else:
                 assert_false(search_api_client.index.called)
