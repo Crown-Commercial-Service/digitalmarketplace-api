@@ -85,7 +85,7 @@ class ServiceUpdater(object):
         cleaned_data = self.clean_data(fix_data)
 
         try:
-            client.create_service(
+            client.import_service(
                 service['id'],
                 cleaned_data,
                 user,
