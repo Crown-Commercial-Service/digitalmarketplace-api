@@ -31,10 +31,7 @@ def auth_user():
 
         return jsonify(users=user.serialize()), 200
     else:
-        login_limit = current_app.config['DM_FAILED_LOGIN_LIMIT']
         user.failed_login_count += 1
-        if user.failed_login_count >= login_limit:
-            user.locked = True
         db.session.add(user)
         db.session.commit()
 
@@ -86,7 +83,6 @@ def create_user():
         role=json_payload['role'],
         password=password,
         active=True,
-        locked=False,
         created_at=now,
         updated_at=now,
         password_changed_at=now
@@ -139,8 +135,6 @@ def update_user(user_id):
         user.password_changed_at = datetime.utcnow()
     if 'active' in user_update:
         user.active = user_update['active']
-    if 'locked' in user_update:
-        user.locked = user_update['locked']
     if 'name' in user_update:
         user.name = user_update['name']
     if 'role' in user_update:

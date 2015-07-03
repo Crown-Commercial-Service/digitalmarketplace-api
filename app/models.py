@@ -1,5 +1,7 @@
 import uuid
 from datetime import datetime
+
+from flask import current_app
 from flask_sqlalchemy import BaseQuery
 
 from sqlalchemy import asc
@@ -233,8 +235,6 @@ class User(db.Model):
                          nullable=False)
     active = db.Column(db.Boolean, index=False, unique=False,
                        nullable=False)
-    locked = db.Column(db.Boolean, index=False, unique=False,
-                       nullable=False)
     created_at = db.Column(db.DateTime, index=False, unique=False,
                            nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, index=False, unique=False,
@@ -251,6 +251,11 @@ class User(db.Model):
                             index=True, unique=False, nullable=True)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
+
+    @property
+    def locked(self):
+        login_attempt_limit = current_app.config['DM_FAILED_LOGIN_LIMIT']
+        return self.failed_login_count >= login_attempt_limit
 
     @staticmethod
     def get_by_email_address(email_address):

@@ -140,9 +140,12 @@ class TestUsersAuth(BaseApplicationTest):
     def test_all_login_attempts_fail_for_locked_users(self):
         self.create_user()
 
+        self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
+
         with self.app.app_context():
             user = User.get_by_email_address('joeblogs@email.com')
-            user.locked = True
+
+            user.failed_login_count = 1
             db.session.add(user)
             db.session.commit()
             response = self.valid_login()
@@ -372,7 +375,6 @@ class TestUsersUpdate(BaseApplicationTest):
                 name="my name",
                 password=encryption.hashpw("my long password"),
                 active=True,
-                locked=False,
                 role='buyer',
                 created_at=now,
                 updated_at=now,
@@ -435,7 +437,7 @@ class TestUsersUpdate(BaseApplicationTest):
             data = json.loads(response.get_data())['users']
             assert_equal(data['active'], False)
 
-    def test_can_update_locked(self):
+    def test_can_not_update_locked(self):
         with self.app.app_context():
             response = self.client.post(
                 '/users/123',
@@ -453,7 +455,7 @@ class TestUsersUpdate(BaseApplicationTest):
 
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
-            assert_equal(data['locked'], True)
+            assert_equal(data['locked'], False)
 
     def test_can_update_name(self):
         with self.app.app_context():
@@ -577,7 +579,6 @@ class TestUsersGet(BaseApplicationTest):
                 name="my name",
                 password=encryption.hashpw("my long password"),
                 active=True,
-                locked=False,
                 role='buyer',
                 created_at=self.now,
                 updated_at=self.now,

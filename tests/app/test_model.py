@@ -9,6 +9,7 @@ from .helpers import BaseApplicationTest
 
 
 def test_should_not_return_password_on_user():
+    app = create_app('test')
     now = datetime.utcnow()
     user = User(
         email_address='email',
@@ -16,16 +17,17 @@ def test_should_not_return_password_on_user():
         role='buyer',
         password='password',
         active=True,
-        locked=False,
+        failed_login_count=0,
         created_at=now,
         updated_at=now,
         password_changed_at=now
     )
 
-    assert_equal(user.serialize()['emailAddress'], "email")
-    assert_equal(user.serialize()['name'], "name")
-    assert_equal(user.serialize()['role'], "buyer")
-    assert_equal('password' in user.serialize(), False)
+    with app.app_context():
+        assert_equal(user.serialize()['emailAddress'], "email")
+        assert_equal(user.serialize()['name'], "name")
+        assert_equal(user.serialize()['role'], "buyer")
+        assert_equal('password' in user.serialize(), False)
 
 
 def test_framework_should_not_accept_invalid_status():
