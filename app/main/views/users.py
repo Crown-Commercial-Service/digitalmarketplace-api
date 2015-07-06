@@ -1,7 +1,7 @@
 from datetime import datetime
 from dmutils.audit import AuditTypes
 from sqlalchemy.exc import IntegrityError
-from flask import jsonify, abort, request
+from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ... import db, encryption
@@ -19,14 +19,22 @@ def auth_user():
     json_payload = json_payload["authUsers"]
     validate_user_auth_json_or_400(json_payload)
 
-    user = User.query.filter(
-        User.email_address == json_payload['emailAddress'].lower()).first()
+    user = User.get_by_email_address(json_payload['emailAddress'].lower())
 
     if user is None:
         return jsonify(authorization=False), 404
-    elif encryption.checkpw(json_payload['password'], user.password):
+    elif encryption.authenticate_user(json_payload['password'], user):
+        user.logged_in_at = datetime.utcnow()
+        user.failed_login_count = 0
+        db.session.add(user)
+        db.session.commit()
+
         return jsonify(users=user.serialize()), 200
     else:
+        user.failed_login_count += 1
+        db.session.add(user)
+        db.session.commit()
+
         return jsonify(authorization=False), 403
 
 
@@ -75,7 +83,6 @@ def create_user():
         role=json_payload['role'],
         password=password,
         active=True,
-        locked=False,
         created_at=now,
         updated_at=now,
         password_changed_at=now
@@ -128,8 +135,6 @@ def update_user(user_id):
         user.password_changed_at = datetime.utcnow()
     if 'active' in user_update:
         user.active = user_update['active']
-    if 'locked' in user_update:
-        user.locked = user_update['locked']
     if 'name' in user_update:
         user.name = user_update['name']
     if 'role' in user_update:

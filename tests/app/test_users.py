@@ -1,4 +1,5 @@
 from flask import json
+from freezegun import freeze_time
 from nose.tools import assert_equal, assert_not_equal, assert_in
 from app import db, encryption
 from app.models import User, Supplier
@@ -8,7 +9,7 @@ from dmutils.formats import DATETIME_FORMAT
 
 
 class TestUsersAuth(BaseApplicationTest):
-    def test_should_validate_credentials(self):
+    def create_user(self):
         with self.app.app_context():
             response = self.client.post(
                 '/users',
@@ -19,35 +20,38 @@ class TestUsersAuth(BaseApplicationTest):
                         'role': 'buyer',
                         'name': 'joe bloggs'}}),
                 content_type='application/json')
-
             assert_equal(response.status_code, 200)
 
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'joeblogs@email.com',
-                        'password': '1234567890'}}),
-                content_type='application/json')
+    def valid_login(self):
+        return self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': '1234567890'}}),
+            content_type='application/json')
+
+    def invalid_password(self):
+        return self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': 'invalid'}}),
+            content_type='application/json')
+
+    def test_should_validate_credentials(self):
+        self.create_user()
+        with self.app.app_context():
+            response = self.valid_login()
 
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
             assert_equal(data['emailAddress'], 'joeblogs@email.com')
 
     def test_should_validate_mixedcase_credentials(self):
+        self.create_user()
         with self.app.app_context():
-            response = self.client.post(
-                '/users',
-                data=json.dumps({
-                    'users': {
-                        'emailAddress': 'joEblogS@EMAIL.com',
-                        'password': '1234567890',
-                        'role': 'buyer',
-                        'name': 'joe bloggs'}}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 200)
-
             response = self.client.post(
                 '/users/auth',
                 data=json.dumps({
@@ -75,19 +79,8 @@ class TestUsersAuth(BaseApplicationTest):
             assert_equal(data['authorization'], False)
 
     def test_should_return_403_for_bad_password(self):
+        self.create_user()
         with self.app.app_context():
-            response = self.client.post(
-                '/users',
-                data=json.dumps({
-                    'users': {
-                        'emailAddress': 'joeblogs@email.com',
-                        'password': '1234567890',
-                        'role': 'buyer',
-                        'name': 'joe bloggs'}}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 200)
-
             response = self.client.post(
                 '/users/auth',
                 data=json.dumps({
@@ -100,12 +93,71 @@ class TestUsersAuth(BaseApplicationTest):
             data = json.loads(response.get_data())
             assert_equal(data['authorization'], False)
 
+    def test_logged_in_at_is_updated_on_successful_login(self):
+        self.create_user()
+        with self.app.app_context(), freeze_time('2015-06-06'):
+            self.valid_login()
+            user = User.get_by_email_address('joeblogs@email.com')
+
+            assert_equal(user.logged_in_at, datetime(2015, 6, 6))
+
+    def test_logged_in_at_is_not_updated_on_failed_login(self):
+        self.create_user()
+        with self.app.app_context(), freeze_time('2015-06-06'):
+            self.invalid_password()
+            user = User.get_by_email_address('joeblogs@email.com')
+
+            assert_equal(user.logged_in_at, None)
+
+    def test_failed_login_should_increment_failed_login_counter(self):
+        self.create_user()
+        with self.app.app_context():
+            self.invalid_password()
+            user = User.get_by_email_address('joeblogs@email.com')
+
+            assert_equal(user.failed_login_count, 1)
+
+    def test_successful_login_resets_failed_login_counter(self):
+        self.create_user()
+        with self.app.app_context():
+            self.invalid_password()
+            self.valid_login()
+
+            user = User.get_by_email_address('joeblogs@email.com')
+            assert_equal(user.failed_login_count, 0)
+
+    def test_user_is_locked_after_too_many_failed_login_attempts(self):
+        self.create_user()
+
+        self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
+
+        with self.app.app_context():
+            self.invalid_password()
+            user = User.get_by_email_address('joeblogs@email.com')
+
+            assert_equal(user.locked, True)
+
+    def test_all_login_attempts_fail_for_locked_users(self):
+        self.create_user()
+
+        self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
+
+        with self.app.app_context():
+            user = User.get_by_email_address('joeblogs@email.com')
+
+            user.failed_login_count = 1
+            db.session.add(user)
+            db.session.commit()
+            response = self.valid_login()
+
+            assert_equal(response.status_code, 403)
+
 
 class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
     method = "post"
     endpoint = "/users"
 
-    def test_can_post_a_user(self):
+    def test_can_post_a_buyer_user(self):
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -323,7 +375,6 @@ class TestUsersUpdate(BaseApplicationTest):
                 name="my name",
                 password=encryption.hashpw("my long password"),
                 active=True,
-                locked=False,
                 role='buyer',
                 created_at=now,
                 updated_at=now,
@@ -386,7 +437,7 @@ class TestUsersUpdate(BaseApplicationTest):
             data = json.loads(response.get_data())['users']
             assert_equal(data['active'], False)
 
-    def test_can_update_locked(self):
+    def test_can_not_update_locked(self):
         with self.app.app_context():
             response = self.client.post(
                 '/users/123',
@@ -398,17 +449,13 @@ class TestUsersUpdate(BaseApplicationTest):
 
             assert_equal(response.status_code, 200)
 
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'test@test.com',
-                        'password': 'my long password'}}),
+            response = self.client.get(
+                '/users/123',
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
-            assert_equal(data['locked'], True)
+            assert_equal(data['locked'], False)
 
     def test_can_update_name(self):
         with self.app.app_context():
@@ -532,7 +579,6 @@ class TestUsersGet(BaseApplicationTest):
                 name="my name",
                 password=encryption.hashpw("my long password"),
                 active=True,
-                locked=False,
                 role='buyer',
                 created_at=self.now,
                 updated_at=self.now,
