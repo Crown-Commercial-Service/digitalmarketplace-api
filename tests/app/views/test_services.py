@@ -1355,6 +1355,47 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 delta=timedelta(seconds=2))
 
     @mock.patch('app.search_api_client')
+    def test_whitespace_is_stripped_on_import(self, search_api_client):
+        with self.app.app_context():
+            search_api_client.index.return_value = "bar"
+
+            payload = self.load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+            payload['serviceSummary'] = "    A new summary with   space    "
+            payload['serviceFeatures'] = ["    ",
+                                          "    A feature   with space    ",
+                                          "",
+                                          "    A second feature with space   "]
+            response = self.client.put(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'update_details': {
+                            'updated_by': 'joeblogs'},
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 201)
+
+            response = self.client.get("/services/1234567890123456")
+            service = json.loads(response.get_data())["services"]
+
+            assert_equal(
+                service["serviceSummary"],
+                "A new summary with   space"
+            )
+            assert_equal(len(service["serviceFeatures"]), 2)
+            assert_equal(
+                service["serviceFeatures"][0],
+                "A feature   with space"
+            )
+            assert_equal(
+                service["serviceFeatures"][1],
+                "A second feature with space"
+            )
+
+    @mock.patch('app.search_api_client')
     def test_add_a_new_service_creates_audit_event(self, search_api_client):
         with self.app.app_context():
             search_api_client.index.return_value = "bar"
