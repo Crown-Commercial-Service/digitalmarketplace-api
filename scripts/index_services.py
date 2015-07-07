@@ -58,11 +58,7 @@ class ServiceIndexer(object):
         client = apiclient.SearchAPIClient(self.endpoint, self.access_token)
         try:
             if service['status'] == 'published':
-                client.index(
-                    service['id'],
-                    service,
-                    service['supplierName'],
-                    service['frameworkName'])
+                client.index(service['id'], service)
             else:
                 client.delete(service['id'])
             return True
