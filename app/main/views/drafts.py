@@ -77,13 +77,12 @@ def edit_draft_service(draft_id):
         DraftService.id == draft_id
     ).first_or_404()
 
-    errs = get_draft_validation_errors(update_json,
+    draft.update_from_json(update_json)
+    errs = get_draft_validation_errors(draft.data,
                                        draft.data['lot'],
                                        framework_id=draft.framework_id)
     if errs:
-        return jsonify(errors=errs), 400
-
-    draft.update_from_json(update_json)
+        abort(400, errs)
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_draft_service,

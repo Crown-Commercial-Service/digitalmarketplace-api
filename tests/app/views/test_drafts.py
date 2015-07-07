@@ -340,8 +340,7 @@ class TestDraftServices(BaseApplicationTest):
             content_type='application/json')
         data2 = json.loads(res2.get_data())
         assert_equal(res2.status_code, 400)
-        assert_in("'Bad Type' is not one of", data2['errors']['serviceTypes'])
-        # 'Invalid value' is not one of
+        assert_in("'Bad Type' is not one of", data2['error']['serviceTypes'])
 
     def test_validation_errors_returned_for_invalid_update_of_copy(self):
         res = self.client.put(
@@ -362,8 +361,8 @@ class TestDraftServices(BaseApplicationTest):
             content_type='application/json')
         data = json.loads(res.get_data())
         assert_equal(res.status_code, 400)
-        assert_in("'badField' was unexpected", str(data['errors']['_form']))
-        assert_in("'chickens' is not one of", data['errors']['priceUnit'])
+        assert_in("'badField' was unexpected", str(data['error']['_form']))
+        assert_in("'chickens' is not one of", data['error']['priceUnit'])
 
     def test_should_create_draft_from_existing_service(self):
         res = self.client.put(
