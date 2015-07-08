@@ -48,7 +48,7 @@
         "maxItems":10,
         "items":{
           "type":"string",
-          "maxLength":100,
+          "maxLength":120,
           "pattern":"^(?:\\S+\\s+){0,9}\\S+$"
         }
       },
@@ -58,7 +58,7 @@
         "maxItems":10,
         "items":{
           "type":"string",
-          "maxLength":100,
+          "maxLength":120,
           "pattern":"^(?:\\S+\\s+){0,9}\\S+$"
         }
       },
