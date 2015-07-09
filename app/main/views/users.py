@@ -6,7 +6,8 @@ from flask import jsonify, abort, request, current_app
 from .. import main
 from ... import db, encryption
 from ...models import User, AuditEvent, Supplier
-from ...utils import get_json_from_request, json_has_required_keys, json_has_matching_id, pagination_links
+from ...utils import get_json_from_request, json_has_required_keys, \
+    json_has_matching_id, pagination_links, get_valid_page_or_1
 from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400
 
 
@@ -46,10 +47,7 @@ def get_user_by_id(user_id):
 
 @main.route('/users', methods=['GET'])
 def list_users():
-    try:
-        page = int(request.args.get('page', 1))
-    except ValueError:
-        abort(400, "Invalid page argument")
+    page = get_valid_page_or_1()
 
     supplier_id = request.args.get('supplier_id')
 
@@ -150,7 +148,7 @@ def create_user():
         db.session.rollback()
         abort(400, "Invalid supplier id")
 
-    return jsonify(users=user.serialize()), 200
+    return jsonify(users=user.serialize()), 201
 
 
 @main.route('/users/<int:user_id>', methods=['POST'])

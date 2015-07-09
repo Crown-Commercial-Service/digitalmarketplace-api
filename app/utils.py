@@ -13,6 +13,13 @@ def url_for(*args, **kwargs):
     return base_url_for(*args, **kwargs)
 
 
+def get_valid_page_or_1():
+    try:
+        return int(request.args.get('page', 1))
+    except ValueError:
+        abort(400, "Invalid page argument")
+
+
 def pagination_links(pagination, endpoint, args):
     links = dict()
     if pagination.has_prev:
