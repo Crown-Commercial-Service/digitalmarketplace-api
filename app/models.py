@@ -451,6 +451,14 @@ class DraftService(db.Model, ServiceTableMixin):
             status=service.status
         )
 
+    def copy(self):
+        return DraftService(
+            framework_id=self.framework_id,
+            supplier_id=self.supplier_id,
+            data=self.data,
+            status=self.status
+        )
+
     def serialize(self):
         data = super(DraftService, self).serialize()
         data['id'] = self.id

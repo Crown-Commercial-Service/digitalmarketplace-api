@@ -292,3 +292,36 @@ def create_new_draft_service(framework_slug):
         abort(400, "Database Error: {0}".format(e))
 
     return jsonify(services=draft.serialize()), 201
+
+
+@main.route('/draft-services/<int:draft_id>/copy', methods=['POST'])
+def copy_draft_service(draft_id):
+    updater_json = validate_and_return_updater_request()
+
+    original_draft = DraftService.query.filter(
+        DraftService.id == draft_id
+    ).first_or_404()
+
+    draft_copy = original_draft.copy()
+
+    try:
+        db.session.add(draft_copy)
+        db.session.flush()
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.create_draft_service,
+            user=updater_json['updated_by'],
+            data={
+                "draftId": draft_copy.id,
+                "originalDraftId": original_draft.id,
+            },
+            db_object=draft_copy
+        )
+        db.session.add(audit)
+
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+
+    return jsonify(services=draft_copy.serialize()), 201
