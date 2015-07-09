@@ -42,6 +42,7 @@
     },
     "serviceSummary":{
       "type":"string",
+      "minLength":1,
       "maxLength":500,
       "pattern":"^(?:\\S+\\s+){0,49}\\S+$"
     },
@@ -160,11 +161,13 @@
     },
     "supportAvailability":{
       "type":"string",
+      "minLength":1,
       "maxLength":200,
       "pattern":"^(?:\\S+\\s+){0,19}\\S+$"
     },
     "supportResponseTime":{
       "type":"string",
+      "minLength":1,
       "maxLength":200,
       "pattern":"^(?:\\S+\\s+){0,19}\\S+$"
     },
