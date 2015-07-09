@@ -35,8 +35,8 @@
       "maxItems":10,
       "items":{
         "type":"string",
-        "maxLength":100,
-        "pattern":"^\\s*(?:\\S+\\s+){0,9}\\S+\\s*$"
+        "maxLength":120,
+        "pattern":"^(?:\\S+\\s+){0,9}\\S+$"
       }
     },
     "serviceFeatures":{
@@ -45,8 +45,8 @@
       "maxItems":10,
       "items":{
         "type":"string",
-        "maxLength":100,
-        "pattern":"^\\s*(?:\\S+\\s+){0,9}\\S+\\s*$"
+        "maxLength":120,
+        "pattern":"^(?:\\S+\\s+){0,9}\\S+$"
       }
     },
     "serviceDefinitionDocumentURL": {

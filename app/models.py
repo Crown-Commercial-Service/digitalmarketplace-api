@@ -13,7 +13,7 @@ from sqlalchemy_utils import generic_relationship
 from dmutils.formats import DATETIME_FORMAT
 
 from . import db
-from .utils import link, url_for
+from .utils import link, url_for, strip_whitespace_from_data
 
 
 class Framework(db.Model):
@@ -356,10 +356,7 @@ class ServiceTableMixin(object):
         data.pop('frameworkName', None)
         data.pop('status', None)
         data.pop('links', None)
-        for key, value in data.items():
-            if isinstance(value, list):
-                # Remove empty items from lists
-                data[key] = list(filter(None, value))
+        data = strip_whitespace_from_data(data)
         current_data = dict(self.data.items())
         current_data.update(data)
         self.data = current_data

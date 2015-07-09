@@ -1,5 +1,6 @@
 from flask import url_for as base_url_for
 from flask import abort, request
+from six import string_types
 
 
 def link(rel, href):
@@ -65,3 +66,16 @@ def display_list(l):
     else:
         # oxford comma
         return ", ".join(l[:-1]) + ", and " + l[-1]
+
+
+def strip_whitespace_from_data(data):
+    for key, value in data.items():
+        if isinstance(value, list):
+            # Strip whitespace and remove empty items from lists
+            data[key] = list(
+                filter(None, map((lambda x: x.strip()), value))
+            )
+        elif isinstance(value, string_types):
+            # Strip whitespace from strings
+            data[key] = value.strip()
+    return data

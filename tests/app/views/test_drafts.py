@@ -495,6 +495,41 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(fetch.status_code, 200)
         assert_equal(data['services']['serviceName'], 'new service name')
 
+    def test_whitespace_is_stripped_when_updating_a_draft(self):
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        draft_id = json.loads(res.get_data())['services']['id']
+        update = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps({
+                'update_details': {
+                    'updated_by': 'joeblogs'},
+                'services': {
+                    'serviceName': '      a new  service name      ',
+                    'serviceFeatures': [
+                        "     Feature   1    ",
+                        "   ",
+                        "",
+                        "    second feature    "
+                    ],
+                }
+            }),
+            content_type='application/json')
+
+        data = json.loads(update.get_data())
+        assert_equal(update.status_code, 200)
+        assert_equal(data['services']['serviceName'], 'a new  service name')
+
+        fetch = self.client.get('/draft-services/{}'.format(draft_id))
+        data = json.loads(fetch.get_data())
+        assert_equal(fetch.status_code, 200)
+        assert_equal(data['services']['serviceName'], 'a new  service name')
+        assert_equal(len(data['services']['serviceFeatures']), 2)
+        assert_equal(data['services']['serviceFeatures'][0], 'Feature   1')
+        assert_equal(data['services']['serviceFeatures'][1], 'second feature')
+
     def test_should_edit_draft_with_audit_event(self):
         res = self.client.put(
             '/draft-services/copy-from/{}'.format(self.service_id),
