@@ -927,7 +927,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
 
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
-            self.client.put(
+            response = self.client.put(
                 '/services/1234567890123456',
                 data=json.dumps(
                     {
@@ -937,11 +937,9 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 ),
                 content_type='application/json')
 
-            service = Service.query.filter(Service.service_id ==
-                                           "1234567890123456").first()
             search_api_client.index.assert_called_with(
                 "1234567890123456",
-                service.data
+                json.loads(response.get_data())['services']
             )
 
     def test_should_not_index_on_service_on_expired_frameworks(
@@ -1028,11 +1026,9 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 ),
                 content_type='application/json')
 
-            service = Service.query.filter(Service.service_id ==
-                                           "1234567890123456").first()
             search_api_client.index.assert_called_with(
                 "1234567890123456",
-                service.data
+                mock.ANY
             )
 
     @mock.patch('app.service_utils.db.session.commit')
@@ -1177,7 +1173,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
             if service_is_indexed:
                 search_api_client.index.assert_called_with(
                     service.service_id,
-                    service.data
+                    json.loads(response.get_data())['services']
                 )
             else:
                 assert_false(search_api_client.index.called)
