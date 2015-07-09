@@ -20,7 +20,7 @@ class TestUsersAuth(BaseApplicationTest):
                         'role': 'buyer',
                         'name': 'joe bloggs'}}),
                 content_type='application/json')
-            assert_equal(response.status_code, 200)
+            assert_equal(response.status_code, 201)
 
     def valid_login(self):
         return self.client.post(
@@ -168,7 +168,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 200)
+        assert_equal(response.status_code, 201)
         data = json.loads(response.get_data())["users"]
         assert_equal(data["emailAddress"], "joeblogs@email.com")
 
@@ -183,7 +183,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 200)
+        assert_equal(response.status_code, 201)
         data = json.loads(response.get_data())["users"]
         assert_equal(data["emailAddress"], "joeblogs@email.com")
 
@@ -205,7 +205,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 200)
+        assert_equal(response.status_code, 201)
         data = json.loads(response.get_data())["users"]
         assert_equal(data["emailAddress"], "joeblogs@email.com")
         assert_equal(data["supplier"]["name"], "Supplier 1")
@@ -229,7 +229,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 200)
+        assert_equal(response.status_code, 201)
 
         audit_response = self.client.get('/audit-events')
         assert_equal(audit_response.status_code, 200)
@@ -283,7 +283,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                         'name': 'joe bloggs'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert_equal(response.status_code, 201)
             user = User.query.filter(
                 User.email_address == 'joeblogs@email.com') \
                 .first()
@@ -302,7 +302,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                         'name': 'joe bloggs'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert_equal(response.status_code, 201)
             user = User.query.filter(
                 User.email_address == 'joeblogs@email.com') \
                 .first()
@@ -319,7 +319,7 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 200)
+        assert_equal(response.status_code, 201)
 
         response = self.client.post(
             '/users',
@@ -570,56 +570,123 @@ class TestUsersUpdate(BaseApplicationTest):
 
 class TestUsersGet(BaseApplicationTest):
     def setup(self):
-        self.now = datetime.utcnow()
         super(TestUsersGet, self).setup()
         with self.app.app_context():
-            user = User(
-                id=123,
-                email_address="test@test.com",
-                name="my name",
-                password=encryption.hashpw("my long password"),
-                active=True,
-                role='buyer',
-                created_at=self.now,
-                updated_at=self.now,
-                password_changed_at=self.now
-            )
-            db.session.add(user)
-            db.session.commit()
+            payload = self.load_example_listing("Supplier")
+            self.supplier = payload
+            self.supplier_id = payload['id']
+
+            response = self.client.put(
+                '/suppliers/{}'.format(self.supplier_id),
+                data=json.dumps({
+                    'suppliers': self.supplier
+                }),
+                content_type='application/json')
+            assert_equal(response.status_code, 201)
+
+            users = [
+                {
+                    "emailAddress": "j@examplecompany.biz",
+                    "name": "John Example",
+                    "password": "minimum10characterpassword",
+                    "role": "supplier",
+                    "supplierId": self.supplier_id
+                },
+                {
+                    "emailAddress": "don@don.com",
+                    "name": "Don",
+                    "password": "minimum10characterpassword",
+                    "role": "supplier",
+                    "supplierId": self.supplier_id
+                }
+            ]
+            self.users = []
+
+            for user in users:
+                response = self.client.post(
+                    '/users',
+                    data=json.dumps({
+                        'users': user
+                    }),
+                    content_type='application/json')
+
+                assert_equal(response.status_code, 201)
+                self.users.append(json.loads(response.get_data())["users"])
 
     def test_can_get_a_user_by_id(self):
         with self.app.app_context():
-            now_as_text = self.now.strftime(DATETIME_FORMAT)
-            response = self.client.get("/users/123")
+            response = self.client.get("/users/{}".format(self.users[0]["id"]))
+            assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())["users"]
-            assert_equal(data['emailAddress'], "test@test.com")
-            assert_equal(data['name'], "my name")
-            assert_equal(data['role'], "buyer")
+            assert_equal(data['emailAddress'], self.users[0]['emailAddress'])
+            assert_equal(data['name'], self.users[0]['name'])
+            assert_equal(data['role'], self.users[0]['role'])
             assert_equal(data['active'], True)
             assert_equal(data['locked'], False)
-            assert_equal(data['createdAt'], now_as_text)
-            assert_equal(data['updatedAt'], now_as_text)
             assert_equal('password' in data, False)
-            assert_equal(response.status_code, 200)
 
     def test_can_get_a_user_by_email(self):
         with self.app.app_context():
-            response = self.client.get("/users?email=test@test.com")
+            response = self.client.get("/users/email-address?email=j@examplecompany.biz")
+            assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())["users"]
-            assert_equal(data['emailAddress'], "test@test.com")
-            assert_equal(data['name'], "my name")
-            assert_equal(data['role'], "buyer")
+            assert_equal(data['emailAddress'], self.users[0]['emailAddress'])
+            assert_equal(data['name'], self.users[0]['name'])
+            assert_equal(data['role'], self.users[0]['role'])
             assert_equal(data['active'], True)
             assert_equal(data['locked'], False)
             assert_equal('password' in data, False)
+
+    def test_can_list_users(self):
+        with self.app.app_context():
+            response = self.client.get("/users")
             assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())["users"]
+            for index, user in enumerate(data):
+                assert_equal(user['emailAddress'], self.users[index]["emailAddress"])
+                assert_equal(user['name'], self.users[index]["name"])
+                assert_equal(user['role'], self.users[index]["role"])
+                assert_equal(user['active'], True)
+                assert_equal(user['locked'], False)
+                assert_equal('password' in user, False)
+
+    def test_can_list_users_by_supplier_id(self):
+        with self.app.app_context():
+            response = self.client.get("/users?supplier_id={}".format(self.supplier_id))
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())["users"]
+            for index, user in enumerate(data):
+                assert_equal(user['emailAddress'], self.users[index]["emailAddress"])
+                assert_equal(user['name'], self.users[index]["name"])
+                assert_equal(user['role'], self.users[index]["role"])
+                assert_equal(user['active'], True)
+                assert_equal(user['locked'], False)
+                assert_equal('password' in user, False)
 
     def test_returns_404_for_non_int_id(self):
         response = self.client.get("/users/bogus")
         assert_equal(response.status_code, 404)
 
     def test_returns_404_for_no_email_supplied(self):
-        response = self.client.get("/users?notemail=test@test.com")
+        response = self.client.get("/users/email-address?notemail=j@examplecompany.biz")
         data = json.loads(response.get_data())["error"]
         assert_equal(response.status_code, 404)
         assert_equal(data, "'email' is a required parameter")
+
+    def test_returns_400_for_non_int_supplier_id(self):
+        bad_supplier_id = 'not_an_integer'
+        response = self.client.get("/users?supplier_id={}".format(bad_supplier_id))
+        assert_equal(response.status_code, 400)
+        assert_in(
+            "Invalid supplier_id: {}".format(bad_supplier_id),
+            response.get_data(as_text=True)
+        )
+
+    def test_returns_404_for_nonexistent_supplier(self):
+        non_existent_supplier = self.supplier_id + 1
+        response = self.client.get("/users?supplier_id={}".format(non_existent_supplier))
+        assert_equal(response.status_code, 404)
+        assert_in(
+            "supplier_id '{}' not found".format(non_existent_supplier),
+            response.get_data(as_text=True)
+        )
