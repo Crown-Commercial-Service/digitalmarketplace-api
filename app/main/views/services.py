@@ -8,7 +8,8 @@ from ...models import ArchivedService, Service, Supplier, Framework
 
 from sqlalchemy import asc
 from ...validation import detect_framework_or_400, is_valid_service_id_or_400
-from ...utils import url_for, pagination_links, drop_foreign_fields, display_list, strip_whitespace_from_data
+from ...utils import url_for, pagination_links, drop_foreign_fields, display_list, strip_whitespace_from_data, \
+    get_valid_page_or_1
 
 from ...service_utils import (
     validate_and_return_service_request,
@@ -34,10 +35,7 @@ def index():
 
 @main.route('/services', methods=['GET'])
 def list_services():
-    try:
-        page = int(request.args.get('page', 1))
-    except ValueError:
-        abort(400, "Invalid page argument")
+    page = get_valid_page_or_1()
 
     supplier_id = request.args.get('supplier_id')
 
@@ -91,10 +89,7 @@ def list_archived_services_by_service_id():
     is_valid_service_id_or_400(request.args.get("service-id", "no service id"))
     service_id = request.args.get("service-id", "no service id")
 
-    try:
-        page = int(request.args.get('page', 1))
-    except ValueError:
-        abort(400, "Invalid page argument")
+    page = get_valid_page_or_1()
 
     services = ArchivedService.query.filter(
         ArchivedService.service_id == service_id

@@ -8,17 +8,14 @@ from ...validation import (
     validate_contact_information_json_or_400,
     is_valid_string_or_400
 )
-from ...utils import pagination_links, drop_foreign_fields, \
-    get_json_from_request, json_has_required_keys, json_has_matching_id
+from ...utils import pagination_links, drop_foreign_fields, get_json_from_request, \
+    json_has_required_keys, json_has_matching_id, get_valid_page_or_1
 from dmutils.audit import AuditTypes
 
 
 @main.route('/suppliers', methods=['GET'])
 def list_suppliers():
-    try:
-        page = int(request.args.get('page', 1))
-    except ValueError:
-        abort(400, "Invalid page argument")
+    page = get_valid_page_or_1()
 
     prefix = request.args.get('prefix', '')
 
