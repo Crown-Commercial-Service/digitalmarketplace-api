@@ -49,18 +49,32 @@ def get_user_by_id(user_id):
 def list_users():
     page = get_valid_page_or_1()
 
+    # email_address is a primary key
+    email_address = request.args.get('email_address')
+    if email_address:
+        user = User.query.filter(
+            User.email_address == email_address.lower()
+        ).first()
+
+        if not user:
+            abort(404, "No user with email_address '{}'".format(email_address))
+
+        return jsonify(
+            users=[user.serialize()],
+            links={}
+        )
+
     supplier_id = request.args.get('supplier_id')
 
     if supplier_id is not None:
         try:
             supplier_id = int(supplier_id)
         except ValueError:
-            abort(400, "Invalid supplier_id: %s" % supplier_id)
+            abort(400, "Invalid supplier_id: {}".format(supplier_id))
 
         supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
         if not supplier:
-            abort(404, "supplier_id '%d' not found" % supplier_id)
-
+            abort(404, "supplier_id '{}' not found".format(supplier_id))
         users = User.query.filter(User.supplier_id == supplier_id).paginate(
             page=page,
             per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
@@ -81,17 +95,6 @@ def list_users():
             request.args
         )
     )
-
-
-@main.route('/users/email-address', methods=['GET'])
-def get_user_by_email():
-    email_address = request.args.get('email')
-    if email_address is None:
-        abort(404, "'email' is a required parameter")
-    user = User.query.filter(
-        User.email_address == email_address.lower()
-    ).first_or_404()
-    return jsonify(users=user.serialize())
 
 
 @main.route('/users', methods=['POST'])

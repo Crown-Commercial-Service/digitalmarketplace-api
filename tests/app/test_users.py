@@ -627,9 +627,9 @@ class TestUsersGet(BaseApplicationTest):
 
     def test_can_get_a_user_by_email(self):
         with self.app.app_context():
-            response = self.client.get("/users/email-address?email=j@examplecompany.biz")
+            response = self.client.get("/users?email_address=j@examplecompany.biz")
             assert_equal(response.status_code, 200)
-            data = json.loads(response.get_data())["users"]
+            data = json.loads(response.get_data())["users"][0]
             assert_equal(data['emailAddress'], self.users[0]['emailAddress'])
             assert_equal(data['name'], self.users[0]['name'])
             assert_equal(data['role'], self.users[0]['role'])
@@ -667,11 +667,15 @@ class TestUsersGet(BaseApplicationTest):
         response = self.client.get("/users/bogus")
         assert_equal(response.status_code, 404)
 
-    def test_returns_404_for_no_email_supplied(self):
-        response = self.client.get("/users/email-address?notemail=j@examplecompany.biz")
+    def test_returns_404_for_nonexistent_email_address(self):
+        non_existent_email = "jbond@mi6.biz"
+        response = self.client.get("/users?email_address={}".format(non_existent_email))
         data = json.loads(response.get_data())["error"]
         assert_equal(response.status_code, 404)
-        assert_equal(data, "'email' is a required parameter")
+        assert_equal(
+            data,
+            "No user with email_address 'jbond@mi6.biz'".format(non_existent_email)
+        )
 
     def test_returns_400_for_non_int_supplier_id(self):
         bad_supplier_id = 'not_an_integer'
