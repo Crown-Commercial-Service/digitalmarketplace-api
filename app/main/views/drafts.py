@@ -10,8 +10,9 @@ from ... import db
 from ...utils import drop_foreign_fields, json_has_required_keys
 from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, Supplier, AuditEvent, Framework
-from ...service_utils import validate_and_return_updater_request, update_and_validate_service, index_service, \
-    validate_service, commit_and_archive_service, create_service_from_draft
+from ...service_utils import validate_and_return_updater_request, \
+    update_and_validate_service, index_service, \
+    commit_and_archive_service, create_service_from_draft
 from ...draft_utils import validate_and_return_draft_request, get_draft_validation_errors
 
 
@@ -125,8 +126,7 @@ def list_draft_services():
     services = DraftService.query.order_by(
         asc(DraftService.framework_id),
         asc(DraftService.data['lot'].cast(String).label('data_lot')),
-        asc(DraftService.data['serviceName'].
-            cast(String).label('data_servicename'))
+        asc(DraftService.id)
     )
 
     if service_id:
