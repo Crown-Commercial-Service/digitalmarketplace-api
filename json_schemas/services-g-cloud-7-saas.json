@@ -42,9 +42,9 @@
     },
     "serviceSummary":{
       "type":"string",
-      "minLength":1,
       "maxLength":500,
-      "pattern":"^(?:\\S+\\s+){0,49}\\S+$"
+      "pattern":"^(?:\\S+\\s+){0,49}\\S+$",
+      "minLength":1
     },
     "serviceTypes":{
       "type":"array",
@@ -161,15 +161,15 @@
     },
     "supportAvailability":{
       "type":"string",
-      "minLength":1,
       "maxLength":200,
-      "pattern":"^(?:\\S+\\s+){0,19}\\S+$"
+      "pattern":"^(?:\\S+\\s+){0,19}\\S+$",
+      "minLength":1
     },
     "supportResponseTime":{
       "type":"string",
-      "minLength":1,
       "maxLength":200,
-      "pattern":"^(?:\\S+\\s+){0,19}\\S+$"
+      "pattern":"^(?:\\S+\\s+){0,19}\\S+$",
+      "minLength":1
     },
     "incidentEscalation":{
       "type":"boolean"
@@ -200,15 +200,15 @@
     },
     "provisioningTime": {
       "type": "string",
-      "minLength":1,
       "maxLength":200,
-      "pattern":"^(?:\\S+\\s+){0,19}\\S+$"
+      "pattern":"^(?:\\S+\\s+){0,19}\\S+$",
+      "minLength":1
     },
     "deprovisioningTime": {
       "type": "string",
-      "minLength":1,
       "maxLength":200,
-      "pattern":"^(?:\\S+\\s+){0,19}\\S+$"
+      "pattern":"^(?:\\S+\\s+){0,19}\\S+$",
+      "minLength":1
     },
     "openSource": {
       "type": "boolean"
@@ -227,9 +227,9 @@
     },
     "apiType": {
       "type": "string",
-      "minLength":1,
       "maxLength":200,
-      "pattern":"^(?:\\S+\\s+){0,19}\\S+$"
+      "pattern":"^(?:\\S+\\s+){0,19}\\S+$",
+      "minLength":1
     },
     "networksConnected": {
       "type": "array",
