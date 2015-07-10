@@ -281,8 +281,7 @@ def test_g7_missing_required_field_has_validation_error():
     data = load_example_listing("G7-SCS")
     data.pop("serviceSummary", None)
     errs = get_validation_errors("services-g-cloud-7-scs", data)
-    assert "'serviceSummary' is a required property" \
-           in "{}".format(errs['_form'])
+    assert "answer_required" in errs['serviceSummary']
 
 
 def test_enforce_required_false_allows_missing_fields():
@@ -301,8 +300,7 @@ def test_required_fields_param_requires_specified_fields():
     errs = get_validation_errors("services-g-cloud-7-scs", data,
                                  enforce_required=False,
                                  required_fields=['serviceSummary'])
-    assert "'serviceSummary' is a required property" \
-           in "{}".format(errs['_form'])
+    assert "answer_required" in errs['serviceSummary']
 
 
 def test_additional_properties_has_validation_error():
@@ -331,9 +329,7 @@ def test_too_many_words_causes_validation_error():
     data = load_example_listing("G7-SCS")
     data.update({'serviceBenefits': ['more than ten words 5 6 7 8 9 10 11']})
     errs = get_validation_errors("services-g-cloud-7-scs", data)
-    print("{}".format(errs['serviceBenefits']))
-    assert "'more than ten words 5 6 7 8 9 10 11' does not match" \
-           in errs['serviceBenefits']
+    assert "under_10_words" in errs['serviceBenefits']
 
 
 def assert_example(name, result, expected):

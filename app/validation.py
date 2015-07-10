@@ -55,7 +55,12 @@ def get_validator(schema_name, enforce_required=True, required_fields=None):
         schema = _SCHEMAS[schema_name]
     else:
         schema = _SCHEMAS[schema_name].copy()
-        schema['required'] = required_fields
+        required = list(
+            filter(
+                lambda(x): x in required_fields,
+                schema.get('required', None))
+        )
+        schema['required'] = required
     return validator_for(schema)(schema, format_checker=FORMAT_CHECKER)
 
 
@@ -143,7 +148,10 @@ def get_validation_errors(validator_name, json_data,
     for error in errors:
         if error.path:
             key = error.path[0]
-            error_map[key] = error.message
+            error_map[key] = _translate_json_schema_error(error.message)
+        elif error.message.endswith("is a required property"):
+            key = re.search(r'\'(.*)\'', error.message).group(1)
+            error_map[key] = 'answer_required'
         else:
             form_errors.append(error.message)
     if form_errors:
@@ -242,3 +250,24 @@ def is_valid_string(string, minlength=1, maxlength=255):
         return True
 
     return False
+
+
+def _translate_json_schema_error(message):
+    if message.endswith('is too short'):
+        return 'answer_required'
+    if message.endswith('is too long'):
+        if message.startswith('['):
+            # A list that is too long - all our lists are max 10 items
+            return 'under_10_items'
+        else:
+            # A string that is too long
+            return 'under_character_limit'
+    if 'does not match' in message:
+        return 'under_{}_words'.format(_get_word_count(message))
+    return message
+
+
+def _get_word_count(message):
+    count_minus_one_string = re.search("\{0,(\d+)", message).group(1)
+    count_minus_one = int(count_minus_one_string)
+    return count_minus_one + 1
