@@ -15,7 +15,7 @@ from dmutils.formats import DATETIME_FORMAT
 
 
 class TestListServicesOrdering(BaseApplicationTest):
-    def test_should_order_services_by_framework_lot_name(self):
+    def test_should_order_supplier_services_by_framework_lot_name(self):
         with self.app.app_context():
             self.app.config['DM_API_SERVICES_PAGE_SIZE'] = 10
             now = datetime.utcnow()
@@ -58,7 +58,7 @@ class TestListServicesOrdering(BaseApplicationTest):
 
             db.session.commit()
 
-        response = self.client.get('/services')
+        response = self.client.get('/services?supplier_id=1')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
@@ -70,7 +70,62 @@ class TestListServicesOrdering(BaseApplicationTest):
             'g6_saas',
             'g5_paas',
             'g5_saas',
-            ])
+        ])
+
+    def test_all_services_list_ordered_by_id(self):
+        with self.app.app_context():
+            self.app.config['DM_API_SERVICES_PAGE_SIZE'] = 10
+            now = datetime.utcnow()
+
+            g5_saas = self.load_example_listing("G5")
+            g5_paas = self.load_example_listing("G5")
+            g6_paas_2 = self.load_example_listing("G6-PaaS")
+            g6_iaas_1 = self.load_example_listing("G6-IaaS")
+            g6_paas_1 = self.load_example_listing("G6-PaaS")
+            g6_saas = self.load_example_listing("G6-SaaS")
+            g6_iaas_2 = self.load_example_listing("G6-IaaS")
+
+            db.session.add(Supplier(supplier_id=1, name=u"Supplier 1"))
+
+            def insert_service(listing, service_id, framework_id):
+                db.session.add(Service(service_id=service_id,
+                                       supplier_id=1,
+                                       updated_at=now,
+                                       status='published',
+                                       created_at=now,
+                                       framework_id=framework_id,
+                                       data=listing))
+
+            # override certain fields to create ordering difference
+            g6_iaas_1['serviceName'] = "b service name"
+            g6_iaas_2['serviceName'] = "a service name"
+            g6_paas_1['serviceName'] = "b service name"
+            g6_paas_2['serviceName'] = "a service name"
+            g5_paas['lot'] = "PaaS"
+
+            insert_service(g5_paas, "g5_paas", 3)
+            insert_service(g5_saas, "g5_saas", 3)
+            insert_service(g6_iaas_1, "g6_iaas_1", 1)
+            insert_service(g6_iaas_2, "g6_iaas_2", 1)
+            insert_service(g6_paas_1, "g6_paas_1", 1)
+            insert_service(g6_paas_2, "g6_paas_2", 1)
+            insert_service(g6_saas, "g6_saas", 1)
+
+            db.session.commit()
+
+        response = self.client.get('/services')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal([d['id'] for d in data['services']], [
+            'g5_paas',
+            'g5_saas',
+            'g6_iaas_1',
+            'g6_iaas_2',
+            'g6_paas_1',
+            'g6_paas_2',
+            'g6_saas',
+        ])
 
 
 class TestListServices(BaseApplicationTest):
