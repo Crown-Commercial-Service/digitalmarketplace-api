@@ -42,7 +42,7 @@ def list_services():
 
     supplier_id = request.args.get('supplier_id')
 
-    services = Service.query.framework_is_live().default_order()
+    services = Service.query.framework_is_live()
 
     if request.args.get('status'):
         services = services.has_statuses(*request.values.getlist('status'))
@@ -58,11 +58,13 @@ def list_services():
         if not supplier:
             abort(404, "supplier_id '%d' not found" % supplier_id)
 
-        items = services.filter(Service.supplier_id == supplier_id).all()
+        items = services.default_order().filter(Service.supplier_id == supplier_id).all()
         return jsonify(
             services=[service.serialize() for service in items],
             links=dict()
         )
+    else:
+        services = services.order_by(asc(Service.id))
 
     services = services.paginate(
         page=page,
