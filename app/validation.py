@@ -57,7 +57,7 @@ def get_validator(schema_name, enforce_required=True, required_fields=None):
         schema = _SCHEMAS[schema_name].copy()
         required = list(
             filter(
-                lambda(x): x in required_fields,
+                lambda x: x in required_fields,
                 schema.get('required', None))
         )
         schema['required'] = required
