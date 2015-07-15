@@ -1,5 +1,5 @@
 import os
-from flask import jsonify, current_app
+from flask import jsonify, current_app, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from . import status
@@ -9,6 +9,11 @@ from dmutils.status import get_flags
 
 @status.route('/_status')
 def status_no_db():
+
+    if 'ignore-dependencies' in request.args:
+        return jsonify(
+            status="ok",
+        ), 200
 
     version = current_app.config['VERSION']
 
