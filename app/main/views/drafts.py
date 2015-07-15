@@ -1,4 +1,3 @@
-import ast
 from dmutils.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 
@@ -73,7 +72,7 @@ def edit_draft_service(draft_id):
 
     updater_json = validate_and_return_updater_request()
     update_json = validate_and_return_draft_request()
-    page_questions = ast.literal_eval(update_json.pop('page_questions', '[]'))
+    page_questions = update_json.pop('page_questions', [])
     draft = DraftService.query.filter(
         DraftService.id == draft_id
     ).first_or_404()
