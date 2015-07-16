@@ -332,6 +332,22 @@ def test_too_many_words_causes_validation_error():
     assert "under_10_words" in errs['serviceBenefits']
 
 
+def test_too_many_list_items_causes_validation_error():
+    data = load_example_listing("G7-SCS")
+    data.update({'serviceBenefits': [
+        '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'
+    ]})
+    errs = get_validation_errors("services-g-cloud-7-scs", data)
+    assert "under_10_items" in errs['serviceBenefits']
+
+
+def test_string_too_long_causes_validation_error():
+    data = load_example_listing("G7-SCS")
+    data.update({'serviceName': "a" * 101})
+    errs = get_validation_errors("services-g-cloud-7-scs", data)
+    assert "under_character_limit" in errs['serviceName']
+
+
 def assert_example(name, result, expected):
     assert_equal(result, expected)
 
