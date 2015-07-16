@@ -55,12 +55,10 @@ def get_validator(schema_name, enforce_required=True, required_fields=None):
         schema = _SCHEMAS[schema_name]
     else:
         schema = _SCHEMAS[schema_name].copy()
-        required = list(
-            filter(
-                lambda x: x in required_fields,
-                schema.get('required', None))
-        )
-        schema['required'] = required
+        schema['required'] = [
+            field for field in schema.get('required', [])
+            if field in required_fields
+            ]
     return validator_for(schema)(schema, format_checker=FORMAT_CHECKER)
 
 
