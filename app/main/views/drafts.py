@@ -72,7 +72,7 @@ def edit_draft_service(draft_id):
 
     updater_json = validate_and_return_updater_request()
     update_json = validate_and_return_draft_request()
-
+    page_questions = update_json.pop('page_questions', [])
     draft = DraftService.query.filter(
         DraftService.id == draft_id
     ).first_or_404()
@@ -80,7 +80,8 @@ def edit_draft_service(draft_id):
     draft.update_from_json(update_json)
     errs = get_draft_validation_errors(draft.data,
                                        draft.data['lot'],
-                                       framework_id=draft.framework_id)
+                                       framework_id=draft.framework_id,
+                                       required=page_questions)
     if errs:
         abort(400, errs)
 
