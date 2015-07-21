@@ -208,8 +208,6 @@ def import_service(service_id):
 
 @main.route('/services/<string:service_id>', methods=['GET'])
 def get_service(service_id):
-    is_valid_service_id_or_400(service_id)
-
     service = Service.query.filter(
         Service.service_id == service_id
     ).framework_is_live().first_or_404()

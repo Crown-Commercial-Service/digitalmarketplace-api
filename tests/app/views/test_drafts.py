@@ -58,11 +58,11 @@ class TestDraftServices(BaseApplicationTest):
             content_type='application/json')
 
     def test_reject_list_drafts_no_supplier_id(self):
-        res = self.client.get('/services/draft')
+        res = self.client.get('/draft-services')
         assert_equal(res.status_code, 400)
 
     def test_reject_list_drafts_invalid_supplier_id(self):
-        res = self.client.get('/services/draft?supplier_id=invalid')
+        res = self.client.get('/draft-services?supplier_id=invalid')
         assert_equal(res.status_code, 400)
 
     def test_reject_list_drafts_if_no_supplier_for_id(self):
