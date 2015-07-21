@@ -1674,8 +1674,7 @@ class TestGetService(BaseApplicationTest):
 
     def test_invalid_service_id(self):
         response = self.client.get('/services/abc123')
-        assert_equal(400, response.status_code)
-        assert_in(b'Invalid service ID supplied', response.get_data())
+        assert_equal(404, response.status_code)
 
     def test_get_published_service(self):
         response = self.client.get('/services/123-published-456')
