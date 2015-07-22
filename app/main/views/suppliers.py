@@ -2,24 +2,20 @@ from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
-from ...models import Supplier, ContactInformation, AuditEvent, Service, \
-    SelectionAnswers, Framework
+from ...models import Supplier, ContactInformation, AuditEvent, Service, SelectionAnswers, Framework
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400,
     is_valid_string_or_400
 )
-from ...utils import pagination_links, drop_foreign_fields, \
-    get_json_from_request, json_has_required_keys, json_has_matching_id
+from ...utils import pagination_links, drop_foreign_fields, get_json_from_request, \
+    json_has_required_keys, json_has_matching_id, get_valid_page_or_1
 from dmutils.audit import AuditTypes
 
 
 @main.route('/suppliers', methods=['GET'])
 def list_suppliers():
-    try:
-        page = int(request.args.get('page', 1))
-    except ValueError:
-        abort(400, "Invalid page argument")
+    page = get_valid_page_or_1()
 
     prefix = request.args.get('prefix', '')
 
@@ -82,7 +78,6 @@ def get_supplier(supplier_id):
     }))
 
 
-# Route to insert new Suppliers, not update existing ones
 @main.route('/suppliers/<int:supplier_id>', methods=['PUT'])
 def import_supplier(supplier_id):
     supplier_data = get_json_from_request()
@@ -140,24 +135,15 @@ def import_supplier(supplier_id):
     for contact_information_data in contact_informations_data:
         contact_information = ContactInformation()
 
-        contact_information.contact_name = \
-            contact_information_data.get('contactName', None)
-        contact_information.phone_number = \
-            contact_information_data.get('phoneNumber', None)
-        contact_information.email = \
-            contact_information_data.get('email', None)
-        contact_information.website = \
-            contact_information_data.get('website', None)
-        contact_information.address1 = \
-            contact_information_data.get('address1', None)
-        contact_information.address2 = \
-            contact_information_data.get('address2', None)
-        contact_information.city = \
-            contact_information_data.get('city', None)
-        contact_information.country = \
-            contact_information_data.get('country', None)
-        contact_information.postcode = \
-            contact_information_data.get('postcode', None)
+        contact_information.contact_name = contact_information_data.get('contactName')
+        contact_information.phone_number = contact_information_data.get('phoneNumber')
+        contact_information.email = contact_information_data.get('email')
+        contact_information.website = contact_information_data.get('website')
+        contact_information.address1 = contact_information_data.get('address1')
+        contact_information.address2 = contact_information_data.get('address2')
+        contact_information.city = contact_information_data.get('city')
+        contact_information.country = contact_information_data.get('country')
+        contact_information.postcode = contact_information_data.get('postcode')
 
         supplier.contact_information.append(contact_information)
 

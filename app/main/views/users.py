@@ -5,11 +5,10 @@ from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ... import db, encryption
-from ...models import User, AuditEvent
+from ...models import User, AuditEvent, Supplier
 from ...utils import get_json_from_request, json_has_required_keys, \
-    json_has_matching_id
-from ...validation import validate_user_json_or_400, \
-    validate_user_auth_json_or_400
+    json_has_matching_id, pagination_links, get_valid_page_or_1
+from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400
 
 
 @main.route('/users/auth', methods=['POST'])
@@ -47,14 +46,55 @@ def get_user_by_id(user_id):
 
 
 @main.route('/users', methods=['GET'])
-def get_user_by_email():
-    email_address = request.args.get('email')
-    if email_address is None:
-        abort(404, "'email' is a required parameter")
-    user = User.query.filter(
-        User.email_address == email_address.lower()
-    ).first_or_404()
-    return jsonify(users=user.serialize())
+def list_users():
+    page = get_valid_page_or_1()
+
+    # email_address is a primary key
+    email_address = request.args.get('email_address')
+    if email_address:
+        user = User.query.filter(
+            User.email_address == email_address.lower()
+        ).first()
+
+        if not user:
+            abort(404, "No user with email_address '{}'".format(email_address))
+
+        return jsonify(
+            users=[user.serialize()],
+            links={}
+        )
+
+    supplier_id = request.args.get('supplier_id')
+
+    if supplier_id is not None:
+        try:
+            supplier_id = int(supplier_id)
+        except ValueError:
+            abort(400, "Invalid supplier_id: {}".format(supplier_id))
+
+        supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
+        if not supplier:
+            abort(404, "supplier_id '{}' not found".format(supplier_id))
+        users = User.query.filter(User.supplier_id == supplier_id).paginate(
+            page=page,
+            per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
+        )
+
+    # No query parameters, so list all users
+    else:
+        users = User.query.paginate(
+            page=page,
+            per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
+        )
+
+    return jsonify(
+        users=[user.serialize() for user in users.items],
+        links=pagination_links(
+            users,
+            '.list_users',
+            request.args
+        )
+    )
 
 
 @main.route('/users', methods=['POST'])
@@ -111,7 +151,7 @@ def create_user():
         db.session.rollback()
         abort(400, "Invalid supplier id")
 
-    return jsonify(users=user.serialize()), 200
+    return jsonify(users=user.serialize()), 201
 
 
 @main.route('/users/<int:user_id>', methods=['POST'])

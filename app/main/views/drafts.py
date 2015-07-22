@@ -10,11 +10,9 @@ from ... import db
 from ...utils import drop_foreign_fields, json_has_required_keys
 from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, Supplier, AuditEvent, Framework
-from ...service_utils import validate_and_return_updater_request, \
-    update_and_validate_service, index_service, validate_service, \
-    commit_and_archive_service, create_service_from_draft
-from ...draft_utils import validate_and_return_draft_request, \
-    get_draft_validation_errors
+from ...service_utils import validate_and_return_updater_request, update_and_validate_service, index_service, \
+    validate_service, commit_and_archive_service, create_service_from_draft
+from ...draft_utils import validate_and_return_draft_request, get_draft_validation_errors
 
 
 @main.route('/draft-services/copy-from/<string:service_id>', methods=['PUT'])
@@ -120,8 +118,7 @@ def list_draft_services():
     except ValueError:
         abort(400, "Invalid supplier_id: %s" % supplier_id)
 
-    supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id) \
-        .all()
+    supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
     if not supplier:
         abort(404, "supplier_id '%d' not found" % supplier_id)
 

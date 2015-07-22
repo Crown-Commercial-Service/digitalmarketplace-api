@@ -4,7 +4,7 @@ from ...models import AuditEvent
 from sqlalchemy import asc, Date, cast
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import true, false
-from ...utils import pagination_links
+from ...utils import pagination_links, get_valid_page_or_1
 from .. import main
 from ... import db
 from dmutils.audit import AuditTypes
@@ -15,10 +15,7 @@ from ...service_utils import validate_and_return_updater_request
 
 @main.route('/audit-events', methods=['GET'])
 def list_audits():
-    try:
-        page = int(request.args.get('page', 1))
-    except ValueError:
-        abort(400, "Invalid page argument")
+    page = get_valid_page_or_1()
 
     audits = AuditEvent.query.order_by(
         asc(AuditEvent.created_at)
