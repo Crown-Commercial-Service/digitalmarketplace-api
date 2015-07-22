@@ -22,7 +22,7 @@ def auth_user():
 
     if user is None:
         return jsonify(authorization=False), 404
-    elif encryption.authenticate_user(json_payload['password'], user):
+    elif encryption.authenticate_user(json_payload['password'], user) and user.active:
         user.logged_in_at = datetime.utcnow()
         user.failed_login_count = 0
         db.session.add(user)
@@ -183,6 +183,8 @@ def update_user(user_id):
         user.supplier_id = user_update['supplierId']
     if 'emailAddress' in user_update:
         user.email_address = user_update['emailAddress']
+    if 'locked' in user_update and not user_update['locked']:
+        user.failed_login_count = 0
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_user,

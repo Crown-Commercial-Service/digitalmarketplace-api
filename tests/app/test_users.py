@@ -433,12 +433,65 @@ class TestUsersUpdate(BaseApplicationTest):
                         'password': 'my long password'}}),
                 content_type='application/json')
 
+            assert_equal(response.status_code, 403)
+
+    def test_can_unlock_user(self):
+
+        self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
+
+        with self.app.app_context():
+
+            # lock the user using failed auth
+            self.client.post(
+                '/users/auth',
+                data=json.dumps({
+                    'authUsers': {
+                        'emailAddress': 'test@test.com',
+                        'password': 'invalid'}
+                }),
+                content_type='application/json'
+            )
+
+            response = self.client.get(
+                '/users/123',
+                content_type='application/json')
+
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
-            assert_equal(data['active'], False)
+            assert_equal(data['locked'], True)
+            assert_equal(data['failedLoginCount'], 1)
 
-    def test_can_not_update_locked(self):
+            response = self.client.post(
+                '/users/123',
+                data=json.dumps({
+                    'users': {
+                        'locked': False
+                    }}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+
+            response = self.client.get(
+                '/users/123',
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['locked'], False)
+            assert_equal(data['failedLoginCount'], 0)
+
+    def test_cant_lock_a_user(self):
         with self.app.app_context():
+
+            response = self.client.get(
+                '/users/123',
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['locked'], False)
+            assert_equal(data['failedLoginCount'], 0)
+
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
@@ -456,6 +509,7 @@ class TestUsersUpdate(BaseApplicationTest):
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
             assert_equal(data['locked'], False)
+            assert_equal(data['failedLoginCount'], 0)
 
     def test_can_update_name(self):
         with self.app.app_context():
