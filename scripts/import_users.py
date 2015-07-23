@@ -59,7 +59,7 @@ class UserPutter(object):
             },
             verify=self.cert if self.cert else True)
 
-        if response.status_code is not 200:
+        if response.status_code is not 201:
             print("failed: {}".format(user['emailAddress']))
 
         return user['emailAddress'], response
@@ -123,7 +123,7 @@ def do_import(base_url, access_token, filename, cert, verbose):
         if response is None:
             print("ERROR: {} not imported".format(username),
                   file=sys.stderr)
-        elif response.status_code / 100 != 2:
+        elif int(response.status_code / 100) != 2:
             print("ERROR: {} on {}".format(response.status_code, username),
                   file=sys.stderr)
             if verbose:
