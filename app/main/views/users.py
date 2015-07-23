@@ -198,7 +198,7 @@ def update_user(user_id):
 
     try:
         db.session.commit()
-        return jsonify(message="done"), 200
+        return jsonify(users=user.serialize()), 200
     except IntegrityError as e:
         db.session.rollback()
         abort(400, "Could not update user with: {0}".format(user_update))

@@ -424,6 +424,8 @@ class TestUsersUpdate(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['active'], False)
 
             response = self.client.post(
                 '/users/auth',
@@ -470,6 +472,8 @@ class TestUsersUpdate(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['locked'], False)
 
             response = self.client.get(
                 '/users/123',
@@ -501,6 +505,8 @@ class TestUsersUpdate(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['locked'], False)
 
             response = self.client.get(
                 '/users/123',
@@ -522,6 +528,8 @@ class TestUsersUpdate(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['name'], 'I Just Got Married')
 
             response = self.client.post(
                 '/users/auth',
@@ -570,6 +578,8 @@ class TestUsersUpdate(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['role'], 'supplier')
 
             response = self.client.post(
                 '/users/auth',
@@ -608,6 +618,8 @@ class TestUsersUpdate(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['emailAddress'], 'myshinynew@email.address')
 
             response = self.client.post(
                 '/users/auth',
