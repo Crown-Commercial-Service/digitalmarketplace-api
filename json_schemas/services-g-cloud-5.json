@@ -20,6 +20,14 @@
     "title": {
       "type": "string"
     },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
     "serviceName":{
       "type":"string",
       "minLength":1,

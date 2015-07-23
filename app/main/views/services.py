@@ -179,11 +179,8 @@ def import_service(service_id):
     service.framework_id = framework.id
     service.status = service_data.pop('status', 'published')
     now = datetime.utcnow()
-    if 'createdAt' in service_data:
-        service.created_at = service_data['createdAt']
-    else:
-        service.created_at = now
-    service.updated_at = now
+    service.created_at = service_data.get('createdAt', now)
+    service.updated_at = service_data.get('updatedAt', now)
 
     service_data = drop_foreign_fields(
         service_data,

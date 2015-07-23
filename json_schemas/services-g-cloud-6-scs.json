@@ -24,6 +24,10 @@
          "type": "string",
          "format": "date-time"
       },
+      "updatedAt": {
+        "type": "string",
+        "format": "date-time"
+      },
       "serviceTypes": {
          "type": "array",
          "uniqueItems": true,
