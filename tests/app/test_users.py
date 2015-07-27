@@ -424,6 +424,8 @@ class TestUsersUpdate(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['active'], False)
 
             response = self.client.post(
                 '/users/auth',
@@ -433,12 +435,67 @@ class TestUsersUpdate(BaseApplicationTest):
                         'password': 'my long password'}}),
                 content_type='application/json')
 
+            assert_equal(response.status_code, 403)
+
+    def test_can_unlock_user(self):
+
+        self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
+
+        with self.app.app_context():
+
+            # lock the user using failed auth
+            self.client.post(
+                '/users/auth',
+                data=json.dumps({
+                    'authUsers': {
+                        'emailAddress': 'test@test.com',
+                        'password': 'invalid'}
+                }),
+                content_type='application/json'
+            )
+
+            response = self.client.get(
+                '/users/123',
+                content_type='application/json')
+
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
-            assert_equal(data['active'], False)
+            assert_equal(data['locked'], True)
+            assert_equal(data['failedLoginCount'], 1)
 
-    def test_can_not_update_locked(self):
+            response = self.client.post(
+                '/users/123',
+                data=json.dumps({
+                    'users': {
+                        'locked': False
+                    }}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['locked'], False)
+
+            response = self.client.get(
+                '/users/123',
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['locked'], False)
+            assert_equal(data['failedLoginCount'], 0)
+
+    def test_cant_lock_a_user(self):
         with self.app.app_context():
+
+            response = self.client.get(
+                '/users/123',
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['locked'], False)
+            assert_equal(data['failedLoginCount'], 0)
+
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
@@ -448,6 +505,8 @@ class TestUsersUpdate(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['locked'], False)
 
             response = self.client.get(
                 '/users/123',
@@ -456,6 +515,7 @@ class TestUsersUpdate(BaseApplicationTest):
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
             assert_equal(data['locked'], False)
+            assert_equal(data['failedLoginCount'], 0)
 
     def test_can_update_name(self):
         with self.app.app_context():
@@ -468,6 +528,8 @@ class TestUsersUpdate(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['name'], 'I Just Got Married')
 
             response = self.client.post(
                 '/users/auth',
@@ -516,6 +578,8 @@ class TestUsersUpdate(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['role'], 'supplier')
 
             response = self.client.post(
                 '/users/auth',
@@ -554,6 +618,8 @@ class TestUsersUpdate(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['emailAddress'], 'myshinynew@email.address')
 
             response = self.client.post(
                 '/users/auth',
@@ -613,29 +679,42 @@ class TestUsersGet(BaseApplicationTest):
                 assert_equal(response.status_code, 201)
                 self.users.append(json.loads(response.get_data())["users"])
 
+    @staticmethod
+    def _assert_things_about_users(user_from_api, user_to_compare_to):
+        assert_equal(user_from_api['emailAddress'], user_to_compare_to['emailAddress'])
+        assert_equal(user_from_api['name'], user_to_compare_to['name'])
+        assert_equal(user_from_api['role'], user_to_compare_to['role'])
+        assert_equal(user_from_api['active'], user_to_compare_to['active'])
+        assert_equal(user_from_api['locked'], False)
+        assert_equal('password' in user_from_api, False)
+
+    def _deactivate_user(self, user_index=0):
+        inactive_user = self.users[user_index]
+        inactive_user['active'] = False
+
+        self.client.post("/users/{}".format(inactive_user['id']))
+        response = self.client.post(
+            '/users/{}'.format(self.users[0]['id']),
+            data=json.dumps({
+                'users': {
+                    'active': inactive_user['active']
+                }}),
+            content_type='application/json')
+        assert_equal(response.status_code, 200)
+
     def test_can_get_a_user_by_id(self):
         with self.app.app_context():
             response = self.client.get("/users/{}".format(self.users[0]["id"]))
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())["users"]
-            assert_equal(data['emailAddress'], self.users[0]['emailAddress'])
-            assert_equal(data['name'], self.users[0]['name'])
-            assert_equal(data['role'], self.users[0]['role'])
-            assert_equal(data['active'], True)
-            assert_equal(data['locked'], False)
-            assert_equal('password' in data, False)
+            self._assert_things_about_users(data, self.users[0])
 
     def test_can_get_a_user_by_email(self):
         with self.app.app_context():
             response = self.client.get("/users?email_address=j@examplecompany.biz")
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())["users"][0]
-            assert_equal(data['emailAddress'], self.users[0]['emailAddress'])
-            assert_equal(data['name'], self.users[0]['name'])
-            assert_equal(data['role'], self.users[0]['role'])
-            assert_equal(data['active'], True)
-            assert_equal(data['locked'], False)
-            assert_equal('password' in data, False)
+            self._assert_things_about_users(data, self.users[0])
 
     def test_can_list_users(self):
         with self.app.app_context():
@@ -643,12 +722,7 @@ class TestUsersGet(BaseApplicationTest):
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())["users"]
             for index, user in enumerate(data):
-                assert_equal(user['emailAddress'], self.users[index]["emailAddress"])
-                assert_equal(user['name'], self.users[index]["name"])
-                assert_equal(user['role'], self.users[index]["role"])
-                assert_equal(user['active'], True)
-                assert_equal(user['locked'], False)
-                assert_equal('password' in user, False)
+                self._assert_things_about_users(user, self.users[index])
 
     def test_can_list_users_by_supplier_id(self):
         with self.app.app_context():
@@ -656,12 +730,48 @@ class TestUsersGet(BaseApplicationTest):
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())["users"]
             for index, user in enumerate(data):
-                assert_equal(user['emailAddress'], self.users[index]["emailAddress"])
-                assert_equal(user['name'], self.users[index]["name"])
-                assert_equal(user['role'], self.users[index]["role"])
-                assert_equal(user['active'], True)
-                assert_equal(user['locked'], False)
-                assert_equal('password' in user, False)
+                self._assert_things_about_users(user, self.users[index])
+
+    def test_can_list_active_users(self):
+        with self.app.app_context():
+            # Deactivate a user
+            self._deactivate_user()
+
+            # Return active users
+            response = self.client.get("/users?active=true".format(self.supplier_id))
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())["users"]
+            assert_equal(len(data), 1)
+
+            for user in self.users:
+                if user['active']:
+                    self._assert_things_about_users(data[0], user)
+
+    def test_can_list_inactive_users(self):
+        with self.app.app_context():
+            # Deactivate a user
+            self._deactivate_user()
+
+            # Return inactive users
+            response = self.client.get("/users?active=false".format(self.supplier_id))
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())["users"]
+            assert_equal(len(data), 1)
+
+            for user in self.users:
+                if not user['active']:
+                    self._assert_things_about_users(data[0], user)
+
+    def test_will_list_users_even_if_active_query_parameter_sucks(self):
+        with self.app.app_context():
+            # Deactivate a user
+            self._deactivate_user()
+
+            # Return inactive users
+            response = self.client.get("/users?active=hfeiwe321!@#!".format(self.supplier_id))
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())["users"]
+            assert_equal(len(data), 2)
 
     def test_returns_404_for_non_int_id(self):
         response = self.client.get("/users/bogus")
