@@ -1,5 +1,6 @@
 from datetime import datetime
 from dmutils.audit import AuditTypes
+from dmutils.config import convert_to_boolean
 from sqlalchemy.exc import IntegrityError
 from flask import jsonify, abort, request, current_app
 
@@ -47,12 +48,13 @@ def get_user_by_id(user_id):
 
 @main.route('/users', methods=['GET'])
 def list_users():
+    user_query = User.query.order_by(User.id)
     page = get_valid_page_or_1()
 
     # email_address is a primary key
     email_address = request.args.get('email_address')
     if email_address:
-        user = User.query.filter(
+        user = user_query.filter(
             User.email_address == email_address.lower()
         ).first()
 
@@ -65,7 +67,6 @@ def list_users():
         )
 
     supplier_id = request.args.get('supplier_id')
-
     if supplier_id is not None:
         try:
             supplier_id = int(supplier_id)
@@ -75,17 +76,17 @@ def list_users():
         supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
         if not supplier:
             abort(404, "supplier_id '{}' not found".format(supplier_id))
-        users = User.query.filter(User.supplier_id == supplier_id).paginate(
-            page=page,
-            per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
-        )
 
-    # No query parameters, so list all users
-    else:
-        users = User.query.paginate(
-            page=page,
-            per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
-        )
+        user_query = user_query.filter(User.supplier_id == supplier_id)
+
+    active = convert_to_boolean(request.args.get('active'))
+    if isinstance(active, bool):
+        user_query = user_query.filter(User.active == active)
+
+    users = user_query.paginate(
+        page=page,
+        per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
+    )
 
     return jsonify(
         users=[user.serialize() for user in users.items],
