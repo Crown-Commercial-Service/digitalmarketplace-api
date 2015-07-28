@@ -688,20 +688,6 @@ class TestUsersGet(BaseApplicationTest):
         assert_equal(user_from_api['locked'], False)
         assert_equal('password' in user_from_api, False)
 
-    def _deactivate_user(self, user_index=0):
-        inactive_user = self.users[user_index]
-        inactive_user['active'] = False
-
-        self.client.post("/users/{}".format(inactive_user['id']))
-        response = self.client.post(
-            '/users/{}'.format(self.users[0]['id']),
-            data=json.dumps({
-                'users': {
-                    'active': inactive_user['active']
-                }}),
-            content_type='application/json')
-        assert_equal(response.status_code, 200)
-
     def test_can_get_a_user_by_id(self):
         with self.app.app_context():
             response = self.client.get("/users/{}".format(self.users[0]["id"]))
@@ -731,47 +717,6 @@ class TestUsersGet(BaseApplicationTest):
             data = json.loads(response.get_data())["users"]
             for index, user in enumerate(data):
                 self._assert_things_about_users(user, self.users[index])
-
-    def test_can_list_active_users(self):
-        with self.app.app_context():
-            # Deactivate a user
-            self._deactivate_user()
-
-            # Return active users
-            response = self.client.get("/users?active=true".format(self.supplier_id))
-            assert_equal(response.status_code, 200)
-            data = json.loads(response.get_data())["users"]
-            assert_equal(len(data), 1)
-
-            for user in self.users:
-                if user['active']:
-                    self._assert_things_about_users(data[0], user)
-
-    def test_can_list_inactive_users(self):
-        with self.app.app_context():
-            # Deactivate a user
-            self._deactivate_user()
-
-            # Return inactive users
-            response = self.client.get("/users?active=false".format(self.supplier_id))
-            assert_equal(response.status_code, 200)
-            data = json.loads(response.get_data())["users"]
-            assert_equal(len(data), 1)
-
-            for user in self.users:
-                if not user['active']:
-                    self._assert_things_about_users(data[0], user)
-
-    def test_will_list_users_even_if_active_query_parameter_sucks(self):
-        with self.app.app_context():
-            # Deactivate a user
-            self._deactivate_user()
-
-            # Return inactive users
-            response = self.client.get("/users?active=hfeiwe321!@#!".format(self.supplier_id))
-            assert_equal(response.status_code, 200)
-            data = json.loads(response.get_data())["users"]
-            assert_equal(len(data), 2)
 
     def test_returns_404_for_non_int_id(self):
         response = self.client.get("/users/bogus")

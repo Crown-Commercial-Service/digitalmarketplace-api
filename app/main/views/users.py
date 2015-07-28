@@ -1,6 +1,5 @@
 from datetime import datetime
 from dmutils.audit import AuditTypes
-from dmutils.config import convert_to_boolean
 from sqlalchemy.exc import IntegrityError
 from flask import jsonify, abort, request, current_app
 
@@ -78,10 +77,6 @@ def list_users():
             abort(404, "supplier_id '{}' not found".format(supplier_id))
 
         user_query = user_query.filter(User.supplier_id == supplier_id)
-
-    active = convert_to_boolean(request.args.get('active'))
-    if isinstance(active, bool):
-        user_query = user_query.filter(User.active == active)
 
     users = user_query.paginate(
         page=page,
