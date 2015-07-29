@@ -114,19 +114,19 @@ class TestListSuppliers(BaseApplicationTest):
     def test_other_prefix_returns_non_alphanumeric_suppliers(self):
         with self.app.app_context():
             db.session.add(
-                Supplier(supplier_id=999, name=u"123 Supplier")
+                Supplier(supplier_id=999, name=u"999 Supplier")
             )
             self.setup_dummy_service(service_id=123, supplier_id=999)
             db.session.commit()
 
-            response = self.client.get('/suppliers?prefix=123')
+            response = self.client.get('/suppliers?prefix=other')
 
             data = json.loads(response.get_data())
             assert_equal(200, response.status_code)
             assert_equal(1, len(data['suppliers']))
             assert_equal(999, data['suppliers'][0]['id'])
             assert_equal(
-                u"123 Supplier",
+                u"999 Supplier",
                 data['suppliers'][0]['name']
             )
 
