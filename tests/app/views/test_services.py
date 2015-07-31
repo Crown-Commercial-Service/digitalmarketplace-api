@@ -915,7 +915,7 @@ class TestPostService(BaseApplicationTest):
 
     def test_json_postgres_field_should_not_include_column_fields(self):
         non_json_fields = [
-            'supplierName', 'links', 'frameworkSlug', 'frameworkName', 'status', 'id']
+            'supplierName', 'links', 'frameworkSlug', 'updatedAt', 'createdAt', 'frameworkName', 'status', 'id']
         with self.app.app_context():
             response = self.client.get('/services/{}'.format(self.service_id))
             data = json.loads(response.get_data())
@@ -1339,7 +1339,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_json_postgres_data_column_should_not_include_column_fields(self):
         non_json_fields = [
-            'supplierName', 'links', 'frameworkSlug', 'frameworkName', 'status', 'id',
+            'supplierName', 'links', 'frameworkSlug', 'updatedAt', 'createdAt', 'frameworkName', 'status', 'id',
             'supplierId', 'updatedAt', 'createdAt']
         with self.app.app_context():
             payload = self.load_example_listing("G6-IaaS")

@@ -358,6 +358,8 @@ class ServiceTableMixin(object):
         data.pop('frameworkName', None)
         data.pop('status', None)
         data.pop('links', None)
+        data.pop('updatedAt', None)
+        data.pop('createdAt', None)
         current_data = dict(self.data.items())
         current_data.update(data)
         current_data = strip_whitespace_from_data(current_data)
