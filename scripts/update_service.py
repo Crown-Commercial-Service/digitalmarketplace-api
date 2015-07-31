@@ -46,8 +46,8 @@ def update(base_url, access_token, filename, service_id):
                 "authorization": "Bearer {}".format(access_token),
                 }
         )
-        print (response.status_code)
-        print (response.text)
+        print(response.status_code)
+        print(response.text)
         return service_id, response
 
 if __name__ == "__main__":
