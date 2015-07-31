@@ -348,6 +348,14 @@ def test_string_too_long_causes_validation_error():
     assert "under_character_limit" in errs['serviceName']
 
 
+def test_max_price_larger_than_min_price_causes_validation_error():
+    data = load_example_listing("G7-SCS")
+    data.update({"priceMax": 32.2})
+    errs = get_validation_errors("services-g-cloud-7-scs", data)
+
+    assert "max_less_than_min" in errs['priceMax']
+
+
 def assert_example(name, result, expected):
     assert_equal(result, expected)
 

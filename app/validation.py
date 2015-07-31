@@ -155,7 +155,17 @@ def get_validation_errors(validator_name, json_data,
             form_errors.append(error.message)
     if form_errors:
         error_map['_form'] = form_errors
+    error_map.update(min_price_less_than_max_price(error_map, json_data))
+
     return error_map
+
+
+def min_price_less_than_max_price(error_map, json_data):
+    if 'priceMin' in json_data and 'priceMax' in json_data:
+        if 'priceMin' not in error_map and 'priceMax' not in error_map:
+            if json_data['priceMin'] > json_data['priceMax']:
+                return {'priceMax': 'max_less_than_min'}
+    return {}
 
 
 def reason_for_failure(submitted_json):
