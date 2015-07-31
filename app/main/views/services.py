@@ -157,7 +157,7 @@ def import_service(service_id):
 
     service_data = drop_foreign_fields(
         service_json,
-        ['supplierName', 'links', 'frameworkName']
+        ['supplierName', 'links', 'frameworkSlug', 'frameworkName']
     )
     service_data = strip_whitespace_from_data(service_data)
     framework = detect_framework_or_400(service_data)

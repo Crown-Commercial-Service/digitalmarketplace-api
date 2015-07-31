@@ -213,6 +213,7 @@ class TestDraftServices(BaseApplicationTest):
 
         data = json.loads(res.get_data())
         assert_equal(res.status_code, 201)
+        assert_equal(data['services']['frameworkSlug'], 'g-cloud-7')
         assert_equal(data['services']['frameworkName'], 'G-Cloud 7')
         assert_equal(data['services']['status'], 'not-submitted')
         assert_equal(data['services']['supplierId'], 1)
@@ -280,6 +281,7 @@ class TestDraftServices(BaseApplicationTest):
             content_type='application/json')
         data2 = json.loads(res2.get_data())
         assert_equal(res2.status_code, 200)
+        assert_equal(data2['services']['frameworkSlug'], 'g-cloud-7')
         assert_equal(data2['services']['frameworkName'], 'G-Cloud 7')
         assert_equal(data2['services']['status'], 'not-submitted')
         assert_equal(data2['services']['supplierId'], 1)
@@ -854,8 +856,8 @@ class TestCopyDraft(BaseApplicationTest):
         assert_equal(res.status_code, 201)
         assert_equal(data['services']['lot'], 'SCS')
         assert_equal(data['services']['supplierId'], 1)
-        assert_equal(data['services']['frameworkName'],
-                     self.draft['frameworkName'])
+        assert_equal(data['services']['frameworkSlug'], self.draft['frameworkSlug'])
+        assert_equal(data['services']['frameworkName'], self.draft['frameworkName'])
 
     def test_copy_draft_should_create_audit_event(self):
         res = self.client.post(
