@@ -40,7 +40,7 @@ class TestAudits(BaseApplicationTest):
         assert_equal(data['auditEvents'][0]['data']['request'], 'data')
 
     def test_should_get_audit_event_using_audit_date(self):
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.utcnow().strftime("%Y-%m-%d")
 
         self.add_audit_events(1)
         response = self.client.get('/audit-events?audit-date={}'.format(today))
