@@ -16,10 +16,10 @@ from docopt import docopt
 
 
 def update(base_url, access_token, filename, service_id):
-    print (base_url)
-    print (access_token)
-    print (filename)
-    print (service_id)
+    print(base_url)
+    print(access_token)
+    print(filename)
+    print(service_id)
 
     endpoint = "{}/services/{}".format(base_url, service_id)
 
