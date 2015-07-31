@@ -30,19 +30,16 @@ def update_and_validate_service(service, service_payload):
 
 
 def validate_service(service):
-
     framework = Framework.query.filter(
         Framework.id == service.framework_id
     ).first()
     slug = framework.slug
 
-    if slug == 'g-cloud-4':
-        validator_name = "services-g-cloud-4"
-    elif slug == 'g-cloud-5':
-        validator_name = "services-g-cloud-5"
+    if slug in ['g-cloud-4', 'g-cloud-5']:
+        validator_name = 'services-{}'.format(slug)
     else:
-        validator_name = "services-{0}-{1}".format(
-            slug, service.data['lot'].lower())
+        lot = service.data['lot'].lower()
+        validator_name = 'services-{}-{}'.format(slug, lot)
 
     data = dict(service.data.items())
     data.update({
