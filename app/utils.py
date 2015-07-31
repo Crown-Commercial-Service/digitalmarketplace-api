@@ -1,6 +1,7 @@
 from flask import url_for as base_url_for
 from flask import abort, request
 from six import string_types
+from werkzeug.exceptions import BadRequest
 
 
 def link(rel, href):
@@ -41,7 +42,10 @@ def get_json_from_request():
     if request.content_type not in ['application/json',
                                     'application/json; charset=UTF-8']:
         abort(400, "Unexpected Content-Type, expecting 'application/json'")
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except BadRequest as e:
+        data = None
     if data is None:
         abort(400, "Invalid JSON; must be a valid JSON object")
     return data
