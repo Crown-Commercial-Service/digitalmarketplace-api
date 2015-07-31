@@ -97,21 +97,20 @@ def detect_framework_or_400(submitted_json):
 
 
 def detect_framework(submitted_json):
-    if validates_against_schema('services-g-cloud-4', submitted_json):
-        return 'G-Cloud 4'
-    elif validates_against_schema('services-g-cloud-5', submitted_json):
-        return 'G-Cloud 5'
-    elif (
-        validates_against_schema('services-g-cloud-6-scs', submitted_json) or
-        validates_against_schema('services-g-cloud-6-saas', submitted_json) or
-        validates_against_schema('services-g-cloud-6-paas', submitted_json) or
-        validates_against_schema('services-g-cloud-6-iaas', submitted_json)
-    ):
-        return 'G-Cloud 6'
-    elif validates_against_schema('services-g-cloud-7-scs', submitted_json):
-        return 'G-Cloud 7'
-    else:
-        return False
+    schemas = [
+        ('G-Cloud 4', 'services-g-cloud-4'),
+        ('G-Cloud 5', 'services-g-cloud-5'),
+        ('G-Cloud 6', 'services-g-cloud-6'),
+        ('G-Cloud 7', 'services-g-cloud-7'),
+    ]
+    for framework_name, schema_prefix in schemas:
+        schema_names = [
+            name for name in SCHEMA_NAMES if name.startswith(schema_prefix)
+        ]
+        for schema_name in schema_names:
+            if validates_against_schema(schema_name, submitted_json):
+                return framework_name
+    return False
 
 
 def validate_supplier_json_or_400(submitted_json):
