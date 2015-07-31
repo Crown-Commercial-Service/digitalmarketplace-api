@@ -264,6 +264,8 @@ def _translate_json_schema_error(message):
             return 'under_character_limit'
     if 'does not match' in message:
         return 'under_{}_words'.format(_get_word_count(message))
+    if "is not of type 'number'" in message:
+        return 'not_a_number'
     return message
 
 
