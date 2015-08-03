@@ -1,6 +1,7 @@
 import json
 import re
 import os
+from decimal import Decimal
 
 from flask import abort
 from jsonschema import ValidationError, FormatChecker
@@ -163,7 +164,7 @@ def get_validation_errors(validator_name, json_data,
 def min_price_less_than_max_price(error_map, json_data):
     if 'priceMin' in json_data and 'priceMax' in json_data:
         if 'priceMin' not in error_map and 'priceMax' not in error_map:
-            if json_data['priceMin'] > json_data['priceMax']:
+            if Decimal(json_data['priceMin']) > Decimal(json_data['priceMax']):
                 return {'priceMax': 'max_less_than_min'}
     return {}
 

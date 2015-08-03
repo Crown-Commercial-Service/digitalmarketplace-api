@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import os
 import json
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_in
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.validation import detect_framework, \
@@ -349,11 +349,14 @@ def test_string_too_long_causes_validation_error():
 
 
 def test_max_price_larger_than_min_price_causes_validation_error():
-    data = load_example_listing("G7-SCS")
-    data.update({"priceMax": 32.2})
-    errs = get_validation_errors("services-g-cloud-7-scs", data)
+    cases = ['32.20', '9.00']
 
-    assert "max_less_than_min" in errs['priceMax']
+    for price_max in cases:
+        data = load_example_listing("G7-SCS")
+        data.update({"priceMax": price_max})
+        errs = get_validation_errors("services-g-cloud-7-scs", data)
+
+        yield assert_in, 'max_less_than_min', errs['priceMax']
 
 
 def assert_example(name, result, expected):
