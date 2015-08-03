@@ -13,7 +13,10 @@ from ...models import Service, DraftService, Supplier, AuditEvent, Framework
 from ...service_utils import validate_and_return_updater_request, \
     update_and_validate_service, index_service, \
     commit_and_archive_service, create_service_from_draft
-from ...draft_utils import validate_and_return_draft_request, get_draft_validation_errors
+from ...draft_utils import (
+    validate_and_return_draft_request, get_draft_validation_errors,
+    get_request_page_questions
+)
 
 
 @main.route('/draft-services/copy-from/<string:service_id>', methods=['PUT'])
@@ -71,7 +74,8 @@ def edit_draft_service(draft_id):
 
     updater_json = validate_and_return_updater_request()
     update_json = validate_and_return_draft_request()
-    page_questions = update_json.pop('page_questions', [])
+    page_questions = get_request_page_questions()
+
     draft = DraftService.query.filter(
         DraftService.id == draft_id
     ).first_or_404()

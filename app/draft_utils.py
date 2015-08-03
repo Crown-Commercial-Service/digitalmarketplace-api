@@ -12,6 +12,11 @@ def validate_and_return_draft_request(draft_id=0):
     return json_payload['services']
 
 
+def get_request_page_questions():
+    json_payload = get_json_from_request()
+    return json_payload.get('page_questions', [])
+
+
 def get_draft_validation_errors(draft_json, lot,
                                 framework_id=0, slug=None, required=None):
     if not slug and not framework_id:
