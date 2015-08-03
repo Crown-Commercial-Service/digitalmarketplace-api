@@ -348,6 +348,26 @@ def test_string_too_long_causes_validation_error():
     assert "under_character_limit" in errs['serviceName']
 
 
+def test_price_not_money_format_validation_error():
+    cases = [
+        "",  # not provided
+        "foo",  # not numeric
+        "12.1",  # too few decimal places
+        "12.001",  # too many decimal places
+    ]
+    data = load_example_listing("G7-SCS")
+
+    def check_min_price_error(field, case):
+        data[field] = case
+        errs = get_validation_errors("services-g-cloud-7-scs", data)
+        assert field in errs
+        assert "not_money_format" in errs[field]
+
+    for case in cases:
+        yield check_min_price_error, 'priceMin', case
+        yield check_min_price_error, 'priceMax', case
+
+
 def test_max_price_larger_than_min_price_causes_validation_error():
     cases = ['32.20', '9.00']
 

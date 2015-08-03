@@ -148,7 +148,7 @@ def get_validation_errors(validator_name, json_data,
     for error in errors:
         if error.path:
             key = error.path[0]
-            error_map[key] = _translate_json_schema_error(error.message)
+            error_map[key] = _translate_json_schema_error(key, error.message)
         elif error.message.endswith("is a required property"):
             key = re.search(r'\'(.*)\'', error.message).group(1)
             error_map[key] = 'answer_required'
@@ -262,7 +262,7 @@ def is_valid_string(string, minlength=1, maxlength=255):
     return False
 
 
-def _translate_json_schema_error(message):
+def _translate_json_schema_error(key, message):
     if message.endswith('is too short'):
         return 'answer_required'
     if message.endswith('is too long'):
@@ -273,9 +273,10 @@ def _translate_json_schema_error(message):
             # A string that is too long
             return 'under_character_limit'
     if 'does not match' in message:
-        return 'under_{}_words'.format(_get_word_count(message))
-    if "is not of type 'number'" in message:
-        return 'not_a_number'
+        if key in ['priceMin', 'priceMax']:
+            return 'not_money_format'
+        else:
+            return 'under_{}_words'.format(_get_word_count(message))
     return message
 
 
