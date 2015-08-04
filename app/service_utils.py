@@ -53,7 +53,7 @@ def validate_service(service):
 
     data = drop_foreign_fields(
         data,
-        ['service_id', 'supplierName', 'links', 'frameworkName', 'updatedAt'])
+        ['service_id', 'supplierName', 'links', 'frameworkSlug', 'frameworkName', 'updatedAt'])
     errs = get_validation_errors(validator_name, data, enforce_required=True)
     if errs:
         abort(400, errs)

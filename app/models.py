@@ -334,6 +334,7 @@ class ServiceTableMixin(object):
             'id': self.service_id,
             'supplierId': self.supplier.supplier_id,
             'supplierName': self.supplier.name,
+            'frameworkSlug': self.framework.slug,
             'frameworkName': self.framework.name,
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
@@ -353,9 +354,12 @@ class ServiceTableMixin(object):
 
         data.pop('supplierId', None)
         data.pop('supplierName', None)
+        data.pop('frameworkSlug', None)
         data.pop('frameworkName', None)
         data.pop('status', None)
         data.pop('links', None)
+        data.pop('updatedAt', None)
+        data.pop('createdAt', None)
         current_data = dict(self.data.items())
         current_data.update(data)
         current_data = strip_whitespace_from_data(current_data)
