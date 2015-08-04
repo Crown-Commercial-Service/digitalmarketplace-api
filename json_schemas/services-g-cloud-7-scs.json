@@ -82,11 +82,11 @@
     },
     "priceMin":{
       "type":"string",
-      "pattern": "^\\d+(?:\\.\\d{2})?$"
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$"
     },
     "priceMax":{
       "type": "string",
-      "pattern": "^\\d+(?:\\.\\d{2})?$"
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$"
     },
     "priceUnit":{
       "enum":[
