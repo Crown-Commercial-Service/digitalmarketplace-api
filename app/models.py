@@ -376,7 +376,7 @@ class Service(db.Model, ServiceTableMixin):
     def create_from_draft(draft, status):
         return Service(
             framework_id=draft.framework_id,
-            service_id=generate_new_service_id(),
+            service_id=generate_new_service_id(draft.framework.slug),
             supplier_id=draft.supplier_id,
             data=draft.data,
             status=status
@@ -550,5 +550,8 @@ def filter_null_value_fields(obj):
     )
 
 
-def generate_new_service_id():
-    return str(random.randint(7e15, 8e15-1))
+def generate_new_service_id(framework_slug):
+    if framework_slug == 'g-cloud-7':
+        return str(random.randint(7e15, 8e15-1))
+    else:
+        raise NotImplemented("Can only generate service_id for G-Cloud 7")
