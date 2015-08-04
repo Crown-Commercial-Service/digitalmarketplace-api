@@ -168,9 +168,9 @@ def delete_draft_service(draft_id):
     :param draft_id:
     :return:
     """
-    user_id = request.args.get('user_id')
+    user_id = request.headers.get('user-id', None)
     if user_id is None:
-        abort(400, "Invalid argument: user_id is required")
+        abort(400, "Invalid request: user-id must be set in header")
     try:
         user_id = int(user_id)
     except ValueError:

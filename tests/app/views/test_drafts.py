@@ -202,16 +202,18 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(res.status_code, 400)
 
     def test_reject_delete_with_no_user_id(self):
-        res = self.client.delete('/draft-services/0000000000')
+        res = self.client.delete('/draft-services/0000000000',
+                                 headers={})
 
         assert_equal(res.status_code, 400)
         data = json.loads(res.get_data())
         assert_in(
-            'Invalid argument: user_id is required',
+            'Invalid request: user-id must be set in header',
             data['error'])
 
     def test_reject_delete_with_invalid_user_id(self):
-        res = self.client.delete('/draft-services/0000000000?user_id=invalid')
+        res = self.client.delete('/draft-services/0000000000',
+                                 headers={"user-id": "invalid"})
 
         assert_equal(res.status_code, 400)
         data = json.loads(res.get_data())
@@ -448,8 +450,8 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(fetch.status_code, 404)
 
     def test_should_404_on_delete_a_draft_that_doesnt_exist(self):
-        res = self.client.delete(
-            '/draft-services/0000000000?user_id=123')
+        res = self.client.delete('/draft-services/0000000000',
+                                 headers={"user-id": 123})
         assert_equal(res.status_code, 404)
         data = json.loads(res.get_data())
         assert_in(
@@ -457,8 +459,8 @@ class TestDraftServices(BaseApplicationTest):
             data['error'])
 
     def test_should_404_on_delete_a_draft_when_user_id_doesnt_exist(self):
-        res = self.client.delete(
-            '/draft-services/0000000000?user_id=1234')
+        res = self.client.delete('/draft-services/0000000000',
+                                 headers={"user-id": 1234})
         assert_equal(res.status_code, 404)
         data = json.loads(res.get_data())
         assert_in(
@@ -475,7 +477,8 @@ class TestDraftServices(BaseApplicationTest):
         fetch = self.client.get('/draft-services/{}'.format(draft_id))
         assert_equal(fetch.status_code, 200)
         delete = self.client.delete(
-            '/draft-services/{}?user_id=123'.format(draft_id))
+            '/draft-services/{}'.format(draft_id),
+            headers={"user-id": 123})
         assert_equal(delete.status_code, 200)
 
         audit_response = self.client.get('/audit-events')
