@@ -9,7 +9,7 @@ from .. import main
 from ... import db
 from ...utils import drop_foreign_fields, json_has_required_keys
 from ...validation import is_valid_service_id_or_400
-from ...models import Service, DraftService, Supplier, AuditEvent, Framework
+from ...models import AuditEvent, DraftService, Framework, Service, Supplier, User
 from ...service_utils import validate_and_return_updater_request, \
     update_and_validate_service, index_service, \
     commit_and_archive_service, create_service_from_draft
@@ -172,16 +172,22 @@ def delete_draft_service(draft_id):
     :param draft_id:
     :return:
     """
-
-    updater_json = validate_and_return_updater_request()
-
+    user_id = request.headers.get('user-id', None)
+    if user_id is None:
+        abort(400, "Invalid request: user-id must be set in header")
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        abort(400, "Invalid user_id: %s" % user_id)
+    user = User.query.filter(User.id == user_id).first()
+    if not user:
+        abort(404, "user_id '%d' not found" % user_id)
     draft = DraftService.query.filter(
         DraftService.id == draft_id
     ).first_or_404()
-
     audit = AuditEvent(
         audit_type=AuditTypes.delete_draft_service,
-        user=updater_json['updated_by'],
+        user=user.email_address,
         data={
             "draftId": draft_id,
             "serviceId": draft.service_id

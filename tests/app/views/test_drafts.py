@@ -1,10 +1,11 @@
+from sqlalchemy.sql.functions import now
 from tests.app.helpers import BaseApplicationTest
 from datetime import datetime
 from flask import json
 import mock
 from sqlalchemy.exc import IntegrityError
 from app.models import Supplier, ContactInformation, Service, Framework, \
-    DraftService
+    DraftService, User
 from app import db
 
 from nose.tools import assert_equal, assert_in, assert_raises
@@ -34,6 +35,11 @@ class TestDraftServices(BaseApplicationTest):
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+            db.session.add(
+                User(id=123, name="Joe Bloggs", email_address="joeblogs",
+                     password="pass", active=True, password_changed_at=now(),
+                     role="supplier", supplier_id=1)
             )
             db.session.add(
                 ContactInformation(
@@ -195,10 +201,25 @@ class TestDraftServices(BaseApplicationTest):
 
         assert_equal(res.status_code, 400)
 
-    def test_reject_delete_with_no_update_details(self):
-        res = self.client.delete('/draft-services/0000000000')
+    def test_reject_delete_with_no_user_id(self):
+        res = self.client.delete('/draft-services/0000000000',
+                                 headers={})
 
         assert_equal(res.status_code, 400)
+        data = json.loads(res.get_data())
+        assert_in(
+            'Invalid request: user-id must be set in header',
+            data['error'])
+
+    def test_reject_delete_with_invalid_user_id(self):
+        res = self.client.delete('/draft-services/0000000000',
+                                 headers={"user-id": "invalid"})
+
+        assert_equal(res.status_code, 400)
+        data = json.loads(res.get_data())
+        assert_in(
+            'Invalid user_id: invalid',
+            data['error'])
 
     def test_reject_publish_with_no_update_details(self):
         res = self.client.post('/draft-services/0000000000/publish')
@@ -431,11 +452,22 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(fetch.status_code, 404)
 
     def test_should_404_on_delete_a_draft_that_doesnt_exist(self):
-        res = self.client.delete(
-            '/draft-services/0000000000',
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
+        res = self.client.delete('/draft-services/0000000000',
+                                 headers={"user-id": 123})
         assert_equal(res.status_code, 404)
+        data = json.loads(res.get_data())
+        assert_in(
+            'The requested URL was not found on the server.',
+            data['error'])
+
+    def test_should_404_on_delete_a_draft_when_user_id_doesnt_exist(self):
+        res = self.client.delete('/draft-services/0000000000',
+                                 headers={"user-id": 1234})
+        assert_equal(res.status_code, 404)
+        data = json.loads(res.get_data())
+        assert_in(
+            "user_id '1234' not found",
+            data['error'])
 
     def test_should_delete_a_draft(self):
         res = self.client.put(
@@ -448,8 +480,7 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(fetch.status_code, 200)
         delete = self.client.delete(
             '/draft-services/{}'.format(draft_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
+            headers={"user-id": 123})
         assert_equal(delete.status_code, 200)
 
         audit_response = self.client.get('/audit-events')
