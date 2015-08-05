@@ -477,6 +477,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.update_request({
             'name': "New Name",
             'description': "New Description",
+            'companiesHouseId': "AA123456",
             'dunsNumber': "010101",
             'eSourcingId': "010101",
             'clients': ["Client1", "Client2"]
@@ -492,6 +493,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(supplier.name, 'New Name')
         assert_equal(supplier.description, "New Description")
         assert_equal(supplier.duns_number, "010101")
+        assert_equal(supplier.companies_house_id, "AA123456")
         assert_equal(supplier.esourcing_id, "010101")
         assert_equal(supplier.clients, ["Client1", "Client2"])
 
