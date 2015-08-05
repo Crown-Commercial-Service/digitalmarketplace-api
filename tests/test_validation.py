@@ -15,6 +15,26 @@ EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                     '..', 'example_listings'))
 
 
+def test_supplier_validates():
+    data = load_example_listing("supplier_creation")
+    errs = get_validation_errors("suppliers", data)
+    assert len(errs) is 0
+
+
+def test_supplier_validates_with_no_companies_house_id():
+    data = load_example_listing("supplier_creation")
+    data.pop("companiesHouseId", None)
+    errs = get_validation_errors("suppliers", data)
+    assert len(errs) is 0
+
+
+def test_supplier_fails_with_bad_companies_house_id():
+    data = load_example_listing("supplier_creation")
+    data["companiesHouseId"] = "short"
+    errs = get_validation_errors("suppliers", data)
+    assert len(errs) is 1
+
+
 def test_for_valid_date():
     cases = [
         ("2010-01-01", True),

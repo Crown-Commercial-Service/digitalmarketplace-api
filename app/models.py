@@ -173,6 +173,7 @@ class Supplier(db.Model):
             'description': self.description,
             'dunsNumber': self.duns_number,
             'eSourcingId': self.esourcing_id,
+            'companiesHouseId': self.companies_house_id,
             'contactInformation': contact_information_list,
             'links': links,
             'clients': self.clients
@@ -188,6 +189,7 @@ class Supplier(db.Model):
         self.duns_number = data.get('dunsNumber')
         self.esourcing_id = data.get('eSourcingId')
         self.clients = data.get('clients')
+        self.companies_house_id = data.get('companiesHouseId')
 
         return self
 

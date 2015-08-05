@@ -28,6 +28,11 @@
       "type": "string",
       "pattern": "^[0-9]+$"
     },
+    "companiesHouseId": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 8
+    },
     "clients": {
       "type": "array",
       "items": {

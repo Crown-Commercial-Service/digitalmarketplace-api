@@ -11,8 +11,7 @@
       "address1": "123 Fake Street",
       "city": "London",
       "country": "United Kingdom",
-      "postcode": "F4 K1E",
-      "links": {"self": "http://localhost/suppliers/123456/contact-information/1"}
+      "postcode": "F4 K1E"
     },
     {
       "id": 1,
