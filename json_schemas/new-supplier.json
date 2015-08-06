@@ -1,0 +1,47 @@
+{
+  "title": "Supplier Schema",
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "contactInformation": {
+      "type": "array",
+      "items": {
+        "$ref": "file:json_schemas/contact-information.json"
+      },
+      "minItems": 1
+    },
+    "dunsNumber": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "eSourcingId": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "companiesHouseId": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 8
+    },
+    "clients": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 0,
+      "maxItems": 10
+    }
+  },
+  "required": [
+    "name",
+    "dunsNumber",
+    "contactInformation"
+  ]
+}

@@ -6,7 +6,8 @@ from ...models import Supplier, ContactInformation, AuditEvent, Service, Selecti
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400,
-    is_valid_string_or_400
+    is_valid_string_or_400,
+    validate_new_supplier_json_or_400
 )
 from ...utils import pagination_links, drop_foreign_fields, get_json_from_request, \
     json_has_required_keys, json_has_matching_id, get_valid_page_or_1
@@ -147,7 +148,7 @@ def import_supplier(supplier_id):
 
         supplier.contact_information.append(contact_information)
 
-    db.session.add(supplier)
+        db.session.add(supplier)
 
     try:
         db.session.commit()
@@ -157,6 +158,70 @@ def import_supplier(supplier_id):
 
     return jsonify(suppliers=supplier.serialize()), 201
 
+
+@main.route('/suppliers', methods=['POST'])
+def create_supplier():
+    supplier_data = get_json_from_request()
+
+    json_has_required_keys(
+        supplier_data,
+        ['suppliers']
+    )
+
+    supplier_data = supplier_data['suppliers']
+    supplier_data = drop_foreign_fields(supplier_data, ['links'])
+
+    json_has_required_keys(
+        supplier_data,
+        ['name', 'contactInformation']
+    )
+
+    contact_informations_data = [
+        drop_foreign_fields(contact_data, ['links'])
+        for contact_data in supplier_data['contactInformation']
+        ]
+
+    supplier_data['contactInformation'] = contact_informations_data
+
+    for contact_information_data in contact_informations_data:
+        json_has_required_keys(
+            contact_information_data,
+            ['contactName', 'email', 'postcode']
+        )
+
+    validate_new_supplier_json_or_400(supplier_data)
+
+    supplier_data = drop_foreign_fields(
+        supplier_data,
+        ['contactInformation']
+    )
+
+    supplier = Supplier()
+    supplier.update_from_json(supplier_data)
+
+    for contact_information_data in contact_informations_data:
+        contact_information = ContactInformation()
+
+        contact_information.contact_name = contact_information_data.get('contactName')
+        contact_information.phone_number = contact_information_data.get('phoneNumber')
+        contact_information.email = contact_information_data.get('email')
+        contact_information.website = contact_information_data.get('website')
+        contact_information.address1 = contact_information_data.get('address1')
+        contact_information.address2 = contact_information_data.get('address2')
+        contact_information.city = contact_information_data.get('city')
+        contact_information.country = contact_information_data.get('country')
+        contact_information.postcode = contact_information_data.get('postcode')
+
+        supplier.contact_information.append(contact_information)
+
+    try:
+        db.session.add(supplier)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+
+    return jsonify(suppliers=supplier.serialize()), 201
 
 @main.route('/suppliers/<int:supplier_id>', methods=['POST'])
 def update_supplier(supplier_id):
@@ -181,7 +246,7 @@ def update_supplier(supplier_id):
         ['links', 'contactInformation']
     )
 
-    validate_supplier_json_or_400(supplier_data)
+    validate_new_supplier_json_or_400(supplier_data)
     json_has_matching_id(supplier_data, supplier_id)
 
     supplier.update_from_json(supplier_data)

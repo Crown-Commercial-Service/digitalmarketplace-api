@@ -7,6 +7,7 @@ from datetime import datetime
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
+from sqlalchemy import Sequence
 from app.models import Service, Supplier, ContactInformation, Framework
 
 TEST_SUPPLIERS_COUNT = 3
@@ -144,6 +145,7 @@ class BaseApplicationTest(object):
                     db.engine.execute(table.delete())
             Framework.query.filter(Framework.id >= 100).delete()
             db.session.commit()
+            db.engine.execute("drop sequence suppliers_supplier_id_seq cascade")
             db.get_engine(self.app).dispose()
 
     def load_example_listing(self, name):

@@ -27,6 +27,7 @@ SCHEMA_NAMES = [
     'users',
     'users-auth',
     'suppliers',
+    'new-supplier',
     'contact-information',
 ]
 FORMAT_CHECKER = FormatChecker()
@@ -120,6 +121,12 @@ def validate_supplier_json_or_400(submitted_json):
     except ValidationError as e:
         abort(400, "JSON was not a valid format. {}".format(e.message))
 
+def validate_new_supplier_json_or_400(submitted_json):
+    try:
+        get_validator('new-supplier').validate(submitted_json)
+    except ValidationError as e:
+        print e
+        abort(400, "JSON was not a valid format. {}".format(e.message))
 
 def validate_contact_information_json_or_400(submitted_json):
     try:

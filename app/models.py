@@ -9,6 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.types import String
+from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
 from dmutils.formats import DATETIME_FORMAT
 
@@ -121,8 +122,8 @@ class Supplier(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    supplier_id = db.Column(db.BigInteger,
-                            index=True, unique=True, nullable=False)
+    supplier_id = db.Column(db.BigInteger, Sequence('suppliers_supplier_id_seq'), index=True, unique=True,
+                            nullable=False)
 
     name = db.Column(db.String(255), nullable=False)
 
@@ -190,7 +191,6 @@ class Supplier(db.Model):
         self.esourcing_id = data.get('eSourcingId')
         self.clients = data.get('clients')
         self.companies_house_id = data.get('companiesHouseId')
-
         return self
 
 
