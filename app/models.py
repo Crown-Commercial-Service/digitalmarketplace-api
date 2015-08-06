@@ -134,11 +134,11 @@ class Supplier(db.Model):
                                           lazy='joined',
                                           innerjoin=False)
 
-    duns_number = db.Column(db.String, index=False,
-                            unique=False, nullable=True)
+    duns_number = db.Column(db.String, index=False, unique=False, nullable=True)
 
-    esourcing_id = db.Column(db.String, index=False,
-                             unique=False, nullable=True)
+    esourcing_id = db.Column(db.String, index=False, unique=False, nullable=True)
+
+    companies_house_id = db.Column(db.String, index=False, unique=False, nullable=True)
 
     clients = db.Column(JSON, default=list)
 
