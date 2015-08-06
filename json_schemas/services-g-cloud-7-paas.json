@@ -173,6 +173,9 @@
     "incidentEscalation":{
       "type":"boolean"
     },
+    "openStandardsSupported": {
+      "type": "boolean"
+    },
     "serviceOnboarding": {
       "type": "boolean"
     },
