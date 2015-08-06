@@ -75,14 +75,12 @@
       }
     },
     "priceMin":{
-      "type":"number",
-      "minimum":0
+      "type":"string",
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$"
     },
     "priceMax":{
-      "type":[
-        "number",
-        "null"
-      ]
+      "type": "string",
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$"
     },
     "priceUnit":{
       "enum":[

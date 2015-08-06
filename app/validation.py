@@ -1,6 +1,7 @@
 import json
 import re
 import os
+from decimal import Decimal
 
 from flask import abort
 from jsonschema import ValidationError, FormatChecker
@@ -97,21 +98,20 @@ def detect_framework_or_400(submitted_json):
 
 
 def detect_framework(submitted_json):
-    if validates_against_schema('services-g-cloud-4', submitted_json):
-        return 'G-Cloud 4'
-    elif validates_against_schema('services-g-cloud-5', submitted_json):
-        return 'G-Cloud 5'
-    elif (
-        validates_against_schema('services-g-cloud-6-scs', submitted_json) or
-        validates_against_schema('services-g-cloud-6-saas', submitted_json) or
-        validates_against_schema('services-g-cloud-6-paas', submitted_json) or
-        validates_against_schema('services-g-cloud-6-iaas', submitted_json)
-    ):
-        return 'G-Cloud 6'
-    elif validates_against_schema('services-g-cloud-7-scs', submitted_json):
-        return 'G-Cloud 7'
-    else:
-        return False
+    schemas = [
+        ('G-Cloud 4', 'services-g-cloud-4'),
+        ('G-Cloud 5', 'services-g-cloud-5'),
+        ('G-Cloud 6', 'services-g-cloud-6'),
+        ('G-Cloud 7', 'services-g-cloud-7'),
+    ]
+    for framework_name, schema_prefix in schemas:
+        schema_names = [
+            name for name in SCHEMA_NAMES if name.startswith(schema_prefix)
+        ]
+        for schema_name in schema_names:
+            if validates_against_schema(schema_name, submitted_json):
+                return framework_name
+    return False
 
 
 def validate_supplier_json_or_400(submitted_json):
@@ -148,7 +148,7 @@ def get_validation_errors(validator_name, json_data,
     for error in errors:
         if error.path:
             key = error.path[0]
-            error_map[key] = _translate_json_schema_error(error.message)
+            error_map[key] = _translate_json_schema_error(key, error.message)
         elif error.message.endswith("is a required property"):
             key = re.search(r'\'(.*)\'', error.message).group(1)
             error_map[key] = 'answer_required'
@@ -156,7 +156,17 @@ def get_validation_errors(validator_name, json_data,
             form_errors.append(error.message)
     if form_errors:
         error_map['_form'] = form_errors
+    error_map.update(min_price_less_than_max_price(error_map, json_data))
+
     return error_map
+
+
+def min_price_less_than_max_price(error_map, json_data):
+    if 'priceMin' in json_data and 'priceMax' in json_data:
+        if 'priceMin' not in error_map and 'priceMax' not in error_map:
+            if Decimal(json_data['priceMin']) > Decimal(json_data['priceMax']):
+                return {'priceMax': 'max_less_than_min'}
+    return {}
 
 
 def reason_for_failure(submitted_json):
@@ -252,7 +262,7 @@ def is_valid_string(string, minlength=1, maxlength=255):
     return False
 
 
-def _translate_json_schema_error(message):
+def _translate_json_schema_error(key, message):
     if message.endswith('is too short'):
         return 'answer_required'
     if message.endswith('is too long'):
@@ -263,7 +273,10 @@ def _translate_json_schema_error(message):
             # A string that is too long
             return 'under_character_limit'
     if 'does not match' in message:
-        return 'under_{}_words'.format(_get_word_count(message))
+        if key in ['priceMin', 'priceMax']:
+            return 'not_money_format'
+        else:
+            return 'under_{}_words'.format(_get_word_count(message))
     if "is not of type 'number'" in message:
         return 'not_a_number'
     return message

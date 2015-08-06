@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import os
 import json
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_in
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.validation import detect_framework, \
@@ -346,6 +346,59 @@ def test_string_too_long_causes_validation_error():
     data.update({'serviceName': "a" * 101})
     errs = get_validation_errors("services-g-cloud-7-scs", data)
     assert "under_character_limit" in errs['serviceName']
+
+
+def test_price_not_money_format_validation_error():
+    cases = [
+        "",  # not provided
+        "foo",  # not numeric
+        "12.",  # too few decimal places
+        "12.000001",  # too many decimal places
+        ".1",  # too few digits
+    ]
+    data = load_example_listing("G7-SCS")
+
+    def check_min_price_error(field, case):
+        data[field] = case
+        errs = get_validation_errors("services-g-cloud-7-scs", data)
+        assert field in errs
+        assert "not_money_format" in errs[field]
+
+    for case in cases:
+        yield check_min_price_error, 'priceMin', case
+        yield check_min_price_error, 'priceMax', case
+
+
+def test_price_not_money_format_valid_cases():
+    cases = [
+        '12',
+        '12.1',
+        '12.11',
+        '12.111',
+        '12.1111',
+        '12.11111',
+    ]
+    data = load_example_listing("G7-SCS")
+
+    def check_min_price_valid(field, case):
+        data[field] = case
+        errs = get_validation_errors("services-g-cloud-7-scs", data)
+        assert "not_money_format" not in errs.get(field, "")
+
+    for case in cases:
+        yield check_min_price_valid, 'priceMin', case
+        yield check_min_price_valid, 'priceMax', case
+
+
+def test_max_price_larger_than_min_price_causes_validation_error():
+    cases = ['32.20', '9.00']
+
+    for price_max in cases:
+        data = load_example_listing("G7-SCS")
+        data.update({"priceMax": price_max})
+        errs = get_validation_errors("services-g-cloud-7-scs", data)
+
+        yield assert_in, 'max_less_than_min', errs['priceMax']
 
 
 def assert_example(name, result, expected):

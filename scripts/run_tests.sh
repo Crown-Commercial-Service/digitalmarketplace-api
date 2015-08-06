@@ -26,5 +26,5 @@ function display_result {
 pep8 .
 display_result $? 1 "Code style check"
 
-nosetests -v -s --with-doctest
+nosetests
 display_result $? 2 "Unit tests"
