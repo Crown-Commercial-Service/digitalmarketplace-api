@@ -145,7 +145,6 @@ class BaseApplicationTest(object):
                     db.engine.execute(table.delete())
             Framework.query.filter(Framework.id >= 100).delete()
             db.session.commit()
-            db.engine.execute("drop sequence suppliers_supplier_id_seq cascade")
             db.get_engine(self.app).dispose()
 
     def load_example_listing(self, name):

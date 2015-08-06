@@ -893,156 +893,116 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
                 Supplier.name == payload['name']
             ).first())
 
-    # def test_null_clients_list(self):
-    #     with self.app.app_context():
-    #         payload = self.load_example_listing("Supplier")
-    #         del payload['clients']
-    #
-    #         response = self.post_supplier(payload)
-    #         assert_equal(response.status_code, 201)
-    #
-    #         supplier = Supplier.query.filter(
-    #             Supplier.supplier_id == 123456
-    #         ).first()
-    #
-    #         assert_equal(supplier.clients, [])
-    #
-    # def test_reinserting_the_same_supplier(self):
-    #     with self.app.app_context():
-    #         payload = self.load_example_listing("Supplier")
-    #         example_listing_contact_information = payload['contactInformation']
-    #
-    #         # Exact loop number is arbitrary
-    #         for i in range(3):
-    #             response = self.post_supplier(payload)
-    #
-    #             assert_equal(response.status_code, 201)
-    #
-    #             supplier = Supplier.query.filter(
-    #                 Supplier.supplier_id == 123456
-    #             ).first()
-    #             assert_equal(supplier.name, payload['name'])
-    #
-    #             contact_informations = ContactInformation.query.filter(
-    #                 ContactInformation.supplier_id == supplier.supplier_id
-    #             ).all()
-    #
-    #             assert_equal(
-    #                 len(example_listing_contact_information),
-    #                 len(contact_informations)
-    #             )
-    #
-    #             # Contact Information without a supplier_id should not exist
-    #             contact_informations_no_supplier_id = \
-    #                 ContactInformation.query.filter(
-    #                     ContactInformation.supplier_id == None  # noqa
-    #                 ).all()
-    #
-    #             assert_equal(
-    #                 0,
-    #                 len(contact_informations_no_supplier_id)
-    #             )
-    #
-    # def test_cannot_put_to_root_suppliers_url(self):
-    #     payload = self.load_example_listing("Supplier")
-    #
-    #     response = self.post_supplier(payload, "")
-    #     assert_equal(response.status_code, 405)
-    #
-    # def test_supplier_json_id_does_not_match_route_id_parameter(self):
-    #     payload = self.load_example_listing("Supplier")
-    #
-    #     response = self.post_supplier(payload, '/1234567890')
-    #     assert_equal(response.status_code, 400)
-    #     assert_in('id parameter must match id in data',
-    #               json.loads(response.get_data())['error'])
-    #
-    # def test_when_supplier_has_missing_contact_information(self):
-    #     payload = self.load_example_listing("Supplier")
-    #     payload.pop('contactInformation')
-    #
-    #     response = self.post_supplier(payload)
-    #     assert_equal(response.status_code, 400)
-    #     for item in ['Invalid JSON must have', 'contactInformation']:
-    #         assert_in(item,
-    #                   json.loads(response.get_data())['error'])
-    #
-    # def test_when_supplier_has_missing_keys(self):
-    #     payload = self.load_example_listing("Supplier")
-    #     payload.pop('id')
-    #     payload.pop('name')
-    #
-    #     response = self.post_supplier(payload)
-    #     assert_equal(response.status_code, 400)
-    #     for item in ['Invalid JSON must have', 'id', 'name']:
-    #         assert_in(item,
-    #                   json.loads(response.get_data())['error'])
-    #
-    # def test_when_supplier_contact_information_has_missing_keys(self):
-    #     payload = self.load_example_listing("Supplier")
-    #
-    #     payload['contactInformation'][0].pop('email')
-    #     payload['contactInformation'][0].pop('postcode')
-    #     payload['contactInformation'][0].pop('contactName')
-    #
-    #     response = self.post_supplier(payload)
-    #     assert_equal(response.status_code, 400)
-    #     for item in ['Invalid JSON must have',
-    #                  'contactName',
-    #                  'email',
-    #                  'postcode']:
-    #         assert_in(item,
-    #                   json.loads(response.get_data())['error'])
-    #
-    # def test_when_supplier_has_extra_keys(self):
-    #     payload = self.load_example_listing("Supplier")
-    #
-    #     payload.update({'newKey': 1})
-    #
-    #     response = self.post_supplier(payload)
-    #     assert_equal(response.status_code, 400)
-    #     assert_in('Additional properties are not allowed',
-    #               json.loads(response.get_data())['error'])
-    #
-    # def test_when_supplier_contact_information_has_extra_keys(self):
-    #     payload = self.load_example_listing("Supplier")
-    #
-    #     payload['contactInformation'][0].update({'newKey': 1})
-    #
-    #     response = self.post_supplier(payload)
-    #     assert_equal(response.status_code, 400)
-    #     assert_in('Additional properties are not allowed',
-    #               json.loads(response.get_data())['error'])
-    #
-    # def test_supplier_duns_number_invalid(self):
-    #     payload = self.load_example_listing("Supplier")
-    #
-    #     payload.update({'dunsNumber': "only-digits-permitted"})
-    #
-    #     response = self.post_supplier(payload)
-    #     assert_equal(response.status_code, 400)
-    #     for item in ['only-digits-permitted', 'does not match']:
-    #         assert_in(item,
-    #                   json.loads(response.get_data())['error'])
-    #
-    # def test_supplier_esourcing_id_invalid(self):
-    #     payload = self.load_example_listing("Supplier")
-    #
-    #     payload.update({'eSourcingId': "only-digits-permitted"})
-    #
-    #     response = self.post_supplier(payload)
-    #     assert_equal(response.status_code, 400)
-    #     for item in ['only-digits-permitted', 'does not match']:
-    #         assert_in(item,
-    #                   json.loads(response.get_data())['error'])
-    #
-    # def test_when_supplier_contact_information_email_invalid(self):
-    #     payload = self.load_example_listing("Supplier")
-    #
-    #     payload['contactInformation'][0].update({'email': "bad-email-99"})
-    #
-    #     response = self.post_supplier(payload)
-    #     assert_equal(response.status_code, 400)
-    #     for item in ['bad-email-99', 'is not a']:
-    #         assert_in(item,
-    #                   json.loads(response.get_data())['error'])
+    def test_null_clients_list(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("new-supplier")
+            del payload['clients']
+
+            response = self.post_supplier(payload)
+            assert_equal(response.status_code, 201)
+
+            supplier = Supplier.query.filter(
+                Supplier.name == payload['name']
+            ).first()
+
+            assert_equal(supplier.clients, [])
+
+    def test_when_supplier_has_missing_contact_information(self):
+        payload = self.load_example_listing("new-supplier")
+        payload.pop('contactInformation')
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['Invalid JSON must have', 'contactInformation']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_when_supplier_has_missing_keys(self):
+        payload = self.load_example_listing("new-supplier")
+        payload.pop('name')
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['Invalid JSON must have', 'name']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_when_supplier_contact_information_has_missing_keys(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload['contactInformation'][0].pop('email')
+        payload['contactInformation'][0].pop('postcode')
+        payload['contactInformation'][0].pop('contactName')
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['Invalid JSON must have',
+                     'contactName',
+                     'email',
+                     'postcode']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_when_supplier_has_extra_keys(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload.update({'newKey': 1})
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        assert_in('Additional properties are not allowed',
+                  json.loads(response.get_data())['error'])
+
+    def test_when_supplier_contact_information_has_extra_keys(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload['contactInformation'][0].update({'newKey': 1})
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        assert_in('Additional properties are not allowed',
+                  json.loads(response.get_data())['error'])
+
+    def test_supplier_duns_number_invalid(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload.update({'dunsNumber': "only-digits-permitted"})
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['only-digits-permitted', 'does not match']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_supplier_esourcing_id_invalid(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload.update({'eSourcingId': "only-digits-permitted"})
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['only-digits-permitted', 'does not match']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_supplier_companies_house_invalid(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload.update({'companiesHouseId': "longer-than-allowed"})
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['longer-than-allowed', 'is too long']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_when_supplier_contact_information_email_invalid(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload['contactInformation'][0].update({'email': "bad-email-99"})
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['bad-email-99', 'is not a']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])

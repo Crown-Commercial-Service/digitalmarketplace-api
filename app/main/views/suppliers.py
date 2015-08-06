@@ -223,6 +223,7 @@ def create_supplier():
 
     return jsonify(suppliers=supplier.serialize()), 201
 
+
 @main.route('/suppliers/<int:supplier_id>', methods=['POST'])
 def update_supplier(supplier_id):
     request_data = get_json_from_request()
@@ -246,7 +247,7 @@ def update_supplier(supplier_id):
         ['links', 'contactInformation']
     )
 
-    validate_new_supplier_json_or_400(supplier_data)
+    validate_supplier_json_or_400(supplier_data)
     json_has_matching_id(supplier_data, supplier_id)
 
     supplier.update_from_json(supplier_data)
