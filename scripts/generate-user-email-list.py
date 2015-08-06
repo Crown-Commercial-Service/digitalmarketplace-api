@@ -18,10 +18,10 @@ def generate_user_email_list(data_api_url, data_api_token):
     for user in client.find_users_iter():
         if user['active'] and user['role'] == 'supplier':
             writer.writerow([
-                user['emailAddress'],
-                user['name'],
+                user['emailAddress'].encode('utf-8'),
+                user['name'].encode('utf-8'),
                 user['supplier']['supplierId'],
-                user['supplier']['name']])
+                user['supplier']['name'].encode('utf-8')])
 
 
 if __name__ == '__main__':
