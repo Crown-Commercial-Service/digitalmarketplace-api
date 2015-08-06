@@ -16,7 +16,7 @@ def generate_user_email_list(data_api_url, data_api_token):
     writer = csv.writer(sys.stdout, delimiter=',', quotechar='"')
 
     for user in client.find_users_iter():
-        if user['active'] and user['role'] != 'supplier':
+        if user['active'] and user['role'] == 'supplier':
             writer.writerow([
                 user['emailAddress'],
                 user['name'],
