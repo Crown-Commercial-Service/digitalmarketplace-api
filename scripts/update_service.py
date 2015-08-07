@@ -24,10 +24,7 @@ def update(base_url, access_token, filename, service_id):
     endpoint = "{}/services/{}".format(base_url, service_id)
 
     with open(filename) as data_file:
-        try:
-            json_from_file = json.load(data_file)
-        except ValueError:
-            print("Skipping {}: not a valid JSON file".format(filename))
+        json_from_file = json.load(data_file)
 
         data = {
             'update_details': {
