@@ -139,7 +139,7 @@ class Supplier(db.Model):
 
     esourcing_id = db.Column(db.String, index=False, unique=False, nullable=True)
 
-    companies_house_id = db.Column(db.String, index=False, unique=False, nullable=True)
+    companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
 
     clients = db.Column(JSON, default=list)
 
@@ -174,7 +174,7 @@ class Supplier(db.Model):
             'description': self.description,
             'dunsNumber': self.duns_number,
             'eSourcingId': self.esourcing_id,
-            'companiesHouseId': self.companies_house_id,
+            'companiesHouseNumber': self.companies_house_number,
             'contactInformation': contact_information_list,
             'links': links,
             'clients': self.clients
@@ -190,7 +190,7 @@ class Supplier(db.Model):
         self.duns_number = data.get('dunsNumber')
         self.esourcing_id = data.get('eSourcingId')
         self.clients = data.get('clients')
-        self.companies_house_id = data.get('companiesHouseId')
+        self.companies_house_number = data.get('companiesHouseNumber')
         return self
 
 

@@ -21,16 +21,16 @@ def test_supplier_validates():
     assert len(errs) is 0
 
 
-def test_supplier_validates_with_no_companies_house_id():
+def test_supplier_validates_with_no_companies_house_number():
     data = load_example_listing("supplier_creation")
-    data.pop("companiesHouseId", None)
+    data.pop("companiesHouseNumber", None)
     errs = get_validation_errors("new-supplier", data)
     assert len(errs) is 0
 
 
-def test_supplier_fails_with_bad_companies_house_id():
+def test_supplier_fails_with_bad_companies_house_number():
     data = load_example_listing("supplier_creation")
-    data["companiesHouseId"] = "short"
+    data["companiesHouseNumber"] = "short"
     errs = get_validation_errors("new-supplier", data)
     assert len(errs) is 1
 

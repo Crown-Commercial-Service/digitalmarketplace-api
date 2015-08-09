@@ -28,7 +28,7 @@
       "type": "string",
       "pattern": "^[0-9]+$"
     },
-    "companiesHouseId": {
+    "companiesHouseNumber": {
       "type": "string",
       "minLength": 8,
       "maxLength": 8

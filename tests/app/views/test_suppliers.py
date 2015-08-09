@@ -477,7 +477,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.update_request({
             'name': "New Name",
             'description': "New Description",
-            'companiesHouseId': "AA123456",
+            'companiesHouseNumber': "AA123456",
             'dunsNumber': "010101",
             'eSourcingId': "010101",
             'clients': ["Client1", "Client2"]
@@ -493,11 +493,11 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(supplier.name, 'New Name')
         assert_equal(supplier.description, "New Description")
         assert_equal(supplier.duns_number, "010101")
-        assert_equal(supplier.companies_house_id, "AA123456")
+        assert_equal(supplier.companies_house_number, "AA123456")
         assert_equal(supplier.esourcing_id, "010101")
         assert_equal(supplier.clients, ["Client1", "Client2"])
 
-    def test_supplier_json_id_does_not_match_oiginal_id(self):
+    def test_supplier_json_id_does_not_match_original_id(self):
         response = self.update_request({
             'id': 234567,
             'name': "New Name"
@@ -986,7 +986,7 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
     def test_supplier_companies_house_invalid(self):
         payload = self.load_example_listing("new-supplier")
 
-        payload.update({'companiesHouseId': "longer-than-allowed"})
+        payload.update({'companiesHouseNumber': "longer-than-allowed"})
 
         response = self.post_supplier(payload)
         assert_equal(response.status_code, 400)
