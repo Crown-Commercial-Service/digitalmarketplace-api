@@ -90,6 +90,12 @@ class ContactInformation(db.Model):
 
         return self
 
+    @staticmethod
+    def from_json(data):
+        c = ContactInformation()
+        c.update_from_json(data)
+        return c
+
     def get_link(self):
         return url_for(".update_contact_information",
                        supplier_id=self.supplier_id,
