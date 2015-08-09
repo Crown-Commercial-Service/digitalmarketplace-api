@@ -14,15 +14,8 @@
     },
     {
       "id": 1,
-      "website": "http://www.don.com?fref=ts",
       "contactName": "Don",
-      "email": "don@don.com",
-      "phoneNumber": "020 7918 9200",
-      "address1": "4 Don Hill",
-      "address2": "Flat 1",
-      "city": "London",
-      "country": "UK",
-      "postcode": "EC1A D0N"
+      "email": "don@don.com"
     }
   ],
   "dunsNumber": "333333333",

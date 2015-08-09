@@ -75,7 +75,7 @@ class ContactInformation(db.Model):
                         unique=False, nullable=True)
 
     postcode = db.Column(db.String, index=False,
-                         unique=False, nullable=False)
+                         unique=False, nullable=True)
 
     def update_from_json(self, data):
         self.contact_name = data.get("contactName")

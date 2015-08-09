@@ -37,7 +37,6 @@
   },
   "required": [
     "contactName",
-    "email",
-    "postcode"
+    "email"
   ]
 }

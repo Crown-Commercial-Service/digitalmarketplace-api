@@ -931,15 +931,13 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         payload = self.load_example_listing("new-supplier")
 
         payload['contactInformation'][0].pop('email')
-        payload['contactInformation'][0].pop('postcode')
         payload['contactInformation'][0].pop('contactName')
 
         response = self.post_supplier(payload)
         assert_equal(response.status_code, 400)
         for item in ['Invalid JSON must have',
                      'contactName',
-                     'email',
-                     'postcode']:
+                     'email']:
             assert_in(item,
                       json.loads(response.get_data())['error'])
 
