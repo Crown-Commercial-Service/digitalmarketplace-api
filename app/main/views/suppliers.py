@@ -134,18 +134,7 @@ def import_supplier(supplier_id):
     supplier.update_from_json(supplier_data)
 
     for contact_information_data in contact_informations_data:
-        contact_information = ContactInformation()
-
-        contact_information.contact_name = contact_information_data.get('contactName')
-        contact_information.phone_number = contact_information_data.get('phoneNumber')
-        contact_information.email = contact_information_data.get('email')
-        contact_information.website = contact_information_data.get('website')
-        contact_information.address1 = contact_information_data.get('address1')
-        contact_information.address2 = contact_information_data.get('address2')
-        contact_information.city = contact_information_data.get('city')
-        contact_information.country = contact_information_data.get('country')
-        contact_information.postcode = contact_information_data.get('postcode')
-
+        contact_information = ContactInformation.from_json(contact_information_data)
         supplier.contact_information.append(contact_information)
 
         db.session.add(supplier)
