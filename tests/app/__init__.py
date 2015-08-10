@@ -28,6 +28,7 @@ def teardown():
     app = create_app('test')
     with app.app_context():
         db.session.remove()
+        db.engine.execute("drop sequence suppliers_supplier_id_seq cascade")
         db.drop_all()
         db.engine.execute("drop table alembic_version")
         insp = inspect(db.engine)

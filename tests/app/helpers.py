@@ -7,6 +7,7 @@ from datetime import datetime
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
+from sqlalchemy import Sequence
 from app.models import Service, Supplier, ContactInformation, Framework
 
 TEST_SUPPLIERS_COUNT = 3

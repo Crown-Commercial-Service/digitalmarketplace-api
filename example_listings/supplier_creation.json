@@ -1,5 +1,4 @@
 {
-  "id": 123456,
   "name": "Example Company Limited",
   "description": "Example Company Limited is an innovation station sensation; we deliver software so bleeding edge you literally won't be able to run any of it on your systems.",
   "contactInformation": [
@@ -11,8 +10,7 @@
       "address1": "123 Fake Street",
       "city": "London",
       "country": "United Kingdom",
-      "postcode": "F4 K1E",
-      "links": {"self": "http://localhost/suppliers/123456/contact-information/1"}
+      "postcode": "F4 K1E"
     },
     {
       "id": 1,

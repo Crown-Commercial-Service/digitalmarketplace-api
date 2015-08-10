@@ -9,6 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.types import String
+from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
 from dmutils.formats import DATETIME_FORMAT
 
@@ -74,7 +75,7 @@ class ContactInformation(db.Model):
                         unique=False, nullable=True)
 
     postcode = db.Column(db.String, index=False,
-                         unique=False, nullable=False)
+                         unique=False, nullable=True)
 
     def update_from_json(self, data):
         self.contact_name = data.get("contactName")
@@ -88,6 +89,12 @@ class ContactInformation(db.Model):
         self.postcode = data.get("postcode")
 
         return self
+
+    @staticmethod
+    def from_json(data):
+        c = ContactInformation()
+        c.update_from_json(data)
+        return c
 
     def get_link(self):
         return url_for(".update_contact_information",
@@ -121,8 +128,8 @@ class Supplier(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    supplier_id = db.Column(db.BigInteger,
-                            index=True, unique=True, nullable=False)
+    supplier_id = db.Column(db.BigInteger, Sequence('suppliers_supplier_id_seq'), index=True, unique=True,
+                            nullable=False)
 
     name = db.Column(db.String(255), nullable=False)
 
@@ -138,7 +145,7 @@ class Supplier(db.Model):
 
     esourcing_id = db.Column(db.String, index=False, unique=False, nullable=True)
 
-    companies_house_id = db.Column(db.String, index=False, unique=False, nullable=True)
+    companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
 
     clients = db.Column(JSON, default=list)
 
@@ -173,6 +180,7 @@ class Supplier(db.Model):
             'description': self.description,
             'dunsNumber': self.duns_number,
             'eSourcingId': self.esourcing_id,
+            'companiesHouseNumber': self.companies_house_number,
             'contactInformation': contact_information_list,
             'links': links,
             'clients': self.clients
@@ -188,7 +196,7 @@ class Supplier(db.Model):
         self.duns_number = data.get('dunsNumber')
         self.esourcing_id = data.get('eSourcingId')
         self.clients = data.get('clients')
-
+        self.companies_house_number = data.get('companiesHouseNumber')
         return self
 
 

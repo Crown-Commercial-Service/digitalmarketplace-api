@@ -1,12 +1,9 @@
 {
-  "title": "G6 Supplier Schema",
+  "title": "Supplier Schema",
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "id": {
-      "type": "integer"
-    },
     "name": {
       "type": "string"
     },
@@ -43,7 +40,8 @@
     }
   },
   "required": [
-    "id",
-    "name"
+    "name",
+    "dunsNumber",
+    "contactInformation"
   ]
 }

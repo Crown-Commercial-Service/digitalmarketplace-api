@@ -1,5 +1,5 @@
 from flask import json
-from nose.tools import assert_equal, assert_in
+from nose.tools import assert_equal, assert_in, assert_is_not_none
 
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
@@ -477,6 +477,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.update_request({
             'name': "New Name",
             'description': "New Description",
+            'companiesHouseNumber': "AA123456",
             'dunsNumber': "010101",
             'eSourcingId': "010101",
             'clients': ["Client1", "Client2"]
@@ -492,10 +493,11 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(supplier.name, 'New Name')
         assert_equal(supplier.description, "New Description")
         assert_equal(supplier.duns_number, "010101")
+        assert_equal(supplier.companies_house_number, "AA123456")
         assert_equal(supplier.esourcing_id, "010101")
         assert_equal(supplier.clients, ["Client1", "Client2"])
 
-    def test_supplier_json_id_does_not_match_oiginal_id(self):
+    def test_supplier_json_id_does_not_match_original_id(self):
         response = self.update_request({
             'id': 234567,
             'name': "New Name"
@@ -864,3 +866,141 @@ class TestSetSupplierSelectionAnswers(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
+
+
+class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
+    method = "post"
+    endpoint = "/suppliers"
+
+    def setup(self):
+        super(TestPostSupplier, self).setup()
+
+    def post_supplier(self, supplier):
+
+        return self.client.post(
+            '/suppliers',
+            data=json.dumps({
+                'suppliers': supplier
+            }),
+            content_type='application/json')
+
+    def test_add_a_new_supplier(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("new-supplier")
+            response = self.post_supplier(payload)
+            assert_equal(response.status_code, 201)
+            assert_is_not_none(Supplier.query.filter(
+                Supplier.name == payload['name']
+            ).first())
+
+    def test_null_clients_list(self):
+        with self.app.app_context():
+            payload = self.load_example_listing("new-supplier")
+            del payload['clients']
+
+            response = self.post_supplier(payload)
+            assert_equal(response.status_code, 201)
+
+            supplier = Supplier.query.filter(
+                Supplier.name == payload['name']
+            ).first()
+
+            assert_equal(supplier.clients, [])
+
+    def test_when_supplier_has_missing_contact_information(self):
+        payload = self.load_example_listing("new-supplier")
+        payload.pop('contactInformation')
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['Invalid JSON must have', 'contactInformation']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_when_supplier_has_missing_keys(self):
+        payload = self.load_example_listing("new-supplier")
+        payload.pop('name')
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['Invalid JSON must have', 'name']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_when_supplier_contact_information_has_missing_keys(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload['contactInformation'][0].pop('email')
+        payload['contactInformation'][0].pop('contactName')
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['Invalid JSON must have',
+                     'contactName',
+                     'email']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_when_supplier_has_extra_keys(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload.update({'newKey': 1})
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        assert_in('Additional properties are not allowed',
+                  json.loads(response.get_data())['error'])
+
+    def test_when_supplier_contact_information_has_extra_keys(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload['contactInformation'][0].update({'newKey': 1})
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        assert_in('Additional properties are not allowed',
+                  json.loads(response.get_data())['error'])
+
+    def test_supplier_duns_number_invalid(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload.update({'dunsNumber': "only-digits-permitted"})
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['only-digits-permitted', 'does not match']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_supplier_esourcing_id_invalid(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload.update({'eSourcingId': "only-digits-permitted"})
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['only-digits-permitted', 'does not match']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_supplier_companies_house_invalid(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload.update({'companiesHouseNumber': "longer-than-allowed"})
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['longer-than-allowed', 'is too long']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_when_supplier_contact_information_email_invalid(self):
+        payload = self.load_example_listing("new-supplier")
+
+        payload['contactInformation'][0].update({'email': "bad-email-99"})
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['bad-email-99', 'is not a']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
