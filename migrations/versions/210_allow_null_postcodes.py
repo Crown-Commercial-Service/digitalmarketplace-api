@@ -1,6 +1,6 @@
 """empty message
 
-Revision ID: 324d95b19e9c
+Revision ID: 210_allow_null_postcodes
 Revises: 200_new_supplier_id_seq
 Create Date: 2015-08-09 09:27:05.848655
 
