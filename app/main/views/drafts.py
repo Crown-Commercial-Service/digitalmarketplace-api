@@ -15,7 +15,7 @@ from ...service_utils import validate_and_return_updater_request, \
     commit_and_archive_service, create_service_from_draft
 from ...draft_utils import (
     validate_and_return_draft_request, get_draft_validation_errors,
-    get_request_page_questions
+    get_request_page_questions, validate_draft
 )
 
 
@@ -82,7 +82,6 @@ def edit_draft_service(draft_id):
 
     draft.update_from_json(update_json)
     errs = get_draft_validation_errors(draft.data,
-                                       draft.data['lot'],
                                        framework_id=draft.framework_id,
                                        required=page_questions)
     if errs:
@@ -264,8 +263,7 @@ def create_new_draft_service(framework_slug):
         abort(400, "'{}' is not open for submissions".format(framework_slug))
 
     supplier_id = draft_json['supplierId']
-    lot = draft_json['lot']
-    errs = get_draft_validation_errors(draft_json, lot, slug=framework_slug)
+    errs = get_draft_validation_errors(draft_json, slug=framework_slug)
     if errs:
         return jsonify(errors=errs), 400
 
@@ -296,6 +294,41 @@ def create_new_draft_service(framework_slug):
         abort(400, "Database Error: {0}".format(e))
 
     return jsonify(services=draft.serialize()), 201
+
+
+@main.route('/draft-services/<int:draft_id>/complete', methods=['POST'])
+def complete_draft_service(draft_id):
+    updater_json = validate_and_return_updater_request()
+
+    draft = DraftService.query.filter(
+        DraftService.id == draft_id
+    ).first_or_404()
+
+    errs = validate_draft(draft)
+    if errs:
+        abort(400, errs)
+
+    draft.status = 'submitted'
+    try:
+        db.session.add(draft)
+        db.session.flush()
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.complete_draft_service,
+            user=updater_json['updated_by'],
+            data={
+                "draftId": draft.id
+            },
+            db_object=draft
+        )
+        db.session.add(audit)
+
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+
+    return jsonify(services=draft.serialize()), 200
 
 
 @main.route('/draft-services/<int:draft_id>/copy', methods=['POST'])
