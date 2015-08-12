@@ -221,9 +221,6 @@ class TestListSuppliersByDunsNumber(BaseApplicationTest):
             db.session.add(
                 Supplier(supplier_id=1, name=u"Duns 123", duns_number="123")
             )
-            db.session.add(
-                Supplier(supplier_id=2, name=u"Duns abc", duns_number="abc")
-            )
             db.session.commit()
 
     def test_invalid_duns_number_returns_400(self):
