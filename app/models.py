@@ -471,8 +471,8 @@ class DraftService(db.Model, ServiceTableMixin):
         return DraftService(
             framework_id=self.framework_id,
             supplier_id=self.supplier_id,
-            data=self.data,
-            status=self.status
+            data=data,
+            status='not-submitted',
         )
 
     def serialize(self):
