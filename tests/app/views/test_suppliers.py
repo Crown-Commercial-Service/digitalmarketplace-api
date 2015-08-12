@@ -212,6 +212,44 @@ class TestListSuppliersOnFramework(BaseApplicationTest):
         assert_equal(3, len(data['suppliers']))
 
 
+class TestListSuppliersByDunsNumber(BaseApplicationTest):
+
+    def setup(self):
+        super(TestListSuppliersByDunsNumber, self).setup()
+
+        with self.app.app_context():
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Duns 123", duns_number="123")
+            )
+            db.session.add(
+                Supplier(supplier_id=2, name=u"Duns abc", duns_number="abc")
+            )
+            db.session.commit()
+
+    def test_invalid_duns_number_returns_400(self):
+        response = self.client.get('/suppliers?duns_number=invalid!')
+        assert_equal(400, response.status_code)
+
+    def test_should_return_suppliers_by_duns_number(self):
+        response = self.client.get('/suppliers?duns_number=123')
+        assert_equal(200, response.status_code)
+        data = json.loads(response.get_data())
+        assert_equal(1, len(data['suppliers']))
+        assert_equal('Duns 123', data['suppliers'][0]['name'])
+
+    def test_should_return_no_suppliers_if_nonexisting_duns(self):
+        response = self.client.get('/suppliers?duns_number=not-existing')
+        data = json.loads(response.get_data())
+        assert_equal(200, response.status_code)
+        assert_equal(0, len(data['suppliers']))
+
+    def test_should_return_all_suppliers_if_no_duns_number(self):
+        response = self.client.get('/suppliers')
+        assert_equal(200, response.status_code)
+        data = json.loads(response.get_data())
+        assert_equal(2, len(data['suppliers']))
+
+
 class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
     method = "put"
     endpoint = "/suppliers/123456"
@@ -1004,3 +1042,14 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         for item in ['bad-email-99', 'is not a']:
             assert_in(item,
                       json.loads(response.get_data())['error'])
+
+    def test_should_not_be_able_to_import_same_duns_number(self):
+        payload1 = self.load_example_listing("new-supplier")
+        payload2 = self.load_example_listing("new-supplier")
+
+        response = self.post_supplier(payload1)
+        assert_equal(response.status_code, 201)
+        response = self.post_supplier(payload2)
+        assert_equal(response.status_code, 409)
+        data = json.loads(response.get_data())
+        assert_equal(data['message'], "Duns number 333333333 is already used")

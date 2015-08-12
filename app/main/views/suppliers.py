@@ -1,3 +1,5 @@
+from datetime import datetime
+from dmutils.deprecation import deprecated
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
@@ -22,6 +24,8 @@ def list_suppliers():
 
     framework = request.args.get('framework')
 
+    duns_number = request.args.get('duns_number')
+
     if framework:
         is_valid_string_or_400(framework)
 
@@ -39,6 +43,12 @@ def list_suppliers():
         ).order_by(Supplier.name)
     else:
         suppliers = Supplier.query.order_by(Supplier.name)
+
+    if duns_number:
+        is_valid_string_or_400(duns_number)
+        suppliers = suppliers.filter(
+            Supplier.duns_number == duns_number
+        )
 
     if prefix:
         if prefix == 'other':
@@ -185,6 +195,12 @@ def create_supplier():
         ['contactInformation']
     )
 
+    # duns number does not have a unique constraint due to nulls
+    if Supplier.query.filter(
+        Supplier.duns_number == supplier_data['dunsNumber']
+    ).first():
+        return jsonify(message="Duns number {} is already used".format(supplier_data['dunsNumber'])), 409
+
     supplier = Supplier()
     supplier.update_from_json(supplier_data)
 
@@ -197,7 +213,7 @@ def create_supplier():
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        return jsonify(message="Database Error: {0}".format(e)), 400
 
     return jsonify(suppliers=supplier.serialize()), 201
 
