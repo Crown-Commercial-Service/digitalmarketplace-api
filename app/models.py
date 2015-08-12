@@ -464,6 +464,10 @@ class DraftService(db.Model, ServiceTableMixin):
         )
 
     def copy(self):
+        data = self.data.copy()
+        name = data.get('serviceName', '')
+        if len(name) <= 95:
+            data['serviceName'] = u"{} copy".format(name)
         return DraftService(
             framework_id=self.framework_id,
             supplier_id=self.supplier_id,

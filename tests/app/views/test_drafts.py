@@ -853,7 +853,8 @@ class TestCopyDraft(BaseApplicationTest):
             },
             'services': {
                 'lot': 'SCS',
-                'supplierId': 1
+                'supplierId': 1,
+                'serviceName': "Draft",
             }
         }
 
@@ -874,6 +875,7 @@ class TestCopyDraft(BaseApplicationTest):
         data = json.loads(res.get_data())
         assert_equal(res.status_code, 201)
         assert_equal(data['services']['lot'], 'SCS')
+        assert_equal(data['services']['serviceName'], 'Draft copy')
         assert_equal(data['services']['supplierId'], 1)
         assert_equal(data['services']['frameworkSlug'], self.draft['frameworkSlug'])
         assert_equal(data['services']['frameworkName'], self.draft['frameworkName'])
