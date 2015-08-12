@@ -3,30 +3,37 @@ from flask import json
 from datetime import datetime
 from app.models import AuditEvent
 from app import db
+from app.models import Supplier
 from dmutils.audit import AuditTypes
 
 from nose.tools import assert_equal, assert_in
 
 
-class TestAudits(BaseApplicationTest):
-    def setup(self):
-        super(TestAudits, self).setup()
-
+class TestAuditEvents(BaseApplicationTest):
     @staticmethod
-    def audit_event(user, type):
+    def audit_event(user, type, db_object=None):
         return AuditEvent(
             audit_type=type,
-            db_object=None,
+            db_object=db_object,
             user=user,
             data={'request': "data"}
         )
 
-    def add_audit_events(self, number, type=AuditTypes.supplier_update):
+    def add_audit_events(self, number, type=AuditTypes.supplier_update, db_object=None):
         with self.app.app_context():
             for i in range(number):
                 db.session.add(
-                    self.audit_event(i, type)
+                    self.audit_event(i, type, db_object)
                 )
+            db.session.commit()
+
+    def add_audit_events_with_db_object(self):
+        self.setup_dummy_suppliers(3)
+        with self.app.app_context():
+            suppliers = Supplier.query.all()
+            for supplier in suppliers:
+                event = AuditEvent(AuditTypes.contact_update, "rob", {}, supplier)
+                db.session.add(event)
             db.session.commit()
 
     def test_should_get_audit_event(self):
@@ -80,6 +87,37 @@ class TestAudits(BaseApplicationTest):
     def test_should_reject_invalid_audit_type(self):
         self.add_audit_events(1)
         response = self.client.get('/audit-events?audit-type=invalid')
+
+        assert_equal(response.status_code, 400)
+
+    def test_should_get_audit_event_by_object(self):
+        self.add_audit_events_with_db_object()
+
+        response = self.client.get('/audit-events?object-type=suppliers&object-id=1')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['auditEvents']), 1)
+        assert_equal(data['auditEvents'][0]['user'], 'rob')
+
+    def test_should_reject_invalid_object_type(self):
+        self.add_audit_events_with_db_object()
+
+        response = self.client.get('/audit-events?object-type=invalid&object-id=1')
+
+        assert_equal(response.status_code, 400)
+
+    def test_should_reject_object_type_if_no_object_id_is_given(self):
+        self.add_audit_events_with_db_object()
+
+        response = self.client.get('/audit-events?object-type=suppliers')
+
+        assert_equal(response.status_code, 400)
+
+    def test_should_reject_object_id_if_no_object_type_is_given(self):
+        self.add_audit_events_with_db_object()
+
+        response = self.client.get('/audit-events?object-id=1')
 
         assert_equal(response.status_code, 400)
 

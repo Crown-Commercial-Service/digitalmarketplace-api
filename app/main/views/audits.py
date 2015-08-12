@@ -6,11 +6,22 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import true, false
 from ...utils import pagination_links, get_valid_page_or_1
 from .. import main
-from ... import db
+from ... import db, models
 from dmutils.audit import AuditTypes
 from dmutils.config import convert_to_boolean
 from ...validation import is_valid_date, is_valid_acknowledged_state
 from ...service_utils import validate_and_return_updater_request
+
+
+AUDIT_OBJECT_TYPES = {
+    "suppliers": models.Supplier,
+    "services": models.Service,
+}
+
+AUDIT_OBJECT_ID_FIELDS = {
+    "suppliers": models.Supplier.supplier_id,
+    "services": models.Service.service_id,
+}
 
 
 @main.route('/audit-events', methods=['GET'])
@@ -30,10 +41,11 @@ def list_audits():
         else:
             abort(400, 'invalid audit date supplied')
 
-    if request.args.get('audit-type'):
-        if AuditTypes.is_valid_audit_type(request.args.get('audit-type')):
+    audit_type = request.args.get('audit-type')
+    if audit_type:
+        if AuditTypes.is_valid_audit_type(audit_type):
             audits = audits.filter(
-                AuditEvent.type == request.args.get('audit-type')
+                AuditEvent.type == audit_type
             )
         else:
             abort(400, "Invalid audit type")
@@ -51,6 +63,21 @@ def list_audits():
                 )
         else:
             abort(400, 'invalid acknowledged state supplied')
+
+    object_type = request.args.get('object-type')
+    object_id = request.args.get('object-id')
+    if object_type:
+        if object_type not in AUDIT_OBJECT_TYPES:
+            abort(400, 'invalid object-type supplied')
+        if not object_id:
+            abort(400, 'object-type cannot be provided without object-id')
+        model = AUDIT_OBJECT_TYPES[object_type]
+        id_field = AUDIT_OBJECT_ID_FIELDS[object_type]
+
+        audits = audits.join(model, model.id == AuditEvent.object_id) \
+                       .filter(id_field == object_id)
+    elif object_id:
+        abort(400, 'object-id cannot be provided without object-type')
 
     audits = audits.paginate(
         page=page,
