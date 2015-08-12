@@ -127,8 +127,6 @@ def list_draft_services():
         abort(404, "supplier_id '%d' not found" % supplier_id)
 
     services = DraftService.query.order_by(
-        asc(DraftService.framework_id),
-        asc(DraftService.data['lot'].cast(String).label('data_lot')),
         asc(DraftService.id)
     )
 
