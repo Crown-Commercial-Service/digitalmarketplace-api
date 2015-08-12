@@ -113,9 +113,6 @@
         "Year"
       ]
     },
-    "priceString":{
-      "type":"string"
-    },
     "vatIncluded":{
       "type":"boolean"
     },
@@ -913,7 +910,6 @@
     "serviceBenefits",
     "priceMin",
     "priceUnit",
-    "priceString",
     "vatIncluded",
     "educationPricing",
     "trialOption",
