@@ -518,7 +518,7 @@ class AuditEvent(db.Model):
         self.user = user
         self.acknowledged = False
 
-    def serialize(self):
+    def serialize(self, include_user=False):
         """
         :return: dictionary representation of an audit event
         """
@@ -548,6 +548,14 @@ class AuditEvent(db.Model):
                 'acknowledgedBy':
                     self.acknowledged_by,
             })
+
+        if include_user:
+            user = User.query.filter(
+                User.email_address == self.user
+            ).first()
+
+            if user:
+                data['userName'] = user.name
 
         return data
 

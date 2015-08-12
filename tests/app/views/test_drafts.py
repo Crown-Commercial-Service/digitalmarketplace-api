@@ -805,6 +805,25 @@ class TestDraftServices(BaseApplicationTest):
             assert_equal(Service.query.count(), 2)
             assert_equal(DraftService.query.count(), 1)
 
+    def test_get_draft_returns_last_audit_event(self):
+        draft = json.loads(self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json'
+        ).get_data())['services']
+
+        res = self.client.get(
+            '/draft-services/%d' % draft['id'],
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json'
+        )
+
+        assert_equal(res.status_code, 200)
+        data = json.loads(res.get_data())
+        draft, audit_event = data['services'], data['auditEvents']
+
+        assert_equal(audit_event['type'], 'create_draft_service')
+
 
 class TestCopyDraft(BaseApplicationTest):
     def setup(self):

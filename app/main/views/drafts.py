@@ -2,14 +2,14 @@ from dmutils.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import asc
+from sqlalchemy import asc, desc
 from sqlalchemy.types import String
 
 from .. import main
 from ... import db
 from ...utils import drop_foreign_fields, json_has_required_keys
 from ...validation import is_valid_service_id_or_400
-from ...models import Service, DraftService, Supplier, AuditEvent, Framework
+from ...models import Service, DraftService, Supplier, AuditEvent, Framework, User
 from ...service_utils import validate_and_return_updater_request, \
     update_and_validate_service, index_service, \
     commit_and_archive_service, create_service_from_draft
@@ -159,7 +159,19 @@ def fetch_draft_service(draft_id):
         DraftService.id == draft_id
     ).first_or_404()
 
-    return jsonify(services=draft.serialize())
+    last_audit_event = AuditEvent.query.filter(
+        AuditEvent.object == draft,
+        AuditEvent.type.in_([
+            AuditTypes.create_draft_service.value,
+            AuditTypes.update_draft_service.value,
+            AuditTypes.complete_draft_service.value,
+        ]),
+    ).order_by(desc(AuditEvent.created_at)).first()
+
+    return jsonify(
+        services=draft.serialize(),
+        auditEvents=last_audit_event.serialize(include_user=True)
+    )
 
 
 @main.route('/draft-services/<int:draft_id>', methods=['DELETE'])
