@@ -903,6 +903,14 @@ class TestCopyDraft(BaseApplicationTest):
             'originalDraftId': self.draft_id
         })
 
+    def test_should_not_copy_draft_without_update_details(self):
+        res = self.client.post(
+            '/draft-services/%s/copy' % self.draft_id,
+            data=json.dumps({}),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 400)
+
     def test_should_not_create_draft_with_invalid_data(self):
         res = self.client.post(
             '/draft-services/1000/copy',
@@ -971,6 +979,14 @@ class TestCompleteDraft(BaseApplicationTest):
         assert_equal(data['auditEvents'][1]['data'], {
             'draftId': self.draft_id,
         })
+
+    def test_should_not_complete_draft_without_update_details(self):
+        res = self.client.post(
+            '/draft-services/%s/complete' % self.draft_id,
+            data=json.dumps({}),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 400)
 
     def test_should_not_complete_invalid_draft(self):
         create_draft_json = {
