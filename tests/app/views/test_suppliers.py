@@ -1,10 +1,11 @@
 from flask import json
-from nose.tools import assert_equal, assert_in, assert_is_not_none
+from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true
 
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
     SelectionAnswers, Framework
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
+from random import randint
 
 
 class TestGetSupplier(BaseApplicationTest):
@@ -54,6 +55,7 @@ class TestGetSupplier(BaseApplicationTest):
             new_payload = self.load_example_listing("Supplier")
             new_payload['id'] = 111111
             new_payload['clients'] = []
+            new_payload['dunsNumber'] = str(randint(111111111, 9999999999))
 
             response = self.client.put(
                 '/suppliers/{}'.format(new_payload['id']),
@@ -220,6 +222,9 @@ class TestListSuppliersByDunsNumber(BaseApplicationTest):
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=1, name=u"Duns 123", duns_number="123")
+            )
+            db.session.add(
+                Supplier(supplier_id=2, name=u"Duns xyq", duns_number="xyz")
             )
             db.session.commit()
 
@@ -1047,6 +1052,6 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.post_supplier(payload1)
         assert_equal(response.status_code, 201)
         response = self.post_supplier(payload2)
-        assert_equal(response.status_code, 409)
+        assert_equal(response.status_code, 400)
         data = json.loads(response.get_data())
-        assert_equal(data['message'], "Duns number 333333333 is already used")
+        assert_true('duplicate key value violates unique constraint "ix_suppliers_duns_number"' in data['message'])

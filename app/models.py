@@ -141,7 +141,7 @@ class Supplier(db.Model):
                                           lazy='joined',
                                           innerjoin=False)
 
-    duns_number = db.Column(db.String, index=True, unique=False, nullable=True)
+    duns_number = db.Column(db.String, index=True, unique=True, nullable=True)
 
     esourcing_id = db.Column(db.String, index=False, unique=False, nullable=True)
 

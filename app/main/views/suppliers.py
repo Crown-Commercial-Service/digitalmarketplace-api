@@ -195,12 +195,6 @@ def create_supplier():
         ['contactInformation']
     )
 
-    # duns number does not have a unique constraint due to nulls
-    if Supplier.query.filter(
-        Supplier.duns_number == supplier_data['dunsNumber']
-    ).first():
-        return jsonify(message="Duns number {} is already used".format(supplier_data['dunsNumber'])), 409
-
     supplier = Supplier()
     supplier.update_from_json(supplier_data)
 
