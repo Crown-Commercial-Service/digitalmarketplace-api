@@ -11,6 +11,7 @@ from dmutils.audit import AuditTypes
 from dmutils.config import convert_to_boolean
 from ...validation import is_valid_date, is_valid_acknowledged_state
 from ...service_utils import validate_and_return_updater_request
+from ...utils import get_json_from_request, json_has_required_keys
 
 
 AUDIT_OBJECT_TYPES = {
@@ -92,6 +93,47 @@ def list_audits():
             request.args
         )
     )
+
+
+@main.route('/audit-events', methods=['POST'])
+def create_audit_event():
+    json_payload = get_json_from_request()  # TODO test
+    json_has_required_keys(json_payload, ['auditEvents'])  # TODO test
+    audit_event_data = json_payload['auditEvents']
+    json_has_required_keys(audit_event_data, ["type", "user", "data"])
+
+    if 'objectType' not in audit_event_data:
+        if 'objectId' in audit_event_data:
+            abort(400, "object ID cannot be provided without an object type")
+        db_object = None
+    else:
+        if audit_event_data['objectType'] not in AUDIT_OBJECT_TYPES:
+            abort(400, "invalid object type supplied")
+        if 'objectId' not in audit_event_data:
+            abort(400, "object type cannot be provided without an object ID")
+        model = AUDIT_OBJECT_TYPES[audit_event_data['objectType']]
+        id_field = AUDIT_OBJECT_ID_FIELDS[audit_event_data['objectType']]
+        db_objects = model.query.filter(
+            id_field == audit_event_data['objectId']
+        ).all()
+        if len(db_objects) != 1:
+            abort(400, "referenced object does not exist")
+        else:
+            db_object = db_objects[0]
+
+    if not AuditTypes.is_valid_audit_type(audit_event_data['type']):
+        abort(400, "invalid audit type supplied")
+
+    audit_event = AuditEvent(
+        audit_type=AuditTypes[audit_event_data['type']],
+        user=audit_event_data['user'],
+        data=audit_event_data['data'],
+        db_object=db_object)
+
+    db.session.add(audit_event)
+    db.session.commit()
+
+    return jsonify(auditEvents=audit_event.serialize()), 201
 
 
 @main.route('/audit-events/<int:audit_id>/acknowledge', methods=['POST'])

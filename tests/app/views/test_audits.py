@@ -6,7 +6,7 @@ from app import db
 from app.models import Supplier
 from dmutils.audit import AuditTypes
 
-from nose.tools import assert_equal, assert_in
+from nose.tools import assert_equal, assert_in, assert_true
 
 
 class TestAuditEvents(BaseApplicationTest):
@@ -290,3 +290,149 @@ class TestAuditEvents(BaseApplicationTest):
             new_data['auditEvents'][0]['id'],
             data['auditEvents'][1]['id']
         )
+
+
+class TestCreateAuditEvent(BaseApplicationTest):
+    @staticmethod
+    def audit_event():
+        audit_event = {
+            "type": "register_framework_interest",
+            "user": "A User",
+            "data": {
+                "Key": "value"
+            },
+        }
+
+        return audit_event
+
+    def audit_event_with_db_object(self):
+        audit_event = self.audit_event()
+        self.setup_dummy_suppliers(1)
+        audit_event['objectType'] = 'suppliers'
+        audit_event['objectId'] = 0
+
+        return audit_event
+
+    def test_create_an_audit_event(self):
+        audit_event = self.audit_event()
+
+        res = self.client.post(
+            '/audit-events',
+            data=json.dumps({'auditEvents': audit_event}),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 201)
+
+    def test_create_an_audit_event_with_an_associated_object(self):
+        audit_event = self.audit_event_with_db_object()
+
+        res = self.client.post(
+            '/audit-events',
+            data=json.dumps({'auditEvents': audit_event}),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 201)
+
+    def test_should_fail_if_no_type_is_given(self):
+        audit_event = self.audit_event()
+        del audit_event['type']
+
+        res = self.client.post(
+            '/audit-events',
+            data=json.dumps({'auditEvents': audit_event}),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 400)
+        assert_true(data['error'].startswith("Invalid JSON"))
+
+    def test_should_fail_if_an_invalid_type_is_given(self):
+        audit_event = self.audit_event()
+        audit_event['type'] = 'invalid'
+
+        res = self.client.post(
+            '/audit-events',
+            data=json.dumps({'auditEvents': audit_event}),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 400)
+        assert_equal(data['error'], "invalid audit type supplied")
+
+    def test_should_fail_if_no_user_is_given(self):
+        audit_event = self.audit_event()
+        del audit_event['user']
+
+        res = self.client.post(
+            '/audit-events',
+            data=json.dumps({'auditEvents': audit_event}),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 400)
+        assert_true(data['error'].startswith("Invalid JSON"))
+
+    def test_should_fail_if_no_data_is_given(self):
+        audit_event = self.audit_event()
+        del audit_event['data']
+
+        res = self.client.post(
+            '/audit-events',
+            data=json.dumps({'auditEvents': audit_event}),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 400)
+        assert_true(data['error'].startswith("Invalid JSON"))
+
+    def test_should_fail_if_invalid_objectType_is_given(self):
+        audit_event = self.audit_event_with_db_object()
+        audit_event['objectType'] = 'invalid'
+
+        res = self.client.post(
+            '/audit-events',
+            data=json.dumps({'auditEvents': audit_event}),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 400)
+        assert_equal(data['error'], "invalid object type supplied")
+
+    def test_should_fail_if_objectType_but_no_objectId_is_given(self):
+        audit_event = self.audit_event_with_db_object()
+        del audit_event['objectId']
+
+        res = self.client.post(
+            '/audit-events',
+            data=json.dumps({'auditEvents': audit_event}),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 400)
+        assert_equal(data['error'], "object type cannot be provided without an object ID")
+
+    def test_should_fail_if_objectId_but_no_objectType_is_given(self):
+        audit_event = self.audit_event_with_db_object()
+        del audit_event['objectType']
+
+        res = self.client.post(
+            '/audit-events',
+            data=json.dumps({'auditEvents': audit_event}),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 400)
+        assert_equal(data['error'], "object ID cannot be provided without an object type")
+
+    def test_should_fail_if_db_object_does_not_exist(self):
+        audit_event = self.audit_event_with_db_object()
+        audit_event['objectId'] = 6
+
+        res = self.client.post(
+            '/audit-events',
+            data=json.dumps({'auditEvents': audit_event}),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 400)
+        assert_equal(data['error'], "referenced object does not exist")
