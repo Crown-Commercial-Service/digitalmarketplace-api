@@ -2,20 +2,20 @@ from dmutils.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import asc
+from sqlalchemy import asc, desc
 from sqlalchemy.types import String
 
 from .. import main
 from ... import db
 from ...utils import drop_foreign_fields, json_has_required_keys
 from ...validation import is_valid_service_id_or_400
-from ...models import Service, DraftService, Supplier, AuditEvent, Framework
+from ...models import Service, DraftService, Supplier, AuditEvent, Framework, User
 from ...service_utils import validate_and_return_updater_request, \
     update_and_validate_service, index_service, \
     commit_and_archive_service, create_service_from_draft
 from ...draft_utils import (
     validate_and_return_draft_request, get_draft_validation_errors,
-    get_request_page_questions
+    get_request_page_questions, validate_draft
 )
 
 
@@ -82,7 +82,6 @@ def edit_draft_service(draft_id):
 
     draft.update_from_json(update_json)
     errs = get_draft_validation_errors(draft.data,
-                                       draft.data['lot'],
                                        framework_id=draft.framework_id,
                                        required=page_questions)
     if errs:
@@ -128,8 +127,6 @@ def list_draft_services():
         abort(404, "supplier_id '%d' not found" % supplier_id)
 
     services = DraftService.query.order_by(
-        asc(DraftService.framework_id),
-        asc(DraftService.data['lot'].cast(String).label('data_lot')),
         asc(DraftService.id)
     )
 
@@ -162,7 +159,19 @@ def fetch_draft_service(draft_id):
         DraftService.id == draft_id
     ).first_or_404()
 
-    return jsonify(services=draft.serialize())
+    last_audit_event = AuditEvent.query.filter(
+        AuditEvent.object == draft,
+        AuditEvent.type.in_([
+            AuditTypes.create_draft_service.value,
+            AuditTypes.update_draft_service.value,
+            AuditTypes.complete_draft_service.value,
+        ]),
+    ).order_by(desc(AuditEvent.created_at)).first()
+
+    return jsonify(
+        services=draft.serialize(),
+        auditEvents=last_audit_event.serialize(include_user=True)
+    )
 
 
 @main.route('/draft-services/<int:draft_id>', methods=['DELETE'])
@@ -264,8 +273,7 @@ def create_new_draft_service(framework_slug):
         abort(400, "'{}' is not open for submissions".format(framework_slug))
 
     supplier_id = draft_json['supplierId']
-    lot = draft_json['lot']
-    errs = get_draft_validation_errors(draft_json, lot, slug=framework_slug)
+    errs = get_draft_validation_errors(draft_json, slug=framework_slug)
     if errs:
         return jsonify(errors=errs), 400
 
@@ -296,6 +304,41 @@ def create_new_draft_service(framework_slug):
         abort(400, "Database Error: {0}".format(e))
 
     return jsonify(services=draft.serialize()), 201
+
+
+@main.route('/draft-services/<int:draft_id>/complete', methods=['POST'])
+def complete_draft_service(draft_id):
+    updater_json = validate_and_return_updater_request()
+
+    draft = DraftService.query.filter(
+        DraftService.id == draft_id
+    ).first_or_404()
+
+    errs = validate_draft(draft)
+    if errs:
+        abort(400, errs)
+
+    draft.status = 'submitted'
+    try:
+        db.session.add(draft)
+        db.session.flush()
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.complete_draft_service,
+            user=updater_json['updated_by'],
+            data={
+                "draftId": draft.id
+            },
+            db_object=draft
+        )
+        db.session.add(audit)
+
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+
+    return jsonify(services=draft.serialize()), 200
 
 
 @main.route('/draft-services/<int:draft_id>/copy', methods=['POST'])
