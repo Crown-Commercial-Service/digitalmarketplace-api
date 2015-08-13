@@ -47,14 +47,6 @@
       "minLength":1
 
     },
-    "serviceTypes":{
-      "type":"array",
-      "uniqueItems":true,
-      "maxItems":5,
-      "items":{
-        "enum":["Compute", "Storage"]
-      }
-    },
     "serviceFeatures":{
       "type":"array",
       "minItems":1,
@@ -905,7 +897,6 @@
     "pricingDocumentURL",
     "serviceName",
     "serviceSummary",
-    "serviceTypes",
     "serviceFeatures",
     "serviceBenefits",
     "priceMin",
