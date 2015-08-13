@@ -464,11 +464,15 @@ class DraftService(db.Model, ServiceTableMixin):
         )
 
     def copy(self):
+        data = self.data.copy()
+        name = data.get('serviceName', '')
+        if len(name) <= 95:
+            data['serviceName'] = u"{} copy".format(name)
         return DraftService(
             framework_id=self.framework_id,
             supplier_id=self.supplier_id,
-            data=self.data,
-            status=self.status
+            data=data,
+            status='not-submitted',
         )
 
     def serialize(self):
@@ -518,7 +522,7 @@ class AuditEvent(db.Model):
         self.user = user
         self.acknowledged = False
 
-    def serialize(self):
+    def serialize(self, include_user=False):
         """
         :return: dictionary representation of an audit event
         """
@@ -548,6 +552,14 @@ class AuditEvent(db.Model):
                 'acknowledgedBy':
                     self.acknowledged_by,
             })
+
+        if include_user:
+            user = User.query.filter(
+                User.email_address == self.user
+            ).first()
+
+            if user:
+                data['userName'] = user.name
 
         return data
 
