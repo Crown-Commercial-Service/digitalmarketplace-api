@@ -23,12 +23,9 @@ def get_framework_stats():
     lot_column = DraftService.data['lot'].cast(String).label('lot')
 
     return str({
-        'services_drafts': DraftService.query.filter(
-                DraftService.status == "not-submitted"
-            ).count(),
-        'services_complete': DraftService.query.filter(
-                DraftService.status == "submitted"
-            ).count(),
+        'services_by_status': dict(db.session.query(
+                DraftService.status, func.count(DraftService.status)
+            ).group_by(DraftService.status)),
         'services_by_lot': dict(db.session.query(
                 lot_column, func.count(lot_column)
             ).group_by(lot_column).all()),
