@@ -19,7 +19,7 @@ def list_frameworks():
 @main.route('/frameworks/g-cloud-7/stats', methods=['GET'])
 def get_framework_stats():
 
-    seven_days_ago = datetime.datetime.now() + datetime.timedelta(-7)
+    seven_days_ago = datetime.datetime.utcnow() + datetime.timedelta(-7)
     lot_column = DraftService.data['lot'].cast(String).label('lot')
 
     return str({
