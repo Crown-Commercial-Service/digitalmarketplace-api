@@ -31,25 +31,25 @@ def get_framework_stats(framework_slug):
 
     return str({
         'services_by_status': dict(db.session.query(
-                DraftService.status, func.count(DraftService.status)
-            ).group_by(
-                DraftService.status
-            ).filter(
-                DraftService.framework_id == framework.id
-            )),
+            DraftService.status, func.count(DraftService.status)
+        ).group_by(
+            DraftService.status
+        ).filter(
+            DraftService.framework_id == framework.id
+        )),
         'services_by_lot': dict(db.session.query(
-                lot_column, func.count(lot_column)
-            ).group_by(
-                lot_column
-            ).filter(
-                DraftService.framework_id == framework.id
-            ).all()),
+            lot_column, func.count(lot_column)
+        ).group_by(
+            lot_column
+        ).filter(
+            DraftService.framework_id == framework.id
+        ).all()),
         'users': User.query.count(),
         'active_users': User.query.filter(User.logged_in_at > seven_days_ago).count(),
         'suppliers': Supplier.query.count(),
         'suppliers_interested': AuditEvent.query.filter(
-                AuditEvent.data['frameworkSlug'].cast(String) == framework_slug,
-                AuditEvent.type == 'register_framework_interest'
-            ).count(),
+            AuditEvent.data['frameworkSlug'].cast(String) == framework_slug,
+            AuditEvent.type == 'register_framework_interest'
+        ).count(),
         'suppliers_with_complete_declaration': SelectionAnswers.find_by_framework(framework_slug).count()
     })
