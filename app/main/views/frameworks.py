@@ -44,8 +44,13 @@ def get_framework_stats(framework_slug):
         ).filter(
             DraftService.framework_id == framework.id
         ).all()),
-        'users': User.query.count(),
-        'active_users': User.query.filter(User.logged_in_at > seven_days_ago).count(),
+        'supplier_users': User.query.filter(
+            User.role == 'supplier'
+        ).count(),
+        'active_supplier_users': User.query.filter(
+            User.role == 'supplier',
+            User.logged_in_at > seven_days_ago
+        ).count(),
         'suppliers': Supplier.query.count(),
         'suppliers_interested': AuditEvent.query.filter(
             AuditEvent.data['frameworkSlug'].cast(String) == framework_slug,
