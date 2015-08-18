@@ -1,6 +1,6 @@
 from flask import jsonify
-from sqlalchemy.types import String
-from sqlalchemy import func
+from sqlalchemy.types import String, Boolean
+from sqlalchemy import func, or_
 import datetime
 
 from .. import main
@@ -29,32 +29,46 @@ def get_framework_stats(framework_slug):
     seven_days_ago = datetime.datetime.utcnow() + datetime.timedelta(-7)
     lot_column = DraftService.data['lot'].cast(String).label('lot')
 
-    return str({
-        'services_by_status': dict(db.session.query(
-            DraftService.status, func.count(DraftService.status)
-        ).group_by(
-            DraftService.status
-        ).filter(
-            DraftService.framework_id == framework.id
-        )),
-        'services_by_lot': dict(db.session.query(
-            lot_column, func.count(lot_column)
-        ).group_by(
-            lot_column
-        ).filter(
-            DraftService.framework_id == framework.id
-        ).all()),
-        'supplier_users': User.query.filter(
-            User.role == 'supplier'
-        ).count(),
-        'active_supplier_users': User.query.filter(
-            User.role == 'supplier',
-            User.logged_in_at > seven_days_ago
-        ).count(),
-        'suppliers': Supplier.query.count(),
-        'suppliers_interested': AuditEvent.query.filter(
-            AuditEvent.data['frameworkSlug'].cast(String) == framework_slug,
-            AuditEvent.type == 'register_framework_interest'
-        ).count(),
-        'suppliers_with_complete_declaration': SelectionAnswers.find_by_framework(framework_slug).count()
+    def label_columns(labels, query):
+        return [dict(zip(labels, item)) for item in query]
+
+    return jsonify({
+        'services': label_columns(
+            ['status', 'lot', 'declaration_made', 'count'],
+            db.session.query(
+                DraftService.status, lot_column, SelectionAnswers.framework_id.isnot(None), func.count()
+            ).outerjoin(
+                SelectionAnswers, DraftService.supplier_id == SelectionAnswers.supplier_id
+            ).group_by(
+                DraftService.status, lot_column, SelectionAnswers.framework_id
+            ).filter(
+                DraftService.framework_id == framework.id
+            ).all()
+        ),
+        'supplier_users': label_columns(
+            ['recent_login', 'count'],
+            db.session.query(
+                User.logged_in_at > seven_days_ago, func.count()
+            ).filter(
+                User.role == 'supplier'
+            ).group_by(
+                User.logged_in_at > seven_days_ago
+            ).all()
+        ),
+        'interested_suppliers': label_columns(
+            ['has_made_declaration', 'count'],
+            db.session.query(
+                SelectionAnswers.framework_id.isnot(None), func.count()
+            ).select_from(
+                Supplier
+            ).outerjoin(
+                AuditEvent, AuditEvent.object_id == Supplier.id
+            ).filter(
+                AuditEvent.type == 'register_framework_interest'
+            ).join(
+                SelectionAnswers, isouter=True
+            ).group_by(
+                SelectionAnswers.framework_id
+            ).all()
+        )
     })
