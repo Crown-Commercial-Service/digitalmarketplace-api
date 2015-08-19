@@ -1,10 +1,10 @@
-from flask import jsonify
-from sqlalchemy.types import String, Boolean
-from sqlalchemy import func, or_
+from flask import jsonify, abort
+from sqlalchemy.types import String
+from sqlalchemy import func, orm
 import datetime
 
 from .. import main
-from ...models import db, Framework, DraftService, Service, User, Supplier, SelectionAnswers, AuditEvent
+from ...models import db, Framework, DraftService, User, Supplier, SelectionAnswers, AuditEvent
 
 
 @main.route('/frameworks', methods=['GET'])
@@ -27,7 +27,19 @@ def get_framework_stats(framework_slug):
         abort(404, "'{}' is not a framework".format(framework.slug))
 
     seven_days_ago = datetime.datetime.utcnow() + datetime.timedelta(-7)
+
     lot_column = DraftService.data['lot'].cast(String).label('lot')
+
+    has_completed_drafts_query = db.session.query(
+        DraftService.supplier_id, func.min(DraftService.id)
+    ).filter(
+        DraftService.framework_id == framework.id,
+        DraftService.status == 'submitted'
+    ).group_by(
+        DraftService.supplier_id
+    ).subquery('completed_drafts')
+
+    drafts_alias = orm.aliased(DraftService, has_completed_drafts_query)
 
     def label_columns(labels, query):
         return [dict(zip(labels, item)) for item in query]
@@ -56,19 +68,21 @@ def get_framework_stats(framework_slug):
             ).all()
         ),
         'interested_suppliers': label_columns(
-            ['has_made_declaration', 'count'],
+            ['has_made_declaration', 'has_completed_services', 'count'],
             db.session.query(
-                SelectionAnswers.framework_id.isnot(None), func.count()
+                SelectionAnswers.framework_id.isnot(None), drafts_alias.supplier_id.isnot(None), func.count()
             ).select_from(
                 Supplier
             ).outerjoin(
                 AuditEvent, AuditEvent.object_id == Supplier.id
+            ).outerjoin(
+                SelectionAnswers
+            ).outerjoin(
+                drafts_alias
             ).filter(
                 AuditEvent.type == 'register_framework_interest'
-            ).join(
-                SelectionAnswers, isouter=True
             ).group_by(
-                SelectionAnswers.framework_id
+                SelectionAnswers.framework_id, drafts_alias.supplier_id.isnot(None)
             ).all()
         )
     })
