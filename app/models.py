@@ -237,7 +237,8 @@ class User(db.Model):
     ROLES = [
         'buyer',
         'supplier',
-        'admin'
+        'admin',
+        'admin-ccs',
     ]
 
     id = db.Column(db.Integer, primary_key=True)

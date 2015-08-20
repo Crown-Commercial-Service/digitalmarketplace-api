@@ -187,6 +187,21 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
         data = json.loads(response.get_data())["users"]
         assert_equal(data["emailAddress"], "joeblogs@email.com")
 
+    def test_can_post_an_admin_ccs_user(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'role': 'admin-ccs',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 201)
+        data = json.loads(response.get_data())["users"]
+        assert_equal(data["emailAddress"], "joeblogs@email.com")
+
     def test_can_post_a_supplier_user(self):
         with self.app.app_context():
             db.session.add(
