@@ -150,6 +150,16 @@ class TestListSuppliers(BaseApplicationTest):
         prev_link = data['links']['prev']
         assert_in('page=1', prev_link)
 
+    def test_query_string_prefix_returns_no_pagination_for_single_page(self):
+        self.setup_additional_dummy_suppliers(5, 'T')
+        response = self.client.get('/suppliers?prefix=t')
+        data = json.loads(response.get_data())
+
+        assert_equal(200, response.status_code)
+        assert_equal(5, len(data['suppliers']))
+        print("LINKS: {}".format(data['links']))
+        assert_equal(0, len(data['links']))
+
     def test_query_string_prefix_page_out_of_range(self):
         response = self.client.get('/suppliers?prefix=s&page=10')
 
