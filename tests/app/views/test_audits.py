@@ -333,6 +333,17 @@ class TestCreateAuditEvent(BaseApplicationTest):
 
         assert_equal(res.status_code, 201)
 
+    def test_create_audit_event_with_no_user(self):
+        audit_event = self.audit_event()
+        del audit_event['user']
+
+        res = self.client.post(
+            '/audit-events',
+            data=json.dumps({'auditEvents': audit_event}),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 201)
+
     def test_should_fail_if_no_type_is_given(self):
         audit_event = self.audit_event()
         del audit_event['type']
@@ -358,19 +369,6 @@ class TestCreateAuditEvent(BaseApplicationTest):
 
         assert_equal(res.status_code, 400)
         assert_equal(data['error'], "invalid audit type supplied")
-
-    def test_should_fail_if_no_user_is_given(self):
-        audit_event = self.audit_event()
-        del audit_event['user']
-
-        res = self.client.post(
-            '/audit-events',
-            data=json.dumps({'auditEvents': audit_event}),
-            content_type='application/json')
-        data = json.loads(res.get_data())
-
-        assert_equal(res.status_code, 400)
-        assert_true(data['error'].startswith("Invalid JSON"))
 
     def test_should_fail_if_no_data_is_given(self):
         audit_event = self.audit_event()

@@ -100,7 +100,7 @@ def create_audit_event():
     json_payload = get_json_from_request()  # TODO test
     json_has_required_keys(json_payload, ['auditEvents'])  # TODO test
     audit_event_data = json_payload['auditEvents']
-    json_has_required_keys(audit_event_data, ["type", "user", "data"])
+    json_has_required_keys(audit_event_data, ["type", "data"])
 
     if 'objectType' not in audit_event_data:
         if 'objectId' in audit_event_data:
@@ -126,7 +126,7 @@ def create_audit_event():
 
     audit_event = AuditEvent(
         audit_type=AuditTypes[audit_event_data['type']],
-        user=audit_event_data['user'],
+        user=audit_event_data.get('user'),
         data=audit_event_data['data'],
         db_object=db_object)
 
