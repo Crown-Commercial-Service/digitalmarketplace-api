@@ -1,6 +1,6 @@
 from datetime import datetime
 from dmutils.audit import AuditTypes
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 from flask import jsonify, abort, request, current_app
 
 from .. import main
@@ -130,6 +130,8 @@ def create_user():
         user.supplier_id = json_payload['supplierId']
         audit_data['supplier_id'] = user.supplier_id
 
+    check_supplier_role(user.role, user.supplier_id)
+
     try:
         db.session.add(user)
         db.session.flush()
@@ -146,6 +148,9 @@ def create_user():
     except IntegrityError:
         db.session.rollback()
         abort(400, "Invalid supplier id")
+    except DataError:
+        db.session.rollback()
+        abort(400, "Invalid user role")
 
     return jsonify(users=user.serialize()), 201
 
@@ -182,6 +187,8 @@ def update_user(user_id):
     if 'locked' in user_update and not user_update['locked']:
         user.failed_login_count = 0
 
+    check_supplier_role(user.role, user.supplier_id)
+
     audit = AuditEvent(
         audit_type=AuditTypes.update_user,
         user=user.email_address,
@@ -195,6 +202,13 @@ def update_user(user_id):
     try:
         db.session.commit()
         return jsonify(users=user.serialize()), 200
-    except IntegrityError as e:
+    except (IntegrityError, DataError):
         db.session.rollback()
         abort(400, "Could not update user with: {0}".format(user_update))
+
+
+def check_supplier_role(role, supplier_id):
+    if role == 'supplier' and not supplier_id:
+        abort(400, "'supplier_id' is required for users with 'supplier' role")
+    elif role != 'supplier' and supplier_id:
+        abort(400, "'supplier_id' is only valid for users with 'supplier' role, not '{}'".format(role))
