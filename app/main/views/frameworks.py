@@ -42,13 +42,13 @@ def get_framework_stats(framework_slug):
     drafts_alias = orm.aliased(DraftService, has_completed_drafts_query)
 
     def label_columns(labels, query):
-        return [dict(zip(labels, item)) for item in query]
+        return [dict(zip(labels, item)) for item in sorted(query)]
 
     return jsonify({
         'services': label_columns(
-            ['status', 'lot', 'declaration_made', 'count'],
+            ['lot', 'status', 'declaration_made', 'count'],
             db.session.query(
-                DraftService.status, lot_column, SelectionAnswers.framework_id.isnot(None), func.count()
+                lot_column, DraftService.status, SelectionAnswers.framework_id.isnot(None), func.count()
             ).outerjoin(
                 SelectionAnswers, DraftService.supplier_id == SelectionAnswers.supplier_id
             ).group_by(
