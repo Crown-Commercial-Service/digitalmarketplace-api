@@ -167,8 +167,8 @@ class TestFrameworkStats(BaseApplicationTest):
                 {u'count': 3, u'has_made_declaration': True,  u'has_completed_services': True},
             ],
             u'supplier_users': [
-                {u'count': 2, u'recent_login': None},
                 {u'count': 4, u'recent_login': False},
+                {u'count': 2, u'recent_login': None},
                 {u'count': 5, u'recent_login': True},
             ]
         })
@@ -184,8 +184,8 @@ class TestFrameworkStats(BaseApplicationTest):
             ],
             u'services': [],
             u'supplier_users': [
-                {u'count': 2, u'recent_login': None},
                 {u'count': 4, u'recent_login': False},
+                {u'count': 2, u'recent_login': None},
                 {u'count': 5, u'recent_login': True},
             ]
         })

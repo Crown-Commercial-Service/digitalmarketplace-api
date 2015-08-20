@@ -42,7 +42,10 @@ def get_framework_stats(framework_slug):
     drafts_alias = orm.aliased(DraftService, has_completed_drafts_query)
 
     def label_columns(labels, query):
-        return [dict(zip(labels, item)) for item in sorted(query)]
+        return [
+            dict(zip(labels, item))
+            for item in sorted(query, key=lambda x: list(map(str, x)))
+        ]
 
     return jsonify({
         'services': label_columns(
