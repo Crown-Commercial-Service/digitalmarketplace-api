@@ -34,3 +34,20 @@ def create_app(config_name):
         application.register_blueprint(explorer_blueprint)
 
     return application
+
+
+def isolation_level(level):
+    """Return a Flask view decorator to set SQLAlchemy isolation level
+
+    Usage::
+        @isolation_level("SERIALIZABLE")
+        @view("/thingy/<id>", methods=["POST"])
+        def create_thing(id):
+            ...
+    """
+    def decorator(view):
+        def view_wrapper(*args, **kwargs):
+            db.session.connection(execution_options={'isolation_level': level})
+            return view(*args, **kwargs)
+        return view_wrapper
+    return decorator

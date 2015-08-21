@@ -288,6 +288,11 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data2['services']['serviceTypes'], ['Implementation'])
         assert_equal(data2['services']['serviceBenefits'], ['Tests pass'])
 
+    @mock.patch('app.db')
+    def test_update_draft_uses_serializable_isolation_level(self, db):
+        self.client.post('/draft-services/1234')
+        db.session.connection.assert_called_with(execution_options={'isolation_level': 'SERIALIZABLE'})
+
     def test_update_draft_should_create_audit_event(self):
         res = self.client.post(
             '/draft-services/g-cloud-7/create',
