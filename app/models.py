@@ -238,6 +238,13 @@ class SelectionAnswers(db.Model):
 class User(db.Model):
     __tablename__ = 'users'
 
+    ROLES = [
+        'buyer',
+        'supplier',
+        'admin',
+        'admin-ccs',
+    ]
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, index=False, unique=False,
                      nullable=False)
@@ -256,7 +263,7 @@ class User(db.Model):
                                     nullable=False)
     logged_in_at = db.Column(db.DateTime, nullable=True)
     failed_login_count = db.Column(db.Integer, nullable=False, default=0)
-    role = db.Column(db.String, index=False, unique=False, nullable=False)
+    role = db.Column(db.Enum(ROLES, name='user_roles_enum'), index=False, unique=False, nullable=False)
 
     supplier_id = db.Column(db.BigInteger,
                             db.ForeignKey('suppliers.supplier_id'),
