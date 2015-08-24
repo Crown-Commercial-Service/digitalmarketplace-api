@@ -215,11 +215,15 @@ class SelectionAnswers(db.Model):
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
     @staticmethod
-    def find_by_supplier_and_framework(supplier_id, framework_slug):
+    def find_by_framework(framework_slug):
         return SelectionAnswers.query.filter(
             SelectionAnswers.framework.has(
                 Framework.slug == framework_slug)
-        ).filter(
+        )
+
+    @staticmethod
+    def find_by_supplier_and_framework(supplier_id, framework_slug):
+        return SelectionAnswers.find_by_framework(framework_slug).filter(
             SelectionAnswers.supplier_id == supplier_id
         ).first()
 
