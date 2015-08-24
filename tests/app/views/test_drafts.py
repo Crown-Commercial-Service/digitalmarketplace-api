@@ -7,7 +7,7 @@ from app.models import Supplier, ContactInformation, Service, Framework, \
     DraftService
 from app import db
 
-from nose.tools import assert_equal, assert_in, assert_raises
+from nose.tools import assert_equal, assert_in, assert_raises, assert_false
 
 
 class TestDraftServices(BaseApplicationTest):
@@ -855,7 +855,12 @@ class TestCopyDraft(BaseApplicationTest):
                 'lot': 'SCS',
                 'supplierId': 1,
                 'serviceName': "Draft",
-                'status': 'submitted'
+                'status': 'submitted',
+                'serviceSummary': 'This is a summary',
+                "termsAndConditionsDocumentURL": "http://localhost/example.pdf",
+                "pricingDocumentURL": "http://localhost/example.pdf",
+                "serviceDefinitionDocumentURL": "http://localhost/example.pdf",
+                "sfiaRateDocumentURL": "http://localhost/example.pdf",
             }
         }
 
@@ -918,6 +923,29 @@ class TestCopyDraft(BaseApplicationTest):
             content_type='application/json')
 
         assert_equal(res.status_code, 404)
+
+    def test_should_not_copy_draft_service_description(self):
+        res = self.client.post(
+            '/draft-services/{}/copy'.format(self.draft_id),
+            data=json.dumps({"update_details": {"updated_by": "me"}}),
+            content_type="application/json")
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 201)
+        assert_false("serviceSummary" in data['services'])
+
+    def test_should_not_copy_draft_documents(self):
+        res = self.client.post(
+            '/draft-services/{}/copy'.format(self.draft_id),
+            data=json.dumps({"update_details": {"updated_by": "me"}}),
+            content_type="application/json")
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 201)
+        assert_false("termsAndConditionsDocumentURL" in data['services'])
+        assert_false("pricingDocumentURL" in data['services'])
+        assert_false("serviceDefinitionDocumentURL" in data['services'])
+        assert_false("sfiaRateDocumentURL" in data['services'])
 
 
 class TestCompleteDraft(BaseApplicationTest):
