@@ -69,7 +69,7 @@ class SupplierUpdater(object):
     def __call__(self, supplier):
         client = apiclient.DataAPIClient(self.endpoint, self.access_token)
         try:
-            client.create_supplier(supplier['id'],
+            client.import_supplier(supplier['id'],
                                    self.clean_data(supplier, supplier['id']))
         except apiclient.APIError as e:
             print("ERROR: {}. {} not imported".format(e.message,
