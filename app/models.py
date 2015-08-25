@@ -479,6 +479,14 @@ class DraftService(db.Model, ServiceTableMixin):
         name = data.get('serviceName', '')
         if len(name) <= 95:
             data['serviceName'] = u"{} copy".format(name)
+
+        do_not_copy = [
+            "serviceSummary",
+            "termsAndConditionsDocumentURL", "pricingDocumentURL",
+            "serviceDefinitionDocumentURL", "sfiaRateDocumentURL"
+        ]
+        data = {key: value for key, value in data.items() if key not in do_not_copy}
+
         return DraftService(
             framework_id=self.framework_id,
             supplier_id=self.supplier_id,
