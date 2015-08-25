@@ -285,8 +285,10 @@ def _translate_json_schema_error(key, message):
             return 'not_money_format'
         else:
             return 'under_{}_words'.format(_get_word_count(message))
-    if "is not of type 'number'" in message:
-        return 'not_a_number'
+    if "is not of type 'number'" in message \
+            or "is less than" in message \
+            or "is greater than" in message:
+            return 'not_a_number'
     return message
 
 
