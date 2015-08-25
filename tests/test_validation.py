@@ -421,6 +421,14 @@ def test_max_price_larger_than_min_price_causes_validation_error():
         yield assert_in, 'max_less_than_min', errs['priceMax']
 
 
+def test_api_type_is_optional():
+    data = load_example_listing("G6-PaaS")
+    del data["apiType"]
+    errs = get_validation_errors("services-g-cloud-7-paas", data)
+
+    assert not errs.get('apiType', None)
+
+
 def assert_example(name, result, expected):
     assert_equal(result, expected)
 
