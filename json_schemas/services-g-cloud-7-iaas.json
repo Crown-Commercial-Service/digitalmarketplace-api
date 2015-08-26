@@ -214,8 +214,7 @@
     "apiType": {
       "type": "string",
       "maxLength":200,
-      "pattern":"^(?:\\S+\\s+){0,19}\\S+$",
-      "minLength":1
+      "pattern":"^$|(^(?:\\S+\\s+){0,19}\\S+$)"
     },
     "networksConnected": {
       "type": "array",
