@@ -396,7 +396,10 @@
       "type": "object",
       "properties": {
         "value": {
-          "type": "number"
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "exclusiveMaximum": true
         },
         "assurance": {
           "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]

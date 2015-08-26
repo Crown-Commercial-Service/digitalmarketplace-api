@@ -368,6 +368,14 @@ def test_string_too_long_causes_validation_error():
     assert "under_character_limit" in errs['serviceName']
 
 
+def test_percentage_out_of_range_causes_validation_error():
+    data = load_example_listing("G6-PaaS")
+    data.update({'serviceAvailabilityPercentage':
+                {"value": 101, "assurance": "Service provider assertion"}})
+    errs = get_validation_errors("services-g-cloud-7-paas", data)
+    assert "not_a_number" in errs['serviceAvailabilityPercentage']
+
+
 def test_price_not_money_format_validation_error():
     cases = [
         "",  # not provided
