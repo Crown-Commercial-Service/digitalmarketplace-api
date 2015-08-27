@@ -83,6 +83,7 @@ def get_framework_stats(framework_slug):
             ).outerjoin(
                 drafts_alias
             ).filter(
+                AuditEvent.object_type == 'Supplier',
                 AuditEvent.type == 'register_framework_interest'
             ).group_by(
                 SelectionAnswers.framework_id, drafts_alias.supplier_id.isnot(None)

@@ -17,11 +17,13 @@ from ...utils import get_json_from_request, json_has_required_keys
 AUDIT_OBJECT_TYPES = {
     "suppliers": models.Supplier,
     "services": models.Service,
+    "frameworks": models.Framework,
 }
 
 AUDIT_OBJECT_ID_FIELDS = {
     "suppliers": models.Supplier.supplier_id,
     "services": models.Service.service_id,
+    "frameworks": models.Framework.slug,
 }
 
 

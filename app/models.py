@@ -510,9 +510,8 @@ class AuditEvent(db.Model):
     __tablename__ = 'audit_events'
 
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String, nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False,
-                           default=datetime.utcnow)
+    type = db.Column(db.String, index=True, nullable=False)
+    created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
     user = db.Column(db.String)
     data = db.Column(JSON)
 
@@ -581,6 +580,9 @@ class AuditEvent(db.Model):
                 data['userName'] = user.name
 
         return data
+
+
+db.Index('idx_audit_events_object', AuditEvent.object_type, AuditEvent.object_id)
 
 
 def filter_null_value_fields(obj):
