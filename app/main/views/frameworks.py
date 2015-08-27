@@ -71,9 +71,10 @@ def get_framework_stats(framework_slug):
             ).all()
         ),
         'interested_suppliers': label_columns(
-            ['has_made_declaration', 'has_completed_services', 'count'],
+            ['declaration_status', 'has_completed_services', 'count'],
             db.session.query(
-                SelectionAnswers.framework_id.isnot(None), drafts_alias.supplier_id.isnot(None), func.count()
+                SelectionAnswers.question_answers['status'].cast(String),
+                drafts_alias.supplier_id.isnot(None), func.count()
             ).select_from(
                 Supplier
             ).outerjoin(
@@ -86,7 +87,7 @@ def get_framework_stats(framework_slug):
                 AuditEvent.object_type == 'Supplier',
                 AuditEvent.type == 'register_framework_interest'
             ).group_by(
-                SelectionAnswers.framework_id, drafts_alias.supplier_id.isnot(None)
+                SelectionAnswers.question_answers['status'].cast(String), drafts_alias.supplier_id.isnot(None)
             ).all()
         )
     })

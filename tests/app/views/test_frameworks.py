@@ -21,14 +21,14 @@ class TestListFrameworks(BaseApplicationTest):
 
 
 class TestFrameworkStats(BaseApplicationTest):
-    def create_selection_answers(self, framework_id, supplier_ids):
+    def create_selection_answers(self, framework_id, supplier_ids, status=None):
         with self.app.app_context():
             for supplier_id in supplier_ids:
                 db.session.add(
                     SelectionAnswers(
                         framework_id=framework_id,
                         supplier_id=supplier_id,
-                        question_answers='{}',
+                        question_answers={'status': status},
                     )
                 )
 
@@ -91,7 +91,8 @@ class TestFrameworkStats(BaseApplicationTest):
 
         self.setup_dummy_suppliers(30)
         self.create_framework_interest_audit_event(framework.id, range(20))
-        self.create_selection_answers(framework.id, range(12))
+        self.create_selection_answers(framework.id, [1, 3, 5, 7, 9, 11], status='started')
+        self.create_selection_answers(framework.id, [0, 2, 4, 6, 8, 10], status='complete')
         self.create_drafts(framework.id, [
             (1, 1),   # 1 IaaS; with declaration
             (2, 7),   # 1 of each + IaaS, PaaS, SaaS; with declaration
@@ -161,10 +162,12 @@ class TestFrameworkStats(BaseApplicationTest):
                  u'declaration_made': True, u'lot': u'SaaS'}
             ],
             u'interested_suppliers': [
-                {u'count': 7, u'has_made_declaration': False, u'has_completed_services': False},
-                {u'count': 1, u'has_made_declaration': False, u'has_completed_services': True},
-                {u'count': 9, u'has_made_declaration': True,  u'has_completed_services': False},
-                {u'count': 3, u'has_made_declaration': True,  u'has_completed_services': True},
+                {u'count': 7, u'declaration_status': None, u'has_completed_services': False},
+                {u'count': 1, u'declaration_status': None, u'has_completed_services': True},
+                {u'count': 5, u'declaration_status': 'complete', u'has_completed_services': False},
+                {u'count': 1, u'declaration_status': 'complete', u'has_completed_services': True},
+                {u'count': 4, u'declaration_status': 'started', u'has_completed_services': False},
+                {u'count': 2, u'declaration_status': 'started', u'has_completed_services': True},
             ],
             u'supplier_users': [
                 {u'count': 4, u'recent_login': False},
@@ -179,8 +182,9 @@ class TestFrameworkStats(BaseApplicationTest):
         assert_equal(json.loads(response.get_data()), {
             u'interested_suppliers': [
                 # No suppliers with completed G7 services
-                {u'count': 8, u'has_completed_services': False, u'has_made_declaration': False},
-                {u'count': 12, u'has_completed_services': False, u'has_made_declaration': True},
+                {u'count': 8, u'declaration_status': None, u'has_completed_services': False},
+                {u'count': 6, u'declaration_status': 'complete', u'has_completed_services': False},
+                {u'count': 6, u'declaration_status': 'started', u'has_completed_services': False},
             ],
             u'services': [],
             u'supplier_users': [
