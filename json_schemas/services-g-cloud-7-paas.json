@@ -73,7 +73,7 @@
     },
     "priceMax":{
       "type": "string",
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$"
+      "pattern": "^$|^\\d+(?:\\.\\d{1,5})?$"
     },
     "priceUnit":{
       "enum":[

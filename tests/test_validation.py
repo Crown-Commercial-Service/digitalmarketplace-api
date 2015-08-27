@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import os
 import json
 
-from nose.tools import assert_equal, assert_in
+from nose.tools import assert_equal, assert_in, assert_not_in
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.validation import detect_framework, \
@@ -378,7 +378,6 @@ def test_percentage_out_of_range_causes_validation_error():
 
 def test_price_not_money_format_validation_error():
     cases = [
-        "",  # not provided
         "foo",  # not numeric
         "12.",  # too few decimal places
         "12.000001",  # too many decimal places
@@ -391,6 +390,8 @@ def test_price_not_money_format_validation_error():
         errs = get_validation_errors("services-g-cloud-7-scs", data)
         assert field in errs
         assert "not_money_format" in errs[field]
+
+    yield check_min_price_error, 'priceMin', ""
 
     for case in cases:
         yield check_min_price_error, 'priceMin', case
@@ -413,12 +414,14 @@ def test_price_not_money_format_valid_cases():
         errs = get_validation_errors("services-g-cloud-7-scs", data)
         assert "not_money_format" not in errs.get(field, "")
 
+    yield check_min_price_valid, 'priceMax', ""
+
     for case in cases:
         yield check_min_price_valid, 'priceMin', case
         yield check_min_price_valid, 'priceMax', case
 
 
-def test_max_price_larger_than_min_price_causes_validation_error():
+def test_min_price_larger_than_max_price_causes_validation_error():
     cases = ['32.20', '9.00']
 
     for price_max in cases:
@@ -427,6 +430,17 @@ def test_max_price_larger_than_min_price_causes_validation_error():
         errs = get_validation_errors("services-g-cloud-7-scs", data)
 
         yield assert_in, 'max_less_than_min', errs['priceMax']
+
+
+def test_max_price_larger_than_min_price():
+    cases = ['132.20', '']
+
+    for price_max in cases:
+        data = load_example_listing("G7-SCS")
+        data.update({"priceMax": price_max})
+        errs = get_validation_errors("services-g-cloud-7-scs", data)
+
+        yield assert_not_in, 'priceMax', errs
 
 
 def test_api_type_is_optional():
