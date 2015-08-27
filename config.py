@@ -23,6 +23,8 @@ class Config:
     # Feature Flags
     RAISE_ERROR_ON_MISSING_FEATURES = True
 
+    FEATURE_FLAGS_TRANSACTION_ISOLATION = False
+
     DM_API_SERVICES_PAGE_SIZE = 100
     DM_API_SUPPLIERS_PAGE_SIZE = 100
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False
@@ -40,6 +42,7 @@ class Test(Config):
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace_test'
     DM_API_SERVICES_PAGE_SIZE = 5
     DM_API_SUPPLIERS_PAGE_SIZE = 5
+    FEATURE_FLAGS_TRANSACTION_ISOLATION = enabled_since('2015-08-27')
 
 
 class Development(Config):
@@ -47,15 +50,29 @@ class Development(Config):
 
 
 class Live(Config):
+    """Base config for deployed environments"""
     DEBUG = False
     ALLOW_EXPLORER = False
     DM_HTTP_PROTO = 'https'
 
 
+class Preview(Live):
+    FEATURE_FLAGS_TRANSACTION_ISOLATION = enabled_since('2015-08-27')
+
+
+class Staging(Live):
+    pass
+
+
+class Production(Live):
+    pass
+
+
 configs = {
     'development': Development,
-    'preview': Live,
-    'staging': Live,
-    'production': Live,
     'test': Test,
+
+    'preview': Preview,
+    'staging': Staging,
+    'production': Production,
 }

@@ -47,7 +47,8 @@ def isolation_level(level):
     """
     def decorator(view):
         def view_wrapper(*args, **kwargs):
-            db.session.connection(execution_options={'isolation_level': level})
+            if flask_featureflags.is_active('TRANSACTION_ISOLATION'):
+                db.session.connection(execution_options={'isolation_level': level})
             return view(*args, **kwargs)
         return view_wrapper
     return decorator
