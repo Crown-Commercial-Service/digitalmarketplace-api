@@ -289,6 +289,8 @@ def _translate_json_schema_error(key, message):
             or "is less than" in message \
             or "is greater than" in message:
             return 'not_a_number'
+    if message.startswith("None is not one of [u'Service provider assertion'"):
+        return 'assurance_required'
     return message
 
 
