@@ -7,7 +7,7 @@ from app.models import Supplier, ContactInformation, Service, Framework, \
     DraftService
 from app import db
 
-from nose.tools import assert_equal, assert_in, assert_raises
+from nose.tools import assert_equal, assert_in, assert_raises, assert_false
 
 
 class TestDraftServices(BaseApplicationTest):
@@ -805,6 +805,25 @@ class TestDraftServices(BaseApplicationTest):
             assert_equal(Service.query.count(), 2)
             assert_equal(DraftService.query.count(), 1)
 
+    def test_get_draft_returns_last_audit_event(self):
+        draft = json.loads(self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json'
+        ).get_data())['services']
+
+        res = self.client.get(
+            '/draft-services/%d' % draft['id'],
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json'
+        )
+
+        assert_equal(res.status_code, 200)
+        data = json.loads(res.get_data())
+        draft, audit_event = data['services'], data['auditEvents']
+
+        assert_equal(audit_event['type'], 'create_draft_service')
+
 
 class TestCopyDraft(BaseApplicationTest):
     def setup(self):
@@ -834,7 +853,14 @@ class TestCopyDraft(BaseApplicationTest):
             },
             'services': {
                 'lot': 'SCS',
-                'supplierId': 1
+                'supplierId': 1,
+                'serviceName': "Draft",
+                'status': 'submitted',
+                'serviceSummary': 'This is a summary',
+                "termsAndConditionsDocumentURL": "http://localhost/example.pdf",
+                "pricingDocumentURL": "http://localhost/example.pdf",
+                "serviceDefinitionDocumentURL": "http://localhost/example.pdf",
+                "sfiaRateDocumentURL": "http://localhost/example.pdf",
             }
         }
 
@@ -855,6 +881,8 @@ class TestCopyDraft(BaseApplicationTest):
         data = json.loads(res.get_data())
         assert_equal(res.status_code, 201)
         assert_equal(data['services']['lot'], 'SCS')
+        assert_equal(data['services']['status'], 'not-submitted')
+        assert_equal(data['services']['serviceName'], 'Draft copy')
         assert_equal(data['services']['supplierId'], 1)
         assert_equal(data['services']['frameworkSlug'], self.draft['frameworkSlug'])
         assert_equal(data['services']['frameworkName'], self.draft['frameworkName'])
@@ -880,6 +908,14 @@ class TestCopyDraft(BaseApplicationTest):
             'originalDraftId': self.draft_id
         })
 
+    def test_should_not_copy_draft_without_update_details(self):
+        res = self.client.post(
+            '/draft-services/%s/copy' % self.draft_id,
+            data=json.dumps({}),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 400)
+
     def test_should_not_create_draft_with_invalid_data(self):
         res = self.client.post(
             '/draft-services/1000/copy',
@@ -887,3 +923,124 @@ class TestCopyDraft(BaseApplicationTest):
             content_type='application/json')
 
         assert_equal(res.status_code, 404)
+
+    def test_should_not_copy_draft_service_description(self):
+        res = self.client.post(
+            '/draft-services/{}/copy'.format(self.draft_id),
+            data=json.dumps({"update_details": {"updated_by": "me"}}),
+            content_type="application/json")
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 201)
+        assert_false("serviceSummary" in data['services'])
+
+    def test_should_not_copy_draft_documents(self):
+        res = self.client.post(
+            '/draft-services/{}/copy'.format(self.draft_id),
+            data=json.dumps({"update_details": {"updated_by": "me"}}),
+            content_type="application/json")
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 201)
+        assert_false("termsAndConditionsDocumentURL" in data['services'])
+        assert_false("pricingDocumentURL" in data['services'])
+        assert_false("serviceDefinitionDocumentURL" in data['services'])
+        assert_false("sfiaRateDocumentURL" in data['services'])
+
+
+class TestCompleteDraft(BaseApplicationTest):
+    def setup(self):
+        super(TestCompleteDraft, self).setup()
+
+        with self.app.app_context():
+            db.session.add(Supplier(supplier_id=1, name=u"Supplier 1"))
+            db.session.add(
+                ContactInformation(
+                    supplier_id=1,
+                    contact_name=u"Test",
+                    email=u"supplier@user.dmdev",
+                    postcode=u"SW1A 1AA"
+                )
+            )
+            Framework.query.filter_by(slug='g-cloud-7').update(dict(status='open'))
+            db.session.commit()
+
+        create_draft_json = {
+            'update_details': {
+                'updated_by': 'joeblogs'
+            },
+            'services': self.load_example_listing("G7-SCS")
+        }
+
+        draft = self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(create_draft_json),
+            content_type='application/json')
+
+        self.draft = json.loads(draft.get_data())['services']
+        self.draft_id = self.draft['id']
+
+    def test_complete_draft(self):
+        res = self.client.post(
+            '/draft-services/%s/complete' % self.draft_id,
+            data=json.dumps({'update_details': {'updated_by': 'joeblogs'}}),
+            content_type='application/json')
+
+        data = json.loads(res.get_data())
+        assert_equal(res.status_code, 200)
+        assert_equal(data['services']['status'], 'submitted')
+
+    def test_complete_draft_should_create_audit_event(self):
+        res = self.client.post(
+            '/draft-services/%s/complete' % self.draft_id,
+            data=json.dumps({'update_details': {'updated_by': 'joeblogs'}}),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 200)
+
+        audit_response = self.client.get('/audit-events')
+        assert_equal(audit_response.status_code, 200)
+        data = json.loads(audit_response.get_data())
+        assert_equal(len(data['auditEvents']), 2)
+        assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][1]['type'], 'complete_draft_service')
+        assert_equal(data['auditEvents'][1]['data'], {
+            'draftId': self.draft_id,
+        })
+
+    def test_should_not_complete_draft_without_update_details(self):
+        res = self.client.post(
+            '/draft-services/%s/complete' % self.draft_id,
+            data=json.dumps({}),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 400)
+
+    def test_should_not_complete_invalid_draft(self):
+        create_draft_json = {
+            'update_details': {
+                'updated_by': 'joeblogs'
+            },
+            'services': {
+                'lot': 'SCS',
+                'supplierId': 1,
+                'serviceName': 'Name',
+            }
+        }
+
+        draft = self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(create_draft_json),
+            content_type='application/json'
+        )
+
+        draft = json.loads(draft.get_data())['services']
+
+        res = self.client.post(
+            '/draft-services/%s/complete' % draft['id'],
+            data=json.dumps({'update_details': {'updated_by': 'joeblogs'}}),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 400)
+        errors = json.loads(res.get_data())['error']
+        assert_in('serviceSummary', errors)

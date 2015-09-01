@@ -141,7 +141,7 @@ class Supplier(db.Model):
                                           lazy='joined',
                                           innerjoin=False)
 
-    duns_number = db.Column(db.String, index=False, unique=False, nullable=True)
+    duns_number = db.Column(db.String, index=True, unique=True, nullable=True)
 
     esourcing_id = db.Column(db.String, index=False, unique=False, nullable=True)
 
@@ -215,11 +215,15 @@ class SelectionAnswers(db.Model):
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
     @staticmethod
-    def find_by_supplier_and_framework(supplier_id, framework_slug):
+    def find_by_framework(framework_slug):
         return SelectionAnswers.query.filter(
             SelectionAnswers.framework.has(
                 Framework.slug == framework_slug)
-        ).filter(
+        )
+
+    @staticmethod
+    def find_by_supplier_and_framework(supplier_id, framework_slug):
+        return SelectionAnswers.find_by_framework(framework_slug).filter(
             SelectionAnswers.supplier_id == supplier_id
         ).first()
 
@@ -233,6 +237,13 @@ class SelectionAnswers(db.Model):
 
 class User(db.Model):
     __tablename__ = 'users'
+
+    ROLES = [
+        'buyer',
+        'supplier',
+        'admin',
+        'admin-ccs',
+    ]
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, index=False, unique=False,
@@ -252,7 +263,7 @@ class User(db.Model):
                                     nullable=False)
     logged_in_at = db.Column(db.DateTime, nullable=True)
     failed_login_count = db.Column(db.Integer, nullable=False, default=0)
-    role = db.Column(db.String, index=False, unique=False, nullable=False)
+    role = db.Column(db.Enum(ROLES, name='user_roles_enum'), index=False, unique=False, nullable=False)
 
     supplier_id = db.Column(db.BigInteger,
                             db.ForeignKey('suppliers.supplier_id'),
@@ -464,11 +475,23 @@ class DraftService(db.Model, ServiceTableMixin):
         )
 
     def copy(self):
+        data = self.data.copy()
+        name = data.get('serviceName', '')
+        if len(name) <= 95:
+            data['serviceName'] = u"{} copy".format(name)
+
+        do_not_copy = [
+            "serviceSummary",
+            "termsAndConditionsDocumentURL", "pricingDocumentURL",
+            "serviceDefinitionDocumentURL", "sfiaRateDocumentURL"
+        ]
+        data = {key: value for key, value in data.items() if key not in do_not_copy}
+
         return DraftService(
             framework_id=self.framework_id,
             supplier_id=self.supplier_id,
-            data=self.data,
-            status=self.status
+            data=data,
+            status='not-submitted',
         )
 
     def serialize(self):
@@ -487,9 +510,8 @@ class AuditEvent(db.Model):
     __tablename__ = 'audit_events'
 
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String, nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False,
-                           default=datetime.utcnow)
+    type = db.Column(db.String, index=True, nullable=False)
+    created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
     user = db.Column(db.String)
     data = db.Column(JSON)
 
@@ -518,7 +540,7 @@ class AuditEvent(db.Model):
         self.user = user
         self.acknowledged = False
 
-    def serialize(self):
+    def serialize(self, include_user=False):
         """
         :return: dictionary representation of an audit event
         """
@@ -549,7 +571,18 @@ class AuditEvent(db.Model):
                     self.acknowledged_by,
             })
 
+        if include_user:
+            user = User.query.filter(
+                User.email_address == self.user
+            ).first()
+
+            if user:
+                data['userName'] = user.name
+
         return data
+
+
+db.Index('idx_audit_events_object', AuditEvent.object_type, AuditEvent.object_id)
 
 
 def filter_null_value_fields(obj):

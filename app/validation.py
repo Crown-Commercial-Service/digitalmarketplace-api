@@ -170,7 +170,7 @@ def get_validation_errors(validator_name, json_data,
 
 
 def min_price_less_than_max_price(error_map, json_data):
-    if 'priceMin' in json_data and 'priceMax' in json_data:
+    if 'priceMin' in json_data and json_data.get('priceMax'):
         if 'priceMin' not in error_map and 'priceMax' not in error_map:
             if Decimal(json_data['priceMin']) > Decimal(json_data['priceMax']):
                 return {'priceMax': 'max_less_than_min'}
@@ -285,8 +285,12 @@ def _translate_json_schema_error(key, message):
             return 'not_money_format'
         else:
             return 'under_{}_words'.format(_get_word_count(message))
-    if "is not of type 'number'" in message:
-        return 'not_a_number'
+    if "is not of type 'number'" in message \
+            or "is less than" in message \
+            or "is greater than" in message:
+            return 'not_a_number'
+    if message.startswith("None is not one of [u'Service provider assertion'"):
+        return 'assurance_required'
     return message
 
 

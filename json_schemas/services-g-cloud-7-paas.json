@@ -47,14 +47,6 @@
       "minLength":1
 
     },
-    "serviceTypes":{
-      "type":"array",
-      "uniqueItems":true,
-      "maxItems":5,
-      "items":{
-        "enum":["Compute", "Storage"]
-      }
-    },
     "serviceFeatures":{
       "type":"array",
       "minItems":1,
@@ -81,7 +73,7 @@
     },
     "priceMax":{
       "type": "string",
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$"
+      "pattern": "^$|^\\d+(?:\\.\\d{1,5})?$"
     },
     "priceUnit":{
       "enum":[
@@ -112,9 +104,6 @@
         "6 months",
         "Year"
       ]
-    },
-    "priceString":{
-      "type":"string"
     },
     "vatIncluded":{
       "type":"boolean"
@@ -218,8 +207,7 @@
     "apiType": {
       "type": "string",
       "maxLength":200,
-      "pattern":"^(?:\\S+\\s+){0,19}\\S+$",
-      "minLength":1
+      "pattern":"^$|(^(?:\\S+\\s+){0,19}\\S+$)"
     },
     "networksConnected": {
       "type": "array",
@@ -448,7 +436,10 @@
       "type": "object",
       "properties": {
         "value": {
-          "type": "number"
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "exclusiveMaximum": true
         },
         "assurance": {
           "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
@@ -908,12 +899,10 @@
     "pricingDocumentURL",
     "serviceName",
     "serviceSummary",
-    "serviceTypes",
     "serviceFeatures",
     "serviceBenefits",
     "priceMin",
     "priceUnit",
-    "priceString",
     "vatIncluded",
     "educationPricing",
     "trialOption",

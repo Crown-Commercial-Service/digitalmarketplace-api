@@ -80,7 +80,7 @@
     },
     "priceMax":{
       "type": "string",
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$"
+      "pattern": "^$|^\\d+(?:\\.\\d{1,5})?$"
     },
     "priceUnit":{
       "enum":[
@@ -111,9 +111,6 @@
         "6 months",
         "Year"
       ]
-    },
-    "priceString":{
-      "type":"string"
     },
     "vatIncluded":{
       "type":"boolean"
@@ -217,8 +214,7 @@
     "apiType": {
       "type": "string",
       "maxLength":200,
-      "pattern":"^(?:\\S+\\s+){0,19}\\S+$",
-      "minLength":1
+      "pattern":"^$|(^(?:\\S+\\s+){0,19}\\S+$)"
     },
     "networksConnected": {
       "type": "array",
@@ -447,7 +443,10 @@
       "type": "object",
       "properties": {
         "value": {
-          "type": "number"
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "exclusiveMaximum": true
         },
         "assurance": {
           "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
@@ -912,7 +911,6 @@
     "serviceBenefits",
     "priceMin",
     "priceUnit",
-    "priceString",
     "vatIncluded",
     "educationPricing",
     "trialOption",

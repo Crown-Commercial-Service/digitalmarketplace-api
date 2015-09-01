@@ -59,7 +59,7 @@ More generally, the command to start the server is:
 python application.py runserver
 ```
 
-### Using the API locally
+## Using the API locally
 
 By default the API runs on port 5000. Calls to the API require a valid bearer 
 token. Tokens to be accepted can be set using the DM_AUTH_TOKENS environment
@@ -75,7 +75,19 @@ e.g.:
 curl -i -H "Authorization: Bearer myToken" 127.0.0.1:5000/services/123456789
 ```
 
-### Using FeatureFlags
+## Using FeatureFlags
 
 To use feature flags, check out the documentation in (the README of)
 [digitalmarketplace-utils](https://github.com/alphagov/digitalmarketplace-utils#using-featureflags).
+
+
+## Utility scripts
+
+### Getting a list of migration versions
+
+`./scripts/list_migrations.py` checks that there are no branches in the DB migrations and prints a
+list of migration versions
+
+### Getting a list of application URLs
+
+`python application.py list_routes` prints a full list of registered application URLs with supported HTTP methods

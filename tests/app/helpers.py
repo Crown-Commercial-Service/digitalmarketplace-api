@@ -72,6 +72,27 @@ class BaseApplicationTest(object):
                 )
             db.session.commit()
 
+    def setup_additional_dummy_suppliers(self, n, initial):
+        with self.app.app_context():
+            for i in range(1000, n+1000):
+                db.session.add(
+                    Supplier(
+                        supplier_id=i,
+                        name=u"{} suppliers Ltd {}".format(initial, i),
+                        description="",
+                        clients=[]
+                    )
+                )
+                db.session.add(
+                    ContactInformation(
+                        supplier_id=i,
+                        contact_name=u"Contact for Supplier {}".format(i),
+                        email=u"{}@contact.com".format(i),
+                        postcode=u"SW1A 1AA"
+                    )
+                )
+            db.session.commit()
+
     def setup_dummy_service(self, service_id, supplier_id=1, data=None,
                             status='published', framework_id=1):
         now = datetime.utcnow()

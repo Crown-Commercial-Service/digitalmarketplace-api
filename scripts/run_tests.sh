@@ -26,5 +26,8 @@ function display_result {
 pep8 .
 display_result $? 1 "Code style check"
 
+./scripts/list_migrations.py 1>/dev/null
+display_result $? 1 "Migrations order check"
+
 nosetests
 display_result $? 2 "Unit tests"

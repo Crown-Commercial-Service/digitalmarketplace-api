@@ -187,6 +187,21 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
         data = json.loads(response.get_data())["users"]
         assert_equal(data["emailAddress"], "joeblogs@email.com")
 
+    def test_can_post_an_admin_ccs_user(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'role': 'admin-ccs',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 201)
+        data = json.loads(response.get_data())["users"]
+        assert_equal(data["emailAddress"], "joeblogs@email.com")
+
     def test_can_post_a_supplier_user(self):
         with self.app.app_context():
             db.session.add(
@@ -269,6 +284,35 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
         data = json.loads(response.get_data())["error"]
         assert_equal(response.status_code, 400)
         assert_equal(data, "No supplier id provided for supplier user")
+
+    def test_should_reject_non_supplier_user_with_supplier_id(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'role': 'admin',
+                    'supplierId': 1,
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        data = json.loads(response.get_data())["error"]
+        assert_equal(response.status_code, 400)
+        assert_equal(data, "'supplier_id' is only valid for users with 'supplier' role, not 'admin'")
+
+    def test_should_reject_user_with_invalid_role(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'role': 'shopkeeper',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 400)
 
     def test_can_post_a_user_with_hashed_password(self):
         with self.app.app_context():
@@ -606,6 +650,19 @@ class TestUsersUpdate(BaseApplicationTest):
             data = json.loads(response.get_data())["error"]
             assert_equal(response.status_code, 400)
             assert_in("Could not update user", data)
+
+    def test_supplier_role_update_requires_supplier_id(self):
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                'users': {
+                    'role': 'supplier'
+                }}),
+            content_type='application/json')
+
+        data = json.loads(response.get_data())["error"]
+        assert_equal(response.status_code, 400)
+        assert_in("'supplier_id' is required for users with 'supplier' role", data)
 
     def test_can_update_email_address(self):
         with self.app.app_context():
