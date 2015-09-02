@@ -124,9 +124,6 @@
     "freeOption": {
       "type": "boolean"
     },
-    "terminationCost":{
-      "type":"boolean"
-    },
     "minimumContractPeriod":{
       "enum":[
         "Hour",
@@ -797,7 +794,6 @@
     "educationPricing",
     "trialOption",
     "freeOption",
-    "terminationCost",
     "minimumContractPeriod",
     "supportTypes",
     "supportForThirdParties",
