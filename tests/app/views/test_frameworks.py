@@ -127,22 +127,22 @@ class TestFrameworkStats(BaseApplicationTest):
         response = self.client.get('/frameworks/g-cloud-7/stats')
         assert_equal(json.loads(response.get_data()), {
             u'services': [
-                {u'count': 1, u'status': u'not-submitted',
+                {u'count': 3, u'status': u'not-submitted',
                  u'declaration_made': False, u'lot': u'IaaS'},
-                {u'count': 4, u'status': u'not-submitted',
+                {u'count': 2, u'status': u'not-submitted',
                  u'declaration_made': True, u'lot': u'IaaS'},
-                {u'count': 2, u'status': u'submitted',
+                {u'count': 4, u'status': u'submitted',
                  u'declaration_made': False, u'lot': u'IaaS'},
-                {u'count': 6, u'status': u'submitted',
+                {u'count': 4, u'status': u'submitted',
                  u'declaration_made': True, u'lot': u'IaaS'},
 
-                {u'count': 1, u'status': u'not-submitted',
+                {u'count': 2, u'status': u'not-submitted',
                  u'declaration_made': False, u'lot': u'PaaS'},
-                {u'count': 3, u'status': u'not-submitted',
+                {u'count': 2, u'status': u'not-submitted',
                  u'declaration_made': True, u'lot': u'PaaS'},
-                {u'count': 2, u'status': u'submitted',
+                {u'count': 4, u'status': u'submitted',
                  u'declaration_made': False, u'lot': u'PaaS'},
-                {u'count': 6, u'status': u'submitted',
+                {u'count': 4, u'status': u'submitted',
                  u'declaration_made': True, u'lot': u'PaaS'},
 
                 {u'count': 1, u'status': u'not-submitted',
