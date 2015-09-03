@@ -6,7 +6,7 @@ from app import db
 from app.models import Supplier
 from dmutils.audit import AuditTypes
 
-from nose.tools import assert_equal, assert_in, assert_true
+from nose.tools import assert_equal, assert_in, assert_true, assert_false
 
 
 class TestAuditEvents(BaseApplicationTest):
@@ -178,8 +178,33 @@ class TestAuditEvents(BaseApplicationTest):
         assert_equal(len(data['auditEvents']), 2)
         prev_link = data['links']['prev']
         assert_in('page=1', prev_link)
+        assert_false('next' in data['links'])
         assert_equal(data['auditEvents'][0]['user'], '5')
         assert_equal(data['auditEvents'][1]['user'], '6')
+
+    def test_paginated_audit_with_custom_page_size(self):
+        self.add_audit_events(12)
+        response = self.client.get('/audit-events?per_page=10')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['auditEvents']), 10)
+
+    def test_paginated_audit_with_custom_page_size_and_specified_page(self):
+        self.add_audit_events(12)
+        response = self.client.get('/audit-events?page=2&per_page=10')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['auditEvents']), 2)
+        prev_link = data['links']['prev']
+        assert_in('page=1', prev_link)
+        assert_false('next' in data['links'])
+
+    def test_paginated_audit_with_invalid_custom_page_size(self):
+        self.add_audit_events(1)
+        response = self.client.get('/audit-events?per_page=foo')
+        assert_equal(response.status_code, 400)
 
     def test_reject_invalid_audit_id_on_acknowledgement(self):
         res = self.client.post(

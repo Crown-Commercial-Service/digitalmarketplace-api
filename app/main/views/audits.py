@@ -30,6 +30,10 @@ AUDIT_OBJECT_ID_FIELDS = {
 @main.route('/audit-events', methods=['GET'])
 def list_audits():
     page = get_valid_page_or_1()
+    try:
+        per_page = int(request.args.get('per_page', current_app.config['DM_API_SERVICES_PAGE_SIZE']))
+    except ValueError:
+        abort(400, 'invalid page size supplied')
 
     audits = AuditEvent.query.order_by(
         asc(AuditEvent.created_at)
@@ -84,7 +88,7 @@ def list_audits():
 
     audits = audits.paginate(
         page=page,
-        per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
+        per_page=per_page
     )
 
     return jsonify(
