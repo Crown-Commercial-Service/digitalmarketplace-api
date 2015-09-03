@@ -376,6 +376,22 @@ def test_percentage_out_of_range_causes_validation_error():
     assert "not_a_number" in errs['serviceAvailabilityPercentage']
 
 
+def test_assurance_only_causes_validation_error():
+    data = load_example_listing("G6-PaaS")
+    data.update({'serviceAvailabilityPercentage':
+                {"assurance": "Service provider assertion"}})
+    errs = get_validation_errors("services-g-cloud-7-paas", data)
+    assert "'value' is a required property" in errs['serviceAvailabilityPercentage']
+
+
+def test_value_only_causes_validation_error():
+    data = load_example_listing("G6-PaaS")
+    data.update({'serviceAvailabilityPercentage':
+                {"value": 99.9}})
+    errs = get_validation_errors("services-g-cloud-7-paas", data)
+    assert "'assurance' is a required property" in errs['serviceAvailabilityPercentage']
+
+
 def test_price_not_money_format_validation_error():
     cases = [
         "foo",  # not numeric
