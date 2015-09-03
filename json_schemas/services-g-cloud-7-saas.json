@@ -306,7 +306,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation", "CESG-assured components"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "datacentreLocations": {
       "type": "object",
@@ -322,7 +323,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "dataManagementLocations": {
       "type": "object",
@@ -338,7 +340,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "legalJurisdiction": {
       "type": "object",
@@ -349,7 +352,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "datacentreProtectionDisclosure": {
       "type": "object",
@@ -360,7 +364,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "dataAtRestProtections": {
       "type": "object",
@@ -376,7 +381,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation", "CESG-assured components"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "dataSecureDeletion": {
       "type": "object",
@@ -387,7 +393,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation", "CESG-assured components"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "serviceAvailabilityPercentage": {
       "type": "object",
@@ -401,7 +408,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "cloudDeploymentModel": {
       "type": "object",
@@ -412,7 +420,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "otherConsumers": {
       "type": "object",
@@ -423,7 +432,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Contractual commitment", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "servicesSeparation": {
       "type": "object",
@@ -434,7 +444,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent testing of implementation", "Assurance of service design", "CESG-assured components"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "servicesManagementSeparation": {
       "type": "object",
@@ -445,7 +456,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent testing of implementation", "Assurance of service design", "CESG-assured components"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "governanceFramework": {
       "type": "object",
@@ -456,7 +468,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "changeImpactAssessment": {
       "type": "object",
@@ -467,7 +480,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "vulnerabilityAssessment": {
       "type": "object",
@@ -478,7 +492,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "vulnerabilityMonitoring": {
       "type": "object",
@@ -489,7 +504,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "vulnerabilityMitigationPrioritisation": {
       "type": "object",
@@ -500,7 +516,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "vulnerabilityTracking": {
       "type": "object",
@@ -511,7 +528,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "vulnerabilityTimescales": {
       "type": "object",
@@ -522,7 +540,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "eventMonitoring": {
       "type": "object",
@@ -533,7 +552,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "incidentManagementProcess": {
       "type": "object",
@@ -544,7 +564,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "incidentManagementReporting": {
       "type": "object",
@@ -555,7 +576,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "incidentDefinitionPublished": {
       "type": "object",
@@ -566,7 +588,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "personnelSecurityChecks": {
       "type": "object",
@@ -582,7 +605,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "secureDevelopment": {
       "type": "object",
@@ -593,7 +617,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "secureDesign": {
       "type": "object",
@@ -604,7 +629,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "secureConfigurationManagement": {
       "type": "object",
@@ -615,7 +641,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "thirdPartyDataSharingInformation": {
       "type": "object",
@@ -626,7 +653,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "thirdPartySecurityRequirements": {
       "type": "object",
@@ -637,7 +665,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "thirdPartyRiskAssessment": {
       "type": "object",
@@ -648,7 +677,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "thirdPartyComplianceMonitoring": {
       "type": "object",
@@ -659,7 +689,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "userAuthenticateManagement": {
       "type": "object",
@@ -670,7 +701,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "userAuthenticateSupport": {
       "type": "object",
@@ -681,7 +713,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "userAccessControlManagement": {
       "type": "object",
@@ -692,7 +725,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "restrictAdministratorPermissions": {
       "type": "object",
@@ -703,7 +737,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion", "Independent testing of implementation"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "identityAuthenticationControls": {
       "type": "object",
@@ -719,7 +754,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent testing of implementation", "CESG-assured components"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "serviceManagementModel": {
       "type": "object",
@@ -735,7 +771,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "auditInformationProvided": {
       "type": "object",
@@ -746,7 +783,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "deviceAccessMethod": {
       "type": "object",
@@ -762,7 +800,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     },
     "trainingProvided": {
       "type": "object",
@@ -773,7 +812,8 @@
         "assurance": {
           "enum": ["Service provider assertion", "Independent validation of assertion"]
         }
-      }
+      },
+      "required": ["value", "assurance"]
     }
   },
   "required": [
