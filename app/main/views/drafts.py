@@ -6,7 +6,7 @@ from sqlalchemy import asc, desc
 from sqlalchemy.types import String
 
 from .. import main
-from ... import db
+from ... import db, isolation_level
 from ...utils import drop_foreign_fields, json_has_required_keys
 from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, Supplier, AuditEvent, Framework, User
@@ -65,6 +65,7 @@ def copy_draft_service_from_existing_service(service_id):
 
 
 @main.route('/draft-services/<int:draft_id>', methods=['POST'])
+@isolation_level("SERIALIZABLE")
 def edit_draft_service(draft_id):
     """
     Edit a draft service

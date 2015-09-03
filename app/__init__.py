@@ -1,3 +1,4 @@
+from functools import wraps
 from flask import Flask
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -34,3 +35,22 @@ def create_app(config_name):
         application.register_blueprint(explorer_blueprint)
 
     return application
+
+
+def isolation_level(level):
+    """Return a Flask view decorator to set SQLAlchemy isolation level
+
+    Usage::
+        @view("/thingy/<id>", methods=["POST"])
+        @isolation_level("SERIALIZABLE")
+        def create_thing(id):
+            ...
+    """
+    def decorator(view):
+        @wraps(view)
+        def view_wrapper(*args, **kwargs):
+            if flask_featureflags.is_active('TRANSACTION_ISOLATION'):
+                db.session.connection(execution_options={'isolation_level': level})
+            return view(*args, **kwargs)
+        return view_wrapper
+    return decorator
