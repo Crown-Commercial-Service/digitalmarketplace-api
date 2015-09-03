@@ -1,6 +1,6 @@
 from flask import jsonify, abort
 from sqlalchemy.types import String
-from sqlalchemy import func, orm
+from sqlalchemy import func, orm, case
 import datetime
 
 from .. import main
@@ -47,15 +47,19 @@ def get_framework_stats(framework_slug):
             for item in sorted(query, key=lambda x: list(map(str, x)))
         ]
 
+    is_declaration_complete = case([
+        (SelectionAnswers.question_answers['status'].cast(String) == 'complete', True)
+    ], else_=False)
+
     return jsonify({
         'services': label_columns(
             ['lot', 'status', 'declaration_made', 'count'],
             db.session.query(
-                lot_column, DraftService.status, SelectionAnswers.framework_id.isnot(None), func.count()
+                lot_column, DraftService.status, is_declaration_complete, func.count()
             ).outerjoin(
                 SelectionAnswers, DraftService.supplier_id == SelectionAnswers.supplier_id
             ).group_by(
-                DraftService.status, lot_column, SelectionAnswers.framework_id
+                DraftService.status, lot_column, is_declaration_complete
             ).filter(
                 DraftService.framework_id == framework.id
             ).all()
