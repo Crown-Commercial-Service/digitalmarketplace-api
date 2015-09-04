@@ -369,7 +369,7 @@ class TestDraftServices(BaseApplicationTest):
         data = json.loads(res.get_data())
         assert_equal(res.status_code, 400)
         assert_in("'badField' was unexpected", str(data['error']['_form']))
-        assert_in("'chickens' is not one of", data['error']['priceUnit'])
+        assert_in("no_unit_specified", data['error']['priceUnit'])
 
     def test_should_create_draft_from_existing_service(self):
         res = self.client.put(

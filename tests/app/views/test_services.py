@@ -655,7 +655,7 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            assert_in("'per Truth' is not one of",
+            assert_in("no_unit_specified",
                       json.loads(response.get_data())['error']['priceUnit'])
 
     def test_updated_service_is_archived_right_away(self):

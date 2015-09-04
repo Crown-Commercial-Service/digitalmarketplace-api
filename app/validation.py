@@ -281,6 +281,8 @@ def _translate_json_schema_error(key, message):
         else:
             # A string that is too long
             return 'under_character_limit'
+    if "is not one of [u'Unit', u'Person'" in message:
+        return 'no_unit_specified'
     if 'does not match' in message:
         if key in ['priceMin', 'priceMax']:
             return 'not_money_format'
