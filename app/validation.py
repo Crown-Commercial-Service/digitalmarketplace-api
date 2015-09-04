@@ -271,8 +271,9 @@ def is_valid_string(string, minlength=1, maxlength=255):
 
 
 def _translate_json_schema_error(key, message):
-    if message.endswith('is too short'):
-        return 'answer_required'
+    if message.endswith('is too short') \
+            or message.endswith("'value' is a required property"):
+                return 'answer_required'
     if message.endswith('is too long'):
         if message.startswith('['):
             # A list that is too long - all our lists are max 10 items
@@ -285,12 +286,13 @@ def _translate_json_schema_error(key, message):
             return 'not_money_format'
         else:
             return 'under_{}_words'.format(_get_word_count(message))
-    if "is not of type 'number'" in message \
+    if "is not of type u'number'" in message \
             or "is less than" in message \
             or "is greater than" in message:
             return 'not_a_number'
-    if message.startswith("None is not one of [u'Service provider assertion'"):
-        return 'assurance_required'
+    if message.startswith("None is not one of [u'Service provider assertion'") \
+            or message.endswith("'assurance' is a required property"):
+                return 'assurance_required'
     return message
 
 

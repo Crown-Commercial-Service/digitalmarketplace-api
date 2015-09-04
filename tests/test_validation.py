@@ -381,7 +381,7 @@ def test_assurance_only_causes_validation_error():
     data.update({'serviceAvailabilityPercentage':
                 {"assurance": "Service provider assertion"}})
     errs = get_validation_errors("services-g-cloud-7-paas", data)
-    assert "'value' is a required property" in errs['serviceAvailabilityPercentage']
+    assert "answer_required" in errs['serviceAvailabilityPercentage']
 
 
 def test_value_only_causes_validation_error():
@@ -389,7 +389,7 @@ def test_value_only_causes_validation_error():
     data.update({'serviceAvailabilityPercentage':
                 {"value": 99.9}})
     errs = get_validation_errors("services-g-cloud-7-paas", data)
-    assert "'assurance' is a required property" in errs['serviceAvailabilityPercentage']
+    assert "assurance_required" in errs['serviceAvailabilityPercentage']
 
 
 def test_price_not_money_format_validation_error():
