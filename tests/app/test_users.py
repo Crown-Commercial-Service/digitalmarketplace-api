@@ -187,20 +187,51 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
         data = json.loads(response.get_data())["users"]
         assert_equal(data["emailAddress"], "joeblogs@email.com")
 
-    def test_can_post_an_admin_ccs_user(self):
+    def test_can_post_an_admin_ccs_category_user(self):
         response = self.client.post(
             '/users',
             data=json.dumps({
                 'users': {
                     'emailAddress': 'joeblogs@email.com',
                     'password': '1234567890',
-                    'role': 'admin-ccs',
+                    'role': 'admin-ccs-category',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
         assert_equal(response.status_code, 201)
         data = json.loads(response.get_data())["users"]
         assert_equal(data["emailAddress"], "joeblogs@email.com")
+
+    def test_can_post_an_admin_ccs_sourcing_user(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs+sourcing@email.com',
+                    'password': '1234567890',
+                    'role': 'admin-ccs-sourcing',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 201)
+        data = json.loads(response.get_data())["users"]
+        assert_equal(data["emailAddress"], "joeblogs+sourcing@email.com")
+
+    # The admin-ccs role is no longer in use
+    def test_can_not_post_an_admin_ccs_user(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs+admin@email.com',
+                    'password': '1234567890',
+                    'role': 'admin-ccs',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 400)
+        error = json.loads(response.get_data())['error']
+        assert_in("'admin-ccs' is not one of", error)
 
     def test_can_post_a_supplier_user(self):
         with self.app.app_context():

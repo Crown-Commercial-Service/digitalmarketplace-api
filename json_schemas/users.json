@@ -19,7 +19,7 @@
       "minLength": 10
     },
     "role": {
-      "enum": ["buyer", "supplier", "admin", "admin-ccs"]
+      "enum": ["buyer", "supplier", "admin", "admin-ccs-category", "admin-ccs-sourcing"]
     },
     "supplierId": {
       "type": "integer"
