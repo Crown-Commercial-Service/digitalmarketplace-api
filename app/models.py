@@ -242,7 +242,8 @@ class User(db.Model):
         'buyer',
         'supplier',
         'admin',
-        'admin-ccs',
+        'admin-ccs-category',
+        'admin-ccs-sourcing',
     ]
 
     id = db.Column(db.Integer, primary_key=True)
