@@ -29,20 +29,15 @@ def list_suppliers():
     if framework:
         is_valid_string_or_400(framework)
 
-        active_services = Service.query.join(
-            Service.framework
+        suppliers = Supplier.query.join(
+            Service.supplier, Service.framework
         ).filter(
             Framework.status == 'live',
             Framework.framework == framework,
             Service.status == 'published'
-        ).distinct('supplier_id').subquery()
-
-        suppliers = Supplier.query.join(
-            active_services,
-            Supplier.supplier_id == active_services.c.supplier_id
-        ).order_by(Supplier.name)
+        ).order_by(Supplier.name, Supplier.supplier_id)
     else:
-        suppliers = Supplier.query.order_by(Supplier.name)
+        suppliers = Supplier.query.order_by(Supplier.name, Supplier.supplier_id)
 
     if duns_number:
         is_valid_string_or_400(duns_number)
@@ -58,6 +53,8 @@ def list_suppliers():
             # case insensitive LIKE comparison for matching supplier names
             suppliers = suppliers.filter(
                 Supplier.name.ilike(prefix + '%'))
+
+    suppliers = suppliers.distinct(Supplier.name, Supplier.supplier_id)
 
     try:
         suppliers = suppliers.paginate(
