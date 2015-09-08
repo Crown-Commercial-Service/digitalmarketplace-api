@@ -71,6 +71,10 @@ class UserPutter(object):
 
         if "ROLE_SUPPLIER" in json_from_file['roles']:
             role = "supplier"
+        elif "ADMIN" in json_from_file['roles']:
+            role = "admin"
+        elif "ADMIN-CCS" in json_from_file['roles']:
+            role = "admin-ccs"
         else:
             role = "buyer"
 
