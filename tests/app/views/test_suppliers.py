@@ -194,6 +194,9 @@ class TestListSuppliersOnFramework(BaseApplicationTest):
                 service_id=1, supplier_id=1
             )
             self.setup_dummy_service(
+                service_id=4, supplier_id=1, status='enabled'
+            )
+            self.setup_dummy_service(
                 service_id=2, supplier_id=2, framework_id=2
             )
             self.setup_dummy_service(
