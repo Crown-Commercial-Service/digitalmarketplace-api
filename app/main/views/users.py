@@ -179,6 +179,9 @@ def update_user(user_id):
     if 'name' in user_update:
         user.name = user_update['name']
     if 'role' in user_update:
+        if user.role == 'supplier' and user_update['role'] != user.role:
+            user.supplier_id = None
+            user_update.pop('supplierId', None)
         user.role = user_update['role']
     if 'supplierId' in user_update:
         user.supplier_id = user_update['supplierId']
