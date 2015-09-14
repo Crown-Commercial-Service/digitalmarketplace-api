@@ -1,6 +1,6 @@
 from flask import json
 from freezegun import freeze_time
-from nose.tools import assert_equal, assert_not_equal, assert_in
+from nose.tools import assert_equal, assert_not_equal, assert_in, assert_is_none
 from app import db, encryption
 from app.models import User, Supplier
 from datetime import datetime
@@ -455,13 +455,25 @@ class TestUsersUpdate(BaseApplicationTest):
                 updated_at=now,
                 password_changed_at=now
             )
-            db.session.add(user)
-
             supplier = Supplier(
                 supplier_id=456,
                 name="A test supplier"
             )
+            supplier_user = User(
+                id=456,
+                email_address="supplier@test.com",
+                name="my supplier name",
+                password=encryption.hashpw("my long password"),
+                active=True,
+                role='supplier',
+                created_at=now,
+                updated_at=now,
+                supplier_id=456,
+                password_changed_at=now
+            )
             db.session.add(supplier)
+            db.session.add(user)
+            db.session.add(supplier_user)
             db.session.commit()
 
     def test_can_update_password(self):
@@ -667,6 +679,49 @@ class TestUsersUpdate(BaseApplicationTest):
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
             assert_equal(data['role'], 'supplier')
+
+    def test_can_update_role_to_buyer_from_supplier(self):
+        with self.app.app_context():
+            response = self.client.post(
+                '/users/123',
+                data=json.dumps({
+                    'users': {
+                        'role': 'buyer'
+                    }}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['role'], 'buyer')
+            assert_is_none(data.get('supplierId', None))
+
+            response = self.client.post(
+                '/users/auth',
+                data=json.dumps({
+                    'authUsers': {
+                        'emailAddress': 'test@test.com',
+                        'password': 'my long password'}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['role'], 'buyer')
+
+    def test_can_update_role_to_buyer_from_supplier_ignoring_supplier_id(self):
+        with self.app.app_context():
+            response = self.client.post(
+                '/users/456',
+                data=json.dumps({
+                    'users': {
+                        'role': 'buyer',
+                        'supplierId': 456
+                    }}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['role'], 'buyer')
+            assert_is_none(data.get('supplierId', None))
 
     def test_can_not_update_role_to_invalid_value(self):
         with self.app.app_context():
