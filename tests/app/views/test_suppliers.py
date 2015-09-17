@@ -382,15 +382,13 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         payload = self.load_example_listing("Supplier")
 
         payload['contactInformation'][0].pop('email')
-        payload['contactInformation'][0].pop('postcode')
         payload['contactInformation'][0].pop('contactName')
 
         response = self.put_import_supplier(payload)
         assert_equal(response.status_code, 400)
         for item in ['Invalid JSON must have',
                      'contactName',
-                     'email',
-                     'postcode']:
+                     'email']:
             assert_in(item,
                       json.loads(response.get_data())['error'])
 

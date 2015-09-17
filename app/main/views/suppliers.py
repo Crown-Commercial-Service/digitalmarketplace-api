@@ -113,7 +113,7 @@ def import_supplier(supplier_id):
     for contact_information_data in contact_informations_data:
         json_has_required_keys(
             contact_information_data,
-            ['contactName', 'email', 'postcode']
+            ['contactName', 'email']
         )
 
     validate_supplier_json_or_400(supplier_data)
