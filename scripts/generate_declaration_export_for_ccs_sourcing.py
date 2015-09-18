@@ -1,7 +1,7 @@
 """
 
 Usage:
-    scripts/generate_declaration_export_for_ccs_sourcing.py <data_api_url> <data_api_token> <path_to_declaration_manifest>
+    scripts/generate_declaration_export_for_ccs_sourcing.py <data_api_url> <data_api_token> <path_to_declaration_manifest> # noqa
 
 Example:
     ./generate_declaration_export_for_ccs_sourcing.py http://api myToken /my/path/to/file/manifest.yml
@@ -13,11 +13,13 @@ import yaml
 from docopt import docopt
 from dmutils.apiclient import DataAPIClient, HTTPError
 
+
 def get_or_else_none(map_to_check, key):
     """
         Use map.get to handle missing keys for object values
     """
     return map_to_check.get(key, None)
+
 
 def get_or_else_empty_string(map_to_check, key):
     """
@@ -25,11 +27,13 @@ def get_or_else_empty_string(map_to_check, key):
     """
     return map_to_check.get(key, "")
 
+
 def get_or_else_empty_list(map_to_check, key):
     """
         Use map.get to handle missing keys for list values
     """
     return map_to_check.get(key, [])
+
 
 def bool_to_yes_no(value):
         """
@@ -40,6 +44,7 @@ def bool_to_yes_no(value):
         if value:
             return "yes"
         return "no"
+
 
 def has_checked_all_boxes(array, total):
     """
@@ -54,6 +59,7 @@ def has_checked_all_boxes(array, total):
     else:
         return "passed"
 
+
 def process_boolean(declaration, field):
     value = get_or_else_none(declaration, field)
     if value is not None:
@@ -61,83 +67,87 @@ def process_boolean(declaration, field):
     else:
         return ""
 
+
 def process_string(declaration, field):
     return get_or_else_empty_string(declaration, field).encode("utf-8")
+
 
 def process_checkbox_counts(declaration, field):
     values = get_or_else_empty_list(declaration, field)
     return has_checked_all_boxes(values, expected_totals[field])
 
+
 def process_list_to_string(declaration, field):
     return ", ".encode("utf-8").join(get_or_else_empty_list(declaration, field))
 
+
 # expected length of checkbox groups - if users don't tick all they fail
-expected_totals = \
-    {
-       "SQ1-3": 5,
-       "SQC3": 10
-    }
+expected_totals = {
+    "SQ1-3": 5,
+    "SQC3": 10
+}
+
 
 # map fields to processing method
-question_mapping = \
-    {
-        "PR1": process_boolean,
-        "PR2": process_boolean,
-        "SQC2": process_boolean,
-        "PR5": process_boolean,
-        "PR3": process_boolean,
-        "PR4": process_boolean,
-        "SQ1-3": process_checkbox_counts,
-        "SQA2": process_boolean,
-        "SQA3": process_boolean,
-        "SQA4": process_boolean,
-        "SQA5": process_boolean,
-        "AQA5": process_boolean,
-        "AQA3": process_boolean,
-        "SQ5-1a": process_string,
-        "SQC3": process_checkbox_counts,
-        "SQ1-2a": process_string,
-        "SQ1-2b": process_string,
-        "SQ1-1a": process_string,
-        "SQ1-1b": process_string,
-        "SQ1-1ci": process_string,
-        "SQ1-1cii": process_string,
-        "SQ1-1k": process_string,
-        "SQ1-1d-i": process_string,
-        "SQ1-1d-ii": process_string,
-        "SQ1-1e": process_string,
-        "SQ1-1h": process_string,
-        "SQ5-2a": process_boolean,
-        "SQ1-1i-i": process_boolean,
-        "SQ1-1i-ii": process_string,
-        "SQ1-1j-i": process_list_to_string,
-        "SQ1-1j-ii": process_string,
-        "SQ1-1m": process_string,
-        "SQE2a": process_list_to_string,
-        "SQ1-1n": process_string,
-        "SQ1-1o": process_string,
-        "SQ2-1abcd": process_boolean,
-        "SQ2-1e": process_boolean,
-        "SQ2-1f": process_boolean,
-        "SQ2-1ghijklmn": process_boolean,
-        "SQ2-2a": process_boolean,
-        "SQ3-1a": process_boolean,
-        "SQ3-1b": process_boolean,
-        "SQ3-1c": process_boolean,
-        "SQ3-1d": process_boolean,
-        "SQ3-1e": process_boolean,
-        "SQ3-1f": process_boolean,
-        "SQ3-1g": process_boolean,
-        "SQ3-1h-i": process_boolean,
-        "SQ3-1h-ii": process_boolean,
-        "SQ3-1i-i": process_boolean,
-        "SQ3-1i-ii": process_boolean,
-        "SQ3-1j": process_boolean,
-        "SQ3-1k": process_string,
-        "SQ4-1a": process_boolean,
-        "SQ4-1b": process_boolean,
-        "SQ4-1c": process_string,
-    }
+question_mapping = {
+    "PR1": process_boolean,
+    "PR2": process_boolean,
+    "SQC2": process_boolean,
+    "PR5": process_boolean,
+    "PR3": process_boolean,
+    "PR4": process_boolean,
+    "SQ1-3": process_checkbox_counts,
+    "SQA2": process_boolean,
+    "SQA3": process_boolean,
+    "SQA4": process_boolean,
+    "SQA5": process_boolean,
+    "AQA5": process_boolean,
+    "AQA3": process_boolean,
+    "SQ5-1a": process_string,
+    "SQC3": process_checkbox_counts,
+    "SQ1-2a": process_string,
+    "SQ1-2b": process_string,
+    "SQ1-1a": process_string,
+    "SQ1-1b": process_string,
+    "SQ1-1ci": process_string,
+    "SQ1-1cii": process_string,
+    "SQ1-1k": process_string,
+    "SQ1-1d-i": process_string,
+    "SQ1-1d-ii": process_string,
+    "SQ1-1e": process_string,
+    "SQ1-1h": process_string,
+    "SQ5-2a": process_boolean,
+    "SQ1-1i-i": process_boolean,
+    "SQ1-1i-ii": process_string,
+    "SQ1-1j-i": process_list_to_string,
+    "SQ1-1j-ii": process_string,
+    "SQ1-1m": process_string,
+    "SQE2a": process_list_to_string,
+    "SQ1-1n": process_string,
+    "SQ1-1o": process_string,
+    "SQ2-1abcd": process_boolean,
+    "SQ2-1e": process_boolean,
+    "SQ2-1f": process_boolean,
+    "SQ2-1ghijklmn": process_boolean,
+    "SQ2-2a": process_boolean,
+    "SQ3-1a": process_boolean,
+    "SQ3-1b": process_boolean,
+    "SQ3-1c": process_boolean,
+    "SQ3-1d": process_boolean,
+    "SQ3-1e": process_boolean,
+    "SQ3-1f": process_boolean,
+    "SQ3-1g": process_boolean,
+    "SQ3-1h-i": process_boolean,
+    "SQ3-1h-ii": process_boolean,
+    "SQ3-1i-i": process_boolean,
+    "SQ3-1i-ii": process_boolean,
+    "SQ3-1j": process_boolean,
+    "SQ3-1k": process_string,
+    "SQ4-1a": process_boolean,
+    "SQ4-1b": process_boolean,
+    "SQ4-1c": process_string,
+}
+
 
 def process_supplier_declaration(supplier_declaration, questions):
     """
@@ -152,6 +162,7 @@ def process_supplier_declaration(supplier_declaration, questions):
         if question in question_mapping:
             answers.append(question_mapping[question](supplier_declaration, question))
     return answers
+
 
 # get the list of questions, in order, from the manifest
 def process_declaration_manifest(path_to_declaration_manifest):
@@ -171,6 +182,7 @@ def process_declaration_manifest(path_to_declaration_manifest):
             for question in declaration_page['questions']:
                 all_the_questions_in_order.append(question)
     return all_the_questions_in_order
+
 
 def headers(questions):
     """
@@ -193,6 +205,7 @@ def headers(questions):
         csv_headers.append("{}:{}".format(index+1, value))
     return csv_headers
 
+
 def supplier_has_completed_declaration(declaration):
     """
     If declartion has a value for any of the keys on the 4th page we treat it as completed
@@ -203,6 +216,7 @@ def supplier_has_completed_declaration(declaration):
     :return:
     """
     return "SQ2-2a" in declaration['selectionAnswers']['questionAnswers']
+
 
 def suppliers_on_framework(data_api_url, data_api_token, questions):
     """
@@ -245,6 +259,7 @@ def suppliers_on_framework(data_api_url, data_api_token, questions):
                 pass
             else:
                 raise e
+
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)

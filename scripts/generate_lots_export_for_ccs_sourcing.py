@@ -13,6 +13,7 @@ from operator import itemgetter
 from docopt import docopt
 from dmutils.apiclient import DataAPIClient, HTTPError
 
+
 def aggregate(drafts):
     """
     Process a list of drafts
@@ -42,6 +43,7 @@ def aggregate(drafts):
         result[lot] = status_counts
     return result
 
+
 def headers():
     """
     Generate the headers for the CSV file
@@ -61,6 +63,7 @@ def headers():
     csv_headers.append('SCS: Incomplete')
     return csv_headers
 
+
 def submitted_count(drafts):
     """
     Get count of submitted services
@@ -70,6 +73,7 @@ def submitted_count(drafts):
     """
     return drafts.get('submitted', 0)
 
+
 def not_submitted_count(drafts):
     """
     Get count of not-submitted services
@@ -78,6 +82,7 @@ def not_submitted_count(drafts):
     :return:
     """
     return drafts.get('not-submitted', 0)
+
 
 def suppliers_lot_count(data_api_url, data_api_token):
     """
@@ -122,6 +127,7 @@ def suppliers_lot_count(data_api_url, data_api_token):
                 pass
             else:
                 raise e
+
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
