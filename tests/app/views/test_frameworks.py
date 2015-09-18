@@ -20,6 +20,30 @@ class TestListFrameworks(BaseApplicationTest):
                          len(Framework.query.all()))
 
 
+class TestGetFrameworkStatus(BaseApplicationTest):
+    def test_status_is_returned_for_existing_frameworks(self):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-6/status')
+            data = json.loads(response.get_data())
+
+            assert_equal(response.status_code, 200)
+            assert_equal(data['status'], "live")
+
+            response = self.client.get('/frameworks/g-cloud-4/status')
+            data = json.loads(response.get_data())
+
+            assert_equal(response.status_code, 200)
+            assert_equal(data['status'], "expired")
+
+    def test_404_for_non_existing_frameworks(self):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/biscuits-for-gov/status')
+            data = json.loads(response.get_data())
+
+            assert_equal(response.status_code, 404)
+            assert_equal(data['error'], "'biscuits-for-gov' is not a framework")
+
+
 class TestFrameworkStats(BaseApplicationTest):
     def create_selection_answers(self, framework_id, supplier_ids, status=None):
         with self.app.app_context():
