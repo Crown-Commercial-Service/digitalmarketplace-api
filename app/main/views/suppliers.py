@@ -13,6 +13,7 @@ from ...validation import (
 )
 from ...utils import pagination_links, drop_foreign_fields, get_json_from_request, \
     json_has_required_keys, json_has_matching_id, get_valid_page_or_1
+from ...supplier_utils import validate_and_return_supplier_request
 from dmutils.audit import AuditTypes
 
 
@@ -88,39 +89,9 @@ def get_supplier(supplier_id):
 
 @main.route('/suppliers/<int:supplier_id>', methods=['PUT'])
 def import_supplier(supplier_id):
-    supplier_data = get_json_from_request()
+    supplier_data = validate_and_return_supplier_request(supplier_id)
 
-    json_has_required_keys(
-        supplier_data,
-        ['suppliers']
-    )
-
-    supplier_data = supplier_data['suppliers']
-    supplier_data = drop_foreign_fields(supplier_data, ['links'])
-
-    json_has_required_keys(
-        supplier_data,
-        ['id', 'name', 'contactInformation']
-    )
-
-    contact_informations_data = [
-        drop_foreign_fields(contact_data, ['links'])
-        for contact_data in supplier_data['contactInformation']
-        ]
-
-    supplier_data['contactInformation'] = contact_informations_data
-
-    for contact_information_data in contact_informations_data:
-        json_has_required_keys(
-            contact_information_data,
-            ['contactName', 'email']
-        )
-
-    validate_supplier_json_or_400(supplier_data)
-
-    # Check that `supplier_id` matches the JSON-supplied `id`
-    json_has_matching_id(supplier_data, supplier_id)
-
+    contact_informations_data = supplier_data['contactInformation']
     supplier_data = drop_foreign_fields(
         supplier_data,
         ['contactInformation']
@@ -157,36 +128,9 @@ def import_supplier(supplier_id):
 
 @main.route('/suppliers', methods=['POST'])
 def create_supplier():
-    supplier_data = get_json_from_request()
+    supplier_data = validate_and_return_supplier_request()
 
-    json_has_required_keys(
-        supplier_data,
-        ['suppliers']
-    )
-
-    supplier_data = supplier_data['suppliers']
-    supplier_data = drop_foreign_fields(supplier_data, ['links'])
-
-    json_has_required_keys(
-        supplier_data,
-        ['name', 'contactInformation']
-    )
-
-    contact_informations_data = [
-        drop_foreign_fields(contact_data, ['links'])
-        for contact_data in supplier_data['contactInformation']
-        ]
-
-    supplier_data['contactInformation'] = contact_informations_data
-
-    for contact_information_data in contact_informations_data:
-        json_has_required_keys(
-            contact_information_data,
-            ['contactName', 'email']
-        )
-
-    validate_new_supplier_json_or_400(supplier_data)
-
+    contact_informations_data = supplier_data['contactInformation']
     supplier_data = drop_foreign_fields(
         supplier_data,
         ['contactInformation']
