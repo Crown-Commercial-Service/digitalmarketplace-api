@@ -79,7 +79,7 @@ expected_totals = \
     }
 
 # map fields to processing method
-fields = \
+question_mapping = \
     {
         "PR1": process_boolean,
         "PR2": process_boolean,
@@ -149,8 +149,8 @@ def process_supplier_declaration(supplier_declaration, questions):
     """
     answers = []
     for question in questions:
-        if question in fields:
-            answers.append(fields[question](supplier_declaration, question))
+        if question in question_mapping:
+            answers.append(question_mapping[question](supplier_declaration, question))
     return answers
 
 # get the list of questions, in order, from the manifest
