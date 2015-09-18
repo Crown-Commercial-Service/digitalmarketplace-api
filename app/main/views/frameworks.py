@@ -16,6 +16,18 @@ def list_frameworks():
     )
 
 
+@main.route('/frameworks/<string:framework_slug>/status', methods=['GET'])
+def get_framework_status(framework_slug):
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first()
+
+    if not framework:
+        abort(404, "'{}' is not a framework".format(framework_slug))
+
+    return jsonify(status=framework.status)
+
+
 @main.route('/frameworks/<string:framework_slug>/stats', methods=['GET'])
 def get_framework_stats(framework_slug):
 
