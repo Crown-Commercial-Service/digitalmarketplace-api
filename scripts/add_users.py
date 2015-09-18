@@ -4,7 +4,7 @@ Add a series of users from a file of JSON objects, one per line.
 
 The JSON user object lines can have the following fields:
 
-{"name": "A. Non", "password": "pass12345", 'emailAddress': "email@email.com", "role": "supplier", "supplierId": 12345}
+{"name": "A. Non", "password": "pass12345", "emailAddress": "email@email.com", "role": "supplier", "supplierId": 12345}
 
 Usage:
     add-users.py <data_api_endpoint> <data_api_token> <users_path>
