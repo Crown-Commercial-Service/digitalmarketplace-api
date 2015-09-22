@@ -363,36 +363,64 @@ class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
         response = self.put_import_supplier(payload)
         assert_equal(response.status_code, 400)
-        for item in ['Invalid JSON must have', 'contactInformation']:
+        for item in ['Invalid JSON must have', '\'contactInformation\'']:
             assert_in(item,
                       json.loads(response.get_data())['error'])
 
+    def test_when_supplier_has_a_missing_key(self):
+        payload = self.load_example_listing("Supplier")
+        payload.pop('id')
+
+        response = self.put_import_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['JSON was not a valid format',
+                     '\'id\'',
+                     'is a required property']:
+            assert_in(
+                item, json.loads(response.get_data())['error'])
+
     def test_when_supplier_has_missing_keys(self):
         payload = self.load_example_listing("Supplier")
+
+        # only one key is returned in the error message
         payload.pop('id')
         payload.pop('name')
 
         response = self.put_import_supplier(payload)
         assert_equal(response.status_code, 400)
-        for item in ['Invalid JSON must have', 'id', 'name']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+        for item in ['JSON was not a valid format',
+                     '\'id\'',
+                     'is a required property']:
+            assert_in(
+                item, json.loads(response.get_data())['error'])
+
+    def test_when_supplier_contact_information_has_a_missing_key(self):
+        payload = self.load_example_listing("Supplier")
+
+        payload['contactInformation'][0].pop('email')
+
+        response = self.put_import_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['JSON was not a valid format',
+                     '\'email\'',
+                     'is a required property']:
+            assert_in(
+                item, json.loads(response.get_data())['error'])
 
     def test_when_supplier_contact_information_has_missing_keys(self):
         payload = self.load_example_listing("Supplier")
 
+        # only one key is returned in the error message
         payload['contactInformation'][0].pop('email')
-        payload['contactInformation'][0].pop('postcode')
         payload['contactInformation'][0].pop('contactName')
 
         response = self.put_import_supplier(payload)
         assert_equal(response.status_code, 400)
-        for item in ['Invalid JSON must have',
-                     'contactName',
-                     'email',
-                     'postcode']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+        for item in ['JSON was not a valid format',
+                     '\'contactName\'',
+                     'is a required property']:
+            assert_in(
+                item, json.loads(response.get_data())['error'])
 
     def test_when_supplier_has_extra_keys(self):
         payload = self.load_example_listing("Supplier")
@@ -965,31 +993,28 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
         response = self.post_supplier(payload)
         assert_equal(response.status_code, 400)
-        for item in ['Invalid JSON must have', 'contactInformation']:
+        for item in ['Invalid JSON must have', '\'contactInformation\'']:
             assert_in(item,
                       json.loads(response.get_data())['error'])
 
-    def test_when_supplier_has_missing_keys(self):
+    def test_when_supplier_has_a_missing_key(self):
         payload = self.load_example_listing("new-supplier")
         payload.pop('name')
 
         response = self.post_supplier(payload)
         assert_equal(response.status_code, 400)
-        for item in ['Invalid JSON must have', 'name']:
+        for item in ['JSON was not a valid format', '\'name\'', 'is a required property']:
             assert_in(item,
                       json.loads(response.get_data())['error'])
 
-    def test_when_supplier_contact_information_has_missing_keys(self):
+    def test_when_supplier_contact_information_has_a_missing_key(self):
         payload = self.load_example_listing("new-supplier")
 
         payload['contactInformation'][0].pop('email')
-        payload['contactInformation'][0].pop('contactName')
 
         response = self.post_supplier(payload)
         assert_equal(response.status_code, 400)
-        for item in ['Invalid JSON must have',
-                     'contactName',
-                     'email']:
+        for item in ['JSON was not a valid format', '\'email\'', 'is a required property']:
             assert_in(item,
                       json.loads(response.get_data())['error'])
 
