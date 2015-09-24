@@ -88,8 +88,7 @@ class ServiceUpdater(object):
             client.import_service(
                 service['id'],
                 cleaned_data,
-                user,
-                None
+                user
             )
             return True
         except apiclient.APIError as e:
