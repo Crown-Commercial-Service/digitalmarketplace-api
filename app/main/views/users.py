@@ -8,6 +8,7 @@ from ... import db, encryption
 from ...models import User, AuditEvent, Supplier
 from ...utils import get_json_from_request, json_has_required_keys, \
     json_has_matching_id, pagination_links, get_valid_page_or_1
+from ...service_utils import validate_and_return_updater_request
 from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400
 
 
@@ -160,6 +161,7 @@ def update_user(user_id):
     """
         Update a user. Looks user up in DB, and updates where necessary.
     """
+    update_details = validate_and_return_updater_request()
 
     user = User.query.filter(
         User.id == user_id
@@ -194,8 +196,11 @@ def update_user(user_id):
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_user,
-        user=user.email_address,
-        data={'update': user_update},
+        user=update_details.get('updated_by', 'no user data'),
+        data={
+            'user': user.email_address,
+            'update': user_update
+        },
         db_object=user
     )
 
