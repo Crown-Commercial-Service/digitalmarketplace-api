@@ -44,7 +44,7 @@ def update_user_password(api_endpoint, api_token, user_email, new_password, unlo
         user = data_client.get_user(email_address=user_email)['users']
         data_client.update_user_password(user['id'], new_password)
         if unlock:
-            data_client.update_user(user['id'], locked=False)
+            data_client.update_user(user['id'], locked=False, updater=getpass.getuser())
             logger.info("User unlocked")
     except apiclient.APIError:
         sys.exit(1)
