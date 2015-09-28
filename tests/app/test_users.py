@@ -481,6 +481,7 @@ class TestUsersUpdate(BaseApplicationTest):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
+                    "update_details": {"updated_by": "a.user"},
                     'users': {
                         'password': '1234567890'
                     }}),
@@ -505,6 +506,7 @@ class TestUsersUpdate(BaseApplicationTest):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
+                    "update_details": {"updated_by": "a.user"},
                     'users': {
                         'active': False
                     }}),
@@ -553,6 +555,7 @@ class TestUsersUpdate(BaseApplicationTest):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
+                    "update_details": {"updated_by": "a.user"},
                     'users': {
                         'locked': False
                     }}),
@@ -586,6 +589,7 @@ class TestUsersUpdate(BaseApplicationTest):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
+                    "update_details": {"updated_by": "a.user"},
                     'users': {
                         'locked': True
                     }}),
@@ -609,6 +613,7 @@ class TestUsersUpdate(BaseApplicationTest):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
+                    "update_details": {"updated_by": "a.user"},
                     'users': {
                         'name': 'I Just Got Married'
                     }}),
@@ -635,6 +640,7 @@ class TestUsersUpdate(BaseApplicationTest):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
+                    "update_details": {"updated_by": "a.user"},
                     'users': {
                         'name': 'I Just Got Married'
                     }}),
@@ -658,6 +664,7 @@ class TestUsersUpdate(BaseApplicationTest):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
+                    "update_details": {"updated_by": "a.user"},
                     'users': {
                         'role': 'supplier',
                         'supplierId': 456
@@ -685,6 +692,7 @@ class TestUsersUpdate(BaseApplicationTest):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
+                    "update_details": {"updated_by": "a.user"},
                     'users': {
                         'role': 'buyer'
                     }}),
@@ -712,6 +720,7 @@ class TestUsersUpdate(BaseApplicationTest):
             response = self.client.post(
                 '/users/456',
                 data=json.dumps({
+                    "update_details": {"updated_by": "a.user"},
                     'users': {
                         'role': 'buyer',
                         'supplierId': 456
@@ -728,6 +737,7 @@ class TestUsersUpdate(BaseApplicationTest):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
+                    "update_details": {"updated_by": "a.user"},
                     'users': {
                         'role': 'shopkeeper'
                     }}),
@@ -741,6 +751,7 @@ class TestUsersUpdate(BaseApplicationTest):
         response = self.client.post(
             '/users/123',
             data=json.dumps({
+                "update_details": {"updated_by": "a.user"},
                 'users': {
                     'role': 'supplier'
                 }}),
@@ -755,6 +766,7 @@ class TestUsersUpdate(BaseApplicationTest):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
+                    "update_details": {"updated_by": "a.user"},
                     'users': {
                         'emailAddress': 'myshinynew@email.address'
                     }}),
