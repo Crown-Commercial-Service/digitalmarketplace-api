@@ -1,7 +1,7 @@
 """
 
 Usage:
-    scripts/generate_declaration_export_for_ccs_sourcing.py <data_api_url> <data_api_token> <path_to_declaration_manifest> # noqa
+    scripts/generate_declaration_export_for_ccs_sourcing.py <data_api_url> <data_api_token> <path_to_manifest>
 
 Example:
     ./generate_declaration_export_for_ccs_sourcing.py http://api myToken /my/path/to/file/manifest.yml
