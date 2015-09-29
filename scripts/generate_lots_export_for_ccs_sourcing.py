@@ -30,7 +30,7 @@ def aggregate(drafts):
     result = {}
     g7_drafts = sorted(
         [g7 for g7 in drafts if g7['frameworkSlug'] == 'g-cloud-7' and 'serviceName' in g7],
-        key=lambda draft_to_sort: draft_to_sort['lot']
+        key=itemgetter('lot', 'status')
     )
 
     drafts_by_lot = groupby(g7_drafts, itemgetter('lot'))
