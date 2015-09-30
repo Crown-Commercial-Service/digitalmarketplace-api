@@ -3,7 +3,7 @@
   "serviceName":"Some G5 Data Collection",
   "title":"Some G5 Data Collection",
   "serviceSummary":"A simple and easy solution for G5 data stuff.",
-  "priceMin":20.0,
+  "priceMin":"20.0",
   "priceUnit":"Per User / Month",
   "priceString":"20.0 Per User / Month",
   "supplierId":1,

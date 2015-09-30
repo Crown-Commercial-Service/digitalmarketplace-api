@@ -30,7 +30,7 @@
    "priceString": "£34.65 per licence per 6 months",
    "sfiaRateDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
    "pricingDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
-   "priceMin": 34.65,
+   "priceMin": "34.65",
    "sfiaRateDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/15/15-sfia-rate-card.pdf",
    "pricingDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/15/15-pricing-document.pdf",
    "supportForThirdParties": true,

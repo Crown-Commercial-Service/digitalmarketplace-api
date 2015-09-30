@@ -86,11 +86,13 @@
     "terminationCost": {
       "type": "boolean"
     },
-    "priceMin": {
-      "type": "number"
+    "priceMin":{
+      "type":"string",
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$"
     },
-    "priceMax": {
-      "type": ["number", "null"]
+    "priceMax":{
+      "type": "string",
+      "pattern": "^$|^\\d+(?:\\.\\d{1,5})?$"
     },
     "priceUnit": {
       "enum": ["Unit", "Person", "Licence", "User", "Device", "Instance", "Server", "Virtual machine", "Transaction", "Megabyte", "Gigabyte", "Terabyte"]
