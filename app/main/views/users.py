@@ -176,6 +176,7 @@ def update_user(user_id):
     if 'password' in user_update:
         user.password = encryption.hashpw(user_update['password'])
         user.password_changed_at = datetime.utcnow()
+        user_update['password'] = 'updated'
     if 'active' in user_update:
         user.active = user_update['active']
     if 'name' in user_update:
