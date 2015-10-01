@@ -501,6 +501,43 @@ class TestUsersUpdate(BaseApplicationTest):
             data = json.loads(response.get_data())['users']
             assert_equal(data['emailAddress'], 'test@test.com')
 
+    def test_new_password_is_not_audited(self):
+        with self.app.app_context():
+            response = self.client.post(
+                '/users/123',
+                data=json.dumps({
+                    "update_details": {"updated_by": "a.user"},
+                    'users': {
+                        'password': 'not-in-my-audit-event'
+                    }}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+
+            response = self.client.post(
+                '/users/auth',
+                data=json.dumps({
+                    'authUsers': {
+                        'emailAddress': 'test@test.com',
+                        'password': 'not-in-my-audit-event'}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['emailAddress'], 'test@test.com')
+
+            audit_response = self.client.get('/audit-events')
+            assert_equal(audit_response.status_code, 200)
+            data = json.loads(audit_response.get_data())
+
+            assert_equal(len(data['auditEvents']), 1)
+            assert_equal(data['auditEvents'][0]['type'], 'update_user')
+            assert_equal(
+                data['auditEvents'][0]['data']['update']['password'],
+                'updated'
+            )
+            assert("not-in-my-audit-event" not in "{}".format(data))
+
     def test_can_update_active(self):
         with self.app.app_context():
             response = self.client.post(
