@@ -31,7 +31,7 @@
    "vatIncluded": false,
    "priceString": "£10.0067 per person",
    "pricingDocument": "Poster_MJ_s_Charity_Concert_WLC.pdf",
-   "priceMin": 10.0067,
+   "priceMin": "10.0067",
    "freeOption": false,
    "pricingDocumentURL": "https://s3-eu-west-1.amazonaws.com/gds-g6-submission-bucket-local/1/2/2-pricing-document.pdf",
    "openStandardsSupported": true,

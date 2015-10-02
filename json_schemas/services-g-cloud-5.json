@@ -96,17 +96,19 @@
     "terminationCost": {
       "type": "boolean"
     },
-    "priceMin": {
-      "type": "number"
+    "priceMin":{
+      "type":"string",
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$"
+    },
+    "priceMax":{
+      "type": "string",
+      "pattern": "^$|^\\d+(?:\\.\\d{1,5})?$"
     },
     "priceUnit": {
       "type": "string"
     },
     "priceString": {
       "type": "string"
-    },
-    "priceMax": {
-      "type": ["number", "null"]
     },
     "priceInterval": {
       "enum": ["", "Second", "Minute", "Hour", "Day", "Week", "Month", "Quarter", "6 months", "Year"]
