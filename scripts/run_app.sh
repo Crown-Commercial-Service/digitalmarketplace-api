@@ -14,4 +14,9 @@ export DM_SEARCH_API_URL=${DM_SEARCH_API_URL:=http://localhost:5001}
 echo "Environment variables in use:" 
 env | grep DM_
 
-python application.py runserver
+if [ "$1" = "gunicorn" ]; then
+  "$VIRTUAL_ENV/bin/pip" install gunicorn
+  "$VIRTUAL_ENV/bin/gunicorn" -w 4 -b 127.0.0.1:5000 application:application
+else
+  python application.py runserver
+fi
