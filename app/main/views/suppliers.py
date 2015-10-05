@@ -247,8 +247,67 @@ def update_contact_information(supplier_id, contact_id):
     return jsonify(contactInformation=contact.serialize())
 
 
-@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>',
-            methods=['GET'])
+@main.route('/suppliers/<supplier_id>/declarations/<framework_slug>', methods=['GET'])
+def get_a_declaration(supplier_id, framework_slug):
+    declaration = SelectionAnswers.find_by_supplier_and_framework(
+        supplier_id, framework_slug
+    )
+    if declaration is None:
+        abort(404)
+
+    return jsonify(declarations=declaration.serialize())
+
+
+@main.route('/suppliers/<supplier_id>/declarations/<framework_slug>', methods=['PUT'])
+def set_a_declaration(supplier_id, framework_slug):
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first_or_404()
+    if framework.status != 'open':
+        abort(400, 'Framework must be open')
+
+    declaration = SelectionAnswers.find_by_supplier_and_framework(
+        supplier_id, framework_slug
+    )
+    if declaration is not None:
+        status_code = 200
+    else:
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == supplier_id
+        ).first_or_404()
+
+        declaration = SelectionAnswers(
+            supplier_id=supplier.supplier_id,
+            framework_id=framework.id,
+            question_answers={}
+        )
+        status_code = 201
+
+    request_data = get_json_from_request()
+    json_has_required_keys(request_data, ['declarations', 'updated_by'])
+    declarations_data = request_data['declarations']
+    json_has_required_keys(declarations_data, ['questionAnswers'])
+
+    declaration.question_answers = declarations_data['questionAnswers']
+    db.session.add(declaration)
+    db.session.add(
+        AuditEvent(
+            audit_type=AuditTypes.answer_selection_questions,
+            db_object=declaration,
+            user=request_data['updated_by'],
+            data={'update': declarations_data})
+    )
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {}".format(e))
+
+    return jsonify(declarations=declaration.serialize()), status_code
+
+
+@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>', methods=['GET'])
 def get_selection_questions(supplier_id, framework_slug):
     application = SelectionAnswers.find_by_supplier_and_framework(
         supplier_id, framework_slug
@@ -259,8 +318,7 @@ def get_selection_questions(supplier_id, framework_slug):
     return jsonify(selectionAnswers=application.serialize())
 
 
-@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>',
-            methods=['PUT'])
+@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>', methods=['PUT'])
 def set_selection_questions(supplier_id, framework_slug):
     framework = Framework.query.filter(
         Framework.slug == framework_slug
