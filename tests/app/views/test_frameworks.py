@@ -6,7 +6,7 @@ from nose.tools import assert_equal
 from dmutils.audit import AuditTypes
 
 from ..helpers import BaseApplicationTest
-from app.models import db, Framework, SelectionAnswers, DraftService, AuditEvent, Supplier, User
+from app.models import db, Framework, SupplierFramework, DraftService, AuditEvent, Supplier, User
 
 
 class TestListFrameworks(BaseApplicationTest):
@@ -51,10 +51,10 @@ class TestFrameworkStats(BaseApplicationTest):
         with self.app.app_context():
             for supplier_id in supplier_ids:
                 db.session.add(
-                    SelectionAnswers(
+                    SupplierFramework(
                         framework_id=framework_id,
                         supplier_id=supplier_id,
-                        question_answers={'status': status},
+                        declaration={'status': status},
                     )
                 )
 

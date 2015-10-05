@@ -4,7 +4,7 @@ from sqlalchemy import func, orm, case
 import datetime
 
 from .. import main
-from ...models import db, Framework, DraftService, User, Supplier, SelectionAnswers, AuditEvent
+from ...models import db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent
 
 
 @main.route('/frameworks', methods=['GET'])
@@ -60,7 +60,7 @@ def get_framework_stats(framework_slug):
         ]
 
     is_declaration_complete = case([
-        (SelectionAnswers.question_answers['status'].cast(String) == 'complete', True)
+        (SupplierFramework.declaration['status'].cast(String) == 'complete', True)
     ], else_=False)
 
     return jsonify({
@@ -69,7 +69,7 @@ def get_framework_stats(framework_slug):
             db.session.query(
                 lot_column, DraftService.status, is_declaration_complete, func.count()
             ).outerjoin(
-                SelectionAnswers, DraftService.supplier_id == SelectionAnswers.supplier_id
+                SupplierFramework, DraftService.supplier_id == SupplierFramework.supplier_id
             ).group_by(
                 DraftService.status, lot_column, is_declaration_complete
             ).filter(
@@ -89,21 +89,21 @@ def get_framework_stats(framework_slug):
         'interested_suppliers': label_columns(
             ['declaration_status', 'has_completed_services', 'count'],
             db.session.query(
-                SelectionAnswers.question_answers['status'].cast(String),
+                SupplierFramework.declaration['status'].cast(String),
                 drafts_alias.supplier_id.isnot(None), func.count()
             ).select_from(
                 Supplier
             ).outerjoin(
                 AuditEvent, AuditEvent.object_id == Supplier.id
             ).outerjoin(
-                SelectionAnswers
+                SupplierFramework
             ).outerjoin(
                 drafts_alias
             ).filter(
                 AuditEvent.object_type == 'Supplier',
                 AuditEvent.type == 'register_framework_interest'
             ).group_by(
-                SelectionAnswers.question_answers['status'].cast(String), drafts_alias.supplier_id.isnot(None)
+                SupplierFramework.declaration['status'].cast(String), drafts_alias.supplier_id.isnot(None)
             ).all()
         )
     })
