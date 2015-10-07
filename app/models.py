@@ -37,6 +37,7 @@ class Framework(db.Model):
         return {
             'id': self.id,
             'name': self.name,
+            'slug': self.slug,
             'framework': self.framework,
             'status': self.status,
         }

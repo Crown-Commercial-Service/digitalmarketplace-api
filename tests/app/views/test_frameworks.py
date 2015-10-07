@@ -18,6 +18,8 @@ class TestListFrameworks(BaseApplicationTest):
             assert_equal(response.status_code, 200)
             assert_equal(len(data['frameworks']),
                          len(Framework.query.all()))
+            assert_equal(sorted(data['frameworks'][0].keys()),
+                         ['framework', 'id', 'name', 'slug', 'status'])
 
 
 class TestGetFrameworkStatus(BaseApplicationTest):
