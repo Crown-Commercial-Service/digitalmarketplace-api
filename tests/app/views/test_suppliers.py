@@ -962,7 +962,7 @@ class TestGetSupplierDeclarations(BaseApplicationTest):
 
     def test_get_selection_answers(self):
         response = self.client.get(
-            '/suppliers/0/declarations/g-cloud-4')
+            '/suppliers/0/frameworks/g-cloud-4/declaration')
 
         data = json.loads(response.get_data())
         assert_equal(response.status_code, 200)
@@ -970,20 +970,20 @@ class TestGetSupplierDeclarations(BaseApplicationTest):
 
     def test_get_non_existent_by_framework(self):
         response = self.client.get(
-            '/suppliers/0/declarations/g-cloud-5')
+            '/suppliers/0/frameworks/g-cloud-5/declaration')
 
         assert_equal(response.status_code, 404)
 
     def test_get_non_existent_by_supplier(self):
         response = self.client.get(
-            '/suppliers/123/declarations/g-cloud-4')
+            '/suppliers/123/frameworks/g-cloud-4/declaration')
 
         assert_equal(response.status_code, 404)
 
 
 class TestSetSupplierDeclarations(BaseApplicationTest):
     method = 'put'
-    endpoint = '/suppliers/0/declarations/g-cloud-4'
+    endpoint = '/suppliers/0/frameworks/g-cloud-4/declaration'
 
     def setup(self):
         super(TestSetSupplierDeclarations, self).setup()
@@ -1010,7 +1010,7 @@ class TestSetSupplierDeclarations(BaseApplicationTest):
     def test_add_new_declaration(self):
         with self.app.app_context():
             response = self.client.put(
-                '/suppliers/0/declarations/test-open',
+                '/suppliers/0/frameworks/test-open/declaration',
                 data=json.dumps({
                     'updated_by': 'testing',
                     'declaration': {
@@ -1036,7 +1036,7 @@ class TestSetSupplierDeclarations(BaseApplicationTest):
             db.session.commit()
 
             response = self.client.put(
-                '/suppliers/0/declarations/test-open',
+                '/suppliers/0/frameworks/test-open/declaration',
                 data=json.dumps({
                     'updated_by': 'testing',
                     'declaration': {
@@ -1061,7 +1061,7 @@ class TestSetSupplierDeclarations(BaseApplicationTest):
             db.session.commit()
 
             response = self.client.put(
-                '/suppliers/0/declarations/test-pending',
+                '/suppliers/0/frameworks/test-pending/declaration',
                 data=json.dumps({
                     'updated_by': 'testing',
                     'declaration': {
@@ -1074,7 +1074,7 @@ class TestSetSupplierDeclarations(BaseApplicationTest):
     def test_invalid_payload_fails(self):
         with self.app.app_context():
             response = self.client.put(
-                '/suppliers/0/declarations/test-open',
+                '/suppliers/0/frameworks/test-open/declaration',
                 data=json.dumps({
                     'invalid': {
                     }

@@ -247,7 +247,7 @@ def update_contact_information(supplier_id, contact_id):
     return jsonify(contactInformation=contact.serialize())
 
 
-@main.route('/suppliers/<supplier_id>/declarations/<framework_slug>', methods=['GET'])
+@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/declaration', methods=['GET'])
 def get_a_declaration(supplier_id, framework_slug):
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         supplier_id, framework_slug
@@ -258,7 +258,7 @@ def get_a_declaration(supplier_id, framework_slug):
     return jsonify(declaration=supplier_framework.declaration)
 
 
-@main.route('/suppliers/<supplier_id>/declarations/<framework_slug>', methods=['PUT'])
+@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/declaration', methods=['PUT'])
 def set_a_declaration(supplier_id, framework_slug):
     framework = Framework.query.filter(
         Framework.slug == framework_slug
