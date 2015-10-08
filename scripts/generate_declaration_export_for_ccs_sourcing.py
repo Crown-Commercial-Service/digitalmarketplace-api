@@ -69,7 +69,7 @@ def process_boolean(declaration, field):
 
 
 def process_string(declaration, field):
-    return get_or_else_empty_string(declaration, field).encode("utf-8")
+    return get_or_else_empty_string(declaration, field)
 
 
 def process_checkbox_counts(declaration, field):
@@ -78,7 +78,7 @@ def process_checkbox_counts(declaration, field):
 
 
 def process_list_to_string(declaration, field):
-    return ", ".encode("utf-8").join(get_or_else_empty_list(declaration, field))
+    return ", ".join(get_or_else_empty_list(declaration, field))
 
 
 # expected length of checkbox groups - if users don't tick all they fail
@@ -206,17 +206,6 @@ def headers(questions):
         csv_headers.append("{}:{}".format(index+1, value))
     return csv_headers
 
-# def supplier_has_completed_declaration(declaration):
-#     """
-#     If declartion has a value for any of the keys on the 4th page we treat it as completed
-#     All pages must be valid to save so any key set implies data saved on last page
-#     To get to last page required all previous pages completed
-#     SQ2-2a is the first compulsory question on the 4th page
-#     :param declaration:
-#     :return:
-#     """
-#     return "SQ2-2a" in declaration['selectionAnswers']['questionAnswers']
-
 
 def suppliers_on_framework(data_api_url, data_api_token, questions):
     """
@@ -254,7 +243,12 @@ def suppliers_on_framework(data_api_url, data_api_token, questions):
             for declaration in processed_supplier_declaration:
                 supplier_declaration.append(declaration)
 
-            writer.writerow(supplier_declaration)
+            try:
+                writer.writerow(supplier_declaration)
+            except UnicodeEncodeError:
+                writer.writerow(
+                    [field.encode('utf-8') if hasattr(field, 'encode') else field for field in supplier_declaration]
+                )
 
         except HTTPError as e:
             if e.status_code == 404:
