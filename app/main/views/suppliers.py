@@ -4,7 +4,7 @@ from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
-from ...models import Supplier, ContactInformation, AuditEvent, Service, SelectionAnswers, Framework
+from ...models import Supplier, ContactInformation, AuditEvent, Service, SupplierFramework, Framework
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400,
@@ -247,20 +247,76 @@ def update_contact_information(supplier_id, contact_id):
     return jsonify(contactInformation=contact.serialize())
 
 
-@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>',
-            methods=['GET'])
-def get_selection_questions(supplier_id, framework_slug):
-    application = SelectionAnswers.find_by_supplier_and_framework(
+@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/declaration', methods=['GET'])
+def get_a_declaration(supplier_id, framework_slug):
+    supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         supplier_id, framework_slug
     )
-    if application is None:
+    if supplier_framework is None:
         abort(404)
 
-    return jsonify(selectionAnswers=application.serialize())
+    return jsonify(declaration=supplier_framework.declaration)
 
 
-@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>',
-            methods=['PUT'])
+@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/declaration', methods=['PUT'])
+def set_a_declaration(supplier_id, framework_slug):
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first_or_404()
+    if framework.status != 'open':
+        abort(400, 'Framework must be open')
+
+    supplier_framework = SupplierFramework.find_by_supplier_and_framework(
+        supplier_id, framework_slug
+    )
+    if supplier_framework is not None:
+        status_code = 200 if supplier_framework.declaration else 201
+    else:
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == supplier_id
+        ).first_or_404()
+
+        supplier_framework = SupplierFramework(
+            supplier_id=supplier.supplier_id,
+            framework_id=framework.id,
+            declaration={}
+        )
+        status_code = 201
+
+    request_data = get_json_from_request()
+    json_has_required_keys(request_data, ['declaration', 'updated_by'])
+
+    supplier_framework.declaration = request_data['declaration']
+    db.session.add(supplier_framework)
+    db.session.add(
+        AuditEvent(
+            audit_type=AuditTypes.answer_selection_questions,
+            db_object=supplier_framework,
+            user=request_data['updated_by'],
+            data={'update': request_data['declaration']})
+    )
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {}".format(e))
+
+    return jsonify(declaration=supplier_framework.declaration), status_code
+
+
+@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>', methods=['GET'])
+def get_selection_questions(supplier_id, framework_slug):
+    supplier_framework = SupplierFramework.find_by_supplier_and_framework(
+        supplier_id, framework_slug
+    )
+    if supplier_framework is None:
+        abort(404)
+
+    return jsonify(selectionAnswers=supplier_framework.serialize())
+
+
+@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>', methods=['PUT'])
 def set_selection_questions(supplier_id, framework_slug):
     framework = Framework.query.filter(
         Framework.slug == framework_slug
@@ -268,20 +324,20 @@ def set_selection_questions(supplier_id, framework_slug):
     if framework.status != 'open':
         abort(400, 'Framework must be open')
 
-    answers = SelectionAnswers.find_by_supplier_and_framework(
+    supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         supplier_id, framework_slug
     )
-    if answers is not None:
+    if supplier_framework is not None:
         status_code = 200
     else:
         supplier = Supplier.query.filter(
             Supplier.supplier_id == supplier_id
         ).first_or_404()
 
-        answers = SelectionAnswers(
+        supplier_framework = SupplierFramework(
             supplier_id=supplier.supplier_id,
             framework_id=framework.id,
-            question_answers={}
+            declaration={}
         )
         status_code = 201
 
@@ -290,12 +346,12 @@ def set_selection_questions(supplier_id, framework_slug):
     answers_data = request_data['selectionAnswers']
     json_has_required_keys(answers_data, ['questionAnswers'])
 
-    answers.question_answers = answers_data['questionAnswers']
-    db.session.add(answers)
+    supplier_framework.declaration = answers_data['questionAnswers']
+    db.session.add(supplier_framework)
     db.session.add(
         AuditEvent(
             audit_type=AuditTypes.answer_selection_questions,
-            db_object=answers,
+            db_object=supplier_framework,
             user=request_data['updated_by'],
             data={'update': answers_data})
     )
@@ -306,4 +362,4 @@ def set_selection_questions(supplier_id, framework_slug):
         db.session.rollback()
         abort(400, "Database Error: {}".format(e))
 
-    return jsonify(selectionAnswers=answers.serialize()), status_code
+    return jsonify(selectionAnswers=supplier_framework.serialize()), status_code

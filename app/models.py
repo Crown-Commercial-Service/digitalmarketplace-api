@@ -201,8 +201,8 @@ class Supplier(db.Model):
         return self
 
 
-class SelectionAnswers(db.Model):
-    __tablename__ = 'selection_answers'
+class SupplierFramework(db.Model):
+    __tablename__ = 'supplier_frameworks'
 
     supplier_id = db.Column(db.Integer,
                             db.ForeignKey('suppliers.supplier_id'),
@@ -210,29 +210,30 @@ class SelectionAnswers(db.Model):
     framework_id = db.Column(db.Integer,
                              db.ForeignKey('frameworks.id'),
                              primary_key=True)
-    question_answers = db.Column(JSON)
+    declaration = db.Column(JSON)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
     @staticmethod
     def find_by_framework(framework_slug):
-        return SelectionAnswers.query.filter(
-            SelectionAnswers.framework.has(
+        return SupplierFramework.query.filter(
+            SupplierFramework.framework.has(
                 Framework.slug == framework_slug)
         )
 
     @staticmethod
     def find_by_supplier_and_framework(supplier_id, framework_slug):
-        return SelectionAnswers.find_by_framework(framework_slug).filter(
-            SelectionAnswers.supplier_id == supplier_id
+        return SupplierFramework.find_by_framework(framework_slug).filter(
+            SupplierFramework.supplier_id == supplier_id
         ).first()
 
     def serialize(self):
         return {
             "supplierId": self.supplier_id,
             "frameworkSlug": self.framework.slug,
-            "questionAnswers": self.question_answers,
+            "questionAnswers": self.declaration,
+            "declaration": self.declaration,
         }
 
 
