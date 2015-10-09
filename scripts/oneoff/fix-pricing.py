@@ -20,9 +20,15 @@ def update(client):
             if isinstance(service.get('priceMin'), (int, float)):
                 change = True
                 service['priceMin'] = '{}'.format(service['priceMin'])
+            elif service.get('priceMin') is None:
+                change = True
+                service['priceMin'] = ''
             if isinstance(service.get('priceMax'), (int, float)):
                 change = True
                 service['priceMax'] = '{}'.format(service['priceMax'])
+            elif service.get('priceMax') is None:
+                change = True
+                service['priceMax'] = ''
             if change:
                 try:
                     client.update_service(service['id'], service, 'migration')
