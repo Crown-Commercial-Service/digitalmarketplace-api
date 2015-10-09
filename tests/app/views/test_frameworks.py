@@ -22,6 +22,22 @@ class TestListFrameworks(BaseApplicationTest):
                          ['framework', 'id', 'name', 'slug', 'status'])
 
 
+class TestGetFramework(BaseApplicationTest):
+    def test_a_single_framework_is_returned(self):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-7')
+            data = json.loads(response.get_data())
+
+            assert_equal(response.status_code, 200)
+            assert_equal(data['frameworks']['slug'], 'g-cloud-7')
+
+    def test_a_404_is_raised_if_it_does_not_exist(self):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/biscuits-for-gov')
+
+            assert_equal(response.status_code, 404)
+
+
 class TestGetFrameworkStatus(BaseApplicationTest):
     def test_status_is_returned_for_existing_frameworks(self):
         with self.app.app_context():
@@ -43,7 +59,6 @@ class TestGetFrameworkStatus(BaseApplicationTest):
             data = json.loads(response.get_data())
 
             assert_equal(response.status_code, 404)
-            assert_equal(data['error'], "'biscuits-for-gov' is not a framework")
 
 
 class TestFrameworkStats(BaseApplicationTest):
