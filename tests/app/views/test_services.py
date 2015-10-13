@@ -172,6 +172,31 @@ class TestListServices(BaseApplicationTest):
             assert_equal(response.status_code, 200)
             assert_equal(len(data['services']), 3)
 
+    def test_list_services_with_given_frameworks(self):
+        with self.app.app_context():
+            self.setup_dummy_services_including_unpublished(1)
+
+            self.setup_dummy_service(
+                service_id='998',
+                status='published',
+                framework_id=2)
+            self.setup_dummy_service(
+                service_id='999',
+                status='published',
+                framework_id=3)
+
+            response = self.client.get('/services?framework=g-cloud-4')
+            data = json.loads(response.get_data())
+
+            assert_equal(response.status_code, 200)
+            assert_equal(len(data['services']), 1)
+
+            response = self.client.get('/services?framework=g-cloud-4,g-cloud-5')
+            data = json.loads(response.get_data())
+
+            assert_equal(response.status_code, 200)
+            assert_equal(len(data['services']), 2)
+
     def test_gets_only_active_frameworks_with_status_filter(self):
         with self.app.app_context():
             self.setup_dummy_service(

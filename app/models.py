@@ -424,6 +424,11 @@ class Service(db.Model, ServiceTableMixin):
         def has_statuses(self, *statuses):
             return self.filter(Service.status.in_(statuses))
 
+        def has_frameworks(self, *frameworks):
+            return self.filter(
+                Service.framework.has(Framework.slug.in_(frameworks))
+            )
+
     def get_link(self):
         return url_for(".get_service", service_id=self.service_id)
 
