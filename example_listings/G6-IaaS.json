@@ -2,6 +2,8 @@
    "id": "1234567890123456",
    "supplierId": 1,
    "lot": "IaaS",
+   "frameworkName": "G-Cloud 6",
+   "frameworkSlug": "g-cloud-6",
    "title": "My Iaas Service",
    "createdAt": "2014-12-23T14:46:22Z",
    "serviceTypes": [
