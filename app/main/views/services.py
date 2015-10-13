@@ -44,7 +44,7 @@ def list_services():
     services = Service.query.framework_is_live()
 
     if request.args.get('status'):
-        services = services.has_statuses(*request.values.getlist('status'))
+        services = services.has_statuses(*request.args['status'].split(','))
 
     if supplier_id is not None:
         try:

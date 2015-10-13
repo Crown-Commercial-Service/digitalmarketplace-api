@@ -215,7 +215,7 @@ class TestListServices(BaseApplicationTest):
 
     def test_list_services_gets_combination_of_enabled_and_disabled(self):
         self.setup_dummy_services_including_unpublished(1)
-        response = self.client.get('/services?status=disabled&status=enabled')
+        response = self.client.get('/services?status=disabled,enabled')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
@@ -225,7 +225,7 @@ class TestListServices(BaseApplicationTest):
 
     def test_list_services_gets_combination_of_enabled_and_published(self):
         self.setup_dummy_services_including_unpublished(1)
-        response = self.client.get('/services?status=published&status=enabled')
+        response = self.client.get('/services?status=published,enabled')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
