@@ -91,33 +91,6 @@ def validate_user_auth_json_or_400(submitted_json):
         abort(400, "JSON was not a valid format. {}".format(e.message))
 
 
-def detect_framework_or_400(submitted_json):
-    framework = detect_framework(submitted_json)
-    if not framework:
-        abort(400, "JSON was not a valid format. {}".format(
-            reason_for_failure(submitted_json))
-        )
-
-    return framework
-
-
-def detect_framework(submitted_json):
-    schemas = [
-        ('G-Cloud 4', 'services-g-cloud-4'),
-        ('G-Cloud 5', 'services-g-cloud-5'),
-        ('G-Cloud 6', 'services-g-cloud-6'),
-        ('G-Cloud 7', 'services-g-cloud-7'),
-    ]
-    for framework_name, schema_prefix in schemas:
-        schema_names = [
-            name for name in SCHEMA_NAMES if name.startswith(schema_prefix)
-        ]
-        for schema_name in schema_names:
-            if validates_against_schema(schema_name, submitted_json):
-                return framework_name
-    return False
-
-
 def validate_supplier_json_or_400(submitted_json):
     try:
         get_validator('suppliers').validate(submitted_json)
@@ -178,46 +151,6 @@ def min_price_less_than_max_price(error_map, json_data):
             if Decimal(json_data['priceMin']) > Decimal(json_data['priceMax']):
                 return {'priceMax': 'max_less_than_min'}
     return {}
-
-
-def reason_for_failure(submitted_json):
-    response = []
-    try:
-        get_validator('services-g-cloud-4').validate(submitted_json)
-    except ValidationError as e1:
-        response.append('Not G4: %s' % e1.message)
-
-    try:
-        get_validator('services-g-cloud-5').validate(submitted_json)
-    except ValidationError as e1:
-        response.append('Not G5: %s' % e1.message)
-
-    try:
-        get_validator('services-g-cloud-6-scs').validate(submitted_json)
-    except ValidationError as e1:
-        response.append('Not SCS: %s' % e1.message)
-
-    try:
-        get_validator('services-g-cloud-6-saas').validate(submitted_json)
-    except ValidationError as e2:
-        response.append('Not SaaS: %s' % e2.message)
-
-    try:
-        get_validator('services-g-cloud-6-paas').validate(submitted_json)
-    except ValidationError as e3:
-        response.append('Not PaaS: %s' % e3.message)
-
-    try:
-        get_validator('services-g-cloud-6-iaas').validate(submitted_json)
-    except ValidationError as e4:
-        response.append('Not IaaS: %s' % e4.message)
-
-    try:
-        get_validator('services-g-cloud-7-scs').validate(submitted_json)
-    except ValidationError as e5:
-        response.append('Not 7-SCS: %s' % e5.message)
-
-    return '. '.join(response)
 
 
 def is_valid_service_id(service_id):
