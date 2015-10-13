@@ -259,8 +259,8 @@ class TestListServices(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 5)
-        next_link = data['links']['next']
-        assert_in('page=2', next_link)
+        assert_in('page=2', data['links']['next'])
+        assert_in('page=2', data['links']['last'])
 
     def test_paginated_list_services_page_two(self):
         self.setup_dummy_services_including_unpublished(7)
