@@ -69,7 +69,7 @@ def process_boolean(declaration, field):
 
 
 def process_string(declaration, field):
-    return get_or_else_empty_string(declaration, field).encode("utf-8")
+    return get_or_else_empty_string(declaration, field)
 
 
 def process_checkbox_counts(declaration, field):
@@ -78,7 +78,7 @@ def process_checkbox_counts(declaration, field):
 
 
 def process_list_to_string(declaration, field):
-    return ", ".encode("utf-8").join(get_or_else_empty_list(declaration, field))
+    return ", ".join(get_or_else_empty_list(declaration, field))
 
 
 # expected length of checkbox groups - if users don't tick all they fail
@@ -165,18 +165,18 @@ def process_supplier_declaration(supplier_declaration, questions):
 
 
 # get the list of questions, in order, from the manifest
-def process_declaration_manifest(path_to_declaration_manifest):
+def process_declaration_manifest(path_to_manifest):
     """
     Reads the manifest to get the order list of questions
     - Used to ensure that we can match the JSON key (SQ3-1d)
         to the position on the supplier web page (43)
     - this allows for the CSV row to match the order of questions in the manifest
         and subsequently the order on the application
-    :param path_to_declaration_manifest:
+    :param path_to_manifest:
     :return:
     """
     all_the_questions_in_order = []
-    with open(path_to_declaration_manifest, 'r') as f:
+    with open(path_to_manifest, 'r') as f:
         declaration_pages = yaml.load(f)
         for declaration_page in declaration_pages:
             for question in declaration_page['questions']:
@@ -201,21 +201,10 @@ def headers(questions):
     csv_headers.append('Digital Marketplace ID')
     csv_headers.append('Digital Marketplace Name')
     csv_headers.append('Digital Marketplace Duns number')
+    csv_headers.append('State of Declaration')
     for index, value in enumerate(questions):
         csv_headers.append("{}:{}".format(index+1, value))
     return csv_headers
-
-
-def supplier_has_completed_declaration(declaration):
-    """
-    If declartion has a value for any of the keys on the 4th page we treat it as completed
-    All pages must be valid to save so any key set implies data saved on last page
-    To get to last page required all previous pages completed
-    SQ2-2a is the first compulsory question on the 4th page
-    :param declaration:
-    :return:
-    """
-    return "SQ2-2a" in declaration['selectionAnswers']['questionAnswers']
 
 
 def suppliers_on_framework(data_api_url, data_api_token, questions):
@@ -238,28 +227,40 @@ def suppliers_on_framework(data_api_url, data_api_token, questions):
     for supplier in client.find_suppliers_iter():
         try:
             selection = client.get_selection_answers(supplier['id'], 'g-cloud-7')
-            if supplier_has_completed_declaration(selection):
-                processed_supplier_declaration = \
-                    process_supplier_declaration(
-                        selection['selectionAnswers']['questionAnswers'],
-                        questions
-                    )
+            status = selection['selectionAnswers']['questionAnswers']['status']
 
-                supplier_declaration = list()
-                supplier_declaration.append(supplier['id'])
-                supplier_declaration.append(supplier['name'])
-                supplier_declaration.append(supplier.get('dunsNumber', ""))
-                for declaration in processed_supplier_declaration:
-                    supplier_declaration.append(declaration)
+            processed_supplier_declaration = \
+                process_supplier_declaration(
+                    selection['selectionAnswers']['questionAnswers'],
+                    questions
+                )
 
+            supplier_declaration = list()
+            supplier_declaration.append(supplier['id'])
+            supplier_declaration.append(supplier['name'])
+            supplier_declaration.append(supplier.get('dunsNumber', ""))
+            supplier_declaration.append(status)
+            for declaration in processed_supplier_declaration:
+                supplier_declaration.append(declaration)
+
+            try:
                 writer.writerow(supplier_declaration)
+            except UnicodeEncodeError:
+                writer.writerow(
+                    [field.encode('utf-8') if hasattr(field, 'encode') else field for field in supplier_declaration]
+                )
+
         except HTTPError as e:
             if e.status_code == 404:
                 # not all suppliers make a declaration so this is fine
+                # status = 'unstarted'
                 pass
             else:
+                # status = 'error-{}'.format(e.status_code)
                 raise e
-
+        except KeyError:
+            # status = 'error-key-error'
+            pass
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
@@ -267,5 +268,5 @@ if __name__ == '__main__':
     suppliers_on_framework(
         data_api_url=arguments['<data_api_url>'],
         data_api_token=arguments['<data_api_token>'],
-        questions=process_declaration_manifest(arguments['<path_to_declaration_manifest>'])
+        questions=process_declaration_manifest(arguments['<path_to_manifest>'])
     )
