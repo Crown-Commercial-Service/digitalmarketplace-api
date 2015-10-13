@@ -29,10 +29,11 @@ def update_and_validate_service(service, service_payload):
     return service
 
 
-def validate_service(service):
-    framework = Framework.query.filter(
-        Framework.id == service.framework_id
-    ).first()
+def validate_service(service, framework=None):
+    if not framework:
+        framework = Framework.query.filter(
+            Framework.id == service.framework_id
+        ).first()
     slug = framework.slug
 
     if slug in ['g-cloud-4', 'g-cloud-5']:
@@ -48,13 +49,16 @@ def validate_service(service):
         'status': service.status
     })
 
-    data = drop_foreign_fields(
-        data,
-        ['service_id', 'supplierName', 'links', 'frameworkSlug', 'frameworkName', 'updatedAt'])
+    data = drop_api_exported_fields_so_that_api_import_will_validate(data)
     errs = get_validation_errors(validator_name, data, enforce_required=True)
     if errs:
         abort(400, errs)
     return
+
+
+def drop_api_exported_fields_so_that_api_import_will_validate(data):
+    return drop_foreign_fields(
+        data, ['service_id', 'supplierName', 'links', 'frameworkSlug', 'frameworkName', 'updatedAt'])
 
 
 def commit_and_archive_service(updated_service, update_details,

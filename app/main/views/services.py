@@ -7,7 +7,7 @@ from .. import main
 from ...models import ArchivedService, Service, Supplier, Framework
 
 from sqlalchemy import asc
-from ...validation import detect_framework_or_400, is_valid_service_id_or_400
+from ...validation import is_valid_service_id_or_400
 from ...utils import url_for, pagination_links, drop_foreign_fields, display_list, strip_whitespace_from_data, \
     get_valid_page_or_1
 
@@ -18,6 +18,8 @@ from ...service_utils import (
     delete_service_from_index,
     validate_and_return_updater_request,
     commit_and_archive_service,
+    validate_service,
+    drop_api_exported_fields_so_that_api_import_will_validate
 )
 
 
@@ -155,12 +157,7 @@ def import_service(service_id):
     updater_json = validate_and_return_updater_request()
     service_json = validate_and_return_service_request(service_id)
 
-    service_data = drop_foreign_fields(
-        service_json,
-        ['supplierName', 'links', 'frameworkSlug', 'frameworkName']
-    )
-    service_data = strip_whitespace_from_data(service_data)
-    framework = detect_framework_or_400(service_data)
+    service_data = strip_whitespace_from_data(service_json)
     service_data = drop_foreign_fields(service_data, ['id'])
 
     supplier_id = service_data.pop('supplierId')
@@ -170,23 +167,24 @@ def import_service(service_id):
     if supplier is None:
         abort(400, "Key (supplierId)=({}) is not present".format(supplier_id))
 
+    framework_slug = service_data.get('frameworkSlug')
     framework = Framework.query.filter(
-        Framework.name == framework
+        Framework.slug == framework_slug
     ).first()
+    if framework is None:
+        abort(400, "Key (frameworkSlug)=({}) is not present".format(framework_slug))
 
     service = Service(service_id=service_id)
     service.supplier_id = supplier_id
     service.framework_id = framework.id
     service.status = service_data.pop('status', 'published')
     now = datetime.utcnow()
-    service.created_at = service_data.get('createdAt', now)
-    service.updated_at = service_data.get('updatedAt', now)
+    service.created_at = service_data.pop('createdAt', now)
+    service.updated_at = service_data.pop('updatedAt', now)
 
-    service_data = drop_foreign_fields(
-        service_data,
-        ['createdAt', 'updatedAt']
-    )
     service.data = service_data
+    validate_service(service, framework=framework)
+    service.data = drop_api_exported_fields_so_that_api_import_will_validate(service.data)
 
     commit_and_archive_service(service, updater_json,
                                AuditTypes.import_service)
