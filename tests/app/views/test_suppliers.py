@@ -908,30 +908,6 @@ class TestSetSupplierSupplierFramework(BaseApplicationTest):
                 .find_by_supplier_and_framework(0, 'test-open')
             assert_equal(answers.declaration['question'], 'answer2')
 
-    def test_can_only_set_questions_on_open_framework(self):
-        with self.app.app_context():
-            framework = Framework(
-                slug='test-pending',
-                name='Test pending',
-                framework='gcloud',
-                status='pending')
-            db.session.add(framework)
-            db.session.commit()
-
-            response = self.client.put(
-                '/suppliers/0/selection-answers/test-pending',
-                data=json.dumps({
-                    'updated_by': 'testing',
-                    'selectionAnswers': {
-                        'supplierId': 0,
-                        'frameworkSlug': 'test-pending',
-                        'questionAnswers': {
-                            'question': 'answer'
-                        }}}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 400)
-
     def test_invalid_payload_fails(self):
         with self.app.app_context():
             response = self.client.put(
@@ -1049,27 +1025,6 @@ class TestSetSupplierDeclarations(BaseApplicationTest):
             supplier_framework = SupplierFramework \
                 .find_by_supplier_and_framework(0, 'test-open')
             assert_equal(supplier_framework.declaration['question'], 'answer2')
-
-    def test_can_only_set_questions_on_open_framework(self):
-        with self.app.app_context():
-            framework = Framework(
-                slug='test-pending',
-                name='Test pending',
-                framework='gcloud',
-                status='pending')
-            db.session.add(framework)
-            db.session.commit()
-
-            response = self.client.put(
-                '/suppliers/0/frameworks/test-pending/declaration',
-                data=json.dumps({
-                    'updated_by': 'testing',
-                    'declaration': {
-                        'question': 'answer'
-                        }}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 400)
 
     def test_invalid_payload_fails(self):
         with self.app.app_context():
