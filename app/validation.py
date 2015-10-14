@@ -24,6 +24,7 @@ SCHEMA_NAMES = [
     'services-g-cloud-7-saas',
     'services-g-cloud-7-paas',
     'services-g-cloud-7-scs',
+    'services-digital-outcomes-and-specialists-lot1',
     'services-update',
     'users',
     'users-auth',
