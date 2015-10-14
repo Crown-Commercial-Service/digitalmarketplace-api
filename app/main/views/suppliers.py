@@ -263,8 +263,6 @@ def set_a_declaration(supplier_id, framework_slug):
     framework = Framework.query.filter(
         Framework.slug == framework_slug
     ).first_or_404()
-    if framework.status != 'open':
-        abort(400, 'Framework must be open')
 
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         supplier_id, framework_slug
