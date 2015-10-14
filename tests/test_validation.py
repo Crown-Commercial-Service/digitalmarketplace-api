@@ -5,11 +5,10 @@ import json
 
 from nose.tools import assert_equal, assert_in, assert_not_in
 from jsonschema import validate, SchemaError, ValidationError
+from app.service_utils import drop_api_exported_fields_so_that_api_import_will_validate
 
-from app.validation import detect_framework, \
-    validates_against_schema, is_valid_service_id, \
-    is_valid_date, is_valid_acknowledged_state, get_validation_errors, \
-    is_valid_string
+from app.validation import validates_against_schema, is_valid_service_id, is_valid_date, \
+    is_valid_acknowledged_state, get_validation_errors, is_valid_string
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                     '..', 'example_listings'))
@@ -241,52 +240,23 @@ def test_auth_user_validates():
         yield assert_equal, result, expected, message
 
 
-def test_example_json_validates_correctly():
-    cases = [
-        ("G4", "G-Cloud 4"),
-        ("G5", "G-Cloud 5"),
-        ("G6-SCS", "G-Cloud 6"),
-        ("G6-SaaS", "G-Cloud 6"),
-        ("G6-PaaS", "G-Cloud 6"),
-        ("G6-IaaS", "G-Cloud 6"),
-        ("G6-INVALID", False)
-    ]
-
-    for example, expected, in cases:
-        data = load_example_listing(example)
-        yield assert_example, example, detect_framework(data), expected
-
-
-def test_additional_fields_are_not_allowed():
-    cases = [
-        ("G4", False),
-        ("G5", False),
-        ("G6-SCS", False),
-        ("G6-SaaS", False),
-        ("G6-PaaS", False),
-        ("G6-IaaS", False)
-    ]
-
-    for example, expected in cases:
-        data = load_example_listing(example)
-        data.update({'newKey': 1})
-        yield assert_example, example, detect_framework(data), expected
-
-
 def test_valid_g4_service_has_no_validation_errors():
     data = load_example_listing("G4")
+    data = drop_api_exported_fields_so_that_api_import_will_validate(data)
     errs = get_validation_errors("services-g-cloud-4", data)
     assert not errs
 
 
 def test_valid_g5_service_has_no_validation_errors():
     data = load_example_listing("G5")
+    data = drop_api_exported_fields_so_that_api_import_will_validate(data)
     errs = get_validation_errors("services-g-cloud-5", data)
     assert not errs
 
 
 def test_valid_g6_service_has_no_validation_errors():
     data = load_example_listing("G6-PaaS")
+    data = drop_api_exported_fields_so_that_api_import_will_validate(data)
     errs = get_validation_errors("services-g-cloud-6-paas", data)
     assert not errs
 

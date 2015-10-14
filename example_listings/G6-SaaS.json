@@ -2,6 +2,8 @@
    "id": "1234567890123458",
    "supplierId": 1,
    "lot": "SaaS",
+   "frameworkName": "G-Cloud 6",
+   "frameworkSlug": "g-cloud-6",
    "title": "A SaaS with lots of options",
    "createdAt": "2014-12-23T14:51:19Z",
    "serviceTypes": [

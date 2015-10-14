@@ -9,6 +9,8 @@
   "supplierId":1,
   "status":"published",
   "lot":"SaaS",
+  "frameworkName": "G-Cloud 5",
+  "frameworkSlug": "g-cloud-5",
   "serviceTypes":[
     "Marketing",
     "Software development tools"

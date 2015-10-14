@@ -9,6 +9,8 @@
   "supplierId": 1,
   "status": "disabled",
   "lot": "IaaS",
+  "frameworkName": "G-Cloud 4",
+  "frameworkSlug": "g-cloud-4",
   "serviceTypes": [
     "Storage"
   ],
