@@ -17,6 +17,33 @@ from . import db
 from .utils import link, url_for, strip_whitespace_from_data
 
 
+framework_lots = db.Table(
+    'framework_lots', db.Model.metadata,
+    db.Column('framework_id', db.Integer, db.ForeignKey('frameworks.id'), nullable=False),
+    db.Column('lot_id', db.Integer, db.ForeignKey('lots.id'), nullable=False)
+)
+
+
+class Lot(db.Model):
+    __tablename__ = 'lots'
+
+    id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String, nullable=False, index=True)
+    name = db.Column(db.String, nullable=False)
+    one_service_limit = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __repr__(self):
+        return '<{}: {}>'.format(self.__class__.__name__, self.name)
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'slug': self.slug,
+            'name': self.name,
+            'one_service_limit': self.one_service_limit,
+        }
+
+
 class Framework(db.Model):
     __tablename__ = 'frameworks'
 
@@ -32,6 +59,17 @@ class Framework(db.Model):
     status = db.Column(db.Enum(STATUSES, name='framework_status_enum'),
                        index=True, nullable=False,
                        server_default='pending')
+    lots = db.relationship(
+        Lot, secondary=framework_lots,
+        lazy='joined', innerjoin=False,
+        backref='frameworks'
+    )
+
+    def get_lot(self, lot_slug):
+        return next(
+            (lot for lot in self.lots if lot.slug == lot_slug.lower()),
+            None
+        )
 
     def serialize(self):
         return {
@@ -41,6 +79,9 @@ class Framework(db.Model):
             'framework': self.framework,
             'status': self.status,
         }
+
+    def __repr__(self):
+        return '<{}: {}>'.format(self.__class__.__name__, self.name)
 
 
 class ContactInformation(db.Model):
@@ -338,12 +379,21 @@ class ServiceTableMixin(object):
                          index=True, unique=False, nullable=False)
 
     @declared_attr
+    def lot_id(cls):
+        return db.Column(db.BigInteger, db.ForeignKey('lots.id'),
+                         index=True, unique=False, nullable=False)
+
+    @declared_attr
     def supplier(cls):
         return db.relationship(Supplier, lazy='joined', innerjoin=True)
 
     @declared_attr
     def framework(cls):
         return db.relationship(Framework, lazy='joined', innerjoin=True)
+
+    @declared_attr
+    def lot(cls):
+        return db.relationship(Lot, lazy='joined', innerjoin=True)
 
     def serialize(self):
         """
