@@ -24,17 +24,10 @@ def get_valid_page_or_1():
 def pagination_links(pagination, endpoint, args):
     links = dict()
     if pagination.has_prev:
-        links['prev'] = url_for(endpoint,
-                                **dict(list(args.items()) +
-                                       list({'page': pagination.prev_num}
-                                            .items()
-                                            )))
+        links['prev'] = url_for(endpoint, **dict(list(args.items()) + [('page', pagination.prev_num)]))
     if pagination.has_next:
-        links['next'] = url_for(endpoint,
-                                **dict(list(args.items()) +
-                                       list({'page': pagination.next_num}
-                                            .items()
-                                            )))
+        links['next'] = url_for(endpoint, **dict(list(args.items()) + [('page', pagination.next_num)]))
+        links['last'] = url_for(endpoint, **dict(list(args.items()) + [('page', pagination.pages)]))
     return links
 
 

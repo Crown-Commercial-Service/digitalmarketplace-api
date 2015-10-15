@@ -41,10 +41,17 @@ def list_services():
 
     supplier_id = request.args.get('supplier_id')
 
-    services = Service.query.framework_is_live()
+    if request.args.get('framework'):
+        services = Service.query.has_frameworks(*[
+            slug.strip() for slug in request.args['framework'].split(',')
+        ])
+    else:
+        services = Service.query.framework_is_live()
 
     if request.args.get('status'):
-        services = services.has_statuses(*request.values.getlist('status'))
+        services = services.has_statuses(*[
+            status.strip() for status in request.args['status'].split(',')
+        ])
 
     if supplier_id is not None:
         try:

@@ -172,6 +172,31 @@ class TestListServices(BaseApplicationTest):
             assert_equal(response.status_code, 200)
             assert_equal(len(data['services']), 3)
 
+    def test_list_services_with_given_frameworks(self):
+        with self.app.app_context():
+            self.setup_dummy_services_including_unpublished(1)
+
+            self.setup_dummy_service(
+                service_id='998',
+                status='published',
+                framework_id=2)
+            self.setup_dummy_service(
+                service_id='999',
+                status='published',
+                framework_id=3)
+
+            response = self.client.get('/services?framework=g-cloud-4')
+            data = json.loads(response.get_data())
+
+            assert_equal(response.status_code, 200)
+            assert_equal(len(data['services']), 1)
+
+            response = self.client.get('/services?framework=g-cloud-4,g-cloud-5')
+            data = json.loads(response.get_data())
+
+            assert_equal(response.status_code, 200)
+            assert_equal(len(data['services']), 2)
+
     def test_gets_only_active_frameworks_with_status_filter(self):
         with self.app.app_context():
             self.setup_dummy_service(
@@ -215,7 +240,7 @@ class TestListServices(BaseApplicationTest):
 
     def test_list_services_gets_combination_of_enabled_and_disabled(self):
         self.setup_dummy_services_including_unpublished(1)
-        response = self.client.get('/services?status=disabled&status=enabled')
+        response = self.client.get('/services?status=disabled,enabled')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
@@ -225,7 +250,7 @@ class TestListServices(BaseApplicationTest):
 
     def test_list_services_gets_combination_of_enabled_and_published(self):
         self.setup_dummy_services_including_unpublished(1)
-        response = self.client.get('/services?status=published&status=enabled')
+        response = self.client.get('/services?status=published,enabled')
         data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 200)
@@ -259,8 +284,8 @@ class TestListServices(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 5)
-        next_link = data['links']['next']
-        assert_in('page=2', next_link)
+        assert_in('page=2', data['links']['next'])
+        assert_in('page=2', data['links']['last'])
 
     def test_paginated_list_services_page_two(self):
         self.setup_dummy_services_including_unpublished(7)
