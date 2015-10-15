@@ -1049,3 +1049,131 @@ class TestCompleteDraft(BaseApplicationTest):
         assert_equal(res.status_code, 400)
         errors = json.loads(res.get_data())['error']
         assert_in('serviceSummary', errors)
+
+
+class TestDOSServices(BaseApplicationTest):
+    service_id = None
+    updater_json = None
+    create_draft_json = None
+
+    def setup(self):
+        super(TestDOSServices, self).setup()
+
+        payload = self.load_example_listing("DOS-LOT1")
+        self.updater_json = {
+            'update_details': {
+                'updated_by': 'joeblogs'}
+        }
+        self.create_draft_json = self.updater_json.copy()
+        self.create_draft_json['services'] = payload
+
+        with self.app.app_context():
+            framework_enum_vals = db.session.execute("SELECT enum_range(NULL::framework_enum);").first()[0]
+            if 'dos' not in str(framework_enum_vals):
+                self.bootstrap_dos()
+
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+            db.session.add(
+                ContactInformation(
+                    supplier_id=1,
+                    contact_name=u"Liz",
+                    email=u"liz@royal.gov.uk",
+                    postcode=u"SW1A 1AA"
+                )
+            )
+            db.session.commit()
+
+    def test_should_create_dos_draft_with_minimal_data(self):
+        res = self._post_dos_draft()
+
+        data = json.loads(res.get_data())
+        assert_equal(data['services']['frameworkSlug'], 'digital-outcomes-and-specialists')
+        assert_equal(data['services']['frameworkName'], 'Digital Outcomes and Specialists')
+        assert_equal(data['services']['status'], 'not-submitted')
+        assert_equal(data['services']['supplierId'], 1)
+        assert_equal(data['services']['lot'], 'LOT1')
+
+    def test_create_dos_draft_should_create_audit_event(self):
+        res = self._post_dos_draft()
+
+        data = json.loads(res.get_data())
+        draft_id = data['services']['id']
+
+        audit_response = self.client.get('/audit-events')
+        assert_equal(audit_response.status_code, 200)
+        data = json.loads(audit_response.get_data())
+        assert_equal(len(data['auditEvents']), 1)
+        assert_equal(data['auditEvents'][0]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][0]['type'], 'create_draft_service')
+        assert_equal(
+            data['auditEvents'][0]['data']['draftId'], draft_id
+        )
+
+    def test_should_fetch_a_dos_draft(self):
+        res = self._post_dos_draft()
+        draft_id = json.loads(res.get_data())['services']['id']
+        fetch = self.client.get('/draft-services/{}'.format(draft_id))
+        assert_equal(fetch.status_code, 200)
+        data = json.loads(res.get_data())
+        assert_equal(data['services']['example'], "This is an example")
+        assert_equal(data['services']['id'], draft_id)
+
+    def test_should_delete_a_dos_draft(self):
+        res = self._post_dos_draft()
+        draft_id = json.loads(res.get_data())['services']['id']
+        fetch = self.client.get('/draft-services/{}'.format(draft_id))
+        assert_equal(fetch.status_code, 200)
+        delete = self.client.delete(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        assert_equal(delete.status_code, 200)
+
+        audit_response = self.client.get('/audit-events')
+        assert_equal(audit_response.status_code, 200)
+        data = json.loads(audit_response.get_data())
+
+        assert_equal(len(data['auditEvents']), 2)
+        assert_equal(data['auditEvents'][0]['type'], 'create_draft_service')
+        assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
+        assert_equal(data['auditEvents'][1]['type'], 'delete_draft_service')
+        assert_equal(
+            data['auditEvents'][1]['data']['draftId'], draft_id
+        )
+
+        fetch_again = self.client.get(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        assert_equal(fetch_again.status_code, 404)
+
+    def test_should_edit_dos_draft(self):
+        res = self._post_dos_draft()
+        draft_id = json.loads(res.get_data())['services']['id']
+        update = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps({
+                'update_details': {
+                    'updated_by': 'joeblogs'},
+                'services': {
+                    'example': 'updated example'
+                }
+            }),
+            content_type='application/json')
+        assert_equal(update.status_code, 200)
+
+        fetch = self.client.get('/draft-services/{}'.format(draft_id))
+        assert_equal(fetch.status_code, 200)
+        data = json.loads(fetch.get_data())
+        assert_equal(data['services']['example'], "updated example")
+        assert_equal(data['services']['id'], draft_id)
+
+    def _post_dos_draft(self):
+        res = self.client.post(
+            '/draft-services/digital-outcomes-and-specialists/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+        assert_equal(res.status_code, 201)
+        return res
