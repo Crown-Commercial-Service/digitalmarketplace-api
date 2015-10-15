@@ -273,6 +273,10 @@ def create_new_draft_service(framework_slug):
     if framework.status != 'open':
         abort(400, "'{}' is not open for submissions".format(framework_slug))
 
+    lot = framework.get_lot(draft_json['lot'])
+    if not lot:
+        abort(400, "Incorrect lot '{}' for framework '{}'".format(draft_json['lot'], framework_slug))
+
     supplier_id = draft_json['supplierId']
     errs = get_draft_validation_errors(draft_json, slug=framework_slug)
     if errs:
@@ -281,10 +285,12 @@ def create_new_draft_service(framework_slug):
     draft_json = drop_foreign_fields(draft_json, ['supplierId'])
     draft = DraftService(
         framework_id=framework.id,
+        lot_id=lot.id,
         supplier_id=supplier_id,
         data=draft_json,
         status="not-submitted"
     )
+
     try:
         db.session.add(draft)
         db.session.flush()

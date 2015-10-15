@@ -1,7 +1,6 @@
 from dmutils.audit import AuditTypes
 
 from flask import jsonify, abort, request, current_app
-from datetime import datetime
 
 from .. import main
 from ...models import ArchivedService, Service, Supplier, Framework
@@ -181,21 +180,25 @@ def import_service(service_id):
     if framework is None:
         abort(400, "Key (frameworkSlug)=({}) is not present".format(framework_slug))
 
-    service = Service(service_id=service_id)
-    service.supplier_id = supplier_id
-    service.framework_id = framework.id
-    service.status = service_data.pop('status', 'published')
-    now = datetime.utcnow()
-    service.created_at = service_data.pop('createdAt', now)
-    service.updated_at = service_data.pop('updatedAt', now)
+    lot = framework.get_lot(service_data['lot'])
+    if not lot:
+        abort(400, "Incorrect lot '{}' for framework '{}'".format(service_data['lot'], framework.slug))
 
-    service.data = service_data
+    service_data = drop_api_exported_fields_so_that_api_import_will_validate(service_data)
+    service = Service(
+        service_id=service_id,
+        supplier_id=supplier_id,
+        lot_id=lot.id,
+        framework_id=framework.id,
+        status=service_data.pop('status', 'published'),
+        created_at=service_data.pop('createdAt', None),
+        updated_at=service_data.pop('updatedAt', None),
+        data=service_data,
+    )
+
     validate_service(service, framework=framework)
-    service.data = drop_api_exported_fields_so_that_api_import_will_validate(service.data)
 
-    commit_and_archive_service(service, updater_json,
-                               AuditTypes.import_service)
-
+    commit_and_archive_service(service, updater_json, AuditTypes.import_service)
     index_service(service)
 
     return jsonify(services=service.serialize()), 201

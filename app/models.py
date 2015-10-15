@@ -448,6 +448,7 @@ class Service(db.Model, ServiceTableMixin):
     def create_from_draft(draft, status):
         return Service(
             framework_id=draft.framework_id,
+            lot_id=draft.lot_id,
             service_id=generate_new_service_id(draft.framework.slug),
             supplier_id=draft.supplier_id,
             data=draft.data,
@@ -493,6 +494,7 @@ class ArchivedService(db.Model, ServiceTableMixin):
     def from_service(service):
         return ArchivedService(
             framework_id=service.framework_id,
+            lot_id=service.lot_id,
             service_id=service.service_id,
             supplier_id=service.supplier_id,
             created_at=service.created_at,
@@ -526,6 +528,7 @@ class DraftService(db.Model, ServiceTableMixin):
     def from_service(service):
         return DraftService(
             framework_id=service.framework_id,
+            lot_id=service.lot_id,
             service_id=service.service_id,
             supplier_id=service.supplier_id,
             data=service.data,
@@ -547,6 +550,7 @@ class DraftService(db.Model, ServiceTableMixin):
 
         return DraftService(
             framework_id=self.framework_id,
+            lot_id=self.lot_id,
             supplier_id=self.supplier_id,
             data=data,
             status='not-submitted',

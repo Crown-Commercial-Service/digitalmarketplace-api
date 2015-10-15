@@ -93,7 +93,7 @@ class BaseApplicationTest(object):
             db.session.commit()
 
     def setup_dummy_service(self, service_id, supplier_id=1, data=None,
-                            status='published', framework_id=1):
+                            status='published', framework_id=1, lot_id=1):
         now = datetime.utcnow()
         db.session.add(Service(service_id=service_id,
                                supplier_id=supplier_id,
@@ -103,6 +103,7 @@ class BaseApplicationTest(object):
                                                   format(service_id)
                                },
                                framework_id=framework_id,
+                               lot_id=lot_id,
                                created_at=now,
                                updated_at=now))
 
@@ -161,7 +162,7 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             db.session.remove()
             for table in reversed(db.metadata.sorted_tables):
-                if table.name != "frameworks":
+                if table.name not in ["lots", "frameworks", "framework_lots"]:
                     db.engine.execute(table.delete())
             Framework.query.filter(Framework.id >= 100).delete()
             db.session.commit()

@@ -16,7 +16,7 @@ from dmutils.formats import DATETIME_FORMAT
 
 
 class TestListServicesOrdering(BaseApplicationTest):
-    def test_should_order_supplier_services_by_framework_lot_name(self):
+    def setup_services(self):
         with self.app.app_context():
             self.app.config['DM_API_SERVICES_PAGE_SIZE'] = 10
             now = datetime.utcnow()
@@ -33,12 +33,13 @@ class TestListServicesOrdering(BaseApplicationTest):
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
 
-            def insert_service(listing, service_id, framework_id):
+            def insert_service(listing, service_id, lot_id, framework_id):
                 db.session.add(Service(service_id=service_id,
                                        supplier_id=1,
                                        updated_at=now,
                                        status='published',
                                        created_at=now,
+                                       lot_id=lot_id,
                                        framework_id=framework_id,
                                        data=listing))
 
@@ -49,15 +50,18 @@ class TestListServicesOrdering(BaseApplicationTest):
             g6_paas_2['serviceName'] = "a service name"
             g5_paas['lot'] = "PaaS"
 
-            insert_service(g5_paas, "g5_paas", 3)
-            insert_service(g5_saas, "g5_saas", 3)
-            insert_service(g6_iaas_1, "g6_iaas_1", 1)
-            insert_service(g6_iaas_2, "g6_iaas_2", 1)
-            insert_service(g6_paas_1, "g6_paas_1", 1)
-            insert_service(g6_paas_2, "g6_paas_2", 1)
-            insert_service(g6_saas, "g6_saas", 1)
+            insert_service(g5_paas, "g5_paas", 2, 3)
+            insert_service(g5_saas, "g5_saas", 1, 3)
+            insert_service(g6_iaas_1, "g6_iaas_1", 3, 1)
+            insert_service(g6_iaas_2, "g6_iaas_2", 3, 1)
+            insert_service(g6_paas_1, "g6_paas_1", 2, 1)
+            insert_service(g6_paas_2, "g6_paas_2", 2, 1)
+            insert_service(g6_saas, "g6_saas", 1, 1)
 
             db.session.commit()
+
+    def test_should_order_supplier_services_by_framework_lot_name(self):
+        self.setup_services()
 
         response = self.client.get('/services?supplier_id=1')
         data = json.loads(response.get_data())
@@ -74,45 +78,7 @@ class TestListServicesOrdering(BaseApplicationTest):
         ])
 
     def test_all_services_list_ordered_by_id(self):
-        with self.app.app_context():
-            self.app.config['DM_API_SERVICES_PAGE_SIZE'] = 10
-            now = datetime.utcnow()
-
-            g5_saas = self.load_example_listing("G5")
-            g5_paas = self.load_example_listing("G5")
-            g6_paas_2 = self.load_example_listing("G6-PaaS")
-            g6_iaas_1 = self.load_example_listing("G6-IaaS")
-            g6_paas_1 = self.load_example_listing("G6-PaaS")
-            g6_saas = self.load_example_listing("G6-SaaS")
-            g6_iaas_2 = self.load_example_listing("G6-IaaS")
-
-            db.session.add(Supplier(supplier_id=1, name=u"Supplier 1"))
-
-            def insert_service(listing, service_id, framework_id):
-                db.session.add(Service(service_id=service_id,
-                                       supplier_id=1,
-                                       updated_at=now,
-                                       status='published',
-                                       created_at=now,
-                                       framework_id=framework_id,
-                                       data=listing))
-
-            # override certain fields to create ordering difference
-            g6_iaas_1['serviceName'] = "b service name"
-            g6_iaas_2['serviceName'] = "a service name"
-            g6_paas_1['serviceName'] = "b service name"
-            g6_paas_2['serviceName'] = "a service name"
-            g5_paas['lot'] = "PaaS"
-
-            insert_service(g5_paas, "g5_paas", 3)
-            insert_service(g5_saas, "g5_saas", 3)
-            insert_service(g6_iaas_1, "g6_iaas_1", 1)
-            insert_service(g6_iaas_2, "g6_iaas_2", 1)
-            insert_service(g6_paas_1, "g6_paas_1", 1)
-            insert_service(g6_paas_2, "g6_paas_2", 1)
-            insert_service(g6_saas, "g6_saas", 1)
-
-            db.session.commit()
+        self.setup_services()
 
         response = self.client.get('/services')
         data = json.loads(response.get_data())
@@ -762,7 +728,7 @@ class TestPostService(BaseApplicationTest):
                 ),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert_equal(response.status_code, 200, response.get_data())
 
     def test_should_404_if_no_archived_service_found_by_pk(self):
         response = self.client.get('/archived-services/5')
@@ -1081,6 +1047,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                                    updated_at=now,
                                    status='published',
                                    created_at=now,
+                                   lot_id=3,
                                    framework_id=1,
                                    data=payload))
             db.session.add(Service(service_id="4-G2-0123-456",
@@ -1088,6 +1055,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                                    updated_at=now,
                                    status='published',
                                    created_at=now,
+                                   lot_id=3,
                                    framework_id=2,  # G-Cloud 4
                                    data=g4_payload))
             db.session.commit()
@@ -1171,7 +1139,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 ),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert_equal(response.status_code, 200, response.get_data())
 
 
 class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
@@ -1205,6 +1173,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
                                        updated_at=now,
                                        status=status,
                                        created_at=now,
+                                       lot_id=1,
                                        framework_id=1,
                                        data=self.services[status]))
 
@@ -1536,7 +1505,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             for field in ['id', 'supplierId', 'status']:
                 payload.pop(field, None)
             payload = drop_api_exported_fields_so_that_api_import_will_validate(payload)
-            assert_equal(response.status_code, 201)
+            assert_equal(response.status_code, 201, response.get_data())
             now = datetime.utcnow()
             service = Service.query.filter(Service.service_id == "4-disabled").first()
             assert_equal(service.status, 'disabled')
@@ -1670,6 +1639,7 @@ class TestGetService(BaseApplicationTest):
                                    created_at=now,
                                    status='published',
                                    data={'foo': 'bar'},
+                                   lot_id=1,
                                    framework_id=1))
             db.session.add(Service(service_id="123-disabled-456",
                                    supplier_id=1,
@@ -1677,6 +1647,7 @@ class TestGetService(BaseApplicationTest):
                                    created_at=now,
                                    status='disabled',
                                    data={'foo': 'bar'},
+                                   lot_id=1,
                                    framework_id=1))
             db.session.add(Service(service_id="123-enabled-456",
                                    supplier_id=1,
@@ -1684,6 +1655,7 @@ class TestGetService(BaseApplicationTest):
                                    created_at=now,
                                    status='enabled',
                                    data={'foo': 'bar'},
+                                   lot_id=1,
                                    framework_id=1))
             db.session.add(Service(service_id="123-expired-456",
                                    supplier_id=1,
@@ -1691,6 +1663,7 @@ class TestGetService(BaseApplicationTest):
                                    created_at=now,
                                    status='enabled',
                                    data={'foo': 'bar'},
+                                   lot_id=1,
                                    framework_id=123))
             db.session.commit()
 

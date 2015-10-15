@@ -135,6 +135,7 @@ class TestDraftServices(BaseApplicationTest):
                         status='published',
                         created_at=now,
                         data={'foo': 'bar'},
+                        lot_id=1,
                         framework_id=1)
                 )
 
@@ -884,7 +885,7 @@ class TestCopyDraft(BaseApplicationTest):
             content_type='application/json')
 
         data = json.loads(res.get_data())
-        assert_equal(res.status_code, 201)
+        assert_equal(res.status_code, 201, res.get_data())
         assert_equal(data['services']['lot'], 'SCS')
         assert_equal(data['services']['status'], 'not-submitted')
         assert_equal(data['services']['serviceName'], 'Draft copy')
@@ -992,7 +993,7 @@ class TestCompleteDraft(BaseApplicationTest):
             content_type='application/json')
 
         data = json.loads(res.get_data())
-        assert_equal(res.status_code, 200)
+        assert_equal(res.status_code, 200, res.get_data())
         assert_equal(data['services']['status'], 'submitted')
 
     def test_complete_draft_should_create_audit_event(self):

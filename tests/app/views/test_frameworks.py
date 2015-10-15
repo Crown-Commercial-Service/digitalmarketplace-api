@@ -97,6 +97,7 @@ class TestFrameworkStats(BaseApplicationTest):
                 for ind in range(count):
                     db.session.add(
                         DraftService(
+                            lot_id=1 + (ind % 4),
                             framework_id=framework_id,
                             supplier_id=supplier_id,
                             data={
