@@ -7,7 +7,7 @@ from datetime import datetime
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Service, Supplier, ContactInformation, Framework
+from app.models import Service, Supplier, ContactInformation, Framework, Lot
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -187,9 +187,17 @@ class BaseApplicationTest(object):
         db.session.execute("ALTER TYPE framework_enum ADD VALUE 'dos' AFTER 'gcloud';")
         db.session.execute("ALTER TYPE framework_status_enum ADD VALUE 'coming' BEFORE 'pending';")
         db.session.connection().connection.set_isolation_level(old_level)
-        db.session.add(Framework(name="Digital Outcomes and Specialists",
-                                 framework='dos', status='open',
-                                 slug='digital-outcomes-and-specialists'))
+
+        framework = Framework(
+            name="Digital Outcomes and Specialists",
+            framework='dos', status='open',
+            slug='digital-outcomes-and-specialists',
+            lots=[
+                Lot(name="DOS LOT 1", slug='lot1')
+            ]
+        )
+
+        db.session.add(framework)
         db.session.commit()
 
 

@@ -1176,5 +1176,5 @@ class TestDOSServices(BaseApplicationTest):
             '/draft-services/digital-outcomes-and-specialists/create',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
-        assert_equal(res.status_code, 201)
+        assert_equal(res.status_code, 201, res.get_data())
         return res
