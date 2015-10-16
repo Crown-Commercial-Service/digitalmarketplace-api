@@ -67,7 +67,7 @@ class Framework(db.Model):
 
     def get_lot(self, lot_slug):
         return next(
-            (lot for lot in self.lots if lot.slug == lot_slug.lower()),
+            (lot for lot in self.lots if lot.slug == lot_slug),
             None
         )
 
