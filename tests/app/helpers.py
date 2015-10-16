@@ -7,7 +7,6 @@ from datetime import datetime
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from sqlalchemy import Sequence
 from app.models import Service, Supplier, ContactInformation, Framework
 
 TEST_SUPPLIERS_COUNT = 3
@@ -190,6 +189,7 @@ class BaseApplicationTest(object):
         db.session.add(Framework(name="Digital Outcomes and Specialists",
                                  framework='dos', status='open',
                                  slug='digital-outcomes-and-specialists'))
+        db.session.commit()
 
 
 class JSONUpdateTestMixin(object):

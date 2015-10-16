@@ -1183,3 +1183,91 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(response.status_code, 400)
         data = json.loads(response.get_data())
         assert_true('duplicate key value violates unique constraint "ix_suppliers_duns_number"' in data['message'])
+
+
+class TestRegisterFrameworkInterest(BaseApplicationTest):
+    def setup(self):
+        super(TestRegisterFrameworkInterest, self).setup()
+
+        with self.app.app_context():
+            framework_enum_vals = db.session.execute("SELECT enum_range(NULL::framework_enum);").first()[0]
+            if 'dos' not in str(framework_enum_vals):
+                self.bootstrap_dos()
+
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+            db.session.add(
+                ContactInformation(
+                    supplier_id=1,
+                    contact_name=u"Liz",
+                    email=u"liz@royal.gov.uk",
+                    postcode=u"SW1A 1AA"
+                )
+            )
+            db.session.commit()
+
+    def test_can_register_interest_in_open_framework(self):
+        with self.app.app_context():
+            response = self.client.post(
+                '/suppliers/1/frameworks/digital-outcomes-and-specialists/interest',
+                data=json.dumps(
+                    {'update_details': {'updated_by': 'interested@example.com'}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 201)
+            data = json.loads(response.get_data())
+            assert_equal(data['frameworkInterest']['supplierId'], 1)
+            assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+
+    def test_can_not_register_interest_in_not_open_framework_(self):
+        with self.app.app_context():
+            response = self.client.post(
+                '/suppliers/1/frameworks/g-cloud-5/interest',
+                data=json.dumps(
+                    {'update_details': {'updated_by': 'interested@example.com'}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 400)
+            data = json.loads(response.get_data())
+            assert_equal(data['error'], "'g-cloud-5' framework is not open")
+
+    def test_can_not_register_interest_more_than_once_in_open_framework(self):
+        with self.app.app_context():
+            response1 = self.client.post(
+                '/suppliers/1/frameworks/digital-outcomes-and-specialists/interest',
+                data=json.dumps(
+                    {'update_details': {'updated_by': 'interested@example.com'}}),
+                content_type='application/json')
+            assert_equal(response1.status_code, 201)
+            data = json.loads(response1.get_data())
+            assert_equal(data['frameworkInterest']['supplierId'], 1)
+            assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+
+            response2 = self.client.post(
+                '/suppliers/1/frameworks/digital-outcomes-and-specialists/interest',
+                data=json.dumps(
+                    {'update_details': {'updated_by': 'another@example.com'}}),
+                content_type='application/json')
+            assert_equal(response2.status_code, 200)
+            data = json.loads(response2.get_data())
+            assert_equal(data['frameworkInterest']['supplierId'], 1)
+            assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+
+    def test_can_get_registered_frameworks_for_a_supplier(self):
+        with self.app.app_context():
+            response1 = self.client.get("/suppliers/1/frameworks/interest")
+            assert_equal(response1.status_code, 200)
+            data = json.loads(response1.get_data())
+            assert_equal(data['frameworks'], [])
+
+            self.client.post(
+                '/suppliers/1/frameworks/digital-outcomes-and-specialists/interest',
+                data=json.dumps(
+                    {'update_details': {'updated_by': 'interested@example.com'}}),
+                content_type='application/json')
+
+            response2 = self.client.get("/suppliers/1/frameworks/interest")
+            assert_equal(response2.status_code, 200)
+            data = json.loads(response2.get_data())
+            assert_equal(data['frameworks'], ['digital-outcomes-and-specialists'])
