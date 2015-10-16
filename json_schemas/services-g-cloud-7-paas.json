@@ -16,7 +16,7 @@
     },
     "lot":{
       "enum":[
-        "PaaS"
+        "paas"
       ]
     },
     "serviceDefinitionDocumentURL":{

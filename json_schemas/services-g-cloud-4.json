@@ -15,7 +15,7 @@
       "type": "integer"
     },
     "lot": {
-      "enum": ["SaaS", "PaaS", "IaaS", "SCS"]
+      "enum": ["saas", "paas", "iaas", "scs"]
     },
     "title": {
       "type": "string"

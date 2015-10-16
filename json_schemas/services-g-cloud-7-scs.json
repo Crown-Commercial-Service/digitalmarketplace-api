@@ -16,7 +16,7 @@
     },
     "lot":{
       "enum":[
-        "SCS"
+        "scs"
       ]
     },
     "serviceDefinitionDocumentURL":{

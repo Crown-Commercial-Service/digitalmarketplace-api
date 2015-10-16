@@ -16,7 +16,7 @@
     },
     "lot":{
       "enum":[
-        "IaaS"
+        "iaas"
       ]
     },
     "serviceDefinitionDocumentURL":{

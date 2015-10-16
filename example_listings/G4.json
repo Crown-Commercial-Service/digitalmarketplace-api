@@ -8,7 +8,7 @@
   "priceString": "0.45 GB/Month",
   "supplierId": 1,
   "status": "disabled",
-  "lot": "IaaS",
+  "lot": "iaas",
   "frameworkName": "G-Cloud 4",
   "frameworkSlug": "g-cloud-4",
   "serviceTypes": [
