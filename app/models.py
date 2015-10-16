@@ -408,6 +408,8 @@ class ServiceTableMixin(object):
             'supplierName': self.supplier.name,
             'frameworkSlug': self.framework.slug,
             'frameworkName': self.framework.name,
+            'lot': self.lot.slug,
+            'lotName': self.lot.name,
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'status': self.status
