@@ -113,3 +113,20 @@ def get_framework_stats(framework_slug):
             ).all()
         )
     })
+
+
+@main.route('/frameworks/<string:framework_slug>/interest', methods=['GET'])
+def get_framework_interest(framework_slug):
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first_or_404()
+
+    supplier_frameworks = SupplierFramework.query.filter(
+        SupplierFramework.framework_id == framework.id
+    ).all()
+
+    supplier_ids = []
+    for supplier_framework in supplier_frameworks:
+        supplier_ids.append(supplier_framework.supplier_id)
+
+    return jsonify(interestedSuppliers=supplier_ids)
