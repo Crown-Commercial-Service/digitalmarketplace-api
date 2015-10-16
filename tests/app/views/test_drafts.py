@@ -27,7 +27,7 @@ class TestDraftServices(BaseApplicationTest):
         }
         self.create_draft_json = self.updater_json.copy()
         self.create_draft_json['services'] = {
-            'lot': 'SCS',
+            'lot': 'scs',
             'supplierId': 1
         }
 
@@ -218,7 +218,7 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data['services']['frameworkName'], 'G-Cloud 7')
         assert_equal(data['services']['status'], 'not-submitted')
         assert_equal(data['services']['supplierId'], 1)
-        assert_equal(data['services']['lot'], 'SCS')
+        assert_equal(data['services']['lot'], 'scs')
 
     def test_create_draft_should_create_audit_event(self):
         res = self.client.post(
@@ -858,7 +858,7 @@ class TestCopyDraft(BaseApplicationTest):
                 'updated_by': 'joeblogs'
             },
             'services': {
-                'lot': 'SCS',
+                'lot': 'scs',
                 'supplierId': 1,
                 'serviceName': "Draft",
                 'status': 'submitted',
@@ -886,7 +886,7 @@ class TestCopyDraft(BaseApplicationTest):
 
         data = json.loads(res.get_data())
         assert_equal(res.status_code, 201, res.get_data())
-        assert_equal(data['services']['lot'], 'SCS')
+        assert_equal(data['services']['lot'], 'scs')
         assert_equal(data['services']['status'], 'not-submitted')
         assert_equal(data['services']['serviceName'], 'Draft copy')
         assert_equal(data['services']['supplierId'], 1)
@@ -1028,7 +1028,7 @@ class TestCompleteDraft(BaseApplicationTest):
                 'updated_by': 'joeblogs'
             },
             'services': {
-                'lot': 'SCS',
+                'lot': 'scs',
                 'supplierId': 1,
                 'serviceName': 'Name',
             }
@@ -1094,7 +1094,7 @@ class TestDOSServices(BaseApplicationTest):
         assert_equal(data['services']['frameworkName'], 'Digital Outcomes and Specialists')
         assert_equal(data['services']['status'], 'not-submitted')
         assert_equal(data['services']['supplierId'], 1)
-        assert_equal(data['services']['lot'], 'LOT1')
+        assert_equal(data['services']['lot'], 'lot1')
 
     def test_create_dos_draft_should_create_audit_event(self):
         res = self._post_dos_draft()
