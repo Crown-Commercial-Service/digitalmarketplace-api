@@ -31,6 +31,7 @@ def validate_draft(draft):
 
     data = dict(draft.data.items())
     data.update({
+        'lot': draft.lot.slug,
         'supplierId': draft.supplier_id,
         'status': draft.status
     })

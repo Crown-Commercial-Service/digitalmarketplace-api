@@ -1502,7 +1502,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 ),
                 content_type='application/json')
 
-            for field in ['id', 'supplierId', 'status']:
+            for field in ['id', 'lot', 'supplierId', 'status']:
                 payload.pop(field, None)
             payload = drop_api_exported_fields_so_that_api_import_will_validate(payload)
             assert_equal(response.status_code, 201, response.get_data())

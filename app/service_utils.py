@@ -72,6 +72,7 @@ def validate_service(service, framework=None, lot=None):
     data = dict(service.data.items())
     data.update({
         'id': service.service_id,
+        'lot': lot.slug,
         'supplierId': service.supplier_id,
         'status': service.status
     })
@@ -85,7 +86,7 @@ def validate_service(service, framework=None, lot=None):
 
 def drop_api_exported_fields_so_that_api_import_will_validate(data):
     return drop_foreign_fields(
-        data, ['service_id', 'supplierName', 'links', 'frameworkSlug', 'frameworkName', 'updatedAt'])
+        data, ['service_id', 'supplierName', 'links', 'frameworkSlug', 'frameworkName', 'lotName', 'updatedAt'])
 
 
 def commit_and_archive_service(updated_service, update_details,
