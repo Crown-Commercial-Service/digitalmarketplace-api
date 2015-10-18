@@ -73,19 +73,20 @@ class TestServices(BaseApplicationTest):
             assert(all(s.framework.status == 'live' for s in services))
 
     def test_default_ordering(self):
-        def add_service(service_id, framework_id, lot, service_name):
+        def add_service(service_id, framework_id, lot_id, service_name):
             self.setup_dummy_service(
                 service_id=service_id,
                 supplier_id=0,
                 framework_id=framework_id,
-                data={'lot': lot, 'serviceName': service_name})
+                lot_id=lot_id,
+                data={'serviceName': service_name})
 
         with self.app.app_context():
             self.setup_dummy_suppliers(1)
-            add_service('990', 3, 'zzz', 'zzz')
-            add_service('991', 3, 'zzz', 'aaa')
-            add_service('992', 3, 'aaa', 'zzz')
-            add_service('993', 1, 'zzz', 'zzz')
+            add_service('990', 3, 3, 'zzz')
+            add_service('991', 3, 3, 'aaa')
+            add_service('992', 3, 1, 'zzz')
+            add_service('993', 1, 3, 'zzz')
             db.session.commit()
 
             services = Service.query.default_order()

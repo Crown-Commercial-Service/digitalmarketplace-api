@@ -463,15 +463,12 @@ class Service(db.Model, ServiceTableMixin):
                 Service.framework.has(Framework.status == 'live'))
 
         def default_order(self):
-            lot = Service.data['lot'] \
-                         .cast(String) \
-                         .label('data_lot')
             service_name = Service.data['serviceName'] \
                                   .cast(String) \
                                   .label('data_servicename')
             return self.order_by(
                 asc(Service.framework_id),
-                asc(lot),
+                asc(Service.lot_id),
                 asc(service_name))
 
         def has_statuses(self, *statuses):

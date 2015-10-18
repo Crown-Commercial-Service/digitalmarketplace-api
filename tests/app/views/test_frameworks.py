@@ -100,9 +100,7 @@ class TestFrameworkStats(BaseApplicationTest):
                             lot_id=1 + (ind % 4),
                             framework_id=framework_id,
                             supplier_id=supplier_id,
-                            data={
-                                'lot': ['IaaS', 'PaaS', 'SaaS', 'SCS'][ind % 4]
-                            },
+                            data={},
                             status=status
                         )
                     )
@@ -136,16 +134,16 @@ class TestFrameworkStats(BaseApplicationTest):
         self.create_selection_answers(framework.id, [1, 3, 5, 7, 9, 11], status='started')
         self.create_selection_answers(framework.id, [0, 2, 4, 6, 8, 10], status='complete')
         self.create_drafts(framework.id, [
-            (1, 1),   # 1 IaaS; with declaration
-            (2, 7),   # 1 of each + IaaS, PaaS, SaaS; with declaration
-            (3, 2),   # IaaS + PaaS; with declaration
-            (14, 3),  # IaaS + PaaS + SaaS; without declaration
+            (1, 1),   # 1 saas; with declaration
+            (2, 7),   # 1 of each + iaas, paas, saas; with declaration
+            (3, 2),   # saas + paas; with declaration
+            (14, 3),  # iaas + paas + saas; without declaration
         ])
         self.create_drafts(framework.id, [
-            (1, 2),   # IaaS + PaaS; with declaration
-            (2, 15),  # 3 of each + IaaS, PaaS, SaaS; with declaration
-            (3, 2),   # IaaS + PaaS; with declaration
-            (14, 7),  # 1 of each + IaaS + PaaS + SaaS; without declaration
+            (1, 2),   # saas + paas; with declaration
+            (2, 15),  # 3 of each + iaas, paas, saas; with declaration
+            (3, 2),   # saas + paas; with declaration
+            (14, 7),  # 1 of each + iaas + paas + saas; without declaration
         ], status='submitted')
 
         self.create_users(
@@ -169,39 +167,37 @@ class TestFrameworkStats(BaseApplicationTest):
         response = self.client.get('/frameworks/g-cloud-7/stats')
         assert_equal(json.loads(response.get_data()), {
             u'services': [
+                {u'count': 1, u'status': u'not-submitted',
+                 u'declaration_made': False, u'lot': u'iaas'},
+                {u'count': 2, u'status': u'not-submitted',
+                 u'declaration_made': True, u'lot': u'iaas'},
+                {u'count': 2, u'status': u'not-submitted',
+                 u'declaration_made': False, u'lot': u'paas'},
+                {u'count': 2, u'status': u'not-submitted',
+                 u'declaration_made': True, u'lot': u'paas'},
                 {u'count': 3, u'status': u'not-submitted',
-                 u'declaration_made': False, u'lot': u'IaaS'},
+                 u'declaration_made': False, u'lot': u'saas'},
                 {u'count': 2, u'status': u'not-submitted',
-                 u'declaration_made': True, u'lot': u'IaaS'},
-                {u'count': 4, u'status': u'submitted',
-                 u'declaration_made': False, u'lot': u'IaaS'},
-                {u'count': 4, u'status': u'submitted',
-                 u'declaration_made': True, u'lot': u'IaaS'},
-
-                {u'count': 2, u'status': u'not-submitted',
-                 u'declaration_made': False, u'lot': u'PaaS'},
-                {u'count': 2, u'status': u'not-submitted',
-                 u'declaration_made': True, u'lot': u'PaaS'},
-                {u'count': 4, u'status': u'submitted',
-                 u'declaration_made': False, u'lot': u'PaaS'},
-                {u'count': 4, u'status': u'submitted',
-                 u'declaration_made': True, u'lot': u'PaaS'},
-
+                 u'declaration_made': True, u'lot': u'saas'},
                 {u'count': 1, u'status': u'not-submitted',
-                 u'declaration_made': True, u'lot': u'SCS'},
-                {u'count': 1, u'status': u'submitted',
-                 u'declaration_made': False, u'lot': u'SCS'},
-                {u'count': 3, u'status': u'submitted',
-                 u'declaration_made': True, u'lot': u'SCS'},
+                 u'declaration_made': True, u'lot': u'scs'},
 
-                {u'count': 1, u'status': u'not-submitted',
-                 u'declaration_made': False, u'lot': u'SaaS'},
-                {u'count': 2, u'status': u'not-submitted',
-                 u'declaration_made': True, u'lot': u'SaaS'},
                 {u'count': 2, u'status': u'submitted',
-                 u'declaration_made': False, u'lot': u'SaaS'},
+                 u'declaration_made': False, u'lot': u'iaas'},
                 {u'count': 4, u'status': u'submitted',
-                 u'declaration_made': True, u'lot': u'SaaS'}
+                 u'declaration_made': True, u'lot': u'iaas'},
+                {u'count': 4, u'status': u'submitted',
+                 u'declaration_made': False, u'lot': u'paas'},
+                {u'count': 4, u'status': u'submitted',
+                 u'declaration_made': True, u'lot': u'paas'},
+                {u'count': 4, u'status': u'submitted',
+                 u'declaration_made': False, u'lot': u'saas'},
+                {u'count': 4, u'status': u'submitted',
+                 u'declaration_made': True, u'lot': u'saas'},
+                {u'count': 1, u'status': u'submitted',
+                 u'declaration_made': False, u'lot': u'scs'},
+                {u'count': 3, u'status': u'submitted',
+                 u'declaration_made': True, u'lot': u'scs'},
             ],
             u'interested_suppliers': [
                 {u'count': 7, u'declaration_status': None, u'has_completed_services': False},

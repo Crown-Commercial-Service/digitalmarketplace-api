@@ -68,13 +68,13 @@ class TestListServicesOrdering(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
         assert_equal([d['id'] for d in data['services']], [
-            'g6_iaas_2',
-            'g6_iaas_1',
+            'g6_saas',
             'g6_paas_2',
             'g6_paas_1',
-            'g6_saas',
-            'g5_paas',
+            'g6_iaas_2',
+            'g6_iaas_1',
             'g5_saas',
+            'g5_paas',
         ])
 
     def test_all_services_list_ordered_by_id(self):
