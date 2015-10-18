@@ -1,12 +1,12 @@
 from flask import current_app, abort
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 
 from .utils import get_json_from_request, \
     json_has_matching_id, json_has_required_keys, drop_foreign_fields
 from .validation import validate_updater_json_or_400, get_validation_errors
 from . import search_api_client, apiclient
 from . import db
-from .models import ArchivedService, AuditEvent, Framework, Service
+from .models import ArchivedService, AuditEvent, Framework, Service, Supplier
 
 
 def validate_and_return_updater_request():
@@ -21,6 +21,35 @@ def validate_and_return_service_request(service_id):
     json_has_required_keys(json_payload, ['services'])
     json_has_matching_id(json_payload['services'], service_id)
     return json_payload['services']
+
+
+def validate_and_return_related_objects(service_json):
+    json_has_required_keys(service_json, ['frameworkSlug', 'lot', 'supplierId'])
+    framework = Framework.query.filter(
+        Framework.slug == service_json['frameworkSlug']
+    ).first()
+
+    if not framework:
+        abort(400, "Framework '{}' does not exits".format(service_json['frameworkSlug']))
+
+    lot = framework.get_lot(service_json['lot'])
+
+    if not lot:
+        abort(400, "Incorrect lot '{}' for framework '{}'".format(service_json['lot'], framework.slug))
+
+    try:
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == service_json['supplierId']
+        ).first()
+    except DataError:
+        supplier = None
+
+    if not supplier:
+        abort(400, "Invalid supplier_id '{}'".format(service_json['supplierId']))
+
+    service_json = drop_foreign_fields(service_json, ['frameworkSlug', 'lot', 'supplierId'])
+
+    return service_json, framework, lot, supplier
 
 
 def update_and_validate_service(service, service_payload):

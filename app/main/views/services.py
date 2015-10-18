@@ -3,7 +3,7 @@ from dmutils.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 
 from .. import main
-from ...models import ArchivedService, Service, Supplier, Framework
+from ...models import ArchivedService, Service, Supplier
 
 from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
@@ -18,6 +18,7 @@ from ...service_utils import (
     validate_and_return_updater_request,
     commit_and_archive_service,
     validate_service,
+    validate_and_return_related_objects,
     drop_api_exported_fields_so_that_api_import_will_validate
 )
 
@@ -166,28 +167,12 @@ def import_service(service_id):
     service_data = strip_whitespace_from_data(service_json)
     service_data = drop_foreign_fields(service_data, ['id'])
 
-    supplier_id = service_data.pop('supplierId')
-    supplier = Supplier.query.filter(
-        Supplier.supplier_id == supplier_id
-    ).first()
-    if supplier is None:
-        abort(400, "Key (supplierId)=({}) is not present".format(supplier_id))
-
-    framework_slug = service_data.get('frameworkSlug')
-    framework = Framework.query.filter(
-        Framework.slug == framework_slug
-    ).first()
-    if framework is None:
-        abort(400, "Key (frameworkSlug)=({}) is not present".format(framework_slug))
-
-    lot = framework.get_lot(service_data['lot'])
-    if not lot:
-        abort(400, "Incorrect lot '{}' for framework '{}'".format(service_data['lot'], framework.slug))
+    service_data, framework, lot, supplier = validate_and_return_related_objects(service_data)
 
     service_data = drop_api_exported_fields_so_that_api_import_will_validate(service_data)
     service = Service(
         service_id=service_id,
-        supplier_id=supplier_id,
+        supplier_id=supplier.supplier_id,
         lot_id=lot.id,
         framework_id=framework.id,
         status=service_data.pop('status', 'published'),

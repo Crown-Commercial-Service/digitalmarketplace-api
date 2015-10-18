@@ -1581,8 +1581,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            assert_in(b'Key (supplierId)=(100) is not present',
-                      response.get_data())
+            assert_in("Invalid supplier_id '100'", json.loads(response.get_data())['error'])
 
     def test_supplier_name_in_service_data_is_shadowed(self):
         with self.app.app_context():
