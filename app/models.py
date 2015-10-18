@@ -8,13 +8,14 @@ from sqlalchemy import asc
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm import validates
 from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
 from dmutils.formats import DATETIME_FORMAT
 
 from . import db
-from .utils import link, url_for, strip_whitespace_from_data
+from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields
 
 
 framework_lots = db.Table(
@@ -395,6 +396,20 @@ class ServiceTableMixin(object):
     def lot(cls):
         return db.relationship(Lot, lazy='joined', innerjoin=True)
 
+    @validates('data')
+    def validates_data(self, key, value):
+        data = drop_foreign_fields(value, [
+            'id', 'status',
+            'supplierId', 'supplierName',
+            'frameworkSlug', 'frameworkName',
+            'lot', 'lotName',
+            'updatedAt', 'createdAt', 'links'
+        ])
+
+        data = strip_whitespace_from_data(data)
+
+        return data
+
     def serialize(self):
         """
         :return: dictionary representation of a service
@@ -422,25 +437,11 @@ class ServiceTableMixin(object):
         return data
 
     def update_from_json(self, data):
-        sid = data.pop('id', self.service_id)
-        if sid:
-            self.service_id = str(sid)
-
-        data.pop('supplierId', None)
-        data.pop('supplierName', None)
-        data.pop('frameworkSlug', None)
-        data.pop('frameworkName', None)
-        data.pop('status', None)
-        data.pop('links', None)
-        data.pop('updatedAt', None)
-        data.pop('createdAt', None)
         current_data = dict(self.data.items())
         current_data.update(data)
-        current_data = strip_whitespace_from_data(current_data)
-        self.data = current_data
 
-        now = datetime.utcnow()
-        self.updated_at = now
+        self.data = current_data
+        self.updated_at = datetime.utcnow()
 
 
 class Service(db.Model, ServiceTableMixin):
