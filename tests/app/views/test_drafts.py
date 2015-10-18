@@ -263,6 +263,18 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(res.status_code, 400)
         assert_in("'g-cloud-5' is not open for submissions", data['error'])
 
+    def test_should_not_create_draft_with_invalid_lot(self):
+        draft_json = self.create_draft_json.copy()
+        draft_json['services']['lot'] = 'newlot'
+        res = self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+
+        data = json.loads(res.get_data())
+        assert_equal(res.status_code, 400)
+        assert_in("Incorrect lot 'newlot' for framework 'g-cloud-7'", data['error'])
+
     def test_can_save_additional_fields_to_draft(self):
         res = self.client.post(
             '/draft-services/g-cloud-7/create',
