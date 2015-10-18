@@ -1,7 +1,6 @@
-from .models import Framework
 from .utils import get_json_from_request, json_has_required_keys, \
     json_has_matching_id
-from .validation import get_validation_errors, get_validator
+from .validation import get_validation_errors
 
 
 def validate_and_return_draft_request(draft_id=0):
@@ -17,17 +16,9 @@ def get_request_page_questions():
     return json_payload.get('page_questions', [])
 
 
-def get_draft_validation_errors(draft_json, framework_id=0, slug=None, required=None):
-    if not slug and not framework_id:
-        raise Exception('Validation requires either framework_id or slug')
-    if not slug:
-        framework = Framework.query.filter(
-            Framework.id == framework_id
-        ).first()
-        slug = framework.slug
-
+def get_draft_validation_errors(draft_json, framework=None, lot=None, required=None):
     errs = get_validation_errors(
-        "services-{0}-{1}".format(slug, draft_json['lot'].lower()),
+        "services-{0}-{1}".format(framework.slug, lot.slug),
         draft_json,
         enforce_required=False,
         required_fields=required
@@ -36,12 +27,7 @@ def get_draft_validation_errors(draft_json, framework_id=0, slug=None, required=
 
 
 def validate_draft(draft):
-    framework = Framework.query.filter(
-        Framework.id == draft.framework_id
-    ).first()
-
-    lot = draft.data['lot'].lower()
-    validator_name = 'services-{}-{}'.format(framework.slug, lot)
+    validator_name = 'services-{}-{}'.format(draft.framework.slug, draft.lot.slug)
 
     data = dict(draft.data.items())
     data.update({

@@ -29,18 +29,16 @@ def update_and_validate_service(service, service_payload):
     return service
 
 
-def validate_service(service, framework=None):
+def validate_service(service, framework=None, lot=None):
     if not framework:
-        framework = Framework.query.filter(
-            Framework.id == service.framework_id
-        ).first()
-    slug = framework.slug
+        framework = service.framework
+    if not lot:
+        lot = service.lot
 
-    if slug in ['g-cloud-4', 'g-cloud-5']:
-        validator_name = 'services-{}'.format(slug)
+    if framework.slug in ['g-cloud-4', 'g-cloud-5']:
+        validator_name = 'services-{}'.format(framework.slug)
     else:
-        lot = service.data['lot'].lower()
-        validator_name = 'services-{}-{}'.format(slug, lot)
+        validator_name = 'services-{}-{}'.format(framework.slug, lot.slug)
 
     data = dict(service.data.items())
     data.update({
@@ -127,7 +125,7 @@ def create_service_from_draft(draft, status):
         db.session.begin_nested()
         service = Service.create_from_draft(draft, status)
         try:
-            validate_service(service)
+            validate_service(service, framework=draft.framework, lot=draft.lot)
             db.session.add(service)
             db.session.commit()
             return service

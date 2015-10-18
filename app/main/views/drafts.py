@@ -83,7 +83,8 @@ def edit_draft_service(draft_id):
 
     draft.update_from_json(update_json)
     errs = get_draft_validation_errors(draft.data,
-                                       framework_id=draft.framework_id,
+                                       framework=draft.framework,
+                                       lot=draft.lot,
                                        required=page_questions)
     if errs:
         abort(400, errs)
@@ -278,7 +279,7 @@ def create_new_draft_service(framework_slug):
         abort(400, "Incorrect lot '{}' for framework '{}'".format(draft_json['lot'], framework_slug))
 
     supplier_id = draft_json['supplierId']
-    errs = get_draft_validation_errors(draft_json, slug=framework_slug)
+    errs = get_draft_validation_errors(draft_json, framework=framework, lot=lot)
     if errs:
         return jsonify(errors=errs), 400
 
