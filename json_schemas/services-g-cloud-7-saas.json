@@ -4,21 +4,6 @@
   "type":"object",
   "additionalProperties":false,
   "properties":{
-    "id":{
-      "type":"string",
-      "pattern":"^([0-9]{16})$"
-    },
-    "status": {
-      "enum": ["disabled", "enabled", "published", "submitted", "not-submitted"]
-    },
-    "supplierId":{
-      "type":"integer"
-    },
-    "lot":{
-      "enum":[
-        "saas"
-      ]
-    },
     "serviceDefinitionDocumentURL":{
       "type":"string",
       "format":"uri"
@@ -817,9 +802,6 @@
     }
   },
   "required": [
-    "id",
-    "supplierId",
-    "lot",
     "serviceDefinitionDocumentURL",
     "termsAndConditionsDocumentURL",
     "pricingDocumentURL",

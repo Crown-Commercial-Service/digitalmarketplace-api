@@ -4,29 +4,8 @@
    "type": "object",
    "additionalProperties": false,
    "properties": {
-    "id": {
-      "type": "string",
-      "pattern": "^([0-9]{16})$"
-    },
-    "status": {
-      "enum": ["disabled", "enabled", "published"]
-    },
-      "supplierId": {
-         "type": "integer"
-      },
-      "lot": {
-         "enum": ["scs"]
-      },
       "title": {
          "type": "string"
-      },
-      "createdAt": {
-         "type": "string",
-         "format": "date-time"
-      },
-      "updatedAt": {
-        "type": "string",
-        "format": "date-time"
       },
       "serviceTypes": {
          "type": "array",
@@ -153,9 +132,6 @@
       }
    },
    "required": [
-      "id",
-      "supplierId",
-      "lot",
       "title",
       "serviceTypes",
       "serviceName",
