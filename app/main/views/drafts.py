@@ -260,8 +260,9 @@ def publish_draft_service(draft_id):
     return jsonify(services=service_from_draft.serialize()), 200
 
 
-@main.route('/draft-services/<string:framework_slug>/create', methods=['POST'])
-def create_new_draft_service(framework_slug):
+@main.route('/draft-services', methods=['POST'])
+@main.route('/draft-services/<string:framework_slug>/create', methods=['POST'])  # TODO deprecated
+def create_new_draft_service(framework_slug=None):
     """
     Create a new draft service with lot, supplier_id, draft_id, framework_id
     :return: the new draft id and location e.g.
