@@ -1108,6 +1108,18 @@ class TestDOSServices(BaseApplicationTest):
         assert_equal(data['services']['supplierId'], 1)
         assert_equal(data['services']['lot'], 'lot1')
 
+    def test_disallow_multiple_drafts_for_one_service_lots(self):
+        self._post_dos_draft()
+
+        res = self.client.post(
+            '/draft-services/digital-outcomes-and-specialists/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+
+        data = json.loads(res.get_data())
+        assert_equal(res.status_code, 400)
+        assert_equal(data['error'], "'lot1' service already exists for supplier '1'")
+
     def test_create_dos_draft_should_create_audit_event(self):
         res = self._post_dos_draft()
 

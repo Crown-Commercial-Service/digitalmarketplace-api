@@ -278,6 +278,11 @@ def create_new_draft_service(framework_slug=None):
     if framework.status != 'open':
         abort(400, "'{}' is not open for submissions".format(framework.slug))
 
+    if lot.one_service_limit:
+        lot_service = DraftService.query.filter(DraftService.supplier == supplier, DraftService.lot == lot).first()
+        if lot_service:
+            abort(400, "'{}' service already exists for supplier '{}'".format(lot.slug, supplier.supplier_id))
+
     draft = DraftService(
         framework_id=framework.id,
         lot_id=lot.id,
