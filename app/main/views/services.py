@@ -7,8 +7,7 @@ from ...models import ArchivedService, Service, Supplier
 
 from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
-from ...utils import url_for, pagination_links, drop_foreign_fields, display_list, strip_whitespace_from_data, \
-    get_valid_page_or_1
+from ...utils import url_for, pagination_links, display_list, get_valid_page_or_1
 
 from ...service_utils import (
     validate_and_return_service_request,
@@ -17,9 +16,8 @@ from ...service_utils import (
     delete_service_from_index,
     validate_and_return_updater_request,
     commit_and_archive_service,
-    validate_service,
+    validate_service_data,
     validate_and_return_related_objects,
-    drop_api_exported_fields_so_that_api_import_will_validate
 )
 
 
@@ -162,14 +160,10 @@ def import_service(service_id):
         abort(400, "Cannot update service by PUT")
 
     updater_json = validate_and_return_updater_request()
-    service_json = validate_and_return_service_request(service_id)
+    service_data = validate_and_return_service_request(service_id)
 
-    service_data = strip_whitespace_from_data(service_json)
-    service_data = drop_foreign_fields(service_data, ['id'])
+    framework, lot, supplier = validate_and_return_related_objects(service_data)
 
-    service_data, framework, lot, supplier = validate_and_return_related_objects(service_data)
-
-    service_data = drop_api_exported_fields_so_that_api_import_will_validate(service_data)
     service = Service(
         service_id=service_id,
         supplier_id=supplier.supplier_id,
@@ -181,7 +175,7 @@ def import_service(service_id):
         data=service_data,
     )
 
-    validate_service(service, framework=framework, lot=lot)
+    validate_service_data(service, framework=framework, lot=lot)
 
     commit_and_archive_service(service, updater_json, AuditTypes.import_service)
     index_service(service)

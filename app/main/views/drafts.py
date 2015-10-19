@@ -3,23 +3,21 @@ from flask import jsonify, abort, request, current_app
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import asc, desc
-from sqlalchemy.types import String
 
 from .. import main
 from ... import db, isolation_level
-from ...utils import drop_foreign_fields, json_has_required_keys
 from ...validation import is_valid_service_id_or_400
-from ...models import Service, DraftService, Supplier, AuditEvent, Framework, User
+from ...models import Service, DraftService, Supplier, AuditEvent, Framework
 from ...service_utils import (
     validate_and_return_updater_request,
     update_and_validate_service, index_service,
     commit_and_archive_service, create_service_from_draft,
-    validate_and_return_related_objects,
+    validate_and_return_related_objects, validate_service_data
 )
 
 from ...draft_utils import (
     validate_and_return_draft_request, get_draft_validation_errors,
-    get_request_page_questions, validate_draft
+    get_request_page_questions
 )
 
 
@@ -275,14 +273,10 @@ def create_new_draft_service(framework_slug=None):
         current_app.logger.warning("Deprecated /draft-services/<framework_slug> route")
         draft_json['frameworkSlug'] = framework_slug
 
-    draft_json, framework, lot, supplier = validate_and_return_related_objects(draft_json)
+    framework, lot, supplier = validate_and_return_related_objects(draft_json)
 
     if framework.status != 'open':
         abort(400, "'{}' is not open for submissions".format(framework.slug))
-
-    errs = get_draft_validation_errors(draft_json, framework=framework, lot=lot)
-    if errs:
-        return jsonify(errors=errs), 400
 
     draft = DraftService(
         framework_id=framework.id,
@@ -291,6 +285,10 @@ def create_new_draft_service(framework_slug=None):
         data=draft_json,
         status="not-submitted"
     )
+
+    errs = get_draft_validation_errors(draft.data, framework=framework, lot=lot)
+    if errs:
+        return jsonify(errors=errs), 400
 
     try:
         db.session.add(draft)
@@ -322,7 +320,7 @@ def complete_draft_service(draft_id):
         DraftService.id == draft_id
     ).first_or_404()
 
-    errs = validate_draft(draft)
+    errs = validate_service_data(draft)
     if errs:
         abort(400, errs)
 

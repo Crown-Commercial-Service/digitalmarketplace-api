@@ -24,25 +24,3 @@ def get_draft_validation_errors(draft_json, framework=None, lot=None, required=N
         required_fields=required
     )
     return errs
-
-
-def validate_draft(draft):
-    validator_name = 'services-{}-{}'.format(draft.framework.slug, draft.lot.slug)
-
-    data = dict(draft.data.items())
-    data.update({
-        'lot': draft.lot.slug,
-        'supplierId': draft.supplier_id,
-        'status': draft.status
-    })
-
-    errs = get_validation_errors(
-        validator_name,
-        data,
-        enforce_required=True
-    )
-
-    # Drafts are valid even without the required service ID
-    errs.pop('id', None)
-
-    return errs

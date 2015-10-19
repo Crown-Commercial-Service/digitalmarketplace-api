@@ -7,7 +7,6 @@ from nose.tools import assert_equal, assert_in, assert_true, \
 from app.models import Service, Supplier, ContactInformation, Framework
 import mock
 from app import db, create_app
-from app.service_utils import drop_api_exported_fields_so_that_api_import_will_validate
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
 from sqlalchemy.exc import IntegrityError
@@ -1423,7 +1422,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 ),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 201)
+            assert_equal(response.status_code, 201, response.get_data())
 
             response = self.client.get("/services/1234567890123456")
             service = json.loads(response.get_data())["services"]
@@ -1504,12 +1503,12 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
             for field in ['id', 'lot', 'supplierId', 'status']:
                 payload.pop(field, None)
-            payload = drop_api_exported_fields_so_that_api_import_will_validate(payload)
             assert_equal(response.status_code, 201, response.get_data())
             now = datetime.utcnow()
             service = Service.query.filter(Service.service_id == "4-disabled").first()
             assert_equal(service.status, 'disabled')
-            assert_equal(service.data, payload)
+            for key in service.data:
+                assert_equal(service.data[key], payload[key])
             assert_almost_equal(service.created_at, service.updated_at,
                                 delta=timedelta(seconds=0.5))
             assert_almost_equal(now, service.created_at,

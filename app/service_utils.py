@@ -2,7 +2,7 @@ from flask import current_app, abort
 from sqlalchemy.exc import IntegrityError, DataError
 
 from .utils import get_json_from_request, \
-    json_has_matching_id, json_has_required_keys, drop_foreign_fields
+    json_has_matching_id, json_has_required_keys
 from .validation import validate_updater_json_or_400, get_validation_errors
 from . import search_api_client, apiclient
 from . import db
@@ -25,6 +25,7 @@ def validate_and_return_service_request(service_id):
 
 def validate_and_return_related_objects(service_json):
     json_has_required_keys(service_json, ['frameworkSlug', 'lot', 'supplierId'])
+
     framework = Framework.query.filter(
         Framework.slug == service_json['frameworkSlug']
     ).first()
@@ -47,18 +48,16 @@ def validate_and_return_related_objects(service_json):
     if not supplier:
         abort(400, "Invalid supplier_id '{}'".format(service_json['supplierId']))
 
-    service_json = drop_foreign_fields(service_json, ['frameworkSlug', 'lot', 'supplierId'])
-
-    return service_json, framework, lot, supplier
+    return framework, lot, supplier
 
 
 def update_and_validate_service(service, service_payload):
     service.update_from_json(service_payload)
-    validate_service(service)
+    validate_service_data(service)
     return service
 
 
-def validate_service(service, framework=None, lot=None):
+def validate_service_data(service, framework=None, lot=None):
     if not framework:
         framework = service.framework
     if not lot:
@@ -69,24 +68,10 @@ def validate_service(service, framework=None, lot=None):
     else:
         validator_name = 'services-{}-{}'.format(framework.slug, lot.slug)
 
-    data = dict(service.data.items())
-    data.update({
-        'id': service.service_id,
-        'lot': lot.slug,
-        'supplierId': service.supplier_id,
-        'status': service.status
-    })
-
-    data = drop_api_exported_fields_so_that_api_import_will_validate(data)
-    errs = get_validation_errors(validator_name, data, enforce_required=True)
+    errs = get_validation_errors(validator_name, service.data, enforce_required=True)
     if errs:
         abort(400, errs)
     return
-
-
-def drop_api_exported_fields_so_that_api_import_will_validate(data):
-    return drop_foreign_fields(
-        data, ['service_id', 'supplierName', 'links', 'frameworkSlug', 'frameworkName', 'lotName', 'updatedAt'])
 
 
 def commit_and_archive_service(updated_service, update_details,
@@ -155,7 +140,7 @@ def create_service_from_draft(draft, status):
         db.session.begin_nested()
         service = Service.create_from_draft(draft, status)
         try:
-            validate_service(service, framework=draft.framework, lot=draft.lot)
+            validate_service_data(service, framework=draft.framework, lot=draft.lot)
             db.session.add(service)
             db.session.commit()
             return service
