@@ -129,7 +129,7 @@ class TestDraftServices(BaseApplicationTest):
             for service_id in service_ids:
                 db.session.add(
                     Service(
-                        service_id=service_id,
+                        service_id=str(service_id),
                         supplier_id=1,
                         updated_at=now,
                         status='published',

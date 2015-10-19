@@ -4,7 +4,7 @@ from nose.tools import assert_equal, assert_raises
 from sqlalchemy.exc import DataError
 
 from app import db, create_app
-from app.models import User, Framework, Service
+from app.models import User, Framework, Service, ValidationError
 from .helpers import BaseApplicationTest
 
 
@@ -61,7 +61,7 @@ class TestServices(BaseApplicationTest):
     def test_framework_is_live_only_returns_live_frameworks(self):
         with self.app.app_context():
             self.setup_dummy_service(
-                service_id='999',
+                service_id='1000000000',
                 status='published',
                 framework_id=2)
             self.setup_dummy_services_including_unpublished(1)
@@ -83,17 +83,17 @@ class TestServices(BaseApplicationTest):
 
         with self.app.app_context():
             self.setup_dummy_suppliers(1)
-            add_service('990', 3, 3, 'zzz')
-            add_service('991', 3, 3, 'aaa')
-            add_service('992', 3, 1, 'zzz')
-            add_service('993', 1, 3, 'zzz')
+            add_service('1000000990', 3, 3, 'zzz')
+            add_service('1000000991', 3, 3, 'aaa')
+            add_service('1000000992', 3, 1, 'zzz')
+            add_service('1000000993', 1, 3, 'zzz')
             db.session.commit()
 
             services = Service.query.default_order()
 
             assert_equal(
                 [s.service_id for s in services],
-                ['993', '992', '991', '990'])
+                ['1000000993', '1000000992', '1000000991', '1000000990'])
 
     def test_has_statuses(self):
         with self.app.app_context():
@@ -102,6 +102,16 @@ class TestServices(BaseApplicationTest):
             services = Service.query.has_statuses('published')
 
             assert_equal(services.count(), 1)
+
+    def test_service_status(self):
+        service = Service(status='enabled')
+
+        assert_equal(service.status, 'enabled')
+
+    def test_invalid_service_status(self):
+        service = Service()
+        with assert_raises(ValidationError):
+            service.status = 'invalid'
 
     def test_has_statuses_should_accept_multiple_statuses(self):
         with self.app.app_context():

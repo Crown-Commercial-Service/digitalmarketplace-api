@@ -112,7 +112,7 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             for i in range(start_id, start_id + n):
                 self.setup_dummy_service(
-                    service_id=i,
+                    service_id=str(2000000000 + start_id + i),
                     supplier_id=supplier_id or (i % TEST_SUPPLIERS_COUNT),
                     framework_id=framework_id or 1
                 )
@@ -125,11 +125,11 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             # Add extra 'enabled' and 'disabled' services
             self.setup_dummy_service(
-                service_id=n + 1,
+                service_id=str(n + 2000000001),
                 supplier_id=n % TEST_SUPPLIERS_COUNT,
                 status='disabled')
             self.setup_dummy_service(
-                service_id=n + 2,
+                service_id=str(n + 2000000002),
                 supplier_id=n % TEST_SUPPLIERS_COUNT,
                 status='enabled')
             # Add an extra supplier that will have no services

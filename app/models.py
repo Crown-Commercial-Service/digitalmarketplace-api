@@ -16,6 +16,7 @@ from dmutils.formats import DATETIME_FORMAT
 
 from . import db
 from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields
+from .validation import is_valid_service_id
 
 
 framework_lots = db.Table(
@@ -23,6 +24,11 @@ framework_lots = db.Table(
     db.Column('framework_id', db.Integer, db.ForeignKey('frameworks.id'), nullable=False),
     db.Column('lot_id', db.Integer, db.ForeignKey('lots.id'), nullable=False)
 )
+
+
+class ValidationError(ValueError):
+    def __init__(self, message):
+        self.message = message
 
 
 class Lot(db.Model):
@@ -359,7 +365,7 @@ class User(db.Model):
 
 class ServiceTableMixin(object):
 
-    STATUSES = ['disabled', 'enabled', 'published']
+    STATUSES = ('disabled', 'enabled', 'published')
 
     id = db.Column(db.Integer, primary_key=True)
     service_id = db.Column(db.String, index=True, unique=True, nullable=False)
@@ -399,9 +405,18 @@ class ServiceTableMixin(object):
     def lot(cls):
         return db.relationship(Lot, lazy='joined', innerjoin=True)
 
+    @validates('service_id')
+    def validate_service_id(self, key, value):
+        if not is_valid_service_id(value):
+            raise ValidationError("Invalid service ID value '{}'".format(value))
+
+        return value
+
     @validates('status')
     def validates_status(self, key, value):
-        assert value in self.STATUSES
+        if value not in self.STATUSES:
+            raise ValidationError("Invalid status value '{}'".format(value))
+
         return value
 
     @validates('data')
@@ -528,7 +543,7 @@ class ArchivedService(db.Model, ServiceTableMixin):
 class DraftService(db.Model, ServiceTableMixin):
     __tablename__ = 'draft_services'
 
-    STATUSES = ['not-submitted', 'submitted', 'enabled', 'disabled', 'published']
+    STATUSES = ('not-submitted', 'submitted', 'enabled', 'disabled', 'published')
 
     # Overwrites service_id column to remove uniqueness and nullable constraint
     service_id = db.Column(db.String, index=True, unique=False, nullable=True,
