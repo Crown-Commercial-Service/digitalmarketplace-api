@@ -234,3 +234,36 @@ class TestFrameworkStats(BaseApplicationTest):
                 {u'count': 5, u'recent_login': True},
             ]
         })
+
+
+class TestGetFrameworkInterest(BaseApplicationTest):
+    def setup(self):
+        super(TestGetFrameworkInterest, self).setup()
+
+        self.register_g7_interest(5)
+
+    def register_g7_interest(self, num):
+        self.setup_dummy_suppliers(num)
+        with self.app.app_context():
+            for supplier_id in range(num):
+                db.session.add(
+                    SupplierFramework(
+                        framework_id=4,
+                        supplier_id=supplier_id
+                    )
+                )
+            db.session.commit()
+
+    def test_interested_suppliers_are_returned(self):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-7/interest')
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())
+            assert_equal(data['interestedSuppliers'], [0, 1, 2, 3, 4])
+
+    def test_a_404_is_raised_if_it_does_not_exist(self):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/biscuits-for-gov/interest')
+
+            assert_equal(response.status_code, 404)

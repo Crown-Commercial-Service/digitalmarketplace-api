@@ -1,5 +1,3 @@
-from datetime import datetime
-from dmutils.deprecation import deprecated
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
@@ -8,11 +6,11 @@ from ...models import Supplier, ContactInformation, AuditEvent, Service, Supplie
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400,
-    is_valid_string_or_400,
-    validate_new_supplier_json_or_400
+    is_valid_string_or_400
 )
 from ...utils import pagination_links, drop_foreign_fields, get_json_from_request, \
     json_has_required_keys, json_has_matching_id, get_valid_page_or_1
+from ...service_utils import validate_and_return_updater_request
 from ...supplier_utils import validate_and_return_supplier_request
 from dmutils.audit import AuditTypes
 
@@ -361,3 +359,66 @@ def set_selection_questions(supplier_id, framework_slug):
         abort(400, "Database Error: {}".format(e))
 
     return jsonify(selectionAnswers=supplier_framework.serialize()), status_code
+
+
+@main.route('/suppliers/<supplier_id>/frameworks/interest', methods=['GET'])
+def get_registered_frameworks(supplier_id):
+    supplier_frameworks = SupplierFramework.query.filter(
+        SupplierFramework.supplier_id == supplier_id
+    ).all()
+    slugs = []
+    for framework in supplier_frameworks:
+        framework = Framework.query.filter(
+            Framework.id == framework.framework_id
+        ).first()
+        slugs.append(framework.slug)
+
+    return jsonify(frameworks=slugs)
+
+
+@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/interest', methods=['POST'])
+def register_interest_in_framework(supplier_id, framework_slug):
+    updater_json = validate_and_return_updater_request()
+
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first_or_404()
+
+    if framework.status != 'open':
+        abort(400, "'{}' framework is not open".format(framework_slug))
+
+    supplier = Supplier.query.filter(
+        Supplier.supplier_id == supplier_id
+    ).first()
+
+    if supplier is None:
+        abort(404, "supplier_id '{}' not found".format(supplier_id))
+
+    interest_record = SupplierFramework.query.filter(
+        SupplierFramework.supplier_id == supplier_id,
+        SupplierFramework.framework_id == framework.id
+    ).first()
+
+    if interest_record:
+        return jsonify(frameworkInterest=interest_record.serialize()), 200
+    else:
+        interest_record = SupplierFramework(
+            supplier_id=supplier_id,
+            framework_id=framework.id
+        )
+        audit_event = AuditEvent(
+            audit_type=AuditTypes.register_framework_interest,
+            user=updater_json.get('user'),
+            data={'supplierId': supplier_id, 'frameworkSlug': framework_slug},
+            db_object=supplier
+        )
+
+        try:
+            db.session.add(interest_record)
+            db.session.add(audit_event)
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            return jsonify(message="Database Error: {0}".format(e)), 400
+
+        return jsonify(frameworkInterest=interest_record.serialize()), 201
