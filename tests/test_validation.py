@@ -5,13 +5,19 @@ import json
 
 from nose.tools import assert_equal, assert_in, assert_not_in
 from jsonschema import validate, SchemaError, ValidationError
-from app.service_utils import drop_api_exported_fields_so_that_api_import_will_validate
 
+from app.utils import drop_foreign_fields
 from app.validation import validates_against_schema, is_valid_service_id, is_valid_date, \
     is_valid_acknowledged_state, get_validation_errors, is_valid_string
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                     '..', 'example_listings'))
+
+
+def drop_api_exported_fields_so_that_api_import_will_validate(data):
+    return drop_foreign_fields(
+        data, ['id', 'lot', 'supplierId', 'supplierName', 'links', 'status',
+               'frameworkSlug', 'frameworkName', 'lotName', 'createdAt', 'updatedAt'])
 
 
 def test_supplier_validates():
@@ -263,6 +269,7 @@ def test_valid_g6_service_has_no_validation_errors():
 
 def test_valid_g7_service_has_no_validation_errors():
     data = load_example_listing("G7-SCS")
+    data = drop_api_exported_fields_so_that_api_import_will_validate(data)
     errs = get_validation_errors("services-g-cloud-7-scs", data)
     assert not errs
 
@@ -276,6 +283,7 @@ def test_g7_missing_required_field_has_validation_error():
 
 def test_enforce_required_false_allows_missing_fields():
     data = load_example_listing("G7-SCS")
+    data = drop_api_exported_fields_so_that_api_import_will_validate(data)
     data.pop("serviceSummary", None)
     data.pop("serviceDefinitionDocumentURL", None)
     errs = get_validation_errors("services-g-cloud-7-scs", data,
@@ -295,6 +303,7 @@ def test_required_fields_param_requires_specified_fields():
 
 def test_additional_properties_has_validation_error():
     data = load_example_listing("G7-SCS")
+    data = drop_api_exported_fields_so_that_api_import_will_validate(data)
     data.update({'newKey': 1})
     errs = get_validation_errors("services-g-cloud-7-scs", data)
     assert "Additional properties are not allowed ('newKey' was unexpected)" \
