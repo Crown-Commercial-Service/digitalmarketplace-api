@@ -358,6 +358,9 @@ class User(db.Model):
 
 
 class ServiceTableMixin(object):
+
+    STATUSES = ['disabled', 'enabled', 'published']
+
     id = db.Column(db.Integer, primary_key=True)
     service_id = db.Column(db.String, index=True, unique=True, nullable=False)
 
@@ -395,6 +398,11 @@ class ServiceTableMixin(object):
     @declared_attr
     def lot(cls):
         return db.relationship(Lot, lazy='joined', innerjoin=True)
+
+    @validates('status')
+    def validates_status(self, key, value):
+        assert value in self.STATUSES
+        return value
 
     @validates('data')
     def validates_data(self, key, value):
@@ -519,6 +527,8 @@ class ArchivedService(db.Model, ServiceTableMixin):
 
 class DraftService(db.Model, ServiceTableMixin):
     __tablename__ = 'draft_services'
+
+    STATUSES = ['not-submitted', 'submitted', 'enabled', 'disabled', 'published']
 
     # Overwrites service_id column to remove uniqueness and nullable constraint
     service_id = db.Column(db.String, index=True, unique=False, nullable=True,
