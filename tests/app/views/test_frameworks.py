@@ -19,7 +19,7 @@ class TestListFrameworks(BaseApplicationTest):
             assert_equal(len(data['frameworks']),
                          len(Framework.query.all()))
             assert_equal(sorted(data['frameworks'][0].keys()),
-                         ['framework', 'id', 'name', 'slug', 'status'])
+                         ['framework', 'id', 'lots', 'name', 'slug', 'status'])
 
 
 class TestGetFramework(BaseApplicationTest):
@@ -30,6 +30,18 @@ class TestGetFramework(BaseApplicationTest):
 
             assert_equal(response.status_code, 200)
             assert_equal(data['frameworks']['slug'], 'g-cloud-7')
+
+    def test_framework_lots_are_returned(self):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-7')
+
+        data = json.loads(response.get_data())
+        assert_equal(data['frameworks']['lots'], [
+            {u'id': 1, u'name': u'Software as a Service', u'one_service_limit': False, u'slug': u'saas'},
+            {u'id': 2, u'name': u'Platform as a Service', u'one_service_limit': False, u'slug': u'paas'},
+            {u'id': 3, u'name': u'Infrastructure as a Service', u'one_service_limit': False, u'slug': u'iaas'},
+            {u'id': 4, u'name': u'Specialist Cloud Services', u'one_service_limit': False, u'slug': u'scs'}
+        ])
 
     def test_a_404_is_raised_if_it_does_not_exist(self):
         with self.app.app_context():

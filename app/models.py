@@ -85,6 +85,7 @@ class Framework(db.Model):
             'slug': self.slug,
             'framework': self.framework,
             'status': self.status,
+            'lots': [lot.serialize() for lot in self.lots],
         }
 
     def __repr__(self):
