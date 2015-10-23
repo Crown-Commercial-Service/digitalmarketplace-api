@@ -16,7 +16,7 @@ from ...service_utils import (
 )
 
 from ...draft_utils import (
-    validate_and_return_draft_request, get_draft_validation_errors,
+    validate_and_return_draft_request,
     get_request_page_questions
 )
 
@@ -84,12 +84,7 @@ def edit_draft_service(draft_id):
     ).first_or_404()
 
     draft.update_from_json(update_json)
-    errs = get_draft_validation_errors(draft.data,
-                                       framework=draft.framework,
-                                       lot=draft.lot,
-                                       required=page_questions)
-    if errs:
-        abort(400, errs)
+    validate_service_data(draft, enforce_required=False, required_fields=page_questions)
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_draft_service,
@@ -291,9 +286,7 @@ def create_new_draft_service(framework_slug=None):
         status="not-submitted"
     )
 
-    errs = get_draft_validation_errors(draft.data, framework=framework, lot=lot)
-    if errs:
-        return jsonify(errors=errs), 400
+    validate_service_data(draft, enforce_required=False)
 
     try:
         db.session.add(draft)
@@ -325,9 +318,7 @@ def complete_draft_service(draft_id):
         DraftService.id == draft_id
     ).first_or_404()
 
-    errs = validate_service_data(draft)
-    if errs:
-        abort(400, errs)
+    validate_service_data(draft)
 
     draft.status = 'submitted'
     try:

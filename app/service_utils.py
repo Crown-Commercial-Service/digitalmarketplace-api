@@ -57,18 +57,17 @@ def update_and_validate_service(service, service_payload):
     return service
 
 
-def validate_service_data(service, framework=None, lot=None):
-    if not framework:
-        framework = service.framework
-    if not lot:
-        lot = service.lot
-
-    if framework.slug in ['g-cloud-4', 'g-cloud-5']:
-        validator_name = 'services-{}'.format(framework.slug)
+def validate_service_data(service, enforce_required=True, required_fields=None):
+    if service.framework.slug in ['g-cloud-4', 'g-cloud-5']:
+        validator_name = 'services-{}'.format(service.framework.slug)
     else:
-        validator_name = 'services-{}-{}'.format(framework.slug, lot.slug)
+        validator_name = 'services-{}-{}'.format(service.framework.slug, service.lot.slug)
 
-    errs = get_validation_errors(validator_name, service.data, enforce_required=True)
+    errs = get_validation_errors(
+        validator_name, service.data,
+        enforce_required=enforce_required,
+        required_fields=required_fields
+    )
     if errs:
         abort(400, errs)
     return
@@ -140,7 +139,7 @@ def create_service_from_draft(draft, status):
         db.session.begin_nested()
         service = Service.create_from_draft(draft, status)
         try:
-            validate_service_data(service, framework=draft.framework, lot=draft.lot)
+            validate_service_data(service)
             db.session.add(service)
             db.session.commit()
             return service

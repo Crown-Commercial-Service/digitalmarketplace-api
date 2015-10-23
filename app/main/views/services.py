@@ -175,7 +175,7 @@ def import_service(service_id):
         data=service_data,
     )
 
-    validate_service_data(service, framework=framework, lot=lot)
+    validate_service_data(service)
 
     commit_and_archive_service(service, updater_json, AuditTypes.import_service)
     index_service(service)
