@@ -260,6 +260,8 @@ class SupplierFramework(db.Model):
                              db.ForeignKey('frameworks.id'),
                              primary_key=True)
     declaration = db.Column(JSON)
+    on_framework = db.Column(db.Boolean, nullable=True)
+    agreement_returned = db.Column(db.Boolean, nullable=True)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
@@ -283,6 +285,8 @@ class SupplierFramework(db.Model):
             "frameworkSlug": self.framework.slug,
             "questionAnswers": self.declaration,
             "declaration": self.declaration,
+            "onFramework": self.on_framework,
+            "agreementReturned": self.agreement_returned
         }
 
 
