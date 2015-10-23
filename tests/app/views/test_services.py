@@ -1594,6 +1594,24 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(response.status_code, 400)
         assert_in("Incorrect lot 'foo' for framework 'g-cloud-4'", json.loads(response.get_data())['error'])
 
+    def test_invalid_service_data(self):
+        payload = self.load_example_listing("G6-IaaS")
+        payload['id'] = "1234567890123456"
+
+        payload['priceMin'] = None
+
+        response = self.client.put(
+            '/services/1234567890123456',
+            data=json.dumps({
+                'update_details': {
+                    'updated_by': 'joeblogs'},
+                'services': payload
+            }),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 400)
+        assert_in("None is not of type", json.loads(response.get_data())['error']['priceMin'])
+
     def test_add_a_service_with_unknown_supplier_id(self):
         with self.app.app_context():
             payload = self.load_example_listing("G6-IaaS")
