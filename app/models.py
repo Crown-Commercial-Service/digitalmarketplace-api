@@ -474,10 +474,10 @@ class Service(db.Model, ServiceTableMixin):
     @staticmethod
     def create_from_draft(draft, status):
         return Service(
-            framework_id=draft.framework_id,
-            lot_id=draft.lot_id,
+            framework=draft.framework,
+            lot=draft.lot,
             service_id=generate_new_service_id(draft.framework.slug),
-            supplier_id=draft.supplier_id,
+            supplier=draft.supplier,
             data=draft.data,
             status=status
         )
@@ -517,10 +517,10 @@ class ArchivedService(db.Model, ServiceTableMixin):
     @staticmethod
     def from_service(service):
         return ArchivedService(
-            framework_id=service.framework_id,
-            lot_id=service.lot_id,
+            framework=service.framework,
+            lot=service.lot,
             service_id=service.service_id,
-            supplier_id=service.supplier_id,
+            supplier=service.supplier,
             created_at=service.created_at,
             updated_at=service.updated_at,
             data=service.data,
@@ -554,9 +554,9 @@ class DraftService(db.Model, ServiceTableMixin):
     def from_service(service):
         return DraftService(
             framework_id=service.framework_id,
-            lot_id=service.lot_id,
+            lot=service.lot,
             service_id=service.service_id,
-            supplier_id=service.supplier_id,
+            supplier=service.supplier,
             data=service.data,
             status=service.status
         )
@@ -575,9 +575,9 @@ class DraftService(db.Model, ServiceTableMixin):
         data = {key: value for key, value in data.items() if key not in do_not_copy}
 
         return DraftService(
-            framework_id=self.framework_id,
-            lot_id=self.lot_id,
-            supplier_id=self.supplier_id,
+            framework=self.framework,
+            lot=self.lot,
+            supplier=self.supplier,
             data=data,
             status='not-submitted',
         )

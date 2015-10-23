@@ -166,12 +166,12 @@ def import_service(service_id):
 
     service = Service(
         service_id=service_id,
-        supplier_id=supplier.supplier_id,
-        lot_id=lot.id,
-        framework_id=framework.id,
-        status=service_data.pop('status', 'published'),
-        created_at=service_data.pop('createdAt', None),
-        updated_at=service_data.pop('updatedAt', None),
+        supplier=supplier,
+        lot=lot,
+        framework=framework,
+        status=service_data.get('status', 'published'),
+        created_at=service_data.get('createdAt'),
+        updated_at=service_data.get('updatedAt'),
         data=service_data,
     )
 

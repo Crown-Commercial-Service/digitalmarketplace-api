@@ -284,9 +284,9 @@ def create_new_draft_service(framework_slug=None):
             abort(400, "'{}' service already exists for supplier '{}'".format(lot.slug, supplier.supplier_id))
 
     draft = DraftService(
-        framework_id=framework.id,
-        lot_id=lot.id,
-        supplier_id=supplier.supplier_id,
+        framework=framework,
+        lot=lot,
+        supplier=supplier,
         data=draft_json,
         status="not-submitted"
     )
