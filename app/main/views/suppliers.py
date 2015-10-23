@@ -376,8 +376,10 @@ def get_registered_frameworks(supplier_id):
     return jsonify(frameworks=slugs)
 
 
+# TODO: deprecated - remove route once all frontend apps are using utils version 10.8.0 or higher
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/interest', methods=['POST'])
 def register_interest_in_framework(supplier_id, framework_slug):
+    current_app.logger.warning("Deprecated /suppliers/<supplier_id>/frameworks/<framework_slug>/interest route")
     updater_json = validate_and_return_updater_request()
 
     framework = Framework.query.filter(
@@ -422,3 +424,70 @@ def register_interest_in_framework(supplier_id, framework_slug):
             return jsonify(message="Database Error: {0}".format(e)), 400
 
         return jsonify(frameworkInterest=interest_record.serialize()), 201
+
+
+@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['POST'])
+def update_supplier_framework_details(supplier_id, framework_slug):
+    updater_json = validate_and_return_updater_request()
+
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first_or_404()
+
+    supplier = Supplier.query.filter(
+        Supplier.supplier_id == supplier_id
+    ).first()
+
+    if supplier is None:
+        abort(404, "supplier_id '{}' not found".format(supplier_id))
+
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ["update"])
+    update_json = json_payload["update"]
+
+    interest_record = SupplierFramework.query.filter(
+        SupplierFramework.supplier_id == supplier_id,
+        SupplierFramework.framework_id == framework.id
+    ).first()
+
+    if interest_record:
+        # Updating an existing supplier_frameworks entry
+        audit_event = AuditEvent(
+            audit_type=AuditTypes.supplier_update,
+            user=updater_json.get('user'),
+            data={'supplierId': supplier_id, 'frameworkSlug': framework_slug, 'update': update_json},
+            db_object=supplier
+        )
+        status_code = 200
+
+    else:
+        # Registering interest for the first time
+        if framework.status != 'open':
+            abort(400, "'{}' framework is not open".format(framework_slug))
+        interest_record = SupplierFramework(
+            supplier_id=supplier_id,
+            framework_id=framework.id
+        )
+        audit_event = AuditEvent(
+            audit_type=AuditTypes.register_framework_interest,
+            user=updater_json.get('user'),
+            data={'supplierId': supplier_id, 'frameworkSlug': framework_slug},
+            db_object=supplier
+        )
+        status_code = 201
+
+    if 'onFramework' in update_json:
+        interest_record.on_framework = update_json['onFramework']
+        if interest_record.on_framework is True and interest_record.agreement_returned is None:
+            interest_record.agreement_returned = False
+    if 'agreementReturned' in update_json:
+        interest_record.agreement_returned = update_json['agreementReturned']
+    try:
+        db.session.add(interest_record)
+        db.session.add(audit_event)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message="Database Error: {0}".format(e)), 400
+
+    return jsonify(frameworkInterest=interest_record.serialize()), status_code
