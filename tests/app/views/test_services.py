@@ -1536,7 +1536,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert_equal(json.loads(response.get_data())['error'],
                      "Invalid JSON must have '["
-                     "'update_details']' key(s)")
+                     "'update_details']' keys")
         assert_equal(response.status_code, 400)
         assert_in(b'Invalid JSON', response.get_data())
 
