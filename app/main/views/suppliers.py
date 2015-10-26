@@ -245,8 +245,10 @@ def update_contact_information(supplier_id, contact_id):
     return jsonify(contactInformation=contact.serialize())
 
 
+# TODO: deprecated - remove route once all frontend apps are using utils version 10.8.0 or higher
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/declaration', methods=['GET'])
 def get_a_declaration(supplier_id, framework_slug):
+    current_app.logger.warning("Deprecated /suppliers/<supplier_id>/frameworks/<framework_slug>/declaration route")
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         supplier_id, framework_slug
     )
