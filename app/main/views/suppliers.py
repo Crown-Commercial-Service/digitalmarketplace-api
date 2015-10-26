@@ -316,6 +316,17 @@ def get_registered_frameworks(supplier_id):
     return jsonify(frameworks=slugs)
 
 
+@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['GET'])
+def get_supplier_framework_info(supplier_id, framework_slug):
+    supplier_framework = SupplierFramework.find_by_supplier_and_framework(
+        supplier_id, framework_slug
+    )
+    if supplier_framework is None:
+        abort(404)
+
+    return jsonify(frameworkInterest=supplier_framework.serialize())
+
+
 # TODO: deprecated - remove route once all frontend apps are using utils version 10.8.0 or higher
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/interest', methods=['POST'])
 def register_interest_in_framework(supplier_id, framework_slug):
