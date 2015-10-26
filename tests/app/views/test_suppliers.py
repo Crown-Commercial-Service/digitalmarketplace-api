@@ -796,134 +796,6 @@ class TestUpdateContactInformation(BaseApplicationTest):
         assert_equal(response.status_code, 400)
 
 
-class TestGetSupplierSupplierFramework(BaseApplicationTest):
-    def setup(self):
-        super(TestGetSupplierSupplierFramework, self).setup()
-        self.setup_dummy_suppliers(1)
-
-        with self.app.app_context():
-            answers = SupplierFramework(
-                supplier_id=0, framework_id=2,
-                declaration={})
-            db.session.add(answers)
-            db.session.commit()
-
-    def test_get_selection_answers(self):
-        response = self.client.get(
-            '/suppliers/0/selection-answers/g-cloud-4')
-
-        data = json.loads(response.get_data())
-        assert_equal(response.status_code, 200)
-        assert_equal(data['selectionAnswers']['supplierId'], 0)
-        assert_equal(data['selectionAnswers']['frameworkSlug'],
-                     'g-cloud-4')
-
-    def test_get_non_existent_by_framework(self):
-        response = self.client.get(
-            '/suppliers/0/selection-answers/g-cloud-5')
-
-        assert_equal(response.status_code, 404)
-
-    def test_get_non_existent_by_supplier(self):
-        response = self.client.get(
-            '/suppliers/123/selection-answers/g-cloud-4')
-
-        assert_equal(response.status_code, 404)
-
-
-class TestSetSupplierSupplierFramework(BaseApplicationTest):
-    method = 'put'
-    endpoint = '/suppliers/0/selection-answers/g-cloud-4'
-
-    def setup(self):
-        super(TestSetSupplierSupplierFramework, self).setup()
-        with self.app.app_context():
-            framework = Framework(
-                slug='test-open',
-                name='Test open',
-                framework='gcloud',
-                status='open')
-            db.session.add(framework)
-            db.session.commit()
-        self.setup_dummy_suppliers(1)
-
-    def teardown(self):
-        super(TestSetSupplierSupplierFramework, self).teardown()
-        with self.app.app_context():
-            frameworks = Framework.query.filter(
-                Framework.slug.like('test-%')
-            ).all()
-            for framework in frameworks:
-                db.session.delete(framework)
-            db.session.commit()
-
-    def test_add_new_selection_answers(self):
-        with self.app.app_context():
-            response = self.client.put(
-                '/suppliers/0/selection-answers/test-open',
-                data=json.dumps({
-                    'updated_by': 'testing',
-                    'selectionAnswers': {
-                        'supplierId': 0,
-                        'frameworkSlug': 'test-open',
-                        'questionAnswers': {
-                            'question': 'answer'
-                        }
-                    }
-                }),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-            answers = SupplierFramework \
-                .find_by_supplier_and_framework(0, 'test-open')
-            assert_equal(answers.declaration['question'], 'answer')
-
-    def test_update_existing_selection_answers(self):
-        with self.app.app_context():
-            framework_id = Framework.query.filter(
-                Framework.slug == 'test-open').first().id
-            answers = SupplierFramework(
-                supplier_id=0,
-                framework_id=framework_id,
-                declaration={'question': 'answer'})
-            db.session.add(answers)
-            db.session.commit()
-
-            response = self.client.put(
-                '/suppliers/0/selection-answers/test-open',
-                data=json.dumps({
-                    'updated_by': 'testing',
-                    'selectionAnswers': {
-                        'supplierId': 0,
-                        'frameworkSlug': 'test-open',
-                        'questionAnswers': {
-                            'question': 'answer2',
-                        }
-                    }
-                }),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 200)
-            answers = SupplierFramework \
-                .find_by_supplier_and_framework(0, 'test-open')
-            assert_equal(answers.declaration['question'], 'answer2')
-
-    def test_invalid_payload_fails(self):
-        with self.app.app_context():
-            response = self.client.put(
-                '/suppliers/0/selection-answers/test-open',
-                data=json.dumps({
-                    'selectionAnswers': {
-                        'invalid': {
-                            'question': 'answer'
-                        }
-                    }
-                }),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 400)
-
-
 class TestGetSupplierDeclarations(BaseApplicationTest):
     def setup(self):
         super(TestGetSupplierDeclarations, self).setup()
@@ -936,7 +808,7 @@ class TestGetSupplierDeclarations(BaseApplicationTest):
             db.session.add(answers)
             db.session.commit()
 
-    def test_get_selection_answers(self):
+    def test_get_declaration(self):
         response = self.client.get(
             '/suppliers/0/frameworks/g-cloud-4/declaration')
 
@@ -1207,13 +1079,13 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
             )
             db.session.commit()
 
-    def register_interest_update(self, supplier_id, framework_slug, user='interested@example.com', update={}):
+    def register_interest(self, supplier_id, framework_slug, user='interested@example.com'):
         return self.client.post(
             '/suppliers/{}/frameworks/{}'.format(supplier_id, framework_slug),
             data=json.dumps(
                 {
                     'update_details': {'updated_by': user},
-                    'update': update
+                    'update': {}
                 }),
             content_type='application/json')
 
@@ -1232,7 +1104,7 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
 
     def test_can_register_interest_in_open_framework(self):
         with self.app.app_context():
-            response = self.register_interest_update(1, 'digital-outcomes-and-specialists')
+            response = self.register_interest(1, 'digital-outcomes-and-specialists')
 
             assert_equal(response.status_code, 201)
             data = json.loads(response.get_data())
@@ -1241,7 +1113,7 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
 
     def test_can_not_register_interest_in_not_open_framework_(self):
         with self.app.app_context():
-            response = self.register_interest_update(1, 'g-cloud-5')
+            response = self.register_interest(1, 'g-cloud-5')
 
             assert_equal(response.status_code, 400)
             data = json.loads(response.get_data())
@@ -1249,20 +1121,20 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
 
     def test_can_not_register_interest_more_than_once_in_open_framework(self):
         with self.app.app_context():
-            response1 = self.register_interest_update(1, 'digital-outcomes-and-specialists')
+            response1 = self.register_interest(1, 'digital-outcomes-and-specialists')
             assert_equal(response1.status_code, 201)
             data = json.loads(response1.get_data())
             assert_equal(data['frameworkInterest']['supplierId'], 1)
             assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
 
-            response2 = self.register_interest_update(1, 'digital-outcomes-and-specialists', user='another@example.com')
+            response2 = self.register_interest(1, 'digital-outcomes-and-specialists', user='another@example.com')
             assert_equal(response2.status_code, 200)
             data = json.loads(response2.get_data())
             assert_equal(data['frameworkInterest']['supplierId'], 1)
             assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
 
     def test_register_interest_creates_audit_event(self):
-        self.register_interest_update(1, 'digital-outcomes-and-specialists')
+        self.register_interest(1, 'digital-outcomes-and-specialists')
 
         with self.app.app_context():
             supplier = Supplier.query.filter(
@@ -1285,61 +1157,114 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
             data = json.loads(response1.get_data())
             assert_equal(data['frameworks'], [])
 
-            self.register_interest_update(1, 'digital-outcomes-and-specialists')
+            self.register_interest(1, 'digital-outcomes-and-specialists')
 
             response2 = self.client.get("/suppliers/1/frameworks/interest")
             assert_equal(response2.status_code, 200)
             data = json.loads(response2.get_data())
             assert_equal(data['frameworks'], ['digital-outcomes-and-specialists'])
 
-    def test_adding_supplier_has_passed(self):
-        self.register_interest_update(1, 'digital-outcomes-and-specialists')
 
-        response = self.register_interest_update(
-            1,
+class TestSupplierFrameworkUpdates(BaseApplicationTest):
+    def setup(self):
+        super(TestSupplierFrameworkUpdates, self).setup()
+
+        self.setup_dummy_suppliers(1)
+
+        with self.app.app_context():
+            framework_enum_vals = db.session.execute("SELECT enum_range(NULL::framework_enum);").first()[0]
+            if 'dos' not in str(framework_enum_vals):
+                self.bootstrap_dos()
+
+            answers = SupplierFramework(
+                supplier_id=0, framework_id=2,
+                declaration={'an_answer': 'Yes it is'},
+                on_framework=True, agreement_returned=True)
+            db.session.add(answers)
+            db.session.commit()
+
+    def supplier_framework_update(self, supplier_id, framework_slug, update={}):
+        return self.client.post(
+            '/suppliers/{}/frameworks/{}'.format(supplier_id, framework_slug),
+            data=json.dumps(
+                {
+                    'update_details': {'updated_by': 'interested@example.com'},
+                    'update': update
+                }),
+            content_type='application/json')
+
+    def test_get_supplier_framework_info(self):
+        response = self.client.get(
+            '/suppliers/0/frameworks/g-cloud-4')
+
+        data = json.loads(response.get_data())
+        assert_equal(response.status_code, 200)
+        assert_equal(data['frameworkInterest']['supplierId'], 0)
+        assert_equal(data['frameworkInterest']['frameworkSlug'], 'g-cloud-4')
+        assert_equal(data['frameworkInterest']['declaration'], {'an_answer': 'Yes it is'})
+        assert_equal(data['frameworkInterest']['onFramework'], True)
+        assert_equal(data['frameworkInterest']['agreementReturned'], True)
+
+    def test_get_supplier_framework_info_non_existent_by_framework(self):
+        response = self.client.get(
+            '/suppliers/0/frameworks/g-cloud-5')
+
+        assert_equal(response.status_code, 404)
+
+    def test_get_supplier_framework_info_non_existent_by_supplier(self):
+        response = self.client.get(
+            '/suppliers/123/frameworks/g-cloud-4')
+
+        assert_equal(response.status_code, 404)
+
+    def test_adding_supplier_has_passed(self):
+        self.supplier_framework_update(0, 'digital-outcomes-and-specialists')
+
+        response = self.supplier_framework_update(
+            0,
             'digital-outcomes-and-specialists',
             update={'onFramework': True}
         )
         assert_equal(response.status_code, 200)
         data = json.loads(response.get_data())
-        assert_equal(data['frameworkInterest']['supplierId'], 1)
+        assert_equal(data['frameworkInterest']['supplierId'], 0)
         assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
         assert_equal(data['frameworkInterest']['onFramework'], True)
         assert_equal(data['frameworkInterest']['agreementReturned'], False)
 
     def test_adding_supplier_has_not_passed(self):
-        self.register_interest_update(1, 'digital-outcomes-and-specialists')
+        self.supplier_framework_update(0, 'digital-outcomes-and-specialists')
 
-        response = self.register_interest_update(
-            1,
+        response = self.supplier_framework_update(
+            0,
             'digital-outcomes-and-specialists',
             update={'onFramework': False}
         )
         assert_equal(response.status_code, 200)
         data = json.loads(response.get_data())
-        assert_equal(data['frameworkInterest']['supplierId'], 1)
+        assert_equal(data['frameworkInterest']['supplierId'], 0)
         assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
         assert_equal(data['frameworkInterest']['onFramework'], False)
 
     def test_adding_that_agreement_has_been_returned(self):
-        self.register_interest_update(1, 'digital-outcomes-and-specialists')
+        self.supplier_framework_update(0, 'digital-outcomes-and-specialists')
 
-        response = self.register_interest_update(
-            1,
+        response = self.supplier_framework_update(
+            0,
             'digital-outcomes-and-specialists',
             update={'agreementReturned': True}
         )
         assert_equal(response.status_code, 200)
         data = json.loads(response.get_data())
-        assert_equal(data['frameworkInterest']['supplierId'], 1)
+        assert_equal(data['frameworkInterest']['supplierId'], 0)
         assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
         assert_equal(data['frameworkInterest']['agreementReturned'], True)
 
     def test_changing_from_failed_to_passed(self):
-        self.register_interest_update(1, 'digital-outcomes-and-specialists')
+        self.supplier_framework_update(0, 'digital-outcomes-and-specialists')
 
-        response = self.register_interest_update(
-            1,
+        response = self.supplier_framework_update(
+            0,
             'digital-outcomes-and-specialists',
             update={'onFramework': False}
         )
@@ -1348,8 +1273,8 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
         assert_equal(data['frameworkInterest']['onFramework'], False)
         assert_equal(data['frameworkInterest']['agreementReturned'], None)
 
-        response2 = self.register_interest_update(
-            1,
+        response2 = self.supplier_framework_update(
+            0,
             'digital-outcomes-and-specialists',
             update={'onFramework': True}
         )
@@ -1359,10 +1284,10 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
         assert_equal(data['frameworkInterest']['agreementReturned'], False)
 
     def test_changing_from_passed_to_failed(self):
-        self.register_interest_update(1, 'digital-outcomes-and-specialists')
+        self.supplier_framework_update(0, 'digital-outcomes-and-specialists')
 
-        response = self.register_interest_update(
-            1,
+        response = self.supplier_framework_update(
+            0,
             'digital-outcomes-and-specialists',
             update={'onFramework': True}
         )
@@ -1371,8 +1296,8 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
         assert_equal(data['frameworkInterest']['onFramework'], True)
         assert_equal(data['frameworkInterest']['agreementReturned'], False)
 
-        response2 = self.register_interest_update(
-            1,
+        response2 = self.supplier_framework_update(
+            0,
             'digital-outcomes-and-specialists',
             update={'onFramework': False}
         )
@@ -1382,15 +1307,15 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
         assert_equal(data['frameworkInterest']['agreementReturned'], False)
 
     def test_pass_fail_update_creates_audit_event(self):
-        self.register_interest_update(1, 'digital-outcomes-and-specialists')
-        self.register_interest_update(
-            1,
+        self.supplier_framework_update(0, 'digital-outcomes-and-specialists')
+        self.supplier_framework_update(
+            0,
             'digital-outcomes-and-specialists',
             update={'onFramework': True, 'agreementReturned': True}
         )
         with self.app.app_context():
             supplier = Supplier.query.filter(
-                Supplier.supplier_id == 1
+                Supplier.supplier_id == 0
             ).first()
 
             audit = AuditEvent.query.filter(
@@ -1400,7 +1325,7 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
 
             assert_equal(audit.type, "supplier_update")
             assert_equal(audit.user, "interested@example.com")
-            assert_equal(audit.data['supplierId'], 1)
+            assert_equal(audit.data['supplierId'], 0)
             assert_equal(audit.data['frameworkSlug'], 'digital-outcomes-and-specialists')
             assert_equal(audit.data['update']['onFramework'], True)
             assert_equal(audit.data['update']['agreementReturned'], True)
