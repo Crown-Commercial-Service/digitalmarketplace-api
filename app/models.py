@@ -283,7 +283,6 @@ class SupplierFramework(db.Model):
         return {
             "supplierId": self.supplier_id,
             "frameworkSlug": self.framework.slug,
-            "questionAnswers": self.declaration,
             "declaration": self.declaration,
             "onFramework": self.on_framework,
             "agreementReturned": self.agreement_returned
