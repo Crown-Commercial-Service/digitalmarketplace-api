@@ -1207,7 +1207,17 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
             )
             db.session.commit()
 
-    def test_can_register_interest_in_open_framework(self):
+    def register_interest_update(self, supplier_id, framework_slug, user='interested@example.com', update={}):
+        return self.client.post(
+            '/suppliers/{}/frameworks/{}'.format(supplier_id, framework_slug),
+            data=json.dumps(
+                {
+                    'update_details': {'updated_by': user},
+                    'update': update
+                }),
+            content_type='application/json')
+
+    def test_can_still_register_interest_in_open_framework_using_deprecated_route(self):
         with self.app.app_context():
             response = self.client.post(
                 '/suppliers/1/frameworks/digital-outcomes-and-specialists/interest',
@@ -1220,13 +1230,18 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
             assert_equal(data['frameworkInterest']['supplierId'], 1)
             assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
 
+    def test_can_register_interest_in_open_framework(self):
+        with self.app.app_context():
+            response = self.register_interest_update(1, 'digital-outcomes-and-specialists')
+
+            assert_equal(response.status_code, 201)
+            data = json.loads(response.get_data())
+            assert_equal(data['frameworkInterest']['supplierId'], 1)
+            assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+
     def test_can_not_register_interest_in_not_open_framework_(self):
         with self.app.app_context():
-            response = self.client.post(
-                '/suppliers/1/frameworks/g-cloud-5/interest',
-                data=json.dumps(
-                    {'update_details': {'updated_by': 'interested@example.com'}}),
-                content_type='application/json')
+            response = self.register_interest_update(1, 'g-cloud-5')
 
             assert_equal(response.status_code, 400)
             data = json.loads(response.get_data())
@@ -1234,25 +1249,34 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
 
     def test_can_not_register_interest_more_than_once_in_open_framework(self):
         with self.app.app_context():
-            response1 = self.client.post(
-                '/suppliers/1/frameworks/digital-outcomes-and-specialists/interest',
-                data=json.dumps(
-                    {'update_details': {'updated_by': 'interested@example.com'}}),
-                content_type='application/json')
+            response1 = self.register_interest_update(1, 'digital-outcomes-and-specialists')
             assert_equal(response1.status_code, 201)
             data = json.loads(response1.get_data())
             assert_equal(data['frameworkInterest']['supplierId'], 1)
             assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
 
-            response2 = self.client.post(
-                '/suppliers/1/frameworks/digital-outcomes-and-specialists/interest',
-                data=json.dumps(
-                    {'update_details': {'updated_by': 'another@example.com'}}),
-                content_type='application/json')
+            response2 = self.register_interest_update(1, 'digital-outcomes-and-specialists', user='another@example.com')
             assert_equal(response2.status_code, 200)
             data = json.loads(response2.get_data())
             assert_equal(data['frameworkInterest']['supplierId'], 1)
             assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+
+    def test_register_interest_creates_audit_event(self):
+        self.register_interest_update(1, 'digital-outcomes-and-specialists')
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 1
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == supplier
+            ).first()
+
+            assert_equal(audit.type, "register_framework_interest")
+            assert_equal(audit.user, "interested@example.com")
+            assert_equal(audit.data['supplierId'], 1)
+            assert_equal(audit.data['frameworkSlug'], 'digital-outcomes-and-specialists')
 
     def test_can_get_registered_frameworks_for_a_supplier(self):
         with self.app.app_context():
@@ -1261,13 +1285,122 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
             data = json.loads(response1.get_data())
             assert_equal(data['frameworks'], [])
 
-            self.client.post(
-                '/suppliers/1/frameworks/digital-outcomes-and-specialists/interest',
-                data=json.dumps(
-                    {'update_details': {'updated_by': 'interested@example.com'}}),
-                content_type='application/json')
+            self.register_interest_update(1, 'digital-outcomes-and-specialists')
 
             response2 = self.client.get("/suppliers/1/frameworks/interest")
             assert_equal(response2.status_code, 200)
             data = json.loads(response2.get_data())
             assert_equal(data['frameworks'], ['digital-outcomes-and-specialists'])
+
+    def test_adding_supplier_has_passed(self):
+        self.register_interest_update(1, 'digital-outcomes-and-specialists')
+
+        response = self.register_interest_update(
+            1,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': True}
+        )
+        assert_equal(response.status_code, 200)
+        data = json.loads(response.get_data())
+        assert_equal(data['frameworkInterest']['supplierId'], 1)
+        assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+        assert_equal(data['frameworkInterest']['onFramework'], True)
+        assert_equal(data['frameworkInterest']['agreementReturned'], False)
+
+    def test_adding_supplier_has_not_passed(self):
+        self.register_interest_update(1, 'digital-outcomes-and-specialists')
+
+        response = self.register_interest_update(
+            1,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': False}
+        )
+        assert_equal(response.status_code, 200)
+        data = json.loads(response.get_data())
+        assert_equal(data['frameworkInterest']['supplierId'], 1)
+        assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+        assert_equal(data['frameworkInterest']['onFramework'], False)
+
+    def test_adding_that_agreement_has_been_returned(self):
+        self.register_interest_update(1, 'digital-outcomes-and-specialists')
+
+        response = self.register_interest_update(
+            1,
+            'digital-outcomes-and-specialists',
+            update={'agreementReturned': True}
+        )
+        assert_equal(response.status_code, 200)
+        data = json.loads(response.get_data())
+        assert_equal(data['frameworkInterest']['supplierId'], 1)
+        assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+        assert_equal(data['frameworkInterest']['agreementReturned'], True)
+
+    def test_changing_from_failed_to_passed(self):
+        self.register_interest_update(1, 'digital-outcomes-and-specialists')
+
+        response = self.register_interest_update(
+            1,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': False}
+        )
+        assert_equal(response.status_code, 200)
+        data = json.loads(response.get_data())
+        assert_equal(data['frameworkInterest']['onFramework'], False)
+        assert_equal(data['frameworkInterest']['agreementReturned'], None)
+
+        response2 = self.register_interest_update(
+            1,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': True}
+        )
+        assert_equal(response2.status_code, 200)
+        data = json.loads(response2.get_data())
+        assert_equal(data['frameworkInterest']['onFramework'], True)
+        assert_equal(data['frameworkInterest']['agreementReturned'], False)
+
+    def test_changing_from_passed_to_failed(self):
+        self.register_interest_update(1, 'digital-outcomes-and-specialists')
+
+        response = self.register_interest_update(
+            1,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': True}
+        )
+        assert_equal(response.status_code, 200)
+        data = json.loads(response.get_data())
+        assert_equal(data['frameworkInterest']['onFramework'], True)
+        assert_equal(data['frameworkInterest']['agreementReturned'], False)
+
+        response2 = self.register_interest_update(
+            1,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': False}
+        )
+        assert_equal(response2.status_code, 200)
+        data = json.loads(response2.get_data())
+        assert_equal(data['frameworkInterest']['onFramework'], False)
+        assert_equal(data['frameworkInterest']['agreementReturned'], False)
+
+    def test_pass_fail_update_creates_audit_event(self):
+        self.register_interest_update(1, 'digital-outcomes-and-specialists')
+        self.register_interest_update(
+            1,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': True, 'agreementReturned': True}
+        )
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == 1
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == supplier,
+                AuditEvent.type == "supplier_update"
+            ).first()
+
+            assert_equal(audit.type, "supplier_update")
+            assert_equal(audit.user, "interested@example.com")
+            assert_equal(audit.data['supplierId'], 1)
+            assert_equal(audit.data['frameworkSlug'], 'digital-outcomes-and-specialists')
+            assert_equal(audit.data['update']['onFramework'], True)
+            assert_equal(audit.data['update']['agreementReturned'], True)

@@ -454,8 +454,8 @@ def update_supplier_framework_details(supplier_id, framework_slug):
         # Updating an existing supplier_frameworks entry
         audit_event = AuditEvent(
             audit_type=AuditTypes.supplier_update,
-            user=updater_json.get('user'),
-            data={'supplierId': supplier_id, 'frameworkSlug': framework_slug, 'update': update_json},
+            user=updater_json.get('updated_by'),
+            data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug, 'update': update_json},
             db_object=supplier
         )
         status_code = 200
@@ -470,8 +470,8 @@ def update_supplier_framework_details(supplier_id, framework_slug):
         )
         audit_event = AuditEvent(
             audit_type=AuditTypes.register_framework_interest,
-            user=updater_json.get('user'),
-            data={'supplierId': supplier_id, 'frameworkSlug': framework_slug},
+            user=updater_json.get('updated_by'),
+            data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug},
             db_object=supplier
         )
         status_code = 201
