@@ -301,66 +301,6 @@ def set_a_declaration(supplier_id, framework_slug):
     return jsonify(declaration=supplier_framework.declaration), status_code
 
 
-@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>', methods=['GET'])
-def get_selection_questions(supplier_id, framework_slug):
-    supplier_framework = SupplierFramework.find_by_supplier_and_framework(
-        supplier_id, framework_slug
-    )
-    if supplier_framework is None:
-        abort(404)
-
-    return jsonify(selectionAnswers=supplier_framework.serialize())
-
-
-@main.route('/suppliers/<supplier_id>/selection-answers/<framework_slug>', methods=['PUT'])
-def set_selection_questions(supplier_id, framework_slug):
-    framework = Framework.query.filter(
-        Framework.slug == framework_slug
-    ).first_or_404()
-    if framework.status != 'open':
-        abort(400, 'Framework must be open')
-
-    supplier_framework = SupplierFramework.find_by_supplier_and_framework(
-        supplier_id, framework_slug
-    )
-    if supplier_framework is not None:
-        status_code = 200
-    else:
-        supplier = Supplier.query.filter(
-            Supplier.supplier_id == supplier_id
-        ).first_or_404()
-
-        supplier_framework = SupplierFramework(
-            supplier_id=supplier.supplier_id,
-            framework_id=framework.id,
-            declaration={}
-        )
-        status_code = 201
-
-    request_data = get_json_from_request()
-    json_has_required_keys(request_data, ['selectionAnswers', 'updated_by'])
-    answers_data = request_data['selectionAnswers']
-    json_has_required_keys(answers_data, ['questionAnswers'])
-
-    supplier_framework.declaration = answers_data['questionAnswers']
-    db.session.add(supplier_framework)
-    db.session.add(
-        AuditEvent(
-            audit_type=AuditTypes.answer_selection_questions,
-            db_object=supplier_framework,
-            user=request_data['updated_by'],
-            data={'update': answers_data})
-    )
-
-    try:
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        abort(400, "Database Error: {}".format(e))
-
-    return jsonify(selectionAnswers=supplier_framework.serialize()), status_code
-
-
 @main.route('/suppliers/<supplier_id>/frameworks/interest', methods=['GET'])
 def get_registered_frameworks(supplier_id):
     supplier_frameworks = SupplierFramework.query.filter(
