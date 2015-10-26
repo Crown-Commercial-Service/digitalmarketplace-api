@@ -1080,7 +1080,7 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
             db.session.commit()
 
     def register_interest(self, supplier_id, framework_slug, user='interested@example.com'):
-        return self.client.post(
+        return self.client.put(
             '/suppliers/{}/frameworks/{}'.format(supplier_id, framework_slug),
             data=json.dumps(
                 {
@@ -1175,6 +1175,13 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             framework_enum_vals = db.session.execute("SELECT enum_range(NULL::framework_enum);").first()[0]
             if 'dos' not in str(framework_enum_vals):
                 self.bootstrap_dos()
+            self.client.put(
+                '/suppliers/0/frameworks/digital-outcomes-and-specialists',
+                data=json.dumps(
+                    {
+                        'update_details': {'updated_by': 'interested@example.com'}
+                    }),
+                content_type='application/json')
 
             answers = SupplierFramework(
                 supplier_id=0, framework_id=2,
@@ -1218,8 +1225,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert_equal(response.status_code, 404)
 
     def test_adding_supplier_has_passed(self):
-        self.supplier_framework_update(0, 'digital-outcomes-and-specialists')
-
         response = self.supplier_framework_update(
             0,
             'digital-outcomes-and-specialists',
@@ -1233,8 +1238,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert_equal(data['frameworkInterest']['agreementReturned'], False)
 
     def test_adding_supplier_has_not_passed(self):
-        self.supplier_framework_update(0, 'digital-outcomes-and-specialists')
-
         response = self.supplier_framework_update(
             0,
             'digital-outcomes-and-specialists',
@@ -1247,8 +1250,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert_equal(data['frameworkInterest']['onFramework'], False)
 
     def test_adding_that_agreement_has_been_returned(self):
-        self.supplier_framework_update(0, 'digital-outcomes-and-specialists')
-
         response = self.supplier_framework_update(
             0,
             'digital-outcomes-and-specialists',
@@ -1261,8 +1262,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert_equal(data['frameworkInterest']['agreementReturned'], True)
 
     def test_changing_from_failed_to_passed(self):
-        self.supplier_framework_update(0, 'digital-outcomes-and-specialists')
-
         response = self.supplier_framework_update(
             0,
             'digital-outcomes-and-specialists',
@@ -1284,8 +1283,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert_equal(data['frameworkInterest']['agreementReturned'], False)
 
     def test_changing_from_passed_to_failed(self):
-        self.supplier_framework_update(0, 'digital-outcomes-and-specialists')
-
         response = self.supplier_framework_update(
             0,
             'digital-outcomes-and-specialists',
@@ -1307,7 +1304,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert_equal(data['frameworkInterest']['agreementReturned'], False)
 
     def test_pass_fail_update_creates_audit_event(self):
-        self.supplier_framework_update(0, 'digital-outcomes-and-specialists')
         self.supplier_framework_update(
             0,
             'digital-outcomes-and-specialists',

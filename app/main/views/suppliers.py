@@ -379,6 +379,54 @@ def register_interest_in_framework(supplier_id, framework_slug):
         return jsonify(frameworkInterest=interest_record.serialize()), 201
 
 
+@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['PUT'])
+def register_framework_interest(supplier_id, framework_slug):
+    updater_json = validate_and_return_updater_request()
+
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first_or_404()
+
+    supplier = Supplier.query.filter(
+        Supplier.supplier_id == supplier_id
+    ).first()
+
+    if supplier is None:
+        abort(404, "supplier_id '{}' not found".format(supplier_id))
+
+    interest_record = SupplierFramework.query.filter(
+        SupplierFramework.supplier_id == supplier_id,
+        SupplierFramework.framework_id == framework.id
+    ).first()
+
+    if interest_record:
+        return jsonify(frameworkInterest=interest_record.serialize()), 200
+
+    if framework.status != 'open':
+        abort(400, "'{}' framework is not open".format(framework_slug))
+
+    interest_record = SupplierFramework(
+        supplier_id=supplier_id,
+        framework_id=framework.id
+    )
+    audit_event = AuditEvent(
+        audit_type=AuditTypes.register_framework_interest,
+        user=updater_json.get('updated_by'),
+        data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug},
+        db_object=supplier
+    )
+
+    try:
+        db.session.add(interest_record)
+        db.session.add(audit_event)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message="Database Error: {0}".format(e)), 400
+
+    return jsonify(frameworkInterest=interest_record.serialize()), 201
+
+
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['POST'])
 def update_supplier_framework_details(supplier_id, framework_slug):
     updater_json = validate_and_return_updater_request()
@@ -403,31 +451,8 @@ def update_supplier_framework_details(supplier_id, framework_slug):
         SupplierFramework.framework_id == framework.id
     ).first()
 
-    if interest_record:
-        # Updating an existing supplier_frameworks entry
-        audit_event = AuditEvent(
-            audit_type=AuditTypes.supplier_update,
-            user=updater_json.get('updated_by'),
-            data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug, 'update': update_json},
-            db_object=supplier
-        )
-        status_code = 200
-
-    else:
-        # Registering interest for the first time
-        if framework.status != 'open':
-            abort(400, "'{}' framework is not open".format(framework_slug))
-        interest_record = SupplierFramework(
-            supplier_id=supplier_id,
-            framework_id=framework.id
-        )
-        audit_event = AuditEvent(
-            audit_type=AuditTypes.register_framework_interest,
-            user=updater_json.get('updated_by'),
-            data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug},
-            db_object=supplier
-        )
-        status_code = 201
+    if not interest_record:
+        abort(404, "supplier_id '{}' has not registered interest in {}".format(supplier_id, framework_slug))
 
     if 'onFramework' in update_json:
         interest_record.on_framework = update_json['onFramework']
@@ -435,6 +460,14 @@ def update_supplier_framework_details(supplier_id, framework_slug):
             interest_record.agreement_returned = False
     if 'agreementReturned' in update_json:
         interest_record.agreement_returned = update_json['agreementReturned']
+
+    audit_event = AuditEvent(
+        audit_type=AuditTypes.supplier_update,
+        user=updater_json.get('updated_by'),
+        data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug, 'update': update_json},
+        db_object=supplier
+    )
+
     try:
         db.session.add(interest_record)
         db.session.add(audit_event)
@@ -443,4 +476,4 @@ def update_supplier_framework_details(supplier_id, framework_slug):
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
 
-    return jsonify(frameworkInterest=interest_record.serialize()), status_code
+    return jsonify(frameworkInterest=interest_record.serialize()), 200
