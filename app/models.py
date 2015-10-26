@@ -55,7 +55,7 @@ class Framework(db.Model):
     __tablename__ = 'frameworks'
 
     STATUSES = [
-        'pending', 'open', 'live', 'expired'
+        'coming', 'open', 'pending', 'standstill', 'live', 'expired'
     ]
 
     id = db.Column(db.Integer, primary_key=True)
