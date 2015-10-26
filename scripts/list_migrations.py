@@ -14,7 +14,9 @@ def detect_heads(migrations):
 
 
 def version_history(migrations):
-    version_history = [m.revision for m in migrations.walk_revisions()]
+    version_history = [
+        (m.revision, m.doc) for m in migrations.walk_revisions()
+    ]
     version_history.reverse()
     return version_history
 
@@ -28,7 +30,7 @@ def main(migrations_path):
         sys.exit(1)
 
     for version in version_history(migrations):
-        print(version)
+        print("{:35} {}".format(*version))
 
 
 if __name__ == '__main__':

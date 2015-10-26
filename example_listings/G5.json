@@ -8,7 +8,7 @@
   "priceString":"20.0 Per User / Month",
   "supplierId":1,
   "status":"published",
-  "lot":"SaaS",
+  "lot":"saas",
   "frameworkName": "G-Cloud 5",
   "frameworkSlug": "g-cloud-5",
   "serviceTypes":[

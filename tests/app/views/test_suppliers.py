@@ -118,7 +118,7 @@ class TestListSuppliers(BaseApplicationTest):
             db.session.add(
                 Supplier(supplier_id=999, name=u"999 Supplier")
             )
-            self.setup_dummy_service(service_id=123, supplier_id=999)
+            self.setup_dummy_service(service_id='1230000000', supplier_id=999)
             db.session.commit()
 
             response = self.client.get('/suppliers?prefix=other')
@@ -191,16 +191,16 @@ class TestListSuppliersOnFramework(BaseApplicationTest):
                 Supplier(supplier_id=3, name=u"Unpublished Service")
             )
             self.setup_dummy_service(
-                service_id=1, supplier_id=1
+                service_id='1000000001', supplier_id=1
             )
             self.setup_dummy_service(
-                service_id=4, supplier_id=1, status='enabled'
+                service_id='1000000004', supplier_id=1, status='enabled'
             )
             self.setup_dummy_service(
-                service_id=2, supplier_id=2, framework_id=2
+                service_id='1000000002', supplier_id=2, framework_id=2
             )
             self.setup_dummy_service(
-                service_id=3, supplier_id=3, status='enabled'
+                service_id='1000000003', supplier_id=3, status='enabled'
             )
             db.session.commit()
 

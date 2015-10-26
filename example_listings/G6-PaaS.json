@@ -1,7 +1,7 @@
 {
    "id": "1234567890123457",
    "supplierId": 1,
-   "lot": "PaaS",
+   "lot": "paas",
    "frameworkName": "G-Cloud 6",
    "frameworkSlug": "g-cloud-6",
    "title": "\"My new PaaS\" Service with \"Quotes\"",

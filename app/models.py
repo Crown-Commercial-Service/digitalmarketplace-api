@@ -8,13 +8,47 @@ from sqlalchemy import asc
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm import validates
 from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
 from dmutils.formats import DATETIME_FORMAT
 
 from . import db
-from .utils import link, url_for, strip_whitespace_from_data
+from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields
+from .validation import is_valid_service_id
+
+
+framework_lots = db.Table(
+    'framework_lots', db.Model.metadata,
+    db.Column('framework_id', db.Integer, db.ForeignKey('frameworks.id'), nullable=False),
+    db.Column('lot_id', db.Integer, db.ForeignKey('lots.id'), nullable=False)
+)
+
+
+class ValidationError(ValueError):
+    def __init__(self, message):
+        self.message = message
+
+
+class Lot(db.Model):
+    __tablename__ = 'lots'
+
+    id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String, nullable=False, index=True)
+    name = db.Column(db.String, nullable=False)
+    one_service_limit = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __repr__(self):
+        return '<{}: {}>'.format(self.__class__.__name__, self.name)
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'slug': self.slug,
+            'name': self.name,
+            'one_service_limit': self.one_service_limit,
+        }
 
 
 class Framework(db.Model):
@@ -32,6 +66,17 @@ class Framework(db.Model):
     status = db.Column(db.Enum(STATUSES, name='framework_status_enum'),
                        index=True, nullable=False,
                        server_default='pending')
+    lots = db.relationship(
+        Lot, secondary=framework_lots,
+        lazy='joined', innerjoin=False,
+        backref='frameworks'
+    )
+
+    def get_lot(self, lot_slug):
+        return next(
+            (lot for lot in self.lots if lot.slug == lot_slug),
+            None
+        )
 
     def serialize(self):
         return {
@@ -40,7 +85,11 @@ class Framework(db.Model):
             'slug': self.slug,
             'framework': self.framework,
             'status': self.status,
+            'lots': [lot.serialize() for lot in self.lots],
         }
+
+    def __repr__(self):
+        return '<{}: {}>'.format(self.__class__.__name__, self.name)
 
 
 class ContactInformation(db.Model):
@@ -316,6 +365,9 @@ class User(db.Model):
 
 
 class ServiceTableMixin(object):
+
+    STATUSES = ('disabled', 'enabled', 'published')
+
     id = db.Column(db.Integer, primary_key=True)
     service_id = db.Column(db.String, index=True, unique=True, nullable=False)
 
@@ -338,12 +390,49 @@ class ServiceTableMixin(object):
                          index=True, unique=False, nullable=False)
 
     @declared_attr
+    def lot_id(cls):
+        return db.Column(db.BigInteger, db.ForeignKey('lots.id'),
+                         index=True, unique=False, nullable=False)
+
+    @declared_attr
     def supplier(cls):
         return db.relationship(Supplier, lazy='joined', innerjoin=True)
 
     @declared_attr
     def framework(cls):
         return db.relationship(Framework, lazy='joined', innerjoin=True)
+
+    @declared_attr
+    def lot(cls):
+        return db.relationship(Lot, lazy='joined', innerjoin=True)
+
+    @validates('service_id')
+    def validate_service_id(self, key, value):
+        if not is_valid_service_id(value):
+            raise ValidationError("Invalid service ID value '{}'".format(value))
+
+        return value
+
+    @validates('status')
+    def validates_status(self, key, value):
+        if value not in self.STATUSES:
+            raise ValidationError("Invalid status value '{}'".format(value))
+
+        return value
+
+    @validates('data')
+    def validates_data(self, key, value):
+        data = drop_foreign_fields(value, [
+            'id', 'status',
+            'supplierId', 'supplierName',
+            'frameworkSlug', 'frameworkName',
+            'lot', 'lotName',
+            'updatedAt', 'createdAt', 'links'
+        ])
+
+        data = strip_whitespace_from_data(data)
+
+        return data
 
     def serialize(self):
         """
@@ -358,6 +447,8 @@ class ServiceTableMixin(object):
             'supplierName': self.supplier.name,
             'frameworkSlug': self.framework.slug,
             'frameworkName': self.framework.name,
+            'lot': self.lot.slug,
+            'lotName': self.lot.name,
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'status': self.status
@@ -370,25 +461,11 @@ class ServiceTableMixin(object):
         return data
 
     def update_from_json(self, data):
-        sid = data.pop('id', self.service_id)
-        if sid:
-            self.service_id = str(sid)
-
-        data.pop('supplierId', None)
-        data.pop('supplierName', None)
-        data.pop('frameworkSlug', None)
-        data.pop('frameworkName', None)
-        data.pop('status', None)
-        data.pop('links', None)
-        data.pop('updatedAt', None)
-        data.pop('createdAt', None)
         current_data = dict(self.data.items())
         current_data.update(data)
-        current_data = strip_whitespace_from_data(current_data)
-        self.data = current_data
 
-        now = datetime.utcnow()
-        self.updated_at = now
+        self.data = current_data
+        self.updated_at = datetime.utcnow()
 
 
 class Service(db.Model, ServiceTableMixin):
@@ -397,9 +474,10 @@ class Service(db.Model, ServiceTableMixin):
     @staticmethod
     def create_from_draft(draft, status):
         return Service(
-            framework_id=draft.framework_id,
+            framework=draft.framework,
+            lot=draft.lot,
             service_id=generate_new_service_id(draft.framework.slug),
-            supplier_id=draft.supplier_id,
+            supplier=draft.supplier,
             data=draft.data,
             status=status
         )
@@ -410,15 +488,12 @@ class Service(db.Model, ServiceTableMixin):
                 Service.framework.has(Framework.status == 'live'))
 
         def default_order(self):
-            lot = Service.data['lot'] \
-                         .cast(String) \
-                         .label('data_lot')
             service_name = Service.data['serviceName'] \
                                   .cast(String) \
                                   .label('data_servicename')
             return self.order_by(
                 asc(Service.framework_id),
-                asc(lot),
+                asc(Service.lot_id),
                 asc(service_name))
 
         def has_statuses(self, *statuses):
@@ -442,9 +517,10 @@ class ArchivedService(db.Model, ServiceTableMixin):
     @staticmethod
     def from_service(service):
         return ArchivedService(
-            framework_id=service.framework_id,
+            framework=service.framework,
+            lot=service.lot,
             service_id=service.service_id,
-            supplier_id=service.supplier_id,
+            supplier=service.supplier,
             created_at=service.created_at,
             updated_at=service.updated_at,
             data=service.data,
@@ -468,6 +544,8 @@ class ArchivedService(db.Model, ServiceTableMixin):
 class DraftService(db.Model, ServiceTableMixin):
     __tablename__ = 'draft_services'
 
+    STATUSES = ('not-submitted', 'submitted', 'enabled', 'disabled', 'published')
+
     # Overwrites service_id column to remove uniqueness and nullable constraint
     service_id = db.Column(db.String, index=True, unique=False, nullable=True,
                            default=None)
@@ -476,8 +554,9 @@ class DraftService(db.Model, ServiceTableMixin):
     def from_service(service):
         return DraftService(
             framework_id=service.framework_id,
+            lot=service.lot,
             service_id=service.service_id,
-            supplier_id=service.supplier_id,
+            supplier=service.supplier,
             data=service.data,
             status=service.status
         )
@@ -496,8 +575,9 @@ class DraftService(db.Model, ServiceTableMixin):
         data = {key: value for key, value in data.items() if key not in do_not_copy}
 
         return DraftService(
-            framework_id=self.framework_id,
-            supplier_id=self.supplier_id,
+            framework=self.framework,
+            lot=self.lot,
+            supplier=self.supplier,
             data=data,
             status='not-submitted',
         )

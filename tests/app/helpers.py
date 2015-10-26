@@ -7,7 +7,7 @@ from datetime import datetime
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Service, Supplier, ContactInformation, Framework
+from app.models import Service, Supplier, ContactInformation, Framework, Lot
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -93,7 +93,7 @@ class BaseApplicationTest(object):
             db.session.commit()
 
     def setup_dummy_service(self, service_id, supplier_id=1, data=None,
-                            status='published', framework_id=1):
+                            status='published', framework_id=1, lot_id=1):
         now = datetime.utcnow()
         db.session.add(Service(service_id=service_id,
                                supplier_id=supplier_id,
@@ -103,6 +103,7 @@ class BaseApplicationTest(object):
                                                   format(service_id)
                                },
                                framework_id=framework_id,
+                               lot_id=lot_id,
                                created_at=now,
                                updated_at=now))
 
@@ -111,7 +112,7 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             for i in range(start_id, start_id + n):
                 self.setup_dummy_service(
-                    service_id=i,
+                    service_id=str(2000000000 + start_id + i),
                     supplier_id=supplier_id or (i % TEST_SUPPLIERS_COUNT),
                     framework_id=framework_id or 1
                 )
@@ -124,11 +125,11 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             # Add extra 'enabled' and 'disabled' services
             self.setup_dummy_service(
-                service_id=n + 1,
+                service_id=str(n + 2000000001),
                 supplier_id=n % TEST_SUPPLIERS_COUNT,
                 status='disabled')
             self.setup_dummy_service(
-                service_id=n + 2,
+                service_id=str(n + 2000000002),
                 supplier_id=n % TEST_SUPPLIERS_COUNT,
                 status='enabled')
             # Add an extra supplier that will have no services
@@ -161,7 +162,7 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             db.session.remove()
             for table in reversed(db.metadata.sorted_tables):
-                if table.name != "frameworks":
+                if table.name not in ["lots", "frameworks", "framework_lots"]:
                     db.engine.execute(table.delete())
             Framework.query.filter(Framework.id >= 100).delete()
             db.session.commit()
@@ -186,9 +187,17 @@ class BaseApplicationTest(object):
         db.session.execute("ALTER TYPE framework_enum ADD VALUE 'dos' AFTER 'gcloud';")
         db.session.execute("ALTER TYPE framework_status_enum ADD VALUE 'coming' BEFORE 'pending';")
         db.session.connection().connection.set_isolation_level(old_level)
-        db.session.add(Framework(name="Digital Outcomes and Specialists",
-                                 framework='dos', status='open',
-                                 slug='digital-outcomes-and-specialists'))
+
+        framework = Framework(
+            name="Digital Outcomes and Specialists",
+            framework='dos', status='open',
+            slug='digital-outcomes-and-specialists',
+            lots=[
+                Lot(name="DOS LOT 1", slug='lot1', one_service_limit=True),
+            ]
+        )
+
+        db.session.add(framework)
         db.session.commit()
 
 

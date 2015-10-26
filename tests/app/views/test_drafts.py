@@ -27,7 +27,7 @@ class TestDraftServices(BaseApplicationTest):
         }
         self.create_draft_json = self.updater_json.copy()
         self.create_draft_json['services'] = {
-            'lot': 'SCS',
+            'lot': 'scs',
             'supplierId': 1
         }
 
@@ -129,12 +129,13 @@ class TestDraftServices(BaseApplicationTest):
             for service_id in service_ids:
                 db.session.add(
                     Service(
-                        service_id=service_id,
+                        service_id=str(service_id),
                         supplier_id=1,
                         updated_at=now,
                         status='published',
                         created_at=now,
                         data={'foo': 'bar'},
+                        lot_id=1,
                         framework_id=1)
                 )
 
@@ -217,7 +218,7 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data['services']['frameworkName'], 'G-Cloud 7')
         assert_equal(data['services']['status'], 'not-submitted')
         assert_equal(data['services']['supplierId'], 1)
-        assert_equal(data['services']['lot'], 'SCS')
+        assert_equal(data['services']['lot'], 'scs')
 
     def test_create_draft_should_create_audit_event(self):
         res = self.client.post(
@@ -250,7 +251,7 @@ class TestDraftServices(BaseApplicationTest):
 
         data = json.loads(res.get_data())
         assert_equal(res.status_code, 400)
-        assert_in("'ShouldBeInt' is not of type", data['errors']['supplierId'])
+        assert_in("Invalid supplier_id 'ShouldBeInt'", data['error'])
 
     def test_should_not_create_draft_on_not_open_framework(self):
         res = self.client.post(
@@ -261,6 +262,18 @@ class TestDraftServices(BaseApplicationTest):
         data = json.loads(res.get_data())
         assert_equal(res.status_code, 400)
         assert_in("'g-cloud-5' is not open for submissions", data['error'])
+
+    def test_should_not_create_draft_with_invalid_lot(self):
+        draft_json = self.create_draft_json.copy()
+        draft_json['services']['lot'] = 'newlot'
+        res = self.client.post(
+            '/draft-services/g-cloud-7/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+
+        data = json.loads(res.get_data())
+        assert_equal(res.status_code, 400)
+        assert_in("Incorrect lot 'newlot' for framework 'g-cloud-7'", data['error'])
 
     def test_can_save_additional_fields_to_draft(self):
         res = self.client.post(
@@ -857,7 +870,7 @@ class TestCopyDraft(BaseApplicationTest):
                 'updated_by': 'joeblogs'
             },
             'services': {
-                'lot': 'SCS',
+                'lot': 'scs',
                 'supplierId': 1,
                 'serviceName': "Draft",
                 'status': 'submitted',
@@ -884,8 +897,8 @@ class TestCopyDraft(BaseApplicationTest):
             content_type='application/json')
 
         data = json.loads(res.get_data())
-        assert_equal(res.status_code, 201)
-        assert_equal(data['services']['lot'], 'SCS')
+        assert_equal(res.status_code, 201, res.get_data())
+        assert_equal(data['services']['lot'], 'scs')
         assert_equal(data['services']['status'], 'not-submitted')
         assert_equal(data['services']['serviceName'], 'Draft copy')
         assert_equal(data['services']['supplierId'], 1)
@@ -992,7 +1005,7 @@ class TestCompleteDraft(BaseApplicationTest):
             content_type='application/json')
 
         data = json.loads(res.get_data())
-        assert_equal(res.status_code, 200)
+        assert_equal(res.status_code, 200, res.get_data())
         assert_equal(data['services']['status'], 'submitted')
 
     def test_complete_draft_should_create_audit_event(self):
@@ -1027,7 +1040,7 @@ class TestCompleteDraft(BaseApplicationTest):
                 'updated_by': 'joeblogs'
             },
             'services': {
-                'lot': 'SCS',
+                'lot': 'scs',
                 'supplierId': 1,
                 'serviceName': 'Name',
             }
@@ -1093,7 +1106,19 @@ class TestDOSServices(BaseApplicationTest):
         assert_equal(data['services']['frameworkName'], 'Digital Outcomes and Specialists')
         assert_equal(data['services']['status'], 'not-submitted')
         assert_equal(data['services']['supplierId'], 1)
-        assert_equal(data['services']['lot'], 'LOT1')
+        assert_equal(data['services']['lot'], 'lot1')
+
+    def test_disallow_multiple_drafts_for_one_service_lots(self):
+        self._post_dos_draft()
+
+        res = self.client.post(
+            '/draft-services/digital-outcomes-and-specialists/create',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+
+        data = json.loads(res.get_data())
+        assert_equal(res.status_code, 400)
+        assert_equal(data['error'], "'lot1' service already exists for supplier '1'")
 
     def test_create_dos_draft_should_create_audit_event(self):
         res = self._post_dos_draft()
@@ -1175,5 +1200,5 @@ class TestDOSServices(BaseApplicationTest):
             '/draft-services/digital-outcomes-and-specialists/create',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
-        assert_equal(res.status_code, 201)
+        assert_equal(res.status_code, 201, res.get_data())
         return res

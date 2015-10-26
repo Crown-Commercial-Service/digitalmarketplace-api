@@ -1,15 +1,13 @@
 from dmutils.audit import AuditTypes
 
 from flask import jsonify, abort, request, current_app
-from datetime import datetime
 
 from .. import main
-from ...models import ArchivedService, Service, Supplier, Framework
+from ...models import ArchivedService, Service, Supplier
 
 from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
-from ...utils import url_for, pagination_links, drop_foreign_fields, display_list, strip_whitespace_from_data, \
-    get_valid_page_or_1
+from ...utils import url_for, pagination_links, display_list, get_valid_page_or_1
 
 from ...service_utils import (
     validate_and_return_service_request,
@@ -18,8 +16,8 @@ from ...service_utils import (
     delete_service_from_index,
     validate_and_return_updater_request,
     commit_and_archive_service,
-    validate_service,
-    drop_api_exported_fields_so_that_api_import_will_validate
+    validate_service_data,
+    validate_and_return_related_objects,
 )
 
 
@@ -162,40 +160,24 @@ def import_service(service_id):
         abort(400, "Cannot update service by PUT")
 
     updater_json = validate_and_return_updater_request()
-    service_json = validate_and_return_service_request(service_id)
+    service_data = validate_and_return_service_request(service_id)
 
-    service_data = strip_whitespace_from_data(service_json)
-    service_data = drop_foreign_fields(service_data, ['id'])
+    framework, lot, supplier = validate_and_return_related_objects(service_data)
 
-    supplier_id = service_data.pop('supplierId')
-    supplier = Supplier.query.filter(
-        Supplier.supplier_id == supplier_id
-    ).first()
-    if supplier is None:
-        abort(400, "Key (supplierId)=({}) is not present".format(supplier_id))
+    service = Service(
+        service_id=service_id,
+        supplier=supplier,
+        lot=lot,
+        framework=framework,
+        status=service_data.get('status', 'published'),
+        created_at=service_data.get('createdAt'),
+        updated_at=service_data.get('updatedAt'),
+        data=service_data,
+    )
 
-    framework_slug = service_data.get('frameworkSlug')
-    framework = Framework.query.filter(
-        Framework.slug == framework_slug
-    ).first()
-    if framework is None:
-        abort(400, "Key (frameworkSlug)=({}) is not present".format(framework_slug))
+    validate_service_data(service)
 
-    service = Service(service_id=service_id)
-    service.supplier_id = supplier_id
-    service.framework_id = framework.id
-    service.status = service_data.pop('status', 'published')
-    now = datetime.utcnow()
-    service.created_at = service_data.pop('createdAt', now)
-    service.updated_at = service_data.pop('updatedAt', now)
-
-    service.data = service_data
-    validate_service(service, framework=framework)
-    service.data = drop_api_exported_fields_so_that_api_import_will_validate(service.data)
-
-    commit_and_archive_service(service, updater_json,
-                               AuditTypes.import_service)
-
+    commit_and_archive_service(service, updater_json, AuditTypes.import_service)
     index_service(service)
 
     return jsonify(services=service.serialize()), 201

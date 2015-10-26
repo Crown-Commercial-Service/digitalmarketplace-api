@@ -4,7 +4,7 @@ from sqlalchemy import func, orm, case
 import datetime
 
 from .. import main
-from ...models import db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent
+from ...models import db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent, Lot
 
 
 @main.route('/frameworks', methods=['GET'])
@@ -46,8 +46,6 @@ def get_framework_stats(framework_slug):
 
     seven_days_ago = datetime.datetime.utcnow() + datetime.timedelta(-7)
 
-    lot_column = DraftService.data['lot'].cast(String).label('lot')
-
     has_completed_drafts_query = db.session.query(
         DraftService.supplier_id, func.min(DraftService.id)
     ).filter(
@@ -71,13 +69,15 @@ def get_framework_stats(framework_slug):
 
     return jsonify({
         'services': label_columns(
-            ['lot', 'status', 'declaration_made', 'count'],
+            ['status', 'lot', 'declaration_made', 'count'],
             db.session.query(
-                lot_column, DraftService.status, is_declaration_complete, func.count()
+                DraftService.status, Lot.slug, is_declaration_complete, func.count()
             ).outerjoin(
                 SupplierFramework, DraftService.supplier_id == SupplierFramework.supplier_id
+            ).join(
+                Lot, DraftService.lot_id == Lot.id
             ).group_by(
-                DraftService.status, lot_column, is_declaration_complete
+                DraftService.status, Lot.slug, is_declaration_complete
             ).filter(
                 DraftService.framework_id == framework.id
             ).all()

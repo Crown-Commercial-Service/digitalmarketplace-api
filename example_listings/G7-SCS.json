@@ -1,7 +1,7 @@
 {
    "id": "7234567890123456",
    "supplierId": 1,
-   "lot": "SCS",
+   "lot": "scs",
    "serviceDefinitionDocumentURL": "https://assets.digitalmarketplace.service.gov.uk/documents/1/7234567890123456-service-definition-document.pdf",
    "termsAndConditionsDocumentURL": "https://assets.digitalmarketplace.service.gov.uk/documents/1/7234567890123456-terms-and-condtions.pdf",
    "pricingDocumentURL": "https://assets.digitalmarketplace.service.gov.uk/documents/1/7234567890123456-pricing-document.pdf",

@@ -45,9 +45,9 @@ def get_json_from_request():
 
 
 def json_has_required_keys(data, keys):
-    for key in keys:
-        if key not in data.keys():
-            abort(400, "Invalid JSON must have '%s' key(s)" % keys)
+    missing_keys = set(keys) - set(data.keys())
+    if missing_keys:
+        abort(400, "Invalid JSON must have '%s' keys" % list(missing_keys))
 
 
 def drop_foreign_fields(json_object, list_of_keys):

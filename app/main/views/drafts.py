@@ -3,19 +3,21 @@ from flask import jsonify, abort, request, current_app
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import asc, desc
-from sqlalchemy.types import String
 
 from .. import main
 from ... import db, isolation_level
-from ...utils import drop_foreign_fields, json_has_required_keys
 from ...validation import is_valid_service_id_or_400
-from ...models import Service, DraftService, Supplier, AuditEvent, Framework, User
-from ...service_utils import validate_and_return_updater_request, \
-    update_and_validate_service, index_service, \
-    commit_and_archive_service, create_service_from_draft
+from ...models import Service, DraftService, Supplier, AuditEvent, Framework
+from ...service_utils import (
+    validate_and_return_updater_request,
+    update_and_validate_service, index_service,
+    commit_and_archive_service, create_service_from_draft,
+    validate_and_return_related_objects, validate_service_data
+)
+
 from ...draft_utils import (
-    validate_and_return_draft_request, get_draft_validation_errors,
-    get_request_page_questions, validate_draft
+    validate_and_return_draft_request,
+    get_request_page_questions
 )
 
 
@@ -82,11 +84,7 @@ def edit_draft_service(draft_id):
     ).first_or_404()
 
     draft.update_from_json(update_json)
-    errs = get_draft_validation_errors(draft.data,
-                                       framework_id=draft.framework_id,
-                                       required=page_questions)
-    if errs:
-        abort(400, errs)
+    validate_service_data(draft, enforce_required=False, required_fields=page_questions)
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_draft_service,
@@ -255,8 +253,9 @@ def publish_draft_service(draft_id):
     return jsonify(services=service_from_draft.serialize()), 200
 
 
-@main.route('/draft-services/<string:framework_slug>/create', methods=['POST'])
-def create_new_draft_service(framework_slug):
+@main.route('/draft-services', methods=['POST'])
+@main.route('/draft-services/<string:framework_slug>/create', methods=['POST'])  # TODO deprecated
+def create_new_draft_service(framework_slug=None):
     """
     Create a new draft service with lot, supplier_id, draft_id, framework_id
     :return: the new draft id and location e.g.
@@ -264,27 +263,31 @@ def create_new_draft_service(framework_slug):
     """
     updater_json = validate_and_return_updater_request()
     draft_json = validate_and_return_draft_request()
-    json_has_required_keys(draft_json, ['lot', 'supplierId'])
 
-    framework = Framework.query.filter(
-        Framework.slug == framework_slug
-    ).first()
+    if framework_slug:
+        current_app.logger.warning("Deprecated /draft-services/<framework_slug> route")
+        draft_json['frameworkSlug'] = framework_slug
+
+    framework, lot, supplier = validate_and_return_related_objects(draft_json)
 
     if framework.status != 'open':
-        abort(400, "'{}' is not open for submissions".format(framework_slug))
+        abort(400, "'{}' is not open for submissions".format(framework.slug))
 
-    supplier_id = draft_json['supplierId']
-    errs = get_draft_validation_errors(draft_json, slug=framework_slug)
-    if errs:
-        return jsonify(errors=errs), 400
+    if lot.one_service_limit:
+        lot_service = DraftService.query.filter(DraftService.supplier == supplier, DraftService.lot == lot).first()
+        if lot_service:
+            abort(400, "'{}' service already exists for supplier '{}'".format(lot.slug, supplier.supplier_id))
 
-    draft_json = drop_foreign_fields(draft_json, ['supplierId'])
     draft = DraftService(
-        framework_id=framework.id,
-        supplier_id=supplier_id,
+        framework=framework,
+        lot=lot,
+        supplier=supplier,
         data=draft_json,
         status="not-submitted"
     )
+
+    validate_service_data(draft, enforce_required=False)
+
     try:
         db.session.add(draft)
         db.session.flush()
@@ -315,9 +318,7 @@ def complete_draft_service(draft_id):
         DraftService.id == draft_id
     ).first_or_404()
 
-    errs = validate_draft(draft)
-    if errs:
-        abort(400, errs)
+    validate_service_data(draft)
 
     draft.status = 'submitted'
     try:

@@ -4,36 +4,11 @@
   "type":"object",
   "additionalProperties":false,
   "properties": {
-    "id": {
-      "type": "string",
-      "pattern": "^([0-9]{16})$"
-    },
-    "status": {
-      "enum": [
-        "disabled",
-        "enabled",
-        "published",
-        "submitted",
-        "not-submitted"
-      ]
-    },
-    "supplierId": {
-      "type": "integer"
-    },
-    "lot": {
-      "enum": [
-        "LOT1"
-      ]
-    },
     "example": {
       "type": "string"
     }
   },
   "required":[
-    "id",
-    "supplierId",
-    "status",
-    "lot",
     "example"
   ]
 }

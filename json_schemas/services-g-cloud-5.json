@@ -4,29 +4,8 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "id": {
-      "type": "string",
-      "pattern": "^5\\-.*"
-    },
-    "status": {
-      "enum": ["disabled", "enabled", "published"]
-    },
-    "supplierId": {
-      "type": "integer"
-    },
-    "lot": {
-      "enum": ["SaaS", "PaaS", "IaaS", "SCS"]
-    },
     "title": {
       "type": "string"
-    },
-    "createdAt": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "updatedAt": {
-      "type": "string",
-      "format": "date-time"
     },
     "serviceName":{
       "type":"string",
@@ -229,10 +208,6 @@
     }
   },
   "required": [
-    "id",
-    "status",
-    "supplierId",
-    "lot",
     "title",
     "serviceName",
     "serviceSummary",
