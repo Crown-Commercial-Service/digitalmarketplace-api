@@ -1084,8 +1084,7 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
             '/suppliers/{}/frameworks/{}'.format(supplier_id, framework_slug),
             data=json.dumps(
                 {
-                    'update_details': {'updated_by': user},
-                    'update': {}
+                    'update_details': {'updated_by': user}
                 }),
             content_type='application/json')
 
@@ -1132,6 +1131,21 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
             data = json.loads(response2.get_data())
             assert_equal(data['frameworkInterest']['supplierId'], 1)
             assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+
+    def test_can_not_send_payload_to_register_interest_endpoint(self):
+        with self.app.app_context():
+            response = self.client.put(
+                '/suppliers/1/frameworks/digital-outcomes-and-specialists',
+                data=json.dumps(
+                    {
+                        'update_details': {'updated_by': 'interested@example.com'},
+                        'update': {'agreementReturned': True}
+                    }),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 400)
+            data = json.loads(response.get_data())
+            assert_equal(data['error'], 'This PUT endpoint does not take a payload.')
 
     def test_register_interest_creates_audit_event(self):
         self.register_interest(1, 'digital-outcomes-and-specialists')

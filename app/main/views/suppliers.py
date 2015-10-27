@@ -387,6 +387,11 @@ def register_framework_interest(supplier_id, framework_slug):
         SupplierFramework.framework_id == framework.id
     ).first()
 
+    json_payload = get_json_from_request()
+    json_payload.pop('update_details')
+    if json_payload:
+        abort(400, "This PUT endpoint does not take a payload.")
+
     if interest_record:
         return jsonify(frameworkInterest=interest_record.serialize()), 200
 
