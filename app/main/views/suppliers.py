@@ -341,7 +341,7 @@ def register_interest_in_framework(supplier_id, framework_slug):
     ).first_or_404()
 
     interest_record = SupplierFramework.query.filter(
-        SupplierFramework.supplier_id == supplier_id,
+        SupplierFramework.supplier_id == supplier.supplier_id,
         SupplierFramework.framework_id == framework.id
     ).first()
 
@@ -349,13 +349,13 @@ def register_interest_in_framework(supplier_id, framework_slug):
         return jsonify(frameworkInterest=interest_record.serialize()), 200
     else:
         interest_record = SupplierFramework(
-            supplier_id=supplier_id,
+            supplier_id=supplier.supplier_id,
             framework_id=framework.id
         )
         audit_event = AuditEvent(
             audit_type=AuditTypes.register_framework_interest,
             user=updater_json.get('user'),
-            data={'supplierId': supplier_id, 'frameworkSlug': framework_slug},
+            data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug},
             db_object=supplier
         )
 
@@ -382,16 +382,15 @@ def register_framework_interest(supplier_id, framework_slug):
         Supplier.supplier_id == supplier_id
     ).first_or_404()
 
-    interest_record = SupplierFramework.query.filter(
-        SupplierFramework.supplier_id == supplier_id,
-        SupplierFramework.framework_id == framework.id
-    ).first()
-
     json_payload = get_json_from_request()
     json_payload.pop('update_details')
     if json_payload:
         abort(400, "This PUT endpoint does not take a payload.")
 
+    interest_record = SupplierFramework.query.filter(
+        SupplierFramework.supplier_id == supplier.supplier_id,
+        SupplierFramework.framework_id == framework.id
+    ).first()
     if interest_record:
         return jsonify(frameworkInterest=interest_record.serialize()), 200
 
@@ -399,7 +398,7 @@ def register_framework_interest(supplier_id, framework_slug):
         abort(400, "'{}' framework is not open".format(framework_slug))
 
     interest_record = SupplierFramework(
-        supplier_id=supplier_id,
+        supplier_id=supplier.supplier_id,
         framework_id=framework.id
     )
     audit_event = AuditEvent(
@@ -437,7 +436,7 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     update_json = json_payload["frameworkInterest"]
 
     interest_record = SupplierFramework.query.filter(
-        SupplierFramework.supplier_id == supplier_id,
+        SupplierFramework.supplier_id == supplier.supplier_id,
         SupplierFramework.framework_id == framework.id
     ).first()
 
