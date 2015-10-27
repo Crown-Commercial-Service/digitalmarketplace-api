@@ -1210,7 +1210,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             data=json.dumps(
                 {
                     'update_details': {'updated_by': 'interested@example.com'},
-                    'update': update
+                    'frameworkInterest': update
                 }),
             content_type='application/json')
 

@@ -433,8 +433,8 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     ).first_or_404()
 
     json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ["update"])
-    update_json = json_payload["update"]
+    json_has_required_keys(json_payload, ["frameworkInterest"])
+    update_json = json_payload["frameworkInterest"]
 
     interest_record = SupplierFramework.query.filter(
         SupplierFramework.supplier_id == supplier_id,
