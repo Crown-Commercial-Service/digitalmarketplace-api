@@ -917,12 +917,7 @@ class TestUsersGet(BaseApplicationTest):
     def test_returns_404_for_nonexistent_email_address(self):
         non_existent_email = "jbond@mi6.biz"
         response = self.client.get("/users?email_address={}".format(non_existent_email))
-        data = json.loads(response.get_data())["error"]
         assert_equal(response.status_code, 404)
-        assert_equal(
-            data,
-            "No user with email_address 'jbond@mi6.biz'".format(non_existent_email)
-        )
 
     def test_returns_400_for_non_int_supplier_id(self):
         bad_supplier_id = 'not_an_integer'

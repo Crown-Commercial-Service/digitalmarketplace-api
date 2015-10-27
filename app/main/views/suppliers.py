@@ -157,10 +157,7 @@ def update_supplier(supplier_id):
 
     supplier = Supplier.query.filter(
         Supplier.supplier_id == supplier_id
-    ).first()
-
-    if supplier is None:
-        abort(404, "supplier_id '%d' not found" % supplier_id)
+    ).first_or_404()
 
     json_has_required_keys(
         request_data,
@@ -206,10 +203,7 @@ def update_contact_information(supplier_id, contact_id):
     contact = ContactInformation.query.filter(
         ContactInformation.id == contact_id,
         ContactInformation.supplier_id == supplier_id,
-    ).first()
-
-    if contact is None:
-        abort(404, "contact_id '%d' not found" % contact_id)
+    ).first_or_404()
 
     json_has_required_keys(request_data, [
         'contactInformation', 'updated_by'
@@ -344,10 +338,7 @@ def register_interest_in_framework(supplier_id, framework_slug):
 
     supplier = Supplier.query.filter(
         Supplier.supplier_id == supplier_id
-    ).first()
-
-    if supplier is None:
-        abort(404, "supplier_id '{}' not found".format(supplier_id))
+    ).first_or_404()
 
     interest_record = SupplierFramework.query.filter(
         SupplierFramework.supplier_id == supplier_id,
@@ -389,10 +380,7 @@ def register_framework_interest(supplier_id, framework_slug):
 
     supplier = Supplier.query.filter(
         Supplier.supplier_id == supplier_id
-    ).first()
-
-    if supplier is None:
-        abort(404, "supplier_id '{}' not found".format(supplier_id))
+    ).first_or_404()
 
     interest_record = SupplierFramework.query.filter(
         SupplierFramework.supplier_id == supplier_id,
@@ -437,10 +425,7 @@ def update_supplier_framework_details(supplier_id, framework_slug):
 
     supplier = Supplier.query.filter(
         Supplier.supplier_id == supplier_id
-    ).first()
-
-    if supplier is None:
-        abort(404, "supplier_id '{}' not found".format(supplier_id))
+    ).first_or_404()
 
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ["update"])
