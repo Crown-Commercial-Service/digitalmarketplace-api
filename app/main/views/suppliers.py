@@ -239,7 +239,7 @@ def update_contact_information(supplier_id, contact_id):
     return jsonify(contactInformation=contact.serialize())
 
 
-# TODO: deprecated - remove route once all frontend apps are using utils version 10.8.0 or higher
+# TODO: deprecated - remove route once all frontend apps are using utils version 11.1.0 or higher
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/declaration', methods=['GET'])
 def get_a_declaration(supplier_id, framework_slug):
     current_app.logger.warning("Deprecated /suppliers/<supplier_id>/frameworks/<framework_slug>/declaration route")
@@ -323,7 +323,7 @@ def get_supplier_framework_info(supplier_id, framework_slug):
     return jsonify(frameworkInterest=supplier_framework.serialize())
 
 
-# TODO: deprecated - remove route once all frontend apps are using utils version 10.8.0 or higher
+# TODO: deprecated - remove route once all frontend apps are using utils version 11.1.0 or higher
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/interest', methods=['POST'])
 def register_interest_in_framework(supplier_id, framework_slug):
     current_app.logger.warning("Deprecated /suppliers/<supplier_id>/frameworks/<framework_slug>/interest route")
