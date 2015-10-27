@@ -3,14 +3,14 @@
     been returned.
 
 Revision ID: 360_add_pass_fail_returned
-Revises: 340
+Revises: 350_migrate_interested_suppliers
 Create Date: 2015-10-23 16:25:02.068155
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '360_add_pass_fail_returned'
-down_revision = '340'
+down_revision = '350_migrate_interested_suppliers'
 
 from alembic import op
 import sqlalchemy as sa
