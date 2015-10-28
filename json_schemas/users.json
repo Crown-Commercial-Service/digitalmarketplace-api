@@ -25,7 +25,8 @@
       "type": "integer"
     },
     "hashpw": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "set to False to skip password hashing"
     }
   },
   "required": [
