@@ -39,10 +39,7 @@ def get_framework_stats(framework_slug):
 
     framework = Framework.query.filter(
         Framework.slug == framework_slug
-    ).first()
-
-    if not framework:
-        abort(404, "'{}' is not a framework".format(framework.slug))
+    ).first_or_404()
 
     seven_days_ago = datetime.datetime.utcnow() + datetime.timedelta(-7)
 

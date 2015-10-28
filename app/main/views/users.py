@@ -56,10 +56,7 @@ def list_users():
     if email_address:
         user = user_query.filter(
             User.email_address == email_address.lower()
-        ).first()
-
-        if not user:
-            abort(404, "No user with email_address '{}'".format(email_address))
+        ).first_or_404()
 
         return jsonify(
             users=[user.serialize()],
