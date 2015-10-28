@@ -15,35 +15,41 @@ def update(client):
         i, service = data
         if i % 1000 == 0:
             print(i)
+        update = {}
         if service['frameworkSlug'] in ['g-cloud-5', 'g-cloud-6']:
             change = False
             if isinstance(service.get('priceMin'), (int, float)):
                 change = True
-                service['priceMin'] = '{}'.format(service['priceMin'])
+                update['priceMin'] = '{}'.format(service['priceMin'])
             elif service.get('priceMin') is None:
                 change = True
-                service['priceMin'] = ''
+                update['priceMin'] = ''
             if isinstance(service.get('priceMax'), (int, float)):
                 change = True
-                service['priceMax'] = '{}'.format(service['priceMax'])
+                update['priceMax'] = '{}'.format(service['priceMax'])
             elif service.get('priceMax') is None:
                 change = True
-                service['priceMax'] = ''
+                update['priceMax'] = ''
             if change:
                 try:
-                    client.update_service(service['id'], service, 'migration')
+                    client.update_service(service['id'], update, 'migration')
+                    return 1
                 except apiclient.APIError as e:
                     print(e.message)
                     print(service)
                     pass
+        return 0
     return do_update
 
 
 def main(api_url, api_access_token):
     client = apiclient.DataAPIClient(api_url, api_access_token)
     pool = ThreadPool(10)
+    count = 1
     for i in pool.imap_unordered(update(client), enumerate(client.find_services_iter())):
-        pass
+        count += i
+        if count % 1000 == 0:
+            print("** {}".format(count))
 
 if __name__ == "__main__":
     arguments = docopt(__doc__)
