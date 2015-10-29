@@ -27,6 +27,7 @@ class TestDraftServices(BaseApplicationTest):
         }
         self.create_draft_json = self.updater_json.copy()
         self.create_draft_json['services'] = {
+            'frameworkSlug': 'g-cloud-7',
             'lot': 'scs',
             'supplierId': 1
         }
@@ -171,7 +172,7 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(res.status_code, 400)
 
     def test_reject_create_with_no_update_details(self):
-        res = self.client.post('/draft-services/g-cloud-7/create')
+        res = self.client.post('/draft-services')
 
         assert_equal(res.status_code, 400)
 
@@ -208,7 +209,7 @@ class TestDraftServices(BaseApplicationTest):
 
     def test_should_create_draft_with_minimal_data(self):
         res = self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
 
@@ -222,7 +223,7 @@ class TestDraftServices(BaseApplicationTest):
 
     def test_create_draft_should_create_audit_event(self):
         res = self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
 
@@ -245,7 +246,7 @@ class TestDraftServices(BaseApplicationTest):
         invalid_create_json = self.create_draft_json.copy()
         invalid_create_json['services']['supplierId'] = "ShouldBeInt"
         res = self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(invalid_create_json),
             content_type='application/json')
 
@@ -254,9 +255,11 @@ class TestDraftServices(BaseApplicationTest):
         assert_in("Invalid supplier_id 'ShouldBeInt'", data['error'])
 
     def test_should_not_create_draft_on_not_open_framework(self):
+        draft_json = self.create_draft_json.copy()
+        draft_json['services']['frameworkSlug'] = 'g-cloud-5'
         res = self.client.post(
-            '/draft-services/g-cloud-5/create',
-            data=json.dumps(self.create_draft_json),
+            '/draft-services',
+            data=json.dumps(draft_json),
             content_type='application/json')
 
         data = json.loads(res.get_data())
@@ -267,7 +270,7 @@ class TestDraftServices(BaseApplicationTest):
         draft_json = self.create_draft_json.copy()
         draft_json['services']['lot'] = 'newlot'
         res = self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
 
@@ -277,7 +280,7 @@ class TestDraftServices(BaseApplicationTest):
 
     def test_can_save_additional_fields_to_draft(self):
         res = self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
         data = json.loads(res.get_data())
@@ -308,7 +311,7 @@ class TestDraftServices(BaseApplicationTest):
 
     def test_update_draft_should_create_audit_event(self):
         res = self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
         data = json.loads(res.get_data())
@@ -343,7 +346,7 @@ class TestDraftServices(BaseApplicationTest):
 
     def test_validation_errors_returned_for_invalid_update_of_new_draft(self):
         res = self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
         data = json.loads(res.get_data())
@@ -689,7 +692,7 @@ class TestDraftServices(BaseApplicationTest):
 
     def test_should_be_able_to_publish_valid_new_draft_service(self):
         res = self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
         draft_data = json.loads(res.get_data())
@@ -754,7 +757,7 @@ class TestDraftServices(BaseApplicationTest):
 
     def publish_new_draft_service(self):
         res = self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
         draft_data = json.loads(res.get_data())
@@ -825,7 +828,7 @@ class TestDraftServices(BaseApplicationTest):
 
     def test_get_draft_returns_last_audit_event(self):
         draft = json.loads(self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json'
         ).get_data())['services']
@@ -870,6 +873,7 @@ class TestCopyDraft(BaseApplicationTest):
                 'updated_by': 'joeblogs'
             },
             'services': {
+                'frameworkSlug': 'g-cloud-7',
                 'lot': 'scs',
                 'supplierId': 1,
                 'serviceName': "Draft",
@@ -883,7 +887,7 @@ class TestCopyDraft(BaseApplicationTest):
         }
 
         draft = self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(create_draft_json),
             content_type='application/json')
 
@@ -982,16 +986,17 @@ class TestCompleteDraft(BaseApplicationTest):
             )
             Framework.query.filter_by(slug='g-cloud-7').update(dict(status='open'))
             db.session.commit()
-
+        draft_json = self.load_example_listing("G7-SCS")
+        draft_json['frameworkSlug'] = 'g-cloud-7'
         create_draft_json = {
             'update_details': {
                 'updated_by': 'joeblogs'
             },
-            'services': self.load_example_listing("G7-SCS")
+            'services': draft_json
         }
 
         draft = self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(create_draft_json),
             content_type='application/json')
 
@@ -1040,6 +1045,7 @@ class TestCompleteDraft(BaseApplicationTest):
                 'updated_by': 'joeblogs'
             },
             'services': {
+                'frameworkSlug': 'g-cloud-7',
                 'lot': 'scs',
                 'supplierId': 1,
                 'serviceName': 'Name',
@@ -1047,7 +1053,7 @@ class TestCompleteDraft(BaseApplicationTest):
         }
 
         draft = self.client.post(
-            '/draft-services/g-cloud-7/create',
+            '/draft-services',
             data=json.dumps(create_draft_json),
             content_type='application/json'
         )
@@ -1079,6 +1085,7 @@ class TestDOSServices(BaseApplicationTest):
         }
         self.create_draft_json = self.updater_json.copy()
         self.create_draft_json['services'] = payload
+        self.create_draft_json['services']['frameworkSlug'] = 'digital-outcomes-and-specialists'
 
         with self.app.app_context():
             framework_enum_vals = db.session.execute("SELECT enum_range(NULL::framework_enum);").first()[0]
@@ -1112,7 +1119,7 @@ class TestDOSServices(BaseApplicationTest):
         self._post_dos_draft()
 
         res = self.client.post(
-            '/draft-services/digital-outcomes-and-specialists/create',
+            '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
 
@@ -1197,7 +1204,7 @@ class TestDOSServices(BaseApplicationTest):
 
     def _post_dos_draft(self):
         res = self.client.post(
-            '/draft-services/digital-outcomes-and-specialists/create',
+            '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
         assert_equal(res.status_code, 201, res.get_data())

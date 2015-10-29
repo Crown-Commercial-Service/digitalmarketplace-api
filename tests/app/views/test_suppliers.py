@@ -796,39 +796,6 @@ class TestUpdateContactInformation(BaseApplicationTest):
         assert_equal(response.status_code, 400)
 
 
-class TestGetSupplierDeclarations(BaseApplicationTest):
-    def setup(self):
-        super(TestGetSupplierDeclarations, self).setup()
-        self.setup_dummy_suppliers(1)
-
-        with self.app.app_context():
-            answers = SupplierFramework(
-                supplier_id=0, framework_id=2,
-                declaration={})
-            db.session.add(answers)
-            db.session.commit()
-
-    def test_get_declaration(self):
-        response = self.client.get(
-            '/suppliers/0/frameworks/g-cloud-4/declaration')
-
-        data = json.loads(response.get_data())
-        assert_equal(response.status_code, 200)
-        assert_equal(data['declaration'], {})
-
-    def test_get_non_existent_by_framework(self):
-        response = self.client.get(
-            '/suppliers/0/frameworks/g-cloud-5/declaration')
-
-        assert_equal(response.status_code, 404)
-
-    def test_get_non_existent_by_supplier(self):
-        response = self.client.get(
-            '/suppliers/123/frameworks/g-cloud-4/declaration')
-
-        assert_equal(response.status_code, 404)
-
-
 class TestSetSupplierDeclarations(BaseApplicationTest):
     method = 'put'
     endpoint = '/suppliers/0/frameworks/g-cloud-4/declaration'
@@ -1087,19 +1054,6 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
                     'update_details': {'updated_by': user}
                 }),
             content_type='application/json')
-
-    def test_can_still_register_interest_in_open_framework_using_deprecated_route(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/suppliers/1/frameworks/digital-outcomes-and-specialists/interest',
-                data=json.dumps(
-                    {'update_details': {'updated_by': 'interested@example.com'}}),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-            data = json.loads(response.get_data())
-            assert_equal(data['frameworkInterest']['supplierId'], 1)
-            assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
 
     def test_can_register_interest_in_open_framework(self):
         with self.app.app_context():
