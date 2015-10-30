@@ -1024,6 +1024,47 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_true('duplicate key value violates unique constraint "ix_suppliers_duns_number"' in data['message'])
 
 
+class TestGetSupplierFrameworks(BaseApplicationTest):
+    def setup(self):
+        super(TestGetSupplierFrameworks, self).setup()
+
+        with self.app.app_context():
+
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
+            )
+            db.session.add(
+                SupplierFramework(
+                    supplier_id=1,
+                    framework_id=1,
+                    declaration={},
+                    agreement_returned=False,
+                    on_framework=False
+                )
+            )
+            db.session.commit()
+
+    def test_register_interest(self):
+        response = self.client.get('/suppliers/1/frameworks')
+        data = json.loads(response.get_data())
+        assert_equal(response.status_code, 200)
+        assert_equal(
+            data,
+            {
+                'frameworkInterest': [
+                    {
+                        'agreementReturned': False,
+                        'onFramework': False,
+                        'declaration': {},
+                        'frameworkSlug': 'g-cloud-6',
+                        'onFramework': False,
+                        'supplierId': 1
+                    }
+                ]
+            }
+        )
+
+
 class TestRegisterFrameworkInterest(BaseApplicationTest):
     def setup(self):
         super(TestRegisterFrameworkInterest, self).setup()

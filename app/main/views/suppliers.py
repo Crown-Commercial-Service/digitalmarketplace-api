@@ -299,6 +299,15 @@ def get_registered_frameworks(supplier_id):
     return jsonify(frameworks=slugs)
 
 
+@main.route('/suppliers/<supplier_id>/frameworks', methods=['GET'])
+def get_supplier_frameworks_info(supplier_id):
+    supplier_framework = SupplierFramework.query.filter(
+        SupplierFramework.supplier_id == supplier_id
+    )
+
+    return jsonify(frameworkInterest=[framework.serialize() for framework in supplier_framework])
+
+
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['GET'])
 def get_supplier_framework_info(supplier_id, framework_slug):
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
