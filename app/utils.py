@@ -5,6 +5,7 @@ from werkzeug.exceptions import BadRequest
 
 
 def link(rel, href):
+    """Generates a link dict from a rel, href pair."""
     if href is not None:
         return {rel: href}
 
@@ -69,6 +70,8 @@ def json_has_matching_id(data, id):
 
 
 def display_list(l):
+    """Returns a comma-punctuated string for the input list
+    with a trailing ('Oxford') comma."""
     length = len(l)
     if length <= 2:
         return " and ".join(l)
