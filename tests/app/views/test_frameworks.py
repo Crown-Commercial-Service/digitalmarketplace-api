@@ -50,6 +50,62 @@ class TestGetFramework(BaseApplicationTest):
             assert_equal(response.status_code, 404)
 
 
+class TestUpdateFramework(BaseApplicationTest):
+    def setup(self):
+        super(TestUpdateFramework, self).setup()
+        framework = Framework()
+        framework.name = 'Example G-Cloud framework'
+        framework.framework = 'gcloud'
+        framework.slug = 'example'
+        framework.status = 'open'
+
+        with self.app.app_context():
+            db.session.add(framework)
+            db.session.commit()
+
+    def teardown(self):
+        with self.app.app_context():
+            Framework.query.filter(Framework.slug == 'example').delete()
+            db.session.commit()
+
+    def test_framework_updated(self):
+        with self.app.app_context():
+            response = self.client.post('/frameworks/example',
+                                        data=json.dumps({'frameworks': {'status': 'expired'},
+                                                         'updated_by': 'example user'}),
+                                        content_type="application/json")
+
+            assert response.status_code == 200
+            assert Framework.query.filter(Framework.slug == 'example').first().status == "expired"
+
+    def test_returns_404_on_non_existent_framework(self):
+        with self.app.app_context():
+            response = self.client.post('/frameworks/example2',
+                                        data=json.dumps({'frameworks': {'status': 'expired'},
+                                                         'updated_by': 'example user'}),
+                                        content_type="application/json")
+
+            assert response.status_code == 404
+
+    def test_cannot_update_framework_with_invalid_status(self):
+        with self.app.app_context():
+            response = self.client.post('/frameworks/example',
+                                        data=json.dumps({'frameworks': {'status': 'invalid'},
+                                                         'updated_by': 'example user'}),
+                                        content_type="application/json")
+
+            assert response.status_code == 400
+
+    def test_cannot_update_fields_other_than_status(self):
+        with self.app.app_context():
+            response = self.client.post('/frameworks/example',
+                                        data=json.dumps({'frameworks': {'status': 'expired', 'name': 'Blah blah'},
+                                                         'updated_by': 'example user'}),
+                                        content_type="application/json")
+
+            assert response.status_code == 400
+
+
 class TestGetFrameworkStatus(BaseApplicationTest):
     def test_status_is_returned_for_existing_frameworks(self):
         with self.app.app_context():

@@ -55,7 +55,7 @@ class Framework(db.Model):
     __tablename__ = 'frameworks'
 
     STATUSES = [
-        'pending', 'open', 'live', 'expired'
+        'coming', 'open', 'pending', 'standstill', 'live', 'expired'
     ]
 
     id = db.Column(db.Integer, primary_key=True)
@@ -63,9 +63,9 @@ class Framework(db.Model):
     name = db.Column(db.String(255), nullable=False)
     framework = db.Column(db.Enum('gcloud', name='frameworks_enum'),
                           index=True, nullable=False)
-    status = db.Column(db.Enum(STATUSES, name='framework_status_enum'),
+    status = db.Column(db.String(),
                        index=True, nullable=False,
-                       server_default='pending')
+                       default='pending')
     lots = db.relationship(
         Lot, secondary=framework_lots,
         lazy='joined', innerjoin=False,
@@ -87,6 +87,13 @@ class Framework(db.Model):
             'status': self.status,
             'lots': [lot.serialize() for lot in self.lots],
         }
+
+    @validates('status')
+    def validates_status(self, key, value):
+        if value not in self.STATUSES:
+            raise ValidationError("Invalid status value '{}'".format(value))
+
+        return value
 
     def __repr__(self):
         return '<{}: {}>'.format(self.__class__.__name__, self.name)

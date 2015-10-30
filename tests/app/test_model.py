@@ -32,7 +32,7 @@ def test_should_not_return_password_on_user():
 
 def test_framework_should_not_accept_invalid_status():
     app = create_app('test')
-    with app.app_context(), assert_raises(DataError):
+    with app.app_context(), assert_raises(ValidationError):
         f = Framework(
             name='foo',
             slug='foo',

@@ -185,7 +185,6 @@ class BaseApplicationTest(object):
         old_level = db.session.connection().connection.isolation_level
         db.session.connection().connection.set_isolation_level(0)
         db.session.execute("ALTER TYPE framework_enum ADD VALUE 'dos' AFTER 'gcloud';")
-        db.session.execute("ALTER TYPE framework_status_enum ADD VALUE 'coming' BEFORE 'pending';")
         db.session.connection().connection.set_isolation_level(old_level)
 
         framework = Framework(

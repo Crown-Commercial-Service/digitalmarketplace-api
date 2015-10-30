@@ -50,6 +50,11 @@ def json_has_required_keys(data, keys):
         abort(400, "Invalid JSON must have '%s' keys" % list(missing_keys))
 
 
+def json_only_has_required_keys(data, keys):
+    if set(keys) != set(data.keys()):
+        abort(400, "Invalid JSON must only have {} keys".format(keys))
+
+
 def drop_foreign_fields(json_object, list_of_keys):
     json_object = json_object.copy()
     for key in list_of_keys:

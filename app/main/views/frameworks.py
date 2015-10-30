@@ -1,10 +1,15 @@
 from flask import jsonify, abort
 from sqlalchemy.types import String
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, orm, case
 import datetime
 
+from dmutils.audit import AuditTypes
 from .. import main
-from ...models import db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent, Lot
+from ...models import (
+    db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent, Lot, ValidationError
+)
+from ...utils import get_json_from_request, json_has_required_keys, json_only_has_required_keys
 
 
 @main.route('/frameworks', methods=['GET'])
@@ -32,6 +37,34 @@ def get_framework_status(framework_slug):
     ).first_or_404()
 
     return jsonify(status=framework.status)
+
+
+@main.route('/frameworks/<framework_slug>', methods=['POST'])
+def update_framework(framework_slug):
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first_or_404()
+
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['frameworks', 'updated_by'])
+    json_only_has_required_keys(json_payload['frameworks'], ['status'])
+
+    try:
+        framework.status = json_payload['frameworks']['status']
+        db.session.add(framework)
+        db.session.add(
+            AuditEvent(
+                audit_type=AuditTypes.framework_update,
+                db_object=framework,
+                user=json_payload['updated_by'],
+                data={'update': json_payload['frameworks']})
+        )
+        db.session.commit()
+    except (IntegrityError, ValidationError) as e:
+        db.session.rollback()
+        abort(400, "Validation Error: {}".format(e))
+
+    return jsonify(frameworks=framework.serialize())
 
 
 @main.route('/frameworks/<string:framework_slug>/stats', methods=['GET'])
