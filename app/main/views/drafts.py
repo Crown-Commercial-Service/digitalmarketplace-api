@@ -254,7 +254,6 @@ def publish_draft_service(draft_id):
 
 
 @main.route('/draft-services', methods=['POST'])
-@main.route('/draft-services/<string:framework_slug>/create', methods=['POST'])  # TODO deprecated
 def create_new_draft_service(framework_slug=None):
     """
     Create a new draft service with lot, supplier_id, draft_id, framework_id
@@ -263,10 +262,6 @@ def create_new_draft_service(framework_slug=None):
     """
     updater_json = validate_and_return_updater_request()
     draft_json = validate_and_return_draft_request()
-
-    if framework_slug:
-        current_app.logger.warning("Deprecated /draft-services/<framework_slug> route")
-        draft_json['frameworkSlug'] = framework_slug
 
     framework, lot, supplier = validate_and_return_related_objects(draft_json)
 

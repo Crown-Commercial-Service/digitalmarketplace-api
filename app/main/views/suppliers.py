@@ -239,19 +239,6 @@ def update_contact_information(supplier_id, contact_id):
     return jsonify(contactInformation=contact.serialize())
 
 
-# TODO: deprecated - remove route once all frontend apps are using utils version 11.1.0 or higher
-@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/declaration', methods=['GET'])
-def get_a_declaration(supplier_id, framework_slug):
-    current_app.logger.warning("Deprecated /suppliers/<supplier_id>/frameworks/<framework_slug>/declaration route")
-    supplier_framework = SupplierFramework.find_by_supplier_and_framework(
-        supplier_id, framework_slug
-    )
-    if supplier_framework is None:
-        abort(404)
-
-    return jsonify(declaration=supplier_framework.declaration)
-
-
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/declaration', methods=['PUT'])
 def set_a_declaration(supplier_id, framework_slug):
     framework = Framework.query.filter(
@@ -321,53 +308,6 @@ def get_supplier_framework_info(supplier_id, framework_slug):
         abort(404)
 
     return jsonify(frameworkInterest=supplier_framework.serialize())
-
-
-# TODO: deprecated - remove route once all frontend apps are using utils version 11.1.0 or higher
-@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/interest', methods=['POST'])
-def register_interest_in_framework(supplier_id, framework_slug):
-    current_app.logger.warning("Deprecated /suppliers/<supplier_id>/frameworks/<framework_slug>/interest route")
-    updater_json = validate_and_return_updater_request()
-
-    framework = Framework.query.filter(
-        Framework.slug == framework_slug
-    ).first_or_404()
-
-    if framework.status != 'open':
-        abort(400, "'{}' framework is not open".format(framework_slug))
-
-    supplier = Supplier.query.filter(
-        Supplier.supplier_id == supplier_id
-    ).first_or_404()
-
-    interest_record = SupplierFramework.query.filter(
-        SupplierFramework.supplier_id == supplier.supplier_id,
-        SupplierFramework.framework_id == framework.id
-    ).first()
-
-    if interest_record:
-        return jsonify(frameworkInterest=interest_record.serialize()), 200
-    else:
-        interest_record = SupplierFramework(
-            supplier_id=supplier.supplier_id,
-            framework_id=framework.id
-        )
-        audit_event = AuditEvent(
-            audit_type=AuditTypes.register_framework_interest,
-            user=updater_json.get('user'),
-            data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug},
-            db_object=supplier
-        )
-
-        try:
-            db.session.add(interest_record)
-            db.session.add(audit_event)
-            db.session.commit()
-        except IntegrityError as e:
-            db.session.rollback()
-            return jsonify(message="Database Error: {0}".format(e)), 400
-
-        return jsonify(frameworkInterest=interest_record.serialize()), 201
 
 
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['PUT'])
