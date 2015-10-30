@@ -226,12 +226,13 @@ def suppliers_on_framework(data_api_url, data_api_token, questions):
 
     for supplier in client.find_suppliers_iter():
         try:
-            selection = client.get_selection_answers(supplier['id'], 'g-cloud-7')
-            status = selection['selectionAnswers']['questionAnswers']['status']
-
+            declaration = client.get_supplier_declaration(supplier['id'], 'g-cloud-7')['declaration']
+            if not declaration:
+                continue
+            status = declaration['status']
             processed_supplier_declaration = \
                 process_supplier_declaration(
-                    selection['selectionAnswers']['questionAnswers'],
+                    declaration,
                     questions
                 )
 
