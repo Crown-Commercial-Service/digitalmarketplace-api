@@ -5,7 +5,7 @@ from werkzeug.exceptions import BadRequest
 
 
 def link(rel, href):
-    """Generates a link dict from a rel, href pair."""
+    """Generate a link dict from a rel, href pair."""
     if href is not None:
         return {rel: href}
 
