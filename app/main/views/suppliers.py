@@ -1,8 +1,9 @@
 from flask import jsonify, abort, request, current_app
+from sqlalchemy import func, orm
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
-from ...models import Supplier, ContactInformation, AuditEvent, Service, SupplierFramework, Framework
+from ...models import Supplier, ContactInformation, AuditEvent, Service, DraftService, SupplierFramework, Framework
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400,
@@ -301,11 +302,25 @@ def get_registered_frameworks(supplier_id):
 
 @main.route('/suppliers/<supplier_id>/frameworks', methods=['GET'])
 def get_supplier_frameworks_info(supplier_id):
-    supplier_framework = SupplierFramework.query.filter(
-        SupplierFramework.supplier_id == supplier_id
-    )
 
-    return jsonify(frameworkInterest=[framework.serialize() for framework in supplier_framework])
+    supplier = Supplier.query.filter(
+        Supplier.supplier_id == supplier_id
+    ).first_or_404()
+
+    service_counts = SupplierFramework.get_service_counts(supplier_id)
+
+    supplier_frameworks = SupplierFramework.query.filter(
+        SupplierFramework.supplier == supplier
+    ).all()
+
+    return jsonify(frameworkInterest=[
+        framework.serialize({
+            'drafts_count': service_counts.get((framework.framework_id, 'not-submitted'), 0),
+            'complete_drafts_count': service_counts.get((framework.framework_id, 'submitted'), 0),
+            'services_count': service_counts.get((framework.framework_id, 'published'), 0)
+        })
+        for framework in supplier_frameworks]
+    )
 
 
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['GET'])

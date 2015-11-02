@@ -206,6 +206,7 @@ class Supplier(db.Model):
 
     clients = db.Column(JSON, default=list)
 
+    # Drop this method once the supplier front end is using SupplierFramework counts
     def get_service_counts(self):
         services = db.session.query(
             Framework.name, func.count(Framework.name)
@@ -286,14 +287,40 @@ class SupplierFramework(db.Model):
             SupplierFramework.supplier_id == supplier_id
         ).first()
 
-    def serialize(self):
+    @staticmethod
+    def get_service_counts(supplier_id):
+
+        count_services_query = db.session.query(
+            Service.framework_id, Service.status, func.count()
+        ).filter(
+            Service.supplier_id == supplier_id
+        ).group_by(
+            Service.framework_id,
+            Service.status
+        ).all()
+
+        count_drafts_query = db.session.query(
+            DraftService.framework_id, DraftService.status, func.count()
+        ).filter(
+            DraftService.supplier_id == supplier_id
+        ).group_by(
+            DraftService.framework_id,
+            DraftService.status
+        ).all()
+
         return {
+            (row[0], row[1]): row[2]
+            for row in count_services_query + count_drafts_query
+        }
+
+    def serialize(self, data=None):
+        return dict({
             "supplierId": self.supplier_id,
             "frameworkSlug": self.framework.slug,
             "declaration": self.declaration,
             "onFramework": self.on_framework,
             "agreementReturned": self.agreement_returned
-        }
+        }, **(data or {}))
 
 
 class User(db.Model):
