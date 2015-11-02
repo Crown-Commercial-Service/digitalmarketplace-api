@@ -221,6 +221,17 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data['services']['supplierId'], 1)
         assert_equal(data['services']['lot'], 'scs')
 
+    def test_create_draft_checks_page_questions(self):
+        self.create_draft_json['page_questions'] = ['serviceName']
+        res = self.client.post(
+            '/draft-services',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+
+        data = json.loads(res.get_data())
+        assert_equal(res.status_code, 400)
+        assert_equal(data['error'], {'serviceName': 'answer_required'})
+
     def test_create_draft_should_create_audit_event(self):
         res = self.client.post(
             '/draft-services',
@@ -238,9 +249,8 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(data['auditEvents'][0]['type'], 'import_service')
         assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
         assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
-        assert_equal(
-            data['auditEvents'][1]['data']['draftId'], draft_id
-        )
+        assert_equal(data['auditEvents'][1]['data']['draftId'], draft_id)
+        assert_equal(data['auditEvents'][1]['data']['draftJson'], self.create_draft_json['services'])
 
     def test_should_not_create_draft_with_invalid_data(self):
         invalid_create_json = self.create_draft_json.copy()
