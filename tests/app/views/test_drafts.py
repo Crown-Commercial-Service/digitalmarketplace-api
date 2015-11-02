@@ -1113,7 +1113,7 @@ class TestDOSServices(BaseApplicationTest):
         assert_equal(data['services']['frameworkName'], 'Digital Outcomes and Specialists')
         assert_equal(data['services']['status'], 'not-submitted')
         assert_equal(data['services']['supplierId'], 1)
-        assert_equal(data['services']['lot'], 'lot1')
+        assert_equal(data['services']['lot'], 'digital-outcomes')
 
     def test_disallow_multiple_drafts_for_one_service_lots(self):
         self._post_dos_draft()
@@ -1125,7 +1125,7 @@ class TestDOSServices(BaseApplicationTest):
 
         data = json.loads(res.get_data())
         assert_equal(res.status_code, 400)
-        assert_equal(data['error'], "'lot1' service already exists for supplier '1'")
+        assert_equal(data['error'], "'digital-outcomes' service already exists for supplier '1'")
 
     def test_create_dos_draft_should_create_audit_event(self):
         res = self._post_dos_draft()

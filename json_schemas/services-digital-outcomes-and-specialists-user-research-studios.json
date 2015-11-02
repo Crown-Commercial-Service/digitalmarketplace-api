@@ -1,0 +1,18 @@
+{
+  "title":"Digital Outcomes and Specialists User research studios Service Schema",
+  "$schema":"http://json-schema.org/schema#",
+  "type":"object",
+
+  "additionalProperties": true,
+
+  "properties": {
+    "serviceName":{
+      "type":"string",
+      "minLength":1,
+      "maxLength":100
+    }
+  },
+  "required": [
+    "serviceName"
+  ]
+}
