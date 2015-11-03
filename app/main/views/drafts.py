@@ -262,6 +262,7 @@ def create_new_draft_service(framework_slug=None):
     """
     updater_json = validate_and_return_updater_request()
     draft_json = validate_and_return_draft_request()
+    page_questions = get_request_page_questions()
 
     framework, lot, supplier = validate_and_return_related_objects(draft_json)
 
@@ -281,7 +282,7 @@ def create_new_draft_service(framework_slug=None):
         status="not-submitted"
     )
 
-    validate_service_data(draft, enforce_required=False)
+    validate_service_data(draft, enforce_required=False, required_fields=page_questions)
 
     try:
         db.session.add(draft)
@@ -291,7 +292,8 @@ def create_new_draft_service(framework_slug=None):
             audit_type=AuditTypes.create_draft_service,
             user=updater_json['updated_by'],
             data={
-                "draftId": draft.id
+                "draftId": draft.id,
+                "draftJson": draft_json,
             },
             db_object=draft
         )

@@ -1,0 +1,14 @@
+{
+  "title":"Digital Outcomes and Specialists Digital outcomes Service Schema",
+  "$schema":"http://json-schema.org/schema#",
+  "type":"object",
+
+  "additionalProperties": true,
+
+  "properties": {
+  },
+  "required": [
+    "outcomesSupplierInformation"
+  ]
+
+}

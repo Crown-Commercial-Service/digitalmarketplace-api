@@ -30,15 +30,6 @@ def get_framework(framework_slug):
     return jsonify(frameworks=framework.serialize())
 
 
-@main.route('/frameworks/<string:framework_slug>/status', methods=['GET'])
-def get_framework_status(framework_slug):
-    framework = Framework.query.filter(
-        Framework.slug == framework_slug
-    ).first_or_404()
-
-    return jsonify(status=framework.status)
-
-
 @main.route('/frameworks/<framework_slug>', methods=['POST'])
 def update_framework(framework_slug):
     framework = Framework.query.filter(

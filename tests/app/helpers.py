@@ -192,7 +192,7 @@ class BaseApplicationTest(object):
             framework='dos', status='open',
             slug='digital-outcomes-and-specialists',
             lots=[
-                Lot(name="DOS LOT 1", slug='lot1', one_service_limit=True),
+                Lot(name="Digital outcomes", slug='digital-outcomes', one_service_limit=True),
             ]
         )
 

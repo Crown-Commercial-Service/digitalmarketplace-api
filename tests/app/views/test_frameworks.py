@@ -1,7 +1,7 @@
 import datetime
 
 from flask import json
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_in
 
 from dmutils.audit import AuditTypes
 
@@ -30,6 +30,7 @@ class TestGetFramework(BaseApplicationTest):
 
             assert_equal(response.status_code, 200)
             assert_equal(data['frameworks']['slug'], 'g-cloud-7')
+            assert_in('status', data['frameworks'])
 
     def test_framework_lots_are_returned(self):
         with self.app.app_context():
@@ -104,29 +105,6 @@ class TestUpdateFramework(BaseApplicationTest):
                                         content_type="application/json")
 
             assert response.status_code == 400
-
-
-class TestGetFrameworkStatus(BaseApplicationTest):
-    def test_status_is_returned_for_existing_frameworks(self):
-        with self.app.app_context():
-            response = self.client.get('/frameworks/g-cloud-6/status')
-            data = json.loads(response.get_data())
-
-            assert_equal(response.status_code, 200)
-            assert_equal(data['status'], "live")
-
-            response = self.client.get('/frameworks/g-cloud-4/status')
-            data = json.loads(response.get_data())
-
-            assert_equal(response.status_code, 200)
-            assert_equal(data['status'], "expired")
-
-    def test_404_for_non_existing_frameworks(self):
-        with self.app.app_context():
-            response = self.client.get('/frameworks/biscuits-for-gov/status')
-            data = json.loads(response.get_data())
-
-            assert_equal(response.status_code, 404)
 
 
 class TestFrameworkStats(BaseApplicationTest):
