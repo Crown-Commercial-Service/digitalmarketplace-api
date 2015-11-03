@@ -3,7 +3,7 @@ from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true
 
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
-    SupplierFramework, Framework
+    SupplierFramework, Framework, DraftService, Service
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 from random import randint
 
@@ -1022,6 +1022,118 @@ class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(response.status_code, 400)
         data = json.loads(response.get_data())
         assert_true('duplicate key value violates unique constraint "ix_suppliers_duns_number"' in data['message'])
+
+
+class TestGetSupplierFrameworks(BaseApplicationTest):
+    def setup(self):
+        super(TestGetSupplierFrameworks, self).setup()
+
+        with self.app.app_context():
+
+            db.session.add_all([
+                Supplier(supplier_id=1, name=u"Supplier 1"),
+                Supplier(supplier_id=2, name=u"Supplier 2"),
+                Supplier(supplier_id=3, name=u"Supplier 2"),
+                SupplierFramework(
+                    supplier_id=1,
+                    framework_id=1,
+                    declaration={},
+                    agreement_returned=False,
+                    on_framework=False
+                ),
+                SupplierFramework(
+                    supplier_id=2,
+                    framework_id=1,
+                    declaration={},
+                    agreement_returned=False,
+                    on_framework=False
+                ),
+                DraftService(
+                    framework_id=1,
+                    lot_id=1,
+                    service_id="0987654321",
+                    supplier_id=1,
+                    data={},
+                    status='not-submitted'
+                ),
+                DraftService(
+                    framework_id=1,
+                    lot_id=2,
+                    service_id="1234567890",
+                    supplier_id=1,
+                    data={},
+                    status='submitted'
+                ),
+                Service(
+                    framework_id=1,
+                    lot_id=2,
+                    service_id="1234567890",
+                    supplier_id=2,
+                    data={},
+                    status='published'
+                )
+            ])
+            db.session.commit()
+
+    def test_supplier_with_drafts(self):
+        response = self.client.get('/suppliers/1/frameworks')
+        data = json.loads(response.get_data())
+        assert_equal(response.status_code, 200)
+        assert_equal(
+            data,
+            {
+                'frameworkInterest': [
+                    {
+                        'agreementReturned': False,
+                        'onFramework': False,
+                        'declaration': {},
+                        'frameworkSlug': 'g-cloud-6',
+                        'supplierId': 1,
+                        'drafts_count': 1,
+                        'complete_drafts_count': 1,
+                        'services_count': 0
+                    }
+                ]
+            }
+        )
+
+    def test_supplier_with_service(self):
+        response = self.client.get('/suppliers/2/frameworks')
+        data = json.loads(response.get_data())
+        assert_equal(response.status_code, 200)
+        assert_equal(
+            data,
+            {
+                'frameworkInterest': [
+                    {
+                        'agreementReturned': False,
+                        'onFramework': False,
+                        'declaration': {},
+                        'frameworkSlug': 'g-cloud-6',
+                        'supplierId': 2,
+                        'drafts_count': 0,
+                        'complete_drafts_count': 0,
+                        'services_count': 1
+                    }
+                ]
+            }
+        )
+
+    def test_supplier_with_no_drafts_or_services(self):
+        response = self.client.get('/suppliers/3/frameworks')
+        data = json.loads(response.get_data())
+        assert_equal(response.status_code, 200)
+        assert_equal(
+            data,
+            {
+                'frameworkInterest': []
+            }
+        )
+
+    def test_supplier_that_doesnt_exist(self):
+        response = self.client.get('/suppliers/4/frameworks')
+        data = json.loads(response.get_data())
+        assert_equal(response.status_code, 404)
 
 
 class TestRegisterFrameworkInterest(BaseApplicationTest):
