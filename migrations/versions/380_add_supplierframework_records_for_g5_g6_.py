@@ -7,7 +7,7 @@ Create Date: 2015-11-02 16:27:01.538066
 """
 
 # revision identifiers, used by Alembic.
-revision = '380'
+revision = '380_add_supplierframework'
 down_revision = '370_use_sqlalchemy_validator'
 
 from alembic import op
