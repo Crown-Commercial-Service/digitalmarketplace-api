@@ -1741,7 +1741,7 @@ class TestGetService(BaseApplicationTest):
 
     def test_get_expired_service(self):
         response = self.client.get('/services/123-expired-456')
-        assert_equal(404, response.status_code)
+        assert_equal(410, response.status_code)
 
     def test_get_service_returns_supplier_info(self):
         response = self.client.get('/services/123-published-456')
