@@ -363,10 +363,16 @@ def test_assurance_only_causes_validation_error():
     assert "answer_required" in errs['serviceAvailabilityPercentage']
 
 
+def test_non_number_value_causes_validation_error():
+    data = load_example_listing("G6-PaaS")
+    data.update({'serviceAvailabilityPercentage': {"value": "a99.9", "assurance": "Service provider assertion"}})
+    errs = get_validation_errors("services-g-cloud-7-paas", data)
+    assert "not_a_number" in errs['serviceAvailabilityPercentage']
+
+
 def test_value_only_causes_validation_error():
     data = load_example_listing("G6-PaaS")
-    data.update({'serviceAvailabilityPercentage':
-                {"value": 99.9}})
+    data.update({'serviceAvailabilityPercentage': {"value": 99.9}})
     errs = get_validation_errors("services-g-cloud-7-paas", data)
     assert "assurance_required" in errs['serviceAvailabilityPercentage']
 

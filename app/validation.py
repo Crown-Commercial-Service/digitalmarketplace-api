@@ -37,9 +37,6 @@ SCHEMA_NAMES = [
 ]
 FORMAT_CHECKER = FormatChecker()
 
-PRICE_UNIT_ERROR_REGEX = re.compile(".* is not one of .*'Unit', .?'Person'")
-ASSERTION_ERROR_REGEX = re.compile("None is not one of .*'Service provider assertion'")
-
 
 def load_schemas(schemas_path, schema_names):
     loaded_schemas = {}
@@ -136,8 +133,10 @@ def get_validation_errors(validator_name, json_data,
     for error in errors:
         if error.path:
             key = error.path[0]
-            error_map[key] = _translate_json_schema_error(key, error.message)
-        elif error.message.endswith("is a required property"):
+            error_map[key] = _translate_json_schema_error(
+                key, error.validator, error.validator_value, error.message
+            )
+        elif error.validator == 'required':
             key = re.search(r'\'(.*)\'', error.message).group(1)
             error_map[key] = 'answer_required'
         else:
@@ -210,37 +209,36 @@ def is_valid_string(string, minlength=1, maxlength=255):
     return False
 
 
-def _translate_json_schema_error(key, message):
-    if message.endswith('is too short') \
-            or message.endswith("'value' is a required property"):
-                return 'answer_required'
+def _translate_json_schema_error(key, validator, validator_value, message):
+    validator_type_to_error = {
+        'minLength': 'answer_required',
+        'minItems': 'answer_required',
+        'minimum': 'not_a_number',
+        'maximum': 'not_a_number',
+        'maxItems': 'under_10_items',
+        'maxLength': 'under_character_limit',
+    }
 
-    if message.endswith('is too long'):
-        if message.startswith('['):
-            # A list that is too long - all our lists are max 10 items
-            return 'under_10_items'
+    if validator in validator_type_to_error:
+        return validator_type_to_error[validator]
+
+    elif validator == 'required':
+        if "'assurance'" in message:
+            return 'assurance_required'
         else:
-            # A string that is too long
-            return 'under_character_limit'
+            return 'answer_required'
 
-    if 'does not match' in message:
+    elif validator == 'pattern':
         if key in ['priceMin', 'priceMax']:
             return 'not_money_format'
         else:
-            return 'under_{}_words'.format(_get_word_count(message))
+            return 'under_{}_words'.format(_get_word_count(validator_value))
 
-    match = PRICE_UNIT_ERROR_REGEX.match(message)
-    if match:
+    elif validator == 'enum' and key == 'priceUnit':
         return 'no_unit_specified'
 
-    if "is not of type u'number'" in message \
-            or "is less than" in message \
-            or "is greater than" in message:
-            return 'not_a_number'
-
-    match = ASSERTION_ERROR_REGEX.match(message)
-    if match or message.endswith("'assurance' is a required property"):
-                return 'assurance_required'
+    elif validator == 'type' and validator_value == 'number':
+        return 'not_a_number'
 
     return message
 
