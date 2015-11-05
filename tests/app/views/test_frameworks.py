@@ -2,6 +2,7 @@ import datetime
 
 from flask import json
 from nose.tools import assert_equal, assert_in
+from dateutil.parser import parse as parse_time
 
 from dmutils.audit import AuditTypes
 
@@ -277,6 +278,59 @@ class TestFrameworkStats(BaseApplicationTest):
                 {u'count': 5, u'recent_login': True},
             ]
         })
+
+
+class TestGetFrameworkSuppliers(BaseApplicationTest):
+    def setup(self):
+        super(TestGetFrameworkSuppliers, self).setup()
+
+        self.setup_dummy_suppliers(5)
+        with self.app.app_context():
+            db.session.execute("UPDATE frameworks SET status='open' WHERE id=4")
+            db.session.commit()
+            for supplier_id in range(5):
+                response = self.client.put(
+                    '/suppliers/{}/frameworks/g-cloud-7'.format(supplier_id),
+                    data=json.dumps({
+                        'update_details': {'updated_by': 'example'}
+                    }),
+                    content_type='application/json')
+                assert response.status_code == 201, response.get_data(as_text=True)
+            for supplier_id in range(3, 5):
+                response = self.client.post(
+                    '/suppliers/{}/frameworks/g-cloud-7'.format(supplier_id),
+                    data=json.dumps({
+                        'update_details': {'updated_by': 'example'},
+                        'frameworkInterest': {'agreementReturned': True},
+                    }),
+                    content_type='application/json')
+                assert response.status_code == 200, response.get_data(as_text=True)
+
+    def teardown(self):
+        super(TestGetFrameworkSuppliers, self).teardown()
+
+        with self.app.app_context():
+            db.session.execute("UPDATE frameworks SET status='open' WHERE id=4")
+            db.session.commit()
+
+    def test_list_suppliers_related_to_a_framework(self):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-7/suppliers')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 5
+
+    def test_list_suppliers_with_agreements_returned(self):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-7/suppliers?agreement_returned=true')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 2
+
+            times = [parse_time(item['agreementReturnedAt']) for item in data['supplierFrameworks']]
+            assert times[0] > times[1]
 
 
 class TestGetFrameworkInterest(BaseApplicationTest):

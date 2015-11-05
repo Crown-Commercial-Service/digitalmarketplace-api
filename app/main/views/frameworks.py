@@ -1,10 +1,12 @@
-from flask import jsonify, abort
+from flask import jsonify, abort, request
 from sqlalchemy.types import String
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql.expression import true, false
 from sqlalchemy import func, orm, case
 import datetime
 
 from dmutils.audit import AuditTypes
+from dmutils.config import convert_to_boolean
 from .. import main
 from ...models import (
     db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent, Lot, ValidationError
@@ -60,7 +62,6 @@ def update_framework(framework_slug):
 
 @main.route('/frameworks/<string:framework_slug>/stats', methods=['GET'])
 def get_framework_stats(framework_slug):
-
     framework = Framework.query.filter(
         Framework.slug == framework_slug
     ).first_or_404()
@@ -134,6 +135,33 @@ def get_framework_stats(framework_slug):
             ).all()
         )
     })
+
+
+@main.route('/frameworks/<string:framework_slug>/suppliers', methods=['GET'])
+def get_framework_suppliers(framework_slug):
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first_or_404()
+
+    agreement_returned = request.args.get('agreement_returned')
+
+    supplier_frameworks = SupplierFramework.query.filter(
+        SupplierFramework.framework_id == framework.id
+    )
+
+    if agreement_returned is not None:
+        if convert_to_boolean(agreement_returned):
+            supplier_frameworks = supplier_frameworks.filter(
+                SupplierFramework.agreement_returned == true()
+            ).order_by(SupplierFramework.agreement_returned_at.desc())
+        else:
+            supplier_frameworks = supplier_frameworks.filter(
+                SupplierFramework.agreement_returned == false()
+            )
+
+    return jsonify(supplierFrameworks=[
+        supplier_framework.serialize() for supplier_framework in supplier_frameworks
+    ])
 
 
 @main.route('/frameworks/<string:framework_slug>/interest', methods=['GET'])
