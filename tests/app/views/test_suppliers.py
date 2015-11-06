@@ -1,5 +1,8 @@
+from datetime import datetime
 from flask import json
-from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true
+import pytest
+from freezegun import freeze_time
+from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true, assert_is
 
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
@@ -1038,14 +1041,12 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                     supplier_id=1,
                     framework_id=1,
                     declaration={},
-                    agreement_returned=False,
                     on_framework=False
                 ),
                 SupplierFramework(
                     supplier_id=2,
                     framework_id=1,
                     declaration={},
-                    agreement_returned=False,
                     on_framework=False
                 ),
                 DraftService(
@@ -1085,6 +1086,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                 'frameworkInterest': [
                     {
                         'agreementReturned': False,
+                        'agreementReturnedAt': None,
                         'onFramework': False,
                         'declaration': {},
                         'frameworkSlug': 'g-cloud-6',
@@ -1107,6 +1109,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                 'frameworkInterest': [
                     {
                         'agreementReturned': False,
+                        'agreementReturnedAt': None,
                         'onFramework': False,
                         'declaration': {},
                         'frameworkSlug': 'g-cloud-6',
@@ -1266,7 +1269,8 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             answers = SupplierFramework(
                 supplier_id=0, framework_id=2,
                 declaration={'an_answer': 'Yes it is'},
-                on_framework=True, agreement_returned=True)
+                on_framework=True,
+                agreement_returned_at=datetime(2015, 10, 10, 10, 10, 10))
             db.session.add(answers)
             db.session.commit()
 
@@ -1291,6 +1295,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert_equal(data['frameworkInterest']['declaration'], {'an_answer': 'Yes it is'})
         assert_equal(data['frameworkInterest']['onFramework'], True)
         assert_equal(data['frameworkInterest']['agreementReturned'], True)
+        assert_equal(data['frameworkInterest']['agreementReturnedAt'], '2015-10-10T10:10:10.000000Z')
 
     def test_get_supplier_framework_info_non_existent_by_framework(self):
         response = self.client.get(
@@ -1316,6 +1321,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
         assert_equal(data['frameworkInterest']['onFramework'], True)
         assert_equal(data['frameworkInterest']['agreementReturned'], False)
+        assert_is(data['frameworkInterest']['agreementReturnedAt'], None)
 
     def test_adding_supplier_has_not_passed(self):
         response = self.supplier_framework_update(
@@ -1330,16 +1336,42 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert_equal(data['frameworkInterest']['onFramework'], False)
 
     def test_adding_that_agreement_has_been_returned(self):
+        with freeze_time('2012-12-12'):
+            response = self.supplier_framework_update(
+                0,
+                'digital-outcomes-and-specialists',
+                update={'agreementReturned': True}
+            )
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())
+            assert_equal(data['frameworkInterest']['supplierId'], 0)
+            assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+            assert_equal(data['frameworkInterest']['agreementReturned'], True)
+            assert_equal(data['frameworkInterest']['agreementReturnedAt'], "2012-12-12T00:00:00.000000Z")
+
+    def test_agreement_returned_at_timestamp_cannot_be_set(self):
+        with freeze_time('2012-12-12'):
+            response = self.supplier_framework_update(
+                0,
+                'digital-outcomes-and-specialists',
+                update={'agreementReturned': True, 'agreementReturnedAt': '2013-13-13T00:00:00.000000Z'}
+            )
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())
+            assert_equal(data['frameworkInterest']['agreementReturnedAt'], '2012-12-12T00:00:00.000000Z')
+
+    def test_agreement_returned_at_is_unset_when_agreement_reutrned_flag_is_false(self):
+        self.supplier_framework_update(
+            0, 'digital-outcomes-and-specialists',
+            update={'agreementReturned': True})
         response = self.supplier_framework_update(
-            0,
-            'digital-outcomes-and-specialists',
-            update={'agreementReturned': True}
-        )
+            0, 'digital-outcomes-and-specialists',
+            update={'agreementReturned': False})
+
         assert_equal(response.status_code, 200)
         data = json.loads(response.get_data())
-        assert_equal(data['frameworkInterest']['supplierId'], 0)
-        assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
-        assert_equal(data['frameworkInterest']['agreementReturned'], True)
+        assert_equal(data['frameworkInterest']['agreementReturned'], False)
+        assert_equal(data['frameworkInterest']['agreementReturnedAt'], None)
 
     def test_changing_from_failed_to_passed(self):
         response = self.supplier_framework_update(
@@ -1350,7 +1382,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         data = json.loads(response.get_data())
         assert_equal(data['frameworkInterest']['onFramework'], False)
-        assert_equal(data['frameworkInterest']['agreementReturned'], None)
+        assert_equal(data['frameworkInterest']['agreementReturned'], False)
 
         response2 = self.supplier_framework_update(
             0,

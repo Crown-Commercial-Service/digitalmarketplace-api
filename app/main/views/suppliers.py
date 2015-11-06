@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import jsonify, abort, request, current_app
 from sqlalchemy import func, orm
 from sqlalchemy.exc import IntegrityError, DataError
@@ -195,9 +196,7 @@ def update_supplier(supplier_id):
     return jsonify(suppliers=supplier.serialize())
 
 
-@main.route(
-    '/suppliers/<int:supplier_id>/contact-information/<int:contact_id>',
-    methods=['POST'])
+@main.route('/suppliers/<int:supplier_id>/contact-information/<int:contact_id>', methods=['POST'])
 def update_contact_information(supplier_id, contact_id):
     request_data = get_json_from_request()
 
@@ -302,7 +301,6 @@ def get_registered_frameworks(supplier_id):
 
 @main.route('/suppliers/<supplier_id>/frameworks', methods=['GET'])
 def get_supplier_frameworks_info(supplier_id):
-
     supplier = Supplier.query.filter(
         Supplier.supplier_id == supplier_id
     ).first_or_404()
@@ -409,10 +407,11 @@ def update_supplier_framework_details(supplier_id, framework_slug):
 
     if 'onFramework' in update_json:
         interest_record.on_framework = update_json['onFramework']
-        if interest_record.on_framework is True and interest_record.agreement_returned is None:
-            interest_record.agreement_returned = False
     if 'agreementReturned' in update_json:
-        interest_record.agreement_returned = update_json['agreementReturned']
+        if update_json['agreementReturned']:
+            interest_record.agreement_returned_at = datetime.utcnow()
+        else:
+            interest_record.agreement_returned_at = None
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.supplier_update,

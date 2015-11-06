@@ -269,7 +269,7 @@ class SupplierFramework(db.Model):
                              primary_key=True)
     declaration = db.Column(JSON)
     on_framework = db.Column(db.Boolean, nullable=True)
-    agreement_returned = db.Column(db.Boolean, nullable=True)
+    agreement_returned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
@@ -314,12 +314,16 @@ class SupplierFramework(db.Model):
         }
 
     def serialize(self, data=None):
+        agreement_returned_at = self.agreement_returned_at
+        if agreement_returned_at:
+            agreement_returned_at = agreement_returned_at.strftime(DATETIME_FORMAT)
         return dict({
             "supplierId": self.supplier_id,
             "frameworkSlug": self.framework.slug,
             "declaration": self.declaration,
             "onFramework": self.on_framework,
-            "agreementReturned": self.agreement_returned
+            "agreementReturned": bool(agreement_returned_at),
+            "agreementReturnedAt": agreement_returned_at,
         }, **(data or {}))
 
 
