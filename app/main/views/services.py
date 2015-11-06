@@ -187,9 +187,14 @@ def import_service(service_id):
 def get_service(service_id):
     service = Service.query.filter(
         Service.service_id == service_id
-    ).framework_is_live().first_or_404()
+    ).first_or_404()
 
-    return jsonify(services=service.serialize())
+    if service.framework.status == 'live':
+        return jsonify(services=service.serialize())
+    elif service.framework.status == 'expired':
+        abort(410)
+    else:
+        abort(404)
 
 
 @main.route('/archived-services/<int:archived_service_id>', methods=['GET'])
