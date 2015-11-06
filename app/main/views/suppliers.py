@@ -407,11 +407,8 @@ def update_supplier_framework_details(supplier_id, framework_slug):
 
     if 'onFramework' in update_json:
         interest_record.on_framework = update_json['onFramework']
-        if interest_record.on_framework is True and interest_record.agreement_returned is None:
-            interest_record.agreement_returned = False
     if 'agreementReturned' in update_json:
-        interest_record.agreement_returned = update_json['agreementReturned']
-        if interest_record.agreement_returned:
+        if update_json['agreementReturned']:
             interest_record.agreement_returned_at = datetime.utcnow()
         else:
             interest_record.agreement_returned_at = None

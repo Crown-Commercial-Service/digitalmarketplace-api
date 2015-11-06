@@ -152,11 +152,11 @@ def get_framework_suppliers(framework_slug):
     if agreement_returned is not None:
         if convert_to_boolean(agreement_returned):
             supplier_frameworks = supplier_frameworks.filter(
-                SupplierFramework.agreement_returned == true()
+                SupplierFramework.agreement_returned_at.isnot(None)
             ).order_by(SupplierFramework.agreement_returned_at.desc())
         else:
             supplier_frameworks = supplier_frameworks.filter(
-                SupplierFramework.agreement_returned == false()
+                SupplierFramework.agreement_returned_at.is_(None)
             )
 
     return jsonify(supplierFrameworks=[

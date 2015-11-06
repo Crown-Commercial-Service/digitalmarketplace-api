@@ -1041,14 +1041,12 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                     supplier_id=1,
                     framework_id=1,
                     declaration={},
-                    agreement_returned=False,
                     on_framework=False
                 ),
                 SupplierFramework(
                     supplier_id=2,
                     framework_id=1,
                     declaration={},
-                    agreement_returned=False,
                     on_framework=False
                 ),
                 DraftService(
@@ -1272,7 +1270,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
                 supplier_id=0, framework_id=2,
                 declaration={'an_answer': 'Yes it is'},
                 on_framework=True,
-                agreement_returned=True,
                 agreement_returned_at=datetime(2015, 10, 10, 10, 10, 10))
             db.session.add(answers)
             db.session.commit()
@@ -1385,7 +1382,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert_equal(response.status_code, 200)
         data = json.loads(response.get_data())
         assert_equal(data['frameworkInterest']['onFramework'], False)
-        assert_equal(data['frameworkInterest']['agreementReturned'], None)
+        assert_equal(data['frameworkInterest']['agreementReturned'], False)
 
         response2 = self.supplier_framework_update(
             0,
