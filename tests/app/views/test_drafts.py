@@ -742,9 +742,10 @@ class TestDraftServices(BaseApplicationTest):
         fetch = self.client.get('/draft-services/{}'.format(draft_id))
         assert_equal(fetch.status_code, 404)
 
-        # G-Cloud 7 service should not be visible yet
+        # G-Cloud 7 service should be visible from API
+        # (frontends hide them based on statuses)
         fetch2 = self.client.get('/services/{}'.format(new_service_id))
-        assert_equal(fetch2.status_code, 404)
+        assert_equal(fetch2.status_code, 200)
 
         # published should be visible when G7 goes live
         with self.app.app_context():

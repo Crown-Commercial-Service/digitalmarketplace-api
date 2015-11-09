@@ -189,12 +189,7 @@ def get_service(service_id):
         Service.service_id == service_id
     ).first_or_404()
 
-    if service.framework.status == 'live':
-        return jsonify(services=service.serialize())
-    elif service.framework.status == 'expired':
-        abort(410)
-    else:
-        abort(404)
+    return jsonify(services=service.serialize())
 
 
 @main.route('/archived-services/<int:archived_service_id>', methods=['GET'])
