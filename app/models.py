@@ -319,6 +319,7 @@ class SupplierFramework(db.Model):
             agreement_returned_at = agreement_returned_at.strftime(DATETIME_FORMAT)
         return dict({
             "supplierId": self.supplier_id,
+            "supplierName": self.supplier.name,
             "frameworkSlug": self.framework.slug,
             "declaration": self.declaration,
             "onFramework": self.on_framework,

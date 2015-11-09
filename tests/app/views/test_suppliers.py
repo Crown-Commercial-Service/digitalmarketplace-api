@@ -1093,7 +1093,8 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'supplierId': 1,
                         'drafts_count': 1,
                         'complete_drafts_count': 1,
-                        'services_count': 0
+                        'services_count': 0,
+                        'supplierName': 'Supplier 1',
                     }
                 ]
             }
@@ -1116,7 +1117,8 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'supplierId': 2,
                         'drafts_count': 0,
                         'complete_drafts_count': 0,
-                        'services_count': 1
+                        'services_count': 1,
+                        'supplierName': 'Supplier 2',
                     }
                 ]
             }
