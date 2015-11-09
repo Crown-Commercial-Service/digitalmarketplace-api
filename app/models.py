@@ -467,7 +467,7 @@ class ServiceTableMixin(object):
         data = drop_foreign_fields(value, [
             'id', 'status',
             'supplierId', 'supplierName',
-            'frameworkSlug', 'frameworkName',
+            'frameworkSlug', 'frameworkName', 'frameworkStatus',
             'lot', 'lotName',
             'updatedAt', 'createdAt', 'links'
         ])
@@ -489,6 +489,7 @@ class ServiceTableMixin(object):
             'supplierName': self.supplier.name,
             'frameworkSlug': self.framework.slug,
             'frameworkName': self.framework.name,
+            'frameworkStatus': self.framework.status,
             'lot': self.lot.slug,
             'lotName': self.lot.name,
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
