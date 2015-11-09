@@ -227,10 +227,7 @@ def publish_draft_service(draft_id):
             Service.service_id == draft.service_id
         ).first_or_404()
 
-        service_from_draft = update_and_validate_service(
-            service,
-            draft.data)
-
+        service_from_draft = update_and_validate_service(service, draft.data)
     else:
         service_from_draft = create_service_from_draft(draft, "enabled")
 

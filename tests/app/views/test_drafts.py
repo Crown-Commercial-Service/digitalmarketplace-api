@@ -624,7 +624,8 @@ class TestDraftServices(BaseApplicationTest):
             content_type='application/json')
         assert_equal(res.status_code, 404)
 
-    def test_should_be_able_to_publish_valid_copied_draft_service(self):
+    @mock.patch('app.service_utils.search_api_client')
+    def test_should_be_able_to_publish_valid_copied_draft_service(self, search_api_client):
         initial = self.client.get('/services/{}'.format(self.service_id))
         assert_equal(initial.status_code, 200)
         assert_equal(
@@ -700,7 +701,10 @@ class TestDraftServices(BaseApplicationTest):
             json.loads(archives.get_data())['services'][0]['serviceName'],
             'My Iaas Service')
 
-    def test_should_be_able_to_publish_valid_new_draft_service(self):
+        assert search_api_client.index.called
+
+    @mock.patch('app.service_utils.search_api_client')
+    def test_should_be_able_to_publish_valid_new_draft_service(self, search_api_client):
         res = self.client.post(
             '/draft-services',
             data=json.dumps(self.create_draft_json),
@@ -747,17 +751,6 @@ class TestDraftServices(BaseApplicationTest):
         fetch2 = self.client.get('/services/{}'.format(new_service_id))
         assert_equal(fetch2.status_code, 200)
 
-        # published should be visible when G7 goes live
-        with self.app.app_context():
-            fw = Framework.query.filter_by(name='G-Cloud 7').first()
-            fw.status = 'live'
-            db.session.commit()
-        updated_draft = self.client.get('/services/{}'.format(new_service_id))
-        assert_equal(updated_draft.status_code, 200)
-        assert_equal(
-            json.loads(updated_draft.get_data())['services']['serviceName'],
-            'An example G-7 SCS Service')
-
         # archive should be updated
         archives = self.client.get(
             '/archived-services?service-id={}'.format(new_service_id))
@@ -765,6 +758,9 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(
             json.loads(archives.get_data())['services'][0]['serviceName'],
             'An example G-7 SCS Service')
+
+        # service should not be indexed as G-Cloud 7 is not live
+        assert not search_api_client.index.called
 
     def publish_new_draft_service(self):
         res = self.client.post(
