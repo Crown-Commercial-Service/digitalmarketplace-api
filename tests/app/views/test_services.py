@@ -1748,3 +1748,10 @@ class TestGetService(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert_equal(data['services']['supplierId'], 1)
         assert_equal(data['services']['supplierName'], u'Supplier 1')
+
+    def test_get_service_returns_framework_info(self):
+        response = self.client.get('/services/123-published-456')
+        data = json.loads(response.get_data())
+        assert_equal(data['services']['frameworkSlug'], 'g-cloud-6')
+        assert_equal(data['services']['frameworkName'], u'G-Cloud 6')
+        assert_equal(data['services']['frameworkStatus'], u'live')
