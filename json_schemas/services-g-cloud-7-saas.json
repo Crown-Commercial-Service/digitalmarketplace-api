@@ -10,6 +10,7 @@
     },
     "apiType": {
       "maxLength": 200,
+      "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,19}\\S+$)",
       "type": "string"
     },
@@ -84,6 +85,7 @@
         "type": "string"
       },
       "maxItems": 10,
+      "minItems": 0,
       "type": "array"
     },
     "dataAtRestProtections": {
@@ -108,6 +110,7 @@
             ]
           },
           "maxItems": 6,
+          "minItems": 1,
           "type": "array",
           "uniqueItems": true
         }
@@ -144,6 +147,7 @@
             ]
           },
           "maxItems": 5,
+          "minItems": 1,
           "type": "array",
           "uniqueItems": true
         }
@@ -176,6 +180,7 @@
             ]
           },
           "maxItems": 6,
+          "minItems": 1,
           "type": "array",
           "uniqueItems": true
         }
@@ -231,6 +236,7 @@
             ]
           },
           "maxItems": 5,
+          "minItems": 1,
           "type": "array",
           "uniqueItems": true
         }
@@ -302,6 +308,7 @@
             ]
           },
           "maxItems": 3,
+          "minItems": 1,
           "type": "array",
           "uniqueItems": true
         }
@@ -382,6 +389,7 @@
             ]
           },
           "maxItems": 7,
+          "minItems": 1,
           "type": "array",
           "uniqueItems": true
         }
@@ -399,6 +407,7 @@
         "type": "string"
       },
       "maxItems": 10,
+      "minItems": 0,
       "type": "array"
     },
     "incidentDefinitionPublished": {
@@ -505,6 +514,7 @@
         ]
       },
       "maxItems": 7,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
@@ -562,6 +572,7 @@
             ]
           },
           "maxItems": 4,
+          "minItems": 1,
           "type": "array",
           "uniqueItems": true
         }
@@ -761,6 +772,7 @@
             ]
           },
           "maxItems": 5,
+          "minItems": 1,
           "type": "array",
           "uniqueItems": true
         }
@@ -816,6 +828,7 @@
         ]
       },
       "maxItems": 22,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
@@ -908,6 +921,7 @@
         ]
       },
       "maxItems": 9,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
@@ -921,6 +935,7 @@
         ]
       },
       "maxItems": 4,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
@@ -1088,6 +1103,7 @@
         "type": "string"
       },
       "maxItems": 10,
+      "minItems": 0,
       "type": "array"
     },
     "vulnerabilityAssessment": {

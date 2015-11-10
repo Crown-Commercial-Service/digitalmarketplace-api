@@ -105,6 +105,7 @@
         ]
       },
       "maxItems": 5,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
@@ -159,6 +160,7 @@
         "type": "string"
       },
       "maxItems": 10,
+      "minItems": 0,
       "type": "array"
     }
   },
