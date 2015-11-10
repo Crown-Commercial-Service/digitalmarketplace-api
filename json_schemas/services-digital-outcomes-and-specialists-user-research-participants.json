@@ -1,10 +1,7 @@
 {
-  "title":"Digital Outcomes and Specialists User research participants Service Schema",
-  "$schema":"http://json-schema.org/schema#",
-  "type":"object",
-
+  "$schema": "http://json-schema.org/schema#",
   "additionalProperties": true,
-
-  "properties": {
-  }
+  "properties": {},
+  "title": "Digital Outcomes and Specialists User research participants Service Schema",
+  "type": "object"
 }
