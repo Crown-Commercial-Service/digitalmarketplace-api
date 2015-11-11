@@ -235,7 +235,7 @@ def publish_draft_service(draft_id):
 
         service_from_draft = update_and_validate_service(service, draft.data)
     else:
-        service_from_draft = create_service_from_draft(draft, "enabled")
+        service_from_draft = create_service_from_draft(draft, "published")
 
     commit_and_archive_service(service_from_draft, update_details,
                                AuditTypes.publish_draft_service,

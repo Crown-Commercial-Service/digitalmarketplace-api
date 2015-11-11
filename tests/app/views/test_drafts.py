@@ -740,18 +740,26 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(res.status_code, 400)
 
     @mock.patch('app.service_utils.search_api_client')
+    def test_search_api_should_be_called_on_publish_if_framework_is_live(self, search_api_client):
+        draft_id = self.create_draft_service()['id']
+        self.complete_draft_service(draft_id)
+
+        with self.app.app_context():
+            Framework.query.filter_by(slug='g-cloud-7').update(dict(status='live'))
+            db.session.commit()
+
+        res = self.publish_draft_service(draft_id)
+
+        assert res.status_code == 200
+        assert search_api_client.index.called
+
+    @mock.patch('app.service_utils.search_api_client')
     def test_should_be_able_to_publish_valid_new_draft_service(self, search_api_client):
         draft_id = self.create_draft_service()['id']
         self.complete_draft_service(draft_id)
 
-        res = self.client.post(
-            '/draft-services/{}/publish'.format(draft_id),
-            data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs',
-                }
-            }),
-            content_type='application/json')
+        res = self.publish_draft_service(draft_id)
+
         assert_equal(res.status_code, 200)
         created_service_data = json.loads(res.get_data())
         new_service_id = created_service_data['services']['id']
@@ -774,6 +782,8 @@ class TestDraftServices(BaseApplicationTest):
         # (frontends hide them based on statuses)
         fetch2 = self.client.get('/services/{}'.format(new_service_id))
         assert_equal(fetch2.status_code, 200)
+        assert_equal(json.loads(fetch2.get_data())['services']['status'],
+                     "published")
 
         # archive should be updated
         archives = self.client.get(
