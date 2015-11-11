@@ -631,6 +631,10 @@ class DraftService(db.Model, ServiceTableMixin):
         if self.service_id:
             data['serviceId'] = self.service_id
 
+        data['links']['publish'] = url_for('.publish_draft_service', draft_id=self.id)
+        data['links']['complete'] = url_for('.complete_draft_service', draft_id=self.id)
+        data['links']['copy'] = url_for('.copy_draft_service', draft_id=self.id)
+
         return data
 
     def get_link(self):

@@ -58,6 +58,14 @@ class TestDraftServices(BaseApplicationTest):
                  'services': payload}),
             content_type='application/json')
 
+    def service_count(self):
+        with self.app.app_context():
+            return Service.query.count()
+
+    def draft_service_count(self):
+        with self.app.app_context():
+            return DraftService.query.count()
+
     def test_reject_list_drafts_no_supplier_id(self):
         res = self.client.get('/draft-services')
         assert_equal(res.status_code, 400)
@@ -445,6 +453,18 @@ class TestDraftServices(BaseApplicationTest):
             'Draft already exists for service {}'.format(self.service_id),
             data['error'])
 
+    def test_submission_draft_should_not_prevent_draft_being_created_from_existing_service(self):
+        res = self.publish_new_draft_service()
+
+        service = json.loads(res.get_data())['services']
+
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(service['id']),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        assert res.status_code == 201
+
     def test_should_fetch_a_draft(self):
         res = self.client.put(
             '/draft-services/copy-from/{}'.format(self.service_id),
@@ -703,23 +723,26 @@ class TestDraftServices(BaseApplicationTest):
 
         assert search_api_client.index.called
 
+    def test_should_not_be_able_to_publish_submission_if_not_submitted(self):
+        draft = self.create_draft_service()
+
+        res = self.publish_draft_service(draft['id'])
+        assert_equal(res.status_code, 400)
+
+    def test_should_not_be_able_to_republish_submission(self):
+        draft = self.create_draft_service()
+        self.complete_draft_service(draft['id'])
+
+        res = self.publish_draft_service(draft['id'])
+        assert_equal(res.status_code, 200)
+
+        res = self.publish_draft_service(draft['id'])
+        assert_equal(res.status_code, 400)
+
     @mock.patch('app.service_utils.search_api_client')
     def test_should_be_able_to_publish_valid_new_draft_service(self, search_api_client):
-        res = self.client.post(
-            '/draft-services',
-            data=json.dumps(self.create_draft_json),
-            content_type='application/json')
-        draft_data = json.loads(res.get_data())
-        draft_id = draft_data['services']['id']
-        g7_complete = self.load_example_listing("G7-SCS")
-        g7_complete.pop('id', None)
-        draft_update_json = {'services': g7_complete,
-                             'update_details': {'updated_by': 'joeblogs'}}
-        res2 = self.client.post(
-            '/draft-services/{}'.format(draft_id),
-            data=json.dumps(draft_update_json),
-            content_type='application/json')
-        complete_draft = json.loads(res2.get_data())
+        draft_id = self.create_draft_service()['id']
+        self.complete_draft_service(draft_id)
 
         res = self.client.post(
             '/draft-services/{}/publish'.format(draft_id),
@@ -736,15 +759,16 @@ class TestDraftServices(BaseApplicationTest):
         audit_response = self.client.get('/audit-events')
         assert_equal(audit_response.status_code, 200)
         data = json.loads(audit_response.get_data())
-        assert_equal(len(data['auditEvents']), 4)
+        assert_equal(len(data['auditEvents']), 5)
         assert_equal(data['auditEvents'][0]['type'], 'import_service')
         assert_equal(data['auditEvents'][1]['type'], 'create_draft_service')
         assert_equal(data['auditEvents'][2]['type'], 'update_draft_service')
-        assert_equal(data['auditEvents'][3]['type'], 'publish_draft_service')
+        assert_equal(data['auditEvents'][3]['type'], 'complete_draft_service')
+        assert_equal(data['auditEvents'][4]['type'], 'publish_draft_service')
 
-        # draft should no longer exist
+        # draft should still exist
         fetch = self.client.get('/draft-services/{}'.format(draft_id))
-        assert_equal(fetch.status_code, 404)
+        assert_equal(fetch.status_code, 200)
 
         # G-Cloud 7 service should be visible from API
         # (frontends hide them based on statuses)
@@ -762,23 +786,38 @@ class TestDraftServices(BaseApplicationTest):
         # service should not be indexed as G-Cloud 7 is not live
         assert not search_api_client.index.called
 
-    def publish_new_draft_service(self):
+    def create_draft_service(self):
         res = self.client.post(
             '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
-        draft_data = json.loads(res.get_data())
-        draft_id = draft_data['services']['id']
-        g7_complete = self.load_example_listing('G7-SCS')
+        assert_equal(res.status_code, 201)
+        draft = json.loads(res.get_data())['services']
+
+        g7_complete = self.load_example_listing("G7-SCS").copy()
         g7_complete.pop('id')
         draft_update_json = {'services': g7_complete,
                              'update_details': {'updated_by': 'joeblogs'}}
         res2 = self.client.post(
-            '/draft-services/{}'.format(draft_id),
+            '/draft-services/{}'.format(draft['id']),
             data=json.dumps(draft_update_json),
             content_type='application/json')
-        json.loads(res2.get_data())
+        assert_equal(res2.status_code, 200)
+        draft = json.loads(res2.get_data())['services']
 
+        return draft
+
+    def complete_draft_service(self, draft_id):
+        return self.client.post(
+            '/draft-services/{}/complete'.format(draft_id),
+            data=json.dumps({
+                'update_details': {
+                    'updated_by': 'joeblogs',
+                }
+            }),
+            content_type='application/json')
+
+    def publish_draft_service(self, draft_id):
         return self.client.post(
             '/draft-services/{}/publish'.format(draft_id),
             data=json.dumps({
@@ -788,9 +827,41 @@ class TestDraftServices(BaseApplicationTest):
             }),
             content_type='application/json')
 
+    def publish_new_draft_service(self):
+        draft = self.create_draft_service()
+        res = self.complete_draft_service(draft['id'])
+        assert res.status_code == 200
+
+        res = self.publish_draft_service(draft['id'])
+        assert res.status_code == 200
+
+        return res
+
+    def test_submitted_drafts_are_not_deleted_when_published(self):
+        draft = self.create_draft_service()
+        self.complete_draft_service(draft['id'])
+
+        assert self.draft_service_count() == 1
+        assert self.publish_draft_service(draft['id']).status_code == 200
+        assert self.draft_service_count() == 1
+
+    def test_drafts_made_from_services_are_deleted_when_published(self):
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        draft = json.loads(res.get_data())['services']
+
+        assert self.service_count() == 1
+        assert self.draft_service_count() == 1
+
+        assert self.publish_draft_service(draft['id']).status_code == 200
+
+        assert self.service_count() == 1
+        assert self.draft_service_count() == 0
+
     @mock.patch('app.models.generate_new_service_id')
-    def test_service_id_collisions_should_be_handled(self,
-                                                     generate_new_service_id):
+    def test_service_id_collisions_should_be_handled(self, generate_new_service_id):
         # Return the same ID a few times (cause collisions) and then return
         # a different one.
         generate_new_service_id.side_effect = [
@@ -805,33 +876,13 @@ class TestDraftServices(BaseApplicationTest):
         res = self.publish_new_draft_service()
         assert_equal(res.status_code, 200)
 
-        with self.app.app_context():
-            # Count is 3 because we create on in the setup
-            assert_equal(Service.query.count(), 3)
-            assert_equal(DraftService.query.count(), 0)
-
-    @mock.patch('app.models.generate_new_service_id')
-    def test_draft_service_should_be_left_on_service_id_collision_failure(
-            self, generate_new_service_id):
-        generate_new_service_id.side_effect = [
-            '1234567890123457',
-            '1234567890123457',
-            '1234567890123457',
-            '1234567890123457',
-            '1234567890123457',
-            '1234567890123457',
-            '1234567890123457',
-        ]
-
-        res = self.publish_new_draft_service()
-        assert_equal(res.status_code, 200)
-        with assert_raises(IntegrityError):
-            res = self.publish_new_draft_service()
-
-        with self.app.app_context():
-            db.session.rollback()
-            assert_equal(Service.query.count(), 2)
-            assert_equal(DraftService.query.count(), 1)
+        # Count is 3 because we create one in the setup
+        assert self.service_count() == 3
+        res = self.client.get('/services?framework=g-cloud-7')
+        services = json.loads(res.get_data())['services']
+        assert services[0]['id'] == '1234567890123457'
+        assert services[1]['id'] == '1234567890123458'
+        assert self.draft_service_count() == 2
 
     def test_get_draft_returns_last_audit_event(self):
         draft = json.loads(self.client.post(
