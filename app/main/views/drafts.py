@@ -36,7 +36,8 @@ def copy_draft_service_from_existing_service(service_id):
     ).first_or_404()
 
     draft_service = DraftService.query.filter(
-        DraftService.service_id == service_id
+        DraftService.service_id == service_id,
+        DraftService.status.notin_(('not-submitted', 'submitted')),
     ).first()
     if draft_service:
         abort(400, "Draft already exists for service {}".format(service_id))
@@ -222,31 +223,38 @@ def publish_draft_service(draft_id):
         DraftService.id == draft_id
     ).first_or_404()
 
+    if draft.status == 'not-submitted':
+        abort(400, "Cannot publish a draft if it is not submitted: {}".format(draft.status))
+    if draft.status == 'submitted' and draft.service_id:
+        abort(400, "Cannot re-publish a submitted service")
+
     if draft.service_id:
         service = Service.query.filter(
             Service.service_id == draft.service_id
         ).first_or_404()
 
-        service_from_draft = update_and_validate_service(
-            service,
-            draft.data)
-
+        service_from_draft = update_and_validate_service(service, draft.data)
     else:
-        service_from_draft = create_service_from_draft(draft, "enabled")
+        service_from_draft = create_service_from_draft(draft, "published")
 
     commit_and_archive_service(service_from_draft, update_details,
                                AuditTypes.publish_draft_service,
                                audit_data={'draftId': draft_id})
 
     try:
-        db.session.delete(draft)
+        if draft.status == 'submitted':
+            draft.service_id = service_from_draft.service_id
+            db.session.add(draft)
+        else:
+            db.session.delete(draft)
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
+        action = 'update' if draft.status == 'submitted' else 'delete'
         current_app.logger.warning(
-            'Failed to delete draft {} after publishing service {}: {}'.format(
-                draft_id, service_from_draft.service_id, e.message)
-        )
+            'Failed to {action} draft {draft_id} after publishing service {service_id}: {error}'.format(
+                extra=dict(
+                    action=action, draft_id=draft_id, service_id=service_from_draft.service_id, error=e.message)))
 
     index_service(service_from_draft)
 
