@@ -1,38 +1,44 @@
 {
-  "title": "API Updater Schema",
   "$schema": "http://json-schema.org/schema#",
-  "type": "object",
   "additionalProperties": false,
   "properties": {
-    "name": {
-      "type": "string",
-      "maxLength": 255,
-      "minLength": 1
-    },
     "emailAddress": {
-      "type": "string",
-      "pattern": "^[^@^\\s]+@[^@^\\.^\\s]+(\\.[^@^\\.^\\s]+)+$"
+      "pattern": "^[^@^\\s]+@[^@^\\.^\\s]+(\\.[^@^\\.^\\s]+)+$",
+      "type": "string"
+    },
+    "hashpw": {
+      "description": "set to False to skip password hashing",
+      "type": "boolean"
+    },
+    "name": {
+      "maxLength": 255,
+      "minLength": 1,
+      "type": "string"
     },
     "password": {
-      "type": "string",
       "maxLength": 255,
-      "minLength": 10
+      "minLength": 10,
+      "type": "string"
     },
     "role": {
-      "enum": ["buyer", "supplier", "admin", "admin-ccs-category", "admin-ccs-sourcing"]
+      "enum": [
+        "buyer",
+        "supplier",
+        "admin",
+        "admin-ccs-category",
+        "admin-ccs-sourcing"
+      ]
     },
     "supplierId": {
       "type": "integer"
-    },
-    "hashpw": {
-      "type": "boolean",
-      "description": "set to False to skip password hashing"
     }
   },
   "required": [
-    "name",
-    "role",
     "emailAddress",
-    "password"
-  ]
+    "name",
+    "password",
+    "role"
+  ],
+  "title": "API Updater Schema",
+  "type": "object"
 }

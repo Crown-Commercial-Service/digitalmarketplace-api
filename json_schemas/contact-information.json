@@ -1,24 +1,6 @@
 {
-  "title": "G6 Contact Information Schema",
-  "type": "object",
   "additionalProperties": false,
   "properties": {
-    "id": {
-      "type": "integer"
-    },
-    "website": {
-      "type": "string"
-    },
-    "contactName": {
-      "type": "string"
-    },
-    "email": {
-      "type": "string",
-      "format": "email"
-    },
-    "phoneNumber": {
-      "type": "string"
-    },
     "address1": {
       "type": "string"
     },
@@ -28,15 +10,33 @@
     "city": {
       "type": "string"
     },
+    "contactName": {
+      "type": "string"
+    },
     "country": {
       "type": "string"
     },
+    "email": {
+      "format": "email",
+      "type": "string"
+    },
+    "id": {
+      "type": "integer"
+    },
+    "phoneNumber": {
+      "type": "string"
+    },
     "postcode": {
+      "type": "string"
+    },
+    "website": {
       "type": "string"
     }
   },
   "required": [
     "contactName",
     "email"
-  ]
+  ],
+  "title": "G6 Contact Information Schema",
+  "type": "object"
 }

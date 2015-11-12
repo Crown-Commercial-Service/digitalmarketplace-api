@@ -1,21 +1,21 @@
 {
-  "title": "API Updater Schema",
   "$schema": "http://json-schema.org/schema#",
-  "type": "object",
   "additionalProperties": false,
   "properties": {
     "emailAddress": {
-      "type": "string",
-      "pattern": "^[^@^\\s]+@[^@^\\.^\\s]+(\\.[^@^\\.^\\s]+)+$"
+      "pattern": "^[^@^\\s]+@[^@^\\.^\\s]+(\\.[^@^\\.^\\s]+)+$",
+      "type": "string"
     },
     "password": {
-      "type": "string",
       "maxLength": 255,
-      "minLength": 10
+      "minLength": 10,
+      "type": "string"
     }
   },
   "required": [
     "emailAddress",
     "password"
-  ]
+  ],
+  "title": "API Updater Schema",
+  "type": "object"
 }
