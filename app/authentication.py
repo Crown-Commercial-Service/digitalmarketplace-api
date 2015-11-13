@@ -8,9 +8,9 @@ def requires_authentication():
         incoming_token = get_token_from_headers(request.headers)
 
         if not incoming_token:
-            abort(401)
+            abort(401, "Unauthorized; bearer token must be provided")
         if not token_is_valid(incoming_token):
-            abort(403, incoming_token)
+            abort(403, "Forbidden; invalid bearer token provided {}".format(incoming_token))
 
 
 def token_is_valid(incoming_token):
