@@ -181,6 +181,10 @@ class BaseApplicationTest(object):
         return datetime.strptime(
             value, from_format)
 
+    def set_framework_status(self, slug, status):
+        Framework.query.filter_by(slug=slug).update({'status': status})
+        db.session.commit()
+
     def bootstrap_dos(self):
         old_level = db.session.connection().connection.isolation_level
         db.session.connection().connection.set_isolation_level(0)
