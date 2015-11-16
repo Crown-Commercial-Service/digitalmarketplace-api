@@ -11,17 +11,17 @@ revision = '420'
 down_revision = '410_remove_empty_drafts'
 
 from alembic import op
-import sqlalchemy as sa
-from app.models import Framework
 
 
 def upgrade():
     op.execute("COMMIT")
     op.execute("ALTER TYPE framework_enum ADD VALUE IF NOT EXISTS 'dos' after 'gcloud'")
 
-    framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+    conn = op.get_bind()
+    res = conn.execute("SELECT * FROM frameworks WHERE slug = 'digital-outcomes-and-specialists'")
+    results = res.fetchall()
 
-    if not framework:
+    if not results:
         op.execute("""
             INSERT INTO frameworks (name, framework, status, slug)
                 values('Digital Outcomes and Specialists', 'dos', 'coming', 'digital-outcomes-and-specialists')
