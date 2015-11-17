@@ -181,22 +181,8 @@ class BaseApplicationTest(object):
         return datetime.strptime(
             value, from_format)
 
-    def bootstrap_dos(self):
-        old_level = db.session.connection().connection.isolation_level
-        db.session.connection().connection.set_isolation_level(0)
-        db.session.execute("ALTER TYPE framework_enum ADD VALUE 'dos' AFTER 'gcloud';")
-        db.session.connection().connection.set_isolation_level(old_level)
-
-        framework = Framework(
-            name="Digital Outcomes and Specialists",
-            framework='dos', status='open',
-            slug='digital-outcomes-and-specialists',
-            lots=[
-                Lot(name="Digital outcomes", slug='digital-outcomes', one_service_limit=True),
-            ]
-        )
-
-        db.session.add(framework)
+    def set_framework_status(self, slug, status):
+        Framework.query.filter_by(slug=slug).update({'status': status})
         db.session.commit()
 
 

@@ -1146,9 +1146,7 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
         super(TestRegisterFrameworkInterest, self).setup()
 
         with self.app.app_context():
-            framework_enum_vals = db.session.execute("SELECT enum_range(NULL::framework_enum);").first()[0]
-            if 'dos' not in str(framework_enum_vals):
-                self.bootstrap_dos()
+            self.set_framework_status('digital-outcomes-and-specialists', 'open')
 
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
@@ -1257,9 +1255,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         self.setup_dummy_suppliers(1)
 
         with self.app.app_context():
-            framework_enum_vals = db.session.execute("SELECT enum_range(NULL::framework_enum);").first()[0]
-            if 'dos' not in str(framework_enum_vals):
-                self.bootstrap_dos()
+            self.set_framework_status('digital-outcomes-and-specialists', 'open')
             self.client.put(
                 '/suppliers/0/frameworks/digital-outcomes-and-specialists',
                 data=json.dumps(
