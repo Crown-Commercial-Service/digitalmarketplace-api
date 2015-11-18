@@ -1,7 +1,49 @@
 {
   "$schema": "http://json-schema.org/schema#",
-  "additionalProperties": true,
-  "properties": {},
+  "additionalProperties": false,
+  "properties": {
+    "anonymousRecruitment": {
+      "type": "boolean"
+    },
+    "manageIncentives": {
+      "type": "boolean"
+    },
+    "recruitFromList": {
+      "type": "boolean"
+    },
+    "recruitLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "recruitMethods": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "anonymousRecruitment",
+    "manageIncentives",
+    "recruitFromList",
+    "recruitLocations",
+    "recruitMethods"
+  ],
   "title": "Digital Outcomes and Specialists User research participants Service Schema",
   "type": "object"
 }

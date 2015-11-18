@@ -1,7 +1,134 @@
 {
   "$schema": "http://json-schema.org/schema#",
-  "additionalProperties": true,
+  "additionalProperties": false,
   "properties": {
+    "labAccessibility": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "labAddress": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "labBabyChanging": {
+      "type": "boolean"
+    },
+    "labCarPark": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "labDesktopStreaming": {
+      "enum": [
+        "No",
+        "Yes \u2013 included as standard",
+        "Yes \u2013 for an additional cost"
+      ]
+    },
+    "labDeviceStreaming": {
+      "enum": [
+        "No",
+        "Yes \u2013 included as standard",
+        "Yes \u2013 for an additional cost"
+      ]
+    },
+    "labEyeTracking": {
+      "enum": [
+        "No",
+        "Yes \u2013 included as standard",
+        "Yes \u2013 for an additional cost"
+      ]
+    },
+    "labHosting": {
+      "enum": [
+        "No",
+        "Yes \u2013 included as standard",
+        "Yes \u2013 for an additional cost"
+      ]
+    },
+    "labPublicTransport": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "labSize": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "labStreaming": {
+      "enum": [
+        "No",
+        "Yes \u2013 included as standard",
+        "Yes \u2013 for an additional cost"
+      ]
+    },
+    "labTechAssistance": {
+      "enum": [
+        "No",
+        "Yes \u2013 included as standard",
+        "Yes \u2013 for an additional cost"
+      ]
+    },
+    "labToilets": {
+      "type": "boolean"
+    },
+    "labViewingArea": {
+      "enum": [
+        "No",
+        "Yes \u2013 included as standard",
+        "Yes \u2013 for an additional cost"
+      ]
+    },
+    "labWaitingArea": {
+      "enum": [
+        "No",
+        "Yes \u2013 included as standard",
+        "Yes \u2013 for an additional cost"
+      ]
+    },
+    "labWiFi": {
+      "enum": [
+        "No",
+        "Yes \u2013 included as standard",
+        "Yes \u2013 for an additional cost"
+      ]
+    },
+    "priceInterval": {
+      "enum": [
+        "",
+        "Second",
+        "Minute",
+        "Hour",
+        "Day",
+        "Week",
+        "Month",
+        "Quarter",
+        "6 months",
+        "Year"
+      ]
+    },
+    "priceMax": {
+      "pattern": "^$|^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "priceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "priceUnit": {
+      "enum": [
+        "Unit",
+        "Person",
+        "Licence",
+        "User",
+        "Device",
+        "Instance",
+        "Server",
+        "Virtual machine",
+        "Transaction",
+        "Megabyte",
+        "Gigabyte",
+        "Terabyte"
+      ]
+    },
     "serviceName": {
       "maxLength": 100,
       "minLength": 1,
@@ -9,6 +136,23 @@
     }
   },
   "required": [
+    "labAccessibility",
+    "labAddress",
+    "labBabyChanging",
+    "labCarPark",
+    "labDesktopStreaming",
+    "labDeviceStreaming",
+    "labEyeTracking",
+    "labHosting",
+    "labPrice",
+    "labPublicTransport",
+    "labSize",
+    "labStreaming",
+    "labTechAssistance",
+    "labToilets",
+    "labViewingArea",
+    "labWaitingArea",
+    "labWiFi",
     "serviceName"
   ],
   "title": "Digital Outcomes and Specialists User research studios Service Schema",
