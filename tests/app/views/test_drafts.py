@@ -2,12 +2,11 @@ from tests.app.helpers import BaseApplicationTest
 from datetime import datetime
 from flask import json
 import mock
-from sqlalchemy.exc import IntegrityError
 from app.models import Supplier, ContactInformation, Service, Framework, \
     DraftService
 from app import db
 
-from nose.tools import assert_equal, assert_in, assert_raises, assert_false
+from nose.tools import assert_equal, assert_in, assert_false
 
 
 class TestDraftServices(BaseApplicationTest):
@@ -1267,6 +1266,18 @@ class TestDOSServices(BaseApplicationTest):
         data = json.loads(fetch.get_data())
         assert_equal(data['services']['dataProtocols'], False)
         assert_equal(data['services']['id'], draft_id)
+
+    def test_should_not_copy_one_service_limit_lot_draft(self):
+        draft = json.loads(self._post_dos_draft().get_data())
+
+        res = self.client.post(
+            '/draft-services/{}/copy'.format(draft['services']['id']),
+            data=json.dumps({"update_details": {"updated_by": "me"}}),
+            content_type="application/json")
+        data = json.loads(res.get_data())
+
+        assert_equal(res.status_code, 400)
+        assert_in("Cannot copy a 'digital-outcomes' draft", data['error'])
 
     def _post_dos_draft(self):
         res = self.client.post(
