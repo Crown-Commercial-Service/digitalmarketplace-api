@@ -69,6 +69,7 @@ class Framework(db.Model):
     lots = db.relationship(
         Lot, secondary=framework_lots,
         lazy='joined', innerjoin=False,
+        order_by=Lot.id,
         backref='frameworks'
     )
 
