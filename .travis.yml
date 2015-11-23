@@ -12,6 +12,8 @@ install:
 before_script:
   - psql -c 'create database digitalmarketplace_test;' -U postgres
 script:
-  - ./scripts/run_tests.sh
+  - ./scripts/run_tests.sh --cov=app --cov-report=term-missing
+after_success:
+  - coveralls
 notifications:
   email: false

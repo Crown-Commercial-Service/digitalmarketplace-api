@@ -1,9 +1,451 @@
 {
   "$schema": "http://json-schema.org/schema#",
-  "additionalProperties": true,
-  "properties": {},
+  "additionalProperties": false,
+  "properties": {
+    "agileCoachLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "bespokeSystemInformation": {
+      "type": "boolean"
+    },
+    "businessAnalystLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "communicationsManagerLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "contentDesignerLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataProtocols": {
+      "type": "boolean"
+    },
+    "deliveryManagerLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "designerLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "developerLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "helpGovernmentImproveServices": {
+      "type": "boolean"
+    },
+    "openSourceLicence": {
+      "type": "boolean"
+    },
+    "openStandardsPrinciples": {
+      "type": "boolean"
+    },
+    "performanceAnalystLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "portfolioManagerLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "priceInterval": {
+      "enum": [
+        "",
+        "Second",
+        "Minute",
+        "Hour",
+        "Day",
+        "Week",
+        "Month",
+        "Quarter",
+        "6 months",
+        "Year"
+      ]
+    },
+    "priceMax": {
+      "pattern": "^$|^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "priceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "priceUnit": {
+      "enum": [
+        "Unit",
+        "Person",
+        "Licence",
+        "User",
+        "Device",
+        "Instance",
+        "Server",
+        "Virtual machine",
+        "Transaction",
+        "Megabyte",
+        "Gigabyte",
+        "Terabyte"
+      ]
+    },
+    "productManagerLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "programmeManagerLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "securityConsultantLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "serviceManagerLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "technicalArchitectLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "userResearcherLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "webOperationsLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
   "required": [
-    "specialistsSupplierInformation"
+    "agileCoachDayRate",
+    "agileCoachLocations",
+    "bespokeSystemInformation",
+    "businessAnalystDayRate",
+    "businessAnalystLocations",
+    "communicationsManagerDayRate",
+    "communicationsManagerLocations",
+    "contentDesignerDayRate",
+    "contentDesignerLocations",
+    "dataProtocols",
+    "deliveryManagerDayRate",
+    "deliveryManagerLocations",
+    "designerDayRate",
+    "designerLocations",
+    "developerDayRate",
+    "developerLocations",
+    "helpGovernmentImproveServices",
+    "openSourceLicence",
+    "openStandardsPrinciples",
+    "performanceAnalystDayRate",
+    "performanceAnalystLocations",
+    "portfolioManagerDayRate",
+    "portfolioManagerLocations",
+    "productManagerDayRate",
+    "productManagerLocations",
+    "programmeManagerDayRate",
+    "programmeManagerLocations",
+    "securityConsultantDayRate",
+    "securityConsultantLocations",
+    "serviceManagerDayRate",
+    "serviceManagerLocations",
+    "technicalArchitectDayRate",
+    "technicalArchitectLocations",
+    "userResearcherDayRate",
+    "userResearcherLocations",
+    "webOperationsDayRate",
+    "webOperationsLocations"
   ],
   "title": "Digital Outcomes and Specialists Digital specialists Service Schema",
   "type": "object"

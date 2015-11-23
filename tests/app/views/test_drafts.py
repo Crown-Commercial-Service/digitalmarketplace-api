@@ -1215,7 +1215,7 @@ class TestDOSServices(BaseApplicationTest):
         fetch = self.client.get('/draft-services/{}'.format(draft_id))
         assert_equal(fetch.status_code, 200)
         data = json.loads(res.get_data())
-        assert_equal(data['services']['example'], "This is an example")
+        assert_equal(data['services']['dataProtocols'], True)
         assert_equal(data['services']['id'], draft_id)
 
     def test_should_delete_a_dos_draft(self):
@@ -1256,7 +1256,7 @@ class TestDOSServices(BaseApplicationTest):
                 'update_details': {
                     'updated_by': 'joeblogs'},
                 'services': {
-                    'example': 'updated example'
+                    'dataProtocols': False
                 }
             }),
             content_type='application/json')
@@ -1265,7 +1265,7 @@ class TestDOSServices(BaseApplicationTest):
         fetch = self.client.get('/draft-services/{}'.format(draft_id))
         assert_equal(fetch.status_code, 200)
         data = json.loads(fetch.get_data())
-        assert_equal(data['services']['example'], "updated example")
+        assert_equal(data['services']['dataProtocols'], False)
         assert_equal(data['services']['id'], draft_id)
 
     def _post_dos_draft(self):

@@ -1,9 +1,210 @@
 {
   "$schema": "http://json-schema.org/schema#",
-  "additionalProperties": true,
-  "properties": {},
+  "additionalProperties": false,
+  "properties": {
+    "bespokeSystemInformation": {
+      "type": "boolean"
+    },
+    "dataProtocols": {
+      "type": "boolean"
+    },
+    "deliveryTypes": {
+      "items": {
+        "enum": [
+          "Service management",
+          "Product management",
+          "Project management",
+          "Programme management",
+          "Business analysis",
+          "Agile coaching / training",
+          "Agile delivery",
+          "Digital communication / engagement"
+        ]
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "helpGovernmentImproveServices": {
+      "type": "boolean"
+    },
+    "openSourceLicence": {
+      "type": "boolean"
+    },
+    "openStandardsPrinciples": {
+      "type": "boolean"
+    },
+    "outcomesLocations": {
+      "items": {
+        "enum": [
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "performanceAnalysisTypes": {
+      "items": {
+        "enum": [
+          "Data analysis",
+          "Web analytics",
+          "Data cleansing",
+          "Data visualisation",
+          "Statistical modelling",
+          "Performance reporting",
+          "Performance frameworks",
+          "A/B and multivariate testing"
+        ]
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "securityTypes": {
+      "items": {
+        "enum": [
+          "CLAS / CESG certification",
+          "THC (Pen) Testing",
+          "Threat modelling",
+          "Risk management",
+          "Incident response / forensics",
+          "Security policy",
+          "Firewall review / audit",
+          "Infrastructure review"
+        ]
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "softwareDevelopmentTypes": {
+      "items": {
+        "enum": [
+          "Frontend web application development",
+          "Web application development",
+          "Desktop application development",
+          "Mobile application development",
+          "Geographic information systems (GIS) development",
+          "Database development (Relational/Document/XML/Graph/RDF/Key Value)",
+          "Cloud-based service development",
+          "API development",
+          "Game development",
+          "Message Queues",
+          "Search",
+          "Customer relationship management",
+          "Content management system (Wordpress/Drupal)",
+          "Systems Integration",
+          "Mainframe (Cobol / etc)",
+          "Machine learning"
+        ]
+      },
+      "maxItems": 16,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "supportAndOperationsTypes": {
+      "items": {
+        "enum": [
+          "Hosting",
+          "Tooling (continuous integration / deployment tools)",
+          "Incident management",
+          "Monitoring",
+          "Systems administration",
+          "Customer support",
+          "Technical service desk",
+          "Network administration",
+          "Firewall management"
+        ]
+      },
+      "maxItems": 9,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "testingAndAuditingTypes": {
+      "items": {
+        "enum": [
+          "Load/Performance testing",
+          "Accessibility testing",
+          "Application testing (Automated/Exploratory)",
+          "Software auditing",
+          "System auditing",
+          "Process auditing",
+          "Data auditing"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "userExperienceAndDesignTypes": {
+      "items": {
+        "enum": [
+          "Interaction design",
+          "User experience and design strategy",
+          "Information architecture",
+          "Prototyping",
+          "Animation",
+          "Brand development",
+          "Cross-platform design",
+          "Content design / copywriting"
+        ]
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "userResearchTypes": {
+      "items": {
+        "enum": [
+          "User needs and insights",
+          "User journey mapping",
+          "Creating personas",
+          "Usability testing",
+          "Quantitative research",
+          "Surveys"
+        ]
+      },
+      "maxItems": 6,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
   "required": [
-    "outcomesSupplierInformation"
+    "bespokeSystemInformation",
+    "dataProtocols",
+    "deliveryTypes",
+    "helpGovernmentImproveServices",
+    "openSourceLicence",
+    "openStandardsPrinciples",
+    "outcomesLocations",
+    "performanceAnalysisTypes",
+    "securityTypes",
+    "softwareDevelopmentTypes",
+    "supportAndOperationsTypes",
+    "testingAndAuditingTypes",
+    "userExperienceAndDesignTypes",
+    "userResearchTypes"
   ],
   "title": "Digital Outcomes and Specialists Digital outcomes Service Schema",
   "type": "object"
