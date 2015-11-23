@@ -1,7 +1,6 @@
 from flask import jsonify, abort, request
 from sqlalchemy.types import String
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.sql.expression import true, false
 from sqlalchemy import func, orm, case
 import datetime
 
@@ -172,10 +171,8 @@ def get_framework_interest(framework_slug):
 
     supplier_frameworks = SupplierFramework.query.filter(
         SupplierFramework.framework_id == framework.id
-    ).all()
+    ).order_by(SupplierFramework.supplier_id).all()
 
-    supplier_ids = []
-    for supplier_framework in supplier_frameworks:
-        supplier_ids.append(supplier_framework.supplier_id)
+    supplier_ids = [supplier_framework.supplier_id for supplier_framework in supplier_frameworks]
 
     return jsonify(interestedSuppliers=supplier_ids)

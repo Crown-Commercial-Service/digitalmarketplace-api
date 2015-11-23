@@ -69,6 +69,7 @@ class Framework(db.Model):
     lots = db.relationship(
         Lot, secondary=framework_lots,
         lazy='joined', innerjoin=False,
+        order_by=Lot.id,
         backref='frameworks'
     )
 
@@ -605,6 +606,9 @@ class DraftService(db.Model, ServiceTableMixin):
         )
 
     def copy(self):
+        if self.lot.one_service_limit:
+            raise ValidationError("Cannot copy a '{}' draft".format(self.lot.slug))
+
         data = self.data.copy()
         name = data.get('serviceName', '')
         if len(name) <= 95:
