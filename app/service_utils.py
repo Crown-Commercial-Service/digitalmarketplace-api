@@ -57,20 +57,27 @@ def update_and_validate_service(service, service_payload):
     return service
 
 
-def validate_service_data(service, enforce_required=True, required_fields=None):
+def _get_validator_name(service):
     if service.framework.slug in ['g-cloud-4', 'g-cloud-5']:
-        validator_name = 'services-{}'.format(service.framework.slug)
+        return 'services-{}'.format(service.framework.slug)
     else:
-        validator_name = 'services-{}-{}'.format(service.framework.slug, service.lot.slug)
+        return 'services-{}-{}'.format(service.framework.slug, service.lot.slug)
 
-    errs = get_validation_errors(
-        validator_name, service.data,
+
+def validate_service_data(service, enforce_required=True, required_fields=None):
+    errs = get_service_validation_errors(
+        service, enforce_required, required_fields)
+
+    if errs:
+        abort(400, errs)
+
+
+def get_service_validation_errors(service, enforce_required=True, required_fields=None):
+    return get_validation_errors(
+        _get_validator_name(service), service.data,
         enforce_required=enforce_required,
         required_fields=required_fields
     )
-    if errs:
-        abort(400, errs)
-    return
 
 
 def commit_and_archive_service(updated_service, update_details,

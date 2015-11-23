@@ -476,6 +476,28 @@ class TestDraftServices(BaseApplicationTest):
         data = json.loads(res.get_data())
         assert_equal(data['services']['serviceId'], self.service_id)
 
+    def test_invalid_draft_should_have_validation_errors(self):
+        res = self.client.post(
+            '/draft-services',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+        assert res.status_code == 201
+
+        data = json.loads(res.get_data())
+
+        res = self.client.get('/draft-services/{}'.format(data['services']['id']))
+        assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert data['validationErrors']
+
+    def test_valid_draft_should_have_no_validation_errors(self):
+        draft = self.create_draft_service()
+
+        res = self.client.get('/draft-services/{}'.format(draft['id']))
+        assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert not data['validationErrors']
+
     def test_should_404_on_fetch_a_draft_that_doesnt_exist(self):
         fetch = self.client.get('/draft-services/0000000000')
         assert_equal(fetch.status_code, 404)

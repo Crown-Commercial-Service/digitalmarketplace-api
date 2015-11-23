@@ -12,7 +12,8 @@ from ...service_utils import (
     validate_and_return_updater_request,
     update_and_validate_service, index_service,
     commit_and_archive_service, create_service_from_draft,
-    validate_and_return_related_objects, validate_service_data
+    validate_and_return_related_objects, validate_service_data,
+    get_service_validation_errors
 )
 
 from ...draft_utils import (
@@ -170,7 +171,8 @@ def fetch_draft_service(draft_id):
 
     return jsonify(
         services=draft.serialize(),
-        auditEvents=last_audit_event.serialize(include_user=True)
+        auditEvents=last_audit_event.serialize(include_user=True),
+        validationErrors=get_service_validation_errors(draft)
     )
 
 
