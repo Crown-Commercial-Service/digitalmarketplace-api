@@ -511,6 +511,9 @@ class ServiceTableMixin(object):
         self.data = current_data
         self.updated_at = datetime.utcnow()
 
+    def purge_nulls(self):
+        self.data = dict((k, v) for k, v in self.data.iteritems() if v is not None)
+
 
 class Service(db.Model, ServiceTableMixin):
     __tablename__ = 'services'

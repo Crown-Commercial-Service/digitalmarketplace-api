@@ -120,3 +120,26 @@ class TestServices(BaseApplicationTest):
             services = Service.query.has_statuses('published', 'disabled')
 
             assert_equal(services.count(), 2)
+
+    def test_purge_nulls(self):
+        service_with_nulls = {
+            'serviceName': 'Service with nulls',
+            'empty': None,
+            'serviceSummary': None,
+            'price': 'Not a lot'
+        }
+        same_service_without_nulls = {
+            'serviceName': 'Service with nulls',
+            'price': 'Not a lot'
+        }
+        with self.app.app_context():
+            self.setup_dummy_suppliers(2)
+            self.setup_dummy_service("1234567890123456", data=service_with_nulls)
+
+            service = Service.query.filter(
+                Service.service_id == "1234567890123456"
+            ).first()
+
+            assert_equal(service.data, service_with_nulls)
+            service.purge_nulls()
+            assert_equal(service.data, same_service_without_nulls)
