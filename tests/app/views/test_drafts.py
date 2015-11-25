@@ -239,6 +239,15 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(res.status_code, 400)
         assert_equal(data['error'], {'serviceName': 'answer_required'})
 
+    def test_create_draft_only_checks_valid_page_questions(self):
+        self.create_draft_json['page_questions'] = ['tea_and_cakes']
+        res = self.client.post(
+            '/draft-services',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+
+        assert_equal(res.status_code, 201)
+
     def test_create_draft_should_create_audit_event(self):
         res = self.client.post(
             '/draft-services',
@@ -1160,14 +1169,13 @@ class TestCompleteDraft(BaseApplicationTest):
 
 
 class TestDOSServices(BaseApplicationTest):
-    service_id = None
     updater_json = None
     create_draft_json = None
 
     def setup(self):
         super(TestDOSServices, self).setup()
 
-        payload = self.load_example_listing("DOS-LOT1")
+        payload = self.load_example_listing("DOS-digital-specialist")
         self.updater_json = {
             'update_details': {
                 'updated_by': 'joeblogs'}
@@ -1192,6 +1200,27 @@ class TestDOSServices(BaseApplicationTest):
             )
             db.session.commit()
 
+    def _post_dos_draft(self, draft_json=None):
+        res = self.client.post(
+            '/draft-services',
+            data=json.dumps(draft_json or self.create_draft_json),
+            content_type='application/json')
+        assert_equal(res.status_code, 201, res.get_data())
+        return res
+
+    def _edit_dos_draft(self, draft_id, services, page_questions=None):
+        res = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps({
+                'update_details': {
+                    'updated_by': 'joeblogs'
+                },
+                'services': services,
+                'page_questions': page_questions if page_questions is not None else []
+            }),
+            content_type='application/json')
+        return res
+
     def test_should_create_dos_draft_with_minimal_data(self):
         res = self._post_dos_draft()
 
@@ -1200,7 +1229,7 @@ class TestDOSServices(BaseApplicationTest):
         assert_equal(data['services']['frameworkName'], 'Digital Outcomes and Specialists')
         assert_equal(data['services']['status'], 'not-submitted')
         assert_equal(data['services']['supplierId'], 1)
-        assert_equal(data['services']['lot'], 'digital-outcomes')
+        assert_equal(data['services']['lot'], 'digital-specialists')
 
     def test_disallow_multiple_drafts_for_one_service_lots(self):
         self._post_dos_draft()
@@ -1212,7 +1241,7 @@ class TestDOSServices(BaseApplicationTest):
 
         data = json.loads(res.get_data())
         assert_equal(res.status_code, 400)
-        assert_equal(data['error'], "'digital-outcomes' service already exists for supplier '1'")
+        assert_equal(data['error'], "'digital-specialists' service already exists for supplier '1'")
 
     def test_create_dos_draft_should_create_audit_event(self):
         res = self._post_dos_draft()
@@ -1271,16 +1300,10 @@ class TestDOSServices(BaseApplicationTest):
     def test_should_edit_dos_draft(self):
         res = self._post_dos_draft()
         draft_id = json.loads(res.get_data())['services']['id']
-        update = self.client.post(
-            '/draft-services/{}'.format(draft_id),
-            data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
-                'services': {
-                    'dataProtocols': False
-                }
-            }),
-            content_type='application/json')
+        update = self._edit_dos_draft(
+            draft_id=draft_id,
+            services={'dataProtocols': False}
+        )
         assert_equal(update.status_code, 200)
 
         fetch = self.client.get('/draft-services/{}'.format(draft_id))
@@ -1288,6 +1311,55 @@ class TestDOSServices(BaseApplicationTest):
         data = json.loads(fetch.get_data())
         assert_equal(data['services']['dataProtocols'], False)
         assert_equal(data['services']['id'], draft_id)
+
+    def test_should_not_edit_draft_with_invalid_price_strings(self):
+        res = self._post_dos_draft()
+        draft_id = json.loads(res.get_data())['services']['id']
+        update = self._edit_dos_draft(
+            draft_id=draft_id,
+            services={
+                "agileCoachPriceMin": 'not_a_valid_price',
+                "agileCoachPriceMax": '!@#$%^&*('},
+            page_questions=[]
+        )
+        data = json.loads(update.get_data())
+        for key in ['agileCoachPriceMin', 'agileCoachPriceMax']:
+            assert_equal(data['error'][key], 'not_money_format')
+        assert_equal(update.status_code, 400)
+
+    def test_should_not_edit_draft_if_dependencies_missing(self):
+        res = self._post_dos_draft()
+        draft_id = json.loads(res.get_data())['services']['id']
+        update = self._edit_dos_draft(
+            draft_id=draft_id,
+            services={
+                # missing "developerLocations"
+                "dataProtocols": True,
+                "developerPriceMin": "1"},
+            page_questions=[]
+        )
+        data = json.loads(update.get_data())
+        for key in ['developerLocations', 'developerPriceMax']:
+            assert_equal(data['error'][key], 'answer_required')
+        assert_equal(update.status_code, 400)
+
+    def test_should_filter_out_invalid_page_questions(self):
+        res = self._post_dos_draft()
+        draft_id = json.loads(res.get_data())['services']['id']
+        update = self._edit_dos_draft(
+            draft_id=draft_id,
+            services={
+                "dataProtocols": True},
+            page_questions=[
+                # neither of these keys exist in the schema
+                "clemenule",
+                "firecracker",
+                # keys which exist in anyOf requirements are ignored
+                "developerLocations",
+                "developerPriceMax",
+                "developerPriceMin"]
+        )
+        assert_equal(update.status_code, 200)
 
     def test_should_not_copy_one_service_limit_lot_draft(self):
         draft = json.loads(self._post_dos_draft().get_data())
@@ -1299,12 +1371,30 @@ class TestDOSServices(BaseApplicationTest):
         data = json.loads(res.get_data())
 
         assert_equal(res.status_code, 400)
-        assert_in("Cannot copy a 'digital-outcomes' draft", data['error'])
+        assert_in("Cannot copy a 'digital-specialists' draft", data['error'])
 
-    def _post_dos_draft(self):
-        res = self.client.post(
-            '/draft-services',
-            data=json.dumps(self.create_draft_json),
-            content_type='application/json')
-        assert_equal(res.status_code, 201, res.get_data())
-        return res
+    def test_complete_valid_dos_draft(self):
+        res = self._post_dos_draft()
+        draft_id = json.loads(res.get_data())['services']['id']
+        complete = self.client.post(
+            '/draft-services/{}/complete'.format(draft_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json'
+        )
+        assert_equal(complete.status_code, 200)
+
+    def test_should_not_complete_invalid_dos_draft(self):
+        draft_json = self.create_draft_json
+        draft_json['services'].pop('agileCoachLocations')
+        draft_json['services'].pop('agileCoachPriceMin')
+        draft_json['services'].pop('agileCoachPriceMax')
+        res = self._post_dos_draft(draft_json)
+        draft_id = json.loads(res.get_data())['services']['id']
+        complete = self.client.post(
+            '/draft-services/{}/complete'.format(draft_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json'
+        )
+        data = json.loads(complete.get_data())
+        assert_in("specialist_required", "{}".format(data['error']['_form']))
+        assert_equal(complete.status_code, 400)
