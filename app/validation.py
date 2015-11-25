@@ -141,6 +141,9 @@ def get_validation_errors(validator_name, json_data,
         elif error.validator == 'required':
             key = re.search(r'\'(.*)\'', error.message).group(1)
             error_map[key] = 'answer_required'
+        elif error.validator == 'anyOf':
+            if error.validator_value[0].get('title'):
+                form_errors.append('{}_required'.format(error.validator_value[0].get('title')))
         else:
             form_errors.append(error.message)
     if form_errors:
