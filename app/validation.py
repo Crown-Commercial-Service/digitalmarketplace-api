@@ -1,6 +1,7 @@
 import json
 import re
 import os
+import copy
 from decimal import Decimal
 
 from flask import abort
@@ -60,11 +61,12 @@ def get_validator(schema_name, enforce_required=True, required_fields=None):
     if enforce_required:
         schema = _SCHEMAS[schema_name]
     else:
-        schema = _SCHEMAS[schema_name].copy()
+        schema = copy.deepcopy(_SCHEMAS[schema_name])
         schema['required'] = [
             field for field in schema.get('required', [])
             if field in required_fields
-            ]
+        ]
+        schema.pop('anyOf', None)
     return validator_for(schema)(schema, format_checker=FORMAT_CHECKER)
 
 
@@ -136,9 +138,13 @@ def get_validation_errors(validator_name, json_data,
             error_map[key] = _translate_json_schema_error(
                 key, error.validator, error.validator_value, error.message
             )
-        elif error.validator == 'required':
-            key = re.search(r'\'(.*)\'', error.message).group(1)
+        elif error.validator in ['required', 'dependencies']:
+            regex = r'\'(\w+)\' is a dependency of \'(\w+)\'' if error.validator == 'dependencies' else r'\'(.*)\''
+            key = re.search(regex, error.message).group(1)
             error_map[key] = 'answer_required'
+        elif error.validator == 'anyOf':
+            if error.validator_value[0].get('title'):
+                form_errors.append('{}_required'.format(error.validator_value[0].get('title')))
         else:
             form_errors.append(error.message)
     if form_errors:
@@ -229,10 +235,13 @@ def _translate_json_schema_error(key, validator, validator_value, message):
             return 'answer_required'
 
     elif validator == 'pattern':
-        if key in ['priceMin', 'priceMax']:
-            return 'not_money_format'
-        else:
-            return 'under_{}_words'.format(_get_word_count(validator_value))
+        # Since error messages are now specified in the manifests, we can (in the future) generalise the returned
+        # string and just show the correct message
+        for price_str in ['priceMin', 'priceMax', 'PriceMin', 'PriceMax']:
+            if price_str in key:
+                return 'not_money_format'
+
+        return 'under_{}_words'.format(_get_word_count(validator_value))
 
     elif validator == 'enum' and key == 'priceUnit':
         return 'no_unit_specified'
