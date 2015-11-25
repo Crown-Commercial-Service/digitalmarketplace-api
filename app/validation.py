@@ -139,7 +139,7 @@ def get_validation_errors(validator_name, json_data,
                 key, error.validator, error.validator_value, error.message
             )
         elif error.validator in ['required', 'dependencies']:
-            regex = r'\'(\w+)\' is a dependency of \'(\w+)\'' if error.validator == 'dependencies' else r'\'(.*)\''
+            regex = r'u?\'(\w+)\' is a dependency of u?\'(\w+)\'' if error.validator == 'dependencies' else r'\'(.*)\''
             key = re.search(regex, error.message).group(1)
             error_map[key] = 'answer_required'
         elif error.validator == 'anyOf':
