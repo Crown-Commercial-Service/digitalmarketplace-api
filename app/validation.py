@@ -138,8 +138,9 @@ def get_validation_errors(validator_name, json_data,
             error_map[key] = _translate_json_schema_error(
                 key, error.validator, error.validator_value, error.message
             )
-        elif error.validator == 'required':
-            key = re.search(r'\'(.*)\'', error.message).group(1)
+        elif error.validator in ['required', 'dependencies']:
+            regex = r'\'(\w+)\' is a dependency of \'(\w+)\'' if error.validator == 'dependencies' else r'\'(.*)\''
+            key = re.search(regex, error.message).group(1)
             error_map[key] = 'answer_required'
         elif error.validator == 'anyOf':
             if error.validator_value[0].get('title'):
