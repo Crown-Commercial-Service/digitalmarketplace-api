@@ -65,6 +65,7 @@ class Framework(db.Model):
     status = db.Column(db.String(),
                        index=True, nullable=False,
                        default='pending')
+    clarification_questions_open = db.Column(db.Boolean, nullable=False, default=False)
     lots = db.relationship(
         Lot, secondary=framework_lots,
         lazy='joined', innerjoin=False,
@@ -85,6 +86,7 @@ class Framework(db.Model):
             'slug': self.slug,
             'framework': self.framework,
             'status': self.status,
+            'clarification_questions_open': self.clarification_questions_open,
             'lots': [lot.serialize() for lot in self.lots],
         }
 

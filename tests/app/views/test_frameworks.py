@@ -20,7 +20,7 @@ class TestListFrameworks(BaseApplicationTest):
             assert_equal(len(data['frameworks']),
                          len(Framework.query.all()))
             assert_equal(sorted(data['frameworks'][0].keys()),
-                         ['framework', 'id', 'lots', 'name', 'slug', 'status'])
+                         ['clarification_questions_open', 'framework', 'id', 'lots', 'name', 'slug', 'status'])
 
 
 class TestGetFramework(BaseApplicationTest):
@@ -73,12 +73,17 @@ class TestUpdateFramework(BaseApplicationTest):
     def test_framework_updated(self):
         with self.app.app_context():
             response = self.client.post('/frameworks/example',
-                                        data=json.dumps({'frameworks': {'status': 'expired'},
-                                                         'updated_by': 'example user'}),
+                                        data=json.dumps({'frameworks': {
+                                            'status': 'expired',
+                                            'clarification_questions_open': False,
+                                        }, 'updated_by': 'example user'}),
                                         content_type="application/json")
 
             assert response.status_code == 200
-            assert Framework.query.filter(Framework.slug == 'example').first().status == "expired"
+
+            framework = Framework.query.filter(Framework.slug == 'example').first()
+            assert framework.status == "expired"
+            assert not framework.clarification_questions_open
 
     def test_returns_404_on_non_existent_framework(self):
         with self.app.app_context():
