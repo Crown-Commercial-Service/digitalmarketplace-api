@@ -235,10 +235,13 @@ def _translate_json_schema_error(key, validator, validator_value, message):
             return 'answer_required'
 
     elif validator == 'pattern':
-        if key in ['priceMin', 'priceMax']:
-            return 'not_money_format'
-        else:
-            return 'under_{}_words'.format(_get_word_count(validator_value))
+        # Since error messages are now specified in the manifests, we can (in the future) generalise the returned
+        # string and just show the correct message
+        for price_str in ['priceMin', 'priceMax', 'PriceMin', 'PriceMax']:
+            if price_str in key:
+                return 'not_money_format'
+
+        return 'under_{}_words'.format(_get_word_count(validator_value))
 
     elif validator == 'enum' and key == 'priceUnit':
         return 'no_unit_specified'
