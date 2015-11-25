@@ -1,6 +1,56 @@
 {
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
+  "anyOf": [
+    {
+      "required": [
+        "deliveryTypes"
+      ],
+      "title": "capability"
+    },
+    {
+      "required": [
+        "performanceAnalysisTypes"
+      ],
+      "title": "capability"
+    },
+    {
+      "required": [
+        "securityTypes"
+      ],
+      "title": "capability"
+    },
+    {
+      "required": [
+        "softwareDevelopmentTypes"
+      ],
+      "title": "capability"
+    },
+    {
+      "required": [
+        "supportAndOperationsTypes"
+      ],
+      "title": "capability"
+    },
+    {
+      "required": [
+        "testingAndAuditingTypes"
+      ],
+      "title": "capability"
+    },
+    {
+      "required": [
+        "userExperienceAndDesignTypes"
+      ],
+      "title": "capability"
+    },
+    {
+      "required": [
+        "userResearchTypes"
+      ],
+      "title": "capability"
+    }
+  ],
   "properties": {
     "bespokeSystemInformation": {
       "type": "boolean"
@@ -11,14 +61,14 @@
     "deliveryTypes": {
       "items": {
         "enum": [
-          "Service management",
-          "Product management",
-          "Project management",
-          "Programme management",
-          "Business analysis",
-          "Agile coaching / training",
+          "Agile coaching and training",
           "Agile delivery",
-          "Digital communication / engagement"
+          "Business analysis",
+          "Digital communication and engagement",
+          "Product management",
+          "Programme management",
+          "Project management",
+          "Service management"
         ]
       },
       "maxItems": 8,
@@ -38,6 +88,7 @@
     "outcomesLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -52,7 +103,7 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
@@ -60,14 +111,14 @@
     "performanceAnalysisTypes": {
       "items": {
         "enum": [
+          "A/B and multivariate testing",
           "Data analysis",
-          "Web analytics",
           "Data cleansing",
           "Data visualisation",
-          "Statistical modelling",
-          "Performance reporting",
           "Performance frameworks",
-          "A/B and multivariate testing"
+          "Performance reporting",
+          "Statistical modelling",
+          "Web analytics"
         ]
       },
       "maxItems": 8,
@@ -78,17 +129,18 @@
     "securityTypes": {
       "items": {
         "enum": [
-          "CLAS / CESG certification",
-          "THC (Pen) Testing",
-          "Threat modelling",
+          "CESG information assurance certification",
+          "Firewall audit",
+          "Incident response and forensics",
+          "Infrastructure review",
           "Risk management",
-          "Incident response / forensics",
           "Security policy",
-          "Firewall review / audit",
-          "Infrastructure review"
+          "IT health check",
+          "Threat modelling",
+          "Vulnerability and penetration testing"
         ]
       },
-      "maxItems": 8,
+      "maxItems": 9,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
@@ -96,22 +148,22 @@
     "softwareDevelopmentTypes": {
       "items": {
         "enum": [
-          "Frontend web application development",
-          "Web application development",
-          "Desktop application development",
-          "Mobile application development",
-          "Geographic information systems (GIS) development",
-          "Database development (Relational/Document/XML/Graph/RDF/Key Value)",
-          "Cloud-based service development",
           "API development",
-          "Game development",
-          "Message Queues",
-          "Search",
+          "Cloud-based service development",
+          "Content management system",
           "Customer relationship management",
-          "Content management system (Wordpress/Drupal)",
-          "Systems Integration",
-          "Mainframe (Cobol / etc)",
-          "Machine learning"
+          "Database development",
+          "Desktop application development",
+          "Frontend web application development",
+          "Game development",
+          "Geographic information systems (GIS) development",
+          "Machine learning",
+          "Mainframe",
+          "Message queues",
+          "Mobile application development",
+          "Search",
+          "Systems integration",
+          "Web application development"
         ]
       },
       "maxItems": 16,
@@ -122,15 +174,15 @@
     "supportAndOperationsTypes": {
       "items": {
         "enum": [
+          "Customer support",
+          "Firewall management",
           "Hosting",
-          "Tooling (continuous integration / deployment tools)",
           "Incident management",
           "Monitoring",
-          "Systems administration",
-          "Customer support",
-          "Technical service desk",
           "Network administration",
-          "Firewall management"
+          "Systems administration",
+          "Service desk",
+          "Tooling"
         ]
       },
       "maxItems": 9,
@@ -141,13 +193,13 @@
     "testingAndAuditingTypes": {
       "items": {
         "enum": [
-          "Load/Performance testing",
           "Accessibility testing",
-          "Application testing (Automated/Exploratory)",
-          "Software auditing",
-          "System auditing",
+          "Application testing",
+          "Data auditing",
+          "Load and performance testing",
           "Process auditing",
-          "Data auditing"
+          "Software auditing",
+          "System auditing"
         ]
       },
       "maxItems": 7,
@@ -158,17 +210,19 @@
     "userExperienceAndDesignTypes": {
       "items": {
         "enum": [
-          "Interaction design",
-          "User experience and design strategy",
-          "Information architecture",
-          "Prototyping",
+          "Accessibility",
           "Animation",
           "Brand development",
+          "Content design and copywriting",
           "Cross-platform design",
-          "Content design / copywriting"
+          "Information architecture",
+          "Interaction design",
+          "Prototyping",
+          "Service design",
+          "User experience and design strategy"
         ]
       },
-      "maxItems": 8,
+      "maxItems": 10,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
@@ -176,12 +230,12 @@
     "userResearchTypes": {
       "items": {
         "enum": [
-          "User needs and insights",
-          "User journey mapping",
           "Creating personas",
-          "Usability testing",
           "Quantitative research",
-          "Surveys"
+          "Surveys",
+          "Usability testing",
+          "User journey mapping",
+          "User needs and insights"
         ]
       },
       "maxItems": 6,
@@ -193,18 +247,10 @@
   "required": [
     "bespokeSystemInformation",
     "dataProtocols",
-    "deliveryTypes",
     "helpGovernmentImproveServices",
     "openSourceLicence",
     "openStandardsPrinciples",
-    "outcomesLocations",
-    "performanceAnalysisTypes",
-    "securityTypes",
-    "softwareDevelopmentTypes",
-    "supportAndOperationsTypes",
-    "testingAndAuditingTypes",
-    "userExperienceAndDesignTypes",
-    "userResearchTypes"
+    "outcomesLocations"
   ],
   "title": "Digital Outcomes and Specialists Digital outcomes Service Schema",
   "type": "object"
