@@ -1,6 +1,7 @@
 import json
 import re
 import os
+import copy
 from decimal import Decimal
 
 from flask import abort
@@ -60,7 +61,7 @@ def get_validator(schema_name, enforce_required=True, required_fields=None):
     if enforce_required:
         schema = _SCHEMAS[schema_name]
     else:
-        schema = _SCHEMAS[schema_name].copy()
+        schema = copy.deepcopy(_SCHEMAS[schema_name])
         schema['required'] = [
             field for field in schema.get('required', [])
             if field in required_fields
