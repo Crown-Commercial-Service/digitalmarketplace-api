@@ -3,7 +3,7 @@ from datetime import datetime
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
-
+from six import iteritems
 from sqlalchemy import asc
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
@@ -512,7 +512,7 @@ class ServiceTableMixin(object):
         self.updated_at = datetime.utcnow()
 
     def purge_nulls(self):
-        self.data = dict((k, v) for k, v in self.data.iteritems() if v is not None)
+        self.data = dict((k, v) for k, v in iteritems(self.data) if v is not None)
 
 
 class Service(db.Model, ServiceTableMixin):
