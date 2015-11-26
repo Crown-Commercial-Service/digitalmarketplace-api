@@ -1598,7 +1598,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         payload = self.load_example_listing("G6-IaaS")
         payload['id'] = "1234567890123456"
 
-        payload['priceMin'] = None
+        payload['priceMin'] = 23.45
 
         response = self.client.put(
             '/services/1234567890123456',
@@ -1610,7 +1610,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         assert_equal(response.status_code, 400)
-        assert_in("None is not of type", json.loads(response.get_data())['error']['priceMin'])
+        assert_in("23.45 is not of type", json.loads(response.get_data())['error']['priceMin'])
 
     def test_add_a_service_with_unknown_supplier_id(self):
         with self.app.app_context():
