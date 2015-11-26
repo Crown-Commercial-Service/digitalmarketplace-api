@@ -1,6 +1,7 @@
 import json
 import re
 import os
+import copy
 from decimal import Decimal
 
 from flask import abort
@@ -60,11 +61,12 @@ def get_validator(schema_name, enforce_required=True, required_fields=None):
     if enforce_required:
         schema = _SCHEMAS[schema_name]
     else:
-        schema = _SCHEMAS[schema_name].copy()
+        schema = copy.deepcopy(_SCHEMAS[schema_name])
         schema['required'] = [
             field for field in schema.get('required', [])
             if field in required_fields
-            ]
+        ]
+        schema.pop('anyOf', None)
     return validator_for(schema)(schema, format_checker=FORMAT_CHECKER)
 
 
@@ -136,9 +138,13 @@ def get_validation_errors(validator_name, json_data,
             error_map[key] = _translate_json_schema_error(
                 key, error.validator, error.validator_value, error.message
             )
-        elif error.validator == 'required':
-            key = re.search(r'\'(.*)\'', error.message).group(1)
+        elif error.validator in ['required', 'dependencies']:
+            regex = r'u?\'(\w+)\' is a dependency of u?\'(\w+)\'' if error.validator == 'dependencies' else r'\'(.*)\''
+            key = re.search(regex, error.message).group(1)
             error_map[key] = 'answer_required'
+        elif error.validator == 'anyOf':
+            if error.validator_value[0].get('title'):
+                form_errors.append('{}_required'.format(error.validator_value[0].get('title')))
         else:
             form_errors.append(error.message)
     if form_errors:
@@ -149,10 +155,26 @@ def get_validation_errors(validator_name, json_data,
 
 
 def min_price_less_than_max_price(error_map, json_data):
-    if 'priceMin' in json_data and json_data.get('priceMax'):
-        if 'priceMin' not in error_map and 'priceMax' not in error_map:
-            if Decimal(json_data['priceMin']) > Decimal(json_data['priceMax']):
-                return {'priceMax': 'max_less_than_min'}
+
+    def return_min_and_max_price_keys(json_data):
+        if 'priceMin' in json_data:
+            return 'priceMin', 'priceMax'
+
+        specialist_price_keys = [k for k in json_data.keys() if k.endswith(('PriceMin', 'PriceMax'))]
+        if specialist_price_keys:
+            return \
+                next((key for key in specialist_price_keys if key.endswith('PriceMin')), None), \
+                next((key for key in specialist_price_keys if key.endswith('PriceMax')), None)
+
+        return None, None
+
+    min_price_key, max_price_key = return_min_and_max_price_keys(json_data)
+
+    if min_price_key:
+        if min_price_key in json_data and json_data.get(max_price_key):
+            if min_price_key not in error_map and max_price_key not in error_map:
+                if Decimal(json_data[min_price_key]) > Decimal(json_data[max_price_key]):
+                    return {max_price_key: 'max_less_than_min'}
     return {}
 
 
@@ -229,10 +251,12 @@ def _translate_json_schema_error(key, validator, validator_value, message):
             return 'answer_required'
 
     elif validator == 'pattern':
-        if key in ['priceMin', 'priceMax']:
+        # Since error messages are now specified in the manifests, we can (in the future) generalise the returned
+        # string and just show the correct message
+        if key.endswith(('priceMin', 'priceMax', 'PriceMin', 'PriceMax')):
             return 'not_money_format'
-        else:
-            return 'under_{}_words'.format(_get_word_count(validator_value))
+
+        return 'under_{}_words'.format(_get_word_count(validator_value))
 
     elif validator == 'enum' and key == 'priceUnit':
         return 'no_unit_specified'

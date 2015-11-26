@@ -1,0 +1,15 @@
+{
+  "id": 1,
+  "supplierId": 1,
+  "lot": "digital-specialists",
+  "lotName": "Digital Specialists",
+  "agileCoachLocations": [
+    "London"
+  ],
+  "agileCoachPriceMax": "200",
+  "agileCoachPriceMin": "100",
+  "bespokeSystemInformation": true,
+  "dataProtocols": true,
+  "helpGovernmentImproveServices": true,
+  "openStandardsPrinciples": true
+}

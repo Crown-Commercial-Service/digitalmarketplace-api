@@ -1,10 +1,335 @@
 {
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
+  "anyOf": [
+    {
+      "required": [
+        "agileCoachLocations",
+        "agileCoachPriceMax",
+        "agileCoachPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "businessAnalystLocations",
+        "businessAnalystPriceMax",
+        "businessAnalystPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "communicationsManagerLocations",
+        "communicationsManagerPriceMax",
+        "communicationsManagerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "contentDesignerLocations",
+        "contentDesignerPriceMax",
+        "contentDesignerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "deliveryManagerLocations",
+        "deliveryManagerPriceMax",
+        "deliveryManagerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "designerLocations",
+        "designerPriceMax",
+        "designerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "developerLocations",
+        "developerPriceMax",
+        "developerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "performanceAnalystLocations",
+        "performanceAnalystPriceMax",
+        "performanceAnalystPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "portfolioManagerLocations",
+        "portfolioManagerPriceMax",
+        "portfolioManagerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "productManagerLocations",
+        "productManagerPriceMax",
+        "productManagerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "programmeManagerLocations",
+        "programmeManagerPriceMax",
+        "programmeManagerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "securityConsultantLocations",
+        "securityConsultantPriceMax",
+        "securityConsultantPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "serviceManagerLocations",
+        "serviceManagerPriceMax",
+        "serviceManagerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "technicalArchitectLocations",
+        "technicalArchitectPriceMax",
+        "technicalArchitectPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "userResearcherLocations",
+        "userResearcherPriceMax",
+        "userResearcherPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "webOperationsLocations",
+        "webOperationsPriceMax",
+        "webOperationsPriceMin"
+      ],
+      "title": "specialist"
+    }
+  ],
+  "dependencies": {
+    "agileCoachLocations": [
+      "agileCoachPriceMax",
+      "agileCoachPriceMin"
+    ],
+    "agileCoachPriceMax": [
+      "agileCoachLocations",
+      "agileCoachPriceMin"
+    ],
+    "agileCoachPriceMin": [
+      "agileCoachLocations",
+      "agileCoachPriceMax"
+    ],
+    "businessAnalystLocations": [
+      "businessAnalystPriceMax",
+      "businessAnalystPriceMin"
+    ],
+    "businessAnalystPriceMax": [
+      "businessAnalystLocations",
+      "businessAnalystPriceMin"
+    ],
+    "businessAnalystPriceMin": [
+      "businessAnalystLocations",
+      "businessAnalystPriceMax"
+    ],
+    "communicationsManagerLocations": [
+      "communicationsManagerPriceMax",
+      "communicationsManagerPriceMin"
+    ],
+    "communicationsManagerPriceMax": [
+      "communicationsManagerLocations",
+      "communicationsManagerPriceMin"
+    ],
+    "communicationsManagerPriceMin": [
+      "communicationsManagerLocations",
+      "communicationsManagerPriceMax"
+    ],
+    "contentDesignerLocations": [
+      "contentDesignerPriceMax",
+      "contentDesignerPriceMin"
+    ],
+    "contentDesignerPriceMax": [
+      "contentDesignerLocations",
+      "contentDesignerPriceMin"
+    ],
+    "contentDesignerPriceMin": [
+      "contentDesignerLocations",
+      "contentDesignerPriceMax"
+    ],
+    "deliveryManagerLocations": [
+      "deliveryManagerPriceMax",
+      "deliveryManagerPriceMin"
+    ],
+    "deliveryManagerPriceMax": [
+      "deliveryManagerLocations",
+      "deliveryManagerPriceMin"
+    ],
+    "deliveryManagerPriceMin": [
+      "deliveryManagerLocations",
+      "deliveryManagerPriceMax"
+    ],
+    "designerLocations": [
+      "designerPriceMax",
+      "designerPriceMin"
+    ],
+    "designerPriceMax": [
+      "designerLocations",
+      "designerPriceMin"
+    ],
+    "designerPriceMin": [
+      "designerLocations",
+      "designerPriceMax"
+    ],
+    "developerLocations": [
+      "developerPriceMax",
+      "developerPriceMin"
+    ],
+    "developerPriceMax": [
+      "developerLocations",
+      "developerPriceMin"
+    ],
+    "developerPriceMin": [
+      "developerLocations",
+      "developerPriceMax"
+    ],
+    "performanceAnalystLocations": [
+      "performanceAnalystPriceMax",
+      "performanceAnalystPriceMin"
+    ],
+    "performanceAnalystPriceMax": [
+      "performanceAnalystLocations",
+      "performanceAnalystPriceMin"
+    ],
+    "performanceAnalystPriceMin": [
+      "performanceAnalystLocations",
+      "performanceAnalystPriceMax"
+    ],
+    "portfolioManagerLocations": [
+      "portfolioManagerPriceMax",
+      "portfolioManagerPriceMin"
+    ],
+    "portfolioManagerPriceMax": [
+      "portfolioManagerLocations",
+      "portfolioManagerPriceMin"
+    ],
+    "portfolioManagerPriceMin": [
+      "portfolioManagerLocations",
+      "portfolioManagerPriceMax"
+    ],
+    "productManagerLocations": [
+      "productManagerPriceMax",
+      "productManagerPriceMin"
+    ],
+    "productManagerPriceMax": [
+      "productManagerLocations",
+      "productManagerPriceMin"
+    ],
+    "productManagerPriceMin": [
+      "productManagerLocations",
+      "productManagerPriceMax"
+    ],
+    "programmeManagerLocations": [
+      "programmeManagerPriceMax",
+      "programmeManagerPriceMin"
+    ],
+    "programmeManagerPriceMax": [
+      "programmeManagerLocations",
+      "programmeManagerPriceMin"
+    ],
+    "programmeManagerPriceMin": [
+      "programmeManagerLocations",
+      "programmeManagerPriceMax"
+    ],
+    "securityConsultantLocations": [
+      "securityConsultantPriceMax",
+      "securityConsultantPriceMin"
+    ],
+    "securityConsultantPriceMax": [
+      "securityConsultantLocations",
+      "securityConsultantPriceMin"
+    ],
+    "securityConsultantPriceMin": [
+      "securityConsultantLocations",
+      "securityConsultantPriceMax"
+    ],
+    "serviceManagerLocations": [
+      "serviceManagerPriceMax",
+      "serviceManagerPriceMin"
+    ],
+    "serviceManagerPriceMax": [
+      "serviceManagerLocations",
+      "serviceManagerPriceMin"
+    ],
+    "serviceManagerPriceMin": [
+      "serviceManagerLocations",
+      "serviceManagerPriceMax"
+    ],
+    "technicalArchitectLocations": [
+      "technicalArchitectPriceMax",
+      "technicalArchitectPriceMin"
+    ],
+    "technicalArchitectPriceMax": [
+      "technicalArchitectLocations",
+      "technicalArchitectPriceMin"
+    ],
+    "technicalArchitectPriceMin": [
+      "technicalArchitectLocations",
+      "technicalArchitectPriceMax"
+    ],
+    "userResearcherLocations": [
+      "userResearcherPriceMax",
+      "userResearcherPriceMin"
+    ],
+    "userResearcherPriceMax": [
+      "userResearcherLocations",
+      "userResearcherPriceMin"
+    ],
+    "userResearcherPriceMin": [
+      "userResearcherLocations",
+      "userResearcherPriceMax"
+    ],
+    "webOperationsLocations": [
+      "webOperationsPriceMax",
+      "webOperationsPriceMin"
+    ],
+    "webOperationsPriceMax": [
+      "webOperationsLocations",
+      "webOperationsPriceMin"
+    ],
+    "webOperationsPriceMin": [
+      "webOperationsLocations",
+      "webOperationsPriceMax"
+    ]
+  },
   "properties": {
     "agileCoachLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -19,10 +344,18 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "agileCoachPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "agileCoachPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "bespokeSystemInformation": {
       "type": "boolean"
@@ -30,6 +363,7 @@
     "businessAnalystLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -44,14 +378,23 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "businessAnalystPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "businessAnalystPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "communicationsManagerLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -66,14 +409,23 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
+    "communicationsManagerPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "communicationsManagerPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
     "contentDesignerLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -88,10 +440,18 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "contentDesignerPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "contentDesignerPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "dataProtocols": {
       "type": "boolean"
@@ -99,6 +459,7 @@
     "deliveryManagerLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -113,14 +474,23 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "deliveryManagerPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "deliveryManagerPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "designerLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -135,14 +505,23 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "designerPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "designerPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "developerLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -157,15 +536,20 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
-    "helpGovernmentImproveServices": {
-      "type": "boolean"
+    "developerPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
-    "openSourceLicence": {
+    "developerPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "helpGovernmentImproveServices": {
       "type": "boolean"
     },
     "openStandardsPrinciples": {
@@ -174,6 +558,7 @@
     "performanceAnalystLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -188,14 +573,23 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "performanceAnalystPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "performanceAnalystPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "portfolioManagerLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -210,52 +604,23 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
-    "priceInterval": {
-      "enum": [
-        "",
-        "Second",
-        "Minute",
-        "Hour",
-        "Day",
-        "Week",
-        "Month",
-        "Quarter",
-        "6 months",
-        "Year"
-      ]
-    },
-    "priceMax": {
-      "pattern": "^$|^\\d+(?:\\.\\d{1,5})?$",
-      "type": "string"
-    },
-    "priceMin": {
+    "portfolioManagerPriceMax": {
       "pattern": "^\\d+(?:\\.\\d{1,5})?$",
       "type": "string"
     },
-    "priceUnit": {
-      "enum": [
-        "Unit",
-        "Person",
-        "Licence",
-        "User",
-        "Device",
-        "Instance",
-        "Server",
-        "Virtual machine",
-        "Transaction",
-        "Megabyte",
-        "Gigabyte",
-        "Terabyte"
-      ]
+    "portfolioManagerPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "productManagerLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -270,14 +635,23 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "productManagerPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "productManagerPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "programmeManagerLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -292,14 +666,23 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "programmeManagerPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "programmeManagerPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "securityConsultantLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -314,14 +697,23 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "securityConsultantPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "securityConsultantPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "serviceManagerLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -336,14 +728,23 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "serviceManagerPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "serviceManagerPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "technicalArchitectLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -358,14 +759,23 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "technicalArchitectPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "technicalArchitectPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "userResearcherLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -380,14 +790,23 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
+    "userResearcherPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "userResearcherPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
     "webOperationsLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -402,50 +821,25 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "webOperationsPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "webOperationsPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
     }
   },
   "required": [
-    "agileCoachDayRate",
-    "agileCoachLocations",
     "bespokeSystemInformation",
-    "businessAnalystDayRate",
-    "businessAnalystLocations",
-    "communicationsManagerDayRate",
-    "communicationsManagerLocations",
-    "contentDesignerDayRate",
-    "contentDesignerLocations",
     "dataProtocols",
-    "deliveryManagerDayRate",
-    "deliveryManagerLocations",
-    "designerDayRate",
-    "designerLocations",
-    "developerDayRate",
-    "developerLocations",
     "helpGovernmentImproveServices",
-    "openSourceLicence",
-    "openStandardsPrinciples",
-    "performanceAnalystDayRate",
-    "performanceAnalystLocations",
-    "portfolioManagerDayRate",
-    "portfolioManagerLocations",
-    "productManagerDayRate",
-    "productManagerLocations",
-    "programmeManagerDayRate",
-    "programmeManagerLocations",
-    "securityConsultantDayRate",
-    "securityConsultantLocations",
-    "serviceManagerDayRate",
-    "serviceManagerLocations",
-    "technicalArchitectDayRate",
-    "technicalArchitectLocations",
-    "userResearcherDayRate",
-    "userResearcherLocations",
-    "webOperationsDayRate",
-    "webOperationsLocations"
+    "openStandardsPrinciples"
   ],
   "title": "Digital Outcomes and Specialists Digital specialists Service Schema",
   "type": "object"
