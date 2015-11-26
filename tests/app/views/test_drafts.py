@@ -1327,6 +1327,20 @@ class TestDOSServices(BaseApplicationTest):
             assert_equal(data['error'][key], 'not_money_format')
         assert_equal(update.status_code, 400)
 
+    def test_should_not_edit_draft_with_max_price_less_than_min_price(self):
+        res = self._post_dos_draft()
+        draft_id = json.loads(res.get_data())['services']['id']
+        update = self._edit_dos_draft(
+            draft_id=draft_id,
+            services={
+                "agileCoachPriceMin": '200',
+                "agileCoachPriceMax": '100'},
+            page_questions=[]
+        )
+        data = json.loads(update.get_data())
+        assert_equal(data['error']['agileCoachPriceMax'], 'max_less_than_min')
+        assert_equal(update.status_code, 400)
+
     def test_should_not_edit_draft_if_dependencies_missing(self):
         res = self._post_dos_draft()
         draft_id = json.loads(res.get_data())['services']['id']

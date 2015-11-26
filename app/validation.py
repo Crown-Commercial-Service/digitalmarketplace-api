@@ -155,10 +155,26 @@ def get_validation_errors(validator_name, json_data,
 
 
 def min_price_less_than_max_price(error_map, json_data):
-    if 'priceMin' in json_data and json_data.get('priceMax'):
-        if 'priceMin' not in error_map and 'priceMax' not in error_map:
-            if Decimal(json_data['priceMin']) > Decimal(json_data['priceMax']):
-                return {'priceMax': 'max_less_than_min'}
+
+    def return_min_and_max_price_keys(json_data):
+        if 'priceMin' in json_data:
+            return 'priceMin', 'priceMax'
+
+        specialist_price_keys = [k for k in json_data.keys() if k.endswith(('PriceMin', 'PriceMax'))]
+        if specialist_price_keys:
+            return \
+                next((key for key in specialist_price_keys if key.endswith('PriceMin')), None), \
+                next((key for key in specialist_price_keys if key.endswith('PriceMax')), None)
+
+        return None, None
+
+    min_price_key, max_price_key = return_min_and_max_price_keys(json_data)
+
+    if min_price_key:
+        if min_price_key in json_data and json_data.get(max_price_key):
+            if min_price_key not in error_map and max_price_key not in error_map:
+                if Decimal(json_data[min_price_key]) > Decimal(json_data[max_price_key]):
+                    return {max_price_key: 'max_less_than_min'}
     return {}
 
 
