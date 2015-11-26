@@ -79,9 +79,6 @@
     "helpGovernmentImproveServices": {
       "type": "boolean"
     },
-    "openSourceLicence": {
-      "type": "boolean"
-    },
     "openStandardsPrinciples": {
       "type": "boolean"
     },
@@ -248,7 +245,6 @@
     "bespokeSystemInformation",
     "dataProtocols",
     "helpGovernmentImproveServices",
-    "openSourceLicence",
     "openStandardsPrinciples",
     "outcomesLocations"
   ],

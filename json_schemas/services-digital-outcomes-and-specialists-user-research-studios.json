@@ -3,18 +3,35 @@
   "additionalProperties": false,
   "properties": {
     "labAccessibility": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "labAddressBuilding": {
+      "maxLength": 200,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,19}\\S+$",
+      "type": "string"
+    },
+    "labAddressPostcode": {
+      "maxLength": 10,
       "minLength": 1,
       "type": "string"
     },
-    "labAddress": {
+    "labAddressTown": {
+      "maxLength": 200,
       "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,19}\\S+$",
       "type": "string"
     },
     "labBabyChanging": {
       "type": "boolean"
     },
     "labCarPark": {
+      "maxLength": 500,
       "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
     "labDesktopStreaming": {
@@ -45,11 +62,22 @@
         "Yes \u2013 for an additional cost"
       ]
     },
+    "labPriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "labPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
     "labPublicTransport": {
+      "maxLength": 500,
       "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
     "labSize": {
+      "maxLength": 100,
       "minLength": 1,
       "type": "string"
     },
@@ -91,44 +119,6 @@
         "Yes \u2013 for an additional cost"
       ]
     },
-    "priceInterval": {
-      "enum": [
-        "",
-        "Second",
-        "Minute",
-        "Hour",
-        "Day",
-        "Week",
-        "Month",
-        "Quarter",
-        "6 months",
-        "Year"
-      ]
-    },
-    "priceMax": {
-      "pattern": "^$|^\\d+(?:\\.\\d{1,5})?$",
-      "type": "string"
-    },
-    "priceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
-      "type": "string"
-    },
-    "priceUnit": {
-      "enum": [
-        "Unit",
-        "Person",
-        "Licence",
-        "User",
-        "Device",
-        "Instance",
-        "Server",
-        "Virtual machine",
-        "Transaction",
-        "Megabyte",
-        "Gigabyte",
-        "Terabyte"
-      ]
-    },
     "serviceName": {
       "maxLength": 100,
       "minLength": 1,
@@ -137,14 +127,17 @@
   },
   "required": [
     "labAccessibility",
-    "labAddress",
+    "labAddressBuilding",
+    "labAddressPostcode",
+    "labAddressTown",
     "labBabyChanging",
     "labCarPark",
     "labDesktopStreaming",
     "labDeviceStreaming",
     "labEyeTracking",
     "labHosting",
-    "labPrice",
+    "labPriceMax",
+    "labPriceMin",
     "labPublicTransport",
     "labSize",
     "labStreaming",

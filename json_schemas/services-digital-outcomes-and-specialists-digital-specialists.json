@@ -329,6 +329,7 @@
     "agileCoachLocations": {
       "items": {
         "enum": [
+          "Off-site",
           "Scotland",
           "North East England",
           "North West England",
@@ -343,7 +344,7 @@
           "Northern Ireland"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
@@ -549,9 +550,6 @@
       "type": "string"
     },
     "helpGovernmentImproveServices": {
-      "type": "boolean"
-    },
-    "openSourceLicence": {
       "type": "boolean"
     },
     "openStandardsPrinciples": {
@@ -841,7 +839,6 @@
     "bespokeSystemInformation",
     "dataProtocols",
     "helpGovernmentImproveServices",
-    "openSourceLicence",
     "openStandardsPrinciples"
   ],
   "title": "Digital Outcomes and Specialists Digital specialists Service Schema",

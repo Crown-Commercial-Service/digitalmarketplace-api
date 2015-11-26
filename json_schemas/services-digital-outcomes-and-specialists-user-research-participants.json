@@ -25,10 +25,11 @@
           "London",
           "South East England",
           "West England",
-          "Northern Ireland"
+          "Northern Ireland",
+          "International (outside the UK)"
         ]
       },
-      "maxItems": 12,
+      "maxItems": 13,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
