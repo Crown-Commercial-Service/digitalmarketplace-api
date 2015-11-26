@@ -128,7 +128,8 @@ class TestFrameworkStats(BaseApplicationTest):
                 db.session.add(
                     SupplierFramework(
                         framework_id=framework_id,
-                        supplier_id=supplier_id
+                        supplier_id=supplier_id,
+                        declaration={}
                     )
                 )
             db.session.commit()
