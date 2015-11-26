@@ -120,15 +120,12 @@ def get_framework_stats(framework_slug):
                 drafts_alias.supplier_id.isnot(None), func.count()
             ).select_from(
                 Supplier
-            ).outerjoin(
-                AuditEvent, AuditEvent.object_id == Supplier.id
-            ).outerjoin(
+            ).join(
                 SupplierFramework
             ).outerjoin(
                 drafts_alias
             ).filter(
-                AuditEvent.object_type == 'Supplier',
-                AuditEvent.type == 'register_framework_interest'
+                SupplierFramework.framework_id == framework.id
             ).group_by(
                 SupplierFramework.declaration['status'].cast(String), drafts_alias.supplier_id.isnot(None)
             ).all()
