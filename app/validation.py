@@ -237,9 +237,8 @@ def _translate_json_schema_error(key, validator, validator_value, message):
     elif validator == 'pattern':
         # Since error messages are now specified in the manifests, we can (in the future) generalise the returned
         # string and just show the correct message
-        for price_str in ['priceMin', 'priceMax', 'PriceMin', 'PriceMax']:
-            if price_str in key:
-                return 'not_money_format'
+        if key.endswith(('priceMin', 'priceMax', 'PriceMin', 'PriceMax')):
+            return 'not_money_format'
 
         return 'under_{}_words'.format(_get_word_count(validator_value))
 
