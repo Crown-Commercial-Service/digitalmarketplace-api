@@ -1,4 +1,6 @@
 import pytest
+
+from nose.tools import assert_equal
 from werkzeug.exceptions import HTTPException
 
 from .helpers import BaseApplicationTest
@@ -7,7 +9,8 @@ from app.utils import (display_list,
                        strip_whitespace_from_data,
                        json_has_matching_id,
                        json_has_required_keys,
-                       link)
+                       link,
+                       purge_nulls_from_data)
 
 
 def test_link():
@@ -51,3 +54,17 @@ def test_strip_whitespace_from_data():
     after_strip = strip_whitespace_from_data(struct_with_list)
     for item in after_strip['eggs']:
         assert " " not in item
+
+
+def test_purge_nulls():
+    service_with_nulls = {
+        'serviceName': 'Service with nulls',
+        'empty': None,
+        'serviceSummary': None,
+        'price': 'Not a lot'
+    }
+    same_service_without_nulls = {
+        'serviceName': 'Service with nulls',
+        'price': 'Not a lot'
+    }
+    assert_equal(purge_nulls_from_data(service_with_nulls), same_service_without_nulls)

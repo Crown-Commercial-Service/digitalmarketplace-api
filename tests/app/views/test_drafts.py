@@ -370,6 +370,44 @@ class TestDraftServices(BaseApplicationTest):
             data['auditEvents'][2]['data']['draftId'], draft_id
         )
 
+    def test_update_draft_should_purge_keys_with_null_values(self):
+        res = self.client.post(
+            '/draft-services',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+        draft_id = data['services']['id']
+
+        draft_update_json = self.updater_json.copy()
+        draft_update_json['services'] = {
+            'serviceName': "What a great service",
+            'serviceTypes': ['Implementation'],
+            'serviceBenefits': ['Tests pass']
+        }
+        res2 = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(draft_update_json),
+            content_type='application/json')
+        assert_equal(res2.status_code, 200)
+        data2 = json.loads(res2.get_data())['services']
+        assert('serviceName' in data2)
+        assert('serviceBenefits' in data2)
+        assert('serviceTypes' in data2)
+
+        draft_update_json['services'] = {
+            'serviceTypes': None,
+            'serviceBenefits': None
+        }
+        res3 = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(draft_update_json),
+            content_type='application/json')
+        assert_equal(res3.status_code, 200)
+        data3 = json.loads(res3.get_data())['services']
+        assert('serviceName' in data3)
+        assert('serviceBenefits' not in data3)
+        assert('serviceTypes' not in data3)
+
     def test_validation_errors_returned_for_invalid_update_of_new_draft(self):
         res = self.client.post(
             '/draft-services',

@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from nose.tools import assert_equal, assert_raises
-from sqlalchemy.exc import DataError
 
 from app import db, create_app
 from app.models import User, Framework, Service, ValidationError

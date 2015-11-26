@@ -3,7 +3,6 @@ from datetime import datetime
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
-
 from sqlalchemy import asc
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
@@ -15,7 +14,7 @@ from sqlalchemy_utils import generic_relationship
 from dmutils.formats import DATETIME_FORMAT
 
 from . import db
-from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields
+from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
 from .validation import is_valid_service_id
 
 
@@ -474,6 +473,7 @@ class ServiceTableMixin(object):
         ])
 
         data = strip_whitespace_from_data(data)
+        data = purge_nulls_from_data(data)
 
         return data
 

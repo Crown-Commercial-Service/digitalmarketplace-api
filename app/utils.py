@@ -1,6 +1,6 @@
 from flask import url_for as base_url_for
 from flask import abort, request
-from six import string_types
+from six import iteritems, string_types
 from werkzeug.exceptions import BadRequest
 
 
@@ -91,3 +91,7 @@ def strip_whitespace_from_data(data):
             # Strip whitespace from strings
             data[key] = value.strip()
     return data
+
+
+def purge_nulls_from_data(data):
+    return dict((k, v) for k, v in iteritems(data) if v is not None)
