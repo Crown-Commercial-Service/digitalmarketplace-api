@@ -109,33 +109,29 @@ class TestUpdateFramework(BaseApplicationTest):
 
 
 class TestFrameworkStats(BaseApplicationTest):
-    def create_selection_answers(self, framework_id, supplier_ids, status=None):
+    def make_declaration(self, framework_id, supplier_ids, status=None):
+        with self.app.app_context():
+            db.session.query(
+                SupplierFramework
+            ).filter(
+                SupplierFramework.framework_id == framework_id,
+                SupplierFramework.supplier_id.in_(supplier_ids)
+            ).update({
+                SupplierFramework.declaration: {'status': status}
+            }, synchronize_session=False)
+
+            db.session.commit()
+
+    def register_framework_interest(self, framework_id, supplier_ids):
         with self.app.app_context():
             for supplier_id in supplier_ids:
                 db.session.add(
                     SupplierFramework(
                         framework_id=framework_id,
                         supplier_id=supplier_id,
-                        declaration={'status': status},
+                        declaration={}
                     )
                 )
-
-            db.session.commit()
-
-    def create_framework_interest_audit_event(self, framework_id, supplier_ids):
-        with self.app.app_context():
-            for supplier_id in supplier_ids:
-                db.session.add(
-                    AuditEvent(
-                        audit_type=AuditTypes.register_framework_interest,
-                        user='supplier@user.dmdev',
-                        data='{}',
-                        db_object=Supplier.query.filter(
-                            Supplier.supplier_id == supplier_id
-                        ).first()
-                    )
-                )
-
             db.session.commit()
 
     def create_drafts(self, framework_id, supplier_id_count_pairs, status='not-submitted'):
@@ -177,9 +173,9 @@ class TestFrameworkStats(BaseApplicationTest):
             framework = Framework.query.filter(Framework.slug == framework_slug).first()
 
         self.setup_dummy_suppliers(30)
-        self.create_framework_interest_audit_event(framework.id, range(20))
-        self.create_selection_answers(framework.id, [1, 3, 5, 7, 9, 11], status='started')
-        self.create_selection_answers(framework.id, [0, 2, 4, 6, 8, 10], status='complete')
+        self.register_framework_interest(framework.id, range(20))
+        self.make_declaration(framework.id, [1, 3, 5, 7, 9, 11], status='started')
+        self.make_declaration(framework.id, [0, 2, 4, 6, 8, 10], status='complete')
         self.create_drafts(framework.id, [
             (1, 1),   # 1 saas; with declaration
             (2, 7),   # 1 of each + iaas, paas, saas; with declaration
@@ -265,12 +261,7 @@ class TestFrameworkStats(BaseApplicationTest):
         self.setup_data('g-cloud-6')
         response = self.client.get('/frameworks/g-cloud-7/stats')
         assert_equal(json.loads(response.get_data()), {
-            u'interested_suppliers': [
-                # No suppliers with completed G7 services
-                {u'count': 8, u'declaration_status': None, u'has_completed_services': False},
-                {u'count': 6, u'declaration_status': 'complete', u'has_completed_services': False},
-                {u'count': 6, u'declaration_status': 'started', u'has_completed_services': False},
-            ],
+            u'interested_suppliers': [],
             u'services': [],
             u'supplier_users': [
                 {u'count': 4, u'recent_login': False},
