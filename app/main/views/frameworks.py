@@ -39,10 +39,11 @@ def update_framework(framework_slug):
 
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['frameworks', 'updated_by'])
-    json_only_has_required_keys(json_payload['frameworks'], ['status'])
+    json_only_has_required_keys(json_payload['frameworks'], ['status', 'clarificationQuestionsOpen'])
 
     try:
         framework.status = json_payload['frameworks']['status']
+        framework.clarification_questions_open = json_payload['frameworks']['clarificationQuestionsOpen']
         db.session.add(framework)
         db.session.add(
             AuditEvent(

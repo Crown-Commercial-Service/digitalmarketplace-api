@@ -46,7 +46,8 @@ class Lot(db.Model):
             'id': self.id,
             'slug': self.slug,
             'name': self.name,
-            'one_service_limit': self.one_service_limit,
+            'one_service_limit': self.one_service_limit,  # TODO deprecated
+            'oneServiceLimit': self.one_service_limit,
         }
 
 
@@ -65,6 +66,7 @@ class Framework(db.Model):
     status = db.Column(db.String(),
                        index=True, nullable=False,
                        default='pending')
+    clarification_questions_open = db.Column(db.Boolean, nullable=False, default=False)
     lots = db.relationship(
         Lot, secondary=framework_lots,
         lazy='joined', innerjoin=False,
@@ -85,6 +87,7 @@ class Framework(db.Model):
             'slug': self.slug,
             'framework': self.framework,
             'status': self.status,
+            'clarificationQuestionsOpen': self.clarification_questions_open,
             'lots': [lot.serialize() for lot in self.lots],
         }
 
