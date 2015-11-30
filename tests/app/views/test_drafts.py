@@ -408,6 +408,49 @@ class TestDraftServices(BaseApplicationTest):
         assert('serviceBenefits' not in data3)
         assert('serviceTypes' not in data3)
 
+    def test_update_draft_should_validate_full_draft_if_submitted(self):
+        draft_id = self.create_draft_service()['id']
+        self.complete_draft_service(draft_id)
+
+        res = self.client.get('/draft-services/{}'.format(draft_id))
+        submitted_draft = json.loads(res.get_data())['services']
+        submitted_draft['serviceName'] = None
+        submitted_draft['serviceBenefits'] = None
+
+        draft_update_json = self.updater_json.copy()
+        draft_update_json['services'] = submitted_draft
+
+        res2 = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(draft_update_json),
+            content_type='application/json')
+        errors = json.loads(res2.get_data())['error']
+
+        assert_equal(res2.status_code, 400)
+        assert_equal(errors, {u'serviceName': u'answer_required', u'serviceBenefits': u'answer_required'})
+
+    def test_update_draft_should_not_validate_full_draft_if_not_submitted(self):
+        draft_id = self.create_draft_service()['id']
+
+        res = self.client.get('/draft-services/{}'.format(draft_id))
+        submitted_draft = json.loads(res.get_data())['services']
+        submitted_draft['serviceName'] = None
+        submitted_draft['serviceBenefits'] = None
+
+        draft_update_json = self.updater_json.copy()
+        draft_update_json['services'] = submitted_draft
+
+        res2 = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(draft_update_json),
+            content_type='application/json')
+        updated_draft = json.loads(res2.get_data())['services']
+
+        assert_equal(res2.status_code, 200)
+        assert_equal(updated_draft['status'], 'not-submitted')
+        assert('serviceName' not in updated_draft)
+        assert('serviceBenefits' not in updated_draft)
+
     def test_validation_errors_returned_for_invalid_update_of_new_draft(self):
         res = self.client.post(
             '/draft-services',
