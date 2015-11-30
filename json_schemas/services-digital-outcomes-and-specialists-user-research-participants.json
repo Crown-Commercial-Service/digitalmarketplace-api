@@ -35,7 +35,17 @@
       "uniqueItems": true
     },
     "recruitMethods": {
-      "type": "boolean"
+      "items": {
+        "enum": [
+          "Entirely offline",
+          "Initial recruitment offline, but then contact them online",
+          "Entirely online"
+        ]
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
     }
   },
   "required": [

@@ -86,7 +86,7 @@ def edit_draft_service(draft_id):
     ).first_or_404()
 
     draft.update_from_json(update_json)
-    validate_service_data(draft, enforce_required=False, required_fields=page_questions)
+    validate_service_data(draft, enforce_required=(draft.status == 'submitted'), required_fields=page_questions)
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_draft_service,
