@@ -92,6 +92,14 @@
     },
     {
       "required": [
+        "qualityAssuranceLocations",
+        "qualityAssurancePriceMax",
+        "qualityAssurancePriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
         "securityConsultantLocations",
         "securityConsultantPriceMax",
         "securityConsultantPriceMin"
@@ -263,6 +271,18 @@
     "programmeManagerPriceMin": [
       "programmeManagerLocations",
       "programmeManagerPriceMax"
+    ],
+    "qualityAssuranceLocations": [
+      "qualityAssurancePriceMax",
+      "qualityAssurancePriceMin"
+    ],
+    "qualityAssurancePriceMax": [
+      "qualityAssuranceLocations",
+      "qualityAssurancePriceMin"
+    ],
+    "qualityAssurancePriceMin": [
+      "qualityAssuranceLocations",
+      "qualityAssurancePriceMax"
     ],
     "securityConsultantLocations": [
       "securityConsultantPriceMax",
@@ -676,6 +696,37 @@
       "type": "string"
     },
     "programmeManagerPriceMin": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "qualityAssuranceLocations": {
+      "items": {
+        "enum": [
+          "Off-site",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "The Midlands",
+          "East England",
+          "Wales",
+          "London",
+          "South East England",
+          "West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "qualityAssurancePriceMax": {
+      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "qualityAssurancePriceMin": {
       "pattern": "^\\d+(?:\\.\\d{1,5})?$",
       "type": "string"
     },

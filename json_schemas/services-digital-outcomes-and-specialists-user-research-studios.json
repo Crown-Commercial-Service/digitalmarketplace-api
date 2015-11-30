@@ -62,10 +62,6 @@
         "Yes \u2013 for an additional cost"
       ]
     },
-    "labPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
-      "type": "string"
-    },
     "labPriceMin": {
       "pattern": "^\\d+(?:\\.\\d{1,5})?$",
       "type": "string"
@@ -93,6 +89,18 @@
         "No",
         "Yes \u2013 included as standard",
         "Yes \u2013 for an additional cost"
+      ]
+    },
+    "labTimeMin": {
+      "enum": [
+        "1 hour",
+        "2 hours",
+        "3 hours",
+        "4 hours",
+        "5 hours",
+        "6 hours",
+        "7 hours",
+        "8 hours"
       ]
     },
     "labToilets": {
@@ -136,12 +144,12 @@
     "labDeviceStreaming",
     "labEyeTracking",
     "labHosting",
-    "labPriceMax",
     "labPriceMin",
     "labPublicTransport",
     "labSize",
     "labStreaming",
     "labTechAssistance",
+    "labTimeMin",
     "labToilets",
     "labViewingArea",
     "labWaitingArea",
