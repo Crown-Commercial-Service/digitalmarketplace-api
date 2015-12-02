@@ -159,9 +159,8 @@ def min_price_less_than_max_price(error_map, json_data):
     for key in json_data.keys():
         if key.lower().endswith('pricemin'):
             prefix = key[:-8]
-            max_price_key = prefix + ('PriceMax' if prefix else 'priceMax')
+            max_price_key = (prefix + 'PriceMax') if prefix else 'priceMax'
             if (
-                max_price_key in json_data and
                 json_data.get(max_price_key, None) and
                 key not in error_map and
                 max_price_key not in error_map

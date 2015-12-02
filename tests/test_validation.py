@@ -8,7 +8,7 @@ from jsonschema import validate, SchemaError, ValidationError
 
 from app.utils import drop_foreign_fields
 from app.validation import validates_against_schema, is_valid_service_id, is_valid_date, \
-    is_valid_acknowledged_state, get_validation_errors, is_valid_string
+    is_valid_acknowledged_state, get_validation_errors, is_valid_string, min_price_less_than_max_price
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                     '..', 'example_listings'))
@@ -442,6 +442,50 @@ def test_max_price_larger_than_min_price():
         errs = get_validation_errors("services-g-cloud-7-scs", data)
 
         yield assert_not_in, 'priceMax', errs
+
+
+def test_max_price_larger_than_min_price_with_multiple_price_fields():
+    data = {
+        'agileCoachPriceMin': '200',
+        'agileCoachPriceMax': '250',
+        'developerPriceMin': '200',
+        'developerPriceMax': '25',
+        'windowCleanerPriceMin': '12.50',
+        'windowCleanerPriceMax': '300',
+    }
+    errors = min_price_less_than_max_price({}, data)
+    assert_equal(errors, {'developerPriceMax': 'max_less_than_min'})
+
+
+def test_max_price_larger_than_min_price_with_multiple_price_errors():
+    data = {
+        'agileCoachPriceMin': '200',
+        'agileCoachPriceMax': '250',
+        'developerPriceMin': '200',
+        'developerPriceMax': '25',
+        'designerPriceMin': '300',
+        'designerPriceMax': '299.99',
+        'windowCleanerPriceMin': '12.50',
+        'windowCleanerPriceMax': '300',
+    }
+    errors = min_price_less_than_max_price({}, data)
+    assert_equal(errors, {'developerPriceMax': 'max_less_than_min', 'designerPriceMax': 'max_less_than_min'})
+
+
+def test_max_price_larger_than_min_does_not_overwrite_previous_errors():
+    data = {
+        'agileCoachPriceMin': '200',
+        'agileCoachPriceMax': '250',
+        'developerPriceMin': '200',
+        'developerPriceMax': '25',
+        'designerPriceMin': '300',
+        'designerPriceMax': '299.99',
+        'windowCleanerPriceMin': '12.50',
+        'windowCleanerPriceMax': '300',
+    }
+    previous_errors = {'designerPriceMax': 'non_curly_quotes'}
+    errors = min_price_less_than_max_price(previous_errors, data)
+    assert_equal(errors, {'developerPriceMax': 'max_less_than_min'})
 
 
 def test_api_type_is_optional():
