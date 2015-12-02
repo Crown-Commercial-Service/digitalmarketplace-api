@@ -370,11 +370,11 @@
       "uniqueItems": true
     },
     "agileCoachPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "agileCoachPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "bespokeSystemInformation": {
@@ -404,11 +404,11 @@
       "uniqueItems": true
     },
     "businessAnalystPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "businessAnalystPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "communicationsManagerLocations": {
@@ -435,11 +435,11 @@
       "uniqueItems": true
     },
     "communicationsManagerPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "communicationsManagerPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "contentDesignerLocations": {
@@ -466,11 +466,11 @@
       "uniqueItems": true
     },
     "contentDesignerPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "contentDesignerPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "dataProtocols": {
@@ -500,11 +500,11 @@
       "uniqueItems": true
     },
     "deliveryManagerPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "deliveryManagerPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "designerLocations": {
@@ -531,11 +531,11 @@
       "uniqueItems": true
     },
     "designerPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "designerPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "developerLocations": {
@@ -562,11 +562,11 @@
       "uniqueItems": true
     },
     "developerPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "developerPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "helpGovernmentImproveServices": {
@@ -599,11 +599,11 @@
       "uniqueItems": true
     },
     "performanceAnalystPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "performanceAnalystPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "portfolioManagerLocations": {
@@ -630,11 +630,11 @@
       "uniqueItems": true
     },
     "portfolioManagerPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "portfolioManagerPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "productManagerLocations": {
@@ -661,11 +661,11 @@
       "uniqueItems": true
     },
     "productManagerPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "productManagerPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "programmeManagerLocations": {
@@ -692,11 +692,11 @@
       "uniqueItems": true
     },
     "programmeManagerPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "programmeManagerPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "qualityAssuranceLocations": {
@@ -723,11 +723,11 @@
       "uniqueItems": true
     },
     "qualityAssurancePriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "qualityAssurancePriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "securityConsultantLocations": {
@@ -754,11 +754,11 @@
       "uniqueItems": true
     },
     "securityConsultantPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "securityConsultantPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "serviceManagerLocations": {
@@ -785,11 +785,11 @@
       "uniqueItems": true
     },
     "serviceManagerPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "serviceManagerPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "technicalArchitectLocations": {
@@ -816,11 +816,11 @@
       "uniqueItems": true
     },
     "technicalArchitectPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "technicalArchitectPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "userResearcherLocations": {
@@ -847,11 +847,11 @@
       "uniqueItems": true
     },
     "userResearcherPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "userResearcherPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "webOperationsLocations": {
@@ -878,11 +878,11 @@
       "uniqueItems": true
     },
     "webOperationsPriceMax": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "webOperationsPriceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     }
   },
