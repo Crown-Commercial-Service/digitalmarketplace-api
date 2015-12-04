@@ -61,7 +61,7 @@
     "deliveryTypes": {
       "items": {
         "enum": [
-          "Agile coaching and training",
+          "Agile coaching",
           "Agile delivery",
           "Business analysis",
           "Digital communication and engagement",
@@ -85,14 +85,14 @@
     "outcomesLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
           "Yorkshire and the Humber",
           "East Midlands",
-          "The Midlands",
-          "East England",
+          "West Midlands",
+          "East of England",
           "Wales",
           "London",
           "South East England",
@@ -151,7 +151,7 @@
           "Customer relationship management",
           "Database development",
           "Desktop application development",
-          "Frontend web application development",
+          "Front-end web application development",
           "Game development",
           "Geographic information systems (GIS) development",
           "Machine learning",
@@ -229,13 +229,12 @@
         "enum": [
           "Creating personas",
           "Quantitative research",
-          "Surveys",
           "Usability testing",
           "User journey mapping",
           "User needs and insights"
         ]
       },
-      "maxItems": 6,
+      "maxItems": 5,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true

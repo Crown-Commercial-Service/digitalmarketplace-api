@@ -32,11 +32,11 @@
       ]
     },
     "priceMax": {
-      "pattern": "^$|^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^$|^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "priceMin": {
-      "pattern": "^\\d+(?:\\.\\d{1,5})?$",
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "priceUnit": {
