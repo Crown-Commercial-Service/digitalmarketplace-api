@@ -36,30 +36,30 @@
     },
     "labDesktopStreaming": {
       "enum": [
-        "No",
         "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost"
+        "Yes \u2013 for an additional cost",
+        "No"
       ]
     },
     "labDeviceStreaming": {
       "enum": [
-        "No",
         "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost"
+        "Yes \u2013 for an additional cost",
+        "No"
       ]
     },
     "labEyeTracking": {
       "enum": [
-        "No",
         "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost"
+        "Yes \u2013 for an additional cost",
+        "No"
       ]
     },
     "labHosting": {
       "enum": [
-        "No",
         "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost"
+        "Yes \u2013 for an additional cost",
+        "No"
       ]
     },
     "labPriceMin": {
@@ -79,16 +79,16 @@
     },
     "labStreaming": {
       "enum": [
-        "No",
         "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost"
+        "Yes \u2013 for an additional cost",
+        "No"
       ]
     },
     "labTechAssistance": {
       "enum": [
-        "No",
         "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost"
+        "Yes \u2013 for an additional cost",
+        "No"
       ]
     },
     "labTimeMin": {
@@ -108,24 +108,20 @@
     },
     "labViewingArea": {
       "enum": [
-        "No",
         "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost"
+        "Yes \u2013 for an additional cost",
+        "No"
       ]
     },
     "labWaitingArea": {
       "enum": [
-        "No",
         "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost"
+        "Yes \u2013 for an additional cost",
+        "No"
       ]
     },
     "labWiFi": {
-      "enum": [
-        "No",
-        "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost"
-      ]
+      "type": "boolean"
     },
     "serviceName": {
       "maxLength": 100,

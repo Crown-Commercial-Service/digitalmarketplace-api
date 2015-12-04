@@ -349,7 +349,7 @@
     "agileCoachLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -383,7 +383,7 @@
     "businessAnalystLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -414,7 +414,7 @@
     "communicationsManagerLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -445,7 +445,7 @@
     "contentDesignerLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -479,7 +479,7 @@
     "deliveryManagerLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -510,7 +510,7 @@
     "designerLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -541,7 +541,7 @@
     "developerLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -578,7 +578,7 @@
     "performanceAnalystLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -609,7 +609,7 @@
     "portfolioManagerLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -640,7 +640,7 @@
     "productManagerLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -671,7 +671,7 @@
     "programmeManagerLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -702,7 +702,7 @@
     "qualityAssuranceLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -733,7 +733,7 @@
     "securityConsultantLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -764,7 +764,7 @@
     "serviceManagerLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -795,7 +795,7 @@
     "technicalArchitectLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -826,7 +826,7 @@
     "userResearcherLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
@@ -857,7 +857,7 @@
     "webOperationsLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
