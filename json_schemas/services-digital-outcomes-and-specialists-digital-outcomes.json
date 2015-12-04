@@ -85,7 +85,7 @@
     "outcomesLocations": {
       "items": {
         "enum": [
-          "Off-site",
+          "Offsite",
           "Scotland",
           "North East England",
           "North West England",
