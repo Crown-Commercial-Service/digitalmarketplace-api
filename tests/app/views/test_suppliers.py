@@ -857,7 +857,6 @@ class TestSetSupplierDeclarations(BaseApplicationTest):
                 .find_by_supplier_and_framework(0, 'test-open')
             assert isinstance(answers.declaration, dict)
 
-
     def test_update_existing_declaration(self):
         with self.app.app_context():
             framework_id = Framework.query.filter(
