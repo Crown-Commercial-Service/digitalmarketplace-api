@@ -279,6 +279,25 @@ class TestFrameworkStats(BaseApplicationTest):
             ]
         })
 
+    def test_stats_handles_null_declarations(self):
+        self.setup_data('g-cloud-7')
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == 'g-cloud-7').first()
+            db.session.query(
+                SupplierFramework
+            ).filter(
+                SupplierFramework.framework_id == framework.id,
+                SupplierFramework.supplier_id.in_([0, 1])
+            ).update({
+                SupplierFramework.declaration: None
+            }, synchronize_session=False)
+
+            db.session.commit()
+
+        response = self.client.get('/frameworks/g-cloud-7/stats')
+
+        assert response.status_code == 200
+
 
 class TestGetFrameworkSuppliers(BaseApplicationTest):
     def setup(self):
