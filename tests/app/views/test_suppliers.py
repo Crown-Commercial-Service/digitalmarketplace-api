@@ -842,6 +842,22 @@ class TestSetSupplierDeclarations(BaseApplicationTest):
                 .find_by_supplier_and_framework(0, 'test-open')
             assert_equal(answers.declaration['question'], 'answer')
 
+    def test_add_null_declaration_should_result_in_dict(self):
+        with self.app.app_context():
+            response = self.client.put(
+                '/suppliers/0/frameworks/test-open/declaration',
+                data=json.dumps({
+                    'updated_by': 'testing',
+                    'declaration': None
+                }),
+                content_type='application/json')
+
+            assert response.status_code == 201
+            answers = SupplierFramework \
+                .find_by_supplier_and_framework(0, 'test-open')
+            assert isinstance(answers.declaration, dict)
+
+
     def test_update_existing_declaration(self):
         with self.app.app_context():
             framework_id = Framework.query.filter(
@@ -1178,6 +1194,7 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
             data = json.loads(response.get_data())
             assert_equal(data['frameworkInterest']['supplierId'], 1)
             assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+            assert isinstance(data['frameworkInterest']['declaration'], dict)
 
     def test_can_not_register_interest_in_not_open_framework_(self):
         with self.app.app_context():
