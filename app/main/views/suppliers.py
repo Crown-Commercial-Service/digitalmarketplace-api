@@ -265,7 +265,7 @@ def set_a_declaration(supplier_id, framework_slug):
     request_data = get_json_from_request()
     json_has_required_keys(request_data, ['declaration', 'updated_by'])
 
-    supplier_framework.declaration = request_data['declaration']
+    supplier_framework.declaration = request_data['declaration'] or {}
     db.session.add(supplier_framework)
     db.session.add(
         AuditEvent(
@@ -361,7 +361,8 @@ def register_framework_interest(supplier_id, framework_slug):
 
     interest_record = SupplierFramework(
         supplier_id=supplier.supplier_id,
-        framework_id=framework.id
+        framework_id=framework.id,
+        declaration={}
     )
     audit_event = AuditEvent(
         audit_type=AuditTypes.register_framework_interest,

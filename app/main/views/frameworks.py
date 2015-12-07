@@ -1,7 +1,7 @@
 from flask import jsonify, abort, request
 from sqlalchemy.types import String
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import func, orm, case
+from sqlalchemy import func, orm, case, cast
 import datetime
 
 from dmutils.audit import AuditTypes
@@ -101,7 +101,8 @@ def get_framework_stats(framework_slug):
             ).group_by(
                 DraftService.status, Lot.slug, is_declaration_complete
             ).filter(
-                DraftService.framework_id == framework.id
+                DraftService.framework_id == framework.id,
+                cast(SupplierFramework.declaration, String) != 'null'
             ).all()
         ),
         'supplier_users': label_columns(
@@ -126,7 +127,8 @@ def get_framework_stats(framework_slug):
             ).outerjoin(
                 drafts_alias
             ).filter(
-                SupplierFramework.framework_id == framework.id
+                SupplierFramework.framework_id == framework.id,
+                cast(SupplierFramework.declaration, String) != 'null'
             ).group_by(
                 SupplierFramework.declaration['status'].cast(String), drafts_alias.supplier_id.isnot(None)
             ).all()
