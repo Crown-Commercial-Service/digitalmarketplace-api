@@ -18,12 +18,14 @@ AUDIT_OBJECT_TYPES = {
     "suppliers": models.Supplier,
     "services": models.Service,
     "frameworks": models.Framework,
+    "users": models.User,
 }
 
 AUDIT_OBJECT_ID_FIELDS = {
     "suppliers": models.Supplier.supplier_id,
     "services": models.Service.service_id,
     "frameworks": models.Framework.slug,
+    "users": models.User.id,
 }
 
 
