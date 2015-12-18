@@ -1042,10 +1042,18 @@ class TestUsersExport(BaseUserTest):
     def _post_framework_agreement(self):
         self._post_framework_interest({'frameworkInterest': {'agreementReturned': True}})
 
+    def _set_framework_status(self, status='pending'):
+        with self.app.app_context():
+            self.set_framework_status(self.framework_slug, status)
+
     def _return_users_export(self):
         response = self.client.get('/users/export/{}'.format(self.framework_slug))
         assert response.status_code == 200
         return response
+
+    def _return_users_export_after_setting_framework_status(self, status='pending'):
+        self._set_framework_status(status)
+        return self._return_users_export()
 
     def _setup(self, post_supplier=True, post_users=True, register_supplier_with_framework=True):
         if post_supplier:
@@ -1058,47 +1066,46 @@ class TestUsersExport(BaseUserTest):
     def _assert_things_about_export_response(self, row, parameters=None):
         _parameters = {
             'application_result': 'fail',
+            'application_status': 'no_application',
             'declaration_status': 'unstarted',
             'framework_agreement': False,
-            'submitted_drafts': 0
         }
 
         if parameters is not None and isinstance(parameters, dict):
             _parameters.update(parameters)
 
-        assert row['user_id'] in [user['id'] for user in self.users]
         assert row['user_email'] in [user['emailAddress'] for user in self.users]
-        assert row['framework_slug'] == self.framework_slug
+        assert row['user_name'] in [user['name'] for user in self.users]
         assert row['supplier_id'] == self.supplier_id
-        assert row['supplier_name'] == self.supplier['name']
         assert row['application_result'] == _parameters['application_result']
+        assert row['application_status'] == _parameters['application_status']
         assert row['declaration_status'] == _parameters['declaration_status']
         assert row['framework_agreement'] == _parameters['framework_agreement']
-        assert row['submitted_drafts'] == _parameters['submitted_drafts']
 
     ############################################################################################
 
     # Test no suppliers
     def test_get_response_when_no_suppliers(self):
-        data = json.loads(self._return_users_export().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert data == []
 
     # Test 1 supplier no users
     def test_get_response_when_no_users(self):
         self._setup(post_users=False, register_supplier_with_framework=False)
-        data = json.loads(self._return_users_export().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert data == []
 
     # Test supplier not registered on the framework
     def test_get_response_when_not_registered_with_framework(self):
         self._setup(register_supplier_with_framework=False)
-        data = json.loads(self._return_users_export().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert data == []
 
     # Test get back users for supplier who has unstarted declaration no drafts
     def test_response_unstarted_declaration_no_drafts(self):
         self._setup()
-        data = json.loads(self._return_users_export().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        print(data)
         assert len(data) == len(self.users)
         for datum in data:
             self._assert_things_about_export_response(datum)
@@ -1107,40 +1114,26 @@ class TestUsersExport(BaseUserTest):
     def test_response_unstarted_declaration_one_draft(self):
         self._setup()
         self._post_complete_draft_service()
-        data = json.loads(self._return_users_export().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_export_response(datum, parameters={'submitted_drafts': 1})
-
-    # Test get back users for supplier who has started declaration no drafts
-    def test_response_started_declaration_no_drafts(self):
-        self._setup()
-        self._put_incomplete_declaration()
-        data = json.loads(self._return_users_export().get_data())["users"]
-        assert len(data) == len(self.users)
-        for datum in data:
-            self._assert_things_about_export_response(datum, parameters={'declaration_status': 'started'})
+            self._assert_things_about_export_response(datum)
 
     # Test get back users for supplier who has started declaration 1 draft
     def test_response_started_declaration_one_draft(self):
         self._setup()
         self._put_incomplete_declaration()
         self._post_complete_draft_service()
-        data = json.loads(self._return_users_export().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_export_response(
-                datum,
-                parameters={
-                    'declaration_status': 'started',
-                    'submitted_drafts': 1}
-            )
+            self._assert_things_about_export_response(datum, parameters={'declaration_status': 'started'})
 
     # Test get back users for supplier who has completed declaration no drafts
     def test_response_complete_declaration_no_drafts(self):
         self._setup()
         self._put_complete_declaration()
-        data = json.loads(self._return_users_export().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={'declaration_status': 'complete'})
@@ -1150,15 +1143,28 @@ class TestUsersExport(BaseUserTest):
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
-        data = json.loads(self._return_users_export().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_export_response(
-                datum,
-                parameters={
-                    'declaration_status': 'complete',
-                    'submitted_drafts': 1}
-            )
+            self._assert_things_about_export_response(datum, parameters={
+                'declaration_status': 'complete',
+                'application_status': 'application'
+            })
+
+    # Test get back users for supplier who has completed declaration 1 draft but framework is still 'open'
+    def test_response_complete_declaration_one_draft_while_framework_still_open(self):
+        self._setup()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        data = json.loads(self._return_users_export_after_setting_framework_status(status='open').get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_export_response(datum, parameters={
+                'declaration_status': 'complete',
+                'application_status': '',
+                'application_result': '',
+                'framework_agreement': ''
+            })
 
     # Test get back users for supplier who has completed declaration + framework agreement
     def test_response_submitted_framework_agreement_on_framework(self):
@@ -1166,16 +1172,14 @@ class TestUsersExport(BaseUserTest):
         self._put_complete_declaration()
         self._post_complete_draft_service()
         self._post_framework_agreement()
-        data = json.loads(self._return_users_export().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_export_response(
-                datum,
-                parameters={
-                    'declaration_status': 'complete',
-                    'submitted_drafts': 1,
-                    'framework_agreement': True}
-            )
+            self._assert_things_about_export_response(datum, parameters={
+                'declaration_status': 'complete',
+                'application_status': 'application',
+                'framework_agreement': True
+            })
 
     # Test get back users bad framework name
     def test_400_response_if_bad_framework_name(self):

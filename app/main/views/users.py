@@ -218,7 +218,8 @@ def update_user(user_id):
 def export_users_for_framework(framework_slug):
 
     # 400 if framework slug is invalid
-    if not Framework.query.filter(Framework.slug == framework_slug).first():
+    framework = Framework.query.filter(Framework.slug == framework_slug).first()
+    if not framework:
         abort(400, 'invalid framework')
 
     supplier_frameworks_and_suppliers_and_users = db.session.query(
@@ -240,35 +241,42 @@ def export_users_for_framework(framework_slug):
 
     for sf, s, u in supplier_frameworks_and_suppliers_and_users:
 
-        # get number of completed draft services per supplier
-        # `application_status` is based on a complete declaration and at least one completed draft service
-        if sf.supplier_id not in submitted_draft_counts_per_supplier.keys():
-            submitted_draft_counts_per_supplier[sf.supplier_id] = db.session.query(
-                func.count()
-            ).filter(
-                DraftService.supplier_id == sf.supplier_id
-            ).filter(
-                DraftService.framework_id == sf.framework_id
-            ).filter(
-                DraftService.status == 'submitted'
-            ).scalar()
-
+        # always get the declaration status
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
-        submitted_draft_count = submitted_draft_counts_per_supplier[sf.supplier_id]
-        application_status = \
-            'application' if submitted_draft_count and declaration_status == 'complete' else 'no_application'
+        application_status = ''
+        application_result = ''
+        framework_agreement = ''
+
+        # if framework is pending, live, or expired
+        if framework.status != 'open':
+
+            # get number of completed draft services per supplier
+            # `application_status` is based on a complete declaration and at least one completed draft service
+            if sf.supplier_id not in submitted_draft_counts_per_supplier.keys():
+                submitted_draft_counts_per_supplier[sf.supplier_id] = db.session.query(
+                    func.count()
+                ).filter(
+                    DraftService.supplier_id == sf.supplier_id
+                ).filter(
+                    DraftService.framework_id == sf.framework_id
+                ).filter(
+                    DraftService.status == 'submitted'
+                ).scalar()
+
+            submitted_draft_count = submitted_draft_counts_per_supplier[sf.supplier_id]
+            application_status = \
+                'application' if submitted_draft_count and declaration_status == 'complete' else 'no_application'
+            application_result = 'pass' if sf.on_framework else 'fail'
+            framework_agreement = bool(sf.agreement_returned_at)
 
         user_rows.append({
-            'user_id': u.id,
             'user_email': u.email_address,
+            'user_name': u.name,
             'supplier_id': s.supplier_id,
-            'supplier_name': s.name,
-            'framework_slug': sf.framework.slug,
             'declaration_status': declaration_status,
-            'submitted_drafts': submitted_draft_count,
             'application_status': application_status,
-            'framework_agreement': bool(sf.agreement_returned_at),
-            'application_result': 'pass' if sf.on_framework else 'fail'
+            'framework_agreement': framework_agreement,
+            'application_result': application_result
         })
 
     return jsonify(users=[user for user in user_rows])
