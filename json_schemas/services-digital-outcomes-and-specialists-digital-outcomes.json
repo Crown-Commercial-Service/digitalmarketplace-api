@@ -96,6 +96,7 @@
           "Wales",
           "London",
           "South East England",
+          "South West England",
           "West England",
           "Northern Ireland"
         ]
@@ -130,9 +131,9 @@
           "Firewall audit",
           "Incident response and forensics",
           "Infrastructure review",
+          "IT health check",
           "Risk management",
           "Security policy",
-          "IT health check",
           "Threat modelling",
           "Vulnerability and penetration testing"
         ]
@@ -177,8 +178,8 @@
           "Incident management",
           "Monitoring",
           "Network administration",
-          "Systems administration",
           "Service desk",
+          "Systems administration",
           "Tooling"
         ]
       },
