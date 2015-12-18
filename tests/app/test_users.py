@@ -1089,19 +1089,19 @@ class TestUsersExport(BaseUserTest):
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert data == []
 
-    # Test 1 supplier no users
+    # Test one supplier with no users
     def test_get_response_when_no_users(self):
         self._setup(post_users=False, register_supplier_with_framework=False)
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert data == []
 
-    # Test supplier not registered on the framework
+    # Test one supplier not registered on the framework
     def test_get_response_when_not_registered_with_framework(self):
         self._setup(register_supplier_with_framework=False)
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert data == []
 
-    # Test get back users for supplier who has unstarted declaration no drafts
+    # Test users for supplier with unstarted declaration no drafts
     def test_response_unstarted_declaration_no_drafts(self):
         self._setup()
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
@@ -1110,7 +1110,7 @@ class TestUsersExport(BaseUserTest):
         for datum in data:
             self._assert_things_about_export_response(datum)
 
-    # Test get back users for supplier who has unstarted declaration 1 draft
+    # Test users for supplier with unstarted declaration one draft
     def test_response_unstarted_declaration_one_draft(self):
         self._setup()
         self._post_complete_draft_service()
@@ -1119,7 +1119,7 @@ class TestUsersExport(BaseUserTest):
         for datum in data:
             self._assert_things_about_export_response(datum)
 
-    # Test get back users for supplier who has started declaration 1 draft
+    # Test users for supplier with started declaration one draft
     def test_response_started_declaration_one_draft(self):
         self._setup()
         self._put_incomplete_declaration()
@@ -1129,7 +1129,7 @@ class TestUsersExport(BaseUserTest):
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={'declaration_status': 'started'})
 
-    # Test get back users for supplier who has completed declaration no drafts
+    # Test users for supplier with completed declaration no drafts
     def test_response_complete_declaration_no_drafts(self):
         self._setup()
         self._put_complete_declaration()
@@ -1138,7 +1138,7 @@ class TestUsersExport(BaseUserTest):
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={'declaration_status': 'complete'})
 
-    # Test get back users for supplier who has completed declaration 1 draft
+    # Test users for supplier with completed declaration one draft
     def test_response_complete_declaration_one_draft(self):
         self._setup()
         self._put_complete_declaration()
@@ -1151,7 +1151,7 @@ class TestUsersExport(BaseUserTest):
                 'application_status': 'application'
             })
 
-    # Test get back users for supplier who has completed declaration 1 draft but framework is still 'open'
+    # Test users for supplier with completed declaration one draft but framework still open
     def test_response_complete_declaration_one_draft_while_framework_still_open(self):
         self._setup()
         self._put_complete_declaration()
@@ -1166,7 +1166,7 @@ class TestUsersExport(BaseUserTest):
                 'framework_agreement': ''
             })
 
-    # Test get back users for supplier who has completed declaration + framework agreement
+    # Test users for supplier with completed declaration one draft and framework agreement
     def test_response_submitted_framework_agreement_on_framework(self):
         self._setup()
         self._put_complete_declaration()
@@ -1181,8 +1181,15 @@ class TestUsersExport(BaseUserTest):
                 'framework_agreement': True
             })
 
-    # Test get back users bad framework name
+    # Test 400 if bad framework name
     def test_400_response_if_bad_framework_name(self):
         self._setup()
         response = self.client.get('/users/export/{}'.format('cyber-outcomes-and-cyber-specialists'))
+        assert response.status_code == 400
+
+    # Test 400 if bad framework status
+    def test_400_response_if_framework_is_coming(self):
+        self._setup()
+        self._set_framework_status('coming')
+        response = self.client.get('/users/export/{}'.format(self.framework_slug))
         assert response.status_code == 400

@@ -222,6 +222,9 @@ def export_users_for_framework(framework_slug):
     if not framework:
         abort(400, 'invalid framework')
 
+    if framework.status == 'coming':
+        abort(400, 'framework not yet open')
+
     supplier_frameworks_and_suppliers_and_users = db.session.query(
         SupplierFramework, Supplier, User
     ).join(
