@@ -214,8 +214,8 @@ def update_user(user_id):
         abort(400, "Could not update user with: {0}".format(user_update))
 
 
-@main.route('/users/csv/<framework_slug>', methods=['GET'])
-def list_all_supplier_users_who_have_applied_for_a_given_framework(framework_slug):
+@main.route('/users/export/<framework_slug>', methods=['GET'])
+def export_users_for_framework(framework_slug):
 
     # 400 if framework slug is invalid
     if not Framework.query.filter(Framework.slug == framework_slug).first():

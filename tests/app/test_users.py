@@ -950,12 +950,12 @@ class TestUsersGet(BaseUserTest):
             response.get_data(as_text=True))
 
 
-class TestUsersCSV(BaseUserTest):
+class TestUsersExport(BaseUserTest):
     framework_slug = None
     updater_json = None
 
     def setup(self):
-        super(TestUsersCSV, self).setup()
+        super(TestUsersExport, self).setup()
         with self.app.app_context():
             self.framework_slug = 'digital-outcomes-and-specialists'
             self.set_framework_status(self.framework_slug, 'open')
@@ -1042,8 +1042,8 @@ class TestUsersCSV(BaseUserTest):
     def _post_framework_agreement(self):
         self._post_framework_interest({'frameworkInterest': {'agreementReturned': True}})
 
-    def _return_users_csv_response(self):
-        response = self.client.get('/users/csv/{}'.format(self.framework_slug))
+    def _return_users_export(self):
+        response = self.client.get('/users/export/{}'.format(self.framework_slug))
         assert response.status_code == 200
         return response
 
@@ -1055,7 +1055,7 @@ class TestUsersCSV(BaseUserTest):
         if register_supplier_with_framework:
             self._register_supplier_with_framework()
 
-    def _assert_things_about_csv_response(self, row, parameters=None):
+    def _assert_things_about_export_response(self, row, parameters=None):
         _parameters = {
             'application_result': 'fail',
             'declaration_status': 'unstarted',
@@ -1080,56 +1080,56 @@ class TestUsersCSV(BaseUserTest):
 
     # Test no suppliers
     def test_get_response_when_no_suppliers(self):
-        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        data = json.loads(self._return_users_export().get_data())["users"]
         assert data == []
 
     # Test 1 supplier no users
     def test_get_response_when_no_users(self):
         self._setup(post_users=False, register_supplier_with_framework=False)
-        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        data = json.loads(self._return_users_export().get_data())["users"]
         assert data == []
 
     # Test supplier not registered on the framework
     def test_get_response_when_not_registered_with_framework(self):
         self._setup(register_supplier_with_framework=False)
-        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        data = json.loads(self._return_users_export().get_data())["users"]
         assert data == []
 
     # Test get back users for supplier who has unstarted declaration no drafts
     def test_response_unstarted_declaration_no_drafts(self):
         self._setup()
-        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        data = json.loads(self._return_users_export().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_csv_response(datum)
+            self._assert_things_about_export_response(datum)
 
     # Test get back users for supplier who has unstarted declaration 1 draft
     def test_response_unstarted_declaration_one_draft(self):
         self._setup()
         self._post_complete_draft_service()
-        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        data = json.loads(self._return_users_export().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_csv_response(datum, parameters={'submitted_drafts': 1})
+            self._assert_things_about_export_response(datum, parameters={'submitted_drafts': 1})
 
     # Test get back users for supplier who has started declaration no drafts
     def test_response_started_declaration_no_drafts(self):
         self._setup()
         self._put_incomplete_declaration()
-        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        data = json.loads(self._return_users_export().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_csv_response(datum, parameters={'declaration_status': 'started'})
+            self._assert_things_about_export_response(datum, parameters={'declaration_status': 'started'})
 
     # Test get back users for supplier who has started declaration 1 draft
     def test_response_started_declaration_one_draft(self):
         self._setup()
         self._put_incomplete_declaration()
         self._post_complete_draft_service()
-        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        data = json.loads(self._return_users_export().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_csv_response(
+            self._assert_things_about_export_response(
                 datum,
                 parameters={
                     'declaration_status': 'started',
@@ -1140,20 +1140,20 @@ class TestUsersCSV(BaseUserTest):
     def test_response_complete_declaration_no_drafts(self):
         self._setup()
         self._put_complete_declaration()
-        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        data = json.loads(self._return_users_export().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_csv_response(datum, parameters={'declaration_status': 'complete'})
+            self._assert_things_about_export_response(datum, parameters={'declaration_status': 'complete'})
 
     # Test get back users for supplier who has completed declaration 1 draft
     def test_response_complete_declaration_one_draft(self):
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
-        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        data = json.loads(self._return_users_export().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_csv_response(
+            self._assert_things_about_export_response(
                 datum,
                 parameters={
                     'declaration_status': 'complete',
@@ -1166,10 +1166,10 @@ class TestUsersCSV(BaseUserTest):
         self._put_complete_declaration()
         self._post_complete_draft_service()
         self._post_framework_agreement()
-        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        data = json.loads(self._return_users_export().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_csv_response(
+            self._assert_things_about_export_response(
                 datum,
                 parameters={
                     'declaration_status': 'complete',
@@ -1178,7 +1178,7 @@ class TestUsersCSV(BaseUserTest):
             )
 
     # Test get back users bad framework name
-    def test_404_response_if_bad_framework_name(self):
+    def test_400_response_if_bad_framework_name(self):
         self._setup()
-        response = self.client.get('/users/csv/{}'.format('cyber-outcomes-and-cyber-specialists'))
+        response = self.client.get('/users/export/{}'.format('cyber-outcomes-and-cyber-specialists'))
         assert response.status_code == 400
