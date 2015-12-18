@@ -8,44 +8,76 @@ from .helpers import BaseApplicationTest, JSONUpdateTestMixin
 from dmutils.formats import DATETIME_FORMAT
 
 
-class TestUsersAuth(BaseApplicationTest):
+class BaseUserTest(BaseApplicationTest):
+    supplier = None
+    supplier_id = None
+    users = None
+
+    def setup(self):
+        super(BaseUserTest, self).setup()
+        payload = self.load_example_listing("Supplier")
+        self.supplier = payload
+        self.supplier_id = payload['id']
+        self.users = []
+
+    def _post_supplier(self):
+        response = self.client.put(
+            '/suppliers/{}'.format(self.supplier_id),
+            data=json.dumps({'suppliers': self.supplier}),
+            content_type='application/json')
+
+        assert response.status_code == 201
+
+    def _post_user(self, user):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({'users': user}),
+            content_type='application/json')
+
+        assert response.status_code == 201
+        self.users.append(json.loads(response.get_data())["users"])
+
+    def _return_post_login(self, auth_users=None, status_code=200):
+        _auth_users = {
+            'emailAddress': 'joeblogs@email.com',
+            'password': '1234567890'
+        }
+        if auth_users is not None and isinstance(auth_users, dict):
+            _auth_users.update(auth_users)
+
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({'authUsers': _auth_users}),
+            content_type='application/json')
+        assert response.status_code == status_code
+        return response
+
+
+class TestUsersAuth(BaseUserTest):
     def create_user(self):
         with self.app.app_context():
-            response = self.client.post(
-                '/users',
-                data=json.dumps({
-                    'users': {
-                        'emailAddress': 'joeblogs@email.com',
-                        'password': '1234567890',
-                        'role': 'buyer',
-                        'name': 'joe bloggs'}}),
-                content_type='application/json')
-            assert_equal(response.status_code, 201)
+            user = {
+                'emailAddress': 'joeblogs@email.com',
+                'password': '1234567890',
+                'role': 'buyer',
+                'name': 'joe bloggs'
+            }
+            self._post_user(user)
 
     def valid_login(self):
-        return self.client.post(
-            '/users/auth',
-            data=json.dumps({
-                'authUsers': {
-                    'emailAddress': 'joeblogs@email.com',
-                    'password': '1234567890'}}),
-            content_type='application/json')
+        return self._return_post_login()
 
     def invalid_password(self):
-        return self.client.post(
-            '/users/auth',
-            data=json.dumps({
-                'authUsers': {
-                    'emailAddress': 'joeblogs@email.com',
-                    'password': 'invalid'}}),
-            content_type='application/json')
+        return self._return_post_login(
+            auth_users={'password': 'invalid'},
+            status_code=403
+        )
 
     def test_should_validate_credentials(self):
         self.create_user()
         with self.app.app_context():
             response = self.valid_login()
 
-            assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
             assert_equal(data['emailAddress'], 'joeblogs@email.com')
 
@@ -148,9 +180,7 @@ class TestUsersAuth(BaseApplicationTest):
             user.failed_login_count = 1
             db.session.add(user)
             db.session.commit()
-            response = self.valid_login()
-
-            assert_equal(response.status_code, 403)
+            self._return_post_login(status_code=403)
 
 
 class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
@@ -826,50 +856,33 @@ class TestUsersUpdate(BaseApplicationTest):
             assert_equal(data['emailAddress'], 'myshinynew@email.address')
 
 
-class TestUsersGet(BaseApplicationTest):
+class TestUsersGet(BaseUserTest):
     def setup(self):
         super(TestUsersGet, self).setup()
         with self.app.app_context():
-            payload = self.load_example_listing("Supplier")
-            self.supplier = payload
-            self.supplier_id = payload['id']
+            self._post_supplier()
+            self._post_users()
 
-            response = self.client.put(
-                '/suppliers/{}'.format(self.supplier_id),
-                data=json.dumps({
-                    'suppliers': self.supplier
-                }),
-                content_type='application/json')
-            assert_equal(response.status_code, 201)
+    def _post_users(self):
+        users = [
+            {
+                "emailAddress": "j@examplecompany.biz",
+                "name": "John Example",
+                "password": "minimum10characterpassword",
+                "role": "supplier",
+                "supplierId": self.supplier_id
+            },
+            {
+                "emailAddress": "don@don.com",
+                "name": "Don",
+                "password": "minimum10characterpassword",
+                "role": "supplier",
+                "supplierId": self.supplier_id
+            }
+        ]
 
-            users = [
-                {
-                    "emailAddress": "j@examplecompany.biz",
-                    "name": "John Example",
-                    "password": "minimum10characterpassword",
-                    "role": "supplier",
-                    "supplierId": self.supplier_id
-                },
-                {
-                    "emailAddress": "don@don.com",
-                    "name": "Don",
-                    "password": "minimum10characterpassword",
-                    "role": "supplier",
-                    "supplierId": self.supplier_id
-                }
-            ]
-            self.users = []
-
-            for user in users:
-                response = self.client.post(
-                    '/users',
-                    data=json.dumps({
-                        'users': user
-                    }),
-                    content_type='application/json')
-
-                assert_equal(response.status_code, 201)
-                self.users.append(json.loads(response.get_data())["users"])
+        for user in users:
+            self._post_user(user)
 
     @staticmethod
     def _assert_things_about_users(user_from_api, user_to_compare_to):
@@ -934,5 +947,238 @@ class TestUsersGet(BaseApplicationTest):
         assert_equal(response.status_code, 404)
         assert_in(
             "supplier_id '{}' not found".format(non_existent_supplier),
-            response.get_data(as_text=True)
-        )
+            response.get_data(as_text=True))
+
+
+class TestUsersCSV(BaseUserTest):
+    framework_slug = None
+    updater_json = None
+
+    def setup(self):
+        super(TestUsersCSV, self).setup()
+        with self.app.app_context():
+            self.framework_slug = 'digital-outcomes-and-specialists'
+            self.set_framework_status(self.framework_slug, 'open')
+            self.updater_json = {'update_details': {'updated_by': 'Paul'}}
+
+    def _post_users(self):
+        users = [
+            {
+                "emailAddress": "j@examplecompany.biz",
+                "name": "John Example",
+                "password": "minimum10characterpassword",
+                "role": "supplier",
+                "supplierId": self.supplier_id
+            },
+            {
+                "emailAddress": "don@don.com",
+                "name": "Don",
+                "password": "minimum10characterpassword",
+                "role": "supplier",
+                "supplierId": self.supplier_id
+            }
+        ]
+
+        for user in users:
+            self._post_user(user)
+
+    def _register_supplier_with_framework(self):
+        response = self.client.put(
+            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        assert response.status_code == 201
+
+    def _put_declaration(self, status):
+        data = {'declaration': {'status': status}}
+        data.update(self.updater_json['update_details'])
+
+        response = self.client.put(
+            '/suppliers/{}/frameworks/{}/declaration'.format(self.supplier_id, self.framework_slug),
+            data=json.dumps(data),
+            content_type='application/json')
+
+        assert response.status_code == 201
+
+    def _put_complete_declaration(self):
+        self._put_declaration(status='complete')
+
+    def _put_incomplete_declaration(self):
+        self._put_declaration(status='started')
+
+    def _post_complete_draft_service(self):
+        payload = self.load_example_listing("DOS-digital-specialist")
+
+        self.draft_json = {'services': payload}
+        self.draft_json['services']['supplierId'] = self.supplier_id
+        self.draft_json['services']['frameworkSlug'] = self.framework_slug
+        self.draft_json.update(self.updater_json)
+
+        response = self.client.post(
+            '/draft-services',
+            data=json.dumps(self.draft_json),
+            content_type='application/json')
+
+        assert response.status_code == 201
+
+        draft_id = json.loads(response.get_data())['services']['id']
+        complete = self.client.post(
+            '/draft-services/{}/complete'.format(draft_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        assert complete.status_code == 200
+
+    def _post_framework_interest(self, data):
+        data.update(self.updater_json)
+        response = self.client.post(
+            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug),
+            data=json.dumps(data),
+            content_type='application/json')
+
+        assert response.status_code == 200
+
+    def _post_framework_agreement(self):
+        self._post_framework_interest({'frameworkInterest': {'agreementReturned': True}})
+
+    def _return_users_csv_response(self):
+        response = self.client.get('/users/csv/{}'.format(self.framework_slug))
+        assert response.status_code == 200
+        return response
+
+    def _setup(self, post_supplier=True, post_users=True, register_supplier_with_framework=True):
+        if post_supplier:
+            self._post_supplier()
+        if post_users:
+            self._post_users()
+        if register_supplier_with_framework:
+            self._register_supplier_with_framework()
+
+    def _assert_things_about_csv_response(self, row, parameters=None):
+        _parameters = {
+            'application_result': 'fail',
+            'declaration_status': 'unstarted',
+            'framework_agreement': False,
+            'submitted_drafts': 0
+        }
+
+        if parameters is not None and isinstance(parameters, dict):
+            _parameters.update(parameters)
+
+        assert row['user_id'] in [user['id'] for user in self.users]
+        assert row['user_email'] in [user['emailAddress'] for user in self.users]
+        assert row['framework_slug'] == self.framework_slug
+        assert row['supplier_id'] == self.supplier_id
+        assert row['supplier_name'] == self.supplier['name']
+        assert row['application_result'] == _parameters['application_result']
+        assert row['declaration_status'] == _parameters['declaration_status']
+        assert row['framework_agreement'] == _parameters['framework_agreement']
+        assert row['submitted_drafts'] == _parameters['submitted_drafts']
+
+    ############################################################################################
+
+    # Test no suppliers
+    def test_get_response_when_no_suppliers(self):
+        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        assert data == []
+
+    # Test 1 supplier no users
+    def test_get_response_when_no_users(self):
+        self._setup(post_users=False, register_supplier_with_framework=False)
+        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        assert data == []
+
+    # Test supplier not registered on the framework
+    def test_get_response_when_not_registered_with_framework(self):
+        self._setup(register_supplier_with_framework=False)
+        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        assert data == []
+
+    # Test get back users for supplier who has unstarted declaration no drafts
+    def test_response_unstarted_declaration_no_drafts(self):
+        self._setup()
+        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_csv_response(datum)
+
+    # Test get back users for supplier who has unstarted declaration 1 draft
+    def test_response_unstarted_declaration_one_draft(self):
+        self._setup()
+        self._post_complete_draft_service()
+        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_csv_response(datum, parameters={'submitted_drafts': 1})
+
+    # Test get back users for supplier who has started declaration no drafts
+    def test_response_started_declaration_no_drafts(self):
+        self._setup()
+        self._put_incomplete_declaration()
+        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_csv_response(datum, parameters={'declaration_status': 'started'})
+
+    # Test get back users for supplier who has started declaration 1 draft
+    def test_response_started_declaration_one_draft(self):
+        self._setup()
+        self._put_incomplete_declaration()
+        self._post_complete_draft_service()
+        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_csv_response(
+                datum,
+                parameters={
+                    'declaration_status': 'started',
+                    'submitted_drafts': 1}
+            )
+
+    # Test get back users for supplier who has completed declaration no drafts
+    def test_response_complete_declaration_no_drafts(self):
+        self._setup()
+        self._put_complete_declaration()
+        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_csv_response(datum, parameters={'declaration_status': 'complete'})
+
+    # Test get back users for supplier who has completed declaration 1 draft
+    def test_response_complete_declaration_one_draft(self):
+        self._setup()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_csv_response(
+                datum,
+                parameters={
+                    'declaration_status': 'complete',
+                    'submitted_drafts': 1}
+            )
+
+    # Test get back users for supplier who has completed declaration + framework agreement
+    def test_response_submitted_framework_agreement_on_framework(self):
+        self._setup()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_framework_agreement()
+        data = json.loads(self._return_users_csv_response().get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_csv_response(
+                datum,
+                parameters={
+                    'declaration_status': 'complete',
+                    'submitted_drafts': 1,
+                    'framework_agreement': True}
+            )
+
+    # Test get back users bad framework name
+    def test_404_response_if_bad_framework_name(self):
+        self._setup()
+        response = self.client.get('/users/csv/{}'.format('cyber-outcomes-and-cyber-specialists'))
+        assert response.status_code == 400
