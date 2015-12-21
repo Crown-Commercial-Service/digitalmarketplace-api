@@ -228,15 +228,9 @@ def export_users_for_framework(framework_slug):
     supplier_frameworks_and_suppliers_and_users = db.session.query(
         SupplierFramework, Supplier, User
     ).join(
-        Framework
+        Supplier, User, Framework
     ).filter(
         Framework.slug == framework_slug
-    ).filter(
-        SupplierFramework.framework_id == Framework.id
-    ).filter(
-        SupplierFramework.supplier_id == Supplier.supplier_id
-    ).filter(
-        User.supplier_id == Supplier.supplier_id
     ).all()
 
     submitted_draft_counts_per_supplier = {}
@@ -259,10 +253,8 @@ def export_users_for_framework(framework_slug):
                 submitted_draft_counts_per_supplier[sf.supplier_id] = db.session.query(
                     func.count()
                 ).filter(
-                    DraftService.supplier_id == sf.supplier_id
-                ).filter(
-                    DraftService.framework_id == sf.framework_id
-                ).filter(
+                    DraftService.supplier_id == sf.supplier_id,
+                    DraftService.framework_id == sf.framework_id,
                     DraftService.status == 'submitted'
                 ).scalar()
 
