@@ -1,11 +1,12 @@
 from datetime import datetime
 from dmutils.audit import AuditTypes
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, DataError
 from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ... import db, encryption
-from ...models import User, AuditEvent, Supplier
+from ...models import User, AuditEvent, Supplier, Framework, SupplierFramework, DraftService
 from ...utils import get_json_from_request, json_has_required_keys, \
     json_has_matching_id, pagination_links, get_valid_page_or_1
 from ...service_utils import validate_and_return_updater_request
@@ -211,6 +212,69 @@ def update_user(user_id):
     except (IntegrityError, DataError):
         db.session.rollback()
         abort(400, "Could not update user with: {0}".format(user_update))
+
+
+@main.route('/users/export/<framework_slug>', methods=['GET'])
+def export_users_for_framework(framework_slug):
+
+    # 400 if framework slug is invalid
+    framework = Framework.query.filter(Framework.slug == framework_slug).first()
+    if not framework:
+        abort(400, 'invalid framework')
+
+    if framework.status == 'coming':
+        abort(400, 'framework not yet open')
+
+    supplier_frameworks_and_suppliers_and_users = db.session.query(
+        SupplierFramework, Supplier, User
+    ).join(
+        Supplier, User, Framework
+    ).filter(
+        Framework.slug == framework_slug
+    ).all()
+
+    submitted_draft_counts_per_supplier = {}
+    user_rows = []
+
+    for sf, s, u in supplier_frameworks_and_suppliers_and_users:
+
+        # always get the declaration status
+        declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
+        application_status = ''
+        application_result = ''
+        framework_agreement = ''
+
+        # if framework is pending, live, or expired
+        if framework.status != 'open':
+
+            # get number of completed draft services per supplier
+            # `application_status` is based on a complete declaration and at least one completed draft service
+            if sf.supplier_id not in submitted_draft_counts_per_supplier.keys():
+                submitted_draft_counts_per_supplier[sf.supplier_id] = db.session.query(
+                    func.count()
+                ).filter(
+                    DraftService.supplier_id == sf.supplier_id,
+                    DraftService.framework_id == sf.framework_id,
+                    DraftService.status == 'submitted'
+                ).scalar()
+
+            submitted_draft_count = submitted_draft_counts_per_supplier[sf.supplier_id]
+            application_status = \
+                'application' if submitted_draft_count and declaration_status == 'complete' else 'no_application'
+            application_result = 'pass' if sf.on_framework else 'fail'
+            framework_agreement = bool(sf.agreement_returned_at)
+
+        user_rows.append({
+            'user_email': u.email_address,
+            'user_name': u.name,
+            'supplier_id': s.supplier_id,
+            'declaration_status': declaration_status,
+            'application_status': application_status,
+            'framework_agreement': framework_agreement,
+            'application_result': application_result
+        })
+
+    return jsonify(users=[user for user in user_rows])
 
 
 def check_supplier_role(role, supplier_id):
