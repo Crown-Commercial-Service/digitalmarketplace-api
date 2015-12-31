@@ -189,13 +189,15 @@ def get_service(service_id):
         Service.service_id == service_id
     ).first_or_404()
 
-    status_update_audit_event = AuditEvent.query.filter(
-        AuditEvent.object == service,
-        AuditEvent.type == AuditTypes.update_service_status.value,
-    ).order_by(desc(AuditEvent.created_at)).first()
+    status_update_audit_event = None
+    if service.status is not 'published':
+        status_update_audit_event = AuditEvent.query.filter(
+            AuditEvent.object == service,
+            AuditEvent.type == AuditTypes.update_service_status.value,
+        ).order_by(desc(AuditEvent.created_at)).first()
 
-    if status_update_audit_event is not None:
-        status_update_audit_event = status_update_audit_event.serialize()
+        if status_update_audit_event is not None:
+            status_update_audit_event = status_update_audit_event.serialize()
 
     return jsonify(
         services=service.serialize(),
