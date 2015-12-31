@@ -4,7 +4,8 @@ import os
 from flask import json
 from nose.tools import assert_equal, assert_in, assert_true, \
     assert_almost_equal, assert_false, assert_is_not_none, assert_not_in
-from app.models import Service, Supplier, ContactInformation, Framework
+from app.models import Service, Supplier, ContactInformation, Framework, \
+    AuditEvent
 import mock
 from app import db, create_app
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
@@ -12,6 +13,7 @@ from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
 from sqlalchemy.exc import IntegrityError
 from dmutils.apiclient import HTTPError
 from dmutils.formats import DATETIME_FORMAT
+from dmutils.audit import AuditTypes
 
 
 class TestListServicesOrdering(BaseApplicationTest):
@@ -1751,3 +1753,70 @@ class TestGetService(BaseApplicationTest):
         assert_equal(data['services']['frameworkSlug'], 'g-cloud-6')
         assert_equal(data['services']['frameworkName'], u'G-Cloud 6')
         assert_equal(data['services']['frameworkStatus'], u'live')
+
+    def test_get_service_returns_empty_last_status_update_audit_if_published(self):
+        # create an audit event for the disabled service
+        with self.app.app_context():
+            service = Service.query.filter(
+                Service.service_id == '123-published-456'
+            ).first()
+            audit_event = AuditEvent(
+                audit_type=AuditTypes.update_service_status,
+                db_object=service,
+                user='joeblogs',
+                data={
+                    "supplierId": 1,
+                    "newArchivedServiceId": 2,
+                    "new_status": "published",
+                    "supplierName": "Supplier 1",
+                    "serviceId": "123-published-456",
+                    "old_status": "disabled",
+                    "oldArchivedServiceId": 1
+                }
+            )
+            db.session.add(audit_event)
+            db.session.commit()
+        response = self.client.get('/services/123-disabled-456')
+        data = json.loads(response.get_data())
+        assert_equal(data['statusUpdateAuditEvent'], None)
+
+        # clean up audit events
+        with self.app.app_context():
+            db.session.delete(audit_event)
+            db.session.commit()
+
+    def test_get_service_returns_last_status_update_audit_if_disabled(self):
+        # create an audit event for the disabled service
+        with self.app.app_context():
+            service = Service.query.filter(
+                Service.service_id == '123-disabled-456'
+            ).first()
+            audit_event = AuditEvent(
+                audit_type=AuditTypes.update_service_status,
+                db_object=service,
+                user='joeblogs',
+                data={
+                    "supplierId": 1,
+                    "newArchivedServiceId": 2,
+                    "new_status": "disabled",
+                    "supplierName": "Supplier 1",
+                    "serviceId": "123-disabled-456",
+                    "old_status": "published",
+                    "oldArchivedServiceId": 1
+                }
+            )
+            db.session.add(audit_event)
+            db.session.commit()
+        response = self.client.get('/services/123-disabled-456')
+        data = json.loads(response.get_data())
+        assert_equal(data['statusUpdateAuditEvent']['type'], 'update_service_status')
+        assert_equal(data['statusUpdateAuditEvent']['user'], 'joeblogs')
+        assert_in('createdAt', data['statusUpdateAuditEvent'])
+        assert_equal(data['statusUpdateAuditEvent']['data']['serviceId'], '123-disabled-456')
+        assert_equal(data['statusUpdateAuditEvent']['data']['old_status'], 'published')
+        assert_equal(data['statusUpdateAuditEvent']['data']['new_status'], 'disabled')
+
+        # clean up audit events
+        with self.app.app_context():
+            db.session.delete(audit_event)
+            db.session.commit()
