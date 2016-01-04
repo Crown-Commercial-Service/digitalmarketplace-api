@@ -46,6 +46,22 @@ class TestAuditEvents(BaseApplicationTest):
         assert_equal(data['auditEvents'][0]['user'], '0')
         assert_equal(data['auditEvents'][0]['data']['request'], 'data')
 
+    def test_should_get_audit_events_sorted(self):
+        self.add_audit_events(5)
+        response = self.client.get('/audit-events')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(data['auditEvents'][0]['user'], '0')
+        assert_equal(data['auditEvents'][4]['user'], '4')
+
+        response = self.client.get('/audit-events?latest_first=true')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(data['auditEvents'][0]['user'], '4')
+        assert_equal(data['auditEvents'][4]['user'], '0')
+
     def test_should_get_audit_event_using_audit_date(self):
         today = datetime.utcnow().strftime("%Y-%m-%d")
 
