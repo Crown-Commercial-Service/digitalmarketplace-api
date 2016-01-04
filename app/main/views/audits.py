@@ -1,7 +1,7 @@
 from flask import jsonify, abort, request, current_app
 from datetime import datetime
 from ...models import AuditEvent
-from sqlalchemy import asc, Date, cast
+from sqlalchemy import asc, desc, Date, cast
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import true, false
 from ...utils import pagination_links, get_valid_page_or_1
@@ -38,7 +38,9 @@ def list_audits():
         abort(400, 'invalid page size supplied')
 
     audits = AuditEvent.query.order_by(
-        asc(AuditEvent.created_at)
+        desc(AuditEvent.created_at)
+        if convert_to_boolean(request.args.get('latest_first'))
+        else asc(AuditEvent.created_at)
     )
 
     audit_date = request.args.get('audit-date', None)
