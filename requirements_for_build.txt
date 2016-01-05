@@ -1,3 +1,0 @@
--r requirements_for_test.txt
--e git+https://github.com/alphagov/digitalmarketplace-deployment#egg=digitalmarketplace-deploy
-requests==2.5.1
