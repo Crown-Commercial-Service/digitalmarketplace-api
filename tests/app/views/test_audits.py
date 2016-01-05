@@ -4,7 +4,7 @@ from datetime import datetime
 from app.models import AuditEvent
 from app import db
 from app.models import Supplier
-from dmutils.audit import AuditTypes
+from dmapiclient.audit import AuditTypes
 
 from nose.tools import assert_equal, assert_in, assert_true, assert_false
 

@@ -23,7 +23,8 @@ from itertools import islice
 from datetime import datetime
 
 from docopt import docopt
-from dmutils import apiclient
+
+import dmapiclient
 
 
 CLEAN_FIELDS = {
@@ -35,7 +36,7 @@ CLEAN_FIELDS = {
 
 def request_suppliers(api_url, api_access_token, page=1):
 
-    data_client = apiclient.DataAPIClient(
+    data_client = dmapiclient.DataAPIClient(
         api_url,
         api_access_token
     )
@@ -67,11 +68,11 @@ class SupplierUpdater(object):
         self.user_password = user_password
 
     def __call__(self, supplier):
-        client = apiclient.DataAPIClient(self.endpoint, self.access_token)
+        client = dmapiclient.DataAPIClient(self.endpoint, self.access_token)
         try:
             client.import_supplier(supplier['id'],
                                    self.clean_data(supplier, supplier['id']))
-        except apiclient.APIError as e:
+        except dmapiclient.APIError as e:
             print("ERROR: {}. {} not imported".format(e.message,
                                                       supplier.get('id')),
                   file=sys.stderr)
@@ -90,7 +91,7 @@ class SupplierUpdater(object):
                 'name': supplier['name'],
                 'supplierId': supplier['id'],
             })
-        except apiclient.APIError as e:
+        except dmapiclient.APIError as e:
             if e.status_code != 409:
                 print("ERROR: {}. Could not create user account for {}".format(
                     e.message, supplier.get('id')), file=sys.stderr)
@@ -137,7 +138,7 @@ def do_index(api_url, api_access_token, source_api_url,
     while suppliers:
         try:
             suppliers = list(islice(iter_suppliers, 0, 100))
-        except apiclient.APIError as e:
+        except dmapiclient.APIError as e:
             print('API request failed: {}'.format(e.message), file=sys.stderr)
             return False
 

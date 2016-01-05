@@ -1,5 +1,5 @@
 from datetime import datetime
-from dmutils.audit import AuditTypes
+from dmapiclient.audit import AuditTypes
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, DataError
 from flask import jsonify, abort, request, current_app

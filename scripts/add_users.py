@@ -10,7 +10,7 @@ Usage:
     add-users.py <data_api_endpoint> <data_api_token> <users_path>
 """
 from docopt import docopt
-from dmutils.apiclient import DataAPIClient
+from dmapiclient import DataAPIClient
 
 import json
 

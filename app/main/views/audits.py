@@ -7,7 +7,7 @@ from sqlalchemy.sql.expression import true, false
 from ...utils import pagination_links, get_valid_page_or_1
 from .. import main
 from ... import db, models
-from dmutils.audit import AuditTypes
+from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
 from ...validation import is_valid_date, is_valid_acknowledged_state
 from ...service_utils import validate_and_return_updater_request

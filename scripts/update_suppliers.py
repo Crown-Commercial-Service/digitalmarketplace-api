@@ -12,7 +12,7 @@ Usage:
     update-suppliers.py <data_api_endpoint> <data_api_token> <updates_path> <updated_by>
 """
 from docopt import docopt
-from dmutils.apiclient import DataAPIClient
+from dmapiclient import DataAPIClient
 
 import json
 

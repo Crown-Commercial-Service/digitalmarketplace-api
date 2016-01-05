@@ -11,7 +11,7 @@ import sys
 import yaml
 
 from docopt import docopt
-from dmutils.apiclient import DataAPIClient, HTTPError
+from dmapiclient import DataAPIClient, HTTPError
 
 
 def get_or_else_none(map_to_check, key):

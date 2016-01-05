@@ -11,9 +11,9 @@ from app import db, create_app
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
 from sqlalchemy.exc import IntegrityError
-from dmutils.apiclient import HTTPError
+from dmapiclient import HTTPError
 from dmutils.formats import DATETIME_FORMAT
-from dmutils.audit import AuditTypes
+from dmapiclient.audit import AuditTypes
 
 
 class TestListServicesOrdering(BaseApplicationTest):

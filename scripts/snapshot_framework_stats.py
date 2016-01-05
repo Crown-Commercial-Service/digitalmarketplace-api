@@ -8,7 +8,6 @@ Example:
     ./snapshot_framework_stats.py g-cloud-7 dev myToken
 """
 
-import sys
 import logging
 
 logger = logging.getLogger('script')
@@ -17,8 +16,8 @@ logging.basicConfig(level=logging.INFO)
 import backoff
 from docopt import docopt
 
-from dmutils import apiclient
-from dmutils.audit import AuditTypes
+import dmapiclient
+from dmapiclient.audit import AuditTypes
 
 
 def get_api_endpoint_from_stage(stage):
@@ -36,9 +35,9 @@ def get_api_endpoint_from_stage(stage):
     )
 
 
-@backoff.on_exception(backoff.expo, apiclient.HTTPError, max_tries=5)
+@backoff.on_exception(backoff.expo, dmapiclient.HTTPError, max_tries=5)
 def snapshot_framework_stats(api_endpoint, api_token, framework_slug):
-    data_client = apiclient.DataAPIClient(api_endpoint, api_token)
+    data_client = dmapiclient.DataAPIClient(api_endpoint, api_token)
 
     stats = data_client.get_framework_stats(framework_slug)
     data_client.create_audit_event(
