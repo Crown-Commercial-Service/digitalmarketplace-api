@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError, DataError
 from .utils import get_json_from_request, \
     json_has_matching_id, json_has_required_keys
 from .validation import validate_updater_json_or_400, get_validation_errors
-from . import search_api_client, apiclient
+from . import search_api_client, dmapiclient
 from . import db
 from .models import ArchivedService, AuditEvent, Framework, Service, Supplier
 
@@ -125,7 +125,7 @@ def index_service(service):
     if service.framework.status == 'live' and service.status == 'published':
         try:
             search_api_client.index(service.service_id, service.serialize())
-        except apiclient.HTTPError as e:
+        except dmapiclient.HTTPError as e:
             current_app.logger.warning(
                 'Failed to add {} to search index: {}'.format(
                     service.service_id, e.message))
@@ -134,7 +134,7 @@ def index_service(service):
 def delete_service_from_index(service):
     try:
         search_api_client.delete(service.service_id)
-    except apiclient.HTTPError as e:
+    except dmapiclient.HTTPError as e:
         current_app.logger.warning(
             'Failed to remove {} to search index: {}'.format(
                 service.service_id, e.message))

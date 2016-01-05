@@ -9,7 +9,9 @@ SQLAlchemy==1.0.5
 SQLAlchemy-Utils==0.30.5
 
 git+https://github.com/madzak/python-json-logger.git@v0.1.3#egg=python-json-logger==v0.1.3
-git+https://github.com/alphagov/digitalmarketplace-utils.git@15.3.0#egg=digitalmarketplace-utils==15.3.0
+
+git+https://github.com/alphagov/digitalmarketplace-utils.git@16.0.0#egg=digitalmarketplace-utils==16.0.0
+git+https://github.com/alphagov/digitalmarketplace-apiclient.git@1.0.1#egg=digitalmarketplace-apiclient==1.0.1
 
 # For schema validation
 jsonschema==2.5.1

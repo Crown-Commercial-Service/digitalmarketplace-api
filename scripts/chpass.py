@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 
 from docopt import docopt
 
-from dmutils import apiclient
+import dmapiclient
 
 
 def get_api_endpoint_from_stage(stage):
@@ -38,7 +38,7 @@ def get_api_endpoint_from_stage(stage):
 
 
 def update_user_password(api_endpoint, api_token, user_email, new_password, unlock=False):
-    data_client = apiclient.DataAPIClient(api_endpoint, api_token)
+    data_client = dmapiclient.DataAPIClient(api_endpoint, api_token)
 
     try:
         user = data_client.get_user(email_address=user_email)['users']
@@ -46,7 +46,7 @@ def update_user_password(api_endpoint, api_token, user_email, new_password, unlo
         if unlock:
             data_client.update_user(user['id'], locked=False, updater=getpass.getuser())
             logger.info("User unlocked")
-    except apiclient.APIError:
+    except dmapiclient.APIError:
         sys.exit(1)
 
     logger.info("Password updated")

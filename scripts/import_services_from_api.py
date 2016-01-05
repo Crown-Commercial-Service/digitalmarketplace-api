@@ -22,7 +22,8 @@ from itertools import islice
 from datetime import datetime
 
 from docopt import docopt
-from dmutils import apiclient
+
+import dmapiclient
 
 
 CLEAN_FIELDS = {}
@@ -30,7 +31,7 @@ CLEAN_FIELDS = {}
 
 def request_services(api_url, api_access_token, page=1):
 
-    data_client = apiclient.DataAPIClient(
+    data_client = dmapiclient.DataAPIClient(
         api_url,
         api_access_token
     )
@@ -78,7 +79,7 @@ class ServiceUpdater(object):
         self.access_token = access_token
 
     def __call__(self, service):
-        client = apiclient.DataAPIClient(self.endpoint, self.access_token)
+        client = dmapiclient.DataAPIClient(self.endpoint, self.access_token)
 
         user = self.get_user(service)
         fix_data = self.update_data(service)
@@ -91,7 +92,7 @@ class ServiceUpdater(object):
                 user
             )
             return True
-        except apiclient.APIError as e:
+        except dmapiclient.APIError as e:
             print("ERROR: {}. {} not imported".format(e.message,
                                                       service.get('id')),
                   file=sys.stderr)
@@ -141,7 +142,7 @@ def do_index(api_url, api_access_token, source_api_url,
     while services:
         try:
             services = list(islice(iter_services, 0, 100))
-        except apiclient.APIError as e:
+        except dmapiclient.APIError as e:
             print('API request failed: {}'.format(e.message), file=sys.stderr)
             return False
 

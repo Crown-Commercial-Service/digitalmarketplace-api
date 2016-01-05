@@ -11,7 +11,7 @@ import sys
 from itertools import groupby
 from operator import itemgetter
 from docopt import docopt
-from dmutils.apiclient import DataAPIClient, HTTPError
+from dmapiclient import DataAPIClient, HTTPError
 
 
 def aggregate(drafts):

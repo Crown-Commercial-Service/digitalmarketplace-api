@@ -2,13 +2,15 @@ from functools import wraps
 from flask import Flask
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
-from dmutils import apiclient, init_app, flask_featureflags
+
+import dmapiclient
+from dmutils import init_app, flask_featureflags
 
 from config import configs
 
 bootstrap = Bootstrap()
 db = SQLAlchemy()
-search_api_client = apiclient.SearchAPIClient()
+search_api_client = dmapiclient.SearchAPIClient()
 feature_flags = flask_featureflags.FeatureFlag()
 
 

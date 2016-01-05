@@ -1,4 +1,4 @@
-from dmutils.audit import AuditTypes
+from dmapiclient.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 
 from sqlalchemy.exc import IntegrityError

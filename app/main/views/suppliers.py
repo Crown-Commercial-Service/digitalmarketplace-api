@@ -14,7 +14,7 @@ from ...utils import pagination_links, drop_foreign_fields, get_json_from_reques
     json_has_required_keys, json_has_matching_id, get_valid_page_or_1
 from ...service_utils import validate_and_return_updater_request
 from ...supplier_utils import validate_and_return_supplier_request
-from dmutils.audit import AuditTypes
+from dmapiclient.audit import AuditTypes
 
 
 @main.route('/suppliers', methods=['GET'])

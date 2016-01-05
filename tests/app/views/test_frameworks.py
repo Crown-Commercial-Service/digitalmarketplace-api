@@ -4,7 +4,7 @@ from flask import json
 from nose.tools import assert_equal, assert_in
 from dateutil.parser import parse as parse_time
 
-from dmutils.audit import AuditTypes
+from dmapiclient.audit import AuditTypes
 
 from ..helpers import BaseApplicationTest
 from app.models import db, Framework, SupplierFramework, DraftService, AuditEvent, Supplier, User

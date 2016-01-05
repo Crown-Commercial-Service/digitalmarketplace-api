@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, orm, case, cast
 import datetime
 
-from dmutils.audit import AuditTypes
+from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
 from .. import main
 from ...models import (

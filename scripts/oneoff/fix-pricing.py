@@ -7,7 +7,7 @@ Usage:
 from multiprocessing.pool import ThreadPool
 
 from docopt import docopt
-from dmutils import apiclient
+import dmapiclient
 
 
 def update(client):
@@ -34,7 +34,7 @@ def update(client):
                 try:
                     client.update_service(service['id'], update, 'migration')
                     return 1
-                except apiclient.APIError as e:
+                except dmapiclient.APIError as e:
                     print(e.message)
                     print(service)
                     pass
@@ -43,7 +43,7 @@ def update(client):
 
 
 def main(api_url, api_access_token):
-    client = apiclient.DataAPIClient(api_url, api_access_token)
+    client = dmapiclient.DataAPIClient(api_url, api_access_token)
     pool = ThreadPool(10)
     count = 1
     for i in pool.imap_unordered(update(client), enumerate(client.find_services_iter())):
