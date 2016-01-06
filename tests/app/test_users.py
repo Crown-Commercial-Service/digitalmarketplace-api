@@ -1105,7 +1105,6 @@ class TestUsersExport(BaseUserTest):
     def test_response_unstarted_declaration_no_drafts(self):
         self._setup()
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
-        print(data)
         assert len(data) == len(self.users)
         for datum in data:
             self._assert_things_about_export_response(datum)
@@ -1180,6 +1179,27 @@ class TestUsersExport(BaseUserTest):
                 'application_status': 'application',
                 'framework_agreement': True
             })
+
+    def test_response_does_not_include_disabled_users(self):
+        self._setup()
+        self._post_user({
+            "emailAddress": "disabled-user@example.com",
+            "name": "Disabled User",
+            "password": "minimum10characterpassword",
+            "role": "supplier",
+            "supplierId": self.supplier_id
+        })
+        response = self.client.post(
+            '/users/{}'.format(self.users[-1]['id']),
+            data=json.dumps({
+                "users": {"active": False},
+                "update_details": {"updated_by": "test"}
+            }),
+            content_type='application/json')
+        assert response.status_code == 200
+
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        assert len(data) == len(self.users) - 1
 
     # Test 400 if bad framework name
     def test_400_response_if_bad_framework_name(self):
