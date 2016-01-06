@@ -4,7 +4,7 @@ from nose.tools import assert_equal, assert_not_equal, assert_in, assert_is_none
 from app import db, encryption
 from app.models import User, Supplier
 from datetime import datetime
-from .helpers import BaseApplicationTest, JSONUpdateTestMixin
+from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 from dmutils.formats import DATETIME_FORMAT
 
 
