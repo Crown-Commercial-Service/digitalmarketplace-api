@@ -7,7 +7,7 @@ def authenticate_user(password, user):
 
 
 def hashpw(password):
-    return generate_password_hash(password, 10)
+    return generate_password_hash(password, 10).decode('utf-8')
 
 
 def checkpw(password, hashed_password):
