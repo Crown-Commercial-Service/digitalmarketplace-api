@@ -231,6 +231,8 @@ def export_users_for_framework(framework_slug):
         Supplier, User, Framework
     ).filter(
         Framework.slug == framework_slug
+    ).filter(
+        User.active.is_(True)
     ).all()
 
     submitted_draft_counts_per_supplier = {}
