@@ -2,7 +2,7 @@ from dmapiclient.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import asc, desc
+from sqlalchemy import asc
 
 from .. import main
 from ... import db, isolation_level
@@ -160,14 +160,11 @@ def fetch_draft_service(draft_id):
         DraftService.id == draft_id
     ).first_or_404()
 
-    last_audit_event = AuditEvent.query.filter(
-        AuditEvent.object == draft,
-        AuditEvent.type.in_([
-            AuditTypes.create_draft_service.value,
-            AuditTypes.update_draft_service.value,
-            AuditTypes.complete_draft_service.value,
-        ]),
-    ).order_by(desc(AuditEvent.created_at)).first()
+    last_audit_event = AuditEvent.query.last_for_object(draft, [
+        AuditTypes.create_draft_service.value,
+        AuditTypes.update_draft_service.value,
+        AuditTypes.complete_draft_service.value,
+    ])
 
     return jsonify(
         services=draft.serialize(),
