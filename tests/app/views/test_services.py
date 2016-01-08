@@ -1820,3 +1820,37 @@ class TestGetService(BaseApplicationTest):
         with self.app.app_context():
             db.session.delete(audit_event)
             db.session.commit()
+
+    def test_get_service_returns_last_status_update_audit_if_published_but_framework_is_expired(self):
+        # create an audit event for the disabled service
+        with self.app.app_context():
+            # get expired framework
+            framework = Framework.query.filter(
+                Framework.id == 123
+            ).first()
+            # create an audit event for the framework status change
+            audit_event = AuditEvent(
+                audit_type=AuditTypes.framework_update,
+                db_object=framework,
+                user='joeblogs',
+                data={
+                    "update": {
+                        "status": "expired",
+                        "clarificationQuestionsOpen": "true"
+                    }
+                }
+            )
+            # make a published service use the expired framework
+            service = Service.query.filter(
+                Service.service_id == '123-published-456'
+            ).update({
+                'framework_id': 123
+            })
+            db.session.add(audit_event)
+            db.session.commit()
+        response = self.client.get('/services/123-published-456')
+        data = json.loads(response.get_data())
+        assert_equal(data['statusUpdateAuditEvent']['type'], 'framework_update')
+        assert_equal(data['statusUpdateAuditEvent']['user'], 'joeblogs')
+        assert_in('createdAt', data['statusUpdateAuditEvent'])
+        assert_equal(data['statusUpdateAuditEvent']['data']['update']['status'], 'expired')
