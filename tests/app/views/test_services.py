@@ -1780,11 +1780,6 @@ class TestGetService(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert_equal(data['statusUpdateAuditEvent'], None)
 
-        # clean up audit events
-        with self.app.app_context():
-            db.session.delete(audit_event)
-            db.session.commit()
-
     def test_get_service_returns_last_status_update_audit_if_disabled(self):
         # create an audit event for the disabled service
         with self.app.app_context():
@@ -1815,11 +1810,6 @@ class TestGetService(BaseApplicationTest):
         assert_equal(data['statusUpdateAuditEvent']['data']['serviceId'], '123-disabled-456')
         assert_equal(data['statusUpdateAuditEvent']['data']['old_status'], 'published')
         assert_equal(data['statusUpdateAuditEvent']['data']['new_status'], 'disabled')
-
-        # clean up audit events
-        with self.app.app_context():
-            db.session.delete(audit_event)
-            db.session.commit()
 
     def test_get_service_returns_last_status_update_audit_if_published_but_framework_is_expired(self):
         # create an audit event for the disabled service
