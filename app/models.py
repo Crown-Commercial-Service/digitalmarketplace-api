@@ -3,7 +3,7 @@ from datetime import datetime
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
-from sqlalchemy import asc
+from sqlalchemy import asc, desc
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
@@ -681,6 +681,14 @@ class AuditEvent(db.Model):
         self.object = db_object
         self.user = user
         self.acknowledged = False
+
+    class query_class(BaseQuery):
+        def last_for_object(self, object, types=None):
+            events = self.filter(AuditEvent.object == object)
+            if types is not None:
+                events = events.filter(AuditEvent.type.in_(types))
+
+            return events.order_by(desc(AuditEvent.created_at)).first()
 
     def serialize(self, include_user=False):
         """

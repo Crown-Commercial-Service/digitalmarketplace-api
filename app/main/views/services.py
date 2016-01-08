@@ -5,7 +5,7 @@ from flask import jsonify, abort, request, current_app
 from .. import main
 from ...models import ArchivedService, Service, Supplier, AuditEvent
 
-from sqlalchemy import asc, desc
+from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
 from ...utils import url_for, pagination_links, display_list, get_valid_page_or_1
 
@@ -191,10 +191,9 @@ def get_service(service_id):
 
     status_update_audit_event = None
     if service.status is not 'published':
-        status_update_audit_event = AuditEvent.query.filter(
-            AuditEvent.object == service,
-            AuditEvent.type == AuditTypes.update_service_status.value,
-        ).order_by(desc(AuditEvent.created_at)).first()
+        status_update_audit_event = AuditEvent.query.last_for_object(service, [
+            AuditTypes.update_service_status.value,
+        ])
 
         if status_update_audit_event is not None:
             status_update_audit_event = status_update_audit_event.serialize()
