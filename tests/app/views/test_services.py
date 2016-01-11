@@ -1778,7 +1778,7 @@ class TestGetService(BaseApplicationTest):
             db.session.commit()
         response = self.client.get('/services/123-disabled-456')
         data = json.loads(response.get_data())
-        assert_equal(data['statusUpdateAuditEvent'], None)
+        assert_equal(data['serviceMadeUnavailableAuditEvent'], None)
 
     def test_get_service_returns_last_status_update_audit_if_disabled(self):
         # create an audit event for the disabled service
@@ -1804,12 +1804,12 @@ class TestGetService(BaseApplicationTest):
             db.session.commit()
         response = self.client.get('/services/123-disabled-456')
         data = json.loads(response.get_data())
-        assert_equal(data['statusUpdateAuditEvent']['type'], 'update_service_status')
-        assert_equal(data['statusUpdateAuditEvent']['user'], 'joeblogs')
-        assert_in('createdAt', data['statusUpdateAuditEvent'])
-        assert_equal(data['statusUpdateAuditEvent']['data']['serviceId'], '123-disabled-456')
-        assert_equal(data['statusUpdateAuditEvent']['data']['old_status'], 'published')
-        assert_equal(data['statusUpdateAuditEvent']['data']['new_status'], 'disabled')
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['type'], 'update_service_status')
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['user'], 'joeblogs')
+        assert_in('createdAt', data['serviceMadeUnavailableAuditEvent'])
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['data']['serviceId'], '123-disabled-456')
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['data']['old_status'], 'published')
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['data']['new_status'], 'disabled')
 
     def test_get_service_returns_last_status_update_audit_if_published_but_framework_is_expired(self):
         # create an audit event for the disabled service
@@ -1840,7 +1840,7 @@ class TestGetService(BaseApplicationTest):
             db.session.commit()
         response = self.client.get('/services/123-published-456')
         data = json.loads(response.get_data())
-        assert_equal(data['statusUpdateAuditEvent']['type'], 'framework_update')
-        assert_equal(data['statusUpdateAuditEvent']['user'], 'joeblogs')
-        assert_in('createdAt', data['statusUpdateAuditEvent'])
-        assert_equal(data['statusUpdateAuditEvent']['data']['update']['status'], 'expired')
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['type'], 'framework_update')
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['user'], 'joeblogs')
+        assert_in('createdAt', data['serviceMadeUnavailableAuditEvent'])
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['data']['update']['status'], 'expired')
