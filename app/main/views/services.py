@@ -3,7 +3,7 @@ from dmapiclient.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 
 from .. import main
-from ...models import ArchivedService, Service, Supplier, AuditEvent
+from ...models import ArchivedService, Service, Supplier, AuditEvent, Framework
 
 from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
@@ -189,18 +189,30 @@ def get_service(service_id):
         Service.service_id == service_id
     ).first_or_404()
 
-    status_update_audit_event = None
-    if service.status is not 'published':
-        status_update_audit_event = AuditEvent.query.last_for_object(service, [
-            AuditTypes.update_service_status.value,
-        ])
+    service_made_unavailable_audit_event = None
+    service_is_unavailable = False
+    if service.status != 'published':
+        service_is_unavailable = True
+        audit_event_object_reference = service
+        audit_event_update_type = AuditTypes.update_service_status.value
+    elif service.framework.status == 'expired':
+        service_is_unavailable = True
+        audit_event_object_reference = Framework.query.filter(
+            Framework.id == service.framework.id
+        ).first_or_404()
+        audit_event_update_type = AuditTypes.framework_update.value
 
-        if status_update_audit_event is not None:
-            status_update_audit_event = status_update_audit_event.serialize()
+    if service_is_unavailable:
+        service_made_unavailable_audit_event = AuditEvent.query.last_for_object(
+            audit_event_object_reference, [audit_event_update_type]
+        )
+
+    if service_made_unavailable_audit_event is not None:
+        service_made_unavailable_audit_event = service_made_unavailable_audit_event.serialize()
 
     return jsonify(
         services=service.serialize(),
-        statusUpdateAuditEvent=status_update_audit_event
+        serviceMadeUnavailableAuditEvent=service_made_unavailable_audit_event
     )
 
 

@@ -1778,12 +1778,7 @@ class TestGetService(BaseApplicationTest):
             db.session.commit()
         response = self.client.get('/services/123-disabled-456')
         data = json.loads(response.get_data())
-        assert_equal(data['statusUpdateAuditEvent'], None)
-
-        # clean up audit events
-        with self.app.app_context():
-            db.session.delete(audit_event)
-            db.session.commit()
+        assert_equal(data['serviceMadeUnavailableAuditEvent'], None)
 
     def test_get_service_returns_last_status_update_audit_if_disabled(self):
         # create an audit event for the disabled service
@@ -1809,14 +1804,43 @@ class TestGetService(BaseApplicationTest):
             db.session.commit()
         response = self.client.get('/services/123-disabled-456')
         data = json.loads(response.get_data())
-        assert_equal(data['statusUpdateAuditEvent']['type'], 'update_service_status')
-        assert_equal(data['statusUpdateAuditEvent']['user'], 'joeblogs')
-        assert_in('createdAt', data['statusUpdateAuditEvent'])
-        assert_equal(data['statusUpdateAuditEvent']['data']['serviceId'], '123-disabled-456')
-        assert_equal(data['statusUpdateAuditEvent']['data']['old_status'], 'published')
-        assert_equal(data['statusUpdateAuditEvent']['data']['new_status'], 'disabled')
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['type'], 'update_service_status')
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['user'], 'joeblogs')
+        assert_in('createdAt', data['serviceMadeUnavailableAuditEvent'])
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['data']['serviceId'], '123-disabled-456')
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['data']['old_status'], 'published')
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['data']['new_status'], 'disabled')
 
-        # clean up audit events
+    def test_get_service_returns_last_status_update_audit_if_published_but_framework_is_expired(self):
+        # create an audit event for the disabled service
         with self.app.app_context():
-            db.session.delete(audit_event)
+            # get expired framework
+            framework = Framework.query.filter(
+                Framework.id == 123
+            ).first()
+            # create an audit event for the framework status change
+            audit_event = AuditEvent(
+                audit_type=AuditTypes.framework_update,
+                db_object=framework,
+                user='joeblogs',
+                data={
+                    "update": {
+                        "status": "expired",
+                        "clarificationQuestionsOpen": "true"
+                    }
+                }
+            )
+            # make a published service use the expired framework
+            service = Service.query.filter(
+                Service.service_id == '123-published-456'
+            ).update({
+                'framework_id': 123
+            })
+            db.session.add(audit_event)
             db.session.commit()
+        response = self.client.get('/services/123-published-456')
+        data = json.loads(response.get_data())
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['type'], 'framework_update')
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['user'], 'joeblogs')
+        assert_in('createdAt', data['serviceMadeUnavailableAuditEvent'])
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['data']['update']['status'], 'expired')
