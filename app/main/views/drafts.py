@@ -261,7 +261,7 @@ def publish_draft_service(draft_id):
 
 
 @main.route('/draft-services', methods=['POST'])
-def create_new_draft_service(framework_slug=None):
+def create_new_draft_service():
     """
     Create a new draft service with lot, supplier_id, draft_id, framework_id
     :return: the new draft id and location e.g.
