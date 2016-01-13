@@ -31,7 +31,7 @@ def validate_and_return_related_objects(service_json):
     ).first()
 
     if not framework:
-        abort(400, "Framework '{}' does not exits".format(service_json['frameworkSlug']))
+        abort(400, "Framework '{}' does not exist".format(service_json['frameworkSlug']))
 
     lot = framework.get_lot(service_json['lot'])
 
