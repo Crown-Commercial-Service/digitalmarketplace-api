@@ -89,13 +89,10 @@ def list_audits():
             id_field == object_id
         ).first()
 
-        # FIXME this makes sure we return 0 audit events if the referenced
-        # object doesn't exist in case apps aren't handling a 404 response.
-        # Should be changed to a 404 once the apps are updated.
         if ref_object is None:
-            audits = audits.filter(false())
-        else:
-            audits = audits.filter(AuditEvent.object == ref_object)
+            abort(404, "Object with given object-type and object-id doesn't exist")
+
+        audits = audits.filter(AuditEvent.object == ref_object)
 
     elif object_id:
         abort(400, 'object-id cannot be provided without object-type')
