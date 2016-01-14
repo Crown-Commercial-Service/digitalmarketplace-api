@@ -18,7 +18,7 @@ def upgrade():
         INSERT INTO audit_events
             ("type", "created_at", "user", "data", "object_type", "object_id", "acknowledged")
         VALUES 
-            ('framework_update', '2015-01-31T14:00:00', 'migration', '{"update": {"status": "expired"}}', 'Framework', 2, FALSE)
+            ('framework_update', '2015-01-31T14:00:00', 'migration 460', '{"update": {"status": "expired"}}', 'Framework', 2, FALSE)
     """)
 
 
