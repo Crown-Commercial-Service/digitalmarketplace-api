@@ -191,16 +191,16 @@ def get_service(service_id):
 
     service_made_unavailable_audit_event = None
     service_is_unavailable = False
-    if service.status != 'published':
-        service_is_unavailable = True
-        audit_event_object_reference = service
-        audit_event_update_type = AuditTypes.update_service_status.value
-    elif service.framework.status == 'expired':
+    if service.framework.status == 'expired':
         service_is_unavailable = True
         audit_event_object_reference = Framework.query.filter(
             Framework.id == service.framework.id
         ).first_or_404()
         audit_event_update_type = AuditTypes.framework_update.value
+    elif service.status != 'published':
+        service_is_unavailable = True
+        audit_event_object_reference = service
+        audit_event_update_type = AuditTypes.update_service_status.value
 
     if service_is_unavailable:
         service_made_unavailable_audit_event = AuditEvent.query.last_for_object(
