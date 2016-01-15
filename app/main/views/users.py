@@ -263,7 +263,10 @@ def export_users_for_framework(framework_slug):
             submitted_draft_count = submitted_draft_counts_per_supplier[sf.supplier_id]
             application_status = \
                 'application' if submitted_draft_count and declaration_status == 'complete' else 'no_application'
-            application_result = 'pass' if sf.on_framework else 'fail'
+            if sf.on_framework is None:
+                application_result = 'no result'
+            else:
+                application_result = 'pass' if sf.on_framework else 'fail'
             framework_agreement = bool(sf.agreement_returned_at)
 
         user_rows.append({
