@@ -1754,7 +1754,7 @@ class TestGetService(BaseApplicationTest):
         assert_equal(data['services']['frameworkName'], u'G-Cloud 6')
         assert_equal(data['services']['frameworkStatus'], u'live')
 
-    def test_get_service_returns_empty_last_status_update_audit_if_published(self):
+    def test_get_service_returns_empty_unavailability_audit_if_published(self):
         # create an audit event for the disabled service
         with self.app.app_context():
             service = Service.query.filter(
@@ -1780,7 +1780,7 @@ class TestGetService(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert_equal(data['serviceMadeUnavailableAuditEvent'], None)
 
-    def test_get_service_returns_last_status_update_audit_if_disabled(self):
+    def test_get_service_returns_unavailability_audit_if_disabled(self):
         # create an audit event for the disabled service
         with self.app.app_context():
             service = Service.query.filter(
@@ -1811,7 +1811,7 @@ class TestGetService(BaseApplicationTest):
         assert_equal(data['serviceMadeUnavailableAuditEvent']['data']['old_status'], 'published')
         assert_equal(data['serviceMadeUnavailableAuditEvent']['data']['new_status'], 'disabled')
 
-    def test_get_service_returns_last_status_update_audit_if_published_but_framework_is_expired(self):
+    def test_get_service_returns_unavailability_audit_if_published_but_framework_is_expired(self):
         # create an audit event for the disabled service
         with self.app.app_context():
             # get expired framework
@@ -1840,6 +1840,41 @@ class TestGetService(BaseApplicationTest):
             db.session.commit()
         response = self.client.get('/services/123-published-456')
         data = json.loads(response.get_data())
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['type'], 'framework_update')
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['user'], 'joeblogs')
+        assert_in('createdAt', data['serviceMadeUnavailableAuditEvent'])
+        assert_equal(data['serviceMadeUnavailableAuditEvent']['data']['update']['status'], 'expired')
+
+    def test_get_service_returns_correct_unavailability_audit_if_disabled_but_framework_is_expired(self):
+        # create an audit event for the disabled service
+        with self.app.app_context():
+            # get expired framework
+            framework = Framework.query.filter(
+                Framework.id == 123
+            ).first()
+            # create an audit event for the framework status change
+            audit_event = AuditEvent(
+                audit_type=AuditTypes.framework_update,
+                db_object=framework,
+                user='joeblogs',
+                data={
+                    "update": {
+                        "status": "expired",
+                        "clarificationQuestionsOpen": "true"
+                    }
+                }
+            )
+            # make a disabled service use the expired framework
+            service = Service.query.filter(
+                Service.service_id == '123-disabled-456'
+            ).update({
+                'framework_id': 123
+            })
+            db.session.add(audit_event)
+            db.session.commit()
+        response = self.client.get('/services/123-disabled-456')
+        data = json.loads(response.get_data())
+        print(response.get_data())
         assert_equal(data['serviceMadeUnavailableAuditEvent']['type'], 'framework_update')
         assert_equal(data['serviceMadeUnavailableAuditEvent']['user'], 'joeblogs')
         assert_in('createdAt', data['serviceMadeUnavailableAuditEvent'])
