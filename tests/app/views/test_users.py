@@ -1042,6 +1042,15 @@ class TestUsersExport(BaseUserTest):
     def _post_framework_agreement(self):
         self._post_framework_interest({'frameworkInterest': {'agreementReturned': True}})
 
+    def _post_result(self, result):
+        data = {'frameworkInterest': {'onFramework': result}, 'update_details': {'updated_by': 'Paul'}}
+        data.update(self.updater_json['update_details'])
+        response = self.client.post(
+            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug),
+            data=json.dumps(data),
+            content_type='application/json')
+        assert response.status_code == 200
+
     def _set_framework_status(self, status='pending'):
         with self.app.app_context():
             self.set_framework_status(self.framework_slug, status)
@@ -1065,7 +1074,7 @@ class TestUsersExport(BaseUserTest):
 
     def _assert_things_about_export_response(self, row, parameters=None):
         _parameters = {
-            'application_result': 'fail',
+            'application_result': 'no result',
             'application_status': 'no_application',
             'declaration_status': 'unstarted',
             'framework_agreement': False,
@@ -1178,6 +1187,37 @@ class TestUsersExport(BaseUserTest):
                 'declaration_status': 'complete',
                 'application_status': 'application',
                 'framework_agreement': True
+            })
+
+    def test_response_awarded_on_framework(self):
+        self._setup()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_framework_agreement()
+        self._post_result(True)
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_export_response(datum, parameters={
+                'declaration_status': 'complete',
+                'application_status': 'application',
+                'framework_agreement': True,
+                'application_result': 'pass'
+            })
+
+    def test_response_not_awarded_on_framework(self):
+        self._setup()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_result(False)
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_export_response(datum, parameters={
+                'declaration_status': 'complete',
+                'application_status': 'application',
+                'framework_agreement': False,
+                'application_result': 'fail'
             })
 
     def test_response_does_not_include_disabled_users(self):
