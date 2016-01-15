@@ -591,7 +591,7 @@ class ArchivedService(db.Model, ServiceTableMixin):
 class DraftService(db.Model, ServiceTableMixin):
     __tablename__ = 'draft_services'
 
-    STATUSES = ('not-submitted', 'submitted', 'enabled', 'disabled', 'published')
+    STATUSES = ('not-submitted', 'submitted', 'enabled', 'disabled', 'published', 'failed')
 
     # Overwrites service_id column to remove uniqueness and nullable constraint
     service_id = db.Column(db.String, index=True, unique=False, nullable=True,
