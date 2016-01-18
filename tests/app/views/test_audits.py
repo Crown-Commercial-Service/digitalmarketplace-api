@@ -116,6 +116,40 @@ class TestAuditEvents(BaseApplicationTest):
         assert_equal(len(data['auditEvents']), 1)
         assert_equal(data['auditEvents'][0]['user'], 'rob')
 
+    def test_get_audit_event_for_missing_object_returns_404(self):
+        self.add_audit_events_with_db_object()
+
+        response = self.client.get('/audit-events?object-type=suppliers&object-id=100000')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 404)
+
+    def test_should_only_get_audit_event_with_correct_object_type(self):
+        self.add_audit_events_with_db_object()
+
+        with self.app.app_context():
+            # Create a second AuditEvent with the same object_id but with a
+            # different object_type to check that we're not filtering based
+            # on object_id only
+            supplier = Supplier.query.filter(Supplier.supplier_id == 1).first()
+            event = AuditEvent(
+                audit_type=AuditTypes.supplier_update,
+                db_object=supplier,
+                user='not rob',
+                data={'request': "data"}
+            )
+            event.object_type = 'Service'
+
+            db.session.add(event)
+            db.session.commit()
+
+        response = self.client.get('/audit-events?object-type=suppliers&object-id=1')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['auditEvents']), 1)
+        assert_equal(data['auditEvents'][0]['user'], 'rob')
+
     def test_should_reject_invalid_object_type(self):
         self.add_audit_events_with_db_object()
 
