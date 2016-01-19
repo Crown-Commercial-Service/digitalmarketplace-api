@@ -101,6 +101,7 @@ def get_framework_stats(framework_slug):
             ).group_by(
                 DraftService.status, Lot.slug, is_declaration_complete
             ).filter(
+                SupplierFramework.framework_id == framework.id,
                 DraftService.framework_id == framework.id,
                 cast(SupplierFramework.declaration, String) != 'null'
             ).all()
