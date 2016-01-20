@@ -177,11 +177,27 @@ class TestFrameworkStats(BaseApplicationTest):
 
             db.session.commit()
 
-    def setup_data(self, framework_slug):
+    def setup_supplier_data(self):
+        self.setup_dummy_suppliers(30)
+        self.create_users(
+            [1, 2, 3, 4, 5],
+            logged_in_at=datetime.datetime.utcnow() - datetime.timedelta(days=1)
+        )
+
+        self.create_users(
+            [6, 7, 8, 9],
+            logged_in_at=datetime.datetime.utcnow() - datetime.timedelta(days=10)
+        )
+
+        self.create_users(
+            [10, 11],
+            logged_in_at=None
+        )
+
+    def setup_framework_data(self, framework_slug):
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == framework_slug).first()
 
-        self.setup_dummy_suppliers(30)
         self.register_framework_interest(framework.id, range(20))
         self.make_declaration(framework.id, [1, 3, 5, 7, 9, 11], status='started')
         self.make_declaration(framework.id, [0, 2, 4, 6, 8, 10], status='complete')
@@ -198,23 +214,14 @@ class TestFrameworkStats(BaseApplicationTest):
             (14, 7),  # 1 of each + iaas + paas + saas; without declaration
         ], status='submitted')
 
-        self.create_users(
-            [1, 2, 3, 4, 5],
-            logged_in_at=datetime.datetime.utcnow() - datetime.timedelta(days=1)
-        )
-
-        self.create_users(
-            [6, 7, 8, 9],
-            logged_in_at=datetime.datetime.utcnow() - datetime.timedelta(days=10)
-        )
-
-        self.create_users(
-            [10, 11],
-            logged_in_at=None
-        )
+    def setup_data(self, framework_slug):
+        self.setup_supplier_data()
+        self.setup_framework_data(framework_slug)
 
     def test_stats(self):
-        self.setup_data('g-cloud-7')
+        self.setup_supplier_data()
+        self.setup_framework_data('g-cloud-7')
+        self.setup_framework_data('digital-outcomes-and-specialists')
 
         response = self.client.get('/frameworks/g-cloud-7/stats')
         assert_equal(json.loads(response.get_data()), {
