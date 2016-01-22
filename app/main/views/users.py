@@ -10,7 +10,7 @@ from ...models import User, AuditEvent, Supplier, Framework, SupplierFramework, 
 from ...utils import get_json_from_request, json_has_required_keys, \
     json_has_matching_id, pagination_links, get_valid_page_or_1
 from ...service_utils import validate_and_return_updater_request
-from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400
+from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400, is_valid_buyer_email
 
 
 @main.route('/users/auth', methods=['POST'])
@@ -179,6 +179,8 @@ def update_user(user_id):
         user.active = user_update['active']
     if 'name' in user_update:
         user.name = user_update['name']
+    if 'emailAddress' in user_update:
+        user.email_address = user_update['emailAddress']
     if 'role' in user_update:
         if user.role == 'supplier' and user_update['role'] != user.role:
             user.supplier_id = None
@@ -186,8 +188,6 @@ def update_user(user_id):
         user.role = user_update['role']
     if 'supplierId' in user_update:
         user.supplier_id = user_update['supplierId']
-    if 'emailAddress' in user_update:
-        user.email_address = user_update['emailAddress']
     if 'locked' in user_update and not user_update['locked']:
         user.failed_login_count = 0
 
