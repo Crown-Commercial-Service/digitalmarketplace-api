@@ -540,7 +540,6 @@ class ServiceTableMixin(object):
         current_data.update(data)
 
         self.data = current_data
-        self.updated_at = datetime.utcnow()
 
 
 class Service(db.Model, ServiceTableMixin):
@@ -770,6 +769,12 @@ class Brief(db.Model):
                            default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def update_from_json(self, data):
+        current_data = dict(self.data.items())
+        current_data.update(data)
+
+        self.data = current_data
 
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,

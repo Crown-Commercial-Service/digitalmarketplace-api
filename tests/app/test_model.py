@@ -84,6 +84,23 @@ class TestBriefs(BaseApplicationTest):
             assert brief.created_at == created_at
             assert brief.updated_at > updated_at
 
+    def test_update_from_json(self):
+        with self.app.app_context():
+            brief = Brief(data={})
+            db.session.add(brief)
+            db.session.commit()
+
+            updated_at = brief.updated_at
+            created_at = brief.created_at
+
+            brief.update_from_json({"foo": "bar"})
+            db.session.add(brief)
+            db.session.commit()
+
+            assert brief.created_at == created_at
+            assert brief.updated_at > updated_at
+            assert brief.data == {'foo': 'bar'}
+
 
 class TestServices(BaseApplicationTest):
     def test_framework_is_live_only_returns_live_frameworks(self):
@@ -148,6 +165,29 @@ class TestServices(BaseApplicationTest):
             services = Service.query.has_statuses('published', 'disabled')
 
             assert_equal(services.count(), 2)
+
+    def test_update_from_json(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            self.setup_dummy_service(
+                service_id='1000000000',
+                supplier_id=0,
+                status='published',
+                framework_id=2)
+
+            service = Service.query.filter(Service.service_id == '1000000000').first()
+
+            updated_at = service.updated_at
+            created_at = service.created_at
+
+            service.update_from_json({'foo': 'bar'})
+
+            db.session.add(service)
+            db.session.commit()
+
+            assert service.created_at == created_at
+            assert service.updated_at > updated_at
+            assert service.data == {'foo': 'bar', 'serviceName': 'Service 1000000000'}
 
 
 class TestSupplierFrameworks(BaseApplicationTest):
