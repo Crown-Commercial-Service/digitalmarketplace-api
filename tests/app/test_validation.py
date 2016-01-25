@@ -13,7 +13,7 @@ from app.validation import validates_against_schema, is_valid_service_id, is_val
     is_valid_buyer_email
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                    '..', 'example_listings'))
+                                                    '..', '..', 'example_listings'))
 
 
 def drop_api_exported_fields_so_that_api_import_will_validate(data):
