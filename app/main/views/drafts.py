@@ -6,6 +6,7 @@ from sqlalchemy import asc
 
 from .. import main
 from ... import db, isolation_level
+from ...utils import json_only_has_required_keys
 from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, Supplier, AuditEvent, Framework
 from ...service_utils import (
@@ -334,6 +335,44 @@ def complete_draft_service(draft_id):
             user=updater_json['updated_by'],
             data={
                 "draftId": draft.id
+            },
+            db_object=draft
+        )
+        db.session.add(audit)
+
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+
+    return jsonify(services=draft.serialize()), 200
+
+
+@main.route('/draft-services/<int:draft_id>/update-status', methods=['POST'])
+def update_draft_service_status(draft_id):
+    updater_json = validate_and_return_updater_request()
+    update_json = validate_and_return_draft_request()
+    json_only_has_required_keys(update_json, ['status'])
+
+    new_status = update_json['status']
+    if not new_status or new_status not in DraftService.STATUSES:
+        abort(400, "'{}' is not a valid status".format(new_status))
+
+    draft = DraftService.query.filter(
+        DraftService.id == draft_id
+    ).first_or_404()
+
+    draft.status = new_status
+    try:
+        db.session.add(draft)
+        db.session.flush()
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.update_draft_service_status,
+            user=updater_json['updated_by'],
+            data={
+                "draftId": draft.id,
+                "status": new_status
             },
             db_object=draft
         )
