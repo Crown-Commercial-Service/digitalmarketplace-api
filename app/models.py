@@ -772,6 +772,12 @@ class Brief(db.Model):
 
     users = db.relationship("User", secondary="brief_users")
 
+    @validates('users')
+    def validates_users(self, key, user):
+        if user.role != 'buyer':
+            raise ValidationError("The brief user must be a buyer")
+        return user
+
     def update_from_json(self, data):
         current_data = dict(self.data.items())
         current_data.update(data)

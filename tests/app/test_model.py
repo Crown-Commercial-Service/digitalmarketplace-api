@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+import pytest
 from nose.tools import assert_equal, assert_raises
 
 from app import db, create_app
@@ -70,9 +71,7 @@ class TestBriefs(BaseApplicationTest):
 
     def test_updating_a_brief_updates_dates(self):
         with self.app.app_context():
-            self.setup_dummy_user()
-
-            brief = Brief(data={}, users=User.query.all())
+            brief = Brief(data={})
             db.session.add(brief)
             db.session.commit()
 
@@ -85,7 +84,6 @@ class TestBriefs(BaseApplicationTest):
 
             assert brief.created_at == created_at
             assert brief.updated_at > updated_at
-            assert brief.users == User.query.all()
 
     def test_update_from_json(self):
         with self.app.app_context():
@@ -103,6 +101,21 @@ class TestBriefs(BaseApplicationTest):
             assert brief.created_at == created_at
             assert brief.updated_at > updated_at
             assert brief.data == {'foo': 'bar'}
+
+    def test_buyer_users_can_be_added_to_a_brief(self):
+        with self.app.app_context():
+            self.setup_dummy_user(role='buyer')
+
+            brief = Brief(data={}, users=User.query.all())
+
+            assert len(brief.users) == 1
+
+    def test_non_buyer_users_cannot_be_added_to_a_brief(self):
+        with self.app.app_context():
+            self.setup_dummy_user(role='admin')
+
+            with pytest.raises(ValidationError):
+                Brief(data={}, users=User.query.all())
 
 
 class TestServices(BaseApplicationTest):

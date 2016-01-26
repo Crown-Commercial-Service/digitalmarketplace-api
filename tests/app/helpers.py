@@ -50,18 +50,20 @@ class BaseApplicationTest(object):
     def do_not_provide_access_token(self):
         self.app.wsgi_app = self.app.wsgi_app.app
 
-    def setup_dummy_user(self):
+    def setup_dummy_user(self, id=123, role='buyer'):
         with self.app.app_context():
             db.session.add(
                 User(
-                    id=123,
-                    email_address="test@digital.gov.uk",
+                    id=id,
+                    email_address="test+{}@digital.gov.uk".format(id),
                     name="my name",
                     password="fake password",
                     active=True,
-                    role='buyer',
+                    role=role,
+                    password_changed_at=datetime.now()
                 )
             )
+            db.session.commit()
 
     def setup_dummy_suppliers(self, n):
         with self.app.app_context():
