@@ -28,3 +28,12 @@ def create_a_brief():
     db.session.commit()
 
     return jsonify(), 201
+
+
+@main.route('/briefs/<int:brief_id>', methods=['GET'])
+def get_brief(brief_id):
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    return jsonify(briefs=brief.serialize())

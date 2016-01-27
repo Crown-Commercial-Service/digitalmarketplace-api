@@ -7,7 +7,7 @@ from datetime import datetime
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Service, Supplier, ContactInformation, Framework, Lot, User, FrameworkLot
+from app.models import Service, Supplier, ContactInformation, Framework, Lot, User, FrameworkLot, Brief
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -65,6 +65,21 @@ class BaseApplicationTest(object):
             db.session.commit()
 
             return user.id
+
+    def setup_dummy_briefs(self, n, user_id=None, framework_id=1, lot_id=1):
+        if user_id is None:
+            user_id = self.setup_dummy_user(id=None)
+
+        with self.app.app_context():
+            for i in range(1, n + 1):
+                db.session.add(Brief(
+                    id=i,
+                    data={"title": "Brief {}".format(i)},
+                    framework_id=framework_id,
+                    lot_id=lot_id,
+                    users=[User.query.get(user_id)]
+                ))
+            db.session.commit()
 
     def setup_dummy_suppliers(self, n):
         with self.app.app_context():

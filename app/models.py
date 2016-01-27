@@ -798,6 +798,27 @@ class Brief(db.Model):
 
         self.data = current_data
 
+    def serialize(self):
+        data = dict(self.data.items())
+
+        data.update({
+            'id': self.id,
+            'frameworkSlug': self.framework.slug,
+            'frameworkName': self.framework.name,
+            'frameworkStatus': self.framework.status,
+            'lot': self.lot.slug,
+            'lotName': self.lot.name,
+            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
+        })
+
+        data['links'] = {
+            'self': url_for('.get_brief', brief_id=self.id),
+            'framework': url_for('.get_framework', framework_slug=self.framework.slug),
+        }
+
+        return data
+
 
 class BriefUser(db.Model):
     __tablename__ = 'brief_users'
