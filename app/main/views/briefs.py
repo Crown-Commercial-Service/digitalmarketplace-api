@@ -1,8 +1,8 @@
-from flask import jsonify, abort
+from flask import jsonify, abort, current_app, request
 
 from .. import main
 from ... import db
-from ...utils import get_json_from_request, json_has_required_keys
+from ...utils import get_json_from_request, json_has_required_keys, pagination_links, get_valid_page_or_1
 from ...service_utils import validate_and_return_lot
 from ...models import User, Brief
 
@@ -37,3 +37,22 @@ def get_brief(brief_id):
     ).first_or_404()
 
     return jsonify(briefs=brief.serialize())
+
+
+@main.route('/briefs', methods=['GET'])
+def list_briefs():
+    page = get_valid_page_or_1()
+
+    briefs = Brief.query.order_by(Brief.id)
+    briefs = briefs.paginate(
+        page=page,
+        per_page=current_app.config['DM_API_BRIEFS_PAGE_SIZE'])
+
+    return jsonify(
+        briefs=[brief.serialize() for brief in briefs.items],
+        links=pagination_links(
+            briefs,
+            '.list_briefs',
+            request.args
+        )
+    )

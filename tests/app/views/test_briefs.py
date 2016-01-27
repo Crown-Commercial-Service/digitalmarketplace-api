@@ -96,3 +96,35 @@ class TestBriefs(BaseApplicationTest):
         res = self.client.get('/briefs/1')
 
         assert res.status_code == 404
+
+    def test_list_briefs(self):
+        self.setup_dummy_briefs(3)
+
+        res = self.client.get('/briefs')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 3
+
+    def test_list_briefs_pagination_page_one(self):
+        self.setup_dummy_briefs(7)
+
+        res = self.client.get('/briefs')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        assert len(data['briefs']) == 5
+        assert data['links']['next'] == 'http://localhost/briefs?page=2'
+        assert data['links']['last'] == 'http://localhost/briefs?page=2'
+
+    def test_list_briefs_pagination_page_two(self):
+        self.setup_dummy_briefs(7)
+
+        res = self.client.get('/briefs?page=2')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        assert len(data['briefs']) == 2
+        assert data['links']['prev'] == 'http://localhost/briefs?page=1'
