@@ -277,6 +277,13 @@ class SupplierFramework(db.Model):
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
+    @validates('declaration')
+    def validates_declaration(self, key, value):
+        value = strip_whitespace_from_data(value)
+        value = purge_nulls_from_data(value)
+
+        return value
+
     @staticmethod
     def find_by_framework(framework_slug):
         return SupplierFramework.query.filter(

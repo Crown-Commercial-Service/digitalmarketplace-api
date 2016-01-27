@@ -3,7 +3,7 @@ from datetime import datetime
 from nose.tools import assert_equal, assert_raises
 
 from app import db, create_app
-from app.models import User, Framework, Service, ValidationError
+from app.models import User, Framework, Service, ValidationError, SupplierFramework
 from .helpers import BaseApplicationTest
 
 
@@ -119,3 +119,17 @@ class TestServices(BaseApplicationTest):
             services = Service.query.has_statuses('published', 'disabled')
 
             assert_equal(services.count(), 2)
+
+
+class TestSupplierFrameworks(BaseApplicationTest):
+    def test_nulls_are_stripped_from_declaration(self):
+        supplier_framework = SupplierFramework()
+        supplier_framework.declaration = {'foo': 'bar', 'bar': None}
+
+        assert supplier_framework.declaration == {'foo': 'bar'}
+
+    def test_whitespace_values_are_stripped_from_declaration(self):
+        supplier_framework = SupplierFramework()
+        supplier_framework.declaration = {'foo': ' bar ', 'bar': '', 'other': ' '}
+
+        assert supplier_framework.declaration == {'foo': 'bar', 'bar': '', 'other': ''}
