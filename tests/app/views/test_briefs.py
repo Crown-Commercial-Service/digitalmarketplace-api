@@ -5,12 +5,30 @@ from ..helpers import BaseApplicationTest
 
 from dmapiclient.audit import AuditTypes
 from app import db
+from app.models import Framework
 
 
 class TestBriefs(BaseApplicationTest):
     def setup(self):
         super(TestBriefs, self).setup()
         self.user_id = self.setup_dummy_user(role='buyer')
+
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self._original_framework_status = framework.status
+            framework.status = 'live'
+
+            db.session.add(framework)
+            db.session.commit()
+
+    def teardown(self):
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            framework.status = self._original_framework_status
+
+            db.session.add(framework)
+            db.session.commit()
+        super(TestBriefs, self).teardown()
 
     def test_create_brief_with_no_data(self):
         res = self.client.post(
@@ -39,6 +57,32 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 201
         assert data['briefs']['frameworkSlug'] == 'digital-outcomes-and-specialists'
         assert data['briefs']['title'] == 'the title'
+
+    def test_can_only_create_briefs_on_live_frameworks(self):
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self._original_framework_status = framework.status
+            framework.status = 'open'
+
+            db.session.add(framework)
+            db.session.commit()
+
+        res = self.client.post(
+            '/briefs',
+            data=json.dumps({
+                'briefs': {
+                    'userId': self.user_id,
+                    'frameworkSlug': 'digital-outcomes-and-specialists',
+                    'lot': 'digital-specialists',
+                    'title': 'the title',
+                },
+                'update_details': {
+                    'updated_by': 'example'
+                }
+            }),
+            content_type='application/json')
+
+        assert res.status_code == 400
 
     def test_create_brief_creates_audit_event(self):
         self.client.post(
@@ -209,7 +253,7 @@ class TestBriefs(BaseApplicationTest):
                 'title': 'Brief 1',
                 'frameworkSlug': 'digital-outcomes-and-specialists',
                 'frameworkName': 'Digital Outcomes and Specialists',
-                'frameworkStatus': 'coming',
+                'frameworkStatus': 'live',
                 'lot': 'digital-specialists',
                 'lotName': 'Digital specialists',
                 'createdAt': mock.ANY,

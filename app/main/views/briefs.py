@@ -20,6 +20,9 @@ def create_brief():
 
     framework, lot = validate_and_return_lot(brief_json)
 
+    if framework.status != 'live':
+        abort(400, "Framework must be live")
+
     user = User.query.get(brief_json.pop('userId'))
 
     if user is None:
