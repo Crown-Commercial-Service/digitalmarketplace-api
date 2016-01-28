@@ -7,11 +7,14 @@ from ...utils import get_json_from_request, json_has_required_keys, pagination_l
 from ...service_utils import validate_and_return_lot, validate_and_return_updater_request
 from ...models import User, Brief, AuditEvent
 from ...brief_utils import validate_brief_data
+from ...draft_utils import get_request_page_questions
 
 
 @main.route('/briefs', methods=['POST'])
 def create_brief():
     updater_json = validate_and_return_updater_request()
+    page_questions = get_request_page_questions()
+
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['briefs'])
     brief_json = json_payload['briefs']
@@ -29,7 +32,7 @@ def create_brief():
         abort(400, "User ID does not exist")
 
     brief = Brief(data=brief_json, users=[user], framework=framework, lot=lot)
-    validate_brief_data(brief)
+    validate_brief_data(brief, enforce_required=False, required_fields=page_questions)
 
     db.session.add(brief)
     try:
@@ -58,6 +61,8 @@ def create_brief():
 @main.route('/briefs/<int:brief_id>', methods=['POST'])
 def update_brief(brief_id):
     updater_json = validate_and_return_updater_request()
+    page_questions = get_request_page_questions()
+
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['briefs'])
     brief_json = json_payload['briefs']
@@ -67,7 +72,8 @@ def update_brief(brief_id):
     ).first_or_404()
 
     brief.update_from_json(brief_json)
-    validate_brief_data(brief)
+
+    validate_brief_data(brief, enforce_required=False, required_fields=page_questions)
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_brief,

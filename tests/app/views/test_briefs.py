@@ -58,6 +58,26 @@ class TestBriefs(BaseApplicationTest):
         assert data['briefs']['frameworkSlug'] == 'digital-outcomes-and-specialists'
         assert data['briefs']['title'] == 'the title'
 
+    def test_create_fails_if_required_field_is_not_provided(self):
+        res = self.client.post(
+            '/briefs',
+            data=json.dumps({
+                'briefs': {
+                    'userId': self.user_id,
+                    'frameworkSlug': 'digital-outcomes-and-specialists',
+                    'lot': 'digital-specialists',
+                },
+                'update_details': {
+                    'updated_by': 'example'
+                },
+                'page_questions': ['title'],
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == {'title': 'answer_required'}
+
     def test_can_only_create_briefs_on_live_frameworks(self):
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
@@ -195,6 +215,22 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
         assert data['briefs']['title'] == 'my title'
 
+    def test_update_fails_if_required_field_is_not_provided(self):
+        self.setup_dummy_briefs(1)
+
+        res = self.client.post(
+            '/briefs/1',
+            data=json.dumps({
+                'briefs': {},
+                'update_details': {'updated_by': 'example'},
+                'page_questions': ['title'],
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == {'title': 'answer_required'}
+
     def test_update_brief_creates_audit_event(self):
         self.setup_dummy_briefs(1)
 
@@ -250,7 +286,6 @@ class TestBriefs(BaseApplicationTest):
         assert json.loads(res.get_data(as_text=True)) == {
             'briefs': {
                 'id': 1,
-                'title': 'Brief 1',
                 'frameworkSlug': 'digital-outcomes-and-specialists',
                 'frameworkName': 'Digital Outcomes and Specialists',
                 'frameworkStatus': 'live',

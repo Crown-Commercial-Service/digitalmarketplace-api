@@ -74,7 +74,7 @@ class BaseApplicationTest(object):
             for i in range(1, n + 1):
                 db.session.add(Brief(
                     id=i,
-                    data={"title": "Brief {}".format(i)},
+                    data={},
                     framework_id=framework_id,
                     lot_id=lot_id,
                     users=[User.query.get(user_id)]
