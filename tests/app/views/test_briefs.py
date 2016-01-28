@@ -25,8 +25,8 @@ class TestBriefs(BaseApplicationTest):
             data=json.dumps({
                 'briefs': {
                     'userId': self.user_id,
-                    'frameworkSlug': 'g-cloud-7',
-                    'lot': 'iaas',
+                    'frameworkSlug': 'digital-outcomes-and-specialists',
+                    'lot': 'digital-specialists',
                     'title': 'the title',
                 },
                 'update_details': {
@@ -37,7 +37,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 201
-        assert data['briefs']['frameworkSlug'] == 'g-cloud-7'
+        assert data['briefs']['frameworkSlug'] == 'digital-outcomes-and-specialists'
         assert data['briefs']['title'] == 'the title'
 
     def test_create_brief_creates_audit_event(self):
@@ -46,8 +46,9 @@ class TestBriefs(BaseApplicationTest):
             data=json.dumps({
                 'briefs': {
                     'userId': self.user_id,
-                    'frameworkSlug': 'g-cloud-7',
-                    'lot': 'iaas',
+                    'frameworkSlug': 'digital-outcomes-and-specialists',
+                    'lot': 'digital-specialists',
+                    'title': 'my title',
                 },
                 'update_details': {'updated_by': 'example'}
             }),
@@ -59,7 +60,32 @@ class TestBriefs(BaseApplicationTest):
 
         brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.create_brief.value]
         assert len(brief_audits) == 1
-        assert brief_audits[0]['data'] == {'briefId': 2, 'briefJson': {'frameworkSlug': 'g-cloud-7', 'lot': 'iaas'}}
+        assert brief_audits[0]['data'] == {
+            'briefId': 2,
+            'briefJson': {
+                'frameworkSlug': 'digital-outcomes-and-specialists',
+                'lot': 'digital-specialists',
+                'title': 'my title'
+            }
+        }
+
+    def test_create_brief_fails_if_schema_validation_fails(self):
+        res = self.client.post(
+            '/briefs',
+            data=json.dumps({
+                'briefs': {
+                    'userId': self.user_id,
+                    'frameworkSlug': 'digital-outcomes-and-specialists',
+                    'lot': 'digital-specialists',
+                    'title': 'my title' * 30,
+                },
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == {'title': 'under_character_limit'}
 
     def test_create_brief_fails_if_user_does_not_exist(self):
         res = self.client.post(
@@ -67,8 +93,8 @@ class TestBriefs(BaseApplicationTest):
             data=json.dumps({
                 'briefs': {
                     'userId': 999,
-                    'frameworkSlug': 'g-cloud-7',
-                    'lot': 'iaas',
+                    'frameworkSlug': 'digital-outcomes-and-specialists',
+                    'lot': 'digital-specialists',
                 },
                 'update_details': {'updated_by': 'example'}
             }),
@@ -84,7 +110,7 @@ class TestBriefs(BaseApplicationTest):
                 'briefs': {
                     'userId': self.user_id,
                     'frameworkSlug': 'not-exists',
-                    'lot': 'iaas',
+                    'lot': 'digital-specialists',
                 },
                 'update_details': {'updated_by': 'example'}
             }),
@@ -99,7 +125,7 @@ class TestBriefs(BaseApplicationTest):
             data=json.dumps({
                 'briefs': {
                     'userId': self.user_id,
-                    'frameworkSlug': 'g-cloud-7',
+                    'frameworkSlug': 'digital-outcomes-and-specialists',
                     'lot': 'not-exists',
                 },
                 'update_details': {'updated_by': 'example'}
@@ -107,7 +133,8 @@ class TestBriefs(BaseApplicationTest):
             content_type='application/json')
 
         assert res.status_code == 400
-        assert json.loads(res.get_data(as_text=True))['error'] == "Incorrect lot 'not-exists' for framework 'g-cloud-7'"
+        assert json.loads(res.get_data(as_text=True))['error'] == \
+            "Incorrect lot 'not-exists' for framework 'digital-outcomes-and-specialists'"
 
     def test_update_brief(self):
         self.setup_dummy_briefs(1)
@@ -143,6 +170,23 @@ class TestBriefs(BaseApplicationTest):
         assert len(brief_audits) == 1
         assert brief_audits[0]['data'] == {'briefId': 1, 'briefJson': {'title': 'my title'}}
 
+    def test_update_brief_fails_if_schema_validation_fails(self):
+        self.setup_dummy_briefs(1)
+
+        res = self.client.post(
+            '/briefs/1',
+            data=json.dumps({
+                'briefs': {
+                    'title': 'my title' * 30,
+                },
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == {'title': 'under_character_limit'}
+
     def test_update_brief_returns_404_if_not_found(self):
         res = self.client.post(
             '/briefs/1',
@@ -163,15 +207,15 @@ class TestBriefs(BaseApplicationTest):
             'briefs': {
                 'id': 1,
                 'title': 'Brief 1',
-                'frameworkSlug': 'g-cloud-6',
-                'frameworkName': 'G-Cloud 6',
-                'frameworkStatus': 'live',
-                'lot': 'saas',
-                'lotName': 'Software as a Service',
+                'frameworkSlug': 'digital-outcomes-and-specialists',
+                'frameworkName': 'Digital Outcomes and Specialists',
+                'frameworkStatus': 'coming',
+                'lot': 'digital-specialists',
+                'lotName': 'Digital specialists',
                 'createdAt': mock.ANY,
                 'updatedAt': mock.ANY,
                 'links': {
-                    'framework': 'http://localhost/frameworks/g-cloud-6',
+                    'framework': 'http://localhost/frameworks/digital-outcomes-and-specialists',
                     'self': 'http://localhost/briefs/1',
                 },
             }

@@ -66,7 +66,7 @@ class BaseApplicationTest(object):
 
             return user.id
 
-    def setup_dummy_briefs(self, n, user_id=None, framework_id=1, lot_id=1):
+    def setup_dummy_briefs(self, n, user_id=None, framework_id=5, lot_id=6):
         if user_id is None:
             user_id = self.setup_dummy_user(id=None)
 

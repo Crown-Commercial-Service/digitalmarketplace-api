@@ -6,6 +6,7 @@ from ... import db
 from ...utils import get_json_from_request, json_has_required_keys, pagination_links, get_valid_page_or_1
 from ...service_utils import validate_and_return_lot, validate_and_return_updater_request
 from ...models import User, Brief, AuditEvent
+from ...brief_utils import validate_brief_data
 
 
 @main.route('/briefs', methods=['POST'])
@@ -25,6 +26,7 @@ def create_brief():
         abort(400, "User ID does not exist")
 
     brief = Brief(data=brief_json, users=[user], framework=framework, lot=lot)
+    validate_brief_data(brief)
 
     db.session.add(brief)
     try:
@@ -62,6 +64,7 @@ def update_brief(brief_id):
     ).first_or_404()
 
     brief.update_from_json(brief_json)
+    validate_brief_data(brief)
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_brief,
