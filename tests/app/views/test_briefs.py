@@ -368,6 +368,21 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == {'title': 'answer_required'}
 
+    def test_cannot_make_a_brief_live_if_it_is_already_live(self):
+        self.setup_dummy_briefs(1, status='live')
+
+        res = self.client.put(
+            '/briefs/1/status',
+            data=json.dumps({
+                'briefs': {'status': 'live'},
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == 'Brief already live'
+
     def test_change_status_makes_audit_event(self):
         self.setup_dummy_briefs(1, title='The Title')
 

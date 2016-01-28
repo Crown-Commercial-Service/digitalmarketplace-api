@@ -66,7 +66,7 @@ class BaseApplicationTest(object):
 
             return user.id
 
-    def setup_dummy_briefs(self, n, user_id=None, framework_id=5, lot_id=6, title=None):
+    def setup_dummy_briefs(self, n, user_id=None, framework_id=5, lot_id=6, title=None, status='draft'):
         if user_id is None:
             user_id = self.setup_dummy_user(id=None)
 
@@ -74,6 +74,7 @@ class BaseApplicationTest(object):
             for i in range(1, n + 1):
                 db.session.add(Brief(
                     id=i,
+                    status=status,
                     data={'title': title},
                     framework_id=framework_id,
                     lot_id=lot_id,
