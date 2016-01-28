@@ -792,6 +792,20 @@ class Brief(db.Model):
             raise ValidationError("The brief user must be a buyer")
         return user
 
+    @validates('data')
+    def validates_data(self, key, data):
+        data = drop_foreign_fields(data, [
+            'id',
+            'frameworkSlug', 'frameworkName', 'frameworkStatus',
+            'lot', 'lotName',
+            'updatedAt', 'createdAt', 'links'
+        ])
+
+        data = strip_whitespace_from_data(data)
+        data = purge_nulls_from_data(data)
+
+        return data
+
     def update_from_json(self, data):
         current_data = dict(self.data.items())
         current_data.update(data)

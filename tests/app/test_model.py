@@ -109,6 +109,30 @@ class TestBriefs(BaseApplicationTest):
             assert brief.updated_at > updated_at
             assert brief.data == {'foo': 'bar'}
 
+    def test_foreign_fields_stripped_from_data(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        brief.data = {
+            'frameworkSlug': 'test',
+            'frameworkName': 'test',
+            'lot': 'test',
+            'lotName': 'test',
+            'title': 'test',
+        }
+
+        assert brief.data == {'title': 'test'}
+
+    def test_nulls_are_stripped_from_declaration(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        brief.data = {'foo': 'bar', 'bar': None}
+
+        assert brief.data == {'foo': 'bar'}
+
+    def test_whitespace_values_are_stripped_from_declaration(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        brief.data = {'foo': ' bar ', 'bar': '', 'other': '  '}
+
+        assert brief.data == {'foo': 'bar', 'bar': '', 'other': ''}
+
     def test_buyer_users_can_be_added_to_a_brief(self):
         with self.app.app_context():
             self.setup_dummy_user(role='buyer')
