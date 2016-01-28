@@ -8,8 +8,3 @@ def validate_and_return_draft_request(draft_id=0):
     if draft_id:
         json_has_matching_id(json_payload['services'], draft_id)
     return json_payload['services']
-
-
-def get_request_page_questions():
-    json_payload = get_json_from_request()
-    return json_payload.get('page_questions', [])

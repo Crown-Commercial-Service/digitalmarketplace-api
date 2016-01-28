@@ -9,6 +9,9 @@ from ... import db, isolation_level
 from ...utils import json_only_has_required_keys
 from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, Supplier, AuditEvent, Framework
+from ...utils import (
+    get_request_page_questions
+)
 from ...service_utils import (
     validate_and_return_updater_request,
     update_and_validate_service, index_service,
@@ -18,8 +21,7 @@ from ...service_utils import (
 )
 
 from ...draft_utils import (
-    validate_and_return_draft_request,
-    get_request_page_questions
+    validate_and_return_draft_request
 )
 
 

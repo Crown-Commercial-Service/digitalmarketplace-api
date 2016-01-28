@@ -125,7 +125,7 @@ class TestBriefs(BaseApplicationTest):
         brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.create_brief.value]
         assert len(brief_audits) == 1
         assert brief_audits[0]['data'] == {
-            'briefId': 2,
+            'briefId': mock.ANY,
             'briefJson': {
                 'frameworkSlug': 'digital-outcomes-and-specialists',
                 'lot': 'digital-specialists',

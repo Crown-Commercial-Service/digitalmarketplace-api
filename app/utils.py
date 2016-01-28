@@ -95,3 +95,8 @@ def strip_whitespace_from_data(data):
 
 def purge_nulls_from_data(data):
     return dict((k, v) for k, v in iteritems(data) if v is not None)
+
+
+def get_request_page_questions():
+    json_payload = get_json_from_request()
+    return json_payload.get('page_questions', [])

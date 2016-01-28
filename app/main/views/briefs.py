@@ -3,11 +3,13 @@ from flask import jsonify, abort, current_app, request
 from dmapiclient.audit import AuditTypes
 from .. import main
 from ... import db
-from ...utils import get_json_from_request, json_has_required_keys, pagination_links, get_valid_page_or_1
-from ...service_utils import validate_and_return_lot, validate_and_return_updater_request
 from ...models import User, Brief, AuditEvent
+from ...utils import (
+    get_json_from_request, json_has_required_keys, pagination_links,
+    get_valid_page_or_1, get_request_page_questions
+)
+from ...service_utils import validate_and_return_lot, validate_and_return_updater_request
 from ...brief_utils import validate_brief_data
-from ...draft_utils import get_request_page_questions
 
 
 @main.route('/briefs', methods=['POST'])
