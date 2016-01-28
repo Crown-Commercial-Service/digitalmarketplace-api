@@ -27,6 +27,7 @@ class TestBriefs(BaseApplicationTest):
                     'userId': self.user_id,
                     'frameworkSlug': 'g-cloud-7',
                     'lot': 'iaas',
+                    'title': 'the title',
                 },
                 'update_details': {
                     'updated_by': 'example'
@@ -37,6 +38,7 @@ class TestBriefs(BaseApplicationTest):
 
         assert res.status_code == 201
         assert data['briefs']['frameworkSlug'] == 'g-cloud-7'
+        assert data['briefs']['title'] == 'the title'
 
     def test_create_brief_creates_audit_event(self):
         self.client.post(

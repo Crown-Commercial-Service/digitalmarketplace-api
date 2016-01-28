@@ -24,7 +24,7 @@ def create_brief():
     if user is None:
         abort(400, "User ID does not exist")
 
-    brief = Brief(data={}, users=[user], framework=framework, lot=lot)
+    brief = Brief(data=brief_json, users=[user], framework=framework, lot=lot)
 
     db.session.add(brief)
     try:
