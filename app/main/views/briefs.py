@@ -1,23 +1,25 @@
 from flask import jsonify, abort, current_app, request
 
+from dmapiclient.audit import AuditTypes
 from .. import main
 from ... import db
 from ...utils import get_json_from_request, json_has_required_keys, pagination_links, get_valid_page_or_1
-from ...service_utils import validate_and_return_lot
-from ...models import User, Brief
+from ...service_utils import validate_and_return_lot, validate_and_return_updater_request
+from ...models import User, Brief, AuditEvent
 
 
 @main.route('/briefs', methods=['POST'])
-def create_a_brief():
+def create_brief():
+    updater_json = validate_and_return_updater_request()
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['briefs'])
-    json_payload = json_payload['briefs']
+    brief_json = json_payload['briefs']
 
-    json_has_required_keys(json_payload, ['frameworkSlug', 'lot', 'userId'])
+    json_has_required_keys(brief_json, ['frameworkSlug', 'lot', 'userId'])
 
-    framework, lot = validate_and_return_lot(json_payload)
+    framework, lot = validate_and_return_lot(brief_json)
 
-    user = User.query.get(json_payload.pop('userId'))
+    user = User.query.get(brief_json.pop('userId'))
 
     if user is None:
         abort(400, "User ID does not exist")
@@ -25,9 +27,57 @@ def create_a_brief():
     brief = Brief(data={}, users=[user], framework=framework, lot=lot)
 
     db.session.add(brief)
+    try:
+        db.session.flush()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.create_brief,
+        user=updater_json['updated_by'],
+        data={
+            'briefId': brief.id,
+            'briefJson': brief_json,
+        },
+        db_object=brief,
+    )
+
+    db.session.add(audit)
+
     db.session.commit()
 
-    return jsonify(), 201
+    return jsonify(briefs=brief.serialize()), 201
+
+
+@main.route('/briefs/<int:brief_id>', methods=['POST'])
+def update_brief(brief_id):
+    updater_json = validate_and_return_updater_request()
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['briefs'])
+    brief_json = json_payload['briefs']
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    brief.update_from_json(brief_json)
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.update_brief,
+        user=updater_json['updated_by'],
+        data={
+            'briefId': brief.id,
+            'briefJson': brief_json,
+        },
+        db_object=brief,
+    )
+
+    db.session.add(brief)
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify(briefs=brief.serialize()), 200
 
 
 @main.route('/briefs/<int:brief_id>', methods=['GET'])

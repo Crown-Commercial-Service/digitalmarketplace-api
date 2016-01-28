@@ -3,6 +3,7 @@ import json
 import mock
 from ..helpers import BaseApplicationTest
 
+from dmapiclient.audit import AuditTypes
 from app import db
 
 
@@ -21,36 +22,70 @@ class TestBriefs(BaseApplicationTest):
     def test_create_brief(self):
         res = self.client.post(
             '/briefs',
-            data=json.dumps({'briefs': {
-                'userId': self.user_id,
-                'frameworkSlug': 'g-cloud-7',
-                'lot': 'iaas',
-            }}),
+            data=json.dumps({
+                'briefs': {
+                    'userId': self.user_id,
+                    'frameworkSlug': 'g-cloud-7',
+                    'lot': 'iaas',
+                },
+                'update_details': {
+                    'updated_by': 'example'
+                }
+            }),
             content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 201
+        assert data['briefs']['frameworkSlug'] == 'g-cloud-7'
+
+    def test_create_brief_creates_audit_event(self):
+        self.client.post(
+            '/briefs',
+            data=json.dumps({
+                'briefs': {
+                    'userId': self.user_id,
+                    'frameworkSlug': 'g-cloud-7',
+                    'lot': 'iaas',
+                },
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.create_brief.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data'] == {'briefId': 2, 'briefJson': {'frameworkSlug': 'g-cloud-7', 'lot': 'iaas'}}
 
     def test_create_brief_fails_if_user_does_not_exist(self):
         res = self.client.post(
             '/briefs',
-            data=json.dumps({'briefs': {
-                'userId': 999,
-                'frameworkSlug': 'g-cloud-7',
-                'lot': 'iaas',
-            }}),
+            data=json.dumps({
+                'briefs': {
+                    'userId': 999,
+                    'frameworkSlug': 'g-cloud-7',
+                    'lot': 'iaas',
+                },
+                'update_details': {'updated_by': 'example'}
+            }),
             content_type='application/json')
 
         assert res.status_code == 400
         assert json.loads(res.get_data(as_text=True))['error'] == 'User ID does not exist'
 
-    def test_create_brief_fails_if_frmework_does_not_exist(self):
+    def test_create_brief_fails_if_framework_does_not_exist(self):
         res = self.client.post(
             '/briefs',
-            data=json.dumps({'briefs': {
-                'userId': self.user_id,
-                'frameworkSlug': 'not-exists',
-                'lot': 'iaas',
-            }}),
+            data=json.dumps({
+                'briefs': {
+                    'userId': self.user_id,
+                    'frameworkSlug': 'not-exists',
+                    'lot': 'iaas',
+                },
+                'update_details': {'updated_by': 'example'}
+            }),
             content_type='application/json')
 
         assert res.status_code == 400
@@ -59,15 +94,63 @@ class TestBriefs(BaseApplicationTest):
     def test_create_brief_fails_if_lot_does_not_exist(self):
         res = self.client.post(
             '/briefs',
-            data=json.dumps({'briefs': {
-                'userId': self.user_id,
-                'frameworkSlug': 'g-cloud-7',
-                'lot': 'not-exists',
-            }}),
+            data=json.dumps({
+                'briefs': {
+                    'userId': self.user_id,
+                    'frameworkSlug': 'g-cloud-7',
+                    'lot': 'not-exists',
+                },
+                'update_details': {'updated_by': 'example'}
+            }),
             content_type='application/json')
 
         assert res.status_code == 400
         assert json.loads(res.get_data(as_text=True))['error'] == "Incorrect lot 'not-exists' for framework 'g-cloud-7'"
+
+    def test_update_brief(self):
+        self.setup_dummy_briefs(1)
+
+        res = self.client.post(
+            '/briefs/1',
+            data=json.dumps({
+                'briefs': {'title': 'my title'},
+                'update_details': {'updated_by': 'example'},
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['briefs']['title'] == 'my title'
+
+    def test_update_brief_creates_audit_event(self):
+        self.setup_dummy_briefs(1)
+
+        self.client.post(
+            '/briefs/1',
+            data=json.dumps({
+                'briefs': {'title': 'my title'},
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data'] == {'briefId': 1, 'briefJson': {'title': 'my title'}}
+
+    def test_update_brief_returns_404_if_not_found(self):
+        res = self.client.post(
+            '/briefs/1',
+            data=json.dumps({
+                'briefs': {},
+                'update_details': {'updated_by': 'example'},
+            }),
+            content_type='application/json')
+
+        assert res.status_code == 404
 
     def test_get_brief(self):
         self.setup_dummy_briefs(1)
@@ -92,7 +175,7 @@ class TestBriefs(BaseApplicationTest):
             }
         }
 
-    def test_get_brief_returns_404_if_not_exists(self):
+    def test_get_brief_returns_404_if_not_found(self):
         res = self.client.get('/briefs/1')
 
         assert res.status_code == 404
