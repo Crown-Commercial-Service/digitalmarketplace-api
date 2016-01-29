@@ -27,6 +27,8 @@ def create_brief():
 
     if framework.status != 'live':
         abort(400, "Framework must be live")
+    if not lot.requires_brief:
+        abort(400, "Lot '{}' does not require a brief".format(lot.name))
 
     user = User.query.get(brief_json.pop('userId'))
 

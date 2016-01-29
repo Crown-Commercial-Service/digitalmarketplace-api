@@ -38,16 +38,20 @@ class TestGetFramework(BaseApplicationTest):
             response = self.client.get('/frameworks/g-cloud-7')
 
         data = json.loads(response.get_data())
-        assert_equal(data['frameworks']['lots'], [
+        assert data['frameworks']['lots'] == [
             {u'id': 1, u'name': u'Software as a Service',
-             u'one_service_limit': False, u'oneServiceLimit': False, u'slug': u'saas'},
+             u'one_service_limit': False, u'oneServiceLimit': False, u'slug': u'saas',
+             u'requiresBrief': False},
             {u'id': 2, u'name': u'Platform as a Service',
-             u'one_service_limit': False, u'oneServiceLimit': False, u'slug': u'paas'},
+             u'one_service_limit': False, u'oneServiceLimit': False, u'slug': u'paas',
+             u'requiresBrief': False},
             {u'id': 3, u'name': u'Infrastructure as a Service',
-             u'one_service_limit': False, u'oneServiceLimit': False, u'slug': u'iaas'},
+             u'one_service_limit': False, u'oneServiceLimit': False, u'slug': u'iaas',
+             u'requiresBrief': False},
             {u'id': 4, u'name': u'Specialist Cloud Services',
-             u'one_service_limit': False, u'oneServiceLimit': False, u'slug': u'scs'}
-        ])
+             u'one_service_limit': False, u'oneServiceLimit': False, u'slug': u'scs',
+             u'requiresBrief': False},
+        ]
 
     def test_a_404_is_raised_if_it_does_not_exist(self):
         with self.app.app_context():

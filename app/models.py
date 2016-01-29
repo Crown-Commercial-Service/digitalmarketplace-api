@@ -38,6 +38,10 @@ class Lot(db.Model):
     name = db.Column(db.String, nullable=False)
     one_service_limit = db.Column(db.Boolean, nullable=False, default=False)
 
+    @property
+    def requires_brief(self):
+        return self.one_service_limit
+
     def __repr__(self):
         return '<{}: {}>'.format(self.__class__.__name__, self.name)
 
@@ -48,6 +52,7 @@ class Lot(db.Model):
             'name': self.name,
             'one_service_limit': self.one_service_limit,  # TODO deprecated
             'oneServiceLimit': self.one_service_limit,
+            'requiresBrief': self.requires_brief,
         }
 
 

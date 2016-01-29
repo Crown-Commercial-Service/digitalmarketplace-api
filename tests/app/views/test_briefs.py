@@ -58,6 +58,26 @@ class TestBriefs(BaseApplicationTest):
         assert data['briefs']['frameworkSlug'] == 'digital-outcomes-and-specialists'
         assert data['briefs']['title'] == 'the title'
 
+    def test_create_fails_if_lot_does_not_require_briefs(self):
+        res = self.client.post(
+            '/briefs',
+            data=json.dumps({
+                'briefs': {
+                    'userId': self.user_id,
+                    'frameworkSlug': 'digital-outcomes-and-specialists',
+                    'lot': 'user-research-studios',
+                    'title': 'the title',
+                },
+                'update_details': {
+                    'updated_by': 'example'
+                }
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == "Lot 'User research studios' does not require a brief"
+
     def test_create_fails_if_required_field_is_not_provided(self):
         res = self.client.post(
             '/briefs',
