@@ -73,6 +73,9 @@ def update_brief(brief_id):
         Brief.id == brief_id
     ).first_or_404()
 
+    if brief.status == 'live':
+        abort(400, "Cannot update a live brief")
+
     brief.update_from_json(brief_json)
 
     validate_brief_data(brief, enforce_required=False, required_fields=page_questions)

@@ -231,6 +231,21 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == {'title': 'answer_required'}
 
+    def test_update_fails_if_status_is_live(self):
+        self.setup_dummy_briefs(1, status='live')
+
+        res = self.client.post(
+            '/briefs/1',
+            data=json.dumps({
+                'briefs': {'title': 'my title'},
+                'update_details': {'updated_by': 'example'},
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == 'Cannot update a live brief'
+
     def test_update_brief_creates_audit_event(self):
         self.setup_dummy_briefs(1)
 
