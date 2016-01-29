@@ -381,7 +381,37 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
-        assert data['error'] == 'Brief already live'
+        assert data['error'] == 'Brief is already live'
+
+    def test_cannot_make_a_live_brief_pending(self):
+        self.setup_dummy_briefs(1, status='live')
+
+        res = self.client.put(
+            '/briefs/1/status',
+            data=json.dumps({
+                'briefs': {'status': 'draft'},
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == 'Cannot make a live brief draft'
+
+    def test_cannot_set_status_to_invalid_value(self):
+        self.setup_dummy_briefs(1, status='draft')
+
+        res = self.client.put(
+            '/briefs/1/status',
+            data=json.dumps({
+                'briefs': {'status': 'invalid'},
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == "Invalid brief status 'invalid'"
 
     def test_change_status_makes_audit_event(self):
         self.setup_dummy_briefs(1, title='The Title')

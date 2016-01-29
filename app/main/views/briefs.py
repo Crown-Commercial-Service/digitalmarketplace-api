@@ -135,8 +135,8 @@ def update_brief_status(brief_id):
         Brief.id == brief_id
     ).first_or_404()
 
-    if brief.status == 'live':
-        abort(400, "Brief already live")
+    if brief_json['status'] == brief.status:
+        abort(400, "Brief is already {}".format(brief.status))
 
     brief.status = brief_json['status']
 
