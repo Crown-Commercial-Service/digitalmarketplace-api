@@ -777,7 +777,7 @@ class Brief(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), nullable=False)
-    lot_id = db.Column(db.Integer, db.ForeignKey('lots.id'), nullable=False)
+    _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lots.id'), nullable=False)
 
     data = db.Column(JSON)
     status = db.Column(db.String, index=False, unique=False,
@@ -788,7 +788,7 @@ class Brief(db.Model):
     updated_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    __table_args__ = (db.ForeignKeyConstraint([framework_id, lot_id],
+    __table_args__ = (db.ForeignKeyConstraint([framework_id, _lot_id],
                                               ['framework_lots.framework_id', 'framework_lots.lot_id']),
                       {})
 
@@ -801,6 +801,20 @@ class Brief(db.Model):
         if user.role != 'buyer':
             raise ValidationError("The brief user must be a buyer")
         return user
+
+    @property
+    def lot_id(self):
+        return self._lot_id
+
+    @lot_id.setter
+    def lot_id(self, lot_id):
+        raise ValidationError("Cannot update lot_id directly, use lot relationship")
+
+    @validates('lot')
+    def validates_lot(self, key, lot):
+        if not lot.requires_brief:
+            raise ValidationError("Lot '{}' does not require a brief".format(lot.name))
+        return lot
 
     @validates('data')
     def validates_data(self, key, data):

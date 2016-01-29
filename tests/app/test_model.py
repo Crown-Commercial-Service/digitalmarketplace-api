@@ -174,6 +174,20 @@ class TestBriefs(BaseApplicationTest):
             with pytest.raises(IntegrityError):
                 db.session.commit()
 
+    def test_brief_lot_must_require_briefs(self):
+        with self.app.app_context():
+            with pytest.raises(ValidationError):
+                Brief(data={},
+                      framework=self.framework,
+                      lot=self.framework.get_lot('user-research-studios'))
+
+    def test_cannot_update_lot_by_id(self):
+        with self.app.app_context():
+            with pytest.raises(ValidationError):
+                Brief(data={},
+                      framework=self.framework,
+                      lot_id=self.framework.get_lot('user-research-studios').id)
+
 
 class TestServices(BaseApplicationTest):
     def test_framework_is_live_only_returns_live_frameworks(self):
