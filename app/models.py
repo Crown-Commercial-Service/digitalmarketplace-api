@@ -50,7 +50,6 @@ class Lot(db.Model):
             'id': self.id,
             'slug': self.slug,
             'name': self.name,
-            'one_service_limit': self.one_service_limit,  # TODO deprecated
             'oneServiceLimit': self.one_service_limit,
             'requiresBrief': self.requires_brief,
         }
