@@ -35,7 +35,7 @@ def test_framework_should_not_accept_invalid_status():
         f = Framework(
             name='foo',
             slug='foo',
-            framework='gcloud',
+            framework='g-cloud',
             status='invalid',
         )
         db.session.add(f)
@@ -49,7 +49,7 @@ def test_framework_should_accept_valid_statuses():
             f = Framework(
                 name='foo',
                 slug='foo-{}'.format(i),
-                framework='gcloud',
+                framework='g-cloud',
                 status=status,
             )
             db.session.add(f)

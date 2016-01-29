@@ -61,7 +61,7 @@ class TestUpdateFramework(BaseApplicationTest):
         super(TestUpdateFramework, self).setup()
         framework = Framework()
         framework.name = 'Example G-Cloud framework'
-        framework.framework = 'gcloud'
+        framework.framework = 'g-cloud'
         framework.slug = 'example'
         framework.status = 'open'
 

@@ -1667,7 +1667,7 @@ class TestGetService(BaseApplicationTest):
                 id=123,
                 name="expired",
                 slug="expired",
-                framework="gcloud",
+                framework="g-cloud",
                 status="expired",
             ))
             db.session.add(
