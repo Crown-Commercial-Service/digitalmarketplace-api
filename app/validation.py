@@ -17,7 +17,6 @@ JSON_SCHEMAS_PATH = './json_schemas'
 SCHEMA_NAMES = [
     'briefs-digital-outcomes-and-specialists-digital-outcomes',
     'briefs-digital-outcomes-and-specialists-digital-specialists',
-    'briefs-digital-outcomes-and-specialists-user-research-studios',
     'briefs-digital-outcomes-and-specialists-user-research-participants',
     'services-g-cloud-4',
     'services-g-cloud-5',
