@@ -103,7 +103,7 @@ def get_brief(brief_id):
         Brief.id == brief_id
     ).first_or_404()
 
-    return jsonify(briefs=brief.serialize())
+    return jsonify(briefs=brief.serialize(with_users=True))
 
 
 @main.route('/briefs', methods=['GET'])

@@ -844,7 +844,7 @@ class Brief(db.Model):
 
         self.data = current_data
 
-    def serialize(self):
+    def serialize(self, with_users=False):
         data = dict(self.data.items())
 
         data.update({
@@ -863,6 +863,14 @@ class Brief(db.Model):
             'self': url_for('.get_brief', brief_id=self.id),
             'framework': url_for('.get_framework', framework_slug=self.framework.slug),
         }
+
+        if with_users:
+            data['users'] = [
+                drop_foreign_fields(
+                    user.serialize(),
+                    ['locked', 'createdAt', 'updatedAt', 'passwordChangedAt', 'loggedInAt', 'failedLoginCount']
+                ) for user in self.users
+            ]
 
         return data
 

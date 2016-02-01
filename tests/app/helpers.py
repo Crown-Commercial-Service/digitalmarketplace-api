@@ -66,8 +66,8 @@ class BaseApplicationTest(object):
 
             return user.id
 
-    def setup_dummy_briefs(self, n, title=None, status='draft'):
-        user_id = self.setup_dummy_user(id=None)
+    def setup_dummy_briefs(self, n, title=None, status='draft', user_id=1):
+        user_id = self.setup_dummy_user(id=1)
 
         with self.app.app_context():
             framework = Framework.query.get(5)
