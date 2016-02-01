@@ -438,8 +438,11 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == {'title': 'answer_required'}
 
-    def test_cannot_make_a_brief_live_if_it_is_already_live(self):
-        self.setup_dummy_briefs(1, status='live')
+    def test_published_at_is_not_updated_if_live_brief_is_made_live(self):
+        self.setup_dummy_briefs(1, status='live', title='The title')
+
+        res = self.client.get('/briefs/1')
+        original_published_at = json.loads(res.get_data(as_text=True))['briefs']['publishedAt']
 
         res = self.client.put(
             '/briefs/1/status',
@@ -450,8 +453,11 @@ class TestBriefs(BaseApplicationTest):
             content_type='application/json')
         data = json.loads(res.get_data(as_text=True))
 
-        assert res.status_code == 400
-        assert data['error'] == 'Brief is already live'
+        assert res.status_code == 200
+
+        res = self.client.get('/briefs/1')
+        published_at = json.loads(res.get_data(as_text=True))['briefs']['publishedAt']
+        assert published_at == original_published_at
 
     def test_cannot_make_a_brief_live_if_the_framework_is_no_longer_live(self):
         self.setup_dummy_briefs(1, title='The title')

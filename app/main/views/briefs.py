@@ -142,28 +142,26 @@ def update_brief_status(brief_id):
         Brief.id == brief_id
     ).first_or_404()
 
-    if brief_json['status'] == brief.status:
-        abort(400, "Brief is already {}".format(brief.status))
-
     if brief.framework.status != 'live':
         abort(400, "Framework is not live")
 
-    brief.status = brief_json['status']
+    if brief_json['status'] != brief.status:
+        brief.status = brief_json['status']
 
-    validate_brief_data(brief, enforce_required=True)
+        validate_brief_data(brief, enforce_required=True)
 
-    audit = AuditEvent(
-        audit_type=AuditTypes.update_brief_status,
-        user=updater_json['updated_by'],
-        data={
-            'briefId': brief.id,
-            'briefStatus': brief.status,
-        },
-        db_object=brief,
-    )
+        audit = AuditEvent(
+            audit_type=AuditTypes.update_brief_status,
+            user=updater_json['updated_by'],
+            data={
+                'briefId': brief.id,
+                'briefStatus': brief.status,
+            },
+            db_object=brief,
+        )
 
-    db.session.add(brief)
-    db.session.add(audit)
-    db.session.commit()
+        db.session.add(brief)
+        db.session.add(audit)
+        db.session.commit()
 
     return jsonify(briefs=brief.serialize()), 200
