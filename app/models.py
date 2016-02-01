@@ -39,7 +39,7 @@ class Lot(db.Model):
     one_service_limit = db.Column(db.Boolean, nullable=False, default=False)
 
     @property
-    def requires_brief(self):
+    def allows_brief(self):
         return self.one_service_limit
 
     def __repr__(self):
@@ -51,7 +51,7 @@ class Lot(db.Model):
             'slug': self.slug,
             'name': self.name,
             'oneServiceLimit': self.one_service_limit,
-            'requiresBrief': self.requires_brief,
+            'allowsBrief': self.allows_brief,
         }
 
 
@@ -812,7 +812,7 @@ class Brief(db.Model):
 
     @validates('lot')
     def validates_lot(self, key, lot):
-        if not lot.requires_brief:
+        if not lot.allows_brief:
             raise ValidationError("Lot '{}' does not require a brief".format(lot.name))
         return lot
 
