@@ -474,7 +474,7 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == "Framework is not live"
 
-    def test_cannot_make_a_live_brief_pending(self):
+    def test_cannot_make_a_live_brief_draft(self):
         self.setup_dummy_briefs(1, status='live')
 
         res = self.client.put(
@@ -487,7 +487,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
-        assert data['error'] == 'Cannot make a live brief draft'
+        assert data['error'] == "Cannot change brief status from 'live' to 'draft'"
 
     def test_cannot_set_status_to_invalid_value(self):
         self.setup_dummy_briefs(1, status='draft')

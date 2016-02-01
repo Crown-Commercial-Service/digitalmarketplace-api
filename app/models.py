@@ -836,7 +836,7 @@ class Brief(db.Model):
         if status not in self.STATUSES:
             raise ValidationError("Invalid brief status '{}'".format(status))
         if self.status == 'live' and status == 'draft':
-            raise ValidationError("Cannot make a live brief draft")
+            raise ValidationError("Cannot change brief status from 'live' to 'draft'")
         if status == 'live':
             self.published_at = datetime.utcnow()
         return status
