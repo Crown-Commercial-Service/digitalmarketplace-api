@@ -109,7 +109,7 @@ class TestBriefs(BaseApplicationTest):
             assert brief.updated_at > updated_at
             assert brief.data == {'foo': 'bar'}
 
-    def test_foreign_fields_stripped_from_data(self):
+    def test_foreign_fields_stripped_from_brief_data(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
         brief.data = {
             'frameworkSlug': 'test',
@@ -121,13 +121,13 @@ class TestBriefs(BaseApplicationTest):
 
         assert brief.data == {'title': 'test'}
 
-    def test_nulls_are_stripped_from_declaration(self):
+    def test_nulls_are_stripped_from_brief_data(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
         brief.data = {'foo': 'bar', 'bar': None}
 
         assert brief.data == {'foo': 'bar'}
 
-    def test_whitespace_values_are_stripped_from_declaration(self):
+    def test_whitespace_values_are_stripped_from_brief_data(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
         brief.data = {'foo': ' bar ', 'bar': '', 'other': '  '}
 
@@ -222,7 +222,8 @@ class TestServices(BaseApplicationTest):
             self.setup_dummy_service(
                 service_id='10000000001',
                 supplier_id=0,
-                framework_id=5)
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=1)  # SaaS
             with pytest.raises(IntegrityError) as excinfo:
                 db.session.commit()
 

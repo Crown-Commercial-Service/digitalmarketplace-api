@@ -121,8 +121,10 @@ class TestBriefs(BaseApplicationTest):
                 }
             }),
             content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
+        assert data['error'] == 'Framework must be live'
 
     def test_create_brief_creates_audit_event(self):
         self.client.post(
@@ -480,7 +482,7 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == "Framework is not live"
 
-    def test_cannot_make_a_live_brief_draft(self):
+    def test_cannot_return_a_live_brief_to_pending(self):
         self.setup_dummy_briefs(1, status='live')
 
         res = self.client.put(
