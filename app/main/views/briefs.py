@@ -108,9 +108,13 @@ def get_brief(brief_id):
 
 @main.route('/briefs', methods=['GET'])
 def list_briefs():
+    briefs = Brief.query.order_by(Brief.id)
     page = get_valid_page_or_1()
 
-    briefs = Brief.query.order_by(Brief.id)
+    user_id = request.args.get('user_id')
+    if user_id:
+        briefs = briefs.filter(Brief.users.any(id=user_id))
+
     briefs = briefs.paginate(
         page=page,
         per_page=current_app.config['DM_API_BRIEFS_PAGE_SIZE'])

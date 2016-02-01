@@ -368,6 +368,16 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
         assert not any('users' in brief for brief in data['briefs'])
 
+    def test_list_briefs_by_user(self):
+        self.setup_dummy_briefs(3, user_id=1)
+        self.setup_dummy_briefs(2, user_id=2, brief_start=4)
+
+        res = self.client.get('/briefs?user_id=1')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 3
+
     def test_list_briefs_pagination_page_one(self):
         self.setup_dummy_briefs(7)
 

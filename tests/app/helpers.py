@@ -66,13 +66,13 @@ class BaseApplicationTest(object):
 
             return user.id
 
-    def setup_dummy_briefs(self, n, title=None, status='draft', user_id=1):
-        user_id = self.setup_dummy_user(id=1)
+    def setup_dummy_briefs(self, n, title=None, status='draft', user_id=1, brief_start=1):
+        user_id = self.setup_dummy_user(id=user_id)
 
         with self.app.app_context():
             framework = Framework.query.get(5)
             lot = Lot.query.get(6)
-            for i in range(1, n + 1):
+            for i in range(brief_start, brief_start + n):
                 db.session.add(Brief(
                     id=i,
                     status=status,
