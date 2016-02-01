@@ -446,6 +446,27 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == 'Brief is already live'
 
+    def test_cannot_make_a_brief_live_if_the_framework_is_no_longer_live(self):
+        self.setup_dummy_briefs(1, title='The title')
+
+        with self.app.app_context():
+            framework = Framework.query.get(5)
+            framework.status = 'expired'
+            db.session.add(framework)
+            db.session.commit()
+
+        res = self.client.put(
+            '/briefs/1/status',
+            data=json.dumps({
+                'briefs': {'status': 'live'},
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == "Framework is not live"
+
     def test_cannot_make_a_live_brief_pending(self):
         self.setup_dummy_briefs(1, status='live')
 

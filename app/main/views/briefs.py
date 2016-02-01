@@ -145,6 +145,9 @@ def update_brief_status(brief_id):
     if brief_json['status'] == brief.status:
         abort(400, "Brief is already {}".format(brief.status))
 
+    if brief.framework.status != 'live':
+        abort(400, "Framework is not live")
+
     brief.status = brief_json['status']
 
     validate_brief_data(brief, enforce_required=True)
