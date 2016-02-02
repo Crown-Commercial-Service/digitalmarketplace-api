@@ -120,3 +120,37 @@ def list_briefs():
             request.args
         )
     )
+
+
+@main.route('/briefs/<int:brief_id>/status', methods=['PUT'])
+def update_brief_status(brief_id):
+    updater_json = validate_and_return_updater_request()
+
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['briefs'])
+    brief_json = json_payload['briefs']
+    json_has_required_keys(brief_json, ['status'])
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    brief.status = brief_json['status']
+
+    validate_brief_data(brief, enforce_required=True)
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.update_brief_status,
+        user=updater_json['updated_by'],
+        data={
+            'briefId': brief.id,
+            'briefStatus': brief.status,
+        },
+        db_object=brief,
+    )
+
+    db.session.add(brief)
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify(briefs=brief.serialize()), 200

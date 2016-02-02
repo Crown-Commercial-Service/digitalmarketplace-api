@@ -133,6 +133,21 @@ class TestBriefs(BaseApplicationTest):
 
         assert brief.data == {'foo': 'bar', 'bar': '', 'other': ''}
 
+    def test_status_defaults_to_draft(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+
+        with self.app.app_context():
+            db.session.add(brief)
+            db.session.commit()
+
+            assert brief.status == 'draft'
+
+    def test_status_must_be_valid(self):
+        with pytest.raises(ValidationError):
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
+
+            brief.status = 'invalid'
+
     def test_buyer_users_can_be_added_to_a_brief(self):
         with self.app.app_context():
             self.setup_dummy_user(role='buyer')

@@ -286,6 +286,7 @@ class TestBriefs(BaseApplicationTest):
         assert json.loads(res.get_data(as_text=True)) == {
             'briefs': {
                 'id': 1,
+                'status': 'draft',
                 'frameworkSlug': 'digital-outcomes-and-specialists',
                 'frameworkName': 'Digital Outcomes and Specialists',
                 'frameworkStatus': 'live',
@@ -336,3 +337,55 @@ class TestBriefs(BaseApplicationTest):
 
         assert len(data['briefs']) == 2
         assert data['links']['prev'] == 'http://localhost/briefs?page=1'
+
+    def test_make_a_brief_live(self):
+        self.setup_dummy_briefs(1, title='The Title')
+
+        res = self.client.put(
+            '/briefs/1/status',
+            data=json.dumps({
+                'briefs': {'status': 'live'},
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['briefs']['status'] == 'live'
+
+    def test_cannot_make_a_brief_live_if_is_not_complete(self):
+        self.setup_dummy_briefs(1)
+
+        res = self.client.put(
+            '/briefs/1/status',
+            data=json.dumps({
+                'briefs': {'status': 'live'},
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == {'title': 'answer_required'}
+
+    def test_change_status_makes_audit_event(self):
+        self.setup_dummy_briefs(1, title='The Title')
+
+        self.client.put(
+            '/briefs/1/status',
+            data=json.dumps({
+                'briefs': {'status': 'live'},
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief_status.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data'] == {
+            'briefId': mock.ANY,
+            'briefStatus': 'live',
+        }

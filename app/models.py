@@ -768,10 +768,16 @@ class AuditEvent(db.Model):
 class Brief(db.Model):
     __tablename__ = 'briefs'
 
+    STATUSES = ('draft', 'live')
+
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(JSON)
+
     framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), nullable=False)
     lot_id = db.Column(db.Integer, db.ForeignKey('lots.id'), nullable=False)
+
+    data = db.Column(JSON)
+    status = db.Column(db.String, index=False, unique=False,
+                       nullable=False, default='draft')
 
     created_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow)
@@ -806,6 +812,12 @@ class Brief(db.Model):
 
         return data
 
+    @validates('status')
+    def validates_status(self, key, status):
+        if status not in self.STATUSES:
+            raise ValidationError("Invalid status value '{}'".format(status))
+        return status
+
     def update_from_json(self, data):
         current_data = dict(self.data.items())
         current_data.update(data)
@@ -817,6 +829,7 @@ class Brief(db.Model):
 
         data.update({
             'id': self.id,
+            'status': self.status,
             'frameworkSlug': self.framework.slug,
             'frameworkName': self.framework.name,
             'frameworkStatus': self.framework.status,
