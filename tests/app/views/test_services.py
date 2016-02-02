@@ -5,7 +5,7 @@ from flask import json
 from nose.tools import assert_equal, assert_in, assert_true, \
     assert_almost_equal, assert_false, assert_is_not_none, assert_not_in
 from app.models import Service, Supplier, ContactInformation, Framework, \
-    AuditEvent
+    AuditEvent, FrameworkLot
 import mock
 from app import db, create_app
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
@@ -1669,6 +1669,11 @@ class TestGetService(BaseApplicationTest):
                 slug="expired",
                 framework="g-cloud",
                 status="expired",
+            ))
+            db.session.commit()
+            db.session.add(FrameworkLot(
+                framework_id=123,
+                lot_id=1
             ))
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")

@@ -38,16 +38,20 @@ class TestGetFramework(BaseApplicationTest):
             response = self.client.get('/frameworks/g-cloud-7')
 
         data = json.loads(response.get_data())
-        assert_equal(data['frameworks']['lots'], [
+        assert data['frameworks']['lots'] == [
             {u'id': 1, u'name': u'Software as a Service',
-             u'one_service_limit': False, u'oneServiceLimit': False, u'slug': u'saas'},
+             u'oneServiceLimit': False, u'slug': u'saas',
+             u'allowsBrief': False},
             {u'id': 2, u'name': u'Platform as a Service',
-             u'one_service_limit': False, u'oneServiceLimit': False, u'slug': u'paas'},
+             u'oneServiceLimit': False, u'slug': u'paas',
+             u'allowsBrief': False},
             {u'id': 3, u'name': u'Infrastructure as a Service',
-             u'one_service_limit': False, u'oneServiceLimit': False, u'slug': u'iaas'},
+             u'oneServiceLimit': False, u'slug': u'iaas',
+             u'allowsBrief': False},
             {u'id': 4, u'name': u'Specialist Cloud Services',
-             u'one_service_limit': False, u'oneServiceLimit': False, u'slug': u'scs'}
-        ])
+             u'oneServiceLimit': False, u'slug': u'scs',
+             u'allowsBrief': False},
+        ]
 
     def test_a_404_is_raised_if_it_does_not_exist(self):
         with self.app.app_context():
@@ -145,11 +149,13 @@ class TestFrameworkStats(BaseApplicationTest):
 
     def create_drafts(self, framework_id, supplier_id_count_pairs, status='not-submitted'):
         with self.app.app_context():
+            framework = Framework.query.get(framework_id)
+            framework_lots = framework.lots
             for supplier_id, count in supplier_id_count_pairs:
                 for ind in range(count):
                     db.session.add(
                         DraftService(
-                            lot_id=1 + (ind % 4),
+                            lot=framework_lots[ind % 4],
                             framework_id=framework_id,
                             supplier_id=supplier_id,
                             data={},
@@ -201,6 +207,7 @@ class TestFrameworkStats(BaseApplicationTest):
         self.register_framework_interest(framework.id, range(20))
         self.make_declaration(framework.id, [1, 3, 5, 7, 9, 11], status='started')
         self.make_declaration(framework.id, [0, 2, 4, 6, 8, 10], status='complete')
+
         self.create_drafts(framework.id, [
             (1, 1),   # 1 saas; with declaration
             (2, 7),   # 1 of each + iaas, paas, saas; with declaration

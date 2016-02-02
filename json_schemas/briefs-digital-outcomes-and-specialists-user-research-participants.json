@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "type": "string",
+      "maxLength": 100,
+      "minLength": 1
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "title": "Digital Outcomes and Specialists User research participants brief",
+  "type": "object"
+}

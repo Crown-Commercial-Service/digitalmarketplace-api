@@ -1,9 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
+import pytest
 from nose.tools import assert_equal, assert_raises
+from sqlalchemy.exc import IntegrityError
 
 from app import db, create_app
-from app.models import User, Framework, Service, ValidationError, SupplierFramework
+from app.models import User, Framework, Service, Brief, ValidationError, SupplierFramework
 from .helpers import BaseApplicationTest
 
 
@@ -56,6 +58,149 @@ def test_framework_should_accept_valid_statuses():
             db.session.commit()
 
 
+class TestBriefs(BaseApplicationTest):
+    def setup(self):
+        super(TestBriefs, self).setup()
+        with self.app.app_context():
+            self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self.lot = self.framework.get_lot('digital-outcomes')
+
+    def test_create_a_new_brief(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
+            db.session.add(brief)
+            db.session.commit()
+
+            assert isinstance(brief.created_at, datetime)
+            assert isinstance(brief.updated_at, datetime)
+            assert brief.id is not None
+            assert brief.data == dict()
+
+    def test_updating_a_brief_updates_dates(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
+            db.session.add(brief)
+            db.session.commit()
+
+            updated_at = brief.updated_at
+            created_at = brief.created_at
+
+            brief.data = {'foo': 'bar'}
+            db.session.add(brief)
+            db.session.commit()
+
+            assert brief.created_at == created_at
+            assert brief.updated_at > updated_at
+
+    def test_update_from_json(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
+            db.session.add(brief)
+            db.session.commit()
+
+            updated_at = brief.updated_at
+            created_at = brief.created_at
+
+            brief.update_from_json({"foo": "bar"})
+            db.session.add(brief)
+            db.session.commit()
+
+            assert brief.created_at == created_at
+            assert brief.updated_at > updated_at
+            assert brief.data == {'foo': 'bar'}
+
+    def test_foreign_fields_stripped_from_brief_data(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        brief.data = {
+            'frameworkSlug': 'test',
+            'frameworkName': 'test',
+            'lot': 'test',
+            'lotName': 'test',
+            'title': 'test',
+        }
+
+        assert brief.data == {'title': 'test'}
+
+    def test_nulls_are_stripped_from_brief_data(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        brief.data = {'foo': 'bar', 'bar': None}
+
+        assert brief.data == {'foo': 'bar'}
+
+    def test_whitespace_values_are_stripped_from_brief_data(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        brief.data = {'foo': ' bar ', 'bar': '', 'other': '  '}
+
+        assert brief.data == {'foo': 'bar', 'bar': '', 'other': ''}
+
+    def test_status_defaults_to_draft(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+
+        with self.app.app_context():
+            db.session.add(brief)
+            db.session.commit()
+
+            assert brief.status == 'draft'
+
+    def test_status_must_be_valid(self):
+        with pytest.raises(ValidationError):
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
+
+            brief.status = 'invalid'
+
+    def test_publishing_a_brief_sets_published_at(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
+            db.session.add(brief)
+            db.session.commit()
+
+            assert brief.published_at is None
+
+            brief.status = 'live'
+
+            assert isinstance(brief.published_at, datetime)
+
+    def test_buyer_users_can_be_added_to_a_brief(self):
+        with self.app.app_context():
+            self.setup_dummy_user(role='buyer')
+
+            brief = Brief(data={}, framework=self.framework, lot=self.lot,
+                          users=User.query.all())
+
+            assert len(brief.users) == 1
+
+    def test_non_buyer_users_cannot_be_added_to_a_brief(self):
+        with self.app.app_context():
+            self.setup_dummy_user(role='admin')
+
+            with pytest.raises(ValidationError):
+                Brief(data={}, framework=self.framework, lot=self.lot,
+                      users=User.query.all())
+
+    def test_brief_lot_must_be_associated_to_the_framework(self):
+        with self.app.app_context():
+            other_framework = Framework.query.filter(Framework.slug == 'g-cloud-7').first()
+
+            brief = Brief(data={}, framework=other_framework, lot=self.lot)
+            db.session.add(brief)
+            with pytest.raises(IntegrityError):
+                db.session.commit()
+
+    def test_brief_lot_must_require_briefs(self):
+        with self.app.app_context():
+            with pytest.raises(ValidationError):
+                Brief(data={},
+                      framework=self.framework,
+                      lot=self.framework.get_lot('user-research-studios'))
+
+    def test_cannot_update_lot_by_id(self):
+        with self.app.app_context():
+            with pytest.raises(ValidationError):
+                Brief(data={},
+                      framework=self.framework,
+                      lot_id=self.framework.get_lot('user-research-studios').id)
+
+
 class TestServices(BaseApplicationTest):
     def test_framework_is_live_only_returns_live_frameworks(self):
         with self.app.app_context():
@@ -70,6 +215,19 @@ class TestServices(BaseApplicationTest):
             assert_equal(Service.query.count(), 4)
             assert_equal(services.count(), 3)
             assert(all(s.framework.status == 'live' for s in services))
+
+    def test_lot_must_be_associated_to_the_framework(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            self.setup_dummy_service(
+                service_id='10000000001',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=1)  # SaaS
+            with pytest.raises(IntegrityError) as excinfo:
+                db.session.commit()
+
+            assert 'not present in table "framework_lots"' in "{}".format(excinfo.value)
 
     def test_default_ordering(self):
         def add_service(service_id, framework_id, lot_id, service_name):
@@ -119,6 +277,29 @@ class TestServices(BaseApplicationTest):
             services = Service.query.has_statuses('published', 'disabled')
 
             assert_equal(services.count(), 2)
+
+    def test_update_from_json(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            self.setup_dummy_service(
+                service_id='1000000000',
+                supplier_id=0,
+                status='published',
+                framework_id=2)
+
+            service = Service.query.filter(Service.service_id == '1000000000').first()
+
+            updated_at = service.updated_at
+            created_at = service.created_at
+
+            service.update_from_json({'foo': 'bar'})
+
+            db.session.add(service)
+            db.session.commit()
+
+            assert service.created_at == created_at
+            assert service.updated_at > updated_at
+            assert service.data == {'foo': 'bar', 'serviceName': 'Service 1000000000'}
 
 
 class TestSupplierFrameworks(BaseApplicationTest):

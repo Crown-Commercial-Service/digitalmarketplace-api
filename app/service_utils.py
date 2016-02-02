@@ -23,20 +23,28 @@ def validate_and_return_service_request(service_id):
     return json_payload['services']
 
 
-def validate_and_return_related_objects(service_json):
-    json_has_required_keys(service_json, ['frameworkSlug', 'lot', 'supplierId'])
+def validate_and_return_lot(json_payload):
+    json_has_required_keys(json_payload, ['frameworkSlug', 'lot'])
 
     framework = Framework.query.filter(
-        Framework.slug == service_json['frameworkSlug']
+        Framework.slug == json_payload['frameworkSlug']
     ).first()
 
     if not framework:
-        abort(400, "Framework '{}' does not exist".format(service_json['frameworkSlug']))
+        abort(400, "Framework '{}' does not exist".format(json_payload['frameworkSlug']))
 
-    lot = framework.get_lot(service_json['lot'])
+    lot = framework.get_lot(json_payload['lot'])
 
     if not lot:
-        abort(400, "Incorrect lot '{}' for framework '{}'".format(service_json['lot'], framework.slug))
+        abort(400, "Incorrect lot '{}' for framework '{}'".format(json_payload['lot'], framework.slug))
+
+    return framework, lot
+
+
+def validate_and_return_related_objects(service_json):
+    json_has_required_keys(service_json, ['frameworkSlug', 'lot', 'supplierId'])
+
+    framework, lot = validate_and_return_lot(service_json)
 
     try:
         supplier = Supplier.query.filter(

@@ -18,11 +18,11 @@ from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_field
 from .validation import is_valid_service_id, is_valid_buyer_email
 
 
-framework_lots = db.Table(
-    'framework_lots', db.Model.metadata,
-    db.Column('framework_id', db.Integer, db.ForeignKey('frameworks.id'), nullable=False),
-    db.Column('lot_id', db.Integer, db.ForeignKey('lots.id'), nullable=False)
-)
+class FrameworkLot(db.Model):
+    __tablename__ = 'framework_lots'
+
+    framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), primary_key=True)
+    lot_id = db.Column(db.Integer, db.ForeignKey('lots.id'), primary_key=True)
 
 
 class ValidationError(ValueError):
@@ -38,6 +38,10 @@ class Lot(db.Model):
     name = db.Column(db.String, nullable=False)
     one_service_limit = db.Column(db.Boolean, nullable=False, default=False)
 
+    @property
+    def allows_brief(self):
+        return self.one_service_limit
+
     def __repr__(self):
         return '<{}: {}>'.format(self.__class__.__name__, self.name)
 
@@ -46,8 +50,8 @@ class Lot(db.Model):
             'id': self.id,
             'slug': self.slug,
             'name': self.name,
-            'one_service_limit': self.one_service_limit,  # TODO deprecated
             'oneServiceLimit': self.one_service_limit,
+            'allowsBrief': self.allows_brief,
         }
 
 
@@ -71,7 +75,7 @@ class Framework(db.Model):
                        default='pending')
     clarification_questions_open = db.Column(db.Boolean, nullable=False, default=False)
     lots = db.relationship(
-        Lot, secondary=framework_lots,
+        'Lot', secondary="framework_lots",
         lazy='joined', innerjoin=False,
         order_by=Lot.id,
         backref='frameworks'
@@ -463,6 +467,12 @@ class ServiceTableMixin(object):
                          index=True, unique=False, nullable=False)
 
     @declared_attr
+    def __table_args__(cls):
+        return (db.ForeignKeyConstraint([cls.framework_id, cls.lot_id],
+                                        ['framework_lots.framework_id', 'framework_lots.lot_id']),
+                {})
+
+    @declared_attr
     def lot_id(cls):
         return db.Column(db.BigInteger, db.ForeignKey('lots.id'),
                          index=True, unique=False, nullable=False)
@@ -540,7 +550,6 @@ class ServiceTableMixin(object):
         current_data.update(data)
 
         self.data = current_data
-        self.updated_at = datetime.utcnow()
 
 
 class Service(db.Model, ServiceTableMixin):
@@ -758,6 +767,126 @@ class AuditEvent(db.Model):
                 data['userName'] = user.name
 
         return data
+
+
+class Brief(db.Model):
+    __tablename__ = 'briefs'
+
+    STATUSES = ('draft', 'live')
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), nullable=False)
+    _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lots.id'), nullable=False)
+
+    data = db.Column(JSON)
+    status = db.Column(db.String, index=False, unique=False,
+                       nullable=False, default='draft')
+
+    created_at = db.Column(db.DateTime, index=True, nullable=False,
+                           default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, index=True, nullable=False,
+                           default=datetime.utcnow, onupdate=datetime.utcnow)
+    published_at = db.Column(db.DateTime, index=True, nullable=True)
+
+    __table_args__ = (db.ForeignKeyConstraint([framework_id, _lot_id],
+                                              ['framework_lots.framework_id', 'framework_lots.lot_id']),
+                      {})
+
+    users = db.relationship('User', secondary='brief_users')
+    framework = db.relationship('Framework', lazy='joined')
+    lot = db.relationship('Lot', lazy='joined')
+
+    @validates('users')
+    def validates_users(self, key, user):
+        if user.role != 'buyer':
+            raise ValidationError("The brief user must be a buyer")
+        return user
+
+    @property
+    def lot_id(self):
+        return self._lot_id
+
+    @lot_id.setter
+    def lot_id(self, lot_id):
+        raise ValidationError("Cannot update lot_id directly, use lot relationship")
+
+    @validates('lot')
+    def validates_lot(self, key, lot):
+        if not lot.allows_brief:
+            raise ValidationError("Lot '{}' does not require a brief".format(lot.name))
+        return lot
+
+    @validates('data')
+    def validates_data(self, key, data):
+        data = drop_foreign_fields(data, [
+            'id',
+            'frameworkSlug', 'frameworkName', 'frameworkStatus',
+            'lot', 'lotName',
+            'updatedAt', 'createdAt', 'links'
+        ])
+
+        data = strip_whitespace_from_data(data)
+        data = purge_nulls_from_data(data)
+
+        return data
+
+    @validates('status')
+    def validates_status(self, key, status):
+        if status not in self.STATUSES:
+            raise ValidationError("Invalid brief status '{}'".format(status))
+        if self.status == 'live' and status == 'draft':
+            raise ValidationError("Cannot change brief status from 'live' to 'draft'")
+        if status == 'live':
+            self.published_at = datetime.utcnow()
+        return status
+
+    def update_from_json(self, data):
+        current_data = dict(self.data.items())
+        current_data.update(data)
+
+        self.data = current_data
+
+    def serialize(self, with_users=False):
+        data = dict(self.data.items())
+
+        data.update({
+            'id': self.id,
+            'status': self.status,
+            'frameworkSlug': self.framework.slug,
+            'frameworkName': self.framework.name,
+            'frameworkStatus': self.framework.status,
+            'lot': self.lot.slug,
+            'lotName': self.lot.name,
+            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
+        })
+
+        if self.status == 'live':
+            data['publishedAt'] = self.published_at.strftime(DATETIME_FORMAT)
+
+        data['links'] = {
+            'self': url_for('.get_brief', brief_id=self.id),
+            'framework': url_for('.get_framework', framework_slug=self.framework.slug),
+        }
+
+        if with_users:
+            data['users'] = [
+                drop_foreign_fields(
+                    user.serialize(),
+                    ['locked', 'createdAt', 'updatedAt', 'passwordChangedAt', 'loggedInAt', 'failedLoginCount']
+                ) for user in self.users
+            ]
+
+        return data
+
+
+class BriefUser(db.Model):
+    __tablename__ = 'brief_users'
+
+    brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+
 
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,

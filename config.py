@@ -27,6 +27,7 @@ class Config:
 
     DM_API_SERVICES_PAGE_SIZE = 100
     DM_API_SUPPLIERS_PAGE_SIZE = 100
+    DM_API_BRIEFS_PAGE_SIZE = 100
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace'
@@ -42,6 +43,7 @@ class Test(Config):
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace_test'
     DM_API_SERVICES_PAGE_SIZE = 5
     DM_API_SUPPLIERS_PAGE_SIZE = 5
+    DM_API_BRIEFS_PAGE_SIZE = 5
     FEATURE_FLAGS_TRANSACTION_ISOLATION = enabled_since('2015-08-27')
 
 
