@@ -759,6 +759,18 @@ class AuditEvent(db.Model):
 
         return data
 
+
+class Brief(db.Model):
+    __tablename__ = 'briefs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(JSON)
+
+    created_at = db.Column(db.DateTime, index=True, nullable=False,
+                           default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, index=True, nullable=False,
+                           default=datetime.utcnow, onupdate=datetime.utcnow)
+
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
 # which takes a long time for old events

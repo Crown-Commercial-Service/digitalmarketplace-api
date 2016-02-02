@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from nose.tools import assert_equal, assert_raises
 
 from app import db, create_app
-from app.models import User, Framework, Service, ValidationError, SupplierFramework
+from app.models import User, Framework, Service, Brief, ValidationError, SupplierFramework
 from .helpers import BaseApplicationTest
 
 
@@ -54,6 +54,35 @@ def test_framework_should_accept_valid_statuses():
             )
             db.session.add(f)
             db.session.commit()
+
+
+class TestBriefs(BaseApplicationTest):
+    def test_create_a_new_brief(self):
+        with self.app.app_context():
+            brief = Brief(data={})
+            db.session.add(brief)
+            db.session.commit()
+
+            assert isinstance(brief.created_at, datetime)
+            assert isinstance(brief.updated_at, datetime)
+            assert brief.id is not None
+            assert brief.data == dict()
+
+    def test_updating_a_brief_updates_dates(self):
+        with self.app.app_context():
+            brief = Brief(data={})
+            db.session.add(brief)
+            db.session.commit()
+
+            updated_at = brief.updated_at
+            created_at = brief.created_at
+
+            brief.data = {'foo': 'bar'}
+            db.session.add(brief)
+            db.session.commit()
+
+            assert brief.created_at == created_at
+            assert brief.updated_at > updated_at
 
 
 class TestServices(BaseApplicationTest):
