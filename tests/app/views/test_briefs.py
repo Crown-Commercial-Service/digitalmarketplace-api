@@ -345,6 +345,13 @@ class TestBriefs(BaseApplicationTest):
             }
         }
 
+    def test_get_live_brief_has_published_at_time(self):
+        self.setup_dummy_briefs(1, status='live')
+        res = self.client.get('/briefs/1')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert 'publishedAt' in data['briefs']
+
     def test_get_brief_returns_404_if_not_found(self):
         res = self.client.get('/briefs/1')
 

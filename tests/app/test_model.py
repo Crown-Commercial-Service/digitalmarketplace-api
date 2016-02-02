@@ -148,6 +148,18 @@ class TestBriefs(BaseApplicationTest):
 
             brief.status = 'invalid'
 
+    def test_publishing_a_brief_sets_published_at(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
+            db.session.add(brief)
+            db.session.commit()
+
+            assert brief.published_at is None
+
+            brief.status = 'live'
+
+            assert isinstance(brief.published_at, datetime)
+
     def test_buyer_users_can_be_added_to_a_brief(self):
         with self.app.app_context():
             self.setup_dummy_user(role='buyer')

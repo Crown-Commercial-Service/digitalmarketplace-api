@@ -787,6 +787,7 @@ class Brief(db.Model):
                            default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow, onupdate=datetime.utcnow)
+    published_at = db.Column(db.DateTime, index=True, nullable=True)
 
     __table_args__ = (db.ForeignKeyConstraint([framework_id, _lot_id],
                                               ['framework_lots.framework_id', 'framework_lots.lot_id']),
@@ -836,6 +837,8 @@ class Brief(db.Model):
             raise ValidationError("Invalid brief status '{}'".format(status))
         if self.status == 'live' and status == 'draft':
             raise ValidationError("Cannot make a live brief draft")
+        if status == 'live':
+            self.published_at = datetime.utcnow()
         return status
 
     def update_from_json(self, data):
@@ -858,6 +861,9 @@ class Brief(db.Model):
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
         })
+
+        if self.status == 'live':
+            data['publishedAt'] = self.published_at.strftime(DATETIME_FORMAT)
 
         data['links'] = {
             'self': url_for('.get_brief', brief_id=self.id),
