@@ -18,11 +18,11 @@ from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_field
 from .validation import is_valid_service_id, is_valid_buyer_email
 
 
-framework_lots = db.Table(
-    'framework_lots', db.Model.metadata,
-    db.Column('framework_id', db.Integer, db.ForeignKey('frameworks.id'), nullable=False),
-    db.Column('lot_id', db.Integer, db.ForeignKey('lots.id'), nullable=False)
-)
+class FrameworkLot(db.Model):
+    __tablename__ = 'framework_lots'
+
+    framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), primary_key=True)
+    lot_id = db.Column(db.Integer, db.ForeignKey('lots.id'), primary_key=True)
 
 
 class ValidationError(ValueError):
@@ -71,7 +71,7 @@ class Framework(db.Model):
                        default='pending')
     clarification_questions_open = db.Column(db.Boolean, nullable=False, default=False)
     lots = db.relationship(
-        Lot, secondary=framework_lots,
+        'Lot', secondary="framework_lots",
         lazy='joined', innerjoin=False,
         order_by=Lot.id,
         backref='frameworks'
@@ -463,6 +463,12 @@ class ServiceTableMixin(object):
                          index=True, unique=False, nullable=False)
 
     @declared_attr
+    def __table_args__(cls):
+        return (db.ForeignKeyConstraint([cls.framework_id, cls.lot_id],
+                                        ['framework_lots.framework_id', 'framework_lots.lot_id']),
+                {})
+
+    @declared_attr
     def lot_id(cls):
         return db.Column(db.BigInteger, db.ForeignKey('lots.id'),
                          index=True, unique=False, nullable=False)
@@ -764,13 +770,21 @@ class Brief(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(JSON)
+    framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), nullable=False)
+    lot_id = db.Column(db.Integer, db.ForeignKey('lots.id'), nullable=False)
 
     created_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    users = db.relationship("User", secondary="brief_users")
+    __table_args__ = (db.ForeignKeyConstraint([framework_id, lot_id],
+                                              ['framework_lots.framework_id', 'framework_lots.lot_id']),
+                      {})
+
+    users = db.relationship('User', secondary='brief_users')
+    framework = db.relationship('Framework', lazy='joined')
+    lot = db.relationship('Lot', lazy='joined')
 
     @validates('users')
     def validates_users(self, key, user):
@@ -788,8 +802,8 @@ class Brief(db.Model):
 class BriefUser(db.Model):
     __tablename__ = 'brief_users'
 
-    brief_id = db.Column('brief_id', db.Integer, db.ForeignKey('briefs.id'), primary_key=True)
-    user_id = db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
 
 
 # Index for .last_for_object queries. Without a composite index the

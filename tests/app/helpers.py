@@ -7,7 +7,7 @@ from datetime import datetime
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Service, Supplier, ContactInformation, Framework, Lot, User
+from app.models import Service, Supplier, ContactInformation, Framework, Lot, User, FrameworkLot
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -52,18 +52,19 @@ class BaseApplicationTest(object):
 
     def setup_dummy_user(self, id=123, role='buyer'):
         with self.app.app_context():
-            db.session.add(
-                User(
-                    id=id,
-                    email_address="test+{}@digital.gov.uk".format(id),
-                    name="my name",
-                    password="fake password",
-                    active=True,
-                    role=role,
-                    password_changed_at=datetime.now()
-                )
+            user = User(
+                id=id,
+                email_address="test+{}@digital.gov.uk".format(id),
+                name="my name",
+                password="fake password",
+                active=True,
+                role=role,
+                password_changed_at=datetime.now()
             )
+            db.session.add(user)
             db.session.commit()
+
+            return user.id
 
     def setup_dummy_suppliers(self, n):
         with self.app.app_context():
@@ -179,6 +180,7 @@ class BaseApplicationTest(object):
             for table in reversed(db.metadata.sorted_tables):
                 if table.name not in ["lots", "frameworks", "framework_lots"]:
                     db.engine.execute(table.delete())
+            FrameworkLot.query.filter(FrameworkLot.framework_id >= 100).delete()
             Framework.query.filter(Framework.id >= 100).delete()
             db.session.commit()
             db.get_engine(self.app).dispose()

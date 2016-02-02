@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 from nose.tools import assert_equal, assert_raises
+from sqlalchemy.exc import IntegrityError
 
 from app import db, create_app
 from app.models import User, Framework, Service, Brief, ValidationError, SupplierFramework
@@ -58,9 +59,15 @@ def test_framework_should_accept_valid_statuses():
 
 
 class TestBriefs(BaseApplicationTest):
+    def setup(self):
+        super(TestBriefs, self).setup()
+        with self.app.app_context():
+            self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self.lot = self.framework.get_lot('digital-outcomes')
+
     def test_create_a_new_brief(self):
         with self.app.app_context():
-            brief = Brief(data={})
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
             db.session.add(brief)
             db.session.commit()
 
@@ -71,7 +78,7 @@ class TestBriefs(BaseApplicationTest):
 
     def test_updating_a_brief_updates_dates(self):
         with self.app.app_context():
-            brief = Brief(data={})
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
             db.session.add(brief)
             db.session.commit()
 
@@ -87,7 +94,7 @@ class TestBriefs(BaseApplicationTest):
 
     def test_update_from_json(self):
         with self.app.app_context():
-            brief = Brief(data={})
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
             db.session.add(brief)
             db.session.commit()
 
@@ -106,7 +113,8 @@ class TestBriefs(BaseApplicationTest):
         with self.app.app_context():
             self.setup_dummy_user(role='buyer')
 
-            brief = Brief(data={}, users=User.query.all())
+            brief = Brief(data={}, framework=self.framework, lot=self.lot,
+                          users=User.query.all())
 
             assert len(brief.users) == 1
 
@@ -115,7 +123,17 @@ class TestBriefs(BaseApplicationTest):
             self.setup_dummy_user(role='admin')
 
             with pytest.raises(ValidationError):
-                Brief(data={}, users=User.query.all())
+                Brief(data={}, framework=self.framework, lot=self.lot,
+                      users=User.query.all())
+
+    def test_brief_lot_must_be_associated_to_the_framework(self):
+        with self.app.app_context():
+            other_framework = Framework.query.filter(Framework.slug == 'g-cloud-7').first()
+
+            brief = Brief(data={}, framework=other_framework, lot=self.lot)
+            db.session.add(brief)
+            with pytest.raises(IntegrityError):
+                db.session.commit()
 
 
 class TestServices(BaseApplicationTest):
@@ -132,6 +150,18 @@ class TestServices(BaseApplicationTest):
             assert_equal(Service.query.count(), 4)
             assert_equal(services.count(), 3)
             assert(all(s.framework.status == 'live' for s in services))
+
+    def test_lot_must_be_associated_to_the_framework(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            self.setup_dummy_service(
+                service_id='10000000001',
+                supplier_id=0,
+                framework_id=5)
+            with pytest.raises(IntegrityError) as excinfo:
+                db.session.commit()
+
+            assert 'not present in table "framework_lots"' in "{}".format(excinfo.value)
 
     def test_default_ordering(self):
         def add_service(service_id, framework_id, lot_id, service_name):
