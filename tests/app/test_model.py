@@ -70,7 +70,9 @@ class TestBriefs(BaseApplicationTest):
 
     def test_updating_a_brief_updates_dates(self):
         with self.app.app_context():
-            brief = Brief(data={})
+            self.setup_dummy_user()
+
+            brief = Brief(data={}, users=User.query.all())
             db.session.add(brief)
             db.session.commit()
 
@@ -83,6 +85,7 @@ class TestBriefs(BaseApplicationTest):
 
             assert brief.created_at == created_at
             assert brief.updated_at > updated_at
+            assert brief.users == User.query.all()
 
     def test_update_from_json(self):
         with self.app.app_context():

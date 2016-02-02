@@ -7,7 +7,7 @@ from datetime import datetime
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Service, Supplier, ContactInformation, Framework, Lot
+from app.models import Service, Supplier, ContactInformation, Framework, Lot, User
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -49,6 +49,19 @@ class BaseApplicationTest(object):
 
     def do_not_provide_access_token(self):
         self.app.wsgi_app = self.app.wsgi_app.app
+
+    def setup_dummy_user(self):
+        with self.app.app_context():
+            db.session.add(
+                User(
+                    id=123,
+                    email_address="test@digital.gov.uk",
+                    name="my name",
+                    password="fake password",
+                    active=True,
+                    role='buyer',
+                )
+            )
 
     def setup_dummy_suppliers(self, n):
         with self.app.app_context():

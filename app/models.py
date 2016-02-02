@@ -770,11 +770,21 @@ class Brief(db.Model):
     updated_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    users = db.relationship("User", secondary="brief_users")
+
     def update_from_json(self, data):
         current_data = dict(self.data.items())
         current_data.update(data)
 
         self.data = current_data
+
+
+class BriefUser(db.Model):
+    __tablename__ = 'brief_users'
+
+    brief_id = db.Column('brief_id', db.Integer, db.ForeignKey('briefs.id'), primary_key=True)
+    user_id = db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
+
 
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
