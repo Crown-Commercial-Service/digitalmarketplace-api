@@ -30,6 +30,10 @@ def list_suppliers():
     if framework:
         is_valid_string_or_400(framework)
 
+        # TODO: remove backwards compatibility
+        if framework == 'gcloud':
+            framework = 'g-cloud'
+
         suppliers = Supplier.query.join(
             Service.supplier, Service.framework
         ).filter(

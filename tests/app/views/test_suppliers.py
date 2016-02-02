@@ -211,8 +211,16 @@ class TestListSuppliersOnFramework(BaseApplicationTest):
         response = self.client.get('/suppliers?framework=invalid!')
         assert_equal(400, response.status_code)
 
-    def test_should_return_suppliers_on_framework(self):
+    def test_should_return_suppliers_on_framework_backwards_compatibility(self):
+        # TODO: REMOVE WHEN BUYER APP IS UPDATED
         response = self.client.get('/suppliers?framework=gcloud')
+        assert_equal(200, response.status_code)
+        data = json.loads(response.get_data())
+        assert_equal(1, len(data['suppliers']))
+        assert_equal('Active', data['suppliers'][0]['name'])
+
+    def test_should_return_suppliers_on_framework(self):
+        response = self.client.get('/suppliers?framework=g-cloud')
         assert_equal(200, response.status_code)
         data = json.loads(response.get_data())
         assert_equal(1, len(data['suppliers']))
@@ -220,7 +228,10 @@ class TestListSuppliersOnFramework(BaseApplicationTest):
 
     def test_should_return_no_suppliers_no_framework(self):
         response = self.client.get('/suppliers?framework=bad')
-        assert_equal(400, response.status_code)
+        data = json.loads(response.get_data())
+
+        assert response.status_code == 200
+        assert len(data['suppliers']) == 0
 
     def test_should_return_all_suppliers_if_no_framework(self):
         response = self.client.get('/suppliers')
@@ -809,7 +820,7 @@ class TestSetSupplierDeclarations(BaseApplicationTest):
             framework = Framework(
                 slug='test-open',
                 name='Test open',
-                framework='gcloud',
+                framework='g-cloud',
                 status='open')
             db.session.add(framework)
             db.session.commit()

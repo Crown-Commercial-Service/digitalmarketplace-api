@@ -54,15 +54,18 @@ class Lot(db.Model):
 class Framework(db.Model):
     __tablename__ = 'frameworks'
 
-    STATUSES = [
+    STATUSES = (
         'coming', 'open', 'pending', 'standstill', 'live', 'expired'
-    ]
+    )
+    FRAMEWORKS = (
+        'g-cloud',
+        'dos',
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     slug = db.Column(db.String, nullable=False, unique=True, index=True)
     name = db.Column(db.String(255), nullable=False)
-    framework = db.Column(db.Enum('gcloud', name='frameworks_enum'),
-                          index=True, nullable=False)
+    framework = db.Column(db.String(), index=True, nullable=False)
     status = db.Column(db.String(),
                        index=True, nullable=False,
                        default='pending')
@@ -97,6 +100,12 @@ class Framework(db.Model):
             raise ValidationError("Invalid status value '{}'".format(value))
 
         return value
+
+    @validates('framework')
+    def validates_framework(self, key, framework):
+        if framework not in self.FRAMEWORKS:
+            raise ValidationError("Invalid framework value '{}'".format(framework))
+        return framework
 
     def __repr__(self):
         return '<{}: {}>'.format(self.__class__.__name__, self.name)
