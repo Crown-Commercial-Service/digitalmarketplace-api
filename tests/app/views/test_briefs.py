@@ -325,6 +325,7 @@ class TestBriefs(BaseApplicationTest):
                 'id': 1,
                 'status': 'draft',
                 'frameworkSlug': 'digital-outcomes-and-specialists',
+                'frameworkFramework': 'dos',
                 'frameworkName': 'Digital Outcomes and Specialists',
                 'frameworkStatus': 'live',
                 'lot': 'digital-specialists',

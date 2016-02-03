@@ -508,7 +508,7 @@ class ServiceTableMixin(object):
         data = drop_foreign_fields(value, [
             'id', 'status',
             'supplierId', 'supplierName',
-            'frameworkSlug', 'frameworkName', 'frameworkStatus',
+            'frameworkSlug', 'frameworkFramework', 'frameworkName', 'frameworkStatus',
             'lot', 'lotName',
             'updatedAt', 'createdAt', 'links'
         ])
@@ -530,6 +530,7 @@ class ServiceTableMixin(object):
             'supplierId': self.supplier.supplier_id,
             'supplierName': self.supplier.name,
             'frameworkSlug': self.framework.slug,
+            'frameworkFramework': self.framework.framework,
             'frameworkName': self.framework.name,
             'frameworkStatus': self.framework.status,
             'lot': self.lot.slug,
@@ -821,7 +822,7 @@ class Brief(db.Model):
     def validates_data(self, key, data):
         data = drop_foreign_fields(data, [
             'id',
-            'frameworkSlug', 'frameworkName', 'frameworkStatus',
+            'frameworkSlug', 'frameworkFramework', 'frameworkName', 'frameworkStatus',
             'lot', 'lotName',
             'updatedAt', 'createdAt', 'links'
         ])
@@ -854,6 +855,7 @@ class Brief(db.Model):
             'id': self.id,
             'status': self.status,
             'frameworkSlug': self.framework.slug,
+            'frameworkFramework': self.framework.framework,
             'frameworkName': self.framework.name,
             'frameworkStatus': self.framework.status,
             'lot': self.lot.slug,

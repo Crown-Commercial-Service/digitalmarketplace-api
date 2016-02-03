@@ -225,14 +225,24 @@ class TestListServices(BaseApplicationTest):
         assert_equal(data['services'][0]['id'], '2000000000')
         assert_equal(data['services'][1]['id'], '2000000003')
 
-    def test_list_services_returns_framework(self):
+    def test_list_services_returns_framework_and_lot_info(self):
         self.setup_dummy_services_including_unpublished(1)
         response = self.client.get('/services')
         data = json.loads(response.get_data())
         service = data['services'][0]
 
-        assert_equal(service['frameworkSlug'], u'g-cloud-6')
-        assert_equal(service['frameworkName'], u'G-Cloud 6')
+        framework_info = {
+            key: value for key, value in data['services'][0].items()
+            if key.startswith('framework') or key.startswith('lot')
+        }
+        assert framework_info == {
+            'frameworkSlug': 'g-cloud-6',
+            'frameworkName': 'G-Cloud 6',
+            'frameworkStatus': 'live',
+            'frameworkFramework': 'g-cloud',
+            'lot': 'saas',
+            'lotName': 'Software as a Service',
+        }
 
     def test_list_services_returns_supplier_info(self):
         self.setup_dummy_services_including_unpublished(1)
@@ -1752,12 +1762,22 @@ class TestGetService(BaseApplicationTest):
         assert_equal(data['services']['supplierId'], 1)
         assert_equal(data['services']['supplierName'], u'Supplier 1')
 
-    def test_get_service_returns_framework_info(self):
+    def test_get_service_returns_framework_and_lot_info(self):
         response = self.client.get('/services/123-published-456')
         data = json.loads(response.get_data())
-        assert_equal(data['services']['frameworkSlug'], 'g-cloud-6')
-        assert_equal(data['services']['frameworkName'], u'G-Cloud 6')
-        assert_equal(data['services']['frameworkStatus'], u'live')
+
+        framework_info = {
+            key: value for key, value in data['services'].items()
+            if key.startswith('framework') or key.startswith('lot')
+        }
+        assert framework_info == {
+            'frameworkSlug': 'g-cloud-6',
+            'frameworkName': 'G-Cloud 6',
+            'frameworkFramework': 'g-cloud',
+            'frameworkStatus': 'live',
+            'lot': 'saas',
+            'lotName': 'Software as a Service',
+        }
 
     def test_get_service_returns_empty_unavailability_audit_if_published(self):
         # create an audit event for the disabled service
