@@ -329,6 +329,7 @@ class TestBriefs(BaseApplicationTest):
                 'frameworkName': 'Digital Outcomes and Specialists',
                 'frameworkStatus': 'live',
                 'lot': 'digital-specialists',
+                'lotSlug': 'digital-specialists',
                 'lotName': 'Digital specialists',
                 'createdAt': mock.ANY,
                 'updatedAt': mock.ANY,

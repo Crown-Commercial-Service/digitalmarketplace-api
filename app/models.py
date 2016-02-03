@@ -509,7 +509,7 @@ class ServiceTableMixin(object):
             'id', 'status',
             'supplierId', 'supplierName',
             'frameworkSlug', 'frameworkFramework', 'frameworkName', 'frameworkStatus',
-            'lot', 'lotName',
+            'lot', 'lotSlug', 'lotName',
             'updatedAt', 'createdAt', 'links'
         ])
 
@@ -534,6 +534,7 @@ class ServiceTableMixin(object):
             'frameworkName': self.framework.name,
             'frameworkStatus': self.framework.status,
             'lot': self.lot.slug,
+            'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
@@ -823,7 +824,7 @@ class Brief(db.Model):
         data = drop_foreign_fields(data, [
             'id',
             'frameworkSlug', 'frameworkFramework', 'frameworkName', 'frameworkStatus',
-            'lot', 'lotName',
+            'lot', 'lotSlug', 'lotName',
             'updatedAt', 'createdAt', 'links'
         ])
 
@@ -859,6 +860,7 @@ class Brief(db.Model):
             'frameworkName': self.framework.name,
             'frameworkStatus': self.framework.status,
             'lot': self.lot.slug,
+            'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),

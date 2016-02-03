@@ -241,6 +241,7 @@ class TestListServices(BaseApplicationTest):
             'frameworkStatus': 'live',
             'frameworkFramework': 'g-cloud',
             'lot': 'saas',
+            'lotSlug': 'saas',
             'lotName': 'Software as a Service',
         }
 
@@ -1776,6 +1777,7 @@ class TestGetService(BaseApplicationTest):
             'frameworkFramework': 'g-cloud',
             'frameworkStatus': 'live',
             'lot': 'saas',
+            'lotSlug': 'saas',
             'lotName': 'Software as a Service',
         }
 
