@@ -8,7 +8,24 @@ API tier for Digital Marketplace.
 
 - Python app, based on the [Flask framework](http://flask.pocoo.org/)
 
-## Setup
+## Quickstart
+
+Install [Virtualenv](https://virtualenv.pypa.io/en/latest/)
+```
+sudo easy_install virtualenv
+```
+
+Bootstrap the database
+```
+make bootstrap
+```
+
+Install dependencies, run migrations and run the app
+```
+make run_all
+```
+
+## Full setup
 
 Install [Virtualenv](https://virtualenv.pypa.io/en/latest/)
 
@@ -20,7 +37,7 @@ Ensure you have Postgres running locally, and then bootstrap your development
 environment
 
 ```
-./scripts/bootstrap.sh
+make bootstrap
 ```
 
 ### Activate the virtual environment
@@ -34,34 +51,31 @@ source ./venv/bin/activate
 When new database migrations are added you can bring your local database schema
 up to date by running upgrade.
 
-```python application.py db upgrade```
+```make run_migrations```
 
 ### Upgrade dependencies
 
 Install new Python dependencies with pip
 
-```pip install -r requirements_for_test.txt```
+```make requirements_for_test```
 
 ### Run the tests
 
-```
-./scripts/run_tests.sh
-```
+This will run the linter, validate the migrations and run the unit tests.
+
+```make test```
+
+To test individual parts of the test stack use the `test_pep8`, `test_migrations`
+or `test_unit` targets.
 
 ### Run the development server
 
-To run the API for local development you can use the convenient run script, 
-which sets the environment variables required for local development: 
+Run the API with environment variables required for local development set.
+This will install requirements, run database migrations and run the app.
 
-```
-./scripts/run_app.sh
-```
+```make run_all```
 
-More generally, the command to start the server is:
-
-```
-python application.py runserver
-```
+To just run the application use the `run_app` target.
 
 ## Using the API locally
 
