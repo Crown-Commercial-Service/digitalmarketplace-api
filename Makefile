@@ -31,6 +31,6 @@ test_migrations: virtualenv
 test_unit: virtualenv
 	export DM_API_AUTH_TOKENS=$${DM_API_AUTH_TOKENS:=myToken}
 
-	py.test
+	py.test ${PYTEST_ARGS}
 
 .PHONY: virtualenv requirements requirements_for_test test_pep8 test_migrations test_unit test test_all run_migrations run_app run_all
