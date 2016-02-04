@@ -508,8 +508,8 @@ class ServiceTableMixin(object):
         data = drop_foreign_fields(value, [
             'id', 'status',
             'supplierId', 'supplierName',
-            'frameworkSlug', 'frameworkName', 'frameworkStatus',
-            'lot', 'lotName',
+            'frameworkSlug', 'frameworkFramework', 'frameworkName', 'frameworkStatus',
+            'lot', 'lotSlug', 'lotName',
             'updatedAt', 'createdAt', 'links'
         ])
 
@@ -530,9 +530,11 @@ class ServiceTableMixin(object):
             'supplierId': self.supplier.supplier_id,
             'supplierName': self.supplier.name,
             'frameworkSlug': self.framework.slug,
+            'frameworkFramework': self.framework.framework,
             'frameworkName': self.framework.name,
             'frameworkStatus': self.framework.status,
             'lot': self.lot.slug,
+            'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
@@ -821,8 +823,8 @@ class Brief(db.Model):
     def validates_data(self, key, data):
         data = drop_foreign_fields(data, [
             'id',
-            'frameworkSlug', 'frameworkName', 'frameworkStatus',
-            'lot', 'lotName',
+            'frameworkSlug', 'frameworkFramework', 'frameworkName', 'frameworkStatus',
+            'lot', 'lotSlug', 'lotName',
             'updatedAt', 'createdAt', 'links'
         ])
 
@@ -854,9 +856,11 @@ class Brief(db.Model):
             'id': self.id,
             'status': self.status,
             'frameworkSlug': self.framework.slug,
+            'frameworkFramework': self.framework.framework,
             'frameworkName': self.framework.name,
             'frameworkStatus': self.framework.status,
             'lot': self.lot.slug,
+            'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
