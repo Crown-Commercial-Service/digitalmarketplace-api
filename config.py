@@ -41,6 +41,7 @@ class Test(Config):
     DEBUG = True
     ES_ENABLED = False
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace_test'
+    DM_API_AUTH_TOKENS = 'myToken'
     DM_API_SERVICES_PAGE_SIZE = 5
     DM_API_SUPPLIERS_PAGE_SIZE = 5
     DM_API_BRIEFS_PAGE_SIZE = 5
@@ -49,6 +50,10 @@ class Test(Config):
 
 class Development(Config):
     DEBUG = True
+
+    DM_API_AUTH_TOKENS = 'myToken'
+    DM_SEARCH_API_AUTH_TOKEN = 'myToken'
+    DM_SEARCH_API_URL = 'http://localhost:5001'
 
 
 class Live(Config):
