@@ -8,11 +8,11 @@ addons:
 env:
   - SQLALCHEMY_DATABASE_URI=postgresql://postgres:@localhost:5432/digitalmarketplace_test
 install:
-  - pip install -r requirements_for_test.txt
+  - make requirements_for_test
 before_script:
   - psql -c 'create database digitalmarketplace_test;' -U postgres
 script:
-  - ./scripts/run_tests.sh --cov=app --cov-report=term-missing
+  - PYTEST_ARGS='--cov=app --cov-report=term-missing' make test
 after_success:
   - coveralls
 notifications:
