@@ -3,7 +3,7 @@ SHELL := /bin/bash
 run_all: requirements run_migrations run_app
 
 run_app: virtualenv
-	./scripts/run_app.sh
+	python application.py runserver
 
 run_migrations: virtualenv
 	python application.py db upgrade
@@ -29,8 +29,6 @@ test_migrations: virtualenv
 	./scripts/list_migrations.py 1>/dev/null
 
 test_unit: virtualenv
-	export DM_API_AUTH_TOKENS=$${DM_API_AUTH_TOKENS:=myToken}
-
 	py.test ${PYTEST_ARGS}
 
 .PHONY: virtualenv requirements requirements_for_test test_pep8 test_migrations test_unit test test_all run_migrations run_app run_all
