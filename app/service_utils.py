@@ -3,17 +3,10 @@ from sqlalchemy.exc import IntegrityError, DataError
 
 from .utils import get_json_from_request, \
     json_has_matching_id, json_has_required_keys
-from .validation import validate_updater_json_or_400, get_validation_errors
+from .validation import get_validation_errors
 from . import search_api_client, dmapiclient
 from . import db
 from .models import ArchivedService, AuditEvent, Framework, Service, Supplier
-
-
-def validate_and_return_updater_request():
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ['update_details'])
-    validate_updater_json_or_400(json_payload['update_details'])
-    return json_payload['update_details']
 
 
 def validate_and_return_service_request(service_id):

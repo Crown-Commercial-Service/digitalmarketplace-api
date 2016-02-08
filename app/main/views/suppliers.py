@@ -11,8 +11,7 @@ from ...validation import (
     is_valid_string_or_400
 )
 from ...utils import pagination_links, drop_foreign_fields, get_json_from_request, \
-    json_has_required_keys, json_has_matching_id, get_valid_page_or_1
-from ...service_utils import validate_and_return_updater_request
+    json_has_required_keys, json_has_matching_id, get_valid_page_or_1, validate_and_return_updater_request
 from ...supplier_utils import validate_and_return_supplier_request
 from dmapiclient.audit import AuditTypes
 

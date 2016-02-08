@@ -7,14 +7,16 @@ from ...models import ArchivedService, Service, Supplier, AuditEvent, Framework
 
 from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
-from ...utils import url_for, pagination_links, display_list, get_valid_page_or_1
+from ...utils import (
+    url_for, pagination_links, display_list, get_valid_page_or_1,
+    validate_and_return_updater_request,
+)
 
 from ...service_utils import (
     validate_and_return_service_request,
     update_and_validate_service,
     index_service,
     delete_service_from_index,
-    validate_and_return_updater_request,
     commit_and_archive_service,
     validate_service_data,
     validate_and_return_related_objects,

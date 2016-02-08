@@ -10,8 +10,7 @@ from ... import db, models
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
 from ...validation import is_valid_date, is_valid_acknowledged_state
-from ...service_utils import validate_and_return_updater_request
-from ...utils import get_json_from_request, json_has_required_keys
+from ...utils import get_json_from_request, json_has_required_keys, validate_and_return_updater_request
 
 
 AUDIT_OBJECT_TYPES = {
