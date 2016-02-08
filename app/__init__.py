@@ -27,6 +27,9 @@ def create_app(config_name):
         search_api_client=search_api_client
     )
 
+    if not application.config['DM_API_AUTH_TOKENS']:
+        raise Exception("No DM_API_AUTH_TOKENS provided")
+
     from .main import main as main_blueprint
     application.register_blueprint(main_blueprint)
     from .status import status as status_blueprint
