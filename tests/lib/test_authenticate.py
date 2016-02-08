@@ -1,6 +1,6 @@
-from nose.tools import eq_
+import pytest
 
-from app.authentication import get_token_from_headers
+from app.authentication import get_token_from_headers, get_allowed_tokens_from_config
 
 
 def test_get_token_from_headers():
@@ -14,4 +14,13 @@ def test_get_token_from_headers():
 
 
 def check_token(headers, expected_token, message=None):
-    eq_(get_token_from_headers(headers), expected_token, message)
+    assert get_token_from_headers(headers) == expected_token, message
+
+
+@pytest.mark.parametrize('config,tokens', [
+    ({'DM_API_AUTH_TOKENS': 'foo:bar'}, ['foo', 'bar']),
+    ({'DM_API_AUTH_TOKENS': 'bar'}, ['bar']),
+    ({}, []),
+])
+def test_get_allowed_tokens_from_config(config, tokens):
+    assert get_allowed_tokens_from_config(config) == tokens

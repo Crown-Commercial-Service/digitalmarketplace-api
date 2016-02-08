@@ -14,24 +14,12 @@ def requires_authentication():
 
 
 def token_is_valid(incoming_token):
-    return incoming_token in get_allowed_tokens_from_environment()
+    return incoming_token in get_allowed_tokens_from_config(current_app.config)
 
 
-def get_allowed_tokens_from_environment():
-    """Return a list of allowed auth tokens from the DM_API_AUTH_TOKENS env
-       variable
-
-    >>> os.environ['DM_API_AUTH_TOKENS'] = ''
-    >>> list(get_allowed_tokens_from_environment())
-    []
-    >>> del os.environ['DM_API_AUTH_TOKENS']
-    >>> list(get_allowed_tokens_from_environment())
-    []
-    >>> os.environ['DM_API_AUTH_TOKENS'] = 'ab:cd'
-    >>> list(get_allowed_tokens_from_environment())
-    ['ab', 'cd']
-    """
-    return filter(None, os.environ.get('DM_API_AUTH_TOKENS', '').split(":"))
+def get_allowed_tokens_from_config(config):
+    """Return a list of allowed auth tokens from the application config"""
+    return [token for token in config.get('DM_API_AUTH_TOKENS', '').split(':') if token]
 
 
 def get_token_from_headers(headers):
