@@ -906,6 +906,13 @@ class BriefResponse(db.Model):
     brief = db.relationship('Brief')
     supplier = db.relationship('Supplier', lazy='joined')
 
+    @validates('data')
+    def validates_data(self, key, data):
+        data = strip_whitespace_from_data(data)
+        data = purge_nulls_from_data(data)
+
+        return data
+
 
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
