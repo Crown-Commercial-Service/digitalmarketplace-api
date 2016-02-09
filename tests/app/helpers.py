@@ -239,16 +239,6 @@ class JSONUpdateTestMixin(object):
         assert_in(b'Invalid JSON',
                   response.get_data())
 
-    def test_invalid_json_causes_failure(self):
-        response = self.client.open(
-            self.endpoint,
-            method=self.method,
-            data='{"not": "valid"}',
-            content_type='application/json')
-
-        assert_equal(response.status_code, 400)
-        assert_in(b'Invalid JSON', response.get_data())
-
     def test_invalid_content_type_causes_failure(self):
         response = self.client.open(
             self.endpoint,

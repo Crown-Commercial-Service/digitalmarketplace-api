@@ -427,7 +427,7 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             data = json.loads(response.get_data())
-            assert_in('Invalid JSON', data['error'])
+            assert_in('JSON validation error', data['error'])
             assert_equal(response.status_code, 400)
 
     def test_no_content_type_causes_failure(self):
@@ -465,8 +465,7 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            assert_in(b'Invalid JSON',
-                      response.get_data())
+            assert_in(b'Invalid JSON', response.get_data())
 
     def test_can_post_a_valid_service_update(self):
         with self.app.app_context():
@@ -900,8 +899,7 @@ class TestPostService(BaseApplicationTest):
         )
 
         assert_equal(response.status_code, 400)
-        assert_in('update_details',
-                  json.loads(response.get_data())['error'])
+        assert_in('updated_by', json.loads(response.get_data())['error'])
 
     def test_should_404_without_status_parameter(self):
         response = self.client.post(
@@ -1547,11 +1545,8 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                                           'foo': 'bar'}}),
             content_type='application/json')
 
-        assert_equal(json.loads(response.get_data())['error'],
-                     "Invalid JSON must have '["
-                     "'update_details']' keys")
         assert_equal(response.status_code, 400)
-        assert_in(b'Invalid JSON', response.get_data())
+        assert_in("'updated_by' is a required property", json.loads(response.get_data())['error'])
 
     def test_invalid_service_id_too_short(self):
         response = self.client.put(
