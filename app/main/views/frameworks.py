@@ -10,7 +10,10 @@ from .. import main
 from ...models import (
     db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent, Lot, ValidationError
 )
-from ...utils import get_json_from_request, json_has_required_keys, json_only_has_required_keys
+from ...utils import (
+    get_json_from_request, json_has_required_keys, json_only_has_required_keys,
+    validate_and_return_updater_request,
+)
 
 
 @main.route('/frameworks', methods=['GET'])
@@ -33,12 +36,13 @@ def get_framework(framework_slug):
 
 @main.route('/frameworks/<framework_slug>', methods=['POST'])
 def update_framework(framework_slug):
+    updater_json = validate_and_return_updater_request()
     framework = Framework.query.filter(
         Framework.slug == framework_slug
     ).first_or_404()
 
     json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ['frameworks', 'updated_by'])
+    json_has_required_keys(json_payload, ['frameworks'])
     json_only_has_required_keys(json_payload['frameworks'], ['status', 'clarificationQuestionsOpen'])
 
     try:
@@ -49,7 +53,7 @@ def update_framework(framework_slug):
             AuditEvent(
                 audit_type=AuditTypes.framework_update,
                 db_object=framework,
-                user=json_payload['updated_by'],
+                user=updater_json['updated_by'],
                 data={'update': json_payload['frameworks']})
         )
         db.session.commit()
