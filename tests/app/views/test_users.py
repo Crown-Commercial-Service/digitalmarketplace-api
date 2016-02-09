@@ -4,7 +4,7 @@ from nose.tools import assert_equal, assert_not_equal, assert_in, assert_is_none
 from app import db, encryption
 from app.models import User, Supplier
 from datetime import datetime
-from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
+from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
 from dmutils.formats import DATETIME_FORMAT
 
 
@@ -183,7 +183,7 @@ class TestUsersAuth(BaseUserTest):
             self._return_post_login(status_code=403)
 
 
-class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
+class TestUsersPost(BaseApplicationTest, JSONTestMixin):
     method = "post"
     endpoint = "/users"
 
@@ -498,7 +498,10 @@ class TestUsersPost(BaseApplicationTest, JSONUpdateTestMixin):
         assert_in("JSON was not a valid format", data)
 
 
-class TestUsersUpdate(BaseApplicationTest):
+class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
+    method = "post"
+    endpoint = "/users/123"
+
     def setup(self):
         now = datetime.utcnow()
         super(TestUsersUpdate, self).setup()

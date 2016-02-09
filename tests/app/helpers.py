@@ -220,7 +220,7 @@ class BaseApplicationTest(object):
         db.session.commit()
 
 
-class JSONUpdateTestMixin(object):
+class JSONTestMixin(object):
     """
     Tests to verify that endpoints that accept JSON.
     """
@@ -228,10 +228,15 @@ class JSONUpdateTestMixin(object):
     method = None
     client = None
 
-    def test_non_json_causes_failure(self):
-        response = self.client.open(
-            self.endpoint,
+    def open(self, **kwargs):
+        return self.client.open(
+            self.endpoint.format(self=self),
             method=self.method,
+            **kwargs
+        )
+
+    def test_non_json_causes_failure(self):
+        response = self.open(
             data='this is not JSON',
             content_type='application/json')
 
@@ -240,10 +245,18 @@ class JSONUpdateTestMixin(object):
                   response.get_data())
 
     def test_invalid_content_type_causes_failure(self):
-        response = self.client.open(
-            self.endpoint,
-            method=self.method,
+        response = self.open(
             data='{"services": {"foo": "bar"}}')
 
         assert_equal(response.status_code, 400)
         assert_in(b'Unexpected Content-Type', response.get_data())
+
+
+class JSONUpdateTestMixin(JSONTestMixin):
+    def test_missing_updated_by_should_fail_with_400(self):
+        response = self.open(
+            data='{}',
+            content_type='application/json')
+
+        assert_equal(response.status_code, 400)
+        assert_in("'updated_by' is a required property", response.get_data(as_text=True))
