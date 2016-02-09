@@ -892,6 +892,21 @@ class BriefUser(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
 
 
+class BriefResponse(db.Model):
+    __tablename__ = 'brief_responses'
+
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(JSON, nullable=False)
+
+    brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), nullable=False)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.supplier_id'), nullable=False)
+
+    created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
+
+    brief = db.relationship('Brief')
+    supplier = db.relationship('Supplier', lazy='joined')
+
+
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
 # which takes a long time for old events

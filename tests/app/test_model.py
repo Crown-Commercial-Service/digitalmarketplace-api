@@ -1,11 +1,17 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 from nose.tools import assert_equal, assert_raises
 from sqlalchemy.exc import IntegrityError
 
 from app import db, create_app
-from app.models import User, Framework, Service, Brief, ValidationError, SupplierFramework
+from app.models import (
+    User, Framework, Service,
+    Supplier, SupplierFramework,
+    Brief, BriefResponse,
+    ValidationError,
+)
+
 from .helpers import BaseApplicationTest
 
 
@@ -199,6 +205,32 @@ class TestBriefs(BaseApplicationTest):
                 Brief(data={},
                       framework=self.framework,
                       lot_id=self.framework.get_lot('user-research-studios').id)
+
+
+class TestBriefResponses(BaseApplicationTest):
+    def setup(self):
+        super(TestBriefResponses, self).setup()
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            lot = framework.get_lot('digital-outcomes')
+            self.brief = Brief(data={}, framework=framework, lot=lot)
+            db.session.add(self.brief)
+            db.session.commit()
+
+            self.setup_dummy_suppliers(1)
+            self.supplier = Supplier.query.filter(Supplier.supplier_id == 0).first()
+
+    def test_create_a_new_brief_response(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(data={}, brief=self.brief, supplier=self.supplier)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            assert brief_response.id is not None
+            assert brief_response.supplier_id == 0
+            assert brief_response.brief_id == self.brief.id
+            assert isinstance(brief_response.created_at, datetime)
+            assert brief_response.data == {}
 
 
 class TestServices(BaseApplicationTest):
