@@ -34,20 +34,26 @@ def validate_and_return_lot(json_payload):
     return framework, lot
 
 
-def validate_and_return_related_objects(service_json):
-    json_has_required_keys(service_json, ['frameworkSlug', 'lot', 'supplierId'])
-
-    framework, lot = validate_and_return_lot(service_json)
-
+def validate_and_return_supplier(json_payload):
+    json_has_required_keys(json_payload, ['supplierId'])
     try:
         supplier = Supplier.query.filter(
-            Supplier.supplier_id == service_json['supplierId']
+            Supplier.supplier_id == json_payload['supplierId']
         ).first()
     except DataError:
         supplier = None
 
     if not supplier:
-        abort(400, "Invalid supplier_id '{}'".format(service_json['supplierId']))
+        abort(400, "Invalid supplier ID '{}'".format(json_payload['supplierId']))
+
+    return supplier
+
+
+def validate_and_return_related_objects(service_json):
+    json_has_required_keys(service_json, ['frameworkSlug', 'lot', 'supplierId'])
+
+    framework, lot = validate_and_return_lot(service_json)
+    supplier = validate_and_return_supplier(service_json)
 
     return framework, lot, supplier
 

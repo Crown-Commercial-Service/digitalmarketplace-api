@@ -278,7 +278,7 @@ class TestDraftServices(BaseApplicationTest):
 
         data = json.loads(res.get_data())
         assert_equal(res.status_code, 400)
-        assert_in("Invalid supplier_id 'ShouldBeInt'", data['error'])
+        assert_in("Invalid supplier ID 'ShouldBeInt'", data['error'])
 
     def test_should_not_create_draft_on_not_open_framework(self):
         draft_json = self.create_draft_json.copy()
