@@ -32,15 +32,15 @@ class TestCreateBriefResponse(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json'
         )
 
-    def test_create_new_brief_response(self, live_framework):
-        res = self.create_brief_response({
+    def test_create_new_brief_response(self, live_framework, brief_example_data):
+        res = self.create_brief_response(dict(brief_example_data, **{
             'briefId': self.brief_id,
             'supplierId': 0,
-        })
+        }))
 
         data = json.loads(res.get_data(as_text=True))
 
-        assert res.status_code == 201
+        assert res.status_code == 201, data
         assert data['briefResponses']['supplierName'] == 'Supplier 0'
         assert data['briefResponses']['briefId'] == self.brief_id
 

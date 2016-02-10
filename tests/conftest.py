@@ -7,6 +7,8 @@ from .app import setup, teardown
 from app import create_app
 from app.models import db, Framework
 
+from .example_listings import * # noqa
+
 
 @pytest.fixture(autouse=True, scope='session')
 def db_migration(request):

@@ -42,6 +42,8 @@ def create_brief_response():
         brief=brief,
     )
 
+    brief_response.validate()
+
     db.session.add(brief_response)
     try:
         db.session.flush()
