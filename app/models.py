@@ -15,7 +15,7 @@ from dmutils.formats import DATETIME_FORMAT
 
 from . import db
 from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
-from .validation import is_valid_service_id, is_valid_buyer_email
+from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
 
 
 class FrameworkLot(db.Model):
@@ -912,6 +912,17 @@ class BriefResponse(db.Model):
         data = purge_nulls_from_data(data)
 
         return data
+
+    def validate(self, enforce_required=True, required_fields=None):
+        errs = get_validation_errors(
+            'brief-responses-{}-{}'.format(self.brief.framework.slug, self.brief.lot.slug),
+            self.data,
+            enforce_required=enforce_required,
+            required_fields=required_fields
+        )
+
+        if errs:
+            raise ValidationError(errs)
 
     def serialize(self):
         data = self.data.copy()
