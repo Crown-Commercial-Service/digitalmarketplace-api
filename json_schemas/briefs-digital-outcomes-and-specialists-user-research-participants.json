@@ -2,15 +2,45 @@
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
   "properties": {
-    "title": {
-      "type": "string",
+    "backgroundInformation": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "location": {
+      "enum": [
+        "Scotland",
+        "North East England",
+        "North West England",
+        "Yorkshire and the Humber",
+        "East Midlands",
+        "West Midlands",
+        "East of England",
+        "Wales",
+        "London",
+        "South East England",
+        "South West England",
+        "Northern Ireland",
+        "Offsite"
+      ]
+    },
+    "organisation": {
       "maxLength": 100,
-      "minLength": 1
+      "minLength": 1,
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
     }
   },
   "required": [
+    "backgroundInformation",
+    "location",
+    "organisation",
     "title"
   ],
-  "title": "Digital Outcomes and Specialists User research participants brief",
+  "title": "Digital Outcomes and Specialists User research participants Brief Schema",
   "type": "object"
 }
