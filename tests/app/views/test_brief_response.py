@@ -1,6 +1,9 @@
 import json
 
+from hypothesis import given
+
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
+from ... import example_listings
 
 from app.models import db, Lot, Brief
 
@@ -32,6 +35,7 @@ class TestCreateBriefResponse(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json'
         )
 
+    @given(example_listings.brief_data(essential_count=4))
     def test_create_new_brief_response(self, live_framework, brief_example_data):
         res = self.create_brief_response(dict(brief_example_data, **{
             'briefId': self.brief_id,

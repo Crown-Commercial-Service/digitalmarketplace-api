@@ -1,8 +1,16 @@
-import pytest
+from hypothesis import strategies, settings
+
+settings.register_profile("unit", settings(
+    database=None,
+    max_examples=1,
+))
+settings.load_profile("unit")
 
 
-@pytest.fixture()
-def brief_example_data():
-    return {
-        "essentialRequirements": [True, False, True, False]
-    }
+def brief_data(essential_count=5):
+    return strategies.fixed_dictionaries({
+        "essentialRequirements": strategies.lists(
+            elements=strategies.booleans(),
+            min_size=essential_count, max_size=essential_count,
+        )
+    })
