@@ -98,7 +98,8 @@ def strip_whitespace_from_data(data):
         if isinstance(value, list):
             # Strip whitespace and remove empty items from lists
             data[key] = list(
-                filter(None, map(lambda x: x.strip() if isinstance(x, string_types) else x, value))
+                filter(lambda x: x not in ['', None],
+                       map(lambda x: x.strip() if isinstance(x, string_types) else x, value))
             )
         elif isinstance(value, string_types):
             # Strip whitespace from strings
