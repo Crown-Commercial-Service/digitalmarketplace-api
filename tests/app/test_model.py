@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import mock
 import pytest
 from nose.tools import assert_equal, assert_raises
 from sqlalchemy.exc import IntegrityError
@@ -243,6 +244,28 @@ class TestBriefResponses(BaseApplicationTest):
         brief_response.data = {'foo': ' bar ', 'bar': ['', '  foo']}
 
         assert brief_response.data == {'foo': 'bar', 'bar': ['foo']}
+
+    def test_brief_response_can_be_serialized(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            with mock.patch('app.models.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert brief_response.serialize() == {
+                    'id': brief_response.id,
+                    'briefId': self.brief.id,
+                    'supplierId': 0,
+                    'supplierName': 'Supplier 0',
+                    'createdAt': mock.ANY,
+                    'foo': 'bar',
+                    'links': {
+                        'self': (('.get_brief_response',), {'brief_response_id': brief_response.id}),
+                        'brief': (('.get_brief',), {'brief_id': self.brief.id}),
+                        'supplier': (('.get_supplier',), {'supplier_id': 0}),
+                    }
+                }
 
 
 class TestServices(BaseApplicationTest):

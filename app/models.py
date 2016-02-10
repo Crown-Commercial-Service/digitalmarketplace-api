@@ -913,6 +913,23 @@ class BriefResponse(db.Model):
 
         return data
 
+    def serialize(self):
+        data = self.data.copy()
+        data.update({
+            'id': self.id,
+            'briefId': self.brief_id,
+            'supplierId': self.supplier_id,
+            'supplierName': self.supplier.name,
+            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'links': {
+                'self': url_for('.get_brief_response', brief_response_id=self.id),
+                'brief': url_for('.get_brief', brief_id=self.brief_id),
+                'supplier': url_for(".get_supplier", supplier_id=self.supplier_id),
+            }
+        })
+
+        return data
+
 
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
