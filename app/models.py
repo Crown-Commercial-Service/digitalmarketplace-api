@@ -908,6 +908,9 @@ class BriefResponse(db.Model):
 
     @validates('data')
     def validates_data(self, key, data):
+        data = drop_foreign_fields(data, [
+            'supplierId', 'briefId',
+        ])
         data = strip_whitespace_from_data(data)
         data = purge_nulls_from_data(data)
 

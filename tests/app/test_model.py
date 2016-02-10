@@ -233,6 +233,12 @@ class TestBriefResponses(BaseApplicationTest):
             assert isinstance(brief_response.created_at, datetime)
             assert brief_response.data == {}
 
+    def test_foreign_fields_are_removed_from_brief_response_data(self):
+        brief_response = BriefResponse(data={})
+        brief_response.data = {'foo': 'bar', 'briefId': 5, 'supplierId': 100}
+
+        assert brief_response.data == {'foo': 'bar'}
+
     def test_nulls_are_removed_from_brief_response_data(self):
         brief_response = BriefResponse(data={})
         brief_response.data = {'foo': 'bar', 'bar': None}
