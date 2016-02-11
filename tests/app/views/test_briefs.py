@@ -1,7 +1,7 @@
 import json
 
 import mock
-from ..helpers import BaseApplicationTest
+from ..helpers import BaseApplicationTest, COMPLETE_DIGITAL_SPECIALISTS_BRIEF
 
 from dmapiclient.audit import AuditTypes
 from app import db
@@ -316,12 +316,13 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 404
 
     def test_get_brief(self):
-        self.setup_dummy_briefs(1)
+        self.setup_dummy_briefs(1, title="I need a Developer")
         res = self.client.get('/briefs/1')
 
         assert res.status_code == 200
-        assert json.loads(res.get_data(as_text=True)) == {
-            'briefs': {
+        expected_data = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
+        expected_data.update(
+            {
                 'id': 1,
                 'status': 'draft',
                 'frameworkSlug': 'digital-outcomes-and-specialists',
@@ -347,7 +348,9 @@ class TestBriefs(BaseApplicationTest):
                     }
                 ]
             }
-        }
+        )
+
+        assert json.loads(res.get_data(as_text=True)) == {"briefs": expected_data}
 
     def test_get_live_brief_has_published_at_time(self):
         self.setup_dummy_briefs(1, status='live')

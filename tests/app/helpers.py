@@ -12,6 +12,24 @@ from app.models import Service, Supplier, ContactInformation, Framework, Lot, Us
 TEST_SUPPLIERS_COUNT = 3
 
 
+COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
+    "additionalTerms": "",
+    "backgroundInformation": "Background",
+    "contractLength": "6 Months",
+    "currentTechnologies": "",
+    "essentialRequirements": ["COBOL", "LISP"],
+    "evaluationType": ["presentation"],
+    "importantDates": "29th March",
+    "location": "Wales",
+    "niceToHaveRequirements": ["FORTRAN"],
+    "organisation": "Org.org",
+    "specialistRole": "Developer",
+    "startDate": "12th February 2016",
+    "title": "I need a Developer",
+    "workingArrangements": "",
+}
+
+
 class WSGIApplicationWithEnvironment(object):
     def __init__(self, app, **kwargs):
         self.app = app
@@ -70,13 +88,15 @@ class BaseApplicationTest(object):
         user_id = self.setup_dummy_user(id=user_id)
 
         with self.app.app_context():
-            framework = Framework.query.get(5)
-            lot = Lot.query.get(6)
+            framework = Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").first()
+            lot = Lot.query.filter(Lot.slug == "digital-specialists").first()
+            data = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
+            data["title"] = title
             for i in range(brief_start, brief_start + n):
                 db.session.add(Brief(
                     id=i,
                     status=status,
-                    data={'title': title},
+                    data=data,
                     framework=framework,
                     lot=lot,
                     users=[User.query.get(user_id)]
