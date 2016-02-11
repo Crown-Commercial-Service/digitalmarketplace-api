@@ -181,3 +181,18 @@ class TestCreateBriefResponse(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert res.status_code == 400
         assert "Brief framework must be live" in res.get_data(as_text=True)
+
+    @given(example_listings.brief_data(essential_count=4))
+    def test_cannot_respond_to_a_brief_more_than_once_from_the_same_supplier(self, live_framework, brief_example_data):
+        self.create_brief_response(dict(brief_example_data, **{
+            'briefId': self.brief_id,
+            'supplierId': 0,
+        }))
+
+        res = self.create_brief_response(dict(brief_example_data, **{
+            'briefId': self.brief_id,
+            'supplierId': 0,
+        }))
+
+        assert res.status_code == 400, res.get_data(as_text=True)
+        assert 'Brief response already exists' in res.get_data(as_text=True)

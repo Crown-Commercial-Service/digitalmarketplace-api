@@ -38,6 +38,10 @@ def create_brief_response():
 
     supplier = validate_and_return_supplier(brief_response_json)
 
+    # Check if brief response already exists from this supplier
+    if BriefResponse.query.filter(BriefResponse.supplier == supplier, BriefResponse.brief == brief).first():
+        abort(400, "Brief response already exists for supplier '{}'".format(supplier.supplier_id))
+
     brief_response = BriefResponse(
         data=brief_response_json,
         supplier=supplier,
