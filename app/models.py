@@ -924,6 +924,12 @@ class BriefResponse(db.Model):
             required_fields=required_fields
         )
 
+        if len(self.data['essentialRequirements']) != len(self.brief.data['essentialRequirements']):
+            errs['essentialRequirements'] = 'answer_required'
+
+        if len(self.data.get('niceToHaveRequirements', [])) != len(self.brief.data.get('niceToHaveRequirements', [])):
+            errs['niceToHaveRequirements'] = 'answer_required'
+
         if errs:
             raise ValidationError(errs)
 
