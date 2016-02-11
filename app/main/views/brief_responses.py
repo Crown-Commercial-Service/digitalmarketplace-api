@@ -73,6 +73,10 @@ def create_brief_response():
     return jsonify(briefResponses=brief_response.serialize()), 201
 
 
-@main.route('/brief-responses/<int:brief_response_id>', methods=['POST'])
+@main.route('/brief-responses/<int:brief_response_id>', methods=['GET'])
 def get_brief_response(brief_response_id):
-    pass
+    brief_response = BriefResponse.query.filter(
+        BriefResponse.id == brief_response_id
+    ).first_or_404()
+
+    return jsonify(briefResponses=brief_response.serialize())

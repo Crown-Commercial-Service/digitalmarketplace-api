@@ -6,15 +6,12 @@ from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 from ... import example_listings
 
 from dmapiclient.audit import AuditTypes
-from app.models import db, Lot, Brief, AuditEvent
+from app.models import db, Lot, Brief, BriefResponse, AuditEvent
 
 
-class TestCreateBriefResponse(BaseApplicationTest, JSONUpdateTestMixin):
-    endpoint = '/brief-responses'
-    method = 'post'
-
+class BaseBriefResponseTest(BaseApplicationTest):
     def setup(self):
-        super(TestCreateBriefResponse, self).setup()
+        super(BaseBriefResponseTest, self).setup()
 
         with self.app.app_context():
             self.setup_dummy_suppliers(1)
@@ -36,6 +33,14 @@ class TestCreateBriefResponse(BaseApplicationTest, JSONUpdateTestMixin):
             }),
             content_type='application/json'
         )
+
+    def get_brief_response(self, brief_response_id):
+        return self.client.get('/brief-responses/{}'.format(brief_response_id))
+
+
+class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
+    endpoint = '/brief-responses'
+    method = 'post'
 
     @given(example_listings.brief_response_data())
     def test_create_new_brief_response(self, live_framework, brief_response_data):
@@ -221,3 +226,33 @@ class TestCreateBriefResponse(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert res.status_code == 400, res.get_data(as_text=True)
         assert data['error']['niceToHaveRequirements'] == 'answer_required'
+
+
+class TestGetBriefResponse(BaseBriefResponseTest):
+    def setup(self):
+        super(TestGetBriefResponse, self).setup()
+
+        with self.app.app_context():
+            brief_response = BriefResponse(
+                data=example_listings.brief_response_data().example(),
+                supplier_id=0, brief_id=self.brief_id
+            )
+
+            db.session.add(brief_response)
+            db.session.commit()
+
+            self.brief_response_id = brief_response.id
+
+    def test_get_brief_response(self):
+        res = self.get_brief_response(self.brief_response_id)
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['briefResponses']['id'] == self.brief_response_id
+        assert data['briefResponses']['supplierId'] == 0
+
+    def test_get_missing_brief_returns_404(self):
+        res = self.get_brief_response(999)
+
+        assert res.status_code == 404
