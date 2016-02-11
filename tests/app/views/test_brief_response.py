@@ -5,7 +5,8 @@ from hypothesis import given
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 from ... import example_listings
 
-from app.models import db, Lot, Brief
+from dmapiclient.audit import AuditTypes
+from app.models import db, Lot, Brief, AuditEvent
 
 
 class TestCreateBriefResponse(BaseApplicationTest, JSONUpdateTestMixin):
@@ -47,6 +48,29 @@ class TestCreateBriefResponse(BaseApplicationTest, JSONUpdateTestMixin):
         assert res.status_code == 201, data
         assert data['briefResponses']['supplierName'] == 'Supplier 0'
         assert data['briefResponses']['briefId'] == self.brief_id
+
+    @given(example_listings.brief_data(essential_count=4))
+    def test_create_brief_response_creates_an_audit_event(self, live_framework, brief_example_data):
+        res = self.create_brief_response(dict(brief_example_data, **{
+            'briefId': self.brief_id,
+            'supplierId': 0,
+        }))
+
+        assert res.status_code == 201, res.get_data(as_text=True)
+
+        with self.app.app_context():
+            audit_events = AuditEvent.query.filter(
+                AuditEvent.type == AuditTypes.create_brief_response.value
+            ).all()
+
+        assert len(audit_events) == 1
+        assert audit_events[0].data == {
+            'briefResponseId': json.loads(res.get_data(as_text=True))['briefResponses']['id'],
+            'briefResponseJson': dict(brief_example_data, **{
+                'briefId': self.brief_id,
+                'supplierId': 0,
+            })
+        }
 
     def test_cannot_create_brief_response_with_empty_json(self, live_framework):
         res = self.client.post(

@@ -1,8 +1,10 @@
 from flask import jsonify, abort
 from sqlalchemy.exc import IntegrityError, DataError
 
+from dmapiclient.audit import AuditTypes
+
 from .. import main
-from ...models import db, Supplier, Brief, BriefResponse
+from ...models import db, Brief, BriefResponse, AuditEvent
 from ...utils import (
     get_json_from_request, json_has_required_keys,
     validate_and_return_updater_request,
@@ -51,6 +53,17 @@ def create_brief_response():
         db.session.rollback()
         abort(400, e.orig)
 
+    audit = AuditEvent(
+        audit_type=AuditTypes.create_brief_response,
+        user=updater_json['updated_by'],
+        data={
+            'briefResponseId': brief_response.id,
+            'briefResponseJson': brief_response_json,
+        },
+        db_object=brief_response,
+    )
+
+    db.session.add(audit)
     db.session.commit()
 
     return jsonify(briefResponses=brief_response.serialize()), 201
