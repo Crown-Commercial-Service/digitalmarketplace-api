@@ -11,8 +11,7 @@ from ...validation import (
     is_valid_string_or_400
 )
 from ...utils import pagination_links, drop_foreign_fields, get_json_from_request, \
-    json_has_required_keys, json_has_matching_id, get_valid_page_or_1
-from ...service_utils import validate_and_return_updater_request
+    json_has_required_keys, json_has_matching_id, get_valid_page_or_1, validate_and_return_updater_request
 from ...supplier_utils import validate_and_return_supplier_request
 from dmapiclient.audit import AuditTypes
 
@@ -165,10 +164,8 @@ def update_supplier(supplier_id):
         Supplier.supplier_id == supplier_id
     ).first_or_404()
 
-    json_has_required_keys(
-        request_data,
-        ['suppliers', 'updated_by']
-    )
+    updater_json = validate_and_return_updater_request()
+    json_has_required_keys(request_data, ['suppliers'])
 
     supplier_data = supplier.serialize()
     supplier_data.update(request_data['suppliers'])
@@ -187,7 +184,7 @@ def update_supplier(supplier_id):
         AuditEvent(
             audit_type=AuditTypes.supplier_update,
             db_object=supplier,
-            user=request_data['updated_by'],
+            user=updater_json['updated_by'],
             data={'update': request_data['suppliers']})
     )
 
@@ -209,10 +206,8 @@ def update_contact_information(supplier_id, contact_id):
         ContactInformation.supplier_id == supplier_id,
     ).first_or_404()
 
-    json_has_required_keys(request_data, [
-        'contactInformation', 'updated_by'
-    ])
-
+    updater_json = validate_and_return_updater_request()
+    json_has_required_keys(request_data, ['contactInformation'])
     contact_data = contact.serialize()
     contact_data.update(request_data['contactInformation'])
     contact_data = drop_foreign_fields(
@@ -230,7 +225,7 @@ def update_contact_information(supplier_id, contact_id):
         AuditEvent(
             audit_type=AuditTypes.contact_update,
             db_object=contact.supplier,
-            user=request_data['updated_by'],
+            user=updater_json['updated_by'],
             data={'update': request_data['contactInformation']})
     )
 
@@ -267,7 +262,8 @@ def set_a_declaration(supplier_id, framework_slug):
         status_code = 201
 
     request_data = get_json_from_request()
-    json_has_required_keys(request_data, ['declaration', 'updated_by'])
+    updater_json = validate_and_return_updater_request()
+    json_has_required_keys(request_data, ['declaration'])
 
     supplier_framework.declaration = request_data['declaration'] or {}
     db.session.add(supplier_framework)
@@ -275,7 +271,7 @@ def set_a_declaration(supplier_id, framework_slug):
         AuditEvent(
             audit_type=AuditTypes.answer_selection_questions,
             db_object=supplier_framework,
-            user=request_data['updated_by'],
+            user=updater_json['updated_by'],
             data={'update': request_data['declaration']})
     )
 
@@ -338,7 +334,6 @@ def get_supplier_framework_info(supplier_id, framework_slug):
 
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['PUT'])
 def register_framework_interest(supplier_id, framework_slug):
-    updater_json = validate_and_return_updater_request()
 
     framework = Framework.query.filter(
         Framework.slug == framework_slug
@@ -349,6 +344,7 @@ def register_framework_interest(supplier_id, framework_slug):
     ).first_or_404()
 
     json_payload = get_json_from_request()
+    updater_json = validate_and_return_updater_request()
     json_payload.pop('update_details')
     if json_payload:
         abort(400, "This PUT endpoint does not take a payload.")
@@ -370,7 +366,7 @@ def register_framework_interest(supplier_id, framework_slug):
     )
     audit_event = AuditEvent(
         audit_type=AuditTypes.register_framework_interest,
-        user=updater_json.get('updated_by'),
+        user=updater_json['updated_by'],
         data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug},
         db_object=supplier
     )
@@ -388,7 +384,6 @@ def register_framework_interest(supplier_id, framework_slug):
 
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['POST'])
 def update_supplier_framework_details(supplier_id, framework_slug):
-    updater_json = validate_and_return_updater_request()
 
     framework = Framework.query.filter(
         Framework.slug == framework_slug
@@ -399,6 +394,7 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     ).first_or_404()
 
     json_payload = get_json_from_request()
+    updater_json = validate_and_return_updater_request()
     json_has_required_keys(json_payload, ["frameworkInterest"])
     update_json = json_payload["frameworkInterest"]
 
@@ -420,7 +416,7 @@ def update_supplier_framework_details(supplier_id, framework_slug):
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.supplier_update,
-        user=updater_json.get('updated_by'),
+        user=updater_json['updated_by'],
         data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug, 'update': update_json},
         db_object=supplier
     )

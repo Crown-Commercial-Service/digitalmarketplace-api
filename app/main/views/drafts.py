@@ -10,10 +10,10 @@ from ...utils import json_only_has_required_keys
 from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, Supplier, AuditEvent, Framework
 from ...utils import (
+    validate_and_return_updater_request,
     get_request_page_questions
 )
 from ...service_utils import (
-    validate_and_return_updater_request,
     update_and_validate_service, index_service,
     commit_and_archive_service, create_service_from_draft,
     validate_and_return_related_objects, validate_service_data,

@@ -1,4 +1,4 @@
-from tests.app.helpers import BaseApplicationTest
+from tests.app.helpers import BaseApplicationTest, JSONUpdateTestMixin
 from datetime import datetime
 from flask import json
 import mock
@@ -1025,7 +1025,10 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(audit_event['type'], 'create_draft_service')
 
 
-class TestCopyDraft(BaseApplicationTest):
+class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
+    endpoint = '/draft-services/{self.draft_id}/copy'
+    method = 'post'
+
     def setup(self):
         super(TestCopyDraft, self).setup()
 
@@ -1109,14 +1112,6 @@ class TestCopyDraft(BaseApplicationTest):
             'originalDraftId': self.draft_id
         })
 
-    def test_should_not_copy_draft_without_update_details(self):
-        res = self.client.post(
-            '/draft-services/%s/copy' % self.draft_id,
-            data=json.dumps({}),
-            content_type='application/json')
-
-        assert_equal(res.status_code, 400)
-
     def test_should_not_create_draft_with_invalid_data(self):
         res = self.client.post(
             '/draft-services/1000/copy',
@@ -1149,7 +1144,10 @@ class TestCopyDraft(BaseApplicationTest):
         assert_false("sfiaRateDocumentURL" in data['services'])
 
 
-class TestCompleteDraft(BaseApplicationTest):
+class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
+    endpoint = '/draft-services/{self.draft_id}/complete'
+    method = 'post'
+
     def setup(self):
         super(TestCompleteDraft, self).setup()
 
@@ -1495,7 +1493,10 @@ class TestDOSServices(BaseApplicationTest):
         assert_equal(complete.status_code, 400)
 
 
-class TestUpdateDraftStatus(BaseApplicationTest):
+class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
+    endpoint = '/draft-services/{self.draft_id}/update-status'
+    method = 'post'
+
     def setup(self):
         super(TestUpdateDraftStatus, self).setup()
 
@@ -1555,14 +1556,6 @@ class TestUpdateDraftStatus(BaseApplicationTest):
         assert_equal(data['auditEvents'][1]['data'], {
             'draftId': self.draft_id, 'status': 'failed'
         })
-
-    def test_should_not_update_draft_status_without_update_details(self):
-        res = self.client.post(
-            '/draft-services/%s/update-status' % self.draft_id,
-            data=json.dumps({'services': {'status': 'not-submitted'}}),
-            content_type='application/json')
-
-        assert_equal(res.status_code, 400)
 
     def test_should_not_update_draft_status_to_invalid_status(self):
         res = self.client.post(

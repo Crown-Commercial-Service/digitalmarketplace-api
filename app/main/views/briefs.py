@@ -6,9 +6,9 @@ from ... import db
 from ...models import User, Brief, AuditEvent
 from ...utils import (
     get_json_from_request, json_has_required_keys, pagination_links,
-    get_valid_page_or_1, get_request_page_questions
+    get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request
 )
-from ...service_utils import validate_and_return_lot, validate_and_return_updater_request
+from ...service_utils import validate_and_return_lot
 from ...brief_utils import validate_brief_data
 
 

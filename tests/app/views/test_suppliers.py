@@ -7,7 +7,7 @@ from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true,
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
     SupplierFramework, Framework, DraftService, Service
-from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
+from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
 from random import randint
 
 
@@ -278,7 +278,7 @@ class TestListSuppliersByDunsNumber(BaseApplicationTest):
         assert_equal(2, len(data['suppliers']))
 
 
-class TestPutSupplier(BaseApplicationTest, JSONUpdateTestMixin):
+class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
     method = "put"
     endpoint = "/suppliers/123456"
 
@@ -516,10 +516,6 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json',
         )
 
-    def test_empty_update_request(self):
-        response = self.update_request(full_data={})
-        assert_equal(response.status_code, 400)
-
     def test_empty_update_supplier(self):
         response = self.update_request({})
         assert_equal(response.status_code, 200)
@@ -639,7 +635,10 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(response.status_code, 400)
 
 
-class TestUpdateContactInformation(BaseApplicationTest):
+class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
+    method = "post"
+    endpoint = "/suppliers/123456/contact-information/{self.contact_id}"
+
     def setup(self):
         super(TestUpdateContactInformation, self).setup()
 
@@ -664,10 +663,6 @@ class TestUpdateContactInformation(BaseApplicationTest):
             } if full_data is None else full_data),
             content_type='application/json',
         )
-
-    def test_empty_update_request(self):
-        response = self.update_request(full_data={})
-        assert_equal(response.status_code, 400)
 
     def test_empty_update(self):
         response = self.update_request({})
@@ -810,7 +805,7 @@ class TestUpdateContactInformation(BaseApplicationTest):
         assert_equal(response.status_code, 400)
 
 
-class TestSetSupplierDeclarations(BaseApplicationTest):
+class TestSetSupplierDeclarations(BaseApplicationTest, JSONUpdateTestMixin):
     method = 'put'
     endpoint = '/suppliers/0/frameworks/g-cloud-4/declaration'
 
@@ -894,20 +889,8 @@ class TestSetSupplierDeclarations(BaseApplicationTest):
                 .find_by_supplier_and_framework(0, 'test-open')
             assert_equal(supplier_framework.declaration['question'], 'answer2')
 
-    def test_invalid_payload_fails(self):
-        with self.app.app_context():
-            response = self.client.put(
-                '/suppliers/0/frameworks/test-open/declaration',
-                data=json.dumps({
-                    'invalid': {
-                    }
-                }),
-                content_type='application/json')
 
-            assert_equal(response.status_code, 400)
-
-
-class TestPostSupplier(BaseApplicationTest, JSONUpdateTestMixin):
+class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
     method = "post"
     endpoint = "/suppliers"
 
@@ -1167,7 +1150,10 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
         assert_equal(response.status_code, 404)
 
 
-class TestRegisterFrameworkInterest(BaseApplicationTest):
+class TestRegisterFrameworkInterest(BaseApplicationTest, JSONUpdateTestMixin):
+    method = "post"
+    endpoint = "/suppliers/1/frameworks/digital-outcomes-and-specialists"
+
     def setup(self):
         super(TestRegisterFrameworkInterest, self).setup()
 
@@ -1275,7 +1261,10 @@ class TestRegisterFrameworkInterest(BaseApplicationTest):
             assert_equal(data['frameworks'], ['digital-outcomes-and-specialists'])
 
 
-class TestSupplierFrameworkUpdates(BaseApplicationTest):
+class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
+    method = "post"
+    endpoint = "/suppliers/0/frameworks/digital-outcomes-and-specialists"
+
     def setup(self):
         super(TestSupplierFrameworkUpdates, self).setup()
 

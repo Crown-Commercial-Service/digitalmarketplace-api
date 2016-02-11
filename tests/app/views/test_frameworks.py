@@ -6,7 +6,7 @@ from dateutil.parser import parse as parse_time
 
 from dmapiclient.audit import AuditTypes
 
-from ..helpers import BaseApplicationTest
+from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 from app.models import db, Framework, SupplierFramework, DraftService, AuditEvent, Supplier, User
 
 
@@ -60,7 +60,10 @@ class TestGetFramework(BaseApplicationTest):
             assert_equal(response.status_code, 404)
 
 
-class TestUpdateFramework(BaseApplicationTest):
+class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
+    endpoint = '/frameworks/example'
+    method = 'post'
+
     def setup(self):
         super(TestUpdateFramework, self).setup()
         framework = Framework()

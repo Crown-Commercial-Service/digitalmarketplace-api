@@ -364,7 +364,9 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 404)
 
 
-class TestPostService(BaseApplicationTest):
+class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
+    endpoint = '/services/{self.service_id}'
+    method = 'post'
     service_id = None
 
     def setup(self):
@@ -417,19 +419,6 @@ class TestPostService(BaseApplicationTest):
 
         assert_equal(response.status_code, 404)
 
-    def test_can_not_update_without_updater_details(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/services/%s' % self.service_id,
-                data=json.dumps(
-                    {'services': {
-                        'serviceName': 'new service name'}}),
-                content_type='application/json')
-
-            data = json.loads(response.get_data())
-            assert_in('Invalid JSON', data['error'])
-            assert_equal(response.status_code, 400)
-
     def test_no_content_type_causes_failure(self):
         with self.app.app_context():
             response = self.client.post(
@@ -465,8 +454,7 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            assert_in(b'Invalid JSON',
-                      response.get_data())
+            assert_in(b'Invalid JSON', response.get_data())
 
     def test_can_post_a_valid_service_update(self):
         with self.app.app_context():
@@ -887,21 +875,6 @@ class TestPostService(BaseApplicationTest):
             for valid_status in valid_statuses:
                 assert_in(valid_status,
                           json.loads(response.get_data())['error'])
-
-    def test_should_400_without_update_details(self):
-        response = self.client.post(
-            '/services/{0}/status/{1}'.format(
-                self.service_id,
-                'enabled'
-            ),
-            data=json.dumps(
-                {}),
-            content_type='application/json'
-        )
-
-        assert_equal(response.status_code, 400)
-        assert_in('update_details',
-                  json.loads(response.get_data())['error'])
 
     def test_should_404_without_status_parameter(self):
         response = self.client.post(
@@ -1539,19 +1512,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(response.status_code, 400)
         assert_in(b'id parameter must match id in data',
                   response.get_data())
-
-    def test_when_no_update_details(self):
-        response = self.client.put(
-            '/services/1234567890123456',
-            data=json.dumps({'services': {'id': "1234567890123456",
-                                          'foo': 'bar'}}),
-            content_type='application/json')
-
-        assert_equal(json.loads(response.get_data())['error'],
-                     "Invalid JSON must have '["
-                     "'update_details']' keys")
-        assert_equal(response.status_code, 400)
-        assert_in(b'Invalid JSON', response.get_data())
 
     def test_invalid_service_id_too_short(self):
         response = self.client.put(
