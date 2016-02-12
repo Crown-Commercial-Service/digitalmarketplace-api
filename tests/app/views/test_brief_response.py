@@ -14,7 +14,7 @@ class BaseBriefResponseTest(BaseApplicationTest):
         super(BaseBriefResponseTest, self).setup()
 
         with self.app.app_context():
-            self.setup_dummy_suppliers(1)
+            self.setup_dummy_suppliers(2)
             brief = Brief(
                 data=example_listings.brief_data().example(),
                 status='live', framework_id=5, lot=Lot.query.get(5)
@@ -23,6 +23,18 @@ class BaseBriefResponseTest(BaseApplicationTest):
             db.session.commit()
 
             self.brief_id = brief.id
+
+    def setup_dummy_brief_response(self, brief_id=None, supplier_id=0):
+        with self.app.app_context():
+            brief_response = BriefResponse(
+                data=example_listings.brief_response_data().example(),
+                supplier_id=supplier_id, brief_id=brief_id or self.brief_id
+            )
+
+            db.session.add(brief_response)
+            db.session.commit()
+
+            return brief_response.id
 
     def create_brief_response(self, data):
         return self.client.post(
@@ -36,6 +48,9 @@ class BaseBriefResponseTest(BaseApplicationTest):
 
     def get_brief_response(self, brief_response_id):
         return self.client.get('/brief-responses/{}'.format(brief_response_id))
+
+    def list_brief_responses(self, **parameters):
+        return self.client.get('/brief-responses', query_string=parameters)
 
 
 class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
@@ -232,16 +247,7 @@ class TestGetBriefResponse(BaseBriefResponseTest):
     def setup(self):
         super(TestGetBriefResponse, self).setup()
 
-        with self.app.app_context():
-            brief_response = BriefResponse(
-                data=example_listings.brief_response_data().example(),
-                supplier_id=0, brief_id=self.brief_id
-            )
-
-            db.session.add(brief_response)
-            db.session.commit()
-
-            self.brief_response_id = brief_response.id
+        self.brief_response_id = self.setup_dummy_brief_response()
 
     def test_get_brief_response(self):
         res = self.get_brief_response(self.brief_response_id)
@@ -256,3 +262,90 @@ class TestGetBriefResponse(BaseBriefResponseTest):
         res = self.get_brief_response(999)
 
         assert res.status_code == 404
+
+
+class TestListBriefResponses(BaseBriefResponseTest):
+    def test_list_empty_brief_responses(self):
+        res = self.list_brief_responses()
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['briefResponses'] == []
+        assert 'self' in data['links'], data
+
+    def test_list_brief_responses(self):
+        for i in range(3):
+            self.setup_dummy_brief_response()
+
+        res = self.list_brief_responses()
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 3
+        assert 'self' in data['links']
+
+    def test_list_brief_responses_pagination(self):
+        for i in range(8):
+            self.setup_dummy_brief_response()
+
+        res = self.list_brief_responses()
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 5
+        assert 'next' in data['links']
+
+        res = self.list_brief_responses(page=2)
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 3
+        assert 'prev' in data['links']
+
+    def test_list_brief_responses_for_supplier_id(self):
+        for i in range(8):
+            self.setup_dummy_brief_response(supplier_id=0)
+            self.setup_dummy_brief_response(supplier_id=1)
+
+        res = self.list_brief_responses(supplier_id=1)
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 8
+        assert all(br['supplierId'] == 1 for br in data['briefResponses'])
+        assert 'self' in data['links']
+
+    def test_list_brief_responses_for_brief_id(self):
+        with self.app.app_context():
+            brief = Brief(
+                data=example_listings.brief_data().example(),
+                status='live', framework_id=5, lot=Lot.query.get(5)
+            )
+            db.session.add(brief)
+            db.session.commit()
+
+            another_brief_id = brief.id
+
+        for i in range(8):
+            self.setup_dummy_brief_response(brief_id=self.brief_id, supplier_id=0)
+            self.setup_dummy_brief_response(brief_id=another_brief_id, supplier_id=0)
+
+        res = self.list_brief_responses(brief_id=another_brief_id)
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 8
+        assert all(br['briefId'] == another_brief_id for br in data['briefResponses'])
+        assert 'self' in data['links']
+
+    def test_cannot_list_brief_responses_for_non_integer_brief_id(self):
+        res = self.list_brief_responses(supplier_id="not-valid")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert len(data['briefResponses']) == 0
+
+    def test_cannot_list_brief_responses_for_non_integer_supplier_id(self):
+        res = self.list_brief_responses(supplier_id="not-valid")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert len(data['briefResponses']) == 0

@@ -1,4 +1,4 @@
-from flask import jsonify, abort
+from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
 
 from dmapiclient.audit import AuditTypes
@@ -7,6 +7,7 @@ from .. import main
 from ...models import db, Brief, BriefResponse, AuditEvent
 from ...utils import (
     get_json_from_request, json_has_required_keys,
+    pagination_links, get_valid_page_or_1, url_for,
     validate_and_return_updater_request,
 )
 
@@ -80,3 +81,37 @@ def get_brief_response(brief_response_id):
     ).first_or_404()
 
     return jsonify(briefResponses=brief_response.serialize())
+
+
+@main.route('/brief-responses', methods=['GET'])
+def list_brief_responses():
+    page = get_valid_page_or_1()
+    brief_id = request.args.get('brief_id', type=int)
+    supplier_id = request.args.get('supplier_id', type=int)
+
+    brief_responses = BriefResponse.query
+    if supplier_id is not None:
+        brief_responses = brief_responses.filter(BriefResponse.supplier_id == supplier_id)
+
+    if brief_id is not None:
+        brief_responses = brief_responses.filter(BriefResponse.brief_id == brief_id)
+
+    if brief_id or supplier_id:
+        return jsonify(
+            briefResponses=[brief_response.serialize() for brief_response in brief_responses.all()],
+            links={'self': url_for('.list_brief_responses', supplier_id=supplier_id, brief_id=brief_id)}
+        )
+
+    brief_responses = brief_responses.paginate(
+        page=page,
+        per_page=current_app.config['DM_API_BRIEF_RESPONSES_PAGE_SIZE']
+    )
+
+    return jsonify(
+        briefResponses=[brief_response.serialize() for brief_response in brief_responses.items],
+        links=pagination_links(
+            brief_responses,
+            '.list_brief_responses',
+            request.args
+        )
+    )
