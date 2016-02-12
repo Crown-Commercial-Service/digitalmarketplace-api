@@ -12,12 +12,12 @@ def brief_response_data(essential_count=5, nice_to_have_count=5):
         "essentialRequirements": strategies.lists(
             elements=strategies.booleans(),
             min_size=essential_count,
-            max_size=essential_count,
+            max_size=essential_count if essential_count is not None else 10,
         ),
         "niceToHaveRequirements": strategies.lists(
             elements=strategies.booleans(),
             min_size=nice_to_have_count,
-            max_size=nice_to_have_count,
+            max_size=nice_to_have_count if nice_to_have_count is not None else 10,
         ),
     })
 
@@ -27,11 +27,11 @@ def brief_data(essential_count=5, nice_to_have_count=5):
         'essentialRequirements': strategies.lists(
             elements=strategies.text(min_size=1, alphabet='abcdefgh', average_size=10),
             min_size=essential_count,
-            max_size=essential_count,
+            max_size=essential_count if essential_count is not None else 10,
         ),
         'niceToHaveRequirements': strategies.lists(
             elements=strategies.text(min_size=1, alphabet='abcdefgh', average_size=10),
             min_size=nice_to_have_count,
-            max_size=nice_to_have_count,
+            max_size=nice_to_have_count if nice_to_have_count is not None else 10,
         ),
     })
