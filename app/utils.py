@@ -37,6 +37,7 @@ def get_valid_page_or_1():
 
 def pagination_links(pagination, endpoint, args):
     links = dict()
+    links['self'] = url_for(endpoint, **args)
     if pagination.has_prev:
         links['prev'] = url_for(endpoint, **dict(list(args.items()) + [('page', pagination.prev_num)]))
     if pagination.has_next:
