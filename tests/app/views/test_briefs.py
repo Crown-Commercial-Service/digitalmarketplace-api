@@ -520,13 +520,14 @@ class TestBriefs(BaseApplicationTest):
     def test_change_status_makes_audit_event(self):
         self.setup_dummy_briefs(1, title='The Title')
 
-        self.client.put(
+        res = self.client.put(
             '/briefs/1/status',
             data=json.dumps({
                 'briefs': {'status': 'live'},
                 'update_details': {'updated_by': 'example'}
             }),
             content_type='application/json')
+        assert res.status_code == 200
 
         audit_response = self.client.get('/audit-events')
         assert audit_response.status_code == 200

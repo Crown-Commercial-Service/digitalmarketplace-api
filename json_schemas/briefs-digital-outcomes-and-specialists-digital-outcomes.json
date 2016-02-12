@@ -95,11 +95,11 @@
     },
     "phase": {
       "enum": [
-        "Not started",
-        "Discovery",
-        "Alpha",
-        "Beta",
-        "Live"
+        "not_started",
+        "discovery",
+        "alpha",
+        "beta",
+        "live"
       ]
     },
     "startDate": {
