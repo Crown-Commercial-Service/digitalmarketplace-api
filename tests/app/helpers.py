@@ -23,7 +23,7 @@ COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
     "location": "Wales",
     "niceToHaveRequirements": ["FORTRAN"],
     "organisation": "Org.org",
-    "specialistRole": "Developer",
+    "specialistRole": "developer",
     "startDate": "12th February 2016",
     "title": "I need a Developer",
     "workingArrangements": "",
