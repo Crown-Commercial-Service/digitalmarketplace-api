@@ -22,6 +22,11 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
+    "endUsers": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
     "essentialRequirements": {
       "items": {
         "maxLength": 100,
@@ -122,11 +127,6 @@
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
-    "users": {
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
-      "type": "string"
-    },
     "workingArrangements": {
       "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
@@ -136,6 +136,7 @@
   "required": [
     "backgroundInformation",
     "contractLength",
+    "endUsers",
     "essentialRequirements",
     "evaluationType",
     "importantDates",
@@ -145,8 +146,7 @@
     "startDate",
     "successCriteria",
     "title",
-    "userNeeds",
-    "users"
+    "userNeeds"
   ],
   "title": "Digital Outcomes and Specialists Digital outcomes Brief Schema",
   "type": "object"
