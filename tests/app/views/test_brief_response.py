@@ -339,13 +339,15 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert 'self' in data['links']
 
     def test_cannot_list_brief_responses_for_non_integer_brief_id(self):
-        res = self.list_brief_responses(supplier_id="not-valid")
+        res = self.list_brief_responses(brief_id="not-valid")
         data = json.loads(res.get_data(as_text=True))
 
-        assert len(data['briefResponses']) == 0
+        assert res.status_code == 400
+        assert data['error'] == 'Invalid brief_id: not-valid'
 
     def test_cannot_list_brief_responses_for_non_integer_supplier_id(self):
         res = self.list_brief_responses(supplier_id="not-valid")
         data = json.loads(res.get_data(as_text=True))
 
-        assert len(data['briefResponses']) == 0
+        assert res.status_code == 400
+        assert data['error'] == 'Invalid supplier_id: not-valid'

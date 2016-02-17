@@ -6,7 +6,7 @@ from dmapiclient.audit import AuditTypes
 from .. import main
 from ...models import db, Brief, BriefResponse, AuditEvent
 from ...utils import (
-    get_json_from_request, json_has_required_keys,
+    get_json_from_request, json_has_required_keys, get_int_or_400,
     pagination_links, get_valid_page_or_1, url_for,
     validate_and_return_updater_request,
 )
@@ -86,8 +86,8 @@ def get_brief_response(brief_response_id):
 @main.route('/brief-responses', methods=['GET'])
 def list_brief_responses():
     page = get_valid_page_or_1()
-    brief_id = request.args.get('brief_id', type=int)
-    supplier_id = request.args.get('supplier_id', type=int)
+    brief_id = get_int_or_400(request.args, 'brief_id')
+    supplier_id = get_int_or_400(request.args, 'supplier_id')
 
     brief_responses = BriefResponse.query
     if supplier_id is not None:

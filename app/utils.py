@@ -35,6 +35,18 @@ def get_valid_page_or_1():
         abort(400, "Invalid page argument")
 
 
+def get_int_or_400(data, key):
+    value = data.get(key)
+
+    if value is None:
+        return value
+
+    try:
+        return int(value)
+    except ValueError:
+        abort(400, "Invalid {}: {}".format(key, value))
+
+
 def pagination_links(pagination, endpoint, args):
     links = dict()
     links['self'] = url_for(endpoint, **args)
