@@ -1,11 +1,18 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
+import mock
 import pytest
 from nose.tools import assert_equal, assert_raises
 from sqlalchemy.exc import IntegrityError
 
 from app import db, create_app
-from app.models import User, Framework, Service, Brief, ValidationError, SupplierFramework
+from app.models import (
+    User, Framework, Service,
+    Supplier, SupplierFramework,
+    Brief, BriefResponse,
+    ValidationError,
+)
+
 from .helpers import BaseApplicationTest
 
 
@@ -199,6 +206,72 @@ class TestBriefs(BaseApplicationTest):
                 Brief(data={},
                       framework=self.framework,
                       lot_id=self.framework.get_lot('user-research-studios').id)
+
+
+class TestBriefResponses(BaseApplicationTest):
+    def setup(self):
+        super(TestBriefResponses, self).setup()
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            lot = framework.get_lot('digital-outcomes')
+            self.brief = Brief(data={}, framework=framework, lot=lot)
+            db.session.add(self.brief)
+            db.session.commit()
+
+            self.setup_dummy_suppliers(1)
+            self.supplier = Supplier.query.filter(Supplier.supplier_id == 0).first()
+
+    def test_create_a_new_brief_response(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(data={}, brief=self.brief, supplier=self.supplier)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            assert brief_response.id is not None
+            assert brief_response.supplier_id == 0
+            assert brief_response.brief_id == self.brief.id
+            assert isinstance(brief_response.created_at, datetime)
+            assert brief_response.data == {}
+
+    def test_foreign_fields_are_removed_from_brief_response_data(self):
+        brief_response = BriefResponse(data={})
+        brief_response.data = {'foo': 'bar', 'briefId': 5, 'supplierId': 100}
+
+        assert brief_response.data == {'foo': 'bar'}
+
+    def test_nulls_are_removed_from_brief_response_data(self):
+        brief_response = BriefResponse(data={})
+        brief_response.data = {'foo': 'bar', 'bar': None}
+
+        assert brief_response.data == {'foo': 'bar'}
+
+    def test_whitespace_is_stripped_from_brief_response_data(self):
+        brief_response = BriefResponse(data={})
+        brief_response.data = {'foo': ' bar ', 'bar': ['', '  foo']}
+
+        assert brief_response.data == {'foo': 'bar', 'bar': ['foo']}
+
+    def test_brief_response_can_be_serialized(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            with mock.patch('app.models.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert brief_response.serialize() == {
+                    'id': brief_response.id,
+                    'briefId': self.brief.id,
+                    'supplierId': 0,
+                    'supplierName': 'Supplier 0',
+                    'createdAt': mock.ANY,
+                    'foo': 'bar',
+                    'links': {
+                        'self': (('.get_brief_response',), {'brief_response_id': brief_response.id}),
+                        'brief': (('.get_brief',), {'brief_id': self.brief.id}),
+                        'supplier': (('.get_supplier',), {'supplier_id': 0}),
+                    }
+                }
 
 
 class TestServices(BaseApplicationTest):

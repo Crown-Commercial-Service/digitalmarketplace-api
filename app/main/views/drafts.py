@@ -11,7 +11,7 @@ from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, Supplier, AuditEvent, Framework
 from ...utils import (
     validate_and_return_updater_request,
-    get_request_page_questions
+    get_request_page_questions, get_int_or_400,
 )
 from ...service_utils import (
     update_and_validate_service, index_service,
@@ -116,15 +116,12 @@ def edit_draft_service(draft_id):
 
 @main.route('/draft-services', methods=['GET'])
 def list_draft_services():
-    supplier_id = request.args.get('supplier_id')
+    supplier_id = get_int_or_400(request.args, 'supplier_id')
     service_id = request.args.get('service_id')
     framework_slug = request.args.get('framework')
+
     if supplier_id is None:
         abort(400, "Invalid page argument: supplier_id is required")
-    try:
-        supplier_id = int(supplier_id)
-    except ValueError:
-        abort(400, "Invalid supplier_id: %s" % supplier_id)
 
     supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
     if not supplier:

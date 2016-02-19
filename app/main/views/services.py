@@ -9,7 +9,7 @@ from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
 from ...utils import (
     url_for, pagination_links, display_list, get_valid_page_or_1,
-    validate_and_return_updater_request,
+    validate_and_return_updater_request, get_int_or_400
 )
 
 from ...service_utils import (
@@ -39,7 +39,7 @@ def index():
 def list_services():
     page = get_valid_page_or_1()
 
-    supplier_id = request.args.get('supplier_id')
+    supplier_id = get_int_or_400(request.args, 'supplier_id')
 
     if request.args.get('framework'):
         services = Service.query.has_frameworks(*[
@@ -54,11 +54,6 @@ def list_services():
         ])
 
     if supplier_id is not None:
-        try:
-            supplier_id = int(supplier_id)
-        except ValueError:
-            abort(400, "Invalid supplier_id: %s" % supplier_id)
-
         supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
         if not supplier:
             abort(404, "supplier_id '%d' not found" % supplier_id)

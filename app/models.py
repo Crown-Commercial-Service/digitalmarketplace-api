@@ -15,7 +15,7 @@ from dmutils.formats import DATETIME_FORMAT
 
 from . import db
 from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
-from .validation import is_valid_service_id, is_valid_buyer_email
+from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
 
 
 class FrameworkLot(db.Model):
@@ -890,6 +890,71 @@ class BriefUser(db.Model):
 
     brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+
+
+class BriefResponse(db.Model):
+    __tablename__ = 'brief_responses'
+
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(JSON, nullable=False)
+
+    brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), nullable=False)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.supplier_id'), nullable=False)
+
+    created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
+
+    brief = db.relationship('Brief')
+    supplier = db.relationship('Supplier', lazy='joined')
+
+    @validates('data')
+    def validates_data(self, key, data):
+        data = drop_foreign_fields(data, [
+            'supplierId', 'briefId',
+        ])
+        data = strip_whitespace_from_data(data)
+        data = purge_nulls_from_data(data)
+
+        return data
+
+    def validate(self, enforce_required=True, required_fields=None):
+        errs = get_validation_errors(
+            'brief-responses-{}-{}'.format(self.brief.framework.slug, self.brief.lot.slug),
+            self.data,
+            enforce_required=enforce_required,
+            required_fields=required_fields
+        )
+
+        if (
+            'essentialRequirements' not in errs and
+            len(self.data.get('essentialRequirements', [])) != len(self.brief.data['essentialRequirements'])
+        ):
+            errs['essentialRequirements'] = 'answer_required'
+
+        if (
+            'niceToHaveRequirements' not in errs and
+            len(self.data.get('niceToHaveRequirements', [])) != len(self.brief.data.get('niceToHaveRequirements', []))
+        ):
+            errs['niceToHaveRequirements'] = 'answer_required'
+
+        if errs:
+            raise ValidationError(errs)
+
+    def serialize(self):
+        data = self.data.copy()
+        data.update({
+            'id': self.id,
+            'briefId': self.brief_id,
+            'supplierId': self.supplier_id,
+            'supplierName': self.supplier.name,
+            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'links': {
+                'self': url_for('.get_brief_response', brief_response_id=self.id),
+                'brief': url_for('.get_brief', brief_id=self.brief_id),
+                'supplier': url_for(".get_supplier", supplier_id=self.supplier_id),
+            }
+        })
+
+        return data
 
 
 # Index for .last_for_object queries. Without a composite index the

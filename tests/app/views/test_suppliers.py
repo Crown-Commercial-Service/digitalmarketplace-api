@@ -160,7 +160,7 @@ class TestListSuppliers(BaseApplicationTest):
 
         assert_equal(200, response.status_code)
         assert_equal(5, len(data['suppliers']))
-        assert_equal(0, len(data['links']))
+        assert_equal(['self'], list(data['links'].keys()))
 
     def test_query_string_prefix_page_out_of_range(self):
         response = self.client.get('/suppliers?prefix=s&page=10')

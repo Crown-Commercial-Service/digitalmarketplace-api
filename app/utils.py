@@ -35,8 +35,21 @@ def get_valid_page_or_1():
         abort(400, "Invalid page argument")
 
 
+def get_int_or_400(data, key):
+    value = data.get(key)
+
+    if value is None:
+        return value
+
+    try:
+        return int(value)
+    except ValueError:
+        abort(400, "Invalid {}: {}".format(key, value))
+
+
 def pagination_links(pagination, endpoint, args):
     links = dict()
+    links['self'] = url_for(endpoint, **args)
     if pagination.has_prev:
         links['prev'] = url_for(endpoint, **dict(list(args.items()) + [('page', pagination.prev_num)]))
     if pagination.has_next:
@@ -98,7 +111,8 @@ def strip_whitespace_from_data(data):
         if isinstance(value, list):
             # Strip whitespace and remove empty items from lists
             data[key] = list(
-                filter(None, map((lambda x: x.strip()), value))
+                filter(lambda x: x not in ['', None],
+                       map(lambda x: x.strip() if isinstance(x, string_types) else x, value))
             )
         elif isinstance(value, string_types):
             # Strip whitespace from strings
