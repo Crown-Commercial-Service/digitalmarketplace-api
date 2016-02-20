@@ -627,10 +627,7 @@ class TestDraftServices(BaseApplicationTest):
             data['auditEvents'][2]['data']['serviceId'], self.service_id
         )
 
-        fetch_again = self.client.get(
-            '/draft-services/{}'.format(self.service_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
+        fetch_again = self.client.get('/draft-services/{}'.format(draft_id))
         assert_equal(fetch_again.status_code, 404)
 
     def test_should_be_able_to_update_a_draft(self):
