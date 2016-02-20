@@ -205,12 +205,16 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(res.status_code, 400)
 
     def test_reject_delete_with_no_update_details(self):
-        res = self.client.delete('/draft-services/0000000000')
+        res = self.client.delete('/draft-services/0000000000',
+                                 data=json.dumps({}),
+                                 content_type='application/json')
 
         assert_equal(res.status_code, 400)
 
     def test_reject_publish_with_no_update_details(self):
-        res = self.client.post('/draft-services/0000000000/publish')
+        res = self.client.post('/draft-services/0000000000/publish',
+                               data=json.dumps({}),
+                               content_type='application/json')
 
         assert_equal(res.status_code, 400)
 
