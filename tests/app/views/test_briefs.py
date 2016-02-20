@@ -539,3 +539,94 @@ class TestBriefs(BaseApplicationTest):
             'briefId': mock.ANY,
             'briefStatus': 'live',
         }
+
+    def test_can_delete_a_draft_brief(self):
+        res = self.client.post(
+            '/briefs',
+            data=json.dumps({
+                'briefs': {
+                    'userId': self.user_id,
+                    'frameworkSlug': 'digital-outcomes-and-specialists',
+                    'lot': 'digital-specialists',
+                    'title': 'the title',
+                },
+                'update_details': {
+                    'updated_by': 'example'
+                }
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 201
+        brief_id = data['briefs']['id']
+
+        fetch = self.client.get('/briefs/{}'.format(brief_id))
+        assert fetch.status_code == 200
+
+        delete = self.client.delete(
+            '/briefs/{}'.format(brief_id),
+            data=json.dumps({'update_details': {'updated_by': 'deleter'}}),
+            content_type='application/json')
+        assert delete.status_code == 200
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        audit_data = json.loads(audit_response.get_data())
+        assert len(audit_data['auditEvents']) == 2
+        assert audit_data['auditEvents'][0]['type'] == 'create_brief'
+        assert audit_data['auditEvents'][1]['type'] == 'delete_brief'
+        assert audit_data['auditEvents'][1]['user'] == 'deleter'
+        assert audit_data['auditEvents'][1]['data']['briefId'] == brief_id
+
+        fetch_again = self.client.get('/briefs/{}'.format(brief_id))
+        assert fetch_again.status_code == 404
+
+    def can_not_delete_a_live_brief(self):
+        res = self.client.post(
+            '/briefs',
+            data=json.dumps({
+                'briefs': {
+                    'userId': self.user_id,
+                    'frameworkSlug': 'digital-outcomes-and-specialists',
+                    'lot': 'digital-specialists',
+                    'title': 'the title',
+                    'status': 'live'
+                },
+                'update_details': {
+                    'updated_by': 'example'
+                }
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 201
+        brief_id = data['briefs']['id']
+
+        fetch = self.client.get('/briefs/{}'.format(brief_id))
+        assert fetch.status_code == 200
+
+        delete = self.client.delete(
+            '/briefs/{}'.format(brief_id),
+            data=json.dumps({'update_details': {'updated_by': 'deleter'}}),
+            content_type='application/json')
+        assert delete.status_code == 400
+        error = json.loads(res.get_data(as_text=True))['error']
+        assert error == u"Cannot delete a live brief"
+
+        fetch_again = self.client.get('/briefs/{}'.format(brief_id))
+        assert fetch_again.status_code == 200
+
+    def test_reject_delete_with_no_update_details(self):
+        res = self.client.delete('/briefs/0000000000',
+                                 data=json.dumps({}),
+                                 content_type='application/json')
+        assert res.status_code == 400
+        error = json.loads(res.get_data(as_text=True))['error']
+        assert error == u"JSON validation error: u'updated_by' is a required property"
+
+    def test_should_404_on_delete_a_brief_that_doesnt_exist(self):
+        res = self.client.delete(
+            '/briefs/0000000000',
+            data=json.dumps({'update_details': {'updated_by': 'example'}}),
+            content_type='application/json')
+        assert res.status_code == 404
