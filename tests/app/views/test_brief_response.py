@@ -218,7 +218,8 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400, res.get_data(as_text=True)
         assert 'Brief response already exists' in res.get_data(as_text=True)
 
-    @given(example_listings.brief_response_data(None, 5).filter(lambda x: len(x['essentialRequirements']) != 5))
+    @given(example_listings.brief_response_data(None, 5).filter(
+        lambda x: len(x['essentialRequirements']) != 5 and all(i is not None for i in x['essentialRequirements'])))
     def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(self, live_framework, brief_response_data):
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.brief_id,
@@ -230,8 +231,22 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400, res.get_data(as_text=True)
         assert data['error']['essentialRequirements'] == 'answer_required'
 
-    @given(example_listings.brief_response_data(5, None).filter(lambda x: len(x['niceToHaveRequirements']) != 5))
+    @given(example_listings.brief_response_data(5, None).filter(
+        lambda x: len(x['niceToHaveRequirements']) != 5 and all(i is not None for i in x['niceToHaveRequirements'])))
     def test_cannot_respond_to_a_brief_with_wrong_number_of_nicetohave_reqs(self, live_framework, brief_response_data):
+        res = self.create_brief_response(dict(brief_response_data, **{
+            'briefId': self.brief_id,
+            'supplierId': 0,
+        }))
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400, res.get_data(as_text=True)
+        assert data['error']['niceToHaveRequirements'] == 'answer_required'
+
+    @given(example_listings.brief_response_data(5, None).filter(
+        lambda x: any(i is None for i in x['niceToHaveRequirements'])))
+    def test_cannot_respond_to_a_brief_with_none_reqs_values(self, live_framework, brief_response_data):
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.brief_id,
             'supplierId': 0,
