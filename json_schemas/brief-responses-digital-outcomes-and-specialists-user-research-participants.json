@@ -17,11 +17,16 @@
       "maxItems": 10,
       "minItems": 0,
       "type": "array"
+    },
+    "userParticipantResponse": {
+      "minLength": 1,
+      "type": "string"
     }
   },
   "required": [
-    "essentialRequirements"
+    "essentialRequirements",
+    "userParticipantResponse"
   ],
-  "title": "Digital Outcomes and Specialists Digital outcomes Brief Response Schema",
+  "title": "Digital Outcomes and Specialists User research participants Brief Response Schema",
   "type": "object"
 }
