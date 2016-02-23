@@ -1,4 +1,5 @@
 from flask import jsonify, abort, current_app, request
+from sqlalchemy.exc import IntegrityError
 
 from dmapiclient.audit import AuditTypes
 from .. import main
@@ -165,3 +166,40 @@ def update_brief_status(brief_id):
         db.session.commit()
 
     return jsonify(briefs=brief.serialize()), 200
+
+
+@main.route('/briefs/<int:brief_id>', methods=['DELETE'])
+def delete_draft_brief(brief_id):
+    """
+    Delete a brief
+    :param brief_id:
+    :return:
+    """
+
+    updater_json = validate_and_return_updater_request()
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    if brief.status == 'live':
+        abort(400, "Cannot delete a live brief")
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.delete_brief,
+        user=updater_json['updated_by'],
+        data={
+            "briefId": brief_id
+        },
+        db_object=None
+    )
+
+    db.session.delete(brief)
+    db.session.add(audit)
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+
+    return jsonify(message="done"), 200

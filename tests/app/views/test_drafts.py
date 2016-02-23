@@ -205,12 +205,16 @@ class TestDraftServices(BaseApplicationTest):
         assert_equal(res.status_code, 400)
 
     def test_reject_delete_with_no_update_details(self):
-        res = self.client.delete('/draft-services/0000000000')
+        res = self.client.delete('/draft-services/0000000000',
+                                 data=json.dumps({}),
+                                 content_type='application/json')
 
         assert_equal(res.status_code, 400)
 
     def test_reject_publish_with_no_update_details(self):
-        res = self.client.post('/draft-services/0000000000/publish')
+        res = self.client.post('/draft-services/0000000000/publish',
+                               data=json.dumps({}),
+                               content_type='application/json')
 
         assert_equal(res.status_code, 400)
 
@@ -627,10 +631,7 @@ class TestDraftServices(BaseApplicationTest):
             data['auditEvents'][2]['data']['serviceId'], self.service_id
         )
 
-        fetch_again = self.client.get(
-            '/draft-services/{}'.format(self.service_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
+        fetch_again = self.client.get('/draft-services/{}'.format(draft_id))
         assert_equal(fetch_again.status_code, 404)
 
     def test_should_be_able_to_update_a_draft(self):
