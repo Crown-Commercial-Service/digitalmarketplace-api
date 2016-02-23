@@ -571,7 +571,7 @@ class TestBriefs(BaseApplicationTest):
 
         audit_response = self.client.get('/audit-events')
         assert audit_response.status_code == 200
-        audit_data = json.loads(audit_response.get_data())
+        audit_data = json.loads(audit_response.get_data(as_text=True))
         assert len(audit_data['auditEvents']) == 2
         assert audit_data['auditEvents'][0]['type'] == 'create_brief'
         assert audit_data['auditEvents'][1]['type'] == 'delete_brief'
@@ -622,7 +622,7 @@ class TestBriefs(BaseApplicationTest):
                                  content_type='application/json')
         assert res.status_code == 400
         error = json.loads(res.get_data(as_text=True))['error']
-        assert error == u"JSON validation error: u'updated_by' is a required property"
+        assert "'updated_by' is a required property" in error
 
     def test_should_404_on_delete_a_brief_that_doesnt_exist(self):
         res = self.client.delete(
