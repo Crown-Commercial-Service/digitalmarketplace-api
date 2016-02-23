@@ -798,6 +798,7 @@ class Brief(db.Model):
     users = db.relationship('User', secondary='brief_users')
     framework = db.relationship('Framework', lazy='joined')
     lot = db.relationship('Lot', lazy='joined')
+    clarification_questions = db.relationship("BriefClarificationQuestion")
 
     @validates('users')
     def validates_users(self, key, user):
@@ -955,6 +956,20 @@ class BriefResponse(db.Model):
         })
 
         return data
+
+
+class BriefClarificationQuestion(db.Model):
+    __tablename__ = 'brief_clarification_questions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    brief_id = db.Column(db.Integer, db.ForeignKey("briefs.id"), nullable=False)
+
+    question = db.Column(db.String, nullable=False)
+    answer = db.Column(db.String, nullable=False)
+
+    published_at = db.Column(db.DateTime, index=True, nullable=False)
+
+    brief = db.relationship("Brief")
 
 
 # Index for .last_for_object queries. Without a composite index the
