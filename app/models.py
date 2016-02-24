@@ -967,7 +967,8 @@ class BriefClarificationQuestion(db.Model):
     question = db.Column(db.String, nullable=False)
     answer = db.Column(db.String, nullable=False)
 
-    published_at = db.Column(db.DateTime, index=True, nullable=False)
+    published_at = db.Column(db.DateTime, index=True, nullable=False,
+                             default=datetime.utcnow)
 
     brief = db.relationship("Brief")
 

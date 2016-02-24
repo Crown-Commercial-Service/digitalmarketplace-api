@@ -304,6 +304,16 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
 
         assert str(e.value) == "Cannot update brief_id directly, use brief relationship"
 
+    def test_published_at_is_set_on_creation(self):
+        with self.app.app_context():
+            clarification_question = BriefClarificationQuestion(
+                brief=self.brief, question="Why?", answer="Because")
+
+            db.session.add(clarification_question)
+            db.session.commit()
+
+            assert isinstance(clarification_question.published_at, datetime)
+
 
 class TestServices(BaseApplicationTest):
     def test_framework_is_live_only_returns_live_frameworks(self):
