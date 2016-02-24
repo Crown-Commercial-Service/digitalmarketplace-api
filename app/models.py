@@ -962,7 +962,7 @@ class BriefClarificationQuestion(db.Model):
     __tablename__ = 'brief_clarification_questions'
 
     id = db.Column(db.Integer, primary_key=True)
-    brief_id = db.Column(db.Integer, db.ForeignKey("briefs.id"), nullable=False)
+    _brief_id = db.Column("brief_id", db.Integer, db.ForeignKey("briefs.id"), nullable=False)
 
     question = db.Column(db.String, nullable=False)
     answer = db.Column(db.String, nullable=False)
@@ -970,6 +970,14 @@ class BriefClarificationQuestion(db.Model):
     published_at = db.Column(db.DateTime, index=True, nullable=False)
 
     brief = db.relationship("Brief")
+
+    @property
+    def brief_id(self):
+        return self._brief_id
+
+    @brief_id.setter
+    def brief_id(self, brief_id):
+        raise ValidationError("Cannot update brief_id directly, use brief relationship")
 
     @validates('brief')
     def validates_brief(self, key, brief):

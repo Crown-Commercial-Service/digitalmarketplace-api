@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db, create_app
 from app.models import (
-    User, Framework, Service,
+    User, Lot, Framework, Service,
     Supplier, SupplierFramework,
     Brief, BriefResponse,
     ValidationError,
@@ -285,15 +285,24 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
             db.session.add(self.brief)
             db.session.commit()
 
+            # Reload objects after session commit
+            self.framework = Framework.query.get(self.framework.id)
+            self.lot = Lot.query.get(self.lot.id)
+            self.brief = Brief.query.get(self.brief.id)
+
     def test_brief_must_be_live(self):
         with self.app.app_context():
-            db.session.add(self.framework)
-            db.session.add(self.lot)
             brief = Brief(data={}, framework=self.framework, lot=self.lot, status="draft")
             with pytest.raises(ValidationError) as e:
                 BriefClarificationQuestion(brief=brief, question="Why?", answer="Because")
 
             assert str(e.value) == "Brief status must be 'live', not 'draft'"
+
+    def test_cannot_update_brief_by_id(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            BriefClarificationQuestion(brief_id=self.brief.id, question="Why?", answer="Because")
+
+        assert str(e.value) == "Cannot update brief_id directly, use brief relationship"
 
 
 class TestServices(BaseApplicationTest):
