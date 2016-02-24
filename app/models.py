@@ -9,6 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import validates
+from sqlalchemy.orm.session import Session
 from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
@@ -799,7 +800,9 @@ class Brief(db.Model):
     users = db.relationship('User', secondary='brief_users')
     framework = db.relationship('Framework', lazy='joined')
     lot = db.relationship('Lot', lazy='joined')
-    clarification_questions = db.relationship("BriefClarificationQuestion")
+    clarification_questions = db.relationship(
+        "BriefClarificationQuestion",
+        order_by="BriefClarificationQuestion.published_at")
 
     @validates('users')
     def validates_users(self, key, user):
@@ -844,6 +847,16 @@ class Brief(db.Model):
         if status == 'live':
             self.published_at = datetime.utcnow()
         return status
+
+    def add_clarification_question(self, question, answer):
+        clarification_question = BriefClarificationQuestion(
+            brief=self,
+            question=question,
+            answer=answer)
+
+        Session.object_session(self).add(clarification_question)
+
+        return clarification_question
 
     def update_from_json(self, data):
         current_data = dict(self.data.items())

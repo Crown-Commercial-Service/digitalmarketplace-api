@@ -208,6 +208,33 @@ class TestBriefs(BaseApplicationTest):
                       framework=self.framework,
                       lot_id=self.framework.get_lot('user-research-studios').id)
 
+    def test_add_brief_clarification_question(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, status="live")
+            db.session.add(brief)
+            db.session.commit()
+
+            clarification = brief.add_clarification_question(
+                "How do expect to deliver this?",
+                "By the power of Grayskull")
+            db.session.commit()
+
+            assert len(brief.clarification_questions) == 1
+            assert len(BriefClarificationQuestion.query.filter(
+                BriefClarificationQuestion._brief_id == brief.id
+            ).all()) == 1
+
+    def test_new_clarification_questions_get_added_to_the_end(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, status="live")
+            db.session.add(brief)
+            brief.add_clarification_question("How?", "This")
+            brief.add_clarification_question("When", "Then")
+            db.session.commit()
+
+            assert brief.clarification_questions[0].question == "How?"
+            assert brief.clarification_questions[1].question == "When"
+
 
 class TestBriefResponses(BaseApplicationTest):
     def setup(self):
