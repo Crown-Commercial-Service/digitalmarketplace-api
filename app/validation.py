@@ -263,6 +263,9 @@ def _translate_json_schema_error(key, validator, validator_value, message):
     elif validator == 'type' and validator_value == 'number':
         return 'not_a_number'
 
+    elif validator == 'type' and validator_value == 'boolean':
+        return 'answer_required'
+
     return message
 
 
