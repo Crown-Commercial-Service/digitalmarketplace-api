@@ -879,6 +879,9 @@ class Brief(db.Model):
             'lotName': self.lot.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
+            'clarificationQuestions': [
+                question.serialize() for question in self.clarification_questions
+            ],
         })
 
         if self.status == 'live':
@@ -1006,6 +1009,13 @@ class BriefClarificationQuestion(db.Model):
         if len(words) > 100:
             raise ValidationError("{} must not be more than 100 words".format(key.title()))
         return value
+
+    def serialize(self):
+        return {
+            "question": self.question,
+            "answer": self.answer,
+            "publishedAt": self.published_at.strftime(DATETIME_FORMAT),
+        }
 
 
 # Index for .last_for_object queries. Without a composite index the
