@@ -11,6 +11,7 @@ from app.models import (
     Supplier, SupplierFramework,
     Brief, BriefResponse,
     ValidationError,
+    BriefClarificationQuestion
 )
 
 from .helpers import BaseApplicationTest
@@ -272,6 +273,27 @@ class TestBriefResponses(BaseApplicationTest):
                         'supplier': (('.get_supplier',), {'supplier_id': 0}),
                     }
                 }
+
+
+class TestBriefClarificationQuestion(BaseApplicationTest):
+    def setup(self):
+        super(TestBriefClarificationQuestion, self).setup()
+        with self.app.app_context():
+            self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self.lot = self.framework.get_lot('digital-outcomes')
+            self.brief = Brief(data={}, framework=self.framework, lot=self.lot, status="live")
+            db.session.add(self.brief)
+            db.session.commit()
+
+    def test_brief_must_be_live(self):
+        with self.app.app_context():
+            db.session.add(self.framework)
+            db.session.add(self.lot)
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, status="draft")
+            with pytest.raises(ValidationError) as e:
+                BriefClarificationQuestion(brief=brief, question="Why?", answer="Because")
+
+            assert str(e.value) == "Brief status must be 'live', not 'draft'"
 
 
 class TestServices(BaseApplicationTest):

@@ -971,6 +971,12 @@ class BriefClarificationQuestion(db.Model):
 
     brief = db.relationship("Brief")
 
+    @validates('brief')
+    def validates_brief(self, key, brief):
+        if brief.status != "live":
+            raise ValidationError("Brief status must be 'live', not '{}'".format(brief.status))
+        return brief
+
 
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
