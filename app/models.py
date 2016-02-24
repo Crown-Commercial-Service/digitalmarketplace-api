@@ -1,4 +1,5 @@
 import random
+import re
 from datetime import datetime
 
 from flask import current_app
@@ -985,6 +986,13 @@ class BriefClarificationQuestion(db.Model):
         if brief.status != "live":
             raise ValidationError("Brief status must be 'live', not '{}'".format(brief.status))
         return brief
+
+    @validates("question", "answer")
+    def validates_question_and_answer(self, key, value):
+        words = re.split("\W+", value)
+        if len(words) > 100:
+            raise ValidationError("{} must not be more than 100 words".format(key.title()))
+        return value
 
 
 # Index for .last_for_object queries. Without a composite index the

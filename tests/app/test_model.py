@@ -306,13 +306,51 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
 
     def test_published_at_is_set_on_creation(self):
         with self.app.app_context():
-            clarification_question = BriefClarificationQuestion(
+            question = BriefClarificationQuestion(
                 brief=self.brief, question="Why?", answer="Because")
 
-            db.session.add(clarification_question)
+            db.session.add(question)
             db.session.commit()
 
-            assert isinstance(clarification_question.published_at, datetime)
+            assert isinstance(question.published_at, datetime)
+
+    def test_question_must_not_be_null(self):
+        with self.app.app_context(), pytest.raises(IntegrityError):
+            question = BriefClarificationQuestion(brief=self.brief, answer="Because")
+
+            db.session.add(question)
+            db.session.commit()
+
+    def test_questions_must_not_be_more_than_100_words(self):
+        long_question = " ".join(["word"] * 101)
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            BriefClarificationQuestion(brief=self.brief, question=long_question, answer="Because")
+
+        assert str(e.value) == "Question must not be more than 100 words"
+
+    def test_questions_can_be_100_words(self):
+        question = " ".join(["word"] * 100)
+        with self.app.app_context():
+            BriefClarificationQuestion(brief=self.brief, question=question, answer="Because")
+
+    def test_answer_must_not_be_null(self):
+        with self.app.app_context(), pytest.raises(IntegrityError):
+            question = BriefClarificationQuestion(brief=self.brief, question="Why?")
+
+            db.session.add(question)
+            db.session.commit()
+
+    def test_answers_must_not_be_more_than_100_words(self):
+        long_answer = " ".join(["word"] * 101)
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            BriefClarificationQuestion(brief=self.brief, question="Why?", answer=long_answer)
+
+        assert str(e.value) == "Answer must not be more than 100 words"
+
+    def test_answers_can_be_100_words(self):
+        answer = " ".join(["word"] * 100)
+        with self.app.app_context():
+            BriefClarificationQuestion(brief=self.brief, question="Why?", answer=answer)
 
 
 class TestServices(BaseApplicationTest):
