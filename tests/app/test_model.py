@@ -323,13 +323,13 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
             with pytest.raises(ValidationError) as e:
                 BriefClarificationQuestion(brief=brief, question="Why?", answer="Because")
 
-            assert str(e.value) == "Brief status must be 'live', not 'draft'"
+            assert str(e.value.message) == "Brief status must be 'live', not 'draft'"
 
     def test_cannot_update_brief_by_id(self):
         with self.app.app_context(), pytest.raises(ValidationError) as e:
             BriefClarificationQuestion(brief_id=self.brief.id, question="Why?", answer="Because")
 
-        assert str(e.value) == "Cannot update brief_id directly, use brief relationship"
+        assert str(e.value.message) == "Cannot update brief_id directly, use brief relationship"
 
     def test_published_at_is_set_on_creation(self):
         with self.app.app_context():
@@ -353,7 +353,7 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
         with self.app.app_context(), pytest.raises(ValidationError) as e:
             BriefClarificationQuestion(brief=self.brief, question=long_question, answer="Because")
 
-        assert str(e.value) == "Question must not be more than 100 words"
+        assert str(e.value.message) == "Question must not be more than 100 words"
 
     def test_questions_can_be_100_words(self):
         question = " ".join(["word"] * 100)
@@ -372,7 +372,7 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
         with self.app.app_context(), pytest.raises(ValidationError) as e:
             BriefClarificationQuestion(brief=self.brief, question="Why?", answer=long_answer)
 
-        assert str(e.value) == "Answer must not be more than 100 words"
+        assert str(e.value.message) == "Answer must not be more than 100 words"
 
     def test_answers_can_be_100_words(self):
         answer = " ".join(["word"] * 100)
