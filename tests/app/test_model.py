@@ -350,21 +350,24 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
 
     def test_question_must_not_be_empty(self):
         with self.app.app_context(), pytest.raises(ValidationError) as e:
-            BriefClarificationQuestion(brief=self.brief, question="", answer="Because")
+            question = BriefClarificationQuestion(brief=self.brief, question="", answer="Because")
+            question.validate()
 
-        assert str(e.value.message) == "Question must not be empty"
+        assert e.value.message["question"] == "answer_required"
 
     def test_questions_must_not_be_more_than_100_words(self):
         long_question = " ".join(["word"] * 101)
         with self.app.app_context(), pytest.raises(ValidationError) as e:
-            BriefClarificationQuestion(brief=self.brief, question=long_question, answer="Because")
+            question = BriefClarificationQuestion(brief=self.brief, question=long_question, answer="Because")
+            question.validate()
 
-        assert str(e.value.message) == "Question must not be more than 100 words"
+        assert e.value.message["question"] == "under_100_words"
 
     def test_questions_can_be_100_words(self):
         question = " ".join(["word"] * 100)
         with self.app.app_context():
-            BriefClarificationQuestion(brief=self.brief, question=question, answer="Because")
+            question = BriefClarificationQuestion(brief=self.brief, question=question, answer="Because")
+            question.validate()
 
     def test_answer_must_not_be_null(self):
         with self.app.app_context(), pytest.raises(IntegrityError):
@@ -375,21 +378,24 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
 
     def test_answer_must_not_be_empty(self):
         with self.app.app_context(), pytest.raises(ValidationError) as e:
-            BriefClarificationQuestion(brief=self.brief, question="Why?", answer="")
+            question = BriefClarificationQuestion(brief=self.brief, question="Why?", answer="")
+            question.validate()
 
-        assert str(e.value.message) == "Answer must not be empty"
+        assert e.value.message["answer"] == "answer_required"
 
     def test_answers_must_not_be_more_than_100_words(self):
         long_answer = " ".join(["word"] * 101)
         with self.app.app_context(), pytest.raises(ValidationError) as e:
-            BriefClarificationQuestion(brief=self.brief, question="Why?", answer=long_answer)
+            question = BriefClarificationQuestion(brief=self.brief, question="Why?", answer=long_answer)
+            question.validate()
 
-        assert str(e.value.message) == "Answer must not be more than 100 words"
+        assert e.value.message["answer"] == "under_100_words"
 
     def test_answers_can_be_100_words(self):
         answer = " ".join(["word"] * 100)
         with self.app.app_context():
-            BriefClarificationQuestion(brief=self.brief, question="Why?", answer=answer)
+            question = BriefClarificationQuestion(brief=self.brief, question="Why?", answer=answer)
+            question.validate()
 
 
 class TestServices(BaseApplicationTest):

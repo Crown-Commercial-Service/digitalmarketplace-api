@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "title": "Brief clarification question schema",
+  "type": "object",
+  "properties": {
+    "question": {
+      "minLength": 1,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
+    "answer": {
+      "minLength": 1,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": ["question", "answer"]
+}

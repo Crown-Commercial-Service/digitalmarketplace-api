@@ -853,6 +853,7 @@ class Brief(db.Model):
             brief=self,
             question=question,
             answer=answer)
+        clarification_question.validate()
 
         Session.object_session(self).add(clarification_question)
 
@@ -1003,14 +1004,14 @@ class BriefClarificationQuestion(db.Model):
             raise ValidationError("Brief status must be 'live', not '{}'".format(brief.status))
         return brief
 
-    @validates("question", "answer")
-    def validates_question_and_answer(self, key, value):
-        if len(value) == 0:
-            raise ValidationError("{} must not be empty".format(key.title()))
-        words = re.split("\W+", value)
-        if len(words) > 100:
-            raise ValidationError("{} must not be more than 100 words".format(key.title()))
-        return value
+    def validate(self):
+        errs = get_validation_errors(
+            "brief-clarification-question",
+            {"question": self.question, "answer": self.answer}
+        )
+
+        if errs:
+            raise ValidationError(errs)
 
     def serialize(self):
         return {
