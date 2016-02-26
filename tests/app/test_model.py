@@ -215,7 +215,7 @@ class TestBriefs(BaseApplicationTest):
             db.session.commit()
 
             clarification = brief.add_clarification_question(
-                "How do expect to deliver this?",
+                "How do you expect to deliver this?",
                 "By the power of Grayskull")
             db.session.commit()
 
