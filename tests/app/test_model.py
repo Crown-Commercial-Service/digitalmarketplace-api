@@ -363,6 +363,14 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
 
         assert e.value.message["question"] == "under_100_words"
 
+    def test_question_must_not_be_more_than_5000_characters(self):
+        long_question = "a" * 5001
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            question = BriefClarificationQuestion(brief=self.brief, question=long_question, answer="Because")
+            question.validate()
+
+        assert e.value.message["question"] == "under_character_limit"
+
     def test_questions_can_be_100_words(self):
         question = " ".join(["word"] * 100)
         with self.app.app_context():
@@ -390,6 +398,14 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
             question.validate()
 
         assert e.value.message["answer"] == "under_100_words"
+
+    def test_answer_must_not_be_more_than_5000_characters(self):
+        long_answer = "a" * 5001
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            question = BriefClarificationQuestion(brief=self.brief, question="Why?", answer=long_answer)
+            question.validate()
+
+        assert e.value.message["answer"] == "under_character_limit"
 
     def test_answers_can_be_100_words(self):
         answer = " ".join(["word"] * 100)

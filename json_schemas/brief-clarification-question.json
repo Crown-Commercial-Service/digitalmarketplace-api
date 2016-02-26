@@ -5,11 +5,13 @@
   "properties": {
     "question": {
       "minLength": 1,
+      "maxLength": 5000,
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
     "answer": {
       "minLength": 1,
+      "maxLength": 5000,
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     }
