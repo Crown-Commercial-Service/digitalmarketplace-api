@@ -348,6 +348,12 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
             db.session.add(question)
             db.session.commit()
 
+    def test_question_must_not_be_empty(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            BriefClarificationQuestion(brief=self.brief, question="", answer="Because")
+
+        assert str(e.value.message) == "Question must not be empty"
+
     def test_questions_must_not_be_more_than_100_words(self):
         long_question = " ".join(["word"] * 101)
         with self.app.app_context(), pytest.raises(ValidationError) as e:
@@ -366,6 +372,12 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
 
             db.session.add(question)
             db.session.commit()
+
+    def test_answer_must_not_be_empty(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            BriefClarificationQuestion(brief=self.brief, question="Why?", answer="")
+
+        assert str(e.value.message) == "Answer must not be empty"
 
     def test_answers_must_not_be_more_than_100_words(self):
         long_answer = " ".join(["word"] * 101)

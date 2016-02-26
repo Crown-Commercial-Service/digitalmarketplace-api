@@ -1005,6 +1005,8 @@ class BriefClarificationQuestion(db.Model):
 
     @validates("question", "answer")
     def validates_question_and_answer(self, key, value):
+        if len(value) == 0:
+            raise ValidationError("{} must not be empty".format(key.title()))
         words = re.split("\W+", value)
         if len(words) > 100:
             raise ValidationError("{} must not be more than 100 words".format(key.title()))
