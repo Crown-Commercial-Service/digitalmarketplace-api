@@ -1,4 +1,5 @@
 import random
+import re
 from datetime import datetime
 
 from flask import current_app
@@ -8,6 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import validates
+from sqlalchemy.orm.session import Session
 from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
@@ -798,6 +800,9 @@ class Brief(db.Model):
     users = db.relationship('User', secondary='brief_users')
     framework = db.relationship('Framework', lazy='joined')
     lot = db.relationship('Lot', lazy='joined')
+    clarification_questions = db.relationship(
+        "BriefClarificationQuestion",
+        order_by="BriefClarificationQuestion.published_at")
 
     @validates('users')
     def validates_users(self, key, user):
@@ -843,6 +848,17 @@ class Brief(db.Model):
             self.published_at = datetime.utcnow()
         return status
 
+    def add_clarification_question(self, question, answer):
+        clarification_question = BriefClarificationQuestion(
+            brief=self,
+            question=question,
+            answer=answer)
+        clarification_question.validate()
+
+        Session.object_session(self).add(clarification_question)
+
+        return clarification_question
+
     def update_from_json(self, data):
         current_data = dict(self.data.items())
         current_data.update(data)
@@ -864,6 +880,9 @@ class Brief(db.Model):
             'lotName': self.lot.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
+            'clarificationQuestions': [
+                question.serialize() for question in self.clarification_questions
+            ],
         })
 
         if self.status == 'live':
@@ -955,6 +974,51 @@ class BriefResponse(db.Model):
         })
 
         return data
+
+
+class BriefClarificationQuestion(db.Model):
+    __tablename__ = 'brief_clarification_questions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    _brief_id = db.Column("brief_id", db.Integer, db.ForeignKey("briefs.id"), nullable=False)
+
+    question = db.Column(db.String, nullable=False)
+    answer = db.Column(db.String, nullable=False)
+
+    published_at = db.Column(db.DateTime, index=True, nullable=False,
+                             default=datetime.utcnow)
+
+    brief = db.relationship("Brief")
+
+    @property
+    def brief_id(self):
+        return self._brief_id
+
+    @brief_id.setter
+    def brief_id(self, brief_id):
+        raise ValidationError("Cannot update brief_id directly, use brief relationship")
+
+    @validates('brief')
+    def validates_brief(self, key, brief):
+        if brief.status != "live":
+            raise ValidationError("Brief status must be 'live', not '{}'".format(brief.status))
+        return brief
+
+    def validate(self):
+        errs = get_validation_errors(
+            "brief-clarification-question",
+            {"question": self.question, "answer": self.answer}
+        )
+
+        if errs:
+            raise ValidationError(errs)
+
+    def serialize(self):
+        return {
+            "question": self.question,
+            "answer": self.answer,
+            "publishedAt": self.published_at.strftime(DATETIME_FORMAT),
+        }
 
 
 # Index for .last_for_object queries. Without a composite index the

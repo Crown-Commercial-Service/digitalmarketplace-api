@@ -7,10 +7,11 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db, create_app
 from app.models import (
-    User, Framework, Service,
+    User, Lot, Framework, Service,
     Supplier, SupplierFramework,
     Brief, BriefResponse,
     ValidationError,
+    BriefClarificationQuestion
 )
 
 from .helpers import BaseApplicationTest
@@ -207,6 +208,33 @@ class TestBriefs(BaseApplicationTest):
                       framework=self.framework,
                       lot_id=self.framework.get_lot('user-research-studios').id)
 
+    def test_add_brief_clarification_question(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, status="live")
+            db.session.add(brief)
+            db.session.commit()
+
+            clarification = brief.add_clarification_question(
+                "How do you expect to deliver this?",
+                "By the power of Grayskull")
+            db.session.commit()
+
+            assert len(brief.clarification_questions) == 1
+            assert len(BriefClarificationQuestion.query.filter(
+                BriefClarificationQuestion._brief_id == brief.id
+            ).all()) == 1
+
+    def test_new_clarification_questions_get_added_to_the_end(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, status="live")
+            db.session.add(brief)
+            brief.add_clarification_question("How?", "This")
+            brief.add_clarification_question("When", "Then")
+            db.session.commit()
+
+            assert brief.clarification_questions[0].question == "How?"
+            assert brief.clarification_questions[1].question == "When"
+
 
 class TestBriefResponses(BaseApplicationTest):
     def setup(self):
@@ -272,6 +300,118 @@ class TestBriefResponses(BaseApplicationTest):
                         'supplier': (('.get_supplier',), {'supplier_id': 0}),
                     }
                 }
+
+
+class TestBriefClarificationQuestion(BaseApplicationTest):
+    def setup(self):
+        super(TestBriefClarificationQuestion, self).setup()
+        with self.app.app_context():
+            self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self.lot = self.framework.get_lot('digital-outcomes')
+            self.brief = Brief(data={}, framework=self.framework, lot=self.lot, status="live")
+            db.session.add(self.brief)
+            db.session.commit()
+
+            # Reload objects after session commit
+            self.framework = Framework.query.get(self.framework.id)
+            self.lot = Lot.query.get(self.lot.id)
+            self.brief = Brief.query.get(self.brief.id)
+
+    def test_brief_must_be_live(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, status="draft")
+            with pytest.raises(ValidationError) as e:
+                BriefClarificationQuestion(brief=brief, question="Why?", answer="Because")
+
+            assert str(e.value.message) == "Brief status must be 'live', not 'draft'"
+
+    def test_cannot_update_brief_by_id(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            BriefClarificationQuestion(brief_id=self.brief.id, question="Why?", answer="Because")
+
+        assert str(e.value.message) == "Cannot update brief_id directly, use brief relationship"
+
+    def test_published_at_is_set_on_creation(self):
+        with self.app.app_context():
+            question = BriefClarificationQuestion(
+                brief=self.brief, question="Why?", answer="Because")
+
+            db.session.add(question)
+            db.session.commit()
+
+            assert isinstance(question.published_at, datetime)
+
+    def test_question_must_not_be_null(self):
+        with self.app.app_context(), pytest.raises(IntegrityError):
+            question = BriefClarificationQuestion(brief=self.brief, answer="Because")
+
+            db.session.add(question)
+            db.session.commit()
+
+    def test_question_must_not_be_empty(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            question = BriefClarificationQuestion(brief=self.brief, question="", answer="Because")
+            question.validate()
+
+        assert e.value.message["question"] == "answer_required"
+
+    def test_questions_must_not_be_more_than_100_words(self):
+        long_question = " ".join(["word"] * 101)
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            question = BriefClarificationQuestion(brief=self.brief, question=long_question, answer="Because")
+            question.validate()
+
+        assert e.value.message["question"] == "under_100_words"
+
+    def test_question_must_not_be_more_than_5000_characters(self):
+        long_question = "a" * 5001
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            question = BriefClarificationQuestion(brief=self.brief, question=long_question, answer="Because")
+            question.validate()
+
+        assert e.value.message["question"] == "under_character_limit"
+
+    def test_questions_can_be_100_words(self):
+        question = " ".join(["word"] * 100)
+        with self.app.app_context():
+            question = BriefClarificationQuestion(brief=self.brief, question=question, answer="Because")
+            question.validate()
+
+    def test_answer_must_not_be_null(self):
+        with self.app.app_context(), pytest.raises(IntegrityError):
+            question = BriefClarificationQuestion(brief=self.brief, question="Why?")
+
+            db.session.add(question)
+            db.session.commit()
+
+    def test_answer_must_not_be_empty(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            question = BriefClarificationQuestion(brief=self.brief, question="Why?", answer="")
+            question.validate()
+
+        assert e.value.message["answer"] == "answer_required"
+
+    def test_answers_must_not_be_more_than_100_words(self):
+        long_answer = " ".join(["word"] * 101)
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            question = BriefClarificationQuestion(brief=self.brief, question="Why?", answer=long_answer)
+            question.validate()
+
+        assert e.value.message["answer"] == "under_100_words"
+
+    def test_answer_must_not_be_more_than_5000_characters(self):
+        long_answer = "a" * 5001
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            question = BriefClarificationQuestion(brief=self.brief, question="Why?", answer=long_answer)
+            question.validate()
+
+        assert e.value.message["answer"] == "under_character_limit"
+
+    def test_answers_can_be_100_words(self):
+        answer = " ".join(["word"] * 100)
+        with self.app.app_context():
+            question = BriefClarificationQuestion(brief=self.brief, question="Why?", answer=answer)
+            question.validate()
 
 
 class TestServices(BaseApplicationTest):
