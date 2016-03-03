@@ -8,7 +8,7 @@ from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
 from .. import main
 from ...models import (
-    db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent, Lot, ValidationError
+    db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent, Lot,
 )
 from ...utils import (
     get_json_from_request, json_has_required_keys, json_only_has_required_keys,
@@ -57,9 +57,9 @@ def update_framework(framework_slug):
                 data={'update': json_payload['frameworks']})
         )
         db.session.commit()
-    except (IntegrityError, ValidationError) as e:
+    except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Validation Error: {}".format(e))
+        abort(400, "Database Error: {}".format(e))
 
     return jsonify(frameworks=framework.serialize())
 
