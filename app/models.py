@@ -784,9 +784,6 @@ class Brief(db.Model):
     _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lots.id'), nullable=False)
 
     data = db.Column(JSON)
-    status = db.Column(db.String, index=False, unique=False,
-                       nullable=False, default='draft')
-
     created_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, index=True, nullable=False,
@@ -838,15 +835,23 @@ class Brief(db.Model):
 
         return data
 
-    @validates('status')
-    def validates_status(self, key, status):
-        if status not in self.STATUSES:
-            raise ValidationError("Invalid brief status '{}'".format(status))
-        if self.status == 'live' and status == 'draft':
-            raise ValidationError("Cannot change brief status from 'live' to 'draft'")
-        if status == 'live':
+    @property
+    def status(self):
+        if self.published_at:
+            return 'live'
+        else:
+            return 'draft'
+
+    @status.setter
+    def status(self, value):
+        if value == self.status:
+            return
+        elif value == 'live':
             self.published_at = datetime.utcnow()
-        return status
+        elif value == 'draft' and self.published_at is not None:
+            raise ValidationError("Cannot change brief status from 'live' to 'draft'")
+        else:
+            raise ValidationError("Invalid brief status '{}'".format(value))
 
     def add_clarification_question(self, question, answer):
         clarification_question = BriefClarificationQuestion(
