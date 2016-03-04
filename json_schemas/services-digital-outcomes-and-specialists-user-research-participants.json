@@ -5,13 +5,7 @@
     "anonymousRecruitment": {
       "type": "boolean"
     },
-    "manageIncentives": {
-      "type": "boolean"
-    },
-    "recruitFromList": {
-      "type": "boolean"
-    },
-    "recruitLocations": {
+    "locations": {
       "items": {
         "enum": [
           "Scotland",
@@ -34,6 +28,12 @@
       "type": "array",
       "uniqueItems": true
     },
+    "manageIncentives": {
+      "type": "boolean"
+    },
+    "recruitFromList": {
+      "type": "boolean"
+    },
     "recruitMethods": {
       "items": {
         "enum": [
@@ -50,9 +50,9 @@
   },
   "required": [
     "anonymousRecruitment",
+    "locations",
     "manageIncentives",
     "recruitFromList",
-    "recruitLocations",
     "recruitMethods"
   ],
   "title": "Digital Outcomes and Specialists User research participants Service Schema",

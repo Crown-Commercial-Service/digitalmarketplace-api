@@ -79,10 +79,7 @@
     "helpGovernmentImproveServices": {
       "type": "boolean"
     },
-    "openStandardsPrinciples": {
-      "type": "boolean"
-    },
-    "outcomesLocations": {
+    "locations": {
       "items": {
         "enum": [
           "Offsite",
@@ -104,6 +101,9 @@
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "openStandardsPrinciples": {
+      "type": "boolean"
     },
     "performanceAnalysisTypes": {
       "items": {
@@ -244,8 +244,8 @@
     "bespokeSystemInformation",
     "dataProtocols",
     "helpGovernmentImproveServices",
-    "openStandardsPrinciples",
-    "outcomesLocations"
+    "locations",
+    "openStandardsPrinciples"
   ],
   "title": "Digital Outcomes and Specialists Digital outcomes Service Schema",
   "type": "object"
