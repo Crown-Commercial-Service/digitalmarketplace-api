@@ -389,6 +389,26 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
         assert len(data['briefs']) == 3
 
+    def test_list_briefs_by_status(self):
+        self.setup_dummy_briefs(3, status='live')
+        self.setup_dummy_briefs(2, status='draft', brief_start=4)
+
+        res = self.client.get('/briefs?status=live')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 3, data['briefs']
+
+    def test_cannot_list_briefs_by_invalid_status(self):
+        self.setup_dummy_briefs(1, status='live')
+        self.setup_dummy_briefs(1, status='draft', brief_start=2)
+
+        res = self.client.get('/briefs?status=invalid')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 0
+
     def test_list_briefs_pagination_page_one(self):
         self.setup_dummy_briefs(7)
 

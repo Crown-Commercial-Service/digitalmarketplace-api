@@ -1,5 +1,4 @@
 import random
-import re
 from datetime import datetime
 
 from flask import current_app
@@ -8,8 +7,10 @@ from sqlalchemy import asc, desc
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.session import Session
+from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
@@ -835,7 +836,7 @@ class Brief(db.Model):
 
         return data
 
-    @property
+    @hybrid_property
     def status(self):
         if self.published_at:
             return 'live'
@@ -852,6 +853,12 @@ class Brief(db.Model):
             raise ValidationError("Cannot change brief status from 'live' to 'draft'")
         else:
             raise ValidationError("Invalid brief status '{}'".format(value))
+
+    @status.expression
+    def status(cls):
+        return sql_case([
+            (cls.published_at.isnot(None), 'live'),
+        ], else_='draft')
 
     def add_clarification_question(self, question, answer):
         clarification_question = BriefClarificationQuestion(

@@ -70,6 +70,8 @@ class BaseApplicationTest(object):
 
     def setup_dummy_user(self, id=123, role='buyer'):
         with self.app.app_context():
+            if User.query.get(id):
+                return id
             user = User(
                 id=id,
                 email_address="test+{}@digital.gov.uk".format(id),

@@ -113,8 +113,13 @@ def list_briefs():
     page = get_valid_page_or_1()
 
     user_id = get_int_or_400(request.args, 'user_id')
+    status = request.args.get('status')
+
     if user_id:
         briefs = briefs.filter(Brief.users.any(id=user_id))
+
+    if status:
+        briefs = briefs.filter(Brief.status == status)
 
     briefs = briefs.paginate(
         page=page,
