@@ -1481,7 +1481,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
         self.setup_services()
         self.setup_dummy_briefs(1, status="live")
 
-        response = self.client.get("/suppliers/0/briefs/1")
+        response = self.client.head("/suppliers/0/briefs/1")
 
         assert response.status_code == 200
 
@@ -1497,7 +1497,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
                 lot_slug="digital-outcomes")
             db.session.commit()
 
-        response = self.client.get("/suppliers/0/briefs/1")
+        response = self.client.head("/suppliers/0/briefs/1")
 
         assert response.status_code == 200
 
@@ -1505,7 +1505,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
         self.setup_services()
         self.setup_dummy_briefs(1, status="draft")
 
-        response = self.client.get("/suppliers/0/briefs/1")
+        response = self.client.head("/suppliers/0/briefs/1")
 
         assert response.status_code == 404
 
@@ -1521,7 +1521,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
                       "specialistRole": "developer"})
             db.session.commit()
 
-        response = self.client.get("/suppliers/0/briefs/1")
+        response = self.client.head("/suppliers/0/briefs/1")
 
         assert response.status_code == 404
 
@@ -1549,6 +1549,6 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
                 lot_slug="digital-outcomes")
             db.session.commit()
 
-        response = self.client.get("/suppliers/0/briefs/1")
+        response = self.client.head("/suppliers/0/briefs/1")
 
         assert response.status_code == 200
