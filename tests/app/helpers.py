@@ -166,14 +166,15 @@ class BaseApplicationTest(object):
                                created_at=now,
                                updated_at=now))
 
-    def setup_dummy_services(self, n, supplier_id=None, framework_id=None,
-                             start_id=0):
+    def setup_dummy_services(self, n, supplier_id=None, framework_id=1,
+                             start_id=0, lot_id=1):
         with self.app.app_context():
             for i in range(start_id, start_id + n):
                 self.setup_dummy_service(
                     service_id=str(2000000000 + start_id + i),
                     supplier_id=supplier_id or (i % TEST_SUPPLIERS_COUNT),
-                    framework_id=framework_id or 1
+                    framework_id=framework_id,
+                    lot_id=lot_id
                 )
 
             db.session.commit()

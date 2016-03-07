@@ -176,4 +176,19 @@ def filter_services(frameworks=None, statuses=None, lot_slug=None, location=None
     if statuses:
         services = services.has_statuses(*statuses)
 
+    location_key = "locations"
+
+    if role:
+        assert lot_slug == 'digital-specialists', "Role only applies to Digital Specialists lot"
+        location_key = role + "Locations"
+        services = services.data_has_key(location_key)
+
+    if location:
+        if lot_slug == 'digital-specialists':
+            assert role, "Role must be specified for Digital Specialists"
+        services = services.data_key_contains_value(location_key, location)
+
+    if lot_slug:
+        services = services.in_lot(lot_slug)
+
     return services

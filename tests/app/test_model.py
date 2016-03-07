@@ -539,6 +539,79 @@ class TestServices(BaseApplicationTest):
 
             assert_equal(services.count(), 1)
 
+    def test_in_lot(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            self.setup_dummy_service(
+                service_id='10000000001',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=5)  # digital-outcomes
+            self.setup_dummy_service(
+                service_id='10000000002',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=6)  # digital-specialists
+            self.setup_dummy_service(
+                service_id='10000000003',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=6)  # digital-specialists
+
+            services = Service.query.in_lot('digital-specialists')
+            assert services.count() == 2
+
+    def test_data_has_key(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            self.setup_dummy_service(
+                service_id='10000000001',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=6,  # digital-specialists
+                data={'key1': 'foo', 'key2': 'bar'})
+            self.setup_dummy_service(
+                service_id='10000000002',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=6,  # digital-specialists
+                data={'key1': 'blah'})
+            services = Service.query.data_has_key('key1')
+            assert services.count() == 2
+
+            services = Service.query.data_has_key('key2')
+            assert services.count() == 1
+
+            services = Service.query.data_has_key('key3')
+            assert services.count() == 0
+
+    def test_data_key_contains_value(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            self.setup_dummy_service(
+                service_id='10000000001',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=6,  # digital-specialists
+                data={'key1': ['foo1', 'foo2'], 'key2': ['bar1']})
+            self.setup_dummy_service(
+                service_id='10000000002',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=6,  # digital-specialists
+                data={'key1': ['foo1', 'foo3']})
+            services = Service.query.data_key_contains_value('key1', 'foo1')
+            assert services.count() == 2
+
+            services = Service.query.data_key_contains_value('key2', 'bar1')
+            assert services.count() == 1
+
+            services = Service.query.data_key_contains_value('key3', 'foo1')
+            assert services.count() == 0
+
+            services = Service.query.data_key_contains_value('key1', 'bar1')
+            assert services.count() == 0
+
     def test_service_status(self):
         service = Service(status='enabled')
 
