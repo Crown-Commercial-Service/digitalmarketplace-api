@@ -1445,3 +1445,110 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(audit.data['frameworkSlug'], 'digital-outcomes-and-specialists')
             assert_equal(audit.data['update']['onFramework'], True)
             assert_equal(audit.data['update']['agreementReturned'], True)
+
+
+class TestSupplierIsEligibleForBrief(BaseApplicationTest):
+    def setup_services(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            self.set_framework_status("digital-outcomes-and-specialists", "live")
+            self.setup_dummy_service(
+                service_id='10000000001',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=5,  # digital-outcomes
+                data={"locations": [
+                    "London", "Offsite", "Scotland", "Wales"
+                ]
+                })
+            self.setup_dummy_service(
+                service_id='10000000002',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=6,  # digital-specialists
+                data={"developerLocations": ["London", "Offsite", "Scotland", "Wales"]}
+            )
+            self.setup_dummy_service(
+                service_id='10000000003',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=6,  # digital-specialists
+                data={"developerLocations": ["Wales"]}
+            )
+            db.session.commit()
+
+    def test_supplier_is_eligible_for_specialist(self):
+        self.setup_services()
+        self.setup_dummy_briefs(1, status="live")
+
+        response = self.client.get("/suppliers/0/briefs/1")
+
+        assert response.status_code == 200
+
+    def test_supplier_is_eligible_for_outcome(self):
+        self.setup_services()
+        with self.app.app_context():
+            self.setup_dummy_user(id=1)
+            self.setup_dummy_brief(
+                id=1,
+                status="live",
+                user_id=1,
+                data={"location": "London"},
+                lot_slug="digital-outcomes")
+            db.session.commit()
+
+        response = self.client.get("/suppliers/0/briefs/1")
+
+        assert response.status_code == 200
+
+    def test_404_if_brief_not_live(self):
+        self.setup_services()
+        self.setup_dummy_briefs(1, status="draft")
+
+        response = self.client.get("/suppliers/0/briefs/1")
+
+        assert response.status_code == 404
+
+    def test_404_if_supplier_is_not_in_specialist_location(self):
+        self.setup_services()
+        with self.app.app_context():
+            self.setup_dummy_user(id=1)
+            self.setup_dummy_brief(
+                id=1,
+                status="live",
+                user_id=1,
+                data={"location": "North East England",
+                      "specialistRole": "developer"})
+            db.session.commit()
+
+        response = self.client.get("/suppliers/0/briefs/1")
+
+        assert response.status_code == 404
+
+    def test_404_if_supplier_does_not_supply_the_role(self):
+        self.setup_services()
+        with self.app.app_context():
+            self.setup_dummy_user(id=1)
+            self.setup_dummy_brief(
+                id=1,
+                status="live",
+                user_id=1,
+                data={"location": "London",
+                      "specialistRole": "agileCoach"})
+            db.session.commit()
+
+    def test_404_if_supplier_does_not_supply_in_outcome_location(self):
+        self.setup_services()
+        with self.app.app_context():
+            self.setup_dummy_user(id=1)
+            self.setup_dummy_brief(
+                id=1,
+                status="live",
+                user_id=1,
+                data={"location": "Wales"},
+                lot_slug="digital-outcomes")
+            db.session.commit()
+
+        response = self.client.get("/suppliers/0/briefs/1")
+
+        assert response.status_code == 200
