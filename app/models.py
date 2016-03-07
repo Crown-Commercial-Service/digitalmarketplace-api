@@ -932,8 +932,12 @@ class Brief(db.Model):
             ],
         })
 
-        if self.status == 'live':
-            data['publishedAt'] = self.published_at.strftime(DATETIME_FORMAT)
+        if self.published_at:
+            data.update({
+                'publishedAt': self.published_at.strftime(DATETIME_FORMAT),
+                'applicationsClosedAt': self.applications_closed_at.strftime(DATETIME_FORMAT),
+                'clarificationQuestionsClosedAt': self.clarification_questions_closed_at.strftime(DATETIME_FORMAT),
+            })
 
         data['links'] = {
             'self': url_for('.get_brief', brief_id=self.id),
