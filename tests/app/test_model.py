@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import mock
 import pytest
@@ -143,30 +143,93 @@ class TestBriefs(BaseApplicationTest):
 
     def test_status_defaults_to_draft(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        assert brief.status == 'draft'
 
+    def test_query_draft_brief(self):
         with self.app.app_context():
-            db.session.add(brief)
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot))
             db.session.commit()
 
-            assert brief.status == 'draft'
+            assert Brief.query.filter(Brief.status == 'draft').count() == 1
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+
+    def test_query_live_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow()))
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 1
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+
+    def test_query_closed_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1)))
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'closed').count() == 1
+
+    def test_live_status_for_briefs_with_published_at(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
+        assert brief.status == 'live'
+
+    def test_applications_closed_at_is_none_for_drafts(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+
+        assert brief.applications_closed_at is None
+
+    def test_applications_closed_at_is_set_with_published_at(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot,
+                      published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
+
+        assert brief.applications_closed_at == datetime(2016, 3, 18)
+
+    def test_query_brief_applications_closed_at_date(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 18)).count() == 1
+
+    def test_expired_status_for_a_brief_with_passed_close_date(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot,
+                      published_at=datetime.utcnow() - timedelta(days=1000))
+
+        assert brief.status == 'closed'
+        assert brief.applications_closed_at < datetime.utcnow()
+
+    def test_can_set_draft_brief_to_the_same_status(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        brief.status = 'draft'
+
+    def test_test_publishing_a_brief_sets_published_at(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        assert brief.published_at is None
+
+        brief.status = 'live'
+        assert isinstance(brief.published_at, datetime)
 
     def test_status_must_be_valid(self):
-        with pytest.raises(ValidationError):
-            brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
+        with pytest.raises(ValidationError):
             brief.status = 'invalid'
 
-    def test_publishing_a_brief_sets_published_at(self):
-        with self.app.app_context():
-            brief = Brief(data={}, framework=self.framework, lot=self.lot)
-            db.session.add(brief)
-            db.session.commit()
+    def test_cannot_set_live_brief_to_draft(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
 
-            assert brief.published_at is None
+        with pytest.raises(ValidationError):
+            brief.status = 'draft'
 
-            brief.status = 'live'
+    def test_cannot_set_brief_to_closed(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
-            assert isinstance(brief.published_at, datetime)
+        with pytest.raises(ValidationError):
+            brief.status = 'closed'
 
     def test_buyer_users_can_be_added_to_a_brief(self):
         with self.app.app_context():
@@ -214,7 +277,7 @@ class TestBriefs(BaseApplicationTest):
             db.session.add(brief)
             db.session.commit()
 
-            clarification = brief.add_clarification_question(
+            brief.add_clarification_question(
                 "How do you expect to deliver this?",
                 "By the power of Grayskull")
             db.session.commit()

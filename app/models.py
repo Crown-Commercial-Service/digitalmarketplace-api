@@ -1,16 +1,17 @@
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
 from sqlalchemy import asc, desc
 from sqlalchemy import func
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSON, INTERVAL
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import case as sql_case
+from sqlalchemy.sql.expression import cast as sql_cast
 from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
@@ -777,7 +778,8 @@ class AuditEvent(db.Model):
 class Brief(db.Model):
     __tablename__ = 'briefs'
 
-    STATUSES = ('draft', 'live')
+    QUESTIONS_OPEN_DAYS = 7
+    APPLICATIONS_OPEN_DAYS = 14
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -837,11 +839,30 @@ class Brief(db.Model):
         return data
 
     @hybrid_property
+    def applications_closed_at(self):
+        if self.published_at is None:
+            return None
+
+        # Set time to midnight next day and add full number of days before application closes
+        published_day = self.published_at.replace(hour=0, minute=0, second=0, microsecond=0)
+        closing_time = published_day + timedelta(days=self.APPLICATIONS_OPEN_DAYS + 1)
+
+        return closing_time
+
+    @applications_closed_at.expression
+    def applications_closed_at(cls):
+        return func.date_trunc('day', cls.published_at) + sql_cast(
+            '%d days' % (cls.APPLICATIONS_OPEN_DAYS + 1), INTERVAL
+        )
+
+    @hybrid_property
     def status(self):
-        if self.published_at:
+        if self.published_at is None:
+            return 'draft'
+        elif self.applications_closed_at > datetime.utcnow():
             return 'live'
         else:
-            return 'draft'
+            return 'closed'
 
     @status.setter
     def status(self, value):
@@ -851,14 +872,17 @@ class Brief(db.Model):
             self.published_at = datetime.utcnow()
         elif value == 'draft' and self.published_at is not None:
             raise ValidationError("Cannot change brief status from 'live' to 'draft'")
+        elif value == 'closed':
+            raise ValidationError("Cannot change brief status to 'closed'")
         else:
             raise ValidationError("Invalid brief status '{}'".format(value))
 
     @status.expression
     def status(cls):
         return sql_case([
-            (cls.published_at.isnot(None), 'live'),
-        ], else_='draft')
+            (cls.published_at.is_(None), 'draft'),
+            (cls.applications_closed_at > datetime.utcnow(), 'live')
+        ], else_='closed')
 
     def add_clarification_question(self, question, answer):
         clarification_question = BriefClarificationQuestion(
