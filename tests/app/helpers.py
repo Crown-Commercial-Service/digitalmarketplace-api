@@ -99,15 +99,29 @@ class BaseApplicationTest(object):
             data = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
             data["title"] = title
             for i in range(brief_start, brief_start + n):
-                db.session.add(Brief(
+                self.setup_dummy_brief(
                     id=i,
-                    data=data,
-                    framework=framework,
-                    lot=lot,
-                    published_at=published_at,
-                    users=[User.query.get(user_id)]
-                ))
+                    status=status,
+                    user_id=user_id,
+                    data=dict(COMPLETE_DIGITAL_SPECIALISTS_BRIEF, title=title),
+                    framework_slug="digital-outcomes-and-specialists",
+                    lot_slug="digital-specialists"
+                )
             db.session.commit()
+
+    def setup_dummy_brief(self, id=None, status="draft", user_id=1, data=None,
+                          framework_slug="digital-outcomes-and-specialists", lot_slug="digital-specialists"):
+        framework = Framework.query.filter(Framework.slug == framework_slug).first()
+        lot = Lot.query.filter(Lot.slug == lot_slug).first()
+
+        db.session.add(Brief(
+            id=id,
+            status=status,
+            data=data,
+            framework=framework,
+            lot=lot,
+            users=[User.query.get(user_id)]
+        ))
 
     def setup_dummy_suppliers(self, n):
         with self.app.app_context():
