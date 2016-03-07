@@ -164,3 +164,16 @@ def create_service_from_draft(draft, status):
             db.session.rollback()
             if counter >= 5:
                 raise
+
+
+def filter_services(frameworks=None, statuses=None, lot_slug=None, location=None, role=None):
+
+    if frameworks:
+        services = Service.query.has_frameworks(*frameworks)
+    else:
+        services = Service.query.framework_is_live()
+
+    if statuses:
+        services = services.has_statuses(*statuses)
+
+    return services

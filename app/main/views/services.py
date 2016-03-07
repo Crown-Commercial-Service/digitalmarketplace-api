@@ -20,7 +20,7 @@ from ...service_utils import (
     commit_and_archive_service,
     validate_service_data,
     validate_and_return_related_objects,
-)
+    filter_services)
 
 
 @main.route('/')
@@ -42,16 +42,16 @@ def list_services():
     supplier_id = get_int_or_400(request.args, 'supplier_id')
 
     if request.args.get('framework'):
-        services = Service.query.has_frameworks(*[
-            slug.strip() for slug in request.args['framework'].split(',')
-        ])
+        frameworks = [slug.strip() for slug in request.args['framework'].split(',')]
     else:
-        services = Service.query.framework_is_live()
+        frameworks = None
 
     if request.args.get('status'):
-        services = services.has_statuses(*[
-            status.strip() for status in request.args['status'].split(',')
-        ])
+        statuses = [status.strip() for status in request.args['status'].split(',')]
+    else:
+        statuses = None
+
+    services = filter_services(frameworks=frameworks, statuses=statuses)
 
     if supplier_id is not None:
         supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
