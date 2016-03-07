@@ -6,7 +6,7 @@ from .utils import get_json_from_request, \
 from .validation import get_validation_errors
 from . import search_api_client, dmapiclient
 from . import db
-from .models import ArchivedService, AuditEvent, Framework, Service, Supplier
+from .models import ArchivedService, AuditEvent, Framework, Service, Supplier, ValidationError
 
 
 def validate_and_return_service_request(service_id):
@@ -179,13 +179,17 @@ def filter_services(frameworks=None, statuses=None, lot_slug=None, location=None
     location_key = "locations"
 
     if role:
-        assert lot_slug == 'digital-specialists', "Role only applies to Digital Specialists lot"
+        if lot_slug != 'digital-specialists':
+            raise ValidationError("Role only applies to Digital Specialists lot")
         location_key = role + "Locations"
         services = services.data_has_key(location_key)
 
     if location:
+        if not lot_slug:
+            raise ValidationError("Lot must be specified to filter by location")
         if lot_slug == 'digital-specialists':
-            assert role, "Role must be specified for Digital Specialists"
+            if not role:
+                raise ValidationError("Role must be specified for Digital Specialists")
         services = services.data_key_contains_value(location_key, location)
 
     if lot_slug:

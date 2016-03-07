@@ -97,6 +97,35 @@ class TestListServicesOrdering(BaseApplicationTest):
 
 
 class TestListServices(BaseApplicationTest):
+    def setup_services(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            self.set_framework_status('digital-outcomes-and-specialists', 'live')
+            self.setup_dummy_service(
+                service_id='10000000001',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=5,  # digital-outcomes
+                data={"locations": [
+                    "London", "Offsite", "Scotland", "Wales"
+                ]
+                })
+            self.setup_dummy_service(
+                service_id='10000000002',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=6,  # digital-specialists
+                data={"agileCoachLocations": ["London", "Offsite", "Scotland", "Wales"]}
+            )
+            self.setup_dummy_service(
+                service_id='10000000003',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=6,  # digital-specialists
+                data={"agileCoachLocations": ["Wales"]}
+            )
+            db.session.commit()
+
     def test_list_services_with_no_services(self):
         response = self.client.get('/services')
         data = json.loads(response.get_data())
@@ -362,6 +391,54 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services?supplier_id=100')
 
         assert_equal(response.status_code, 404)
+
+    def test_filter_services_by_lot_location_role(self):
+        self.setup_services()
+        response = self.client.get('/services?lot_slug=digital-specialists')
+        data = json.loads(response.get_data())
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 2)
+
+        response = self.client.get('/services?lot_slug=digital-outcomes')
+        data = json.loads(response.get_data())
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 1)
+
+        response = self.client.get('/services?lot_slug=digital-specialists&location=London&role=agileCoach')
+        data = json.loads(response.get_data())
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 1)
+
+        response = self.client.get('/services?lot_slug=digital-specialists&location=Wales&role=agileCoach')
+        data = json.loads(response.get_data())
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 2)
+
+        response = self.client.get('/services?lot_slug=digital-specialists&role=agileCoach')
+        data = json.loads(response.get_data())
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data['services']), 2)
+
+    def test_cannot_filter_services_by_location_without_lot(self):
+        self.setup_services()
+        response = self.client.get('/services?location=Wales')
+        data = json.loads(response.get_data())
+        assert response.status_code == 400
+        assert data['error'] == 'Lot must be specified to filter by location'
+
+    def test_can_only_filter_by_role_for_specialists_lot(self):
+        self.setup_services()
+        response = self.client.get('/services?lot_slug=digital-outcomes&role=agileCoach')
+        data = json.loads(response.get_data())
+        assert response.status_code == 400
+        assert data['error'] == 'Role only applies to Digital Specialists lot'
+
+    def test_role_required_for_digital_specialists_location_query(self):
+        self.setup_services()
+        response = self.client.get('/services?lot_slug=digital-specialists&location=Wales')
+        data = json.loads(response.get_data())
+        assert response.status_code == 400
+        assert data['error'] == 'Role must be specified for Digital Specialists'
 
 
 class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):

@@ -3,7 +3,7 @@ from dmapiclient.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 
 from .. import main
-from ...models import ArchivedService, Service, Supplier, AuditEvent, Framework
+from ...models import ArchivedService, Service, Supplier, AuditEvent, Framework, ValidationError
 
 from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
@@ -51,7 +51,16 @@ def list_services():
     else:
         statuses = None
 
-    services = filter_services(frameworks=frameworks, statuses=statuses)
+    try:
+        services = filter_services(
+            frameworks=frameworks,
+            statuses=statuses,
+            lot_slug=request.args.get('lot_slug', None),
+            location=request.args.get('location', None),
+            role=request.args.get('role', None)
+        )
+    except ValidationError as e:
+        abort(400, e.message)
 
     if supplier_id is not None:
         supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
