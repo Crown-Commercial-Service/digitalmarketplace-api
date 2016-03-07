@@ -778,7 +778,7 @@ class AuditEvent(db.Model):
 class Brief(db.Model):
     __tablename__ = 'briefs'
 
-    QUESTIONS_OPEN_DAYS = 7
+    CLARIFICATION_QUESTIONS_OPEN_DAYS = 7
     APPLICATIONS_OPEN_DAYS = 14
 
     id = db.Column(db.Integer, primary_key=True)
@@ -854,6 +854,17 @@ class Brief(db.Model):
         return func.date_trunc('day', cls.published_at) + sql_cast(
             '%d days' % (cls.APPLICATIONS_OPEN_DAYS + 1), INTERVAL
         )
+
+    @hybrid_property
+    def clarification_questions_closed_at(self):
+        if self.published_at is None:
+            return None
+
+        # Set time to midnight next day and add full number of days before questions close
+        published_day = self.published_at.replace(hour=0, minute=0, second=0, microsecond=0)
+        closing_time = published_day + timedelta(days=self.CLARIFICATION_QUESTIONS_OPEN_DAYS + 1)
+
+        return closing_time
 
     @hybrid_property
     def status(self):
