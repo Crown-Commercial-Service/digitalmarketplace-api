@@ -201,6 +201,7 @@ class TestBriefs(BaseApplicationTest):
                       published_at=datetime.utcnow() - timedelta(days=1000))
 
         assert brief.status == 'closed'
+        assert brief.clarification_questions_are_closed
         assert brief.applications_closed_at < datetime.utcnow()
 
     def test_can_set_draft_brief_to_the_same_status(self):
@@ -212,6 +213,7 @@ class TestBriefs(BaseApplicationTest):
         assert brief.published_at is None
 
         brief.status = 'live'
+        assert not brief.clarification_questions_are_closed
         assert isinstance(brief.published_at, datetime)
 
     def test_status_must_be_valid(self):

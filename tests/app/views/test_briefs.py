@@ -357,6 +357,7 @@ class TestBriefs(BaseApplicationTest):
         assert 'publishedAt' in data['briefs']
         assert 'applicationsClosedAt' in data['briefs']
         assert 'clarificationQuestionsClosedAt' in data['briefs']
+        assert not data['briefs']['clarificationQuestionsAreClosed']
 
     def test_get_brief_returns_404_if_not_found(self):
         res = self.client.get('/briefs/1')

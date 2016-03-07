@@ -867,6 +867,10 @@ class Brief(db.Model):
         return closing_time
 
     @hybrid_property
+    def clarification_questions_are_closed(self):
+        return datetime.utcnow() > self.clarification_questions_closed_at
+
+    @hybrid_property
     def status(self):
         if self.published_at is None:
             return 'draft'
@@ -937,6 +941,7 @@ class Brief(db.Model):
                 'publishedAt': self.published_at.strftime(DATETIME_FORMAT),
                 'applicationsClosedAt': self.applications_closed_at.strftime(DATETIME_FORMAT),
                 'clarificationQuestionsClosedAt': self.clarification_questions_closed_at.strftime(DATETIME_FORMAT),
+                'clarificationQuestionsAreClosed': self.clarification_questions_are_closed,
             })
 
         data['links'] = {
