@@ -450,7 +450,7 @@ def supplier_eligible_for_brief(supplier_id, brief_id):
     ).first_or_404()
 
     services = filter_services(
-        frameworks=[brief.framework.slug],
+        framework_slugs=[brief.framework.slug],
         statuses=["published"],
         lot_slug=brief.lot.slug,
         location=brief.data["location"],

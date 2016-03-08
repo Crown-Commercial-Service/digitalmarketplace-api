@@ -166,10 +166,9 @@ def create_service_from_draft(draft, status):
                 raise
 
 
-def filter_services(frameworks=None, statuses=None, lot_slug=None, location=None, role=None):
-
-    if frameworks:
-        services = Service.query.has_frameworks(*frameworks)
+def filter_services(framework_slugs=None, statuses=None, lot_slug=None, location=None, role=None):
+    if framework_slugs:
+        services = Service.query.has_frameworks(*framework_slugs)
     else:
         services = Service.query.framework_is_live()
 

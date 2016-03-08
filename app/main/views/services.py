@@ -53,7 +53,7 @@ def list_services():
 
     try:
         services = filter_services(
-            frameworks=frameworks,
+            framework_slugs=frameworks,
             statuses=statuses,
             lot_slug=request.args.get('lot_slug', None),
             location=request.args.get('location', None),
