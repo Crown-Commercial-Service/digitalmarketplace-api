@@ -1052,7 +1052,4 @@ def filter_null_value_fields(obj):
 
 
 def generate_new_service_id(framework_slug):
-    if framework_slug == 'g-cloud-7':
-        return str(random.randint(7e15, 8e15-1))
-    else:
-        raise NotImplemented("Can only generate service_id for G-Cloud 7")
+    return str(random.randint(10 ** 14, 10 ** 15 - 1))
