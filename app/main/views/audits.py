@@ -1,5 +1,5 @@
 from flask import jsonify, abort, request, current_app
-from datetime import datetime
+from datetime import datetime, timedelta
 from ...models import AuditEvent
 from sqlalchemy import asc, desc, Date, cast
 from sqlalchemy.exc import IntegrityError
@@ -9,6 +9,7 @@ from .. import main
 from ... import db, models
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
+from dmutils.formats import DATE_FORMAT
 from ...validation import is_valid_date, is_valid_acknowledged_state
 from ...utils import get_json_from_request, json_has_required_keys, validate_and_return_updater_request
 
@@ -45,8 +46,9 @@ def list_audits():
     audit_date = request.args.get('audit-date', None)
     if audit_date:
         if is_valid_date(audit_date):
+            audit_datetime = datetime.strptime(audit_date, DATE_FORMAT)
             audits = audits.filter(
-                cast(AuditEvent.created_at, Date) == audit_date
+                AuditEvent.created_at.between(audit_datetime, audit_datetime + timedelta(days=1))
             )
         else:
             abort(400, 'invalid audit date supplied')
