@@ -390,8 +390,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
         self.client.put(
             '/services/%s' % self.service_id,
             data=json.dumps(
-                {'update_details': {
-                    'updated_by': 'joeblogs'},
+                {'updated_by': 'joeblogs',
                  'services': payload}),
             content_type='application/json')
 
@@ -399,8 +398,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.post(
             "/services",
             data=json.dumps(
-                {'update_details': {
-                    'updated_by': 'joeblogs'},
+                {'updated_by': 'joeblogs',
                  'services': {
                      'serviceName': 'new service name'}}),
             content_type='application/json')
@@ -411,8 +409,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.post(
             "/services/9999999999",
             data=json.dumps(
-                {'update_details': {
-                    'updated_by': 'joeblogs'},
+                {'updated_by': 'joeblogs',
                  'services': {
                      'serviceName': 'new service name'}}),
             content_type='application/json')
@@ -424,8 +421,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/services/%s' % self.service_id,
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {
                          'serviceName': 'new service name'}}))
 
@@ -437,8 +433,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/services/%s' % self.service_id,
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {
                          'serviceName': 'new service name'}}),
                 content_type='application/octet-stream')
@@ -461,8 +456,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/services/%s' % self.service_id,
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {
                          'serviceName': 'new service name'}}),
                 content_type='application/json')
@@ -480,8 +474,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/services/%s' % self.service_id,
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {
                          'serviceName': 'new service name'}}),
                 content_type='application/json')
@@ -505,14 +498,14 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             self.client.post(
                 '/services/%s' % self.service_id,
                 data=json.dumps(
-                    {'update_details': {'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {'serviceName': 'new service name'}}),
                 content_type='application/json')
 
             self.client.post(
                 '/services/%s' % self.service_id,
                 data=json.dumps(
-                    {'update_details': {'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {'serviceName': 'new new service name'}}),
                 content_type='application/json')
 
@@ -546,8 +539,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/services/%s' % self.service_id,
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {
                          'serviceName': 'new service name',
                          'incidentEscalation': False,
@@ -571,8 +563,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/services/%s' % self.service_id,
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {
                          'supportTypes': support_types}}),
                 content_type='application/json')
@@ -598,8 +589,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/services/%s' % self.service_id,
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {
                          'identityAuthenticationControls':
                              identity_authentication_controls}}),
@@ -624,8 +614,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 "/services/" + self.service_id,
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {
                          'thisIsInvalid': 'so I should never see this'}}),
                 content_type='application/json')
@@ -640,10 +629,9 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 "/services/" + self.service_id,
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {
-                        'priceUnit': 'per Truth'}}),
+                         'priceUnit': 'per Truth'}}),
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
@@ -655,8 +643,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/services/%s' % self.service_id,
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {
                          'serviceName': 'new service name'}}),
                 content_type='application/json')
@@ -676,8 +663,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/services/%s' % self.service_id,
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'},
+                    {'updated_by': 'joeblogs',
                      'services': {
                          'serviceName': 'new service name'}}),
                 content_type='application/json')
@@ -699,8 +685,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
                 response = self.client.post(
                     '/services/%s' % self.service_id,
                     data=json.dumps(
-                        {'update_details': {
-                            'updated_by': 'joeblogs'},
+                        {'updated_by': 'joeblogs',
                          'services': {
                              'serviceName': 'new service name' + str(i)}}),
                     content_type='application/json')
@@ -721,8 +706,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
                 '/services/%s' % self.service_id,
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': data['services']
                     }
                 ),
@@ -758,8 +742,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.post(
             '/services/%s' % self.service_id,
             data=json.dumps(
-                {'update_details': {
-                    'updated_by': 'joeblogs'},
+                {'updated_by': 'joeblogs',
                  'services': {
                      'serviceName': 'new service name', 'id': 'differentId'}}),
             content_type='application/json')
@@ -772,8 +755,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.post(
             '/services/%s' % self.service_id,
             data=json.dumps(
-                {'update_details': {
-                    'updated_by': 'joeblogs'},
+                {'updated_by': 'joeblogs',
                  'services': {
                      'status': 'enabled'}}),
             content_type='application/json')
@@ -800,9 +782,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
                     status
                 ),
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'}
-                     }),
+                    {'updated_by': 'joeblogs'}),
                 content_type='application/json'
             )
 
@@ -817,9 +797,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
                 "disabled"
             ),
             data=json.dumps(
-                {'update_details': {
-                    'updated_by': 'joeblogs'}
-                 }),
+                {'updated_by': 'joeblogs'}),
             content_type='application/json'
         )
 
@@ -862,9 +840,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
                     status
                 ),
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'}
-                     }),
+                    {'updated_by': 'joeblogs'}),
                 content_type='application/json'
             )
 
@@ -882,9 +858,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
                 self.service_id,
             ),
             data=json.dumps(
-                {'update_details': {
-                    'updated_by': 'joeblogs'}
-                 }),
+                {'updated_by': 'joeblogs'}),
             content_type='application/json'
         )
 
@@ -900,9 +874,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/services/{}'.format(self.service_id),
                 data=json.dumps({
-                    'update_details': {
-                        'updated_by': 'joeblogs',
-                    },
+                    'updated_by': 'joeblogs',
                     'services': data['services'],
                 }),
                 content_type='application/json')
@@ -923,9 +895,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.put('/services/{}'.format(payload['id']),
                                        data=json.dumps({
                                            'services': payload,
-                                           "update_details": {
-                                               "updated_by": "joeblogs",
-                                           },
+                                           "updated_by": "joeblogs",
                                        }),
                                        content_type='application/json')
             assert_equal(response.status_code, 201)
@@ -935,9 +905,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
                                             "services": {
                                                 "serviceName": "fooo",
                                             },
-                                            "update_details": {
-                                                "updated_by": "joeblogs",
-                                            },
+                                            "updated_by": "joeblogs"
                                         }),
                                         content_type='application/json')
             assert_equal(response.status_code, 200)
@@ -964,8 +932,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 '/services/1234567890123456',
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -986,8 +953,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 '/services/' + payload["id"],
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1007,8 +973,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 '/services/1234567890123456',
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1055,8 +1020,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 '/services/1234567890123456',
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1081,8 +1045,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 '/services/1234567890123456',
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1099,8 +1062,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 '/services/4-G2-0123-456',
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1118,8 +1080,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 '/services/1234567890123456',
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1186,9 +1147,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
                     new_status
                 ),
                 data=json.dumps(
-                    {'update_details': {
-                        'updated_by': 'joeblogs'}
-                     }),
+                    {'updated_by': 'joeblogs'}),
                 content_type='application/json'
             )
 
@@ -1269,8 +1228,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
                 'published'
             ),
             data=json.dumps(
-                {'update_details': {
-                    'updated_by': 'joeblogs'}}),
+                {'updated_by': 'joeblogs'}),
             content_type='application/json'
         )
 
@@ -1286,9 +1244,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
                 'enabled'
             ),
             data=json.dumps(
-                {'update_details': {
-                    'updated_by': 'joeblogs'}
-                 }),
+                {'updated_by': 'joeblogs'}),
             content_type='application/json'
         )
 
@@ -1328,8 +1284,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.put(
                 '/services/1234567890123456',
                 data=json.dumps({
-                    'update_details': {
-                        'updated_by': 'joeblogs'},
+                    'updated_by': 'joeblogs',
                     'services': payload,
                 }),
                 content_type='application/json')
@@ -1354,8 +1309,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 '/services/1234567890123456',
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1402,8 +1356,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 '/services/1234567890123456',
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1438,8 +1391,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 '/services/1234567890123456',
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1481,8 +1433,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 '/services/4-disabled',
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1504,8 +1455,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.put(
             '/services/1234567890123456',
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
+                'updated_by': 'joeblogs',
                 'services': {'id': "1234567890123457", 'foo': 'bar'}}),
             content_type='application/json')
 
@@ -1517,8 +1467,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.put(
             '/services/abc123456',
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
+                'updated_by': 'joeblogs',
                 'services': {'id': 'abc123456', 'foo': 'bar'}}),
             content_type='application/json')
 
@@ -1529,8 +1478,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.put(
             '/services/abcdefghij12345678901',
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
+                'updated_by': 'joeblogs',
                 'services': {'id': 'abcdefghij12345678901', 'foo': 'bar'}}),
             content_type='application/json')
 
@@ -1544,8 +1492,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.put(
             '/services/4-invalid-status',
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
+                'updated_by': 'joeblogs',
                 'services': payload}),
             content_type='application/json')
 
@@ -1559,8 +1506,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.put(
             '/services/4-invalid-lot',
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
+                'updated_by': 'joeblogs',
                 'services': payload}),
             content_type='application/json')
 
@@ -1576,8 +1522,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.put(
             '/services/1234567890123456',
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
+                'updated_by': 'joeblogs',
                 'services': payload
             }),
             content_type='application/json')
@@ -1594,8 +1539,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 '/services/6543210987654321',
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')
@@ -1614,8 +1558,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 '/services/1234567890123456',
                 data=json.dumps(
                     {
-                        'update_details': {
-                            'updated_by': 'joeblogs'},
+                        'updated_by': 'joeblogs',
                         'services': payload}
                 ),
                 content_type='application/json')

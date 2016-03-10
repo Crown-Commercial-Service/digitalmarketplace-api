@@ -328,7 +328,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                 response = self.client.put(
                     '/suppliers/{}/frameworks/g-cloud-7'.format(supplier_id),
                     data=json.dumps({
-                        'update_details': {'updated_by': 'example'}
+                        'updated_by': 'example'
                     }),
                     content_type='application/json')
                 assert response.status_code == 201, response.get_data(as_text=True)
@@ -336,7 +336,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                 response = self.client.post(
                     '/suppliers/{}/frameworks/g-cloud-7'.format(supplier_id),
                     data=json.dumps({
-                        'update_details': {'updated_by': 'example'},
+                        'updated_by': 'example',
                         'frameworkInterest': {'agreementReturned': True},
                     }),
                     content_type='application/json')

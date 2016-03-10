@@ -543,7 +543,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
-                    "update_details": {"updated_by": "a.user"},
+                    "updated_by": "a.user",
                     'users': {
                         'password': '1234567890'
                     }}),
@@ -568,7 +568,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
-                    "update_details": {"updated_by": "a.user"},
+                    "updated_by": "a.user",
                     'users': {
                         'password': 'not-in-my-audit-event'
                     }}),
@@ -605,7 +605,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
-                    "update_details": {"updated_by": "a.user"},
+                    "updated_by": "a.user",
                     'users': {
                         'active': False
                     }}),
@@ -654,7 +654,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
-                    "update_details": {"updated_by": "a.user"},
+                    "updated_by": "a.user",
                     'users': {
                         'locked': False
                     }}),
@@ -688,7 +688,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
-                    "update_details": {"updated_by": "a.user"},
+                    "updated_by": "a.user",
                     'users': {
                         'locked': True
                     }}),
@@ -712,7 +712,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
-                    "update_details": {"updated_by": "a.user"},
+                    "updated_by": "a.user",
                     'users': {
                         'name': 'I Just Got Married'
                     }}),
@@ -739,7 +739,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
-                    "update_details": {"updated_by": "a.user"},
+                    "updated_by": "a.user",
                     'users': {
                         'name': 'I Just Got Married'
                     }}),
@@ -763,7 +763,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
-                    "update_details": {"updated_by": "a.user"},
+                    "updated_by": "a.user",
                     'users': {
                         'role': 'supplier',
                         'supplierId': 456
@@ -791,7 +791,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
-                    "update_details": {"updated_by": "a.user"},
+                    "updated_by": "a.user",
                     'users': {
                         'role': 'buyer'
                     }}),
@@ -818,7 +818,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.post(
             '/users/456',
             data=json.dumps({
-                'update_details': {'updated_by': 'a.user'},
+                'updated_by': 'a.user',
                 'users': {
                     'role': 'buyer',
                     'emailAddress': 'bad@example.com',
@@ -832,7 +832,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.post(
             '/users/456',
             data=json.dumps({
-                'update_details': {'updated_by': 'a.user'},
+                'updated_by': 'a.user',
                 'users': {'emailAddress': 'bad@example.com'},
             }),
             content_type='application/json')
@@ -842,7 +842,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.post(
             '/users/456',
             data=json.dumps({
-                'update_details': {'updated_by': 'a.user'},
+                'updated_by': 'a.user',
                 'users': {'role': 'buyer'},
             }),
             content_type='application/json')
@@ -855,7 +855,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/users/456',
                 data=json.dumps({
-                    "update_details": {"updated_by": "a.user"},
+                    "updated_by": "a.user",
                     'users': {
                         'role': 'buyer',
                         'supplierId': 456
@@ -872,7 +872,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
-                    "update_details": {"updated_by": "a.user"},
+                    "updated_by": "a.user",
                     'users': {
                         'role': 'shopkeeper'
                     }}),
@@ -886,7 +886,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.client.post(
             '/users/123',
             data=json.dumps({
-                "update_details": {"updated_by": "a.user"},
+                "updated_by": "a.user",
                 'users': {
                     'role': 'supplier'
                 }}),
@@ -901,7 +901,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             response = self.client.post(
                 '/users/123',
                 data=json.dumps({
-                    "update_details": {"updated_by": "a.user"},
+                    "updated_by": "a.user",
                     'users': {
                         'emailAddress': 'myshinynew@digital.gov.uk'
                     }}),
@@ -1027,7 +1027,7 @@ class TestUsersExport(BaseUserTest):
         with self.app.app_context():
             self.framework_slug = 'digital-outcomes-and-specialists'
             self.set_framework_status(self.framework_slug, 'open')
-            self.updater_json = {'update_details': {'updated_by': 'Paul'}}
+            self.updater_json = {'updated_by': 'Paul'}
 
     def _post_users(self):
         users = [
@@ -1060,7 +1060,7 @@ class TestUsersExport(BaseUserTest):
 
     def _put_declaration(self, status):
         data = {'declaration': {'status': status}}
-        data.update(self.updater_json['update_details'])
+        data.update(self.updater_json)
 
         response = self.client.put(
             '/suppliers/{}/frameworks/{}/declaration'.format(self.supplier_id, self.framework_slug),
@@ -1111,8 +1111,8 @@ class TestUsersExport(BaseUserTest):
         self._post_framework_interest({'frameworkInterest': {'agreementReturned': True}})
 
     def _post_result(self, result):
-        data = {'frameworkInterest': {'onFramework': result}, 'update_details': {'updated_by': 'Paul'}}
-        data.update(self.updater_json['update_details'])
+        data = {'frameworkInterest': {'onFramework': result}, 'updated_by': 'Paul'}
+        data.update(self.updater_json)
         response = self.client.post(
             '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug),
             data=json.dumps(data),
@@ -1301,7 +1301,7 @@ class TestUsersExport(BaseUserTest):
             '/users/{}'.format(self.users[-1]['id']),
             data=json.dumps({
                 "users": {"active": False},
-                "update_details": {"updated_by": "test"}
+                "updated_by": "test"
             }),
             content_type='application/json')
         assert response.status_code == 200

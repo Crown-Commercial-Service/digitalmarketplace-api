@@ -47,9 +47,7 @@ class TestBriefs(BaseApplicationTest):
                     'lot': 'digital-specialists',
                     'title': 'the title',
                 },
-                'update_details': {
-                    'updated_by': 'example'
-                }
+                'updated_by': 'example'
             }),
             content_type='application/json')
         data = json.loads(res.get_data(as_text=True))
@@ -87,9 +85,7 @@ class TestBriefs(BaseApplicationTest):
                     'frameworkSlug': 'digital-outcomes-and-specialists',
                     'lot': 'digital-specialists',
                 },
-                'update_details': {
-                    'updated_by': 'example'
-                },
+                'updated_by': 'example',
                 'page_questions': ['title'],
             }),
             content_type='application/json')
@@ -136,7 +132,7 @@ class TestBriefs(BaseApplicationTest):
                     'lot': 'digital-specialists',
                     'title': 'my title',
                 },
-                'update_details': {'updated_by': 'example'}
+                'updated_by': 'example'
             }),
             content_type='application/json')
 
@@ -182,7 +178,7 @@ class TestBriefs(BaseApplicationTest):
                     'frameworkSlug': 'digital-outcomes-and-specialists',
                     'lot': 'digital-specialists',
                 },
-                'update_details': {'updated_by': 'example'}
+                'updated_by': 'example'
             }),
             content_type='application/json')
 
@@ -214,7 +210,7 @@ class TestBriefs(BaseApplicationTest):
                     'frameworkSlug': 'digital-outcomes-and-specialists',
                     'lot': 'not-exists',
                 },
-                'update_details': {'updated_by': 'example'}
+                'updated_by': 'example'
             }),
             content_type='application/json')
 
@@ -244,7 +240,7 @@ class TestBriefs(BaseApplicationTest):
             '/briefs/1',
             data=json.dumps({
                 'briefs': {},
-                'update_details': {'updated_by': 'example'},
+                'updated_by': 'example',
                 'page_questions': ['title'],
             }),
             content_type='application/json')
@@ -275,7 +271,7 @@ class TestBriefs(BaseApplicationTest):
             '/briefs/1',
             data=json.dumps({
                 'briefs': {'title': 'my title'},
-                'update_details': {'updated_by': 'example'}
+                'updated_by': 'example'
             }),
             content_type='application/json')
 
@@ -309,7 +305,7 @@ class TestBriefs(BaseApplicationTest):
             '/briefs/1',
             data=json.dumps({
                 'briefs': {},
-                'update_details': {'updated_by': 'example'},
+                'updated_by': 'example',
             }),
             content_type='application/json')
 
@@ -438,7 +434,7 @@ class TestBriefs(BaseApplicationTest):
             '/briefs/1/status',
             data=json.dumps({
                 'briefs': {'status': 'live'},
-                'update_details': {'updated_by': 'example'}
+                'updated_by': 'example'
             }),
             content_type='application/json')
         data = json.loads(res.get_data(as_text=True))
@@ -480,7 +476,7 @@ class TestBriefs(BaseApplicationTest):
             '/briefs/1/status',
             data=json.dumps({
                 'briefs': {'status': 'live'},
-                'update_details': {'updated_by': 'example'}
+                'updated_by': 'example'
             }),
             content_type='application/json')
         data = json.loads(res.get_data(as_text=True))
@@ -510,7 +506,7 @@ class TestBriefs(BaseApplicationTest):
             '/briefs/1/status',
             data=json.dumps({
                 'briefs': {'status': 'invalid'},
-                'update_details': {'updated_by': 'example'}
+                'updated_by': 'example'
             }),
             content_type='application/json')
         data = json.loads(res.get_data(as_text=True))
@@ -551,9 +547,7 @@ class TestBriefs(BaseApplicationTest):
                     'lot': 'digital-specialists',
                     'title': 'the title',
                 },
-                'update_details': {
-                    'updated_by': 'example'
-                }
+                'updated_by': 'example'
             }),
             content_type='application/json')
         data = json.loads(res.get_data(as_text=True))
@@ -593,9 +587,7 @@ class TestBriefs(BaseApplicationTest):
                     'title': 'the title',
                     'status': 'live'
                 },
-                'update_details': {
-                    'updated_by': 'example'
-                }
+                'updated_by': 'example'
             }),
             content_type='application/json')
         data = json.loads(res.get_data(as_text=True))
@@ -617,7 +609,7 @@ class TestBriefs(BaseApplicationTest):
         fetch_again = self.client.get('/briefs/{}'.format(brief_id))
         assert fetch_again.status_code == 200
 
-    def test_reject_delete_with_no_update_details(self):
+    def test_reject_delete_with_no_updated_by(self):
         res = self.client.delete('/briefs/0000000000',
                                  data=json.dumps({}),
                                  content_type='application/json')
@@ -628,7 +620,7 @@ class TestBriefs(BaseApplicationTest):
     def test_should_404_on_delete_a_brief_that_doesnt_exist(self):
         res = self.client.delete(
             '/briefs/0000000000',
-            data=json.dumps({'update_details': {'updated_by': 'example'}}),
+            data=json.dumps({'updated_by': 'example'}),
             content_type='application/json'
         )
         assert res.status_code == 404
@@ -664,7 +656,7 @@ class TestBriefs(BaseApplicationTest):
                 "clarificationQuestion": {
                     "answer": "That",
                 },
-                "update_details": {"updated_by": "example"},
+                "updated_by": "example",
             }),
             content_type="application/json")
 
@@ -702,7 +694,7 @@ class TestBriefs(BaseApplicationTest):
                     "question": "What?",
                     "answer": "That",
                 },
-                "update_details": {"updated_by": "example"},
+                "updated_by": "example",
             }),
             content_type="application/json")
 

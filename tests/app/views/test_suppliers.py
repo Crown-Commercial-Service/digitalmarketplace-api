@@ -1176,10 +1176,7 @@ class TestRegisterFrameworkInterest(BaseApplicationTest, JSONUpdateTestMixin):
     def register_interest(self, supplier_id, framework_slug, user='interested@example.com'):
         return self.client.put(
             '/suppliers/{}/frameworks/{}'.format(supplier_id, framework_slug),
-            data=json.dumps(
-                {
-                    'update_details': {'updated_by': user}
-                }),
+            data=json.dumps({'updated_by': user}),
             content_type='application/json')
 
     def test_can_register_interest_in_open_framework(self):
@@ -1220,7 +1217,7 @@ class TestRegisterFrameworkInterest(BaseApplicationTest, JSONUpdateTestMixin):
                 '/suppliers/1/frameworks/digital-outcomes-and-specialists',
                 data=json.dumps(
                     {
-                        'update_details': {'updated_by': 'interested@example.com'},
+                        'updated_by': 'interested@example.com',
                         'update': {'agreementReturned': True}
                     }),
                 content_type='application/json')
@@ -1274,10 +1271,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             self.set_framework_status('digital-outcomes-and-specialists', 'open')
             self.client.put(
                 '/suppliers/0/frameworks/digital-outcomes-and-specialists',
-                data=json.dumps(
-                    {
-                        'update_details': {'updated_by': 'interested@example.com'}
-                    }),
+                data=json.dumps({'updated_by': 'interested@example.com'}),
                 content_type='application/json')
 
             answers = SupplierFramework(
@@ -1293,7 +1287,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             '/suppliers/{}/frameworks/{}'.format(supplier_id, framework_slug),
             data=json.dumps(
                 {
-                    'update_details': {'updated_by': 'interested@example.com'},
+                    'updated_by': 'interested@example.com',
                     'frameworkInterest': update
                 }),
             content_type='application/json')
