@@ -345,7 +345,7 @@ def register_framework_interest(supplier_id, framework_slug):
 
     json_payload = get_json_from_request()
     updater_json = validate_and_return_updater_request()
-    json_payload.pop('update_details')
+    json_payload.pop('updated_by')
     if json_payload:
         abort(400, "This PUT endpoint does not take a payload.")
 
