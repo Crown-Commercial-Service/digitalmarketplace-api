@@ -21,8 +21,7 @@ class TestDraftServices(BaseApplicationTest):
 
         self.service_id = str(payload['id'])
         self.updater_json = {
-            'update_details': {
-                'updated_by': 'joeblogs'}
+            'updated_by': 'joeblogs'
         }
         self.create_draft_json = self.updater_json.copy()
         self.create_draft_json['services'] = {
@@ -52,8 +51,7 @@ class TestDraftServices(BaseApplicationTest):
         self.client.put(
             '/services/%s' % self.service_id,
             data=json.dumps(
-                {'update_details': {
-                    'updated_by': 'joeblogs'},
+                {'updated_by': 'joeblogs',
                  'services': payload}),
             content_type='application/json')
 
@@ -173,12 +171,12 @@ class TestDraftServices(BaseApplicationTest):
 
         assert_equal(res.status_code, 400)
 
-    def test_reject_copy_with_no_update_details(self):
+    def test_reject_copy_with_no_updated_by(self):
         res = self.client.put('/draft-services/copy-from/0000000000')
 
         assert_equal(res.status_code, 400)
 
-    def test_reject_create_with_no_update_details(self):
+    def test_reject_create_with_no_updated_by(self):
         res = self.client.post('/draft-services')
 
         assert_equal(res.status_code, 400)
@@ -204,14 +202,14 @@ class TestDraftServices(BaseApplicationTest):
 
         assert_equal(res.status_code, 400)
 
-    def test_reject_delete_with_no_update_details(self):
+    def test_reject_delete_with_no_updated_by(self):
         res = self.client.delete('/draft-services/0000000000',
                                  data=json.dumps({}),
                                  content_type='application/json')
 
         assert_equal(res.status_code, 400)
 
-    def test_reject_publish_with_no_update_details(self):
+    def test_reject_publish_with_no_updated_by(self):
         res = self.client.post('/draft-services/0000000000/publish',
                                data=json.dumps({}),
                                content_type='application/json')
@@ -485,8 +483,7 @@ class TestDraftServices(BaseApplicationTest):
         res = self.client.post(
             '/draft-services/{}'.format(draft_id),
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
+                'updated_by': 'joeblogs',
                 'services': {
                     'badField': 'new service name',
                     'priceUnit': 'chickens'
@@ -643,8 +640,7 @@ class TestDraftServices(BaseApplicationTest):
         update = self.client.post(
             '/draft-services/{}'.format(draft_id),
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
+                'updated_by': 'joeblogs',
                 'services': {
                     'serviceName': 'new service name'
                 }
@@ -669,8 +665,7 @@ class TestDraftServices(BaseApplicationTest):
         update = self.client.post(
             '/draft-services/{}'.format(draft_id),
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
+                'updated_by': 'joeblogs',
                 'services': {
                     'serviceName': '      a new  service name      ',
                     'serviceFeatures': [
@@ -704,8 +699,7 @@ class TestDraftServices(BaseApplicationTest):
         update = self.client.post(
             '/draft-services/{}'.format(draft_id),
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
+                'updated_by': 'joeblogs',
                 'services': {
                     'serviceName': 'new service name'
                 }
@@ -738,8 +732,7 @@ class TestDraftServices(BaseApplicationTest):
         update = self.client.post(
             '/draft-services/{}'.format(self.service_id),
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'}
+                'updated_by': 'joeblogs'
             }),
             content_type='application/json')
 
@@ -748,11 +741,7 @@ class TestDraftServices(BaseApplicationTest):
     def test_should_not_be_able_to_publish_if_no_draft_exists(self):
         res = self.client.post(
             '/draft-services/98765/publish',
-            data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs',
-                }
-            }),
+            data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
         assert_equal(res.status_code, 404)
 
@@ -779,8 +768,7 @@ class TestDraftServices(BaseApplicationTest):
         self.client.post(
             '/draft-services/{}'.format(draft_id),
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'},
+                'updated_by': 'joeblogs',
                 'services': {
                     'serviceName': 'chickens'
                 }
@@ -796,11 +784,7 @@ class TestDraftServices(BaseApplicationTest):
 
         res = self.client.post(
             '/draft-services/{}/publish'.format(draft_id),
-            data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs',
-                }
-            }),
+            data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
         assert_equal(res.status_code, 200)
 
@@ -919,7 +903,7 @@ class TestDraftServices(BaseApplicationTest):
         g7_complete = self.load_example_listing("G7-SCS").copy()
         g7_complete.pop('id')
         draft_update_json = {'services': g7_complete,
-                             'update_details': {'updated_by': 'joeblogs'}}
+                             'updated_by': 'joeblogs'}
         res2 = self.client.post(
             '/draft-services/{}'.format(draft['id']),
             data=json.dumps(draft_update_json),
@@ -932,20 +916,14 @@ class TestDraftServices(BaseApplicationTest):
     def complete_draft_service(self, draft_id):
         return self.client.post(
             '/draft-services/{}/complete'.format(draft_id),
-            data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs',
-                }
-            }),
+            data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
     def publish_draft_service(self, draft_id):
         return self.client.post(
             '/draft-services/{}/publish'.format(draft_id),
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs',
-                }
+                'updated_by': 'joeblogs'
             }),
             content_type='application/json')
 
@@ -1052,9 +1030,7 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
             db.session.commit()
 
         create_draft_json = {
-            'update_details': {
-                'updated_by': 'joeblogs'
-            },
+            'updated_by': 'joeblogs',
             'services': {
                 'frameworkSlug': 'g-cloud-7',
                 'lot': 'scs',
@@ -1080,7 +1056,7 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
     def test_copy_draft(self):
         res = self.client.post(
             '/draft-services/%s/copy' % self.draft_id,
-            data=json.dumps({'update_details': {'updated_by': 'joeblogs'}}),
+            data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
         data = json.loads(res.get_data())
@@ -1095,7 +1071,7 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
     def test_copy_draft_should_create_audit_event(self):
         res = self.client.post(
             '/draft-services/%s/copy' % self.draft_id,
-            data=json.dumps({'update_details': {'updated_by': 'joeblogs'}}),
+            data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
         assert_equal(res.status_code, 201)
@@ -1116,7 +1092,7 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
     def test_should_not_create_draft_with_invalid_data(self):
         res = self.client.post(
             '/draft-services/1000/copy',
-            data=json.dumps({'update_details': {'updated_by': 'joeblogs'}}),
+            data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
         assert_equal(res.status_code, 404)
@@ -1124,7 +1100,7 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
     def test_should_not_copy_draft_service_description(self):
         res = self.client.post(
             '/draft-services/{}/copy'.format(self.draft_id),
-            data=json.dumps({"update_details": {"updated_by": "me"}}),
+            data=json.dumps({"updated_by": "me"}),
             content_type="application/json")
         data = json.loads(res.get_data())
 
@@ -1134,7 +1110,7 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
     def test_should_not_copy_draft_documents(self):
         res = self.client.post(
             '/draft-services/{}/copy'.format(self.draft_id),
-            data=json.dumps({"update_details": {"updated_by": "me"}}),
+            data=json.dumps({"updated_by": "me"}),
             content_type="application/json")
         data = json.loads(res.get_data())
 
@@ -1167,9 +1143,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
         draft_json = self.load_example_listing("G7-SCS")
         draft_json['frameworkSlug'] = 'g-cloud-7'
         create_draft_json = {
-            'update_details': {
-                'updated_by': 'joeblogs'
-            },
+            'updated_by': 'joeblogs',
             'services': draft_json
         }
 
@@ -1184,7 +1158,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
     def test_complete_draft(self):
         res = self.client.post(
             '/draft-services/%s/complete' % self.draft_id,
-            data=json.dumps({'update_details': {'updated_by': 'joeblogs'}}),
+            data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
         data = json.loads(res.get_data())
@@ -1194,7 +1168,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
     def test_complete_draft_should_create_audit_event(self):
         res = self.client.post(
             '/draft-services/%s/complete' % self.draft_id,
-            data=json.dumps({'update_details': {'updated_by': 'joeblogs'}}),
+            data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
         assert_equal(res.status_code, 200)
@@ -1209,7 +1183,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
             'draftId': self.draft_id,
         })
 
-    def test_should_not_complete_draft_without_update_details(self):
+    def test_should_not_complete_draft_without_updated_by(self):
         res = self.client.post(
             '/draft-services/%s/complete' % self.draft_id,
             data=json.dumps({}),
@@ -1219,9 +1193,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_should_not_complete_invalid_draft(self):
         create_draft_json = {
-            'update_details': {
-                'updated_by': 'joeblogs'
-            },
+            'updated_by': 'joeblogs',
             'services': {
                 'frameworkSlug': 'g-cloud-7',
                 'lot': 'scs',
@@ -1240,7 +1212,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
 
         res = self.client.post(
             '/draft-services/%s/complete' % draft['id'],
-            data=json.dumps({'update_details': {'updated_by': 'joeblogs'}}),
+            data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
         assert_equal(res.status_code, 400)
@@ -1257,8 +1229,7 @@ class TestDOSServices(BaseApplicationTest):
 
         payload = self.load_example_listing("DOS-digital-specialist")
         self.updater_json = {
-            'update_details': {
-                'updated_by': 'joeblogs'}
+            'updated_by': 'joeblogs'
         }
         self.create_draft_json = self.updater_json.copy()
         self.create_draft_json['services'] = payload
@@ -1292,9 +1263,7 @@ class TestDOSServices(BaseApplicationTest):
         res = self.client.post(
             '/draft-services/{}'.format(draft_id),
             data=json.dumps({
-                'update_details': {
-                    'updated_by': 'joeblogs'
-                },
+                'updated_by': 'joeblogs',
                 'services': services,
                 'page_questions': page_questions if page_questions is not None else []
             }),
@@ -1460,7 +1429,7 @@ class TestDOSServices(BaseApplicationTest):
 
         res = self.client.post(
             '/draft-services/{}/copy'.format(draft['services']['id']),
-            data=json.dumps({"update_details": {"updated_by": "me"}}),
+            data=json.dumps({"updated_by": "me"}),
             content_type="application/json")
         data = json.loads(res.get_data())
 
@@ -1516,9 +1485,7 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
         draft_json = self.load_example_listing("G7-SCS")
         draft_json['frameworkSlug'] = 'g-cloud-7'
         create_draft_json = {
-            'update_details': {
-                'updated_by': 'joeblogs'
-            },
+            'updated_by': 'joeblogs',
             'services': draft_json
         }
 
@@ -1533,7 +1500,7 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
     def test_update_draft_status(self):
         res = self.client.post(
             '/draft-services/%s/update-status' % self.draft_id,
-            data=json.dumps({'services': {'status': 'failed'}, 'update_details': {'updated_by': 'joeblogs'}}),
+            data=json.dumps({'services': {'status': 'failed'}, 'updated_by': 'joeblogs'}),
             content_type='application/json')
 
         data = json.loads(res.get_data())
@@ -1543,7 +1510,7 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
     def test_update_draft_status_should_create_audit_event(self):
         res = self.client.post(
             '/draft-services/%s/update-status' % self.draft_id,
-            data=json.dumps({'services': {'status': 'failed'}, 'update_details': {'updated_by': 'joeblogs'}}),
+            data=json.dumps({'services': {'status': 'failed'}, 'updated_by': 'joeblogs'}),
             content_type='application/json')
 
         assert_equal(res.status_code, 200)
@@ -1561,7 +1528,7 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
     def test_should_not_update_draft_status_to_invalid_status(self):
         res = self.client.post(
             '/draft-services/%s/update-status' % self.draft_id,
-            data=json.dumps({'services': {'status': 'INVALID-STATUS'}, 'update_details': {'updated_by': 'joeblogs'}}),
+            data=json.dumps({'services': {'status': 'INVALID-STATUS'}, 'updated_by': 'joeblogs'}),
             content_type='application/json')
 
         assert_equal(res.status_code, 400)

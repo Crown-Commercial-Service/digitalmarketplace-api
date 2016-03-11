@@ -281,9 +281,7 @@ class TestAuditEvents(BaseApplicationTest):
             '/audit-events/{}/acknowledge'.format(
                 data['auditEvents'][0]['id']
             ),
-            data=json.dumps({
-                'update_details': {'updated_by': 'tests'}
-            }),
+            data=json.dumps({'updated_by': 'tests'}),
             content_type='application/json')
         # re-fetch to get updated data
         new_response = self.client.get('/audit-events')
@@ -301,9 +299,7 @@ class TestAuditEvents(BaseApplicationTest):
             '/audit-events/{}/acknowledge'.format(
                 data['auditEvents'][0]['id']
             ),
-            data=json.dumps({
-                'update_details': {'updated_by': 'tests'}
-            }),
+            data=json.dumps({'updated_by': 'tests'}),
             content_type='application/json')
         # re-fetch to get updated data
         new_response = self.client.get('/audit-events')
@@ -326,9 +322,7 @@ class TestAuditEvents(BaseApplicationTest):
             '/audit-events/{}/acknowledge'.format(
                 data['auditEvents'][0]['id']
             ),
-            data=json.dumps({
-                'update_details': {'updated_by': 'tests'}
-            }),
+            data=json.dumps({'updated_by': 'tests'}),
             content_type='application/json')
         # re-fetch to get updated data
         new_response = self.client.get(
@@ -350,9 +344,7 @@ class TestAuditEvents(BaseApplicationTest):
             '/audit-events/{}/acknowledge'.format(
                 data['auditEvents'][0]['id']
             ),
-            data=json.dumps({
-                'update_details': {'updated_by': 'tests'}
-            }),
+            data=json.dumps({'updated_by': 'tests'}),
             content_type='application/json')
         # re-fetch to get updated data
         new_response = self.client.get(
