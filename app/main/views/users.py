@@ -9,7 +9,7 @@ from ... import db, encryption
 from ...models import User, AuditEvent, Supplier, Framework, SupplierFramework, DraftService
 from ...utils import get_json_from_request, json_has_required_keys, \
     json_has_matching_id, pagination_links, get_valid_page_or_1, validate_and_return_updater_request
-from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400
+from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400, is_valid_buyer_email
 
 
 @main.route('/users/auth', methods=['POST'])
@@ -279,6 +279,15 @@ def export_users_for_framework(framework_slug):
         })
 
     return jsonify(users=[user for user in user_rows])
+
+
+@main.route("/users/check-buyer-email", methods=["GET"])
+def email_has_valid_buyer_domain():
+    email_address = request.args.get('email_address')
+    if not email_address:
+        abort(400, "'email_address' is a required parameter")
+
+    return jsonify(valid=is_valid_buyer_email(email_address))
 
 
 def check_supplier_role(role, supplier_id):
