@@ -264,6 +264,21 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == 'Cannot update a live brief'
 
+    def test_update_fails_if_status_is_closed(self):
+        self.setup_dummy_briefs(1, status='closed')
+
+        res = self.client.post(
+            '/briefs/1',
+            data=json.dumps({
+                'briefs': {'title': 'my title'},
+                'update_details': {'updated_by': 'example'},
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == 'Cannot update a closed brief'
+
     def test_update_brief_creates_audit_event(self):
         self.setup_dummy_briefs(1)
 
@@ -599,37 +614,34 @@ class TestBriefs(BaseApplicationTest):
         fetch_again = self.client.get('/briefs/{}'.format(brief_id))
         assert fetch_again.status_code == 404
 
-    def can_not_delete_a_live_brief(self):
-        res = self.client.post(
-            '/briefs',
-            data=json.dumps({
-                'briefs': {
-                    'userId': self.user_id,
-                    'frameworkSlug': 'digital-outcomes-and-specialists',
-                    'lot': 'digital-specialists',
-                    'title': 'the title',
-                    'status': 'live'
-                },
-                'updated_by': 'example'
-            }),
-            content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 201
-        brief_id = data['briefs']['id']
-
-        fetch = self.client.get('/briefs/{}'.format(brief_id))
-        assert fetch.status_code == 200
+    def test_can_not_delete_a_live_brief(self):
+        self.setup_dummy_briefs(1, status='live')
 
         delete = self.client.delete(
-            '/briefs/{}'.format(brief_id),
+            '/briefs/1',
             data=json.dumps({'update_details': {'updated_by': 'deleter'}}),
             content_type='application/json')
         assert delete.status_code == 400
-        error = json.loads(res.get_data(as_text=True))['error']
+
+        error = json.loads(delete.get_data(as_text=True))['error']
         assert error == u"Cannot delete a live brief"
 
-        fetch_again = self.client.get('/briefs/{}'.format(brief_id))
+        fetch_again = self.client.get('/briefs/1')
+        assert fetch_again.status_code == 200
+
+    def test_can_not_delete_a_closed_brief(self):
+        self.setup_dummy_briefs(1, status='closed')
+
+        delete = self.client.delete(
+            '/briefs/1',
+            data=json.dumps({'update_details': {'updated_by': 'deleter'}}),
+            content_type='application/json')
+        assert delete.status_code == 400
+
+        error = json.loads(delete.get_data(as_text=True))['error']
+        assert error == u"Cannot delete a closed brief"
+
+        fetch_again = self.client.get('/briefs/1')
         assert fetch_again.status_code == 200
 
     def test_reject_delete_with_no_updated_by(self):
