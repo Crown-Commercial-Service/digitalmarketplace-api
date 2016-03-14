@@ -557,6 +557,8 @@ class ServiceTableMixin(object):
 
         self.data = current_data
 
+    def __repr__(self):
+        return '<{} service_id={} lot={}>'.format(self.__class__.__name__, self.service_id, self.lot)
 
 class Service(db.Model, ServiceTableMixin):
     __tablename__ = 'services'

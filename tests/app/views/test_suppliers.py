@@ -1481,9 +1481,11 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
         self.setup_services()
         self.setup_dummy_briefs(1, status="live")
 
-        response = self.client.head("/suppliers/0/briefs/1")
+        response = self.client.get("/suppliers/0/briefs/1")
+        data = json.loads(response.get_data())
 
         assert response.status_code == 200
+        assert data["eligible"]
 
     def test_supplier_is_eligible_for_outcome(self):
         self.setup_services()
@@ -1497,15 +1499,17 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
                 lot_slug="digital-outcomes")
             db.session.commit()
 
-        response = self.client.head("/suppliers/0/briefs/1")
+        response = self.client.get("/suppliers/0/briefs/1")
+        data = json.loads(response.get_data())
 
         assert response.status_code == 200
+        assert data["eligible"]
 
     def test_404_if_brief_not_live(self):
         self.setup_services()
         self.setup_dummy_briefs(1, status="draft")
 
-        response = self.client.head("/suppliers/0/briefs/1")
+        response = self.client.get("/suppliers/0/briefs/1")
 
         assert response.status_code == 404
 
@@ -1521,9 +1525,11 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
                       "specialistRole": "developer"})
             db.session.commit()
 
-        response = self.client.head("/suppliers/0/briefs/1")
+        response = self.client.get("/suppliers/0/briefs/1")
+        data = json.loads(response.get_data())
 
-        assert response.status_code == 404
+        assert response.status_code == 200
+        assert not data["eligible"]
 
     def test_404_if_supplier_does_not_supply_the_role(self):
         self.setup_services()
@@ -1537,6 +1543,12 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
                       "specialistRole": "agileCoach"})
             db.session.commit()
 
+        response = self.client.get("/suppliers/0/briefs/1")
+        data = json.loads(response.get_data())
+
+        assert response.status_code == 200
+        assert not data["eligible"]
+
     def test_404_if_supplier_does_not_supply_in_outcome_location(self):
         self.setup_services()
         with self.app.app_context():
@@ -1545,10 +1557,12 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
                 id=1,
                 status="live",
                 user_id=1,
-                data={"location": "Wales"},
+                data={"location": "North East England"},
                 lot_slug="digital-outcomes")
             db.session.commit()
 
-        response = self.client.head("/suppliers/0/briefs/1")
+        response = self.client.get("/suppliers/0/briefs/1")
+        data = json.loads(response.get_data())
 
         assert response.status_code == 200
+        assert not data["eligible"]

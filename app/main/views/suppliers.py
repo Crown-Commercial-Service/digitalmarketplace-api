@@ -437,7 +437,7 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     return jsonify(frameworkInterest=interest_record.serialize()), 200
 
 
-@main.route("/suppliers/<supplier_id>/briefs/<brief_id>", methods=["HEAD"])
+@main.route("/suppliers/<supplier_id>/briefs/<brief_id>", methods=["GET"])
 def supplier_eligible_for_brief(supplier_id, brief_id):
     brief = Brief.query.filter(
         Brief.id == brief_id
@@ -459,7 +459,4 @@ def supplier_eligible_for_brief(supplier_id, brief_id):
 
     services = services.filter(Supplier.supplier_id == supplier.supplier_id)
 
-    if len(services.all()):
-        return "", 200
-    else:
-        return "", 404
+    return jsonify(eligible=services.count() > 0)
