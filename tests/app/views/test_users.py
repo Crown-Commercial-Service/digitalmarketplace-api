@@ -1321,3 +1321,19 @@ class TestUsersExport(BaseUserTest):
         self._set_framework_status('coming')
         response = self.client.get('/users/export/{}'.format(self.framework_slug))
         assert response.status_code == 400
+
+
+class TestUsersEmailCheck(BaseUserTest):
+    def test_valid_email_is_ok(self):
+        response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@gov.uk'})
+        assert response.status_code == 200
+        assert json.loads(response.get_data())['valid'] is True
+
+    def test_invalid_email_is_not_ok(self):
+        response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'someone@notgov.uk'})
+        assert response.status_code == 200
+        assert json.loads(response.get_data())['valid'] is False
+
+    def test_email_address_is_required(self):
+        response = self.client.get('/users/check-buyer-email')
+        assert response.status_code == 400
