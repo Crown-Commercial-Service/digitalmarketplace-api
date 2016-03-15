@@ -607,7 +607,7 @@ class Service(db.Model, ServiceTableMixin):
             return self.filter(Service.data[key_to_find].astext != '')  # SQLAlchemy weirdness
 
         def data_key_contains_value(self, k, v):
-            return self.filter(Service.data[k].astext.contains('"{}"'.format(v)))  # Postgres 9.3: use string matching
+            return self.filter(Service.data[k].astext.contains(u'"{}"'.format(v)))  # Postgres 9.3: use string matching
 
     def get_link(self):
         return url_for(".get_service", service_id=self.service_id)
