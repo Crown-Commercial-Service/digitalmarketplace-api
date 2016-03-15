@@ -87,10 +87,6 @@ class BaseApplicationTest(object):
             return user.id
 
     def setup_dummy_briefs(self, n, title=None, status='draft', user_id=1, brief_start=1, lot="digital-specialists"):
-        if status == 'closed':
-            published_at = datetime.utcnow() - timedelta(days=1000)
-        else:
-            published_at = None if status == 'draft' else datetime.utcnow()
         user_id = self.setup_dummy_user(id=user_id)
 
         with self.app.app_context():
@@ -101,26 +97,33 @@ class BaseApplicationTest(object):
             for i in range(brief_start, brief_start + n):
                 self.setup_dummy_brief(
                     id=i,
-                    status=status,
                     user_id=user_id,
                     data=dict(COMPLETE_DIGITAL_SPECIALISTS_BRIEF, title=title),
                     framework_slug="digital-outcomes-and-specialists",
-                    lot_slug="digital-specialists"
+                    lot_slug=lot.slug,
+                    status=status,
                 )
             db.session.commit()
 
-    def setup_dummy_brief(self, id=None, status="draft", user_id=1, data=None,
+    def setup_dummy_brief(self, id=None, user_id=1, status=None, data=None, published_at=None,
                           framework_slug="digital-outcomes-and-specialists", lot_slug="digital-specialists"):
+        if published_at is not None and status is not None:
+            raise ValueError("Cannot provide both status and published_at")
+        if not published_at:
+            if status == 'closed':
+                published_at = datetime.utcnow() - timedelta(days=1000)
+            else:
+                published_at = None if status == 'draft' else datetime.utcnow()
         framework = Framework.query.filter(Framework.slug == framework_slug).first()
         lot = Lot.query.filter(Lot.slug == lot_slug).first()
 
         db.session.add(Brief(
             id=id,
-            status=status,
             data=data,
             framework=framework,
             lot=lot,
-            users=[User.query.get(user_id)]
+            users=[User.query.get(user_id)],
+            published_at=published_at,
         ))
 
     def setup_dummy_suppliers(self, n):
