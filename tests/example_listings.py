@@ -34,6 +34,7 @@ def brief_response_data(essential_count=5, nice_to_have_count=5):
 
 def brief_data(essential_count=5, nice_to_have_count=5):
     return fixed_dictionaries({
+        'location': text(alphabet='abcdefghijkl'),
         'essentialRequirements': requirements_list(essential_count),
         'niceToHaveRequirements': requirements_list(nice_to_have_count),
     })
