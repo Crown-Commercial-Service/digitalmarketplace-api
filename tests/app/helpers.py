@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from nose.tools import assert_equal, assert_in
 
@@ -87,6 +87,10 @@ class BaseApplicationTest(object):
             return user.id
 
     def setup_dummy_briefs(self, n, title=None, status='draft', user_id=1, brief_start=1):
+        if status == 'closed':
+            published_at = datetime.utcnow() - timedelta(days=1000)
+        else:
+            published_at = None if status == 'draft' else datetime.utcnow()
         user_id = self.setup_dummy_user(id=user_id)
 
         with self.app.app_context():
@@ -97,10 +101,10 @@ class BaseApplicationTest(object):
             for i in range(brief_start, brief_start + n):
                 db.session.add(Brief(
                     id=i,
-                    status=status,
                     data=data,
                     framework=framework,
                     lot=lot,
+                    published_at=published_at,
                     users=[User.query.get(user_id)]
                 ))
             db.session.commit()

@@ -74,8 +74,8 @@ def update_brief(brief_id):
         Brief.id == brief_id
     ).first_or_404()
 
-    if brief.status == 'live':
-        abort(400, "Cannot update a live brief")
+    if brief.status != 'draft':
+        abort(400, "Cannot update a {} brief".format(brief.status))
 
     brief.update_from_json(brief_json)
 
@@ -187,8 +187,8 @@ def delete_draft_brief(brief_id):
         Brief.id == brief_id
     ).first_or_404()
 
-    if brief.status == 'live':
-        abort(400, "Cannot delete a live brief")
+    if brief.status != 'draft':
+        abort(400, "Cannot delete a {} brief".format(brief.status))
 
     audit = AuditEvent(
         audit_type=AuditTypes.delete_brief,
