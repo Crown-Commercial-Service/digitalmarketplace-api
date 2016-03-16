@@ -55,9 +55,9 @@ def list_services():
         services = filter_services(
             framework_slugs=frameworks,
             statuses=statuses,
-            lot_slug=request.args.get('lot_slug', None),
-            location=request.args.get('location', None),
-            role=request.args.get('role', None)
+            lot_slug=request.args.get('lot'),
+            location=request.args.get('location'),
+            role=request.args.get('role')
         )
     except ValidationError as e:
         abort(400, e.message)
