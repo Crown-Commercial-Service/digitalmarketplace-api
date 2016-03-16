@@ -86,7 +86,7 @@ class BaseApplicationTest(object):
 
             return user.id
 
-    def setup_dummy_briefs(self, n, title=None, status='draft', user_id=1, brief_start=1):
+    def setup_dummy_briefs(self, n, title=None, status='draft', user_id=1, brief_start=1, lot="digital-specialists"):
         if status == 'closed':
             published_at = datetime.utcnow() - timedelta(days=1000)
         else:
@@ -95,7 +95,7 @@ class BaseApplicationTest(object):
 
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").first()
-            lot = Lot.query.filter(Lot.slug == "digital-specialists").first()
+            lot = Lot.query.filter(Lot.slug == lot).first()
             data = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
             data["title"] = title
             for i in range(brief_start, brief_start + n):

@@ -427,6 +427,68 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
         assert len(data['briefs']) == 0
 
+    def test_list_briefs_by_multiple_statuses(self):
+        self.setup_dummy_briefs(3, status='live')
+        self.setup_dummy_briefs(2, status='draft', brief_start=4)
+
+        res = self.client.get('/briefs?status=draft,live')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 5, data['briefs']
+
+    def test_list_briefs_by_framework(self):
+        self.setup_dummy_briefs(3, status='live')
+        self.setup_dummy_briefs(2, status='draft', brief_start=4)
+
+        res = self.client.get('/briefs?framework=digital-outcomes-and-specialists')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 5, data['briefs']
+
+    def test_cannot_list_briefs_by_invalid_framework(self):
+        self.setup_dummy_briefs(1, status='live')
+        self.setup_dummy_briefs(1, status='draft', brief_start=2)
+
+        res = self.client.get('/briefs?framework=digital-biscuits-and-cakes')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 0
+
+    def test_list_briefs_by_framework_and_status(self):
+        self.setup_dummy_briefs(3, status='live')
+        self.setup_dummy_briefs(2, status='draft', brief_start=4)
+
+        res = self.client.get('/briefs?framework=digital-outcomes-and-specialists&status=draft')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 2, data['briefs']
+
+    def test_list_briefs_by_lot(self):
+        self.setup_dummy_briefs(3, status='live', lot='digital-outcomes')
+        self.setup_dummy_briefs(1, status='draft', lot='digital-outcomes', brief_start=4)
+        self.setup_dummy_briefs(2, status='live', lot='digital-specialists', brief_start=5)
+
+        res = self.client.get('/briefs?lot=digital-outcomes')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 4, data['briefs']
+
+    def test_list_briefs_by_lot_and_status(self):
+        self.setup_dummy_briefs(3, status='live', lot='digital-outcomes')
+        self.setup_dummy_briefs(1, status='draft', lot='digital-outcomes', brief_start=4)
+        self.setup_dummy_briefs(2, status='live', lot='digital-specialists', brief_start=5)
+
+        res = self.client.get('/briefs?lot=digital-outcomes&status=live')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 3, data['briefs']
+
     def test_list_briefs_pagination_page_one(self):
         self.setup_dummy_briefs(7)
 
