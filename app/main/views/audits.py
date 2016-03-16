@@ -19,6 +19,7 @@ AUDIT_OBJECT_TYPES = {
     "services": models.Service,
     "frameworks": models.Framework,
     "users": models.User,
+    "briefs": models.Brief,
 }
 
 AUDIT_OBJECT_ID_FIELDS = {
@@ -26,6 +27,7 @@ AUDIT_OBJECT_ID_FIELDS = {
     "services": models.Service.service_id,
     "frameworks": models.Framework.slug,
     "users": models.User.id,
+    "briefs": models.Brief.id,
 }
 
 
