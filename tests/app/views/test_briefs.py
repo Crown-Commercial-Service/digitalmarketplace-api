@@ -427,6 +427,16 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
         assert len(data['briefs']) == 0
 
+    def test_list_briefs_by_multiple_statuses(self):
+        self.setup_dummy_briefs(3, status='live')
+        self.setup_dummy_briefs(2, status='draft', brief_start=4)
+
+        res = self.client.get('/briefs?status=draft,live')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 5, data['briefs']
+
     def test_list_briefs_pagination_page_one(self):
         self.setup_dummy_briefs(7)
 

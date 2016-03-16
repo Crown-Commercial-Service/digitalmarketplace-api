@@ -899,6 +899,10 @@ class Brief(db.Model):
             (cls.applications_closed_at > datetime.utcnow(), 'live')
         ], else_='closed')
 
+    class query_class(BaseQuery):
+        def has_statuses(self, *statuses):
+            return self.filter(Brief.status.in_(statuses))
+
     def add_clarification_question(self, question, answer):
         clarification_question = BriefClarificationQuestion(
             brief=self,

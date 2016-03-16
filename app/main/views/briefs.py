@@ -109,17 +109,18 @@ def get_brief(brief_id):
 
 @main.route('/briefs', methods=['GET'])
 def list_briefs():
-    briefs = Brief.query.order_by(Brief.id)
+    briefs = Brief.query.order_by(Brief.published_at.desc(), Brief.id)
     page = get_valid_page_or_1()
 
     user_id = get_int_or_400(request.args, 'user_id')
-    status = request.args.get('status')
 
     if user_id:
         briefs = briefs.filter(Brief.users.any(id=user_id))
 
-    if status:
-        briefs = briefs.filter(Brief.status == status)
+    if request.args.get('status'):
+        briefs = briefs.has_statuses(*[
+            status.strip() for status in request.args['status'].split(',')
+            ])
 
     briefs = briefs.paginate(
         page=page,
