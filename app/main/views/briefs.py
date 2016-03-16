@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from dmapiclient.audit import AuditTypes
 from .. import main
 from ... import db
-from ...models import User, Brief, AuditEvent
+from ...models import User, Brief, AuditEvent, Framework, Lot
 from ...utils import (
     get_json_from_request, get_int_or_400, json_has_required_keys, pagination_links,
     get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request
@@ -116,6 +116,12 @@ def list_briefs():
 
     if user_id:
         briefs = briefs.filter(Brief.users.any(id=user_id))
+
+    if request.args.get('framework'):
+        briefs = briefs.filter(Brief.framework.has(Framework.slug == request.args.get('framework')))
+
+    if request.args.get('lot'):
+        briefs = briefs.filter(Brief.lot.has(Lot.slug == request.args.get('lot')))
 
     if request.args.get('status'):
         briefs = briefs.has_statuses(*[
