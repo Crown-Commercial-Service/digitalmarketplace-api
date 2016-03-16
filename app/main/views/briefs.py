@@ -4,12 +4,12 @@ from sqlalchemy.exc import IntegrityError
 from dmapiclient.audit import AuditTypes
 from .. import main
 from ... import db
-from ...models import User, Brief, AuditEvent, Framework, Lot
+from ...models import User, Brief, AuditEvent, Framework, Lot, Supplier
 from ...utils import (
     get_json_from_request, get_int_or_400, json_has_required_keys, pagination_links,
     get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request
 )
-from ...service_utils import validate_and_return_lot
+from ...service_utils import validate_and_return_lot, filter_services
 from ...brief_utils import validate_brief_data
 
 
@@ -251,3 +251,30 @@ def add_clarification_question(brief_id):
     db.session.commit()
 
     return jsonify(briefs=brief.serialize()), 200
+
+
+@main.route("/briefs/<brief_id>/services", methods=["GET"])
+def list_brief_services(brief_id):
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).filter(
+        Brief.status == "live"
+    ).first_or_404()
+
+    supplier_id = get_int_or_400(request.args, 'supplier_id')
+
+    supplier = Supplier.query.filter(
+        Supplier.supplier_id == supplier_id
+    ).first_or_404()
+
+    services = filter_services(
+        framework_slugs=[brief.framework.slug],
+        statuses=["published"],
+        lot_slug=brief.lot.slug,
+        location=brief.data["location"],
+        role=brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
+    )
+
+    services = services.filter(Supplier.supplier_id == supplier.supplier_id)
+
+    return jsonify(services=[service.serialize() for service in services])

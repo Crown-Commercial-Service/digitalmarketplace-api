@@ -1,13 +1,11 @@
 from datetime import datetime
 from flask import jsonify, abort, request, current_app
-from sqlalchemy import func, orm
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
 from ...models import (
     Supplier, ContactInformation, AuditEvent,
-    Service, DraftService, SupplierFramework, Framework,
-    Brief
+    Service, SupplierFramework, Framework
 )
 from ...validation import (
     validate_supplier_json_or_400,
@@ -17,7 +15,6 @@ from ...validation import (
 from ...utils import pagination_links, drop_foreign_fields, get_json_from_request, \
     json_has_required_keys, json_has_matching_id, get_valid_page_or_1, validate_and_return_updater_request
 from ...supplier_utils import validate_and_return_supplier_request
-from ...service_utils import filter_services
 from dmapiclient.audit import AuditTypes
 
 
@@ -435,28 +432,3 @@ def update_supplier_framework_details(supplier_id, framework_slug):
         return jsonify(message="Database Error: {0}".format(e)), 400
 
     return jsonify(frameworkInterest=interest_record.serialize()), 200
-
-
-@main.route("/suppliers/<supplier_id>/briefs/<brief_id>", methods=["GET"])
-def supplier_eligible_for_brief(supplier_id, brief_id):
-    brief = Brief.query.filter(
-        Brief.id == brief_id
-    ).filter(
-        Brief.status == "live"
-    ).first_or_404()
-
-    supplier = Supplier.query.filter(
-        Supplier.supplier_id == supplier_id
-    ).first_or_404()
-
-    services = filter_services(
-        framework_slugs=[brief.framework.slug],
-        statuses=["published"],
-        lot_slug=brief.lot.slug,
-        location=brief.data["location"],
-        role=brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
-    )
-
-    services = services.filter(Supplier.supplier_id == supplier.supplier_id)
-
-    return jsonify(eligible=services.count() > 0)
