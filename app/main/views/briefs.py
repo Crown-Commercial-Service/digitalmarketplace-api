@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from dmapiclient.audit import AuditTypes
 from .. import main
 from ... import db
-from ...models import User, Brief, AuditEvent, Framework, Lot, Supplier
+from ...models import User, Brief, AuditEvent, Framework, Lot, Supplier, Service
 from ...utils import (
     get_json_from_request, get_int_or_400, json_has_required_keys, pagination_links,
     get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request
@@ -275,6 +275,6 @@ def list_brief_services(brief_id):
         role=brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
     )
 
-    services = services.filter(Supplier.supplier_id == supplier.supplier_id)
+    services = services.filter(Service.supplier_id == supplier.supplier_id)
 
     return jsonify(services=[service.serialize() for service in services])

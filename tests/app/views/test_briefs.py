@@ -813,7 +813,7 @@ class TestBriefs(BaseApplicationTest):
 class TestSupplierIsEligibleForBrief(BaseApplicationTest):
     def setup_services(self):
         with self.app.app_context():
-            self.setup_dummy_suppliers(1)
+            self.setup_dummy_suppliers(2)
             self.set_framework_status("digital-outcomes-and-specialists", "live")
             self.setup_dummy_service(
                 service_id='10000000001',
@@ -833,7 +833,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
             )
             self.setup_dummy_service(
                 service_id='10000000003',
-                supplier_id=0,
+                supplier_id=1,
                 framework_id=5,  # Digital Outcomes and Specialists
                 lot_id=6,  # digital-specialists
                 data={"developerLocations": ["Wales"]}
@@ -848,7 +848,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
         data = json.loads(response.get_data(as_text=True))
 
         assert response.status_code == 200
-        assert data["services"]
+        assert len(data["services"]) == 1
 
     def test_supplier_is_eligible_for_outcome(self):
         self.setup_services()
