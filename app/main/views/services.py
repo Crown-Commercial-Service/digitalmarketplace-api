@@ -3,7 +3,7 @@ from dmapiclient.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 
 from .. import main
-from ...models import ArchivedService, Service, Supplier, AuditEvent, Framework
+from ...models import ArchivedService, Service, Supplier, AuditEvent, Framework, ValidationError
 
 from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
@@ -20,7 +20,7 @@ from ...service_utils import (
     commit_and_archive_service,
     validate_service_data,
     validate_and_return_related_objects,
-)
+    filter_services)
 
 
 @main.route('/')
@@ -42,16 +42,25 @@ def list_services():
     supplier_id = get_int_or_400(request.args, 'supplier_id')
 
     if request.args.get('framework'):
-        services = Service.query.has_frameworks(*[
-            slug.strip() for slug in request.args['framework'].split(',')
-        ])
+        frameworks = [slug.strip() for slug in request.args['framework'].split(',')]
     else:
-        services = Service.query.framework_is_live()
+        frameworks = None
 
     if request.args.get('status'):
-        services = services.has_statuses(*[
-            status.strip() for status in request.args['status'].split(',')
-        ])
+        statuses = [status.strip() for status in request.args['status'].split(',')]
+    else:
+        statuses = None
+
+    try:
+        services = filter_services(
+            framework_slugs=frameworks,
+            statuses=statuses,
+            lot_slug=request.args.get('lot'),
+            location=request.args.get('location'),
+            role=request.args.get('role')
+        )
+    except ValidationError as e:
+        abort(400, e.message)
 
     if supplier_id is not None:
         supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()

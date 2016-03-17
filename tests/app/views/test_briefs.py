@@ -808,3 +808,132 @@ class TestBriefs(BaseApplicationTest):
             "question": "What?",
             "answer": "That",
         }
+
+
+class TestSupplierIsEligibleForBrief(BaseApplicationTest):
+    def setup_services(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(2)
+            self.set_framework_status("digital-outcomes-and-specialists", "live")
+            self.setup_dummy_service(
+                service_id='10000000001',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=5,  # digital-outcomes
+                data={"locations": [
+                    "London", "Offsite", "Scotland", "Wales"
+                ]
+                })
+            self.setup_dummy_service(
+                service_id='10000000002',
+                supplier_id=0,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=6,  # digital-specialists
+                data={"developerLocations": ["London", "Offsite", "Scotland", "Wales"]}
+            )
+            self.setup_dummy_service(
+                service_id='10000000003',
+                supplier_id=1,
+                framework_id=5,  # Digital Outcomes and Specialists
+                lot_id=6,  # digital-specialists
+                data={"developerLocations": ["Wales"]}
+            )
+            db.session.commit()
+
+    def test_supplier_is_eligible_for_specialist(self):
+        self.setup_services()
+        self.setup_dummy_briefs(1, status="live")
+
+        response = self.client.get("/briefs/1/services?supplier_id=0")
+        data = json.loads(response.get_data(as_text=True))
+
+        assert response.status_code == 200
+        assert len(data["services"]) == 1
+
+    def test_supplier_is_eligible_for_outcome(self):
+        self.setup_services()
+        with self.app.app_context():
+            self.setup_dummy_user(id=1)
+            self.setup_dummy_brief(
+                id=1,
+                status="live",
+                user_id=1,
+                data={"location": "London"},
+                lot_slug="digital-outcomes")
+            db.session.commit()
+
+        response = self.client.get("/briefs/1/services?supplier_id=0")
+        data = json.loads(response.get_data(as_text=True))
+
+        assert response.status_code == 200
+        assert data["services"]
+
+    def test_supplier_id_must_be_provided(self):
+        self.setup_services()
+        self.setup_dummy_briefs(1, status="live")
+
+        response = self.client.get("/briefs/1/services")
+
+        assert response.status_code == 404
+
+    def test_supplier_is_ineligible_if_brief_not_live(self):
+        self.setup_services()
+        self.setup_dummy_briefs(1, status="draft")
+
+        response = self.client.get("/briefs/1/services?supplier_id=0")
+
+        assert response.status_code == 404
+
+    def test_supplier_is_ineligible_if_not_in_specialist_location(self):
+        self.setup_services()
+        with self.app.app_context():
+            self.setup_dummy_user(id=1)
+            self.setup_dummy_brief(
+                id=1,
+                status="live",
+                user_id=1,
+                data={"location": "North East England",
+                      "specialistRole": "developer"})
+            db.session.commit()
+
+        response = self.client.get("/briefs/1/services?supplier_id=0")
+        data = json.loads(response.get_data(as_text=True))
+
+        assert response.status_code == 200
+        assert not data["services"]
+
+    def test_supplier_is_ineligible_if_does_not_supply_the_role(self):
+        self.setup_services()
+        with self.app.app_context():
+            self.setup_dummy_user(id=1)
+            self.setup_dummy_brief(
+                id=1,
+                status="live",
+                user_id=1,
+                data={"location": "London",
+                      "specialistRole": "agileCoach"})
+            db.session.commit()
+
+        response = self.client.get("/briefs/1/services?supplier_id=0")
+        data = json.loads(response.get_data(as_text=True))
+
+        assert response.status_code == 200
+        assert not data["services"]
+
+    def test_supplier_is_ineligible_if_does_not_supply_in_outcome_location(self):
+        self.setup_services()
+        with self.app.app_context():
+            self.setup_dummy_user(id=1)
+            self.setup_dummy_brief(
+                id=1,
+                status="live",
+                user_id=1,
+                data={"location": "North East England"},
+                lot_slug="digital-outcomes")
+            db.session.commit()
+
+        response = self.client.get("/briefs/1/services?supplier_id=0")
+        data = json.loads(response.get_data(as_text=True))
+
+        assert response.status_code == 200
+        assert not data["services"]

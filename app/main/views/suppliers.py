@@ -1,10 +1,12 @@
 from datetime import datetime
 from flask import jsonify, abort, request, current_app
-from sqlalchemy import func, orm
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
-from ...models import Supplier, ContactInformation, AuditEvent, Service, DraftService, SupplierFramework, Framework
+from ...models import (
+    Supplier, ContactInformation, AuditEvent,
+    Service, SupplierFramework, Framework
+)
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400,
