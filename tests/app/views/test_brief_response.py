@@ -6,7 +6,7 @@ from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 from ... import example_listings
 
 from dmapiclient.audit import AuditTypes
-from app.models import db, Lot, Brief, BriefResponse, AuditEvent
+from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service
 
 
 class BaseBriefResponseTest(BaseApplicationTest):
@@ -19,7 +19,17 @@ class BaseBriefResponseTest(BaseApplicationTest):
                 data=example_listings.brief_data().example(),
                 status='live', framework_id=5, lot=Lot.query.get(5)
             )
-            db.session.add(brief)
+
+            service = Service(
+                service_id='1234560987654321',
+                data={'locations': [brief.data['location']]},
+                status='published',
+                framework_id=5,
+                lot_id=5,
+                supplier_id=0,
+            )
+
+            db.session.add_all([service, brief])
             db.session.commit()
 
             self.brief_id = brief.id
@@ -175,6 +185,15 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
         assert res.status_code == 400
         assert 'Invalid supplier ID' in res.get_data(as_text=True)
+
+    def test_cannot_create_brief_response_when_supplier_isnt_eligible(self, live_framework):
+        res = self.create_brief_response({
+            'briefId': self.brief_id,
+            'supplierId': 1
+        })
+
+        assert res.status_code == 400
+        assert 'Supplier not eligible' in res.get_data(as_text=True)
 
     def test_cannot_respond_to_a_brief_that_isnt_live(self, live_framework):
         with self.app.app_context():

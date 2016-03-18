@@ -558,7 +558,10 @@ class ServiceTableMixin(object):
         self.data = current_data
 
     def __repr__(self):
-        return '<{} service_id={} lot={}>'.format(self.__class__.__name__, self.service_id, self.lot)
+        return '<{}: service_id={}, supplier_id={}, lot={}>'.format(
+            self.__class__.__name__,
+            self.service_id, self.supplier_id, self.lot
+        )
 
 
 class Service(db.Model, ServiceTableMixin):
@@ -604,7 +607,7 @@ class Service(db.Model, ServiceTableMixin):
             return self.filter(Service.data[key_to_find].astext != '')  # SQLAlchemy weirdness
 
         def data_key_contains_value(self, k, v):
-            return self.filter(Service.data[k].astext.contains('"{}"'.format(v)))  # Postgres 9.3: use string matching
+            return self.filter(Service.data[k].astext.contains(u'"{}"'.format(v)))  # Postgres 9.3: use string matching
 
     def get_link(self):
         return url_for(".get_service", service_id=self.service_id)
