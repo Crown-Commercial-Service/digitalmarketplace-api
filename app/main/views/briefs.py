@@ -128,18 +128,24 @@ def list_briefs():
             status.strip() for status in request.args['status'].split(',')
             ])
 
-    briefs = briefs.paginate(
-        page=page,
-        per_page=current_app.config['DM_API_BRIEFS_PAGE_SIZE'])
-
-    return jsonify(
-        briefs=[brief.serialize() for brief in briefs.items],
-        links=pagination_links(
-            briefs,
-            '.list_briefs',
-            request.args
+    if user_id:
+        return jsonify(
+            briefs=[brief.serialize() for brief in briefs.all()],
+            links=dict()
         )
-    )
+    else:
+        briefs = briefs.paginate(
+            page=page,
+            per_page=current_app.config['DM_API_BRIEFS_PAGE_SIZE'])
+
+        return jsonify(
+            briefs=[brief.serialize() for brief in briefs.items],
+            links=pagination_links(
+                briefs,
+                '.list_briefs',
+                request.args
+            )
+        )
 
 
 @main.route('/briefs/<int:brief_id>/status', methods=['PUT'])
