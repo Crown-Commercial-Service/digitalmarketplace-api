@@ -512,6 +512,17 @@ class TestBriefs(BaseApplicationTest):
         assert len(data['briefs']) == 2
         assert data['links']['prev'] == 'http://localhost/briefs?page=1'
 
+    def test_list_briefs_no_pagination_if_user_id_supplied(self):
+        self.setup_dummy_briefs(7)
+
+        res = self.client.get('/briefs?user_id=1')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        assert len(data['briefs']) == 7
+        assert data['links'] == {}
+
     def test_make_a_brief_live(self):
         self.setup_dummy_briefs(1, title='The Title')
 
