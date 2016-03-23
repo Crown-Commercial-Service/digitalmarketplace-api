@@ -125,7 +125,7 @@ def list_draft_services():
 
     supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
     if not supplier:
-        abort(404, "supplier_id '%d' not found" % supplier_id)
+        abort(404, "supplier_id '{}' not found".format(supplier_id))
 
     services = DraftService.query.order_by(
         asc(DraftService.id)
@@ -139,6 +139,8 @@ def list_draft_services():
         framework = Framework.query.filter(
             Framework.slug == framework_slug
         ).first()
+        if not framework:
+            abort(404, "framework '{}' not found".format(framework_slug))
         services = services.filter(DraftService.framework_id == framework.id)
 
     items = services.filter(DraftService.supplier_id == supplier_id).all()

@@ -115,6 +115,17 @@ class TestDraftServices(BaseApplicationTest):
         drafts = json.loads(res.get_data())
         assert_equal(len(drafts['services']), 0)
 
+    def test_does_not_return_drafts_from_non_existant_framework(self):
+        self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        res = self.client.get(
+            '/draft-services?supplier_id=1&framework=this-is-not-valid'
+        )
+        assert res.status_code == 404
+        assert json.loads(res.get_data(as_text=True))["error"] == "framework 'this-is-not-valid' not found"
+
     def test_returns_all_drafts_for_supplier_on_single_page(self):
         with self.app.app_context():
 
