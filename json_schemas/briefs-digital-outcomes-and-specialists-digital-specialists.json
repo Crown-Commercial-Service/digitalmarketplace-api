@@ -85,21 +85,21 @@
     },
     "specialistRole": {
       "enum": [
-        "agile_coach",
-        "business_analyst",
-        "communications_manager",
-        "content_designer",
-        "cyber_security_consultant",
-        "delivery_manager",
+        "agileCoach",
+        "businessAnalyst",
+        "communicationsManager",
+        "contentDesigner",
+        "securityConsultant",
+        "deliveryManager",
         "designer",
         "developer",
-        "portfolio_manager",
-        "product_manager",
-        "programme_manager",
-        "quality_assurance_analyst",
-        "service_manager",
-        "user_researcher",
-        "web_operations_engineer"
+        "portfolioManager",
+        "productManager",
+        "programmeManager",
+        "qualityAssurance",
+        "serviceManager",
+        "userResearcher",
+        "webOperations"
       ]
     },
     "startDate": {
