@@ -1,6 +1,6 @@
 from flask import jsonify, abort, request
 from sqlalchemy.types import String
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy import func, orm, case, cast
 import datetime
 
@@ -23,6 +23,49 @@ def list_frameworks():
     return jsonify(
         frameworks=[f.serialize() for f in frameworks]
     )
+
+
+@main.route("/frameworks", methods=["POST"])
+def create_framework():
+    updater_json = validate_and_return_updater_request()
+
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['frameworks'])
+    json_only_has_required_keys(json_payload['frameworks'], [
+        "slug", "name", "framework", "status", "clarificationQuestionsOpen", "lots"
+    ])
+
+    lots = Lot.query.filter(Lot.slug.in_(json_payload["frameworks"]["lots"])).all()
+    unfound_lots = set(json_payload["frameworks"]["lots"]) - set(lot.slug for lot in lots)
+    if len(unfound_lots) > 0:
+        abort(400, "Invalid lot slugs: {}".format(", ".join(sorted(unfound_lots))))
+
+    try:
+        framework = Framework(
+            slug=json_payload["frameworks"]["slug"],
+            name=json_payload["frameworks"]["name"],
+            framework=json_payload["frameworks"]["framework"],
+            status=json_payload["frameworks"]["status"],
+            clarification_questions_open=json_payload["frameworks"]["clarificationQuestionsOpen"],
+            lots=lots
+        )
+        db.session.add(framework)
+        db.session.add(
+            AuditEvent(
+                audit_type=AuditTypes.create_framework,
+                db_object=framework,
+                user=updater_json['updated_by'],
+                data={'update': json_payload['frameworks']})
+        )
+        db.session.commit()
+    except DataError as e:
+        db.session.rollback()
+        abort(400, "Invalid framework")
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Slug '{}' already in use".format(json_payload["frameworks"]["slug"]))
+
+    return jsonify(frameworks=framework.serialize())
 
 
 @main.route('/frameworks/<string:framework_slug>', methods=['GET'])

@@ -1,5 +1,6 @@
 import random
 from datetime import datetime, timedelta
+import re
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
@@ -115,8 +116,16 @@ class Framework(db.Model):
             raise ValidationError("Invalid framework value '{}'".format(framework))
         return framework
 
+    slug_pattern = re.compile("^[\w-]+$")
+
+    @validates("slug")
+    def validates_slug(self, key, slug):
+        if not self.slug_pattern.match(slug):
+            raise ValidationError("Invalid slug value '{}'".format(slug))
+        return slug
+
     def __repr__(self):
-        return '<{}: {}>'.format(self.__class__.__name__, self.name)
+        return '<{}: {} slug={}>'.format(self.__class__.__name__, self.name, self.slug)
 
 
 class ContactInformation(db.Model):
