@@ -7,7 +7,7 @@ from dateutil.parser import parse as parse_time
 from dmapiclient.audit import AuditTypes
 
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
-from app.models import db, Framework, SupplierFramework, DraftService, AuditEvent, Supplier, User
+from app.models import db, Framework, SupplierFramework, DraftService, AuditEvent, Supplier, User, FrameworkLot
 
 
 class TestListFrameworks(BaseApplicationTest):
@@ -21,6 +21,107 @@ class TestListFrameworks(BaseApplicationTest):
                          len(Framework.query.all()))
             assert_equal(sorted(data['frameworks'][0].keys()),
                          ['clarificationQuestionsOpen', 'framework', 'id', 'lots', 'name', 'slug', 'status'])
+
+
+class TestCreateFramework(BaseApplicationTest):
+    def framework(self, **kwargs):
+        return {
+            "frameworks": {
+                "slug": kwargs.get("slug", "example"),
+                "name": "Example",
+                "framework": "g-cloud",
+                "status": kwargs.get("status", "coming"),
+                "clarificationQuestionsOpen": kwargs.get("clarificationQuestionsOpen", False),
+                "lots": kwargs.get("lots", [
+                    "saas", "paas", "iaas", "scs"
+                ])
+            },
+            "updated_by": "example"
+        }
+
+    def teardown(self):
+        super(TestCreateFramework, self).teardown()
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == "example").first()
+            if framework:
+                FrameworkLot.query.filter(FrameworkLot.framework_id == framework.id).delete()
+                Framework.query.filter(Framework.id == framework.id).delete()
+                db.session.commit()
+
+    def test_create_a_framework(self):
+        with self.app.app_context():
+            response = self.client.post("/frameworks",
+                                        data=json.dumps(self.framework()),
+                                        content_type="application/json")
+
+            assert response.status_code == 200
+
+            framework = Framework.query.filter(Framework.slug == "example").first()
+
+            assert framework.name == "Example"
+            assert len(framework.lots) == 4
+
+    def test_create_adds_audit_event(self):
+        with self.app.app_context():
+            self.client.post("/frameworks",
+                             data=json.dumps(self.framework()),
+                             content_type="application/json")
+
+            response = self.client.get("/audit-events")
+
+            data = json.loads(response.get_data(as_text=True))
+
+            assert len(data["auditEvents"]) == 1
+            assert data["auditEvents"][0]["type"] == "create_framework"
+
+    def test_create_fails_if_framework_already_exists(self):
+        with self.app.app_context():
+            self.client.post("/frameworks",
+                             data=json.dumps(self.framework()),
+                             content_type="application/json")
+
+            response = self.client.post("/frameworks",
+                                        data=json.dumps(self.framework()),
+                                        content_type="application/json")
+
+            assert response.status_code == 400
+            assert json.loads(response.get_data(as_text=True))["error"] == "Slug 'example' already in use"
+
+    def test_create_fails_if_status_is_invalid(self):
+        with self.app.app_context():
+            response = self.client.post("/frameworks",
+                                        data=json.dumps(self.framework(status="invalid")),
+                                        content_type="application/json")
+
+            assert response.status_code == 400
+            assert json.loads(response.get_data(as_text=True))["error"] == "Invalid status value 'invalid'"
+
+    def test_create_fails_if_clarification_questions_open_is_invalid(self):
+        with self.app.app_context():
+            response = self.client.post("/frameworks",
+                                        data=json.dumps(self.framework(clarificationQuestionsOpen="invalid")),
+                                        content_type="application/json")
+
+            assert response.status_code == 400
+            assert json.loads(response.get_data(as_text=True))["error"] == "Invalid framework"
+
+    def test_create_fails_if_lot_slug_is_invalid(self):
+        with self.app.app_context():
+            response = self.client.post("/frameworks",
+                                        data=json.dumps(self.framework(lots=["saas", "invalid", "bad"])),
+                                        content_type="application/json")
+
+            assert response.status_code == 400
+            assert json.loads(response.get_data(as_text=True))["error"] == "Invalid lot slugs: bad, invalid"
+
+    def test_create_fails_if_slug_is_invalid(self):
+        with self.app.app_context():
+            response = self.client.post("/frameworks",
+                                        data=json.dumps(self.framework(slug="this is/invalid")),
+                                        content_type="application/json")
+
+            assert response.status_code == 400
+            assert json.loads(response.get_data(as_text=True))["error"] == "Invalid slug value 'this is/invalid'"
 
 
 class TestGetFramework(BaseApplicationTest):
