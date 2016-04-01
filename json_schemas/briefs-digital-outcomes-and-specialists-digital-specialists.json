@@ -17,6 +17,12 @@
       "minLength": 1,
       "type": "string"
     },
+    "culturalWeighting": {
+      "exclusiveMaximum": true,
+      "maximum": 20,
+      "minimum": 5,
+      "type": "integer"
+    },
     "currentTechnologies": {
       "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
@@ -83,6 +89,12 @@
       "minLength": 1,
       "type": "string"
     },
+    "priceWeighting": {
+      "exclusiveMaximum": true,
+      "maximum": 85,
+      "minimum": 20,
+      "type": "integer"
+    },
     "specialistRole": {
       "enum": [
         "agileCoach",
@@ -107,6 +119,12 @@
       "minLength": 1,
       "type": "string"
     },
+    "technicalWeighting": {
+      "exclusiveMaximum": true,
+      "maximum": 75,
+      "minimum": 10,
+      "type": "integer"
+    },
     "title": {
       "maxLength": 100,
       "minLength": 1,
@@ -121,13 +139,16 @@
   "required": [
     "backgroundInformation",
     "contractLength",
+    "culturalWeighting",
     "essentialRequirements",
     "evaluationType",
     "importantDates",
     "location",
     "organisation",
+    "priceWeighting",
     "specialistRole",
     "startDate",
+    "technicalWeighting",
     "title"
   ],
   "title": "Digital Outcomes and Specialists Digital specialists Brief Schema",
