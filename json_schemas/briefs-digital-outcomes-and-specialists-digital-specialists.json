@@ -18,7 +18,7 @@
       "type": "string"
     },
     "culturalWeighting": {
-      "exclusiveMaximum": true,
+      "exclusiveMaximum": false,
       "maximum": 20,
       "minimum": 5,
       "type": "integer"
@@ -90,7 +90,7 @@
       "type": "string"
     },
     "priceWeighting": {
-      "exclusiveMaximum": true,
+      "exclusiveMaximum": false,
       "maximum": 85,
       "minimum": 20,
       "type": "integer"
@@ -120,7 +120,7 @@
       "type": "string"
     },
     "technicalWeighting": {
-      "exclusiveMaximum": true,
+      "exclusiveMaximum": false,
       "maximum": 75,
       "minimum": 10,
       "type": "integer"
