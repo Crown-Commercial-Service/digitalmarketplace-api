@@ -19,7 +19,7 @@
       "type": "array"
     },
     "respondToEmailAddress": {
-      "minLength": 1,
+      "format": "email",
       "type": "string"
     }
   },
