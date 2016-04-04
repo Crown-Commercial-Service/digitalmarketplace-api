@@ -28,6 +28,10 @@
       "minItems": 0,
       "type": "array"
     },
+    "respondToEmailAddress": {
+      "format": "email",
+      "type": "string"
+    },
     "specialistName": {
       "maxLength": 100,
       "minLength": 1,
@@ -38,6 +42,7 @@
     "availability",
     "dayRate",
     "essentialRequirements",
+    "respondToEmailAddress",
     "specialistName"
   ],
   "title": "Digital Outcomes and Specialists Digital specialists Brief Response Schema",

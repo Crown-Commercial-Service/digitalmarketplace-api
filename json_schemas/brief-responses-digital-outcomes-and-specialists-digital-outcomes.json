@@ -17,10 +17,15 @@
       "maxItems": 10,
       "minItems": 0,
       "type": "array"
+    },
+    "respondToEmailAddress": {
+      "format": "email",
+      "type": "string"
     }
   },
   "required": [
-    "essentialRequirements"
+    "essentialRequirements",
+    "respondToEmailAddress"
   ],
   "title": "Digital Outcomes and Specialists Digital outcomes Brief Response Schema",
   "type": "object"
