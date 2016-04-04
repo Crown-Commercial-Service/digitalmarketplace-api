@@ -7,6 +7,16 @@
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
+    "essentialRequirements": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
     "location": {
       "enum": [
         "Scotland",
@@ -24,6 +34,16 @@
         "International (outside the UK)"
       ]
     },
+    "niceToHaveRequirements": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 0,
+      "type": "array"
+    },
     "organisation": {
       "maxLength": 100,
       "minLength": 1,
@@ -37,6 +57,7 @@
   },
   "required": [
     "backgroundInformation",
+    "essentialRequirements",
     "location",
     "organisation",
     "title"

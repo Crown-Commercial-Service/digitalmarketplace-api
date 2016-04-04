@@ -3,7 +3,7 @@ from hypothesis.strategies import (
     fixed_dictionaries, lists,
     booleans, integers, text, none,
     composite, sampled_from, one_of,
-)
+    just)
 
 settings.register_profile("unit", settings(
     database=None,
@@ -29,6 +29,7 @@ def brief_response_data(essential_count=5, nice_to_have_count=5):
     return fixed_dictionaries({
         "essentialRequirements": requirements_list(essential_count, answers=True),
         "niceToHaveRequirements": requirements_list(nice_to_have_count, answers=True),
+        "respondToEmailAddress": just("supplier@email.com"),
     })
 
 
