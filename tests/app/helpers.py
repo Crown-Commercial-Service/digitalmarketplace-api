@@ -27,6 +27,9 @@ COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
     "startDate": "12th February 2016",
     "title": "I need a Developer",
     "workingArrangements": "",
+    "culturalWeighting": 10,
+    "priceWeighting": 20,
+    "technicalWeighting": 70,
 }
 
 
