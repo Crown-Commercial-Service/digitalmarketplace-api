@@ -315,6 +315,40 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == {'title': 'under_character_limit'}
 
+    def test_update_brief_criteria_weightings(self):
+        self.setup_dummy_briefs(1)
+
+        res = self.client.post(
+            '/briefs/1',
+            data=json.dumps({
+                'briefs': {'technicalWeighting': 68, 'culturalWeighting': 7, 'priceWeighting': 25},
+                'update_details': {'updated_by': 'example'},
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['briefs']['technicalWeighting'] == 68
+
+    def test_update_brief_criteria_validation(self):
+        self.setup_dummy_briefs(1)
+
+        res = self.client.post(
+            '/briefs/1',
+            data=json.dumps({
+                'briefs': {'technicalWeighting': 15, 'culturalWeighting': 80, 'priceWeighting': 30},
+                'update_details': {'updated_by': 'example'},
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == {
+            "culturalWeighting": "not_a_number",
+            "priceWeighting": "total_should_be_100",
+            "technicalWeighting": "total_should_be_100"
+        }
+
     def test_update_brief_returns_404_if_not_found(self):
         res = self.client.post(
             '/briefs/1',
