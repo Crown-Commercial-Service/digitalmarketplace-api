@@ -7,6 +7,12 @@
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
+    "culturalWeighting": {
+      "exclusiveMaximum": false,
+      "maximum": 70,
+      "minimum": 10,
+      "type": "integer"
+    },
     "essentialRequirements": {
       "items": {
         "maxLength": 100,
@@ -49,6 +55,18 @@
       "minLength": 1,
       "type": "string"
     },
+    "priceWeighting": {
+      "exclusiveMaximum": false,
+      "maximum": 80,
+      "minimum": 20,
+      "type": "integer"
+    },
+    "technicalWeighting": {
+      "exclusiveMaximum": false,
+      "maximum": 70,
+      "minimum": 10,
+      "type": "integer"
+    },
     "title": {
       "maxLength": 100,
       "minLength": 1,
@@ -57,9 +75,12 @@
   },
   "required": [
     "backgroundInformation",
+    "culturalWeighting",
     "essentialRequirements",
     "location",
     "organisation",
+    "priceWeighting",
+    "technicalWeighting",
     "title"
   ],
   "title": "Digital Outcomes and Specialists User research participants Brief Schema",

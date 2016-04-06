@@ -17,6 +17,12 @@
       "minLength": 1,
       "type": "string"
     },
+    "culturalWeighting": {
+      "exclusiveMaximum": false,
+      "maximum": 20,
+      "minimum": 5,
+      "type": "integer"
+    },
     "currentTechnologies": {
       "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
@@ -107,6 +113,12 @@
         "live"
       ]
     },
+    "priceWeighting": {
+      "exclusiveMaximum": false,
+      "maximum": 85,
+      "minimum": 20,
+      "type": "integer"
+    },
     "startDate": {
       "maxLength": 100,
       "minLength": 1,
@@ -116,6 +128,12 @@
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
+    },
+    "technicalWeighting": {
+      "exclusiveMaximum": false,
+      "maximum": 75,
+      "minimum": 10,
+      "type": "integer"
     },
     "title": {
       "maxLength": 100,
@@ -136,6 +154,7 @@
   "required": [
     "backgroundInformation",
     "contractLength",
+    "culturalWeighting",
     "endUsers",
     "essentialRequirements",
     "evaluationType",
@@ -143,8 +162,10 @@
     "location",
     "organisation",
     "outcome",
+    "priceWeighting",
     "startDate",
     "successCriteria",
+    "technicalWeighting",
     "title",
     "userNeeds"
   ],
