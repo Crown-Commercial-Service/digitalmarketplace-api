@@ -261,7 +261,7 @@ def _translate_json_schema_error(key, validator, validator_value, message):
     elif validator == 'enum' and key == 'priceUnit':
         return 'no_unit_specified'
 
-    elif validator == 'type' and validator_value == 'number':
+    elif validator == 'type' and validator_value in ['number', 'integer']:
         return 'not_a_number'
 
     elif validator == 'type' and validator_value == 'boolean':
