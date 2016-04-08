@@ -15,10 +15,10 @@ def validate_brief_data(brief, enforce_required=True, required_fields=None):
 
     criteria_weighting_keys = ['technicalWeighting', 'culturalWeighting', 'priceWeighting']
     # Only check total if all weightings are set
-    if all(key in brief.data for key in criteria_weighting_keys):
+    if not errs and all(key in brief.data for key in criteria_weighting_keys):
         criteria_weightings = sum(brief.data[key] for key in criteria_weighting_keys)
         if criteria_weightings != 100:
-            for key in set(criteria_weighting_keys) - set(errs):
+            for key in criteria_weighting_keys:
                 errs[key] = 'total_should_be_100'
 
     if errs:
