@@ -330,13 +330,13 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
         assert data['briefs']['technicalWeighting'] == 68
 
-    def test_update_brief_criteria_validation(self):
+    def test_update_brief_criteria_validation_weighting_sums_are_100(self):
         self.setup_dummy_briefs(1)
 
         res = self.client.post(
             '/briefs/1',
             data=json.dumps({
-                'briefs': {'technicalWeighting': 15, 'culturalWeighting': 80, 'priceWeighting': 30},
+                'briefs': {'technicalWeighting': 10, 'culturalWeighting': 20, 'priceWeighting': 71},
                 'update_details': {'updated_by': 'example'},
             }),
             content_type='application/json')
@@ -344,9 +344,47 @@ class TestBriefs(BaseApplicationTest):
 
         assert res.status_code == 400
         assert data['error'] == {
+            "technicalWeighting": "total_should_be_100",
+            "culturalWeighting": "total_should_be_100",
+            "priceWeighting": "total_should_be_100"
+        }
+
+    def test_update_brief_criteria_validation_of_maximums_and_minimums(self):
+        self.setup_dummy_briefs(1)
+
+        res = self.client.post(
+            '/briefs/1',
+            data=json.dumps({
+                'briefs': {'technicalWeighting': 15, 'culturalWeighting': 75, 'priceWeighting': 10},
+                'update_details': {'updated_by': 'example'},
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        # cultural weighting of 75 above the maximum
+        # price weighting of 10 is below the minimum
+        assert data['error'] == {
             "culturalWeighting": "not_a_number",
-            "priceWeighting": "total_should_be_100",
-            "technicalWeighting": "total_should_be_100"
+            "priceWeighting": "not_a_number"
+        }
+
+    def test_update_brief_criteria_validation_of_non_integers(self):
+        self.setup_dummy_briefs(1)
+
+        res = self.client.post(
+            '/briefs/1',
+            data=json.dumps({
+                'briefs': {'technicalWeighting': 'fifteen', 'culturalWeighting': '', 'priceWeighting': 30},
+                'update_details': {'updated_by': 'example'},
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == {
+            "technicalWeighting": "not_a_number",
+            "culturalWeighting": "not_a_number"
         }
 
     def test_update_brief_returns_404_if_not_found(self):
