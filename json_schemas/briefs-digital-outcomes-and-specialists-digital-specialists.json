@@ -105,11 +105,13 @@
         "deliveryManager",
         "designer",
         "developer",
+        "performanceAnalyst",
         "portfolioManager",
         "productManager",
         "programmeManager",
         "qualityAssurance",
         "serviceManager",
+        "technicalArchitect",
         "userResearcher",
         "webOperations"
       ]
