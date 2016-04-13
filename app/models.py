@@ -867,16 +867,16 @@ class Brief(db.Model):
         if self.published_at is None:
             return None
 
-        # Set time to midnight next day and add full number of days before application closes
-        published_day = self.published_at.replace(hour=0, minute=0, second=0, microsecond=0)
-        closing_time = published_day + timedelta(days=self.APPLICATIONS_OPEN_DAYS + 1)
+        # Set time to 23:59:59 same day and add full number of days before application closes
+        published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
+        closing_time = published_day + timedelta(days=self.APPLICATIONS_OPEN_DAYS)
 
         return closing_time
 
     @applications_closed_at.expression
     def applications_closed_at(cls):
         return func.date_trunc('day', cls.published_at) + sql_cast(
-            '%d days' % (cls.APPLICATIONS_OPEN_DAYS + 1), INTERVAL
+            '%d days 23:59:59' % cls.APPLICATIONS_OPEN_DAYS, INTERVAL
         )
 
     @hybrid_property
@@ -884,9 +884,9 @@ class Brief(db.Model):
         if self.published_at is None:
             return None
 
-        # Set time to midnight next day and add full number of days before questions close
-        published_day = self.published_at.replace(hour=0, minute=0, second=0, microsecond=0)
-        closing_time = published_day + timedelta(days=self.CLARIFICATION_QUESTIONS_OPEN_DAYS + 1)
+        # Set time to 23:59:59 same day and add full number of days before questions close
+        published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
+        closing_time = published_day + timedelta(days=self.CLARIFICATION_QUESTIONS_OPEN_DAYS)
 
         return closing_time
 
