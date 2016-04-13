@@ -119,6 +119,11 @@
       "minimum": 20,
       "type": "integer"
     },
+    "questionAndAnswerSessionDetails": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
     "startDate": {
       "maxLength": 100,
       "minLength": 1,
