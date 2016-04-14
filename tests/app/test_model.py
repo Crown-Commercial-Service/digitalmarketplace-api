@@ -185,8 +185,8 @@ class TestBriefs(BaseApplicationTest):
         brief = Brief(data={}, framework=self.framework, lot=self.lot,
                       published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
 
-        assert brief.applications_closed_at == datetime(2016, 3, 18)
-        assert brief.clarification_questions_closed_at == datetime(2016, 3, 11)
+        assert brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)
+        assert brief.clarification_questions_closed_at == datetime(2016, 3, 10, 23, 59, 59)
 
     def test_query_brief_applications_closed_at_date(self):
         with self.app.app_context():
@@ -194,7 +194,7 @@ class TestBriefs(BaseApplicationTest):
                                  published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
             db.session.commit()
 
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 18)).count() == 1
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
 
     def test_expired_status_for_a_brief_with_passed_close_date(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot,
