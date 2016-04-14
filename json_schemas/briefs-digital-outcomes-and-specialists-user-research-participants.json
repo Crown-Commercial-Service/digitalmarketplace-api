@@ -61,6 +61,11 @@
       "minimum": 20,
       "type": "integer"
     },
+    "questionAndAnswerSessionDetails": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
     "technicalWeighting": {
       "exclusiveMaximum": false,
       "maximum": 70,

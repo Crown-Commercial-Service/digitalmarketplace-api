@@ -95,6 +95,11 @@
       "minimum": 20,
       "type": "integer"
     },
+    "questionAndAnswerSessionDetails": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
     "specialistRole": {
       "enum": [
         "agileCoach",
