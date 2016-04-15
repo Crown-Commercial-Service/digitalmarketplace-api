@@ -1019,7 +1019,7 @@ class BriefResponse(db.Model):
 
         return data
 
-    def validate(self, enforce_required=True, required_fields=None):
+    def validate(self, enforce_required=True, required_fields=None, max_day_rate=None):
         errs = get_validation_errors(
             'brief-responses-{}-{}'.format(self.brief.framework.slug, self.brief.lot.slug),
             self.data,
@@ -1038,6 +1038,10 @@ class BriefResponse(db.Model):
             len(self.data.get('niceToHaveRequirements', [])) != len(self.brief.data.get('niceToHaveRequirements', []))
         ):
             errs['niceToHaveRequirements'] = 'answer_required'
+
+        if max_day_rate and 'dayRate' not in errs:
+            if float(self.data['dayRate']) > float(max_day_rate):
+                errs['dayRate'] = 'max_less_than_min'
 
         if errs:
             raise ValidationError(errs)

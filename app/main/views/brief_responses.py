@@ -54,7 +54,10 @@ def create_brief_response():
         brief=brief,
     )
 
-    brief_response.validate()
+    brief_role = brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
+    service_max_day_rate = brief_service.data[brief_role + "PriceMax"] if brief_role else None
+
+    brief_response.validate(max_day_rate=service_max_day_rate)
 
     db.session.add(brief_response)
     try:
