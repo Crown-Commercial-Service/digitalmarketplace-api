@@ -930,8 +930,8 @@ class Brief(db.Model):
     def add_clarification_question(self, question, answer):
         clarification_question = BriefClarificationQuestion(
             brief=self,
-            question=question,
-            answer=answer)
+            question=question.strip(),
+            answer=answer.strip())
         clarification_question.validate()
 
         Session.object_session(self).add(clarification_question)
