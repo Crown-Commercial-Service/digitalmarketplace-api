@@ -239,6 +239,7 @@ def _translate_json_schema_error(key, validator, validator_value, message):
         'maximum': 'not_a_number',
         'maxItems': 'under_10_items',
         'maxLength': 'under_character_limit',
+        'format': 'invalid_format',
     }
 
     if validator in validator_type_to_error:

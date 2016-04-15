@@ -323,7 +323,7 @@ def test_invalid_url_field_has_validation_error():
     data = load_example_listing("G7-SCS")
     data.update({'serviceDefinitionDocumentURL': 'not_a_url'})
     errs = get_validation_errors("services-g-cloud-7-scs", data)
-    assert "'not_a_url' is not" in errs['serviceDefinitionDocumentURL']
+    assert errs['serviceDefinitionDocumentURL'] == 'invalid_format'
 
 
 def test_too_many_words_causes_validation_error():
