@@ -33,9 +33,21 @@ def brief_response_data(essential_count=5, nice_to_have_count=5):
     })
 
 
+def specialists_brief_response_data(min_day_rate=1, max_day_rate=1000):
+    return fixed_dictionaries({
+        "essentialRequirements": requirements_list(5, answers=True),
+        "niceToHaveRequirements": requirements_list(5, answers=True),
+        "respondToEmailAddress": just("supplier@email.com"),
+        "specialistName": text(min_size=1, average_size=10, alphabet='abcdefghijkl'),
+        "availability": text(min_size=1, average_size=10, alphabet='abcdefghijkl'),
+        "dayRate": integers(min_value=min_day_rate, max_value=max_day_rate).map(lambda x: str(x)),
+    })
+
+
 def brief_data(essential_count=5, nice_to_have_count=5):
     return fixed_dictionaries({
-        'location': text(alphabet='abcdefghijkl'),
+        'specialistRole': just('developer'),
+        'location': text(min_size=1, average_size=10, alphabet='abcdefghijkl'),
         'essentialRequirements': requirements_list(essential_count),
         'niceToHaveRequirements': requirements_list(nice_to_have_count),
     })

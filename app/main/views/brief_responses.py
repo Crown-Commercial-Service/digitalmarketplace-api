@@ -11,7 +11,7 @@ from ...utils import (
     validate_and_return_updater_request,
 )
 
-from ...brief_utils import is_supplier_eligible_for_brief
+from ...brief_utils import get_supplier_service_eligible_for_brief
 from ...service_utils import validate_and_return_supplier
 
 
@@ -40,7 +40,8 @@ def create_brief_response():
 
     supplier = validate_and_return_supplier(brief_response_json)
 
-    if not is_supplier_eligible_for_brief(supplier, brief):
+    brief_service = get_supplier_service_eligible_for_brief(supplier, brief)
+    if not brief_service:
         abort(400, "Supplier not eligible")
 
     # Check if brief response already exists from this supplier
@@ -53,7 +54,10 @@ def create_brief_response():
         brief=brief,
     )
 
-    brief_response.validate()
+    brief_role = brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
+    service_max_day_rate = brief_service.data[brief_role + "PriceMax"] if brief_role else None
+
+    brief_response.validate(max_day_rate=service_max_day_rate)
 
     db.session.add(brief_response)
     try:

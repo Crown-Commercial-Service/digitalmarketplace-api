@@ -20,6 +20,7 @@
     },
     "respondToEmailAddress": {
       "format": "email",
+      "minLength": 1,
       "type": "string"
     }
   },

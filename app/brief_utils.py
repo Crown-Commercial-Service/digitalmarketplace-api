@@ -25,7 +25,7 @@ def validate_brief_data(brief, enforce_required=True, required_fields=None):
         abort(400, errs)
 
 
-def is_supplier_eligible_for_brief(supplier, brief):
+def get_supplier_service_eligible_for_brief(supplier, brief):
     services = filter_services(
         framework_slugs=[brief.framework.slug],
         statuses=["published"],
@@ -36,4 +36,4 @@ def is_supplier_eligible_for_brief(supplier, brief):
 
     services = services.filter(Service.supplier_id == supplier.supplier_id)
 
-    return services.count() > 0
+    return services.first()

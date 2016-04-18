@@ -29,10 +29,27 @@ class BaseBriefResponseTest(BaseApplicationTest):
                 supplier_id=0,
             )
 
-            db.session.add_all([service, brief])
+            specialist_brief = Brief(
+                data=example_listings.brief_data().example(),
+                status='live', framework_id=5, lot=Lot.query.get(6)
+            )
+
+            specialist_service = Service(
+                service_id='1234560987654322',
+                data={'developerLocations': [specialist_brief.data['location']],
+                      'developerPriceMin': "0",
+                      'developerPriceMax': "1000"},
+                status='published',
+                framework_id=5,
+                lot_id=6,
+                supplier_id=0,
+            )
+
+            db.session.add_all([service, specialist_service, brief, specialist_brief])
             db.session.commit()
 
             self.brief_id = brief.id
+            self.specialist_brief_id = specialist_brief.id
 
     def setup_dummy_brief_response(self, brief_id=None, supplier_id=0):
         with self.app.app_context():
@@ -170,7 +187,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
     def test_cannot_create_brief_response_when_brief_doesnt_exist(self, live_framework):
         res = self.create_brief_response({
-            'briefId': self.brief_id + 1,
+            'briefId': self.brief_id + 100,
             'supplierId': 0
         })
 
@@ -275,6 +292,29 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
         assert res.status_code == 400, res.get_data(as_text=True)
         assert data['error']['niceToHaveRequirements'] == 'answer_required'
+
+    @given(example_listings.specialists_brief_response_data())
+    def test_create_digital_specialists_brief_response(self, live_framework, brief_response_data):
+        res = self.create_brief_response(dict(brief_response_data, **{
+            'briefId': self.specialist_brief_id,
+            'supplierId': 0,
+        }))
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 201, data
+
+    @given(example_listings.specialists_brief_response_data(min_day_rate=1001, max_day_rate=100000))
+    def test_day_rate_should_be_less_than_service_max_price(self, live_framework, brief_response_data):
+        res = self.create_brief_response(dict(brief_response_data, **{
+            'briefId': self.specialist_brief_id,
+            'supplierId': 0,
+        }))
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400, data
+        assert data == {'error': {'dayRate': 'max_less_than_min'}}
 
 
 class TestGetBriefResponse(BaseBriefResponseTest):

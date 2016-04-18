@@ -8,8 +8,7 @@
       "type": "string"
     },
     "dayRate": {
-      "maxLength": 100,
-      "minLength": 1,
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
     "essentialRequirements": {
@@ -30,6 +29,7 @@
     },
     "respondToEmailAddress": {
       "format": "email",
+      "minLength": 1,
       "type": "string"
     },
     "specialistName": {
