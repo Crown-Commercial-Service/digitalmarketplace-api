@@ -4,18 +4,28 @@
   "properties": {
     "additionalTerms": {
       "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
-    "backgroundInformation": {
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+    "budgetRange": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
     "contractLength": {
       "maxLength": 100,
-      "minLength": 1,
+      "minLength": 0,
       "type": "string"
+    },
+    "culturalFitCriteria": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
     },
     "culturalWeighting": {
       "exclusiveMaximum": false,
@@ -23,36 +33,32 @@
       "minimum": 5,
       "type": "integer"
     },
-    "currentTechnologies": {
-      "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
-      "type": "string"
-    },
     "essentialRequirements": {
       "items": {
-        "maxLength": 100,
-        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
         "type": "string"
       },
-      "maxItems": 10,
+      "maxItems": 20,
       "minItems": 1,
       "type": "array"
     },
     "evaluationType": {
       "items": {
         "enum": [
-          "provide a written proposal",
-          "provide a case study or evidence of previous work",
-          "presentation",
-          "pitch"
+          "Work history",
+          "Reference",
+          "Interview",
+          "Scenario or test",
+          "Presentation"
         ]
       },
-      "maxItems": 4,
+      "maxItems": 5,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
-    "importantDates": {
+    "existingTeam": {
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
@@ -76,11 +82,11 @@
     },
     "niceToHaveRequirements": {
       "items": {
-        "maxLength": 100,
-        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
         "type": "string"
       },
-      "maxItems": 10,
+      "maxItems": 20,
       "minItems": 0,
       "type": "array"
     },
@@ -98,6 +104,11 @@
     "questionAndAnswerSessionDetails": {
       "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
+    "securityClearance": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
       "type": "string"
     },
     "specialistRole": {
@@ -121,6 +132,11 @@
         "webOperations"
       ]
     },
+    "specialistWork": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
     "startDate": {
       "maxLength": 100,
       "minLength": 1,
@@ -138,25 +154,32 @@
       "type": "string"
     },
     "workingArrangements": {
-      "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "workplaceAddress": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     }
   },
   "required": [
-    "backgroundInformation",
-    "contractLength",
+    "culturalFitCriteria",
     "culturalWeighting",
     "essentialRequirements",
     "evaluationType",
-    "importantDates",
+    "existingTeam",
     "location",
     "organisation",
     "priceWeighting",
     "specialistRole",
+    "specialistWork",
     "startDate",
     "technicalWeighting",
-    "title"
+    "title",
+    "workingArrangements",
+    "workplaceAddress"
   ],
   "title": "Digital Outcomes and Specialists Digital specialists Brief Schema",
   "type": "object"

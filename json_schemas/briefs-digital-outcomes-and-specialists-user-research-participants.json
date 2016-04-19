@@ -2,9 +2,19 @@
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
   "properties": {
-    "backgroundInformation": {
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+    "accessRestrictions": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
+    "additionalTerms": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
+    "budgetRange": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
     "culturalWeighting": {
@@ -15,13 +25,27 @@
     },
     "essentialRequirements": {
       "items": {
-        "maxLength": 100,
-        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
         "type": "string"
       },
-      "maxItems": 10,
+      "maxItems": 20,
       "minItems": 1,
       "type": "array"
+    },
+    "evaluationType": {
+      "items": {
+        "enum": [
+          "Case study",
+          "Reference",
+          "Written proposal",
+          "Interview"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
     },
     "location": {
       "enum": [
@@ -42,17 +66,32 @@
     },
     "niceToHaveRequirements": {
       "items": {
-        "maxLength": 100,
-        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
         "type": "string"
       },
-      "maxItems": 10,
+      "maxItems": 20,
       "minItems": 0,
       "type": "array"
     },
     "organisation": {
       "maxLength": 100,
       "minLength": 1,
+      "type": "string"
+    },
+    "participantSpecification": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "participantsPerRound": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "particpantAccessibilityNeeds": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
     "priceWeighting": {
@@ -65,6 +104,53 @@
       "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
+    },
+    "researchAddress": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "researchDates": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "researchFrequency": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "researchOutOfHours": {
+      "items": {
+        "enum": [
+          "Weekday evenings",
+          "Weekends"
+        ]
+      },
+      "maxItems": 2,
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "researchPlan": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
+    "researchRounds": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "successCriteria": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
     },
     "technicalWeighting": {
       "exclusiveMaximum": false,
@@ -79,12 +165,19 @@
     }
   },
   "required": [
-    "backgroundInformation",
     "culturalWeighting",
     "essentialRequirements",
+    "evaluationType",
     "location",
     "organisation",
+    "participantSpecification",
+    "participantsPerRound",
     "priceWeighting",
+    "researchAddress",
+    "researchDates",
+    "researchFrequency",
+    "researchRounds",
+    "successCriteria",
     "technicalWeighting",
     "title"
   ],
