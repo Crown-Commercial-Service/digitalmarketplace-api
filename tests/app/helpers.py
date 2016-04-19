@@ -14,22 +14,23 @@ TEST_SUPPLIERS_COUNT = 3
 
 COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
     "additionalTerms": "",
-    "backgroundInformation": "Background",
     "contractLength": "6 Months",
-    "currentTechnologies": "",
+    "culturalFitCriteria": ["CULTURAL", "FIT"],
+    "culturalWeighting": 10,
     "essentialRequirements": ["COBOL", "LISP"],
-    "evaluationType": ["presentation"],
-    "importantDates": "29th March",
+    "evaluationType": ["Presentation"],
+    "existingTeam": "team team team",
     "location": "Wales",
     "niceToHaveRequirements": ["FORTRAN"],
     "organisation": "Org.org",
-    "specialistRole": "developer",
-    "startDate": "12th February 2016",
-    "title": "I need a Developer",
-    "workingArrangements": "",
-    "culturalWeighting": 10,
     "priceWeighting": 20,
+    "specialistRole": "developer",
+    "specialistWork": "work work work",
+    "startDate": "12th February 2016",
     "technicalWeighting": 70,
+    "title": "I need a Developer",
+    "workingArrangements": "arrangements",
+    "workplaceAddress": "address",
 }
 
 
