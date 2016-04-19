@@ -339,7 +339,7 @@ def test_too_many_list_items_causes_validation_error():
         '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'
     ]})
     errs = get_validation_errors("services-g-cloud-7-scs", data)
-    assert "under_10_items" in errs['serviceBenefits']
+    assert "max_items_limit" in errs['serviceBenefits']
 
 
 def test_string_too_long_causes_validation_error():
