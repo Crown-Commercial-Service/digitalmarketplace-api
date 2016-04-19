@@ -4,7 +4,7 @@
   "properties": {
     "additionalTerms": {
       "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
     "backgroundInformation": {
@@ -12,10 +12,25 @@
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
+    "budgetRange": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
     "contractLength": {
       "maxLength": 100,
-      "minLength": 1,
+      "minLength": 0,
       "type": "string"
+    },
+    "culturalFitCriteria": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
     },
     "culturalWeighting": {
       "exclusiveMaximum": false,
@@ -23,9 +38,9 @@
       "minimum": 5,
       "type": "integer"
     },
-    "currentTechnologies": {
+    "earlyMarketEngagement": {
       "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
       "type": "string"
     },
     "endUsers": {
@@ -35,34 +50,30 @@
     },
     "essentialRequirements": {
       "items": {
-        "maxLength": 100,
-        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
         "type": "string"
       },
-      "maxItems": 10,
+      "maxItems": 20,
       "minItems": 1,
       "type": "array"
     },
     "evaluationType": {
       "items": {
         "enum": [
-          "provide a written proposal",
-          "provide a case study or evidence of previous work",
-          "presentation",
-          "pitch"
+          "Written proposal",
+          "Case study",
+          "Work history",
+          "Reference",
+          "Presentation"
         ]
       },
-      "maxItems": 4,
+      "maxItems": 5,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
-    "expectedOutcomes": {
-      "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
-      "type": "string"
-    },
-    "importantDates": {
+    "existingTeam": {
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
@@ -86,11 +97,11 @@
     },
     "niceToHaveRequirements": {
       "items": {
-        "maxLength": 100,
-        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
         "type": "string"
       },
-      "maxItems": 10,
+      "maxItems": 20,
       "minItems": 0,
       "type": "array"
     },
@@ -101,16 +112,24 @@
     },
     "outcome": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "phase": {
       "enum": [
+        "not_applicable",
         "not_started",
         "discovery",
         "alpha",
         "beta",
         "live"
+      ]
+    },
+    "priceCriteria": {
+      "enum": [
+        "Fixed price",
+        "Time and materials",
+        "Capped time and materials"
       ]
     },
     "priceWeighting": {
@@ -124,14 +143,29 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
+    "securityClearance": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
+      "type": "string"
+    },
     "startDate": {
       "maxLength": 100,
       "minLength": 1,
       "type": "string"
     },
     "successCriteria": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
+    },
+    "summary": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
     "technicalWeighting": {
@@ -150,29 +184,44 @@
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
-    "workingArrangements": {
+    "workAlreadyDone": {
       "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
+    "workingArrangements": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "workplaceAddress": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     }
   },
   "required": [
     "backgroundInformation",
-    "contractLength",
+    "culturalFitCriteria",
     "culturalWeighting",
     "endUsers",
     "essentialRequirements",
     "evaluationType",
-    "importantDates",
+    "existingTeam",
     "location",
     "organisation",
     "outcome",
+    "phase",
+    "priceCriteria",
     "priceWeighting",
     "startDate",
     "successCriteria",
+    "summary",
     "technicalWeighting",
     "title",
-    "userNeeds"
+    "userNeeds",
+    "workingArrangements",
+    "workplaceAddress"
   ],
   "title": "Digital Outcomes and Specialists Digital outcomes Brief Schema",
   "type": "object"
