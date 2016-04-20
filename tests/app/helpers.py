@@ -13,24 +13,26 @@ TEST_SUPPLIERS_COUNT = 3
 
 
 COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
-    "additionalTerms": "",
-    "contractLength": "6 Months",
-    "culturalFitCriteria": ["CULTURAL", "FIT"],
-    "culturalWeighting": 10,
-    "essentialRequirements": ["COBOL", "LISP"],
-    "evaluationType": ["Presentation"],
-    "existingTeam": "team team team",
-    "location": "Wales",
-    "niceToHaveRequirements": ["FORTRAN"],
+    "essentialRequirements": ["MS Paint", "GIMP"],
+    "startDate": "31/12/2016",
+    "evaluationType": ["Work history", "Reference", "Interview"],
+    "niceToHaveRequirements":  ["LISP"],
+    "existingTeam": "Nice people.",
+    "specialistWork": "All the things",
+    "workingArrangements": "Just get the work done.",
     "organisation": "Org.org",
-    "priceWeighting": 20,
+    "location": "Wales",
     "specialistRole": "developer",
-    "specialistWork": "work work work",
-    "startDate": "12th February 2016",
-    "technicalWeighting": 70,
     "title": "I need a Developer",
-    "workingArrangements": "arrangements",
-    "workplaceAddress": "address",
+    "priceWeighting": 85,
+    "contractLength": "3 weeks",
+    "culturalWeighting": 5,
+    "securityClearance": "Developed vetting required.",
+    "technicalWeighting": 10,
+    "culturalFitCriteria": ["CULTURAL", "FIT"],
+    "numberOfSuppliers": "3",
+    "summary": "Doing some stuff to help out.",
+    "workplaceAddress": "Aviation House"
 }
 
 

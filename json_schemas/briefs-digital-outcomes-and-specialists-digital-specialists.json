@@ -90,6 +90,10 @@
       "minItems": 0,
       "type": "array"
     },
+    "numberOfSuppliers": {
+      "minLength": 1,
+      "type": "string"
+    },
     "organisation": {
       "maxLength": 100,
       "minLength": 1,
@@ -142,6 +146,11 @@
       "minLength": 1,
       "type": "string"
     },
+    "summary": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
     "technicalWeighting": {
       "exclusiveMaximum": false,
       "maximum": 75,
@@ -171,11 +180,13 @@
     "evaluationType",
     "existingTeam",
     "location",
+    "numberOfSuppliers",
     "organisation",
     "priceWeighting",
     "specialistRole",
     "specialistWork",
     "startDate",
+    "summary",
     "technicalWeighting",
     "title",
     "workingArrangements",

@@ -105,6 +105,10 @@
       "minItems": 0,
       "type": "array"
     },
+    "numberOfSuppliers": {
+      "minLength": 1,
+      "type": "string"
+    },
     "organisation": {
       "maxLength": 100,
       "minLength": 1,
@@ -209,6 +213,7 @@
     "evaluationType",
     "existingTeam",
     "location",
+    "numberOfSuppliers",
     "organisation",
     "outcome",
     "phase",

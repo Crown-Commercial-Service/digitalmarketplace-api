@@ -74,6 +74,10 @@
       "minItems": 0,
       "type": "array"
     },
+    "numberOfSuppliers": {
+      "minLength": 1,
+      "type": "string"
+    },
     "organisation": {
       "maxLength": 100,
       "minLength": 1,
@@ -152,6 +156,11 @@
       "minItems": 1,
       "type": "array"
     },
+    "summary": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
     "technicalWeighting": {
       "exclusiveMaximum": false,
       "maximum": 70,
@@ -169,6 +178,7 @@
     "essentialRequirements",
     "evaluationType",
     "location",
+    "numberOfSuppliers",
     "organisation",
     "participantSpecification",
     "participantsPerRound",
@@ -178,6 +188,7 @@
     "researchFrequency",
     "researchRounds",
     "successCriteria",
+    "summary",
     "technicalWeighting",
     "title"
   ],
