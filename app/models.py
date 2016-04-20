@@ -803,6 +803,7 @@ class Brief(db.Model):
     __tablename__ = 'briefs'
 
     CLARIFICATION_QUESTIONS_OPEN_DAYS = 7
+    CLARIFICATION_QUESTIONS_PUBLISHED_DAYS = 1
     APPLICATIONS_OPEN_DAYS = 14
 
     id = db.Column(db.Integer, primary_key=True)
@@ -891,6 +892,14 @@ class Brief(db.Model):
         return closing_time
 
     @hybrid_property
+    def clarification_questions_published_by(self):
+        if self.published_at is None:
+            return None
+
+        # All clarification questions should be published N days before brief closes
+        return self.applications_closed_at - timedelta(days=self.CLARIFICATION_QUESTIONS_PUBLISHED_DAYS)
+
+    @hybrid_property
     def clarification_questions_are_closed(self):
         return datetime.utcnow() > self.clarification_questions_closed_at
 
@@ -969,6 +978,8 @@ class Brief(db.Model):
                 'publishedAt': self.published_at.strftime(DATETIME_FORMAT),
                 'applicationsClosedAt': self.applications_closed_at.strftime(DATETIME_FORMAT),
                 'clarificationQuestionsClosedAt': self.clarification_questions_closed_at.strftime(DATETIME_FORMAT),
+                'clarificationQuestionsPublishedBy': self.clarification_questions_published_by.strftime(
+                    DATETIME_FORMAT),
                 'clarificationQuestionsAreClosed': self.clarification_questions_are_closed,
             })
 
