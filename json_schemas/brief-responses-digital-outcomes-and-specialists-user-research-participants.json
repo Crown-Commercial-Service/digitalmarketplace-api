@@ -22,16 +22,11 @@
       "format": "email",
       "minLength": 1,
       "type": "string"
-    },
-    "userParticipantResponse": {
-      "minLength": 1,
-      "type": "string"
     }
   },
   "required": [
     "essentialRequirements",
-    "respondToEmailAddress",
-    "userParticipantResponse"
+    "respondToEmailAddress"
   ],
   "title": "Digital Outcomes and Specialists User research participants Brief Response Schema",
   "type": "object"

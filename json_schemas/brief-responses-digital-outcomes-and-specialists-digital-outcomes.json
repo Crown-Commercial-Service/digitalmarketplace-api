@@ -2,6 +2,11 @@
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
   "properties": {
+    "availability": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
     "essentialRequirements": {
       "items": {
         "type": "boolean"
@@ -25,6 +30,7 @@
     }
   },
   "required": [
+    "availability",
     "essentialRequirements",
     "respondToEmailAddress"
   ],
