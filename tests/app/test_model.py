@@ -187,6 +187,7 @@ class TestBriefs(BaseApplicationTest):
 
         assert brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)
         assert brief.clarification_questions_closed_at == datetime(2016, 3, 10, 23, 59, 59)
+        assert brief.clarification_questions_published_by == datetime(2016, 3, 16, 23, 59, 59)
 
     def test_query_brief_applications_closed_at_date(self):
         with self.app.app_context():
