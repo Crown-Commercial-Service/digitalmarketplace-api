@@ -978,7 +978,8 @@ class Brief(db.Model):
                 'publishedAt': self.published_at.strftime(DATETIME_FORMAT),
                 'applicationsClosedAt': self.applications_closed_at.strftime(DATETIME_FORMAT),
                 'clarificationQuestionsClosedAt': self.clarification_questions_closed_at.strftime(DATETIME_FORMAT),
-                'clarificationQuestionsPublishedBy': self.clarification_questions_published_by.strftime(DATETIME_FORMAT),
+                'clarificationQuestionsPublishedBy': self.clarification_questions_published_by.strftime(
+                    DATETIME_FORMAT),
                 'clarificationQuestionsAreClosed': self.clarification_questions_are_closed,
             })
 
