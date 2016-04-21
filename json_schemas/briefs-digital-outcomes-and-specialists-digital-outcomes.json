@@ -183,11 +183,6 @@
       "minLength": 1,
       "type": "string"
     },
-    "userNeeds": {
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
-      "type": "string"
-    },
     "workAlreadyDone": {
       "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
@@ -224,7 +219,6 @@
     "summary",
     "technicalWeighting",
     "title",
-    "userNeeds",
     "workingArrangements",
     "workplaceAddress"
   ],

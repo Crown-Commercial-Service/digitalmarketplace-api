@@ -31,19 +31,13 @@
       "format": "email",
       "minLength": 1,
       "type": "string"
-    },
-    "specialistName": {
-      "maxLength": 100,
-      "minLength": 1,
-      "type": "string"
     }
   },
   "required": [
     "availability",
     "dayRate",
     "essentialRequirements",
-    "respondToEmailAddress",
-    "specialistName"
+    "respondToEmailAddress"
   ],
   "title": "Digital Outcomes and Specialists Digital specialists Brief Response Schema",
   "type": "object"
