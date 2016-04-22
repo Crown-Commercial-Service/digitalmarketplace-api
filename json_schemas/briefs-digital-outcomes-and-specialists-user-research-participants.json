@@ -83,6 +83,11 @@
       "minLength": 1,
       "type": "string"
     },
+    "participantAccessibilityNeeds": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
     "participantSpecification": {
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
@@ -91,11 +96,6 @@
     "participantsPerRound": {
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
-      "type": "string"
-    },
-    "particpantAccessibilityNeeds": {
-      "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
     "priceWeighting": {
