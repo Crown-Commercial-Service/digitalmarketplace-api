@@ -4,6 +4,8 @@ import re
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
+from six import string_types
+
 from sqlalchemy import asc, desc
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON, INTERVAL
@@ -939,8 +941,9 @@ class Brief(db.Model):
     def add_clarification_question(self, question, answer):
         clarification_question = BriefClarificationQuestion(
             brief=self,
-            question=question.strip(),
-            answer=answer.strip())
+            question=question,
+            answer=answer,
+        )
         clarification_question.validate()
 
         Session.object_session(self).add(clarification_question)
@@ -1093,6 +1096,14 @@ class BriefClarificationQuestion(db.Model):
     def brief_id(self):
         return self._brief_id
 
+    @validates('question')
+    def validates_question(self, key, value):
+        return value.strip() if isinstance(value, string_types) else value
+
+    @validates('answer')
+    def validates_answer(self, key, value):
+        return value.strip() if isinstance(value, string_types) else value
+
     @brief_id.setter
     def brief_id(self, brief_id):
         raise ValidationError("Cannot update brief_id directly, use brief relationship")
@@ -1104,10 +1115,9 @@ class BriefClarificationQuestion(db.Model):
         return brief
 
     def validate(self):
-        errs = get_validation_errors(
-            "brief-clarification-question",
-            {"question": self.question, "answer": self.answer}
-        )
+        data = {"question": self.question, "answer": self.answer}
+        data = purge_nulls_from_data(data)
+        errs = get_validation_errors("brief-clarification-question", data)
 
         if errs:
             raise ValidationError(errs)
