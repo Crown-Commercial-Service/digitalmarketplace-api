@@ -23,6 +23,11 @@
       "minimum": 10,
       "type": "integer"
     },
+    "earlyMarketEngagement": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
+      "type": "string"
+    },
     "essentialRequirements": {
       "items": {
         "maxLength": 300,
