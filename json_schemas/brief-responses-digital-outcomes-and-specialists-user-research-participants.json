@@ -6,7 +6,7 @@
       "items": {
         "type": "boolean"
       },
-      "maxItems": 10,
+      "maxItems": 20,
       "minItems": 1,
       "type": "array"
     },
@@ -14,7 +14,7 @@
       "items": {
         "type": "boolean"
       },
-      "maxItems": 10,
+      "maxItems": 20,
       "minItems": 0,
       "type": "array"
     },
