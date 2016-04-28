@@ -149,12 +149,11 @@
             "enum": [
               "UK",
               "EU",
-              "USA - Safe Harbor",
               "Other countries with data protection treaties",
               "Rest of world"
             ]
           },
-          "maxItems": 5,
+          "maxItems": 4,
           "minItems": 1,
           "type": "array",
           "uniqueItems": true
@@ -182,8 +181,8 @@
               "Encrypted PSN service",
               "PSN service",
               "CPA Foundation VPN Gateway",
-              "VPN using TLS, version 1.2 or later",
-              "VPN using legacy SSL or TLS",
+              "TLS (HTTPS or VPN) version 1.2 or later",
+              "Legacy SSL or TLS (HTTPS or VPN)",
               "No encryption"
             ]
           },
@@ -215,8 +214,8 @@
               "Encrypted PSN service",
               "PSN service",
               "CPA Foundation VPN Gateway",
-              "VPN using TLS, version 1.2 or later",
-              "VPN using legacy SSL or TLS",
+              "TLS (HTTPS or VPN) version 1.2 or later",
+              "Legacy SSL or TLS (HTTPS or VPN)",
               "No encryption"
             ]
           },
@@ -245,8 +244,8 @@
         "value": {
           "items": {
             "enum": [
-              "VPN using TLS, version 1.2 or later",
-              "VPN using legacy SSL or TLS",
+              "TLS (HTTPS or VPN) version 1.2 or later",
+              "Legacy SSL or TLS (HTTPS or VPN)",
               "VLAN",
               "Bonded fibre optic connections",
               "Other network protection",
@@ -372,12 +371,11 @@
             "enum": [
               "UK",
               "EU",
-              "USA - Safe Harbor",
               "Other countries with data protection treaties",
               "Rest of world"
             ]
           },
-          "maxItems": 5,
+          "maxItems": 4,
           "minItems": 1,
           "type": "array",
           "uniqueItems": true
@@ -659,7 +657,6 @@
           "enum": [
             "UK",
             "EU",
-            "USA - Safe Harbor",
             "Other countries with data protection treaties",
             "Rest of world"
           ]
