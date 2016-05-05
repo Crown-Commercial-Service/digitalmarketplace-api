@@ -54,15 +54,15 @@ class Lot(db.Model):
         return '<{}: {}>'.format(self.__class__.__name__, self.name)
 
     def serialize(self):
-        lot = {
+        data = dict(self.data.items())
+        data.update({
             'id': self.id,
             'slug': self.slug,
             'name': self.name,
             'oneServiceLimit': self.one_service_limit,
             'allowsBrief': self.allows_brief,
-        }
-        lot.update(dict(self.data.items()))
-        return lot
+        })
+        return data
 
 
 class Framework(db.Model):
