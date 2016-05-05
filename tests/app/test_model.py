@@ -667,3 +667,20 @@ class TestSupplierFrameworks(BaseApplicationTest):
         supplier_framework.declaration = {'foo': ' bar ', 'bar': '', 'other': ' '}
 
         assert supplier_framework.declaration == {'foo': 'bar', 'bar': '', 'other': ''}
+
+
+class TestLot(BaseApplicationTest):
+    def test_lot_data_is_serialized(self):
+        with self.app.app_context():
+            self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self.lot = self.framework.get_lot('digital-specialists')
+
+            assert self.lot.serialize() == {
+                u'id': 6,
+                u'name': u'Digital specialists',
+                u'slug': u'digital-specialists',
+                u'allowsBrief': True,
+                u'oneServiceLimit': True,
+                u'unitSingular': u'specialist',
+                u'unitPlural': u'specialists',
+            }
