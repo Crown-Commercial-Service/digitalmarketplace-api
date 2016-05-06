@@ -30,7 +30,7 @@ COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
     "securityClearance": "Developed vetting required.",
     "technicalWeighting": 10,
     "culturalFitCriteria": ["CULTURAL", "FIT"],
-    "numberOfSuppliers": "3",
+    "numberOfSuppliers": 3,
     "summary": "Doing some stuff to help out.",
     "workplaceAddress": "Aviation House"
 }

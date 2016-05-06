@@ -96,8 +96,10 @@
       "type": "array"
     },
     "numberOfSuppliers": {
-      "minLength": 1,
-      "type": "string"
+      "exclusiveMaximum": false,
+      "maximum": 15,
+      "minimum": 3,
+      "type": "integer"
     },
     "organisation": {
       "maxLength": 100,
