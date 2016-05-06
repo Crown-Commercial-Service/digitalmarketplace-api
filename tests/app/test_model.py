@@ -673,14 +673,14 @@ class TestLot(BaseApplicationTest):
     def test_lot_data_is_serialized(self):
         with self.app.app_context():
             self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            self.lot = self.framework.get_lot('digital-specialists')
+            self.lot = self.framework.get_lot('user-research-studios')
 
             assert self.lot.serialize() == {
-                u'id': 6,
-                u'name': u'Digital specialists',
-                u'slug': u'digital-specialists',
-                u'allowsBrief': True,
-                u'oneServiceLimit': True,
-                u'unitSingular': u'specialist',
-                u'unitPlural': u'specialists',
+                u'id': 7,
+                u'name': u'User research studios',
+                u'slug': u'user-research-studios',
+                u'allowsBrief': False,
+                u'oneServiceLimit': False,
+                u'unitSingular': u'lab',
+                u'unitPlural': u'labs',
             }

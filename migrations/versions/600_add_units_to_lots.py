@@ -20,12 +20,7 @@ def upgrade():
     op.execute("""
         UPDATE lots
           SET data = '{"unitSingular": "service", "unitPlural": "services"}'
-          WHERE  slug in ('saas', 'paas', 'iaas', 'scs', 'digital-outcomes', 'user-research-participants');
-    """)
-    op.execute("""
-        UPDATE lots
-          SET data = '{"unitSingular": "specialist", "unitPlural": "specialists"}'
-          WHERE  slug = 'digital-specialists';
+          WHERE  slug in ('saas', 'paas', 'iaas', 'scs', 'digital-outcomes', 'digital-specialists', 'user-research-participants');
     """)
     op.execute("""
         UPDATE lots
