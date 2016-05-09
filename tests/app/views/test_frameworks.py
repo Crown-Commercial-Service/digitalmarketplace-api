@@ -140,18 +140,42 @@ class TestGetFramework(BaseApplicationTest):
 
         data = json.loads(response.get_data())
         assert data['frameworks']['lots'] == [
-            {u'id': 1, u'name': u'Software as a Service',
-             u'oneServiceLimit': False, u'slug': u'saas',
-             u'allowsBrief': False},
-            {u'id': 2, u'name': u'Platform as a Service',
-             u'oneServiceLimit': False, u'slug': u'paas',
-             u'allowsBrief': False},
-            {u'id': 3, u'name': u'Infrastructure as a Service',
-             u'oneServiceLimit': False, u'slug': u'iaas',
-             u'allowsBrief': False},
-            {u'id': 4, u'name': u'Specialist Cloud Services',
-             u'oneServiceLimit': False, u'slug': u'scs',
-             u'allowsBrief': False},
+            {
+                u'id': 1,
+                u'name': u'Software as a Service',
+                u'slug': u'saas',
+                u'allowsBrief': False,
+                u'unitSingular': u'service',
+                u'oneServiceLimit': False,
+                u'unitPlural': u'services',
+            },
+            {
+                u'id': 2,
+                u'name': u'Platform as a Service',
+                u'slug': u'paas',
+                u'allowsBrief': False,
+                u'oneServiceLimit': False,
+                u'unitSingular': u'service',
+                u'unitPlural': u'services',
+            },
+            {
+                u'id': 3,
+                u'name': u'Infrastructure as a Service',
+                u'slug': u'iaas',
+                u'allowsBrief': False,
+                u'oneServiceLimit': False,
+                u'unitSingular': u'service',
+                u'unitPlural': u'services',
+            },
+            {
+                u'id': 4,
+                u'name': u'Specialist Cloud Services',
+                u'slug': u'scs',
+                u'allowsBrief': False,
+                u'oneServiceLimit': False,
+                u'unitSingular': u'service',
+                u'unitPlural': u'services',
+            }
         ]
 
     def test_a_404_is_raised_if_it_does_not_exist(self):

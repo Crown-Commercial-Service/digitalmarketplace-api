@@ -44,6 +44,7 @@ class Lot(db.Model):
     slug = db.Column(db.String, nullable=False, index=True)
     name = db.Column(db.String, nullable=False)
     one_service_limit = db.Column(db.Boolean, nullable=False, default=False)
+    data = db.Column(JSON)
 
     @property
     def allows_brief(self):
@@ -53,13 +54,15 @@ class Lot(db.Model):
         return '<{}: {}>'.format(self.__class__.__name__, self.name)
 
     def serialize(self):
-        return {
+        data = dict(self.data.items())
+        data.update({
             'id': self.id,
             'slug': self.slug,
             'name': self.name,
             'oneServiceLimit': self.one_service_limit,
             'allowsBrief': self.allows_brief,
-        }
+        })
+        return data
 
 
 class Framework(db.Model):
