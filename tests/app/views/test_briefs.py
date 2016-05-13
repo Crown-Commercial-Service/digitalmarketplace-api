@@ -668,8 +668,8 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == "Framework is not live"
 
-    def test_cannot_return_a_live_brief_to_pending(self):
-        self.setup_dummy_briefs(1, status='live')
+    def test_can_unpublish_a_live_brief(self):
+        self.setup_dummy_briefs(1, title="Published brief", status='live')
 
         res = self.client.put(
             '/briefs/1/status',
@@ -680,8 +680,9 @@ class TestBriefs(BaseApplicationTest):
             content_type='application/json')
         data = json.loads(res.get_data(as_text=True))
 
-        assert res.status_code == 400
-        assert data['error'] == "Cannot change brief status from 'live' to 'draft'"
+        assert res.status_code == 200
+        assert data['briefs']['status'] == 'draft'
+        assert 'publishedAt' not in data['briefs']
 
     def test_cannot_set_status_to_invalid_value(self):
         self.setup_dummy_briefs(1, status='draft')
