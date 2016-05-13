@@ -923,8 +923,8 @@ class Brief(db.Model):
             return
         elif value == 'live':
             self.published_at = datetime.utcnow()
-        elif value == 'draft' and self.published_at is not None:
-            raise ValidationError("Cannot change brief status from 'live' to 'draft'")
+        elif value == 'draft':
+            self.published_at = None
         elif value == 'closed':
             raise ValidationError("Cannot change brief status to 'closed'")
         else:

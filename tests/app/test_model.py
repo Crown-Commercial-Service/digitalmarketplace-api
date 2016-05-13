@@ -223,11 +223,11 @@ class TestBriefs(BaseApplicationTest):
         with pytest.raises(ValidationError):
             brief.status = 'invalid'
 
-    def test_cannot_set_live_brief_to_draft(self):
+    def test_can_set_live_brief_to_draft(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
+        brief.status = 'draft'
 
-        with pytest.raises(ValidationError):
-            brief.status = 'draft'
+        assert brief.published_at is None
 
     def test_cannot_set_brief_to_closed(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
