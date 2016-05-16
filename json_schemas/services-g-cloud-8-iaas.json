@@ -178,8 +178,8 @@
         "value": {
           "items": {
             "enum": [
-              "Encrypted PSN service",
-              "PSN service",
+              "PSN assured service",
+              "PSN protected service",
               "CPA Foundation VPN Gateway",
               "TLS (HTTPS or VPN) version 1.2 or later",
               "Legacy SSL or TLS (HTTPS or VPN)",
@@ -211,8 +211,8 @@
         "value": {
           "items": {
             "enum": [
-              "Encrypted PSN service",
-              "PSN service",
+              "PSN assured service",
+              "PSN protected service",
               "CPA Foundation VPN Gateway",
               "TLS (HTTPS or VPN) version 1.2 or later",
               "Legacy SSL or TLS (HTTPS or VPN)",
@@ -701,14 +701,13 @@
         "enum": [
           "Internet",
           "Public Services Network (PSN)",
-          "Government Secure intranet (GSi)",
           "Police National Network (PNN)",
           "New NHS Network (N3)",
           "Joint Academic Network (JANET)",
           "Other"
         ]
       },
-      "maxItems": 7,
+      "maxItems": 6,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
@@ -1126,13 +1125,14 @@
           "Internet Explorer 8",
           "Internet Explorer 9",
           "Internet Explorer 10+",
+          "Microsoft Edge",
           "Firefox",
           "Chrome",
           "Safari",
           "Opera"
         ]
       },
-      "maxItems": 9,
+      "maxItems": 10,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
