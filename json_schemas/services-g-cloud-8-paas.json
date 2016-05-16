@@ -626,8 +626,8 @@
         "value": {
           "items": {
             "enum": [
-              "Encrypted PSN service",
-              "PSN service",
+              "PSN assured service",
+              "PSN protected service",
               "Private WAN",
               "Internet"
             ]
