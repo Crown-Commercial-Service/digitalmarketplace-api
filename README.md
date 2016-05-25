@@ -40,6 +40,12 @@ environment
 make bootstrap
 ```
 
+On Debian Jessie, the following packages are required for bootstrapping to work:
+
+```
+apt-get install gcc virtualenv python-dev libffi-dev libpq-dev
+```
+
 ### Activate the virtual environment
 
 ```

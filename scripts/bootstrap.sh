@@ -25,6 +25,10 @@ if [ ! $VIRTUAL_ENV ]; then
   . ./venv/bin/activate
 fi
 
+# Some of the specified packages use syntax in their requirements.txt
+# that older pips don't understand
+pip install "pip>=8.0"
+
 # Install Python development dependencies
 pip install -r requirements_for_test.txt
 
