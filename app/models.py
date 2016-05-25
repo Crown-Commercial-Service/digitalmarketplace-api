@@ -438,6 +438,7 @@ class User(db.Model):
         user = {
             'id': self.id,
             'emailAddress': self.email_address,
+            'phoneNumber': self.phone_number,
             'name': self.name,
             'role': self.role,
             'active': self.active,
