@@ -425,6 +425,7 @@ class TestBriefs(BaseApplicationTest):
                     {
                         'id': 1,
                         'emailAddress': 'test+1@digital.gov.uk',
+                        'phoneNumber': None,
                         'name': 'my name',
                         'role': 'buyer',
                         'active': True,
