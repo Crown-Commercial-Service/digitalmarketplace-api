@@ -193,6 +193,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             data=json.dumps({
                 'users': {
                     'emailAddress': 'joeblogs@email.com',
+                    'phoneNumber': '01234 567890',
                     'password': '1234567890',
                     'role': 'admin',
                     'name': 'joe bloggs'}}),
@@ -222,6 +223,22 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             data=json.dumps({
                 'users': {
                     'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'password': '1234567890',
+                    'role': 'buyer',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert response.status_code == 201
+        data = json.loads(response.get_data())['users']
+        assert data['active']
+
+    def test_creating_buyer_user_with_no_phone_number_succeeds(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'phoneNumber': '',
                     'password': '1234567890',
                     'role': 'buyer',
                     'name': 'joe bloggs'}}),
