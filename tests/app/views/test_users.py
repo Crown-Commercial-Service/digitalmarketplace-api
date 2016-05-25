@@ -192,16 +192,16 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@email.gov.uk',
                     'phoneNumber': '01234 567890',
                     'password': '1234567890',
-                    'role': 'admin',
+                    'role': 'buyer',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
         assert_equal(response.status_code, 201)
         data = json.loads(response.get_data())["users"]
-        assert_equal(data["emailAddress"], "joeblogs@email.com")
+        assert_equal(data["emailAddress"], "joeblogs@email.gov.uk")
 
     def test_creating_buyer_user_with_bad_email_domain_fails(self):
         response = self.client.post(
