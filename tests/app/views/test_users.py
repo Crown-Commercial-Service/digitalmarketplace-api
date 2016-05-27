@@ -202,6 +202,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
         assert_equal(response.status_code, 201)
         data = json.loads(response.get_data())["users"]
         assert_equal(data["emailAddress"], "joeblogs@email.gov.uk")
+        assert_equal(data["phoneNumber"], "01234 567890")
 
     def test_creating_buyer_user_with_bad_email_domain_fails(self):
         response = self.client.post(
