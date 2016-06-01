@@ -2,6 +2,7 @@ from functools import wraps
 from flask import Flask
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
+import json
 
 import dmapiclient
 from dmutils import init_app, flask_featureflags
@@ -29,6 +30,10 @@ def create_app(config_name):
 
     if not application.config['DM_API_AUTH_TOKENS']:
         raise Exception("No DM_API_AUTH_TOKENS provided")
+
+    if application.config['VCAP_SERVICES']:
+        cf_services = json.loads(application.config['VCAP_SERVICES'])
+        application.config['SQLALCHEMY_DATABASE_URI'] = cf_services['PostgreSQL'][0]['credentials']['uri']
 
     from .main import main as main_blueprint
     application.register_blueprint(main_blueprint)
