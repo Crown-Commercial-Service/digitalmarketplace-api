@@ -21,7 +21,7 @@
       "type": "string"
     },
     "phoneNumber": {
-      "pattern": "^$|^\\+?([\\d\\s()-]){6,20}$",
+      "pattern": "^$|^\\+?([\\d\\s()-]){9,20}$",
       "type": "string"
     },
     "role": {
