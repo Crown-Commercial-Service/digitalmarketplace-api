@@ -277,7 +277,6 @@ def list_brief_services(brief_id):
         framework_slugs=[brief.framework.slug],
         statuses=["published"],
         lot_slug=brief.lot.slug,
-        location=brief.data["location"],
         role=brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
     )
 
