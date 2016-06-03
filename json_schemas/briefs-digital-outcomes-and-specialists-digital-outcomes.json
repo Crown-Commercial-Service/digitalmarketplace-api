@@ -61,15 +61,14 @@
     "evaluationType": {
       "items": {
         "enum": [
-          "Written proposal",
           "Case study",
           "Work history",
           "Reference",
           "Presentation"
         ]
       },
-      "maxItems": 5,
-      "minItems": 1,
+      "maxItems": 4,
+      "minItems": 0,
       "type": "array",
       "uniqueItems": true
     },
@@ -207,7 +206,6 @@
     "culturalWeighting",
     "endUsers",
     "essentialRequirements",
-    "evaluationType",
     "existingTeam",
     "location",
     "numberOfSuppliers",
