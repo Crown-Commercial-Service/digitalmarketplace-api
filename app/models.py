@@ -385,6 +385,8 @@ class User(db.Model):
                      nullable=False)
     email_address = db.Column(db.String, index=True, unique=True,
                               nullable=False)
+    phone_number = db.Column(db.String, index=False, unique=False,
+                             nullable=True)
     password = db.Column(db.String, index=False, unique=False,
                          nullable=False)
     active = db.Column(db.Boolean, index=False, unique=False,
@@ -436,6 +438,7 @@ class User(db.Model):
         user = {
             'id': self.id,
             'emailAddress': self.email_address,
+            'phoneNumber': self.phone_number,
             'name': self.name,
             'role': self.role,
             'active': self.active,

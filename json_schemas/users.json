@@ -20,6 +20,10 @@
       "minLength": 10,
       "type": "string"
     },
+    "phoneNumber": {
+      "pattern": "^$|^\\+?([\\d\\s()-]){9,20}$",
+      "type": "string"
+    },
     "role": {
       "enum": [
         "buyer",

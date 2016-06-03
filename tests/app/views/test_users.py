@@ -192,15 +192,17 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@email.gov.uk',
+                    'phoneNumber': '01234 567890',
                     'password': '1234567890',
-                    'role': 'admin',
+                    'role': 'buyer',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
         assert_equal(response.status_code, 201)
         data = json.loads(response.get_data())["users"]
-        assert_equal(data["emailAddress"], "joeblogs@email.com")
+        assert_equal(data["emailAddress"], "joeblogs@email.gov.uk")
+        assert_equal(data["phoneNumber"], "01234 567890")
 
     def test_creating_buyer_user_with_bad_email_domain_fails(self):
         response = self.client.post(
@@ -230,6 +232,52 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
         assert response.status_code == 201
         data = json.loads(response.get_data())['users']
         assert data['active']
+
+    def test_creating_buyer_user_with_no_phone_number_succeeds(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'phoneNumber': '',
+                    'password': '1234567890',
+                    'role': 'buyer',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert response.status_code == 201
+        data = json.loads(response.get_data())['users']
+        assert data['active']
+
+    def test_creating_buyer_user_with_bad_phone_number_fails(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'phoneNumber': '123456',
+                    'password': '1234567890',
+                    'role': 'buyer',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert response.status_code == 400
+
+    def test_creating_buyer_user_with_no_phone_stores_none(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'phoneNumber': '',
+                    'password': '1234567890',
+                    'role': 'buyer',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert response.status_code == 201
+        data = json.loads(response.get_data())['users']
+        assert_equal(data['phoneNumber'], None)
 
     def test_can_post_an_admin_user(self):
         response = self.client.post(

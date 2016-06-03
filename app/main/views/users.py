@@ -113,6 +113,7 @@ def create_user():
     now = datetime.utcnow()
     user = User(
         email_address=json_payload['emailAddress'].lower(),
+        phone_number=json_payload.get('phoneNumber') or None,
         name=json_payload['name'],
         role=json_payload['role'],
         password=password,
