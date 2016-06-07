@@ -16,8 +16,8 @@ class Config:
     DM_HTTP_PROTO = 'http'
     # Logging
     DM_LOG_LEVEL = 'DEBUG'
+    DM_LOG_PATH = None
     DM_APP_NAME = 'api'
-    DM_LOG_PATH = '/var/log/digitalmarketplace/application.log'
     DM_REQUEST_ID_HEADER = 'DM-Request-ID'
     DM_DOWNSTREAM_REQUEST_ID_HEADER = 'X-Amz-Cf-Id'
 
@@ -66,6 +66,7 @@ class Live(Config):
     DEBUG = False
     ALLOW_EXPLORER = False
     DM_HTTP_PROTO = 'https'
+    DM_LOG_PATH = '/var/log/digitalmarketplace/application.log'
 
 
 class Preview(Live):
