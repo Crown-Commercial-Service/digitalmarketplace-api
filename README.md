@@ -96,7 +96,7 @@ it to ``myToken``. You should include a valid token in your request headers,
 e.g.:
 
 ```
-curl -i -H "Authorization: Bearer myToken" 127.0.0.1:5000/services/123456789
+curl -i -H "Authorization: Bearer myToken" 127.0.0.1:5000/services
 ```
 
 ## Using FeatureFlags
