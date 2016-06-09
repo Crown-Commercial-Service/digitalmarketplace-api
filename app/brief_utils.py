@@ -30,7 +30,6 @@ def get_supplier_service_eligible_for_brief(supplier, brief):
         framework_slugs=[brief.framework.slug],
         statuses=["published"],
         lot_slug=brief.lot.slug,
-        location=brief.data["location"],
         role=brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
     )
 
