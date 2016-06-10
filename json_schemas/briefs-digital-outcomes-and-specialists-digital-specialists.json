@@ -51,15 +51,14 @@
     "evaluationType": {
       "items": {
         "enum": [
-          "Work history",
           "Reference",
           "Interview",
           "Scenario or test",
           "Presentation"
         ]
       },
-      "maxItems": 5,
-      "minItems": 1,
+      "maxItems": 4,
+      "minItems": 0,
       "type": "array",
       "uniqueItems": true
     },
@@ -184,7 +183,6 @@
     "culturalFitCriteria",
     "culturalWeighting",
     "essentialRequirements",
-    "evaluationType",
     "existingTeam",
     "location",
     "numberOfSuppliers",

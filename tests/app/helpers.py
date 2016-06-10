@@ -15,7 +15,7 @@ TEST_SUPPLIERS_COUNT = 3
 COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
     "essentialRequirements": ["MS Paint", "GIMP"],
     "startDate": "31/12/2016",
-    "evaluationType": ["Work history", "Reference", "Interview"],
+    "evaluationType": ["Reference", "Interview"],
     "niceToHaveRequirements":  ["LISP"],
     "existingTeam": "Nice people.",
     "specialistWork": "All the things",

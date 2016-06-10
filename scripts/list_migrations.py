@@ -4,8 +4,11 @@
 from __future__ import print_function
 
 import sys
+import warnings
 
 from alembic.script import ScriptDirectory
+
+warnings.simplefilter('error')
 
 
 def detect_heads(migrations):
