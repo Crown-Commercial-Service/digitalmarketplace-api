@@ -19,8 +19,18 @@ class TestListFrameworks(BaseApplicationTest):
             assert_equal(response.status_code, 200)
             assert_equal(len(data['frameworks']),
                          len(Framework.query.all()))
-            assert_equal(sorted(data['frameworks'][0].keys()),
-                         ['clarificationQuestionsOpen', 'framework', 'id', 'lots', 'name', 'slug', 'status'])
+            assert_equal(
+                set(data['frameworks'][0].keys()),
+                set([
+                    'clarificationQuestionsOpen',
+                    'framework',
+                    'frameworkAgreementVersion',
+                    'id',
+                    'lots',
+                    'name',
+                    'slug',
+                    'status',
+                ]))
 
 
 class TestCreateFramework(BaseApplicationTest):

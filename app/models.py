@@ -104,6 +104,7 @@ class Framework(db.Model):
             'name': self.name,
             'slug': self.slug,
             'framework': self.framework,
+            'frameworkAgreementVersion': self.framework_agreement_version,
             'status': self.status,
             'clarificationQuestionsOpen': self.clarification_questions_open,
             'lots': [lot.serialize() for lot in self.lots],
