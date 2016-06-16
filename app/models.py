@@ -80,6 +80,7 @@ class Framework(db.Model):
     slug = db.Column(db.String, nullable=False, unique=True, index=True)
     name = db.Column(db.String(255), nullable=False)
     framework = db.Column(db.String(), index=True, nullable=False)
+    framework_agreement_version = db.Column(db.String(), nullable=True)
     status = db.Column(db.String(),
                        index=True, nullable=False,
                        default='pending')
