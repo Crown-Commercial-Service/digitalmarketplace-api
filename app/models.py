@@ -307,6 +307,8 @@ class SupplierFramework(db.Model):
     declaration = db.Column(JSON)
     on_framework = db.Column(db.Boolean, nullable=True)
     agreement_returned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
+    countersigned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
+    signer_details = db.Column(JSON)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
