@@ -80,6 +80,7 @@ class Framework(db.Model):
     slug = db.Column(db.String, nullable=False, unique=True, index=True)
     name = db.Column(db.String(255), nullable=False)
     framework = db.Column(db.String(), index=True, nullable=False)
+    framework_agreement_version = db.Column(db.String(), nullable=True)
     status = db.Column(db.String(),
                        index=True, nullable=False,
                        default='pending')
@@ -103,6 +104,7 @@ class Framework(db.Model):
             'name': self.name,
             'slug': self.slug,
             'framework': self.framework,
+            'frameworkAgreementVersion': self.framework_agreement_version,
             'status': self.status,
             'clarificationQuestionsOpen': self.clarification_questions_open,
             'lots': [lot.serialize() for lot in self.lots],
