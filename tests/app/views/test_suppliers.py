@@ -1104,6 +1104,9 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'complete_drafts_count': 1,
                         'services_count': 0,
                         'supplierName': 'Supplier 1',
+                        'signerDetails': None,
+                        'countersigned': False,
+                        'countersignedAt': None,
                     }
                 ]
             }
@@ -1128,6 +1131,9 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'complete_drafts_count': 0,
                         'services_count': 1,
                         'supplierName': 'Supplier 2',
+                        'signerDetails': None,
+                        'countersigned': False,
+                        'countersignedAt': None,
                     }
                 ]
             }
