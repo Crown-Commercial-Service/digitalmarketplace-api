@@ -5,7 +5,8 @@ from .. import main
 from ... import db
 from ...models import (
     Supplier, ContactInformation, AuditEvent,
-    Service, SupplierFramework, Framework
+    Service, SupplierFramework, Framework,
+    ValidationError
 )
 from ...validation import (
     validate_supplier_json_or_400,
@@ -408,13 +409,19 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if not interest_record:
         abort(404, "supplier_id '{}' has not registered interest in {}".format(supplier_id, framework_slug))
 
+    uniform_now = datetime.utcnow()
+
     if 'onFramework' in update_json:
         interest_record.on_framework = update_json['onFramework']
     if 'agreementReturned' in update_json:
         if update_json['agreementReturned']:
-            interest_record.agreement_returned_at = datetime.utcnow()
+            interest_record.agreement_returned_at = uniform_now
         else:
             interest_record.agreement_returned_at = None
+    if update_json.get('countersigned'):
+        interest_record.countersigned_at = uniform_now
+    if 'signerDetails' in update_json:
+        interest_record.signer_details = update_json["signerDetails"]
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.supplier_update,
