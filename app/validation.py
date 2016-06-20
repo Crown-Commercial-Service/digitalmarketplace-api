@@ -290,5 +290,5 @@ _BUYER_EMAIL_DOMAINS = load_buyer_email_domains('./data/buyer-email-domains.txt'
 
 
 def is_valid_buyer_email(email):
-    _, domain = email.split('@')
+    domain = email.split('@')[-1]
     return any(domain == d or domain.endswith('.' + d) for d in _BUYER_EMAIL_DOMAINS)
