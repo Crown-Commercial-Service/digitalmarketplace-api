@@ -533,6 +533,7 @@ def check_schema(schema):
     ('test@something.gov.uk', True),
     ('test@somegov.uk', False),
     ('test@gov.ok', False),
+    ('test@test@gov.uk', True)
 ])
 def test_is_valid_buyer_email(email, expected):
     assert is_valid_buyer_email(email) == expected
