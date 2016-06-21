@@ -413,11 +413,8 @@ def update_supplier_framework_details(supplier_id, framework_slug):
 
     if 'onFramework' in update_json:
         interest_record.on_framework = update_json['onFramework']
-    if 'agreementReturned' in update_json:
-        if update_json['agreementReturned']:
-            interest_record.agreement_returned_at = uniform_now
-        else:
-            interest_record.agreement_returned_at = None
+    if update_json.get('agreementReturned'):
+        interest_record.agreement_returned_at = uniform_now
     if update_json.get('countersigned'):
         interest_record.countersigned_at = uniform_now
     if 'signerDetails' in update_json:

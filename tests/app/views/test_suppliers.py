@@ -1418,26 +1418,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             data = json.loads(response.get_data())
             assert_equal(data['frameworkInterest']['countersignedAt'], '2012-12-12T00:00:00.000000Z')
 
-    def test_agreement_returned_at_is_unset_when_agreement_returned_flag_is_false(self):
-        with freeze_time('2012-12-12'):
-            response = self.supplier_framework_update(
-                0, 'digital-outcomes-and-specialists',
-                update={'agreementReturned': True})
-
-            assert_equal(response.status_code, 200)
-            data = json.loads(response.get_data())
-            assert_equal(data['frameworkInterest']['agreementReturned'], True)
-            assert_equal(data['frameworkInterest']['agreementReturnedAt'], '2012-12-12T00:00:00.000000Z')
-
-            response2 = self.supplier_framework_update(
-                0, 'digital-outcomes-and-specialists',
-                update={'agreementReturned': False})
-
-            assert_equal(response2.status_code, 200)
-            data2 = json.loads(response2.get_data())
-            assert_equal(data2['frameworkInterest']['agreementReturned'], False)
-            assert_equal(data2['frameworkInterest']['agreementReturnedAt'], None)
-
     def test_setting_signer_details(self):
         supplier_details_payload = {
             "some": [
