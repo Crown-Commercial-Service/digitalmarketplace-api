@@ -219,6 +219,7 @@ class ContactInformation(db.Model):
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
 
+    # NOTE other tables tend to make foreign key references to `supplier_id` instead of this
     id = db.Column(db.Integer, primary_key=True)
 
     supplier_id = db.Column(db.BigInteger, Sequence('suppliers_supplier_id_seq'), index=True, unique=True,
@@ -377,9 +378,10 @@ class User(db.Model):
     ROLES = [
         'buyer',
         'supplier',
-        'admin',
-        'admin-ccs-category',
-        'admin-ccs-sourcing',
+        'admin',               # a general admin user, with permission to do most (but not all)
+                               # admin actions.
+        'admin-ccs-category',  # generally restricted to read-only access to admin views.
+        'admin-ccs-sourcing',  # can perform admin actions involving supplier acceptance.
     ]
 
     id = db.Column(db.Integer, primary_key=True)
@@ -391,8 +393,11 @@ class User(db.Model):
                              nullable=True)
     password = db.Column(db.String, index=False, unique=False,
                          nullable=False)
+
+    # used to disable accounts
     active = db.Column(db.Boolean, index=False, unique=False,
                        nullable=False)
+
     created_at = db.Column(db.DateTime, index=False, unique=False,
                            nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, index=False, unique=False,
@@ -401,7 +406,12 @@ class User(db.Model):
     password_changed_at = db.Column(db.DateTime, index=False, unique=False,
                                     nullable=False)
     logged_in_at = db.Column(db.DateTime, nullable=True)
+
+    # used to determine whether account is `locked`. field is reset upon successful login or can
+    # be reset manually to "unlock" an account.
     failed_login_count = db.Column(db.Integer, nullable=False, default=0)
+
+    # used by frontends to determine whether view access should be allowed
     role = db.Column(db.Enum(ROLES, name='user_roles_enum'), index=False, unique=False, nullable=False)
 
     supplier_id = db.Column(db.BigInteger,
@@ -424,6 +434,9 @@ class User(db.Model):
 
     @property
     def locked(self):
+        """
+            Whether account has had too many failed login attempts (since counter last reset)
+        """
         login_attempt_limit = current_app.config['DM_FAILED_LOGIN_LIMIT']
         return self.failed_login_count >= login_attempt_limit
 
@@ -468,7 +481,12 @@ class ServiceTableMixin(object):
 
     STATUSES = ('disabled', 'enabled', 'published')
 
+    # not used as the externally-visible "pk" by actual Services in favour of service_id
     id = db.Column(db.Integer, primary_key=True)
+
+    # used as externally-visible "pk" for Services and allows services identity to be tracked
+    # across a service's lifetime. assigned randomly (see generate_new_service_id) at DraftService ->
+    # Service publishing time.
     service_id = db.Column(db.String, index=True, unique=True, nullable=False)
 
     data = db.Column(JSON)
@@ -633,6 +651,9 @@ class Service(db.Model, ServiceTableMixin):
 
 
 class ArchivedService(db.Model, ServiceTableMixin):
+    """
+        A record of a Service's past state
+    """
     __tablename__ = 'archived_services'
 
     # Overwrites service_id column to remove uniqueness constraint
@@ -1169,4 +1190,5 @@ def filter_null_value_fields(obj):
 
 
 def generate_new_service_id(framework_slug):
+    # FIXME framework_slug parameter ignored??
     return str(random.randint(10 ** 14, 10 ** 15 - 1))
