@@ -1419,20 +1419,40 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(data['frameworkInterest']['countersignedAt'], '2012-12-12T00:00:00.000000Z')
 
     def test_setting_signer_details(self):
-        supplier_details_payload = {
+        signer_details_payload = {
             "some": [
                 "arbitrary",
                 123,
                 ["json"]
             ],
+            "here": "there",
         }
         response = self.supplier_framework_update(
             0, 'digital-outcomes-and-specialists',
-            update={'signerDetails': supplier_details_payload})
+            update={'signerDetails': signer_details_payload})
 
         assert_equal(response.status_code, 200)
         data = json.loads(response.get_data())
-        assert_equal(data['frameworkInterest']['signerDetails'], supplier_details_payload)
+        assert_equal(data['frameworkInterest']['signerDetails'], signer_details_payload)
+
+        # while we're at it let's test the signerDetails partial updating behaviour
+        signer_details_update_payload = {
+            "other": {
+                "json": 456,
+            },
+            "here": None,
+        }
+        response2 = self.supplier_framework_update(
+            0, 'digital-outcomes-and-specialists',
+            update={'signerDetails': signer_details_update_payload})
+
+        signer_details_payload.update(signer_details_update_payload)
+        # json validator should strip this key
+        del signer_details_payload["here"]
+
+        assert_equal(response2.status_code, 200)
+        data2 = json.loads(response2.get_data())
+        assert_equal(data2['frameworkInterest']['signerDetails'], signer_details_payload)
 
     def test_changing_from_failed_to_passed(self):
         response = self.supplier_framework_update(

@@ -418,7 +418,13 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if update_json.get('countersigned'):
         interest_record.countersigned_at = uniform_now
     if 'signerDetails' in update_json:
-        interest_record.signer_details = update_json["signerDetails"]
+        if update_json["signerDetails"] is None:
+            interest_record.signer_details = None
+        else:
+            interest_record.signer_details = interest_record.signer_details or {}
+            interest_record.signer_details.update(update_json["signerDetails"])
+            # a dummy assignment to force the validator to run. FIXME sort this out project-wide
+            interest_record.signer_details = interest_record.signer_details
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.supplier_update,

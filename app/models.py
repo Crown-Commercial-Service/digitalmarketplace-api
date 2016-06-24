@@ -320,6 +320,13 @@ class SupplierFramework(db.Model):
 
         return value
 
+    @validates('signer_details')
+    def validates_signer_details(self, key, value):
+        value = strip_whitespace_from_data(value)
+        value = purge_nulls_from_data(value)
+
+        return value
+
     @staticmethod
     def find_by_framework(framework_slug):
         return SupplierFramework.query.filter(
