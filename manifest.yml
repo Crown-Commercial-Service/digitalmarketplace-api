@@ -1,7 +1,8 @@
 services:
-    - pgdb-test
+    - pgdb-dev
 
 applications:
-    - name: dm-test-api
+    - name: dm-dev-api
+      command: python application.py runserver
       memory: 128M
       disk_quota: 512M

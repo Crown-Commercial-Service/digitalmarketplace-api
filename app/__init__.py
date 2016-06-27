@@ -31,9 +31,12 @@ def create_app(config_name):
     if not application.config['DM_API_AUTH_TOKENS']:
         raise Exception("No DM_API_AUTH_TOKENS provided")
 
-    if application.config['VCAP_SERVICES']:
-        cf_services = json.loads(application.config['VCAP_SERVICES'])
-        application.config['SQLALCHEMY_DATABASE_URI'] = cf_services['PostgreSQL'][0]['credentials']['uri']
+    # FIXME: The service broker adds a 'reconnect' parameter that's rejected by Postgres and
+    # doesn't seem to be in the Postgres documentation anyway.  We need to patch the broker to fix
+    # the username stability issue anyway.
+    import os
+    if os.environ.has_key('DATABASE_URL'):
+        application.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL'].replace('reconnect=true', '')
 
     from .main import main as main_blueprint
     application.register_blueprint(main_blueprint)
