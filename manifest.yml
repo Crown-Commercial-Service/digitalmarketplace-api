@@ -1,0 +1,7 @@
+services:
+    - pgdb-test
+
+applications:
+    - name: dm-test-api
+      memory: 128M
+      disk_quota: 512M
