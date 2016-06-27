@@ -21,6 +21,7 @@ from sqlalchemy_utils import generic_relationship
 from dmutils.formats import DATETIME_FORMAT
 
 from . import db
+from .fields import SanitizedJSON
 from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
 from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
 
@@ -304,19 +305,12 @@ class SupplierFramework(db.Model):
     framework_id = db.Column(db.Integer,
                              db.ForeignKey('frameworks.id'),
                              primary_key=True)
-    declaration = db.Column(JSON)
+    declaration = db.Column(SanitizedJSON)
     on_framework = db.Column(db.Boolean, nullable=True)
     agreement_returned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
-
-    @validates('declaration')
-    def validates_declaration(self, key, value):
-        value = strip_whitespace_from_data(value)
-        value = purge_nulls_from_data(value)
-
-        return value
 
     @staticmethod
     def find_by_framework(framework_slug):
@@ -489,7 +483,7 @@ class ServiceTableMixin(object):
     # Service publishing time.
     service_id = db.Column(db.String, index=True, unique=True, nullable=False)
 
-    data = db.Column(JSON)
+    data = db.Column(SanitizedJSON)
     status = db.Column(db.String, index=False, unique=False, nullable=False)
 
     created_at = db.Column(db.DateTime, index=False, nullable=False,
@@ -553,9 +547,6 @@ class ServiceTableMixin(object):
             'lot', 'lotSlug', 'lotName',
             'updatedAt', 'createdAt', 'links'
         ])
-
-        data = strip_whitespace_from_data(data)
-        data = purge_nulls_from_data(data)
 
         return data
 
@@ -842,7 +833,7 @@ class Brief(db.Model):
     framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), nullable=False)
     _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lots.id'), nullable=False)
 
-    data = db.Column(JSON)
+    data = db.Column(SanitizedJSON)
     created_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, index=True, nullable=False,
@@ -888,9 +879,6 @@ class Brief(db.Model):
             'lot', 'lotSlug', 'lotName',
             'updatedAt', 'createdAt', 'links'
         ])
-
-        data = strip_whitespace_from_data(data)
-        data = purge_nulls_from_data(data)
 
         return data
 
@@ -1042,7 +1030,7 @@ class BriefResponse(db.Model):
     __tablename__ = 'brief_responses'
 
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(JSON, nullable=False)
+    data = db.Column(SanitizedJSON, nullable=False)
 
     brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), nullable=False)
     supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.supplier_id'), nullable=False)
@@ -1057,8 +1045,6 @@ class BriefResponse(db.Model):
         data = drop_foreign_fields(data, [
             'supplierId', 'briefId',
         ])
-        data = strip_whitespace_from_data(data)
-        data = purge_nulls_from_data(data)
 
         return data
 
