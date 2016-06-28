@@ -21,6 +21,7 @@ from sqlalchemy_utils import generic_relationship
 from dmutils.formats import DATETIME_FORMAT
 
 from . import db
+from .fields import DMMutableContainer
 from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
 from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
 
@@ -44,7 +45,7 @@ class Lot(db.Model):
     slug = db.Column(db.String, nullable=False, index=True)
     name = db.Column(db.String, nullable=False)
     one_service_limit = db.Column(db.Boolean, nullable=False, default=False)
-    data = db.Column(JSON)
+    data = db.Column(DMMutableContainer.as_mutable(JSON))
 
     @property
     def allows_brief(self):
@@ -241,7 +242,7 @@ class Supplier(db.Model):
 
     companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
 
-    clients = db.Column(JSON, default=list)
+    clients = db.Column(DMMutableContainer.as_mutable(JSON), default=list)
 
     # Drop this method once the supplier front end is using SupplierFramework counts
     def get_service_counts(self):
@@ -304,15 +305,16 @@ class SupplierFramework(db.Model):
     framework_id = db.Column(db.Integer,
                              db.ForeignKey('frameworks.id'),
                              primary_key=True)
-    declaration = db.Column(JSON)
+    declaration = db.Column(DMMutableContainer.as_mutable(JSON))
     on_framework = db.Column(db.Boolean, nullable=True)
     agreement_returned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
     countersigned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
-    agreement_details = db.Column(JSON)
+    agreement_details = db.Column(DMMutableContainer.as_mutable(JSON))
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
+    # NOTE validation does *not* get run on changes to deep-nested mutables
     @validates('declaration')
     def validates_declaration(self, key, value):
         value = strip_whitespace_from_data(value)
@@ -506,7 +508,7 @@ class ServiceTableMixin(object):
     # Service publishing time.
     service_id = db.Column(db.String, index=True, unique=True, nullable=False)
 
-    data = db.Column(JSON)
+    data = db.Column(DMMutableContainer.as_mutable(JSON))
     status = db.Column(db.String, index=False, unique=False, nullable=False)
 
     created_at = db.Column(db.DateTime, index=False, nullable=False,
@@ -561,6 +563,7 @@ class ServiceTableMixin(object):
 
         return value
 
+    # NOTE validation does *not* get run on changes to deep-nested mutables
     @validates('data')
     def validates_data(self, key, value):
         data = drop_foreign_fields(value, [
@@ -770,7 +773,7 @@ class AuditEvent(db.Model):
     type = db.Column(db.String, index=True, nullable=False)
     created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
     user = db.Column(db.String)
-    data = db.Column(JSON)
+    data = db.Column(DMMutableContainer.as_mutable(JSON))
 
     object_type = db.Column(db.String)
     object_id = db.Column(db.BigInteger)
@@ -859,7 +862,7 @@ class Brief(db.Model):
     framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), nullable=False)
     _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lots.id'), nullable=False)
 
-    data = db.Column(JSON)
+    data = db.Column(DMMutableContainer.as_mutable(JSON))
     created_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, index=True, nullable=False,
@@ -897,6 +900,7 @@ class Brief(db.Model):
             raise ValidationError("Lot '{}' does not require a brief".format(lot.name))
         return lot
 
+    # NOTE validation does *not* get run on changes to deep-nested mutables
     @validates('data')
     def validates_data(self, key, data):
         data = drop_foreign_fields(data, [
@@ -1059,7 +1063,7 @@ class BriefResponse(db.Model):
     __tablename__ = 'brief_responses'
 
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(JSON, nullable=False)
+    data = db.Column(DMMutableContainer.as_mutable(JSON), nullable=False)
 
     brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), nullable=False)
     supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.supplier_id'), nullable=False)
@@ -1069,6 +1073,7 @@ class BriefResponse(db.Model):
     brief = db.relationship('Brief')
     supplier = db.relationship('Supplier', lazy='joined')
 
+    # NOTE validation does *not* get run on changes to deep-nested mutables
     @validates('data')
     def validates_data(self, key, data):
         data = drop_foreign_fields(data, [
