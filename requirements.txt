@@ -8,7 +8,7 @@ psycopg2==2.5.4
 SQLAlchemy==1.0.5
 SQLAlchemy-Utils==0.30.5
 
-git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@21.1.1#egg=dto-digitalmarketplace-utils==21.1.1
+git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@22.0.0#egg=dto-digitalmarketplace-utils==22.0.0
 git+https://github.com/AusDTO/dto-digitalmarketplace-apiclient.git@4.0.0#egg=dto-digitalmarketplace-apiclient==4.0.0
 
 # For schema validation

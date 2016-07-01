@@ -3,6 +3,6 @@ services:
 
 applications:
     - name: dm-dev-api
-      command: python application.py runserver
+      command: python application.py runprodserver
       memory: 128M
       disk_quota: 512M
