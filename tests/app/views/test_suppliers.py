@@ -1104,6 +1104,9 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'complete_drafts_count': 1,
                         'services_count': 0,
                         'supplierName': 'Supplier 1',
+                        'signerDetails': None,
+                        'countersigned': False,
+                        'countersignedAt': None,
                     }
                 ]
             }
@@ -1128,6 +1131,9 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'complete_drafts_count': 0,
                         'services_count': 1,
                         'supplierName': 'Supplier 2',
+                        'signerDetails': None,
+                        'countersigned': False,
+                        'countersignedAt': None,
                     }
                 ]
             }
@@ -1278,7 +1284,10 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
                 supplier_id=0, framework_id=2,
                 declaration={'an_answer': 'Yes it is'},
                 on_framework=True,
-                agreement_returned_at=datetime(2015, 10, 10, 10, 10, 10))
+                agreement_returned_at=datetime(2015, 10, 10, 10, 10, 10),
+                countersigned_at=datetime(2015, 11, 12, 13, 14, 15),
+                signer_details={u'some': u'thing'},
+            )
             db.session.add(answers)
             db.session.commit()
 
@@ -1304,6 +1313,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(data['frameworkInterest']['onFramework'], True)
         assert_equal(data['frameworkInterest']['agreementReturned'], True)
         assert_equal(data['frameworkInterest']['agreementReturnedAt'], '2015-10-10T10:10:10.000000Z')
+        assert_equal(data['frameworkInterest']['countersigned'], True)
+        assert_equal(data['frameworkInterest']['countersignedAt'], '2015-11-12T13:14:15.000000Z')
+        assert_equal(data['frameworkInterest']['signerDetails'], {'some': 'thing'})
 
     def test_get_supplier_framework_info_non_existent_by_framework(self):
         response = self.client.get(
@@ -1330,6 +1342,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(data['frameworkInterest']['onFramework'], True)
         assert_equal(data['frameworkInterest']['agreementReturned'], False)
         assert_is(data['frameworkInterest']['agreementReturnedAt'], None)
+        assert_equal(data['frameworkInterest']['countersigned'], False)
+        assert_is(data['frameworkInterest']['countersignedAt'], None)
+        assert_is(data['frameworkInterest']['signerDetails'], None)
 
     def test_adding_supplier_has_not_passed(self):
         response = self.supplier_framework_update(
@@ -1356,6 +1371,26 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
             assert_equal(data['frameworkInterest']['agreementReturned'], True)
             assert_equal(data['frameworkInterest']['agreementReturnedAt'], "2012-12-12T00:00:00.000000Z")
+            assert_equal(data['frameworkInterest']['countersigned'], False)
+            assert_is(data['frameworkInterest']['countersignedAt'], None)
+            assert_is(data['frameworkInterest']['signerDetails'], None)
+
+    def test_adding_that_agreement_has_been_countersigned(self):
+        with freeze_time('2012-12-12'):
+            response = self.supplier_framework_update(
+                0,
+                'digital-outcomes-and-specialists',
+                update={'countersigned': True}
+            )
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())
+            assert_equal(data['frameworkInterest']['supplierId'], 0)
+            assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+            assert_equal(data['frameworkInterest']['agreementReturned'], False)
+            assert_is(data['frameworkInterest']['agreementReturnedAt'], None)
+            assert_equal(data['frameworkInterest']['countersigned'], True)
+            assert_equal(data['frameworkInterest']['countersignedAt'], "2012-12-12T00:00:00.000000Z")
+            assert_is(data['frameworkInterest']['signerDetails'], None)
 
     def test_agreement_returned_at_timestamp_cannot_be_set(self):
         with freeze_time('2012-12-12'):
@@ -1368,18 +1403,56 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             data = json.loads(response.get_data())
             assert_equal(data['frameworkInterest']['agreementReturnedAt'], '2012-12-12T00:00:00.000000Z')
 
-    def test_agreement_returned_at_is_unset_when_agreement_reutrned_flag_is_false(self):
-        self.supplier_framework_update(
-            0, 'digital-outcomes-and-specialists',
-            update={'agreementReturned': True})
+    def test_countersigned_at_timestamp_cannot_be_set(self):
+        with freeze_time('2012-12-12'):
+            response = self.supplier_framework_update(
+                0,
+                'digital-outcomes-and-specialists',
+                update={
+                    'agreementReturned': True,
+                    'countersigned': True,
+                    'countersignedAt': '2013-13-13T00:00:00.000000Z',
+                }
+            )
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())
+            assert_equal(data['frameworkInterest']['countersignedAt'], '2012-12-12T00:00:00.000000Z')
+
+    def test_setting_signer_details(self):
+        signer_details_payload = {
+            "some": [
+                "arbitrary",
+                123,
+                ["json"]
+            ],
+            "here": "there",
+        }
         response = self.supplier_framework_update(
             0, 'digital-outcomes-and-specialists',
-            update={'agreementReturned': False})
+            update={'signerDetails': signer_details_payload})
 
         assert_equal(response.status_code, 200)
         data = json.loads(response.get_data())
-        assert_equal(data['frameworkInterest']['agreementReturned'], False)
-        assert_equal(data['frameworkInterest']['agreementReturnedAt'], None)
+        assert_equal(data['frameworkInterest']['signerDetails'], signer_details_payload)
+
+        # while we're at it let's test the signerDetails partial updating behaviour
+        signer_details_update_payload = {
+            "other": {
+                "json": 456,
+            },
+            "here": None,
+        }
+        response2 = self.supplier_framework_update(
+            0, 'digital-outcomes-and-specialists',
+            update={'signerDetails': signer_details_update_payload})
+
+        signer_details_payload.update(signer_details_update_payload)
+        # json validator should strip this key
+        del signer_details_payload["here"]
+
+        assert_equal(response2.status_code, 200)
+        data2 = json.loads(response2.get_data())
+        assert_equal(data2['frameworkInterest']['signerDetails'], signer_details_payload)
 
     def test_changing_from_failed_to_passed(self):
         response = self.supplier_framework_update(

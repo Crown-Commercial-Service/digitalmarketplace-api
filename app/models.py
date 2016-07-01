@@ -307,12 +307,21 @@ class SupplierFramework(db.Model):
     declaration = db.Column(JSON)
     on_framework = db.Column(db.Boolean, nullable=True)
     agreement_returned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
+    countersigned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
+    signer_details = db.Column(JSON)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
     @validates('declaration')
     def validates_declaration(self, key, value):
+        value = strip_whitespace_from_data(value)
+        value = purge_nulls_from_data(value)
+
+        return value
+
+    @validates('signer_details')
+    def validates_signer_details(self, key, value):
         value = strip_whitespace_from_data(value)
         value = purge_nulls_from_data(value)
 
@@ -361,6 +370,11 @@ class SupplierFramework(db.Model):
         agreement_returned_at = self.agreement_returned_at
         if agreement_returned_at:
             agreement_returned_at = agreement_returned_at.strftime(DATETIME_FORMAT)
+
+        countersigned_at = self.countersigned_at
+        if countersigned_at:
+            countersigned_at = countersigned_at.strftime(DATETIME_FORMAT)
+
         return dict({
             "supplierId": self.supplier_id,
             "supplierName": self.supplier.name,
@@ -369,6 +383,9 @@ class SupplierFramework(db.Model):
             "onFramework": self.on_framework,
             "agreementReturned": bool(agreement_returned_at),
             "agreementReturnedAt": agreement_returned_at,
+            "signerDetails": self.signer_details,
+            "countersigned": bool(countersigned_at),
+            "countersignedAt": countersigned_at,
         }, **(data or {}))
 
 
