@@ -609,10 +609,9 @@ class ServiceTableMixin(object):
         return data
 
     def update_from_json(self, data):
-        current_data = dict(self.data.items())
-        current_data.update(data)
-
-        self.data = current_data
+        if not self.data:
+            self.data = {}
+        self.data.update(data)
 
     def __repr__(self):
         return '<{}: service_id={}, supplier_id={}, lot={}>'.format(
@@ -1001,10 +1000,9 @@ class Brief(db.Model):
         return clarification_question
 
     def update_from_json(self, data):
-        current_data = dict(self.data.items())
-        current_data.update(data)
-
-        self.data = current_data
+        if not self.data:
+            self.data = {}
+        self.data.update(data)
 
     def serialize(self, with_users=False):
         data = dict(self.data.items())
