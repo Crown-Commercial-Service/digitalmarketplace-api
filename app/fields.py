@@ -1,4 +1,7 @@
 from sqlalchemy.ext.mutable import Mutable, MutableDict
+from sqlalchemy.orm.attributes import set_attribute
+
+from six import iteritems
 
 # here we implement subclasses of json-style containers (dict, list) which advertize their mutations back to a parent
 # model instance when used for e.g. a JSON field. this allows validators to run a *little* more reliably.
@@ -10,7 +13,23 @@ from sqlalchemy.ext.mutable import Mutable, MutableDict
 # `isinstance(some_dmmutabledict, DMMutableContainer)` and get a sensible answer (True)
 
 
-class DMMutableContainer(Mutable):
+class SetTriggeringMutable(Mutable):
+    """
+    A Mutable subclass which emits history events through `set_attribute` on `change()` which should have the
+    effect of causing validators to be run
+    """
+    def changed(self):
+        # we specifically have to let the parent class trigger its flag_modified *before* we trigger
+        # set_attribute - i'm sure why - the details of this seem to lurk deep in the internals of sqlalchemy
+        r = super(SetTriggeringMutable, self).changed()
+        # iterating through a copy of the items because the set_attribute will possibly alter the _parents
+        # WeakKeyDictionary (we're not worried that our snapshot could be stale...)
+        for parent, key in tuple(iteritems(self._parents)):
+            set_attribute(parent, key, getattr(parent, key))
+        return r
+
+
+class DMMutableContainer(SetTriggeringMutable):
     """
         All this does is implement a common `coerce` method for initializing the appropriate implementation class, other
         than that it's an abstract class. The effect is that this class can be used to apply mutable container behaviour
