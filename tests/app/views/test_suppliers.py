@@ -1283,7 +1283,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             # framework_agreement_version gets saved into the agreementDetails JSON blob of a supplier_framework
             # when an agreement is returned
             Framework.query.filter_by(slug='digital-outcomes-and-specialists').update(
-               {'framework_agreement_version': 'v1.0'}
+                {'framework_agreement_version': 'v1.0'}
             )
 
             answers = SupplierFramework(
@@ -1436,7 +1436,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert response2.status_code == 200
         data2 = json.loads(response2.get_data())
-        assert data2['frameworkInterest']['agreementReturned'] == False
+        assert data2['frameworkInterest']['agreementReturned'] is False
         assert data2['frameworkInterest']['agreementReturnedAt'] is None
         assert data2['frameworkInterest']['agreementDetails'] is None
 
@@ -1464,9 +1464,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             0, 'digital-outcomes-and-specialists',
             update={'agreementDetails': agreement_details_payload})
 
-        assert_equal(response.status_code, 200)
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert_equal(data['frameworkInterest']['agreementDetails'], agreement_details_payload)
+        assert data['frameworkInterest']['agreementDetails'] == agreement_details_payload
 
         # while we're at it let's test the agreementDetails partial updating behaviour
         agreement_details_update_payload = {
@@ -1477,14 +1477,55 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             update={'agreementDetails': agreement_details_update_payload})
 
         agreement_details_payload.update(agreement_details_update_payload)
-
-        assert_equal(response2.status_code, 200)
+        assert response2.status_code == 200
         data2 = json.loads(response2.get_data())
-        assert_equal(data2['frameworkInterest']['agreementDetails'], {
+        assert data2['frameworkInterest']['agreementDetails'] == {
             "signerName": "name",
             "signerRole": "role",
             "uploaderUserId": 1
-        })
+        }
+
+    def test_schema_validation_fails_if_unknown_fields_present_in_agreement_details(self):
+        agreement_details_payload = {
+            "signerName": "Normal Person",
+            "signerMobilePhoneOperatingSystem": "Windows Phone",
+        }
+        response = self.supplier_framework_update(
+            0, 'digital-outcomes-and-specialists',
+            update={'agreementDetails': agreement_details_payload}
+        )
+
+        assert response.status_code == 400
+        data = json.loads(response.get_data())
+        error_message = u'JSON was not a valid format. ' \
+                        u'Additional properties are not allowed (\'signerMobilePhoneOperatingSystem\' was unexpected)'
+        assert error_message in data['error']
+
+    def test_schema_validation_fails_if_empty_object_sent_as_agreement_details(self):
+        response = self.supplier_framework_update(
+            0, 'digital-outcomes-and-specialists',
+            update={'agreementDetails': {}}
+        )
+
+        assert response.status_code == 400
+        data = json.loads(response.get_data())
+        error_message = u'JSON was not a valid format. {} does not have enough properties'
+        assert error_message in data['error']
+
+    def test_schema_validation_fails_if_empty_strings_sent_as_agreement_details(self):
+        agreement_details_payload = {
+            "signerName": "",
+            "signerRole": "",
+        }
+        response = self.supplier_framework_update(
+            0, 'digital-outcomes-and-specialists',
+            update={'agreementDetails': agreement_details_payload}
+        )
+
+        assert response.status_code == 400
+        data = json.loads(response.get_data())
+        error_message = u'JSON was not a valid format. \'\' is too short'
+        assert error_message in data['error']
 
     def test_changing_from_failed_to_passed(self):
         response = self.supplier_framework_update(
