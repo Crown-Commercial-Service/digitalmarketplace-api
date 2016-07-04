@@ -6,3 +6,5 @@ applications:
       command: python application.py runprodserver
       memory: 128M
       disk_quota: 512M
+      env:
+          DM_SEARCH_API_URL: https://dm-dev-search-api.apps.staging.digital.gov.au/
