@@ -1280,13 +1280,23 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
                 data=json.dumps({'updated_by': 'interested@example.com'}),
                 content_type='application/json')
 
+            # framework_agreement_version gets saved into the agreementDetails JSON blob of a supplier_framework
+            # when an agreement is returned
+            Framework.query.filter_by(slug='digital-outcomes-and-specialists').update(
+               {'framework_agreement_version': 'v1.0'}
+            )
+
             answers = SupplierFramework(
                 supplier_id=0, framework_id=2,
                 declaration={'an_answer': 'Yes it is'},
                 on_framework=True,
                 agreement_returned_at=datetime(2015, 10, 10, 10, 10, 10),
                 countersigned_at=datetime(2015, 11, 12, 13, 14, 15),
-                agreement_details={u'some': u'thing'},
+                agreement_details={
+                    u'signerName': u'thing',
+                    u'signerRole': u'thing',
+                    u'uploaderUserId': 20
+                },
             )
             db.session.add(answers)
             db.session.commit()
@@ -1315,7 +1325,11 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(data['frameworkInterest']['agreementReturnedAt'], '2015-10-10T10:10:10.000000Z')
         assert_equal(data['frameworkInterest']['countersigned'], True)
         assert_equal(data['frameworkInterest']['countersignedAt'], '2015-11-12T13:14:15.000000Z')
-        assert_equal(data['frameworkInterest']['agreementDetails'], {'some': 'thing'})
+        assert_equal(data['frameworkInterest']['agreementDetails'], {
+            'signerName': 'thing',
+            'signerRole': 'thing',
+            'uploaderUserId': 20
+        })
 
     def test_get_supplier_framework_info_non_existent_by_framework(self):
         response = self.client.get(
@@ -1373,7 +1387,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(data['frameworkInterest']['agreementReturnedAt'], "2012-12-12T00:00:00.000000Z")
             assert_equal(data['frameworkInterest']['countersigned'], False)
             assert_is(data['frameworkInterest']['countersignedAt'], None)
-            assert_is(data['frameworkInterest']['agreementDetails'], None)
+            assert_equal(data['frameworkInterest']['agreementDetails'], {u'frameworkAgreementVersion': u'v1.0'})
 
     def test_adding_that_agreement_has_been_countersigned(self):
         with freeze_time('2012-12-12'):
@@ -1403,18 +1417,28 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             data = json.loads(response.get_data())
             assert_equal(data['frameworkInterest']['agreementReturnedAt'], '2012-12-12T00:00:00.000000Z')
 
-    def test_agreement_returned_at_is_unset_when_agreement_returned_flag_is_false(self):
-        self.supplier_framework_update(
-            0, 'digital-outcomes-and-specialists',
-            update={'agreementReturned': True})
+    def test_agreement_returned_at_and_agreement_details_are_unset_when_agreement_returned_is_false(self):
         response = self.supplier_framework_update(
+            0, 'digital-outcomes-and-specialists',
+            update={
+                'agreementReturned': True,
+                'agreementDetails': {
+                    'uploaderUserId': 1
+                }
+            })
+        data = json.loads(response.get_data())
+        assert response.status_code == 200
+        assert data['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == "v1.0"
+
+        response2 = self.supplier_framework_update(
             0, 'digital-outcomes-and-specialists',
             update={'agreementReturned': False})
 
-        assert_equal(response.status_code, 200)
-        data = json.loads(response.get_data())
-        assert_equal(data['frameworkInterest']['agreementReturned'], False)
-        assert_equal(data['frameworkInterest']['agreementReturnedAt'], None)
+        assert response2.status_code == 200
+        data2 = json.loads(response2.get_data())
+        assert data2['frameworkInterest']['agreementReturned'] == False
+        assert data2['frameworkInterest']['agreementReturnedAt'] is None
+        assert data2['frameworkInterest']['agreementDetails'] is None
 
     def test_countersigned_at_timestamp_cannot_be_set(self):
         with freeze_time('2012-12-12'):
@@ -1433,12 +1457,8 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_setting_agreement_details(self):
         agreement_details_payload = {
-            "some": [
-                "arbitrary",
-                123,
-                ["json"]
-            ],
-            "here": "there",
+            "signerName": "name",
+            "signerRole": "role",
         }
         response = self.supplier_framework_update(
             0, 'digital-outcomes-and-specialists',
@@ -1450,22 +1470,21 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
 
         # while we're at it let's test the agreementDetails partial updating behaviour
         agreement_details_update_payload = {
-            "other": {
-                "json": 456,
-            },
-            "here": None,
+            "uploaderUserId": 1,
         }
         response2 = self.supplier_framework_update(
             0, 'digital-outcomes-and-specialists',
             update={'agreementDetails': agreement_details_update_payload})
 
         agreement_details_payload.update(agreement_details_update_payload)
-        # json validator should strip this key
-        del agreement_details_payload["here"]
 
         assert_equal(response2.status_code, 200)
         data2 = json.loads(response2.get_data())
-        assert_equal(data2['frameworkInterest']['agreementDetails'], agreement_details_payload)
+        assert_equal(data2['frameworkInterest']['agreementDetails'], {
+            "signerName": "name",
+            "signerRole": "role",
+            "uploaderUserId": 1
+        })
 
     def test_changing_from_failed_to_passed(self):
         response = self.supplier_framework_update(

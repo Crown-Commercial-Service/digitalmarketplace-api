@@ -11,6 +11,7 @@ from ...models import (
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400,
+    validate_agreement_details_json_or_400,
     is_valid_string_or_400
 )
 from ...utils import pagination_links, drop_foreign_fields, get_json_from_request, \
@@ -401,6 +402,9 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     json_has_required_keys(json_payload, ["frameworkInterest"])
     update_json = json_payload["frameworkInterest"]
 
+    if 'agreementDetails' in update_json:
+        validate_agreement_details_json_or_400(update_json['agreementDetails'])
+
     interest_record = SupplierFramework.query.filter(
         SupplierFramework.supplier_id == supplier.supplier_id,
         SupplierFramework.framework_id == framework.id
@@ -411,23 +415,25 @@ def update_supplier_framework_details(supplier_id, framework_slug):
 
     uniform_now = datetime.utcnow()
 
+    agreement_details = interest_record.agreement_details.copy() if interest_record.agreement_details else {}
+
     if 'onFramework' in update_json:
         interest_record.on_framework = update_json['onFramework']
     if 'agreementReturned' in update_json:
         if update_json["agreementReturned"] is False:
             interest_record.agreement_returned_at = None
+            if agreement_details:
+                agreement_details = None
         else:
             interest_record.agreement_returned_at = uniform_now
+            agreement_details['frameworkAgreementVersion'] = framework.framework_agreement_version
     if update_json.get('countersigned'):
         interest_record.countersigned_at = uniform_now
     if 'agreementDetails' in update_json:
-        if update_json["agreementDetails"] is None:
-            interest_record.agreement_details = None
-        else:
-            interest_record.agreement_details = interest_record.agreement_details or {}
-            interest_record.agreement_details.update(update_json["agreementDetails"])
-            # a dummy assignment to force the validator to run. FIXME sort this out project-wide
-            interest_record.agreement_details = interest_record.agreement_details
+        agreement_details.update(update_json['agreementDetails'])
+
+    # thanks @ris!
+    interest_record.agreement_details = agreement_details or None
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.supplier_update,

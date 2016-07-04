@@ -322,6 +322,9 @@ class SupplierFramework(db.Model):
 
     @validates('agreement_details')
     def validates_agreement_details(self, key, value):
+        if value is None:
+            return value
+
         value = strip_whitespace_from_data(value)
         value = purge_nulls_from_data(value)
 

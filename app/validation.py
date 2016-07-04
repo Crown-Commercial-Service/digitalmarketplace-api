@@ -15,6 +15,7 @@ MAXIMUM_SERVICE_ID_LENGTH = 20
 
 JSON_SCHEMAS_PATH = './json_schemas'
 SCHEMA_NAMES = [
+    'agreement-details',
     'brief-clarification-question',
     'briefs-digital-outcomes-and-specialists-digital-outcomes',
     'briefs-digital-outcomes-and-specialists-digital-specialists',
@@ -122,6 +123,13 @@ def validate_new_supplier_json_or_400(submitted_json):
 def validate_contact_information_json_or_400(submitted_json):
     try:
         get_validator('contact-information').validate(submitted_json)
+    except ValidationError as e:
+        abort(400, "JSON was not a valid format. {}".format(e.message))
+
+
+def validate_agreement_details_json_or_400(submitted_json):
+    try:
+        get_validator('agreement-details').validate(submitted_json)
     except ValidationError as e:
         abort(400, "JSON was not a valid format. {}".format(e.message))
 
