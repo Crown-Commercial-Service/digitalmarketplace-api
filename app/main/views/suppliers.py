@@ -413,18 +413,21 @@ def update_supplier_framework_details(supplier_id, framework_slug):
 
     if 'onFramework' in update_json:
         interest_record.on_framework = update_json['onFramework']
-    if update_json.get('agreementReturned'):
-        interest_record.agreement_returned_at = uniform_now
+    if 'agreementReturned' in update_json:
+        if update_json["agreementReturned"] is False:
+            interest_record.agreement_returned_at = None
+        else:
+            interest_record.agreement_returned_at = uniform_now
     if update_json.get('countersigned'):
         interest_record.countersigned_at = uniform_now
-    if 'signerDetails' in update_json:
-        if update_json["signerDetails"] is None:
-            interest_record.signer_details = None
+    if 'agreementDetails' in update_json:
+        if update_json["agreementDetails"] is None:
+            interest_record.agreement_details = None
         else:
-            interest_record.signer_details = interest_record.signer_details or {}
-            interest_record.signer_details.update(update_json["signerDetails"])
+            interest_record.agreement_details = interest_record.agreement_details or {}
+            interest_record.agreement_details.update(update_json["agreementDetails"])
             # a dummy assignment to force the validator to run. FIXME sort this out project-wide
-            interest_record.signer_details = interest_record.signer_details
+            interest_record.agreement_details = interest_record.agreement_details
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.supplier_update,

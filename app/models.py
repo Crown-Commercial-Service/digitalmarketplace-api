@@ -308,7 +308,7 @@ class SupplierFramework(db.Model):
     on_framework = db.Column(db.Boolean, nullable=True)
     agreement_returned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
     countersigned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
-    signer_details = db.Column(JSON)
+    agreement_details = db.Column(JSON)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
@@ -320,8 +320,8 @@ class SupplierFramework(db.Model):
 
         return value
 
-    @validates('signer_details')
-    def validates_signer_details(self, key, value):
+    @validates('agreement_details')
+    def validates_agreement_details(self, key, value):
         value = strip_whitespace_from_data(value)
         value = purge_nulls_from_data(value)
 
@@ -383,7 +383,7 @@ class SupplierFramework(db.Model):
             "onFramework": self.on_framework,
             "agreementReturned": bool(agreement_returned_at),
             "agreementReturnedAt": agreement_returned_at,
-            "signerDetails": self.signer_details,
+            "agreementDetails": self.agreement_details,
             "countersigned": bool(countersigned_at),
             "countersignedAt": countersigned_at,
         }, **(data or {}))
