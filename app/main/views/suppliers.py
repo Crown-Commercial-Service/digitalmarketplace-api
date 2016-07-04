@@ -432,7 +432,6 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if 'agreementDetails' in update_json:
         agreement_details.update(update_json['agreementDetails'])
 
-    # thanks @ris!
     interest_record.agreement_details = agreement_details or None
 
     audit_event = AuditEvent(
