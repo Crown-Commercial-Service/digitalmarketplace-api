@@ -4,6 +4,7 @@ acas.org.uk
 access.uk.com
 affinitysutton.com
 ahdb.org.uk
+arts.wales
 assembly.wales
 bankofengland.co.uk
 barbican.org.uk
@@ -91,10 +92,12 @@ nhsla.com
 nice.org.uk
 nilsc.org.uk
 nmc-uk.org
+nmni.com
 ofcom.org.uk
 originhousing.org.uk
 os.uk
 parliament.uk
+pharmacyregulation.org
 police.uk
 postoffice.co.uk
 psha.org.uk
