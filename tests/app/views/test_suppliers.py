@@ -1272,6 +1272,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         super(TestSupplierFrameworkUpdates, self).setup()
 
         self.setup_dummy_suppliers(1)
+        self.setup_dummy_user(1, role='supplier')
 
         with self.app.app_context():
             self.set_framework_status('digital-outcomes-and-specialists', 'open')
@@ -1482,7 +1483,27 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert data2['frameworkInterest']['agreementDetails'] == {
             "signerName": "name",
             "signerRole": "role",
-            "uploaderUserId": 1
+            "uploaderUserId": 1,
+            "uploaderUserName": "my name",
+            "uploaderUserEmail": "test+1@digital.gov.uk",
+        }
+
+    def test_setting_agreement_details_with_nonexistent_user_id_doesnt_return_user_details(self):
+        agreement_details_payload = {
+            "signerName": "name",
+            "signerRole": "role",
+            "uploaderUserId": 999
+        }
+        response = self.supplier_framework_update(
+            0, 'digital-outcomes-and-specialists',
+            update={'agreementDetails': agreement_details_payload})
+
+        data = json.loads(response.get_data())
+        assert response.status_code == 200
+        assert data['frameworkInterest']['agreementDetails'] == {
+            "signerName": "name",
+            "signerRole": "role",
+            "uploaderUserId": 999
         }
 
     def test_schema_validation_fails_if_unknown_fields_present_in_agreement_details(self):
