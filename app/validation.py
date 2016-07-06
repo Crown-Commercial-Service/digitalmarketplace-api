@@ -127,13 +127,6 @@ def validate_contact_information_json_or_400(submitted_json):
         abort(400, "JSON was not a valid format. {}".format(e.message))
 
 
-def validate_agreement_details_json_or_400(submitted_json):
-    try:
-        get_validator('agreement-details').validate(submitted_json)
-    except ValidationError as e:
-        abort(400, "JSON was not a valid format. {}".format(e.message))
-
-
 def validates_against_schema(validator_name, submitted_json):
     try:
         get_validator(validator_name).validate(submitted_json)

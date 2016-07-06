@@ -1281,12 +1281,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
                 data=json.dumps({'updated_by': 'interested@example.com'}),
                 content_type='application/json')
 
-            # framework_agreement_version gets saved into the agreementDetails JSON blob of a supplier_framework
-            # when an agreement is returned
-            Framework.query.filter_by(slug='digital-outcomes-and-specialists').update(
-                {'framework_agreement_version': 'v1.0'}
-            )
-
             answers = SupplierFramework(
                 supplier_id=0, framework_id=2,
                 declaration={'an_answer': 'Yes it is'},
@@ -1300,7 +1294,31 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
                 },
             )
             db.session.add(answers)
+
+            g_cloud_8 = Framework(
+                slug='g-cloud-8',
+                name='G-Cloud 8',
+                framework='g-cloud',
+                framework_agreement_version='v1.0',
+                status='open',
+                clarification_questions_open=False
+            )
+            db.session.add(g_cloud_8)
             db.session.commit()
+
+            self.client.put(
+                '/suppliers/0/frameworks/g-cloud-8',
+                data=json.dumps({'updated_by': 'interested@example.com'}),
+                content_type='application/json')
+
+    def teardown(self):
+        with self.app.app_context():
+            g_cloud_8 = Framework.query.filter(Framework.slug == 'g-cloud-8').first()
+            SupplierFramework.query.filter(SupplierFramework.framework_id == g_cloud_8.id).delete()
+            Framework.query.filter(Framework.id == g_cloud_8.id).delete()
+            db.session.commit()
+
+        super(TestSupplierFrameworkUpdates, self).teardown()
 
     def supplier_framework_update(self, supplier_id, framework_slug, update={}):
         return self.client.post(
@@ -1373,7 +1391,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists'
         assert data['frameworkInterest']['onFramework'] is False
 
-    def test_adding_that_agreement_has_been_returned(self):
+    def test_setting_agreement_returned_has_no_agreement_details_if_no_framework_agreement_version(self):
         with freeze_time('2012-12-12'):
             response = self.supplier_framework_update(
                 0,
@@ -1384,6 +1402,24 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             data = json.loads(response.get_data())
             assert data['frameworkInterest']['supplierId'] == 0
             assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
+            assert data['frameworkInterest']['agreementReturned'] is True
+            assert data['frameworkInterest']['agreementReturnedAt'] == "2012-12-12T00:00:00.000000Z"
+            assert data['frameworkInterest']['countersigned'] is False
+            assert data['frameworkInterest']['countersignedAt'] is None
+            assert data['frameworkInterest']['agreementDetails'] is None
+
+    def test_setting_agreement_returned_has_agreement_details_if_framework_agreement_version(self):
+        with freeze_time('2012-12-12'):
+
+            response = self.supplier_framework_update(
+                0,
+                'g-cloud-8',
+                update={'agreementReturned': True}
+            )
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert data['frameworkInterest']['supplierId'] == 0
+            assert data['frameworkInterest']['frameworkSlug'] == 'g-cloud-8'
             assert data['frameworkInterest']['agreementReturned'] is True
             assert data['frameworkInterest']['agreementReturnedAt'] == "2012-12-12T00:00:00.000000Z"
             assert data['frameworkInterest']['countersigned'] is False
@@ -1420,10 +1456,12 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_agreement_returned_at_and_agreement_details_are_unset_when_agreement_returned_is_false(self):
         response = self.supplier_framework_update(
-            0, 'digital-outcomes-and-specialists',
+            0, 'g-cloud-8',
             update={
                 'agreementReturned': True,
                 'agreementDetails': {
+                    'signerName': 'name',
+                    'signerRole': 'role',
                     'uploaderUserId': 1
                 }
             })
@@ -1432,7 +1470,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert data['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == "v1.0"
 
         response2 = self.supplier_framework_update(
-            0, 'digital-outcomes-and-specialists',
+            0, 'g-cloud-8',
             update={'agreementReturned': False})
 
         assert response2.status_code == 200
@@ -1462,7 +1500,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             "signerRole": "role",
         }
         response = self.supplier_framework_update(
-            0, 'digital-outcomes-and-specialists',
+            0, 'g-cloud-8',
             update={'agreementDetails': agreement_details_payload})
 
         assert response.status_code == 200
@@ -1474,7 +1512,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             "uploaderUserId": 1,
         }
         response2 = self.supplier_framework_update(
-            0, 'digital-outcomes-and-specialists',
+            0, 'g-cloud-8',
             update={'agreementDetails': agreement_details_update_payload})
 
         agreement_details_payload.update(agreement_details_update_payload)
@@ -1488,6 +1526,21 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             "uploaderUserEmail": "test+1@digital.gov.uk",
         }
 
+    def test_cannot_set_agreement_details_on_frameworks_without_framework_agreement_version(self):
+        agreement_details_payload = {
+            "signerName": "name",
+            "signerRole": "role",
+            "uploaderUserId": 1,
+        }
+        response = self.supplier_framework_update(
+            0, 'digital-outcomes-and-specialists',
+            update={'agreementDetails': agreement_details_payload})
+
+        # still returns a 200-level response even though it doesn't update anything
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['agreementDetails'] is None
+
     def test_setting_agreement_details_with_nonexistent_user_id_doesnt_return_user_details(self):
         agreement_details_payload = {
             "signerName": "name",
@@ -1495,7 +1548,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             "uploaderUserId": 999
         }
         response = self.supplier_framework_update(
-            0, 'digital-outcomes-and-specialists',
+            0, 'g-cloud-8',
             update={'agreementDetails': agreement_details_payload})
 
         data = json.loads(response.get_data())
@@ -1520,9 +1573,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         data = json.loads(response.get_data())
         # split assertions into keyphrases due to nested unicode string in python 2
         strings_we_expect_in_the_error_message = [
-            'JSON was not a valid format.', 'disallowedKey', 'was unexpected']
+            'Additional properties are not allowed', 'disallowedKey', 'was unexpected']
         for error_string in strings_we_expect_in_the_error_message:
-            assert error_string in data['error']
+            assert error_string in data['error']['_form'][0]
 
     def test_schema_validation_fails_if_empty_object_sent_as_agreement_details(self):
         response = self.supplier_framework_update(
@@ -1532,8 +1585,8 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert response.status_code == 400
         data = json.loads(response.get_data())
-        error_message = 'JSON was not a valid format. {} does not have enough properties'
-        assert error_message in data['error']
+        error_message = '{} does not have enough properties'
+        assert error_message in data['error']['_form'][0]
 
     def test_schema_validation_fails_if_empty_strings_sent_as_agreement_details(self):
         agreement_details_payload = {
@@ -1547,11 +1600,8 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert response.status_code == 400
         data = json.loads(response.get_data())
-        # split assertions into keyphrases due to nested unicode string in python 2
-        strings_we_expect_in_the_error_message = [
-            'JSON was not a valid format.',  'is too short']
-        for error_string in strings_we_expect_in_the_error_message:
-            assert error_string in data['error']
+        expected_error_dict = {'signerName': 'answer_required', 'signerRole': 'answer_required'}
+        assert expected_error_dict == data['error']
 
     def test_changing_from_failed_to_passed(self):
         response = self.supplier_framework_update(
