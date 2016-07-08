@@ -408,7 +408,11 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if not interest_record:
         abort(404, "supplier_id '{}' has not registered interest in {}".format(supplier_id, framework_slug))
 
-    if 'agreementDetails' in update_json:
+    if 'agreementDetails' in update_json or (
+            update_json.get('agreementReturned') and
+            framework.framework_agreement_details and
+            framework.framework_agreement_details.get('frameworkAgreementVersion')
+    ):
         required_fields = ['signerName', 'signerRole']
         if update_json.get('agreementReturned'):
             required_fields.append('uploaderUserId')
@@ -417,7 +421,10 @@ def update_supplier_framework_details(supplier_id, framework_slug):
         # If invalid, 400
         interest_record_agreement_details_proposed = interest_record.agreement_details.copy() \
             if interest_record.agreement_details else {}
-        interest_record_agreement_details_proposed.update(update_json.get('agreementDetails'))
+        interest_record_agreement_details_proposed.update(update_json.get('agreementDetails', {}))
+        interest_record_agreement_details_proposed = drop_foreign_fields(
+            interest_record_agreement_details_proposed, 'frameworkAgreementVersion'
+        )
 
         validate_agreement_details_data(
             interest_record_agreement_details_proposed,
@@ -438,14 +445,14 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if update_json.get('countersigned'):
         interest_record.countersigned_at = uniform_now
 
-    # agreementDetails should only exist for g-cloud-8 and above (signified by having a framework_agreement_version)
-    if framework.framework_agreement_version:
+    # agreementDetails should only exist for g-cloud-8 and above (signified by having a 'frameworkAgreementVersion' inside framework_agreement_details)  # noqa
+    if framework.framework_agreement_details and framework.framework_agreement_details.get('frameworkAgreementVersion'):
         agreement_details = interest_record.agreement_details.copy() if interest_record.agreement_details else {}
 
         if update_json.get('agreementDetails'):
             agreement_details.update(update_json['agreementDetails'])
         if update_json.get('agreementReturned'):
-            agreement_details['frameworkAgreementVersion'] = framework.framework_agreement_version
+            agreement_details['frameworkAgreementVersion'] = framework.framework_agreement_details['frameworkAgreementVersion']  # noqa
 
         interest_record.agreement_details = agreement_details or None
 
