@@ -422,9 +422,6 @@ def update_supplier_framework_details(supplier_id, framework_slug):
         interest_record_agreement_details_proposed = interest_record.agreement_details.copy() \
             if interest_record.agreement_details else {}
         interest_record_agreement_details_proposed.update(update_json.get('agreementDetails', {}))
-        interest_record_agreement_details_proposed = drop_foreign_fields(
-            interest_record_agreement_details_proposed, 'frameworkAgreementVersion'
-        )
 
         validate_agreement_details_data(
             interest_record_agreement_details_proposed,

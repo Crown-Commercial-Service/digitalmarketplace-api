@@ -1671,6 +1671,31 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         expected_error_dict = {'signerName': 'answer_required', 'signerRole': 'answer_required'}
         assert expected_error_dict == data['error']
 
+    def test_can_manually_override_framework_agreement_version_for_returned_framework_agreement(self):
+        response = self.supplier_framework_update(
+            0,
+            'g-cloud-8',
+            update={
+                'agreementReturned': True,
+                'agreementDetails': {
+                    'signerName': 'name',
+                    'signerRole': 'role',
+                    'uploaderUserId': 1
+                }
+            }
+        )
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == 'v1.0'
+
+        response2 = self.supplier_framework_update(
+            0, 'g-cloud-8',
+            update={'agreementDetails': {'frameworkAgreementVersion': 'v2.0'}}
+        )
+        assert response2.status_code == 200
+        data2 = json.loads(response2.get_data())
+        assert data2['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == 'v2.0'
+
     def test_changing_on_framework_from_failed_to_passed(self):
         response = self.supplier_framework_update(
             0,
