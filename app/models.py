@@ -314,7 +314,6 @@ class SupplierFramework(db.Model):
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
-    # NOTE validation does *not* get run on changes to deep-nested mutables
     @validates('declaration')
     def validates_declaration(self, key, value):
         value = strip_whitespace_from_data(value)
@@ -563,7 +562,6 @@ class ServiceTableMixin(object):
 
         return value
 
-    # NOTE validation does *not* get run on changes to deep-nested mutables
     @validates('data')
     def validates_data(self, key, value):
         data = drop_foreign_fields(value, [
@@ -899,7 +897,6 @@ class Brief(db.Model):
             raise ValidationError("Lot '{}' does not require a brief".format(lot.name))
         return lot
 
-    # NOTE validation does *not* get run on changes to deep-nested mutables
     @validates('data')
     def validates_data(self, key, data):
         data = drop_foreign_fields(data, [
@@ -1071,7 +1068,6 @@ class BriefResponse(db.Model):
     brief = db.relationship('Brief')
     supplier = db.relationship('Supplier', lazy='joined')
 
-    # NOTE validation does *not* get run on changes to deep-nested mutables
     @validates('data')
     def validates_data(self, key, data):
         data = drop_foreign_fields(data, [
