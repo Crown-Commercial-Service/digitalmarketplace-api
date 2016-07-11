@@ -1,3 +1,6 @@
+from collections import MutableSet
+from weakref import WeakSet
+
 from flask import url_for as base_url_for
 from flask import abort, request
 from six import iteritems, string_types
@@ -127,3 +130,45 @@ def purge_nulls_from_data(data):
 def get_request_page_questions():
     json_payload = get_json_from_request()
     return json_payload.get('page_questions', [])
+
+
+# based on http://stackoverflow.com/a/16994637
+class IdentitySet(MutableSet):
+    "A `set` implementation based on object identity rather than equality. Therefore works with non-hashable objects."
+    class _Ref(object):
+        "A trivial object wrapper which causes __hash__ and __eq__ to be based on the wrapped object's identity"
+        def __init__(self, value):
+            self.value = value
+
+        def __eq__(self, other):
+            return self.value is other.value
+
+        def __hash__(self):
+            return id(self.value)
+
+    _internal_set_impl = set
+
+    def __init__(self, iterable=()):
+        self.refs = self._internal_set_impl(map(self._Ref, iterable))
+
+    def __contains__(self, elem):
+        return self._Ref(elem) in self.refs
+
+    def __iter__(self):
+        return (ref.value for ref in self.refs)
+
+    def __len__(self):
+        return len(self.refs)
+
+    def add(self, elem):
+        return self.refs.add(self._Ref(elem))
+
+    def discard(self, elem):
+        return self.refs.discard(self._Ref(elem))
+
+    def __repr__(self):
+        return "%s(%s)" % (type(self).__name__, list(self))
+
+
+class WeakIdentitySet(IdentitySet):
+    _internal_set_impl = WeakSet
