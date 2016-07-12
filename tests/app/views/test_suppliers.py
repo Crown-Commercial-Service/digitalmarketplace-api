@@ -1571,10 +1571,12 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             0, 'digital-outcomes-and-specialists',
             update={'agreementDetails': agreement_details_payload})
 
-        # weird because it still returns a 200-level response even though it doesn't update anything
-        assert response.status_code == 200
+        assert response.status_code == 400
         data = json.loads(response.get_data())
-        assert data['frameworkInterest']['agreementDetails'] is None
+        strings_we_expect_in_the_error_message = [
+            'Framework', 'digital-outcomes-and-specialists', 'does not accept',  'agreementDetails']
+        for error_string in strings_we_expect_in_the_error_message:
+            assert error_string in data['error']
 
     def test_setting_agreement_details_with_nonexistent_user_id_doesnt_return_user_details(self):
         agreement_details_payload = {

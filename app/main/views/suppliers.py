@@ -408,6 +408,10 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if not interest_record:
         abort(404, "supplier_id '{}' has not registered interest in {}".format(supplier_id, framework_slug))
 
+    # `agreementDetails` shouldn't be passed in unless the framework has framework_agreement_details
+    if 'agreementDetails' in update_json and framework.framework_agreement_details is None:
+        abort(400, "Framework '{}' does not accept 'agreementDetails'".format(framework_slug))
+
     if (
             (framework.framework_agreement_details and framework.framework_agreement_details.get('frameworkAgreementVersion')) and  # noqa
             ('agreementDetails' in update_json or update_json.get('agreementReturned'))
