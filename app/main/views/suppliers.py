@@ -408,10 +408,9 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if not interest_record:
         abort(404, "supplier_id '{}' has not registered interest in {}".format(supplier_id, framework_slug))
 
-    if 'agreementDetails' in update_json or (
-            update_json.get('agreementReturned') and
-            framework.framework_agreement_details and
-            framework.framework_agreement_details.get('frameworkAgreementVersion')
+    if (
+            (framework.framework_agreement_details and framework.framework_agreement_details.get('frameworkAgreementVersion')) and  # noqa
+            ('agreementDetails' in update_json or update_json.get('agreementReturned'))
     ):
         required_fields = ['signerName', 'signerRole']
         if update_json.get('agreementReturned'):
@@ -419,15 +418,20 @@ def update_supplier_framework_details(supplier_id, framework_slug):
 
         # Make a copy of the existing agreement_details with our new changes to be added and validate this
         # If invalid, 400
-        interest_record_agreement_details_proposed = interest_record.agreement_details.copy() \
-            if interest_record.agreement_details else {}
-        interest_record_agreement_details_proposed.update(update_json.get('agreementDetails', {}))
+        agreement_details = interest_record.agreement_details.copy() if interest_record.agreement_details else {}
+
+        if update_json.get('agreementDetails'):
+            agreement_details.update(update_json['agreementDetails'])
+        if update_json.get('agreementReturned'):
+            agreement_details['frameworkAgreementVersion'] = framework.framework_agreement_details['frameworkAgreementVersion']  # noqa
 
         validate_agreement_details_data(
-            interest_record_agreement_details_proposed,
+            agreement_details,
             enforce_required=False,
             required_fields=required_fields
         )
+
+        interest_record.agreement_details = agreement_details or None
 
     uniform_now = datetime.utcnow()
 
@@ -441,17 +445,6 @@ def update_supplier_framework_details(supplier_id, framework_slug):
             interest_record.agreement_returned_at = uniform_now
     if update_json.get('countersigned'):
         interest_record.countersigned_at = uniform_now
-
-    # agreementDetails should only exist for g-cloud-8 and above (signified by having a 'frameworkAgreementVersion' inside framework_agreement_details)  # noqa
-    if framework.framework_agreement_details and framework.framework_agreement_details.get('frameworkAgreementVersion'):
-        agreement_details = interest_record.agreement_details.copy() if interest_record.agreement_details else {}
-
-        if update_json.get('agreementDetails'):
-            agreement_details.update(update_json['agreementDetails'])
-        if update_json.get('agreementReturned'):
-            agreement_details['frameworkAgreementVersion'] = framework.framework_agreement_details['frameworkAgreementVersion']  # noqa
-
-        interest_record.agreement_details = agreement_details or None
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.supplier_update,
