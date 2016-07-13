@@ -1578,7 +1578,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         for error_string in strings_we_expect_in_the_error_message:
             assert error_string in data['error']
 
-    def test_setting_agreement_details_with_nonexistent_user_id_doesnt_return_user_details(self):
+    def test_can_not_set_agreement_details_with_nonexistent_user_id(self):
         agreement_details_payload = {
             "signerName": "name",
             "signerRole": "role",
@@ -1589,12 +1589,11 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             update={'agreementDetails': agreement_details_payload})
 
         data = json.loads(response.get_data())
-        assert response.status_code == 200
-        assert data['frameworkInterest']['agreementDetails'] == {
-            "signerName": "name",
-            "signerRole": "role",
-            "uploaderUserId": 999
-        }
+        assert response.status_code == 400
+        strings_we_expect_in_the_error_message = [
+            'No user found with id', '999']
+        for error_string in strings_we_expect_in_the_error_message:
+            assert error_string in data['error']
 
     def test_schema_validation_fails_if_unknown_fields_present_in_agreement_details(self):
         agreement_details_payload = {

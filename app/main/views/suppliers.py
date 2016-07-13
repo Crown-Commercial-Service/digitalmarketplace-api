@@ -5,7 +5,7 @@ from .. import main
 from ... import db
 from ...models import (
     Supplier, ContactInformation, AuditEvent,
-    Service, SupplierFramework, Framework
+    Service, SupplierFramework, Framework, User
 )
 from ...validation import (
     validate_supplier_json_or_400,
@@ -434,6 +434,11 @@ def update_supplier_framework_details(supplier_id, framework_slug):
             enforce_required=False,
             required_fields=required_fields
         )
+
+        if update_json.get('agreementDetails') and update_json['agreementDetails'].get('uploaderUserId'):
+            user = User.query.filter(User.id == update_json['agreementDetails']['uploaderUserId']).first()
+            if not user:
+                abort(400, "No user found with id '{}'".format(update_json['agreementDetails']['uploaderUserId']))
 
         interest_record.agreement_details = agreement_details or None
 
