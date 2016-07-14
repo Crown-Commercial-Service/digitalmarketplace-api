@@ -5,8 +5,7 @@ from .. import main
 from ... import db
 from ...models import (
     Supplier, ContactInformation, AuditEvent,
-    Service, SupplierFramework, Framework,
-    ValidationError
+    Service, SupplierFramework, Framework, User
 )
 from ...validation import (
     validate_supplier_json_or_400,
@@ -15,7 +14,7 @@ from ...validation import (
 )
 from ...utils import pagination_links, drop_foreign_fields, get_json_from_request, \
     json_has_required_keys, json_has_matching_id, get_valid_page_or_1, validate_and_return_updater_request
-from ...supplier_utils import validate_and_return_supplier_request
+from ...supplier_utils import validate_and_return_supplier_request, validate_agreement_details_data
 from dmapiclient.audit import AuditTypes
 
 
@@ -409,6 +408,40 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if not interest_record:
         abort(404, "supplier_id '{}' has not registered interest in {}".format(supplier_id, framework_slug))
 
+    # `agreementDetails` shouldn't be passed in unless the framework has framework_agreement_details
+    if 'agreementDetails' in update_json and framework.framework_agreement_details is None:
+        abort(400, "Framework '{}' does not accept 'agreementDetails'".format(framework_slug))
+
+    if (
+            (framework.framework_agreement_details and framework.framework_agreement_details.get('frameworkAgreementVersion')) and  # noqa
+            ('agreementDetails' in update_json or update_json.get('agreementReturned'))
+    ):
+        required_fields = ['signerName', 'signerRole']
+        if update_json.get('agreementReturned'):
+            required_fields.append('uploaderUserId')
+
+        # Make a copy of the existing agreement_details with our new changes to be added and validate this
+        # If invalid, 400
+        agreement_details = interest_record.agreement_details.copy() if interest_record.agreement_details else {}
+
+        if update_json.get('agreementDetails'):
+            agreement_details.update(update_json['agreementDetails'])
+        if update_json.get('agreementReturned'):
+            agreement_details['frameworkAgreementVersion'] = framework.framework_agreement_details['frameworkAgreementVersion']  # noqa
+
+        validate_agreement_details_data(
+            agreement_details,
+            enforce_required=False,
+            required_fields=required_fields
+        )
+
+        if update_json.get('agreementDetails') and update_json['agreementDetails'].get('uploaderUserId'):
+            user = User.query.filter(User.id == update_json['agreementDetails']['uploaderUserId']).first()
+            if not user:
+                abort(400, "No user found with id '{}'".format(update_json['agreementDetails']['uploaderUserId']))
+
+        interest_record.agreement_details = agreement_details or None
+
     uniform_now = datetime.utcnow()
 
     if 'onFramework' in update_json:
@@ -416,18 +449,11 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if 'agreementReturned' in update_json:
         if update_json["agreementReturned"] is False:
             interest_record.agreement_returned_at = None
+            interest_record.agreement_details = None
         else:
             interest_record.agreement_returned_at = uniform_now
     if update_json.get('countersigned'):
         interest_record.countersigned_at = uniform_now
-    if 'agreementDetails' in update_json:
-        if update_json["agreementDetails"] is None:
-            interest_record.agreement_details = None
-        else:
-            interest_record.agreement_details = interest_record.agreement_details or {}
-            interest_record.agreement_details.update(update_json["agreementDetails"])
-            # a dummy assignment to force the validator to run. FIXME sort this out project-wide
-            interest_record.agreement_details = interest_record.agreement_details
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.supplier_update,

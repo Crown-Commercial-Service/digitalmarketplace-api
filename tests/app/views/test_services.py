@@ -1881,7 +1881,6 @@ class TestGetService(BaseApplicationTest):
             db.session.commit()
         response = self.client.get('/services/123-disabled-456')
         data = json.loads(response.get_data())
-        print(response.get_data())
         assert_equal(data['serviceMadeUnavailableAuditEvent']['type'], 'framework_update')
         assert_equal(data['serviceMadeUnavailableAuditEvent']['user'], 'joeblogs')
         assert_in('createdAt', data['serviceMadeUnavailableAuditEvent'])

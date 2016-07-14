@@ -322,6 +322,9 @@ class SupplierFramework(db.Model):
 
     @validates('agreement_details')
     def validates_agreement_details(self, key, value):
+        if value is None:
+            return value
+
         value = strip_whitespace_from_data(value)
         value = purge_nulls_from_data(value)
 
@@ -375,7 +378,7 @@ class SupplierFramework(db.Model):
         if countersigned_at:
             countersigned_at = countersigned_at.strftime(DATETIME_FORMAT)
 
-        return dict({
+        supplier_framework = dict({
             "supplierId": self.supplier_id,
             "supplierName": self.supplier.name,
             "frameworkSlug": self.framework.slug,
@@ -387,6 +390,17 @@ class SupplierFramework(db.Model):
             "countersigned": bool(countersigned_at),
             "countersignedAt": countersigned_at,
         }, **(data or {}))
+
+        if self.agreement_details and self.agreement_details.get('uploaderUserId'):
+            user = User.query.filter(
+                User.id == self.agreement_details.get('uploaderUserId')
+            ).first()
+
+            if user:
+                supplier_framework['agreementDetails']['uploaderUserName'] = user.name
+                supplier_framework['agreementDetails']['uploaderUserEmail'] = user.email_address
+
+        return supplier_framework
 
 
 class User(db.Model):
