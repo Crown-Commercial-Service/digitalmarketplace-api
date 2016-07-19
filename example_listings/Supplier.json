@@ -4,17 +4,17 @@
   "description": "Example Company Limited is an innovation station sensation; we deliver software so bleeding edge you literally won't be able to run any of it on your systems.",
   "summary": "An example company",
   "address": {
-	  "address_line": "0 Foo Street",
+	  "addressLine": "0 Foo Street",
 	  "suburb": "Barton",
 	  "state": "NSW",
-	  "postal_code": "2999",
+	  "postalCode": "2999",
 	  "country": "Australia"
   },
   "website": "https://example.com",
   "abn": "00000000000",
   "acn": "000000000",
   "contacts": [{
-	  "contact_for": "Testing",
+	  "contactFor": "Testing",
 	  "name": "Jo Example",
 	  "role": "Example Provider",
 	  "email": "jo@example.com",
@@ -32,5 +32,5 @@
 	  "role": "Reference Provider",
 	  "email": "another.bot@example.com"
   }],
-  "categories": []
+  "prices": []
 }

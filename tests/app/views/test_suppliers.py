@@ -199,7 +199,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         payload.update({'name': 'New Name'})
         supplier = json.loads(response.get_data())['suppliers']
 
-        supplier.pop('data_version')
+        supplier.pop('dataVersion')
 
         assert (set(supplier.keys()) == set(payload.keys()))
         for key in payload.keys():

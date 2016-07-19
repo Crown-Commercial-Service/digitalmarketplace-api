@@ -148,20 +148,20 @@ class Address(db.Model):
     @staticmethod
     def from_json(as_dict):
         try:
-            return Address(address_line=as_dict.get('address_line'),
+            return Address(address_line=as_dict.get('addressLine'),
                            suburb=as_dict.get('suburb'),
                            state=as_dict.get('state'),
-                           postal_code=as_dict.get('postal_code'),
+                           postal_code=as_dict.get('postalCode'),
                            country=as_dict.get('country', 'Australia'))
         except KeyError, e:
             raise ValidationError('Contact missing required field: {}'.format(e))
 
     def serialize(self):
         serialized = {
-            'address_line': self.address_line,
+            'addressLine': self.address_line,
             'suburb': self.suburb,
             'state': self.state,
-            'postal_code': self.postal_code,
+            'postalCode': self.postal_code,
             'country': self.country,
         }
         return filter_null_value_fields(serialized)
@@ -181,7 +181,7 @@ class Contact(db.Model):
     @staticmethod
     def from_json(as_dict):
         try:
-            return Contact(contact_for=as_dict.get('contact_for', None),
+            return Contact(contact_for=as_dict.get('contactFor', None),
                            name=as_dict.get('name'),
                            role=as_dict.get('role'),
                            email=as_dict.get('email', None),
@@ -192,7 +192,7 @@ class Contact(db.Model):
 
     def serialize(self):
         serialized = {
-            'contact_for': self.contact_for,
+            'contactFor': self.contact_for,
             'name': self.name,
             'role': self.role,
             'email': self.email,
@@ -238,7 +238,7 @@ class ServiceCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
 
-    @classmethod
+    @staticmethod
     def lookup(as_dict):
         name = as_dict.get('name', 'no category specified')
         result = ServiceCategory.filter_by(name=name).first()
@@ -250,7 +250,64 @@ class ServiceCategory(db.Model):
         serialized = {
             'name': self.name,
         }
-        return filter_null_value_fields(serialized)
+        return serialized
+
+
+class ServiceRole(db.Model):
+    __tablename__ = 'service_role'
+
+    id = db.Column(db.Integer, primary_key=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('service_category.id'), nullable=False)
+    category = db.relationship('ServiceCategory')
+    name = db.Column(db.String, nullable=False)
+
+    @staticmethod
+    def lookup(as_dict):
+        category_name = as_dict.get('category', 'no category specified')
+        category = Category.lookup({'name': category_name})
+        role_name = as_dict.get('role', 'no role specified')
+        result = ServiceRole.filter_by(name=role_name).first()
+        if result is None:
+            raise ValidationError('Unknown role: {}'.format(role_name))
+        return result
+
+    def serialize(self):
+        serialized = {
+            'category': self.category.name,
+            'role': self.name,
+        }
+        return serialized
+
+
+class PriceSchedule(db.Model):
+    __tablename__ = 'price_schedule'
+
+    id = db.Column(db.Integer, primary_key=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=False)
+    service_role_id = db.Column(db.Integer, db.ForeignKey('service_role.id'), nullable=False)
+    service_role = db.relationship('ServiceRole')
+    hourly_rate = db.Column(db.Numeric, nullable=False)
+    daily_rate = db.Column(db.Numeric, nullable=False)
+    gst_included = db.Column(db.Boolean, index=False, nullable=False, default=True)
+
+    @staticmethod
+    def from_json(as_dict):
+        try:
+            return PriceSchedule(service_role=ServiceRole.lookup(as_dict.get('serviceRole')),
+                                 hourly_rate=as_dict.get('hourlyRate'),
+                                 daily_rate=as_dict.get('dailyRate'),
+                                 gst_included=as_dict.get('gstIncluded'))
+        except KeyError, e:
+            raise ValidationError('Price schedule missing required field: {}'.format(e))
+
+    def serialize(self):
+        serialized = {
+            'serviceRole': self.service_role.serialize(),
+            'hourlyRate': self.hourly_rate,
+            'dailyRate': self.daily_rate,
+            'gstIncluded': self.gst_included,
+        }
+        return serialized
 
 
 supplier__contact = db.Table('supplier__contact',
@@ -293,7 +350,7 @@ class Supplier(db.Model):
     acn = db.Column(db.String(15), nullable=True)
     contacts = db.relationship('Contact', secondary=supplier__contact)
     references = db.relationship('SupplierReference')
-    categories = db.relationship('ServiceCategory', secondary=supplier__service_category)
+    prices = db.relationship('PriceSchedule')
 
     def get_service_counts(self):
         # FIXME: To be removed from Australian version
@@ -305,7 +362,7 @@ class Supplier(db.Model):
     def serialize(self, data=None):
         serialized = {
             'code': self.code,
-            'data_version': self.data_version,
+            'dataVersion': self.data_version,
             'name': self.name,
             'address': self.address.serialize(),
             'summary': self.summary,
@@ -315,14 +372,14 @@ class Supplier(db.Model):
             'acn': self.acn,
             'contacts': [c.serialize() for c in self.contacts],
             'references': [r.serialize() for r in self.references],
-            'categories': [c.serialize() for c in self.categories],
+            'prices': [p.serialize() for p in self.prices],
         }
         serialized.update(data or {})
         return serialized
 
     def update_from_json(self, data):
-        keys = ('code', 'data_version', 'name', 'summary', 'description', 'address', 'website', 'abn', 'acn',
-                'contacts', 'references', 'categories')
+        keys = ('code', 'dataVersion', 'name', 'summary', 'description', 'address', 'website', 'abn', 'acn',
+                'contacts', 'references', 'prices')
         extra_keys = set(data.keys()) - set(keys)
         if extra_keys:
             raise ValidationError('Additional properties are not allowed: {}'.format(str(extra_keys)))
@@ -340,8 +397,8 @@ class Supplier(db.Model):
             self.contacts = [Contact.from_json(c) for c in data['contacts']]
         if 'references' in data:
             self.references = [SupplierReference.from_json(r) for r in data['references']]
-        if 'categories' in data:
-            self.categories = [SupplierCategory.lookup(c) for c in data['categories']]
+        if 'prices' in data:
+            self.prices = [PriceSchedule.from_json(p) for p in data['prices']]
         return self
 
 

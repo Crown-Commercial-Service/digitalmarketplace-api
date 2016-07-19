@@ -148,7 +148,7 @@ class BaseApplicationTest(object):
                                         country='Australia'),
                         contacts=[],
                         references=[],
-                        categories=[],
+                        prices=[],
                     )
                 )
             db.session.commit()
@@ -169,7 +169,7 @@ class BaseApplicationTest(object):
                                         country='Australia'),
                         contacts=[],
                         references=[],
-                        categories=[],
+                        prices=[],
                     )
                 )
             db.session.commit()
