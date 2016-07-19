@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true, assert_is
 
 from app import db
-from app.models import Supplier, AuditEvent, SupplierFramework, Framework, DraftService, Service
+from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, DraftService, Service
 from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
 from random import randint
 
@@ -68,8 +68,12 @@ class TestListSuppliers(BaseApplicationTest):
     def test_other_prefix_returns_non_alphanumeric_suppliers(self):
         with self.app.app_context():
             db.session.add(
-                Supplier(code=999, name=u"999 Supplier")
-            )
+                Supplier(code=999, name=u"999 Supplier",
+                         address=Address(address_line="Asdf",
+                                         suburb="Asdf",
+                                         state="ZZZ",
+                                         postal_code="0000",
+                                         country='Australia')))
             self.setup_dummy_service(service_id='1230000000', supplier_code=999)
             db.session.commit()
 

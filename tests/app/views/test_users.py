@@ -2,7 +2,7 @@ from flask import json
 from freezegun import freeze_time
 from nose.tools import assert_equal, assert_not_equal, assert_in, assert_is_none
 from app import db, encryption
-from app.models import User, Supplier
+from app.models import Address, User, Supplier
 from datetime import datetime
 from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
 from dmutils.formats import DATETIME_FORMAT
@@ -343,7 +343,13 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
     def test_can_post_a_supplier_user(self):
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1")
+                Supplier(code=1,
+                         name=u"Supplier 1",
+                         address=Address(address_line="{} Dummy Street",
+                                         suburb="Dummy",
+                                         state="ZZZ",
+                                         postal_code="0000",
+                                         country='Australia'))
             )
             db.session.commit()
 
@@ -367,7 +373,12 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
     def test_post_a_user_creates_audit_event(self):
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1")
+                Supplier(code=1, name=u"Supplier 1",
+                         address=Address(address_line="{} Dummy Street",
+                                         suburb="Dummy",
+                                         state="ZZZ",
+                                         postal_code="0000",
+                                         country='Australia'))
             )
             db.session.commit()
 
@@ -567,7 +578,12 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             )
             supplier = Supplier(
                 code=456,
-                name="A test supplier"
+                name="A test supplier",
+                address=Address(address_line="{} Dummy Street",
+                                suburb="Dummy",
+                                state="ZZZ",
+                                postal_code="0000",
+                                country='Australia')
             )
             supplier_user = User(
                 id=456,

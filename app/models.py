@@ -135,33 +135,69 @@ class Framework(db.Model):
         return '<{}: {} slug={}>'.format(self.__class__.__name__, self.name, self.slug)
 
 
-class EmailContact(db.Model):
-    __tablename__ = 'email_contact'
+class Address(db.Model):
+    __tablename__ = 'address'
 
     id = db.Column(db.Integer, primary_key=True)
-    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
+    address_line = db.Column(db.String, index=False, nullable=False)
+    suburb = db.Column(db.String, index=False, nullable=False)
+    state = db.Column(db.String, index=False, nullable=False)
+    postal_code = db.Column(db.String(8), index=False, nullable=False)
+    country = db.Column(db.String, index=False, nullable=False, default='Australia')
+
+    @staticmethod
+    def from_json(as_dict):
+        try:
+            return Address(address_line=as_dict.get('address_line'),
+                           suburb=as_dict.get('suburb'),
+                           state=as_dict.get('state'),
+                           postal_code=as_dict.get('postal_code'),
+                           country=as_dict.get('country', 'Australia'))
+        except KeyError, e:
+            raise ValidationError('Contact missing required field: {}'.format(e))
+
+    def serialize(self):
+        serialized = {
+            'address_line': self.address_line,
+            'suburb': self.suburb,
+            'state': self.state,
+            'postal_code': self.postal_code,
+            'country': self.country,
+        }
+        return filter_null_value_fields(serialized)
+
+
+class Contact(db.Model):
+    __tablename__ = 'contact'
+
+    id = db.Column(db.Integer, primary_key=True)
     contact_for = db.Column(db.String, index=False)
     name = db.Column(db.String, index=False)
     role = db.Column(db.String, index=False)
-    email = db.Column(db.String, index=False, nullable=False)
+    email = db.Column(db.String, index=False)
+    phone = db.Column(db.String, index=False)
+    fax = db.Column(db.String, index=False)
 
-    @classmethod
+    @staticmethod
     def from_json(as_dict):
         try:
-            return EmailContact(contact_for=as_dict.get('contact_for', None),
-                                name=as_dict.get('name'),
-                                role=as_dict.get('role'),
-                                email=as_dict.get('email'))
+            return Contact(contact_for=as_dict.get('contact_for', None),
+                           name=as_dict.get('name'),
+                           role=as_dict.get('role'),
+                           email=as_dict.get('email', None),
+                           phone=as_dict.get('phone', None),
+                           fax=as_dict.get('fax', None))
         except KeyError, e:
-            raise ValidationError('Email contact missing required field: {}'.format(e))
+            raise ValidationError('Contact missing required field: {}'.format(e))
 
     def serialize(self):
         serialized = {
             'contact_for': self.contact_for,
             'name': self.name,
-            'organisation': self.organisation,
             'role': self.role,
             'email': self.email,
+            'phone': self.phone,
+            'fax': self.fax,
         }
         return filter_null_value_fields(serialized)
 
@@ -176,7 +212,7 @@ class SupplierReference(db.Model):
     role = db.Column(db.String, index=False)
     email = db.Column(db.String, index=False, nullable=False)
 
-    @classmethod
+    @staticmethod
     def from_json(as_dict):
         try:
             return SupplierReference(name=as_dict.get('name'),
@@ -217,6 +253,18 @@ class ServiceCategory(db.Model):
         return filter_null_value_fields(serialized)
 
 
+supplier__contact = db.Table('supplier__contact',
+                             db.Column('supplier_id',
+                                       db.Integer,
+                                       db.ForeignKey('supplier.id'),
+                                       nullable=False),
+                             db.Column('contact_id',
+                                       db.Integer,
+                                       db.ForeignKey('contact.id'),
+                                       nullable=False),
+                             db.PrimaryKeyConstraint('supplier_id', 'contact_id'))
+
+
 supplier__service_category = db.Table('supplier__service_category',
                                       db.Column('supplier_id',
                                                 db.Integer,
@@ -237,11 +285,13 @@ class Supplier(db.Model):
     code = db.Column(db.BigInteger, index=True, unique=True, nullable=False)
     name = db.Column(db.String(255), nullable=False)
     summary = db.Column(db.String(511), index=False, nullable=True)
-    description = db.Column(db.String, index=False, unique=False, nullable=True)
+    description = db.Column(db.String, index=False, nullable=True)
+    address_id = db.Column(db.Integer, db.ForeignKey('address.id'), index=False, nullable=False)
+    address = db.relationship('Address')
     website = db.Column(db.String(255), index=False, nullable=True)
     abn = db.Column(db.String(15), nullable=True)
     acn = db.Column(db.String(15), nullable=True)
-    contacts = db.relationship('EmailContact')
+    contacts = db.relationship('Contact', secondary=supplier__contact)
     references = db.relationship('SupplierReference')
     categories = db.relationship('ServiceCategory', secondary=supplier__service_category)
 
@@ -257,21 +307,22 @@ class Supplier(db.Model):
             'code': self.code,
             'data_version': self.data_version,
             'name': self.name,
+            'address': self.address.serialize(),
             'summary': self.summary,
             'description': self.description,
             'website': self.website,
             'abn': self.abn,
             'acn': self.acn,
-            'contacts': [c.serialize for c in self.contacts],
-            'references': [r.serialize for r in self.references],
-            'categories': [c.serialize for c in self.categories],
+            'contacts': [c.serialize() for c in self.contacts],
+            'references': [r.serialize() for r in self.references],
+            'categories': [c.serialize() for c in self.categories],
         }
         serialized.update(data or {})
         return serialized
 
     def update_from_json(self, data):
-        keys = ('code', 'data_version', 'name', 'summary', 'description', 'website', 'abn', 'acn', 'contacts',
-                'references', 'categories')
+        keys = ('code', 'data_version', 'name', 'summary', 'description', 'address', 'website', 'abn', 'acn',
+                'contacts', 'references', 'categories')
         extra_keys = set(data.keys()) - set(keys)
         if extra_keys:
             raise ValidationError('Additional properties are not allowed: {}'.format(str(extra_keys)))
@@ -283,8 +334,10 @@ class Supplier(db.Model):
         self.website = data.get('website', self.website)
         self.abn = data.get('abn', self.abn)
         self.acn = data.get('acn', self.acn)
+        if 'address' in data:
+            self.address = Address.from_json(data['address'])
         if 'contacts' in data:
-            self.contacts = [EmailContact.from_json(c) for c in data['contacts']]
+            self.contacts = [Contact.from_json(c) for c in data['contacts']]
         if 'references' in data:
             self.references = [SupplierReference.from_json(r) for r in data['references']]
         if 'categories' in data:

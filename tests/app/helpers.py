@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Service, Supplier, Framework, Lot, User, FrameworkLot, Brief
+from app.models import Address, Service, Supplier, Framework, Lot, User, FrameworkLot, Brief
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -141,6 +141,11 @@ class BaseApplicationTest(object):
                         name=u"Supplier {}".format(i),
                         description="",
                         summary="",
+                        address=Address(address_line="{} Dummy Street".format(i),
+                                        suburb="Dummy",
+                                        state="ZZZ",
+                                        postal_code="0000",
+                                        country='Australia'),
                         contacts=[],
                         references=[],
                         categories=[],
@@ -157,6 +162,11 @@ class BaseApplicationTest(object):
                         name=u"{} suppliers Ltd {}".format(initial, i),
                         description="",
                         summary="",
+                        address=Address(address_line="{} Additional Street".format(i),
+                                        suburb="Additional",
+                                        state="ZZZ",
+                                        postal_code="0000",
+                                        country='Australia'),
                         contacts=[],
                         references=[],
                         categories=[],
@@ -211,7 +221,13 @@ class BaseApplicationTest(object):
             # Add an extra supplier that will have no services
             db.session.add(
                 Supplier(supplier_id=TEST_SUPPLIERS_COUNT, name=u"Supplier {}"
-                         .format(TEST_SUPPLIERS_COUNT))
+                         .format(TEST_SUPPLIERS_COUNT),
+                         address=Address(address_line="{} Empty Street".format(i),
+                                         suburb="Empty",
+                                         state="ZZZ",
+                                         postal_code="0000",
+                                         country='Australia'),
+                         )
             )
             db.session.add(
                 ContactInformation(
