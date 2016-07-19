@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
 from ...models import (
-    Supplier, ContactInformation, AuditEvent,
+    Supplier, AuditEvent,
     Service, SupplierFramework, Framework
 )
 from ...validation import (
@@ -24,32 +24,7 @@ def list_suppliers():
 
     prefix = request.args.get('prefix', '')
 
-    framework = request.args.get('framework')
-
-    duns_number = request.args.get('duns_number')
-
-    if framework:
-        is_valid_string_or_400(framework)
-
-        # TODO: remove backwards compatibility
-        if framework == 'gcloud':
-            framework = 'g-cloud'
-
-        suppliers = Supplier.query.join(
-            Service.supplier, Service.framework
-        ).filter(
-            Framework.status == 'live',
-            Framework.framework == framework,
-            Service.status == 'published'
-        ).order_by(Supplier.name, Supplier.supplier_id)
-    else:
-        suppliers = Supplier.query.order_by(Supplier.name, Supplier.supplier_id)
-
-    if duns_number:
-        is_valid_string_or_400(duns_number)
-        suppliers = suppliers.filter(
-            Supplier.duns_number == duns_number
-        )
+    suppliers = Supplier.query
 
     if prefix:
         if prefix == 'other':
@@ -60,7 +35,7 @@ def list_suppliers():
             suppliers = suppliers.filter(
                 Supplier.name.ilike(prefix + '%'))
 
-    suppliers = suppliers.distinct(Supplier.name, Supplier.supplier_id)
+    suppliers = suppliers.distinct(Supplier.name, Supplier.code)
 
     try:
         suppliers = suppliers.paginate(
@@ -79,185 +54,82 @@ def list_suppliers():
         abort(400, 'invalid framework')
 
 
-@main.route('/suppliers/<int:supplier_id>', methods=['GET'])
-def get_supplier(supplier_id):
+@main.route('/suppliers/<int:code>', methods=['GET'])
+def get_supplier(code):
     supplier = Supplier.query.filter(
-        Supplier.supplier_id == supplier_id
+        Supplier.code == code
     ).first_or_404()
 
     service_counts = supplier.get_service_counts()
 
-    return jsonify(suppliers=supplier.serialize({
-        'service_counts': service_counts
-    }))
+    return jsonify(suppliers=supplier.serialize())
 
 
-@main.route('/suppliers/<int:supplier_id>', methods=['PUT'])
-def import_supplier(supplier_id):
-    supplier_data = validate_and_return_supplier_request(supplier_id)
-
-    contact_informations_data = supplier_data['contactInformation']
-    supplier_data = drop_foreign_fields(
-        supplier_data,
-        ['contactInformation']
-    )
-
-    supplier = Supplier.query.filter(
-        Supplier.supplier_id == supplier_data['id']
-    ).first()
-
-    if supplier is None:
-        supplier = Supplier(supplier_id=supplier_data['id'])
-
-    # if a supplier was found, remove all contact information
-    else:
-        for contact in supplier.contact_information:
-            db.session.delete(contact)
-
+def update_supplier_data_impl(supplier, supplier_data, success_code):
     supplier.update_from_json(supplier_data)
-
-    for contact_information_data in contact_informations_data:
-        contact_information = ContactInformation.from_json(contact_information_data)
-        supplier.contact_information.append(contact_information)
-
-        db.session.add(supplier)
-
-    try:
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
-
-    return jsonify(suppliers=supplier.serialize()), 201
-
-
-@main.route('/suppliers', methods=['POST'])
-def create_supplier():
-    supplier_data = validate_and_return_supplier_request()
-
-    contact_informations_data = supplier_data['contactInformation']
-    supplier_data = drop_foreign_fields(
-        supplier_data,
-        ['contactInformation']
-    )
-
-    supplier = Supplier()
-    supplier.update_from_json(supplier_data)
-
-    for contact_information_data in contact_informations_data:
-        contact_information = ContactInformation.from_json(contact_information_data)
-        supplier.contact_information.append(contact_information)
 
     try:
         db.session.add(supplier)
+        # db.session.add(
+        #     AuditEvent(
+        #         audit_type=AuditTypes.supplier_update,
+        #         db_object=supplier,
+        #         user=updater_json['updated_by'],
+        #         data={'update': request_data['suppliers']})
+        # )
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
 
-    return jsonify(suppliers=supplier.serialize()), 201
+    return jsonify(suppliers=supplier.serialize()), success_code
 
 
-@main.route('/suppliers/<int:supplier_id>', methods=['POST'])
-def update_supplier(supplier_id):
+@main.route('/suppliers', methods=['POST'])
+def create_supplier():
     request_data = get_json_from_request()
+    if 'supplier' in request_data:
+        supplier_data = request_data.get('supplier')
+    else:
+        abort(400)
+
+    supplier = Supplier()
+    return update_supplier_data_impl(supplier, supplier_data, 201)
+
+
+@main.route('/suppliers/<int:code>', methods=['POST'])
+def update_supplier(code):
+    request_data = get_json_from_request()
+    if 'supplier' in request_data:
+        supplier_data = request_data.get('supplier')
+    else:
+        abort(400)
 
     supplier = Supplier.query.filter(
-        Supplier.supplier_id == supplier_id
+        Supplier.code == code
     ).first_or_404()
 
-    updater_json = validate_and_return_updater_request()
-    json_has_required_keys(request_data, ['suppliers'])
-
-    supplier_data = supplier.serialize()
-    supplier_data.update(request_data['suppliers'])
-    supplier_data = drop_foreign_fields(
-        supplier_data,
-        ['links', 'contactInformation']
-    )
-
-    validate_supplier_json_or_400(supplier_data)
-    json_has_matching_id(supplier_data, supplier_id)
-
-    supplier.update_from_json(supplier_data)
-
-    db.session.add(supplier)
-    db.session.add(
-        AuditEvent(
-            audit_type=AuditTypes.supplier_update,
-            db_object=supplier,
-            user=updater_json['updated_by'],
-            data={'update': request_data['suppliers']})
-    )
-
-    try:
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
-
-    return jsonify(suppliers=supplier.serialize())
+    return update_supplier_data_impl(supplier, supplier_data, 200)
 
 
-@main.route('/suppliers/<int:supplier_id>/contact-information/<int:contact_id>', methods=['POST'])
-def update_contact_information(supplier_id, contact_id):
-    request_data = get_json_from_request()
-
-    contact = ContactInformation.query.filter(
-        ContactInformation.id == contact_id,
-        ContactInformation.supplier_id == supplier_id,
-    ).first_or_404()
-
-    updater_json = validate_and_return_updater_request()
-    json_has_required_keys(request_data, ['contactInformation'])
-    contact_data = contact.serialize()
-    contact_data.update(request_data['contactInformation'])
-    contact_data = drop_foreign_fields(
-        contact_data,
-        ['links']
-    )
-
-    validate_contact_information_json_or_400(contact_data)
-    json_has_matching_id(contact_data, contact_id)
-
-    contact.update_from_json(contact_data)
-
-    db.session.add(contact)
-    db.session.add(
-        AuditEvent(
-            audit_type=AuditTypes.contact_update,
-            db_object=contact.supplier,
-            user=updater_json['updated_by'],
-            data={'update': request_data['contactInformation']})
-    )
-
-    try:
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
-
-    return jsonify(contactInformation=contact.serialize())
-
-
-@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/declaration', methods=['PUT'])
-def set_a_declaration(supplier_id, framework_slug):
+@main.route('/suppliers/<int:code>/frameworks/<framework_slug>/declaration', methods=['PUT'])
+def set_a_declaration(code, framework_slug):
     framework = Framework.query.filter(
         Framework.slug == framework_slug
     ).first_or_404()
 
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
-        supplier_id, framework_slug
+        code, framework_slug
     )
     if supplier_framework is not None:
         status_code = 200 if supplier_framework.declaration else 201
     else:
         supplier = Supplier.query.filter(
-            Supplier.supplier_id == supplier_id
+            Supplier.code == code
         ).first_or_404()
 
         supplier_framework = SupplierFramework(
-            supplier_id=supplier.supplier_id,
+            supplier_code=supplier.code,
             framework_id=framework.id,
             declaration={}
         )
@@ -286,10 +158,10 @@ def set_a_declaration(supplier_id, framework_slug):
     return jsonify(declaration=supplier_framework.declaration), status_code
 
 
-@main.route('/suppliers/<supplier_id>/frameworks/interest', methods=['GET'])
-def get_registered_frameworks(supplier_id):
+@main.route('/suppliers/<int:code>/frameworks/interest', methods=['GET'])
+def get_registered_frameworks(code):
     supplier_frameworks = SupplierFramework.query.filter(
-        SupplierFramework.supplier_id == supplier_id
+        SupplierFramework.supplier_code == code
     ).all()
     slugs = []
     for framework in supplier_frameworks:
@@ -301,13 +173,13 @@ def get_registered_frameworks(supplier_id):
     return jsonify(frameworks=slugs)
 
 
-@main.route('/suppliers/<supplier_id>/frameworks', methods=['GET'])
-def get_supplier_frameworks_info(supplier_id):
+@main.route('/suppliers/<int:code>/frameworks', methods=['GET'])
+def get_supplier_frameworks_info(code):
     supplier = Supplier.query.filter(
-        Supplier.supplier_id == supplier_id
+        Supplier.code == code
     ).first_or_404()
 
-    service_counts = SupplierFramework.get_service_counts(supplier_id)
+    service_counts = SupplierFramework.get_service_counts(code)
 
     supplier_frameworks = SupplierFramework.query.filter(
         SupplierFramework.supplier == supplier
@@ -323,10 +195,10 @@ def get_supplier_frameworks_info(supplier_id):
     )
 
 
-@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['GET'])
-def get_supplier_framework_info(supplier_id, framework_slug):
+@main.route('/suppliers/<int:code>/frameworks/<framework_slug>', methods=['GET'])
+def get_supplier_framework_info(code, framework_slug):
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
-        supplier_id, framework_slug
+        code, framework_slug
     )
     if supplier_framework is None:
         abort(404)
@@ -334,15 +206,15 @@ def get_supplier_framework_info(supplier_id, framework_slug):
     return jsonify(frameworkInterest=supplier_framework.serialize())
 
 
-@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['PUT'])
-def register_framework_interest(supplier_id, framework_slug):
+@main.route('/suppliers/<int:code>/frameworks/<framework_slug>', methods=['PUT'])
+def register_framework_interest(code, framework_slug):
 
     framework = Framework.query.filter(
         Framework.slug == framework_slug
     ).first_or_404()
 
     supplier = Supplier.query.filter(
-        Supplier.supplier_id == supplier_id
+        Supplier.code == code
     ).first_or_404()
 
     json_payload = get_json_from_request()
@@ -352,7 +224,7 @@ def register_framework_interest(supplier_id, framework_slug):
         abort(400, "This PUT endpoint does not take a payload.")
 
     interest_record = SupplierFramework.query.filter(
-        SupplierFramework.supplier_id == supplier.supplier_id,
+        SupplierFramework.code == supplier.code,
         SupplierFramework.framework_id == framework.id
     ).first()
     if interest_record:
@@ -362,14 +234,14 @@ def register_framework_interest(supplier_id, framework_slug):
         abort(400, "'{}' framework is not open".format(framework_slug))
 
     interest_record = SupplierFramework(
-        supplier_id=supplier.supplier_id,
+        code=supplier.code,
         framework_id=framework.id,
         declaration={}
     )
     audit_event = AuditEvent(
         audit_type=AuditTypes.register_framework_interest,
         user=updater_json['updated_by'],
-        data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug},
+        data={'supplierId': supplier.code, 'frameworkSlug': framework_slug},
         db_object=supplier
     )
 
@@ -384,15 +256,15 @@ def register_framework_interest(supplier_id, framework_slug):
     return jsonify(frameworkInterest=interest_record.serialize()), 201
 
 
-@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['POST'])
-def update_supplier_framework_details(supplier_id, framework_slug):
+@main.route('/suppliers/<int:code>/frameworks/<framework_slug>', methods=['POST'])
+def update_supplier_framework_details(code, framework_slug):
 
     framework = Framework.query.filter(
         Framework.slug == framework_slug
     ).first_or_404()
 
     supplier = Supplier.query.filter(
-        Supplier.supplier_id == supplier_id
+        Supplier.code == code
     ).first_or_404()
 
     json_payload = get_json_from_request()
@@ -401,12 +273,12 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     update_json = json_payload["frameworkInterest"]
 
     interest_record = SupplierFramework.query.filter(
-        SupplierFramework.supplier_id == supplier.supplier_id,
+        SupplierFramework.code == supplier.code,
         SupplierFramework.framework_id == framework.id
     ).first()
 
     if not interest_record:
-        abort(404, "supplier_id '{}' has not registered interest in {}".format(supplier_id, framework_slug))
+        abort(404, "code '{}' has not registered interest in {}".format(code, framework_slug))
 
     if 'onFramework' in update_json:
         interest_record.on_framework = update_json['onFramework']
@@ -419,7 +291,7 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     audit_event = AuditEvent(
         audit_type=AuditTypes.supplier_update,
         user=updater_json['updated_by'],
-        data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug, 'update': update_json},
+        data={'supplierId': supplier.code, 'frameworkSlug': framework_slug, 'update': update_json},
         db_object=supplier
     )
 

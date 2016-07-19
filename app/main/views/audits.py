@@ -23,7 +23,7 @@ AUDIT_OBJECT_TYPES = {
 }
 
 AUDIT_OBJECT_ID_FIELDS = {
-    "suppliers": models.Supplier.supplier_id,
+    "suppliers": models.Supplier.code,
     "services": models.Service.service_id,
     "frameworks": models.Framework.slug,
     "users": models.User.id,

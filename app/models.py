@@ -26,10 +26,10 @@ from .validation import is_valid_service_id, is_valid_buyer_email, get_validatio
 
 
 class FrameworkLot(db.Model):
-    __tablename__ = 'framework_lots'
+    __tablename__ = 'framework_lot'
 
-    framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), primary_key=True)
-    lot_id = db.Column(db.Integer, db.ForeignKey('lots.id'), primary_key=True)
+    framework_id = db.Column(db.Integer, db.ForeignKey('framework.id'), primary_key=True)
+    lot_id = db.Column(db.Integer, db.ForeignKey('lot.id'), primary_key=True)
 
 
 class ValidationError(ValueError):
@@ -38,7 +38,7 @@ class ValidationError(ValueError):
 
 
 class Lot(db.Model):
-    __tablename__ = 'lots'
+    __tablename__ = 'lot'
 
     id = db.Column(db.Integer, primary_key=True)
     slug = db.Column(db.String, nullable=False, index=True)
@@ -66,7 +66,7 @@ class Lot(db.Model):
 
 
 class Framework(db.Model):
-    __tablename__ = 'frameworks'
+    __tablename__ = 'framework'
 
     STATUSES = (
         'coming', 'open', 'pending', 'standstill', 'live', 'expired'
@@ -86,7 +86,7 @@ class Framework(db.Model):
                        default='pending')
     clarification_questions_open = db.Column(db.Boolean, nullable=False, default=False)
     lots = db.relationship(
-        'Lot', secondary="framework_lots",
+        'Lot', secondary="framework_lot",
         lazy='joined', innerjoin=False,
         order_by=Lot.id,
         backref='frameworks'
@@ -135,174 +135,171 @@ class Framework(db.Model):
         return '<{}: {} slug={}>'.format(self.__class__.__name__, self.name, self.slug)
 
 
-class ContactInformation(db.Model):
-    __tablename__ = 'contact_information'
+class EmailContact(db.Model):
+    __tablename__ = 'email_contact'
 
     id = db.Column(db.Integer, primary_key=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
+    contact_for = db.Column(db.String, index=False)
+    name = db.Column(db.String, index=False)
+    role = db.Column(db.String, index=False)
+    email = db.Column(db.String, index=False, nullable=False)
 
-    supplier_id = db.Column(db.Integer,
-                            db.ForeignKey('suppliers.supplier_id'))
-
-    contact_name = db.Column(db.String, index=False,
-                             unique=False, nullable=False)
-
-    phone_number = db.Column(db.String, index=False,
-                             unique=False, nullable=True)
-
-    email = db.Column(db.String, index=False,
-                      unique=False, nullable=False)
-
-    website = db.Column(db.String, index=False,
-                        unique=False, nullable=True)
-
-    address1 = db.Column(db.String, index=False,
-                         unique=False, nullable=True)
-
-    address2 = db.Column(db.String, index=False,
-                         unique=False, nullable=True)
-
-    city = db.Column(db.String, index=False,
-                     unique=False, nullable=True)
-
-    country = db.Column(db.String, index=False,
-                        unique=False, nullable=True)
-
-    postcode = db.Column(db.String, index=False,
-                         unique=False, nullable=True)
-
-    def update_from_json(self, data):
-        self.contact_name = data.get("contactName")
-        self.phone_number = data.get("phoneNumber")
-        self.email = data.get("email")
-        self.website = data.get("website")
-        self.address1 = data.get("address1")
-        self.address2 = data.get("address2")
-        self.city = data.get("city")
-        self.country = data.get("country")
-        self.postcode = data.get("postcode")
-
-        return self
-
-    @staticmethod
-    def from_json(data):
-        c = ContactInformation()
-        c.update_from_json(data)
-        return c
-
-    def get_link(self):
-        return url_for(".update_contact_information",
-                       supplier_id=self.supplier_id,
-                       contact_id=self.id)
+    @classmethod
+    def from_json(as_dict):
+        try:
+            return EmailContact(contact_for=as_dict.get('contact_for', None),
+                                name=as_dict.get('name'),
+                                role=as_dict.get('role'),
+                                email=as_dict.get('email'))
+        except KeyError, e:
+            raise ValidationError('Email contact missing required field: {}'.format(e))
 
     def serialize(self):
-        links = link(
-            "self", self.get_link()
-        )
-
         serialized = {
-            'id': self.id,
-            'contactName': self.contact_name,
-            'phoneNumber': self.phone_number,
+            'contact_for': self.contact_for,
+            'name': self.name,
+            'organisation': self.organisation,
+            'role': self.role,
             'email': self.email,
-            'website': self.website,
-            'address1': self.address1,
-            'address2': self.address2,
-            'city': self.city,
-            'country': self.country,
-            'postcode': self.postcode,
-            'links': links,
         }
-
         return filter_null_value_fields(serialized)
+
+
+class SupplierReference(db.Model):
+    __tablename__ = 'supplier_reference'
+
+    id = db.Column(db.Integer, primary_key=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
+    name = db.Column(db.String, index=False)
+    organisation = db.Column(db.String, index=False, nullable=False)
+    role = db.Column(db.String, index=False)
+    email = db.Column(db.String, index=False, nullable=False)
+
+    @classmethod
+    def from_json(as_dict):
+        try:
+            return SupplierReference(name=as_dict.get('name'),
+                                     organisation=as_dict.get('organisation'),
+                                     role=as_dict.get('role'),
+                                     email=as_dict.get('email'))
+        except KeyError, e:
+            raise ValidationError('Supplier reference missing required field: {}'.format(e))
+
+    def serialize(self):
+        serialized = {
+            'name': self.name,
+            'organisation': self.organisation,
+            'role': self.role,
+            'email': self.email,
+        }
+        return filter_null_value_fields(serialized)
+
+
+class ServiceCategory(db.Model):
+    __tablename__ = 'service_category'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True, nullable=False)
+
+    @classmethod
+    def lookup(as_dict):
+        name = as_dict.get('name', 'no category specified')
+        result = ServiceCategory.filter_by(name=name).first()
+        if result is None:
+            raise ValidationError('Unknown category: {}'.format(name))
+        return result
+
+    def serialize(self):
+        serialized = {
+            'name': self.name,
+        }
+        return filter_null_value_fields(serialized)
+
+
+supplier__service_category = db.Table('supplier__service_category',
+                                      db.Column('supplier_id',
+                                                db.Integer,
+                                                db.ForeignKey('supplier.id'),
+                                                nullable=False),
+                                      db.Column('service_category_id',
+                                                db.Integer,
+                                                db.ForeignKey('service_category.id'),
+                                                nullable=False),
+                                      db.PrimaryKeyConstraint('supplier_id', 'service_category_id'))
 
 
 class Supplier(db.Model):
-    __tablename__ = 'suppliers'
+    __tablename__ = 'supplier'
 
-    # NOTE other tables tend to make foreign key references to `supplier_id` instead of this
     id = db.Column(db.Integer, primary_key=True)
-
-    supplier_id = db.Column(db.BigInteger, Sequence('suppliers_supplier_id_seq'), index=True, unique=True,
-                            nullable=False)
-
+    data_version = db.Column(db.Integer, index=False)
+    code = db.Column(db.BigInteger, index=True, unique=True, nullable=False)
     name = db.Column(db.String(255), nullable=False)
+    summary = db.Column(db.String(511), index=False, nullable=True)
+    description = db.Column(db.String, index=False, unique=False, nullable=True)
+    website = db.Column(db.String(255), index=False, nullable=True)
+    abn = db.Column(db.String(15), nullable=True)
+    acn = db.Column(db.String(15), nullable=True)
+    contacts = db.relationship('EmailContact')
+    references = db.relationship('SupplierReference')
+    categories = db.relationship('ServiceCategory', secondary=supplier__service_category)
 
-    description = db.Column(db.String, index=False,
-                            unique=False, nullable=True)
-
-    contact_information = db.relationship(ContactInformation,
-                                          backref='supplier',
-                                          lazy='joined',
-                                          innerjoin=False)
-
-    duns_number = db.Column(db.String, index=True, unique=True, nullable=True)
-
-    esourcing_id = db.Column(db.String, index=False, unique=False, nullable=True)
-
-    companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
-
-    clients = db.Column(JSON, default=list)
-
-    # Drop this method once the supplier front end is using SupplierFramework counts
     def get_service_counts(self):
-        services = db.session.query(
-            Framework.name, func.count(Framework.name)
-        ).join(Service.framework).filter(
-            Framework.status == 'live',
-            Service.status == 'published',
-            Service.supplier_id == self.supplier_id
-        ).group_by(Framework.name).all()
-
-        return dict(services)
+        # FIXME: To be removed from Australian version
+        return {}
 
     def get_link(self):
-        return url_for(".get_supplier", supplier_id=self.supplier_id)
+        return url_for(".get_supplier", code=self.code)
 
     def serialize(self, data=None):
-        links = link(
-            "self", self.get_link()
-        )
-
-        contact_information_list = []
-        for contact_information_instance in self.contact_information:
-            contact_information_list.append(
-                contact_information_instance.serialize()
-            )
-
         serialized = {
-            'id': self.supplier_id,
+            'code': self.code,
+            'data_version': self.data_version,
             'name': self.name,
+            'summary': self.summary,
             'description': self.description,
-            'dunsNumber': self.duns_number,
-            'eSourcingId': self.esourcing_id,
-            'companiesHouseNumber': self.companies_house_number,
-            'contactInformation': contact_information_list,
-            'links': links,
-            'clients': self.clients
+            'website': self.website,
+            'abn': self.abn,
+            'acn': self.acn,
+            'contacts': [c.serialize for c in self.contacts],
+            'references': [r.serialize for r in self.references],
+            'categories': [c.serialize for c in self.categories],
         }
-
         serialized.update(data or {})
-
-        return filter_null_value_fields(serialized)
+        return serialized
 
     def update_from_json(self, data):
-        self.name = data.get('name')
-        self.description = data.get('description')
-        self.duns_number = data.get('dunsNumber')
-        self.esourcing_id = data.get('eSourcingId')
-        self.clients = data.get('clients')
-        self.companies_house_number = data.get('companiesHouseNumber')
+        keys = ('code', 'data_version', 'name', 'summary', 'description', 'website', 'abn', 'acn', 'contacts',
+                'references', 'categories')
+        extra_keys = set(data.keys()) - set(keys)
+        if extra_keys:
+            raise ValidationError('Additional properties are not allowed: {}'.format(str(extra_keys)))
+        self.code = data.get('code', self.code)
+        self.data_version = data.get('data_version', self.data_version)
+        self.name = data.get('name', self.name)
+        self.summary = data.get('summary', self.summary)
+        self.description = data.get('description', self.description)
+        self.website = data.get('website', self.website)
+        self.abn = data.get('abn', self.abn)
+        self.acn = data.get('acn', self.acn)
+        if 'contacts' in data:
+            self.contacts = [EmailContact.from_json(c) for c in data['contacts']]
+        if 'references' in data:
+            self.references = [SupplierReference.from_json(r) for r in data['references']]
+        if 'categories' in data:
+            self.categories = [SupplierCategory.lookup(c) for c in data['categories']]
         return self
 
 
 class SupplierFramework(db.Model):
-    __tablename__ = 'supplier_frameworks'
+    __tablename__ = 'supplier_framework'
 
-    supplier_id = db.Column(db.Integer,
-                            db.ForeignKey('suppliers.supplier_id'),
-                            primary_key=True)
+    supplier_code = db.Column(db.BigInteger,
+                              db.ForeignKey('supplier.code'),
+                              primary_key=True)
     framework_id = db.Column(db.Integer,
-                             db.ForeignKey('frameworks.id'),
+                             db.ForeignKey('framework.id'),
                              primary_key=True)
     declaration = db.Column(JSON)
     on_framework = db.Column(db.Boolean, nullable=True)
@@ -326,18 +323,18 @@ class SupplierFramework(db.Model):
         )
 
     @staticmethod
-    def find_by_supplier_and_framework(supplier_id, framework_slug):
+    def find_by_supplier_and_framework(supplier_code, framework_slug):
         return SupplierFramework.find_by_framework(framework_slug).filter(
-            SupplierFramework.supplier_id == supplier_id
+            SupplierFramework.supplier_code == supplier_code
         ).first()
 
     @staticmethod
-    def get_service_counts(supplier_id):
+    def get_service_counts(supplier_code):
 
         count_services_query = db.session.query(
-            Service.framework_id, Service.status, func.count()
+            Service.framework_code, Service.status, func.count()
         ).filter(
-            Service.supplier_id == supplier_id
+            Service.supplier_code == supplier_code
         ).group_by(
             Service.framework_id,
             Service.status
@@ -346,7 +343,7 @@ class SupplierFramework(db.Model):
         count_drafts_query = db.session.query(
             DraftService.framework_id, DraftService.status, func.count()
         ).filter(
-            DraftService.supplier_id == supplier_id
+            DraftService.supplier_code == supplier_code
         ).group_by(
             DraftService.framework_id,
             DraftService.status
@@ -362,7 +359,7 @@ class SupplierFramework(db.Model):
         if agreement_returned_at:
             agreement_returned_at = agreement_returned_at.strftime(DATETIME_FORMAT)
         return dict({
-            "supplierId": self.supplier_id,
+            "supplierCode": self.supplier_code,
             "supplierName": self.supplier.name,
             "frameworkSlug": self.framework.slug,
             "declaration": self.declaration,
@@ -373,7 +370,7 @@ class SupplierFramework(db.Model):
 
 
 class User(db.Model):
-    __tablename__ = 'users'
+    __tablename__ = 'user'
 
     ROLES = [
         'buyer',
@@ -412,11 +409,12 @@ class User(db.Model):
     failed_login_count = db.Column(db.Integer, nullable=False, default=0)
 
     # used by frontends to determine whether view access should be allowed
-    role = db.Column(db.Enum(ROLES, name='user_roles_enum'), index=False, unique=False, nullable=False)
+    role = db.Column(db.Enum(*ROLES, name='user_roles_enum'), index=False, unique=False, nullable=False)
 
-    supplier_id = db.Column(db.BigInteger,
-                            db.ForeignKey('suppliers.supplier_id'),
-                            index=True, unique=False, nullable=True)
+    # FIXME: should be a many-to-many
+    supplier_code = db.Column(db.BigInteger,
+                              db.ForeignKey('supplier.code'),
+                              index=True, unique=False, nullable=True)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
 
@@ -469,7 +467,7 @@ class User(db.Model):
 
         if self.role == 'supplier':
             supplier = {
-                "supplierId": self.supplier.supplier_id,
+                "supplierCode": self.supplier.code,
                 "name": self.supplier.name
             }
             user['supplier'] = supplier
@@ -498,24 +496,24 @@ class ServiceTableMixin(object):
                            default=datetime.utcnow, onupdate=datetime.utcnow)
 
     @declared_attr
-    def supplier_id(cls):
-        return db.Column(db.BigInteger, db.ForeignKey('suppliers.supplier_id'),
+    def supplier_code(cls):
+        return db.Column(db.BigInteger, db.ForeignKey('supplier.code'),
                          index=True, unique=False, nullable=False)
 
     @declared_attr
     def framework_id(cls):
-        return db.Column(db.BigInteger, db.ForeignKey('frameworks.id'),
+        return db.Column(db.BigInteger, db.ForeignKey('framework.id'),
                          index=True, unique=False, nullable=False)
 
     @declared_attr
     def __table_args__(cls):
         return (db.ForeignKeyConstraint([cls.framework_id, cls.lot_id],
-                                        ['framework_lots.framework_id', 'framework_lots.lot_id']),
+                                        ['framework_lot.framework_id', 'framework_lot.lot_id']),
                 {})
 
     @declared_attr
     def lot_id(cls):
-        return db.Column(db.BigInteger, db.ForeignKey('lots.id'),
+        return db.Column(db.BigInteger, db.ForeignKey('lot.id'),
                          index=True, unique=False, nullable=False)
 
     @declared_attr
@@ -548,7 +546,7 @@ class ServiceTableMixin(object):
     def validates_data(self, key, value):
         data = drop_foreign_fields(value, [
             'id', 'status',
-            'supplierId', 'supplierName',
+            'supplierCode', 'supplierName',
             'frameworkSlug', 'frameworkFramework', 'frameworkName', 'frameworkStatus',
             'lot', 'lotSlug', 'lotName',
             'updatedAt', 'createdAt', 'links'
@@ -568,7 +566,7 @@ class ServiceTableMixin(object):
 
         data.update({
             'id': self.service_id,
-            'supplierId': self.supplier.supplier_id,
+            'supplierCode': self.supplier.supplier_code,
             'supplierName': self.supplier.name,
             'frameworkSlug': self.framework.slug,
             'frameworkFramework': self.framework.framework,
@@ -595,14 +593,14 @@ class ServiceTableMixin(object):
         self.data = current_data
 
     def __repr__(self):
-        return '<{}: service_id={}, supplier_id={}, lot={}>'.format(
+        return '<{}: service_id={}, supplier_code={}, lot={}>'.format(
             self.__class__.__name__,
-            self.service_id, self.supplier_id, self.lot
+            self.service_id, self.supplier_code, self.lot
         )
 
 
 class Service(db.Model, ServiceTableMixin):
-    __tablename__ = 'services'
+    __tablename__ = 'service'
 
     @staticmethod
     def create_from_draft(draft, status):
@@ -654,7 +652,7 @@ class ArchivedService(db.Model, ServiceTableMixin):
     """
         A record of a Service's past state
     """
-    __tablename__ = 'archived_services'
+    __tablename__ = 'archived_service'
 
     # Overwrites service_id column to remove uniqueness constraint
     service_id = db.Column(db.String, index=True, unique=False, nullable=False)
@@ -687,7 +685,7 @@ class ArchivedService(db.Model, ServiceTableMixin):
 
 
 class DraftService(db.Model, ServiceTableMixin):
-    __tablename__ = 'draft_services'
+    __tablename__ = 'draft_service'
 
     STATUSES = ('not-submitted', 'submitted', 'enabled', 'disabled', 'published', 'failed')
 
@@ -747,7 +745,7 @@ class DraftService(db.Model, ServiceTableMixin):
 
 
 class AuditEvent(db.Model):
-    __tablename__ = 'audit_events'
+    __tablename__ = 'audit_event'
 
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String, index=True, nullable=False)
@@ -831,7 +829,7 @@ class AuditEvent(db.Model):
 
 
 class Brief(db.Model):
-    __tablename__ = 'briefs'
+    __tablename__ = 'brief'
 
     CLARIFICATION_QUESTIONS_OPEN_DAYS = 7
     CLARIFICATION_QUESTIONS_PUBLISHED_DAYS = 1
@@ -839,8 +837,8 @@ class Brief(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), nullable=False)
-    _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lots.id'), nullable=False)
+    framework_id = db.Column(db.Integer, db.ForeignKey('framework.id'), nullable=False)
+    _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lot.id'), nullable=False)
 
     data = db.Column(JSON)
     created_at = db.Column(db.DateTime, index=True, nullable=False,
@@ -850,17 +848,17 @@ class Brief(db.Model):
     published_at = db.Column(db.DateTime, index=True, nullable=True)
 
     __table_args__ = (db.ForeignKeyConstraint([framework_id, _lot_id],
-                                              ['framework_lots.framework_id', 'framework_lots.lot_id']),
+                                              ['framework_lot.framework_id', 'framework_lot.lot_id']),
                       {})
 
-    users = db.relationship('User', secondary='brief_users')
+    users = db.relationship('User', secondary='brief_user')
     framework = db.relationship('Framework', lazy='joined')
     lot = db.relationship('Lot', lazy='joined')
     clarification_questions = db.relationship(
         "BriefClarificationQuestion",
         order_by="BriefClarificationQuestion.published_at")
 
-    @validates('users')
+    @validates('user')
     def validates_users(self, key, user):
         if user.role != 'buyer':
             raise ValidationError("The brief user must be a buyer")
@@ -1032,20 +1030,20 @@ class Brief(db.Model):
 
 
 class BriefUser(db.Model):
-    __tablename__ = 'brief_users'
+    __tablename__ = 'brief_user'
 
-    brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
 
 
 class BriefResponse(db.Model):
-    __tablename__ = 'brief_responses'
+    __tablename__ = 'brief_response'
 
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(JSON, nullable=False)
 
-    brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), nullable=False)
-    supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.supplier_id'), nullable=False)
+    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), nullable=False)
+    supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
 
     created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
 
@@ -1055,7 +1053,7 @@ class BriefResponse(db.Model):
     @validates('data')
     def validates_data(self, key, data):
         data = drop_foreign_fields(data, [
-            'supplierId', 'briefId',
+            'supplierCode', 'briefId',
         ])
         data = strip_whitespace_from_data(data)
         data = purge_nulls_from_data(data)
@@ -1094,13 +1092,13 @@ class BriefResponse(db.Model):
         data.update({
             'id': self.id,
             'briefId': self.brief_id,
-            'supplierId': self.supplier_id,
+            'supplierCode': self.supplier_code,
             'supplierName': self.supplier.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'links': {
                 'self': url_for('.get_brief_response', brief_response_id=self.id),
                 'brief': url_for('.get_brief', brief_id=self.brief_id),
-                'supplier': url_for(".get_supplier", supplier_id=self.supplier_id),
+                'supplier': url_for(".get_supplier", supplier_code=self.supplier_code),
             }
         })
 
@@ -1108,10 +1106,10 @@ class BriefResponse(db.Model):
 
 
 class BriefClarificationQuestion(db.Model):
-    __tablename__ = 'brief_clarification_questions'
+    __tablename__ = 'brief_clarification_question'
 
     id = db.Column(db.Integer, primary_key=True)
-    _brief_id = db.Column("brief_id", db.Integer, db.ForeignKey("briefs.id"), nullable=False)
+    _brief_id = db.Column("brief_id", db.Integer, db.ForeignKey("brief.id"), nullable=False)
 
     question = db.Column(db.String, nullable=False)
     answer = db.Column(db.String, nullable=False)

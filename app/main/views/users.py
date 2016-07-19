@@ -63,18 +63,18 @@ def list_users():
             links={}
         )
 
-    supplier_id = request.args.get('supplier_id')
-    if supplier_id is not None:
+    supplier_code = request.args.get('supplier_code')
+    if supplier_code is not None:
         try:
-            supplier_id = int(supplier_id)
+            supplier_code = int(supplier_code)
         except ValueError:
-            abort(400, "Invalid supplier_id: {}".format(supplier_id))
+            abort(400, "Invalid supplier_code: {}".format(supplier_code))
 
-        supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
+        supplier = Supplier.query.filter(Supplier.code == supplier_code).all()
         if not supplier:
-            abort(404, "supplier_id '{}' not found".format(supplier_id))
+            abort(404, "supplier_code '{}' not found".format(supplier_code))
 
-        user_query = user_query.filter(User.supplier_id == supplier_id)
+        user_query = user_query.filter(User.supplier_code == supplier_code)
 
     users = user_query.paginate(
         page=page,
@@ -94,11 +94,17 @@ def list_users():
 @main.route('/users', methods=['POST'])
 def create_user():
 
+    print 'get_json_from_request'
     json_payload = get_json_from_request()
+    print json_payload
+    print 'has_required_keys'
     json_has_required_keys(json_payload, ["users"])
+    print 'json_payload'
     json_payload = json_payload["users"]
+    print 'validate'
     validate_user_json_or_400(json_payload)
 
+    print 'query'
     user = User.query.filter(
         User.email_address == json_payload['emailAddress'].lower()).first()
 
@@ -110,6 +116,7 @@ def create_user():
     else:
         password = encryption.hashpw(json_payload['password'])
 
+    print 'User'
     now = datetime.utcnow()
     user = User(
         email_address=json_payload['emailAddress'].lower(),
@@ -125,13 +132,15 @@ def create_user():
 
     audit_data = {}
 
-    if "supplierId" in json_payload:
-        user.supplier_id = json_payload['supplierId']
-        audit_data['supplier_id'] = user.supplier_id
+    if "supplierCode" in json_payload:
+        user.supplier_code = json_payload['supplierCode']
+        audit_data['supplier_code'] = user.supplier_code
 
-    check_supplier_role(user.role, user.supplier_id)
+    print 'check_supplier_role'
+    check_supplier_role(user.role, user.supplier_code)
 
     try:
+        print 'add'
         db.session.add(user)
         db.session.flush()
 
@@ -146,7 +155,7 @@ def create_user():
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        abort(400, "Invalid supplier id")
+        abort(400, "Invalid supplier code")
     except DataError:
         db.session.rollback()
         abort(400, "Invalid user role")
@@ -183,15 +192,15 @@ def update_user(user_id):
         user.email_address = user_update['emailAddress']
     if 'role' in user_update:
         if user.role == 'supplier' and user_update['role'] != user.role:
-            user.supplier_id = None
-            user_update.pop('supplierId', None)
+            user.supplier_code = None
+            user_update.pop('supplierCode', None)
         user.role = user_update['role']
-    if 'supplierId' in user_update:
-        user.supplier_id = user_update['supplierId']
+    if 'supplierCode' in user_update:
+        user.supplier_code = user_update['supplierCode']
     if 'locked' in user_update and not user_update['locked']:
         user.failed_login_count = 0
 
-    check_supplier_role(user.role, user.supplier_id)
+    check_supplier_role(user.role, user.supplier_code)
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_user,
@@ -251,16 +260,16 @@ def export_users_for_framework(framework_slug):
 
             # get number of completed draft services per supplier
             # `application_status` is based on a complete declaration and at least one completed draft service
-            if sf.supplier_id not in submitted_draft_counts_per_supplier.keys():
-                submitted_draft_counts_per_supplier[sf.supplier_id] = db.session.query(
+            if sf.supplier_code not in submitted_draft_counts_per_supplier.keys():
+                submitted_draft_counts_per_supplier[sf.supplier_code] = db.session.query(
                     func.count()
                 ).filter(
-                    DraftService.supplier_id == sf.supplier_id,
+                    DraftService.supplier_code == sf.supplier_code,
                     DraftService.framework_id == sf.framework_id,
                     DraftService.status == 'submitted'
                 ).scalar()
 
-            submitted_draft_count = submitted_draft_counts_per_supplier[sf.supplier_id]
+            submitted_draft_count = submitted_draft_counts_per_supplier[sf.supplier_code]
             application_status = \
                 'application' if submitted_draft_count and declaration_status == 'complete' else 'no_application'
             if sf.on_framework is None:
@@ -272,7 +281,7 @@ def export_users_for_framework(framework_slug):
         user_rows.append({
             'user_email': u.email_address,
             'user_name': u.name,
-            'supplier_id': s.supplier_id,
+            'supplier_code': s.supplier_code,
             'declaration_status': declaration_status,
             'application_status': application_status,
             'framework_agreement': framework_agreement,
@@ -291,8 +300,8 @@ def email_has_valid_buyer_domain():
     return jsonify(valid=is_valid_buyer_email(email_address))
 
 
-def check_supplier_role(role, supplier_id):
-    if role == 'supplier' and not supplier_id:
-        abort(400, "'supplier_id' is required for users with 'supplier' role")
-    elif role != 'supplier' and supplier_id:
-        abort(400, "'supplier_id' is only valid for users with 'supplier' role, not '{}'".format(role))
+def check_supplier_role(role, supplier_code):
+    if role == 'supplier' and not supplier_code:
+        abort(400, "'supplier_code' is required for users with 'supplier' role")
+    elif role != 'supplier' and supplier_code:
+        abort(400, "'supplier_code' is only valid for users with 'supplier' role, not '{}'".format(role))

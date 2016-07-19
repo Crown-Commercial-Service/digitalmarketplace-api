@@ -94,8 +94,8 @@ def validate_user_json_or_400(submitted_json):
     except ValidationError as e:
         abort(400, "JSON was not a valid format. {}".format(e.message))
     if submitted_json['role'] == 'supplier' \
-            and 'supplierId' not in submitted_json:
-        abort(400, "No supplier id provided for supplier user")
+            and 'supplierCode' not in submitted_json:
+        abort(400, "No supplier code provided for supplier user")
 
 
 def validate_user_auth_json_or_400(submitted_json):

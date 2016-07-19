@@ -33,7 +33,7 @@
         "admin-ccs-sourcing"
       ]
     },
-    "supplierId": {
+    "supplierCode": {
       "type": "integer"
     }
   },

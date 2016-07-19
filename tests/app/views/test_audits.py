@@ -131,7 +131,7 @@ class TestAuditEvents(BaseApplicationTest):
             # Create a second AuditEvent with the same object_id but with a
             # different object_type to check that we're not filtering based
             # on object_id only
-            supplier = Supplier.query.filter(Supplier.supplier_id == 1).first()
+            supplier = Supplier.query.filter(Supplier.code == 1).first()
             event = AuditEvent(
                 audit_type=AuditTypes.supplier_update,
                 db_object=supplier,

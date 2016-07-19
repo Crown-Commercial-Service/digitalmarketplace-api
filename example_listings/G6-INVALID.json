@@ -1,6 +1,6 @@
 {
    "id": 3,
-   "supplierId": 1,
+   "supplierCode": 1,
    "lot": "paas",
    "title": 23,
    "lastUpdated": "2014-12-22T17:32:31Z",

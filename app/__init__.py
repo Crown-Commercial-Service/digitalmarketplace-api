@@ -35,7 +35,7 @@ def create_app(config_name):
     # doesn't seem to be in the Postgres documentation anyway.  We need to patch the broker to fix
     # the username stability issue anyway.
     import os
-    if os.environ.has_key('DATABASE_URL'):
+    if 'DATABASE_URL' in os.environ:
         application.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL'].replace('reconnect=true', '')
 
     from .main import main as main_blueprint
