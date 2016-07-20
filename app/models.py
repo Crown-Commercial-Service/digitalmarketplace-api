@@ -172,12 +172,12 @@ class Contact(db.Model):
     __tablename__ = 'contact'
 
     id = db.Column(db.Integer, primary_key=True)
-    contact_for = db.Column(db.String, index=False)
+    contact_for = db.Column(db.String, index=False, nullable=True)
     name = db.Column(db.String, index=False)
-    role = db.Column(db.String, index=False)
-    email = db.Column(db.String, index=False)
-    phone = db.Column(db.String, index=False)
-    fax = db.Column(db.String, index=False)
+    role = db.Column(db.String, index=False, nullable=True)
+    email = db.Column(db.String, index=False, nullable=True)
+    phone = db.Column(db.String, index=False, nullable=True)
+    fax = db.Column(db.String, index=False, nullable=True)
 
     @staticmethod
     def from_json(as_dict):
