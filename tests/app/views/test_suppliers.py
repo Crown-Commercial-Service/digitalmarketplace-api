@@ -43,8 +43,8 @@ class TestGetSupplier(BaseApplicationTest):
 
         data = json.loads(response.get_data())
         assert_equal(200, response.status_code)
-        assert_equal(self.supplier_code, data['suppliers']['code'])
-        assert_equal(self.supplier['name'], data['suppliers']['name'])
+        assert_equal(self.supplier_code, data['supplier']['code'])
+        assert_equal(self.supplier['name'], data['supplier']['name'])
 
 
 class TestListSuppliers(BaseApplicationTest):
@@ -200,7 +200,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(response.status_code, 200)
 
         payload.update({'name': 'New Name'})
-        supplier = json.loads(response.get_data())['suppliers']
+        supplier = json.loads(response.get_data())['supplier']
 
         supplier.pop('dataVersion')
 

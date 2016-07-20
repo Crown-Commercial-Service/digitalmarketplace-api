@@ -66,7 +66,7 @@ def get_supplier(code):
 
     service_counts = supplier.get_service_counts()
 
-    return jsonify(suppliers=supplier.serialize())
+    return jsonify(supplier=supplier.serialize())
 
 
 @main.route('/suppliers/search', methods=['GET'])
@@ -104,7 +104,7 @@ def update_supplier_data_impl(supplier, supplier_data, success_code):
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
 
-    return jsonify(suppliers=supplier.serialize()), success_code
+    return jsonify(supplier=supplier.serialize()), success_code
 
 
 @main.route('/suppliers', methods=['POST'])
