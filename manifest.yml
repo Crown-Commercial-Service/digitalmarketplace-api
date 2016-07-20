@@ -8,3 +8,4 @@ applications:
       disk_quota: 512M
       env:
           DM_SEARCH_API_URL: https://dm-dev-search-api.apps.staging.digital.gov.au/
+          DM_ELASTICSEARCH_URL: search-digital-marketplace-dev-dlc2jevc4vmtqaptuf3pecnirq.ap-southeast-2.es.amazonaws.com:80

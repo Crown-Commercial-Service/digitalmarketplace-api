@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
-from ... import db
+from ... import db, elasticsearch
 from ...models import (
     Supplier, AuditEvent,
     Service, SupplierFramework, Framework
@@ -16,6 +16,10 @@ from ...utils import pagination_links, drop_foreign_fields, get_json_from_reques
     json_has_required_keys, json_has_matching_id, get_valid_page_or_1, validate_and_return_updater_request
 from ...supplier_utils import validate_and_return_supplier_request
 from dmapiclient.audit import AuditTypes
+
+
+SUPPLIER_INDEX = 'suppliers'
+SUPPLIER_DOC_TYPE = 'supplier'
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -69,6 +73,12 @@ def update_supplier_data_impl(supplier, supplier_data, success_code):
     supplier.update_from_json(supplier_data)
 
     try:
+        import json
+        supplier_json = json.dumps(supplier.serialize())
+        elasticsearch.index(index=SUPPLIER_INDEX,
+                            doc_type=SUPPLIER_DOC_TYPE,
+                            body=supplier_json,
+                            id=supplier.id)
         db.session.add(supplier)
         # db.session.add(
         #     AuditEvent(

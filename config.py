@@ -10,6 +10,7 @@ class Config:
     DM_SEARCH_API_URL = None
     DM_SEARCH_API_AUTH_TOKEN = None
     DM_API_AUTH_TOKENS = None
+    ELASTICSEARCH_HOST = os.getenv('DM_ELASTICSEARCH_URL', 'localhost:9200')
     ES_ENABLED = True
     ALLOW_EXPLORER = True
     AUTH_REQUIRED = True
