@@ -18,7 +18,7 @@ EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 def drop_api_exported_fields_so_that_api_import_will_validate(data):
     return drop_foreign_fields(
-        data, ['id', 'lot', 'supplierId', 'supplierName', 'links', 'status',
+        data, ['id', 'lot', 'supplierCode', 'supplierName', 'links', 'status',
                'frameworkSlug', 'frameworkName', 'lotName', 'createdAt', 'updatedAt'])
 
 
@@ -200,17 +200,17 @@ def test_user_creation_validates():
         ({'emailAddress': 'this@that.com',
           'role': 'buyer',
           'name': exactly_255,
-          'supplierId': 123,
+          'supplierCode': 123,
           'password': exactly_255}, True, "valid supplier id"),
         ({'emailAddress': 'this@that.com',
           'role': 'buyer',
           'name': exactly_255,
-          'supplierId': '',
+          'supplierCode': '',
           'password': exactly_255}, False, "invalid supplier id (to short)"),
         ({'emailAddress': 'this@that.com',
           'role': 'buyer',
           'name': exactly_255,
-          'supplierId': longer_than_255,
+          'supplierCode': longer_than_255,
           'password': exactly_255}, False, "invalid supplier id (to long)")
     ]
 
@@ -246,34 +246,6 @@ def test_auth_user_validates():
     for example, expected, message in case:
         result = validates_against_schema('users-auth', example)
         yield assert_equal, result, expected, message
-
-
-def test_valid_g4_service_has_no_validation_errors():
-    data = load_example_listing("G4")
-    data = drop_api_exported_fields_so_that_api_import_will_validate(data)
-    errs = get_validation_errors("services-g-cloud-4", data)
-    assert not errs
-
-
-def test_valid_g5_service_has_no_validation_errors():
-    data = load_example_listing("G5")
-    data = drop_api_exported_fields_so_that_api_import_will_validate(data)
-    errs = get_validation_errors("services-g-cloud-5", data)
-    assert not errs
-
-
-def test_valid_g6_service_has_no_validation_errors():
-    data = load_example_listing("G6-PaaS")
-    data = drop_api_exported_fields_so_that_api_import_will_validate(data)
-    errs = get_validation_errors("services-g-cloud-6-paas", data)
-    assert not errs
-
-
-def test_valid_g7_service_has_no_validation_errors():
-    data = load_example_listing("G7-SCS")
-    data = drop_api_exported_fields_so_that_api_import_will_validate(data)
-    errs = get_validation_errors("services-g-cloud-7-scs", data)
-    assert not errs
 
 
 def test_g7_missing_required_field_has_validation_error():

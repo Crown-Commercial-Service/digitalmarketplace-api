@@ -1,6 +1,6 @@
 {
    "id": "1234567890123456",
-   "supplierId": 1,
+   "supplierCode": 1,
    "lot": "iaas",
    "frameworkName": "G-Cloud 6",
    "frameworkSlug": "g-cloud-6",

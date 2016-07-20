@@ -1,39 +1,41 @@
 {
-  "id": 123456,
   "name": "Example Company Limited",
+  "code": 123456,
   "description": "Example Company Limited is an innovation station sensation; we deliver software so bleeding edge you literally won't be able to run any of it on your systems.",
-  "contactInformation": [
-    {
-      "website": "www.examplecompany.biz",
-      "contactName": "John Example",
-      "email": "j@examplecompany.biz",
-      "phoneNumber": "07309404738",
-      "address1": "123 Fake Street",
-      "city": "London",
-      "country": "United Kingdom",
-      "postcode": "F4 K1E",
-      "links": {"self": "http://localhost/suppliers/123456/contact-information/1"}
-    },
-    {
-      "id": 1,
-      "website": "http://www.don.com?fref=ts",
-      "contactName": "Don",
-      "email": "don@don.com",
-      "phoneNumber": "020 7918 9200",
-      "address1": "4 Don Hill",
-      "address2": "Flat 1",
-      "city": "London",
-      "country": "UK",
-      "postcode": "EC1A D0N"
-    }
-  ],
-  "dunsNumber": "333333333",
-  "eSourcingId": "333333",
-  "companiesHouseNumber": "SC000111",
-  "clients":
-  [
-    "UK Ministry of Defence",
-    "Astula Ltd",
-    "Bedrock Communications Ltd"
-  ]
+  "summary": "An example company",
+  "address": {
+	  "addressLine": "0 Foo Street",
+	  "suburb": "Barton",
+	  "state": "NSW",
+	  "postalCode": "2999",
+	  "country": "Australia"
+  },
+  "website": "https://example.com",
+  "abn": "00000000000",
+  "acn": "000000000",
+  "contacts": [{
+	  "contactFor": "Testing",
+	  "name": "Jo Example",
+	  "role": "Example Provider",
+	  "email": "jo@example.com",
+	  "phone": "+61",
+	  "fax": "+61"
+  }],
+  "references": [{
+	  "name": "Bot",
+	  "organisation": "Super Cheap References",
+	  "role": "Reference Provider",
+	  "email": "bot@example.com"
+  }, {
+	  "name": "Another Bot",
+	  "organisation": "Super Cheap References",
+	  "role": "Reference Provider",
+	  "email": "another.bot@example.com"
+  }],
+  "prices": [{
+	  "serviceRole": { "category": "Business Analysis", "role": "Junior Business Analyst" },
+	  "hourlyRate": "0.10",
+	  "dailyRate": "1.90",
+	  "gstIncluded": true
+  }]
 }
