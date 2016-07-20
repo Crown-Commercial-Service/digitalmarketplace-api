@@ -19,6 +19,8 @@ class TestGetSupplier(BaseApplicationTest):
             self.supplier = payload
             self.supplier_code = payload['code']
 
+            from app.models import ServiceCategory
+
             response = self.client.post(
                 '/suppliers'.format(self.supplier_code),
                 data=json.dumps({

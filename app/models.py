@@ -1,5 +1,6 @@
 import random
 from datetime import datetime, timedelta
+from decimal import Decimal, InvalidOperation
 import re
 
 from flask import current_app
@@ -241,7 +242,7 @@ class ServiceCategory(db.Model):
     @staticmethod
     def lookup(as_dict):
         name = as_dict.get('name', 'no category specified')
-        result = ServiceCategory.filter_by(name=name).first()
+        result = ServiceCategory.query.filter_by(name=name).first()
         if result is None:
             raise ValidationError('Unknown category: {}'.format(name))
         return result
@@ -264,9 +265,9 @@ class ServiceRole(db.Model):
     @staticmethod
     def lookup(as_dict):
         category_name = as_dict.get('category', 'no category specified')
-        category = Category.lookup({'name': category_name})
+        category = ServiceCategory.lookup({'name': category_name})
         role_name = as_dict.get('role', 'no role specified')
-        result = ServiceRole.filter_by(name=role_name).first()
+        result = ServiceRole.query.filter_by(name=role_name).first()
         if result is None:
             raise ValidationError('Unknown role: {}'.format(role_name))
         return result
@@ -294,17 +295,19 @@ class PriceSchedule(db.Model):
     def from_json(as_dict):
         try:
             return PriceSchedule(service_role=ServiceRole.lookup(as_dict.get('serviceRole')),
-                                 hourly_rate=as_dict.get('hourlyRate'),
-                                 daily_rate=as_dict.get('dailyRate'),
+                                 hourly_rate=Decimal(as_dict.get('hourlyRate')),
+                                 daily_rate=Decimal(as_dict.get('dailyRate')),
                                  gst_included=as_dict.get('gstIncluded'))
         except KeyError, e:
             raise ValidationError('Price schedule missing required field: {}'.format(e))
+        except InvalidOperation, e:
+            raise ValidationError('Invalid rate value: {}'.format(e))
 
     def serialize(self):
         serialized = {
             'serviceRole': self.service_role.serialize(),
-            'hourlyRate': self.hourly_rate,
-            'dailyRate': self.daily_rate,
+            'hourlyRate': str(self.hourly_rate),
+            'dailyRate': str(self.daily_rate),
             'gstIncluded': self.gst_included,
         }
         return serialized

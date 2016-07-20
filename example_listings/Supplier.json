@@ -32,5 +32,10 @@
 	  "role": "Reference Provider",
 	  "email": "another.bot@example.com"
   }],
-  "prices": []
+  "prices": [{
+	  "serviceRole": { "category": "Business Analysis", "role": "Junior Business Analyst" },
+	  "hourlyRate": "0.10",
+	  "dailyRate": "1.90",
+	  "gstIncluded": true
+  }]
 }
