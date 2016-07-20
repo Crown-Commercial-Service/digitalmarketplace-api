@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask import json
 import pytest
+import urllib2
 from freezegun import freeze_time
 from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true, assert_is
 
@@ -294,3 +295,36 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         assert_equal(response.status_code, 400)
         assert_in('Additional properties are not allowed',
                   json.loads(response.get_data())['error'])
+
+
+class TestSupplierSearch(BaseApplicationTest):
+
+    def setup(self):
+        super(TestSupplierSearch, self).setup()
+
+    def search(self, query_body, **args):
+        if args:
+            params = '&'.join('{}={}'.format(k, urllib2.quote(v)) for k, v in args.items())
+            q = "?{}".format(params)
+        else:
+            q = ''
+        return self.client.get('/suppliers/search{}'.format(q),
+                               data=json.dumps(query_body),
+                               content_type='application/json')
+
+    def test_basic_search_hit(self):
+        response = self.search({'query': {'term': {'code': 123456}}})
+        assert_equal(response.status_code, 200)
+
+        result = json.loads(response.get_data())
+        assert_equal(result['hits']['total'], 1)
+        assert_equal(len(result['hits']['hits']), 1)
+        assert_equal(result['hits']['hits'][0]['_source']['code'], 123456)
+
+    def test_basic_search_miss(self):
+        response = self.search({'query': {'term': {'code': 654321}}})
+        assert_equal(response.status_code, 200)
+
+        result = json.loads(response.get_data())
+        assert_equal(result['hits']['total'], 0)
+        assert_equal(len(result['hits']['hits']), 0)
