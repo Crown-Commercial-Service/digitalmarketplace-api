@@ -1,5 +1,5 @@
 import os
-from app import create_app, db
+from app import create_app, db, search_indices
 from flask.ext.migrate import Migrate, MigrateCommand
 from flask.ext.script import Manager
 from alembic.command import upgrade
@@ -21,12 +21,14 @@ def setup():
         "migrations")
     with app.app_context():
         upgrade(config, 'head')
+        search_indices.create_indices()
     print("Done db setup")
 
 
 def teardown():
     app = create_app('test')
     with app.app_context():
+        search_indices.delete_indices()
         db.session.remove()
         db.drop_all()
         db.engine.execute("drop table alembic_version")

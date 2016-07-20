@@ -2,11 +2,12 @@ from datetime import datetime
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
-from ... import db, elasticsearch
+from ... import db
 from ...models import (
     Supplier, AuditEvent,
     Service, SupplierFramework, Framework
 )
+from ...search_indices import es_client, get_supplier_index_name
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400,
@@ -18,7 +19,6 @@ from ...supplier_utils import validate_and_return_supplier_request
 from dmapiclient.audit import AuditTypes
 
 
-SUPPLIER_INDEX = 'suppliers'
 SUPPLIER_DOC_TYPE = 'supplier'
 
 
@@ -72,12 +72,12 @@ def get_supplier(code):
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
     starting_offset = int(request.args.get('from', 0))
-    result_count = int(request.args.get('size', 10))
-    result = elasticsearch.search(index=SUPPLIER_INDEX,
-                                  doc_type=SUPPLIER_DOC_TYPE,
-                                  body=get_json_from_request(),
-                                  from_=starting_offset,
-                                  size=result_count)
+    result_count = int(request.args.get('size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE']))
+    result = es_client.search(index=get_supplier_index_name(),
+                              doc_type=SUPPLIER_DOC_TYPE,
+                              body=get_json_from_request(),
+                              from_=starting_offset,
+                              size=result_count)
     return jsonify(result)
 
 
@@ -87,10 +87,10 @@ def update_supplier_data_impl(supplier, supplier_data, success_code):
     try:
         import json
         supplier_json = json.dumps(supplier.serialize())
-        elasticsearch.index(index=SUPPLIER_INDEX,
-                            doc_type=SUPPLIER_DOC_TYPE,
-                            body=supplier_json,
-                            id=supplier.code)
+        es_client.index(index=get_supplier_index_name(),
+                        doc_type=SUPPLIER_DOC_TYPE,
+                        body=supplier_json,
+                        id=supplier.code)
         db.session.add(supplier)
         # db.session.add(
         #     AuditEvent(

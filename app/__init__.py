@@ -12,7 +12,7 @@ from config import configs
 
 bootstrap = Bootstrap()
 db = SQLAlchemy()
-elasticsearch = FlaskElasticsearch()
+es_client = FlaskElasticsearch()
 
 search_api_client = dmapiclient.SearchAPIClient()
 feature_flags = flask_featureflags.FeatureFlag()
@@ -31,7 +31,7 @@ def create_app(config_name):
         search_api_client=search_api_client
     )
 
-    elasticsearch.init_app(application)
+    es_client.init_app(application)
 
     if not application.config['DM_API_AUTH_TOKENS']:
         raise Exception("No DM_API_AUTH_TOKENS provided")

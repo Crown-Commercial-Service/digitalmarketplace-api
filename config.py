@@ -11,6 +11,7 @@ class Config:
     DM_SEARCH_API_AUTH_TOKEN = None
     DM_API_AUTH_TOKENS = None
     ELASTICSEARCH_HOST = os.getenv('DM_ELASTICSEARCH_URL', 'localhost:9200')
+    DM_API_ELASTICSEARCH_INDEX_SUFFIX = ''
     ES_ENABLED = True
     ALLOW_EXPLORER = True
     AUTH_REQUIRED = True
@@ -44,6 +45,7 @@ class Config:
 class Test(Config):
     DM_SEARCH_API_AUTH_TOKEN = 'test'
     DM_SEARCH_API_URL = 'http://localhost'
+    DM_API_ELASTICSEARCH_INDEX_SUFFIX = '_test'
     DEBUG = True
     ES_ENABLED = False
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace_test'
@@ -59,6 +61,7 @@ class Development(Config):
     DEBUG = True
 
     DM_API_AUTH_TOKENS = 'myToken'
+    DM_API_ELASTICSEARCH_INDEX_SUFFIX = '_dev'
     DM_SEARCH_API_AUTH_TOKEN = 'myToken'
     DM_SEARCH_API_URL = 'http://localhost:5001'
 
