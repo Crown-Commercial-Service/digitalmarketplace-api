@@ -19,6 +19,7 @@ from sqlalchemy.sql.expression import cast as sql_cast
 from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
+from dmutils.data_tools import ValidationError, normalise_abn, normalise_acn, parse_money
 from dmutils.formats import DATETIME_FORMAT
 
 from . import db
@@ -31,11 +32,6 @@ class FrameworkLot(db.Model):
 
     framework_id = db.Column(db.Integer, db.ForeignKey('framework.id'), primary_key=True)
     lot_id = db.Column(db.Integer, db.ForeignKey('lot.id'), primary_key=True)
-
-
-class ValidationError(ValueError):
-    def __init__(self, message):
-        self.message = message
 
 
 class Lot(db.Model):
@@ -140,8 +136,8 @@ class Address(db.Model):
     __tablename__ = 'address'
 
     id = db.Column(db.Integer, primary_key=True)
-    address_line = db.Column(db.String, index=False, nullable=False)
-    suburb = db.Column(db.String, index=False, nullable=False)
+    address_line = db.Column(db.String, index=False, nullable=True)
+    suburb = db.Column(db.String, index=False, nullable=True)
     state = db.Column(db.String, index=False, nullable=False)
     postal_code = db.Column(db.String(8), index=False, nullable=False)
     country = db.Column(db.String, index=False, nullable=False, default='Australia')
@@ -167,24 +163,31 @@ class Address(db.Model):
         }
         return filter_null_value_fields(serialized)
 
+    @validates('postal_code')
+    def validate_postal_code(self, key, code):
+        code = str(code)
+        if re.match('[0-9]{4}', code) is None:
+            raise ValidationError('Invalid postal code: {}'.format(code))
+        return code
+
 
 class Contact(db.Model):
     __tablename__ = 'contact'
 
     id = db.Column(db.Integer, primary_key=True)
-    contact_for = db.Column(db.String, index=False)
-    name = db.Column(db.String, index=False)
-    role = db.Column(db.String, index=False)
-    email = db.Column(db.String, index=False)
-    phone = db.Column(db.String, index=False)
-    fax = db.Column(db.String, index=False)
+    contact_for = db.Column(db.String, index=False, nullable=True)
+    name = db.Column(db.String, index=False, nullable=False)
+    role = db.Column(db.String, index=False, nullable=True)
+    email = db.Column(db.String, index=False, nullable=True)
+    phone = db.Column(db.String, index=False, nullable=True)
+    fax = db.Column(db.String, index=False, nullable=True)
 
     @staticmethod
     def from_json(as_dict):
         try:
             return Contact(contact_for=as_dict.get('contactFor', None),
                            name=as_dict.get('name'),
-                           role=as_dict.get('role'),
+                           role=as_dict.get('role', None),
                            email=as_dict.get('email', None),
                            phone=as_dict.get('phone', None),
                            fax=as_dict.get('fax', None))
@@ -208,9 +211,9 @@ class SupplierReference(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
-    name = db.Column(db.String, index=False)
+    name = db.Column(db.String, index=False, nullable=False)
     organisation = db.Column(db.String, index=False, nullable=False)
-    role = db.Column(db.String, index=False)
+    role = db.Column(db.String, index=False, nullable=True)
     email = db.Column(db.String, index=False, nullable=False)
 
     @staticmethod
@@ -218,7 +221,7 @@ class SupplierReference(db.Model):
         try:
             return SupplierReference(name=as_dict.get('name'),
                                      organisation=as_dict.get('organisation'),
-                                     role=as_dict.get('role'),
+                                     role=as_dict.get('role', None),
                                      email=as_dict.get('email'))
         except KeyError, e:
             raise ValidationError('Supplier reference missing required field: {}'.format(e))
@@ -287,16 +290,18 @@ class PriceSchedule(db.Model):
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=False)
     service_role_id = db.Column(db.Integer, db.ForeignKey('service_role.id'), nullable=False)
     service_role = db.relationship('ServiceRole')
-    hourly_rate = db.Column(db.Numeric, nullable=False)
-    daily_rate = db.Column(db.Numeric, nullable=False)
+    hourly_rate = db.Column(db.Numeric)
+    daily_rate = db.Column(db.Numeric)
     gst_included = db.Column(db.Boolean, index=False, nullable=False, default=True)
+
+    __table_args__ = (db.PrimaryKeyConstraint('supplier_id', 'service_role_id'),)
 
     @staticmethod
     def from_json(as_dict):
         try:
             return PriceSchedule(service_role=ServiceRole.lookup(as_dict.get('serviceRole')),
-                                 hourly_rate=Decimal(as_dict.get('hourlyRate')),
-                                 daily_rate=Decimal(as_dict.get('dailyRate')),
+                                 hourly_rate=as_dict.get('hourlyRate'),
+                                 daily_rate=as_dict.get('dailyRate'),
                                  gst_included=as_dict.get('gstIncluded'))
         except KeyError, e:
             raise ValidationError('Price schedule missing required field: {}'.format(e))
@@ -311,6 +316,14 @@ class PriceSchedule(db.Model):
             'gstIncluded': self.gst_included,
         }
         return serialized
+
+    @validates('hourly_rate', 'daily_rate')
+    def validate_rate(self, key, rate):
+        if rate is None:
+            return None
+        if type(rate) is str or type(rate) is unicode:
+            return parse_money(rate)
+        return rate
 
 
 supplier__contact = db.Table('supplier__contact',
@@ -403,6 +416,24 @@ class Supplier(db.Model):
         if 'prices' in data:
             self.prices = [PriceSchedule.from_json(p) for p in data['prices']]
         return self
+
+    @validates('name')
+    def validate_name(self, key, name):
+        if not name:
+            raise ValidationError('Supplier name required')
+        return name
+
+    @validates('acn')
+    def validate_acn(self, key, acn):
+        if acn is not None:
+            acn = normalise_acn(acn)
+        return acn
+
+    @validates('abn')
+    def validate_abn(self, key, abn):
+        if abn is not None:
+            abn = normalise_abn(abn)
+        return abn
 
 
 class SupplierFramework(db.Model):
