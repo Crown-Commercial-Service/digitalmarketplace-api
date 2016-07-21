@@ -118,15 +118,19 @@ def list_briefs():
         briefs = briefs.filter(Brief.users.any(id=user_id))
 
     if request.args.get('framework'):
-        briefs = briefs.filter(Brief.framework.has(Framework.slug == request.args.get('framework')))
+        briefs = briefs.filter(Brief.framework.has(
+            Framework.slug.in_(framework_slug.strip() for framework_slug in request.args["framework"].split(","))
+        ))
 
     if request.args.get('lot'):
-        briefs = briefs.filter(Brief.lot.has(Lot.slug == request.args.get('lot')))
+        briefs = briefs.filter(Brief.lot.has(
+            Lot.slug.in_(lot_slug.strip() for lot_slug in request.args["lot"].split(","))
+        ))
 
     if request.args.get('status'):
-        briefs = briefs.has_statuses(*[
+        briefs = briefs.has_statuses(*(
             status.strip() for status in request.args['status'].split(',')
-            ])
+            ))
 
     if user_id:
         return jsonify(
