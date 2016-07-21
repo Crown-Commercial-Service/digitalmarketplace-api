@@ -10,14 +10,15 @@ Example:
 
 import logging
 
-logger = logging.getLogger('script')
-logging.basicConfig(level=logging.INFO)
-
 import backoff
 from docopt import docopt
 
 import dmapiclient
 from dmapiclient.audit import AuditTypes
+
+
+logger = logging.getLogger('script')
+logging.basicConfig(level=logging.INFO)
 
 
 def get_api_endpoint_from_stage(stage):
