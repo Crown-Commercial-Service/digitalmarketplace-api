@@ -113,7 +113,7 @@ class Client(object):
 
         headers = self.headers.copy()
         headers['Content-Type'] = content_type
-        request = urllib2.Request(api_url, data, self.headers)
+        request = urllib2.Request(api_url, data, headers)
 
         try:
             result = urllib2.urlopen(request)
