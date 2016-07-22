@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask import jsonify, abort, request, current_app
+from elasticsearch import TransportError
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
@@ -71,14 +72,32 @@ def get_supplier(code):
 
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
-    starting_offset = int(request.args.get('from', 0))
-    result_count = int(request.args.get('size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE']))
-    result = es_client.search(index=get_supplier_index_name(),
-                              doc_type=SUPPLIER_DOC_TYPE,
-                              body=get_json_from_request(),
-                              from_=starting_offset,
-                              size=result_count)
-    return jsonify(result)
+    try:
+        starting_offset = int(request.args.get('from', 0))
+        if starting_offset < 0:
+            raise ValueError(starting_offset)
+    except ValueError, e:
+        return jsonify(message="Invalid 'from' value (must be integer > 0): {0}".format(e)), 400
+
+    try:
+        result_count = int(request.args.get('size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE']))
+        if result_count < 0:
+            raise ValueError(result_count)
+    except ValueError, e:
+        return jsonify(message="Invalid 'size' value (must be integer > 0): {0}".format(e)), 400
+
+    try:
+        result = es_client.search(index=get_supplier_index_name(),
+                                  doc_type=SUPPLIER_DOC_TYPE,
+                                  body=get_json_from_request(),
+                                  from_=starting_offset,
+                                  size=result_count)
+    except TransportError, e:
+        return jsonify(message=str(e)), e.status_code
+    except Exception, e:
+        return jsonify(message=str(e)), 500
+
+    return jsonify(result), 200
 
 
 def update_supplier_data_impl(supplier, supplier_data, success_code):
@@ -100,6 +119,8 @@ def update_supplier_data_impl(supplier, supplier_data, success_code):
         #         data={'update': request_data['suppliers']})
         # )
         db.session.commit()
+    except TransportError, e:
+        return jsonify(message=str(e)), e.status_code
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
