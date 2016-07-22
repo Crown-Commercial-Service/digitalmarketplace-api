@@ -1,5 +1,6 @@
 {
   "name": "Example PTY LTD",
+  "longName": "Example PTY LTD (formerly just \"Example\")",
   "code": 123456,
   "description": "Example PTY LTD is an example company.",
   "summary": "An example company",
@@ -10,7 +11,11 @@
 	  "postalCode": "4120",
 	  "country": "Australia"
   },
-  "website": "",
+  "website": "https://example.com/",
+  "extraLinks": [{
+	  "url": "https://social-media.example.com/example-pty-ltd",
+	  "label": "Example PTY LTD on Social Media"
+  }],
   "abn": "50 110 219 460",
   "acn": "071 408 449",
   "contacts": [{
