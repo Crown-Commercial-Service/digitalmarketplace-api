@@ -5,6 +5,7 @@
 import csv
 import json
 import os
+import re
 import sys
 import urllib2
 import logging
@@ -23,34 +24,67 @@ headers = {
 }
 
 def nonEmptyOrNone(s):
+    """
+    Converts empty strings to None.
+
+    Needed because CSV format doesn't know the difference.
+    Used when strings should not be empty, and empty source data means unknown.
+    """
     if s:
         return s
     return None
 
 num_failures = 0
 
-csv_input = csv.reader(sys.stdin)
-csv_input.next()  # drop header
-for record in csv_input:
+for record in csv.DictReader(sys.stdin):
+    if not record['ID']:
+        continue
+
+    display_name = record.get('Display name', None)
+    if display_name:
+        name = display_name
+        long_name = record['Name']
+    else:
+        name = record['Name']
+        long_name = None
+
+    website = record.get('Website', None)
+    if not website or re.match('https?://', website) is None:
+        # Clean up empty strings and variations of 'n/a', 'none', etc
+        website = None
+
+    linkedin_url = record.get('LinkedIn', None)
+    # This field sometimes contains variations of 'Not listed'
+    if linkedin_url and 'www.linkedin.com' in linkedin_url:
+        extra_links = [{
+            'url': linkedin_url,
+            'label': 'LinkedIn',
+        }]
+    else:
+        extra_links = []
+
     supplier = {
-        'code': record[0],
-        'name': record[1],
-        'summary': record[2],
-        'abn': record[3].strip(),
+        'code': record['ID'],
+        'name': name,
+        'longName': long_name,
+        'summary': nonEmptyOrNone(record['Summary']),
+        'abn': nonEmptyOrNone(record['ABN']),
+        'website': website,
         'address': {
-            'addressLine': nonEmptyOrNone(record[4]),
-            'suburb': record[5],
-            'state': record[6],
-            'postalCode': record[7],
+            'addressLine': nonEmptyOrNone(record['Address']),
+            'suburb': nonEmptyOrNone(record['Suburb']),
+            'state': record['State'],
+            'postalCode': record['PCode'],
         },
         'contacts': [{
-            'name': record[8],
-            'role': nonEmptyOrNone(record[9]),
-            'email': nonEmptyOrNone(record[10]),
-            'phone': nonEmptyOrNone(record[11]),
-            'fax': nonEmptyOrNone(record[12]),
+            'name': record['Contact Name'],
+            'role': nonEmptyOrNone(record['Title']),  # sic
+            'email': nonEmptyOrNone(record['Email address']),
+            'phone': nonEmptyOrNone(record['Phone']),
+            'fax': nonEmptyOrNone(record['fax']),
         }]
     }
+
     request = urllib2.Request(api_url, json.dumps({'supplier': supplier}), headers)
     try:
         urllib2.urlopen(request)
