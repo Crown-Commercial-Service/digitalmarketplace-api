@@ -521,6 +521,18 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
         assert len(data['briefs']) == 5, data['briefs']
 
+    def test_list_briefs_by_multiple_frameworks(self):
+        self.setup_dummy_briefs(1, status='draft')
+        self.setup_dummy_briefs(3, status='live', brief_start=2)
+
+        # we don't have multiple brief-capable frameworks in the test dataset yet so this test is a bit of a stub
+        # until we do. at least it tests framework slugs are properly split
+        res = self.client.get('/briefs?framework=digital-outcomes-and-specialists,analogue-outcomes-and-specialists')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 4, data['briefs']
+
     def test_cannot_list_briefs_by_invalid_framework(self):
         self.setup_dummy_briefs(1, status='live')
         self.setup_dummy_briefs(1, status='draft', brief_start=2)
@@ -551,6 +563,27 @@ class TestBriefs(BaseApplicationTest):
 
         assert res.status_code == 200
         assert len(data['briefs']) == 4, data['briefs']
+
+    def test_list_briefs_by_multiple_lots(self):
+        self.setup_dummy_briefs(2, status='live', lot='digital-outcomes')
+        self.setup_dummy_briefs(2, status='draft', lot='digital-specialists', brief_start=3)
+        self.setup_dummy_briefs(1, status='draft', lot='digital-outcomes', brief_start=5)
+        self.setup_dummy_briefs(3, status='live', lot='user-research-participants', brief_start=6)
+
+        res = self.client.get('/briefs?lot=digital-specialists,user-research-participants')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 5, data['briefs']
+        assert all(
+            (brief["lotSlug"] in ("digital-specialists", "user-research-participants",)) for brief in data['briefs']
+        )
+
+        res2 = self.client.get('/briefs?lot=banana,digital-specialists,,user-research-participants,')
+        data2 = json.loads(res.get_data(as_text=True))
+
+        assert res2.status_code == 200
+        assert data['briefs'] == data2['briefs']
 
     def test_list_briefs_by_lot_and_status(self):
         self.setup_dummy_briefs(3, status='live', lot='digital-outcomes')
