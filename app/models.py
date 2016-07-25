@@ -475,6 +475,12 @@ class Supplier(db.Model):
             raise ValidationError('Supplier name required')
         return name.strip()
 
+    @validates('long_name')
+    def validate_long_name(self, key, long_name):
+        if not long_name:
+            return None
+        return long_name.strip()
+
     @validates('acn')
     def validate_acn(self, key, acn):
         if acn is not None:
