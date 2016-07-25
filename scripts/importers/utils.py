@@ -1,6 +1,7 @@
 import urlparse
 import requests
 
+
 def nonEmptyOrNone(s):
     """
     Converts empty strings to None.
