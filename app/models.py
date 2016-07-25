@@ -264,6 +264,7 @@ class ServiceCategory(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
+    abbreviation = db.Column(db.String(15), nullable=False)
 
     @staticmethod
     def lookup(as_dict):
@@ -287,6 +288,7 @@ class ServiceRole(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('service_category.id'), nullable=False)
     category = db.relationship('ServiceCategory')
     name = db.Column(db.String, nullable=False)
+    abbreviation = db.Column(db.String(15), nullable=False)
 
     @staticmethod
     def lookup(as_dict):
