@@ -879,6 +879,7 @@ class Brief(db.Model):
     updated_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow, onupdate=datetime.utcnow)
     published_at = db.Column(db.DateTime, index=True, nullable=True)
+    withdrawn_at = db.Column(db.DateTime, index=True, nullable=True)
 
     __table_args__ = (db.ForeignKeyConstraint([framework_id, _lot_id],
                                               ['framework_lots.framework_id', 'framework_lots.lot_id']),
