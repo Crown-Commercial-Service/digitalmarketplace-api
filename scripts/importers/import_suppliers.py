@@ -4,24 +4,10 @@
 #  ./scripts/importers/import_suppliers.py http://data-api.example.com/ < 'example_listings/test_source_data/DMP Data Source - Test data.csv'  # noqa
 import csv
 import json
-import os
 import re
-import sys
-import urllib2
-import urlparse
 import logging
 
-
-def nonEmptyOrNone(s):
-    """
-    Converts empty strings to None.
-
-    Needed because CSV format doesn't know the difference.
-    Used when strings should not be empty, and empty source data means unknown.
-    """
-    if s:
-        return s
-    return None
+from utils import nonEmptyOrNone, makeClient
 
 
 def run_import(input_file, client):
@@ -92,44 +78,9 @@ def run_import(input_file, client):
     return num_failures, num_successes
 
 
-class Response(object):
-
-    def __init__(self, code, data):
-        self.status_code = code
-        self.data = data
-
-    def get_data(self):
-        return self.data
-
-
-class Client(object):
-
-    def __init__(self, api_host, api_token):
-        self.api_host = api_host
-        self.headers = {'Authorization': 'Bearer {}'.format(api_token)}
-
-    def post(self, path, data, content_type='application/json'):
-        api_url = urlparse.urljoin(self.api_host, path)
-
-        headers = self.headers.copy()
-        headers['Content-Type'] = content_type
-        request = urllib2.Request(api_url, data, headers)
-
-        try:
-            result = urllib2.urlopen(request)
-        except urllib2.HTTPError, e:
-            return Response(e.code, e.fp.read())
-        return Response(result.code, result.read())
-
-
 if __name__ == '__main__':
-    api_token = os.environ.get('DM_DATA_API_AUTH_TOKEN')
-    if len(sys.argv) > 1:
-        api_host = sys.argv[1]
-    else:
-        api_host = 'http://localhost:5000/'
-
-    client = Client(api_host, api_token)
+    import sys
+    client = makeClient()
 
     num_failures, num_successes = run_import(sys.stdin, client)
     if num_failures > 0:
