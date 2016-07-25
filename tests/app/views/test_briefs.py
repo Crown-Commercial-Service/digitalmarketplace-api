@@ -1,4 +1,6 @@
 import json
+from datetime import datetime
+from datetime import timedelta
 
 import mock
 from ..helpers import BaseApplicationTest, COMPLETE_DIGITAL_SPECIALISTS_BRIEF
@@ -595,6 +597,24 @@ class TestBriefs(BaseApplicationTest):
 
         assert res.status_code == 200
         assert len(data['briefs']) == 3, data['briefs']
+
+    def test_list_briefs_by_human_readable(self):
+        today = datetime.utcnow()
+        self.setup_dummy_briefs(1, data={'requirementsLength': '2 weeks'}, status=None, title='First',
+                                published_at=(today + timedelta(days=-40)))
+        self.setup_dummy_briefs(1, data={'requirementsLength': '2 weeks'}, status=None, title='Second',
+                                published_at=(today + timedelta(days=-9)), brief_start=2)
+        self.setup_dummy_briefs(1, data={'requirementsLength': '1 week'}, status=None, title='Third',
+                                published_at=(today + timedelta(days=-8)), brief_start=3)
+        self.setup_dummy_briefs(1, data={'requirementsLength': '1 week'}, status=None,  title='Fourth',
+                                published_at=(today + timedelta(days=-2)), brief_start=4)
+
+        res = self.client.get('/briefs?human=True')
+        data = json.loads(res.get_data(as_text=True))
+        titles = map(lambda brief: brief['title'], data['briefs'])
+
+        assert res.status_code == 200
+        assert titles == ['Fourth', 'Second', 'Third', 'First']
 
     def test_list_briefs_pagination_page_one(self):
         self.setup_dummy_briefs(7)
