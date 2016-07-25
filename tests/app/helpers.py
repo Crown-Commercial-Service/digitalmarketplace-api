@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Address, Service, Supplier, Framework, Lot, User, FrameworkLot, Brief
+from app.models import Address, Service, Supplier, Framework, Lot, User, FrameworkLot, Brief, getUtcTimestamp
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -320,3 +320,8 @@ class JSONUpdateTestMixin(JSONTestMixin):
         assert_equal(response.status_code, 400)
         return  # FIXME: improve error messages
         assert_in("'updated_by' is a required property", response.get_data(as_text=True))
+
+
+def isRecentTimestamp(timestamp):
+    now = getUtcTimestamp()
+    return now - timestamp < timedelta(seconds=10)

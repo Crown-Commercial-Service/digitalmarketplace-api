@@ -1,6 +1,7 @@
 import random
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
+import pytz
 import re
 
 from flask import current_app
@@ -25,6 +26,10 @@ from dmutils.formats import DATETIME_FORMAT
 from . import db
 from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
 from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
+
+
+def getUtcTimestamp():
+    return datetime.now(pytz.utc)
 
 
 class FrameworkLot(db.Model):
@@ -397,6 +402,15 @@ class Supplier(db.Model):
     contacts = db.relationship('Contact', secondary=supplier__contact, single_parent=True, cascade='all, delete-orphan')
     references = db.relationship('SupplierReference', single_parent=True, cascade='all, delete-orphan')
     prices = db.relationship('PriceSchedule', single_parent=True, cascade='all, delete-orphan')
+    creation_time = db.Column(db.DateTime(timezone=True),
+                              index=False,
+                              nullable=False,
+                              default=getUtcTimestamp)
+    # FIXME: remove meaningless default value after schema migration
+    last_update_time = db.Column(db.DateTime(timezone=True),
+                                 index=False,
+                                 nullable=False,
+                                 default=getUtcTimestamp)
 
     def get_service_counts(self):
         # FIXME: To be removed from Australian version
@@ -421,6 +435,8 @@ class Supplier(db.Model):
             'contacts': [c.serialize() for c in self.contacts],
             'references': [r.serialize() for r in self.references],
             'prices': [p.serialize() for p in self.prices],
+            'creationTime': str(self.creation_time),
+            'lastUpdateTime': str(self.last_update_time),
         }
         serialized.update(data or {})
         return serialized
@@ -450,6 +466,7 @@ class Supplier(db.Model):
             self.references = [SupplierReference.from_json(r) for r in data['references']]
         if 'prices' in data:
             self.prices = [PriceSchedule.from_json(p) for p in data['prices']]
+        self.last_update_time = getUtcTimestamp()
         return self
 
     @validates('name')
