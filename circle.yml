@@ -1,0 +1,17 @@
+machine:
+  timezone:
+    Australia/Sydney
+dependencies:
+  override:
+    - pip install -r requirements_for_test.txt
+
+test:
+  override:
+    - ./scripts/run_tests.sh
+
+deployment:
+  development:
+    branch: master
+    commands:
+      - ./scripts/ci_deploy.sh
+

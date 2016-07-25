@@ -4,6 +4,7 @@ services:
 applications:
     - name: dm-dev-api
       command: python application.py runprodserver
+      buildpack: https://github.com/cloudfoundry/buildpack-python.git
       memory: 128M
       disk_quota: 512M
       env:
