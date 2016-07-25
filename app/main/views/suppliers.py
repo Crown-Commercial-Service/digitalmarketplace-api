@@ -28,6 +28,7 @@ def list_suppliers():
     page = get_valid_page_or_1()
 
     prefix = request.args.get('prefix', '')
+    name = request.args.get('name', None)
 
     suppliers = Supplier.query
 
@@ -39,6 +40,9 @@ def list_suppliers():
             # case insensitive LIKE comparison for matching supplier names
             suppliers = suppliers.filter(
                 Supplier.name.ilike(prefix + '%'))
+
+    if name is not None:
+        suppliers = suppliers.filter((Supplier.name == name) | (Supplier.long_name == name))
 
     suppliers = suppliers.distinct(Supplier.name, Supplier.code)
 
