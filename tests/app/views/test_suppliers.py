@@ -7,7 +7,7 @@ from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true,
 
 from app import db
 from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, DraftService, Service
-from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
+from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, isRecentTimestamp
 from random import randint
 
 
@@ -160,6 +160,15 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json',
         )
 
+    def test_update_timestamp(self):
+        response = self.update_request({'name': 'Changed Name'})
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter_by(code=123456).first()
+            assert_is_not_none(supplier)
+            assert (isRecentTimestamp(supplier.last_update_time))
+
     def test_empty_update_supplier(self):
         response = self.update_request({})
         assert_equal(response.status_code, 200)
@@ -203,6 +212,8 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         supplier = json.loads(response.get_data())['supplier']
 
         supplier.pop('dataVersion')
+        supplier.pop('creationTime')
+        supplier.pop('lastUpdateTime')
 
         assert (set(supplier.keys()) == set(payload.keys()))
         for key in payload.keys():
@@ -274,6 +285,10 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
             assert_is_not_none(Supplier.query.filter(
                 Supplier.name == payload['name']
             ).first())
+            supplier = Supplier.query.filter_by(code=payload['code']).first()
+            assert_is_not_none(supplier)
+            assert (isRecentTimestamp(supplier.creation_time))
+            assert (isRecentTimestamp(supplier.last_update_time))
 
     def test_when_supplier_has_a_missing_name(self):
         payload = self.load_example_listing("Supplier")
