@@ -181,7 +181,7 @@ class TestBriefs(BaseApplicationTest):
 
         assert brief.applications_closed_at is None
 
-    def test_applications_closed_at_is_set_with_published_at(self):
+    def test_closing_dates_are_set_with_published_at_when_no_requirementsLength(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot,
                       published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
 
@@ -189,13 +189,53 @@ class TestBriefs(BaseApplicationTest):
         assert brief.clarification_questions_closed_at == datetime(2016, 3, 10, 23, 59, 59)
         assert brief.clarification_questions_published_by == datetime(2016, 3, 16, 23, 59, 59)
 
-    def test_query_brief_applications_closed_at_date(self):
+    def test_closing_dates_are_set_with_published_at_when_requirementsLength_is_two_weeks(self):
+        brief = Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
+                      published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
+
+        assert brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)
+        assert brief.clarification_questions_closed_at == datetime(2016, 3, 10, 23, 59, 59)
+        assert brief.clarification_questions_published_by == datetime(2016, 3, 16, 23, 59, 59)
+
+    def test_closing_dates_are_set_with_published_at_when_requirementsLength_is_one_week(self):
+        brief = Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
+                      published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
+
+        assert brief.applications_closed_at == datetime(2016, 3, 10, 23, 59, 59)
+        assert brief.clarification_questions_closed_at == datetime(2016, 3, 7, 23, 59, 59)
+        assert brief.clarification_questions_published_by == datetime(2016, 3, 9, 23, 59, 59)
+
+    def test_query_brief_applications_closed_at_date_for_brief_with_no_requirements_length(self):
         with self.app.app_context():
             db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
                                  published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
             db.session.commit()
-
             assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
+
+    def test_query_brief_applications_closed_at_date_for_one_week_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.commit()
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 10, 23, 59, 59)).count() == 1
+
+    def test_query_brief_applications_closed_at_date_for_two_week_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.commit()
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
+
+    def test_query_brief_applications_closed_at_date_for_mix_of_brief_lengths(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 10, 12, 30, 1, 2)))
+            db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.commit()
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 3
 
     def test_expired_status_for_a_brief_with_passed_close_date(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot,
