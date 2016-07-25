@@ -105,11 +105,6 @@ def update_supplier_data_impl(supplier, supplier_data, success_code):
 
     try:
         import json
-        supplier_json = json.dumps(supplier.serialize())
-        es_client.index(index=get_supplier_index_name(),
-                        doc_type=SUPPLIER_DOC_TYPE,
-                        body=supplier_json,
-                        id=supplier.code)
         db.session.add(supplier)
         # db.session.add(
         #     AuditEvent(
@@ -119,6 +114,11 @@ def update_supplier_data_impl(supplier, supplier_data, success_code):
         #         data={'update': request_data['suppliers']})
         # )
         db.session.commit()
+        supplier_json = json.dumps(supplier.serialize())
+        es_client.index(index=get_supplier_index_name(),
+                        doc_type=SUPPLIER_DOC_TYPE,
+                        body=supplier_json,
+                        id=supplier.code)
     except TransportError, e:
         return jsonify(message=str(e)), e.status_code
     except IntegrityError as e:
