@@ -140,7 +140,7 @@ def create_supplier():
     return update_supplier_data_impl(supplier, supplier_data, 201)
 
 
-@main.route('/suppliers/<int:code>', methods=['POST'])
+@main.route('/suppliers/<int:code>', methods=['POST', 'PATCH'])
 def update_supplier(code):
     request_data = get_json_from_request()
     if 'supplier' in request_data:
@@ -148,9 +148,13 @@ def update_supplier(code):
     else:
         abort(400)
 
-    supplier = Supplier.query.filter(
-        Supplier.code == code
-    ).first_or_404()
+    if request.method == 'POST':
+        supplier = Supplier(code=code)
+    else:
+        assert request.method == 'PATCH'
+        supplier = Supplier.query.filter(
+            Supplier.code == code
+        ).first_or_404()
 
     return update_supplier_data_impl(supplier, supplier_data, 200)
 

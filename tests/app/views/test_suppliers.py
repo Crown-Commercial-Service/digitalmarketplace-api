@@ -135,7 +135,7 @@ class TestListSuppliers(BaseApplicationTest):
 
 
 class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
-    method = "post"
+    method = "patch"
     endpoint = "/suppliers/123456"
 
     def setup(self):
@@ -151,7 +151,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
                              content_type='application/json')
 
     def update_request(self, data=None, user=None, full_data=None):
-        return self.client.post(
+        return self.client.patch(
             self.endpoint,
             data=json.dumps({
                 'supplier': data,
@@ -236,7 +236,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(supplier.description, "New Description")
 
     def test_update_missing_supplier(self):
-        response = self.client.post(
+        response = self.client.patch(
             '/suppliers/234567',
             data=json.dumps({'supplier': {}}),
             content_type='application/json',
