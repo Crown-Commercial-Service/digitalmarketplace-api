@@ -30,20 +30,21 @@ class Client(object):
         self.api_host = api_host
         self.headers = {'Authorization': 'Bearer {}'.format(api_token)}
 
-    def get(self, path, data, **kwargs):
-        return self.open(method='GET', path=path, data=data, **kwargs)
+    def get(self, path, **kwargs):
+        return self.open(method='GET', path=path, **kwargs)
 
-    def post(self, path, data, **kwargs):
-        return self.open(method='POST', path=path, data=data, **kwargs)
+    def post(self, path, **kwargs):
+        return self.open(method='POST', path=path, **kwargs)
 
-    def patch(self, path, data, **kwargs):
-        return self.open(method='PATCH', path=path, data=data, **kwargs)
+    def patch(self, path, **kwargs):
+        return self.open(method='PATCH', path=path, **kwargs)
 
-    def open(self, method, path, data, content_type):
+    def open(self, method, path, data='', content_type=None):
         api_url = urlparse.urljoin(self.api_host, path)
 
         headers = self.headers.copy()
-        headers['Content-Type'] = content_type
+        if content_type:
+            headers['Content-Type'] = content_type
 
         if method == 'GET':
             handleRequest = requests.get
