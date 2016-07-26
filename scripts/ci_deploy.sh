@@ -11,4 +11,4 @@ cf -v
 cf login -a https://api.system.staging.digital.gov.au -o dto -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
 cf target -o dto -s digital-marketplace
 cf push -c 'python application.py db upgrade' -u 'none'
-cf push -c '' -u 'port'
+cf push
