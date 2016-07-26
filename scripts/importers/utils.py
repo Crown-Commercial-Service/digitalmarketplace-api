@@ -15,6 +15,9 @@ def nonEmptyOrNone(s):
 
 
 class Response(object):
+    """
+    A real HTTP response that's designed to be interface-compatible with the Werkzeug test client response.
+    """
 
     def __init__(self, code, data):
         self.status_code = code
@@ -25,6 +28,9 @@ class Response(object):
 
 
 class Client(object):
+    """
+    A real HTTP client that's designed to be interface-compatible with the Werkzeug test client.
+    """
 
     def __init__(self, api_host, api_token):
         self.api_host = api_host
