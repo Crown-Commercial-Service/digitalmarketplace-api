@@ -1,6 +1,7 @@
 import random
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
+import pytz
 import re
 
 from flask import current_app
@@ -19,6 +20,7 @@ from sqlalchemy.sql.expression import cast as sql_cast
 from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
+from dmutils.data_tools import ValidationError, normalise_abn, normalise_acn, parse_money
 from dmutils.formats import DATETIME_FORMAT
 
 from . import db
@@ -26,16 +28,15 @@ from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_field
 from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
 
 
+def getUtcTimestamp():
+    return datetime.now(pytz.utc)
+
+
 class FrameworkLot(db.Model):
     __tablename__ = 'framework_lot'
 
     framework_id = db.Column(db.Integer, db.ForeignKey('framework.id'), primary_key=True)
     lot_id = db.Column(db.Integer, db.ForeignKey('lot.id'), primary_key=True)
-
-
-class ValidationError(ValueError):
-    def __init__(self, message):
-        self.message = message
 
 
 class Lot(db.Model):
@@ -136,12 +137,35 @@ class Framework(db.Model):
         return '<{}: {} slug={}>'.format(self.__class__.__name__, self.name, self.slug)
 
 
+class WebsiteLink(db.Model):
+    __tablename__ = 'website_link'
+
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.String, index=False, nullable=False)
+    label = db.Column(db.String, index=False, nullable=False)
+
+    @staticmethod
+    def from_json(as_dict):
+        try:
+            return WebsiteLink(url=as_dict.get('url'),
+                               label=as_dict.get('label'))
+        except KeyError, e:
+            raise ValidationError('Website link missing required field: {}'.format(e))
+
+    def serialize(self):
+        serialized = {
+            'url': self.url,
+            'label': self.label,
+        }
+        return serialized
+
+
 class Address(db.Model):
     __tablename__ = 'address'
 
     id = db.Column(db.Integer, primary_key=True)
-    address_line = db.Column(db.String, index=False, nullable=False)
-    suburb = db.Column(db.String, index=False, nullable=False)
+    address_line = db.Column(db.String, index=False, nullable=True)
+    suburb = db.Column(db.String, index=False, nullable=True)
     state = db.Column(db.String, index=False, nullable=False)
     postal_code = db.Column(db.String(8), index=False, nullable=False)
     country = db.Column(db.String, index=False, nullable=False, default='Australia')
@@ -167,24 +191,31 @@ class Address(db.Model):
         }
         return filter_null_value_fields(serialized)
 
+    @validates('postal_code')
+    def validate_postal_code(self, key, code):
+        code = str(code)
+        if re.match('[0-9]{4}', code) is None:
+            raise ValidationError('Invalid postal code: {}'.format(code))
+        return code
+
 
 class Contact(db.Model):
     __tablename__ = 'contact'
 
     id = db.Column(db.Integer, primary_key=True)
-    contact_for = db.Column(db.String, index=False)
-    name = db.Column(db.String, index=False)
-    role = db.Column(db.String, index=False)
-    email = db.Column(db.String, index=False)
-    phone = db.Column(db.String, index=False)
-    fax = db.Column(db.String, index=False)
+    contact_for = db.Column(db.String, index=False, nullable=True)
+    name = db.Column(db.String, index=False, nullable=False)
+    role = db.Column(db.String, index=False, nullable=True)
+    email = db.Column(db.String, index=False, nullable=True)
+    phone = db.Column(db.String, index=False, nullable=True)
+    fax = db.Column(db.String, index=False, nullable=True)
 
     @staticmethod
     def from_json(as_dict):
         try:
             return Contact(contact_for=as_dict.get('contactFor', None),
                            name=as_dict.get('name'),
-                           role=as_dict.get('role'),
+                           role=as_dict.get('role', None),
                            email=as_dict.get('email', None),
                            phone=as_dict.get('phone', None),
                            fax=as_dict.get('fax', None))
@@ -207,10 +238,10 @@ class SupplierReference(db.Model):
     __tablename__ = 'supplier_reference'
 
     id = db.Column(db.Integer, primary_key=True)
-    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
-    name = db.Column(db.String, index=False)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id', ondelete='cascade'))
+    name = db.Column(db.String, index=False, nullable=False)
     organisation = db.Column(db.String, index=False, nullable=False)
-    role = db.Column(db.String, index=False)
+    role = db.Column(db.String, index=False, nullable=True)
     email = db.Column(db.String, index=False, nullable=False)
 
     @staticmethod
@@ -218,7 +249,7 @@ class SupplierReference(db.Model):
         try:
             return SupplierReference(name=as_dict.get('name'),
                                      organisation=as_dict.get('organisation'),
-                                     role=as_dict.get('role'),
+                                     role=as_dict.get('role', None),
                                      email=as_dict.get('email'))
         except KeyError, e:
             raise ValidationError('Supplier reference missing required field: {}'.format(e))
@@ -238,6 +269,7 @@ class ServiceCategory(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
+    abbreviation = db.Column(db.String(15), nullable=False)
 
     @staticmethod
     def lookup(as_dict):
@@ -261,6 +293,7 @@ class ServiceRole(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('service_category.id'), nullable=False)
     category = db.relationship('ServiceCategory')
     name = db.Column(db.String, nullable=False)
+    abbreviation = db.Column(db.String(15), nullable=False)
 
     @staticmethod
     def lookup(as_dict):
@@ -284,19 +317,21 @@ class PriceSchedule(db.Model):
     __tablename__ = 'price_schedule'
 
     id = db.Column(db.Integer, primary_key=True)
-    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=False)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id', ondelete='cascade'), nullable=False)
     service_role_id = db.Column(db.Integer, db.ForeignKey('service_role.id'), nullable=False)
     service_role = db.relationship('ServiceRole')
-    hourly_rate = db.Column(db.Numeric, nullable=False)
-    daily_rate = db.Column(db.Numeric, nullable=False)
+    hourly_rate = db.Column(db.Numeric)
+    daily_rate = db.Column(db.Numeric)
     gst_included = db.Column(db.Boolean, index=False, nullable=False, default=True)
+
+    __table_args__ = (db.UniqueConstraint('supplier_id', 'service_role_id'),)
 
     @staticmethod
     def from_json(as_dict):
         try:
             return PriceSchedule(service_role=ServiceRole.lookup(as_dict.get('serviceRole')),
-                                 hourly_rate=Decimal(as_dict.get('hourlyRate')),
-                                 daily_rate=Decimal(as_dict.get('dailyRate')),
+                                 hourly_rate=as_dict.get('hourlyRate'),
+                                 daily_rate=as_dict.get('dailyRate'),
                                  gst_included=as_dict.get('gstIncluded'))
         except KeyError, e:
             raise ValidationError('Price schedule missing required field: {}'.format(e))
@@ -312,29 +347,37 @@ class PriceSchedule(db.Model):
         }
         return serialized
 
+    @validates('hourly_rate', 'daily_rate')
+    def validate_rate(self, key, rate):
+        if rate is None:
+            return None
+        if type(rate) is str or type(rate) is unicode:
+            return parse_money(rate)
+        return rate
+
+
+supplier__extra_links = db.Table('supplier__extra_links',
+                                 db.Column('supplier_id',
+                                           db.Integer,
+                                           db.ForeignKey('supplier.id', ondelete='cascade'),
+                                           nullable=False),
+                                 db.Column('website_link_id',
+                                           db.Integer,
+                                           db.ForeignKey('website_link.id'),
+                                           nullable=False),
+                                 db.PrimaryKeyConstraint('supplier_id', 'website_link_id'))
+
 
 supplier__contact = db.Table('supplier__contact',
                              db.Column('supplier_id',
                                        db.Integer,
-                                       db.ForeignKey('supplier.id'),
+                                       db.ForeignKey('supplier.id', ondelete='cascade'),
                                        nullable=False),
                              db.Column('contact_id',
                                        db.Integer,
                                        db.ForeignKey('contact.id'),
                                        nullable=False),
                              db.PrimaryKeyConstraint('supplier_id', 'contact_id'))
-
-
-supplier__service_category = db.Table('supplier__service_category',
-                                      db.Column('supplier_id',
-                                                db.Integer,
-                                                db.ForeignKey('supplier.id'),
-                                                nullable=False),
-                                      db.Column('service_category_id',
-                                                db.Integer,
-                                                db.ForeignKey('service_category.id'),
-                                                nullable=False),
-                                      db.PrimaryKeyConstraint('supplier_id', 'service_category_id'))
 
 
 class Supplier(db.Model):
@@ -344,16 +387,30 @@ class Supplier(db.Model):
     data_version = db.Column(db.Integer, index=False)
     code = db.Column(db.BigInteger, index=True, unique=True, nullable=False)
     name = db.Column(db.String(255), nullable=False)
+    long_name = db.Column(db.String(255), nullable=True)
     summary = db.Column(db.String(511), index=False, nullable=True)
     description = db.Column(db.String, index=False, nullable=True)
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'), index=False, nullable=False)
-    address = db.relationship('Address')
+    address = db.relationship('Address', single_parent=True, cascade='all, delete-orphan')
     website = db.Column(db.String(255), index=False, nullable=True)
+    extra_links = db.relationship('WebsiteLink',
+                                  secondary=supplier__extra_links,
+                                  single_parent=True,
+                                  cascade='all, delete-orphan')
     abn = db.Column(db.String(15), nullable=True)
     acn = db.Column(db.String(15), nullable=True)
-    contacts = db.relationship('Contact', secondary=supplier__contact)
-    references = db.relationship('SupplierReference')
-    prices = db.relationship('PriceSchedule')
+    contacts = db.relationship('Contact', secondary=supplier__contact, single_parent=True, cascade='all, delete-orphan')
+    references = db.relationship('SupplierReference', single_parent=True, cascade='all, delete-orphan')
+    prices = db.relationship('PriceSchedule', single_parent=True, cascade='all, delete-orphan')
+    creation_time = db.Column(db.DateTime(timezone=True),
+                              index=False,
+                              nullable=False,
+                              default=getUtcTimestamp)
+    # FIXME: remove meaningless default value after schema migration
+    last_update_time = db.Column(db.DateTime(timezone=True),
+                                 index=False,
+                                 nullable=False,
+                                 default=getUtcTimestamp)
 
     def get_service_counts(self):
         # FIXME: To be removed from Australian version
@@ -367,28 +424,33 @@ class Supplier(db.Model):
             'code': self.code,
             'dataVersion': self.data_version,
             'name': self.name,
+            'longName': self.long_name,
             'address': self.address.serialize(),
             'summary': self.summary,
             'description': self.description,
             'website': self.website,
+            'extraLinks': [l.serialize() for l in self.extra_links],
             'abn': self.abn,
             'acn': self.acn,
             'contacts': [c.serialize() for c in self.contacts],
             'references': [r.serialize() for r in self.references],
             'prices': [p.serialize() for p in self.prices],
+            'creationTime': str(self.creation_time),
+            'lastUpdateTime': str(self.last_update_time),
         }
         serialized.update(data or {})
         return serialized
 
     def update_from_json(self, data):
-        keys = ('code', 'dataVersion', 'name', 'summary', 'description', 'address', 'website', 'abn', 'acn',
-                'contacts', 'references', 'prices')
+        keys = ('code', 'dataVersion', 'name', 'longName', 'summary', 'description', 'address', 'website', 'extraLinks',
+                'abn', 'acn', 'contacts', 'references', 'prices')
         extra_keys = set(data.keys()) - set(keys)
         if extra_keys:
             raise ValidationError('Additional properties are not allowed: {}'.format(str(extra_keys)))
         self.code = data.get('code', self.code)
-        self.data_version = data.get('data_version', self.data_version)
+        self.data_version = data.get('dataVersion', self.data_version)
         self.name = data.get('name', self.name)
+        self.long_name = data.get('longName', self.long_name)
         self.summary = data.get('summary', self.summary)
         self.description = data.get('description', self.description)
         self.website = data.get('website', self.website)
@@ -396,13 +458,34 @@ class Supplier(db.Model):
         self.acn = data.get('acn', self.acn)
         if 'address' in data:
             self.address = Address.from_json(data['address'])
+        if 'extraLinks' in data:
+            self.extra_links = [WebsiteLink.from_json(l) for l in data['extraLinks']]
         if 'contacts' in data:
             self.contacts = [Contact.from_json(c) for c in data['contacts']]
         if 'references' in data:
             self.references = [SupplierReference.from_json(r) for r in data['references']]
         if 'prices' in data:
             self.prices = [PriceSchedule.from_json(p) for p in data['prices']]
+        self.last_update_time = getUtcTimestamp()
         return self
+
+    @validates('name')
+    def validate_name(self, key, name):
+        if not name:
+            raise ValidationError('Supplier name required')
+        return name
+
+    @validates('acn')
+    def validate_acn(self, key, acn):
+        if acn is not None:
+            acn = normalise_acn(acn)
+        return acn
+
+    @validates('abn')
+    def validate_abn(self, key, abn):
+        if abn is not None:
+            abn = normalise_abn(abn)
+        return abn
 
 
 class SupplierFramework(db.Model):
