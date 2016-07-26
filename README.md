@@ -115,3 +115,10 @@ list of migration versions
 ### Getting a list of application URLs
 
 `python application.py list_routes` prints a full list of registered application URLs with supported HTTP methods
+
+### Data import
+
+Scripts in `scripts/importers` import data in csv format to the database through the API of a running instance.
+See each script for usage information.
+
+	./scripts/importers/import_suppliers.py http://data-api.example.com/ < 'example_listings/test_source_data/DMP Data Source - Test data.csv'
