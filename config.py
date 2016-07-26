@@ -13,7 +13,6 @@ class Config:
     ELASTICSEARCH_HOST = os.getenv('DM_ELASTICSEARCH_URL', 'localhost:9200')
     DM_API_ELASTICSEARCH_INDEX_SUFFIX = ''
     ES_ENABLED = True
-    ALLOW_EXPLORER = True
     AUTH_REQUIRED = True
     DM_HTTP_PROTO = 'http'
     # Logging
@@ -72,7 +71,6 @@ class Development(Config):
 class Live(Config):
     """Base config for deployed environments"""
     DEBUG = False
-    ALLOW_EXPLORER = False
     DM_HTTP_PROTO = 'https'
     DM_LOG_PATH = '/var/log/digitalmarketplace/application.log'
 
