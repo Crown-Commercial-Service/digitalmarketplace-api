@@ -80,7 +80,7 @@ class BaseApplicationTest(object):
                 return id
             user = User(
                 id=id,
-                email_address="test+{}@digital.gov.uk".format(id),
+                email_address="test+{}@digital.gov.au".format(id),
                 name="my name",
                 password="fake password",
                 active=True,

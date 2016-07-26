@@ -36,7 +36,7 @@
   "dataBackupRecovery": true,
   "selfServiceProvisioning": true,
   "supportForThirdParties": true,
-  "termsAndConditionsDocumentURL": "http://assets-production.govstore.service.gov.uk/G4/Supplier/someId/Cloud%20Service%20Agreement.pdf",
-  "pricingDocumentURL": "http://assets-production.govstore.service.gov.uk/G4/Supplier/someId/Pricing%20Schedule.pdf",
-  "serviceDefinitionDocumentURL": "http://assets-production.govstore.service.gov.uk/G4/Supplier/someId/ONI%20plc%20Service%20Definition%20-%20BaaS.doc"
+  "termsAndConditionsDocumentURL": "http://assets-production.govstore.service.gov.au/G4/Supplier/someId/Cloud%20Service%20Agreement.pdf",
+  "pricingDocumentURL": "http://assets-production.govstore.service.gov.au/G4/Supplier/someId/Pricing%20Schedule.pdf",
+  "serviceDefinitionDocumentURL": "http://assets-production.govstore.service.gov.au/G4/Supplier/someId/ONI%20plc%20Service%20Definition%20-%20BaaS.doc"
 }
