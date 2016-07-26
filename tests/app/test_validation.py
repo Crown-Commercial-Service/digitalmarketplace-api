@@ -501,11 +501,11 @@ def check_schema(schema):
 
 @pytest.mark.parametrize('email,expected', [
     ('test@example.com', False),
-    ('test@gov.uk', True),
-    ('test@something.gov.uk', True),
-    ('test@somegov.uk', False),
+    ('test@gov.au', True),
+    ('test@something.gov.au', True),
+    ('test@somegov.au', False),
     ('test@gov.ok', False),
-    ('test@test@gov.uk', True)
+    ('test@test@gov.au', True)
 ])
 def test_is_valid_buyer_email(email, expected):
     assert is_valid_buyer_email(email) == expected

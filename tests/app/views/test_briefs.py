@@ -448,7 +448,7 @@ class TestBriefs(BaseApplicationTest):
                 'users': [
                     {
                         'id': 1,
-                        'emailAddress': 'test+1@digital.gov.uk',
+                        'emailAddress': 'test+1@digital.gov.au',
                         'phoneNumber': None,
                         'name': 'my name',
                         'role': 'buyer',
