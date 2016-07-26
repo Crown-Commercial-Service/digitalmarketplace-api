@@ -47,6 +47,8 @@ def create_app(config_name):
     application.register_blueprint(main_blueprint)
     from .status import status as status_blueprint
     application.register_blueprint(status_blueprint)
+    import admin.blueprint
+    application.register_blueprint(admin.blueprint.admin)
 
     if application.config['ALLOW_EXPLORER']:
         from .explorer import explorer as explorer_blueprint
