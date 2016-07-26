@@ -5,7 +5,8 @@ applications:
     - name: dm-dev-api
       command: python application.py runprodserver
       buildpack: https://github.com/cloudfoundry/buildpack-python.git#v1.5.7
-
+      health-check-type: port
+      instances: 1
       memory: 128M
       disk_quota: 512M
       env:
