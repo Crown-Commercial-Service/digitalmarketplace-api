@@ -1,8 +1,6 @@
 machine:
   timezone:
     Australia/Sydney
-  environment:
-    SQLALCHEMY_DATABASE_URI: postgresql://postgres:@localhost:5432/digitalmarketplace_test
   services:
     - elasticsearch
 
@@ -10,9 +8,11 @@ dependencies:
   override:
     - pip install -r requirements_for_test.txt
 
-test:
-  pre:
+database:
+  override:
     - psql -c 'create database digitalmarketplace_test;' -U postgres
+
+test:
   override:
     - ./scripts/run_tests.sh
 
