@@ -10,4 +10,5 @@ sudo dpkg -i cf-cli_amd64.deb
 cf -v
 cf login -a https://api.system.staging.digital.gov.au -o dto -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
 cf target -o dto -s digital-marketplace
+# cf push -c 'python application.py db upgrade'
 cf push

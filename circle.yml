@@ -1,9 +1,16 @@
 machine:
   timezone:
     Australia/Sydney
+  services:
+    - elasticsearch
+
 dependencies:
   override:
     - pip install -r requirements_for_test.txt
+
+database:
+  override:
+    - psql -c 'create database digitalmarketplace_test;' -U postgres
 
 test:
   override:
