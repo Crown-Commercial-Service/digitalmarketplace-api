@@ -34,12 +34,12 @@
   "selfServiceProvisioning":false,
   "supportForThirdParties":true,
   "educationPricing":false,
-  "pricingDocumentURL":"http://assets-production.govstore.service.gov.uk/G5/Supplier/someId/Pricing%20Document.docx",
-  "serviceDefinitionDocumentURL":"http://assets-production.govstore.service.gov.uk/G5/Supplier/someId/Service%20Definition.docx",
-  "sfiaRateDocumentURL":"http://assets-production.govstore.service.gov.uk/G5/Supplier/someId/Rate%20card.docx",
-  "termsAndConditionsDocumentURL":"http://assets-production.govstore.service.gov.uk/G5/Supplier/someId/TandC_data_collection.doc",
+  "pricingDocumentURL":"http://assets-production.govstore.service.gov.au/G5/Supplier/someId/Pricing%20Document.docx",
+  "serviceDefinitionDocumentURL":"http://assets-production.govstore.service.gov.au/G5/Supplier/someId/Service%20Definition.docx",
+  "sfiaRateDocumentURL":"http://assets-production.govstore.service.gov.au/G5/Supplier/someId/Rate%20card.docx",
+  "termsAndConditionsDocumentURL":"http://assets-production.govstore.service.gov.au/G5/Supplier/someId/TandC_data_collection.doc",
   "additionalDocumentURLs": [
-    "http://assets-production.govstore.service.gov.uk/G5/Supplier/someId/Appendix%201.pdf",
-    "http://assets-production.govstore.service.gov.uk/G5/Supplier/someId/Appendix%202.pdf"
+    "http://assets-production.govstore.service.gov.au/G5/Supplier/someId/Appendix%201.pdf",
+    "http://assets-production.govstore.service.gov.au/G5/Supplier/someId/Appendix%202.pdf"
   ]
 }

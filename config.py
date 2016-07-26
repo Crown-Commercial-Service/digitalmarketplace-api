@@ -22,6 +22,8 @@ class Config:
     DM_APP_NAME = 'api'
     DM_REQUEST_ID_HEADER = 'DM-Request-ID'
     DM_DOWNSTREAM_REQUEST_ID_HEADER = 'X-Amz-Cf-Id'
+    DM_API_ADMIN_USERNAME = 'admin'
+    DM_API_ADMIN_PASSWORD = None
 
     # Feature Flags
     RAISE_ERROR_ON_MISSING_FEATURES = True
@@ -64,6 +66,7 @@ class Development(Config):
     DM_API_ELASTICSEARCH_INDEX_SUFFIX = '_dev'
     DM_SEARCH_API_AUTH_TOKEN = 'myToken'
     DM_SEARCH_API_URL = 'http://localhost:5001'
+    DM_API_ADMIN_PASSWORD = 'admin'
 
 
 class Live(Config):
