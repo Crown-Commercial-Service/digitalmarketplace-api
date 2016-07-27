@@ -5,6 +5,10 @@ machine:
     - elasticsearch
 
 dependencies:
+  pre:
+    - curl -v -L -o cf-cli_amd64.deb 'https://cli.run.pivotal.io/stable?release=debian64&version=6.17.0&source=github'
+    - sudo dpkg -i cf-cli_amd64.deb
+    - cf -v
   override:
     - pip install -r requirements_for_test.txt
 
@@ -20,5 +24,12 @@ deployment:
   development:
     branch: master
     commands:
+      - cf login -a https://api.system.staging.digital.gov.au -o dto -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
+      - ./scripts/ci_deploy.sh
+  production:
+    tag: /release-.*/
+    commands:
+      - cp .manifest.production.yml manifest.yml
+      - cf login -a https://api.system.staging.digital.gov.au -o dto -u $CF_USER_PROD -p $CF_PASSWORD_PROD
       - ./scripts/ci_deploy.sh
 
