@@ -987,8 +987,8 @@ class Brief(db.Model):
                 self.withdrawn_at = datetime.utcnow()
             else:
                 raise ValidationError("Cannot withdraw a brief that has not been published")
-        elif value == 'draft':
-            self.published_at = None
+        elif value == 'draft' and self.published_at is not None:
+            raise ValidationError("Cannot change brief status to 'draft'")
         elif value == 'closed':
             raise ValidationError("Cannot change brief status to 'closed'")
         else:

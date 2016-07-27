@@ -767,22 +767,6 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == "Framework is not live"
 
-    def test_can_unpublish_a_live_brief(self):
-        self.setup_dummy_briefs(1, title="Published brief", status='live')
-
-        res = self.client.put(
-            '/briefs/1/status',
-            data=json.dumps({
-                'briefs': {'status': 'draft'},
-                'update_details': {'updated_by': 'example'}
-            }),
-            content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 200
-        assert data['briefs']['status'] == 'draft'
-        assert 'publishedAt' not in data['briefs']
-
     def test_publish_brief_makes_audit_event(self):
         self.setup_dummy_briefs(1, title='The Title')
 
