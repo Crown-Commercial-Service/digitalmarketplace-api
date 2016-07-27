@@ -967,6 +967,8 @@ class Brief(db.Model):
     def status(self):
         if self.published_at is None:
             return 'draft'
+        elif self.withdrawn_at:
+            return 'withdrawn'
         elif self.applications_closed_at > datetime.utcnow():
             return 'live'
         else:
@@ -974,10 +976,17 @@ class Brief(db.Model):
 
     @status.setter
     def status(self, value):
-        if value == self.status:
+        if self.status == value:
             return
+        elif self.status == 'withdrawn':
+            raise ValidationError("Cannot change brief status once it has been 'withdrawn'")
         elif value == 'live':
             self.published_at = datetime.utcnow()
+        elif value == 'withdrawn':
+            if self.published_at:
+                self.withdrawn_at = datetime.utcnow()
+            else:
+                raise ValidationError("Cannot withdraw a brief that has not been published")
         elif value == 'draft':
             self.published_at = None
         elif value == 'closed':
@@ -989,6 +998,7 @@ class Brief(db.Model):
     def status(cls):
         return sql_case([
             (cls.published_at.is_(None), 'draft'),
+            (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.applications_closed_at > datetime.utcnow(), 'live')
         ], else_='closed')
 
@@ -1051,6 +1061,11 @@ class Brief(db.Model):
                 'clarificationQuestionsPublishedBy': self.clarification_questions_published_by.strftime(
                     DATETIME_FORMAT),
                 'clarificationQuestionsAreClosed': self.clarification_questions_are_closed,
+            })
+
+        if self.withdrawn_at:
+            data.update({
+                'withdrawnAt': self.withdrawn_at.strftime(DATETIME_FORMAT)
             })
 
         data['links'] = {

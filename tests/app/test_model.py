@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from collections import Counter
 
 import mock
 import pytest
@@ -152,7 +153,11 @@ class TestBriefs(BaseApplicationTest):
 
             assert Brief.query.filter(Brief.status == 'draft').count() == 1
             assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
             assert Brief.query.filter(Brief.status == 'closed').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'draft'
 
     def test_query_live_brief(self):
         with self.app.app_context():
@@ -161,7 +166,27 @@ class TestBriefs(BaseApplicationTest):
 
             assert Brief.query.filter(Brief.status == 'draft').count() == 0
             assert Brief.query.filter(Brief.status == 'live').count() == 1
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
             assert Brief.query.filter(Brief.status == 'closed').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'live'
+
+    def test_query_withdrawn_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(
+                data={}, framework=self.framework, lot=self.lot,
+                published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
+            ))
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 1
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'withdrawn'
 
     def test_query_closed_brief(self):
         with self.app.app_context():
@@ -170,7 +195,11 @@ class TestBriefs(BaseApplicationTest):
 
             assert Brief.query.filter(Brief.status == 'draft').count() == 0
             assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
             assert Brief.query.filter(Brief.status == 'closed').count() == 1
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'closed'
 
     def test_live_status_for_briefs_with_published_at(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
@@ -249,13 +278,20 @@ class TestBriefs(BaseApplicationTest):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
         brief.status = 'draft'
 
-    def test_test_publishing_a_brief_sets_published_at(self):
+    def test_publishing_a_brief_sets_published_at(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
         assert brief.published_at is None
 
         brief.status = 'live'
         assert not brief.clarification_questions_are_closed
         assert isinstance(brief.published_at, datetime)
+
+    def test_withdrawing_a_brief_sets_withdrawn_at(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
+        assert brief.withdrawn_at is None
+
+        brief.status = 'withdrawn'
+        assert isinstance(brief.withdrawn_at, datetime)
 
     def test_status_must_be_valid(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
@@ -269,11 +305,34 @@ class TestBriefs(BaseApplicationTest):
 
         assert brief.published_at is None
 
+    def test_can_set_live_brief_to_withdrawn(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
+        brief.status = 'withdrawn'
+
+        assert brief.published_at is not None
+        assert brief.withdrawn_at is not None
+
     def test_cannot_set_brief_to_closed(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
         with pytest.raises(ValidationError):
             brief.status = 'closed'
+
+    def test_cannot_set_draft_brief_to_withdrawn(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+
+        with pytest.raises(ValidationError):
+            brief.status = 'withdrawn'
+
+    def test_cannot_change_status_of_withdrawn_brief(self):
+        brief = Brief(
+            data={}, framework=self.framework, lot=self.lot,
+            published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
+        )
+
+        for status in ['draft', 'live', 'closed']:
+            with pytest.raises(ValidationError):
+                brief.status = status
 
     def test_buyer_users_can_be_added_to_a_brief(self):
         with self.app.app_context():
