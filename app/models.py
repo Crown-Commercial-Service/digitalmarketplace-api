@@ -931,16 +931,9 @@ class Brief(db.Model):
     def applications_closed_at(self):
         if self.published_at is None:
             return None
+        brief_publishing_date_and_length = self._build_date_and_length_data()
 
-        published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
-        requirements_length = self.data.get('requirementsLength')
-        data = {
-            'publishedAt': published_day,
-            'requirementsLength': requirements_length
-        }
-        closing_date = get_publishing_dates(data)['closing_date']
-
-        return closing_date
+        return get_publishing_dates(brief_publishing_date_and_length)['closing_date']
 
     @applications_closed_at.expression
     def applications_closed_at(cls):
@@ -954,31 +947,17 @@ class Brief(db.Model):
     def clarification_questions_closed_at(self):
         if self.published_at is None:
             return None
+        brief_publishing_date_and_length = self._build_date_and_length_data()
 
-        published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
-        requirements_length = self.data.get('requirementsLength')
-        data = {
-            'publishedAt': published_day,
-            'requirementsLength': requirements_length
-        }
-        closing_date = get_publishing_dates(data)['questions_close']
-
-        return closing_date
+        return get_publishing_dates(brief_publishing_date_and_length)['questions_close']
 
     @hybrid_property
     def clarification_questions_published_by(self):
         if self.published_at is None:
             return None
+        brief_publishing_date_and_length = self._build_date_and_length_data()
 
-        published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
-        requirements_length = self.data.get('requirementsLength')
-        data = {
-            'publishedAt': published_day,
-            'requirementsLength': requirements_length
-        }
-        closing_date = get_publishing_dates(data)['answers_close']
-
-        return closing_date
+        return get_publishing_dates(brief_publishing_date_and_length)['answers_close']
 
     @hybrid_property
     def clarification_questions_are_closed(self):
@@ -1034,6 +1013,15 @@ class Brief(db.Model):
         current_data.update(data)
 
         self.data = current_data
+
+    def _build_date_and_length_data(self):
+        published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
+        requirements_length = self.data.get('requirementsLength')
+
+        return {
+            'publishedAt': published_day,
+            'requirementsLength': requirements_length
+        }
 
     def serialize(self, with_users=False):
         data = dict(self.data.items())
