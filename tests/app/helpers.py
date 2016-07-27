@@ -114,13 +114,20 @@ class BaseApplicationTest(object):
                 )
             db.session.commit()
 
-    def setup_dummy_brief(self, id=None, user_id=1, status=None, data=None, published_at=None,
-                          framework_slug="digital-outcomes-and-specialists", lot_slug="digital-specialists"):
+    def setup_dummy_brief(
+        self, id=None, user_id=1, status=None, data=None, published_at=None, withdrawn_at=None,
+        framework_slug="digital-outcomes-and-specialists", lot_slug="digital-specialists"
+    ):
         if published_at is not None and status is not None:
             raise ValueError("Cannot provide both status and published_at")
+        if withdrawn_at is not None and publish_at is None:
+            raise ValueError("If setting withdrawn_at then published_at must also be set")
         if not published_at:
             if status == 'closed':
                 published_at = datetime.utcnow() - timedelta(days=1000)
+            elif status == 'withdrawn':
+                published_at = datetime.utcnow() - timedelta(days=1000)
+                withdrawn_at = datetime.utcnow()
             else:
                 published_at = None if status == 'draft' else datetime.utcnow()
         framework = Framework.query.filter(Framework.slug == framework_slug).first()
@@ -133,6 +140,7 @@ class BaseApplicationTest(object):
             lot=lot,
             users=[User.query.get(user_id)],
             published_at=published_at,
+            withdrawn_at=withdrawn_at,
         ))
 
     def setup_dummy_suppliers(self, n):

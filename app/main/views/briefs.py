@@ -160,8 +160,8 @@ def list_briefs():
         )
 
 
-@main.route('/briefs/<int:brief_id>/publish', methods=['PUT'])
-def update_brief_status(brief_id):
+@main.route('/briefs/<int:brief_id>/<any(publish, withdraw):action>', methods=['PUT'])
+def update_brief_status(brief_id, action):
     updater_json = validate_and_return_updater_request()
 
     brief = Brief.query.filter(
@@ -171,16 +171,23 @@ def update_brief_status(brief_id):
     if brief.framework.status != 'live':
         abort(400, "Framework is not live")
 
-    if brief.status != 'live':
-        brief.status = 'live'
+    action_to_status = {
+        'publish': 'live',
+        'withdraw': 'withdrawn'
+    }
+    if brief.status != action_to_status[action]:
+        previousStatus = brief.status
+        brief.status = action_to_status[action]
 
-        validate_brief_data(brief, enforce_required=True)
+        if action == 'publish':
+            validate_brief_data(brief, enforce_required=True)
 
         audit = AuditEvent(
             audit_type=AuditTypes.update_brief_status,
             user=updater_json['updated_by'],
             data={
                 'briefId': brief.id,
+                'briefPreviousStatus': previousStatus,
                 'briefStatus': brief.status,
             },
             db_object=brief,

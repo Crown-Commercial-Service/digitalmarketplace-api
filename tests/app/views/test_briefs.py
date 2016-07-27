@@ -666,6 +666,34 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
         assert data['briefs']['status'] == 'live'
 
+    def test_withdraw_a_brief(self):
+        self.setup_dummy_briefs(1, title='The Title', status='live')
+
+        res = self.client.put(
+            '/briefs/1/withdraw',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['briefs']['status'] == 'withdrawn'
+        assert data['briefs']['withdrawnAt'] is not None
+
+    def test_cannot_publish_withdrawn_brief(self):
+        self.setup_dummy_briefs(1, title='The Title', status='withdrawn')
+
+        res = self.client.put(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+
     def test_cannot_publish_a_brief_if_is_not_complete(self):
         self.setup_dummy_briefs(1)
 
@@ -698,6 +726,26 @@ class TestBriefs(BaseApplicationTest):
         res = self.client.get('/briefs/1')
         published_at = json.loads(res.get_data(as_text=True))['briefs']['publishedAt']
         assert published_at == original_published_at
+
+    def test_withdrawn_at_is_not_updated_if_withdrawn_brief_is_withdrawn(self):
+        self.setup_dummy_briefs(1, title='The title', status='withdrawn')
+
+        res = self.client.get('/briefs/1')
+        original_withdrawn_at = json.loads(res.get_data(as_text=True))['briefs']['withdrawnAt']
+
+        res = self.client.put(
+            '/briefs/1/withdraw',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        res = self.client.get('/briefs/1')
+        withdrawn_at = json.loads(res.get_data(as_text=True))['briefs']['withdrawnAt']
+        assert withdrawn_at == original_withdrawn_at
 
     def test_cannot_publish_a_brief_if_the_framework_is_no_longer_live(self):
         self.setup_dummy_briefs(1, title='The title')
@@ -735,7 +783,7 @@ class TestBriefs(BaseApplicationTest):
         assert data['briefs']['status'] == 'draft'
         assert 'publishedAt' not in data['briefs']
 
-    def test_update_status_makes_audit_event(self):
+    def test_publish_brief_makes_audit_event(self):
         self.setup_dummy_briefs(1, title='The Title')
 
         res = self.client.put(
@@ -754,7 +802,31 @@ class TestBriefs(BaseApplicationTest):
         assert len(brief_audits) == 1
         assert brief_audits[0]['data'] == {
             'briefId': mock.ANY,
+            'briefPreviousStatus': 'draft',
             'briefStatus': 'live',
+        }
+
+    def test_withdraw_brief_makes_audit_event(self):
+        self.setup_dummy_briefs(1, title='The Title', status='live')
+
+        res = self.client.put(
+            '/briefs/1/withdraw',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        assert res.status_code == 200
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief_status.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data'] == {
+            'briefId': mock.ANY,
+            'briefPreviousStatus': 'live',
+            'briefStatus': 'withdrawn',
         }
 
     def test_can_delete_a_draft_brief(self):
