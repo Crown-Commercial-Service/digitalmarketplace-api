@@ -181,7 +181,7 @@ class TestBriefs(BaseApplicationTest):
 
         assert brief.applications_closed_at is None
 
-    def test_closing_dates_are_set_with_published_at_when_no_requirementsLength(self):
+    def test_closing_dates_are_set_with_published_at_when_no_requirements_length(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot,
                       published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
 
@@ -189,7 +189,7 @@ class TestBriefs(BaseApplicationTest):
         assert brief.clarification_questions_closed_at == datetime(2016, 3, 10, 23, 59, 59)
         assert brief.clarification_questions_published_by == datetime(2016, 3, 16, 23, 59, 59)
 
-    def test_closing_dates_are_set_with_published_at_when_requirementsLength_is_two_weeks(self):
+    def test_closing_dates_are_set_with_published_at_when_requirements_length_is_two_weeks(self):
         brief = Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
                       published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
 
@@ -197,7 +197,7 @@ class TestBriefs(BaseApplicationTest):
         assert brief.clarification_questions_closed_at == datetime(2016, 3, 10, 23, 59, 59)
         assert brief.clarification_questions_published_by == datetime(2016, 3, 16, 23, 59, 59)
 
-    def test_closing_dates_are_set_with_published_at_when_requirementsLength_is_one_week(self):
+    def test_closing_dates_are_set_with_published_at_when_requirements_length_is_one_week(self):
         brief = Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
                       published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
 
