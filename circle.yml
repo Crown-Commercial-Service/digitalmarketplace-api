@@ -25,11 +25,15 @@ deployment:
     branch: master
     commands:
       - cf login -a https://api.system.staging.digital.gov.au -o dto -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
-      - ./scripts/ci_deploy.sh
+      - cf target -o dto -s digital-marketplace
+      - cf push -c 'python application.py db upgrade' -u 'none'
+      - cf push
+
   production:
     tag: /release-.*/
     commands:
       - cp .manifest.production.yml manifest.yml
       - cf login -a https://api.system.staging.digital.gov.au -o dto -u $CF_USER_PROD -p $CF_PASSWORD_PROD
-      - ./scripts/ci_deploy.sh
-
+      - cf target -o dto -s digital-marketplace
+      - cf push -f 'manifest.production.yml' -c 'python application.py db upgrade' -u 'none'
+      - cf push -f 'manifest.production.yml'
