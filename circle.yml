@@ -32,7 +32,7 @@ deployment:
   production:
     tag: /release-.*/
     commands:
-      - cf login -a https://api.system.staging.digital.gov.au -o dto -u $CF_USER_PROD -p $CF_PASSWORD_PROD
+      - cf login -a https://api.system.platform.digital.gov.au -o dto -u $CF_USER_PROD -p $CF_PASSWORD_PROD
       - cf target -o dto -s digital-marketplace
       - cf push -f 'manifest.production.yml' -c 'python application.py db upgrade' -u 'none'
       - cf push -f 'manifest.production.yml'
