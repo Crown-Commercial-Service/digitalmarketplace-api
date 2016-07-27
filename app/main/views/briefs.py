@@ -160,14 +160,9 @@ def list_briefs():
         )
 
 
-@main.route('/briefs/<int:brief_id>/status', methods=['PUT'])
+@main.route('/briefs/<int:brief_id>/publish', methods=['PUT'])
 def update_brief_status(brief_id):
     updater_json = validate_and_return_updater_request()
-
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ['briefs'])
-    brief_json = json_payload['briefs']
-    json_has_required_keys(brief_json, ['status'])
 
     brief = Brief.query.filter(
         Brief.id == brief_id
@@ -176,8 +171,8 @@ def update_brief_status(brief_id):
     if brief.framework.status != 'live':
         abort(400, "Framework is not live")
 
-    if brief_json['status'] != brief.status:
-        brief.status = brief_json['status']
+    if brief.status != 'live':
+        brief.status = 'live'
 
         validate_brief_data(brief, enforce_required=True)
 

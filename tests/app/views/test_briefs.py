@@ -652,13 +652,12 @@ class TestBriefs(BaseApplicationTest):
         assert len(data['briefs']) == 7
         assert data['links'] == {}
 
-    def test_make_a_brief_live(self):
+    def test_publish_a_brief(self):
         self.setup_dummy_briefs(1, title='The Title')
 
         res = self.client.put(
-            '/briefs/1/status',
+            '/briefs/1/publish',
             data=json.dumps({
-                'briefs': {'status': 'live'},
                 'update_details': {'updated_by': 'example'}
             }),
             content_type='application/json')
@@ -667,13 +666,12 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
         assert data['briefs']['status'] == 'live'
 
-    def test_cannot_make_a_brief_live_if_is_not_complete(self):
+    def test_cannot_publish_a_brief_if_is_not_complete(self):
         self.setup_dummy_briefs(1)
 
         res = self.client.put(
-            '/briefs/1/status',
+            '/briefs/1/publish',
             data=json.dumps({
-                'briefs': {'status': 'live'},
                 'updated_by': 'example'
             }),
             content_type='application/json')
@@ -682,20 +680,18 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == {'title': 'answer_required'}
 
-    def test_published_at_is_not_updated_if_live_brief_is_made_live(self):
+    def test_published_at_is_not_updated_if_live_brief_is_published(self):
         self.setup_dummy_briefs(1, status='live', title='The title')
 
         res = self.client.get('/briefs/1')
         original_published_at = json.loads(res.get_data(as_text=True))['briefs']['publishedAt']
 
         res = self.client.put(
-            '/briefs/1/status',
+            '/briefs/1/publish',
             data=json.dumps({
-                'briefs': {'status': 'live'},
                 'update_details': {'updated_by': 'example'}
             }),
             content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
 
@@ -703,7 +699,7 @@ class TestBriefs(BaseApplicationTest):
         published_at = json.loads(res.get_data(as_text=True))['briefs']['publishedAt']
         assert published_at == original_published_at
 
-    def test_cannot_make_a_brief_live_if_the_framework_is_no_longer_live(self):
+    def test_cannot_publish_a_brief_if_the_framework_is_no_longer_live(self):
         self.setup_dummy_briefs(1, title='The title')
 
         with self.app.app_context():
@@ -713,9 +709,8 @@ class TestBriefs(BaseApplicationTest):
             db.session.commit()
 
         res = self.client.put(
-            '/briefs/1/status',
+            '/briefs/1/publish',
             data=json.dumps({
-                'briefs': {'status': 'live'},
                 'updated_by': 'example'
             }),
             content_type='application/json')
@@ -740,28 +735,12 @@ class TestBriefs(BaseApplicationTest):
         assert data['briefs']['status'] == 'draft'
         assert 'publishedAt' not in data['briefs']
 
-    def test_cannot_set_status_to_invalid_value(self):
-        self.setup_dummy_briefs(1, status='draft')
-
-        res = self.client.put(
-            '/briefs/1/status',
-            data=json.dumps({
-                'briefs': {'status': 'invalid'},
-                'updated_by': 'example'
-            }),
-            content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 400
-        assert data['error'] == "Invalid brief status 'invalid'"
-
-    def test_change_status_makes_audit_event(self):
+    def test_update_status_makes_audit_event(self):
         self.setup_dummy_briefs(1, title='The Title')
 
         res = self.client.put(
-            '/briefs/1/status',
+            '/briefs/1/publish',
             data=json.dumps({
-                'briefs': {'status': 'live'},
                 'update_details': {'updated_by': 'example'}
             }),
             content_type='application/json')
