@@ -74,6 +74,27 @@ def get_supplier(code):
     return jsonify(supplier=supplier.serialize())
 
 
+@main.route('/suppliers/<int:code>', methods=['DELETE'])
+def delete_supplier(code):
+    supplier = Supplier.query.filter(
+        Supplier.code == code
+    ).first_or_404()
+
+    try:
+        result = es_client.delete(index=get_supplier_index_name(),
+                                  doc_type=SUPPLIER_DOC_TYPE,
+                                  id=supplier.code)
+        db.session.delete(supplier)
+        db.session.commit()
+    except TransportError, e:
+        return jsonify(message=str(e)), e.status_code
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message="Database Error: {0}".format(e)), 400
+
+    return jsonify(message="done"), 200
+
+
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
     try:
