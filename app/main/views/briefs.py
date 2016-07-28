@@ -160,8 +160,47 @@ def list_briefs():
         )
 
 
+@main.route('/briefs/<int:brief_id>/status', methods=['PUT'])
+def update_brief_status(brief_id):
+    """Route is deprecated. Use `update_brief_status_by_action` instead."""
+    updater_json = validate_and_return_updater_request()
+
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['briefs'])
+    brief_json = json_payload['briefs']
+    json_has_required_keys(brief_json, ['status'])
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    if brief.framework.status != 'live':
+        abort(400, "Framework is not live")
+
+    if brief_json['status'] != brief.status:
+        brief.status = brief_json['status']
+
+        validate_brief_data(brief, enforce_required=True)
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.update_brief_status,
+            user=updater_json['updated_by'],
+            data={
+                'briefId': brief.id,
+                'briefStatus': brief.status,
+            },
+            db_object=brief,
+        )
+
+        db.session.add(brief)
+        db.session.add(audit)
+        db.session.commit()
+
+    return jsonify(briefs=brief.serialize()), 200
+
+
 @main.route('/briefs/<int:brief_id>/<any(publish, withdraw):action>', methods=['PUT'])
-def update_brief_status(brief_id, action):
+def update_brief_status_by_action(brief_id, action):
     updater_json = validate_and_return_updater_request()
 
     brief = Brief.query.filter(
