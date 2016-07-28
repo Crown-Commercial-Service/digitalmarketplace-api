@@ -3,7 +3,7 @@ from flask import json
 import pytest
 import urllib2
 from freezegun import freeze_time
-from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true, assert_is
+from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_none, assert_true, assert_is
 
 from app import db
 from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, DraftService, Service
@@ -19,8 +19,6 @@ class TestGetSupplier(BaseApplicationTest):
             payload = self.load_example_listing("Supplier")
             self.supplier = payload
             self.supplier_code = payload['code']
-
-            from app.models import ServiceCategory
 
             response = self.client.post(
                 '/suppliers'.format(self.supplier_code),
@@ -385,9 +383,6 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
 
 class TestSupplierSearch(BaseApplicationTest):
 
-    def setup(self):
-        super(TestSupplierSearch, self).setup()
-
     def search(self, query_body, **args):
         if args:
             params = '&'.join('{}={}'.format(k, urllib2.quote(v)) for k, v in args.items())
@@ -414,3 +409,34 @@ class TestSupplierSearch(BaseApplicationTest):
         result = json.loads(response.get_data())
         assert_equal(result['hits']['total'], 0)
         assert_equal(len(result['hits']['hits']), 0)
+
+
+class TestDeleteSupplier(BaseApplicationTest):
+
+    def setup(self):
+        super(TestDeleteSupplier, self).setup()
+
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            self.supplier = payload
+            self.supplier_code = payload['code']
+
+            response = self.client.post(
+                '/suppliers'.format(self.supplier_code),
+                data=json.dumps({
+                    'supplier': self.supplier
+                }),
+                content_type='application/json')
+            assert_equal(response.status_code, 201)
+
+    def test_delete(self):
+        with self.app.app_context():
+            assert_is_not_none(Supplier.query.filter_by(code=self.supplier_code).first())
+            response = self.client.delete('/suppliers/{}'.format(self.supplier_code))
+            assert_equal(200, response.status_code)
+            assert_is_none(Supplier.query.filter_by(code=self.supplier_code).first())
+
+    def test_nonexistant_delete(self):
+        with self.app.app_context():
+            response = self.client.delete('/suppliers/789012')
+            assert_equal(404, response.status_code)
