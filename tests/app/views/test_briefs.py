@@ -7,7 +7,7 @@ from ..helpers import BaseApplicationTest, COMPLETE_DIGITAL_SPECIALISTS_BRIEF
 
 from dmapiclient.audit import AuditTypes
 from app import db
-from app.models import Framework
+from app.models import Brief, Framework
 
 
 class TestBriefs(BaseApplicationTest):
@@ -1006,6 +1006,78 @@ class TestBriefs(BaseApplicationTest):
             "question": "What?",
             "answer": "That",
         }
+
+    def test_cannot_make_a_draft_copy_of_a_brief_that_is_not_withdrawn(self):
+        self.setup_dummy_briefs(1, title="The Title", status="live")
+
+        res = self.client.post(
+            "/briefs/1/create-draft-from-withdrawn-brief",
+            data=json.dumps({'updated_by': 'example'}),
+            content_type="application/json")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == "Brief status is not 'withdrawn'"
+
+    def test_cannot_make_a_draft_copy_of_a_brief_if_the_framework_is_closed(self):
+        self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
+
+        with self.app.app_context():
+            framework = Framework.query.get(5)
+            framework.status = 'expired'
+            db.session.add(framework)
+            db.session.commit()
+
+        res = self.client.post(
+            "/briefs/1/create-draft-from-withdrawn-brief",
+            data=json.dumps({'updated_by': 'example'}),
+            content_type="application/json")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == "Framework is not live"
+
+    def test_make_a_draft_copy_of_a_withdrawn_brief(self):
+        # Set up withdrawn brief with clarification question
+        self.setup_dummy_briefs(1, title="The Title", status="live")
+        with self.app.app_context():
+            brief = Brief.query.get(1)
+            brief.add_clarification_question('question', 'answer')
+            brief.status = 'withdrawn'
+            db.session.add(brief)
+            db.session.commit()
+
+        res = self.client.post(
+            "/briefs/1/create-draft-from-withdrawn-brief",
+            data=json.dumps({'updated_by': 'example'}),
+            content_type="application/json")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 201
+        assert data["briefs"]["id"] > 1
+        assert data["briefs"]["lot"] == 'digital-specialists'
+        assert data["briefs"]["frameworkSlug"] == 'digital-outcomes-and-specialists'
+        assert data["briefs"]["status"] == 'draft'
+        assert data["briefs"]["title"] == 'Copy of The Title'
+        assert not data["briefs"]["clarificationQuestions"]
+
+    def test_make_a_draft_copy_of_a_withdrawn_brief_makes_audit_event(self):
+        self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
+
+        res = self.client.post(
+            "/briefs/1/create-draft-from-withdrawn-brief",
+            data=json.dumps({'updated_by': 'example'}),
+            content_type="application/json")
+        assert res.status_code == 201
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.create_brief.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data']['withdrawnBriefId'] == 1
+        assert brief_audits[0]['data']['briefId'] > 1
 
 
 class TestSupplierIsEligibleForBrief(BaseApplicationTest):

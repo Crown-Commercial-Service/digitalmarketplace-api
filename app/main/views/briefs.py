@@ -200,6 +200,53 @@ def update_brief_status(brief_id, action):
     return jsonify(briefs=brief.serialize()), 200
 
 
+@main.route('/briefs/<int:brief_id>/create-draft-from-withdrawn-brief', methods=['POST'])
+def create_draft_brief_from_withdrawn_brief(brief_id):
+    updater_json = validate_and_return_updater_request()
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    if brief.framework.status != 'live':
+        abort(400, "Framework is not live")
+
+    if brief.status != 'withdrawn':
+        abort(400, "Brief status is not 'withdrawn'")
+
+    new_brief_data = brief.data
+    new_brief_data['title'] = 'Copy of ' + brief.data['title']
+    new_brief = Brief(
+        data=new_brief_data,
+        framework=brief.framework,
+        lot=brief.lot,
+        users=brief.users
+    )
+    validate_brief_data(new_brief, enforce_required=True)
+
+    db.session.add(new_brief)
+    try:
+        db.session.flush()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.create_brief,
+        user=updater_json['updated_by'],
+        data={
+            'withdrawnBriefId': brief.id,
+            'briefId': new_brief.id
+        },
+        db_object=new_brief,
+    )
+
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify(briefs=new_brief.serialize()), 201
+
+
 @main.route('/briefs/<int:brief_id>', methods=['DELETE'])
 def delete_draft_brief(brief_id):
     """
