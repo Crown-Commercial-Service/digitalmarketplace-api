@@ -611,7 +611,7 @@ class TestBriefs(BaseApplicationTest):
 
         res = self.client.get('/briefs?human=True')
         data = json.loads(res.get_data(as_text=True))
-        titles = map(lambda brief: brief['title'], data['briefs'])
+        titles = list(map(lambda brief: brief['title'], data['briefs']))
 
         assert res.status_code == 200
         assert titles == ['Fourth', 'Second', 'Third', 'First']
