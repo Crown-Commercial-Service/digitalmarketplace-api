@@ -94,17 +94,11 @@ def list_users():
 @main.route('/users', methods=['POST'])
 def create_user():
 
-    print 'get_json_from_request'
     json_payload = get_json_from_request()
-    print json_payload
-    print 'has_required_keys'
     json_has_required_keys(json_payload, ["users"])
-    print 'json_payload'
     json_payload = json_payload["users"]
-    print 'validate'
     validate_user_json_or_400(json_payload)
 
-    print 'query'
     user = User.query.filter(
         User.email_address == json_payload['emailAddress'].lower()).first()
 
@@ -116,7 +110,6 @@ def create_user():
     else:
         password = encryption.hashpw(json_payload['password'])
 
-    print 'User'
     now = datetime.utcnow()
     user = User(
         email_address=json_payload['emailAddress'].lower(),
@@ -136,11 +129,9 @@ def create_user():
         user.supplier_code = json_payload['supplierCode']
         audit_data['supplier_code'] = user.supplier_code
 
-    print 'check_supplier_role'
     check_supplier_role(user.role, user.supplier_code)
 
     try:
-        print 'add'
         db.session.add(user)
         db.session.flush()
 
