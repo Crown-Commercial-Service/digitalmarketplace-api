@@ -462,7 +462,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 3
+        assert len(data['briefs']) == data['meta']['total'] == 3
 
     def test_listed_briefs_do_not_list_users(self):
         self.setup_dummy_briefs(3)
@@ -491,7 +491,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 3, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 3, data['briefs']
 
     def test_cannot_list_briefs_by_invalid_status(self):
         self.setup_dummy_briefs(1, status='live')
@@ -501,7 +501,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 0
+        assert len(data['briefs']) == data['meta']['total'] == 0
 
     def test_list_briefs_by_multiple_statuses(self):
         self.setup_dummy_briefs(3, status='live')
@@ -511,7 +511,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 5, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 5, data['briefs']
 
     def test_list_briefs_by_framework(self):
         self.setup_dummy_briefs(3, status='live')
@@ -521,7 +521,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 5, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 5, data['briefs']
 
     def test_list_briefs_by_multiple_frameworks(self):
         self.setup_dummy_briefs(1, status='draft')
@@ -533,7 +533,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 4, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 4, data['briefs']
 
     def test_cannot_list_briefs_by_invalid_framework(self):
         self.setup_dummy_briefs(1, status='live')
@@ -543,7 +543,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 0
+        assert len(data['briefs']) == data['meta']['total'] == 0
 
     def test_list_briefs_by_framework_and_status(self):
         self.setup_dummy_briefs(3, status='live')
@@ -553,7 +553,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 2, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 2, data['briefs']
 
     def test_list_briefs_by_lot(self):
         self.setup_dummy_briefs(3, status='live', lot='digital-outcomes')
@@ -564,7 +564,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 4, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 4, data['briefs']
 
     def test_list_briefs_by_multiple_lots(self):
         self.setup_dummy_briefs(2, status='live', lot='digital-outcomes')
@@ -576,7 +576,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 5, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 5, data['briefs']
         assert all(
             (brief["lotSlug"] in ("digital-specialists", "user-research-participants",)) for brief in data['briefs']
         )
@@ -596,7 +596,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 3, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 3, data['briefs']
 
     def test_list_briefs_by_human_readable(self):
         today = datetime.utcnow()
@@ -625,6 +625,7 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
 
         assert len(data['briefs']) == 5
+        assert data['meta']['total'] == 7
         assert data['links']['next'] == 'http://localhost/briefs?page=2'
         assert data['links']['last'] == 'http://localhost/briefs?page=2'
 
@@ -637,6 +638,7 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
 
         assert len(data['briefs']) == 2
+        assert data['meta']['total'] == 7
         assert data['links']['prev'] == 'http://localhost/briefs?page=1'
 
     def test_list_briefs_no_pagination_if_user_id_supplied(self):
