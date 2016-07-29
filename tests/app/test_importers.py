@@ -21,7 +21,7 @@ class TestImporters(BaseApplicationTest):
     def test_supplier_importer(self):
         with self.app.app_context():
             with open(self.supplier_data_file_name) as data_file:
-                num_entries = len(data_file.readlines()) - 1  # minus CSV header
+                num_entries = sum(1 for r in csv.DictReader(data_file) if r['Ready to upload'] == 'Y')
                 assert_greater(num_entries, 0)
             num_failures, num_successes = self._import_suppliers()
             assert_equal(num_failures, 0)
@@ -38,17 +38,13 @@ class TestImporters(BaseApplicationTest):
 
     def test_supplier_prices(self):
         with self.app.app_context():
-            num_failures, num_successes = self._import_suppliers()
+            num_failures, num_good_suppliers = self._import_suppliers()
             assert_equal(num_failures, 0)
-            assert_greater(num_successes, 0)
-
-            with open(self.price_data_file_name, 'r') as data_file:
-                suppliers = set(r['Name'] for r in csv.DictReader(data_file))
-                assert_greater(len(suppliers), 0)
+            assert_greater(num_good_suppliers, 0)
 
             num_failures, num_successes = self._import_prices()
             assert_equal(num_failures, 0)
-            assert_equal(num_successes, len(suppliers))
+            assert_equal(num_successes, num_good_suppliers)
 
             alpha = Supplier.query.filter_by(code='001').first()
             assert_is_not_none(alpha)

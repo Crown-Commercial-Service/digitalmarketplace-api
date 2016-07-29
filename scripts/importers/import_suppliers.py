@@ -18,6 +18,9 @@ def run_import(input_file, client):
         if not record['ID']:
             continue
 
+        if record['Ready to upload'] != 'Y':
+            continue
+
         display_name = record.get('Display name', None)
         if display_name:
             name = display_name
