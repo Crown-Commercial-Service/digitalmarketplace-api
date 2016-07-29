@@ -32,7 +32,8 @@ COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
     "culturalFitCriteria": ["CULTURAL", "FIT"],
     "numberOfSuppliers": 3,
     "summary": "Doing some stuff to help out.",
-    "workplaceAddress": "Aviation House"
+    "workplaceAddress": "Aviation House",
+    "requirementsLength": "2 weeks"
 }
 
 
@@ -92,22 +93,24 @@ class BaseApplicationTest(object):
 
             return user.id
 
-    def setup_dummy_briefs(self, n, title=None, status='draft', user_id=1, brief_start=1, lot="digital-specialists"):
+    def setup_dummy_briefs(self, n, title=None, status='draft', user_id=1, data=None,
+                           brief_start=1, lot="digital-specialists", published_at=None):
         user_id = self.setup_dummy_user(id=user_id)
 
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").first()
             lot = Lot.query.filter(Lot.slug == lot).first()
-            data = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
+            data = data or COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
             data["title"] = title
             for i in range(brief_start, brief_start + n):
                 self.setup_dummy_brief(
                     id=i,
                     user_id=user_id,
-                    data=dict(COMPLETE_DIGITAL_SPECIALISTS_BRIEF, title=title),
+                    data=data,
                     framework_slug="digital-outcomes-and-specialists",
                     lot_slug=lot.slug,
                     status=status,
+                    published_at=published_at,
                 )
             db.session.commit()
 

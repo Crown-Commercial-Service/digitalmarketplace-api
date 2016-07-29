@@ -19,6 +19,7 @@ from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
 from dmutils.formats import DATETIME_FORMAT
+from dmutils.dates import get_publishing_dates
 
 from . import db
 from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
@@ -930,37 +931,33 @@ class Brief(db.Model):
     def applications_closed_at(self):
         if self.published_at is None:
             return None
+        brief_publishing_date_and_length = self._build_date_and_length_data()
 
-        # Set time to 23:59:59 same day and add full number of days before application closes
-        published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
-        closing_time = published_day + timedelta(days=self.APPLICATIONS_OPEN_DAYS)
-
-        return closing_time
+        return get_publishing_dates(brief_publishing_date_and_length)['closing_date']
 
     @applications_closed_at.expression
     def applications_closed_at(cls):
-        return func.date_trunc('day', cls.published_at) + sql_cast(
-            '%d days 23:59:59' % cls.APPLICATIONS_OPEN_DAYS, INTERVAL
-        )
+        return sql_case([
+            (cls.data['requirementsLength'].astext == '1 week', func.date_trunc('day', cls.published_at) + sql_cast(
+                '1 week 23:59:59', INTERVAL)),
+            ], else_=func.date_trunc('day', cls.published_at) + sql_cast(
+                '2 weeks 23:59:59', INTERVAL))
 
     @hybrid_property
     def clarification_questions_closed_at(self):
         if self.published_at is None:
             return None
+        brief_publishing_date_and_length = self._build_date_and_length_data()
 
-        # Set time to 23:59:59 same day and add full number of days before questions close
-        published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
-        closing_time = published_day + timedelta(days=self.CLARIFICATION_QUESTIONS_OPEN_DAYS)
-
-        return closing_time
+        return get_publishing_dates(brief_publishing_date_and_length)['questions_close']
 
     @hybrid_property
     def clarification_questions_published_by(self):
         if self.published_at is None:
             return None
+        brief_publishing_date_and_length = self._build_date_and_length_data()
 
-        # All clarification questions should be published N days before brief closes
-        return self.applications_closed_at - timedelta(days=self.CLARIFICATION_QUESTIONS_PUBLISHED_DAYS)
+        return get_publishing_dates(brief_publishing_date_and_length)['answers_close']
 
     @hybrid_property
     def clarification_questions_are_closed(self):
@@ -1016,6 +1013,15 @@ class Brief(db.Model):
         current_data.update(data)
 
         self.data = current_data
+
+    def _build_date_and_length_data(self):
+        published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
+        requirements_length = self.data.get('requirementsLength')
+
+        return {
+            'publishedAt': published_day,
+            'requirementsLength': requirements_length
+        }
 
     def serialize(self, with_users=False):
         data = dict(self.data.items())

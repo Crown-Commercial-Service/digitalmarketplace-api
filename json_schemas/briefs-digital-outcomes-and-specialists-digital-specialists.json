@@ -116,6 +116,12 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
+    "requirementsLength": {
+      "enum": [
+        "1 week",
+        "2 weeks"
+      ]
+    },
     "securityClearance": {
       "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
@@ -188,6 +194,7 @@
     "numberOfSuppliers",
     "organisation",
     "priceWeighting",
+    "requirementsLength",
     "specialistRole",
     "specialistWork",
     "startDate",
