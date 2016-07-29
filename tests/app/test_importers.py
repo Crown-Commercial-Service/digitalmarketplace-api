@@ -44,7 +44,6 @@ class TestImporters(BaseApplicationTest):
 
             num_failures, num_successes = self._import_prices()
             assert_equal(num_failures, 0)
-            assert_equal(num_successes, num_good_suppliers)
 
             alpha = Supplier.query.filter_by(code='001').first()
             assert_is_not_none(alpha)
