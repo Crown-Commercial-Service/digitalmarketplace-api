@@ -1,8 +1,6 @@
 machine:
   timezone:
     Australia/Sydney
-  services:
-    - elasticsearch
 
 dependencies:
   pre:
