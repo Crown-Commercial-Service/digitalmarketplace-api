@@ -48,6 +48,7 @@ def run_import(input_file, client):
             'summary': nonEmptyOrNone(record['Summary']),
             'abn': nonEmptyOrNone(record['ABN']),
             'website': website,
+            'extraLinks': extra_links,
             'address': {
                 'addressLine': nonEmptyOrNone(record['Address']),
                 'suburb': nonEmptyOrNone(record['Suburb']),
