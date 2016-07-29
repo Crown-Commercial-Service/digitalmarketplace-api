@@ -8,7 +8,7 @@ from ...models import (
     Supplier, AuditEvent,
     Service, SupplierFramework, Framework
 )
-from ...search_indices import es_client, get_supplier_index_name
+from ...search_indices import es_client, get_supplier_index_name, SUPPLIER_DOC_TYPE
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400,
@@ -18,9 +18,6 @@ from ...utils import pagination_links, drop_foreign_fields, get_json_from_reques
     json_has_required_keys, json_has_matching_id, get_valid_page_or_1, validate_and_return_updater_request
 from ...supplier_utils import validate_and_return_supplier_request
 from dmapiclient.audit import AuditTypes
-
-
-SUPPLIER_DOC_TYPE = 'supplier'
 
 
 @main.route('/suppliers', methods=['GET'])

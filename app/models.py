@@ -435,8 +435,8 @@ class Supplier(db.Model):
             'contacts': [c.serialize() for c in self.contacts],
             'references': [r.serialize() for r in self.references],
             'prices': [p.serialize() for p in self.prices],
-            'creationTime': str(self.creation_time),
-            'lastUpdateTime': str(self.last_update_time),
+            'creationTime': self.creation_time.strftime(DATETIME_FORMAT),
+            'lastUpdateTime': self.last_update_time.strftime(DATETIME_FORMAT),
         }
         serialized.update(data or {})
         return serialized
