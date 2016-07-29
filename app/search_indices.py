@@ -49,12 +49,11 @@ def create_supplier_index(index_client):
                 },
             },
             'creationTime': {
-                'type': 'date',
+                'type': 'string',
                 'index': 'no',
-                'format': 'strict_date_optional_time',
             },
             'lastUpdateTime': {
-                'type': 'date',
+                'type': 'string',
                 'index': 'no',
             },
             'prices': {
