@@ -12,4 +12,4 @@ applications:
       env:
           DM_ENVIRONMENT: production
           DM_SEARCH_API_URL: https://dm-dev-search-api.apps.staging.digital.gov.au/
-          DM_ELASTICSEARCH_URL: search-digital-marketplace-prod-knuhl4vhapyej53rycvfx55wce.ap-southeast-2.es.amazonaws.com:80
+          DM_ELASTICSEARCH_URL: https://search-digital-marketplace-prod-knuhl4vhapyej53rycvfx55wce.ap-southeast-2.es.amazonaws.com:80
