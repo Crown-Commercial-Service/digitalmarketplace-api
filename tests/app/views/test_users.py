@@ -192,7 +192,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@email.gov.uk',
+                    'emailAddress': 'joeblogs@email.gov.au',
                     'phoneNumber': '01234 567890',
                     'password': '1234567890',
                     'role': 'buyer',
@@ -201,7 +201,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
 
         assert_equal(response.status_code, 201)
         data = json.loads(response.get_data())["users"]
-        assert_equal(data["emailAddress"], "joeblogs@email.gov.uk")
+        assert_equal(data["emailAddress"], "joeblogs@email.gov.au")
         assert_equal(data["phoneNumber"], "01234 567890")
 
     def test_creating_buyer_user_with_bad_email_domain_fails(self):
@@ -223,7 +223,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.au',
                     'password': '1234567890',
                     'role': 'buyer',
                     'name': 'joe bloggs'}}),
@@ -238,7 +238,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.au',
                     'phoneNumber': '',
                     'password': '1234567890',
                     'role': 'buyer',
@@ -254,7 +254,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.au',
                     'phoneNumber': '123456',
                     'password': '1234567890',
                     'role': 'buyer',
@@ -268,7 +268,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.au',
                     'phoneNumber': '',
                     'password': '1234567890',
                     'role': 'buyer',
@@ -531,7 +531,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@gov.uk',
+                    'emailAddress': 'joeblogs@gov.au',
                     'password': '',
                     'role': 'buyer',
                     'name': 'joe bloggs'}}),
@@ -567,7 +567,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
         with self.app.app_context():
             user = User(
                 id=123,
-                email_address="test@digital.gov.uk",
+                email_address="test@digital.gov.au",
                 name="my name",
                 password=encryption.hashpw("my long password"),
                 active=True,
@@ -587,7 +587,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             )
             supplier_user = User(
                 id=456,
-                email_address="supplier@digital.gov.uk",
+                email_address="supplier@digital.gov.au",
                 name="my supplier name",
                 password=encryption.hashpw("my long password"),
                 active=True,
@@ -619,13 +619,13 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 '/users/auth',
                 data=json.dumps({
                     'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
+                        'emailAddress': 'test@digital.gov.au',
                         'password': '1234567890'}}),
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
-            assert_equal(data['emailAddress'], 'test@digital.gov.uk')
+            assert_equal(data['emailAddress'], 'test@digital.gov.au')
 
     def test_new_password_is_not_audited(self):
         with self.app.app_context():
@@ -644,13 +644,13 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 '/users/auth',
                 data=json.dumps({
                     'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
+                        'emailAddress': 'test@digital.gov.au',
                         'password': 'not-in-my-audit-event'}}),
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
-            assert_equal(data['emailAddress'], 'test@digital.gov.uk')
+            assert_equal(data['emailAddress'], 'test@digital.gov.au')
 
             audit_response = self.client.get('/audit-events')
             assert_equal(audit_response.status_code, 200)
@@ -683,7 +683,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 '/users/auth',
                 data=json.dumps({
                     'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
+                        'emailAddress': 'test@digital.gov.au',
                         'password': 'my long password'}}),
                 content_type='application/json')
 
@@ -700,7 +700,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 '/users/auth',
                 data=json.dumps({
                     'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
+                        'emailAddress': 'test@digital.gov.au',
                         'password': 'invalid'}
                 }),
                 content_type='application/json'
@@ -790,7 +790,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 '/users/auth',
                 data=json.dumps({
                     'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
+                        'emailAddress': 'test@digital.gov.au',
                         'password': 'my long password'}}),
                 content_type='application/json')
 
@@ -842,7 +842,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 '/users/auth',
                 data=json.dumps({
                     'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
+                        'emailAddress': 'test@digital.gov.au',
                         'password': 'my long password'}}),
                 content_type='application/json')
 
@@ -870,7 +870,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 '/users/auth',
                 data=json.dumps({
                     'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
+                        'emailAddress': 'test@digital.gov.au',
                         'password': 'my long password'}}),
                 content_type='application/json')
 
@@ -967,25 +967,25 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 data=json.dumps({
                     "updated_by": "a.user",
                     'users': {
-                        'emailAddress': 'myshinynew@digital.gov.uk'
+                        'emailAddress': 'myshinynew@digital.gov.au'
                     }}),
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
-            assert_equal(data['emailAddress'], 'myshinynew@digital.gov.uk')
+            assert_equal(data['emailAddress'], 'myshinynew@digital.gov.au')
 
             response = self.client.post(
                 '/users/auth',
                 data=json.dumps({
                     'authUsers': {
-                        'emailAddress': 'myshinynew@digital.gov.uk',
+                        'emailAddress': 'myshinynew@digital.gov.au',
                         'password': 'my long password'}}),
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())['users']
-            assert_equal(data['emailAddress'], 'myshinynew@digital.gov.uk')
+            assert_equal(data['emailAddress'], 'myshinynew@digital.gov.au')
 
 
 class TestUsersGet(BaseUserTest):
@@ -1410,12 +1410,12 @@ class TestUsersExport(BaseUserTest):
 
 class TestUsersEmailCheck(BaseUserTest):
     def test_valid_email_is_ok(self):
-        response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@gov.uk'})
+        response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@gov.au'})
         assert response.status_code == 200
         assert json.loads(response.get_data())['valid'] is True
 
     def test_invalid_email_is_not_ok(self):
-        response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'someone@notgov.uk'})
+        response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'someone@notgov.au'})
         assert response.status_code == 200
         assert json.loads(response.get_data())['valid'] is False
 

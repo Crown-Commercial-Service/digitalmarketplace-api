@@ -16,6 +16,22 @@ from dmutils.formats import DATETIME_FORMAT
 from dmapiclient.audit import AuditTypes
 
 
+class TestRoleListing(BaseApplicationTest):
+
+    def test_listing(self):
+        response = self.client.get('/roles')
+        data = json.loads(response.get_data())
+        assert_in('roles', data)
+        roles = data['roles']
+        assert len(roles) > 0
+        for role in roles:
+            assert_equal(set(role.keys()), set(('role', 'category', 'roleAbbreviation', 'categoryAbbreviation')))
+            assert_is_not_none(role['role'])
+            assert_is_not_none(role['category'])
+            assert_is_not_none(role['roleAbbreviation'])
+            assert_is_not_none(role['categoryAbbreviation'])
+
+
 class TestListServicesOrdering(BaseApplicationTest):
     def setup_services(self):
         with self.app.app_context():

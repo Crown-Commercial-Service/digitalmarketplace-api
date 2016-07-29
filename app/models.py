@@ -1,6 +1,7 @@
 import random
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
+import pytz
 import re
 
 from flask import current_app
@@ -25,6 +26,10 @@ from dmutils.formats import DATETIME_FORMAT
 from . import db
 from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
 from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
+
+
+def getUtcTimestamp():
+    return datetime.now(pytz.utc)
 
 
 class FrameworkLot(db.Model):
@@ -233,7 +238,7 @@ class SupplierReference(db.Model):
     __tablename__ = 'supplier_reference'
 
     id = db.Column(db.Integer, primary_key=True)
-    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id', ondelete='cascade'))
     name = db.Column(db.String, index=False, nullable=False)
     organisation = db.Column(db.String, index=False, nullable=False)
     role = db.Column(db.String, index=False, nullable=True)
@@ -264,6 +269,7 @@ class ServiceCategory(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
+    abbreviation = db.Column(db.String(15), nullable=False)
 
     @staticmethod
     def lookup(as_dict):
@@ -287,6 +293,7 @@ class ServiceRole(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('service_category.id'), nullable=False)
     category = db.relationship('ServiceCategory')
     name = db.Column(db.String, nullable=False)
+    abbreviation = db.Column(db.String(15), nullable=False)
 
     @staticmethod
     def lookup(as_dict):
@@ -310,14 +317,14 @@ class PriceSchedule(db.Model):
     __tablename__ = 'price_schedule'
 
     id = db.Column(db.Integer, primary_key=True)
-    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=False)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id', ondelete='cascade'), nullable=False)
     service_role_id = db.Column(db.Integer, db.ForeignKey('service_role.id'), nullable=False)
     service_role = db.relationship('ServiceRole')
     hourly_rate = db.Column(db.Numeric)
     daily_rate = db.Column(db.Numeric)
     gst_included = db.Column(db.Boolean, index=False, nullable=False, default=True)
 
-    __table_args__ = (db.PrimaryKeyConstraint('supplier_id', 'service_role_id'),)
+    __table_args__ = (db.UniqueConstraint('supplier_id', 'service_role_id'),)
 
     @staticmethod
     def from_json(as_dict):
@@ -352,7 +359,7 @@ class PriceSchedule(db.Model):
 supplier__extra_links = db.Table('supplier__extra_links',
                                  db.Column('supplier_id',
                                            db.Integer,
-                                           db.ForeignKey('supplier.id'),
+                                           db.ForeignKey('supplier.id', ondelete='cascade'),
                                            nullable=False),
                                  db.Column('website_link_id',
                                            db.Integer,
@@ -364,25 +371,13 @@ supplier__extra_links = db.Table('supplier__extra_links',
 supplier__contact = db.Table('supplier__contact',
                              db.Column('supplier_id',
                                        db.Integer,
-                                       db.ForeignKey('supplier.id'),
+                                       db.ForeignKey('supplier.id', ondelete='cascade'),
                                        nullable=False),
                              db.Column('contact_id',
                                        db.Integer,
                                        db.ForeignKey('contact.id'),
                                        nullable=False),
                              db.PrimaryKeyConstraint('supplier_id', 'contact_id'))
-
-
-supplier__service_category = db.Table('supplier__service_category',
-                                      db.Column('supplier_id',
-                                                db.Integer,
-                                                db.ForeignKey('supplier.id'),
-                                                nullable=False),
-                                      db.Column('service_category_id',
-                                                db.Integer,
-                                                db.ForeignKey('service_category.id'),
-                                                nullable=False),
-                                      db.PrimaryKeyConstraint('supplier_id', 'service_category_id'))
 
 
 class Supplier(db.Model):
@@ -396,14 +391,26 @@ class Supplier(db.Model):
     summary = db.Column(db.String(511), index=False, nullable=True)
     description = db.Column(db.String, index=False, nullable=True)
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'), index=False, nullable=False)
-    address = db.relationship('Address')
+    address = db.relationship('Address', single_parent=True, cascade='all, delete-orphan')
     website = db.Column(db.String(255), index=False, nullable=True)
-    extra_links = db.relationship('WebsiteLink', secondary=supplier__extra_links)
+    extra_links = db.relationship('WebsiteLink',
+                                  secondary=supplier__extra_links,
+                                  single_parent=True,
+                                  cascade='all, delete-orphan')
     abn = db.Column(db.String(15), nullable=True)
     acn = db.Column(db.String(15), nullable=True)
-    contacts = db.relationship('Contact', secondary=supplier__contact)
-    references = db.relationship('SupplierReference')
-    prices = db.relationship('PriceSchedule')
+    contacts = db.relationship('Contact', secondary=supplier__contact, single_parent=True, cascade='all, delete-orphan')
+    references = db.relationship('SupplierReference', single_parent=True, cascade='all, delete-orphan')
+    prices = db.relationship('PriceSchedule', single_parent=True, cascade='all, delete-orphan')
+    creation_time = db.Column(db.DateTime(timezone=True),
+                              index=False,
+                              nullable=False,
+                              default=getUtcTimestamp)
+    # FIXME: remove meaningless default value after schema migration
+    last_update_time = db.Column(db.DateTime(timezone=True),
+                                 index=False,
+                                 nullable=False,
+                                 default=getUtcTimestamp)
 
     def get_service_counts(self):
         # FIXME: To be removed from Australian version
@@ -428,6 +435,8 @@ class Supplier(db.Model):
             'contacts': [c.serialize() for c in self.contacts],
             'references': [r.serialize() for r in self.references],
             'prices': [p.serialize() for p in self.prices],
+            'creationTime': str(self.creation_time),
+            'lastUpdateTime': str(self.last_update_time),
         }
         serialized.update(data or {})
         return serialized
@@ -457,13 +466,20 @@ class Supplier(db.Model):
             self.references = [SupplierReference.from_json(r) for r in data['references']]
         if 'prices' in data:
             self.prices = [PriceSchedule.from_json(p) for p in data['prices']]
+        self.last_update_time = getUtcTimestamp()
         return self
 
     @validates('name')
     def validate_name(self, key, name):
         if not name:
             raise ValidationError('Supplier name required')
-        return name
+        return name.strip()
+
+    @validates('long_name')
+    def validate_long_name(self, key, long_name):
+        if not long_name:
+            return None
+        return long_name.strip()
 
     @validates('acn')
     def validate_acn(self, key, acn):

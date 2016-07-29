@@ -1,14 +1,15 @@
 services:
-    - pgdb-dev
+    - pgdb-prod
 
 applications:
-    - name: dm-dev-api
+    - name: dm-api
       command: python application.py runprodserver
       buildpack: https://github.com/cloudfoundry/buildpack-python.git#v1.5.7
       health-check-type: port
-      instances: 1
+      instances: 2
       memory: 128M
       disk_quota: 512M
       env:
+          DM_ENVIRONMENT: production
           DM_SEARCH_API_URL: https://dm-dev-search-api.apps.staging.digital.gov.au/
-          DM_ELASTICSEARCH_URL: search-digital-marketplace-dev-dlc2jevc4vmtqaptuf3pecnirq.ap-southeast-2.es.amazonaws.com:80
+          DM_ELASTICSEARCH_URL: https://search-digital-marketplace-prod-knuhl4vhapyej53rycvfx55wce.ap-southeast-2.es.amazonaws.com:443

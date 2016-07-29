@@ -3,7 +3,7 @@ from dmapiclient.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 
 from .. import main
-from ...models import ArchivedService, Service, Supplier, AuditEvent, Framework, ValidationError
+from ...models import ArchivedService, Service, ServiceRole, Supplier, AuditEvent, Framework, ValidationError
 
 from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
@@ -33,6 +33,21 @@ def index():
         "frameworks.list": url_for('.list_frameworks', _external=True),
     }
     ), 200
+
+
+@main.route('/roles', methods=['GET'])
+def list_service_roles():
+    roles = ServiceRole.query.all()
+
+    def serialize_with_abbreviations(role):
+        return {
+            'category': role.category.name,
+            'categoryAbbreviation': role.category.abbreviation,
+            'role': role.name,
+            'roleAbbreviation': role.abbreviation,
+        }
+
+    return jsonify(roles=[serialize_with_abbreviations(r) for r in roles])
 
 
 @main.route('/services', methods=['GET'])

@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask import jsonify, abort, request, current_app
+from elasticsearch import TransportError
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
@@ -27,6 +28,7 @@ def list_suppliers():
     page = get_valid_page_or_1()
 
     prefix = request.args.get('prefix', '')
+    name = request.args.get('name', None)
 
     suppliers = Supplier.query
 
@@ -38,6 +40,9 @@ def list_suppliers():
             # case insensitive LIKE comparison for matching supplier names
             suppliers = suppliers.filter(
                 Supplier.name.ilike(prefix + '%'))
+
+    if name is not None:
+        suppliers = suppliers.filter((Supplier.name == name) | (Supplier.long_name == name))
 
     suppliers = suppliers.distinct(Supplier.name, Supplier.code)
 
@@ -69,16 +74,55 @@ def get_supplier(code):
     return jsonify(supplier=supplier.serialize())
 
 
+@main.route('/suppliers/<int:code>', methods=['DELETE'])
+def delete_supplier(code):
+    supplier = Supplier.query.filter(
+        Supplier.code == code
+    ).first_or_404()
+
+    try:
+        result = es_client.delete(index=get_supplier_index_name(),
+                                  doc_type=SUPPLIER_DOC_TYPE,
+                                  id=supplier.code)
+        db.session.delete(supplier)
+        db.session.commit()
+    except TransportError, e:
+        return jsonify(message=str(e)), e.status_code
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message="Database Error: {0}".format(e)), 400
+
+    return jsonify(message="done"), 200
+
+
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
-    starting_offset = int(request.args.get('from', 0))
-    result_count = int(request.args.get('size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE']))
-    result = es_client.search(index=get_supplier_index_name(),
-                              doc_type=SUPPLIER_DOC_TYPE,
-                              body=get_json_from_request(),
-                              from_=starting_offset,
-                              size=result_count)
-    return jsonify(result)
+    try:
+        starting_offset = int(request.args.get('from', 0))
+        if starting_offset < 0:
+            raise ValueError(starting_offset)
+    except ValueError, e:
+        return jsonify(message="Invalid 'from' value (must be integer > 0): {0}".format(e)), 400
+
+    try:
+        result_count = int(request.args.get('size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE']))
+        if result_count < 0:
+            raise ValueError(result_count)
+    except ValueError, e:
+        return jsonify(message="Invalid 'size' value (must be integer > 0): {0}".format(e)), 400
+
+    try:
+        result = es_client.search(index=get_supplier_index_name(),
+                                  doc_type=SUPPLIER_DOC_TYPE,
+                                  body=get_json_from_request(),
+                                  from_=starting_offset,
+                                  size=result_count)
+    except TransportError, e:
+        return jsonify(message=str(e)), e.status_code
+    except Exception, e:
+        return jsonify(message=str(e)), 500
+
+    return jsonify(result), 200
 
 
 def update_supplier_data_impl(supplier, supplier_data, success_code):
@@ -86,11 +130,6 @@ def update_supplier_data_impl(supplier, supplier_data, success_code):
 
     try:
         import json
-        supplier_json = json.dumps(supplier.serialize())
-        es_client.index(index=get_supplier_index_name(),
-                        doc_type=SUPPLIER_DOC_TYPE,
-                        body=supplier_json,
-                        id=supplier.code)
         db.session.add(supplier)
         # db.session.add(
         #     AuditEvent(
@@ -100,6 +139,13 @@ def update_supplier_data_impl(supplier, supplier_data, success_code):
         #         data={'update': request_data['suppliers']})
         # )
         db.session.commit()
+        supplier_json = json.dumps(supplier.serialize())
+        es_client.index(index=get_supplier_index_name(),
+                        doc_type=SUPPLIER_DOC_TYPE,
+                        body=supplier_json,
+                        id=supplier.code)
+    except TransportError, e:
+        return jsonify(message=str(e)), e.status_code
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
@@ -119,7 +165,7 @@ def create_supplier():
     return update_supplier_data_impl(supplier, supplier_data, 201)
 
 
-@main.route('/suppliers/<int:code>', methods=['POST'])
+@main.route('/suppliers/<int:code>', methods=['POST', 'PATCH'])
 def update_supplier(code):
     request_data = get_json_from_request()
     if 'supplier' in request_data:
@@ -127,9 +173,13 @@ def update_supplier(code):
     else:
         abort(400)
 
-    supplier = Supplier.query.filter(
-        Supplier.code == code
-    ).first_or_404()
+    if request.method == 'POST':
+        supplier = Supplier(code=code)
+    else:
+        assert request.method == 'PATCH'
+        supplier = Supplier.query.filter(
+            Supplier.code == code
+        ).first_or_404()
 
     return update_supplier_data_impl(supplier, supplier_data, 200)
 

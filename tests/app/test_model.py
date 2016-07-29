@@ -21,7 +21,7 @@ def test_should_not_return_password_on_user():
     app = create_app('test')
     now = datetime.utcnow()
     user = User(
-        email_address='email@digital.gov.uk',
+        email_address='email@digital.gov.au',
         name='name',
         role='buyer',
         password='password',
@@ -33,7 +33,7 @@ def test_should_not_return_password_on_user():
     )
 
     with app.app_context():
-        assert_equal(user.serialize()['emailAddress'], "email@digital.gov.uk")
+        assert_equal(user.serialize()['emailAddress'], "email@digital.gov.au")
         assert_equal(user.serialize()['name'], "name")
         assert_equal(user.serialize()['role'], "buyer")
         assert_equal('password' in user.serialize(), False)

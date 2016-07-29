@@ -3,11 +3,11 @@ from flask import json
 import pytest
 import urllib2
 from freezegun import freeze_time
-from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true, assert_is
+from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_none, assert_true, assert_is
 
 from app import db
 from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, DraftService, Service
-from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
+from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, isRecentTimestamp
 from random import randint
 
 
@@ -19,8 +19,6 @@ class TestGetSupplier(BaseApplicationTest):
             payload = self.load_example_listing("Supplier")
             self.supplier = payload
             self.supplier_code = payload['code']
-
-            from app.models import ServiceCategory
 
             response = self.client.post(
                 '/suppliers'.format(self.supplier_code),
@@ -135,7 +133,7 @@ class TestListSuppliers(BaseApplicationTest):
 
 
 class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
-    method = "post"
+    method = "patch"
     endpoint = "/suppliers/123456"
 
     def setup(self):
@@ -151,7 +149,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
                              content_type='application/json')
 
     def update_request(self, data=None, user=None, full_data=None):
-        return self.client.post(
+        return self.client.patch(
             self.endpoint,
             data=json.dumps({
                 'supplier': data,
@@ -159,6 +157,15 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             } if full_data is None else full_data),
             content_type='application/json',
         )
+
+    def test_update_timestamp(self):
+        response = self.update_request({'name': 'Changed Name'})
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter_by(code=123456).first()
+            assert_is_not_none(supplier)
+            assert (isRecentTimestamp(supplier.last_update_time))
 
     def test_empty_update_supplier(self):
         response = self.update_request({})
@@ -203,6 +210,8 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         supplier = json.loads(response.get_data())['supplier']
 
         supplier.pop('dataVersion')
+        supplier.pop('creationTime')
+        supplier.pop('lastUpdateTime')
 
         assert (set(supplier.keys()) == set(payload.keys()))
         for key in payload.keys():
@@ -225,7 +234,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(supplier.description, "New Description")
 
     def test_update_missing_supplier(self):
-        response = self.client.post(
+        response = self.client.patch(
             '/suppliers/234567',
             data=json.dumps({'supplier': {}}),
             content_type='application/json',
@@ -274,6 +283,10 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
             assert_is_not_none(Supplier.query.filter(
                 Supplier.name == payload['name']
             ).first())
+            supplier = Supplier.query.filter_by(code=payload['code']).first()
+            assert_is_not_none(supplier)
+            assert (isRecentTimestamp(supplier.creation_time))
+            assert (isRecentTimestamp(supplier.last_update_time))
 
     def test_when_supplier_has_a_missing_name(self):
         payload = self.load_example_listing("Supplier")
@@ -370,9 +383,6 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
 
 class TestSupplierSearch(BaseApplicationTest):
 
-    def setup(self):
-        super(TestSupplierSearch, self).setup()
-
     def search(self, query_body, **args):
         if args:
             params = '&'.join('{}={}'.format(k, urllib2.quote(v)) for k, v in args.items())
@@ -399,3 +409,34 @@ class TestSupplierSearch(BaseApplicationTest):
         result = json.loads(response.get_data())
         assert_equal(result['hits']['total'], 0)
         assert_equal(len(result['hits']['hits']), 0)
+
+
+class TestDeleteSupplier(BaseApplicationTest):
+
+    def setup(self):
+        super(TestDeleteSupplier, self).setup()
+
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            self.supplier = payload
+            self.supplier_code = payload['code']
+
+            response = self.client.post(
+                '/suppliers'.format(self.supplier_code),
+                data=json.dumps({
+                    'supplier': self.supplier
+                }),
+                content_type='application/json')
+            assert_equal(response.status_code, 201)
+
+    def test_delete(self):
+        with self.app.app_context():
+            assert_is_not_none(Supplier.query.filter_by(code=self.supplier_code).first())
+            response = self.client.delete('/suppliers/{}'.format(self.supplier_code))
+            assert_equal(200, response.status_code)
+            assert_is_none(Supplier.query.filter_by(code=self.supplier_code).first())
+
+    def test_nonexistant_delete(self):
+        with self.app.app_context():
+            response = self.client.delete('/suppliers/789012')
+            assert_equal(404, response.status_code)

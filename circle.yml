@@ -1,0 +1,38 @@
+machine:
+  timezone:
+    Australia/Sydney
+  services:
+    - elasticsearch
+
+dependencies:
+  pre:
+    - curl -v -L -o cf-cli_amd64.deb 'https://cli.run.pivotal.io/stable?release=debian64&version=6.17.0&source=github'
+    - sudo dpkg -i cf-cli_amd64.deb
+    - cf -v
+  override:
+    - pip install -r requirements_for_test.txt
+
+database:
+  override:
+    - psql -c 'create database digitalmarketplace_test;' -U postgres
+
+test:
+  override:
+    - ./scripts/run_tests.sh
+
+deployment:
+  development:
+    branch: master
+    commands:
+      - cf login -a https://api.system.staging.digital.gov.au -o dto -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
+      - cf target -o dto -s digital-marketplace
+      - cf push -c 'python application.py db upgrade' -u 'none'
+      - cf push
+
+  production:
+    tag: /release-.*/
+    commands:
+      - cf login -a https://api.system.platform.digital.gov.au -o dto -u $CF_USER_PROD -p $CF_PASSWORD_PROD
+      - cf target -o dto -s digital-marketplace
+      - cf push -f 'manifest.production.yml' -c 'python application.py db upgrade' -u 'none'
+      - cf push -f 'manifest.production.yml'
