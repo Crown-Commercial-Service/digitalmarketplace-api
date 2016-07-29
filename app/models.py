@@ -939,9 +939,9 @@ class Brief(db.Model):
     def applications_closed_at(cls):
         return sql_case([
             (cls.data['requirementsLength'].astext == '1 week', func.date_trunc('day', cls.published_at) + sql_cast(
-                '7 days 23:59:59', INTERVAL)),
+                '1 week 23:59:59', INTERVAL)),
             ], else_=func.date_trunc('day', cls.published_at) + sql_cast(
-                '14 days 23:59:59', INTERVAL))
+                '2 weeks 23:59:59', INTERVAL))
 
     @hybrid_property
     def clarification_questions_closed_at(self):
