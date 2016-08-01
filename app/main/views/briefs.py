@@ -139,20 +139,24 @@ def list_briefs():
     if user_id:
         return jsonify(
             briefs=[brief.serialize() for brief in briefs.all()],
-            links=dict()
+            links={},
         )
     else:
         briefs = briefs.paginate(
             page=page,
-            per_page=current_app.config['DM_API_BRIEFS_PAGE_SIZE'])
+            per_page=current_app.config['DM_API_BRIEFS_PAGE_SIZE'],
+        )
 
         return jsonify(
             briefs=[brief.serialize() for brief in briefs.items],
+            meta={
+                "total": briefs.total,
+            },
             links=pagination_links(
                 briefs,
                 '.list_briefs',
                 request.args
-            )
+            ),
         )
 
 
