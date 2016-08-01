@@ -401,6 +401,36 @@ class TestBriefs(BaseApplicationTest):
             assert brief.clarification_questions[0].question == "How?"
             assert brief.clarification_questions[1].question == "When"
 
+    def test_copy_brief(self):
+        with self.app.app_context():
+            self.framework.status = 'live'
+            self.setup_dummy_user(role='buyer')
+
+            brief = Brief(
+                data={'title': 'my title'},
+                framework=self.framework,
+                lot=self.lot,
+                users=User.query.all()
+            )
+
+        copy = brief.copy()
+
+        assert brief.data == {'title': 'my title'}
+        assert brief.framework == copy.framework
+        assert brief.lot == copy.lot
+        assert brief.users == copy.users
+
+    def test_copy_brief_raises_error_if_framework_is_not_live(self):
+        brief = Brief(
+            data={},
+            framework=self.framework,
+            lot=self.lot
+        )
+        with pytest.raises(ValidationError) as e:
+            copy = brief.copy()
+
+        assert str(e.value.message) == "Framework is not live"
+
 
 class TestBriefResponses(BaseApplicationTest):
     def setup(self):

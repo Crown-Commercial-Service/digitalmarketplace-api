@@ -737,7 +737,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
-        assert data['error'] == "Invalid brief status 'invalid'"
+        assert data['error'] == "Cannot change brief status from 'draft' to 'invalid'"
 
     def test_change_status_makes_audit_event(self):
         self.setup_dummy_briefs(1, title='The Title')
@@ -765,7 +765,7 @@ class TestBriefs(BaseApplicationTest):
     def test_publish_a_brief(self):
         self.setup_dummy_briefs(1, title='The Title')
 
-        res = self.client.put(
+        res = self.client.post(
             '/briefs/1/publish',
             data=json.dumps({
                 'update_details': {'updated_by': 'example'}
@@ -779,7 +779,7 @@ class TestBriefs(BaseApplicationTest):
     def test_withdraw_a_brief(self):
         self.setup_dummy_briefs(1, title='The Title', status='live')
 
-        res = self.client.put(
+        res = self.client.post(
             '/briefs/1/withdraw',
             data=json.dumps({
                 'update_details': {'updated_by': 'example'}
@@ -794,7 +794,7 @@ class TestBriefs(BaseApplicationTest):
     def test_cannot_publish_withdrawn_brief(self):
         self.setup_dummy_briefs(1, title='The Title', status='withdrawn')
 
-        res = self.client.put(
+        res = self.client.post(
             '/briefs/1/publish',
             data=json.dumps({
                 'update_details': {'updated_by': 'example'}
@@ -807,7 +807,7 @@ class TestBriefs(BaseApplicationTest):
     def test_cannot_publish_a_brief_if_is_not_complete(self):
         self.setup_dummy_briefs(1)
 
-        res = self.client.put(
+        res = self.client.post(
             '/briefs/1/publish',
             data=json.dumps({
                 'updated_by': 'example'
@@ -824,7 +824,7 @@ class TestBriefs(BaseApplicationTest):
         res = self.client.get('/briefs/1')
         original_published_at = json.loads(res.get_data(as_text=True))['briefs']['publishedAt']
 
-        res = self.client.put(
+        res = self.client.post(
             '/briefs/1/publish',
             data=json.dumps({
                 'update_details': {'updated_by': 'example'}
@@ -843,7 +843,7 @@ class TestBriefs(BaseApplicationTest):
         res = self.client.get('/briefs/1')
         original_withdrawn_at = json.loads(res.get_data(as_text=True))['briefs']['withdrawnAt']
 
-        res = self.client.put(
+        res = self.client.post(
             '/briefs/1/withdraw',
             data=json.dumps({
                 'update_details': {'updated_by': 'example'}
@@ -866,7 +866,7 @@ class TestBriefs(BaseApplicationTest):
             db.session.add(framework)
             db.session.commit()
 
-        res = self.client.put(
+        res = self.client.post(
             '/briefs/1/publish',
             data=json.dumps({
                 'updated_by': 'example'
@@ -880,7 +880,7 @@ class TestBriefs(BaseApplicationTest):
     def test_publish_brief_makes_audit_event(self):
         self.setup_dummy_briefs(1, title='The Title')
 
-        res = self.client.put(
+        res = self.client.post(
             '/briefs/1/publish',
             data=json.dumps({
                 'update_details': {'updated_by': 'example'}
@@ -903,7 +903,7 @@ class TestBriefs(BaseApplicationTest):
     def test_withdraw_brief_makes_audit_event(self):
         self.setup_dummy_briefs(1, title='The Title', status='live')
 
-        res = self.client.put(
+        res = self.client.post(
             '/briefs/1/withdraw',
             data=json.dumps({
                 'update_details': {'updated_by': 'example'}
@@ -1117,18 +1117,6 @@ class TestBriefs(BaseApplicationTest):
             "answer": "That",
         }
 
-    def test_cannot_make_a_draft_copy_of_a_brief_that_is_not_withdrawn(self):
-        self.setup_dummy_briefs(1, title="The Title", status="live")
-
-        res = self.client.post(
-            "/briefs/1/create-draft-from-withdrawn-brief",
-            data=json.dumps({'updated_by': 'example'}),
-            content_type="application/json")
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 400
-        assert data['error'] == "Brief status is not 'withdrawn'"
-
     def test_cannot_make_a_draft_copy_of_a_brief_if_the_framework_is_closed(self):
         self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
 
@@ -1139,7 +1127,7 @@ class TestBriefs(BaseApplicationTest):
             db.session.commit()
 
         res = self.client.post(
-            "/briefs/1/create-draft-from-withdrawn-brief",
+            "/briefs/1/copy",
             data=json.dumps({'updated_by': 'example'}),
             content_type="application/json")
         data = json.loads(res.get_data(as_text=True))
@@ -1147,18 +1135,17 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == "Framework is not live"
 
-    def test_make_a_draft_copy_of_a_withdrawn_brief(self):
-        # Set up withdrawn brief with clarification question
+    def test_make_a_draft_copy_of_a_brief(self):
+        # Set up brief with clarification question
         self.setup_dummy_briefs(1, title="The Title", status="live")
         with self.app.app_context():
             brief = Brief.query.get(1)
             brief.add_clarification_question('question', 'answer')
-            brief.status = 'withdrawn'
             db.session.add(brief)
             db.session.commit()
 
         res = self.client.post(
-            "/briefs/1/create-draft-from-withdrawn-brief",
+            "/briefs/1/copy",
             data=json.dumps({'updated_by': 'example'}),
             content_type="application/json")
         data = json.loads(res.get_data(as_text=True))
@@ -1168,14 +1155,14 @@ class TestBriefs(BaseApplicationTest):
         assert data["briefs"]["lot"] == 'digital-specialists'
         assert data["briefs"]["frameworkSlug"] == 'digital-outcomes-and-specialists'
         assert data["briefs"]["status"] == 'draft'
-        assert data["briefs"]["title"] == 'Copy of The Title'
+        assert data["briefs"]["title"] == 'The Title'
         assert not data["briefs"]["clarificationQuestions"]
 
-    def test_make_a_draft_copy_of_a_withdrawn_brief_makes_audit_event(self):
+    def test_make_a_draft_copy_of_a_brief_makes_audit_event(self):
         self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
 
         res = self.client.post(
-            "/briefs/1/create-draft-from-withdrawn-brief",
+            "/briefs/1/copy",
             data=json.dumps({'updated_by': 'example'}),
             content_type="application/json")
         assert res.status_code == 201
@@ -1186,7 +1173,7 @@ class TestBriefs(BaseApplicationTest):
 
         brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.create_brief.value]
         assert len(brief_audits) == 1
-        assert brief_audits[0]['data']['withdrawnBriefId'] == 1
+        assert brief_audits[0]['data']['originalBriefId'] == 1
         assert brief_audits[0]['data']['briefId'] > 1
 
 

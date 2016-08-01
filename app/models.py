@@ -965,10 +965,10 @@ class Brief(db.Model):
 
     @hybrid_property
     def status(self):
-        if self.published_at is None:
-            return 'draft'
-        elif self.withdrawn_at:
+        if self.withdrawn_at:
             return 'withdrawn'
+        elif not self.published_at:
+            return 'draft'
         elif self.applications_closed_at > datetime.utcnow():
             return 'live'
         else:
@@ -978,27 +978,19 @@ class Brief(db.Model):
     def status(self, value):
         if self.status == value:
             return
-        elif self.status == 'withdrawn':
-            raise ValidationError("Cannot change brief status once it has been 'withdrawn'")
-        elif value == 'live':
+
+        if value == 'live' and self.status == 'draft':
             self.published_at = datetime.utcnow()
-        elif value == 'withdrawn':
-            if self.published_at:
-                self.withdrawn_at = datetime.utcnow()
-            else:
-                raise ValidationError("Cannot withdraw a brief that has not been published")
-        elif value == 'draft' and self.published_at is not None:
-            raise ValidationError("Cannot change brief status to 'draft'")
-        elif value == 'closed':
-            raise ValidationError("Cannot change brief status to 'closed'")
+        elif value == 'withdrawn' and self.status == 'live':
+            self.withdrawn_at = datetime.utcnow()
         else:
-            raise ValidationError("Invalid brief status '{}'".format(value))
+            raise ValidationError("Cannot change brief status from '{}' to '{}'".format(self.status, value))
 
     @status.expression
     def status(cls):
         return sql_case([
-            (cls.published_at.is_(None), 'draft'),
             (cls.withdrawn_at.isnot(None), 'withdrawn'),
+            (cls.published_at.is_(None), 'draft'),
             (cls.applications_closed_at > datetime.utcnow(), 'live')
         ], else_='closed')
 
@@ -1023,6 +1015,17 @@ class Brief(db.Model):
         current_data.update(data)
 
         self.data = current_data
+
+    def copy(self):
+        if self.framework.status != 'live':
+            raise ValidationError("Framework is not live")
+
+        return Brief(
+            data=self.data,
+            framework=self.framework,
+            lot=self.lot,
+            users=self.users
+        )
 
     def _build_date_and_length_data(self):
         published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
