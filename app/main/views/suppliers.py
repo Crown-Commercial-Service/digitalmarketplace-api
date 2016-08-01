@@ -91,6 +91,7 @@ def delete_supplier(code):
 
     return jsonify(message="done"), 200
 
+
 @main.route('/suppliers', methods=['DELETE'])
 def delete_suppliers():
     try:
@@ -103,6 +104,7 @@ def delete_suppliers():
         return jsonify(message="Database Error: {0}".format(e)), 400
 
     return jsonify(message="done"), 200
+
 
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
