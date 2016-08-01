@@ -129,7 +129,11 @@ def commit_and_archive_service(updated_service, update_details,
 
 
 def index_service(service):
-    if service.framework.status == 'live' and service.status == 'published':
+    if (
+        service.framework.status == 'live' and
+        service.framework.framework == 'g-cloud' and
+        service.status == 'published'
+    ):
         try:
             search_api_client.index(service.service_id, service.serialize())
         except dmapiclient.HTTPError as e:
