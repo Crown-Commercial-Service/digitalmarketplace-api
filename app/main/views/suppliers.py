@@ -8,7 +8,8 @@ from ...models import (
     Supplier, AuditEvent,
     Service, SupplierFramework, Framework
 )
-from ...search_indices import es_client, get_supplier_index_name, SUPPLIER_DOC_TYPE
+from ...search_indices import es_client, get_supplier_index_name, SUPPLIER_DOC_TYPE, delete_indices, create_indices
+
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400,
@@ -83,6 +84,22 @@ def delete_supplier(code):
                                   id=supplier.code)
         db.session.delete(supplier)
         db.session.commit()
+    except TransportError, e:
+        return jsonify(message=str(e)), e.status_code
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message="Database Error: {0}".format(e)), 400
+
+    return jsonify(message="done"), 200
+
+
+@main.route('/suppliers', methods=['DELETE'])
+def delete_suppliers():
+    try:
+        Supplier.query.delete()
+        db.session.commit()
+        delete_indices()
+        create_indices()
     except TransportError, e:
         return jsonify(message=str(e)), e.status_code
     except IntegrityError as e:
