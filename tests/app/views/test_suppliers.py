@@ -9,6 +9,7 @@ from app import db
 from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, DraftService, Service
 from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, isRecentTimestamp
 from random import randint
+from decimal import Decimal
 
 
 class TestGetSupplier(BaseApplicationTest):
@@ -181,6 +182,22 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             ).first()
 
             assert_equal(supplier.name, "New Name")
+
+    def test_price_update(self):
+        response = self.update_request({"prices": [{
+            "serviceRole": {"category": "Business Analysis", "role": "Junior Business Analyst"},
+            "hourlyRate": "1.10",
+            "dailyRate": "2.90"}]})
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.code == 123456
+            ).first()
+
+            price = supplier.prices[0]
+            assert_equal(price.hourly_rate, Decimal('1.10'))
+            assert_equal(price.daily_rate, Decimal('2.90'))
 
     def test_supplier_update_creates_audit_event(self):
         self.update_request({'name': "Name"})
