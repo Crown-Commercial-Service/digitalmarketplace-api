@@ -28,7 +28,7 @@ def upgrade():
     conn = op.get_bind()
     for brief in conn.execute(briefs.select()):
         # skip briefs that are unpublished (&) not a specialist brief (&) have requirements length set
-        if not brief.publishedAt or brief.lot_id != 6 or brief.data.get('requirementsLength') != None:
+        if not brief.published_at or brief.lot_id != 6 or brief.data.get('requirementsLength') != None:
             continue
 
         brief.data['requirementsLength'] = '2 weeks'
