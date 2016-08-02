@@ -1,0 +1,16 @@
+{
+  "checks": {
+    "gov.au-marketplace-api_suppliers": {
+      "handlers": ["default", "slack"],
+      "command": "/opt/sensu/embedded/bin/check-http.rb --timeout 10 --url ${URL}suppliers --headers \"Authorization: Bearer ${API_TOKEN}\" --response-code 200",
+      "interval": 300,
+      "standalone": true
+    },
+    "gov.au-marketplace-api_search": {
+      "handlers": ["default", "slack"],
+      "command": "/opt/sensu/embedded/bin/check-http.rb --timeout 10 --url ${URL}suppliers/search -m POST --body '{\"query\":{\"match_all\":{}}}' --headers \"Authorization: Bearer ${API_TOKEN}\" --response-code 200 --negquery '"total": 0'",
+      "interval": 300,
+      "standalone": true
+    }
+  }
+}

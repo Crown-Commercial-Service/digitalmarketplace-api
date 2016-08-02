@@ -1,0 +1,10 @@
+{
+  "checks": {
+    "gov.au-marketplace-api_auth": {
+      "handlers": ["default", "slack"],
+      "command": "/opt/sensu/embedded/bin/check-http.rb --timeout 10 --url ${URL} --response-code 401",
+      "interval": 300,
+      "standalone": true
+    }
+  }
+}
