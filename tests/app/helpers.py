@@ -313,3 +313,80 @@ class JSONUpdateTestMixin(JSONTestMixin):
 
         assert_equal(response.status_code, 400)
         assert_in("'updated_by' is a required property", response.get_data(as_text=True))
+
+
+class GCloud8ApplicationTest(BaseApplicationTest):
+
+    """
+    --- frameworks ---
+    1: g-cloud-6: live
+    2: g-cloud-4: expired
+    3: g-cloud-5: live
+    4: g-cloud-7: pending
+    5: digital-outcomes-and-specialists: coming
+    6: g-cloud-8: open
+
+    """
+
+    def setup(self):
+        self.new_framework_statuses = {
+            'digital-outcomes-and-specialists': 'live',
+            'g-cloud-8': 'live',
+            'g-cloud-7': 'live',
+            'g-cloud-6': 'expired',
+            'g-cloud-5': 'expired',
+            'g-cloud-4': 'expired',
+        }
+
+        super(GCloud8ApplicationTest, self).setup()
+        with self.app.app_context():
+            self.setup_g_cloud_8()
+
+            if self.new_framework_statuses:
+                self.initial_framework_statuses = self._new_framework_statuses(self.new_framework_statuses)
+
+    @staticmethod
+    def setup_g_cloud_8():
+        g_cloud_8 = Framework(
+            slug='g-cloud-8',
+            name='G-Cloud 8',
+            framework='g-cloud',
+            framework_agreement_details={'frameworkAgreementVersion': 'v1.0'},
+            status='open',
+            clarification_questions_open=False
+        )
+        db.session.add(g_cloud_8)
+        db.session.commit()
+
+    @staticmethod
+    def _new_framework_statuses(new_statuses):
+        initial_statuses = {}
+
+        frameworks = Framework.query.all()
+        for framework in frameworks:
+            # save the old status
+            initial_statuses[framework.slug] = framework.status
+
+            # overwrite it with a new status
+            if framework.slug in new_statuses:
+                framework.status = new_statuses[framework.slug]
+
+            db.session.add(framework)
+
+        db.session.commit()
+        return initial_statuses
+
+    def teardown(self):
+        with self.app.app_context():
+            if self.new_framework_statuses:
+                self._new_framework_statuses(self.initial_framework_statuses)
+
+            self.teardown_g_cloud_8()
+
+        super(GCloud8ApplicationTest, self).teardown()
+
+    @staticmethod
+    def teardown_g_cloud_8():
+        g_cloud_8 = Framework.query.filter(Framework.slug == 'g-cloud-8').first()
+        Framework.query.filter(Framework.id == g_cloud_8.id).delete()
+        db.session.commit()
