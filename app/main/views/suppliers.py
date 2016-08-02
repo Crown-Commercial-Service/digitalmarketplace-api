@@ -6,7 +6,7 @@ from .. import main
 from ... import db
 from ...models import (
     Supplier, AuditEvent,
-    Service, SupplierFramework, Framework
+    Service, SupplierFramework, Framework, PriceSchedule
 )
 from ...search_indices import es_client, get_supplier_index_name, SUPPLIER_DOC_TYPE, delete_indices, create_indices
 
@@ -140,18 +140,12 @@ def supplier_search():
 
 
 def update_supplier_data_impl(supplier, supplier_data, success_code):
+    db.session.query(PriceSchedule).filter(PriceSchedule.supplier_id == supplier.id).delete()
     supplier.update_from_json(supplier_data)
 
     try:
         import json
         db.session.add(supplier)
-        # db.session.add(
-        #     AuditEvent(
-        #         audit_type=AuditTypes.supplier_update,
-        #         db_object=supplier,
-        #         user=updater_json['updated_by'],
-        #         data={'update': request_data['suppliers']})
-        # )
         db.session.commit()
         supplier_json = json.dumps(supplier.serialize())
         es_client.index(index=get_supplier_index_name(),
