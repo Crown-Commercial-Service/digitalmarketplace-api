@@ -19,11 +19,10 @@ def app(request):
     return create_app('test')
 
 
-@pytest.fixture()
-def live_framework(request, app, status='live'):
+def _update_framework(request, app, status, framework_slug):
     with app.app_context():
         framework = Framework.query.filter(
-            Framework.slug == 'digital-outcomes-and-specialists'
+            Framework.slug == framework_slug
         ).first()
         original_framework_status = framework.status
         framework.status = status
@@ -34,7 +33,7 @@ def live_framework(request, app, status='live'):
     def teardown():
         with app.app_context():
             framework = Framework.query.filter(
-                Framework.slug == 'digital-outcomes-and-specialists'
+                Framework.slug == framework_slug
             ).first()
             framework.status = original_framework_status
 
@@ -44,6 +43,11 @@ def live_framework(request, app, status='live'):
     request.addfinalizer(teardown)
 
 
-@pytest.fixture()
+@pytest.fixture(params=[('live', 'digital-outcomes-and-specialists')])
+def live_framework(request, app):
+    _update_framework(request, app, request.param[0], request.param[1])
+
+
+@pytest.fixture(params=[('expired', 'digital-outcomes-and-specialists')])
 def expired_framework(request, app):
-    return live_framework(request, app, status='expired')
+    _update_framework(request, app, request.param[0], request.param[1])
