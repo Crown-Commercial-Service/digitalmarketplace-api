@@ -44,18 +44,9 @@ def _update_framework(request, app, status, framework_slug):
 
 
 @pytest.fixture(params=[('live', 'digital-outcomes-and-specialists')])
-def live_framework(request, app):
-    _update_framework(request, app, request.param[0], request.param[1])
-
-
-@pytest.fixture(params=[('expired', 'digital-outcomes-and-specialists')])
-def expired_framework(request, app):
-    _update_framework(request, app, request.param[0], request.param[1])
-
-
-@pytest.fixture()
 def update_framework(request, app):
-    def inner_update_framework(status='live', framework_slug='digital-outcomes-and-specialists'):
+
+    def _update_framework(request, app, status, framework_slug):
         with app.app_context():
             framework = Framework.query.filter(
                 Framework.slug == framework_slug
@@ -78,5 +69,4 @@ def update_framework(request, app):
 
         request.addfinalizer(teardown)
 
-    return inner_update_framework
-
+    _update_framework(request, app, request.param[0], request.param[1])
