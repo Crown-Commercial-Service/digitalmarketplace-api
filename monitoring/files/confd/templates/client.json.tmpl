@@ -1,0 +1,15 @@
+{
+  "rabbitmq": {
+    "host": "{{getenv "RABBITMQ_HOST"}}",
+    "port": {{getenv "RABBITMQ_PORT"}},
+    "user": "{{getenv "RABBITMQ_USER"}}",
+    "password": "{{getenv "RABBITMQ_PASSWORD"}}",
+    "vhost": "/{{getenv "RABBITMQ_VHOST"}}"
+  },
+  "client": {
+    "name": "{{getenv "HOSTNAME"}}",
+    "address": "",
+    "subscriptions": [],
+    "slack_channel": "#marketplace"
+  }
+}

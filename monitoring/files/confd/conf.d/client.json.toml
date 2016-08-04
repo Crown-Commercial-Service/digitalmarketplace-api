@@ -1,0 +1,4 @@
+[template]
+src = "client.json.tmpl"
+dest = "/etc/sensu/conf.d/client.json"
+

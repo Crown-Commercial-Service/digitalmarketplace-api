@@ -140,11 +140,13 @@ def supplier_search():
 
 
 def update_supplier_data_impl(supplier, supplier_data, success_code):
-    db.session.query(PriceSchedule).filter(PriceSchedule.supplier_id == supplier.id).delete()
-    supplier.update_from_json(supplier_data)
-
     try:
         import json
+        if 'prices' in supplier_data:
+            db.session.query(PriceSchedule).filter(PriceSchedule.supplier_id == supplier.id).delete()
+
+        supplier.update_from_json(supplier_data)
+
         db.session.add(supplier)
         db.session.commit()
         supplier_json = json.dumps(supplier.serialize())
