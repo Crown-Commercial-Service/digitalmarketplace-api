@@ -6,7 +6,7 @@ from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ... import db, encryption
-from ...models import User, AuditEvent, Supplier, Framework, SupplierFramework, DraftService
+from ...models import User, AuditEvent, Supplier, Framework, SupplierFramework, DraftService, Brief, BriefUser
 from ...utils import get_json_from_request, json_has_required_keys, \
     json_has_matching_id, pagination_links, get_valid_page_or_1, validate_and_return_updater_request
 from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400, is_valid_buyer_email
@@ -296,3 +296,32 @@ def check_supplier_role(role, supplier_id):
         abort(400, "'supplier_id' is required for users with 'supplier' role")
     elif role != 'supplier' and supplier_id:
         abort(400, "'supplier_id' is only valid for users with 'supplier' role, not '{}'".format(role))
+
+
+@main.route("/buyers/briefs", methods=["GET"])
+def export_buyers_and_their_briefs():
+    buyers_with_briefs = db.session.query(User, Brief).\
+        outerjoin(BriefUser, User.id == BriefUser.user_id).\
+        outerjoin(Brief, BriefUser.brief_id == Brief.id).\
+        filter(User.role == 'buyer').\
+        order_by(User.name, Brief.id).\
+        all()
+
+    buyer_rows = []
+    last_email_address = ''
+    for buyer, brief in buyers_with_briefs:
+        if buyer.email_address == last_email_address:
+            last_email_address = buyer.email_address
+            buyer_rows[-1]['briefs'] = buyer_rows[-1]['briefs'] + ', {} - {}'.\
+                format(brief.data.get('title'), brief.status) if brief else None
+            continue
+        last_email_address = buyer.email_address
+        buyer_rows.append({
+            'buyer_name': buyer.name,
+            'buyer_email': buyer.email_address,
+            'buyer_phone': buyer.phone_number,
+            'buyer_created': buyer.created_at,
+            'briefs': '{} - {}'.format(brief.data.get('title'), brief.status) if brief else ''
+        })
+
+    return jsonify(buyers=[buyer for buyer in buyer_rows])
