@@ -33,7 +33,7 @@ def create_app(config_name):
 
     if application.config['VCAP_SERVICES']:
         cf_services = json.loads(application.config['VCAP_SERVICES'])
-        application.config['SQLALCHEMY_DATABASE_URI'] = cf_services['PostgreSQL'][0]['credentials']['uri']
+        application.config['SQLALCHEMY_DATABASE_URI'] = cf_services['postgres'][0]['credentials']['uri']
 
     from .main import main as main_blueprint
     application.register_blueprint(main_blueprint)
