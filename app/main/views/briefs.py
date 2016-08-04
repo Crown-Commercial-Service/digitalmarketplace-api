@@ -162,6 +162,7 @@ def list_briefs():
 
 @main.route('/briefs/<int:brief_id>/status', methods=['PUT'])
 def update_brief_status(brief_id):
+    """Route is deprecated. Use `update_brief_status_by_action` instead."""
     updater_json = validate_and_return_updater_request()
 
     json_payload = get_json_from_request()
@@ -196,6 +197,79 @@ def update_brief_status(brief_id):
         db.session.commit()
 
     return jsonify(briefs=brief.serialize()), 200
+
+
+@main.route('/briefs/<int:brief_id>/<any(publish, withdraw):action>', methods=['POST'])
+def update_brief_status_by_action(brief_id, action):
+    updater_json = validate_and_return_updater_request()
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    if brief.framework.status != 'live':
+        abort(400, "Framework is not live")
+
+    action_to_status = {
+        'publish': 'live',
+        'withdraw': 'withdrawn'
+    }
+    if brief.status != action_to_status[action]:
+        previousStatus = brief.status
+        brief.status = action_to_status[action]
+
+        if action == 'publish':
+            validate_brief_data(brief, enforce_required=True)
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.update_brief_status,
+            user=updater_json['updated_by'],
+            data={
+                'briefId': brief.id,
+                'briefPreviousStatus': previousStatus,
+                'briefStatus': brief.status,
+            },
+            db_object=brief,
+        )
+
+        db.session.add(brief)
+        db.session.add(audit)
+        db.session.commit()
+
+    return jsonify(briefs=brief.serialize()), 200
+
+
+@main.route('/briefs/<int:brief_id>/copy', methods=['POST'])
+def copy_brief(brief_id):
+    updater_json = validate_and_return_updater_request()
+
+    original_brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    new_brief = original_brief.copy()
+
+    db.session.add(new_brief)
+    try:
+        db.session.flush()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.create_brief,
+        user=updater_json['updated_by'],
+        data={
+            'originalBriefId': original_brief.id,
+            'briefId': new_brief.id
+        },
+        db_object=new_brief,
+    )
+
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify(briefs=new_brief.serialize()), 201
 
 
 @main.route('/briefs/<int:brief_id>', methods=['DELETE'])

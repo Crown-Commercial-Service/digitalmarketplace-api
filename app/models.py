@@ -965,7 +965,9 @@ class Brief(db.Model):
 
     @hybrid_property
     def status(self):
-        if self.published_at is None:
+        if self.withdrawn_at:
+            return 'withdrawn'
+        elif not self.published_at:
             return 'draft'
         elif self.applications_closed_at > datetime.utcnow():
             return 'live'
@@ -974,20 +976,20 @@ class Brief(db.Model):
 
     @status.setter
     def status(self, value):
-        if value == self.status:
+        if self.status == value:
             return
-        elif value == 'live':
+
+        if value == 'live' and self.status == 'draft':
             self.published_at = datetime.utcnow()
-        elif value == 'draft':
-            self.published_at = None
-        elif value == 'closed':
-            raise ValidationError("Cannot change brief status to 'closed'")
+        elif value == 'withdrawn' and self.status == 'live':
+            self.withdrawn_at = datetime.utcnow()
         else:
-            raise ValidationError("Invalid brief status '{}'".format(value))
+            raise ValidationError("Cannot change brief status from '{}' to '{}'".format(self.status, value))
 
     @status.expression
     def status(cls):
         return sql_case([
+            (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.published_at.is_(None), 'draft'),
             (cls.applications_closed_at > datetime.utcnow(), 'live')
         ], else_='closed')
@@ -1013,6 +1015,17 @@ class Brief(db.Model):
         current_data.update(data)
 
         self.data = current_data
+
+    def copy(self):
+        if self.framework.status != 'live':
+            raise ValidationError("Framework is not live")
+
+        return Brief(
+            data=self.data,
+            framework=self.framework,
+            lot=self.lot,
+            users=self.users
+        )
 
     def _build_date_and_length_data(self):
         published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
@@ -1051,6 +1064,11 @@ class Brief(db.Model):
                 'clarificationQuestionsPublishedBy': self.clarification_questions_published_by.strftime(
                     DATETIME_FORMAT),
                 'clarificationQuestionsAreClosed': self.clarification_questions_are_closed,
+            })
+
+        if self.withdrawn_at:
+            data.update({
+                'withdrawnAt': self.withdrawn_at.strftime(DATETIME_FORMAT)
             })
 
         data['links'] = {

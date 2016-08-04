@@ -7,7 +7,7 @@ from ..helpers import BaseApplicationTest, COMPLETE_DIGITAL_SPECIALISTS_BRIEF
 
 from dmapiclient.audit import AuditTypes
 from app import db
-from app.models import Framework
+from app.models import Brief, Framework
 
 
 class TestBriefs(BaseApplicationTest):
@@ -724,22 +724,6 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == "Framework is not live"
 
-    def test_can_unpublish_a_live_brief(self):
-        self.setup_dummy_briefs(1, title="Published brief", status='live')
-
-        res = self.client.put(
-            '/briefs/1/status',
-            data=json.dumps({
-                'briefs': {'status': 'draft'},
-                'update_details': {'updated_by': 'example'}
-            }),
-            content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 200
-        assert data['briefs']['status'] == 'draft'
-        assert 'publishedAt' not in data['briefs']
-
     def test_cannot_set_status_to_invalid_value(self):
         self.setup_dummy_briefs(1, status='draft')
 
@@ -753,7 +737,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
-        assert data['error'] == "Invalid brief status 'invalid'"
+        assert data['error'] == "Cannot change brief status from 'draft' to 'invalid'"
 
     def test_change_status_makes_audit_event(self):
         self.setup_dummy_briefs(1, title='The Title')
@@ -776,6 +760,167 @@ class TestBriefs(BaseApplicationTest):
         assert brief_audits[0]['data'] == {
             'briefId': mock.ANY,
             'briefStatus': 'live',
+        }
+
+    def test_publish_a_brief(self):
+        self.setup_dummy_briefs(1, title='The Title')
+
+        res = self.client.post(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['briefs']['status'] == 'live'
+
+    def test_withdraw_a_brief(self):
+        self.setup_dummy_briefs(1, title='The Title', status='live')
+
+        res = self.client.post(
+            '/briefs/1/withdraw',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['briefs']['status'] == 'withdrawn'
+        assert data['briefs']['withdrawnAt'] is not None
+
+    def test_cannot_publish_withdrawn_brief(self):
+        self.setup_dummy_briefs(1, title='The Title', status='withdrawn')
+
+        res = self.client.post(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+
+    def test_cannot_publish_a_brief_if_is_not_complete(self):
+        self.setup_dummy_briefs(1)
+
+        res = self.client.post(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'updated_by': 'example'
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == {'title': 'answer_required'}
+
+    def test_published_at_is_not_updated_if_live_brief_is_published(self):
+        self.setup_dummy_briefs(1, status='live', title='The title')
+
+        res = self.client.get('/briefs/1')
+        original_published_at = json.loads(res.get_data(as_text=True))['briefs']['publishedAt']
+
+        res = self.client.post(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+
+        assert res.status_code == 200
+
+        res = self.client.get('/briefs/1')
+        published_at = json.loads(res.get_data(as_text=True))['briefs']['publishedAt']
+        assert published_at == original_published_at
+
+    def test_withdrawn_at_is_not_updated_if_withdrawn_brief_is_withdrawn(self):
+        self.setup_dummy_briefs(1, title='The title', status='withdrawn')
+
+        res = self.client.get('/briefs/1')
+        original_withdrawn_at = json.loads(res.get_data(as_text=True))['briefs']['withdrawnAt']
+
+        res = self.client.post(
+            '/briefs/1/withdraw',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        res = self.client.get('/briefs/1')
+        withdrawn_at = json.loads(res.get_data(as_text=True))['briefs']['withdrawnAt']
+        assert withdrawn_at == original_withdrawn_at
+
+    def test_cannot_publish_a_brief_if_the_framework_is_no_longer_live(self):
+        self.setup_dummy_briefs(1, title='The title')
+
+        with self.app.app_context():
+            framework = Framework.query.get(5)
+            framework.status = 'expired'
+            db.session.add(framework)
+            db.session.commit()
+
+        res = self.client.post(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'updated_by': 'example'
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == "Framework is not live"
+
+    def test_publish_brief_makes_audit_event(self):
+        self.setup_dummy_briefs(1, title='The Title')
+
+        res = self.client.post(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        assert res.status_code == 200
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief_status.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data'] == {
+            'briefId': mock.ANY,
+            'briefPreviousStatus': 'draft',
+            'briefStatus': 'live',
+        }
+
+    def test_withdraw_brief_makes_audit_event(self):
+        self.setup_dummy_briefs(1, title='The Title', status='live')
+
+        res = self.client.post(
+            '/briefs/1/withdraw',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        assert res.status_code == 200
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief_status.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data'] == {
+            'briefId': mock.ANY,
+            'briefPreviousStatus': 'live',
+            'briefStatus': 'withdrawn',
         }
 
     def test_can_delete_a_draft_brief(self):
@@ -971,6 +1116,65 @@ class TestBriefs(BaseApplicationTest):
             "question": "What?",
             "answer": "That",
         }
+
+    def test_cannot_make_a_draft_copy_of_a_brief_if_the_framework_is_closed(self):
+        self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
+
+        with self.app.app_context():
+            framework = Framework.query.get(5)
+            framework.status = 'expired'
+            db.session.add(framework)
+            db.session.commit()
+
+        res = self.client.post(
+            "/briefs/1/copy",
+            data=json.dumps({'updated_by': 'example'}),
+            content_type="application/json")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == "Framework is not live"
+
+    def test_make_a_draft_copy_of_a_brief(self):
+        # Set up brief with clarification question
+        self.setup_dummy_briefs(1, title="The Title", status="live")
+        with self.app.app_context():
+            brief = Brief.query.get(1)
+            brief.add_clarification_question('question', 'answer')
+            db.session.add(brief)
+            db.session.commit()
+
+        res = self.client.post(
+            "/briefs/1/copy",
+            data=json.dumps({'updated_by': 'example'}),
+            content_type="application/json")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 201
+        assert data["briefs"]["id"] > 1
+        assert data["briefs"]["lot"] == 'digital-specialists'
+        assert data["briefs"]["frameworkSlug"] == 'digital-outcomes-and-specialists'
+        assert data["briefs"]["status"] == 'draft'
+        assert data["briefs"]["title"] == 'The Title'
+        assert not data["briefs"]["clarificationQuestions"]
+
+    def test_make_a_draft_copy_of_a_brief_makes_audit_event(self):
+        self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
+
+        res = self.client.post(
+            "/briefs/1/copy",
+            data=json.dumps({'updated_by': 'example'}),
+            content_type="application/json")
+        assert res.status_code == 201
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.create_brief.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data']['originalBriefId'] == 1
+        assert brief_audits[0]['data']['briefId'] > 1
 
 
 class TestSupplierIsEligibleForBrief(BaseApplicationTest):
