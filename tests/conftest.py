@@ -44,9 +44,9 @@ def _update_framework(request, app, status, framework_slug):
 
 
 @pytest.fixture(params=[('live', 'digital-outcomes-and-specialists')])
-def update_framework(request, app):
+def update_framework_status(request, app):
 
-    def _update_framework(request, app, status, framework_slug):
+    def _update_framework_status(request, app, status, framework_slug):
         with app.app_context():
             framework = Framework.query.filter(
                 Framework.slug == framework_slug
@@ -69,4 +69,4 @@ def update_framework(request, app):
 
         request.addfinalizer(teardown)
 
-    _update_framework(request, app, request.param[0], request.param[1])
+    _update_framework_status(request, app, request.param[0], request.param[1])
