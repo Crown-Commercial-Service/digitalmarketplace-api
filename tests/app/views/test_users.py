@@ -6,6 +6,7 @@ from app.models import User, Supplier
 from datetime import datetime
 from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
 from dmutils.formats import DATETIME_FORMAT
+import mock
 
 
 class BaseUserTest(BaseApplicationTest):
@@ -1385,3 +1386,165 @@ class TestUsersEmailCheck(BaseUserTest):
     def test_email_address_is_required(self):
         response = self.client.get('/users/check-buyer-email')
         assert response.status_code == 400
+
+
+class TestBuyersExport(BaseUserTest):
+
+    def test_the_response_returns_buyers(self):
+        buyer = {
+            "emailAddress": "person@gov.uk",
+            "name": "John Example",
+            "password": "minimum10characterpassword",
+            "role": "buyer",
+        }
+        self._post_user(buyer)
+
+        response = self.client.get('/buyers/briefs')
+        data = json.loads(response.get_data())['buyers']
+
+        assert response.status_code == 200
+        assert len(data) == 1
+
+    def test_the_response_does_not_return_suppliers(self):
+        self._post_supplier()
+        supplier = {
+            "emailAddress": "j@examplecompany.biz",
+            "name": "John Example",
+            "password": "minimum10characterpassword",
+            "role": "supplier",
+            "supplierId": self.supplier_id
+        }
+        self._post_user(supplier)
+
+        response = self.client.get('/buyers/briefs')
+        data = json.loads(response.get_data())['buyers']
+
+        assert response.status_code == 200
+        assert len(data) == 0
+
+    def test_the_response_returns_only_buyers(self):
+        self._post_supplier()
+        users = [
+            {
+                "emailAddress": "j@gov.uk",
+                "name": "John Example",
+                "password": "minimum10characterpassword",
+                "role": "buyer"
+            },
+            {
+                "emailAddress": "j@examplecompany.biz",
+                "name": "John Example",
+                "password": "minimum10characterpassword",
+                "role": "supplier",
+                "supplierId": self.supplier_id
+            }
+        ]
+
+        for user in users:
+            self._post_user(user)
+
+        response = self.client.get('/buyers/briefs')
+        data = json.loads(response.get_data())['buyers']
+
+        assert response.status_code == 200
+        assert len(data) == 1
+        assert data[0]['buyer_email'] == 'j@gov.uk'
+
+    def test_the_response_has_correct_details(self):
+        with mock.patch('app.main.views.users.datetime') as mock_date:
+            mock_date.utcnow.return_value = datetime(2016, 8, 4, 12, 0)
+            buyer = {
+                "emailAddress": "j@gov.uk",
+                "name": "John Example",
+                "password": "minimum10characterpassword",
+                "role": "buyer",
+                "phoneNumber": '01234567891'
+            }
+            self._post_user(buyer)
+
+            response = self.client.get('/buyers/briefs')
+            data = json.loads(response.get_data())['buyers']
+            buyer = data[0]
+
+            assert response.status_code == 200
+            assert buyer['buyer_name'] == "John Example"
+            assert buyer['buyer_email'] == "j@gov.uk"
+            assert buyer['buyer_phone'] == "01234567891"
+            assert buyer['buyer_created'] == 'Thu, 04 Aug 2016 12:00:00 GMT'
+            assert buyer['briefs'] == ''
+
+    def test_the_response_has_the_buyers_brief(self):
+        with self.app.app_context():
+            buyer = {
+                "emailAddress": "person@gov.uk",
+                "name": "John Example",
+                "password": "minimum10characterpassword",
+                "role": "buyer",
+            }
+            self._post_user(buyer)
+            user = db.session.query(User).filter_by(name="John Example").first()
+
+            self.set_framework_status("digital-outcomes-and-specialists", "live")
+            brief = {
+                "briefs": {
+                    "frameworkSlug": "digital-outcomes-and-specialists",
+                    "lot": "digital-specialists",
+                    "userId": user.id,
+                    "title": "Writing tests"
+                },
+                "update_details": {
+                    "updated_by": "Chris"
+                }
+            }
+            self.client.post('/briefs', data=json.dumps(brief), content_type='application/json')
+
+            response = self.client.get('/buyers/briefs')
+            data = json.loads(response.get_data())['buyers']
+            buyer = data[0]
+
+            assert buyer['briefs'] == 'Writing tests - draft'
+
+    def test_only_one_row_is_returned_for_a_user_with_multiple_briefs(self):
+        with self.app.app_context():
+            buyer = {
+                "emailAddress": "person@gov.uk",
+                "name": "John Example",
+                "password": "minimum10characterpassword",
+                "role": "buyer",
+            }
+            self._post_user(buyer)
+            database_buyer = db.session.query(User).filter_by(name="John Example").first()
+
+            self.set_framework_status("digital-outcomes-and-specialists", "live")
+            brief_one = {
+                "briefs": {
+                    "frameworkSlug": "digital-outcomes-and-specialists",
+                    "lot": "digital-specialists",
+                    "userId": database_buyer.id,
+                    "title": "Writing tests"
+                },
+                "update_details": {
+                    "updated_by": "Chris"
+                }
+            }
+            brief_two = {
+                "briefs": {
+                    "frameworkSlug": "digital-outcomes-and-specialists",
+                    "lot": "digital-specialists",
+                    "userId": database_buyer.id,
+                    "title": "Writing even more tests"
+                },
+                "update_details": {
+                    "updated_by": "Chris"
+                }
+            }
+
+            self.client.post('/briefs', data=json.dumps(brief_one), content_type='application/json')
+            self.client.post('/briefs', data=json.dumps(brief_two), content_type='application/json')
+
+            response = self.client.get('/buyers/briefs')
+            data = json.loads(response.get_data())['buyers']
+            buyer = data[0]
+
+            assert len(data) == 1
+            assert buyer['briefs'] == 'Writing tests - draft, Writing even more tests - draft'
