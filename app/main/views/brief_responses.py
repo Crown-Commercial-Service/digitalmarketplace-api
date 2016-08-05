@@ -22,7 +22,7 @@ def create_brief_response():
 
     json_has_required_keys(json_payload, ['briefResponses'])
     brief_response_json = json_payload['briefResponses']
-    json_has_required_keys(brief_response_json, ['briefId', 'supplierId'])
+    json_has_required_keys(brief_response_json, ['briefId', 'supplierCode'])
 
     try:
         brief = Brief.query.get(brief_response_json['briefId'])
@@ -46,7 +46,7 @@ def create_brief_response():
 
     # Check if brief response already exists from this supplier
     if BriefResponse.query.filter(BriefResponse.supplier == supplier, BriefResponse.brief == brief).first():
-        abort(400, "Brief response already exists for supplier '{}'".format(supplier.supplier_id))
+        abort(400, "Brief response already exists for supplier '{}'".format(supplier.code))
 
     brief_response = BriefResponse(
         data=brief_response_json,

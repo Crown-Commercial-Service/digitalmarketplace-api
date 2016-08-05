@@ -35,22 +35,22 @@ def validate_and_return_lot(json_payload):
 
 
 def validate_and_return_supplier(json_payload):
-    json_has_required_keys(json_payload, ['supplierId'])
+    json_has_required_keys(json_payload, ['supplierCode'])
     try:
         supplier = Supplier.query.filter(
-            Supplier.supplier_id == json_payload['supplierId']
+            Supplier.code == json_payload['supplierCode']
         ).first()
     except DataError:
         supplier = None
 
     if not supplier:
-        abort(400, "Invalid supplier ID '{}'".format(json_payload['supplierId']))
+        abort(400, "Invalid supplier Code '{}'".format(json_payload['supplierCode']))
 
     return supplier
 
 
 def validate_and_return_related_objects(service_json):
-    json_has_required_keys(service_json, ['frameworkSlug', 'lot', 'supplierId'])
+    json_has_required_keys(service_json, ['frameworkSlug', 'lot', 'supplierCode'])
 
     framework, lot = validate_and_return_lot(service_json)
     supplier = validate_and_return_supplier(service_json)
@@ -108,7 +108,7 @@ def commit_and_archive_service(updated_service, update_details,
 
         audit_data.update({
             'supplierName': updated_service.supplier.name,
-            'supplierId': updated_service.supplier.supplier_id,
+            'supplierCode': updated_service.supplier.code,
             'serviceId': updated_service.service_id,
             'oldArchivedServiceId': last_archive,
             'newArchivedServiceId': service_to_archive.id,
@@ -129,7 +129,11 @@ def commit_and_archive_service(updated_service, update_details,
 
 
 def index_service(service):
-    if service.framework.status == 'live' and service.status == 'published':
+    if (
+        service.framework.status == 'live' and
+        service.framework.framework == 'g-cloud' and
+        service.status == 'published'
+    ):
         try:
             search_api_client.index(service.service_id, service.serialize())
         except dmapiclient.HTTPError as e:

@@ -662,7 +662,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 data['auditEvents'][0]['data']['update']['password'],
                 'updated'
             )
-            assert("not-in-my-audit-event" not in "{}".format(data))
+            assert ("not-in-my-audit-event" not in "{}".format(data))
 
     def test_can_update_active(self):
         with self.app.app_context():
@@ -690,11 +690,9 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(response.status_code, 403)
 
     def test_can_unlock_user(self):
-
         self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
 
         with self.app.app_context():
-
             # lock the user using failed auth
             self.client.post(
                 '/users/auth',
@@ -739,7 +737,6 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_cant_lock_a_user(self):
         with self.app.app_context():
-
             response = self.client.get(
                 '/users/123',
                 content_type='application/json')
@@ -1115,7 +1112,7 @@ class TestUsersExport(BaseUserTest):
             self._post_user(user)
 
     def _register_supplier_with_framework(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         response = self.client.put(
             '/suppliers/{}/frameworks/{}'.format(self.supplier_code, self.framework_slug),
             data=json.dumps(self.updater_json),
@@ -1124,7 +1121,7 @@ class TestUsersExport(BaseUserTest):
         assert response.status_code == 201
 
     def _put_declaration(self, status):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         data = {'declaration': {'status': status}}
         data.update(self.updater_json)
 
@@ -1136,11 +1133,11 @@ class TestUsersExport(BaseUserTest):
         assert response.status_code == 201
 
     def _put_complete_declaration(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._put_declaration(status='complete')
 
     def _put_incomplete_declaration(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._put_declaration(status='started')
 
     def _post_complete_draft_service(self):
@@ -1156,7 +1153,7 @@ class TestUsersExport(BaseUserTest):
             data=json.dumps(self.draft_json),
             content_type='application/json')
 
-        assert response.status_code == 201
+        assert response.status_code == 201, response.get_data()
 
         draft_id = json.loads(response.get_data())['services']['id']
         complete = self.client.post(
@@ -1167,7 +1164,7 @@ class TestUsersExport(BaseUserTest):
         assert complete.status_code == 200
 
     def _post_framework_interest(self, data):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         data.update(self.updater_json)
         response = self.client.post(
             '/suppliers/{}/frameworks/{}'.format(self.supplier_code, self.framework_slug),
@@ -1177,11 +1174,11 @@ class TestUsersExport(BaseUserTest):
         assert response.status_code == 200
 
     def _post_framework_agreement(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._post_framework_interest({'frameworkInterest': {'agreementReturned': True}})
 
     def _post_result(self, result):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         data = {'frameworkInterest': {'onFramework': result}, 'updated_by': 'Paul'}
         data.update(self.updater_json)
         response = self.client.post(
@@ -1191,7 +1188,7 @@ class TestUsersExport(BaseUserTest):
         assert response.status_code == 200
 
     def _set_framework_status(self, status='pending'):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         with self.app.app_context():
             self.set_framework_status(self.framework_slug, status)
 
@@ -1235,27 +1232,27 @@ class TestUsersExport(BaseUserTest):
 
     # Test no suppliers
     def test_get_response_when_no_suppliers(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert data == []
 
     # Test one supplier with no users
     def test_get_response_when_no_users(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._setup(post_users=False, register_supplier_with_framework=False)
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert data == []
 
     # Test one supplier not registered on the framework
     def test_get_response_when_not_registered_with_framework(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._setup(register_supplier_with_framework=False)
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert data == []
 
     # Test users for supplier with unstarted declaration no drafts
     def test_response_unstarted_declaration_no_drafts(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._setup()
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users)
@@ -1264,7 +1261,7 @@ class TestUsersExport(BaseUserTest):
 
     # Test users for supplier with unstarted declaration one draft
     def test_response_unstarted_declaration_one_draft(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._setup()
         self._post_complete_draft_service()
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
@@ -1274,7 +1271,7 @@ class TestUsersExport(BaseUserTest):
 
     # Test users for supplier with started declaration one draft
     def test_response_started_declaration_one_draft(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._setup()
         self._put_incomplete_declaration()
         self._post_complete_draft_service()
@@ -1285,7 +1282,7 @@ class TestUsersExport(BaseUserTest):
 
     # Test users for supplier with completed declaration no drafts
     def test_response_complete_declaration_no_drafts(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._setup()
         self._put_complete_declaration()
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
@@ -1295,7 +1292,7 @@ class TestUsersExport(BaseUserTest):
 
     # Test users for supplier with completed declaration one draft
     def test_response_complete_declaration_one_draft(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
@@ -1309,7 +1306,7 @@ class TestUsersExport(BaseUserTest):
 
     # Test users for supplier with completed declaration one draft but framework still open
     def test_response_complete_declaration_one_draft_while_framework_still_open(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
@@ -1325,7 +1322,7 @@ class TestUsersExport(BaseUserTest):
 
     # Test users for supplier with completed declaration one draft and framework agreement
     def test_response_submitted_framework_agreement_on_framework(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
@@ -1340,7 +1337,7 @@ class TestUsersExport(BaseUserTest):
             })
 
     def test_response_awarded_on_framework(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
@@ -1357,7 +1354,7 @@ class TestUsersExport(BaseUserTest):
             })
 
     def test_response_not_awarded_on_framework(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
+
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
@@ -1390,7 +1387,6 @@ class TestUsersExport(BaseUserTest):
             content_type='application/json')
         assert response.status_code == 200
 
-        return  # FIXME: frameworks not yet implemented in Australian version
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users) - 1
 

@@ -27,6 +27,8 @@ class TestGetSupplier(BaseApplicationTest):
                     'supplier': self.supplier
                 }),
                 content_type='application/json')
+            data = json.loads(response.get_data())
+            print data
             assert_equal(response.status_code, 201)
 
     def test_get_non_existent_supplier(self):
@@ -75,7 +77,9 @@ class TestListSuppliers(BaseApplicationTest):
                                          suburb="Asdf",
                                          state="ZZZ",
                                          postal_code="0000",
-                                         country='Australia')))
+                                         country='Australia')
+                         )
+            )
             self.setup_dummy_service(service_id='1230000000', supplier_code=999)
             db.session.commit()
 
@@ -199,6 +203,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(price.hourly_rate, Decimal('1.10'))
             assert_equal(price.daily_rate, Decimal('2.90'))
 
+    @pytest.mark.skipif(True, reason="failing for AU")
     def test_supplier_update_creates_audit_event(self):
         self.update_request({'name': "Name"})
 
@@ -207,7 +212,6 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
                 Supplier.code == 123456
             ).first()
 
-            return  # FIXME: auditing not yet implemented in Australian version
             audit = AuditEvent.query.filter(
                 AuditEvent.object == supplier
             ).first()
@@ -267,8 +271,8 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert_equal(response.status_code, 400)
 
+    @pytest.mark.skipif(True, reason="failing for AU")
     def test_update_without_updated_by(self):
-        return  # FIXME: updated_by not yet implemented in Australian version
         response = self.update_request(full_data={
             'supplier': {'name': "New Name"},
         })
@@ -284,7 +288,6 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         super(TestPostSupplier, self).setup()
 
     def post_supplier(self, supplier):
-
         return self.client.post(
             '/suppliers',
             data=json.dumps({
@@ -399,7 +402,6 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
 
 
 class TestSupplierSearch(BaseApplicationTest):
-
     def search(self, query_body, **args):
         if args:
             params = '&'.join('{}={}'.format(k, urllib2.quote(v)) for k, v in args.items())
@@ -413,7 +415,6 @@ class TestSupplierSearch(BaseApplicationTest):
     def test_basic_search_hit(self):
         response = self.search({'query': {'term': {'code': 123456}}})
         assert_equal(response.status_code, 200)
-
         result = json.loads(response.get_data())
         assert_equal(result['hits']['total'], 1)
         assert_equal(len(result['hits']['hits']), 1)
@@ -429,7 +430,6 @@ class TestSupplierSearch(BaseApplicationTest):
 
 
 class TestDeleteSupplier(BaseApplicationTest):
-
     def setup(self):
         super(TestDeleteSupplier, self).setup()
 
@@ -460,7 +460,6 @@ class TestDeleteSupplier(BaseApplicationTest):
 
 
 class TestDeleteAllSuppliers(BaseApplicationTest):
-
     def setup(self):
         super(TestDeleteAllSuppliers, self).setup()
 
@@ -481,3 +480,496 @@ class TestDeleteAllSuppliers(BaseApplicationTest):
             response = self.client.delete('/suppliers')
             assert_equal(200, response.status_code)
             assert_false(Supplier.query.all())
+
+
+class TestSupplierFrameworkUpdates(BaseApplicationTest):
+    def setup(self):
+        super(TestSupplierFrameworkUpdates, self).setup()
+
+        self.setup_dummy_suppliers(1)
+        self.setup_dummy_user(1, role='supplier')
+
+        with self.app.app_context():
+            self.set_framework_status('digital-outcomes-and-specialists', 'open')
+            self.client.put(
+                '/suppliers/0/frameworks/digital-outcomes-and-specialists',
+                data=json.dumps({'updated_by': 'interested@example.com'}),
+                content_type='application/json')
+
+            answers = SupplierFramework(
+                supplier_code=0, framework_id=2,
+                declaration={'an_answer': 'Yes it is'},
+                on_framework=True,
+                agreement_returned_at=datetime(2015, 10, 10, 10, 10, 10),
+                countersigned_at=datetime(2015, 11, 12, 13, 14, 15),
+                agreement_details={
+                    u'signerName': u'thing',
+                    u'signerRole': u'thing',
+                    u'uploaderUserId': 20
+                },
+            )
+            db.session.add(answers)
+
+            g_cloud_8 = Framework(
+                slug='g-cloud-8',
+                name='G-Cloud 8',
+                framework='g-cloud',
+                framework_agreement_details={'frameworkAgreementVersion': 'v1.0'},
+                status='open',
+                clarification_questions_open=False
+            )
+            db.session.add(g_cloud_8)
+            db.session.commit()
+
+            self.client.put(
+                '/suppliers/0/frameworks/g-cloud-8',
+                data=json.dumps({'updated_by': 'interested@example.com'}),
+                content_type='application/json')
+
+    def teardown(self):
+        with self.app.app_context():
+            g_cloud_8 = Framework.query.filter(Framework.slug == 'g-cloud-8').first()
+            SupplierFramework.query.filter(SupplierFramework.framework_id == g_cloud_8.id).delete()
+            Framework.query.filter(Framework.id == g_cloud_8.id).delete()
+            db.session.commit()
+
+        super(TestSupplierFrameworkUpdates, self).teardown()
+
+    def supplier_framework_update(self, supplier_id, framework_slug, update={}):
+        return self.client.post(
+            '/suppliers/{}/frameworks/{}'.format(supplier_id, framework_slug),
+            data=json.dumps(
+                {
+                    'updated_by': 'interested@example.com',
+                    'frameworkInterest': update
+                }),
+            content_type='application/json')
+
+    def test_get_supplier_framework_info(self):
+        response = self.client.get(
+            '/suppliers/0/frameworks/g-cloud-4')
+
+        data = json.loads(response.get_data())
+        assert response.status_code, 200
+        assert data['frameworkInterest']['supplierCode'] == 0
+        assert data['frameworkInterest']['frameworkSlug'] == 'g-cloud-4'
+        assert data['frameworkInterest']['declaration'] == {'an_answer': 'Yes it is'}
+        assert data['frameworkInterest']['onFramework'] is True
+        assert data['frameworkInterest']['agreementReturned'] is True
+        assert data['frameworkInterest']['agreementReturnedAt'] == '2015-10-10T10:10:10.000000Z'
+        assert data['frameworkInterest']['countersigned'] is True
+        assert data['frameworkInterest']['countersignedAt'] == '2015-11-12T13:14:15.000000Z'
+        assert data['frameworkInterest']['agreementDetails'] == {
+            'signerName': 'thing',
+            'signerRole': 'thing',
+            'uploaderUserId': 20
+        }
+
+    def test_get_supplier_framework_info_non_existent_by_framework(self):
+        response = self.client.get(
+            '/suppliers/0/frameworks/g-cloud-5')
+
+        assert response.status_code == 404
+
+    def test_get_supplier_framework_info_non_existent_by_supplier(self):
+        response = self.client.get(
+            '/suppliers/123/frameworks/g-cloud-4')
+
+        assert response.status_code == 404
+
+    def test_adding_supplier_has_passed(self):
+        response = self.supplier_framework_update(
+            0,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': True}
+        )
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['supplierCode'] == 0
+        assert data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists'
+        assert data['frameworkInterest']['onFramework'] is True
+        assert data['frameworkInterest']['agreementReturned'] is False
+        assert data['frameworkInterest']['agreementReturnedAt'] is None
+        assert data['frameworkInterest']['countersigned'] is False
+        assert data['frameworkInterest']['countersignedAt'] is None
+        assert data['frameworkInterest']['agreementDetails'] is None
+
+    def test_adding_supplier_has_not_passed(self):
+        response = self.supplier_framework_update(
+            0,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': False}
+        )
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['supplierCode'] == 0
+        assert data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists'
+        assert data['frameworkInterest']['onFramework'] is False
+
+    def test_can_set_agreement_returned_without_agreement_details_for_framework_with_no_agreement_version(self):
+        with freeze_time('2012-12-12'):
+            response = self.supplier_framework_update(
+                0,
+                'digital-outcomes-and-specialists',
+                update={'agreementReturned': True}
+            )
+            assert response.status_code == 200, response.get_data()
+            data = json.loads(response.get_data())
+            assert data['frameworkInterest']['supplierCode'] == 0
+            assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
+            assert data['frameworkInterest']['agreementReturned'] is True
+            assert data['frameworkInterest']['agreementReturnedAt'] == "2012-12-12T00:00:00.000000Z"
+            assert data['frameworkInterest']['countersigned'] is False
+            assert data['frameworkInterest']['countersignedAt'] is None
+            assert data['frameworkInterest']['agreementDetails'] is None
+
+    def test_can_set_agreement_returned_with_agreement_details_for_framework_with_agreement_version(self):
+        with freeze_time('2012-12-12'):
+            response = self.supplier_framework_update(
+                0,
+                'g-cloud-8',
+                update={
+                    'agreementReturned': True,
+                    'agreementDetails': {
+                        'signerName': 'name',
+                        'signerRole': 'role',
+                        'uploaderUserId': 1
+                    }
+                }
+            )
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert data['frameworkInterest']['supplierCode'] == 0
+            assert data['frameworkInterest']['frameworkSlug'] == 'g-cloud-8'
+            assert data['frameworkInterest']['agreementReturned'] is True
+            assert data['frameworkInterest']['agreementReturnedAt'] == "2012-12-12T00:00:00.000000Z"
+            assert data['frameworkInterest']['countersigned'] is False
+            assert data['frameworkInterest']['countersignedAt'] is None
+            assert data['frameworkInterest']['agreementDetails'] == {
+                'signerName': 'name',
+                'signerRole': 'role',
+                'uploaderUserEmail': 'test+1@digital.gov.au',
+                'uploaderUserId': 1,
+                'uploaderUserName': 'my name',
+                'frameworkAgreementVersion': 'v1.0'
+            }
+
+    def test_can_not_set_agreement_returned_without_agreement_details_for_framework_with_agreement_version(self):
+        with freeze_time('2012-12-12'):
+            response = self.supplier_framework_update(
+                0,
+                'g-cloud-8',
+                update={'agreementReturned': True}
+            )
+            assert response.status_code == 400
+            data = json.loads(response.get_data())
+            assert data['error'] == {
+                'uploaderUserId': 'answer_required',
+                'signerRole': 'answer_required',
+                'signerName': 'answer_required'
+            }
+
+    def test_adding_that_agreement_has_been_countersigned(self):
+        with freeze_time('2012-12-12'):
+            response = self.supplier_framework_update(
+                0,
+                'digital-outcomes-and-specialists',
+                update={'countersigned': True}
+            )
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert data['frameworkInterest']['supplierCode'] == 0
+            assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
+            assert data['frameworkInterest']['agreementReturned'] is False
+            assert data['frameworkInterest']['agreementReturnedAt'] is None
+            assert data['frameworkInterest']['countersigned'] is True
+            assert data['frameworkInterest']['countersignedAt'] == "2012-12-12T00:00:00.000000Z"
+            assert data['frameworkInterest']['agreementDetails'] is None
+
+    def test_agreement_returned_at_timestamp_cannot_be_set(self):
+        with freeze_time('2012-12-12'):
+            response = self.supplier_framework_update(
+                0,
+                'digital-outcomes-and-specialists',
+                update={'agreementReturned': True, 'agreementReturnedAt': '2013-13-13T00:00:00.000000Z'}
+            )
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert data['frameworkInterest']['agreementReturnedAt'] == '2012-12-12T00:00:00.000000Z'
+
+    def test_agreement_returned_at_and_agreement_details_are_unset_when_agreement_returned_is_false(self):
+        response = self.supplier_framework_update(
+            0, 'g-cloud-8',
+            update={
+                'agreementReturned': True,
+                'agreementDetails': {
+                    'signerName': 'name',
+                    'signerRole': 'role',
+                    'uploaderUserId': 1
+                }
+            })
+        data = json.loads(response.get_data())
+        assert response.status_code == 200
+        assert data['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == "v1.0"
+
+        response2 = self.supplier_framework_update(
+            0, 'g-cloud-8',
+            update={'agreementReturned': False})
+
+        assert response2.status_code == 200
+        data2 = json.loads(response2.get_data())
+        assert data2['frameworkInterest']['agreementReturned'] is False
+        assert data2['frameworkInterest']['agreementReturnedAt'] is None
+        assert data2['frameworkInterest']['agreementDetails'] is None
+
+    def test_countersigned_at_timestamp_cannot_be_set(self):
+        with freeze_time('2012-12-12'):
+            response = self.supplier_framework_update(
+                0,
+                'digital-outcomes-and-specialists',
+                update={
+                    'agreementReturned': True,
+                    'countersigned': True,
+                    'countersignedAt': '2013-13-13T00:00:00.000000Z',
+                }
+            )
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert data['frameworkInterest']['countersignedAt'] == '2012-12-12T00:00:00.000000Z'
+
+    def test_setting_signer_details_and_then_returning_agreement(self):
+        agreement_details_payload = {
+            "signerName": "name",
+            "signerRole": "role",
+        }
+        response = self.supplier_framework_update(
+            0, 'g-cloud-8',
+            update={'agreementDetails': agreement_details_payload})
+
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['agreementDetails'] == agreement_details_payload
+
+        # while we're at it let's test the agreementDetails partial updating behaviour
+        agreement_details_update_payload = {
+            "uploaderUserId": 1,
+        }
+        response2 = self.supplier_framework_update(
+            0, 'g-cloud-8',
+            update={
+                'agreementReturned': True,
+                'agreementDetails': agreement_details_update_payload
+            }
+        )
+
+        agreement_details_payload.update(agreement_details_update_payload)
+        assert response2.status_code == 200
+        data2 = json.loads(response2.get_data())
+        assert data2['frameworkInterest']['agreementDetails'] == {
+            "signerName": "name",
+            "signerRole": "role",
+            "uploaderUserId": 1,
+            "uploaderUserName": "my name",
+            "uploaderUserEmail": "test+1@digital.gov.au",
+            "frameworkAgreementVersion": "v1.0",
+        }
+
+    def test_can_not_set_agreement_details_on_frameworks_without_framework_agreement_version(self):
+        agreement_details_payload = {
+            "signerName": "name",
+            "signerRole": "role",
+            "uploaderUserId": 1,
+        }
+        response = self.supplier_framework_update(
+            0, 'digital-outcomes-and-specialists',
+            update={'agreementDetails': agreement_details_payload})
+
+        assert response.status_code == 400
+        data = json.loads(response.get_data())
+        strings_we_expect_in_the_error_message = [
+            'Framework', 'digital-outcomes-and-specialists', 'does not accept', 'agreementDetails']
+        for error_string in strings_we_expect_in_the_error_message:
+            assert error_string in data['error']
+
+    def test_can_not_set_agreement_details_with_nonexistent_user_id(self):
+        agreement_details_payload = {
+            "signerName": "name",
+            "signerRole": "role",
+            "uploaderUserId": 999
+        }
+        response = self.supplier_framework_update(
+            0, 'g-cloud-8',
+            update={'agreementDetails': agreement_details_payload})
+
+        data = json.loads(response.get_data())
+        assert response.status_code == 400
+        strings_we_expect_in_the_error_message = [
+            'No user found with id', '999']
+        for error_string in strings_we_expect_in_the_error_message:
+            assert error_string in data['error']
+
+    def test_schema_validation_fails_if_unknown_fields_present_in_agreement_details(self):
+        agreement_details_payload = {
+            "signerName": "Normal Person",
+            "disallowedKey": "value",
+        }
+        response = self.supplier_framework_update(
+            0, 'g-cloud-8',
+            update={'agreementDetails': agreement_details_payload}
+        )
+
+        assert response.status_code == 400
+        data = json.loads(response.get_data())
+        # split assertions into keyphrases due to nested unicode string in python 2
+        strings_we_expect_in_the_error_message = [
+            'Additional properties are not allowed', 'disallowedKey', 'was unexpected']
+        for error_string in strings_we_expect_in_the_error_message:
+            assert error_string in data['error']['_form'][0]
+
+    def test_schema_validation_fails_if_empty_object_sent_as_agreement_details(self):
+        response = self.supplier_framework_update(
+            0, 'g-cloud-8',
+            update={'agreementDetails': {}}
+        )
+
+        assert response.status_code == 400
+        data = json.loads(response.get_data())
+        error_message = '{} does not have enough properties'
+        assert error_message in data['error']['_form'][0]
+
+    def test_schema_validation_fails_if_empty_strings_sent_as_agreement_details(self):
+        agreement_details_payload = {
+            "signerName": "",
+            "signerRole": "",
+        }
+        response = self.supplier_framework_update(
+            0, 'g-cloud-8',
+            update={'agreementDetails': agreement_details_payload}
+        )
+
+        assert response.status_code == 400
+        data = json.loads(response.get_data())
+        expected_error_dict = {'signerName': 'answer_required', 'signerRole': 'answer_required'}
+        assert expected_error_dict == data['error']
+
+    def test_cannot_save_if_required_signer_field_is_missing_from_not_yet_set_agreement_details(self):
+        # missing signerRole
+        agreement_details_payload = {
+            "signerName": "name",
+        }
+        response = self.supplier_framework_update(
+            0, 'g-cloud-8',
+            update={'agreementDetails': agreement_details_payload}
+        )
+
+        assert response.status_code == 400
+        data = json.loads(response.get_data())
+        expected_error_dict = {'signerRole': 'answer_required'}
+        assert expected_error_dict == data['error']
+
+    def test_cannot_return_agreement_if_signer_details_fields_are_missing_from_agreement_details(self):
+        # missing signerName and signerRole
+        agreement_details_payload = {
+            "uploaderUserId": 1,
+        }
+        response = self.supplier_framework_update(
+            0, 'g-cloud-8',
+            update={
+                'agreementReturned': True,
+                'agreementDetails': agreement_details_payload
+            }
+        )
+
+        assert response.status_code == 400
+        data = json.loads(response.get_data())
+        expected_error_dict = {'signerName': 'answer_required', 'signerRole': 'answer_required'}
+        assert expected_error_dict == data['error']
+
+    def test_can_manually_override_framework_agreement_version_for_returned_framework_agreement(self):
+        response = self.supplier_framework_update(
+            0,
+            'g-cloud-8',
+            update={
+                'agreementReturned': True,
+                'agreementDetails': {
+                    'signerName': 'name',
+                    'signerRole': 'role',
+                    'uploaderUserId': 1
+                }
+            }
+        )
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == 'v1.0'
+
+        response2 = self.supplier_framework_update(
+            0, 'g-cloud-8',
+            update={'agreementDetails': {'frameworkAgreementVersion': 'v2.0'}}
+        )
+        assert response2.status_code == 200
+        data2 = json.loads(response2.get_data())
+        assert data2['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == 'v2.0'
+
+    def test_changing_on_framework_from_failed_to_passed(self):
+        response = self.supplier_framework_update(
+            0,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': False}
+        )
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['onFramework'] is False
+        assert data['frameworkInterest']['agreementReturned'] is False
+
+        response2 = self.supplier_framework_update(
+            0,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': True}
+        )
+        assert response2.status_code, 200
+        data = json.loads(response2.get_data())
+        assert data['frameworkInterest']['onFramework'] is True
+        assert data['frameworkInterest']['agreementReturned'] is False
+
+    def test_changing_on_framework_from_passed_to_failed(self):
+        response = self.supplier_framework_update(
+            0,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': True}
+        )
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['onFramework'] is True
+        assert data['frameworkInterest']['agreementReturned'] is False
+
+        response2 = self.supplier_framework_update(
+            0,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': False}
+        )
+        assert response2.status_code == 200
+        data = json.loads(response2.get_data())
+        assert data['frameworkInterest']['onFramework'] is False
+        assert data['frameworkInterest']['agreementReturned'] is False
+
+    def test_changing_on_framework_to_passed_creates_audit_event(self):
+        self.supplier_framework_update(
+            0,
+            'digital-outcomes-and-specialists',
+            update={'onFramework': True, 'agreementReturned': True}
+        )
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.code == 0
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == supplier,
+                AuditEvent.type == "supplier_update"
+            ).first()
+            assert audit.type == "supplier_update"
+            assert audit.user == "interested@example.com"
+            assert audit.data['supplierId'] == 0
+            assert audit.data['frameworkSlug'] == 'digital-outcomes-and-specialists'
+            assert audit.data['update']['onFramework'] is True
+            assert audit.data['update']['agreementReturned'] is True

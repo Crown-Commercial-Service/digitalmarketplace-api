@@ -16,7 +16,6 @@ class TestListFrameworks(BaseApplicationTest):
             response = self.client.get('/frameworks')
             data = json.loads(response.get_data())
 
-            return  # FIXME: frameworks not yet implemented in Australian version
             assert_equal(response.status_code, 200)
             assert_equal(len(data['frameworks']),
                          len(Framework.query.all()))
@@ -61,12 +60,12 @@ class TestCreateFramework(BaseApplicationTest):
 
     def test_create_a_framework(self):
         with self.app.app_context():
-            return  # FIXME: frameworks not yet implemented in Australian version
             response = self.client.post("/frameworks",
                                         data=json.dumps(self.framework()),
                                         content_type="application/json")
 
-            assert response.status_code == 200
+            data = json.loads(response.get_data(as_text=True))
+            assert response.status_code == 200, data
 
             framework = Framework.query.filter(Framework.slug == "example").first()
 
@@ -83,7 +82,6 @@ class TestCreateFramework(BaseApplicationTest):
 
             data = json.loads(response.get_data(as_text=True))
 
-            return  # FIXME: frameworks not yet implemented in Australian version
             assert len(data["auditEvents"]) == 1
             assert data["auditEvents"][0]["type"] == "create_framework"
 
@@ -97,7 +95,6 @@ class TestCreateFramework(BaseApplicationTest):
                                         data=json.dumps(self.framework()),
                                         content_type="application/json")
 
-            return  # FIXME: frameworks not yet implemented in Australian version
             assert response.status_code == 400
             assert json.loads(response.get_data(as_text=True))["error"] == "Slug 'example' already in use"
 
@@ -107,7 +104,6 @@ class TestCreateFramework(BaseApplicationTest):
                                         data=json.dumps(self.framework(status="invalid")),
                                         content_type="application/json")
 
-            return  # FIXME: frameworks not yet implemented in Australian version
             assert response.status_code == 400
             assert json.loads(response.get_data(as_text=True))["error"] == "Invalid status value 'invalid'"
 
@@ -117,7 +113,6 @@ class TestCreateFramework(BaseApplicationTest):
                                         data=json.dumps(self.framework(clarificationQuestionsOpen="invalid")),
                                         content_type="application/json")
 
-            return  # FIXME: frameworks not yet implemented in Australian version
             assert response.status_code == 400
             assert json.loads(response.get_data(as_text=True))["error"] == "Invalid framework"
 
@@ -127,7 +122,6 @@ class TestCreateFramework(BaseApplicationTest):
                                         data=json.dumps(self.framework(lots=["saas", "invalid", "bad"])),
                                         content_type="application/json")
 
-            return  # FIXME: frameworks not yet implemented in Australian version
             assert response.status_code == 400
             assert json.loads(response.get_data(as_text=True))["error"] == "Invalid lot slugs: bad, invalid"
 
@@ -137,7 +131,6 @@ class TestCreateFramework(BaseApplicationTest):
                                         data=json.dumps(self.framework(slug="this is/invalid")),
                                         content_type="application/json")
 
-            return  # FIXME: frameworks not yet implemented in Australian version
             assert response.status_code == 400
             assert json.loads(response.get_data(as_text=True))["error"] == "Invalid slug value 'this is/invalid'"
 
@@ -148,18 +141,15 @@ class TestGetFramework(BaseApplicationTest):
             response = self.client.get('/frameworks/g-cloud-7')
             data = json.loads(response.get_data())
 
-            return  # FIXME: frameworks not yet implemented in Australian version
             assert_equal(response.status_code, 200)
             assert_equal(data['frameworks']['slug'], 'g-cloud-7')
             assert_in('status', data['frameworks'])
 
     def test_framework_lots_are_returned(self):
-        return  # FIXME: frameworks not yet implemented in Australian version
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-7')
 
         data = json.loads(response.get_data())
-        return  # FIXME: frameworks not yet implemented in Australian version
         assert data['frameworks']['lots'] == [
             {
                 u'id': 1,
@@ -213,6 +203,7 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
     def setup(self):
         super(TestUpdateFramework, self).setup()
         framework = Framework()
+        # framework.id = 6,
         framework.name = 'Example G-Cloud framework'
         framework.framework = 'g-cloud'
         framework.slug = 'example'
@@ -350,7 +341,6 @@ class TestFrameworkStats(BaseApplicationTest):
         )
 
     def setup_framework_data(self, framework_slug):
-        return  # FIXME: frameworks not yet implemented in Australian version
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == framework_slug).first()
 
@@ -359,15 +349,15 @@ class TestFrameworkStats(BaseApplicationTest):
         self.make_declaration(framework.id, [0, 2, 4, 6, 8, 10], status='complete')
 
         self.create_drafts(framework.id, [
-            (1, 1),   # 1 saas; with declaration
-            (2, 7),   # 1 of each + iaas, paas, saas; with declaration
-            (3, 2),   # saas + paas; with declaration
+            (1, 1),  # 1 saas; with declaration
+            (2, 7),  # 1 of each + iaas, paas, saas; with declaration
+            (3, 2),  # saas + paas; with declaration
             (14, 3),  # iaas + paas + saas; without declaration
         ])
         self.create_drafts(framework.id, [
-            (1, 2),   # saas + paas; with declaration
+            (1, 2),  # saas + paas; with declaration
             (2, 15),  # 3 of each + iaas, paas, saas; with declaration
-            (3, 2),   # saas + paas; with declaration
+            (3, 2),  # saas + paas; with declaration
             (14, 7),  # 1 of each + iaas + paas + saas; without declaration
         ], status='submitted')
 
@@ -380,7 +370,6 @@ class TestFrameworkStats(BaseApplicationTest):
         self.setup_framework_data('g-cloud-7')
         self.setup_framework_data('digital-outcomes-and-specialists')
 
-        return  # FIXME: frameworks not yet implemented in Australian version
         response = self.client.get('/frameworks/g-cloud-7/stats')
         assert_equal(json.loads(response.get_data()), {
             u'services': [
@@ -433,7 +422,6 @@ class TestFrameworkStats(BaseApplicationTest):
 
     def test_stats_are_for_g_cloud_7_only(self):
         self.setup_data('g-cloud-6')
-        return  # FIXME: frameworks not yet implemented in Australian version
         response = self.client.get('/frameworks/g-cloud-7/stats')
         assert_equal(json.loads(response.get_data()), {
             u'interested_suppliers': [],
@@ -447,7 +435,6 @@ class TestFrameworkStats(BaseApplicationTest):
 
     def test_stats_handles_null_declarations(self):
         self.setup_data('g-cloud-7')
-        return  # FIXME: frameworks not yet implemented in Australian version
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == 'g-cloud-7').first()
             db.session.query(
@@ -469,7 +456,6 @@ class TestFrameworkStats(BaseApplicationTest):
 class TestGetFrameworkSuppliers(BaseApplicationTest):
     def setup(self):
         super(TestGetFrameworkSuppliers, self).setup()
-        return  # FIXME: frameworks not yet implemented in Australian version
 
         self.setup_dummy_suppliers(5)
         with self.app.app_context():
@@ -503,7 +489,6 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
     def test_list_suppliers_related_to_a_framework(self):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-7/suppliers')
-            return  # FIXME: frameworks not yet implemented in Australian version
 
             assert response.status_code == 200
             data = json.loads(response.get_data())
@@ -512,7 +497,6 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
     def test_list_suppliers_with_agreements_returned(self):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-7/suppliers?agreement_returned=true')
-            return  # FIXME: frameworks not yet implemented in Australian version
 
             assert response.status_code == 200
             data = json.loads(response.get_data())
@@ -529,7 +513,6 @@ class TestGetFrameworkInterest(BaseApplicationTest):
         self.register_g7_interest(5)
 
     def register_g7_interest(self, num):
-        return  # FIXME: frameworks not yet implemented in Australian version
         self.setup_dummy_suppliers(num)
         with self.app.app_context():
             for supplier_code in range(num):
@@ -544,7 +527,6 @@ class TestGetFrameworkInterest(BaseApplicationTest):
     def test_interested_suppliers_are_returned(self):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-7/interest')
-            return  # FIXME: frameworks not yet implemented in Australian version
 
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())
@@ -554,5 +536,4 @@ class TestGetFrameworkInterest(BaseApplicationTest):
         with self.app.app_context():
             response = self.client.get('/frameworks/biscuits-for-gov/interest')
 
-            return  # FIXME: frameworks not yet implemented in Australian version
             assert_equal(response.status_code, 404)

@@ -272,7 +272,7 @@ def export_users_for_framework(framework_slug):
         user_rows.append({
             'user_email': u.email_address,
             'user_name': u.name,
-            'supplier_code': s.supplier_code,
+            'supplier_code': s.code,
             'declaration_status': declaration_status,
             'application_status': application_status,
             'framework_agreement': framework_agreement,

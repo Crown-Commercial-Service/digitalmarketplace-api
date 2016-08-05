@@ -80,16 +80,19 @@ def run_import(input_file, client):
         if code is None:
             continue
 
-        role = roles[record['Role'].lower().strip()]
-        prices[code].append({
-            'serviceRole': {
-                'role': role.role,
-                'category': role.category,
-            },
-            'hourlyRate': filterDudPrice(record['hourly rate']),
-            'dailyRate': filterDudPrice(record['daily rate']),
-            'gstIncluded': True,
-        })
+        try:
+            role = roles[record['Role'].lower().strip()]
+            prices[code].append({
+                'serviceRole': {
+                    'role': role.role,
+                    'category': role.category,
+                },
+                'hourlyRate': filterDudPrice(record['hourly rate']),
+                'dailyRate': filterDudPrice(record['daily rate']),
+                'gstIncluded': True,
+            })
+        except:
+            'import error:{}: {}'.format(name, record['Role'].lower().strip())
 
     for code, price_schedule in prices.items():
         supplier_update = {'prices': price_schedule}

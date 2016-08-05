@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "additionalProperties": false,
+  "minProperties": 1,
+  "properties": {
+    "frameworkAgreementVersion": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "signerName": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "signerRole":  {
+      "minLength": 1,
+      "type": "string"
+    },
+    "uploaderUserId": {
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "frameworkAgreementVersion",
+    "signerName",
+    "signerRole",
+    "uploaderUserId"
+  ],
+  "title": "Agreement Details Schema",
+  "type": "object"
+}
