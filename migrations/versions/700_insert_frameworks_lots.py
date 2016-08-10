@@ -34,7 +34,7 @@ def upgrade():
         {'slug': 'digital-specialists', 'name': 'Digital specialists', 'one_service_limit': 'true', 'data': {"unitSingular": "service", "unitPlural": "services"}},
         {'slug': 'user-research-participants', 'name': 'User research participants', 'one_service_limit': 'true', 'data': {"unitSingular": "service", "unitPlural": "services"}},
         {'slug': 'user-research-studios', 'name': 'User research studios', 'one_service_limit': 'false', 'data': {"unitSingular": "lab", "unitPlural": "labs"}},
-        {'slug': 'digital-professionals', 'name': 'Digital professionals', 'one_service_limit': 'false', 'data': {"unitSingular": "service", "unitPlural": "services"}},
+        {'slug': 'digital-professionals', 'name': 'Digital professionals', 'one_service_limit': 'true', 'data': {"unitSingular": "service", "unitPlural": "services"}},
     ])
     op.bulk_insert(models.FrameworkLot.__table__, [
         {'framework_id': 1, 'lot_id': 1},
