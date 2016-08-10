@@ -1,0 +1,12 @@
+DOCKER_CONTAINER_NAME:
+  image: AWS_ACCOUNT_ID.dkr.ecr.AWS_REGION.amazonaws.com/ausdtomonitoring-DOCKER_IMAGE_NAME:IMAGE_TAG
+  hostname: DOCKER_CONTAINER_NAME
+  mem_limit: 262144000
+  environment:
+    - RABBITMQ_HOST
+    - RABBITMQ_PORT
+    - RABBITMQ_USER
+    - RABBITMQ_PASSWORD
+    - RABBITMQ_VHOST
+    - URL=https://dm-api.apps.platform.digital.gov.au/
+    - API_TOKEN

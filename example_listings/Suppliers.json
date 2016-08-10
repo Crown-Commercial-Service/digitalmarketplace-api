@@ -1,0 +1,94 @@
+[
+	{
+	  "name": "Example PTY LTD",
+	  "longName": "Example PTY LTD (formerly just \"Example\")",
+	  "code": 123456,
+	  "description": "Example PTY LTD is an example company.",
+	  "summary": "An example company",
+	  "address": {
+		  "addressLine": "0 Foo Street",
+		  "suburb": "Brisbane",
+		  "state": "QLD",
+		  "postalCode": "4120",
+		  "country": "Australia"
+	  },
+	  "website": "https://example.com/",
+	  "extraLinks": [{
+		  "url": "https://social-media.example.com/example-pty-ltd",
+		  "label": "Example PTY LTD on Social Media"
+	  }],
+	  "abn": "50 110 219 460",
+	  "acn": "071 408 449",
+	  "contacts": [{
+		  "contactFor": "Testing",
+		  "name": "Jo Example",
+		  "role": "Example Provider",
+		  "email": "jo@example.com",
+		  "phone": "+61",
+		  "fax": "+61"
+	  }],
+	  "references": [{
+		  "name": "Bot",
+		  "organisation": "Super Cheap References",
+		  "role": "Reference Provider",
+		  "email": "bot@example.com"
+	  }, {
+		  "name": "Another Bot",
+		  "organisation": "Super Cheap References",
+		  "role": "Reference Provider",
+		  "email": "another.bot@example.com"
+	  }],
+	  "prices": [{
+		  "serviceRole": { "category": "Business Analysis", "role": "Junior Business Analyst" },
+		  "hourlyRate": "0.10",
+		  "dailyRate": "1.90",
+		  "gstIncluded": true
+	  }]
+	},
+	{
+	  "name": "Another Example PTY LTD",
+	  "longName": "Another Example PTY LTD (formerly just \"Example\")",
+	  "code": 1234567,
+	  "description": "Another Example PTY LTD is an example company.",
+	  "summary": "Another example company",
+	  "address": {
+		  "addressLine": "0 Foo Street",
+		  "suburb": "Brisbane",
+		  "state": "QLD",
+		  "postalCode": "4120",
+		  "country": "Australia"
+	  },
+	  "website": "https://example.com/",
+	  "extraLinks": [{
+		  "url": "https://social-media.example.com/example-pty-ltd",
+		  "label": "Example PTY LTD on Social Media"
+	  }],
+	  "abn": "50 110 219 460",
+	  "acn": "071 408 449",
+	  "contacts": [{
+		  "contactFor": "Testing",
+		  "name": "Jo Example",
+		  "role": "Example Provider",
+		  "email": "jo@example.com",
+		  "phone": "+61",
+		  "fax": "+61"
+	  }],
+	  "references": [{
+		  "name": "Bot",
+		  "organisation": "Super Cheap References",
+		  "role": "Reference Provider",
+		  "email": "bot@example.com"
+	  }, {
+		  "name": "Another Bot",
+		  "organisation": "Super Cheap References",
+		  "role": "Reference Provider",
+		  "email": "another.bot@example.com"
+	  }],
+	  "prices": [{
+		  "serviceRole": { "category": "Business Analysis", "role": "Junior Business Analyst" },
+		  "hourlyRate": "0.10",
+		  "dailyRate": "1.90",
+		  "gstIncluded": true
+	  }]
+	}
+]

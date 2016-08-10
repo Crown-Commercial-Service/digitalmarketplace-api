@@ -1,14 +1,27 @@
 machine:
+  services:
+    - docker  # For monitoring
   timezone:
     Australia/Sydney
-  services:
-    - elasticsearch
+  post:
+    # For monitoring:
+    - pip install awscli
+    - sudo curl -o /usr/local/bin/ecs-cli https://s3.amazonaws.com/amazon-ecs-cli/ecs-cli-linux-amd64-latest
+    - sudo chmod +x /usr/local/bin/ecs-cli
+    - /usr/local/bin/ecs-cli --version
 
 dependencies:
   pre:
     - curl -v -L -o cf-cli_amd64.deb 'https://cli.run.pivotal.io/stable?release=debian64&version=6.17.0&source=github'
     - sudo dpkg -i cf-cli_amd64.deb
     - cf -v
+  post:
+    - wget https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.5.0.tar.gz
+    - tar -xvf elasticsearch-1.5.0.tar.gz
+    - elasticsearch-1.5.0/bin/elasticsearch: {background: true}
+    # Make sure that Elasticsearch is up before running tests:
+    - sleep 10 && curl --retry 10 --retry-delay 5 -v http://127.0.0.1:9200/
+    - DOCKERFILE_PATH=./monitoring/Dockerfile DOCKER_IMAGE_NAME=gov-au-marketplace-api ./scripts/ci-monitor-build.sh
   override:
     - pip install -r requirements_for_test.txt
 
@@ -36,3 +49,4 @@ deployment:
       - cf target -o dto -s digital-marketplace
       - cf push -f 'manifest.production.yml' -c 'python application.py db upgrade' -u 'none'
       - cf push -f 'manifest.production.yml'
+      - API_TOKEN="$DM_API_TOKEN_PROD" DOCKER_COMPOSE_FILE_PATH=./monitoring/docker-compose-ecs.yml DOCKER_IMAGE_NAME=gov-au-marketplace-api DOCKER_CONTAINER_NAME=gov-au-marketplace-api ./scripts/ci-monitor-deploy.sh

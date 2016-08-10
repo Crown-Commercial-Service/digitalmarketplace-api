@@ -80,7 +80,7 @@ def run_import(input_file, client):
         if code is None:
             continue
 
-        role = roles[record['Role'].lower()]
+        role = roles[record['Role'].lower().strip()]
         prices[code].append({
             'serviceRole': {
                 'role': role.role,

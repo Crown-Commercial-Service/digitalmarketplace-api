@@ -3,12 +3,13 @@ from flask import json
 import pytest
 import urllib2
 from freezegun import freeze_time
-from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_none, assert_true, assert_is
+from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_none, assert_true, assert_is, assert_false
 
 from app import db
 from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, DraftService, Service
 from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, isRecentTimestamp
 from random import randint
+from decimal import Decimal
 
 
 class TestGetSupplier(BaseApplicationTest):
@@ -181,6 +182,22 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             ).first()
 
             assert_equal(supplier.name, "New Name")
+
+    def test_price_update(self):
+        response = self.update_request({"prices": [{
+            "serviceRole": {"category": "Business Analysis", "role": "Junior Business Analyst"},
+            "hourlyRate": "1.10",
+            "dailyRate": "2.90"}]})
+        assert_equal(response.status_code, 200)
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.code == 123456
+            ).first()
+
+            price = supplier.prices[0]
+            assert_equal(price.hourly_rate, Decimal('1.10'))
+            assert_equal(price.daily_rate, Decimal('2.90'))
 
     def test_supplier_update_creates_audit_event(self):
         self.update_request({'name': "Name"})
@@ -440,3 +457,27 @@ class TestDeleteSupplier(BaseApplicationTest):
         with self.app.app_context():
             response = self.client.delete('/suppliers/789012')
             assert_equal(404, response.status_code)
+
+
+class TestDeleteAllSuppliers(BaseApplicationTest):
+
+    def setup(self):
+        super(TestDeleteAllSuppliers, self).setup()
+
+        with self.app.app_context():
+            payload = self.load_example_listing("Suppliers")
+            for supplier in payload:
+                response = self.client.post(
+                    '/suppliers',
+                    data=json.dumps({
+                        'supplier': supplier
+                    }),
+                    content_type='application/json')
+                assert_equal(response.status_code, 201)
+
+    def test_delete_all(self):
+        with self.app.app_context():
+            assert_true(Supplier.query.all())
+            response = self.client.delete('/suppliers')
+            assert_equal(200, response.status_code)
+            assert_false(Supplier.query.all())

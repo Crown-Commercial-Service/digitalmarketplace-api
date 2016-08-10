@@ -1,8 +1,14 @@
-from . import es_client
+import json
+
+from . import es_client, db
+from models import Supplier
 
 from flask import jsonify, abort, request, current_app
 from elasticsearch import Elasticsearch
 from elasticsearch.client import IndicesClient
+
+
+SUPPLIER_DOC_TYPE = 'supplier'
 
 
 def get_supplier_index_name():
@@ -14,13 +20,88 @@ def _get_raw_elasticsearch_connection():
     return Elasticsearch(hosts=[host])
 
 
+def create_supplier_index(index_client):
+    name = get_supplier_index_name()
+    index_client.create(name)
+    mapping_json = json.dumps({
+        'properties': {
+            'name': {
+                'type': 'multi_field',
+                'fields': {
+                    'name': {'type': 'string', 'index': 'analyzed'},
+                    'not_analyzed': {'type': 'string', 'index': 'not_analyzed'},
+                },
+            },
+            'abn': {
+                'type': 'string',
+                'index': 'not_analyzed',
+            },
+            'acn': {
+                'type': 'string',
+                'index': 'not_analyzed',
+            },
+            'contacts': {
+                'properties': {
+                    'phone': {
+                        'type': 'string',
+                        'index': 'not_analyzed',
+                    },
+                },
+            },
+            'creationTime': {
+                'type': 'string',
+                'index': 'no',
+            },
+            'lastUpdateTime': {
+                'type': 'string',
+                'index': 'no',
+            },
+            'prices': {
+                'properties': {
+                    'serviceRole': {
+                        'properties': {
+                            'category': {
+                                'type': 'string',
+                                'index': 'not_analyzed',
+                            },
+                            'role': {
+                                'type': 'string',
+                                'index': 'not_analyzed',
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    })
+    index_client.put_mapping(index=name, doc_type=SUPPLIER_DOC_TYPE, body=mapping_json)
+    try:
+        db.session.execute('LOCK TABLE supplier IN SHARE MODE')  # block supplier updates but not reads
+        for supplier in Supplier.query.all():
+            supplier_json = json.dumps(supplier.serialize())
+            es_client.index(index=name,
+                            doc_type=SUPPLIER_DOC_TYPE,
+                            body=supplier_json,
+                            id=supplier.code)
+    finally:
+        db.session.commit()  # release table lock
+
+
 def create_indices():
+    # TODO: use index alias juggling to create indices without downtime
     es = _get_raw_elasticsearch_connection()
     ic = IndicesClient(es)
-    ic.create(get_supplier_index_name())
+    create_supplier_index(ic)
 
 
 def delete_indices():
     es = _get_raw_elasticsearch_connection()
     ic = IndicesClient(es)
     ic.delete(get_supplier_index_name())
+
+
+def indices_exist(index_client=None):
+    if index_client is None:
+        index_client = IndicesClient(_get_raw_elasticsearch_connection())
+    index_names = [get_supplier_index_name()]
+    return index_client.exists(index=','.join(index_names))

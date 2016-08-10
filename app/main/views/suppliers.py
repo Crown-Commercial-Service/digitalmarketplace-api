@@ -6,9 +6,10 @@ from .. import main
 from ... import db
 from ...models import (
     Supplier, AuditEvent,
-    Service, SupplierFramework, Framework
+    Service, SupplierFramework, Framework, PriceSchedule
 )
-from ...search_indices import es_client, get_supplier_index_name
+from ...search_indices import es_client, get_supplier_index_name, SUPPLIER_DOC_TYPE, delete_indices, create_indices
+
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400,
@@ -18,9 +19,6 @@ from ...utils import pagination_links, drop_foreign_fields, get_json_from_reques
     json_has_required_keys, json_has_matching_id, get_valid_page_or_1, validate_and_return_updater_request
 from ...supplier_utils import validate_and_return_supplier_request
 from dmapiclient.audit import AuditTypes
-
-
-SUPPLIER_DOC_TYPE = 'supplier'
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -95,6 +93,22 @@ def delete_supplier(code):
     return jsonify(message="done"), 200
 
 
+@main.route('/suppliers', methods=['DELETE'])
+def delete_suppliers():
+    try:
+        Supplier.query.delete()
+        db.session.commit()
+        delete_indices()
+        create_indices()
+    except TransportError, e:
+        return jsonify(message=str(e)), e.status_code
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message="Database Error: {0}".format(e)), 400
+
+    return jsonify(message="done"), 200
+
+
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
     try:
@@ -126,18 +140,14 @@ def supplier_search():
 
 
 def update_supplier_data_impl(supplier, supplier_data, success_code):
-    supplier.update_from_json(supplier_data)
-
     try:
         import json
+        if 'prices' in supplier_data:
+            db.session.query(PriceSchedule).filter(PriceSchedule.supplier_id == supplier.id).delete()
+
+        supplier.update_from_json(supplier_data)
+
         db.session.add(supplier)
-        # db.session.add(
-        #     AuditEvent(
-        #         audit_type=AuditTypes.supplier_update,
-        #         db_object=supplier,
-        #         user=updater_json['updated_by'],
-        #         data={'update': request_data['suppliers']})
-        # )
         db.session.commit()
         supplier_json = json.dumps(supplier.serialize())
         es_client.index(index=get_supplier_index_name(),

@@ -56,6 +56,7 @@ class Test(Config):
     DM_API_BRIEFS_PAGE_SIZE = 5
     DM_API_BRIEF_RESPONSES_PAGE_SIZE = 5
     FEATURE_FLAGS_TRANSACTION_ISOLATION = enabled_since('2015-08-27')
+    DM_API_ADMIN_USERNAME = None
 
 
 class Development(Config):
