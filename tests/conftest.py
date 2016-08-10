@@ -21,7 +21,6 @@ def app(request):
 
 @pytest.fixture()
 def live_framework(request, app, status='live'):
-    return  # FIXME: frameworks not yet implemented in Australian version
     with app.app_context():
         framework = Framework.query.filter(
             Framework.slug == 'digital-outcomes-and-specialists'

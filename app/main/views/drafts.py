@@ -116,16 +116,16 @@ def edit_draft_service(draft_id):
 
 @main.route('/draft-services', methods=['GET'])
 def list_draft_services():
-    supplier_id = get_int_or_400(request.args, 'supplier_id')
+    supplier_code = get_int_or_400(request.args, 'supplier_code')
     service_id = request.args.get('service_id')
     framework_slug = request.args.get('framework')
 
-    if supplier_id is None:
+    if supplier_code is None:
         abort(400, "Invalid page argument: supplier_id is required")
 
-    supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
+    supplier = Supplier.query.filter(Supplier.code == supplier_code).all()
     if not supplier:
-        abort(404, "supplier_id '{}' not found".format(supplier_id))
+        abort(404, "supplier_code '{}' not found".format(supplier_code))
 
     services = DraftService.query.order_by(
         asc(DraftService.id)
@@ -143,7 +143,7 @@ def list_draft_services():
             abort(404, "framework '{}' not found".format(framework_slug))
         services = services.filter(DraftService.framework_id == framework.id)
 
-    items = services.filter(DraftService.supplier_id == supplier_id).all()
+    items = services.filter(DraftService.supplier_code == supplier_code).all()
     return jsonify(
         services=[service.serialize() for service in items],
         links=dict()
@@ -281,7 +281,7 @@ def create_new_draft_service():
     if lot.one_service_limit:
         lot_service = DraftService.query.filter(DraftService.supplier == supplier, DraftService.lot == lot).first()
         if lot_service:
-            abort(400, "'{}' service already exists for supplier '{}'".format(lot.slug, supplier.supplier_id))
+            abort(400, "'{}' service already exists for supplier '{}'".format(lot.slug, supplier.code))
 
     draft = DraftService(
         framework=framework,

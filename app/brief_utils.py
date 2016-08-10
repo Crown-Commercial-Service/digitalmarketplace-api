@@ -33,6 +33,6 @@ def get_supplier_service_eligible_for_brief(supplier, brief):
         role=brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
     )
 
-    services = services.filter(Service.supplier_id == supplier.supplier_id)
+    services = services.filter(Service.supplier_code == supplier.code)
 
     return services.first()

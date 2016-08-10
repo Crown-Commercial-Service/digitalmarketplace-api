@@ -116,12 +116,12 @@ def get_framework_stats(framework_slug):
     seven_days_ago = datetime.datetime.utcnow() + datetime.timedelta(-7)
 
     has_completed_drafts_query = db.session.query(
-        DraftService.supplier_id, func.min(DraftService.id)
+        DraftService.supplier_code, func.min(DraftService.id)
     ).filter(
         DraftService.framework_id == framework.id,
         DraftService.status == 'submitted'
     ).group_by(
-        DraftService.supplier_id
+        DraftService.supplier_code
     ).subquery('completed_drafts')
 
     drafts_alias = orm.aliased(DraftService, has_completed_drafts_query)
@@ -142,7 +142,7 @@ def get_framework_stats(framework_slug):
             db.session.query(
                 DraftService.status, Lot.slug, is_declaration_complete, func.count()
             ).outerjoin(
-                SupplierFramework, DraftService.supplier_id == SupplierFramework.supplier_id
+                SupplierFramework, DraftService.supplier_code == SupplierFramework.supplier_code
             ).join(
                 Lot, DraftService.lot_id == Lot.id
             ).group_by(
@@ -167,7 +167,7 @@ def get_framework_stats(framework_slug):
             ['declaration_status', 'has_completed_services', 'count'],
             db.session.query(
                 SupplierFramework.declaration['status'].cast(String),
-                drafts_alias.supplier_id.isnot(None), func.count()
+                drafts_alias.supplier_code.isnot(None), func.count()
             ).select_from(
                 Supplier
             ).join(
@@ -178,7 +178,7 @@ def get_framework_stats(framework_slug):
                 SupplierFramework.framework_id == framework.id,
                 cast(SupplierFramework.declaration, String) != 'null'
             ).group_by(
-                SupplierFramework.declaration['status'].cast(String), drafts_alias.supplier_id.isnot(None)
+                SupplierFramework.declaration['status'].cast(String), drafts_alias.supplier_code.isnot(None)
             ).all()
         )
     })
@@ -219,8 +219,8 @@ def get_framework_interest(framework_slug):
 
     supplier_frameworks = SupplierFramework.query.filter(
         SupplierFramework.framework_id == framework.id
-    ).order_by(SupplierFramework.supplier_id).all()
+    ).order_by(SupplierFramework.supplier_code).all()
 
-    supplier_ids = [supplier_framework.supplier_id for supplier_framework in supplier_frameworks]
+    supplier_ids = [supplier_framework.supplier_code for supplier_framework in supplier_frameworks]
 
     return jsonify(interestedSuppliers=supplier_ids)
