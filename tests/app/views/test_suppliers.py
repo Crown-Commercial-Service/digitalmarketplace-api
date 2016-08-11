@@ -1264,6 +1264,59 @@ class TestRegisterFrameworkInterest(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(data['frameworks'], ['digital-outcomes-and-specialists'])
 
 
+class TestSupplierFrameworkResponse(BaseApplicationTest):
+
+    def setup(self):
+        super(TestSupplierFrameworkResponse, self).setup()
+
+        self.setup_dummy_suppliers(1)
+        self.setup_dummy_user(1, role='supplier')
+        self.supplier_id = 0
+        self.framework_slug = 'g-cloud-8'
+
+    def test_get_supplier_framework_info(self, open_g8_framework):
+        framework_id = json.loads(
+            self.client.get('frameworks/{}'.format(self.framework_slug)).get_data()
+        )['frameworks']['id']
+
+        # add SupplierFramework record to the database
+        with self.app.app_context():
+            answers = SupplierFramework(
+                supplier_id=self.supplier_id, framework_id=framework_id,
+                declaration={'an_answer': 'Yes it is'},
+                on_framework=True,
+                agreement_returned_at=datetime(2015, 10, 10, 10, 10, 10),
+                countersigned_at=datetime(2015, 11, 12, 13, 14, 15),
+                agreement_details={
+                    u'signerName': u'thing',
+                    u'signerRole': u'thing',
+                    u'uploaderUserId': 20
+                },
+            )
+            db.session.add(answers)
+            db.session.commit()
+
+        # Get back the SupplierFramework record
+        response = self.client.get(
+            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug))
+
+        data = json.loads(response.get_data())
+        assert response.status_code, 200
+        assert data['frameworkInterest']['supplierId'] == self.supplier_id
+        assert data['frameworkInterest']['frameworkSlug'] == self.framework_slug
+        assert data['frameworkInterest']['declaration'] == {'an_answer': 'Yes it is'}
+        assert data['frameworkInterest']['onFramework'] is True
+        assert data['frameworkInterest']['agreementReturned'] is True
+        assert data['frameworkInterest']['agreementReturnedAt'] == '2015-10-10T10:10:10.000000Z'
+        assert data['frameworkInterest']['countersigned'] is True
+        assert data['frameworkInterest']['countersignedAt'] == '2015-11-12T13:14:15.000000Z'
+        assert data['frameworkInterest']['agreementDetails'] == {
+            'signerName': 'thing',
+            'signerRole': 'thing',
+            'uploaderUserId': 20
+        }
+
+
 class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
     method = "post"
     endpoint = "/suppliers/0/frameworks/digital-outcomes-and-specialists"
