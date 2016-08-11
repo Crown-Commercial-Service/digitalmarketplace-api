@@ -5,7 +5,7 @@ from flask import json
 from nose.tools import assert_equal, assert_in, assert_true, \
     assert_almost_equal, assert_false, assert_is_not_none, assert_not_in
 from app.models import Service, Supplier, Framework, \
-    AuditEvent, FrameworkLot
+    AuditEvent, FrameworkLot, Address
 import mock
 from app import db, create_app
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
@@ -14,10 +14,10 @@ from sqlalchemy.exc import IntegrityError
 from dmapiclient import HTTPError
 from dmutils.formats import DATETIME_FORMAT
 from dmapiclient.audit import AuditTypes
+import pytest
 
 
 class TestRoleListing(BaseApplicationTest):
-
     def test_listing(self):
         response = self.client.get('/roles')
         data = json.loads(response.get_data())
@@ -46,9 +46,20 @@ class TestListServicesOrdering(BaseApplicationTest):
             g6_saas = self.load_example_listing("G6-SaaS")
             g6_iaas_2 = self.load_example_listing("G6-IaaS")
 
-            return  # FIXME: services not yet implemented in Australian version
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1")
+                Supplier(code=1,
+                         name=u"Supplier 1",
+                         description="",
+                         summary="",
+                         address=Address(address_line="{} Dummy Street 1",
+                                         suburb="Dummy",
+                                         state="ZZZ",
+                                         postal_code="0000",
+                                         country='Australia'),
+                         contacts=[],
+                         references=[],
+                         prices=[],
+                         )
             )
 
             def insert_service(listing, service_id, lot_id, framework_id):
@@ -81,7 +92,6 @@ class TestListServicesOrdering(BaseApplicationTest):
     def test_should_order_supplier_services_by_framework_lot_name(self):
         self.setup_services()
 
-        return  # FIXME: services not yet implemented in Australian version
         response = self.client.get('/services?supplier_code=1')
         data = json.loads(response.get_data())
 
@@ -99,7 +109,6 @@ class TestListServicesOrdering(BaseApplicationTest):
     def test_all_services_list_ordered_by_id(self):
         self.setup_services()
 
-        return  # FIXME: services not yet implemented in Australian version
         response = self.client.get('/services')
         data = json.loads(response.get_data())
 
@@ -146,7 +155,7 @@ class TestListServices(BaseApplicationTest):
             db.session.commit()
 
     def test_list_services_with_no_services(self):
-        return  # FIXME: services not yet implemented in Australian version
+
         response = self.client.get('/services')
         data = json.loads(response.get_data())
 
@@ -154,7 +163,7 @@ class TestListServices(BaseApplicationTest):
         assert_equal(data['services'], [])
 
     def test_list_services_gets_all_statuses(self):
-        return  # FIXME: services not yet implemented in Australian version
+
         self.setup_dummy_services_including_unpublished(1)
         response = self.client.get('/services')
         data = json.loads(response.get_data())
@@ -163,7 +172,7 @@ class TestListServices(BaseApplicationTest):
         assert_equal(len(data['services']), 3)
 
     def test_list_services_returns_updated_date(self):
-        return  # FIXME: services not yet implemented in Australian version
+
         self.setup_dummy_services_including_unpublished(1)
         response = self.client.get('/services')
         data = json.loads(response.get_data())
@@ -177,7 +186,7 @@ class TestListServices(BaseApplicationTest):
             assert False, "Should be able to parse date"
 
     def test_list_services_gets_only_active_frameworks(self):
-        return  # FIXME: services not yet implemented in Australian version
+
         with self.app.app_context():
             self.setup_dummy_service(
                 service_id='2000000999',
@@ -192,7 +201,7 @@ class TestListServices(BaseApplicationTest):
             assert_equal(len(data['services']), 3)
 
     def test_list_services_with_given_frameworks(self):
-        return  # FIXME: services not yet implemented in Australian version
+
         with self.app.app_context():
             self.setup_dummy_services_including_unpublished(1)
 
@@ -228,7 +237,6 @@ class TestListServices(BaseApplicationTest):
             response = self.client.get('/services?status=published')
             data = json.loads(response.get_data())
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 200)
             assert_equal(len(data['services']), 1)
 
@@ -237,7 +245,6 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services?status=published')
         data = json.loads(response.get_data())
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 1)
         assert_equal(data['services'][0]['id'], '2000000000')
@@ -247,7 +254,6 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services?status=enabled')
         data = json.loads(response.get_data())
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 1)
         assert_equal(data['services'][0]['id'], '2000000003')
@@ -257,7 +263,6 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services?status=disabled')
         data = json.loads(response.get_data())
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 1)
         assert_equal(data['services'][0]['id'], '2000000002')
@@ -267,7 +272,6 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services?status=disabled,enabled')
         data = json.loads(response.get_data())
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 2)
         assert_equal(data['services'][0]['id'], '2000000002')
@@ -278,7 +282,6 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services?status=published,enabled')
         data = json.loads(response.get_data())
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 2)
         assert_equal(data['services'][0]['id'], '2000000000')
@@ -288,13 +291,13 @@ class TestListServices(BaseApplicationTest):
         self.setup_dummy_services_including_unpublished(1)
         response = self.client.get('/services')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         service = data['services'][0]
 
         framework_info = {
             key: value for key, value in data['services'][0].items()
             if key.startswith('framework') or key.startswith('lot')
-        }
+            }
         assert framework_info == {
             'frameworkSlug': 'g-cloud-6',
             'frameworkName': 'G-Cloud 6',
@@ -309,10 +312,10 @@ class TestListServices(BaseApplicationTest):
         self.setup_dummy_services_including_unpublished(1)
         response = self.client.get('/services')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         service = data['services'][0]
 
-        assert_equal(service['supplierId'], 0)
+        assert_equal(service['supplierCode'], 0)
         assert_equal(service['supplierName'], u'Supplier 0')
 
     def test_paginated_list_services_page_one(self):
@@ -321,7 +324,6 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services')
         data = json.loads(response.get_data())
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 5)
         assert_in('page=2', data['links']['next'])
@@ -333,7 +335,6 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services?page=2')
         data = json.loads(response.get_data())
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 4)
         prev_link = data['links']['prev']
@@ -344,13 +345,11 @@ class TestListServices(BaseApplicationTest):
 
         response = self.client.get('/services?page=10')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 404)
 
     def test_below_one_page_number_is_404(self):
         response = self.client.get('/services?page=0')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 404)
 
     def test_x_forwarded_proto(self):
@@ -369,27 +368,23 @@ class TestListServices(BaseApplicationTest):
         else:
             os.environ['DM_HTTP_PROTO'] = prev_environ
 
-        return  # FIXME: services not yet implemented in Australian version
         assert data['links']['services.list'].startswith('https://')
 
     def test_invalid_page_argument(self):
         response = self.client.get('/services?page=a')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 400)
         assert_in(b'Invalid page argument', response.get_data())
 
     def test_invalid_supplier_code_argument(self):
         response = self.client.get('/services?supplier_code=a')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 400)
         assert_in(b'Invalid supplier_code', response.get_data())
 
     def test_non_existent_supplier_code_argument(self):
         response = self.client.get('/services?supplier_code=54321')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 404)
 
     def test_supplier_code_filter(self):
@@ -398,10 +393,9 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services?supplier_code=1')
         data = json.loads(response.get_data())
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 200)
         assert_equal(
-            list(filter(lambda s: s['supplierId'] == 1, data['services'])),
+            list(filter(lambda s: s['supplierCode'] == 1, data['services'])),
             data['services']
         )
 
@@ -413,7 +407,6 @@ class TestListServices(BaseApplicationTest):
         )
         data = json.loads(response.get_data())
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 200)
         assert_equal(
             list(),
@@ -425,7 +418,7 @@ class TestListServices(BaseApplicationTest):
 
         response = self.client.get('/services?supplier_code=1')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_not_in('next', data['links'])
         assert_equal(len(data['services']), 7)
 
@@ -433,14 +426,13 @@ class TestListServices(BaseApplicationTest):
         self.setup_dummy_services_including_unpublished(15)
         response = self.client.get('/services?supplier_code=100')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 404)
 
     def test_filter_services_by_lot_location_role(self):
         self.setup_services()
         response = self.client.get('/services?lot=digital-specialists')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_equal(response.status_code, 200)
         assert_equal(len(data['services']), 2)
 
@@ -468,7 +460,7 @@ class TestListServices(BaseApplicationTest):
         self.setup_services()
         response = self.client.get('/services?location=Wales')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         assert response.status_code == 400
         assert data['error'] == 'Lot must be specified to filter by location'
 
@@ -476,7 +468,7 @@ class TestListServices(BaseApplicationTest):
         self.setup_services()
         response = self.client.get('/services?lot=digital-outcomes&role=agileCoach')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         assert response.status_code == 400
         assert data['error'] == 'Role only applies to Digital Specialists lot'
 
@@ -484,7 +476,7 @@ class TestListServices(BaseApplicationTest):
         self.setup_services()
         response = self.client.get('/services?lot=digital-specialists&location=Wales')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         assert response.status_code == 400
         assert data['error'] == 'Role must be specified for Digital Specialists'
 
@@ -496,12 +488,17 @@ class TestPostService(BaseApplicationTest):
 
     def setup(self):
         super(TestPostService, self).setup()
-        return  # FIXME: services not yet implemented in Australian version
+
         payload = self.load_example_listing("G6-IaaS")
         self.service_id = str(payload['id'])
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1")
+                Supplier(code=1, name=u"Supplier 1",
+                         address=Address(address_line="{} Dummy Street 1",
+                                         suburb="Dummy",
+                                         state="ZZZ",
+                                         postal_code="0000",
+                                         country='Australia'))
             )
             db.session.commit()
 
@@ -521,7 +518,6 @@ class TestPostService(BaseApplicationTest):
                      'serviceName': 'new service name'}}),
             content_type='application/json')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 405)
 
     def test_post_returns_404_if_no_service_to_update(self):
@@ -533,7 +529,6 @@ class TestPostService(BaseApplicationTest):
                      'serviceName': 'new service name'}}),
             content_type='application/json')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 404)
 
     def test_no_content_type_causes_failure(self):
@@ -545,7 +540,6 @@ class TestPostService(BaseApplicationTest):
                      'services': {
                          'serviceName': 'new service name'}}))
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 400)
             assert_in(b'Unexpected Content-Type', response.get_data())
 
@@ -559,7 +553,6 @@ class TestPostService(BaseApplicationTest):
                          'serviceName': 'new service name'}}),
                 content_type='application/octet-stream')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 400)
             assert_in(b'Unexpected Content-Type', response.get_data())
 
@@ -570,7 +563,6 @@ class TestPostService(BaseApplicationTest):
                 data="ouiehdfiouerhfuehr",
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 400)
             assert_in(b'Invalid JSON', response.get_data())
 
@@ -584,7 +576,6 @@ class TestPostService(BaseApplicationTest):
                          'serviceName': 'new service name'}}),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 200)
 
             response = self.client.get('/services/%s' % self.service_id)
@@ -603,7 +594,6 @@ class TestPostService(BaseApplicationTest):
                          'serviceName': 'new service name'}}),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 200)
 
             audit_response = self.client.get('/audit-events')
@@ -635,7 +625,7 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json')
 
             audit_response = self.client.get('/audit-events')
-            return  # FIXME: services not yet implemented in Australian version
+
             assert_equal(audit_response.status_code, 200)
             data = json.loads(audit_response.get_data())
 
@@ -656,7 +646,7 @@ class TestPostService(BaseApplicationTest):
                 'Supplier 1'
             )
             assert_equal(
-                data['auditEvents'][0]['data']['supplierId'],
+                data['auditEvents'][0]['data']['supplierCode'],
                 1
             )
 
@@ -672,7 +662,6 @@ class TestPostService(BaseApplicationTest):
                          'serviceTypes': ['Compute']}}),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 200)
 
             response = self.client.get('/services/%s' % self.service_id)
@@ -695,7 +684,6 @@ class TestPostService(BaseApplicationTest):
                          'supportTypes': support_types}}),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 200)
 
             response = self.client.get('/services/%s' % self.service_id)
@@ -723,7 +711,6 @@ class TestPostService(BaseApplicationTest):
                              identity_authentication_controls}}),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 200)
 
             response = self.client.get('/services/%s' % self.service_id)
@@ -739,7 +726,7 @@ class TestPostService(BaseApplicationTest):
                          updated_auth_controls['value'], True)
 
     def test_invalid_field_not_accepted_on_update(self):
-        return  # FIXME: services not yet implemented in Australian version
+
         with self.app.app_context():
             response = self.client.post(
                 "/services/" + self.service_id,
@@ -755,7 +742,7 @@ class TestPostService(BaseApplicationTest):
                           json.loads(response.get_data())['error']['_form']))
 
     def test_invalid_field_value_not_accepted_on_update(self):
-        return  # FIXME: services not yet implemented in Australian version
+
         with self.app.app_context():
             response = self.client.post(
                 "/services/" + self.service_id,
@@ -779,7 +766,6 @@ class TestPostService(BaseApplicationTest):
                          'serviceName': 'new service name'}}),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 200)
 
             archived_state = self.client.get(
@@ -800,7 +786,6 @@ class TestPostService(BaseApplicationTest):
                          'serviceName': 'new service name'}}),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 200)
 
             archived_state = self.client.get(
@@ -813,7 +798,7 @@ class TestPostService(BaseApplicationTest):
                 ['My Iaas Service', 'new service name'])
 
     def test_updated_service_should_be_archived_on_each_update(self):
-        return  # FIXME: services not yet implemented in Australian version
+
         with self.app.app_context():
             for i in range(5):
                 response = self.client.post(
@@ -836,7 +821,6 @@ class TestPostService(BaseApplicationTest):
             response = self.client.get('/services/%s' % self.service_id)
             data = json.loads(response.get_data())
 
-            return  # FIXME: services not yet implemented in Australian version
             response = self.client.post(
                 '/services/%s' % self.service_id,
                 data=json.dumps(
@@ -851,18 +835,18 @@ class TestPostService(BaseApplicationTest):
 
     def test_should_404_if_no_archived_service_found_by_pk(self):
         response = self.client.get('/archived-services/5')
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_equal(response.status_code, 404)
 
     def test_return_404_if_no_archived_service_by_service_id(self):
         response = self.client.get(
             '/archived-services?service-id=12345678901234')
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_equal(response.status_code, 404)
 
     def test_should_400_if_invalid_service_id(self):
         response = self.client.get('/archived-services?service-id=not-valid')
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_equal(response.status_code, 400)
         assert_in(b'Invalid service ID supplied', response.get_data())
         response = self.client.get(
@@ -885,7 +869,6 @@ class TestPostService(BaseApplicationTest):
                      'serviceName': 'new service name', 'id': 'differentId'}}),
             content_type='application/json')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 400)
         assert_in(b'id parameter must match id in data',
                   response.get_data())
@@ -899,7 +882,6 @@ class TestPostService(BaseApplicationTest):
                      'status': 'enabled'}}),
             content_type='application/json')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 200)
 
         response = self.client.get('/services/%s' % self.service_id)
@@ -926,7 +908,6 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json'
             )
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 200)
             data = json.loads(response.get_data())
             assert_equal(status, data['services']['status'])
@@ -942,7 +923,6 @@ class TestPostService(BaseApplicationTest):
             content_type='application/json'
         )
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 200)
 
         audit_response = self.client.get('/audit-events')
@@ -986,7 +966,6 @@ class TestPostService(BaseApplicationTest):
                 content_type='application/json'
             )
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 400)
             assert_in('is not a valid status',
                       json.loads(response.get_data())['error'])
@@ -1005,11 +984,10 @@ class TestPostService(BaseApplicationTest):
             content_type='application/json'
         )
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 404)
 
     def test_json_postgres_field_should_not_include_column_fields(self):
-        return  # FIXME: services not yet implemented in Australian version
+
         non_json_fields = [
             'supplierName', 'links', 'frameworkSlug', 'updatedAt', 'createdAt', 'frameworkName', 'status', 'id']
         with self.app.app_context():
@@ -1043,7 +1021,7 @@ class TestPostService(BaseApplicationTest):
                                            "updated_by": "joeblogs",
                                        }),
                                        content_type='application/json')
-            return  # FIXME: services not yet implemented in Australian version
+
             assert_equal(response.status_code, 201)
 
             response = self.client.post('/services/{}'.format(payload['id']),
@@ -1061,10 +1039,15 @@ class TestPostService(BaseApplicationTest):
 class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
-        return  # FIXME: services not yet implemented in Australian version
+
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1")
+                Supplier(code=1, name=u"Supplier 1",
+                         address=Address(address_line="{} Dummy Street 1",
+                                         suburb="Dummy",
+                                         state="ZZZ",
+                                         postal_code="0000",
+                                         country='Australia'))
             )
 
             db.session.commit()
@@ -1084,7 +1067,6 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 ),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             search_api_client.index.assert_called_with(
                 "1234567890123456",
                 json.loads(response.get_data())['services']
@@ -1106,7 +1088,6 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 ),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(res.status_code, 201)
             assert_is_not_none(Service.query.filter(
                 Service.service_id == payload["id"]).first())
@@ -1127,7 +1108,6 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 ),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 201)
 
 
@@ -1135,13 +1115,18 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
 class TestShouldCallSearchApiOnPost(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPost, self).setup()
-        return  # FIXME: services not yet implemented in Australian version
+
         now = datetime.utcnow()
         payload = self.load_example_listing("G6-IaaS")
         g4_payload = self.load_example_listing("G4")
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1")
+                Supplier(code=1, name=u"Supplier 1",
+                         address=Address(address_line="{} Dummy Street 1",
+                                         suburb="Dummy",
+                                         state="ZZZ",
+                                         postal_code="0000",
+                                         country='Australia'))
             )
             db.session.add(Service(service_id="1234567890123456",
                                    supplier_code=1,
@@ -1176,7 +1161,6 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 ),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             search_api_client.index.assert_called_with(
                 "1234567890123456",
                 mock.ANY
@@ -1201,7 +1185,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                         'services': payload}
                 ),
                 content_type='application/json')
-            return  # FIXME: services not yet implemented in Australian version
+
             assert_equal(search_api_client.index.called, False)
 
     def test_should_not_index_on_service_on_expired_frameworks(
@@ -1220,7 +1204,6 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 ),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(res.status_code, 200)
             assert_false(search_api_client.index.called)
 
@@ -1239,14 +1222,13 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
                 ),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 200, response.get_data())
 
 
 class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPostStatusUpdate, self).setup()
-        return  # FIXME: services not yet implemented in Australian version
+
         now = datetime.utcnow()
         self.services = {}
 
@@ -1258,7 +1240,12 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
 
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1")
+                Supplier(code=1, name=u"Supplier 1",
+                         address=Address(address_line="{} Dummy Street 1",
+                                         suburb="Dummy",
+                                         state="ZZZ",
+                                         postal_code="0000",
+                                         country='Australia'))
             )
 
             for index, status in enumerate(valid_statuses):
@@ -1291,7 +1278,6 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
                             service_is_indexed, service_is_deleted,
                             expected_status_code):
 
-        return  # FIXME: services not yet implemented in Australian version
         with mock.patch('app.service_utils.search_api_client') \
                 as search_api_client:
 
@@ -1377,7 +1363,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
 
     @mock.patch('app.search_api_client')
     def test_should_ignore_index_error(self, search_api_client):
-        return  # FIXME: services not yet implemented in Australian version
+
         search_api_client.index.side_effect = HTTPError()
 
         response = self.client.post(
@@ -1394,7 +1380,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
 
     @mock.patch('app.search_api_client')
     def test_should_ignore_index_delete_error(self, search_api_client):
-        return  # FIXME: services not yet implemented in Australian version
+
         search_api_client.delete.side_effect = HTTPError()
 
         response = self.client.post(
@@ -1416,12 +1402,17 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
     def setup(self):
         super(TestPutService, self).setup()
-        return  # FIXME: services not yet implemented in Australian version
+
         payload = self.load_example_listing("G6-IaaS")
         del payload['id']
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1")
+                Supplier(code=1, name=u"Supplier 1",
+                         address=Address(address_line="{} Dummy Street 1",
+                                         suburb="Dummy",
+                                         state="ZZZ",
+                                         postal_code="0000",
+                                         country='Australia'))
             )
             db.session.commit()
 
@@ -1441,7 +1432,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 }),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 201)
 
             service = Service.query.filter(
@@ -1467,7 +1457,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 ),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 201)
             now = datetime.utcnow()
 
@@ -1479,8 +1468,8 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 payload['id'])
 
             assert_equal(
-                service["supplierId"],
-                payload['supplierId'])
+                service["supplierCode"],
+                payload['supplierCode'])
 
             assert_equal(
                 self.string_to_time_to_string(
@@ -1515,7 +1504,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 ),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 201, response.get_data())
 
             response = self.client.get("/services/1234567890123456")
@@ -1551,7 +1539,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 ),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 201)
 
             audit_response = self.client.get('/audit-events')
@@ -1567,7 +1554,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                          "1234567890123456")
             assert_equal(data['auditEvents'][0]['data']['supplierName'],
                          "Supplier 1")
-            assert_equal(data['auditEvents'][0]['data']['supplierId'],
+            assert_equal(data['auditEvents'][0]['data']['supplierCode'],
                          1)
             assert_equal(
                 data['auditEvents'][0]['data']['oldArchivedServiceId'], None
@@ -1596,7 +1583,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
             for field in ['id', 'lot', 'supplierId', 'status']:
                 payload.pop(field, None)
-            return  # FIXME: services not yet implemented in Australian version
+
             assert_equal(response.status_code, 201, response.get_data())
             now = datetime.utcnow()
             service = Service.query.filter(Service.service_id == "4-disabled").first()
@@ -1616,7 +1603,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 'services': {'id': "1234567890123457", 'foo': 'bar'}}),
             content_type='application/json')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 400)
         assert_in(b'id parameter must match id in data',
                   response.get_data())
@@ -1629,7 +1615,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 'services': {'id': 'abc123456', 'foo': 'bar'}}),
             content_type='application/json')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 400)
         assert_in(b'Invalid service ID supplied', response.get_data())
 
@@ -1641,7 +1626,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 'services': {'id': 'abcdefghij12345678901', 'foo': 'bar'}}),
             content_type='application/json')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 400)
         assert_in(b'Invalid service ID supplied', response.get_data())
 
@@ -1656,7 +1640,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 'services': payload}),
             content_type='application/json')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 400)
         assert_in("Invalid status value 'foo'", json.loads(response.get_data())['error'])
 
@@ -1671,7 +1654,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 'services': payload}),
             content_type='application/json')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 400)
         assert_in("Incorrect lot 'foo' for framework 'g-cloud-4'", json.loads(response.get_data())['error'])
 
@@ -1689,7 +1671,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             }),
             content_type='application/json')
 
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(response.status_code, 400)
         assert_in("23.45 is not of type", json.loads(response.get_data())['error']['priceMin'])
 
@@ -1697,7 +1678,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         with self.app.app_context():
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "6543210987654321"
-            payload['supplierId'] = 100
+            payload['supplierCode'] = 100
             response = self.client.put(
                 '/services/6543210987654321',
                 data=json.dumps(
@@ -1707,16 +1688,15 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 ),
                 content_type='application/json')
 
-            return  # FIXME: services not yet implemented in Australian version
             assert_equal(response.status_code, 400)
-            assert_in("Invalid supplier ID '100'", json.loads(response.get_data())['error'])
+            assert_in("Invalid supplier Code '100'", json.loads(response.get_data())['error'])
 
     def test_supplier_name_in_service_data_is_shadowed(self):
-        return  # FIXME: services not yet implemented in Australian version
+
         with self.app.app_context():
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
-            payload['supplierId'] = 1
+            payload['supplierCode'] = 1
             payload['supplierName'] = u'New Name'
 
             response = self.client.put(
@@ -1742,7 +1722,6 @@ class TestGetService(BaseApplicationTest):
         super(TestGetService, self).setup()
         now = datetime.utcnow()
         with self.app.app_context():
-            return  # FIXME: services not yet implemented in Australian version
             db.session.add(Framework(
                 id=123,
                 name="expired",
@@ -1756,7 +1735,12 @@ class TestGetService(BaseApplicationTest):
                 lot_id=1
             ))
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1")
+                Supplier(code=1, name=u"Supplier 1",
+                         address=Address(address_line="{} Dummy Street 1",
+                                         suburb="Dummy",
+                                         state="ZZZ",
+                                         postal_code="0000",
+                                         country='Australia'))
             )
             db.session.add(Service(service_id="123-published-456",
                                    supplier_code=1,
@@ -1794,51 +1778,50 @@ class TestGetService(BaseApplicationTest):
 
     def test_get_non_existent_service(self):
         response = self.client.get('/services/9999999999')
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_equal(404, response.status_code)
 
     def test_invalid_service_id(self):
         response = self.client.get('/services/abc123')
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_equal(404, response.status_code)
 
     def test_get_published_service(self):
         response = self.client.get('/services/123-published-456')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_equal(200, response.status_code)
         assert_equal("123-published-456", data['services']['id'])
 
     def test_get_disabled_service(self):
         response = self.client.get('/services/123-disabled-456')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_equal(200, response.status_code)
         assert_equal("123-disabled-456", data['services']['id'])
 
     def test_get_enabled_service(self):
         response = self.client.get('/services/123-enabled-456')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_equal(200, response.status_code)
         assert_equal("123-enabled-456", data['services']['id'])
 
     def test_get_service_returns_supplier_info(self):
         response = self.client.get('/services/123-published-456')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
-        assert_equal(data['services']['supplierId'], 1)
+
+        assert_equal(data['services']['supplierCode'], 1)
         assert_equal(data['services']['supplierName'], u'Supplier 1')
 
     def test_get_service_returns_framework_and_lot_info(self):
         response = self.client.get('/services/123-published-456')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
 
         framework_info = {
             key: value for key, value in data['services'].items()
             if key.startswith('framework') or key.startswith('lot')
-        }
+            }
         assert framework_info == {
             'frameworkSlug': 'g-cloud-6',
             'frameworkName': 'G-Cloud 6',
@@ -1873,7 +1856,7 @@ class TestGetService(BaseApplicationTest):
             db.session.commit()
         response = self.client.get('/services/123-disabled-456')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_equal(data['serviceMadeUnavailableAuditEvent'], None)
 
     def test_get_service_returns_unavailability_audit_if_disabled(self):
@@ -1900,7 +1883,7 @@ class TestGetService(BaseApplicationTest):
             db.session.commit()
         response = self.client.get('/services/123-disabled-456')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_equal(data['serviceMadeUnavailableAuditEvent']['type'], 'update_service_status')
         assert_equal(data['serviceMadeUnavailableAuditEvent']['user'], 'joeblogs')
         assert_in('createdAt', data['serviceMadeUnavailableAuditEvent'])
@@ -1937,7 +1920,7 @@ class TestGetService(BaseApplicationTest):
             db.session.commit()
         response = self.client.get('/services/123-published-456')
         data = json.loads(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
+
         assert_equal(data['serviceMadeUnavailableAuditEvent']['type'], 'framework_update')
         assert_equal(data['serviceMadeUnavailableAuditEvent']['user'], 'joeblogs')
         assert_in('createdAt', data['serviceMadeUnavailableAuditEvent'])
@@ -1972,8 +1955,6 @@ class TestGetService(BaseApplicationTest):
             db.session.commit()
         response = self.client.get('/services/123-disabled-456')
         data = json.loads(response.get_data())
-        print(response.get_data())
-        return  # FIXME: services not yet implemented in Australian version
         assert_equal(data['serviceMadeUnavailableAuditEvent']['type'], 'framework_update')
         assert_equal(data['serviceMadeUnavailableAuditEvent']['user'], 'joeblogs')
         assert_in('createdAt', data['serviceMadeUnavailableAuditEvent'])

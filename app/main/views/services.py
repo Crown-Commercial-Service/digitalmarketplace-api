@@ -54,7 +54,7 @@ def list_service_roles():
 def list_services():
     page = get_valid_page_or_1()
 
-    supplier_id = get_int_or_400(request.args, 'supplier_id')
+    supplier_code = get_int_or_400(request.args, 'supplier_code')
 
     if request.args.get('framework'):
         frameworks = [slug.strip() for slug in request.args['framework'].split(',')]
@@ -77,12 +77,12 @@ def list_services():
     except ValidationError as e:
         abort(400, e.message)
 
-    if supplier_id is not None:
-        supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
+    if supplier_code is not None:
+        supplier = Supplier.query.filter(Supplier.code == supplier_code).all()
         if not supplier:
-            abort(404, "supplier_id '%d' not found" % supplier_id)
+            abort(404, "supplier_code '%d' not found" % supplier_code)
 
-        items = services.default_order().filter(Service.supplier_id == supplier_id).all()
+        items = services.default_order().filter(Service.supplier_code == supplier_code).all()
         return jsonify(
             services=[service.serialize() for service in items],
             links=dict()

@@ -5,6 +5,7 @@ from flask.ext.script import Manager
 from alembic.command import upgrade
 from alembic.config import Config
 from sqlalchemy import inspect
+from app.models import Framework, Lot
 
 
 def setup():
@@ -22,6 +23,7 @@ def setup():
     with app.app_context():
         upgrade(config, 'head')
         search_indices.create_indices()
+
     print("Done db setup")
 
 

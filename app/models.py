@@ -22,6 +22,7 @@ from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
 from dmutils.data_tools import ValidationError, normalise_abn, normalise_acn, parse_money
 from dmutils.formats import DATETIME_FORMAT
+from dmutils.dates import get_publishing_dates
 
 from . import db
 from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
@@ -82,7 +83,7 @@ class Framework(db.Model):
     slug = db.Column(db.String, nullable=False, unique=True, index=True)
     name = db.Column(db.String(255), nullable=False)
     framework = db.Column(db.String(), index=True, nullable=False)
-    framework_agreement_version = db.Column(db.String(), nullable=True)
+    framework_agreement_details = db.Column(JSON, nullable=True)
     status = db.Column(db.String(),
                        index=True, nullable=False,
                        default='pending')
@@ -106,7 +107,7 @@ class Framework(db.Model):
             'name': self.name,
             'slug': self.slug,
             'framework': self.framework,
-            'frameworkAgreementVersion': self.framework_agreement_version,
+            'frameworkAgreementVersion': (self.framework_agreement_details or {}).get("frameworkAgreementVersion"),
             'status': self.status,
             'clarificationQuestionsOpen': self.clarification_questions_open,
             'lots': [lot.serialize() for lot in self.lots],
@@ -506,12 +507,24 @@ class SupplierFramework(db.Model):
     declaration = db.Column(JSON)
     on_framework = db.Column(db.Boolean, nullable=True)
     agreement_returned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
+    countersigned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
+    agreement_details = db.Column(JSON)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
     @validates('declaration')
     def validates_declaration(self, key, value):
+        value = strip_whitespace_from_data(value)
+        value = purge_nulls_from_data(value)
+
+        return value
+
+    @validates('agreement_details')
+    def validates_agreement_details(self, key, value):
+        if value is None:
+            return value
+
         value = strip_whitespace_from_data(value)
         value = purge_nulls_from_data(value)
 
@@ -560,7 +573,12 @@ class SupplierFramework(db.Model):
         agreement_returned_at = self.agreement_returned_at
         if agreement_returned_at:
             agreement_returned_at = agreement_returned_at.strftime(DATETIME_FORMAT)
-        return dict({
+
+        countersigned_at = self.countersigned_at
+        if countersigned_at:
+            countersigned_at = countersigned_at.strftime(DATETIME_FORMAT)
+
+        supplier_framework = dict({
             "supplierCode": self.supplier_code,
             "supplierName": self.supplier.name,
             "frameworkSlug": self.framework.slug,
@@ -568,7 +586,21 @@ class SupplierFramework(db.Model):
             "onFramework": self.on_framework,
             "agreementReturned": bool(agreement_returned_at),
             "agreementReturnedAt": agreement_returned_at,
+            "agreementDetails": self.agreement_details,
+            "countersigned": bool(countersigned_at),
+            "countersignedAt": countersigned_at,
         }, **(data or {}))
+
+        if self.agreement_details and self.agreement_details.get('uploaderUserId'):
+            user = User.query.filter(
+                User.id == self.agreement_details.get('uploaderUserId')
+            ).first()
+
+            if user:
+                supplier_framework['agreementDetails']['uploaderUserName'] = user.name
+                supplier_framework['agreementDetails']['uploaderUserEmail'] = user.email_address
+
+        return supplier_framework
 
 
 class User(db.Model):
@@ -768,7 +800,7 @@ class ServiceTableMixin(object):
 
         data.update({
             'id': self.service_id,
-            'supplierCode': self.supplier.supplier_code,
+            'supplierCode': self.supplier.code,
             'supplierName': self.supplier.name,
             'frameworkSlug': self.framework.slug,
             'frameworkFramework': self.framework.framework,
@@ -1048,6 +1080,7 @@ class Brief(db.Model):
     updated_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow, onupdate=datetime.utcnow)
     published_at = db.Column(db.DateTime, index=True, nullable=True)
+    withdrawn_at = db.Column(db.DateTime, index=True, nullable=True)
 
     __table_args__ = (db.ForeignKeyConstraint([framework_id, _lot_id],
                                               ['framework_lot.framework_id', 'framework_lot.lot_id']),
@@ -1060,7 +1093,7 @@ class Brief(db.Model):
         "BriefClarificationQuestion",
         order_by="BriefClarificationQuestion.published_at")
 
-    @validates('user')
+    @validates('users')
     def validates_users(self, key, user):
         if user.role != 'buyer':
             raise ValidationError("The brief user must be a buyer")
@@ -1098,37 +1131,33 @@ class Brief(db.Model):
     def applications_closed_at(self):
         if self.published_at is None:
             return None
+        brief_publishing_date_and_length = self._build_date_and_length_data()
 
-        # Set time to 23:59:59 same day and add full number of days before application closes
-        published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
-        closing_time = published_day + timedelta(days=self.APPLICATIONS_OPEN_DAYS)
-
-        return closing_time
+        return get_publishing_dates(brief_publishing_date_and_length)['closing_date']
 
     @applications_closed_at.expression
     def applications_closed_at(cls):
-        return func.date_trunc('day', cls.published_at) + sql_cast(
-            '%d days 23:59:59' % cls.APPLICATIONS_OPEN_DAYS, INTERVAL
-        )
+        return sql_case([
+            (cls.data['requirementsLength'].astext == '1 week', func.date_trunc('day', cls.published_at) + sql_cast(
+                '1 week 23:59:59', INTERVAL)),
+            ], else_=func.date_trunc('day', cls.published_at) + sql_cast(
+                '2 weeks 23:59:59', INTERVAL))
 
     @hybrid_property
     def clarification_questions_closed_at(self):
         if self.published_at is None:
             return None
+        brief_publishing_date_and_length = self._build_date_and_length_data()
 
-        # Set time to 23:59:59 same day and add full number of days before questions close
-        published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
-        closing_time = published_day + timedelta(days=self.CLARIFICATION_QUESTIONS_OPEN_DAYS)
-
-        return closing_time
+        return get_publishing_dates(brief_publishing_date_and_length)['questions_close']
 
     @hybrid_property
     def clarification_questions_published_by(self):
         if self.published_at is None:
             return None
+        brief_publishing_date_and_length = self._build_date_and_length_data()
 
-        # All clarification questions should be published N days before brief closes
-        return self.applications_closed_at - timedelta(days=self.CLARIFICATION_QUESTIONS_PUBLISHED_DAYS)
+        return get_publishing_dates(brief_publishing_date_and_length)['answers_close']
 
     @hybrid_property
     def clarification_questions_are_closed(self):
@@ -1136,7 +1165,9 @@ class Brief(db.Model):
 
     @hybrid_property
     def status(self):
-        if self.published_at is None:
+        if self.withdrawn_at:
+            return 'withdrawn'
+        elif not self.published_at:
             return 'draft'
         elif self.applications_closed_at > datetime.utcnow():
             return 'live'
@@ -1145,20 +1176,20 @@ class Brief(db.Model):
 
     @status.setter
     def status(self, value):
-        if value == self.status:
+        if self.status == value:
             return
-        elif value == 'live':
+
+        if value == 'live' and self.status == 'draft':
             self.published_at = datetime.utcnow()
-        elif value == 'draft':
-            self.published_at = None
-        elif value == 'closed':
-            raise ValidationError("Cannot change brief status to 'closed'")
+        elif value == 'withdrawn' and self.status == 'live':
+            self.withdrawn_at = datetime.utcnow()
         else:
-            raise ValidationError("Invalid brief status '{}'".format(value))
+            raise ValidationError("Cannot change brief status from '{}' to '{}'".format(self.status, value))
 
     @status.expression
     def status(cls):
         return sql_case([
+            (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.published_at.is_(None), 'draft'),
             (cls.applications_closed_at > datetime.utcnow(), 'live')
         ], else_='closed')
@@ -1184,6 +1215,26 @@ class Brief(db.Model):
         current_data.update(data)
 
         self.data = current_data
+
+    def copy(self):
+        if self.framework.status != 'live':
+            raise ValidationError("Framework is not live")
+
+        return Brief(
+            data=self.data,
+            framework=self.framework,
+            lot=self.lot,
+            users=self.users
+        )
+
+    def _build_date_and_length_data(self):
+        published_day = self.published_at.replace(hour=23, minute=59, second=59, microsecond=0)
+        requirements_length = self.data.get('requirementsLength')
+
+        return {
+            'publishedAt': published_day,
+            'requirementsLength': requirements_length
+        }
 
     def serialize(self, with_users=False):
         data = dict(self.data.items())
@@ -1213,6 +1264,11 @@ class Brief(db.Model):
                 'clarificationQuestionsPublishedBy': self.clarification_questions_published_by.strftime(
                     DATETIME_FORMAT),
                 'clarificationQuestionsAreClosed': self.clarification_questions_are_closed,
+            })
+
+        if self.withdrawn_at:
+            data.update({
+                'withdrawnAt': self.withdrawn_at.strftime(DATETIME_FORMAT)
             })
 
         data['links'] = {
@@ -1300,7 +1356,7 @@ class BriefResponse(db.Model):
             'links': {
                 'self': url_for('.get_brief_response', brief_response_id=self.id),
                 'brief': url_for('.get_brief', brief_id=self.brief_id),
-                'supplier': url_for(".get_supplier", supplier_code=self.supplier_code),
+                'supplier': url_for(".get_supplier", code=self.supplier_code),
             }
         })
 

@@ -8,7 +8,7 @@ SQLAlchemy==1.0.5
 SQLAlchemy-Utils==0.30.5
 streql==3.0.2
 
-git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@22.1.0#egg=dto-digitalmarketplace-utils==22.1.0
+git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@24.4.2#egg=dto-digitalmarketplace-utils==24.4.2
 git+https://github.com/AusDTO/dto-digitalmarketplace-apiclient.git@4.0.0#egg=dto-digitalmarketplace-apiclient==4.0.0
 
 # For schema validation

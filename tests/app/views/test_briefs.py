@@ -1,11 +1,13 @@
 import json
+from datetime import datetime
+from datetime import timedelta
 
 import mock
 from ..helpers import BaseApplicationTest, COMPLETE_DIGITAL_SPECIALISTS_BRIEF
 
 from dmapiclient.audit import AuditTypes
 from app import db
-from app.models import Framework
+from app.models import Brief, Framework
 
 
 class TestBriefs(BaseApplicationTest):
@@ -13,7 +15,6 @@ class TestBriefs(BaseApplicationTest):
         super(TestBriefs, self).setup()
         self.user_id = self.setup_dummy_user(role='buyer')
 
-        return  # FIXME: briefs not yet implemented in Australian version
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             self._original_framework_status = framework.status
@@ -24,7 +25,6 @@ class TestBriefs(BaseApplicationTest):
 
     def teardown(self):
         with self.app.app_context():
-            return  # FIXME: briefs not yet implemented in Australian version
             framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             framework.status = self._original_framework_status
 
@@ -33,7 +33,6 @@ class TestBriefs(BaseApplicationTest):
         super(TestBriefs, self).teardown()
 
     def test_create_brief_with_no_data(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.post(
             '/briefs',
             content_type='application/json')
@@ -41,7 +40,6 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
 
     def test_create_brief(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.post(
             '/briefs',
             data=json.dumps({
@@ -56,12 +54,11 @@ class TestBriefs(BaseApplicationTest):
             content_type='application/json')
         data = json.loads(res.get_data(as_text=True))
 
-        assert res.status_code == 201
+        assert res.status_code == 201, res.get_data(as_text=True)
         assert data['briefs']['frameworkSlug'] == 'digital-outcomes-and-specialists'
         assert data['briefs']['title'] == 'the title'
 
     def test_create_fails_if_lot_does_not_require_briefs(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.post(
             '/briefs',
             data=json.dumps({
@@ -82,7 +79,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['error'] == "Lot 'User research studios' does not require a brief"
 
     def test_create_fails_if_required_field_is_not_provided(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.post(
             '/briefs',
             data=json.dumps({
@@ -101,7 +97,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['error'] == {'title': 'answer_required'}
 
     def test_can_only_create_briefs_on_live_frameworks(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             self._original_framework_status = framework.status
@@ -130,7 +125,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['error'] == 'Framework must be live'
 
     def test_create_brief_creates_audit_event(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.client.post(
             '/briefs',
             data=json.dumps({
@@ -160,7 +154,6 @@ class TestBriefs(BaseApplicationTest):
         }
 
     def test_create_brief_fails_if_schema_validation_fails(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.post(
             '/briefs',
             data=json.dumps({
@@ -179,7 +172,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['error'] == {'title': 'under_character_limit'}
 
     def test_create_brief_fails_if_user_does_not_exist(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.post(
             '/briefs',
             data=json.dumps({
@@ -196,7 +188,6 @@ class TestBriefs(BaseApplicationTest):
         assert json.loads(res.get_data(as_text=True))['error'] == 'User ID does not exist'
 
     def test_create_brief_fails_if_framework_does_not_exist(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.post(
             '/briefs',
             data=json.dumps({
@@ -213,7 +204,6 @@ class TestBriefs(BaseApplicationTest):
         assert json.loads(res.get_data(as_text=True))['error'] == "Framework 'not-exists' does not exist"
 
     def test_create_brief_fails_if_lot_does_not_exist(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.post(
             '/briefs',
             data=json.dumps({
@@ -231,7 +221,6 @@ class TestBriefs(BaseApplicationTest):
             "Incorrect lot 'not-exists' for framework 'digital-outcomes-and-specialists'"
 
     def test_update_brief(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1)
 
         res = self.client.post(
@@ -247,7 +236,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['briefs']['title'] == 'my title'
 
     def test_update_fails_if_required_field_is_not_provided(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1)
 
         res = self.client.post(
@@ -264,7 +252,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['error'] == {'title': 'answer_required'}
 
     def test_update_fails_if_status_is_live(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, status='live')
 
         res = self.client.post(
@@ -280,7 +267,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['error'] == 'Cannot update a live brief'
 
     def test_update_fails_if_status_is_closed(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, status='closed')
 
         res = self.client.post(
@@ -296,7 +282,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['error'] == 'Cannot update a closed brief'
 
     def test_update_brief_creates_audit_event(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1)
 
         self.client.post(
@@ -316,7 +301,6 @@ class TestBriefs(BaseApplicationTest):
         assert brief_audits[0]['data'] == {'briefId': 1, 'briefJson': {'title': 'my title'}}
 
     def test_update_brief_fails_if_schema_validation_fails(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1)
 
         res = self.client.post(
@@ -334,7 +318,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['error'] == {'title': 'under_character_limit'}
 
     def test_update_brief_criteria_weightings(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1)
 
         res = self.client.post(
@@ -350,7 +333,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['briefs']['technicalWeighting'] == 68
 
     def test_update_brief_criteria_validation_weighting_sums_are_100(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1)
 
         res = self.client.post(
@@ -370,7 +352,6 @@ class TestBriefs(BaseApplicationTest):
         }
 
     def test_update_brief_criteria_validation_of_maximums_and_minimums(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1)
 
         res = self.client.post(
@@ -391,7 +372,6 @@ class TestBriefs(BaseApplicationTest):
         }
 
     def test_update_brief_criteria_validation_of_non_integers(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1)
 
         res = self.client.post(
@@ -410,7 +390,6 @@ class TestBriefs(BaseApplicationTest):
         }
 
     def test_update_brief_returns_404_if_not_found(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.post(
             '/briefs/1',
             data=json.dumps({
@@ -422,7 +401,6 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 404
 
     def test_get_brief(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, title="I need a Developer")
         res = self.client.get('/briefs/1')
 
@@ -462,7 +440,6 @@ class TestBriefs(BaseApplicationTest):
         assert json.loads(res.get_data(as_text=True)) == {"briefs": expected_data}
 
     def test_get_live_brief_has_published_at_time(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, status='live')
         res = self.client.get('/briefs/1')
         data = json.loads(res.get_data(as_text=True))
@@ -474,23 +451,20 @@ class TestBriefs(BaseApplicationTest):
         assert not data['briefs']['clarificationQuestionsAreClosed']
 
     def test_get_brief_returns_404_if_not_found(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.get('/briefs/1')
 
         assert res.status_code == 404
 
     def test_list_briefs(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(3)
 
         res = self.client.get('/briefs')
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 3
+        assert len(data['briefs']) == data['meta']['total'] == 3
 
     def test_listed_briefs_do_not_list_users(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(3)
 
         res = self.client.get('/briefs')
@@ -500,7 +474,6 @@ class TestBriefs(BaseApplicationTest):
         assert not any('users' in brief for brief in data['briefs'])
 
     def test_list_briefs_by_user(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(3, user_id=1)
         self.setup_dummy_briefs(2, user_id=2, brief_start=4)
 
@@ -511,7 +484,6 @@ class TestBriefs(BaseApplicationTest):
         assert len(data['briefs']) == 3
 
     def test_list_briefs_by_status(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(3, status='live')
         self.setup_dummy_briefs(2, status='draft', brief_start=4)
 
@@ -519,10 +491,9 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 3, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 3, data['briefs']
 
     def test_cannot_list_briefs_by_invalid_status(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, status='live')
         self.setup_dummy_briefs(1, status='draft', brief_start=2)
 
@@ -530,10 +501,9 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 0
+        assert len(data['briefs']) == data['meta']['total'] == 0
 
     def test_list_briefs_by_multiple_statuses(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(3, status='live')
         self.setup_dummy_briefs(2, status='draft', brief_start=4)
 
@@ -541,10 +511,9 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 5, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 5, data['briefs']
 
     def test_list_briefs_by_framework(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(3, status='live')
         self.setup_dummy_briefs(2, status='draft', brief_start=4)
 
@@ -552,10 +521,21 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 5, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 5, data['briefs']
+
+    def test_list_briefs_by_multiple_frameworks(self):
+        self.setup_dummy_briefs(1, status='draft')
+        self.setup_dummy_briefs(3, status='live', brief_start=2)
+
+        # we don't have multiple brief-capable frameworks in the test dataset yet so this test is a bit of a stub
+        # until we do. at least it tests framework slugs are properly split
+        res = self.client.get('/briefs?framework=digital-outcomes-and-specialists,analogue-outcomes-and-specialists')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == data['meta']['total'] == 4, data['briefs']
 
     def test_cannot_list_briefs_by_invalid_framework(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, status='live')
         self.setup_dummy_briefs(1, status='draft', brief_start=2)
 
@@ -563,10 +543,9 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 0
+        assert len(data['briefs']) == data['meta']['total'] == 0
 
     def test_list_briefs_by_framework_and_status(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(3, status='live')
         self.setup_dummy_briefs(2, status='draft', brief_start=4)
 
@@ -574,10 +553,9 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 2, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 2, data['briefs']
 
     def test_list_briefs_by_lot(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(3, status='live', lot='digital-outcomes')
         self.setup_dummy_briefs(1, status='draft', lot='digital-outcomes', brief_start=4)
         self.setup_dummy_briefs(2, status='live', lot='digital-specialists', brief_start=5)
@@ -586,10 +564,30 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 4, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 4, data['briefs']
+
+    def test_list_briefs_by_multiple_lots(self):
+        self.setup_dummy_briefs(2, status='live', lot='digital-outcomes')
+        self.setup_dummy_briefs(2, status='draft', lot='digital-specialists', brief_start=3)
+        self.setup_dummy_briefs(1, status='draft', lot='digital-outcomes', brief_start=5)
+        self.setup_dummy_briefs(3, status='live', lot='user-research-participants', brief_start=6)
+
+        res = self.client.get('/briefs?lot=digital-specialists,user-research-participants')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == data['meta']['total'] == 5, data['briefs']
+        assert all(
+            (brief["lotSlug"] in ("digital-specialists", "user-research-participants",)) for brief in data['briefs']
+        )
+
+        res2 = self.client.get('/briefs?lot=banana,digital-specialists,,user-research-participants,')
+        data2 = json.loads(res.get_data(as_text=True))
+
+        assert res2.status_code == 200
+        assert data['briefs'] == data2['briefs']
 
     def test_list_briefs_by_lot_and_status(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(3, status='live', lot='digital-outcomes')
         self.setup_dummy_briefs(1, status='draft', lot='digital-outcomes', brief_start=4)
         self.setup_dummy_briefs(2, status='live', lot='digital-specialists', brief_start=5)
@@ -598,10 +596,27 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefs']) == 3, data['briefs']
+        assert len(data['briefs']) == data['meta']['total'] == 3, data['briefs']
+
+    def test_list_briefs_by_human_readable(self):
+        today = datetime.utcnow()
+        self.setup_dummy_briefs(1, data={'requirementsLength': '2 weeks'}, status=None, title='First',
+                                published_at=(today + timedelta(days=-40)))
+        self.setup_dummy_briefs(1, data={'requirementsLength': '2 weeks'}, status=None, title='Second',
+                                published_at=(today + timedelta(days=-9)), brief_start=2)
+        self.setup_dummy_briefs(1, data={'requirementsLength': '1 week'}, status=None, title='Third',
+                                published_at=(today + timedelta(days=-8)), brief_start=3)
+        self.setup_dummy_briefs(1, data={'requirementsLength': '1 week'}, status=None, title='Fourth',
+                                published_at=(today + timedelta(days=-2)), brief_start=4)
+
+        res = self.client.get('/briefs?human=True')
+        data = json.loads(res.get_data(as_text=True))
+        titles = list(map(lambda brief: brief['title'], data['briefs']))
+
+        assert res.status_code == 200
+        assert titles == ['Fourth', 'Second', 'Third', 'First']
 
     def test_list_briefs_pagination_page_one(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(7)
 
         res = self.client.get('/briefs')
@@ -610,11 +625,11 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
 
         assert len(data['briefs']) == 5
+        assert data['meta']['total'] == 7
         assert data['links']['next'] == 'http://localhost/briefs?page=2'
         assert data['links']['last'] == 'http://localhost/briefs?page=2'
 
     def test_list_briefs_pagination_page_two(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(7)
 
         res = self.client.get('/briefs?page=2')
@@ -623,10 +638,10 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
 
         assert len(data['briefs']) == 2
+        assert data['meta']['total'] == 7
         assert data['links']['prev'] == 'http://localhost/briefs?page=1'
 
     def test_list_briefs_no_pagination_if_user_id_supplied(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(7)
 
         res = self.client.get('/briefs?user_id=1')
@@ -638,7 +653,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['links'] == {}
 
     def test_make_a_brief_live(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, title='The Title')
 
         res = self.client.put(
@@ -654,7 +668,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['briefs']['status'] == 'live'
 
     def test_cannot_make_a_brief_live_if_is_not_complete(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1)
 
         res = self.client.put(
@@ -670,7 +683,6 @@ class TestBriefs(BaseApplicationTest):
         assert data['error'] == {'title': 'answer_required'}
 
     def test_published_at_is_not_updated_if_live_brief_is_made_live(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, status='live', title='The title')
 
         res = self.client.get('/briefs/1')
@@ -692,11 +704,10 @@ class TestBriefs(BaseApplicationTest):
         assert published_at == original_published_at
 
     def test_cannot_make_a_brief_live_if_the_framework_is_no_longer_live(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, title='The title')
 
         with self.app.app_context():
-            framework = Framework.query.get(5)
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             framework.status = 'expired'
             db.session.add(framework)
             db.session.commit()
@@ -713,25 +724,7 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == "Framework is not live"
 
-    def test_can_unpublish_a_live_brief(self):
-        return  # FIXME: briefs not yet implemented in Australian version
-        self.setup_dummy_briefs(1, title="Published brief", status='live')
-
-        res = self.client.put(
-            '/briefs/1/status',
-            data=json.dumps({
-                'briefs': {'status': 'draft'},
-                'update_details': {'updated_by': 'example'}
-            }),
-            content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 200
-        assert data['briefs']['status'] == 'draft'
-        assert 'publishedAt' not in data['briefs']
-
     def test_cannot_set_status_to_invalid_value(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, status='draft')
 
         res = self.client.put(
@@ -744,10 +737,9 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
-        assert data['error'] == "Invalid brief status 'invalid'"
+        assert data['error'] == "Cannot change brief status from 'draft' to 'invalid'"
 
     def test_change_status_makes_audit_event(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, title='The Title')
 
         res = self.client.put(
@@ -770,8 +762,168 @@ class TestBriefs(BaseApplicationTest):
             'briefStatus': 'live',
         }
 
+    def test_publish_a_brief(self):
+        self.setup_dummy_briefs(1, title='The Title')
+
+        res = self.client.post(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['briefs']['status'] == 'live'
+
+    def test_withdraw_a_brief(self):
+        self.setup_dummy_briefs(1, title='The Title', status='live')
+
+        res = self.client.post(
+            '/briefs/1/withdraw',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['briefs']['status'] == 'withdrawn'
+        assert data['briefs']['withdrawnAt'] is not None
+
+    def test_cannot_publish_withdrawn_brief(self):
+        self.setup_dummy_briefs(1, title='The Title', status='withdrawn')
+
+        res = self.client.post(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+
+    def test_cannot_publish_a_brief_if_is_not_complete(self):
+        self.setup_dummy_briefs(1)
+
+        res = self.client.post(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'updated_by': 'example'
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == {'title': 'answer_required'}
+
+    def test_published_at_is_not_updated_if_live_brief_is_published(self):
+        self.setup_dummy_briefs(1, status='live', title='The title')
+
+        res = self.client.get('/briefs/1')
+        original_published_at = json.loads(res.get_data(as_text=True))['briefs']['publishedAt']
+
+        res = self.client.post(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+
+        assert res.status_code == 200
+
+        res = self.client.get('/briefs/1')
+        published_at = json.loads(res.get_data(as_text=True))['briefs']['publishedAt']
+        assert published_at == original_published_at
+
+    def test_withdrawn_at_is_not_updated_if_withdrawn_brief_is_withdrawn(self):
+        self.setup_dummy_briefs(1, title='The title', status='withdrawn')
+
+        res = self.client.get('/briefs/1')
+        original_withdrawn_at = json.loads(res.get_data(as_text=True))['briefs']['withdrawnAt']
+
+        res = self.client.post(
+            '/briefs/1/withdraw',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        res = self.client.get('/briefs/1')
+        withdrawn_at = json.loads(res.get_data(as_text=True))['briefs']['withdrawnAt']
+        assert withdrawn_at == original_withdrawn_at
+
+    def test_cannot_publish_a_brief_if_the_framework_is_no_longer_live(self):
+        self.setup_dummy_briefs(1, title='The title')
+
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").first()
+            framework.status = 'expired'
+            db.session.add(framework)
+            db.session.commit()
+
+        res = self.client.post(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'updated_by': 'example'
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == "Framework is not live"
+
+    def test_publish_brief_makes_audit_event(self):
+        self.setup_dummy_briefs(1, title='The Title')
+
+        res = self.client.post(
+            '/briefs/1/publish',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        assert res.status_code == 200
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief_status.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data'] == {
+            'briefId': mock.ANY,
+            'briefPreviousStatus': 'draft',
+            'briefStatus': 'live',
+        }
+
+    def test_withdraw_brief_makes_audit_event(self):
+        self.setup_dummy_briefs(1, title='The Title', status='live')
+
+        res = self.client.post(
+            '/briefs/1/withdraw',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        assert res.status_code == 200
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief_status.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data'] == {
+            'briefId': mock.ANY,
+            'briefPreviousStatus': 'live',
+            'briefStatus': 'withdrawn',
+        }
+
     def test_can_delete_a_draft_brief(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.post(
             '/briefs',
             data=json.dumps({
@@ -811,7 +963,6 @@ class TestBriefs(BaseApplicationTest):
         assert fetch_again.status_code == 404
 
     def test_can_not_delete_a_live_brief(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, status='live')
 
         delete = self.client.delete(
@@ -827,7 +978,6 @@ class TestBriefs(BaseApplicationTest):
         assert fetch_again.status_code == 200
 
     def test_can_not_delete_a_closed_brief(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, status='closed')
 
         delete = self.client.delete(
@@ -843,7 +993,6 @@ class TestBriefs(BaseApplicationTest):
         assert fetch_again.status_code == 200
 
     def test_reject_delete_with_no_updated_by(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.delete('/briefs/0000000000',
                                  data=json.dumps({}),
                                  content_type='application/json')
@@ -852,7 +1001,6 @@ class TestBriefs(BaseApplicationTest):
         assert "'updated_by' is a required property" in error
 
     def test_should_404_on_delete_a_brief_that_doesnt_exist(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         res = self.client.delete(
             '/briefs/0000000000',
             data=json.dumps({'updated_by': 'example'}),
@@ -861,7 +1009,6 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 404
 
     def test_add_clarification_question(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, title="The Title", status="live")
 
         res = self.client.post(
@@ -884,7 +1031,6 @@ class TestBriefs(BaseApplicationTest):
         }]
 
     def test_clarification_question_strip_whitespace(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, title="The Title", status="live")
 
         res = self.client.post(
@@ -907,7 +1053,6 @@ class TestBriefs(BaseApplicationTest):
         }]
 
     def test_add_clarification_question_fails_if_no_question(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, title="The Title", status="live")
 
         res = self.client.post(
@@ -923,7 +1068,6 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
 
     def test_add_clarification_question_fails_if_no_answer(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, title="The Title", status="live")
 
         res = self.client.post(
@@ -939,7 +1083,6 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
 
     def test_cannot_get_clarification_questions_directly(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, title="The Title", status="live")
 
         res = self.client.get("/briefs/1/clarification-questions")
@@ -947,7 +1090,6 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 405
 
     def test_adding_a_clarification_question_makes_an_audit_event(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_dummy_briefs(1, title="The Title", status="live")
 
         self.client.post(
@@ -968,58 +1110,116 @@ class TestBriefs(BaseApplicationTest):
         audits = [
             event for event in data["auditEvents"]
             if event["type"] == AuditTypes.add_brief_clarification_question.value
-        ]
+            ]
         assert len(audits) == 1
         assert audits[0]['data'] == {
             "question": "What?",
             "answer": "That",
         }
 
+    def test_cannot_make_a_draft_copy_of_a_brief_if_the_framework_is_closed(self):
+        self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
+
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").first()
+            framework.status = 'expired'
+            db.session.add(framework)
+            db.session.commit()
+
+        res = self.client.post(
+            "/briefs/1/copy",
+            data=json.dumps({'updated_by': 'example'}),
+            content_type="application/json")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == "Framework is not live"
+
+    def test_make_a_draft_copy_of_a_brief(self):
+        # Set up brief with clarification question
+        self.setup_dummy_briefs(1, title="The Title", status="live")
+        with self.app.app_context():
+            brief = Brief.query.get(1)
+            brief.add_clarification_question('question', 'answer')
+            db.session.add(brief)
+            db.session.commit()
+
+        res = self.client.post(
+            "/briefs/1/copy",
+            data=json.dumps({'updated_by': 'example'}),
+            content_type="application/json")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 201
+        assert data["briefs"]["id"] > 1
+        assert data["briefs"]["lot"] == 'digital-specialists'
+        assert data["briefs"]["frameworkSlug"] == 'digital-outcomes-and-specialists'
+        assert data["briefs"]["status"] == 'draft'
+        assert data["briefs"]["title"] == 'The Title'
+        assert not data["briefs"]["clarificationQuestions"]
+
+    def test_make_a_draft_copy_of_a_brief_makes_audit_event(self):
+        self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
+
+        res = self.client.post(
+            "/briefs/1/copy",
+            data=json.dumps({'updated_by': 'example'}),
+            content_type="application/json")
+        assert res.status_code == 201
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.create_brief.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data']['originalBriefId'] == 1
+        assert brief_audits[0]['data']['briefId'] > 1
+
 
 class TestSupplierIsEligibleForBrief(BaseApplicationTest):
     def setup_services(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         with self.app.app_context():
             self.setup_dummy_suppliers(2)
             self.set_framework_status("digital-outcomes-and-specialists", "live")
+            framework = Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").first()
+
             self.setup_dummy_service(
                 service_id='10000000001',
-                supplier_id=0,
-                framework_id=5,  # Digital Outcomes and Specialists
-                lot_id=5,  # digital-outcomes
+                supplier_code=0,
+                framework_id=framework.id,  # Digital Outcomes and Specialists
+                lot_id=framework.get_lot('digital-outcomes').id,  # digital-outcomes
                 data={"locations": [
                     "London", "Offsite", "Scotland", "Wales"
                 ]
                 })
             self.setup_dummy_service(
                 service_id='10000000002',
-                supplier_id=0,
-                framework_id=5,  # Digital Outcomes and Specialists
-                lot_id=6,  # digital-specialists
+                supplier_code=0,
+                framework_id=framework.id,  # Digital Outcomes and Specialists
+                lot_id=framework.get_lot('digital-specialists').id,  # digital-specialists
                 data={"developerLocations": ["London", "Offsite", "Scotland", "Wales"]}
             )
             self.setup_dummy_service(
                 service_id='10000000003',
-                supplier_id=1,
-                framework_id=5,  # Digital Outcomes and Specialists
-                lot_id=6,  # digital-specialists
+                supplier_code=1,
+                framework_id=framework.id,  # Digital Outcomes and Specialists
+                lot_id=framework.get_lot('digital-specialists').id,  # digital-specialists
                 data={"developerLocations": ["Wales"]}
             )
             db.session.commit()
 
     def test_supplier_is_eligible_for_specialist(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_services()
         self.setup_dummy_briefs(1, status="live")
 
         response = self.client.get("/briefs/1/services?supplier_id=0")
         data = json.loads(response.get_data(as_text=True))
 
-        assert response.status_code == 200
+        assert response.status_code == 200, response.get_data(as_text=True)
         assert len(data["services"]) == 1
 
     def test_supplier_is_eligible_for_outcome(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_services()
         with self.app.app_context():
             self.setup_dummy_user(id=1)
@@ -1037,8 +1237,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
         assert response.status_code == 200
         assert data["services"]
 
-    def test_supplier_id_must_be_provided(self):
-        return  # FIXME: briefs not yet implemented in Australian version
+    def test_supplier_code_must_be_provided(self):
         self.setup_services()
         self.setup_dummy_briefs(1, status="live")
 
@@ -1047,16 +1246,14 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
         assert response.status_code == 404
 
     def test_supplier_is_ineligible_if_brief_not_live(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_services()
         self.setup_dummy_briefs(1, status="draft")
 
-        response = self.client.get("/briefs/1/services?supplier_id=0")
+        response = self.client.get("/briefs/1/services?supplier_code=0")
 
         assert response.status_code == 404
 
     def test_supplier_is_eligible_even_if_not_in_specialist_location(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_services()
         with self.app.app_context():
             self.setup_dummy_user(id=1)
@@ -1075,7 +1272,6 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
         assert data["services"]
 
     def test_supplier_is_ineligible_if_does_not_supply_the_role(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_services()
         with self.app.app_context():
             self.setup_dummy_user(id=1)
@@ -1094,7 +1290,6 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
         assert not data["services"]
 
     def test_supplier_is_eligible_even_if_does_not_supply_in_outcome_location(self):
-        return  # FIXME: briefs not yet implemented in Australian version
         self.setup_services()
         with self.app.app_context():
             self.setup_dummy_user(id=1)

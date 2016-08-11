@@ -1,6 +1,6 @@
 {
   "id": 1,
-  "supplierId": 1,
+  "supplierCode": 1,
   "lot": "digital-specialists",
   "lotName": "Digital Specialists",
   "agileCoachLocations": [
