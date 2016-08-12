@@ -86,7 +86,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
     method = 'post'
 
     @given(example_listings.brief_response_data())
-    def test_create_new_brief_response(self, update_framework_status, brief_response_data):
+    def test_create_new_brief_response(self, live_dos_framework, brief_response_data):
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.brief_id,
             'supplierId': 0,
@@ -99,7 +99,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert data['briefResponses']['briefId'] == self.brief_id
 
     @given(example_listings.brief_response_data())
-    def test_create_brief_response_creates_an_audit_event(self, update_framework_status, brief_response_data):
+    def test_create_brief_response_creates_an_audit_event(self, live_dos_framework, brief_response_data):
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.brief_id,
             'supplierId': 0,
@@ -121,7 +121,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
             })
         }
 
-    def test_cannot_create_brief_response_with_empty_json(self, update_framework_status):
+    def test_cannot_create_brief_response_with_empty_json(self, live_dos_framework):
         res = self.client.post(
             '/brief-responses',
             data=json.dumps({
@@ -132,7 +132,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
         assert res.status_code == 400
 
-    def test_cannot_create_brief_response_with_invalid_json(self, update_framework_status):
+    def test_cannot_create_brief_response_with_invalid_json(self, live_dos_framework):
         res = self.client.post(
             '/brief-responses',
             data=json.dumps({
@@ -152,7 +152,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert data['error']['essentialRequirements'] == 'answer_required'
         assert 'niceToHaveRequirements' in data['error']
 
-    def test_cannot_create_brief_response_without_supplier_id(self, update_framework_status):
+    def test_cannot_create_brief_response_without_supplier_id(self, live_dos_framework):
         res = self.create_brief_response({
             'briefId': self.brief_id
         })
@@ -160,7 +160,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400
         assert 'supplierId' in res.get_data(as_text=True)
 
-    def test_cannot_create_brief_response_without_brief_id(self, update_framework_status):
+    def test_cannot_create_brief_response_without_brief_id(self, live_dos_framework):
         res = self.create_brief_response({
             'supplierId': 0
         })
@@ -168,7 +168,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400
         assert 'briefId' in res.get_data(as_text=True)
 
-    def test_cannot_create_brief_response_with_non_integer_supplier_id(self, update_framework_status):
+    def test_cannot_create_brief_response_with_non_integer_supplier_id(self, live_dos_framework):
         res = self.create_brief_response({
             'briefId': self.brief_id,
             'supplierId': 'not a number',
@@ -177,7 +177,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400
         assert 'Invalid supplier ID' in res.get_data(as_text=True)
 
-    def test_cannot_create_brief_response_with_non_integer_brief_id(self, update_framework_status):
+    def test_cannot_create_brief_response_with_non_integer_brief_id(self, live_dos_framework):
         res = self.create_brief_response({
             'briefId': 'not a number',
             'supplierId': 0,
@@ -186,7 +186,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400
         assert 'Invalid brief ID' in res.get_data(as_text=True)
 
-    def test_cannot_create_brief_response_when_brief_doesnt_exist(self, update_framework_status):
+    def test_cannot_create_brief_response_when_brief_doesnt_exist(self, live_dos_framework):
         res = self.create_brief_response({
             'briefId': self.brief_id + 100,
             'supplierId': 0
@@ -195,7 +195,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400
         assert 'Invalid brief ID' in res.get_data(as_text=True)
 
-    def test_cannot_create_brief_response_when_supplier_doesnt_exist(self, update_framework_status):
+    def test_cannot_create_brief_response_when_supplier_doesnt_exist(self, live_dos_framework):
         res = self.create_brief_response({
             'briefId': self.brief_id,
             'supplierId': 999
@@ -204,7 +204,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400
         assert 'Invalid supplier ID' in res.get_data(as_text=True)
 
-    def test_cannot_create_brief_response_when_supplier_isnt_eligible(self, update_framework_status):
+    def test_cannot_create_brief_response_when_supplier_isnt_eligible(self, live_dos_framework):
         res = self.create_brief_response({
             'briefId': self.brief_id,
             'supplierId': 1
@@ -213,7 +213,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400
         assert 'Supplier not eligible' in res.get_data(as_text=True)
 
-    def test_cannot_respond_to_a_brief_that_isnt_live(self, update_framework_status):
+    def test_cannot_respond_to_a_brief_that_isnt_live(self, live_dos_framework):
         with self.app.app_context():
             brief = Brief(
                 data={}, status='draft', framework_id=5, lot=Lot.query.get(5)
@@ -231,9 +231,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400
         assert "Brief must be live" in res.get_data(as_text=True)
 
-    @pytest.mark.parametrize(
-        'update_framework_status', [('expired', 'digital-outcomes-and-specialists')], indirect=True)
-    def test_cannot_respond_to_an_expired_framework_brief(self, update_framework_status):
+    def test_cannot_respond_to_an_expired_framework_brief(self, expired_dos_framework):
         res = self.create_brief_response({
             'briefId': self.brief_id,
             'supplierId': 0
@@ -244,7 +242,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
     @given(example_listings.brief_response_data())
     def test_cannot_respond_to_a_brief_more_than_once_from_the_same_supplier(
-            self, update_framework_status, brief_response_data
+            self, live_dos_framework, brief_response_data
     ):
         self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.brief_id,
@@ -262,7 +260,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
     @given(example_listings.brief_response_data(None, 5).filter(
         lambda x: len(x['essentialRequirements']) != 5 and all(i is not None for i in x['essentialRequirements'])))
     def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(
-            self, update_framework_status, brief_response_data
+            self, live_dos_framework, brief_response_data
     ):
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.brief_id,
@@ -277,7 +275,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
     @given(example_listings.brief_response_data(5, None).filter(
         lambda x: len(x['niceToHaveRequirements']) != 5 and all(i is not None for i in x['niceToHaveRequirements'])))
     def test_cannot_respond_to_a_brief_with_wrong_number_of_nicetohave_reqs(
-            self, update_framework_status, brief_response_data
+            self, live_dos_framework, brief_response_data
     ):
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.brief_id,
@@ -291,7 +289,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
     @given(example_listings.brief_response_data(5, None).filter(
         lambda x: any(i is None for i in x['niceToHaveRequirements'])))
-    def test_cannot_respond_to_a_brief_with_none_reqs_values(self, update_framework_status, brief_response_data):
+    def test_cannot_respond_to_a_brief_with_none_reqs_values(self, live_dos_framework, brief_response_data):
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.brief_id,
             'supplierId': 0,
@@ -303,7 +301,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert data['error']['niceToHaveRequirements'] == 'answer_required'
 
     @given(example_listings.specialists_brief_response_data())
-    def test_create_digital_specialists_brief_response(self, update_framework_status, brief_response_data):
+    def test_create_digital_specialists_brief_response(self, live_dos_framework, brief_response_data):
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.specialist_brief_id,
             'supplierId': 0,
@@ -314,7 +312,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 201, data
 
     @given(example_listings.specialists_brief_response_data(min_day_rate=1001, max_day_rate=100000))
-    def test_day_rate_should_be_less_than_service_max_price(self, update_framework_status, brief_response_data):
+    def test_day_rate_should_be_less_than_service_max_price(self, live_dos_framework, brief_response_data):
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.specialist_brief_id,
             'supplierId': 0,
