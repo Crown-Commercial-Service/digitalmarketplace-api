@@ -19,55 +19,137 @@ def app(request):
     return create_app('test')
 
 
-@pytest.fixture()
-def add_g_cloud_8(request, app):
+def _update_framework_status(request, app, slug, status):
     with app.app_context():
-        g_cloud_8 = Framework(
-            slug='g-cloud-8',
-            name='G-Cloud 8',
-            framework='g-cloud',
-            framework_agreement_details={'frameworkAgreementVersion': 'v1.0'},
-            status='open',
-            clarification_questions_open=False
+        framework = Framework.query.filter(
+            Framework.slug == slug
+        ).first()
+        original_framework_status = framework.status
+        framework.status = status
+
+        db.session.add(framework)
+        db.session.commit()
+
+    def teardown():
+        with app.app_context():
+            framework = Framework.query.filter(
+                Framework.slug == slug
+            ).first()
+            framework.status = original_framework_status
+
+            db.session.add(framework)
+            db.session.commit()
+
+    request.addfinalizer(teardown)
+
+
+def _add_framework(request, app, slug, status, framework, framework_agreement_details=None):
+    if framework_agreement_details:
+        framework_agreement_details = {'frameworkAgreementVersion': 'v1.0'}
+
+    with app.app_context():
+        framework = Framework(
+            slug=slug,
+            name=slug,
+            framework=framework,
+            framework_agreement_details=framework_agreement_details,
+            status=status,
+            clarification_questions_open=True if status == 'open' else False
         )
-        db.session.add(g_cloud_8)
+        db.session.add(framework)
         db.session.commit()
 
         def teardown():
             with app.app_context():
-                g_cloud_8 = Framework.query.filter(Framework.slug == 'g-cloud-8').first()
-                Framework.query.filter(Framework.id == g_cloud_8.id).delete()
-                # remove any suppliers registered to this framework
-                SupplierFramework.query.filter(SupplierFramework.framework_id == g_cloud_8.id).delete()
+                framework = Framework.query.filter(Framework.slug == slug).first()
+                Framework.query.filter(Framework.id == framework.id).delete()
                 db.session.commit()
 
     request.addfinalizer(teardown)
 
 
-@pytest.fixture(params=[('live', 'digital-outcomes-and-specialists')])
-def update_framework_status(request, app):
+def _base_framework(
+        request, app, slug, status, framework, framework_agreement_details=None
+):
+    with app.app_context():
+        if Framework.query.filter(Framework.slug == slug).first():
+            _update_framework_status(request, app, slug=slug, status=status)
+        else:
+            _add_framework(
+                request,
+                app,
+                slug=slug,
+                status=status,
+                framework=framework,
+                framework_agreement_details=framework_agreement_details
+            )
 
-    def _update_framework_status(request, app, status, framework_slug):
-        with app.app_context():
-            framework = Framework.query.filter(
-                Framework.slug == framework_slug
-            ).first()
-            original_framework_status = framework.status
-            framework.status = status
 
-            db.session.add(framework)
-            db.session.commit()
+def _g8_framework(request, app, status):
+    _base_framework(
+        request, app, slug='g-cloud-8', status=status, framework='g-cloud', framework_agreement_details=True)
 
-        def teardown():
-            with app.app_context():
-                framework = Framework.query.filter(
-                    Framework.slug == framework_slug
-                ).first()
-                framework.status = original_framework_status
 
-                db.session.add(framework)
-                db.session.commit()
+def _g7_framework(request, app, status):
+    _base_framework(
+        request, app, slug='g-cloud-7', status=status, framework='g-cloud', framework_agreement_details=False)
 
-        request.addfinalizer(teardown)
 
-    _update_framework_status(request, app, request.param[0], request.param[1])
+def _g6_framework(request, app, status):
+    _base_framework(
+        request, app, slug='g-cloud-6', status=status, framework='g-cloud', framework_agreement_details=False)
+
+
+def _dos_framework(request, app, status):
+    _base_framework(
+        request,
+        app,
+        slug='digital-outcomes-and-specialists',
+        status=status,
+        framework='dos',
+        framework_agreement_details=False
+    )
+
+
+# G8
+
+
+@pytest.fixture()
+def open_g8_framework(request, app):
+    _g8_framework(request, app, status='open')
+
+
+@pytest.fixture()
+def live_g8_framework(request, app):
+    _g8_framework(request, app, status='live')
+
+
+# G6
+
+
+@pytest.fixture()
+def open_g6_framework(request, app):
+    _g6_framework(request, app, status='open')
+
+
+@pytest.fixture()
+def expired_g6_framework(request, app):
+    _g6_framework(request, app, status='expired')
+
+
+# DOS
+
+
+@pytest.fixture()
+def open_dos_framework(request, app):
+    _dos_framework(request, app, status='open')
+
+
+@pytest.fixture()
+def live_dos_framework(request, app):
+    _dos_framework(request, app, status='live')
+
+
+@pytest.fixture()
+def expired_dos_framework(request, app):
+    _dos_framework(request, app, status='expired')
