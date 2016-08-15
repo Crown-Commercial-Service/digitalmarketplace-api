@@ -1157,7 +1157,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
 
 
 class TestRegisterFrameworkInterest(BaseApplicationTest, JSONUpdateTestMixin):
-    method = "post"
+    method = "put"
     endpoint = "/suppliers/1/frameworks/digital-outcomes-and-specialists"
 
     def setup(self):
@@ -1264,25 +1264,25 @@ class TestRegisterFrameworkInterest(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(data['frameworks'], ['digital-outcomes-and-specialists'])
 
 
-class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
-    method = "post"
-    endpoint = "/suppliers/0/frameworks/digital-outcomes-and-specialists"
+class TestSupplierFrameworkResponse(BaseApplicationTest):
 
     def setup(self):
-        super(TestSupplierFrameworkUpdates, self).setup()
+        super(TestSupplierFrameworkResponse, self).setup()
 
         self.setup_dummy_suppliers(1)
         self.setup_dummy_user(1, role='supplier')
+        self.supplier_id = 0
+        self.framework_slug = 'g-cloud-8'
 
+    def test_get_supplier_framework_info(self, open_g8_framework):
+        framework_id = json.loads(
+            self.client.get('frameworks/{}'.format(self.framework_slug)).get_data()
+        )['frameworks']['id']
+
+        # add SupplierFramework record to the database
         with self.app.app_context():
-            self.set_framework_status('digital-outcomes-and-specialists', 'open')
-            self.client.put(
-                '/suppliers/0/frameworks/digital-outcomes-and-specialists',
-                data=json.dumps({'updated_by': 'interested@example.com'}),
-                content_type='application/json')
-
-            answers = SupplierFramework(
-                supplier_id=0, framework_id=2,
+            supplier_framework = SupplierFramework(
+                supplier_id=self.supplier_id, framework_id=framework_id,
                 declaration={'an_answer': 'Yes it is'},
                 on_framework=True,
                 agreement_returned_at=datetime(2015, 10, 10, 10, 10, 10),
@@ -1293,51 +1293,17 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
                     u'uploaderUserId': 20
                 },
             )
-            db.session.add(answers)
-
-            g_cloud_8 = Framework(
-                slug='g-cloud-8',
-                name='G-Cloud 8',
-                framework='g-cloud',
-                framework_agreement_details={'frameworkAgreementVersion': 'v1.0'},
-                status='open',
-                clarification_questions_open=False
-            )
-            db.session.add(g_cloud_8)
+            db.session.add(supplier_framework)
             db.session.commit()
 
-            self.client.put(
-                '/suppliers/0/frameworks/g-cloud-8',
-                data=json.dumps({'updated_by': 'interested@example.com'}),
-                content_type='application/json')
-
-    def teardown(self):
-        with self.app.app_context():
-            g_cloud_8 = Framework.query.filter(Framework.slug == 'g-cloud-8').first()
-            SupplierFramework.query.filter(SupplierFramework.framework_id == g_cloud_8.id).delete()
-            Framework.query.filter(Framework.id == g_cloud_8.id).delete()
-            db.session.commit()
-
-        super(TestSupplierFrameworkUpdates, self).teardown()
-
-    def supplier_framework_update(self, supplier_id, framework_slug, update={}):
-        return self.client.post(
-            '/suppliers/{}/frameworks/{}'.format(supplier_id, framework_slug),
-            data=json.dumps(
-                {
-                    'updated_by': 'interested@example.com',
-                    'frameworkInterest': update
-                }),
-            content_type='application/json')
-
-    def test_get_supplier_framework_info(self):
+        # Get back the SupplierFramework record
         response = self.client.get(
-            '/suppliers/0/frameworks/g-cloud-4')
+            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug))
 
         data = json.loads(response.get_data())
         assert response.status_code, 200
-        assert data['frameworkInterest']['supplierId'] == 0
-        assert data['frameworkInterest']['frameworkSlug'] == 'g-cloud-4'
+        assert data['frameworkInterest']['supplierId'] == self.supplier_id
+        assert data['frameworkInterest']['frameworkSlug'] == self.framework_slug
         assert data['frameworkInterest']['declaration'] == {'an_answer': 'Yes it is'}
         assert data['frameworkInterest']['onFramework'] is True
         assert data['frameworkInterest']['agreementReturned'] is True
@@ -1349,6 +1315,36 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             'signerRole': 'thing',
             'uploaderUserId': 20
         }
+
+
+class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
+    method = "post"
+    endpoint = "/suppliers/0/frameworks/digital-outcomes-and-specialists"
+
+    def setup(self):
+        super(TestSupplierFrameworkUpdates, self).setup()
+        self.setup_dummy_suppliers(1)
+        self.setup_dummy_user(1, role='supplier')
+        self.supplier_id = 0
+
+    def supplier_framework_interest(self, framework_slug, update):
+        url = '/suppliers/{}/frameworks/{}'.format(self.supplier_id, framework_slug)
+
+        # Create the SupplierFramework record
+        self.client.put(
+            url,
+            data=json.dumps({'updated_by': 'interested@example.com'}),
+            content_type='application/json')
+
+        # Update the SupplierFramework record
+        return self.client.post(
+            url,
+            data=json.dumps(
+                {
+                    'updated_by': 'interested@example.com',
+                    'frameworkInterest': update
+                }),
+            content_type='application/json')
 
     def test_get_supplier_framework_info_non_existent_by_framework(self):
         response = self.client.get(
@@ -1362,9 +1358,8 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert response.status_code == 404
 
-    def test_adding_supplier_has_passed(self):
-        response = self.supplier_framework_update(
-            0,
+    def test_adding_supplier_has_passed(self, open_dos_framework):
+        response = self.supplier_framework_interest(
             'digital-outcomes-and-specialists',
             update={'onFramework': True}
         )
@@ -1379,9 +1374,8 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert data['frameworkInterest']['countersignedAt'] is None
         assert data['frameworkInterest']['agreementDetails'] is None
 
-    def test_adding_supplier_has_not_passed(self):
-        response = self.supplier_framework_update(
-            0,
+    def test_adding_supplier_has_not_passed(self, open_dos_framework):
+        response = self.supplier_framework_interest(
             'digital-outcomes-and-specialists',
             update={'onFramework': False}
         )
@@ -1391,10 +1385,11 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists'
         assert data['frameworkInterest']['onFramework'] is False
 
-    def test_can_set_agreement_returned_without_agreement_details_for_framework_with_no_agreement_version(self):
+    def test_can_set_agreement_returned_without_agreement_details_for_framework_with_no_agreement_version(
+            self, open_dos_framework
+    ):
         with freeze_time('2012-12-12'):
-            response = self.supplier_framework_update(
-                0,
+            response = self.supplier_framework_interest(
                 'digital-outcomes-and-specialists',
                 update={'agreementReturned': True}
             )
@@ -1408,11 +1403,11 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             assert data['frameworkInterest']['countersignedAt'] is None
             assert data['frameworkInterest']['agreementDetails'] is None
 
-    def test_can_set_agreement_returned_with_agreement_details_for_framework_with_agreement_version(self):
+    def test_can_set_agreement_returned_with_agreement_details_for_framework_with_agreement_version(
+            self, open_g8_framework
+    ):
         with freeze_time('2012-12-12'):
-
-            response = self.supplier_framework_update(
-                0,
+            response = self.supplier_framework_interest(
                 'g-cloud-8',
                 update={
                     'agreementReturned': True,
@@ -1440,11 +1435,11 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
                 'frameworkAgreementVersion': 'v1.0'
             }
 
-    def test_can_not_set_agreement_returned_without_agreement_details_for_framework_with_agreement_version(self):
+    def test_can_not_set_agreement_returned_without_agreement_details_for_framework_with_agreement_version(
+            self, open_g8_framework
+    ):
         with freeze_time('2012-12-12'):
-
-            response = self.supplier_framework_update(
-                0,
+            response = self.supplier_framework_interest(
                 'g-cloud-8',
                 update={'agreementReturned': True}
             )
@@ -1456,10 +1451,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
                 'signerName': 'answer_required'
             }
 
-    def test_adding_that_agreement_has_been_countersigned(self):
+    def test_adding_that_agreement_has_been_countersigned(self, open_dos_framework):
         with freeze_time('2012-12-12'):
-            response = self.supplier_framework_update(
-                0,
+            response = self.supplier_framework_interest(
                 'digital-outcomes-and-specialists',
                 update={'countersigned': True}
             )
@@ -1473,10 +1467,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             assert data['frameworkInterest']['countersignedAt'] == "2012-12-12T00:00:00.000000Z"
             assert data['frameworkInterest']['agreementDetails'] is None
 
-    def test_agreement_returned_at_timestamp_cannot_be_set(self):
+    def test_agreement_returned_at_timestamp_cannot_be_set(self, open_dos_framework):
         with freeze_time('2012-12-12'):
-            response = self.supplier_framework_update(
-                0,
+            response = self.supplier_framework_interest(
                 'digital-outcomes-and-specialists',
                 update={'agreementReturned': True, 'agreementReturnedAt': '2013-13-13T00:00:00.000000Z'}
             )
@@ -1484,9 +1477,11 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             data = json.loads(response.get_data())
             assert data['frameworkInterest']['agreementReturnedAt'] == '2012-12-12T00:00:00.000000Z'
 
-    def test_agreement_returned_at_and_agreement_details_are_unset_when_agreement_returned_is_false(self):
-        response = self.supplier_framework_update(
-            0, 'g-cloud-8',
+    def test_agreement_returned_at_and_agreement_details_are_unset_when_agreement_returned_is_false(
+            self, open_g8_framework
+    ):
+        response = self.supplier_framework_interest(
+            'g-cloud-8',
             update={
                 'agreementReturned': True,
                 'agreementDetails': {
@@ -1499,9 +1494,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert response.status_code == 200
         assert data['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == "v1.0"
 
-        response2 = self.supplier_framework_update(
-            0, 'g-cloud-8',
-            update={'agreementReturned': False})
+        response2 = self.supplier_framework_interest(
+            'g-cloud-8', update={'agreementReturned': False}
+        )
 
         assert response2.status_code == 200
         data2 = json.loads(response2.get_data())
@@ -1509,10 +1504,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert data2['frameworkInterest']['agreementReturnedAt'] is None
         assert data2['frameworkInterest']['agreementDetails'] is None
 
-    def test_countersigned_at_timestamp_cannot_be_set(self):
+    def test_countersigned_at_timestamp_cannot_be_set(self, open_dos_framework):
         with freeze_time('2012-12-12'):
-            response = self.supplier_framework_update(
-                0,
+            response = self.supplier_framework_interest(
                 'digital-outcomes-and-specialists',
                 update={
                     'agreementReturned': True,
@@ -1524,14 +1518,14 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             data = json.loads(response.get_data())
             assert data['frameworkInterest']['countersignedAt'] == '2012-12-12T00:00:00.000000Z'
 
-    def test_setting_signer_details_and_then_returning_agreement(self):
+    def test_setting_signer_details_and_then_returning_agreement(self, open_g8_framework):
         agreement_details_payload = {
             "signerName": "name",
             "signerRole": "role",
         }
-        response = self.supplier_framework_update(
-            0, 'g-cloud-8',
-            update={'agreementDetails': agreement_details_payload})
+        response = self.supplier_framework_interest(
+            'g-cloud-8', update={'agreementDetails': agreement_details_payload}
+        )
 
         assert response.status_code == 200
         data = json.loads(response.get_data())
@@ -1541,8 +1535,8 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         agreement_details_update_payload = {
             "uploaderUserId": 1,
         }
-        response2 = self.supplier_framework_update(
-            0, 'g-cloud-8',
+        response2 = self.supplier_framework_interest(
+            'g-cloud-8',
             update={
                 'agreementReturned': True,
                 'agreementDetails': agreement_details_update_payload
@@ -1561,15 +1555,15 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             "frameworkAgreementVersion": "v1.0",
         }
 
-    def test_can_not_set_agreement_details_on_frameworks_without_framework_agreement_version(self):
+    def test_can_not_set_agreement_details_on_frameworks_without_framework_agreement_version(self, open_dos_framework):
         agreement_details_payload = {
             "signerName": "name",
             "signerRole": "role",
             "uploaderUserId": 1,
         }
-        response = self.supplier_framework_update(
-            0, 'digital-outcomes-and-specialists',
-            update={'agreementDetails': agreement_details_payload})
+        response = self.supplier_framework_interest(
+            'digital-outcomes-and-specialists', update={'agreementDetails': agreement_details_payload}
+        )
 
         assert response.status_code == 400
         data = json.loads(response.get_data())
@@ -1578,15 +1572,15 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         for error_string in strings_we_expect_in_the_error_message:
             assert error_string in data['error']
 
-    def test_can_not_set_agreement_details_with_nonexistent_user_id(self):
+    def test_can_not_set_agreement_details_with_nonexistent_user_id(self, open_g8_framework):
         agreement_details_payload = {
             "signerName": "name",
             "signerRole": "role",
             "uploaderUserId": 999
         }
-        response = self.supplier_framework_update(
-            0, 'g-cloud-8',
-            update={'agreementDetails': agreement_details_payload})
+        response = self.supplier_framework_interest(
+            'g-cloud-8', update={'agreementDetails': agreement_details_payload}
+        )
 
         data = json.loads(response.get_data())
         assert response.status_code == 400
@@ -1595,14 +1589,13 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         for error_string in strings_we_expect_in_the_error_message:
             assert error_string in data['error']
 
-    def test_schema_validation_fails_if_unknown_fields_present_in_agreement_details(self):
+    def test_schema_validation_fails_if_unknown_fields_present_in_agreement_details(self, open_g8_framework):
         agreement_details_payload = {
             "signerName": "Normal Person",
             "disallowedKey": "value",
         }
-        response = self.supplier_framework_update(
-            0, 'g-cloud-8',
-            update={'agreementDetails': agreement_details_payload}
+        response = self.supplier_framework_interest(
+            'g-cloud-8', update={'agreementDetails': agreement_details_payload}
         )
 
         assert response.status_code == 400
@@ -1613,10 +1606,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         for error_string in strings_we_expect_in_the_error_message:
             assert error_string in data['error']['_form'][0]
 
-    def test_schema_validation_fails_if_empty_object_sent_as_agreement_details(self):
-        response = self.supplier_framework_update(
-            0, 'g-cloud-8',
-            update={'agreementDetails': {}}
+    def test_schema_validation_fails_if_empty_object_sent_as_agreement_details(self, open_g8_framework):
+        response = self.supplier_framework_interest(
+            'g-cloud-8', update={'agreementDetails': {}}
         )
 
         assert response.status_code == 400
@@ -1624,14 +1616,13 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         error_message = '{} does not have enough properties'
         assert error_message in data['error']['_form'][0]
 
-    def test_schema_validation_fails_if_empty_strings_sent_as_agreement_details(self):
+    def test_schema_validation_fails_if_empty_strings_sent_as_agreement_details(self, open_g8_framework):
         agreement_details_payload = {
             "signerName": "",
             "signerRole": "",
         }
-        response = self.supplier_framework_update(
-            0, 'g-cloud-8',
-            update={'agreementDetails': agreement_details_payload}
+        response = self.supplier_framework_interest(
+            'g-cloud-8', update={'agreementDetails': agreement_details_payload}
         )
 
         assert response.status_code == 400
@@ -1639,14 +1630,15 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         expected_error_dict = {'signerName': 'answer_required', 'signerRole': 'answer_required'}
         assert expected_error_dict == data['error']
 
-    def test_cannot_save_if_required_signer_field_is_missing_from_not_yet_set_agreement_details(self):
+    def test_cannot_save_if_required_signer_field_is_missing_from_not_yet_set_agreement_details(
+            self, open_g8_framework
+    ):
         # missing signerRole
         agreement_details_payload = {
             "signerName": "name",
         }
-        response = self.supplier_framework_update(
-            0, 'g-cloud-8',
-            update={'agreementDetails': agreement_details_payload}
+        response = self.supplier_framework_interest(
+            'g-cloud-8', update={'agreementDetails': agreement_details_payload}
         )
 
         assert response.status_code == 400
@@ -1654,13 +1646,15 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         expected_error_dict = {'signerRole': 'answer_required'}
         assert expected_error_dict == data['error']
 
-    def test_cannot_return_agreement_if_signer_details_fields_are_missing_from_agreement_details(self):
+    def test_cannot_return_agreement_if_signer_details_fields_are_missing_from_agreement_details(
+            self, open_g8_framework
+    ):
         # missing signerName and signerRole
         agreement_details_payload = {
             "uploaderUserId": 1,
         }
-        response = self.supplier_framework_update(
-            0, 'g-cloud-8',
+        response = self.supplier_framework_interest(
+            'g-cloud-8',
             update={
                 'agreementReturned': True,
                 'agreementDetails': agreement_details_payload
@@ -1672,9 +1666,10 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         expected_error_dict = {'signerName': 'answer_required', 'signerRole': 'answer_required'}
         assert expected_error_dict == data['error']
 
-    def test_can_manually_override_framework_agreement_version_for_returned_framework_agreement(self):
-        response = self.supplier_framework_update(
-            0,
+    def test_can_manually_override_framework_agreement_version_for_returned_framework_agreement(
+            self, open_g8_framework
+    ):
+        response = self.supplier_framework_interest(
             'g-cloud-8',
             update={
                 'agreementReturned': True,
@@ -1689,17 +1684,15 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         data = json.loads(response.get_data())
         assert data['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == 'v1.0'
 
-        response2 = self.supplier_framework_update(
-            0, 'g-cloud-8',
-            update={'agreementDetails': {'frameworkAgreementVersion': 'v2.0'}}
+        response2 = self.supplier_framework_interest(
+            'g-cloud-8', update={'agreementDetails': {'frameworkAgreementVersion': 'v2.0'}}
         )
         assert response2.status_code == 200
         data2 = json.loads(response2.get_data())
         assert data2['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == 'v2.0'
 
-    def test_changing_on_framework_from_failed_to_passed(self):
-        response = self.supplier_framework_update(
-            0,
+    def test_changing_on_framework_from_failed_to_passed(self, open_dos_framework):
+        response = self.supplier_framework_interest(
             'digital-outcomes-and-specialists',
             update={'onFramework': False}
         )
@@ -1708,8 +1701,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert data['frameworkInterest']['onFramework'] is False
         assert data['frameworkInterest']['agreementReturned'] is False
 
-        response2 = self.supplier_framework_update(
-            0,
+        response2 = self.supplier_framework_interest(
             'digital-outcomes-and-specialists',
             update={'onFramework': True}
         )
@@ -1718,9 +1710,8 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert data['frameworkInterest']['onFramework'] is True
         assert data['frameworkInterest']['agreementReturned'] is False
 
-    def test_changing_on_framework_from_passed_to_failed(self):
-        response = self.supplier_framework_update(
-            0,
+    def test_changing_on_framework_from_passed_to_failed(self, open_dos_framework):
+        response = self.supplier_framework_interest(
             'digital-outcomes-and-specialists',
             update={'onFramework': True}
         )
@@ -1729,8 +1720,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert data['frameworkInterest']['onFramework'] is True
         assert data['frameworkInterest']['agreementReturned'] is False
 
-        response2 = self.supplier_framework_update(
-            0,
+        response2 = self.supplier_framework_interest(
             'digital-outcomes-and-specialists',
             update={'onFramework': False}
         )
@@ -1739,9 +1729,8 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
         assert data['frameworkInterest']['onFramework'] is False
         assert data['frameworkInterest']['agreementReturned'] is False
 
-    def test_changing_on_framework_to_passed_creates_audit_event(self):
-        self.supplier_framework_update(
-            0,
+    def test_changing_on_framework_to_passed_creates_audit_event(self, open_dos_framework):
+        self.supplier_framework_interest(
             'digital-outcomes-and-specialists',
             update={'onFramework': True, 'agreementReturned': True}
         )
