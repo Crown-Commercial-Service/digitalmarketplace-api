@@ -1157,7 +1157,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
 
 
 class TestRegisterFrameworkInterest(BaseApplicationTest, JSONUpdateTestMixin):
-    method = "post"
+    method = "put"
     endpoint = "/suppliers/1/frameworks/digital-outcomes-and-specialists"
 
     def setup(self):
