@@ -1065,6 +1065,29 @@ class TestUsersGet(BaseUserTest):
             "supplier_id '{}' not found".format(non_existent_supplier),
             response.get_data(as_text=True))
 
+    def test_only_buyers_returned_with_role_param_set_to_buyer(self):
+        self._post_user({
+            "emailAddress": "Chris@gov.uk",
+            "name": "Chris",
+            "role": "buyer",
+            "password": "minimum10characterpassword"
+        })
+
+        response = self.client.get('/users?role=buyer')
+        data = json.loads(response.get_data())
+        buyer = data['users'][0]
+
+        assert response.status_code == 200
+        assert len(data['users']) == 1
+        assert buyer['name'] == 'Chris'
+
+    def test_400_returned_if_role_param_is_not_valid(self):
+        response = self.client.get('/users?role=incorrect')
+        data = response.get_data(as_text=True)
+
+        assert response.status_code == 400
+        assert_in("Invalid user role: incorrect", data)
+
 
 class TestUsersExport(BaseUserTest):
     framework_slug = None
