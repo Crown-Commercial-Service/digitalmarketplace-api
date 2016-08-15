@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from datetime import timedelta
 
+import pytest
 import mock
 from ..helpers import BaseApplicationTest, COMPLETE_DIGITAL_SPECIALISTS_BRIEF
 
@@ -615,6 +616,34 @@ class TestBriefs(BaseApplicationTest):
 
         assert res.status_code == 200
         assert titles == ['Fourth', 'Second', 'Third', 'First']
+
+    def test_list_briefs_with_user_data_set_true(self):
+        self.setup_dummy_briefs(1, title="Test Brief", user_id=123)
+
+        response = self.client.get('/briefs?with_users=true')
+        data = json.loads(response.get_data(as_text=True))
+
+        assert response.status_code == 200
+        assert data['briefs'][0]['users'][0]['name'] == 'my name'
+
+    def test_list_briefs_with_user_data_set_True(self):
+        self.setup_dummy_briefs(1, title="Test Brief", user_id=123)
+
+        response = self.client.get('/briefs?with_users=True')
+        data = json.loads(response.get_data(as_text=True))
+
+        assert response.status_code == 200
+        assert data['briefs'][0]['users'][0]['name'] == 'my name'
+
+    def test_list_briefs_with_user_data_set_false(self):
+        self.setup_dummy_briefs(1, title="Test Brief", user_id=123)
+
+        response = self.client.get('/briefs?with_users=false')
+        data = json.loads(response.get_data(as_text=True))
+
+        assert response.status_code == 200
+        with pytest.raises(KeyError):
+            data['briefs'][0]['users']
 
     def test_list_briefs_pagination_page_one(self):
         self.setup_dummy_briefs(7)

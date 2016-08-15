@@ -116,6 +116,8 @@ def list_briefs():
 
     page = get_valid_page_or_1()
 
+    with_users = request.args.get('with_users', 'false').lower() == 'true'
+
     user_id = get_int_or_400(request.args, 'user_id')
 
     if user_id:
@@ -138,7 +140,7 @@ def list_briefs():
 
     if user_id:
         return jsonify(
-            briefs=[brief.serialize() for brief in briefs.all()],
+            briefs=[brief.serialize(with_users) for brief in briefs.all()],
             links={},
         )
     else:
@@ -148,7 +150,7 @@ def list_briefs():
         )
 
         return jsonify(
-            briefs=[brief.serialize() for brief in briefs.items],
+            briefs=[brief.serialize(with_users) for brief in briefs.items],
             meta={
                 "total": briefs.total,
             },
