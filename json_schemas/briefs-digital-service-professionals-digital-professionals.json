@@ -69,18 +69,14 @@
     },
     "location": {
       "enum": [
-        "Scotland",
-        "North East England",
-        "North West England",
-        "Yorkshire and the Humber",
-        "East Midlands",
-        "West Midlands",
-        "East of England",
-        "Wales",
-        "London",
-        "South East England",
-        "South West England",
-        "Northern Ireland",
+        "Australian Capital Territory",
+        "New South Wales",
+        "Northern Territory",
+        "Queensland",
+        "South Australia",
+        "Tasmania",
+        "Victoria",
+        "Western Australia",
         "Offsite"
       ]
     },
@@ -131,21 +127,18 @@
       "enum": [
         "agileCoach",
         "businessAnalyst",
-        "communicationsManager",
-        "contentDesigner",
-        "securityConsultant",
         "deliveryManager",
-        "designer",
         "developer",
-        "performanceAnalyst",
-        "portfolioManager",
-        "productManager",
-        "programmeManager",
+        "digitalTransformationAdviser",
+        "ethicalHacker",
+        "inclusiveDesigner",
+        "interactionDesigner",
         "qualityAssurance",
-        "serviceManager",
-        "technicalArchitect",
+        "productManager",
+        "serviceDesigner",
+        "technicalLeadArchitect",
         "userResearcher",
-        "webOperations"
+        "webDevops"
       ]
     },
     "specialistWork": {
