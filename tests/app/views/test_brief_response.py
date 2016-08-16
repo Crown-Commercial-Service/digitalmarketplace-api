@@ -52,11 +52,11 @@ class BaseBriefResponseTest(BaseApplicationTest):
             self.brief_id = brief.id
             self.specialist_brief_id = specialist_brief.id
 
-    def setup_dummy_brief_response(self, brief_id=None, supplier_id=0):
+    def setup_dummy_brief_response(self, brief_id=None, supplier_code=0):
         with self.app.app_context():
             brief_response = BriefResponse(
                 data=example_listings.brief_response_data().example(),
-                supplier_code=supplier_id, brief_id=brief_id or self.brief_id
+                supplier_code=supplier_code, brief_id=brief_id or self.brief_id
             )
 
             db.session.add(brief_response)
@@ -152,7 +152,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert data['error']['essentialRequirements'] == 'answer_required'
         assert 'niceToHaveRequirements' in data['error']
 
-    def test_cannot_create_brief_response_without_supplier_id(self, live_framework):
+    def test_cannot_create_brief_response_without_supplier_code(self, live_framework):
         res = self.create_brief_response({
             'briefId': self.brief_id
         })
@@ -168,7 +168,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400
         assert 'briefId' in res.get_data(as_text=True)
 
-    def test_cannot_create_brief_response_with_non_integer_supplier_id(self, live_framework):
+    def test_cannot_create_brief_response_with_non_integer_supplier_code(self, live_framework):
         res = self.create_brief_response({
             'briefId': self.brief_id,
             'supplierCode': 'not a number',
@@ -378,10 +378,10 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert 'prev' in data['links']
 
     @pytest.mark.skipif(True, reason="failing for AU")
-    def test_list_brief_responses_for_supplier_id(self):
+    def test_list_brief_responses_for_supplier_code(self):
         for i in range(8):
-            self.setup_dummy_brief_response(supplier_id=0)
-            self.setup_dummy_brief_response(supplier_id=1)
+            self.setup_dummy_brief_response(supplier_code=0)
+            self.setup_dummy_brief_response(supplier_code=1)
 
         res = self.list_brief_responses(supplier_code=1)
         data = json.loads(res.get_data(as_text=True))
@@ -403,8 +403,8 @@ class TestListBriefResponses(BaseBriefResponseTest):
             another_brief_id = brief.id
 
         for i in range(8):
-            self.setup_dummy_brief_response(brief_id=self.brief_id, supplier_id=0)
-            self.setup_dummy_brief_response(brief_id=another_brief_id, supplier_id=0)
+            self.setup_dummy_brief_response(brief_id=self.brief_id, supplier_code=0)
+            self.setup_dummy_brief_response(brief_id=another_brief_id, supplier_code=0)
 
         res = self.list_brief_responses(brief_id=another_brief_id)
         data = json.loads(res.get_data(as_text=True))
@@ -421,9 +421,9 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert res.status_code == 400
         assert data['error'] == 'Invalid brief_id: not-valid'
 
-    def test_cannot_list_brief_responses_for_non_integer_supplier_id(self):
-        res = self.list_brief_responses(supplier_id="not-valid")
+    def test_cannot_list_brief_responses_for_non_integer_supplier_code(self):
+        res = self.list_brief_responses(supplier_code="not-valid")
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
-        assert data['error'] == 'Invalid supplier_id: not-valid'
+        assert data['error'] == 'Invalid supplier_code: not-valid'

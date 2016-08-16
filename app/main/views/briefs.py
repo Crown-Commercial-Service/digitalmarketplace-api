@@ -353,7 +353,7 @@ def list_brief_services(brief_id):
         Brief.status == "live"
     ).first_or_404()
 
-    supplier_code = get_int_or_400(request.args, 'supplier_id')
+    supplier_code = get_int_or_400(request.args, 'supplier_code')
 
     supplier = Supplier.query.filter(
         Supplier.code == supplier_code

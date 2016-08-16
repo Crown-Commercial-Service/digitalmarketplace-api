@@ -221,6 +221,6 @@ def get_framework_interest(framework_slug):
         SupplierFramework.framework_id == framework.id
     ).order_by(SupplierFramework.supplier_code).all()
 
-    supplier_ids = [supplier_framework.supplier_code for supplier_framework in supplier_frameworks]
+    supplier_codes = [supplier_framework.supplier_code for supplier_framework in supplier_frameworks]
 
-    return jsonify(interestedSuppliers=supplier_ids)
+    return jsonify(interestedSuppliers=supplier_codes)

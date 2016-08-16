@@ -95,19 +95,19 @@ def get_brief_response(brief_response_id):
 def list_brief_responses():
     page = get_valid_page_or_1()
     brief_id = get_int_or_400(request.args, 'brief_id')
-    supplier_id = get_int_or_400(request.args, 'supplier_id')
+    supplier_code = get_int_or_400(request.args, 'supplier_code')
 
     brief_responses = BriefResponse.query
-    if supplier_id is not None:
-        brief_responses = brief_responses.filter(BriefResponse.supplier_id == supplier_id)
+    if supplier_code is not None:
+        brief_responses = brief_responses.filter(BriefResponse.supplier_code == supplier_code)
 
     if brief_id is not None:
         brief_responses = brief_responses.filter(BriefResponse.brief_id == brief_id)
 
-    if brief_id or supplier_id:
+    if brief_id or supplier_code:
         return jsonify(
             briefResponses=[brief_response.serialize() for brief_response in brief_responses.all()],
-            links={'self': url_for('.list_brief_responses', supplier_id=supplier_id, brief_id=brief_id)}
+            links={'self': url_for('.list_brief_responses', supplier_code=supplier_code, brief_id=brief_id)}
         )
 
     brief_responses = brief_responses.paginate(
