@@ -547,7 +547,7 @@ class SupplierFramework(db.Model):
     def get_service_counts(supplier_code):
 
         count_services_query = db.session.query(
-            Service.framework_code, Service.status, func.count()
+            Service.framework_id, Service.status, func.count()
         ).filter(
             Service.supplier_code == supplier_code
         ).group_by(
