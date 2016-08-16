@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from six import iteritems, iterkeys
 import pytest
 
 from .app import setup, teardown
@@ -19,23 +20,35 @@ def app(request):
     return create_app('test')
 
 
-def _update_framework_status(request, app, slug, status):
-    with app.app_context():
-        framework = Framework.query.filter(
-            Framework.slug == slug
-        ).first()
-        original_framework_status = framework.status
-        framework.status = status
+_framework_kwargs_whitelist = set(("status", "framework", "framework_agreement_details",))
 
-        db.session.add(framework)
-        db.session.commit()
+
+def _update_framework(request, app, slug, **kwargs):
+    if not kwargs:
+        # request doesn't really care about any more specific properties of the Framework. nothing for us
+        # to do.
+        return
+
+    # first whitelist the kwargs to limit what we have to worry about
+    kwargs = {k: v for k, v in iteritems(kwargs) if k in _framework_kwargs_whitelist}
+
+    framework = Framework.query.filter(
+        Framework.slug == slug
+    ).first()
+    original_values = {k: getattr(framework, k) for k in iterkeys(kwargs)}
+    for k, v in iteritems(kwargs):
+        setattr(framework, k, v)
+
+    db.session.add(framework)
+    db.session.commit()
 
     def teardown():
         with app.app_context():
             framework = Framework.query.filter(
                 Framework.slug == slug
             ).first()
-            framework.status = original_framework_status
+            for k, v in iteritems(original_values):
+                setattr(framework, k, v)
 
             db.session.add(framework)
             db.session.commit()
@@ -43,72 +56,55 @@ def _update_framework_status(request, app, slug, status):
     request.addfinalizer(teardown)
 
 
-def _add_framework(request, app, slug, status, framework, framework_agreement_details=None):
-    if framework_agreement_details:
-        framework_agreement_details = {'frameworkAgreementVersion': 'v1.0'}
+def _add_framework(request, app, slug, **kwargs):
+    # first whitelist the kwargs to limit what we have to worry about
+    kwargs = {k: v for k, v in iteritems(kwargs) if k in _framework_kwargs_whitelist}
+    if "status" in kwargs and "clarification_questions_open" not in kwargs:
+        kwargs["clarification_questions_open"] = (kwargs["status"] == "open")
 
-    with app.app_context():
-        framework = Framework(
-            slug=slug,
-            name=slug,
-            framework=framework,
-            framework_agreement_details=framework_agreement_details,
-            status=status,
-            clarification_questions_open=True if status == 'open' else False
-        )
-        db.session.add(framework)
-        db.session.commit()
+    framework = Framework(slug=slug, name=slug, **kwargs)
+    db.session.add(framework)
+    db.session.commit()
 
-        def teardown():
-            with app.app_context():
-                framework = Framework.query.filter(Framework.slug == slug).first()
-                Framework.query.filter(Framework.id == framework.id).delete()
-                db.session.commit()
+    def teardown():
+        with app.app_context():
+            Framework.query.filter(Framework.slug == slug).delete()
+            db.session.commit()
 
     request.addfinalizer(teardown)
 
 
-def _base_framework(
-        request, app, slug, status, framework, framework_agreement_details=None
-):
+def _framework_fixture_inner(request, app, slug, **kwargs):
     with app.app_context():
-        if Framework.query.filter(Framework.slug == slug).first():
-            _update_framework_status(request, app, slug=slug, status=status)
-        else:
-            _add_framework(
-                request,
-                app,
-                slug=slug,
-                status=status,
-                framework=framework,
-                framework_agreement_details=framework_agreement_details
-            )
+        # we have to do a switch between two implementations here as in some cases a matching Framework
+        # may already be in the database (e.g. Frameworks that were inserted by migrations)
+        inner_func = (
+            _update_framework if Framework.query.filter(Framework.slug == slug).first() else _add_framework
+        )
+        inner_func(request, app, slug, **kwargs)
 
+_generic_framework_agreement_details = {"frameworkAgreementVersion": "v1.0"}
 
-def _g8_framework(request, app, status):
-    _base_framework(
-        request, app, slug='g-cloud-8', status=status, framework='g-cloud', framework_agreement_details=True)
-
-
-def _g7_framework(request, app, status):
-    _base_framework(
-        request, app, slug='g-cloud-7', status=status, framework='g-cloud', framework_agreement_details=False)
-
-
-def _g6_framework(request, app, status):
-    _base_framework(
-        request, app, slug='g-cloud-6', status=status, framework='g-cloud', framework_agreement_details=False)
-
-
-def _dos_framework(request, app, status):
-    _base_framework(
-        request,
-        app,
-        slug='digital-outcomes-and-specialists',
-        status=status,
-        framework='dos',
-        framework_agreement_details=False
-    )
+_g8_framework_defaults = {
+    "slug": "g-cloud-8",
+    "framework": "g-cloud",
+    "framework_agreement_details": _generic_framework_agreement_details,
+}
+_g7_framework_defaults = {
+    "slug": "g-cloud-7",
+    "framework": "g-cloud",
+    "framework_agreement_details": None,
+}
+_g6_framework_defaults = {
+    "slug": "g-cloud-6",
+    "framework": "g-cloud",
+    "framework_agreement_details": None,
+}
+_dos_framework_defaults = {
+    "slug": "digital-outcomes-and-specialists",
+    "framework": "dos",
+    "framework_agreement_details": None,
+}
 
 
 # G8
@@ -116,12 +112,12 @@ def _dos_framework(request, app, status):
 
 @pytest.fixture()
 def open_g8_framework(request, app):
-    _g8_framework(request, app, status='open')
+    _framework_fixture_inner(request, app, **dict(_g8_framework_defaults, status="open"))
 
 
 @pytest.fixture()
 def live_g8_framework(request, app):
-    _g8_framework(request, app, status='live')
+    _framework_fixture_inner(request, app, **dict(_g8_framework_defaults, status="live"))
 
 
 # G6
@@ -129,12 +125,12 @@ def live_g8_framework(request, app):
 
 @pytest.fixture()
 def open_g6_framework(request, app):
-    _g6_framework(request, app, status='open')
+    _framework_fixture_inner(request, app, **dict(_g6_framework_defaults, status="open"))
 
 
 @pytest.fixture()
 def expired_g6_framework(request, app):
-    _g6_framework(request, app, status='expired')
+    _framework_fixture_inner(request, app, **dict(_g6_framework_defaults, status="expired"))
 
 
 # DOS
@@ -142,14 +138,14 @@ def expired_g6_framework(request, app):
 
 @pytest.fixture()
 def open_dos_framework(request, app):
-    _dos_framework(request, app, status='open')
+    _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="open"))
 
 
 @pytest.fixture()
 def live_dos_framework(request, app):
-    _dos_framework(request, app, status='live')
+    _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="live"))
 
 
 @pytest.fixture()
 def expired_dos_framework(request, app):
-    _dos_framework(request, app, status='expired')
+    _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="expired"))
