@@ -121,7 +121,7 @@ def list_draft_services():
     framework_slug = request.args.get('framework')
 
     if supplier_code is None:
-        abort(400, "Invalid page argument: supplier_id is required")
+        abort(400, "Invalid page argument: supplier_code is required")
 
     supplier = Supplier.query.filter(Supplier.code == supplier_code).all()
     if not supplier:
@@ -265,7 +265,7 @@ def publish_draft_service(draft_id):
 @main.route('/draft-services', methods=['POST'])
 def create_new_draft_service():
     """
-    Create a new draft service with lot, supplier_id, draft_id, framework_id
+    Create a new draft service with lot, supplier_code, draft_id, framework_id
     :return: the new draft id and location e.g.
     HTTP/1.1 201 Created Location: /draft-services/63636
     """

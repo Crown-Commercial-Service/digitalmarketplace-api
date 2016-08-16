@@ -1213,7 +1213,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
         self.setup_services()
         self.setup_dummy_briefs(1, status="live")
 
-        response = self.client.get("/briefs/1/services?supplier_id=0")
+        response = self.client.get("/briefs/1/services?supplier_code=0")
         data = json.loads(response.get_data(as_text=True))
 
         assert response.status_code == 200, response.get_data(as_text=True)
@@ -1231,7 +1231,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
                 lot_slug="digital-outcomes")
             db.session.commit()
 
-        response = self.client.get("/briefs/1/services?supplier_id=0")
+        response = self.client.get("/briefs/1/services?supplier_code=0")
         data = json.loads(response.get_data(as_text=True))
 
         assert response.status_code == 200
@@ -1265,7 +1265,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
                       "specialistRole": "developer"})
             db.session.commit()
 
-        response = self.client.get("/briefs/1/services?supplier_id=0")
+        response = self.client.get("/briefs/1/services?supplier_code=0")
         data = json.loads(response.get_data(as_text=True))
 
         assert response.status_code == 200
@@ -1283,7 +1283,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
                       "specialistRole": "agileCoach"})
             db.session.commit()
 
-        response = self.client.get("/briefs/1/services?supplier_id=0")
+        response = self.client.get("/briefs/1/services?supplier_code=0")
         data = json.loads(response.get_data(as_text=True))
 
         assert response.status_code == 200
@@ -1301,7 +1301,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
                 lot_slug="digital-outcomes")
             db.session.commit()
 
-        response = self.client.get("/briefs/1/services?supplier_id=0")
+        response = self.client.get("/briefs/1/services?supplier_code=0")
         data = json.loads(response.get_data(as_text=True))
 
         assert response.status_code == 200
