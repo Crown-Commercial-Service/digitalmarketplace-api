@@ -204,15 +204,6 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400
         assert 'Invalid supplier Code' in res.get_data(as_text=True)
 
-    def test_cannot_create_brief_response_when_supplier_isnt_eligible(self, live_framework):
-        res = self.create_brief_response({
-            'briefId': self.brief_id,
-            'supplierCode': 1
-        })
-
-        assert res.status_code == 400
-        assert 'Supplier not eligible' in res.get_data(as_text=True)
-
     def test_cannot_respond_to_a_brief_that_isnt_live(self, live_framework):
         with self.app.app_context():
             brief = Brief(
@@ -304,18 +295,6 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 201, data
-
-    @given(example_listings.specialists_brief_response_data(min_day_rate=1001, max_day_rate=100000))
-    def test_day_rate_should_be_less_than_service_max_price(self, live_framework, brief_response_data):
-        res = self.create_brief_response(dict(brief_response_data, **{
-            'briefId': self.specialist_brief_id,
-            'supplierCode': 0,
-        }))
-
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 400, data
-        assert data == {'error': {'dayRate': 'max_less_than_min'}}
 
 
 class TestGetBriefResponse(BaseBriefResponseTest):

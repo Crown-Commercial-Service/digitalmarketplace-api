@@ -40,9 +40,8 @@ def create_brief_response():
 
     supplier = validate_and_return_supplier(brief_response_json)
 
-    brief_service = get_supplier_service_eligible_for_brief(supplier, brief)
-    if not brief_service:
-        abort(400, "Supplier not eligible")
+    # FIXME: The UK marketplace checks that the supplier has a relevant service and that its day rate meets the budget.
+    # This Australian marketplace should do that too, but Australian suppliers haven't created services yet.
 
     # Check if brief response already exists from this supplier
     if BriefResponse.query.filter(BriefResponse.supplier == supplier, BriefResponse.brief == brief).first():
@@ -54,10 +53,7 @@ def create_brief_response():
         brief=brief,
     )
 
-    brief_role = brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
-    service_max_day_rate = brief_service.data[brief_role + "PriceMax"] if brief_role else None
-
-    brief_response.validate(max_day_rate=service_max_day_rate)
+    brief_response.validate()
 
     db.session.add(brief_response)
     try:
