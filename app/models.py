@@ -4,7 +4,7 @@ import re
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
-from six import string_types
+from six import string_types, iteritems
 
 from sqlalchemy import asc, desc
 from sqlalchemy import func
@@ -105,7 +105,10 @@ class Framework(db.Model):
             'name': self.name,
             'slug': self.slug,
             'framework': self.framework,
-            'frameworkAgreementVersion': (self.framework_agreement_details or {}).get("frameworkAgreementVersion"),
+            'frameworkAgreementVersion': (
+                self.framework_agreement_details or {}
+            ).get("frameworkAgreementVersion"),
+            'variations': (self.framework_agreement_details or {}).get("variations", {}),
             'status': self.status,
             'clarificationQuestionsOpen': self.clarification_questions_open,
             'lots': [lot.serialize() for lot in self.lots],
@@ -310,6 +313,7 @@ class SupplierFramework(db.Model):
     agreement_returned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
     countersigned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
     agreement_details = db.Column(JSON)
+    agreed_variations = db.Column(JSON)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
@@ -326,6 +330,13 @@ class SupplierFramework(db.Model):
         if value is None:
             return value
 
+        value = strip_whitespace_from_data(value)
+        value = purge_nulls_from_data(value)
+
+        return value
+
+    @validates('agreed_variations')
+    def validates_agreed_variations(self, key, value):
         value = strip_whitespace_from_data(value)
         value = purge_nulls_from_data(value)
 
@@ -370,6 +381,22 @@ class SupplierFramework(db.Model):
             for row in count_services_query + count_drafts_query
         }
 
+    @staticmethod
+    def serialize_agreed_variation(agreed_variation):
+        if not agreed_variation.get("agreedUserId"):
+            return agreed_variation
+
+        user = User.query.filter(
+            User.id == agreed_variation["agreedUserId"]
+        ).first()
+        if not user:
+            return agreed_variation
+
+        return dict(agreed_variation, **{
+            "agreedUserName": user.name,
+            "agreedUserEmail": user.email_address,
+        })
+
     def serialize(self, data=None):
         agreement_returned_at = self.agreement_returned_at
         if agreement_returned_at:
@@ -378,6 +405,8 @@ class SupplierFramework(db.Model):
         countersigned_at = self.countersigned_at
         if countersigned_at:
             countersigned_at = countersigned_at.strftime(DATETIME_FORMAT)
+
+        agreed_variations = {k: self.serialize_agreed_variation(v) for k, v in iteritems(self.agreed_variations or {})}
 
         supplier_framework = dict({
             "supplierId": self.supplier_id,
@@ -390,6 +419,7 @@ class SupplierFramework(db.Model):
             "agreementDetails": self.agreement_details,
             "countersigned": bool(countersigned_at),
             "countersignedAt": countersigned_at,
+            "agreedVariations": agreed_variations,
         }, **(data or {}))
 
         if self.agreement_details and self.agreement_details.get('uploaderUserId'):
