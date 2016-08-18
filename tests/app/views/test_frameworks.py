@@ -30,6 +30,7 @@ class TestListFrameworks(BaseApplicationTest):
                     'name',
                     'slug',
                     'status',
+                    'variations',
                 ]))
 
 

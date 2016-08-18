@@ -3,12 +3,14 @@ from flask import json
 import pytest
 from freezegun import freeze_time
 from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true, assert_is
+from random import randint
+
+from dmapiclient.audit import AuditTypes
 
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
     SupplierFramework, Framework, DraftService, Service
 from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
-from random import randint
 
 
 class TestGetSupplier(BaseApplicationTest):
@@ -1107,6 +1109,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'agreementDetails': None,
                         'countersigned': False,
                         'countersignedAt': None,
+                        'agreedVariations': {},
                     }
                 ]
             }
@@ -1134,6 +1137,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'agreementDetails': None,
                         'countersigned': False,
                         'countersignedAt': None,
+                        'agreedVariations': {},
                     }
                 ]
             }
@@ -1749,3 +1753,266 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
             assert audit.data['frameworkSlug'] == 'digital-outcomes-and-specialists'
             assert audit.data['update']['onFramework'] is True
             assert audit.data['update']['agreementReturned'] is True
+
+
+class TestSupplierFrameworkVariation(BaseApplicationTest):
+    def setup(self):
+        super(TestSupplierFrameworkVariation, self).setup()
+        self.setup_dummy_suppliers(1)
+        self.setup_dummy_user(1, role='supplier')
+        self.supplier_id = 0
+
+    def test_agree_variation_fails_with_no_supplier_framework(self, live_g8_framework_2_variations):
+        response = self.client.put("/suppliers/0/frameworks/g-cloud-8/variation/banana", data=json.dumps({
+            "updated_by": "test123",
+            "agreedVariations": {
+                "agreedUserId": 1,
+            },
+        }), content_type="application/json")
+
+        assert response.status_code == 404
+
+        response2 = self.client.get("/suppliers/1/frameworks/g-cloud-8")
+        assert response2.status_code == 404
+
+    def test_agree_variation_fails_with_supplier_not_on_framework(
+            self,
+            live_g8_framework_2_variations_suppliers_not_on_framework,
+            ):
+        response = self.client.put("/suppliers/1/frameworks/g-cloud-8/variation/banana", data=json.dumps({
+            "updated_by": "test123",
+            "agreedVariations": {
+                "agreedUserId": 1,
+            },
+        }), content_type="application/json")
+
+        assert response.status_code == 404
+
+        response2 = self.client.get("/suppliers/1/frameworks/g-cloud-8")
+        assert response2.status_code == 200
+        assert not json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"]
+
+    def test_agree_variation_fails_with_invalid_variation(
+            self,
+            live_g8_framework_2_variations_suppliers_on_framework,
+            ):
+        response = self.client.put("/suppliers/1/frameworks/g-cloud-8/variation/mango", data=json.dumps({
+            "updated_by": "test123",
+            "agreedVariations": {
+                "agreedUserId": 1,
+            },
+        }), content_type="application/json")
+
+        assert response.status_code == 404
+
+        response2 = self.client.get("/suppliers/1/frameworks/g-cloud-8")
+        assert response2.status_code == 200
+        assert not json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"]
+
+    def test_agree_variation_fails_with_no_framework_variations(
+            self,
+            live_g8_framework_suppliers_on_framework,
+            ):
+        response = self.client.put("/suppliers/1/frameworks/g-cloud-8/variation/banana", data=json.dumps({
+            "updated_by": "test123",
+            "agreedVariations": {
+                "agreedUserId": 1,
+            },
+        }), content_type="application/json")
+
+        assert response.status_code == 404
+
+        response2 = self.client.get("/suppliers/1/frameworks/g-cloud-8")
+        assert response2.status_code == 200
+        assert not json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"]
+
+    def test_agree_variation_fails_with_unrelated_user_id(
+            self,
+            live_g8_framework_2_variations_suppliers_on_framework_with_alt,
+            ):
+        response = self.client.put("/suppliers/1/frameworks/g-cloud-8/variation/banana", data=json.dumps({
+            "updated_by": "test123",
+            "agreedVariations": {
+                # the "alt", unrelated, user
+                "agreedUserId": 2,
+            },
+        }), content_type="application/json")
+
+        assert response.status_code == 403
+
+        response2 = self.client.get("/suppliers/1/frameworks/g-cloud-8")
+        assert response2.status_code == 200
+        assert not json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"]
+
+        # let's also check it hasn't gone & done something crazy like flipped the "alt" user/supplier's agreement flag
+        response3 = self.client.get("/suppliers/2/frameworks/g-cloud-8")
+        assert response3.status_code == 200
+        assert not json.loads(response3.get_data())["frameworkInterest"]["agreedVariations"]
+
+    def test_agree_variation_fails_with_invalid_user_id(
+            self,
+            live_g8_framework_2_variations_suppliers_on_framework,
+            ):
+        response = self.client.put("/suppliers/1/frameworks/g-cloud-8/variation/banana", data=json.dumps({
+            "updated_by": "test123",
+            "agreedVariations": {
+                "agreedUserId": 314159,
+            },
+        }), content_type="application/json")
+
+        assert response.status_code == 400
+
+        response2 = self.client.get("/suppliers/1/frameworks/g-cloud-8")
+        assert response2.status_code == 200
+        assert not json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"]
+
+    def test_agree_variation_succeeds(
+            self,
+            app,
+            live_g8_framework_2_variations_suppliers_on_framework_with_alt,
+            ):
+        with freeze_time('2016-06-06'):
+            response = self.client.put("/suppliers/1/frameworks/g-cloud-8/variation/banana", data=json.dumps({
+                "updated_by": "test123",
+                "agreedVariations": {
+                    "agreedUserId": 1,
+                },
+            }), content_type="application/json")
+
+        expected_variation = {
+            "agreedUserId": 1,
+            "agreedUserEmail": "test+1@digital.gov.uk",
+            "agreedUserName": "my name",
+            "agreedAt": "2016-06-06T00:00:00.000000Z",
+        }
+
+        assert response.status_code == 200
+        response_json = json.loads(response.get_data())
+        assert response_json["agreedVariations"] == expected_variation
+
+        response2 = self.client.get("/suppliers/1/frameworks/g-cloud-8")
+        assert response2.status_code == 200
+        assert json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"] == {
+            "banana": expected_variation,
+        }
+
+        with app.app_context():
+            audit_events = AuditEvent.query.filter(
+                AuditEvent.type == "agree_framework_variation"
+            ).order_by(AuditEvent.created_at, AuditEvent.id).all()
+
+            assert len(audit_events) == 1
+
+            assert audit_events[0].user == "test123"
+            assert audit_events[0].data["supplierId"] == 1
+            assert audit_events[0].data["frameworkSlug"] == "g-cloud-8"
+            assert audit_events[0].data["variationSlug"] == "banana"
+            assert audit_events[0].data["update"] == {
+                "agreedUserId": 1,
+            }
+
+    def test_agree_variation_various(
+            self,
+            app,
+            live_g8_framework_2_variations_suppliers_on_framework_with_alt,
+            ):
+        # this test tests quite a few things in one. in an ideal world all these things would be tested separately,
+        # but some of these features require me to build up a bit of prior state for them to come in to play and my
+        # reasoning is that i may as well be testing those bits i'm using to set things up as i set them up. this way
+        # gives me the most bang for the buck.
+
+        with freeze_time('2016-06-06'):
+            response = self.client.put("/suppliers/2/frameworks/g-cloud-8/variation/toblerone", data=json.dumps({
+                "updated_by": "test123",
+                "agreedVariations": {
+                    "agreedUserId": 2,
+                },
+            }), content_type="application/json")
+
+        expected_variation_toblerone = {
+            "agreedUserId": 2,
+            "agreedUserEmail": "test+2@digital.gov.uk",
+            "agreedUserName": "my name",
+            "agreedAt": "2016-06-06T00:00:00.000000Z",
+        }
+
+        assert response.status_code == 200
+        response_json = json.loads(response.get_data())
+        assert response_json["agreedVariations"] == expected_variation_toblerone
+
+        response2 = self.client.get("/suppliers/2/frameworks/g-cloud-8")
+        assert response2.status_code == 200
+        assert json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"] == {
+            "toblerone": expected_variation_toblerone,
+        }
+
+        # check we've left the other supplier alone
+        response3 = self.client.get("/suppliers/1/frameworks/g-cloud-8")
+        assert response3.status_code == 200
+        assert not json.loads(response3.get_data())["frameworkInterest"]["agreedVariations"]
+
+        with freeze_time("2016-07-07"):
+            response4 = self.client.put("/suppliers/2/frameworks/g-cloud-8/variation/banana", data=json.dumps({
+                "updated_by": "test123",
+                "agreedVariations": {
+                    "agreedUserId": 2,
+                },
+            }), content_type="application/json")
+
+        expected_variation_banana = {
+            "agreedUserId": 2,
+            "agreedUserEmail": "test+2@digital.gov.uk",
+            "agreedUserName": "my name",
+            "agreedAt": "2016-07-07T00:00:00.000000Z",
+        }
+
+        assert response4.status_code == 200
+        response4_json = json.loads(response4.get_data())
+        assert response4_json["agreedVariations"] == expected_variation_banana
+
+        response5 = self.client.get("/suppliers/2/frameworks/g-cloud-8")
+        assert response5.status_code == 200
+        assert json.loads(response5.get_data())["frameworkInterest"]["agreedVariations"] == {
+            "banana": expected_variation_banana,
+            "toblerone": expected_variation_toblerone,
+        }
+
+        # check we can't agree a second time
+        response6 = self.client.put("/suppliers/2/frameworks/g-cloud-8/variation/toblerone", data=json.dumps({
+            "updated_by": "test123",
+            "agreedVariations": {
+                "agreedUserId": 2,
+            },
+        }), content_type="application/json")
+        assert response6.status_code == 400
+
+        # check that really didn't alter anything
+        response7 = self.client.get("/suppliers/2/frameworks/g-cloud-8")
+        assert response7.status_code == 200
+        assert json.loads(response7.get_data())["frameworkInterest"]["agreedVariations"] == {
+            "banana": expected_variation_banana,
+            "toblerone": expected_variation_toblerone,
+        }
+
+        with app.app_context():
+            audit_events = AuditEvent.query.filter(
+                AuditEvent.type == "agree_framework_variation"
+            ).order_by(AuditEvent.created_at, AuditEvent.id).all()
+
+            assert len(audit_events) == 2
+
+            assert audit_events[0].user == "test123"
+            assert audit_events[0].data["supplierId"] == 2
+            assert audit_events[0].data["frameworkSlug"] == "g-cloud-8"
+            assert audit_events[0].data["variationSlug"] == "toblerone"
+            assert audit_events[0].data["update"] == {
+                "agreedUserId": 2,
+            }
+
+            assert audit_events[1].user == "test123"
+            assert audit_events[1].data["supplierId"] == 2
+            assert audit_events[1].data["frameworkSlug"] == "g-cloud-8"
+            assert audit_events[1].data["variationSlug"] == "banana"
+            assert audit_events[1].data["update"] == {
+                "agreedUserId": 2,
+            }
