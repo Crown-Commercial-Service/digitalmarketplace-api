@@ -63,6 +63,15 @@ def list_users():
             links={}
         )
 
+    role = request.args.get('role')
+    if role:
+        if role in ['buyer']:
+            user_query = user_query.filter(
+                User.role == role
+            )
+        else:
+            abort(400, 'Invalid user role: {}'.format(role))
+
     supplier_id = request.args.get('supplier_id')
     if supplier_id is not None:
         try:
