@@ -1246,7 +1246,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
         assert response.status_code == 200
         assert len(data["services"]) == 1
 
-    def test_supplier_is_eligible_for_outcome(self):
+    def test_supplier_is_eligible_for_live_outcome(self):
         self.setup_services()
         with self.app.app_context():
             self.setup_dummy_user(id=1)
@@ -1272,13 +1272,23 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
 
         assert response.status_code == 404
 
-    def test_supplier_is_ineligible_if_brief_not_live(self):
+    def test_supplier_is_ineligible_if_brief_in_draft(self):
         self.setup_services()
         self.setup_dummy_briefs(1, status="draft")
 
         response = self.client.get("/briefs/1/services?supplier_id=0")
 
         assert response.status_code == 404
+
+    def test_supplier_is_eligible_if_brief_closed(self):
+        self.setup_services()
+        self.setup_dummy_briefs(1, status="closed")
+
+        response = self.client.get("/briefs/1/services?supplier_id=0")
+        data = json.loads(response.get_data(as_text=True))
+
+        assert response.status_code == 200
+        assert data["services"]
 
     def test_supplier_is_eligible_even_if_not_in_specialist_location(self):
         self.setup_services()

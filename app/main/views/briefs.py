@@ -352,7 +352,7 @@ def list_brief_services(brief_id):
     brief = Brief.query.filter(
         Brief.id == brief_id
     ).filter(
-        Brief.status == "live"
+        Brief.status != "draft"
     ).first_or_404()
 
     supplier_id = get_int_or_400(request.args, 'supplier_id')
