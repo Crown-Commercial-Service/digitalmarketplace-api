@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask import jsonify, abort, request, current_app
+from six import text_type
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
@@ -12,10 +13,19 @@ from ...validation import (
     validate_contact_information_json_or_400,
     is_valid_string_or_400
 )
-from ...utils import pagination_links, drop_foreign_fields, get_json_from_request, \
-    json_has_required_keys, json_has_matching_id, get_valid_page_or_1, validate_and_return_updater_request
+from ...utils import (
+    pagination_links,
+    drop_foreign_fields,
+    get_json_from_request,
+    json_has_required_keys,
+    json_only_has_required_keys,
+    json_has_matching_id,
+    get_valid_page_or_1,
+    validate_and_return_updater_request,
+)
 from ...supplier_utils import validate_and_return_supplier_request, validate_agreement_details_data
 from dmapiclient.audit import AuditTypes
+from dmutils.formats import DATETIME_FORMAT
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -471,3 +481,80 @@ def update_supplier_framework_details(supplier_id, framework_slug):
         return jsonify(message="Database Error: {0}".format(e)), 400
 
     return jsonify(frameworkInterest=interest_record.serialize()), 200
+
+
+@main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>/variation/<variation_slug>', methods=['PUT'])
+def agree_framework_variation(supplier_id, framework_slug, variation_slug):
+
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first_or_404()
+
+    supplier = Supplier.query.filter(
+        Supplier.supplier_id == supplier_id
+    ).first_or_404()
+
+    # TODO SELECT FOR UPDATE?
+    # (technically we should be doing a FOR UPDATE of SupplierFramework and a FOR SHARE of Framework)
+    interest_record = SupplierFramework.query.filter(
+        SupplierFramework.supplier_id == supplier.supplier_id,
+        SupplierFramework.framework_id == framework.id
+    ).first()
+    if not interest_record:
+        abort(404, "supplier_id '{}' has not registered interest in {}".format(supplier_id, framework_slug))
+
+    if not interest_record.on_framework:
+        abort(404, "supplier_id '{}' is not on framework {}".format(supplier_id, framework_slug))
+
+    # acceptable variation_slugs must have corresponding createdAt entry in variations dict
+    if not (framework.framework_agreement_details or {}).get("variations", {}).get(variation_slug, {}).get("createdAt"):
+        abort(404, "Unknown variation '{}' for framework {}".format(variation_slug, framework_slug))
+
+    if (interest_record.agreed_variations or {}).get(variation_slug, {}).get("agreedAt"):
+        abort(400, "supplier_id '{}' has already agreed to variation '{}'.".format(supplier_id, variation_slug))
+
+    json_payload = get_json_from_request()
+    updater_json = validate_and_return_updater_request()
+    json_has_required_keys(json_payload, ["agreedVariations"])
+    json_only_has_required_keys(json_payload["agreedVariations"], ["agreedUserId"])
+
+    user = User.query.filter(User.id == json_payload["agreedVariations"]["agreedUserId"]).first()
+    if not user:
+        abort(400, "No user found with id '{}'".format(json_payload["agreedVariations"]["agreedUserId"]))
+    if supplier_id != user.supplier_id:
+        abort(403, "user '{}' isn't associated with supplier_id '{}'".format(
+            json_payload["agreedVariations"]["agreedUserId"],
+            supplier_id,
+        ))
+
+    agreed_variations = interest_record.agreed_variations.copy() if interest_record.agreed_variations else {}
+    agreed_variations[variation_slug] = agreed_variations.get(variation_slug, {})
+    agreed_variations[variation_slug].update({
+        "agreedAt": datetime.utcnow().strftime(DATETIME_FORMAT),
+        "agreedUserId": user.id,
+    })
+    interest_record.agreed_variations = agreed_variations
+
+    audit_event = AuditEvent(
+        audit_type=AuditTypes.agree_framework_variation,
+        user=updater_json['updated_by'],
+        data={
+            'supplierId': supplier.supplier_id,
+            'frameworkSlug': framework_slug,
+            'variationSlug': variation_slug,
+            'update': json_payload["agreedVariations"],
+        },
+        db_object=interest_record,
+    )
+
+    try:
+        db.session.add(interest_record)
+        db.session.add(audit_event)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message="Database Error: {0}".format(e)), 400
+
+    return jsonify(
+        agreedVariations=SupplierFramework.serialize_agreed_variation(agreed_variations[variation_slug]),
+    ), 200
