@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "availability": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "essentialRequirements": {
+      "items": {
+        "type": "boolean"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
+    },
+    "niceToHaveRequirements": {
+      "items": {
+        "type": "boolean"
+      },
+      "maxItems": 20,
+      "minItems": 0,
+      "type": "array"
+    },
+    "respondToEmailAddress": {
+      "format": "email",
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "availability",
+    "essentialRequirements",
+    "respondToEmailAddress"
+  ],
+  "title": "Digital Outcome Brief Response Schema",
+  "type": "object"
+}
