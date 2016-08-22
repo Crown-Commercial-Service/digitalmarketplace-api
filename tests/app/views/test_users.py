@@ -1140,6 +1140,17 @@ class TestUsersExport(BaseUserTest):
 
         assert response.status_code == 201
 
+    def _put_variation_agreement(self):
+        data = {"agreedVariations": {"agreedUserId": self.users[0].get("id")}}
+        data.update(self.updater_json)
+
+        response = self.client.put(
+            '/suppliers/{}/frameworks/{}/variation/1'.format(self.supplier_id, self.framework_slug),
+            data=json.dumps(data),
+            content_type='application/json')
+
+        assert response.status_code == 200
+
     def _put_complete_declaration(self):
         self._put_declaration(status='complete')
 
@@ -1193,6 +1204,10 @@ class TestUsersExport(BaseUserTest):
     def _set_framework_status(self, status='pending'):
         with self.app.app_context():
             self.set_framework_status(self.framework_slug, status)
+
+    def _set_framework_variation(self):
+        with self.app.app_context():
+            self.set_framework_variation(self.framework_slug)
 
     def _return_users_export(self):
         response = self.client.get('/users/export/{}'.format(self.framework_slug))
@@ -1392,6 +1407,25 @@ class TestUsersExport(BaseUserTest):
         self._set_framework_status('coming')
         response = self.client.get('/users/export/{}'.format(self.framework_slug))
         assert response.status_code == 400
+
+    def test_response_agreed_contract_variation(self):
+        self._setup()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_result(True)
+        self._post_framework_agreement()
+        self._set_framework_variation()
+        self._put_variation_agreement()
+        data = json.loads(self._return_users_export_after_setting_framework_status(status='live').get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_export_response(datum, parameters={
+                'declaration_status': 'complete',
+                'application_status': 'application',
+                'application_result': 'pass',
+                'framework_agreement': True,
+                'agreed_variations': '1'
+            })
 
 
 class TestUsersEmailCheck(BaseUserTest):

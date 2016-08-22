@@ -254,6 +254,7 @@ def export_users_for_framework(framework_slug):
         application_status = ''
         application_result = ''
         framework_agreement = ''
+        variations_agreed = ''
 
         # if framework is pending, live, or expired
         if framework.status != 'open':
@@ -277,6 +278,7 @@ def export_users_for_framework(framework_slug):
             else:
                 application_result = 'pass' if sf.on_framework else 'fail'
             framework_agreement = bool(sf.agreement_returned_at)
+            variations_agreed = sf.agreed_variations.keys() if sf.agreed_variations else []
 
         user_rows.append({
             'user_email': u.email_address,
@@ -285,7 +287,8 @@ def export_users_for_framework(framework_slug):
             'declaration_status': declaration_status,
             'application_status': application_status,
             'framework_agreement': framework_agreement,
-            'application_result': application_result
+            'application_result': application_result,
+            'variations_agreed': variations_agreed
         })
 
     return jsonify(users=[user for user in user_rows])
