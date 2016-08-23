@@ -3,6 +3,14 @@
   "additionalProperties": false,
   "minProperties": 1,
   "properties": {
+    "countersignedUserId":  {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "countersignedOfficialName":  {
+      "minLength": 1,
+      "type": "string"
+    },
     "frameworkAgreementVersion": {
       "minLength": 1,
       "type": "string"

@@ -26,6 +26,16 @@ from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_field
 from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
 
 
+def _serialization_user_details(key_prefix, serialization):
+    user = User.query.filter(
+        User.id == serialization[key_prefix+"UserId"]
+    ).first() if serialization.get(key_prefix+"UserId") else None
+    return {
+        key_prefix+"UserName": user.name,
+        key_prefix+"UserEmail": user.email_address,
+    } if user else {}
+
+
 class FrameworkLot(db.Model):
     __tablename__ = 'framework_lots'
 
@@ -383,19 +393,7 @@ class SupplierFramework(db.Model):
 
     @staticmethod
     def serialize_agreed_variation(agreed_variation):
-        if not agreed_variation.get("agreedUserId"):
-            return agreed_variation
-
-        user = User.query.filter(
-            User.id == agreed_variation["agreedUserId"]
-        ).first()
-        if not user:
-            return agreed_variation
-
-        return dict(agreed_variation, **{
-            "agreedUserName": user.name,
-            "agreedUserEmail": user.email_address,
-        })
+        return dict(agreed_variation, **_serialization_user_details("agreed", agreed_variation))
 
     def serialize(self, data=None):
         agreement_returned_at = self.agreement_returned_at
@@ -422,14 +420,11 @@ class SupplierFramework(db.Model):
             "agreedVariations": agreed_variations,
         }, **(data or {}))
 
-        if self.agreement_details and self.agreement_details.get('uploaderUserId'):
-            user = User.query.filter(
-                User.id == self.agreement_details.get('uploaderUserId')
-            ).first()
-
-            if user:
-                supplier_framework['agreementDetails']['uploaderUserName'] = user.name
-                supplier_framework['agreementDetails']['uploaderUserEmail'] = user.email_address
+        if supplier_framework["agreementDetails"]:
+            for key_prefix in ("uploader", "countersigned",):
+                supplier_framework["agreementDetails"].update(
+                    _serialization_user_details(key_prefix, supplier_framework["agreementDetails"])
+                )
 
         return supplier_framework
 

@@ -445,10 +445,12 @@ def update_supplier_framework_details(supplier_id, framework_slug):
             required_fields=required_fields
         )
 
-        if update_json.get('agreementDetails') and update_json['agreementDetails'].get('uploaderUserId'):
-            user = User.query.filter(User.id == update_json['agreementDetails']['uploaderUserId']).first()
-            if not user:
-                abort(400, "No user found with id '{}'".format(update_json['agreementDetails']['uploaderUserId']))
+        # check keys purportedly referencing user ids
+        for user_id_key in ("uploaderUserId", "countersignedUserId",):
+            user_id = update_json.get("agreementDetails", {}).get(user_id_key)
+            if user_id:
+                if not User.query.filter(User.id == user_id).first():
+                    abort(400, "No user found with id '{}'".format(user_id))
 
         interest_record.agreement_details = agreement_details or None
 
