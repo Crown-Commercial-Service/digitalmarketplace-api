@@ -278,7 +278,7 @@ def export_users_for_framework(framework_slug):
             else:
                 application_result = 'pass' if sf.on_framework else 'fail'
             framework_agreement = bool(sf.agreement_returned_at)
-            variations_agreed = list(sf.agreed_variations.keys()) if sf.agreed_variations else []
+            variations_agreed = ', '.join(sf.agreed_variations.keys()) if sf.agreed_variations else ''
 
         user_rows.append({
             'user_email': u.email_address,
