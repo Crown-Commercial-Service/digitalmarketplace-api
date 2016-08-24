@@ -1404,6 +1404,79 @@ class TestUsersExport(BaseUserTest):
         assert response.status_code == 400
 
 
+class TestSupplierInviteLog(BaseUserTest):
+
+    def setup(self):
+        super(TestSupplierInviteLog, self).setup()
+        with self.app.app_context():
+            self.suppliers = self.load_example_listing("Suppliers")
+            self.contacts = []
+            self.email_supplier_code = {}
+            for supplier in self.suppliers:
+                self.contacts.extend(supplier['contacts'])
+                for contact in supplier['contacts']:
+                    self.email_supplier_code[contact['email']] = supplier['code']
+                data = json.dumps({'supplier': supplier})
+                response = self.client.post(
+                    '/suppliers',
+                    data=data,
+                    content_type='application/json')
+                assert_equal(response.status_code, 201)
+
+    def test_get_invite_candidates(self):
+        with self.app.app_context():
+            response = self.client.get('/users/supplier-invite/list-candidates')
+
+            assert response.status_code == 200
+            results = json.loads(response.get_data())['results']
+            assert len(results) == len(self.contacts)
+            result_contacts = [r['contact'] for r in results]
+            assert sorted(result_contacts) == sorted(self.contacts)
+
+            for result in results:
+                assert result['supplierCode'] == self.email_supplier_code[result['contact']['email']]
+
+    def test_existing_accounts_are_not_candidates(self):
+        with self.app.app_context():
+            contact = self.contacts[1]
+            user = {
+                'emailAddress': contact['email'],
+                'password': '1234567890',
+                'role': 'supplier',
+                'name': contact['name'],
+                'supplierCode': self.suppliers[1]['code'],
+            }
+            self._post_user(user)
+
+            response = self.client.get('/users/supplier-invite/list-candidates')
+
+            assert response.status_code == 200
+            results = json.loads(response.get_data())['results']
+            assert len(results) == len(self.contacts) - 1
+            assert contact not in results
+
+    def test_invited_users_are_not_candidates(self):
+        contact = self.contacts[0]
+        with self.app.app_context():
+            data = {
+                'email': contact['email'],
+                'supplierCode': self.suppliers[0]['code'],
+            }
+            response = self.client.post(
+                '/users/supplier-invite',
+                data=json.dumps(data),
+                content_type='application/json'
+            )
+            assert response.status_code == 200
+
+            response = self.client.get('/users/supplier-invite/list-candidates')
+
+            assert response.status_code == 200
+            results = json.loads(response.get_data())['results']
+            assert len(results) == len(self.contacts) - 1
+            assert contact not in results
+
+
 class TestUsersEmailCheck(BaseUserTest):
     def test_valid_email_is_ok(self):
         response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@gov.au'})

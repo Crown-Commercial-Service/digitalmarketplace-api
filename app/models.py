@@ -357,28 +357,26 @@ class PriceSchedule(db.Model):
         return rate
 
 
-supplier__extra_links = db.Table('supplier__extra_links',
-                                 db.Column('supplier_id',
-                                           db.Integer,
-                                           db.ForeignKey('supplier.id', ondelete='cascade'),
-                                           nullable=False),
-                                 db.Column('website_link_id',
-                                           db.Integer,
-                                           db.ForeignKey('website_link.id'),
-                                           nullable=False),
-                                 db.PrimaryKeyConstraint('supplier_id', 'website_link_id'))
+class SupplierExtraLinks(db.Model):
+    __tablename__ = 'supplier__extra_links'
+    supplier_id = db.Column(
+        db.Integer,
+        db.ForeignKey('supplier.id', ondelete='cascade'),
+        primary_key=True,
+        nullable=False
+    )
+    website_link_id = db.Column(db.Integer, db.ForeignKey('website_link.id'), primary_key=True, nullable=False)
 
 
-supplier__contact = db.Table('supplier__contact',
-                             db.Column('supplier_id',
-                                       db.Integer,
-                                       db.ForeignKey('supplier.id', ondelete='cascade'),
-                                       nullable=False),
-                             db.Column('contact_id',
-                                       db.Integer,
-                                       db.ForeignKey('contact.id'),
-                                       nullable=False),
-                             db.PrimaryKeyConstraint('supplier_id', 'contact_id'))
+class SupplierContact(db.Model):
+    __tablename__ = 'supplier__contact'
+    supplier_id = db.Column(
+        db.Integer,
+        db.ForeignKey('supplier.id', ondelete='cascade'),
+        primary_key=True,
+        nullable=False
+    )
+    contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'), primary_key=True, nullable=False)
 
 
 class Supplier(db.Model):
@@ -395,12 +393,17 @@ class Supplier(db.Model):
     address = db.relationship('Address', single_parent=True, cascade='all, delete-orphan')
     website = db.Column(db.String(255), index=False, nullable=True)
     extra_links = db.relationship('WebsiteLink',
-                                  secondary=supplier__extra_links,
+                                  secondary=SupplierExtraLinks.__table__,
                                   single_parent=True,
                                   cascade='all, delete-orphan')
     abn = db.Column(db.String(15), nullable=True)
     acn = db.Column(db.String(15), nullable=True)
-    contacts = db.relationship('Contact', secondary=supplier__contact, single_parent=True, cascade='all, delete-orphan')
+    contacts = db.relationship(
+        'Contact',
+        secondary=SupplierContact.__table__,
+        single_parent=True,
+        cascade='all, delete-orphan'
+    )
     references = db.relationship('SupplierReference', single_parent=True, cascade='all, delete-orphan')
     prices = db.relationship('PriceSchedule', single_parent=True, cascade='all, delete-orphan')
     creation_time = db.Column(db.DateTime(timezone=True),
@@ -707,6 +710,30 @@ class User(db.Model):
             user['supplier'] = supplier
 
         return user
+
+
+class SupplierUserInviteLog(db.Model):
+    __tablename__ = 'supplier_user_invite_log'
+
+    supplier_id = db.Column(
+        db.Integer,
+        db.ForeignKey('supplier.id', ondelete='cascade'),
+        primary_key=True,
+        nullable=False
+    )
+    contact_id = db.Column(
+        db.Integer,
+        db.ForeignKey('contact.id', ondelete='cascade'),
+        primary_key=True,
+        nullable=False
+    )
+    invite_sent = db.Column(db.DateTime, index=True, nullable=False, default=getUtcTimestamp)
+    __table_args__ = (
+        db.ForeignKeyConstraint(
+            ('supplier_id', 'contact_id'),
+            ('supplier__contact.supplier_id', 'supplier__contact.contact_id')
+        ),
+    )
 
 
 class ServiceTableMixin(object):
