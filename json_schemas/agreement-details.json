@@ -26,6 +26,6 @@
     "signerRole",
     "uploaderUserId"
   ],
-  "title": "Agreement Details Schema",
+  "title": "SupplierFramework.agreement_details Schema",
   "type": "object"
 }

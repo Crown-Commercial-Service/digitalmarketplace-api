@@ -16,6 +16,7 @@ MAXIMUM_SERVICE_ID_LENGTH = 20
 JSON_SCHEMAS_PATH = './json_schemas'
 SCHEMA_NAMES = [
     'agreement-details',
+    'framework-agreement-details',
     'brief-clarification-question',
     'briefs-digital-outcomes-and-specialists-digital-outcomes',
     'briefs-digital-outcomes-and-specialists-digital-specialists',
