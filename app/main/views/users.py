@@ -4,12 +4,15 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, DataError
 from flask import jsonify, abort, request, current_app
 
-from .. import main
-from ... import db, encryption
-from ...models import User, AuditEvent, Supplier, Framework, SupplierFramework, DraftService
-from ...utils import get_json_from_request, json_has_required_keys, \
+from app import db, encryption
+from app.main import main
+from app.models import (
+    AuditEvent, Contact, DraftService, Framework, Supplier, SupplierContact, SupplierFramework, SupplierUserInviteLog,
+    User
+)
+from app.utils import get_json_from_request, json_has_required_keys, \
     json_has_matching_id, pagination_links, get_valid_page_or_1, validate_and_return_updater_request
-from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400, is_valid_buyer_email
+from app.validation import validate_user_json_or_400, validate_user_auth_json_or_400, is_valid_buyer_email
 
 
 @main.route('/users/auth', methods=['POST'])
@@ -289,6 +292,45 @@ def email_has_valid_buyer_domain():
         abort(400, "'email_address' is a required parameter")
 
     return jsonify(valid=is_valid_buyer_email(email_address))
+
+
+@main.route('/users/supplier-invite/list-candidates', methods=['GET'])
+def list_supplier_account_invite_candidates():
+    # NB: outer joins allow missing rows (nulls appear instead)
+    joined_tables = db.session.query(Contact, Supplier.code).select_from(SupplierContact) \
+        .join(Supplier) \
+        .join(Contact) \
+        .outerjoin(SupplierUserInviteLog) \
+        .outerjoin(User, Contact.email == User.email_address)
+    # Current logic is that anyone who doesn't have an account and hasn't been invited yet gets an invite
+    results = joined_tables.filter(User.id.is_(None)).filter(SupplierUserInviteLog.invite_sent.is_(None))
+
+    def serialize_result(result):
+        return {
+            'contact': result[0].serialize(),
+            'supplierCode': result[1],
+        }
+
+    return jsonify(results=[serialize_result(r) for r in results])
+
+
+@main.route('/users/supplier-invite', methods=['POST'])
+def record_supplier_invite():
+    json_data = get_json_from_request()
+    json_has_required_keys(json_data, ('supplierCode', 'email'))
+
+    supplier_contact = SupplierContact.query.join(Supplier).join(Contact) \
+        .filter(Supplier.code == json_data['supplierCode']) \
+        .filter(Contact.email == json_data['email']) \
+        .first()
+    if supplier_contact is None:
+        abort(400, 'No matching supplier and contact found')
+
+    log_entry = SupplierUserInviteLog(supplier_id=supplier_contact.supplier_id, contact_id=supplier_contact.contact_id)
+    db.session.merge(log_entry)
+    db.session.commit()
+
+    return jsonify(message='done')
 
 
 def check_supplier_role(role, supplier_code):
