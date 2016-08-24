@@ -14,6 +14,7 @@ from ...utils import (
     get_json_from_request, json_has_required_keys, json_only_has_required_keys,
     validate_and_return_updater_request,
 )
+from ...framework_utils import validate_framework_agreement_details_data
 
 
 @main.route('/frameworks', methods=['GET'])
@@ -79,6 +80,12 @@ def get_framework(framework_slug):
 
 @main.route('/frameworks/<framework_slug>', methods=['POST'])
 def update_framework(framework_slug):
+    attribute_whitelist = {
+        'status': 'status',
+        'clarificationQuestionsOpen': 'clarification_questions_open',
+        'frameworkAgreementDetails': 'framework_agreement_details'
+    }
+
     updater_json = validate_and_return_updater_request()
     framework = Framework.query.filter(
         Framework.slug == framework_slug
@@ -86,11 +93,26 @@ def update_framework(framework_slug):
 
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['frameworks'])
-    json_only_has_required_keys(json_payload['frameworks'], ['status', 'clarificationQuestionsOpen'])
+
+    if not json_payload['frameworks']:
+        abort(400, "Framework update expects a payload")
+
+    invalid_keys = (set(json_payload['frameworks'].keys()) - set(attribute_whitelist.keys()))
+    if invalid_keys:
+        abort(400, "Invalid keys for framework update: '{}'".format("', '".join(invalid_keys)))
+
+    if 'frameworkAgreementDetails' in json_payload['frameworks']:
+        # all frameworkAgreementDetails keys must be present or the update will fail
+        validate_framework_agreement_details_data(
+            json_payload['frameworks']['frameworkAgreementDetails'],
+            enforce_required=True
+        )
+
+    for whitelisted_key, value in attribute_whitelist.items():
+        if whitelisted_key in json_payload['frameworks']:
+            setattr(framework, value, json_payload['frameworks'][whitelisted_key])
 
     try:
-        framework.status = json_payload['frameworks']['status']
-        framework.clarification_questions_open = json_payload['frameworks']['clarificationQuestionsOpen']
         db.session.add(framework)
         db.session.add(
             AuditEvent(
