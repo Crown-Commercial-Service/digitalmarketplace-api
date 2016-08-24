@@ -129,11 +129,17 @@ class Framework(db.Model):
 
     slug_pattern = re.compile("^[\w-]+$")
 
-    @validates("slug")
+    @validates('slug')
     def validates_slug(self, key, slug):
         if not self.slug_pattern.match(slug):
             raise ValidationError("Invalid slug value '{}'".format(slug))
         return slug
+
+    @validates('clarification_questions_open')
+    def validates_clarification_questions_open(self, key, value):
+        if self.status not in ('coming', 'open', 'pending') and value:
+            raise ValidationError("Clarification questions are only permitted while the framework is open")
+        return value
 
     def __repr__(self):
         return '<{}: {} slug={}>'.format(self.__class__.__name__, self.name, self.slug)
