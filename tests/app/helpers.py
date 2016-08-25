@@ -280,6 +280,15 @@ class BaseApplicationTest(object):
         Framework.query.filter_by(slug=slug).update({'status': status})
         db.session.commit()
 
+    def set_framework_variation(self, slug):
+        Framework.query.filter_by(slug=slug).update({
+            'framework_agreement_details': {
+                "frameworkAgreementVersion": "v1.0",
+                "variations": {"1": {"createdAt": "2016-08-19T15:31:00.000000Z"}}
+            }
+        })
+        db.session.commit()
+
 
 class JSONTestMixin(object):
     """
