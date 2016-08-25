@@ -4,10 +4,8 @@ from flask import json
 from nose.tools import assert_equal, assert_in
 from dateutil.parser import parse as parse_time
 
-from dmapiclient.audit import AuditTypes
-
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
-from app.models import db, Framework, SupplierFramework, DraftService, AuditEvent, Supplier, User, FrameworkLot
+from app.models import db, Framework, SupplierFramework, DraftService, User, FrameworkLot
 
 
 class TestListFrameworks(BaseApplicationTest):
@@ -200,17 +198,42 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = '/frameworks/example'
     method = 'post'
 
+    def setup(self):
+        super(TestUpdateFramework, self).setup()
+
+        self.framework_attributes_and_values_for_update = {
+            'id': 1,
+            'name': "Example Framework 2",
+            'slug': "example-framework-2",
+            'framework': "dos",
+            'frameworkAgreementDetails': {"frameworkAgreementVersion": "v1.0"},
+            'status': "standstill",
+            'clarificationQuestionsOpen': False,
+            'lots': ['saas', 'paas', 'iaas', 'scs']
+        }
+
+        self.attribute_whitelist = [
+            'frameworkAgreementDetails',
+            'status',
+            'clarificationQuestionsOpen',
+        ]
+
+    def post_framework_update(self, update):
+        return self.client.post(
+            '/frameworks/example-framework',
+            data=json.dumps({
+                'frameworks': update,
+                'updated_by': 'example user'
+            }),
+            content_type="application/json"
+        )
+
     def test_framework_updated(self, open_example_framework):
         with self.app.app_context():
-            response = self.client.post(
-                '/frameworks/example-framework',
-                data=json.dumps({'frameworks': {
-                    'status': 'expired',
-                    'clarificationQuestionsOpen': False,
-                }, 'updated_by': 'example user'}),
-                content_type="application/json"
-            )
-
+            response = self.post_framework_update({
+                'status': 'expired',
+                'clarificationQuestionsOpen': False
+            })
             assert response.status_code == 200
 
             framework = Framework.query.filter(Framework.slug == 'example-framework').first()
@@ -229,29 +252,90 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
 
             assert response.status_code == 404
 
-    def test_cannot_update_framework_with_invalid_status(self, open_example_framework):
-        with self.app.app_context():
-            response = self.client.post(
-                '/frameworks/example-framework',
-                data=json.dumps({'frameworks': {
-                    'status': 'invalid'
-                }, 'updated_by': 'example user'}),
-                content_type="application/json"
-            )
+    def test_can_update_whitelisted_fields(self, open_example_framework):
+        valid_attributes_and_values = {
+            key: value for key, value in self.framework_attributes_and_values_for_update.items()
+            if key in self.attribute_whitelist
+        }
 
-            assert response.status_code == 400
+        with self.app.app_context():
+            for key, value in valid_attributes_and_values.items():
+                response = self.post_framework_update({
+                    key: value
+                })
+
+                assert response.status_code == 200
+                post_data = json.loads(response.get_data())['frameworks']
+
+                # `frameworkAgreementDetails` is not included in Framework.serialize() itself, but instead
+                # each (key, value) in `frameworkAgreementDetails` is un-nested and returned with other top-level keys
+                if isinstance(value, dict):
+                    for nested_key, nested_value in value.items():
+                        assert post_data[nested_key] == nested_value
+                else:
+                    assert post_data[key] == value
+
+                get_data = json.loads(
+                    self.client.get('/frameworks/example-framework').get_data()
+                )['frameworks']
+                assert post_data == get_data
 
     def test_cannot_update_non_whitelisted_fields(self, open_example_framework):
+        invalid_attributes_and_values = {
+            key: value for key, value in self.framework_attributes_and_values_for_update.items()
+            if key not in self.attribute_whitelist
+        }
+        # add some random key
+        invalid_attributes_and_values.update({'beverage': 'Clamato'})
+
         with self.app.app_context():
-            response = self.client.post(
-                '/frameworks/example-framework',
-                data=json.dumps({'frameworks': {
-                    'status': 'expired', 'name': 'Blah blah'
-                }, 'updated_by': 'example user'}),
-                content_type="application/json"
-            )
+            for key, value in invalid_attributes_and_values.items():
+                response = self.post_framework_update({
+                    key: value
+                })
+
+                assert response.status_code == 400
+                data = json.loads(response.get_data())['error']
+                assert data == "Invalid keys for framework update: '{}'".format(key)
+
+    def test_cannot_update_framework_with_invalid_status(self, open_example_framework):
+        with self.app.app_context():
+            response = self.post_framework_update({
+                'status': 'invalid'
+            })
 
             assert response.status_code == 400
+            data = json.loads(response.get_data())['error']
+            assert 'Invalid status value' in data
+
+    def test_passing_in_an_empty_update_is_a_failure(self, open_example_framework):
+        with self.app.app_context():
+            response = self.post_framework_update({})
+
+            assert response.status_code == 400
+            data = json.loads(response.get_data())['error']
+            assert data == "Framework update expects a payload"
+
+    def test_schema_validation_for_framework_agreement_details(self, open_example_framework):
+        invalid_framework_agreement_details = [
+            # should be a string
+            {'frameworkAgreementVersion': 1},
+            # cannot be empty
+            {'frameworkAgreementVersion': ''},
+            # should be an object
+            {'variations': 1},
+            # invalid key
+            {'frameworkAgreementDessert': 'Portuguese tart'},
+            # empty update
+            {}
+        ]
+
+        with self.app.app_context():
+            for invalid_value in invalid_framework_agreement_details:
+                response = self.post_framework_update({
+                    'frameworkAgreementDetails': invalid_value
+                })
+                assert response.status_code == 400
 
 
 class TestFrameworkStats(BaseApplicationTest):
