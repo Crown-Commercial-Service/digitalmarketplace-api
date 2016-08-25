@@ -79,6 +79,28 @@ def update_brief(brief_id):
 
     brief.update_from_json(brief_json)
 
+    # validation for the BidList page, where buyer can select who to send the brief to.
+    # Buyers can select: All sellers, a list of seller, or direct (one seller).
+    if brief_json.get('sellerSelector'):
+        selected_option = brief_json['sellerSelector']
+
+        if selected_option == 'allSellers':
+            # Remove single email field and list of emails field from the required.
+            if 'sellerEmail' in page_questions:
+                page_questions.remove('sellerEmail')
+            if 'sellerEmailList' in page_questions:
+                page_questions.remove('sellerEmailList')
+
+        if selected_option == 'someSellers':
+            # Remove single email field from the required.
+            if 'sellerEmail' in page_questions:
+                page_questions.remove('sellerEmail')
+
+        if selected_option == 'oneSeller':
+            # Remove list of emails field from the required.
+            if 'sellerEmailList' in page_questions:
+                page_questions.remove('sellerEmailList')
+
     validate_brief_data(brief, enforce_required=False, required_fields=page_questions)
 
     audit = AuditEvent(
@@ -110,9 +132,9 @@ def get_brief(brief_id):
 @main.route('/briefs', methods=['GET'])
 def list_briefs():
     if request.args.get('human'):
-        briefs = Brief.query.order_by(Brief.status.desc(), Brief.published_at.desc(), Brief.id)
+        briefs = Brief.query.order_by(Brief.status.desc(), Brief.published_at.desc())
     else:
-        briefs = Brief.query.order_by(Brief.id)
+        briefs = Brief.query.order_by(Brief.published_at.desc())
 
     page = get_valid_page_or_1()
 
