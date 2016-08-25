@@ -131,9 +131,9 @@ def get_brief(brief_id):
 @main.route('/briefs', methods=['GET'])
 def list_briefs():
     if request.args.get('human'):
-        briefs = Brief.query.order_by(Brief.status.desc(), Brief.published_at.desc(), Brief.id)
+        briefs = Brief.query.order_by(Brief.published_at.desc())
     else:
-        briefs = Brief.query.order_by(Brief.id)
+        briefs = Brief.query.order_by(Brief.published_at.desc())
 
     page = get_valid_page_or_1()
 
