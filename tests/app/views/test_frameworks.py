@@ -228,18 +228,6 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
             content_type="application/json"
         )
 
-    def test_framework_updated(self, open_example_framework):
-        with self.app.app_context():
-            response = self.post_framework_update({
-                'status': 'expired',
-                'clarificationQuestionsOpen': False
-            })
-            assert response.status_code == 200
-
-            framework = Framework.query.filter(Framework.slug == 'example-framework').first()
-            assert framework.status == "expired"
-            assert not framework.clarification_questions_open
-
     def test_returns_404_on_non_existent_framework(self, open_example_framework):
         with self.app.app_context():
             response = self.client.post(
