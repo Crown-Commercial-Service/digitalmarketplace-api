@@ -38,11 +38,6 @@
       "minimum": 5,
       "type": "integer"
     },
-    "earlyMarketEngagement": {
-      "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
-      "type": "string"
-    },
     "endUsers": {
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
@@ -149,6 +144,28 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
       "type": "string"
     },
+    "sellerEmail": {
+      "maxLength": 300,
+      "minLength": 1,
+      "type": "string"
+    },
+    "sellerEmailList": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 15,
+      "minItems": 1,
+      "type": "array"
+    },
+    "sellerSelector": {
+      "enum": [
+        "allSellers",
+        "someSellers",
+        "oneSeller"
+      ]
+    },
     "startDate": {
       "maxLength": 100,
       "minLength": 1,
@@ -210,6 +227,9 @@
     "phase",
     "priceCriteria",
     "priceWeighting",
+    "sellerEmail",
+    "sellerEmailList",
+    "sellerSelector",
     "startDate",
     "successCriteria",
     "summary",
