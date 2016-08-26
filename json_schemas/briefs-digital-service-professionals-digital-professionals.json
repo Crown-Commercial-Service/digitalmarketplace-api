@@ -120,7 +120,7 @@
     },
     "sellerEmail": {
       "maxLength": 300,
-      "minLength": 1,
+      "minLength": 0,
       "type": "string"
     },
     "sellerEmailList": {
@@ -130,7 +130,7 @@
         "type": "string"
       },
       "maxItems": 15,
-      "minItems": 1,
+      "minItems": 0,
       "type": "array"
     },
     "sellerSelector": {
@@ -205,8 +205,6 @@
     "organisation",
     "priceWeighting",
     "requirementsLength",
-    "sellerEmail",
-    "sellerEmailList",
     "sellerSelector",
     "specialistRole",
     "specialistWork",
