@@ -113,12 +113,12 @@
     },
     "phase": {
       "enum": [
-        "not_applicable",
         "not_started",
         "discovery",
         "alpha",
         "beta",
-        "live"
+        "live",
+        "other"
       ]
     },
     "priceCriteria": {
@@ -146,7 +146,7 @@
     },
     "sellerEmail": {
       "maxLength": 300,
-      "minLength": 1,
+      "minLength": 0,
       "type": "string"
     },
     "sellerEmailList": {
@@ -156,7 +156,7 @@
         "type": "string"
       },
       "maxItems": 15,
-      "minItems": 1,
+      "minItems": 0,
       "type": "array"
     },
     "sellerSelector": {
@@ -227,8 +227,6 @@
     "phase",
     "priceCriteria",
     "priceWeighting",
-    "sellerEmail",
-    "sellerEmailList",
     "sellerSelector",
     "startDate",
     "successCriteria",
