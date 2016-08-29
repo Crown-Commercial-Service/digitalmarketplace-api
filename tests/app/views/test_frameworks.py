@@ -206,7 +206,17 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
             'name': "Example Framework 2",
             'slug': "example-framework-2",
             'framework': "dos",
-            'frameworkAgreementDetails': {"frameworkAgreementVersion": "v1.0"},
+            'frameworkAgreementDetails': {
+                "frameworkAgreementVersion": "v1.0",
+                "variations": {
+                    "banana": {
+                        "createdAt": "2016-06-06T20:01:34.000000Z",
+                    },
+                    "toblerone": {
+                        "createdAt": "2016-07-06T21:09:09.000000Z",
+                    },
+                }
+            },
             'status': "standstill",
             'clarificationQuestionsOpen': False,
             'lots': ['saas', 'paas', 'iaas', 'scs']
@@ -309,11 +319,13 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
             # should be a string
             {'frameworkAgreementVersion': 1},
             # cannot be empty
-            {'frameworkAgreementVersion': ''},
+            {'frameworkAgreementVersion': ""},
             # should be an object
             {'variations': 1},
+            # object must have 'createdAt' key
+            {'variations': {"created_at": "today"}},
             # invalid key
-            {'frameworkAgreementDessert': 'Portuguese tart'},
+            {'frameworkAgreementDessert': "Portuguese tart"},
             # empty update
             {}
         ]

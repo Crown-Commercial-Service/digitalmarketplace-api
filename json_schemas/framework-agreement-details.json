@@ -8,6 +8,18 @@
       "type": "string"
     },
     "variations": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "type": "object"
     }
   },
