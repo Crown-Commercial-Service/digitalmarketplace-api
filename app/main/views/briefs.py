@@ -140,6 +140,7 @@ def list_briefs():
         return jsonify(
             briefs=[brief.serialize() for brief in briefs.all()],
             links={},
+            meta={},
         )
     else:
         briefs = briefs.paginate(
@@ -151,6 +152,7 @@ def list_briefs():
             briefs=[brief.serialize() for brief in briefs.items],
             meta={
                 "total": briefs.total,
+                "per_page": current_app.config['DM_API_BRIEFS_PAGE_SIZE']
             },
             links=pagination_links(
                 briefs,
