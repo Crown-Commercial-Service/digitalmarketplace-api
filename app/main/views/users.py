@@ -297,7 +297,7 @@ def email_has_valid_buyer_domain():
 @main.route('/users/supplier-invite/list-candidates', methods=['GET'])
 def list_supplier_account_invite_candidates():
     # NB: outer joins allow missing rows (nulls appear instead)
-    joined_tables = db.session.query(Contact, Supplier.code).select_from(SupplierContact) \
+    joined_tables = db.session.query(Contact, Supplier.code, Supplier.name).select_from(SupplierContact) \
         .join(Supplier) \
         .join(Contact) \
         .outerjoin(SupplierUserInviteLog) \
@@ -309,6 +309,7 @@ def list_supplier_account_invite_candidates():
         return {
             'contact': result[0].serialize(),
             'supplierCode': result[1],
+            'supplierName': result[2],
         }
 
     return jsonify(results=[serialize_result(r) for r in results])
