@@ -47,6 +47,11 @@ deployment:
     commands:
       - cf login -a https://api.system.platform.digital.gov.au -o dto -u $CF_USER_PROD -p $CF_PASSWORD_PROD
       - cf target -o dto -s digital-marketplace
-      - cf push -f 'manifest.production.yml' -c 'python application.py db upgrade' -u 'none'
-      - cf push -f 'manifest.production.yml'
+      - cf unmap-route dm-api apps.platform.digital.gov.au --hostname dm-api
+      - cf push dm-api -f 'manifest.production.yml' -c 'python application.py db upgrade' -u 'none'
+      - cf push dm-api -f 'manifest.production.yml'
+      - cf map-route dm-api apps.platform.digital.gov.au --hostname dm-api
+      - cf unmap-route dm-api-blue apps.platform.digital.gov.au --hostname dm-api
+      - cf push dm-api-blue -f 'manifest.production.yml'
+      - cf map-route dm-api-blue apps.platform.digital.gov.au --hostname dm-api
       - API_TOKEN="$DM_API_TOKEN_PROD" DOCKER_COMPOSE_FILE_PATH=./monitoring/docker-compose-ecs.yml DOCKER_IMAGE_NAME=gov-au-marketplace-api DOCKER_CONTAINER_NAME=gov-au-marketplace-api ./scripts/ci-monitor-deploy.sh

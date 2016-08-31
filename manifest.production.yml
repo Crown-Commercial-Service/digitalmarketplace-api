@@ -1,9 +1,5 @@
-services:
-    - pgdb-prod
-
 applications:
-    - name: dm-api
-      command: python application.py runprodserver
+    - command: python application.py runprodserver
       buildpack: https://github.com/cloudfoundry/buildpack-python.git#v1.5.7
       health-check-type: port
       instances: 2
