@@ -472,6 +472,13 @@ class FrameworkAgreement(db.Model):
 
     supplier_framework = db.relationship(SupplierFramework, backref='framework_agreements')
 
+    def serialize(self):
+        return {
+            'id': self.id,
+            'supplierId': self.supplier_id,
+            'frameworkId': self.framework_id
+        }
+
 
 class User(db.Model):
     __tablename__ = 'users'
