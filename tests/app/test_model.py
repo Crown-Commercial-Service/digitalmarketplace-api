@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from app import db, create_app
 from app.models import (
     User, Lot, Framework, Service,
-    Supplier, SupplierFramework,
+    Supplier, SupplierFramework, FrameworkAgreement,
     Brief, BriefResponse,
     ValidationError,
     BriefClarificationQuestion
@@ -813,3 +813,33 @@ class TestLot(BaseApplicationTest):
                 u'unitSingular': u'lab',
                 u'unitPlural': u'labs',
             }
+
+
+class TestFrameworkAgreements(BaseApplicationTest):
+    def test_supplier_has_to_be_associated_with_a_framework(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+
+            supplier_framework = SupplierFramework(supplier_id=0, framework_id=1)
+            db.session.add(supplier_framework)
+            db.session.commit()
+
+            framework_agreement = FrameworkAgreement(supplier_id=0, framework_id=1)
+            db.session.add(framework_agreement)
+            db.session.commit()
+
+            assert framework_agreement.id
+
+    def test_supplier_fails_if_not_associated_with_a_framework(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+
+            supplier_framework = SupplierFramework(supplier_id=0, framework_id=1)
+            db.session.add(supplier_framework)
+            db.session.commit()
+
+            framework_agreement = FrameworkAgreement(supplier_id=0, framework_id=2)
+            db.session.add(framework_agreement)
+
+            with pytest.raises(IntegrityError):
+                db.session.commit()
