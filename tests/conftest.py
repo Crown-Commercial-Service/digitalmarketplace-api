@@ -37,11 +37,11 @@ def supplier(request, app):
 
 
 @pytest.fixture()
-def supplier_framework(request, app, supplier, live_g8_framework):
+def supplier_framework(request, app, supplier, open_example_framework):
     with app.app_context():
         sf = SupplierFramework(
             supplier_id=supplier['id'],
-            framework_id=live_g8_framework['id']
+            framework_id=open_example_framework['id']
         )
         db.session.add(sf)
         db.session.commit()
@@ -135,6 +135,11 @@ _dos_framework_defaults = {
     "slug": "digital-outcomes-and-specialists",
     "framework": "dos",
     "framework_agreement_details": None,
+}
+_example_framework_details = {
+    "slug": "example-framework",
+    "framework": "g-cloud",
+    "framework_agreement_details": None
 }
 
 _example_framework_details = {
@@ -243,7 +248,7 @@ def _user_fixture_inner(request, app, user_kwargs=None):
 
 @pytest.fixture()
 def open_example_framework(request, app):
-    _framework_fixture_inner(request, app, **dict(_example_framework_details, status="open"))
+    return _framework_fixture_inner(request, app, **dict(_example_framework_details, status="open"))
 
 
 @pytest.fixture()
