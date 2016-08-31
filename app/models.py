@@ -476,7 +476,10 @@ class FrameworkAgreement(db.Model):
         return {
             'id': self.id,
             'supplierId': self.supplier_id,
-            'frameworkId': self.framework_id
+            'frameworkId': self.framework_id,
+            'signedAgreementReturnedAt': self.signed_agreement_returned_at.strftime(DATETIME_FORMAT),
+            'signedAgreementDetails': self.signed_agreement_details,
+            'signedAgreementPath': self.signed_agreement_path,
         }
 
 
