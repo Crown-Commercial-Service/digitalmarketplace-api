@@ -434,6 +434,25 @@ class SupplierFramework(db.Model):
         return supplier_framework
 
 
+class FrameworkAgreement(db.Model):
+    __tablename__ = 'framework_agreements'
+
+    id = db.Column(db.Integer, primary_key=True)
+    supplier_id = db.Column(db.Integer, nullable=False)
+    framework_id = db.Column(db.Integer, nullable=False)
+    signed_agreement_returned_at = db.Column(db.DateTime)
+    signed_agreement_details = db.Column(JSON)
+    signed_agreement_path = db.Column(db.String)
+
+    __table_args__ = (
+        db.ForeignKeyConstraint(
+            [supplier_id, framework_id],
+            [SupplierFramework.supplier_id, SupplierFramework.framework_id]
+        ),
+        {}
+    )
+
+
 class User(db.Model):
     __tablename__ = 'users'
 
