@@ -22,6 +22,33 @@ def app(request):
     return create_app('test')
 
 
+@pytest.fixture()
+def supplier(request, app):
+    with app.app_context():
+        s = Supplier(
+            name=u"Supplier name",
+            description="",
+            clients=[]
+        )
+        db.session.add(s)
+        db.session.commit()
+
+        return {'id': s.supplier_id}
+
+
+@pytest.fixture()
+def supplier_framework(request, app, supplier, live_g8_framework):
+    with app.app_context():
+        sf = SupplierFramework(
+            supplier_id=supplier['id'],
+            framework_id=live_g8_framework['id']
+        )
+        db.session.add(sf)
+        db.session.commit()
+
+        return {'supplier_id': sf.supplier_id, 'framework_id': sf.framework_id}
+
+
 _framework_kwargs_whitelist = set(("status", "framework", "framework_agreement_details",))
 
 
@@ -56,6 +83,7 @@ def _update_framework(request, app, slug, **kwargs):
             db.session.commit()
 
     request.addfinalizer(teardown)
+    return framework.serialize()
 
 
 def _add_framework(request, app, slug, **kwargs):
@@ -74,6 +102,7 @@ def _add_framework(request, app, slug, **kwargs):
             db.session.commit()
 
     request.addfinalizer(teardown)
+    return framework.serialize()
 
 
 def _framework_fixture_inner(request, app, slug, **kwargs):
@@ -83,7 +112,7 @@ def _framework_fixture_inner(request, app, slug, **kwargs):
         inner_func = (
             _update_framework if Framework.query.filter(Framework.slug == slug).first() else _add_framework
         )
-        inner_func(request, app, slug, **kwargs)
+        return inner_func(request, app, slug, **kwargs)
 
 _generic_framework_agreement_details = {"frameworkAgreementVersion": "v1.0"}
 
@@ -219,12 +248,12 @@ def open_example_framework(request, app):
 
 @pytest.fixture()
 def open_g8_framework(request, app):
-    _framework_fixture_inner(request, app, **dict(_g8_framework_defaults, status="open"))
+    return _framework_fixture_inner(request, app, **dict(_g8_framework_defaults, status="open"))
 
 
 @pytest.fixture()
 def live_g8_framework(request, app):
-    _framework_fixture_inner(request, app, **dict(_g8_framework_defaults, status="live"))
+    return _framework_fixture_inner(request, app, **dict(_g8_framework_defaults, status="live"))
 
 
 @pytest.fixture()
@@ -245,27 +274,27 @@ def live_g8_framework_2_variations(request, app):
 
 @pytest.fixture()
 def open_g6_framework(request, app):
-    _framework_fixture_inner(request, app, **dict(_g6_framework_defaults, status="open"))
+    return _framework_fixture_inner(request, app, **dict(_g6_framework_defaults, status="open"))
 
 
 @pytest.fixture()
 def expired_g6_framework(request, app):
-    _framework_fixture_inner(request, app, **dict(_g6_framework_defaults, status="expired"))
+    return _framework_fixture_inner(request, app, **dict(_g6_framework_defaults, status="expired"))
 
 
 @pytest.fixture()
 def open_dos_framework(request, app):
-    _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="open"))
+    return _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="open"))
 
 
 @pytest.fixture()
 def live_dos_framework(request, app):
-    _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="live"))
+    return _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="live"))
 
 
 @pytest.fixture()
 def expired_dos_framework(request, app):
-    _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="expired"))
+    return _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="expired"))
 
 
 # Suppliers

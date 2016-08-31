@@ -1,13 +1,7 @@
 from flask import jsonify
 from .. import main
-from ... import db
 from ...models import (
     FrameworkAgreement
-)
-from ...validation import (
-    validate_supplier_json_or_400,
-    validate_contact_information_json_or_400,
-    is_valid_string_or_400
 )
 
 
