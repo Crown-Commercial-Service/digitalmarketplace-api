@@ -452,6 +452,8 @@ class FrameworkAgreement(db.Model):
         {}
     )
 
+    supplier_framework = db.relationship(SupplierFramework, backref='framework_agreements')
+
 
 class User(db.Model):
     __tablename__ = 'users'
