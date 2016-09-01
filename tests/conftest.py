@@ -38,11 +38,11 @@ def supplier(request, app):
 
 
 @pytest.fixture()
-def supplier_framework(request, app, supplier, open_example_framework):
+def supplier_framework(request, app, supplier, live_example_framework):
     with app.app_context():
         sf = SupplierFramework(
             supplier_id=supplier['id'],
-            framework_id=open_example_framework['id']
+            framework_id=live_example_framework['id']
         )
         db.session.add(sf)
         db.session.commit()
