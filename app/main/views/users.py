@@ -81,7 +81,7 @@ def list_users():
 
     users = user_query.paginate(
         page=page,
-        per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
+        per_page=current_app.config['DM_API_USER_PAGE_SIZE'],
     )
 
     return jsonify(
