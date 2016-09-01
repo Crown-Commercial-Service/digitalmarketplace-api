@@ -501,7 +501,13 @@ class FrameworkAgreement(db.Model):
             'signedAgreementReturnedAt': (
                 self.signed_agreement_returned_at and
                 self.signed_agreement_returned_at.strftime(DATETIME_FORMAT)
-            )
+            ),
+            'countersignedAgreementDetails': self.countersigned_agreement_details,
+            'countersignedAgreementReturnedAt': (
+                self.countersigned_agreement_returned_at and
+                self.countersigned_agreement_returned_at.strftime(DATETIME_FORMAT)
+            ),
+            'countersignedAgreementPath': self.countersigned_agreement_path
         })
 
 
