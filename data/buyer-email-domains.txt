@@ -45,6 +45,7 @@ fasst.org.uk
 fca.org.uk
 financial-ombudsman.org.uk
 fscs.org.uk
+futureshg.co.uk
 geant.org
 genesisha.org.uk
 gmc-uk.org
@@ -92,6 +93,7 @@ nhs.uk
 nhsla.com
 nice.org.uk
 nilsc.org.uk
+nls.uk
 nmc-uk.org
 nmni.com
 ofcom.org.uk
