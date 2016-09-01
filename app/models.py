@@ -444,8 +444,11 @@ class SupplierFramework(db.Model):
                     agreement.signed_agreement_returned_at.strftime(DATETIME_FORMAT)
                 ),
                 'agreementDetails': agreement.signed_agreement_details,
-                'countersigned': False,
-                'countersignedAt': None,
+                'countersigned': bool(agreement.countersigned_agreement_returned_at),
+                'countersignedAt': (
+                    agreement.countersigned_agreement_returned_at and
+                    agreement.countersigned_agreement_returned_at.strftime(DATETIME_FORMAT)
+                ),
             })
         else:
             supplier_framework.update({

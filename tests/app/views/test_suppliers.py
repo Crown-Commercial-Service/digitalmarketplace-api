@@ -1403,6 +1403,53 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             'agreedVariations': {}
         }
 
+    def test_get_supplier_framework_returns_countersigned_framework_agreement(self, live_example_framework):
+        self.create_framework_agreement(live_example_framework['id'])
+
+        with self.app.app_context():
+            framework_agreement = FrameworkAgreement(
+                supplier_id=self.supplier_id,
+                framework_id=live_example_framework['id'],
+                signed_agreement_details={
+                    u'signerName': u'thing 2',
+                    u'signerRole': u'thing 2',
+                    u'uploaderUserId': 30
+                },
+                signed_agreement_path='/agreement.pdf',
+                signed_agreement_returned_at=datetime(2017, 1, 1, 1, 1, 1),
+                countersigned_agreement_details={
+                    'some': 'data'
+                },
+                countersigned_agreement_returned_at=datetime(2017, 2, 1, 1, 1, 1),
+            )
+            db.session.add(framework_agreement)
+            db.session.commit()
+
+        # Get back the SupplierFramework record
+        response = self.client.get(
+            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, live_example_framework['slug']))
+
+        data = json.loads(response.get_data())
+        assert response.status_code, 200
+        assert 'frameworkInterest' in data, data
+        assert data['frameworkInterest'] == {
+            'supplierId': self.supplier_id,
+            'supplierName': 'Supplier {}'.format(self.supplier_id),
+            'frameworkSlug': live_example_framework['slug'],
+            'declaration': {'an_answer': 'Yes it is'},
+            'onFramework': True,
+            'agreementReturned': True,
+            'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
+            'agreementDetails': {
+                'signerName': 'thing 2',
+                'signerRole': 'thing 2',
+                'uploaderUserId': 30
+            },
+            'countersigned': True,
+            'countersignedAt': '2017-02-01T01:01:01.000000Z',
+            'agreedVariations': {}
+        }
+
 
 class TestSupplierFrameworkUpdates(BaseApplicationTest, JSONUpdateTestMixin):
     method = "post"
