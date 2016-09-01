@@ -22,10 +22,11 @@ def app(request):
     return create_app('test')
 
 
-@pytest.fixture()
+@pytest.fixture(params=[{'supplier_id': None}])
 def supplier(request, app):
     with app.app_context():
         s = Supplier(
+            supplier_id=request.param['supplier_id'],
             name=u"Supplier name",
             description="",
             clients=[]
@@ -251,9 +252,9 @@ def open_example_framework(request, app):
     return _framework_fixture_inner(request, app, **dict(_example_framework_details, status="open"))
 
 
-@pytest.fixture()
+@pytest.fixture(params=[{}])
 def live_example_framework(request, app):
-    return _framework_fixture_inner(request, app, **dict(_example_framework_details, status="live"))
+    return _framework_fixture_inner(request, app, **dict(_example_framework_details, status="live", **request.param))
 
 
 @pytest.fixture()

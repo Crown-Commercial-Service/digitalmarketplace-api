@@ -4,6 +4,7 @@ import os
 import json
 from datetime import datetime, timedelta
 
+import pytest
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
@@ -35,6 +36,10 @@ COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
     "workplaceAddress": "Aviation House",
     "requirementsLength": "2 weeks"
 }
+
+
+def fixture_params(fixture_name, params):
+    return pytest.mark.parametrize(fixture_name, [params], indirect=True)
 
 
 class WSGIApplicationWithEnvironment(object):
