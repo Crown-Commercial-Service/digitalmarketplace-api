@@ -432,13 +432,29 @@ class SupplierFramework(db.Model):
             "frameworkSlug": self.framework.slug,
             "declaration": self.declaration,
             "onFramework": self.on_framework,
-            "agreementReturned": bool(agreement_returned_at),
-            "agreementReturnedAt": agreement_returned_at,
-            "agreementDetails": self.agreement_details,
-            "countersigned": bool(countersigned_at),
-            "countersignedAt": countersigned_at,
             "agreedVariations": agreed_variations,
         }, **(data or {}))
+
+        if self.framework_agreements:
+            agreement = self.framework_agreements[0]
+            supplier_framework.update({
+                'agreementReturned': bool(agreement.signed_agreement_returned_at),
+                'agreementReturnedAt': (
+                    agreement.signed_agreement_returned_at and
+                    agreement.signed_agreement_returned_at.strftime(DATETIME_FORMAT)
+                ),
+                'agreementDetails': agreement.signed_agreement_details,
+                'countersigned': False,
+                'countersignedAt': None,
+            })
+        else:
+            supplier_framework.update({
+                "agreementReturned": bool(agreement_returned_at),
+                "agreementReturnedAt": agreement_returned_at,
+                "agreementDetails": self.agreement_details,
+                "countersigned": bool(countersigned_at),
+                "countersignedAt": countersigned_at,
+            })
 
         if self.agreement_details and self.agreement_details.get('uploaderUserId'):
             user = User.query.filter(
@@ -479,7 +495,10 @@ class FrameworkAgreement(db.Model):
             'frameworkId': self.framework_id,
             'signedAgreementDetails': self.signed_agreement_details,
             'signedAgreementPath': self.signed_agreement_path,
-            'signedAgreementReturnedAt': self.signed_agreement_returned_at and self.signed_agreement_returned_at.strftime(DATETIME_FORMAT)
+            'signedAgreementReturnedAt': (
+                self.signed_agreement_returned_at and
+                self.signed_agreement_returned_at.strftime(DATETIME_FORMAT)
+            )
         })
 
 

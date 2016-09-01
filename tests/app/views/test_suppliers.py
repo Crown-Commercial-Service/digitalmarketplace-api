@@ -9,7 +9,7 @@ from dmapiclient.audit import AuditTypes
 
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
-    SupplierFramework, Framework, DraftService, Service
+    SupplierFramework, Framework, FrameworkAgreement, DraftService, Service
 from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
 
 
@@ -1278,12 +1278,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
         self.supplier_id = 0
         self.framework_slug = 'g-cloud-8'
 
-    def test_get_supplier_framework_info(self, open_g8_framework):
-        framework_id = json.loads(
-            self.client.get('frameworks/{}'.format(self.framework_slug)).get_data()
-        )['frameworks']['id']
-
-        # add SupplierFramework record to the database
+    def create_framework_agreement(self, framework_id):
         with self.app.app_context():
             supplier_framework = SupplierFramework(
                 supplier_id=self.supplier_id, framework_id=framework_id,
@@ -1299,6 +1294,11 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             )
             db.session.add(supplier_framework)
             db.session.commit()
+
+            return supplier_framework
+
+    def test_get_supplier_framework_info(self, open_g8_framework):
+        self.create_framework_agreement(open_g8_framework['id'])
 
         # Get back the SupplierFramework record
         response = self.client.get(
@@ -1318,6 +1318,89 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             'signerName': 'thing',
             'signerRole': 'thing',
             'uploaderUserId': 20
+        }
+
+    def test_get_supplier_framework_returns_framework_agreement(self, live_example_framework):
+        supplier_framework = self.create_framework_agreement(live_example_framework['id'])
+
+        with self.app.app_context():
+            framework_agreement = FrameworkAgreement(
+                supplier_framework=supplier_framework,
+                signed_agreement_details={
+                    u'signerName': u'thing 2',
+                    u'signerRole': u'thing 2',
+                    u'uploaderUserId': 30
+                },
+            )
+            db.session.add(framework_agreement)
+            db.session.commit()
+
+        # Get back the SupplierFramework record
+        response = self.client.get(
+            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, live_example_framework['slug']))
+
+        data = json.loads(response.get_data())
+        assert response.status_code, 200
+        assert 'frameworkInterest' in data, data
+        assert data['frameworkInterest'] == {
+            'supplierId': self.supplier_id,
+            'supplierName': 'Supplier {}'.format(self.supplier_id),
+            'frameworkSlug': live_example_framework['slug'],
+            'declaration': {'an_answer': 'Yes it is'},
+            'onFramework': True,
+            'agreementReturned': False,
+            'agreementReturnedAt': None,
+            'countersigned': False,
+            'countersignedAt': None,
+            'agreementDetails': {
+                'signerName': 'thing 2',
+                'signerRole': 'thing 2',
+                'uploaderUserId': 30
+            },
+            'agreedVariations': {}
+        }
+
+    def test_get_supplier_framework_returns_signed_framework_agreement(self, live_example_framework):
+        self.create_framework_agreement(live_example_framework['id'])
+
+        with self.app.app_context():
+            framework_agreement = FrameworkAgreement(
+                supplier_id=self.supplier_id,
+                framework_id=live_example_framework['id'],
+                signed_agreement_details={
+                    u'signerName': u'thing 2',
+                    u'signerRole': u'thing 2',
+                    u'uploaderUserId': 30
+                },
+                signed_agreement_path='/agreement.pdf',
+                signed_agreement_returned_at=datetime(2017, 1, 1, 1, 1, 1),
+            )
+            db.session.add(framework_agreement)
+            db.session.commit()
+
+        # Get back the SupplierFramework record
+        response = self.client.get(
+            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, live_example_framework['slug']))
+
+        data = json.loads(response.get_data())
+        assert response.status_code, 200
+        assert 'frameworkInterest' in data, data
+        assert data['frameworkInterest'] == {
+            'supplierId': self.supplier_id,
+            'supplierName': 'Supplier {}'.format(self.supplier_id),
+            'frameworkSlug': live_example_framework['slug'],
+            'declaration': {'an_answer': 'Yes it is'},
+            'onFramework': True,
+            'agreementReturned': True,
+            'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
+            'countersigned': False,
+            'countersignedAt': None,
+            'agreementDetails': {
+                'signerName': 'thing 2',
+                'signerRole': 'thing 2',
+                'uploaderUserId': 30
+            },
+            'agreedVariations': {}
         }
 
 

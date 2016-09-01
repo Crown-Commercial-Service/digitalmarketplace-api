@@ -252,6 +252,11 @@ def open_example_framework(request, app):
 
 
 @pytest.fixture()
+def live_example_framework(request, app):
+    return _framework_fixture_inner(request, app, **dict(_example_framework_details, status="live"))
+
+
+@pytest.fixture()
 def open_g8_framework(request, app):
     return _framework_fixture_inner(request, app, **dict(_g8_framework_defaults, status="open"))
 
