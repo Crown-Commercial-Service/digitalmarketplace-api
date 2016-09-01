@@ -494,6 +494,23 @@ class FrameworkAgreement(db.Model):
 
     supplier_framework = db.relationship(SupplierFramework, lazy='joined', backref='framework_agreements')
 
+    def update_signed_agreement_details_from_json(self, data):
+        if self.signed_agreement_details:
+            current_data = self.signed_agreement_details.copy()
+        else:
+            current_data = {}
+
+        current_data.update(data)
+
+        self.signed_agreement_details = current_data
+
+    @validates('signed_agreement_details')
+    def validates_signed_agreement_details(self, key, data):
+        data = strip_whitespace_from_data(data)
+        data = purge_nulls_from_data(data)
+
+        return data
+
     def serialize(self):
         return purge_nulls_from_data({
             'id': self.id,
