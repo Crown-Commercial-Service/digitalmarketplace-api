@@ -474,9 +474,12 @@ class FrameworkAgreement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     supplier_id = db.Column(db.Integer, nullable=False)
     framework_id = db.Column(db.Integer, nullable=False)
-    signed_agreement_returned_at = db.Column(db.DateTime)
     signed_agreement_details = db.Column(JSON)
     signed_agreement_path = db.Column(db.String)
+    signed_agreement_returned_at = db.Column(db.DateTime)
+    countersigned_agreement_details = db.Column(JSON)
+    countersigned_agreement_path = db.Column(db.String)
+    countersigned_agreement_returned_at = db.Column(db.DateTime)
 
     __table_args__ = (
         db.ForeignKeyConstraint(
