@@ -470,7 +470,7 @@ class FrameworkAgreement(db.Model):
         {}
     )
 
-    supplier_framework = db.relationship(SupplierFramework, backref='framework_agreements')
+    supplier_framework = db.relationship(SupplierFramework, lazy='joined', backref='framework_agreements')
 
     def serialize(self):
         return purge_nulls_from_data({
