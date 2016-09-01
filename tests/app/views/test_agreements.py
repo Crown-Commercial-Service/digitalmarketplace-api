@@ -18,7 +18,35 @@ class TestGetFrameworkAgreement(BaseApplicationTest):
 
             return agreement.id
 
-    def test_it_gets_a_framework_agreement_by_id(self, supplier_framework):
+    def test_it_gets_a_newly_created_framework_agreement_by_id(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework
+        )
+        res = self.client.get('/agreements/{}'.format(agreement_id))
+
+        assert res.status_code == 200
+        assert json.loads(res.get_data(as_text=True))['agreement'] == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplier_id'],
+            'frameworkId': supplier_framework['framework_id']
+        }
+
+    def test_it_returns_a_framework_agreement_with_details_only(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_details={'details': 'here'}
+        )
+        res = self.client.get('/agreements/{}'.format(agreement_id))
+
+        assert res.status_code == 200
+        assert json.loads(res.get_data(as_text=True))['agreement'] == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplier_id'],
+            'frameworkId': supplier_framework['framework_id'],
+            'signedAgreementDetails': {'details': 'here'},
+        }
+
+    def test_it_gets_a_signed_framework_agreement_by_id(self, supplier_framework):
         example_time = datetime(2016, 10, 1, 1, 1, 1)
         agreement_id = self.create_agreement(
             supplier_framework,
@@ -33,7 +61,7 @@ class TestGetFrameworkAgreement(BaseApplicationTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplier_id'],
             'frameworkId': supplier_framework['framework_id'],
-            'signedAgreementReturnedAt': example_time.isoformat(),
             'signedAgreementDetails': {'details': 'here'},
             'signedAgreementPath': 'path',
+            'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
         }

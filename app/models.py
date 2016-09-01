@@ -473,14 +473,14 @@ class FrameworkAgreement(db.Model):
     supplier_framework = db.relationship(SupplierFramework, backref='framework_agreements')
 
     def serialize(self):
-        return {
+        return purge_nulls_from_data({
             'id': self.id,
             'supplierId': self.supplier_id,
             'frameworkId': self.framework_id,
-            'signedAgreementReturnedAt': self.signed_agreement_returned_at.strftime(DATETIME_FORMAT),
             'signedAgreementDetails': self.signed_agreement_details,
             'signedAgreementPath': self.signed_agreement_path,
-        }
+            'signedAgreementReturnedAt': self.signed_agreement_returned_at and self.signed_agreement_returned_at.strftime(DATETIME_FORMAT)
+        })
 
 
 class User(db.Model):
