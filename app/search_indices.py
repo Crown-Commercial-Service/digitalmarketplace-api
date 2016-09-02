@@ -11,6 +11,29 @@ from elasticsearch.client import IndicesClient
 SUPPLIER_DOC_TYPE = 'supplier'
 
 
+def index_supplier(supplier):
+    """
+    Add supplier to search index.
+
+    Raises TransportError on failure.
+    """
+    if supplier.abn == Supplier.DUMMY_ABN:
+        current_app.logger.info(
+            'Not indexing example supplier "{supplier_name}"',
+            extra={'supplier_name': supplier.name}
+        )
+    else:
+        current_app.logger.info(
+            'Attempting to add "{supplier_name}" to supplier search index',
+            extra={'supplier_name': supplier.name}
+        )
+        supplier_json = json.dumps(supplier.serialize())
+        es_client.index(index=get_supplier_index_name(),
+                        doc_type=SUPPLIER_DOC_TYPE,
+                        body=supplier_json,
+                        id=supplier.code)
+
+
 def get_supplier_index_name():
     return 'suppliers' + current_app.config['DM_API_ELASTICSEARCH_INDEX_SUFFIX']
 
@@ -78,11 +101,7 @@ def create_supplier_index(index_client):
     try:
         db.session.execute('LOCK TABLE supplier IN SHARE MODE')  # block supplier updates but not reads
         for supplier in Supplier.query.all():
-            supplier_json = json.dumps(supplier.serialize())
-            es_client.index(index=name,
-                            doc_type=SUPPLIER_DOC_TYPE,
-                            body=supplier_json,
-                            id=supplier.code)
+            index_supplier(supplier)
     finally:
         db.session.commit()  # release table lock
 
