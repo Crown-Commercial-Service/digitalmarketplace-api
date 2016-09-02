@@ -59,6 +59,26 @@ class TestListSuppliers(BaseApplicationTest):
         response = self.client.get('/suppliers')
         assert_equal(200, response.status_code)
 
+    def test_example_supplier_not_listed_by_default(self):
+        with self.app.app_context():
+            example_supplier = Supplier(
+                code=0,
+                name='Example Pty Ltd',
+                description='',
+                summary='',
+                abn=Supplier.DUMMY_ABN,
+                contacts=[],
+                references=[],
+                prices=[]
+            )
+            db.session.add(example_supplier)
+        response = self.client.get('/suppliers')
+        assert_equal(200, response.status_code)
+        data = json.loads(response.get_data())
+        assert 'suppliers' in data
+        names = [s['name'] for s in data['suppliers']]
+        assert 'Example Pty Ltd' not in names
+
     def test_query_string_prefix_empty(self):
         response = self.client.get('/suppliers?prefix=')
         assert_equal(200, response.status_code)
@@ -138,8 +158,8 @@ class TestListSuppliers(BaseApplicationTest):
 
 
 class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
-    method = "patch"
-    endpoint = "/suppliers/123456"
+    method = 'patch'
+    endpoint = '/suppliers/1'
 
     def setup(self):
         super(TestUpdateSupplier, self).setup()
@@ -163,12 +183,15 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json',
         )
 
+    def get_supplier(self):
+        return Supplier.query.filter_by(code=1).first()
+
     def test_update_timestamp(self):
         response = self.update_request({'name': 'Changed Name'})
         assert_equal(response.status_code, 200)
 
         with self.app.app_context():
-            supplier = Supplier.query.filter_by(code=123456).first()
+            supplier = self.get_supplier()
             assert_is_not_none(supplier)
             assert (isRecentTimestamp(supplier.last_update_time))
 
@@ -181,9 +204,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(response.status_code, 200)
 
         with self.app.app_context():
-            supplier = Supplier.query.filter(
-                Supplier.code == 123456
-            ).first()
+            supplier = self.get_supplier()
 
             assert_equal(supplier.name, "New Name")
 
@@ -195,9 +216,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(response.status_code, 200)
 
         with self.app.app_context():
-            supplier = Supplier.query.filter(
-                Supplier.code == 123456
-            ).first()
+            supplier = self.get_supplier()
 
             price = supplier.prices[0]
             assert_equal(price.hourly_rate, Decimal('1.10'))
@@ -208,9 +227,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         self.update_request({'name': "Name"})
 
         with self.app.app_context():
-            supplier = Supplier.query.filter(
-                Supplier.code == 123456
-            ).first()
+            supplier = self.get_supplier()
 
             audit = AuditEvent.query.filter(
                 AuditEvent.object == supplier
@@ -234,6 +251,10 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         supplier.pop('creationTime')
         supplier.pop('lastUpdateTime')
 
+        for k, v in supplier.items():
+            if v is None:
+                supplier.pop(k)
+
         assert (set(supplier.keys()) == set(payload.keys()))
         for key in payload.keys():
             assert supplier[key] == payload[key]
@@ -247,9 +268,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(response.status_code, 200)
 
         with self.app.app_context():
-            supplier = Supplier.query.filter(
-                Supplier.code == 123456
-            ).first()
+            supplier = self.get_supplier()
 
         assert_equal(supplier.name, 'New Name')
         assert_equal(supplier.description, "New Description")
@@ -413,17 +432,24 @@ class TestSupplierSearch(BaseApplicationTest):
                                content_type='application/json')
 
     def test_basic_search_hit(self):
-        response = self.search({'query': {'term': {'code': 123456}}})
+        response = self.search({'query': {'term': {'code': 1}}})
         assert_equal(response.status_code, 200)
         result = json.loads(response.get_data())
         assert_equal(result['hits']['total'], 1)
         assert_equal(len(result['hits']['hits']), 1)
-        assert_equal(result['hits']['hits'][0]['_source']['code'], 123456)
+        assert_equal(result['hits']['hits'][0]['_source']['code'], 1)
 
     def test_basic_search_miss(self):
         response = self.search({'query': {'term': {'code': 654321}}})
         assert_equal(response.status_code, 200)
 
+        result = json.loads(response.get_data())
+        assert_equal(result['hits']['total'], 0)
+        assert_equal(len(result['hits']['hits']), 0)
+
+    def test_example_pty_ltd_missing(self):
+        response = self.search({'query': {'term': {'name': 'Example'}}})
+        assert_equal(response.status_code, 200)
         result = json.loads(response.get_data())
         assert_equal(result['hits']['total'], 0)
         assert_equal(len(result['hits']['hits']), 0)

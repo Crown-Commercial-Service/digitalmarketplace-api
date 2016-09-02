@@ -1,42 +1,26 @@
 {
-  "name": "Example PTY LTD",
-  "longName": "Example PTY LTD (formerly just \"Example\")",
-  "code": 123456,
-  "description": "Example PTY LTD is an example company.",
-  "summary": "An example company",
+  "name": "DTO",
+  "longName": "Digital Transformation Office",
+  "code": 1,
+  "description": "Working on things that matter.",
+  "summary": "Simpler, clearer, faster public services.",
   "address": {
-	  "addressLine": "0 Foo Street",
-	  "suburb": "Brisbane",
-	  "state": "QLD",
-	  "postalCode": "4120",
+	  "addressLine": "50 Marcus Clarke Street",
+	  "suburb": "Canberra",
+	  "state": "ACT",
+	  "postalCode": "2601",
 	  "country": "Australia"
   },
-  "website": "https://example.com/",
-  "extraLinks": [{
-	  "url": "https://social-media.example.com/example-pty-ltd",
-	  "label": "Example PTY LTD on Social Media"
-  }],
-  "abn": "50 110 219 460",
-  "acn": "071 408 449",
+  "website": "https://www.dto.gov.au/",
+  "extraLinks": [],
+  "abn": "96 257 979 159",
   "contacts": [{
-	  "contactFor": "Testing",
-	  "name": "Jo Example",
-	  "role": "Example Provider",
-	  "email": "jo@example.com",
-	  "phone": "+61",
-	  "fax": "+61"
+	  "contactFor": "",
+	  "name": "Paul Shetler",
+	  "role": "CEO",
+	  "email": "media@digital.gov.au"
   }],
-  "references": [{
-	  "name": "Bot",
-	  "organisation": "Super Cheap References",
-	  "role": "Reference Provider",
-	  "email": "bot@example.com"
-  }, {
-	  "name": "Another Bot",
-	  "organisation": "Super Cheap References",
-	  "role": "Reference Provider",
-	  "email": "another.bot@example.com"
-  }],
+  "references": [],
   "prices": [{
 	  "serviceRole": { "category": "Business Analysis", "role": "Junior Business Analyst" },
 	  "hourlyRate": "0.10",

@@ -8,7 +8,10 @@ from ...models import (
     Supplier, AuditEvent,
     Service, SupplierFramework, Framework, PriceSchedule, User
 )
-from ...search_indices import es_client, get_supplier_index_name, SUPPLIER_DOC_TYPE, delete_indices, create_indices
+
+from app.search_indices import (
+    create_indices, delete_indices, es_client, get_supplier_index_name, index_supplier, SUPPLIER_DOC_TYPE
+)
 
 from ...validation import (
     validate_supplier_json_or_400,
@@ -28,7 +31,10 @@ def list_suppliers():
     prefix = request.args.get('prefix', '')
     name = request.args.get('name', None)
 
-    suppliers = Supplier.query
+    if name is None:
+        suppliers = Supplier.query.filter(Supplier.abn.is_(None) | (Supplier.abn != Supplier.DUMMY_ABN))
+    else:
+        suppliers = Supplier.query.filter((Supplier.name == name) | (Supplier.long_name == name))
 
     if prefix:
         if prefix == 'other':
@@ -38,9 +44,6 @@ def list_suppliers():
             # case insensitive LIKE comparison for matching supplier names
             suppliers = suppliers.filter(
                 Supplier.name.ilike(prefix + '%'))
-
-    if name is not None:
-        suppliers = suppliers.filter((Supplier.name == name) | (Supplier.long_name == name))
 
     suppliers = suppliers.distinct(Supplier.name, Supplier.code)
 
@@ -115,14 +118,14 @@ def supplier_search():
         starting_offset = int(request.args.get('from', 0))
         if starting_offset < 0:
             raise ValueError(starting_offset)
-    except ValueError, e:
+    except ValueError as e:
         return jsonify(message="Invalid 'from' value (must be integer > 0): {0}".format(e)), 400
 
     try:
         result_count = int(request.args.get('size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE']))
         if result_count < 0:
             raise ValueError(result_count)
-    except ValueError, e:
+    except ValueError as e:
         return jsonify(message="Invalid 'size' value (must be integer > 0): {0}".format(e)), 400
 
     try:
@@ -131,9 +134,9 @@ def supplier_search():
                                   body=get_json_from_request(),
                                   from_=starting_offset,
                                   size=result_count)
-    except TransportError, e:
+    except TransportError as e:
         return jsonify(message=str(e)), e.status_code
-    except Exception, e:
+    except Exception as e:
         return jsonify(message=str(e)), 500
 
     return jsonify(result), 200
@@ -149,11 +152,7 @@ def update_supplier_data_impl(supplier, supplier_data, success_code):
 
         db.session.add(supplier)
         db.session.commit()
-        supplier_json = json.dumps(supplier.serialize())
-        es_client.index(index=get_supplier_index_name(),
-                        doc_type=SUPPLIER_DOC_TYPE,
-                        body=supplier_json,
-                        id=supplier.code)
+        index_supplier(supplier)
     except TransportError, e:
         return jsonify(message=str(e)), e.status_code
     except IntegrityError as e:

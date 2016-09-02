@@ -380,6 +380,8 @@ class SupplierContact(db.Model):
 
 
 class Supplier(db.Model):
+    DUMMY_ABN = '50 110 219 460'
+
     __tablename__ = 'supplier'
 
     id = db.Column(db.Integer, primary_key=True)
