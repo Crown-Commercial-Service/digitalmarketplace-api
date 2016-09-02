@@ -1,12 +1,13 @@
 import pytest
 
 from nose.tools import assert_equal
-from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import BadRequest, HTTPException
 
 from .helpers import BaseApplicationTest
 
 from app.utils import (display_list,
                        strip_whitespace_from_data,
+                       json_has_keys,
                        json_has_matching_id,
                        json_has_required_keys,
                        link,
@@ -68,3 +69,24 @@ def test_purge_nulls():
         'price': 'Not a lot'
     }
     assert_equal(purge_nulls_from_data(service_with_nulls), same_service_without_nulls)
+
+
+def test_json_has_keys():
+    def check(data, data_required_keys, data_optional_keys, result):
+        if result:
+            assert json_has_keys(data, data_required_keys, data_optional_keys) is None
+        else:
+            with pytest.raises(BadRequest):
+                json_has_keys(data, data_required_keys, data_optional_keys)
+
+    for data, data_required_keys, data_optional_keys, result in [
+        ({}, [], [], True),
+        ({}, None, None, True),
+        ({'key1': 'value1'}, ['key1'], None, True),
+        ({'key1': 'value1'}, [], ['key1'], True),
+        ({}, [], ['key1'], True),
+        ({}, ['key1'], [], False),
+        ({'key1': 'value1'}, [], [], False),
+        ({'key1': 'value1'}, [], ['key2'], False),
+    ]:
+        yield check, data, data_required_keys, data_optional_keys, result
