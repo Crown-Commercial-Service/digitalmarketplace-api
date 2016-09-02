@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import jsonify, abort, request, current_app
+from flask import abort, current_app, jsonify, request, url_for
 from elasticsearch import TransportError
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
@@ -18,8 +18,10 @@ from ...validation import (
     validate_contact_information_json_or_400,
     is_valid_string_or_400
 )
-from ...utils import pagination_links, drop_foreign_fields, get_json_from_request, \
-    json_has_required_keys, json_has_matching_id, get_valid_page_or_1, validate_and_return_updater_request
+from app.utils import (
+    drop_foreign_fields, get_json_from_request, get_nonnegative_int_or_400, get_valid_page_or_1, json_has_matching_id,
+    json_has_required_keys, pagination_links, validate_and_return_updater_request
+)
 from ...supplier_utils import validate_and_return_supplier_request, validate_agreement_details_data
 from dmapiclient.audit import AuditTypes
 
@@ -30,6 +32,12 @@ def list_suppliers():
 
     prefix = request.args.get('prefix', '')
     name = request.args.get('name', None)
+
+    results_per_page = get_nonnegative_int_or_400(
+        request.args,
+        'size',
+        current_app.config['DM_API_SUPPLIERS_PAGE_SIZE']
+    )
 
     if name is None:
         suppliers = Supplier.query.filter(Supplier.abn.is_(None) | (Supplier.abn != Supplier.DUMMY_ABN))
@@ -48,20 +56,26 @@ def list_suppliers():
     suppliers = suppliers.distinct(Supplier.name, Supplier.code)
 
     try:
-        suppliers = suppliers.paginate(
-            page=page,
-            per_page=current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'],
-        )
-
-        return jsonify(
-            suppliers=[supplier.serialize() for supplier in suppliers.items],
-            links=pagination_links(
-                suppliers,
+        if results_per_page > 0:
+            paginator = suppliers.paginate(
+                page=page,
+                per_page=results_per_page,
+            )
+            links = pagination_links(
+                paginator,
                 '.list_suppliers',
                 request.args
-            ))
+            )
+            supplier_results = paginator.items
+        else:
+            links = {
+                'self': url_for('.list_suppliers', _external=True, **request.args),
+            }
+            supplier_results = suppliers.all()
+        supplier_data = [supplier.serialize() for supplier in supplier_results]
     except DataError:
         abort(400, 'invalid framework')
+    return jsonify(suppliers=supplier_data, links=links)
 
 
 @main.route('/suppliers/<int:code>', methods=['GET'])
@@ -114,19 +128,8 @@ def delete_suppliers():
 
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
-    try:
-        starting_offset = int(request.args.get('from', 0))
-        if starting_offset < 0:
-            raise ValueError(starting_offset)
-    except ValueError as e:
-        return jsonify(message="Invalid 'from' value (must be integer > 0): {0}".format(e)), 400
-
-    try:
-        result_count = int(request.args.get('size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE']))
-        if result_count < 0:
-            raise ValueError(result_count)
-    except ValueError as e:
-        return jsonify(message="Invalid 'size' value (must be integer > 0): {0}".format(e)), 400
+    starting_offset = get_nonnegative_int_or_400(request.args, 'from', 0)
+    result_count = get_nonnegative_int_or_400(request.args, 'size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'])
 
     try:
         result = es_client.search(index=get_supplier_index_name(),
