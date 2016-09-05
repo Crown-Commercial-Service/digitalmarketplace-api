@@ -29,6 +29,7 @@ class TestListFrameworks(BaseApplicationTest):
                     'slug',
                     'status',
                     'variations',
+                    'countersignerName',
                 ]))
 
 
@@ -207,6 +208,7 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
             'slug': "example-framework-2",
             'framework': "dos",
             'frameworkAgreementDetails': {
+                "countersignerName": "Dan Saxby",
                 "frameworkAgreementVersion": "v1.0",
                 "variations": {
                     "banana": {
@@ -324,6 +326,8 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
             {'variations': 1},
             # object must have 'createdAt' key
             {'variations': {"created_at": "today"}},
+            # countersigner cannot be empty
+            {'countersignerName': ""},
             # invalid key
             {'frameworkAgreementDessert': "Portuguese tart"},
             # empty update
