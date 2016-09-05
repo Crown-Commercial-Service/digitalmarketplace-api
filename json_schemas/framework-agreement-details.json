@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "additionalProperties": false,
+  "minProperties": 1,
+  "properties": {
+    "frameworkAgreementVersion": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "variations": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "frameworkAgreementVersion",
+    "variations"
+  ],
+  "title": "Framework.framework_agreement_details Schema",
+  "type": "object"
+}

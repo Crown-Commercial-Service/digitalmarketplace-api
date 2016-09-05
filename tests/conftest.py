@@ -108,6 +108,12 @@ _dos_framework_defaults = {
     "framework_agreement_details": None,
 }
 
+_example_framework_details = {
+    "slug": "example-framework",
+    "framework": "g-cloud",
+    "framework_agreement_details": None
+}
+
 
 def _supplierframework_fixture_inner(request, app, sf_kwargs=None):
     sf_kwargs = sf_kwargs or {}
@@ -203,8 +209,12 @@ def _user_fixture_inner(request, app, user_kwargs=None):
     request.addfinalizer(teardown)
     return user_id
 
+# Frameworks
 
-# G8
+
+@pytest.fixture()
+def open_example_framework(request, app):
+    _framework_fixture_inner(request, app, **dict(_example_framework_details, status="open"))
 
 
 @pytest.fixture()
@@ -233,9 +243,6 @@ def live_g8_framework_2_variations(request, app):
     ))
 
 
-# G6
-
-
 @pytest.fixture()
 def open_g6_framework(request, app):
     _framework_fixture_inner(request, app, **dict(_g6_framework_defaults, status="open"))
@@ -244,9 +251,6 @@ def open_g6_framework(request, app):
 @pytest.fixture()
 def expired_g6_framework(request, app):
     _framework_fixture_inner(request, app, **dict(_g6_framework_defaults, status="expired"))
-
-
-# DOS
 
 
 @pytest.fixture()

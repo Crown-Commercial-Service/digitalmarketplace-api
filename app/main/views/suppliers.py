@@ -1,6 +1,5 @@
 from datetime import datetime
 from flask import jsonify, abort, request, current_app
-from six import text_type
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db

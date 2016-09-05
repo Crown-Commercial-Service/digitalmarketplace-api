@@ -129,11 +129,26 @@ class Framework(db.Model):
 
     slug_pattern = re.compile("^[\w-]+$")
 
-    @validates("slug")
+    @validates('slug')
     def validates_slug(self, key, slug):
         if not self.slug_pattern.match(slug):
             raise ValidationError("Invalid slug value '{}'".format(slug))
         return slug
+
+    @validates('clarification_questions_open')
+    def validates_clarification_questions_open(self, key, value):
+        # Note that because of an undefined order of setting attributes on this model
+        # (ie, between this `clarification_questions_open` and `status`)
+        # it _is_ possible to be in a state where `clarification_questions_open` is `True`
+        # and the new status is not one of the allowed ones
+        # if `self.status` *at the time of the update* is one of the allowed ones
+        if (
+            self.status is not None and
+            self.status not in ('coming', 'open', 'pending')
+            and value is True
+        ):
+            raise ValidationError("Clarification questions are only permitted while the framework is open")
+        return value
 
     def __repr__(self):
         return '<{}: {} slug={}>'.format(self.__class__.__name__, self.name, self.slug)
