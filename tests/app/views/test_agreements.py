@@ -5,8 +5,7 @@ from app.models import AuditEvent, db, FrameworkAgreement
 from ..helpers import BaseApplicationTest, fixture_params
 
 
-class TestGetFrameworkAgreement(BaseApplicationTest):
-
+class BaseFrameworkAgreementTest(BaseApplicationTest):
     def create_agreement(self, supplier_framework, **framework_agreement_kwargs):
         with self.app.app_context():
             agreement = FrameworkAgreement(
@@ -18,6 +17,8 @@ class TestGetFrameworkAgreement(BaseApplicationTest):
 
             return agreement.id
 
+
+class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
     def test_it_gets_a_newly_created_framework_agreement_by_id(self, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework
@@ -114,18 +115,7 @@ class TestGetFrameworkAgreement(BaseApplicationTest):
         }
 
 
-class TestUpdateFrameworkAgreement(BaseApplicationTest):
-    def create_agreement(self, supplier_framework, **framework_agreement_kwargs):
-        with self.app.app_context():
-            agreement = FrameworkAgreement(
-                supplier_id=supplier_framework['supplier_id'],
-                framework_id=supplier_framework['framework_id'],
-                **framework_agreement_kwargs)
-            db.session.add(agreement)
-            db.session.commit()
-
-            return agreement.id
-
+class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
     def post_agreement_update(self, agreement_id, agreement):
         return self.client.post(
             '/agreements/{}'.format(agreement_id),
