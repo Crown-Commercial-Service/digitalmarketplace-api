@@ -1,6 +1,7 @@
 import json
 import pytest
 from datetime import datetime
+from freezegun import freeze_time
 from app.models import AuditEvent, db, FrameworkAgreement
 from ..helpers import BaseApplicationTest, fixture_params
 
@@ -327,6 +328,192 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
         })
 
         assert res.status_code == 400
+
         assert json.loads(res.get_data(as_text=True)) == {
             'error': {'signerName': 'answer_required', 'signerRole': 'answer_required'}
         }
+
+
+@fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
+class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAgreementTest):
+    def sign_agreement(self, agreement_id, agreement):
+        return self.client.post(
+            '/agreements/{}/sign'.format(agreement_id),
+            data=json.dumps(
+                {
+                    'updated_by': 'interested@example.com',
+                    'agreement': agreement
+                }),
+            content_type='application/json')
+
+    def test_can_sign_framework_agreement(self, user_role_supplier, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_details={'signerName': 'name', 'signerRole': 'role'},
+            signed_agreement_path='/example.pdf'
+        )
+        with freeze_time('2016-12-12'):
+            res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': 1}})
+            assert res.status_code == 200
+
+            data = json.loads(res.get_data(as_text=True))
+            assert data['agreement'] == {
+                'id': agreement_id,
+                'supplierId': supplier_framework['supplier_id'],
+                'frameworkId': supplier_framework['framework_id'],
+                'signedAgreementPath': '/example.pdf',
+                'signedAgreementDetails': {
+                    'signerName': 'name',
+                    'signerRole': 'role',
+                    'uploaderUserId': 1,
+                    'frameworkAgreementVersion': 'v1.0'
+                },
+                'signedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z'
+            }
+
+    def test_signing_framework_agreement_produces_audit_event(self, user_role_supplier, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_details={'signerName': 'name', 'signerRole': 'role'},
+            signed_agreement_path='/example.pdf'
+        )
+        res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': 1}})
+        assert res.status_code == 200
+
+        with self.app.app_context():
+            agreement = FrameworkAgreement.query.filter(
+                FrameworkAgreement.id == agreement_id
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == agreement
+            ).first()
+
+            assert audit.type == "sign_agreement"
+            assert audit.user == "interested@example.com"
+            assert audit.data == {
+                'supplierId': supplier_framework['supplier_id'],
+                'frameworkSlug': 'example-framework',
+                'update': {'signedAgreementDetails': {'uploaderUserId': 1}}
+            }
+
+    def test_can_resign_framework_agreement(self, user_role_supplier, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_details={
+                'signerName': 'name',
+                'signerRole': 'role',
+                'uploaderUserId': 2,
+                'frameworkAgreementVersion': 'v1.0'
+            },
+            signed_agreement_path='/example.pdf',
+            signed_agreement_returned_at=datetime.utcnow()
+        )
+        with freeze_time('2016-12-12'):
+            res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': 1}})
+            assert res.status_code == 200
+
+            data = json.loads(res.get_data(as_text=True))
+            assert data['agreement'] == {
+                'id': agreement_id,
+                'supplierId': supplier_framework['supplier_id'],
+                'frameworkId': supplier_framework['framework_id'],
+                'signedAgreementPath': '/example.pdf',
+                'signedAgreementDetails': {
+                    'signerName': 'name',
+                    'signerRole': 'role',
+                    'uploaderUserId': 1,
+                    'frameworkAgreementVersion': 'v1.0'
+                },
+                'signedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z'
+            }
+
+    def test_can_not_sign_framework_agreement_that_has_no_signer_name(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_details={'signerRole': 'role'},
+            signed_agreement_path='/example.pdf'
+        )
+        res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': 20}})
+        assert res.status_code == 400
+
+    def test_can_not_sign_framework_agreement_that_has_no_signer_role(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_details={'signerName': 'name'},
+            signed_agreement_path='/example.pdf'
+        )
+        res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': 20}})
+        assert res.status_code == 400
+
+    def test_400_if_user_signing_framework_agreement_does_not_exist(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_details={'signerName': 'name', 'signerRole': 'role'},
+            signed_agreement_path='/example.pdf'
+        )
+        res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': 20}})
+        assert res.status_code == 400
+
+
+class TestSignFrameworkAgreementThatHasNoFrameworkAgreementVersion(BaseFrameworkAgreementTest):
+    def sign_agreement(self, agreement_id):
+        return self.client.post(
+            '/agreements/{}/sign'.format(agreement_id),
+            data=json.dumps(
+                {
+                    'updated_by': 'interested@example.com'
+                }),
+            content_type='application/json')
+
+    def test_can_sign_framework_agreement(self, supplier_framework):
+        agreement_id = self.create_agreement(supplier_framework)
+        with freeze_time('2016-12-12'):
+            res = self.sign_agreement(agreement_id)
+            assert res.status_code == 200
+
+            data = json.loads(res.get_data(as_text=True))
+            assert data['agreement'] == {
+                'id': agreement_id,
+                'supplierId': supplier_framework['supplier_id'],
+                'frameworkId': supplier_framework['framework_id'],
+                'signedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z'
+            }
+
+    def test_signing_framework_agreement_produces_audit_event(self, supplier_framework):
+        agreement_id = self.create_agreement(supplier_framework)
+        res = self.sign_agreement(agreement_id)
+        assert res.status_code == 200
+
+        with self.app.app_context():
+            agreement = FrameworkAgreement.query.filter(
+                FrameworkAgreement.id == agreement_id
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == agreement
+            ).first()
+
+            assert audit.type == "sign_agreement"
+            assert audit.user == "interested@example.com"
+            assert audit.data == {
+                'supplierId': supplier_framework['supplier_id'],
+                'frameworkSlug': 'example-framework'
+            }
+
+    def test_can_resign_framework_agreement(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime.utcnow()
+        )
+        with freeze_time('2016-12-12'):
+            res = self.sign_agreement(agreement_id)
+            assert res.status_code == 200
+
+            data = json.loads(res.get_data(as_text=True))
+            assert data['agreement'] == {
+                'id': agreement_id,
+                'supplierId': supplier_framework['supplier_id'],
+                'frameworkId': supplier_framework['framework_id'],
+                'signedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z'
+            }
