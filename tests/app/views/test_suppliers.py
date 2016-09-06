@@ -58,6 +58,9 @@ class TestListSuppliers(BaseApplicationTest):
     def test_query_string_missing(self):
         response = self.client.get('/suppliers')
         assert_equal(200, response.status_code)
+        data = json.loads(response.get_data())
+        assert 'suppliers' in data
+        assert 'links' in data
 
     def test_example_supplier_not_listed_by_default(self):
         with self.app.app_context():
@@ -78,6 +81,18 @@ class TestListSuppliers(BaseApplicationTest):
         assert 'suppliers' in data
         names = [s['name'] for s in data['suppliers']]
         assert 'Example Pty Ltd' not in names
+
+    def test_results_per_page(self):
+        response = self.client.get('/suppliers?per_page=2')
+        assert_equal(200, response.status_code)
+        data = json.loads(response.get_data())
+        assert 'suppliers' in data
+        assert len(data['suppliers']) == 2
+
+    def test_invalid_results_per_page(self):
+        response = self.client.get('/suppliers?per_page=bork')
+        assert_equal(400, response.status_code)
+        assert 'per_page' in response.get_data()
 
     def test_query_string_prefix_empty(self):
         response = self.client.get('/suppliers?prefix=')

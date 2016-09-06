@@ -47,6 +47,26 @@ def get_int_or_400(data, key):
         abort(400, "Invalid {}: {}".format(key, value))
 
 
+def get_positive_int_or_400(data, key, default=None):
+    try:
+        value = int(data.get(key, default))
+        if value <= 0:
+            raise ValueError(value)
+    except ValueError as e:
+        abort(400, "Invalid {} value (must be integer > 0): {}".format(key, e))
+    return value
+
+
+def get_nonnegative_int_or_400(data, key, default=None):
+    try:
+        value = int(data.get(key, default))
+        if value < 0:
+            raise ValueError(value)
+    except ValueError as e:
+        abort(400, "Invalid {} value (must be integer >= 0): {}".format(key, e))
+    return value
+
+
 def pagination_links(pagination, endpoint, args):
     links = dict()
     links['self'] = url_for(endpoint, **args)
