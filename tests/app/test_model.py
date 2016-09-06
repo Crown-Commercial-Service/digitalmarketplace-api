@@ -30,7 +30,8 @@ def test_should_not_return_password_on_user():
         failed_login_count=0,
         created_at=now,
         updated_at=now,
-        password_changed_at=now
+        password_changed_at=now,
+        terms_accepted_at=now
     )
 
     with app.app_context():
