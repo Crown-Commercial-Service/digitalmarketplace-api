@@ -83,27 +83,16 @@ class TestListSuppliers(BaseApplicationTest):
         assert 'Example Pty Ltd' not in names
 
     def test_results_per_page(self):
-        response = self.client.get('/suppliers?size=2')
+        response = self.client.get('/suppliers?per_page=2')
         assert_equal(200, response.status_code)
         data = json.loads(response.get_data())
         assert 'suppliers' in data
         assert len(data['suppliers']) == 2
 
     def test_invalid_results_per_page(self):
-        response = self.client.get('/suppliers?size=bork')
+        response = self.client.get('/suppliers?per_page=bork')
         assert_equal(400, response.status_code)
-        assert 'size' in response.get_data()
-
-    def test_no_result_limit(self):
-        with self.app.app_context():
-            num_suppliers = Supplier.query.count()
-
-        response = self.client.get('/suppliers?size=0')
-        assert_equal(200, response.status_code)
-        data = json.loads(response.get_data())
-        assert 'suppliers' in data
-        assert 'links' in data
-        assert len(data['suppliers']) == num_suppliers
+        assert 'per_page' in response.get_data()
 
     def test_query_string_prefix_empty(self):
         response = self.client.get('/suppliers?prefix=')

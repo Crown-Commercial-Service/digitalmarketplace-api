@@ -19,8 +19,9 @@ from ...validation import (
     is_valid_string_or_400
 )
 from app.utils import (
-    drop_foreign_fields, get_json_from_request, get_nonnegative_int_or_400, get_valid_page_or_1, json_has_matching_id,
-    json_has_required_keys, pagination_links, validate_and_return_updater_request
+    drop_foreign_fields, get_json_from_request, get_nonnegative_int_or_400, get_positive_int_or_400,
+    get_valid_page_or_1, json_has_matching_id, json_has_required_keys, pagination_links,
+    validate_and_return_updater_request
 )
 from ...supplier_utils import validate_and_return_supplier_request, validate_agreement_details_data
 from dmapiclient.audit import AuditTypes
@@ -33,9 +34,9 @@ def list_suppliers():
     prefix = request.args.get('prefix', '')
     name = request.args.get('name', None)
 
-    results_per_page = get_nonnegative_int_or_400(
+    results_per_page = get_positive_int_or_400(
         request.args,
-        'size',
+        'per_page',
         current_app.config['DM_API_SUPPLIERS_PAGE_SIZE']
     )
 
@@ -129,7 +130,7 @@ def delete_suppliers():
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
     starting_offset = get_nonnegative_int_or_400(request.args, 'from', 0)
-    result_count = get_nonnegative_int_or_400(request.args, 'size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'])
+    result_count = get_positive_int_or_400(request.args, 'size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'])
 
     try:
         result = es_client.search(index=get_supplier_index_name(),
