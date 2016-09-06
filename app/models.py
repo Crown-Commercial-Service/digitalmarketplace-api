@@ -105,6 +105,9 @@ class Framework(db.Model):
             'name': self.name,
             'slug': self.slug,
             'framework': self.framework,
+            'countersignerName': (
+                self.framework_agreement_details or {}
+            ).get("countersignerName"),
             'frameworkAgreementVersion': (
                 self.framework_agreement_details or {}
             ).get("frameworkAgreementVersion"),

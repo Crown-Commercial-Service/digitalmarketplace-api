@@ -3,6 +3,10 @@
   "additionalProperties": false,
   "minProperties": 1,
   "properties": {
+    "countersignerName": {
+      "minLength": 1,
+      "type": "string"
+    },
     "frameworkAgreementVersion": {
       "minLength": 1,
       "type": "string"
