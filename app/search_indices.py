@@ -46,13 +46,28 @@ def _get_raw_elasticsearch_connection():
 def create_supplier_index(index_client):
     name = get_supplier_index_name()
     index_client.create(name)
+
+    settings_json = json.dumps({
+        'index': {
+            'analysis': {
+                'analyzer': {
+                    'sortable': {  # A custom analyzer to make sorting case insensitive. Used in mapping.
+                        'tokenizer': 'keyword',
+                        'filter': 'lowercase'
+                    }
+                }
+            }
+        }
+    })
+    index_client.put_settings(index=name, body=settings_json)
+
     mapping_json = json.dumps({
         'properties': {
             'name': {
                 'type': 'multi_field',
                 'fields': {
                     'name': {'type': 'string', 'index': 'analyzed'},
-                    'not_analyzed': {'type': 'string', 'index': 'not_analyzed'},
+                    'not_analyzed': {'type': 'string', 'analyzer': 'sortable'},  # Custom analyzer from settings
                 },
             },
             'abn': {
