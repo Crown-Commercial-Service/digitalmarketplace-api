@@ -4,7 +4,7 @@ from .. import main
 from sqlalchemy.exc import IntegrityError
 from dmapiclient.audit import AuditTypes
 from ...models import (
-    AuditEvent, db, FrameworkAgreement, User
+    AuditEvent, db, FrameworkAgreement, SupplierFramework, User
 )
 
 from ...utils import (
@@ -17,6 +17,71 @@ from ...utils import (
 from ...supplier_utils import validate_agreement_details_data
 
 
+@main.route('/agreements', methods=['POST'])
+def create_framework_agreement():
+    json_payload = get_json_from_request()
+    updater_json = validate_and_return_updater_request()
+    json_has_required_keys(json_payload, ["agreement"])
+    update_json = json_payload["agreement"]
+
+    json_has_keys(update_json, required_keys=['supplierId', 'frameworkId'])
+
+    supplier_framework = SupplierFramework.query.filter(
+        SupplierFramework.supplier_id == update_json['supplierId'],
+        SupplierFramework.framework_id == update_json['frameworkId']
+    ).first()
+
+    if not supplier_framework or not supplier_framework.on_framework:
+        abort(
+            404,
+            "supplier_id '{}' is not on framework_id '{}'".format(
+                update_json['supplierId'], update_json['frameworkId']
+            )
+        )
+
+    # We enforce only one framework agreement per SupplierFramework for the moment
+    # This behaviour will be refactored out later to allow for multiple
+    existing_framework_agreement = FrameworkAgreement.query.filter(
+        FrameworkAgreement.supplier_id == update_json['supplierId'],
+        FrameworkAgreement.framework_id == update_json['frameworkId']
+    ).first()
+
+    if existing_framework_agreement:
+        abort(
+            400,
+            "supplier_id '{}' already has a framework agreement for framework_id '{}'".format(
+                update_json['supplierId'], update_json['frameworkId']
+            )
+        )
+
+    framework_agreement = FrameworkAgreement(
+        supplier_id=update_json['supplierId'],
+        framework_id=update_json['frameworkId']
+    )
+
+    try:
+        db.session.add(framework_agreement)
+        db.session.flush()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
+
+    audit_event = AuditEvent(
+        audit_type=AuditTypes.create_agreement,
+        user=updater_json['updated_by'],
+        data={
+            'supplierId': framework_agreement.supplier_id,
+            'frameworkSlug': framework_agreement.supplier_framework.framework.slug,
+        },
+        db_object=framework_agreement
+    )
+
+    db.session.add(audit_event)
+    db.session.commit()
+
+    return jsonify(agreement=framework_agreement.serialize()), 201
+
+# TODO Do we really need this route?
 @main.route('/agreements/<int:agreement_id>', methods=['GET'])
 def get_framework_agreement(agreement_id):
     framework_agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first_or_404()

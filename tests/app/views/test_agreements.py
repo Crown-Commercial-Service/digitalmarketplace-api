@@ -19,6 +19,135 @@ class BaseFrameworkAgreementTest(BaseApplicationTest):
             return agreement.id
 
 
+class TestCreateFrameworkAgreement(BaseApplicationTest):
+    def post_create_agreement(self, supplier_id=None, framework_id=None):
+        agreement_data = {}
+        if supplier_id:
+            agreement_data['supplierId'] = supplier_id
+        if framework_id:
+            agreement_data['frameworkId'] = framework_id
+
+        return self.client.post(
+            '/agreements',
+            data=json.dumps(
+                {
+                    'updated_by': 'interested@example.com',
+                    'agreement': agreement_data
+                }),
+            content_type='application/json')
+
+    def test_can_create_framework_agreement(self, supplier_framework):
+        res = self.post_create_agreement(
+            supplier_id=supplier_framework['supplier_id'],
+            framework_id=supplier_framework['framework_id']
+        )
+
+        assert res.status_code == 201
+
+        res_agreement_json = json.loads(res.get_data(as_text=True))['agreement']
+        assert res_agreement_json['id'] > 0
+        assert res_agreement_json['supplierId'] == supplier_framework['supplier_id']
+        assert res_agreement_json['frameworkId'] == supplier_framework['framework_id']
+
+        res2 = self.client.get('/agreements/{}'.format(res_agreement_json['id']))
+
+        assert res2.status_code == 200
+        assert json.loads(res2.get_data(as_text=True))['agreement'] == res_agreement_json
+
+    def test_create_framework_agreement_makes_an_audit_event(self, supplier_framework):
+        res = self.post_create_agreement(
+            supplier_id=supplier_framework['supplier_id'],
+            framework_id=supplier_framework['framework_id']
+        )
+
+        assert res.status_code == 201
+
+        agreement_id = json.loads(res.get_data(as_text=True))['agreement']['id']
+
+        with self.app.app_context():
+            agreement = FrameworkAgreement.query.filter(
+                FrameworkAgreement.id == agreement_id
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == agreement
+            ).first()
+
+            assert audit.type == "create_agreement"
+            assert audit.user == "interested@example.com"
+            assert audit.data == {
+                'supplierId': supplier_framework['supplier_id'],
+                'frameworkSlug': 'example-framework',
+            }
+
+    def test_404_if_creating_framework_agreement_with_no_supplier_framework(self, supplier_framework):
+        res = self.post_create_agreement(
+            supplier_id=7,
+            framework_id=8
+        )
+
+        assert res.status_code == 404
+        assert json.loads(res.get_data(as_text=True))['error'] == "supplier_id '7' is not on framework_id '8'"
+
+    @fixture_params('supplier_framework', {'on_framework': False})
+    def test_404_if_creating_framework_agreement_with_supplier_framework_not_on_framework(self, supplier_framework):
+        res = self.post_create_agreement(
+            supplier_id=supplier_framework['supplier_id'],
+            framework_id=supplier_framework['framework_id']
+        )
+
+        assert res.status_code == 404
+        assert (
+            json.loads(res.get_data(as_text=True))['error'] ==
+            "supplier_id '{}' is not on framework_id '{}'".format(
+                supplier_framework['supplier_id'], supplier_framework['framework_id']
+            )
+        )
+
+    def test_can_not_create_framework_agreement_if_no_supplier_id_provided(self, supplier_framework):
+        res = self.post_create_agreement(
+            framework_id=supplier_framework['framework_id']
+        )
+
+        assert res.status_code == 400
+        assert (
+            json.loads(res.get_data(as_text=True))['error'] ==
+            "Invalid JSON must have 'supplierId' keys"
+        )
+
+    def test_can_not_create_framework_agreement_if_no_framework_id_provided(self, supplier_framework):
+        res = self.post_create_agreement(
+            supplier_id=supplier_framework['supplier_id']
+        )
+
+        assert res.status_code == 400
+        assert (
+            json.loads(res.get_data(as_text=True))['error'] ==
+            "Invalid JSON must have 'frameworkId' keys"
+        )
+
+    def test_can_not_make_more_than_one_framework_agreement_per_supplier_framework(self, supplier_framework):
+        res = self.post_create_agreement(
+            supplier_id=supplier_framework['supplier_id'],
+            framework_id=supplier_framework['framework_id']
+        )
+
+        assert res.status_code == 201
+
+        res = self.post_create_agreement(
+            supplier_id=supplier_framework['supplier_id'],
+            framework_id=supplier_framework['framework_id']
+        )
+
+        assert res.status_code == 400
+        assert (
+            json.loads(res.get_data(as_text=True))['error'] ==
+            "supplier_id '{}' already has a framework agreement for framework_id '{}'".format(
+                supplier_framework['supplier_id'], supplier_framework['framework_id']
+            )
+        )
+
+
 class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
     def test_it_gets_a_newly_created_framework_agreement_by_id(self, supplier_framework):
         agreement_id = self.create_agreement(
