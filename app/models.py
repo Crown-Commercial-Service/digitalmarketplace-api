@@ -432,13 +432,32 @@ class SupplierFramework(db.Model):
             "frameworkSlug": self.framework.slug,
             "declaration": self.declaration,
             "onFramework": self.on_framework,
-            "agreementReturned": bool(agreement_returned_at),
-            "agreementReturnedAt": agreement_returned_at,
-            "agreementDetails": self.agreement_details,
-            "countersigned": bool(countersigned_at),
-            "countersignedAt": countersigned_at,
             "agreedVariations": agreed_variations,
         }, **(data or {}))
+
+        if self.framework_agreements:
+            agreement = self.framework_agreements[0]
+            supplier_framework.update({
+                'agreementReturned': bool(agreement.signed_agreement_returned_at),
+                'agreementReturnedAt': (
+                    agreement.signed_agreement_returned_at and
+                    agreement.signed_agreement_returned_at.strftime(DATETIME_FORMAT)
+                ),
+                'agreementDetails': agreement.signed_agreement_details,
+                'countersigned': bool(agreement.countersigned_agreement_returned_at),
+                'countersignedAt': (
+                    agreement.countersigned_agreement_returned_at and
+                    agreement.countersigned_agreement_returned_at.strftime(DATETIME_FORMAT)
+                ),
+            })
+        else:
+            supplier_framework.update({
+                "agreementReturned": bool(agreement_returned_at),
+                "agreementReturnedAt": agreement_returned_at,
+                "agreementDetails": self.agreement_details,
+                "countersigned": bool(countersigned_at),
+                "countersignedAt": countersigned_at,
+            })
 
         if self.agreement_details and self.agreement_details.get('uploaderUserId'):
             user = User.query.filter(
@@ -458,9 +477,12 @@ class FrameworkAgreement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     supplier_id = db.Column(db.Integer, nullable=False)
     framework_id = db.Column(db.Integer, nullable=False)
-    signed_agreement_returned_at = db.Column(db.DateTime)
     signed_agreement_details = db.Column(JSON)
     signed_agreement_path = db.Column(db.String)
+    signed_agreement_returned_at = db.Column(db.DateTime)
+    countersigned_agreement_details = db.Column(JSON)
+    countersigned_agreement_path = db.Column(db.String)
+    countersigned_agreement_returned_at = db.Column(db.DateTime)
 
     __table_args__ = (
         db.ForeignKeyConstraint(
@@ -470,7 +492,43 @@ class FrameworkAgreement(db.Model):
         {}
     )
 
-    supplier_framework = db.relationship(SupplierFramework, backref='framework_agreements')
+    supplier_framework = db.relationship(SupplierFramework, lazy='joined', backref='framework_agreements')
+
+    def update_signed_agreement_details_from_json(self, data):
+        if self.signed_agreement_details:
+            current_data = self.signed_agreement_details.copy()
+        else:
+            current_data = {}
+
+        current_data.update(data)
+
+        self.signed_agreement_details = current_data
+
+    @validates('signed_agreement_details')
+    def validates_signed_agreement_details(self, key, data):
+        data = strip_whitespace_from_data(data)
+        data = purge_nulls_from_data(data)
+
+        return data
+
+    def serialize(self):
+        return purge_nulls_from_data({
+            'id': self.id,
+            'supplierId': self.supplier_id,
+            'frameworkId': self.framework_id,
+            'signedAgreementDetails': self.signed_agreement_details,
+            'signedAgreementPath': self.signed_agreement_path,
+            'signedAgreementReturnedAt': (
+                self.signed_agreement_returned_at and
+                self.signed_agreement_returned_at.strftime(DATETIME_FORMAT)
+            ),
+            'countersignedAgreementDetails': self.countersigned_agreement_details,
+            'countersignedAgreementReturnedAt': (
+                self.countersigned_agreement_returned_at and
+                self.countersigned_agreement_returned_at.strftime(DATETIME_FORMAT)
+            ),
+            'countersignedAgreementPath': self.countersigned_agreement_path
+        })
 
 
 class User(db.Model):

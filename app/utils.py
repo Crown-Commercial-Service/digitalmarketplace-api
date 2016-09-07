@@ -71,10 +71,20 @@ def get_json_from_request():
     return data
 
 
+def json_has_keys(data, required_keys=None, optional_keys=None):
+    data_keys = set(data.keys())
+
+    json_has_required_keys(data, required_keys or [])
+
+    unknown_keys = data_keys - set(optional_keys or []) - set(required_keys or [])
+    if unknown_keys:
+        abort(400, "Invalid JSON should not have '{}' keys".format("', '".join(unknown_keys)))
+
+
 def json_has_required_keys(data, keys):
     missing_keys = set(keys) - set(data.keys())
     if missing_keys:
-        abort(400, "Invalid JSON must have '%s' keys" % list(missing_keys))
+        abort(400, "Invalid JSON must have '{}' keys".format("', '".join(missing_keys)))
 
 
 def json_only_has_required_keys(data, keys):
