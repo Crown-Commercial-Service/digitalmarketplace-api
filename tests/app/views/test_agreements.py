@@ -2,16 +2,18 @@ import json
 import pytest
 from datetime import datetime
 from freezegun import freeze_time
-from app.models import AuditEvent, db, FrameworkAgreement
+from app.models import AuditEvent, db, Framework, FrameworkAgreement
 from ..helpers import BaseApplicationTest, fixture_params
 
 
 class BaseFrameworkAgreementTest(BaseApplicationTest):
     def create_agreement(self, supplier_framework, **framework_agreement_kwargs):
         with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == supplier_framework['frameworkSlug']).first()
+
             agreement = FrameworkAgreement(
-                supplier_id=supplier_framework['supplier_id'],
-                framework_id=supplier_framework['framework_id'],
+                supplier_id=supplier_framework['supplierId'],
+                framework_id=framework.id,
                 **framework_agreement_kwargs)
             db.session.add(agreement)
             db.session.commit()
@@ -20,12 +22,12 @@ class BaseFrameworkAgreementTest(BaseApplicationTest):
 
 
 class TestCreateFrameworkAgreement(BaseApplicationTest):
-    def post_create_agreement(self, supplier_id=None, framework_id=None):
+    def post_create_agreement(self, supplier_id=None, framework_slug=None):
         agreement_data = {}
         if supplier_id:
             agreement_data['supplierId'] = supplier_id
-        if framework_id:
-            agreement_data['frameworkId'] = framework_id
+        if framework_slug:
+            agreement_data['frameworkSlug'] = framework_slug
 
         return self.client.post(
             '/agreements',
@@ -38,16 +40,16 @@ class TestCreateFrameworkAgreement(BaseApplicationTest):
 
     def test_can_create_framework_agreement(self, supplier_framework):
         res = self.post_create_agreement(
-            supplier_id=supplier_framework['supplier_id'],
-            framework_id=supplier_framework['framework_id']
+            supplier_id=supplier_framework['supplierId'],
+            framework_slug=supplier_framework['frameworkSlug']
         )
 
         assert res.status_code == 201
 
         res_agreement_json = json.loads(res.get_data(as_text=True))['agreement']
         assert res_agreement_json['id'] > 0
-        assert res_agreement_json['supplierId'] == supplier_framework['supplier_id']
-        assert res_agreement_json['frameworkId'] == supplier_framework['framework_id']
+        assert res_agreement_json['supplierId'] == supplier_framework['supplierId']
+        assert res_agreement_json['frameworkSlug'] == supplier_framework['frameworkSlug']
 
         res2 = self.client.get('/agreements/{}'.format(res_agreement_json['id']))
 
@@ -56,8 +58,8 @@ class TestCreateFrameworkAgreement(BaseApplicationTest):
 
     def test_create_framework_agreement_makes_an_audit_event(self, supplier_framework):
         res = self.post_create_agreement(
-            supplier_id=supplier_framework['supplier_id'],
-            framework_id=supplier_framework['framework_id']
+            supplier_id=supplier_framework['supplierId'],
+            framework_slug=supplier_framework['frameworkSlug']
         )
 
         assert res.status_code == 201
@@ -76,37 +78,37 @@ class TestCreateFrameworkAgreement(BaseApplicationTest):
             assert audit.type == "create_agreement"
             assert audit.user == "interested@example.com"
             assert audit.data == {
-                'supplierId': supplier_framework['supplier_id'],
-                'frameworkSlug': 'example-framework',
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug']
             }
 
     def test_404_if_creating_framework_agreement_with_no_supplier_framework(self, supplier_framework):
         res = self.post_create_agreement(
             supplier_id=7,
-            framework_id=8
+            framework_slug='dos'
         )
 
         assert res.status_code == 404
-        assert json.loads(res.get_data(as_text=True))['error'] == "supplier_id '7' is not on framework_id '8'"
+        assert json.loads(res.get_data(as_text=True))['error'] == "supplier_id '7' is not on framework 'dos'"
 
     @fixture_params('supplier_framework', {'on_framework': False})
     def test_404_if_creating_framework_agreement_with_supplier_framework_not_on_framework(self, supplier_framework):
         res = self.post_create_agreement(
-            supplier_id=supplier_framework['supplier_id'],
-            framework_id=supplier_framework['framework_id']
+            supplier_id=supplier_framework['supplierId'],
+            framework_slug=supplier_framework['frameworkSlug']
         )
 
         assert res.status_code == 404
         assert (
             json.loads(res.get_data(as_text=True))['error'] ==
-            "supplier_id '{}' is not on framework_id '{}'".format(
-                supplier_framework['supplier_id'], supplier_framework['framework_id']
+            "supplier_id '{}' is not on framework '{}'".format(
+                supplier_framework['supplierId'], supplier_framework['frameworkSlug']
             )
         )
 
     def test_can_not_create_framework_agreement_if_no_supplier_id_provided(self, supplier_framework):
         res = self.post_create_agreement(
-            framework_id=supplier_framework['framework_id']
+            framework_slug=supplier_framework['frameworkSlug']
         )
 
         assert res.status_code == 400
@@ -115,35 +117,35 @@ class TestCreateFrameworkAgreement(BaseApplicationTest):
             "Invalid JSON must have 'supplierId' keys"
         )
 
-    def test_can_not_create_framework_agreement_if_no_framework_id_provided(self, supplier_framework):
+    def test_can_not_create_framework_agreement_if_no_framework_slug_provided(self, supplier_framework):
         res = self.post_create_agreement(
-            supplier_id=supplier_framework['supplier_id']
+            supplier_id=supplier_framework['supplierId']
         )
 
         assert res.status_code == 400
         assert (
             json.loads(res.get_data(as_text=True))['error'] ==
-            "Invalid JSON must have 'frameworkId' keys"
+            "Invalid JSON must have 'frameworkSlug' keys"
         )
 
     def test_can_not_make_more_than_one_framework_agreement_per_supplier_framework(self, supplier_framework):
         res = self.post_create_agreement(
-            supplier_id=supplier_framework['supplier_id'],
-            framework_id=supplier_framework['framework_id']
+            supplier_id=supplier_framework['supplierId'],
+            framework_slug=supplier_framework['frameworkSlug']
         )
 
         assert res.status_code == 201
 
         res = self.post_create_agreement(
-            supplier_id=supplier_framework['supplier_id'],
-            framework_id=supplier_framework['framework_id']
+            supplier_id=supplier_framework['supplierId'],
+            framework_slug=supplier_framework['frameworkSlug']
         )
 
         assert res.status_code == 400
         assert (
             json.loads(res.get_data(as_text=True))['error'] ==
-            "supplier_id '{}' already has a framework agreement for framework_id '{}'".format(
-                supplier_framework['supplier_id'], supplier_framework['framework_id']
+            "supplier_id '{}' already has a framework agreement for framework '{}'".format(
+                supplier_framework['supplierId'], supplier_framework['frameworkSlug']
             )
         )
 
@@ -158,8 +160,8 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
         assert res.status_code == 200
         assert json.loads(res.get_data(as_text=True))['agreement'] == {
             'id': agreement_id,
-            'supplierId': supplier_framework['supplier_id'],
-            'frameworkId': supplier_framework['framework_id']
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug']
         }
 
     def test_it_returns_a_framework_agreement_with_details_only(self, supplier_framework):
@@ -172,8 +174,8 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
         assert res.status_code == 200
         assert json.loads(res.get_data(as_text=True))['agreement'] == {
             'id': agreement_id,
-            'supplierId': supplier_framework['supplier_id'],
-            'frameworkId': supplier_framework['framework_id'],
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
             'signedAgreementDetails': {'details': 'here'},
         }
 
@@ -189,8 +191,8 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
         assert res.status_code == 200
         assert json.loads(res.get_data(as_text=True))['agreement'] == {
             'id': agreement_id,
-            'supplierId': supplier_framework['supplier_id'],
-            'frameworkId': supplier_framework['framework_id'],
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
             'signedAgreementDetails': {'details': 'here'},
             'signedAgreementPath': 'path',
             'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
@@ -210,8 +212,8 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
         assert res.status_code == 200
         assert json.loads(res.get_data(as_text=True))['agreement'] == {
             'id': agreement_id,
-            'supplierId': supplier_framework['supplier_id'],
-            'frameworkId': supplier_framework['framework_id'],
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
             'signedAgreementDetails': {'details': 'here'},
             'signedAgreementPath': 'path',
             'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
@@ -234,8 +236,8 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
         assert res.status_code == 200
         assert json.loads(res.get_data(as_text=True))['agreement'] == {
             'id': agreement_id,
-            'supplierId': supplier_framework['supplier_id'],
-            'frameworkId': supplier_framework['framework_id'],
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
             'signedAgreementDetails': {'details': 'here'},
             'signedAgreementPath': 'path',
             'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
@@ -294,8 +296,8 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
 
         expected_agreement_json = {
             'id': agreement_id,
-            'supplierId': supplier_framework['supplier_id'],
-            'frameworkId': supplier_framework['framework_id'],
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
             'signedAgreementDetails': {
                 'signerName': 'name',
                 'signerRole': 'role',
@@ -319,8 +321,8 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
 
         expected_agreement_json = {
             'id': agreement_id,
-            'supplierId': supplier_framework['supplier_id'],
-            'frameworkId': supplier_framework['framework_id'],
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
             'signedAgreementPath': '/example.pdf'
         }
         assert data['agreement'] == expected_agreement_json
@@ -345,8 +347,8 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
 
         expected_agreement_json = {
             'id': agreement_id,
-            'supplierId': supplier_framework['supplier_id'],
-            'frameworkId': supplier_framework['framework_id'],
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
             'signedAgreementPath': '/example.pdf',
             'signedAgreementDetails': {
                 'signerName': 'name',
@@ -384,8 +386,8 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
             assert audit.type == "update_agreement"
             assert audit.user == "interested@example.com"
             assert audit.data == {
-                'supplierId': supplier_framework['supplier_id'],
-                'frameworkSlug': 'example-framework',
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug'],
                 'update': {
                     'signedAgreementDetails': {
                         'signerName': 'name',
@@ -488,8 +490,8 @@ class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAg
             data = json.loads(res.get_data(as_text=True))
             assert data['agreement'] == {
                 'id': agreement_id,
-                'supplierId': supplier_framework['supplier_id'],
-                'frameworkId': supplier_framework['framework_id'],
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug'],
                 'signedAgreementPath': '/example.pdf',
                 'signedAgreementDetails': {
                     'signerName': 'name',
@@ -521,8 +523,8 @@ class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAg
             assert audit.type == "sign_agreement"
             assert audit.user == "interested@example.com"
             assert audit.data == {
-                'supplierId': supplier_framework['supplier_id'],
-                'frameworkSlug': 'example-framework',
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug'],
                 'update': {'signedAgreementDetails': {'uploaderUserId': 1}}
             }
 
@@ -545,8 +547,8 @@ class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAg
             data = json.loads(res.get_data(as_text=True))
             assert data['agreement'] == {
                 'id': agreement_id,
-                'supplierId': supplier_framework['supplier_id'],
-                'frameworkId': supplier_framework['framework_id'],
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug'],
                 'signedAgreementPath': '/example.pdf',
                 'signedAgreementDetails': {
                     'signerName': 'name',
@@ -604,8 +606,8 @@ class TestSignFrameworkAgreementThatHasNoFrameworkAgreementVersion(BaseFramework
             data = json.loads(res.get_data(as_text=True))
             assert data['agreement'] == {
                 'id': agreement_id,
-                'supplierId': supplier_framework['supplier_id'],
-                'frameworkId': supplier_framework['framework_id'],
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug'],
                 'signedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z'
             }
 
@@ -626,8 +628,8 @@ class TestSignFrameworkAgreementThatHasNoFrameworkAgreementVersion(BaseFramework
             assert audit.type == "sign_agreement"
             assert audit.user == "interested@example.com"
             assert audit.data == {
-                'supplierId': supplier_framework['supplier_id'],
-                'frameworkSlug': 'example-framework'
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug'],
             }
 
     def test_can_resign_framework_agreement(self, supplier_framework):
@@ -642,7 +644,7 @@ class TestSignFrameworkAgreementThatHasNoFrameworkAgreementVersion(BaseFramework
             data = json.loads(res.get_data(as_text=True))
             assert data['agreement'] == {
                 'id': agreement_id,
-                'supplierId': supplier_framework['supplier_id'],
-                'frameworkId': supplier_framework['framework_id'],
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug'],
                 'signedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z'
             }

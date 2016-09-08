@@ -519,7 +519,7 @@ class FrameworkAgreement(db.Model):
         return purge_nulls_from_data({
             'id': self.id,
             'supplierId': self.supplier_id,
-            'frameworkId': self.framework_id,
+            'frameworkSlug': self.supplier_framework.framework.slug,
             'signedAgreementDetails': self.signed_agreement_details,
             'signedAgreementPath': self.signed_agreement_path,
             'signedAgreementReturnedAt': (

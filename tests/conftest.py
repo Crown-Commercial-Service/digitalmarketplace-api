@@ -48,8 +48,7 @@ def supplier_framework(request, app, supplier, live_example_framework):
         db.session.add(sf)
         db.session.commit()
 
-        return {'supplier_id': sf.supplier_id, 'framework_id': sf.framework_id}
-
+        return sf.serialize()
 
 _framework_kwargs_whitelist = set(("status", "framework", "framework_agreement_details",))
 
