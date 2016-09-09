@@ -9,8 +9,7 @@ from jsonschema import validate, SchemaError, ValidationError
 
 from app.utils import drop_foreign_fields
 from app.validation import validates_against_schema, is_valid_service_id, is_valid_date, \
-    is_valid_acknowledged_state, get_validation_errors, is_valid_string, min_price_less_than_max_price, \
-    is_valid_buyer_email
+    is_valid_acknowledged_state, get_validation_errors, is_valid_string, min_price_less_than_max_price
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                     '..', '..', 'example_listings'))
@@ -497,15 +496,3 @@ def check_schema(schema):
         return True
     else:
         return True
-
-
-@pytest.mark.parametrize('email,expected', [
-    ('test@example.com', False),
-    ('test@gov.au', True),
-    ('test@something.gov.au', True),
-    ('test@somegov.au', False),
-    ('test@gov.ok', False),
-    ('test@test@gov.au', True)
-])
-def test_is_valid_buyer_email(email, expected):
-    assert is_valid_buyer_email(email) == expected
