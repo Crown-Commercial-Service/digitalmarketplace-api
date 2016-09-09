@@ -9,7 +9,7 @@ SQLAlchemy-Utils==0.30.5
 streql==3.0.2
 newrelic==2.68.0.50
 
-git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@24.4.2#egg=dto-digitalmarketplace-utils==24.4.2
+git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@25.8.0#egg=dto-digitalmarketplace-utils==25.8.0
 git+https://github.com/AusDTO/dto-digitalmarketplace-apiclient.git@4.0.0#egg=dto-digitalmarketplace-apiclient==4.0.0
 
 # For schema validation
@@ -25,7 +25,3 @@ six==1.9.0
 # Elasticsearch 1.0
 elasticsearch>=1.0.0,<2.0.0
 Flask-Elasticsearch==0.2.1
-
-# For Cloud Foundry
-cffi==1.5.2
-gunicorn==19.4.5
