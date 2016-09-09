@@ -1476,6 +1476,53 @@ class TestSupplierInviteLog(BaseUserTest):
             assert len(results) == len(self.contacts) - 1
             assert contact not in results
 
+    def test_list_unclaimed_invites(self):
+        supplier_who_responds = self.suppliers[0]
+        test_invite_data = {
+            'contact': supplier_who_responds['contacts'][0],
+            'supplierCode': supplier_who_responds['code'],
+            'supplierName': supplier_who_responds['name'],
+        }
+        with self.app.app_context():
+            # Invites are sent and recorded
+            for supplier in self.suppliers:
+                data = {
+                    'email': supplier['contacts'][0]['email'],
+                    'supplierCode': supplier['code'],
+                }
+                response = self.client.post(
+                    '/users/supplier-invite',
+                    data=json.dumps(data),
+                    content_type='application/json'
+                )
+                assert response.status_code == 200
+
+            # No one has responded yet
+            response = self.client.get('/users/supplier-invite/list-unclaimed-invites')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['results']) == len(self.suppliers)
+            assert test_invite_data in data['results']
+
+            # One response
+            user = {
+                'emailAddress': test_invite_data['contact']['email'],
+                'password': '1234567890',
+                'role': 'supplier',
+                'name': test_invite_data['contact']['name'],
+                'supplierCode': test_invite_data['supplierCode'],
+            }
+            self._post_user(user)
+
+            # Should now be missing
+            response = self.client.get('/users/supplier-invite/list-unclaimed-invites')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['results']) == len(self.suppliers) - 1
+            assert test_invite_data not in data['results']
+
 
 class TestUsersEmailCheck(BaseUserTest):
     def test_valid_email_is_ok(self):

@@ -294,6 +294,17 @@ def email_has_valid_buyer_domain():
     return jsonify(valid=is_valid_buyer_email(email_address))
 
 
+def invite_response(db_results):
+    def serialize_result(result):
+        return {
+            'contact': result[0].serialize(),
+            'supplierCode': result[1],
+            'supplierName': result[2],
+        }
+
+    return jsonify(results=[serialize_result(r) for r in db_results])
+
+
 @main.route('/users/supplier-invite/list-candidates', methods=['GET'])
 def list_supplier_account_invite_candidates():
     # NB: outer joins allow missing rows (nulls appear instead)
@@ -305,14 +316,20 @@ def list_supplier_account_invite_candidates():
     # Current logic is that anyone who doesn't have an account and hasn't been invited yet gets an invite
     results = joined_tables.filter(User.id.is_(None)).filter(SupplierUserInviteLog.invite_sent.is_(None))
 
-    def serialize_result(result):
-        return {
-            'contact': result[0].serialize(),
-            'supplierCode': result[1],
-            'supplierName': result[2],
-        }
+    return invite_response(results)
 
-    return jsonify(results=[serialize_result(r) for r in results])
+
+@main.route('/users/supplier-invite/list-unclaimed-invites', methods=['GET'])
+def list_unclaimed_supplier_account_invites():
+    # Supplier invites that still aren't matched with an existing account
+    joined_tables = db.session.query(Contact, Supplier.code, Supplier.name) \
+        .select_from(Supplier) \
+        .join(SupplierUserInviteLog) \
+        .join(Contact) \
+        .outerjoin(User, Contact.email == User.email_address)
+    results = joined_tables.filter(User.id.is_(None))
+
+    return invite_response(results)
 
 
 @main.route('/users/supplier-invite', methods=['POST'])
@@ -335,7 +352,7 @@ def record_supplier_invite():
 
 
 def check_supplier_role(role, supplier_code):
-    if role == 'supplier' and not supplier_code:
+    if role == 'supplier' and supplier_code is None:
         abort(400, "'supplier_code' is required for users with 'supplier' role")
-    elif role != 'supplier' and supplier_code:
+    elif role != 'supplier' and supplier_code is not None:
         abort(400, "'supplier_code' is only valid for users with 'supplier' role, not '{}'".format(role))
