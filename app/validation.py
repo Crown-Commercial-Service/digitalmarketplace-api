@@ -286,16 +286,3 @@ def _get_word_count(message):
     count_minus_one_string = re.search("\{0,(\d+)", message).group(1)
     count_minus_one = int(count_minus_one_string)
     return count_minus_one + 1
-
-
-def load_buyer_email_domains(path):
-    with open(path) as f:
-        return [line.strip() for line in f]
-
-
-_BUYER_EMAIL_DOMAINS = load_buyer_email_domains('./data/buyer-email-domains.txt')
-
-
-def is_valid_buyer_email(email):
-    domain = email.split('@')[-1]
-    return any(domain == d or domain.endswith('.' + d) for d in _BUYER_EMAIL_DOMAINS)
