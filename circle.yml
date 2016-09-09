@@ -21,7 +21,6 @@ dependencies:
     - elasticsearch-1.5.0/bin/elasticsearch: {background: true}
     # Make sure that Elasticsearch is up before running tests:
     - sleep 10 && curl --retry 10 --retry-delay 5 -v http://127.0.0.1:9200/
-    - DOCKERFILE_PATH=./monitoring/Dockerfile DOCKER_IMAGE_NAME=gov-au-marketplace-api ./scripts/ci-monitor-build.sh
   override:
     - pip install -r requirements_for_test.txt
 
@@ -50,4 +49,10 @@ deployment:
       - cf push dm-api-migrate -f 'manifest.production.yml' -c 'python application.py db upgrade' -u 'none' -i 1
       - APP=dm-api DOMAIN=apps.platform.digital.gov.au HOSTNAME=dm-api MANIFEST=manifest.production.yml ./scripts/cf_ha_deploy.sh
       - APP=dm-api-blue DOMAIN=apps.platform.digital.gov.au HOSTNAME=dm-api MANIFEST=manifest.production.yml ./scripts/cf_ha_deploy.sh
+      - ./scripts/ci-notify.sh
+
+  monitoring:
+    tag: /monitor-.*/
+    commands:
+      - DOCKERFILE_PATH=./monitoring/Dockerfile DOCKER_IMAGE_NAME=gov-au-marketplace-api ./scripts/ci-monitor-build.sh
       - API_TOKEN="$DM_API_TOKEN_PROD" DOCKER_COMPOSE_FILE_PATH=./monitoring/docker-compose-ecs.yml DOCKER_IMAGE_NAME=gov-au-marketplace-api DOCKER_CONTAINER_NAME=gov-au-marketplace-api ./scripts/ci-monitor-deploy.sh
