@@ -25,7 +25,9 @@ from dmutils.formats import DATETIME_FORMAT
 from dmutils.dates import get_publishing_dates
 
 from . import db
-from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
+from app.utils import (
+    link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data, filter_fields
+)
 from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
 
 
@@ -642,6 +644,7 @@ class User(db.Model):
     password_changed_at = db.Column(db.DateTime, index=False, unique=False,
                                     nullable=False)
     logged_in_at = db.Column(db.DateTime, nullable=True)
+    terms_accepted_at = db.Column(db.DateTime, index=False, nullable=False, default=datetime.utcnow)
 
     # used to determine whether account is `locked`. field is reset upon successful login or can
     # be reset manually to "unlock" an account.
@@ -701,6 +704,7 @@ class User(db.Model):
                 self.password_changed_at.strftime(DATETIME_FORMAT),
             'loggedInAt': self.logged_in_at.strftime(DATETIME_FORMAT)
                 if self.logged_in_at else None,
+            'termsAcceptedAt': self.terms_accepted_at.strftime(DATETIME_FORMAT),
             'failedLoginCount': self.failed_login_count,
         }
 
@@ -1307,10 +1311,8 @@ class Brief(db.Model):
 
         if with_users:
             data['users'] = [
-                drop_foreign_fields(
-                    user.serialize(),
-                    ['locked', 'createdAt', 'updatedAt', 'passwordChangedAt', 'loggedInAt', 'failedLoginCount']
-                ) for user in self.users
+                filter_fields(user.serialize(), ('id', 'emailAddress', 'phoneNumber', 'name', 'role', 'active'))
+                for user in self.users
             ]
 
         return data

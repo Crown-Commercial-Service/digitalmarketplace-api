@@ -110,6 +110,11 @@ def drop_foreign_fields(json_object, list_of_keys):
     return json_object
 
 
+def filter_fields(dictionary, list_of_keys):
+    key_set = set(list_of_keys)
+    return {k: v for k, v in dictionary.iteritems() if k in key_set}
+
+
 def json_has_matching_id(data, id):
     if 'id' in data and not id == data['id']:
         abort(400, "id parameter must match id in data")
