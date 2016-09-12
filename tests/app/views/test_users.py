@@ -1522,19 +1522,3 @@ class TestSupplierInviteLog(BaseUserTest):
             data = json.loads(response.get_data())
             assert len(data['results']) == len(self.suppliers) - 1
             assert test_invite_data not in data['results']
-
-
-class TestUsersEmailCheck(BaseUserTest):
-    def test_valid_email_is_ok(self):
-        response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@gov.au'})
-        assert response.status_code == 200
-        assert json.loads(response.get_data())['valid'] is True
-
-    def test_invalid_email_is_not_ok(self):
-        response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'someone@notgov.au'})
-        assert response.status_code == 200
-        assert json.loads(response.get_data())['valid'] is False
-
-    def test_email_address_is_required(self):
-        response = self.client.get('/users/check-buyer-email')
-        assert response.status_code == 400

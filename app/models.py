@@ -28,7 +28,9 @@ from . import db
 from app.utils import (
     link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data, filter_fields
 )
-from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
+from .validation import is_valid_service_id, get_validation_errors
+
+from dmutils.forms import is_government_email
 
 
 def getUtcTimestamp():
@@ -662,13 +664,13 @@ class User(db.Model):
 
     @validates('email_address')
     def validate_email_address(self, key, value):
-        if value and self.role == 'buyer' and not is_valid_buyer_email(value):
+        if value and self.role == 'buyer' and not is_government_email(value):
             raise ValidationError("invalid_buyer_domain")
         return value
 
     @validates('role')
     def validate_role(self, key, value):
-        if self.email_address and value == 'buyer' and not is_valid_buyer_email(self.email_address):
+        if self.email_address and value == 'buyer' and not is_government_email(self.email_address):
             raise ValidationError("invalid_buyer_domain")
         return value
 
