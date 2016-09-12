@@ -984,6 +984,37 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             data = json.loads(response.get_data())['users']
             assert_equal(data['emailAddress'], 'myshinynew@digital.gov.au')
 
+    def test_can_update_terms_acceptance_timestamp(self):
+        timestamp = datetime(2000, 01, 01).strftime(DATETIME_FORMAT)
+        with self.app.app_context():
+            response = self.client.post(
+                '/users/456',
+                data=json.dumps({
+                    'updated_by': 'a.user',
+                    'users': {
+                        'termsAcceptedAt': timestamp,
+                    }}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())['users']
+            assert_equal(data['termsAcceptedAt'], timestamp)
+
+    def test_handles_invalid_terms_acceptance_timestamp(self):
+        with self.app.app_context():
+            response = self.client.post(
+                '/users/456',
+                data=json.dumps({
+                    'updated_by': 'a.user',
+                    'users': {
+                        'termsAcceptedAt': 'nope',
+                    }}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 400)
+            data = response.get_data()
+            assert_in('terms_accepted_at', data)
+
 
 class TestUsersGet(BaseUserTest):
     def setup(self):

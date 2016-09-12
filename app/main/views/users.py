@@ -193,6 +193,8 @@ def update_user(user_id):
         user.supplier_code = user_update['supplierCode']
     if 'locked' in user_update and not user_update['locked']:
         user.failed_login_count = 0
+    if 'termsAcceptedAt' in user_update:
+        user.terms_accepted_at = user_update['termsAcceptedAt']
 
     check_supplier_role(user.role, user.supplier_code)
 

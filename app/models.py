@@ -674,6 +674,16 @@ class User(db.Model):
             raise ValidationError("invalid_buyer_domain")
         return value
 
+    @validates('created_at', 'updated_at', 'password_changed_at', 'logged_in_at', 'terms_accepted_at')
+    def validate_date(self, key, value):
+        if value is None or isinstance(value, datetime):
+            return value
+        try:
+            date = datetime.strptime(value, DATETIME_FORMAT)
+            return date
+        except Exception as e:
+            raise ValidationError('Invalid date for {}: {} - {}'.format(key, value, e.message))
+
     @property
     def locked(self):
         """
