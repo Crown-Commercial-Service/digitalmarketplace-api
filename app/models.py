@@ -459,9 +459,9 @@ class SupplierFramework(db.Model):
                 "countersignedAt": countersigned_at,
             })
 
-        if self.agreement_details and self.agreement_details.get('uploaderUserId'):
+        if supplier_framework['agreementDetails'] and supplier_framework['agreementDetails'].get('uploaderUserId'):
             user = User.query.filter(
-                User.id == self.agreement_details.get('uploaderUserId')
+                User.id == supplier_framework['agreementDetails']['uploaderUserId']
             ).first()
 
             if user:
