@@ -510,6 +510,9 @@ class FrameworkAgreement(db.Model):
 
     @validates('signed_agreement_details')
     def validates_signed_agreement_details(self, key, data):
+        if data is None:
+            return data
+
         data = strip_whitespace_from_data(data)
         data = purge_nulls_from_data(data)
 
