@@ -43,7 +43,7 @@ def supplier_framework(request, app, supplier, live_example_framework):
         sf = SupplierFramework(
             supplier_id=supplier['id'],
             framework_id=live_example_framework['id'],
-            on_framework=request.param['on_framework'],
+            **request.param
         )
         db.session.add(sf)
         db.session.commit()
