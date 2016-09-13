@@ -7,7 +7,8 @@ from ... import db
 from ...models import User, Brief, AuditEvent, Framework, Lot, Supplier, Service
 from ...utils import (
     get_json_from_request, get_int_or_400, json_has_required_keys, pagination_links,
-    get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request
+    get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request,
+    get_positive_int_or_400
 )
 from ...service_utils import validate_and_return_lot, filter_services
 from ...brief_utils import validate_brief_data
@@ -118,6 +119,12 @@ def list_briefs():
 
     user_id = get_int_or_400(request.args, 'user_id')
 
+    results_per_page = get_positive_int_or_400(
+        request.args,
+        'per_page',
+        current_app.config['DM_API_SUPPLIERS_PAGE_SIZE']
+    )
+
     if user_id:
         briefs = briefs.filter(Brief.users.any(id=user_id))
 
@@ -145,14 +152,14 @@ def list_briefs():
     else:
         briefs = briefs.paginate(
             page=page,
-            per_page=current_app.config['DM_API_BRIEFS_PAGE_SIZE'],
+            per_page=results_per_page,
         )
 
         return jsonify(
             briefs=[brief.serialize() for brief in briefs.items],
             meta={
                 "total": briefs.total,
-                "per_page": current_app.config['DM_API_BRIEFS_PAGE_SIZE']
+                "per_page": results_per_page
             },
             links=pagination_links(
                 briefs,
