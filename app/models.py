@@ -11,7 +11,7 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON, INTERVAL
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import validates
+from sqlalchemy.orm import validates, backref
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.expression import cast as sql_cast
@@ -492,7 +492,11 @@ class FrameworkAgreement(db.Model):
         {}
     )
 
-    supplier_framework = db.relationship(SupplierFramework, lazy='joined', backref='framework_agreements')
+    supplier_framework = db.relationship(
+        SupplierFramework,
+        lazy="joined",
+        backref=backref('framework_agreements', lazy="joined")
+    )
 
     def update_signed_agreement_details_from_json(self, data):
         if self.signed_agreement_details:
