@@ -1075,6 +1075,19 @@ class TestUsersGet(BaseUserTest):
             for index, user in enumerate(data):
                 self._assert_things_about_users(user, self.users[index])
 
+    def test_user_list_pagination_control(self):
+        with self.app.app_context():
+            response = self.client.get('/users?per_page=2')
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())["users"]
+            assert len(data) == 2
+
+    def test_user_list_pagination_control_error(self):
+        with self.app.app_context():
+            response = self.client.get('/users?per_page=invalid')
+            assert_equal(response.status_code, 400)
+            assert_in('per_page', response.get_data())
+
     def test_can_list_users_by_supplier_code(self):
         with self.app.app_context():
             response = self.client.get("/users?supplier_code={}".format(self.supplier_code))
