@@ -5,7 +5,7 @@ from flask import jsonify
 from sqlalchemy import desc
 
 from .. import main
-from ...models import (Brief, Supplier, ServiceRole, PriceSchedule)
+from ...models import (Brief, Supplier, ServiceRole, PriceSchedule, User)
 
 
 @main.route('/dashboard/stats', methods=['GET'])
@@ -26,6 +26,10 @@ def get_dashboard_stats():
 
     suppliers = {
         "total": Supplier.query.count()
+    }
+
+    buyers = {
+        'total': User.query.filter(User.active.is_(True), User.role == 'buyer').count()
     }
 
     top_roles = []
@@ -54,6 +58,7 @@ def get_dashboard_stats():
     stats = {
         'briefs': briefs,
         'suppliers': suppliers,
+        'buyers': buyers,
         'roles': roles,
     }
 
