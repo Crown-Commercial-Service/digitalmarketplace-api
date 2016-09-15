@@ -32,11 +32,20 @@ def get_dashboard_stats():
     all_roles = ServiceRole.query.all()
 
     for role in all_roles:
-        role_data = {
-            'name': role.name,
-            'count': PriceSchedule.query.filter(PriceSchedule.service_role_id == role.id).count()
-        }
-        top_roles.append(role_data)
+        name = role.name.replace('Junior', '').replace('Senior', '').strip()
+        count = PriceSchedule.query.filter(PriceSchedule.service_role_id == role.id).count()
+        dict_exist = False
+        for top_role in top_roles:
+            if top_role['name'] == name:
+                top_role['count'] += count
+                dict_exist = True
+
+        if not dict_exist:
+            role_data = {
+                'name': name,
+                'count': count
+            }
+            top_roles.append(role_data)
 
     roles = {
         'top_roles': sorted(top_roles, key=itemgetter('count'), reverse=True)
