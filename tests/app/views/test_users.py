@@ -1567,6 +1567,7 @@ class TestSupplierInviteLog(BaseUserTest):
             assert len(data['results']) == len(self.suppliers) - 1
             assert test_invite_data not in data['results']
 
+
 class TestCounts(BaseApplicationTest):
     def test_get_buyers(self):
         response = self.client.get('/users/buyers/count')
