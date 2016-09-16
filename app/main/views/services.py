@@ -53,7 +53,7 @@ def list_service_roles():
     return jsonify(roles=[serialize_with_abbreviations(r) for r in roles])
 
 
-@main.route('/suppliers/roles/count', methods=['GET'])
+@main.route('/roles/count', methods=['GET'])
 def get_roles_stats():
     top_roles = []
     all_roles = ServiceRole.query.all()
