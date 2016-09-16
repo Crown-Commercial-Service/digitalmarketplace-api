@@ -352,6 +352,15 @@ def record_supplier_invite():
     return jsonify(message='done')
 
 
+@main.route('/users/buyers/count', methods=['GET'])
+def get_buyers_stats():
+    buyers = {
+        'total': User.query.filter(User.active.is_(True), User.role == 'buyer').count()
+    }
+
+    return jsonify(buyers=buyers)
+
+
 def check_supplier_role(role, supplier_code):
     if role == 'supplier' and supplier_code is None:
         abort(400, "'supplier_code' is required for users with 'supplier' role")

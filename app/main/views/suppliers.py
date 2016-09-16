@@ -1,11 +1,13 @@
 from datetime import datetime
+from operator import itemgetter
+
 from flask import abort, current_app, jsonify, request, url_for
 from elasticsearch import TransportError
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
 from ...models import (
-    Supplier, AuditEvent,
+    Supplier, AuditEvent, ServiceRole, PriceSchedule,
     Service, SupplierFramework, Framework, PriceSchedule, User
 )
 
@@ -125,6 +127,43 @@ def delete_suppliers():
         return jsonify(message="Database Error: {0}".format(e)), 400
 
     return jsonify(message="done"), 200
+
+
+@main.route('/suppliers/count', methods=['GET'])
+def get_suppliers_stats():
+    suppliers = {
+        "total": Supplier.query.count()
+    }
+
+    return jsonify(suppliers=suppliers)
+
+
+@main.route('/suppliers/roles/count', methods=['GET'])
+def get_roles_stats():
+    top_roles = []
+    all_roles = ServiceRole.query.all()
+
+    for role in all_roles:
+        name = role.name.replace('Junior', '').replace('Senior', '').strip()
+        count = PriceSchedule.query.filter(PriceSchedule.service_role_id == role.id).count()
+        dict_exist = False
+        for top_role in top_roles:
+            if top_role['name'] == name:
+                top_role['count'] += count
+                dict_exist = True
+
+        if not dict_exist:
+            role_data = {
+                'name': name,
+                'count': count
+            }
+            top_roles.append(role_data)
+
+    roles = {
+        'top_roles': sorted(top_roles, key=itemgetter('count'), reverse=True)
+    }
+
+    return jsonify(roles=roles)
 
 
 @main.route('/suppliers/search', methods=['GET'])

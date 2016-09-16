@@ -1566,3 +1566,8 @@ class TestSupplierInviteLog(BaseUserTest):
             data = json.loads(response.get_data())
             assert len(data['results']) == len(self.suppliers) - 1
             assert test_invite_data not in data['results']
+
+class TestCounts(BaseApplicationTest):
+    def test_get_buyers(self):
+        response = self.client.get('/users/buyers/count')
+        assert response.status_code == 200
