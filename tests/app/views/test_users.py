@@ -1570,5 +1570,5 @@ class TestSupplierInviteLog(BaseUserTest):
 
 class TestCounts(BaseApplicationTest):
     def test_get_buyers(self):
-        response = self.client.get('/users/buyers/count')
+        response = self.client.get('/users/count?account_type=buyer')
         assert response.status_code == 200

@@ -352,10 +352,11 @@ def record_supplier_invite():
     return jsonify(message='done')
 
 
-@main.route('/users/buyers/count', methods=['GET'])
+@main.route('/users/count', methods=['GET'])
 def get_buyers_stats():
+    account_type = request.args['account_type']
     buyers = {
-        'total': User.query.filter(User.active.is_(True), User.role == 'buyer').count()
+        'total': User.query.filter(User.active.is_(True), User.role == account_type).count()
     }
 
     return jsonify(buyers=buyers)

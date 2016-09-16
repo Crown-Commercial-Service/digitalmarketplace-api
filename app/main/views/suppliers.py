@@ -138,34 +138,6 @@ def get_suppliers_stats():
     return jsonify(suppliers=suppliers)
 
 
-@main.route('/suppliers/roles/count', methods=['GET'])
-def get_roles_stats():
-    top_roles = []
-    all_roles = ServiceRole.query.all()
-
-    for role in all_roles:
-        name = role.name.replace('Junior', '').replace('Senior', '').strip()
-        count = PriceSchedule.query.filter(PriceSchedule.service_role_id == role.id).count()
-        dict_exist = False
-        for top_role in top_roles:
-            if top_role['name'] == name:
-                top_role['count'] += count
-                dict_exist = True
-
-        if not dict_exist:
-            role_data = {
-                'name': name,
-                'count': count
-            }
-            top_roles.append(role_data)
-
-    roles = {
-        'top_roles': sorted(top_roles, key=itemgetter('count'), reverse=True)
-    }
-
-    return jsonify(roles=roles)
-
-
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
     starting_offset = get_nonnegative_int_or_400(request.args, 'from', 0)
