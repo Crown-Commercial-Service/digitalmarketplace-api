@@ -10,8 +10,10 @@ from app.models import (
     AuditEvent, Contact, DraftService, Framework, Supplier, SupplierContact, SupplierFramework, SupplierUserInviteLog,
     User
 )
-from app.utils import get_json_from_request, json_has_required_keys, \
-    json_has_matching_id, pagination_links, get_valid_page_or_1, validate_and_return_updater_request
+from app.utils import (
+    get_json_from_request, get_positive_int_or_400, get_valid_page_or_1, json_has_required_keys, json_has_matching_id,
+    pagination_links, validate_and_return_updater_request
+)
 from app.validation import validate_user_json_or_400, validate_user_auth_json_or_400
 
 
@@ -54,6 +56,12 @@ def list_users():
     user_query = User.query.order_by(User.id)
     page = get_valid_page_or_1()
 
+    results_per_page = get_positive_int_or_400(
+        request.args,
+        'per_page',
+        current_app.config['DM_API_USER_PAGE_SIZE']
+    )
+
     # email_address is a primary key
     email_address = request.args.get('email_address')
     if email_address:
@@ -81,7 +89,7 @@ def list_users():
 
     users = user_query.paginate(
         page=page,
-        per_page=current_app.config['DM_API_USER_PAGE_SIZE'],
+        per_page=results_per_page,
     )
 
     return jsonify(
