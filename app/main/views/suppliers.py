@@ -1,11 +1,13 @@
 from datetime import datetime
+from operator import itemgetter
+
 from flask import abort, current_app, jsonify, request, url_for
 from elasticsearch import TransportError
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
 from ...models import (
-    Supplier, AuditEvent,
+    Supplier, AuditEvent, ServiceRole, PriceSchedule,
     Service, SupplierFramework, Framework, PriceSchedule, User
 )
 
@@ -125,6 +127,15 @@ def delete_suppliers():
         return jsonify(message="Database Error: {0}".format(e)), 400
 
     return jsonify(message="done"), 200
+
+
+@main.route('/suppliers/count', methods=['GET'])
+def get_suppliers_stats():
+    suppliers = {
+        "total": Supplier.query.count()
+    }
+
+    return jsonify(suppliers=suppliers)
 
 
 @main.route('/suppliers/search', methods=['GET'])

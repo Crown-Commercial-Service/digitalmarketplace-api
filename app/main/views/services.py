@@ -1,9 +1,12 @@
+from operator import itemgetter
+
 from dmapiclient.audit import AuditTypes
 
 from flask import jsonify, abort, request, current_app
 
 from .. import main
-from ...models import ArchivedService, Service, ServiceRole, Supplier, AuditEvent, Framework, ValidationError
+from ...models import ArchivedService, Service, ServiceRole, Supplier, AuditEvent, Framework, ValidationError,\
+    PriceSchedule
 
 from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
@@ -48,6 +51,34 @@ def list_service_roles():
         }
 
     return jsonify(roles=[serialize_with_abbreviations(r) for r in roles])
+
+
+@main.route('/roles/count', methods=['GET'])
+def get_roles_stats():
+    top_roles = []
+    all_roles = ServiceRole.query.all()
+
+    for role in all_roles:
+        name = role.name.replace('Junior', '').replace('Senior', '').strip()
+        count = PriceSchedule.query.filter(PriceSchedule.service_role_id == role.id).count()
+        dict_exist = False
+        for top_role in top_roles:
+            if top_role['name'] == name:
+                top_role['count'] += count
+                dict_exist = True
+
+        if not dict_exist:
+            role_data = {
+                'name': name,
+                'count': count
+            }
+            top_roles.append(role_data)
+
+    roles = {
+        'top_roles': sorted(top_roles, key=itemgetter('count'), reverse=True)
+    }
+
+    return jsonify(roles=roles)
 
 
 @main.route('/services', methods=['GET'])

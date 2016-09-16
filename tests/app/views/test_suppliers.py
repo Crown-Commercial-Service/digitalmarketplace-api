@@ -470,6 +470,12 @@ class TestSupplierSearch(BaseApplicationTest):
         assert_equal(len(result['hits']['hits']), 0)
 
 
+class TestCounts(BaseApplicationTest):
+    def test_get_suppliers(self):
+        response = self.client.get('/suppliers/count')
+        assert response.status_code == 200
+
+
 class TestDeleteSupplier(BaseApplicationTest):
     def setup(self):
         super(TestDeleteSupplier, self).setup()

@@ -1319,3 +1319,9 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest):
 
         assert response.status_code == 200
         assert data["services"]
+
+
+class TestCounts(BaseApplicationTest):
+    def test_get_briefs(self):
+        response = self.client.get('/briefs/count')
+        assert response.status_code == 200
