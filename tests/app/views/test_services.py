@@ -1964,7 +1964,7 @@ class TestGetService(BaseApplicationTest):
 class TestCounts(BaseApplicationTest):
 
     def test_get_roles(self):
-        response = self.client.get('/suppliers/roles/count')
+        response = self.client.get('/roles/count')
         assert response.status_code == 200
 
         data = json.loads(response.get_data())
