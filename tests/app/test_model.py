@@ -558,7 +558,7 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
             question = BriefClarificationQuestion(brief=self.brief, question=long_question, answer="Because")
             question.validate()
 
-        assert e.value.message["question"] == "under_100_words"
+        assert e.value.message['question'] == 'under_word_limit'
 
     def test_question_must_not_be_more_than_5000_characters(self):
         long_question = "a" * 5001
@@ -594,7 +594,7 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
             question = BriefClarificationQuestion(brief=self.brief, question="Why?", answer=long_answer)
             question.validate()
 
-        assert e.value.message["answer"] == "under_100_words"
+        assert e.value.message['answer'] == 'under_word_limit'
 
     def test_answer_must_not_be_more_than_5000_characters(self):
         long_answer = "a" * 5001

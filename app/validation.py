@@ -268,7 +268,7 @@ def _translate_json_schema_error(key, validator, validator_value, message):
         if key.endswith(('dayRate', 'priceMin', 'priceMax', 'PriceMin', 'PriceMax')):
             return 'not_money_format'
 
-        return 'under_{}_words'.format(_get_word_count(validator_value))
+        return 'under_word_limit'
 
     elif validator == 'enum' and key == 'priceUnit':
         return 'no_unit_specified'
