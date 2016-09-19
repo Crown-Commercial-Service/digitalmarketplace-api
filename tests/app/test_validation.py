@@ -301,7 +301,7 @@ def test_too_many_words_causes_validation_error():
     data = load_example_listing("G7-SCS")
     data.update({'serviceBenefits': ['more than ten words 5 6 7 8 9 10 11']})
     errs = get_validation_errors("services-g-cloud-7-scs", data)
-    assert "under_10_words" in errs['serviceBenefits']
+    assert 'under_word_limit' in errs['serviceBenefits']
 
 
 def test_too_many_list_items_causes_validation_error():

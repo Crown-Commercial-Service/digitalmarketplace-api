@@ -125,7 +125,7 @@
     },
     "sellerEmailList": {
       "items": {
-        "maxLength": 300,
+        "maxLength": 100,
         "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
         "type": "string"
       },

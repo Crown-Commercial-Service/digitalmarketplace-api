@@ -9,12 +9,12 @@
     },
     "backgroundInformation": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "budgetRange": {
       "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
       "type": "string"
     },
     "contractLength": {
@@ -40,7 +40,7 @@
     },
     "endUsers": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,499}\\S+$",
       "type": "string"
     },
     "essentialRequirements": {
@@ -69,7 +69,7 @@
     },
     "existingTeam": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,299}\\S+$",
       "type": "string"
     },
     "location": {
@@ -108,7 +108,7 @@
     },
     "outcome": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "phase": {
@@ -151,7 +151,7 @@
     },
     "sellerEmailList": {
       "items": {
-        "maxLength": 300,
+        "maxLength": 100,
         "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
         "type": "string"
       },
@@ -199,7 +199,7 @@
     },
     "workAlreadyDone": {
       "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
       "type": "string"
     },
     "workingArrangements": {
