@@ -1435,13 +1435,13 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             'agreedVariations': {}
         }
 
-    def test_get_supplier_framework_info_non_existent_by_framework(self, supplier_framework):
+    def test_get_supplier_framework_info_with_non_existent_framework(self, supplier_framework):
         response = self.client.get(
             '/suppliers/{}/frameworks/{}'.format(supplier_framework['supplierId'], 'g-cloud-5'))
 
         assert response.status_code == 404
 
-    def test_get_supplier_framework_info_non_existent_by_supplier(self, supplier_framework):
+    def test_get_supplier_framework_info_with_non_existent_supplier(self, supplier_framework):
         response = self.client.get(
             '/suppliers/{}/frameworks/{}'.format(0, supplier_framework['frameworkSlug']))
 

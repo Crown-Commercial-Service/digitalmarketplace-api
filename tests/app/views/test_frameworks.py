@@ -536,6 +536,12 @@ class TestFrameworkStats(BaseApplicationTest):
 
 class TestGetFrameworkSuppliers(BaseApplicationTest):
     def setup(self):
+        """Sets up supplier frameworks as follows:
+
+        Suppliers with IDs 0-4 have a SupplierFramework record ("have registered interest")
+        Suppliers 3 and 4 have returned their agreements - will be saved in FrameworkAgreement, NOT SupplierFramework
+        No further details are saved in anyone's SupplierFramework record
+        """
         super(TestGetFrameworkSuppliers, self).setup()
 
         self.setup_dummy_suppliers(5)
@@ -606,7 +612,8 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
 
     def test_list_suppliers_with_agreements_returned_includes_those_with_only_supplier_framework(self):
         with self.app.app_context():
-            # Set supplier 2 to have their agreement returned information only set in the SupplierFramework table
+            # Set supplier 2 to have their agreement returned information set in the SupplierFramework table
+            # (NOT in the FrameworkAgreement table, like suppliers 3 and 4 have)
             db.session.execute(
                 "UPDATE supplier_frameworks SET agreement_returned_at='{}' WHERE supplier_id=2".format(
                     datetime.datetime.utcnow())

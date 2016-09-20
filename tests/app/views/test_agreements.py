@@ -496,7 +496,7 @@ class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAg
                 'signedAgreementDetails': {
                     'signerName': 'name',
                     'signerRole': 'role',
-                    'uploaderUserId': 1,
+                    'uploaderUserId': user_role_supplier,
                     'frameworkAgreementVersion': 'v1.0'
                 },
                 'signedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z'
@@ -508,7 +508,7 @@ class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAg
             signed_agreement_details={'signerName': 'name', 'signerRole': 'role'},
             signed_agreement_path='/example.pdf'
         )
-        res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': 1}})
+        res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': user_role_supplier}})
         assert res.status_code == 200
 
         with self.app.app_context():
@@ -525,10 +525,10 @@ class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAg
             assert audit.data == {
                 'supplierId': supplier_framework['supplierId'],
                 'frameworkSlug': supplier_framework['frameworkSlug'],
-                'update': {'signedAgreementDetails': {'uploaderUserId': 1}}
+                'update': {'signedAgreementDetails': {'uploaderUserId': user_role_supplier}}
             }
 
-    def test_can_resign_framework_agreement(self, user_role_supplier, supplier_framework):
+    def test_can_re_sign_framework_agreement(self, user_role_supplier, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
             signed_agreement_details={
@@ -541,7 +541,7 @@ class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAg
             signed_agreement_returned_at=datetime.utcnow()
         )
         with freeze_time('2016-12-12'):
-            res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': 1}})
+            res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': user_role_supplier}})
             assert res.status_code == 200
 
             data = json.loads(res.get_data(as_text=True))
@@ -559,34 +559,45 @@ class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAg
                 'signedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z'
             }
 
-    def test_can_not_sign_framework_agreement_that_has_no_signer_name(self, supplier_framework):
+    def test_can_not_sign_framework_agreement_that_has_no_signer_name(self, user_role_supplier, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
             signed_agreement_details={'signerRole': 'role'},
             signed_agreement_path='/example.pdf'
         )
-        res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': 20}})
-        assert res.status_code == 400
+        res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': user_role_supplier}})
 
-    def test_can_not_sign_framework_agreement_that_has_no_signer_role(self, supplier_framework):
+        assert res.status_code == 400
+        assert (
+            json.loads(res.get_data(as_text=True))['error'] == {'signerName': 'answer_required'})
+
+    def test_can_not_sign_framework_agreement_that_has_no_signer_role(self, user_role_supplier, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
             signed_agreement_details={'signerName': 'name'},
             signed_agreement_path='/example.pdf'
         )
-        res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': 20}})
-        assert res.status_code == 400
+        res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': user_role_supplier}})
 
-    def test_400_if_user_signing_framework_agreement_does_not_exist(self, supplier_framework):
+        assert res.status_code == 400
+        assert (
+            json.loads(res.get_data(as_text=True))['error'] == {'signerRole': 'answer_required'})
+
+    def test_400_if_user_signing_framework_agreement_does_not_exist(self, user_role_supplier, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
             signed_agreement_details={'signerName': 'name', 'signerRole': 'role'},
             signed_agreement_path='/example.pdf'
         )
+        # The user_role_supplier fixture sets up user with ID 1; there is no user with ID 20
         res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': 20}})
+
         assert res.status_code == 400
+        assert (
+            json.loads(res.get_data(as_text=True))['error'] == "No user found with id '20'")
 
 
+# Frameworks prior to G-Cloud 8 do not have framework_agreement_version set, and signing these stores only the timestamp
 class TestSignFrameworkAgreementThatHasNoFrameworkAgreementVersion(BaseFrameworkAgreementTest):
     def sign_agreement(self, agreement_id):
         return self.client.post(
@@ -632,7 +643,7 @@ class TestSignFrameworkAgreementThatHasNoFrameworkAgreementVersion(BaseFramework
                 'frameworkSlug': supplier_framework['frameworkSlug'],
             }
 
-    def test_can_resign_framework_agreement(self, supplier_framework):
+    def test_can_re_sign_framework_agreement(self, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
             signed_agreement_returned_at=datetime.utcnow()
