@@ -5,7 +5,8 @@ from .. import main
 from ... import db
 from ...models import (
     Supplier, ContactInformation, AuditEvent,
-    Service, SupplierFramework, Framework, User
+    Service, SupplierFramework, Framework, User,
+    FrameworkAgreement
 )
 from ...validation import (
     validate_supplier_json_or_400,
@@ -395,7 +396,6 @@ def register_framework_interest(supplier_id, framework_slug):
 
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['POST'])
 def update_supplier_framework_details(supplier_id, framework_slug):
-
     framework = Framework.query.filter(
         Framework.slug == framework_slug
     ).first_or_404()
@@ -417,9 +417,44 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if not interest_record:
         abort(404, "supplier_id '{}' has not registered interest in {}".format(supplier_id, framework_slug))
 
+    if 'onFramework' in update_json:
+        interest_record.on_framework = update_json['onFramework']
+
+        audit_event = AuditEvent(
+            audit_type=AuditTypes.supplier_update,
+            user=updater_json['updated_by'],
+            data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug, 'update': update_json},
+            db_object=supplier
+        )
+
+        try:
+            db.session.add(interest_record)
+            db.session.add(audit_event)
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            return jsonify(message="Database Error: {0}".format(e)), 400
+
+        return jsonify(frameworkInterest=interest_record.serialize()), 200
+
     # `agreementDetails` shouldn't be passed in unless the framework has framework_agreement_details
     if 'agreementDetails' in update_json and framework.framework_agreement_details is None:
         abort(400, "Framework '{}' does not accept 'agreementDetails'".format(framework_slug))
+
+    # Try and find an existing FrameworkAgreement to update, if not then create one based on data from SupplierFramework
+    framework_agreement = FrameworkAgreement.query.filter(
+        FrameworkAgreement.supplier_id == supplier.supplier_id
+    ).filter(
+        Framework.slug == framework.slug
+    ).first()
+
+    if not framework_agreement:
+        framework_agreement = FrameworkAgreement(
+            supplier_id=supplier.supplier_id,
+            framework_id=framework.id,
+            signed_agreement_details=interest_record.agreement_details,
+            signed_agreement_returned_at=interest_record.agreement_returned_at
+        )
 
     if (
             (framework.framework_agreement_details and framework.framework_agreement_details.get('frameworkAgreementVersion')) and  # noqa
@@ -429,9 +464,9 @@ def update_supplier_framework_details(supplier_id, framework_slug):
         if update_json.get('agreementReturned'):
             required_fields.append('uploaderUserId')
 
-        # Make a copy of the existing agreement_details with our new changes to be added and validate this
+        # Make a copy of the existing signed_agreement_details with our new changes to be added and validate this
         # If invalid, 400
-        agreement_details = interest_record.agreement_details.copy() if interest_record.agreement_details else {}
+        agreement_details = framework_agreement.signed_agreement_details.copy() if framework_agreement.signed_agreement_details else {}  # noqa
 
         if update_json.get('agreementDetails'):
             agreement_details.update(update_json['agreementDetails'])
@@ -449,35 +484,35 @@ def update_supplier_framework_details(supplier_id, framework_slug):
             if not user:
                 abort(400, "No user found with id '{}'".format(update_json['agreementDetails']['uploaderUserId']))
 
-        interest_record.agreement_details = agreement_details or None
+        framework_agreement.signed_agreement_details = agreement_details or None
 
-    uniform_now = datetime.utcnow()
-
-    if 'onFramework' in update_json:
-        interest_record.on_framework = update_json['onFramework']
     if 'agreementReturned' in update_json:
         if update_json["agreementReturned"] is False:
-            interest_record.agreement_returned_at = None
-            interest_record.agreement_details = None
+            framework_agreement.signed_agreement_returned_at = None
+            framework_agreement.signed_agreement_details = None
         else:
-            interest_record.agreement_returned_at = uniform_now
-    if update_json.get('countersigned'):
-        interest_record.countersigned_at = uniform_now
+            framework_agreement.signed_agreement_returned_at = datetime.utcnow()
+
+    try:
+        db.session.add(framework_agreement)
+        db.session.flush()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.supplier_update,
         user=updater_json['updated_by'],
-        data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug, 'update': update_json},
-        db_object=supplier
+        data={
+            'supplierId': supplier.id,
+            'frameworkSlug': framework.slug,
+            'update': update_json
+        },
+        db_object=framework_agreement
     )
 
-    try:
-        db.session.add(interest_record)
-        db.session.add(audit_event)
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        return jsonify(message="Database Error: {0}".format(e)), 400
+    db.session.add(audit_event)
+    db.session.commit()
 
     return jsonify(frameworkInterest=interest_record.serialize()), 200
 

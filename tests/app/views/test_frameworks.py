@@ -536,6 +536,12 @@ class TestFrameworkStats(BaseApplicationTest):
 
 class TestGetFrameworkSuppliers(BaseApplicationTest):
     def setup(self):
+        """Sets up supplier frameworks as follows:
+
+        Suppliers with IDs 0-4 have a SupplierFramework record ("have registered interest")
+        Suppliers 3 and 4 have returned their agreements - will be saved in FrameworkAgreement, NOT SupplierFramework
+        No further details are saved in anyone's SupplierFramework record
+        """
         super(TestGetFrameworkSuppliers, self).setup()
 
         self.setup_dummy_suppliers(5)
@@ -560,13 +566,6 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                     content_type='application/json')
                 assert response.status_code == 200, response.get_data(as_text=True)
 
-    def teardown(self):
-        super(TestGetFrameworkSuppliers, self).teardown()
-
-        with self.app.app_context():
-            db.session.execute("UPDATE frameworks SET status='open' WHERE id=4")
-            db.session.commit()
-
     def test_list_suppliers_related_to_a_framework(self):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-7/suppliers')
@@ -585,6 +584,51 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
 
             times = [parse_time(item['agreementReturnedAt']) for item in data['supplierFrameworks']]
             assert times[0] > times[1]
+
+    def test_list_suppliers_with_agreements_returned_uses_framework_agreement_timestamp(self):
+        with self.app.app_context():
+            # Set supplier 3 agreement_returned_at as the highest time of suppliers 3 and 4 so we can test that
+            # FrameworkAgreement.signed_agreement_returned_at takes priority over
+            # SupplierFramework.agreement_returned_at when ordering by time
+            db.session.execute(
+                "UPDATE supplier_frameworks SET agreement_returned_at='{}' WHERE supplier_id=3".format(
+                    datetime.datetime.utcnow())
+            )
+            db.session.commit()
+
+            response = self.client.get('/frameworks/g-cloud-7/suppliers?agreement_returned=true')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 2
+
+            times = [parse_time(item['agreementReturnedAt']) for item in data['supplierFrameworks']]
+            assert times[0] > times[1]
+
+            # Check SupplierFramework.agreement_returned_at is not used (indicated by supplier 4
+            # appearing before supplier 3 in our results)
+            supplier_ids = [item['supplierId'] for item in data['supplierFrameworks']]
+            assert supplier_ids[0] > supplier_ids[1]
+
+    def test_list_suppliers_with_agreements_returned_includes_those_with_only_supplier_framework(self):
+        with self.app.app_context():
+            # Set supplier 2 to have their agreement returned information set in the SupplierFramework table
+            # (NOT in the FrameworkAgreement table, like suppliers 3 and 4 have)
+            db.session.execute(
+                "UPDATE supplier_frameworks SET agreement_returned_at='{}' WHERE supplier_id=2".format(
+                    datetime.datetime.utcnow())
+            )
+            db.session.commit()
+
+            response = self.client.get('/frameworks/g-cloud-7/suppliers?agreement_returned=true')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 3
+
+            # Check supplier 2 is included and is the top result (as their agreement returned time is the most recent)
+            supplier_ids = [item['supplierId'] for item in data['supplierFrameworks']]
+            assert supplier_ids[0] == 2
 
 
 class TestGetFrameworkInterest(BaseApplicationTest):

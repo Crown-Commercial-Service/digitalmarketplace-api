@@ -459,9 +459,9 @@ class SupplierFramework(db.Model):
                 "countersignedAt": countersigned_at,
             })
 
-        if self.agreement_details and self.agreement_details.get('uploaderUserId'):
+        if supplier_framework['agreementDetails'] and supplier_framework['agreementDetails'].get('uploaderUserId'):
             user = User.query.filter(
-                User.id == self.agreement_details.get('uploaderUserId')
+                User.id == supplier_framework['agreementDetails']['uploaderUserId']
             ).first()
 
             if user:
@@ -510,6 +510,9 @@ class FrameworkAgreement(db.Model):
 
     @validates('signed_agreement_details')
     def validates_signed_agreement_details(self, key, data):
+        if data is None:
+            return data
+
         data = strip_whitespace_from_data(data)
         data = purge_nulls_from_data(data)
 
@@ -519,7 +522,7 @@ class FrameworkAgreement(db.Model):
         return purge_nulls_from_data({
             'id': self.id,
             'supplierId': self.supplier_id,
-            'frameworkId': self.framework_id,
+            'frameworkSlug': self.supplier_framework.framework.slug,
             'signedAgreementDetails': self.signed_agreement_details,
             'signedAgreementPath': self.signed_agreement_path,
             'signedAgreementReturnedAt': (

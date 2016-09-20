@@ -37,18 +37,18 @@ def supplier(request, app):
         return {'id': s.supplier_id}
 
 
-@pytest.fixture()
+@pytest.fixture(params=[{'on_framework': True}])
 def supplier_framework(request, app, supplier, live_example_framework):
     with app.app_context():
         sf = SupplierFramework(
             supplier_id=supplier['id'],
-            framework_id=live_example_framework['id']
+            framework_id=live_example_framework['id'],
+            **request.param
         )
         db.session.add(sf)
         db.session.commit()
 
-        return {'supplier_id': sf.supplier_id, 'framework_id': sf.framework_id}
-
+        return sf.serialize()
 
 _framework_kwargs_whitelist = set(("status", "framework", "framework_agreement_details",))
 
@@ -137,12 +137,6 @@ _dos_framework_defaults = {
     "framework": "dos",
     "framework_agreement_details": None,
 }
-_example_framework_details = {
-    "slug": "example-framework",
-    "framework": "g-cloud",
-    "framework_agreement_details": None
-}
-
 _example_framework_details = {
     "slug": "example-framework",
     "framework": "g-cloud",

@@ -277,7 +277,7 @@ def export_users_for_framework(framework_slug):
                 application_result = 'no result'
             else:
                 application_result = 'pass' if sf.on_framework else 'fail'
-            framework_agreement = bool(sf.agreement_returned_at)
+            framework_agreement = bool(sf.serialize()['agreementReturnedAt'])
             variations_agreed = ', '.join(sf.agreed_variations.keys()) if sf.agreed_variations else ''
 
         user_rows.append({

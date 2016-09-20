@@ -8,7 +8,7 @@ from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
 from .. import main
 from ...models import (
-    db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent, Lot,
+    db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent, Lot, FrameworkAgreement
 )
 from ...utils import (
     get_json_from_request, json_has_required_keys, json_only_has_required_keys,
@@ -216,16 +216,21 @@ def get_framework_suppliers(framework_slug):
 
     supplier_frameworks = SupplierFramework.query.filter(
         SupplierFramework.framework_id == framework.id
-    )
+    ).outerjoin(SupplierFramework.framework_agreements)
 
     if agreement_returned is not None:
         if convert_to_boolean(agreement_returned):
             supplier_frameworks = supplier_frameworks.filter(
-                SupplierFramework.agreement_returned_at.isnot(None)
-            ).order_by(SupplierFramework.agreement_returned_at.desc())
+                SupplierFramework.agreement_returned_at.isnot(None) |
+                FrameworkAgreement.signed_agreement_returned_at.isnot(None)
+            ).order_by(func.coalesce(
+                FrameworkAgreement.signed_agreement_returned_at,
+                SupplierFramework.agreement_returned_at
+            ).desc())
         else:
             supplier_frameworks = supplier_frameworks.filter(
-                SupplierFramework.agreement_returned_at.is_(None)
+                SupplierFramework.agreement_returned_at.is_(None) &
+                FrameworkAgreement.signed_agreement_returned_at.is_(None)
             )
 
     return jsonify(supplierFrameworks=[
