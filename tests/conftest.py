@@ -143,12 +143,6 @@ _example_framework_details = {
     "framework_agreement_details": None
 }
 
-_example_framework_details = {
-    "slug": "example-framework",
-    "framework": "g-cloud",
-    "framework_agreement_details": None
-}
-
 
 def _supplierframework_fixture_inner(request, app, sf_kwargs=None):
     sf_kwargs = sf_kwargs or {}
