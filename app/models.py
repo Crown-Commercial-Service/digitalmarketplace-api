@@ -1458,6 +1458,47 @@ class BriefClarificationQuestion(db.Model):
         }
 
 
+class WorkOrder(db.Model):
+    __tablename__ = 'work_order'
+
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(JSON, nullable=False)
+
+    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), nullable=False)
+    supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
+
+    created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
+
+    brief = db.relationship('Brief')
+    supplier = db.relationship('Supplier', lazy='joined')
+
+    @validates('data')
+    def validates_data(self, key, data):
+        data = drop_foreign_fields(data, [
+            'supplierCode', 'briefId',
+        ])
+        data = strip_whitespace_from_data(data)
+        data = purge_nulls_from_data(data)
+
+        return data
+
+    def serialize(self):
+        data = self.data.copy()
+        data.update({
+            'id': self.id,
+            'briefId': self.brief_id,
+            'supplierCode': self.supplier_code,
+            'supplierName': self.supplier.name,
+            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'links': {
+                'self': url_for('.get_work_order', work_order_id=self.id),
+                'brief': url_for('.get_brief', brief_id=self.brief_id),
+                'supplier': url_for(".get_supplier", code=self.supplier_code),
+            }
+        })
+
+        return data
+
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
 # which takes a long time for old events

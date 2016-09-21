@@ -12,7 +12,8 @@ from app.models import (
     Supplier, SupplierFramework,
     Brief, BriefResponse,
     ValidationError,
-    BriefClarificationQuestion
+    BriefClarificationQuestion,
+    WorkOrder
 )
 
 from .helpers import BaseApplicationTest
@@ -814,3 +815,69 @@ class TestLot(BaseApplicationTest):
                 u'unitSingular': u'lab',
                 u'unitPlural': u'labs',
             }
+
+
+class TestWorkOrder(BaseApplicationTest):
+    def setup(self):
+        super(TestWorkOrder, self).setup()
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            lot = framework.get_lot('digital-outcomes')
+            self.brief = Brief(data={}, framework=framework, lot=lot)
+            db.session.add(self.brief)
+            db.session.commit()
+
+            self.setup_dummy_suppliers(1)
+            self.supplier = Supplier.query.filter(Supplier.code == 0).first()
+
+    def test_create_a_new_work_order(self):
+        with self.app.app_context():
+            work_order = WorkOrder(data={}, brief=self.brief, supplier=self.supplier)
+            db.session.add(work_order)
+            db.session.commit()
+
+            assert work_order.id is not None
+            assert work_order.supplier_code == 0
+            assert work_order.brief_id == self.brief.id
+            assert isinstance(work_order.created_at, datetime)
+            assert work_order.data == {}
+
+    def test_foreign_fields_are_removed_from_work_order_data(self):
+        work_order = WorkOrder(data={})
+        work_order.data = {'foo': 'bar', 'briefId': 5, 'supplierCode': 100}
+
+        assert work_order.data == {'foo': 'bar'}
+
+    def test_nulls_are_removed_from_work_order_data(self):
+        work_order = WorkOrder(data={})
+        work_order.data = {'foo': 'bar', 'bar': None}
+
+        assert work_order.data == {'foo': 'bar'}
+
+    def test_whitespace_is_stripped_from_work_order_data(self):
+        work_order = WorkOrder(data={})
+        work_order.data = {'foo': ' bar ', 'bar': ['', '  foo']}
+
+        assert work_order.data == {'foo': 'bar', 'bar': ['foo']}
+
+    def test_work_order_can_be_serialized(self):
+        with self.app.app_context():
+            work_order = WorkOrder(data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier)
+            db.session.add(work_order)
+            db.session.commit()
+
+            with mock.patch('app.models.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert work_order.serialize() == {
+                    'id': work_order.id,
+                    'briefId': self.brief.id,
+                    'supplierCode': 0,
+                    'supplierName': 'Supplier 0',
+                    'createdAt': mock.ANY,
+                    'foo': 'bar',
+                    'links': {
+                        'self': (('.get_work_order',), {'work_order_id': work_order.id}),
+                        'brief': (('.get_brief',), {'brief_id': self.brief.id}),
+                        'supplier': (('.get_supplier',), {'code': 0}),
+                    }
+                }
