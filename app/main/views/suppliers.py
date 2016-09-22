@@ -441,7 +441,6 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if 'agreementDetails' in update_json and framework.framework_agreement_details is None:
         abort(400, "Framework '{}' does not accept 'agreementDetails'".format(framework_slug))
 
-    # Try and find an existing FrameworkAgreement to update, if not then create one based on data from SupplierFramework
     framework_agreement = FrameworkAgreement.query.filter(
         FrameworkAgreement.supplier_id == supplier.supplier_id,
         FrameworkAgreement.framework_id == framework.id
@@ -450,9 +449,7 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if not framework_agreement:
         framework_agreement = FrameworkAgreement(
             supplier_id=supplier.supplier_id,
-            framework_id=framework.id,
-            signed_agreement_details=interest_record.agreement_details,
-            signed_agreement_returned_at=interest_record.agreement_returned_at
+            framework_id=framework.id
         )
 
     if (
@@ -484,22 +481,16 @@ def update_supplier_framework_details(supplier_id, framework_slug):
                 abort(400, "No user found with id '{}'".format(update_json['agreementDetails']['uploaderUserId']))
 
         framework_agreement.signed_agreement_details = agreement_details or None
-        interest_record.agreement_details = agreement_details or None
 
     if 'agreementReturned' in update_json:
         if update_json["agreementReturned"] is False:
             framework_agreement.signed_agreement_returned_at = None
             framework_agreement.signed_agreement_details = None
-            interest_record.agreement_returned_at = None
-            interest_record.agreement_details = None
         else:
-            uniform_now = datetime.utcnow()
-            framework_agreement.signed_agreement_returned_at = uniform_now
-            interest_record.agreement_returned_at = uniform_now
+            framework_agreement.signed_agreement_returned_at = datetime.utcnow()
 
     try:
         db.session.add(framework_agreement)
-        db.session.add(interest_record)
         db.session.flush()
     except IntegrityError as e:
         db.session.rollback()

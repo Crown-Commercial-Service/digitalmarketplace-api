@@ -328,26 +328,20 @@ class SupplierFramework(db.Model):
                              primary_key=True)
     declaration = db.Column(JSON)
     on_framework = db.Column(db.Boolean, nullable=True)
+    agreed_variations = db.Column(JSON)
+
+    # The following three fields are deprecated and MUST NOT BE USED
+    # Data may be outdated and should not be used for reading/updating
+    # This framework_agreements table is now the source of truth for this data
     agreement_returned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
     countersigned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
     agreement_details = db.Column(JSON)
-    agreed_variations = db.Column(JSON)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
     @validates('declaration')
     def validates_declaration(self, key, value):
-        value = strip_whitespace_from_data(value)
-        value = purge_nulls_from_data(value)
-
-        return value
-
-    @validates('agreement_details')
-    def validates_agreement_details(self, key, value):
-        if value is None:
-            return value
-
         value = strip_whitespace_from_data(value)
         value = purge_nulls_from_data(value)
 
@@ -416,14 +410,6 @@ class SupplierFramework(db.Model):
         })
 
     def serialize(self, data=None):
-        agreement_returned_at = self.agreement_returned_at
-        if agreement_returned_at:
-            agreement_returned_at = agreement_returned_at.strftime(DATETIME_FORMAT)
-
-        countersigned_at = self.countersigned_at
-        if countersigned_at:
-            countersigned_at = countersigned_at.strftime(DATETIME_FORMAT)
-
         agreed_variations = {k: self.serialize_agreed_variation(v) for k, v in iteritems(self.agreed_variations or {})}
 
         supplier_framework = dict({
@@ -452,11 +438,11 @@ class SupplierFramework(db.Model):
             })
         else:
             supplier_framework.update({
-                "agreementReturned": bool(agreement_returned_at),
-                "agreementReturnedAt": agreement_returned_at,
-                "agreementDetails": self.agreement_details,
-                "countersigned": bool(countersigned_at),
-                "countersignedAt": countersigned_at,
+                "agreementReturned": False,
+                "agreementReturnedAt": None,
+                "agreementDetails": None,
+                "countersigned": False,
+                "countersignedAt": None,
             })
 
         if supplier_framework['agreementDetails'] and supplier_framework['agreementDetails'].get('uploaderUserId'):

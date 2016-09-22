@@ -221,15 +221,12 @@ def get_framework_suppliers(framework_slug):
     if agreement_returned is not None:
         if convert_to_boolean(agreement_returned):
             supplier_frameworks = supplier_frameworks.filter(
-                SupplierFramework.agreement_returned_at.isnot(None) |
                 FrameworkAgreement.signed_agreement_returned_at.isnot(None)
-            ).order_by(func.coalesce(
-                FrameworkAgreement.signed_agreement_returned_at,
-                SupplierFramework.agreement_returned_at
-            ).desc())
+            ).order_by(
+                FrameworkAgreement.signed_agreement_returned_at.desc()
+            )
         else:
             supplier_frameworks = supplier_frameworks.filter(
-                SupplierFramework.agreement_returned_at.is_(None) &
                 FrameworkAgreement.signed_agreement_returned_at.is_(None)
             )
 
