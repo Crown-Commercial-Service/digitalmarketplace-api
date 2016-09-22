@@ -485,16 +485,22 @@ def update_supplier_framework_details(supplier_id, framework_slug):
                 abort(400, "No user found with id '{}'".format(update_json['agreementDetails']['uploaderUserId']))
 
         framework_agreement.signed_agreement_details = agreement_details or None
+        interest_record.agreement_details = agreement_details or None
 
     if 'agreementReturned' in update_json:
         if update_json["agreementReturned"] is False:
             framework_agreement.signed_agreement_returned_at = None
             framework_agreement.signed_agreement_details = None
+            interest_record.agreement_returned_at = None
+            interest_record.agreement_details = None
         else:
-            framework_agreement.signed_agreement_returned_at = datetime.utcnow()
+            uniform_now = datetime.utcnow()
+            framework_agreement.signed_agreement_returned_at = uniform_now
+            interest_record.agreement_returned_at = uniform_now
 
     try:
         db.session.add(framework_agreement)
+        db.session.add(interest_record)
         db.session.flush()
     except IntegrityError as e:
         db.session.rollback()
