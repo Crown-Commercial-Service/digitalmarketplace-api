@@ -1,27 +1,20 @@
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
 
-from .. import main
-from ...models import db, Brief, WorkOrder, AuditEvent
-from ...utils import (
+from app.main import main
+from app.models import db, Brief, WorkOrder, AuditEvent
+from app.utils import (
     get_json_from_request, json_has_required_keys, get_int_or_400,
     pagination_links, get_valid_page_or_1, url_for,
     validate_and_return_updater_request, get_positive_int_or_400
 )
 
-from ...service_utils import validate_and_return_supplier
-from enum import Enum, unique
-
-
-@unique
-class WorkOrderAuditTypes(Enum):
-    create_work_order = 'create_work_order'
+from app.service_utils import validate_and_return_supplier
 
 
 @main.route('/work-orders', methods=['POST'])
 def create_work_order():
     json_payload = get_json_from_request()
-    updater_json = validate_and_return_updater_request()
 
     json_has_required_keys(json_payload, ['workOrder'])
     work_order_json = json_payload['workOrder']
@@ -57,17 +50,6 @@ def create_work_order():
         db.session.rollback()
         abort(400, e.orig)
 
-    audit = AuditEvent(
-        audit_type=WorkOrderAuditTypes.create_work_order,
-        user=updater_json['updated_by'],
-        data={
-            'workOrderId': work_order.id,
-            'workOrderJson': work_order_json,
-        },
-        db_object=work_order,
-    )
-
-    db.session.add(audit)
     db.session.commit()
 
     return jsonify(workOrder=work_order.serialize()), 201

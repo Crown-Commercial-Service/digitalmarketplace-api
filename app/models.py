@@ -1464,7 +1464,7 @@ class WorkOrder(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(JSON, nullable=False)
 
-    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), nullable=False)
+    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), nullable=False, unique=True)
     supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
 
     created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)

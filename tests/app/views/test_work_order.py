@@ -1,12 +1,10 @@
 import json
-import pytest
 import datetime
 
-from ..helpers import BaseApplicationTest
-from ... import example_listings
+from tests.app.helpers import BaseApplicationTest
+from tests import example_listings
 
-from app.models import db, Lot, Brief, WorkOrder, AuditEvent, Service
-from app.main.views.work_orders import WorkOrderAuditTypes
+from app.models import db, Lot, Brief, WorkOrder
 
 
 class BaseWorkOrderTest(BaseApplicationTest):
@@ -29,7 +27,8 @@ class BaseWorkOrderTest(BaseApplicationTest):
         with self.app.app_context():
             work_order = WorkOrder(
                 data=self.work_order_data,
-                supplier_code=supplier_code, brief_id=brief_id or self.brief_id
+                supplier_code=supplier_code,
+                brief_id=brief_id or self.brief_id
             )
 
             db.session.add(work_order)
@@ -72,24 +71,6 @@ class TestCreateWorkOrder(BaseWorkOrderTest):
         assert res.status_code == 201, data
         assert data['workOrder']['supplierName'] == 'Supplier 0'
         assert data['workOrder']['briefId'] == self.brief_id
-
-    def test_create_work_order_creates_an_audit_event(self):
-        res = self.create_work_order(
-            dict(self.work_order_data, briefId=self.brief_id, supplierCode=0)
-        )
-
-        assert res.status_code == 201, res.get_data(as_text=True)
-
-        with self.app.app_context():
-            audit_events = AuditEvent.query.filter(
-                AuditEvent.type == WorkOrderAuditTypes.create_work_order.value
-            ).all()
-
-        assert len(audit_events) == 1
-        assert audit_events[0].data == {
-            'workOrderId': json.loads(res.get_data(as_text=True))['workOrder']['id'],
-            'workOrderJson': dict(self.work_order_data, briefId=self.brief_id, supplierCode=0)
-        }
 
     def test_cannot_create_work_order_with_empty_json(self):
         res = self.client.post(
@@ -172,13 +153,13 @@ class TestCreateWorkOrder(BaseWorkOrderTest):
         assert res.status_code == 400
         assert "Brief must be closed" in res.get_data(as_text=True)
 
-    def test_cannot_respond_to_a_brief_more_than_once_from_the_same_supplier(self):
+    def test_cannot_create_work_order_for_a_brief_more_than_once(self):
         self.create_work_order(
             dict(self.work_order_data, briefId=self.brief_id, supplierCode=0)
         )
 
         res = self.create_work_order(
-            dict(self.work_order_data, briefId=self.brief_id, supplierCode=0)
+            dict(self.work_order_data, briefId=self.brief_id, supplierCode=1)
         )
 
         assert res.status_code == 400, res.get_data(as_text=True)
@@ -200,7 +181,7 @@ class TestGetWorkOrder(BaseWorkOrderTest):
         assert data['workOrder']['id'] == self.work_order_id
         assert data['workOrder']['supplierCode'] == 0
 
-    def test_get_missing_brief_returns_404(self):
+    def test_get_missing_work_order_returns_404(self):
         res = self.get_work_order(999)
 
         assert res.status_code == 404
