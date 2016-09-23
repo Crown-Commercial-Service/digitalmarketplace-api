@@ -443,9 +443,8 @@ def update_supplier_framework_details(supplier_id, framework_slug):
 
     # Try and find an existing FrameworkAgreement to update, if not then create one based on data from SupplierFramework
     framework_agreement = FrameworkAgreement.query.filter(
-        FrameworkAgreement.supplier_id == supplier.supplier_id
-    ).filter(
-        Framework.slug == framework.slug
+        FrameworkAgreement.supplier_id == supplier.supplier_id,
+        FrameworkAgreement.framework_id == framework.id
     ).first()
 
     if not framework_agreement:
