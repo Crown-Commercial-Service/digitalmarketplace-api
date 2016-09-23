@@ -509,7 +509,7 @@ def update_supplier_framework_details(supplier_id, framework_slug):
         audit_type=AuditTypes.supplier_update,
         user=updater_json['updated_by'],
         data={
-            'supplierId': supplier.id,
+            'supplierId': supplier.supplier_id,
             'frameworkSlug': framework.slug,
             'update': update_json
         },
