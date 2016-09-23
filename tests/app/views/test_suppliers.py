@@ -1837,7 +1837,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
     def test_changing_on_framework_to_passed_creates_audit_event(self, supplier_framework):
         self.supplier_framework_interest(
             supplier_framework,
-            update={'onFramework': True, 'agreementReturned': True}
+            update={'onFramework': True}
         )
         with self.app.app_context():
             supplier = Supplier.query.filter(
@@ -1853,7 +1853,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             assert audit.data['supplierId'] == supplier_framework['supplierId']
             assert audit.data['frameworkSlug'] == supplier_framework['frameworkSlug']
             assert audit.data['update']['onFramework'] is True
-            assert audit.data['update']['agreementReturned'] is True
 
 
 class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
