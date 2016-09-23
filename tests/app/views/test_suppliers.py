@@ -1810,6 +1810,30 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['onFramework'] is False
         assert data['frameworkInterest']['agreementReturned'] is False
 
+    def test_updating_framework_agreement_creates_audit_event(self, supplier_framework):
+        self.supplier_framework_interest(
+            supplier_framework,
+            update={'signerName': "Josh Moss", 'signerRole': "The Boss"}
+        )
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == supplier_framework['frameworkSlug']).first()
+
+            framework_agreement = FrameworkAgreement.query.filter(
+                FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
+                FrameworkAgreement.framework_id == framework.id
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.type == "supplier_update",
+                AuditEvent.object == framework_agreement
+            ).first()
+            assert audit.type == "supplier_update"
+            assert audit.user == "interested@example.com"
+            assert audit.data['supplierId'] == supplier_framework['supplierId']
+            assert audit.data['frameworkSlug'] == supplier_framework['frameworkSlug']
+            assert audit.data['update']['signerName'] == "Josh Moss"
+            assert audit.data['update']['signerRole'] == "The Boss"
+
     def test_changing_on_framework_to_passed_creates_audit_event(self, supplier_framework):
         self.supplier_framework_interest(
             supplier_framework,
