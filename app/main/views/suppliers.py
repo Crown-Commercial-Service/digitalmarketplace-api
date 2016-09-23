@@ -443,9 +443,8 @@ def update_supplier_framework_details(supplier_id, framework_slug):
 
     # Try and find an existing FrameworkAgreement to update, if not then create one based on data from SupplierFramework
     framework_agreement = FrameworkAgreement.query.filter(
-        FrameworkAgreement.supplier_id == supplier.supplier_id
-    ).filter(
-        Framework.slug == framework.slug
+        FrameworkAgreement.supplier_id == supplier.supplier_id,
+        FrameworkAgreement.framework_id == framework.id
     ).first()
 
     if not framework_agreement:
@@ -510,7 +509,7 @@ def update_supplier_framework_details(supplier_id, framework_slug):
         audit_type=AuditTypes.supplier_update,
         user=updater_json['updated_by'],
         data={
-            'supplierId': supplier.id,
+            'supplierId': supplier.supplier_id,
             'frameworkSlug': framework.slug,
             'update': update_json
         },
