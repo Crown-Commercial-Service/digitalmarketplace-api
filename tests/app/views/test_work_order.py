@@ -25,16 +25,24 @@ class BaseWorkOrderTest(BaseApplicationTest):
 
     def setup_dummy_work_order(self, brief_id=None, supplier_code=0):
         with self.app.app_context():
+            brief = Brief(
+                data=example_listings.brief_data().example(),
+                published_at=datetime.date(2016, 1, 1), framework_id=5, lot=Lot.query.get(5)
+            )
+
+            db.session.add(brief)
+            db.session.commit()
+
             work_order = WorkOrder(
                 data=self.work_order_data,
                 supplier_code=supplier_code,
-                brief_id=brief_id or self.brief_id
+                brief_id=brief_id or brief.id
             )
 
             db.session.add(work_order)
             db.session.commit()
 
-            return work_order.id
+            return work_order.id, brief.id
 
     def create_work_order(self, data):
         return self.client.post(
@@ -170,7 +178,7 @@ class TestGetWorkOrder(BaseWorkOrderTest):
     def setup(self):
         super(TestGetWorkOrder, self).setup()
 
-        self.work_order_id = self.setup_dummy_work_order()
+        self.work_order_id, _ = self.setup_dummy_work_order()
 
     def test_get_work_order(self):
         res = self.get_work_order(self.work_order_id)
@@ -236,7 +244,7 @@ class TestListworkOrders(BaseWorkOrderTest):
         assert len(data['workOrders']) == 2
 
     def test_list_work_orders_for_supplier_code(self):
-        for i in range(8):
+        for i in range(3):
             self.setup_dummy_work_order(supplier_code=0)
             self.setup_dummy_work_order(supplier_code=1)
 
@@ -244,31 +252,20 @@ class TestListworkOrders(BaseWorkOrderTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['workOrders']) == 8
+        assert len(data['workOrders']) == 3
         assert all(br['supplierCode'] == 1 for br in data['workOrders'])
         assert 'self' in data['links']
 
     def test_list_work_orders_for_brief_id(self):
-        with self.app.app_context():
-            brief = Brief(
-                data=example_listings.brief_data().example(),
-                status='live', framework_id=5, lot=Lot.query.get(5)
-            )
-            db.session.add(brief)
-            db.session.commit()
+        _, brief_id = self.setup_dummy_work_order()
+        for i in range(3):
+            self.setup_dummy_work_order()
 
-            another_brief_id = brief.id
-
-        for i in range(8):
-            self.setup_dummy_work_order(brief_id=self.brief_id, supplier_code=0)
-            self.setup_dummy_work_order(brief_id=another_brief_id, supplier_code=0)
-
-        res = self.list_work_orders(brief_id=another_brief_id)
+        res = self.list_work_orders(brief_id=brief_id)
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['workOrders']) == 8
-        assert all(br['briefId'] == another_brief_id for br in data['workOrders'])
+        assert len(data['workOrders']) == 1
         assert 'self' in data['links']
 
     def test_cannot_list_work_orders_for_non_integer_brief_id(self):
