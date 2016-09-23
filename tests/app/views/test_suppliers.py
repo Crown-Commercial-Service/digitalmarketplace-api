@@ -1927,6 +1927,55 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
                 'signerName': 'name', 'signerRole': 'role', 'uploaderUserId': 1, 'frameworkAgreementVersion': 'v1.0'}
             assert agreements[0].signed_agreement_returned_at == datetime(2016, 6, 6, 0, 0)
 
+    def test_if_framework_agreement_does_not_exist_for_correct_framework_then_it_is_created(
+            self, supplier_framework, live_g8_framework
+    ):
+        with self.app.app_context():
+            # I don't think we can create supplier_frameworks for different frameworks using our current fixture setup
+            g8_supplier_framework = SupplierFramework(
+                supplier_id=supplier_framework['supplierId'],
+                framework_id=live_g8_framework['id'],
+                on_framework=True
+            )
+
+            # Create framework agreement for another framework
+            g8_agreement = FrameworkAgreement(
+                supplier_id=supplier_framework['supplierId'],
+                framework_id=live_g8_framework['id']
+            )
+            db.session.add(g8_supplier_framework)
+            db.session.add(g8_agreement)
+            db.session.commit()
+
+            # assert that we don't have an agreement for the live example framework
+            example_framework = Framework.query.filter(
+                Framework.slug == supplier_framework['frameworkSlug']
+            ).first()
+            example_agreement_query = FrameworkAgreement.query.filter(
+                FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
+                FrameworkAgreement.framework_id == example_framework.id
+            )
+            assert not example_agreement_query.first()
+
+            with freeze_time('2016-06-06'):
+                response = self.client.post(
+                    '/suppliers/{}/frameworks/{}'.format(
+                        supplier_framework['supplierId'], supplier_framework['frameworkSlug']),
+                    data=json.dumps(
+                        {
+                            'updated_by': 'interested@example.com',
+                            'frameworkInterest': {'agreementReturned': True}
+                        }),
+                    content_type='application/json')
+                assert response.status_code == 200
+
+            # Check framework agreement exists for the right framework with the right timestamp
+            example_agreement = example_agreement_query.first()
+            assert example_agreement is not None
+            assert example_agreement.supplier_id == supplier_framework['supplierId']
+            assert example_agreement.framework_id == example_framework.id
+            assert example_agreement.signed_agreement_returned_at == datetime(2016, 6, 6, 0, 0)
+
 
 class TestSupplierFrameworkVariation(BaseApplicationTest):
     def setup(self):
