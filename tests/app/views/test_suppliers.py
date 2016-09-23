@@ -1871,7 +1871,6 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
                 framework_id=framework.id)
             db.session.add(agreement)
             db.session.commit()
-            agreement_id = agreement.id
 
             with freeze_time('2016-06-06'):
                 response = self.client.post(
@@ -1894,7 +1893,7 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
         'agreement_details': {'signerName': 'name', 'signerRole': 'role', 'uploaderUserId': 1}
         }
     )
-    def test_if_framework_agreement_does_not_exists_then_it_is_created(self, supplier_framework):
+    def test_if_framework_agreement_does_not_exist_then_it_is_created(self, supplier_framework):
         with self.app.app_context():
             framework = Framework.query.filter(
                 Framework.slug == supplier_framework['frameworkSlug']
