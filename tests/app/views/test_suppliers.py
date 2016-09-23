@@ -1861,6 +1861,20 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
     # data is fully migrated from the supplier frameworks table to the
     # framework_agreements table then these tests can be removed
 
+    def supplier_framework_update(self, supplier_framework):
+        url = '/suppliers/{}/frameworks/{}'.format(
+            supplier_framework['supplierId'], supplier_framework['frameworkSlug'])
+
+        # Update the SupplierFramework record
+        return self.client.post(
+            url,
+            data=json.dumps(
+                {
+                    'updated_by': 'interested@example.com',
+                    'frameworkInterest': {'agreementReturned': True}
+                }),
+            content_type='application/json')
+
     def test_if_framework_agreement_already_exists_then_it_is_updated(self, supplier_framework):
         with self.app.app_context():
             # Create framework agreement
@@ -1873,15 +1887,7 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
             db.session.commit()
 
             with freeze_time('2016-06-06'):
-                response = self.client.post(
-                    '/suppliers/{}/frameworks/{}'.format(
-                        supplier_framework['supplierId'], supplier_framework['frameworkSlug']),
-                    data=json.dumps(
-                        {
-                            'updated_by': 'interested@example.com',
-                            'frameworkInterest': {'agreementReturned': True}
-                        }),
-                    content_type='application/json')
+                response = self.supplier_framework_update(supplier_framework)
                 assert response.status_code == 200
 
             # Check framework agreement is updated
@@ -1906,16 +1912,8 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
             assert not agreements.count()
 
             with freeze_time('2016-06-06'):
-                    response = self.client.post(
-                        '/suppliers/{}/frameworks/{}'.format(
-                            supplier_framework['supplierId'], supplier_framework['frameworkSlug']),
-                        data=json.dumps(
-                            {
-                                'updated_by': 'interested@example.com',
-                                'frameworkInterest': {'agreementReturned': True}
-                            }),
-                        content_type='application/json')
-                    assert response.status_code == 200
+                response = self.supplier_framework_update(supplier_framework)
+                assert response.status_code == 200
 
             agreements = FrameworkAgreement.query.filter(
                 FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
@@ -1958,15 +1956,7 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
             assert not example_agreement_query.first()
 
             with freeze_time('2016-06-06'):
-                response = self.client.post(
-                    '/suppliers/{}/frameworks/{}'.format(
-                        supplier_framework['supplierId'], supplier_framework['frameworkSlug']),
-                    data=json.dumps(
-                        {
-                            'updated_by': 'interested@example.com',
-                            'frameworkInterest': {'agreementReturned': True}
-                        }),
-                    content_type='application/json')
+                response = self.supplier_framework_update(supplier_framework)
                 assert response.status_code == 200
 
             # Check framework agreement exists for the right framework with the right timestamp
