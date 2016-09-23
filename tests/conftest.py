@@ -201,7 +201,7 @@ def _supplier_fixture_inner(request, app, supplier_kwargs=None, ci_kwargs=None):
     def teardown():
         with app.app_context():
             ContactInformation.query.filter(ContactInformation.id == contact_information_id).delete()
-            Supplier.query.filter(Supplier.id == supplier_id).delete()
+            Supplier.query.filter(Supplier.supplier_id == supplier_id).delete()
             db.session.commit()
     request.addfinalizer(teardown)
     return supplier_id
