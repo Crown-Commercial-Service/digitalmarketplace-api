@@ -1271,16 +1271,9 @@ class TestRegisterFrameworkInterest(BaseApplicationTest, JSONUpdateTestMixin):
 @fixture_params('supplier_framework', {
     'on_framework': True,
     'declaration': {'an_answer': 'Yes it is'},
-    'agreement_returned_at': datetime(2015, 10, 10, 10, 10, 10),
-    'countersigned_at': datetime(2015, 11, 12, 13, 14, 15),
-    'agreement_details': {
-        u'signerName': u'thing',
-        u'signerRole': u'thing',
-        u'uploaderUserId': 20
-    },
 })
 class TestSupplierFrameworkResponse(BaseApplicationTest):
-    def test_get_supplier_framework_info(self, supplier_framework):
+    def test_get_supplier_framework_info_when_no_framework_agreement(self, supplier_framework):
         # Get SupplierFramework record
         response = self.client.get(
             '/suppliers/{}/frameworks/{}'.format(supplier_framework['supplierId'], supplier_framework['frameworkSlug']))
@@ -1291,15 +1284,11 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
         assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
         assert data['frameworkInterest']['declaration'] == {'an_answer': 'Yes it is'}
         assert data['frameworkInterest']['onFramework'] is True
-        assert data['frameworkInterest']['agreementReturned'] is True
-        assert data['frameworkInterest']['agreementReturnedAt'] == '2015-10-10T10:10:10.000000Z'
-        assert data['frameworkInterest']['countersigned'] is True
-        assert data['frameworkInterest']['countersignedAt'] == '2015-11-12T13:14:15.000000Z'
-        assert data['frameworkInterest']['agreementDetails'] == {
-            'signerName': 'thing',
-            'signerRole': 'thing',
-            'uploaderUserId': 20
-        }
+        assert data['frameworkInterest']['agreementReturned'] is False
+        assert data['frameworkInterest']['agreementReturnedAt'] is None
+        assert data['frameworkInterest']['countersigned'] is False
+        assert data['frameworkInterest']['countersignedAt'] is None
+        assert data['frameworkInterest']['agreementDetails'] is None
 
     def test_get_supplier_framework_returns_framework_agreement(self, supplier_framework):
         with self.app.app_context():
@@ -1830,80 +1819,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             assert audit.data['frameworkSlug'] == supplier_framework['frameworkSlug']
             assert audit.data['update']['onFramework'] is True
             assert audit.data['update']['agreementReturned'] is True
-
-
-class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
-    # Tests for whilst we have framework agreement data saved in both the
-    # supplier frameworks and framework agreements table. When framework agreement
-    # data is fully migrated from the supplier frameworks table to the
-    # framework_agreements table then these tests can be removed
-
-    def test_if_framework_agreement_already_exists_then_it_is_updated(self, supplier_framework):
-        with self.app.app_context():
-            # Create framework agreement
-            framework = Framework.query.filter(Framework.slug == supplier_framework['frameworkSlug']).first()
-
-            agreement = FrameworkAgreement(
-                supplier_id=supplier_framework['supplierId'],
-                framework_id=framework.id)
-            db.session.add(agreement)
-            db.session.commit()
-            agreement_id = agreement.id
-
-            with freeze_time('2016-06-06'):
-                response = self.client.post(
-                    '/suppliers/{}/frameworks/{}'.format(
-                        supplier_framework['supplierId'], supplier_framework['frameworkSlug']),
-                    data=json.dumps(
-                        {
-                            'updated_by': 'interested@example.com',
-                            'frameworkInterest': {'agreementReturned': True}
-                        }),
-                    content_type='application/json')
-                assert response.status_code == 200
-
-            # Check framework agreement is updated
-            db.session.refresh(agreement)
-            assert agreement.signed_agreement_returned_at == datetime(2016, 6, 6, 0, 0)
-
-    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    @fixture_params('supplier_framework', {
-        'agreement_details': {'signerName': 'name', 'signerRole': 'role', 'uploaderUserId': 1}
-        }
-    )
-    def test_if_framework_agreement_does_not_exists_then_it_is_created(self, supplier_framework):
-        with self.app.app_context():
-            framework = Framework.query.filter(
-                Framework.slug == supplier_framework['frameworkSlug']
-            ).first()
-
-            agreements = FrameworkAgreement.query.filter(
-                FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
-                FrameworkAgreement.framework_id == framework.id
-            )
-            assert not agreements.count()
-
-            with freeze_time('2016-06-06'):
-                    response = self.client.post(
-                        '/suppliers/{}/frameworks/{}'.format(
-                            supplier_framework['supplierId'], supplier_framework['frameworkSlug']),
-                        data=json.dumps(
-                            {
-                                'updated_by': 'interested@example.com',
-                                'frameworkInterest': {'agreementReturned': True}
-                            }),
-                        content_type='application/json')
-                    assert response.status_code == 200
-
-            agreements = FrameworkAgreement.query.filter(
-                FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
-                FrameworkAgreement.framework_id == framework.id
-            )
-
-            assert agreements.count() == 1
-            assert agreements[0].signed_agreement_details == {
-                'signerName': 'name', 'signerRole': 'role', 'uploaderUserId': 1, 'frameworkAgreementVersion': 'v1.0'}
-            assert agreements[0].signed_agreement_returned_at == datetime(2016, 6, 6, 0, 0)
 
 
 class TestSupplierFrameworkVariation(BaseApplicationTest):
