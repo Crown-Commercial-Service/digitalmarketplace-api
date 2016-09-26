@@ -694,3 +694,87 @@ class TestSignFrameworkAgreementThatHasNoFrameworkAgreementVersion(BaseFramework
                 'status': 'signed',
                 'signedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z'
             }
+
+
+class TestPutFrameworkAgreementOnHold(BaseFrameworkAgreementTest):
+    def put_framework_agreement_on_hold(self, agreement_id):
+        return self.client.post(
+            '/agreements/{}/on-hold'.format(agreement_id),
+            data=json.dumps(
+                {
+                    'updated_by': 'interested@example.com'
+                }),
+            content_type='application/json')
+
+    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
+    def test_can_put_framework_agreement_on_hold(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1),
+        )
+
+        with freeze_time('2016-12-12'):
+            res = self.put_framework_agreement_on_hold(agreement_id)
+
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert data['agreement'] == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'on hold',
+            'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
+            'signedAgreementPutOnHoldAt': '2016-12-12T00:00:00.000000Z'
+        }
+
+        with self.app.app_context():
+            agreement = FrameworkAgreement.query.filter(
+                FrameworkAgreement.id == agreement_id
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == agreement
+            ).first()
+
+            assert audit.type == "update_agreement"
+            assert audit.user == "interested@example.com"
+            assert audit.data == {
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug'],
+                'status': 'on hold'
+            }
+
+    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
+    def test_can_not_put_unsigned_framework_agreement_on_hold(self, supplier_framework):
+        agreement_id = self.create_agreement(supplier_framework)
+        res = self.put_framework_agreement_on_hold(agreement_id)
+
+        assert res.status_code == 400
+        error_message = json.loads(res.get_data(as_text=True))['error']
+        assert error_message == "Framework agreement must have status 'signed' to be put on hold"
+
+    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
+    def test_can_not_put_countersigned_framework_agreement_on_hold(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 9, 1),
+            countersigned_agreement_returned_at=datetime(2016, 10, 1)
+        )
+        res = self.put_framework_agreement_on_hold(agreement_id)
+
+        assert res.status_code == 400
+        error_message = json.loads(res.get_data(as_text=True))['error']
+        assert error_message == "Framework agreement must have status 'signed' to be put on hold"
+
+    def test_can_not_put_framework_agreement_on_hold_that_has_no_framework_agreement_version(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1)
+        )
+        res = self.put_framework_agreement_on_hold(agreement_id)
+
+        assert res.status_code == 400
+        error_message = json.loads(res.get_data(as_text=True))['error']
+        assert error_message == "Framework agreement must have a 'frameworkAgreementVersion' to be put on hold"
