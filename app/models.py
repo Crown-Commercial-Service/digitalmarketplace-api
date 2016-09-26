@@ -466,6 +466,7 @@ class FrameworkAgreement(db.Model):
     signed_agreement_details = db.Column(JSON)
     signed_agreement_path = db.Column(db.String)
     signed_agreement_returned_at = db.Column(db.DateTime)
+    signed_agreement_put_on_hold_at = db.Column(db.DateTime)
     countersigned_agreement_details = db.Column(JSON)
     countersigned_agreement_path = db.Column(db.String)
     countersigned_agreement_returned_at = db.Column(db.DateTime)
@@ -514,6 +515,10 @@ class FrameworkAgreement(db.Model):
             'signedAgreementReturnedAt': (
                 self.signed_agreement_returned_at and
                 self.signed_agreement_returned_at.strftime(DATETIME_FORMAT)
+            ),
+            'signedAgreementPutOnHoldAt': (
+                self.signed_agreement_put_on_hold_at and
+                self.signed_agreement_put_on_hold_at.strftime(DATETIME_FORMAT)
             ),
             'countersignedAgreementDetails': self.countersigned_agreement_details,
             'countersignedAgreementReturnedAt': (
