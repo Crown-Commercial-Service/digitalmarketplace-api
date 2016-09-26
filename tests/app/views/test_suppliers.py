@@ -1810,17 +1810,15 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['onFramework'] is False
         assert data['frameworkInterest']['agreementReturned'] is False
 
-    def test_updating_framework_agreement_creates_audit_event(self, supplier_framework):
+    def test_updating_framework_agreement_creates_audit_event(self, live_example_framework, supplier_framework):
         self.supplier_framework_interest(
             supplier_framework,
             update={'signerName': "Josh Moss", 'signerRole': "The Boss"}
         )
         with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == supplier_framework['frameworkSlug']).first()
-
             framework_agreement = FrameworkAgreement.query.filter(
                 FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
-                FrameworkAgreement.framework_id == framework.id
+                FrameworkAgreement.framework_id == live_example_framework['id']
             ).first()
 
             audit = AuditEvent.query.filter(
@@ -1875,14 +1873,13 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
                 }),
             content_type='application/json')
 
-    def test_if_framework_agreement_already_exists_then_it_is_updated(self, supplier_framework):
+    def test_if_framework_agreement_already_exists_then_it_is_updated(self, live_example_framework, supplier_framework):
         with self.app.app_context():
             # Create framework agreement
-            framework = Framework.query.filter(Framework.slug == supplier_framework['frameworkSlug']).first()
-
             agreement = FrameworkAgreement(
                 supplier_id=supplier_framework['supplierId'],
-                framework_id=framework.id)
+                framework_id=live_example_framework['id']
+            )
             db.session.add(agreement)
             db.session.commit()
 
@@ -1899,15 +1896,11 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
         'agreement_details': {'signerName': 'name', 'signerRole': 'role', 'uploaderUserId': 1}
         }
     )
-    def test_if_framework_agreement_does_not_exist_then_it_is_created(self, supplier_framework):
+    def test_if_framework_agreement_does_not_exist_then_it_is_created(self, live_example_framework, supplier_framework):
         with self.app.app_context():
-            framework = Framework.query.filter(
-                Framework.slug == supplier_framework['frameworkSlug']
-            ).first()
-
             agreements = FrameworkAgreement.query.filter(
                 FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
-                FrameworkAgreement.framework_id == framework.id
+                FrameworkAgreement.framework_id == live_example_framework['id']
             )
             assert not agreements.count()
 
@@ -1917,7 +1910,7 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
 
             agreements = FrameworkAgreement.query.filter(
                 FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
-                FrameworkAgreement.framework_id == framework.id
+                FrameworkAgreement.framework_id == live_example_framework['id']
             )
 
             assert agreements.count() == 1
@@ -1926,7 +1919,7 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
             assert agreements[0].signed_agreement_returned_at == datetime(2016, 6, 6, 0, 0)
 
     def test_if_framework_agreement_does_not_exist_for_correct_framework_then_it_is_created(
-            self, supplier_framework, live_g8_framework
+            self, live_example_framework, supplier_framework, live_g8_framework
     ):
         with self.app.app_context():
             # I don't think we can create supplier_frameworks for different frameworks using our current fixture setup
@@ -1946,12 +1939,9 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
             db.session.commit()
 
             # assert that we don't have an agreement for the live example framework
-            example_framework = Framework.query.filter(
-                Framework.slug == supplier_framework['frameworkSlug']
-            ).first()
             example_agreement_query = FrameworkAgreement.query.filter(
                 FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
-                FrameworkAgreement.framework_id == example_framework.id
+                FrameworkAgreement.framework_id == live_example_framework['id']
             )
             assert not example_agreement_query.first()
 
@@ -1963,7 +1953,7 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
             example_agreement = example_agreement_query.first()
             assert example_agreement is not None
             assert example_agreement.supplier_id == supplier_framework['supplierId']
-            assert example_agreement.framework_id == example_framework.id
+            assert example_agreement.framework_id == live_example_framework['id']
             assert example_agreement.signed_agreement_returned_at == datetime(2016, 6, 6, 0, 0)
 
 
