@@ -657,7 +657,7 @@ class User(db.Model):
 
     # FIXME: should be a many-to-many
     supplier_code = db.Column(db.BigInteger,
-                              db.ForeignKey('supplier.code'),
+                              db.ForeignKey('supplier.code', ondelete='cascade'),
                               index=True, unique=False, nullable=True)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
@@ -749,7 +749,8 @@ class SupplierUserInviteLog(db.Model):
     __table_args__ = (
         db.ForeignKeyConstraint(
             ('supplier_id', 'contact_id'),
-            ('supplier__contact.supplier_id', 'supplier__contact.contact_id')
+            ('supplier__contact.supplier_id', 'supplier__contact.contact_id'),
+            ondelete='cascade',
         ),
     )
 
