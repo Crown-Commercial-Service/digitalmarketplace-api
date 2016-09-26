@@ -505,11 +505,23 @@ class FrameworkAgreement(db.Model):
 
         return data
 
+    @hybrid_property
+    def status(self):
+        if self.countersigned_agreement_returned_at:
+            return 'countersigned'
+        elif self.signed_agreement_put_on_hold_at:
+            return 'on hold'
+        elif self.signed_agreement_returned_at:
+            return 'signed'
+        else:
+            return 'draft'
+
     def serialize(self):
         return purge_nulls_from_data({
             'id': self.id,
             'supplierId': self.supplier_id,
             'frameworkSlug': self.supplier_framework.framework.slug,
+            'status': self.status,
             'signedAgreementDetails': self.signed_agreement_details,
             'signedAgreementPath': self.signed_agreement_path,
             'signedAgreementReturnedAt': (

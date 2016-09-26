@@ -50,6 +50,7 @@ class TestCreateFrameworkAgreement(BaseApplicationTest):
         assert res_agreement_json['id'] > 0
         assert res_agreement_json['supplierId'] == supplier_framework['supplierId']
         assert res_agreement_json['frameworkSlug'] == supplier_framework['frameworkSlug']
+        assert res_agreement_json['status'] == 'draft'
 
         res2 = self.client.get('/agreements/{}'.format(res_agreement_json['id']))
 
@@ -161,7 +162,8 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
         assert json.loads(res.get_data(as_text=True))['agreement'] == {
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
-            'frameworkSlug': supplier_framework['frameworkSlug']
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'draft'
         }
 
     def test_it_returns_a_framework_agreement_with_details_only(self, supplier_framework):
@@ -177,6 +179,7 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
             'signedAgreementDetails': {'details': 'here'},
+            'status': 'draft'
         }
 
     def test_it_gets_a_signed_framework_agreement_by_id(self, supplier_framework):
@@ -193,6 +196,7 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'signed',
             'signedAgreementDetails': {'details': 'here'},
             'signedAgreementPath': 'path',
             'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
@@ -213,6 +217,7 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'on hold',
             'signedAgreementDetails': {'details': 'here'},
             'signedAgreementPath': 'path',
             'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
@@ -235,6 +240,7 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'countersigned',
             'signedAgreementDetails': {'details': 'here'},
             'signedAgreementPath': 'path',
             'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
@@ -259,6 +265,7 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'countersigned',
             'signedAgreementDetails': {'details': 'here'},
             'signedAgreementPath': 'path',
             'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
@@ -319,6 +326,7 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'draft',
             'signedAgreementDetails': {
                 'signerName': 'name',
                 'signerRole': 'role',
@@ -344,6 +352,7 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'draft',
             'signedAgreementPath': '/example.pdf'
         }
         assert data['agreement'] == expected_agreement_json
@@ -370,6 +379,7 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'draft',
             'signedAgreementPath': '/example.pdf',
             'signedAgreementDetails': {
                 'signerName': 'name',
@@ -513,6 +523,7 @@ class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAg
                 'id': agreement_id,
                 'supplierId': supplier_framework['supplierId'],
                 'frameworkSlug': supplier_framework['frameworkSlug'],
+                'status': 'signed',
                 'signedAgreementPath': '/example.pdf',
                 'signedAgreementDetails': {
                     'signerName': 'name',
@@ -570,6 +581,7 @@ class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAg
                 'id': agreement_id,
                 'supplierId': supplier_framework['supplierId'],
                 'frameworkSlug': supplier_framework['frameworkSlug'],
+                'status': 'signed',
                 'signedAgreementPath': '/example.pdf',
                 'signedAgreementDetails': {
                     'signerName': 'name',
@@ -640,6 +652,7 @@ class TestSignFrameworkAgreementThatHasNoFrameworkAgreementVersion(BaseFramework
                 'id': agreement_id,
                 'supplierId': supplier_framework['supplierId'],
                 'frameworkSlug': supplier_framework['frameworkSlug'],
+                'status': 'signed',
                 'signedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z'
             }
 
@@ -678,5 +691,6 @@ class TestSignFrameworkAgreementThatHasNoFrameworkAgreementVersion(BaseFramework
                 'id': agreement_id,
                 'supplierId': supplier_framework['supplierId'],
                 'frameworkSlug': supplier_framework['frameworkSlug'],
+                'status': 'signed',
                 'signedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z'
             }
