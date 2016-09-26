@@ -1810,10 +1810,32 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['onFramework'] is False
         assert data['frameworkInterest']['agreementReturned'] is False
 
+    def test_updating_framework_agreement_creates_audit_event(self, live_example_framework, supplier_framework):
+        self.supplier_framework_interest(
+            supplier_framework,
+            update={'signerName': "Josh Moss", 'signerRole': "The Boss"}
+        )
+        with self.app.app_context():
+            framework_agreement = FrameworkAgreement.query.filter(
+                FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
+                FrameworkAgreement.framework_id == live_example_framework['id']
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.type == "supplier_update",
+                AuditEvent.object == framework_agreement
+            ).first()
+            assert audit.type == "supplier_update"
+            assert audit.user == "interested@example.com"
+            assert audit.data['supplierId'] == supplier_framework['supplierId']
+            assert audit.data['frameworkSlug'] == supplier_framework['frameworkSlug']
+            assert audit.data['update']['signerName'] == "Josh Moss"
+            assert audit.data['update']['signerRole'] == "The Boss"
+
     def test_changing_on_framework_to_passed_creates_audit_event(self, supplier_framework):
         self.supplier_framework_interest(
             supplier_framework,
-            update={'onFramework': True, 'agreementReturned': True}
+            update={'onFramework': True}
         )
         with self.app.app_context():
             supplier = Supplier.query.filter(
@@ -1829,7 +1851,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             assert audit.data['supplierId'] == supplier_framework['supplierId']
             assert audit.data['frameworkSlug'] == supplier_framework['frameworkSlug']
             assert audit.data['update']['onFramework'] is True
-            assert audit.data['update']['agreementReturned'] is True
 
 
 class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
@@ -1838,28 +1859,32 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
     # data is fully migrated from the supplier frameworks table to the
     # framework_agreements table then these tests can be removed
 
-    def test_if_framework_agreement_already_exists_then_it_is_updated(self, supplier_framework):
+    def supplier_framework_update(self, supplier_framework):
+        url = '/suppliers/{}/frameworks/{}'.format(
+            supplier_framework['supplierId'], supplier_framework['frameworkSlug'])
+
+        # Update the SupplierFramework record
+        return self.client.post(
+            url,
+            data=json.dumps(
+                {
+                    'updated_by': 'interested@example.com',
+                    'frameworkInterest': {'agreementReturned': True}
+                }),
+            content_type='application/json')
+
+    def test_if_framework_agreement_already_exists_then_it_is_updated(self, live_example_framework, supplier_framework):
         with self.app.app_context():
             # Create framework agreement
-            framework = Framework.query.filter(Framework.slug == supplier_framework['frameworkSlug']).first()
-
             agreement = FrameworkAgreement(
                 supplier_id=supplier_framework['supplierId'],
-                framework_id=framework.id)
+                framework_id=live_example_framework['id']
+            )
             db.session.add(agreement)
             db.session.commit()
-            agreement_id = agreement.id
 
             with freeze_time('2016-06-06'):
-                response = self.client.post(
-                    '/suppliers/{}/frameworks/{}'.format(
-                        supplier_framework['supplierId'], supplier_framework['frameworkSlug']),
-                    data=json.dumps(
-                        {
-                            'updated_by': 'interested@example.com',
-                            'frameworkInterest': {'agreementReturned': True}
-                        }),
-                    content_type='application/json')
+                response = self.supplier_framework_update(supplier_framework)
                 assert response.status_code == 200
 
             # Check framework agreement is updated
@@ -1871,39 +1896,65 @@ class TestSupplierFrameworkAgreementsDataMigration(BaseApplicationTest):
         'agreement_details': {'signerName': 'name', 'signerRole': 'role', 'uploaderUserId': 1}
         }
     )
-    def test_if_framework_agreement_does_not_exists_then_it_is_created(self, supplier_framework):
+    def test_if_framework_agreement_does_not_exist_then_it_is_created(self, live_example_framework, supplier_framework):
         with self.app.app_context():
-            framework = Framework.query.filter(
-                Framework.slug == supplier_framework['frameworkSlug']
-            ).first()
-
             agreements = FrameworkAgreement.query.filter(
                 FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
-                FrameworkAgreement.framework_id == framework.id
+                FrameworkAgreement.framework_id == live_example_framework['id']
             )
             assert not agreements.count()
 
             with freeze_time('2016-06-06'):
-                    response = self.client.post(
-                        '/suppliers/{}/frameworks/{}'.format(
-                            supplier_framework['supplierId'], supplier_framework['frameworkSlug']),
-                        data=json.dumps(
-                            {
-                                'updated_by': 'interested@example.com',
-                                'frameworkInterest': {'agreementReturned': True}
-                            }),
-                        content_type='application/json')
-                    assert response.status_code == 200
+                response = self.supplier_framework_update(supplier_framework)
+                assert response.status_code == 200
 
             agreements = FrameworkAgreement.query.filter(
                 FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
-                FrameworkAgreement.framework_id == framework.id
+                FrameworkAgreement.framework_id == live_example_framework['id']
             )
 
             assert agreements.count() == 1
             assert agreements[0].signed_agreement_details == {
                 'signerName': 'name', 'signerRole': 'role', 'uploaderUserId': 1, 'frameworkAgreementVersion': 'v1.0'}
             assert agreements[0].signed_agreement_returned_at == datetime(2016, 6, 6, 0, 0)
+
+    def test_if_framework_agreement_does_not_exist_for_correct_framework_then_it_is_created(
+            self, live_example_framework, supplier_framework, live_g8_framework
+    ):
+        with self.app.app_context():
+            # I don't think we can create supplier_frameworks for different frameworks using our current fixture setup
+            g8_supplier_framework = SupplierFramework(
+                supplier_id=supplier_framework['supplierId'],
+                framework_id=live_g8_framework['id'],
+                on_framework=True
+            )
+
+            # Create framework agreement for another framework
+            g8_agreement = FrameworkAgreement(
+                supplier_id=supplier_framework['supplierId'],
+                framework_id=live_g8_framework['id']
+            )
+            db.session.add(g8_supplier_framework)
+            db.session.add(g8_agreement)
+            db.session.commit()
+
+            # assert that we don't have an agreement for the live example framework
+            example_agreement_query = FrameworkAgreement.query.filter(
+                FrameworkAgreement.supplier_id == supplier_framework['supplierId'],
+                FrameworkAgreement.framework_id == live_example_framework['id']
+            )
+            assert not example_agreement_query.first()
+
+            with freeze_time('2016-06-06'):
+                response = self.supplier_framework_update(supplier_framework)
+                assert response.status_code == 200
+
+            # Check framework agreement exists for the right framework with the right timestamp
+            example_agreement = example_agreement_query.first()
+            assert example_agreement is not None
+            assert example_agreement.supplier_id == supplier_framework['supplierId']
+            assert example_agreement.framework_id == live_example_framework['id']
+            assert example_agreement.signed_agreement_returned_at == datetime(2016, 6, 6, 0, 0)
 
 
 class TestSupplierFrameworkVariation(BaseApplicationTest):
