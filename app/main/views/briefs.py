@@ -178,6 +178,8 @@ def get_briefs_stats():
     all_briefs = brief_query.order_by(desc(Brief.published_at)).all()
 
     briefs = {
+        'total': brief_query.count(),
+
         'open_to_all': brief_query.filter(Brief.data['sellerSelector'].astext == 'allSellers').count(),
 
         'open_to_selected': brief_query.filter(Brief.data['sellerSelector'].astext == 'someSellers').count(),
