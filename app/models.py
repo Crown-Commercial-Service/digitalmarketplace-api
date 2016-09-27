@@ -435,6 +435,7 @@ class SupplierFramework(db.Model):
                     agreement.countersigned_agreement_returned_at and
                     agreement.countersigned_agreement_returned_at.strftime(DATETIME_FORMAT)
                 ),
+                'agreementStatus': agreement.status
             })
         else:
             supplier_framework.update({
@@ -443,6 +444,7 @@ class SupplierFramework(db.Model):
                 "agreementDetails": None,
                 "countersigned": False,
                 "countersignedAt": None,
+                "agreementStatus": None
             })
 
         if supplier_framework['agreementDetails'] and supplier_framework['agreementDetails'].get('uploaderUserId'):
