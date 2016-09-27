@@ -1110,6 +1110,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'countersigned': False,
                         'countersignedAt': None,
                         'agreementStatus': None,
+                        'agreementId': None,
                         'agreedVariations': {},
                     }
                 ]
@@ -1139,6 +1140,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'countersigned': False,
                         'countersignedAt': None,
                         'agreementStatus': None,
+                        'agreementId': None,
                         'agreedVariations': {},
                     }
                 ]
@@ -1310,31 +1312,35 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             db.session.add(framework_agreement)
             db.session.commit()
 
-        # Get back the SupplierFramework record
-        response = self.client.get(
-            '/suppliers/{}/frameworks/{}'.format(supplier_framework['supplierId'], supplier_framework['frameworkSlug']))
+            # Get back the SupplierFramework record
+            response = self.client.get(
+                '/suppliers/{}/frameworks/{}'.format(
+                    supplier_framework['supplierId'], supplier_framework['frameworkSlug']
+                )
+            )
 
-        data = json.loads(response.get_data())
-        assert response.status_code, 200
-        assert 'frameworkInterest' in data
-        assert data['frameworkInterest'] == {
-            'supplierId': supplier_framework['supplierId'],
-            'supplierName': 'Supplier name',
-            'frameworkSlug': supplier_framework['frameworkSlug'],
-            'declaration': {'an_answer': 'Yes it is'},
-            'onFramework': True,
-            'agreementReturned': False,
-            'agreementReturnedAt': None,
-            'countersigned': False,
-            'countersignedAt': None,
-            'agreementDetails': {
-                'signerName': 'thing 2',
-                'signerRole': 'thing 2',
-                'uploaderUserId': 30
-            },
-            'agreementStatus': 'draft',
-            'agreedVariations': {}
-        }
+            data = json.loads(response.get_data())
+            assert response.status_code, 200
+            assert 'frameworkInterest' in data
+            assert data['frameworkInterest'] == {
+                'supplierId': supplier_framework['supplierId'],
+                'supplierName': 'Supplier name',
+                'frameworkSlug': supplier_framework['frameworkSlug'],
+                'declaration': {'an_answer': 'Yes it is'},
+                'onFramework': True,
+                'agreementId': framework_agreement.id,
+                'agreementReturned': False,
+                'agreementReturnedAt': None,
+                'countersigned': False,
+                'countersignedAt': None,
+                'agreementDetails': {
+                    'signerName': 'thing 2',
+                    'signerRole': 'thing 2',
+                    'uploaderUserId': 30
+                },
+                'agreementStatus': 'draft',
+                'agreedVariations': {}
+            }
 
     def test_get_supplier_framework_returns_signed_framework_agreement(self, supplier_framework):
         with self.app.app_context():
@@ -1355,31 +1361,35 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             db.session.add(framework_agreement)
             db.session.commit()
 
-        # Get back the SupplierFramework record
-        response = self.client.get(
-            '/suppliers/{}/frameworks/{}'.format(supplier_framework['supplierId'], supplier_framework['frameworkSlug']))
+            # Get back the SupplierFramework record
+            response = self.client.get(
+                '/suppliers/{}/frameworks/{}'.format(
+                    supplier_framework['supplierId'], supplier_framework['frameworkSlug']
+                )
+            )
 
-        data = json.loads(response.get_data())
-        assert response.status_code, 200
-        assert 'frameworkInterest' in data, data
-        assert data['frameworkInterest'] == {
-            'supplierId': supplier_framework['supplierId'],
-            'supplierName': 'Supplier name',
-            'frameworkSlug': supplier_framework['frameworkSlug'],
-            'declaration': {'an_answer': 'Yes it is'},
-            'onFramework': True,
-            'agreementReturned': True,
-            'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
-            'countersigned': False,
-            'countersignedAt': None,
-            'agreementDetails': {
-                'signerName': 'thing 2',
-                'signerRole': 'thing 2',
-                'uploaderUserId': 30
-            },
-            'agreementStatus': 'signed',
-            'agreedVariations': {}
-        }
+            data = json.loads(response.get_data())
+            assert response.status_code, 200
+            assert 'frameworkInterest' in data, data
+            assert data['frameworkInterest'] == {
+                'supplierId': supplier_framework['supplierId'],
+                'supplierName': 'Supplier name',
+                'frameworkSlug': supplier_framework['frameworkSlug'],
+                'declaration': {'an_answer': 'Yes it is'},
+                'onFramework': True,
+                'agreementId': framework_agreement.id,
+                'agreementReturned': True,
+                'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
+                'countersigned': False,
+                'countersignedAt': None,
+                'agreementDetails': {
+                    'signerName': 'thing 2',
+                    'signerRole': 'thing 2',
+                    'uploaderUserId': 30
+                },
+                'agreementStatus': 'signed',
+                'agreedVariations': {}
+            }
 
     def test_get_supplier_framework_returns_countersigned_framework_agreement(self, supplier_framework, supplier):
         with self.app.app_context():
@@ -1404,31 +1414,35 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             db.session.add(framework_agreement)
             db.session.commit()
 
-        # Get back the SupplierFramework record
-        response = self.client.get(
-            '/suppliers/{}/frameworks/{}'.format(supplier_framework['supplierId'], supplier_framework['frameworkSlug']))
+            # Get back the SupplierFramework record
+            response = self.client.get(
+                '/suppliers/{}/frameworks/{}'.format(
+                    supplier_framework['supplierId'], supplier_framework['frameworkSlug']
+                )
+            )
 
-        data = json.loads(response.get_data())
-        assert response.status_code, 200
-        assert 'frameworkInterest' in data
-        assert data['frameworkInterest'] == {
-            'supplierId': supplier_framework['supplierId'],
-            'supplierName': 'Supplier name',
-            'frameworkSlug': supplier_framework['frameworkSlug'],
-            'declaration': {'an_answer': 'Yes it is'},
-            'onFramework': True,
-            'agreementReturned': True,
-            'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
-            'agreementDetails': {
-                'signerName': 'thing 2',
-                'signerRole': 'thing 2',
-                'uploaderUserId': 30
-            },
-            'countersigned': True,
-            'countersignedAt': '2017-02-01T01:01:01.000000Z',
-            'agreementStatus': 'countersigned',
-            'agreedVariations': {}
-        }
+            data = json.loads(response.get_data())
+            assert response.status_code, 200
+            assert 'frameworkInterest' in data
+            assert data['frameworkInterest'] == {
+                'supplierId': supplier_framework['supplierId'],
+                'supplierName': 'Supplier name',
+                'frameworkSlug': supplier_framework['frameworkSlug'],
+                'declaration': {'an_answer': 'Yes it is'},
+                'onFramework': True,
+                'agreementId': framework_agreement.id,
+                'agreementReturned': True,
+                'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
+                'agreementDetails': {
+                    'signerName': 'thing 2',
+                    'signerRole': 'thing 2',
+                    'uploaderUserId': 30
+                },
+                'countersigned': True,
+                'countersignedAt': '2017-02-01T01:01:01.000000Z',
+                'agreementStatus': 'countersigned',
+                'agreedVariations': {}
+            }
 
     def test_get_supplier_framework_info_with_non_existent_framework(self, supplier_framework):
         response = self.client.get(
