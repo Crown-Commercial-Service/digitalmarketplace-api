@@ -424,6 +424,7 @@ class SupplierFramework(db.Model):
         if self.framework_agreements:
             agreement = self.framework_agreements[0]
             supplier_framework.update({
+                'agreementId': agreement.id,
                 'agreementReturned': bool(agreement.signed_agreement_returned_at),
                 'agreementReturnedAt': (
                     agreement.signed_agreement_returned_at and
@@ -439,6 +440,7 @@ class SupplierFramework(db.Model):
             })
         else:
             supplier_framework.update({
+                "agreementId": None,
                 "agreementReturned": False,
                 "agreementReturnedAt": None,
                 "agreementDetails": None,
