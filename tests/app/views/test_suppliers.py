@@ -1109,6 +1109,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'agreementDetails': None,
                         'countersigned': False,
                         'countersignedAt': None,
+                        'agreementStatus': None,
                         'agreedVariations': {},
                     }
                 ]
@@ -1137,6 +1138,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'agreementDetails': None,
                         'countersigned': False,
                         'countersignedAt': None,
+                        'agreementStatus': None,
                         'agreedVariations': {},
                     }
                 ]
@@ -1289,6 +1291,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
         assert data['frameworkInterest']['countersigned'] is False
         assert data['frameworkInterest']['countersignedAt'] is None
         assert data['frameworkInterest']['agreementDetails'] is None
+        assert data['frameworkInterest']['agreementStatus'] is None
 
     def test_get_supplier_framework_returns_framework_agreement(self, supplier_framework):
         with self.app.app_context():
@@ -1329,6 +1332,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                 'signerRole': 'thing 2',
                 'uploaderUserId': 30
             },
+            'agreementStatus': 'draft',
             'agreedVariations': {}
         }
 
@@ -1373,6 +1377,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                 'signerRole': 'thing 2',
                 'uploaderUserId': 30
             },
+            'agreementStatus': 'signed',
             'agreedVariations': {}
         }
 
@@ -1421,6 +1426,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             },
             'countersigned': True,
             'countersignedAt': '2017-02-01T01:01:01.000000Z',
+            'agreementStatus': 'countersigned',
             'agreedVariations': {}
         }
 

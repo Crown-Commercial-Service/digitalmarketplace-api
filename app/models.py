@@ -435,6 +435,7 @@ class SupplierFramework(db.Model):
                     agreement.countersigned_agreement_returned_at and
                     agreement.countersigned_agreement_returned_at.strftime(DATETIME_FORMAT)
                 ),
+                'agreementStatus': agreement.status
             })
         else:
             supplier_framework.update({
@@ -443,6 +444,7 @@ class SupplierFramework(db.Model):
                 "agreementDetails": None,
                 "countersigned": False,
                 "countersignedAt": None,
+                "agreementStatus": None
             })
 
         if supplier_framework['agreementDetails'] and supplier_framework['agreementDetails'].get('uploaderUserId'):
@@ -466,6 +468,7 @@ class FrameworkAgreement(db.Model):
     signed_agreement_details = db.Column(JSON)
     signed_agreement_path = db.Column(db.String)
     signed_agreement_returned_at = db.Column(db.DateTime)
+    signed_agreement_put_on_hold_at = db.Column(db.DateTime)
     countersigned_agreement_details = db.Column(JSON)
     countersigned_agreement_path = db.Column(db.String)
     countersigned_agreement_returned_at = db.Column(db.DateTime)
@@ -504,16 +507,32 @@ class FrameworkAgreement(db.Model):
 
         return data
 
+    @hybrid_property
+    def status(self):
+        if self.countersigned_agreement_returned_at:
+            return 'countersigned'
+        elif self.signed_agreement_put_on_hold_at:
+            return 'on hold'
+        elif self.signed_agreement_returned_at:
+            return 'signed'
+        else:
+            return 'draft'
+
     def serialize(self):
         return purge_nulls_from_data({
             'id': self.id,
             'supplierId': self.supplier_id,
             'frameworkSlug': self.supplier_framework.framework.slug,
+            'status': self.status,
             'signedAgreementDetails': self.signed_agreement_details,
             'signedAgreementPath': self.signed_agreement_path,
             'signedAgreementReturnedAt': (
                 self.signed_agreement_returned_at and
                 self.signed_agreement_returned_at.strftime(DATETIME_FORMAT)
+            ),
+            'signedAgreementPutOnHoldAt': (
+                self.signed_agreement_put_on_hold_at and
+                self.signed_agreement_put_on_hold_at.strftime(DATETIME_FORMAT)
             ),
             'countersignedAgreementDetails': self.countersigned_agreement_details,
             'countersignedAgreementReturnedAt': (

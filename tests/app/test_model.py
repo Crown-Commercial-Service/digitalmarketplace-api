@@ -843,3 +843,48 @@ class TestFrameworkAgreements(BaseApplicationTest):
 
             with pytest.raises(IntegrityError):
                 db.session.commit()
+
+    def test_new_framework_agreement_status_is_draft(self):
+        framework_agreement = FrameworkAgreement(supplier_id=0, framework_id=1)
+        assert framework_agreement.status == 'draft'
+
+    def test_partially_signed_framework_agreement_status_is_draft(self):
+        framework_agreement = FrameworkAgreement(
+            supplier_id=0,
+            framework_id=1,
+            signed_agreement_details={'agreement': 'details'},
+            signed_agreement_path='path'
+        )
+        assert framework_agreement.status == 'draft'
+
+    def test_signed_framework_agreement_status_is_signed(self):
+        framework_agreement = FrameworkAgreement(
+            supplier_id=0,
+            framework_id=1,
+            signed_agreement_details={'agreement': 'details'},
+            signed_agreement_path='path',
+            signed_agreement_returned_at=datetime.utcnow()
+        )
+        assert framework_agreement.status == 'signed'
+
+    def test_on_hold_framework_agreement_status_is_on_hold(self):
+        framework_agreement = FrameworkAgreement(
+            supplier_id=0,
+            framework_id=1,
+            signed_agreement_details={'agreement': 'details'},
+            signed_agreement_path='path',
+            signed_agreement_returned_at=datetime.utcnow(),
+            signed_agreement_put_on_hold_at=datetime.utcnow()
+        )
+        assert framework_agreement.status == 'on hold'
+
+    def test_countersigned_framework_agreement_status_is_countersigned(self):
+        framework_agreement = FrameworkAgreement(
+            supplier_id=0,
+            framework_id=1,
+            signed_agreement_details={'agreement': 'details'},
+            signed_agreement_path='path',
+            signed_agreement_returned_at=datetime.utcnow(),
+            countersigned_agreement_returned_at=datetime.utcnow()
+        )
+        assert framework_agreement.status == 'countersigned'
