@@ -132,7 +132,7 @@ def delete_suppliers():
 @main.route('/suppliers/count', methods=['GET'])
 def get_suppliers_stats():
     suppliers = {
-        "total": Supplier.query.count()
+        "total": Supplier.query.filter(Supplier.abn != Supplier.DUMMY_ABN).count()
     }
 
     return jsonify(suppliers=suppliers)
