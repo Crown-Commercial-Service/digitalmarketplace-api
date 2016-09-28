@@ -1,6 +1,3 @@
-services:
-    - pgdb-dev
-
 applications:
     - name: dm-dev-api
       command: ./scripts/cf_run_app.sh
