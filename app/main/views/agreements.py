@@ -237,3 +237,53 @@ def put_signed_framework_agreement_on_hold(agreement_id):
         return jsonify(message="Database Error: {0}".format(e)), 400
 
     return jsonify(agreement=framework_agreement.serialize())
+
+
+@main.route('/agreements/<int:agreement_id>/countersign-script', methods=['POST'])
+def temp_countersign_time_and_path(agreement_id):
+    """Temporary countersign route needed for one off script
+
+    Temporary route needed so we can set a user defined timestamp for an agreement
+    to be countersigned (the real route that is still to be created will not allow
+    the user to define the timestamp but will take the current time). This route
+    will also allow us to set the countersigned path. After a one off refactoring script
+    is run then this route will no longer be needed and we can delete it.
+    """
+    framework_agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first_or_404()
+
+    json_payload = get_json_from_request()
+    updater_json = validate_and_return_updater_request()
+    json_has_required_keys(json_payload, ["agreement"])
+    update_json = json_payload["agreement"]
+
+    json_has_keys(
+        update_json,
+        required_keys=['countersignedAgreementPath', 'countersignedAgreementReturnedAt']
+    )
+
+    if framework_agreement.status != 'signed':
+        abort(400, "Framework agreement must have status 'signed' to be countersigned")
+
+    framework_agreement.countersigned_agreement_returned_at = update_json['countersignedAgreementReturnedAt']
+    framework_agreement.countersigned_agreement_path = update_json['countersignedAgreementPath']
+
+    audit_event = AuditEvent(
+        audit_type=AuditTypes.countersign_agreement,
+        user=updater_json['updated_by'],
+        data={
+            'supplierId': framework_agreement.supplier_id,
+            'frameworkSlug': framework_agreement.supplier_framework.framework.slug,
+            'update': update_json
+        },
+        db_object=framework_agreement
+    )
+
+    try:
+        db.session.add(framework_agreement)
+        db.session.add(audit_event)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message="Database Error: {0}".format(e)), 400
+
+    return jsonify(agreement=framework_agreement.serialize())
