@@ -234,19 +234,19 @@ def export_users_for_framework(framework_slug):
     if framework.status == 'coming':
         abort(400, 'framework not yet open')
 
-    supplier_frameworks_and_suppliers_and_users = db.session.query(
-        SupplierFramework, Supplier, User
+    supplier_frameworks_and_users = db.session.query(
+        SupplierFramework, User
     ).join(
-        Supplier, User, Framework
+        User, SupplierFramework.supplier_id == User.supplier_id
     ).filter(
-        Framework.slug == framework_slug
+        SupplierFramework.framework == framework
     ).filter(
         User.active.is_(True)
     ).all()
 
     user_rows = []
 
-    for sf, s, u in supplier_frameworks_and_suppliers_and_users:
+    for sf, u in supplier_frameworks_and_users:
 
         # always get the declaration status
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
@@ -260,13 +260,13 @@ def export_users_for_framework(framework_slug):
                 application_result = 'no result'
             else:
                 application_result = 'pass' if sf.on_framework else 'fail'
-            framework_agreement = bool(sf.serialize()['agreementReturnedAt'])
+            framework_agreement = bool(getattr(sf.current_framework_agreement, 'signed_agreement_returned_at', None))
             variations_agreed = ', '.join(sf.agreed_variations.keys()) if sf.agreed_variations else ''
 
         user_rows.append({
             'user_email': u.email_address,
             'user_name': u.name,
-            'supplier_id': s.supplier_id,
+            'supplier_id': sf.supplier_id,
             'declaration_status': declaration_status,
             'application_status': '',
             'framework_agreement': framework_agreement,
