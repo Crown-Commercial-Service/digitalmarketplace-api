@@ -244,35 +244,18 @@ def export_users_for_framework(framework_slug):
         User.active.is_(True)
     ).all()
 
-    submitted_draft_counts_per_supplier = {}
     user_rows = []
 
     for sf, s, u in supplier_frameworks_and_suppliers_and_users:
 
         # always get the declaration status
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
-        application_status = ''
         application_result = ''
         framework_agreement = ''
         variations_agreed = ''
 
         # if framework is pending, live, or expired
         if framework.status != 'open':
-
-            # get number of completed draft services per supplier
-            # `application_status` is based on a complete declaration and at least one completed draft service
-            if sf.supplier_id not in submitted_draft_counts_per_supplier.keys():
-                submitted_draft_counts_per_supplier[sf.supplier_id] = db.session.query(
-                    func.count()
-                ).filter(
-                    DraftService.supplier_id == sf.supplier_id,
-                    DraftService.framework_id == sf.framework_id,
-                    DraftService.status == 'submitted'
-                ).scalar()
-
-            submitted_draft_count = submitted_draft_counts_per_supplier[sf.supplier_id]
-            application_status = \
-                'application' if submitted_draft_count and declaration_status == 'complete' else 'no_application'
             if sf.on_framework is None:
                 application_result = 'no result'
             else:
@@ -285,7 +268,7 @@ def export_users_for_framework(framework_slug):
             'user_name': u.name,
             'supplier_id': s.supplier_id,
             'declaration_status': declaration_status,
-            'application_status': application_status,
+            'application_status': '',
             'framework_agreement': framework_agreement,
             'application_result': application_result,
             'variations_agreed': variations_agreed
