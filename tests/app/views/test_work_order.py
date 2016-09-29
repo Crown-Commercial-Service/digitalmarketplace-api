@@ -23,7 +23,9 @@ class BaseWorkOrderTest(BaseApplicationTest):
 
             self.brief_id = brief.id
 
-    def setup_dummy_work_order(self, brief_id=None, supplier_code=0):
+    def setup_dummy_work_order(self, brief_id=None, supplier_code=0, data=None):
+        if data is None:
+            data = self.work_order_data
         with self.app.app_context():
             brief = Brief(
                 data=example_listings.brief_data().example(),
@@ -34,7 +36,7 @@ class BaseWorkOrderTest(BaseApplicationTest):
             db.session.commit()
 
             work_order = WorkOrder(
-                data=self.work_order_data,
+                data=data,
                 supplier_code=supplier_code,
                 brief_id=brief_id or brief.id
             )
@@ -47,6 +49,16 @@ class BaseWorkOrderTest(BaseApplicationTest):
     def create_work_order(self, data):
         return self.client.post(
             '/work-orders',
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+                'workOrder': data,
+            }),
+            content_type='application/json'
+        )
+
+    def patch_work_order(self, work_order_id, data):
+        return self.client.patch(
+            '/work-orders/{}'.format(work_order_id),
             data=json.dumps({
                 'updated_by': 'test@example.com',
                 'workOrder': data,
@@ -172,6 +184,58 @@ class TestCreateWorkOrder(BaseWorkOrderTest):
 
         assert res.status_code == 400, res.get_data(as_text=True)
         assert 'Work order already exists' in res.get_data(as_text=True)
+
+
+class TestUpdateWorkOrder(BaseWorkOrderTest):
+
+    def setup(self):
+        super(TestUpdateWorkOrder, self).setup()
+        self.work_order_id, _ = self.setup_dummy_work_order(
+            brief_id=self.brief_id,
+            supplier_code=0,
+            data=self.work_order_data
+        )
+
+    def test_patch_existing_order(self):
+        work_order_data = self.work_order_data
+        work_order_data['foo'] = 'baz'
+
+        res = self.patch_work_order(
+            work_order_id=self.work_order_id,
+            data=work_order_data
+        )
+
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))
+        assert data['workOrder']['supplierName'] == 'Supplier 0'
+        assert data['workOrder']['briefId'] == self.brief_id
+        assert data['workOrder']['foo'] == 'baz'
+
+    def test_empty_patch(self):
+        res = self.patch_work_order(
+            work_order_id=self.work_order_id,
+            data={}
+        )
+
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))
+        assert data['workOrder']['supplierName'] == 'Supplier 0'
+        assert data['workOrder']['briefId'] == self.brief_id
+        assert data['workOrder']['foo'] == self.work_order_data['foo']
+
+    def test_patch_missing_order(self):
+        res = self.patch_work_order(
+            work_order_id=9,
+            data={}
+        )
+
+        assert res.status_code == 404
+
+    def test_malformed_request(self):
+        res = self.client.patch('/work-orders/1', data={'notAWorkOrder': 'no'})
+        assert res.status_code == 400
 
 
 class TestGetWorkOrder(BaseWorkOrderTest):
