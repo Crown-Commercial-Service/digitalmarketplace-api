@@ -340,6 +340,11 @@ class SupplierFramework(db.Model):
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
+    @property
+    def current_framework_agreement(self):
+        if self.framework_agreements:
+            return self.framework_agreements[0]
+
     @validates('declaration')
     def validates_declaration(self, key, value):
         value = strip_whitespace_from_data(value)
@@ -421,8 +426,8 @@ class SupplierFramework(db.Model):
             "agreedVariations": agreed_variations,
         }, **(data or {}))
 
-        if self.framework_agreements:
-            agreement = self.framework_agreements[0]
+        agreement = self.current_framework_agreement
+        if agreement:
             supplier_framework.update({
                 'agreementId': agreement.id,
                 'agreementReturned': bool(agreement.signed_agreement_returned_at),
