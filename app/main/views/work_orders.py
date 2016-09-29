@@ -12,36 +12,31 @@ from app.utils import (
 from app.service_utils import validate_and_return_supplier
 
 
-@main.route('/work-orders', methods=['POST'])
-def create_work_order():
-    json_payload = get_json_from_request()
-
-    json_has_required_keys(json_payload, ['workOrder'])
-    work_order_json = json_payload['workOrder']
-    json_has_required_keys(work_order_json, ['briefId', 'supplierCode'])
+def get_brief_for_new_work_order(work_order_json):
+    json_has_required_keys(work_order_json, ['briefId'])
+    brief_id = work_order_json['briefId']
 
     try:
-        brief = Brief.query.get(work_order_json['briefId'])
+        brief = Brief.query.get(brief_id)
     except DataError:
         brief = None
 
     if brief is None:
-        abort(400, "Invalid brief ID '{}'".format(work_order_json['briefId']))
+        abort(400, "Invalid brief ID '{}'".format(brief_id))
 
     if brief.status != 'closed':
         abort(400, "Brief must be closed")
 
-    supplier = validate_and_return_supplier(work_order_json)
+    return brief
 
-    if WorkOrder.query.filter(WorkOrder.brief == brief).first():
-        abort(400, "Work order already exists for brief '{}'".format(brief.id))
 
-    work_order = WorkOrder(
-        data=work_order_json,
-        supplier=supplier,
-        brief=brief,
-    )
+def get_work_order_json():
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['workOrder'])
+    return json_payload['workOrder']
 
+
+def save_work_order(work_order):
     db.session.add(work_order)
 
     try:
@@ -52,7 +47,38 @@ def create_work_order():
 
     db.session.commit()
 
+
+@main.route('/work-orders', methods=['POST'])
+def create_work_order():
+    work_order_json = get_work_order_json()
+    supplier = validate_and_return_supplier(work_order_json)
+    brief = get_brief_for_new_work_order(work_order_json)
+
+    if WorkOrder.query.filter_by(brief_id=brief.id).first() is not None:
+        abort(400, "Work order already exists for brief '{}'".format(brief.id))
+
+    work_order = WorkOrder(
+        data=work_order_json,
+        supplier=supplier,
+        brief=brief,
+    )
+    save_work_order(work_order)
+
     return jsonify(workOrder=work_order.serialize()), 201
+
+
+@main.route('/work-orders/<int:work_order_id>', methods=['PATCH'])
+def update_work_order(work_order_id):
+    work_order_json = get_work_order_json()
+
+    work_order = WorkOrder.query.get(work_order_id)
+    if work_order is None:
+        abort(404, "Work order '{}' does not exist".format(work_order_id))
+
+    work_order.update_from_json(work_order_json)
+    save_work_order(work_order)
+
+    return jsonify(workOrder=work_order.serialize()), 200
 
 
 @main.route('/work-orders/<int:work_order_id>', methods=['GET'])

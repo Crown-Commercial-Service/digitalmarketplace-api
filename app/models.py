@@ -1500,6 +1500,13 @@ class WorkOrder(db.Model):
 
         return data
 
+    def update_from_json(self, data):
+        # Need this juggling because of the validates_data hook
+        new_data = dict(self.data)
+        new_data.update(data)
+        self.data = new_data
+
+
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
 # which takes a long time for old events
