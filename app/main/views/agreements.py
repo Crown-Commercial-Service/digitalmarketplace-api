@@ -246,3 +246,44 @@ def put_signed_framework_agreement_on_hold(agreement_id):
         return jsonify(message="Database Error: {0}".format(e)), 400
 
     return jsonify(agreement=framework_agreement.serialize())
+
+@main.route('/agreements/<int:agreement_id>/countersign', methods=['POST'])
+def countersign_agreement(agreement_id):
+    framework_agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first_or_404()
+    framework_agreement_details = framework_agreement.supplier_framework.framework.framework_agreement_details
+
+    updater_json = validate_and_return_updater_request()
+
+    if framework_agreement.status not in ['signed', 'on hold']:
+        abort(400, "Framework agreement must have status 'signed' or 'on hold' to be countersigned")
+
+    if not framework_agreement_details or not framework_agreement_details.get('frameworkAgreementVersion'):
+        abort(400, "Framework agreement must have a 'frameworkAgreementVersion' to be countersigned")
+
+    framework_agreement.signed_agreement_put_on_hold_at = None
+    framework_agreement.countersigned_agreement_returned_at = datetime.utcnow()
+
+    countersigner_details = framework_agreement_details.get('agreement_countersigner_details', {})
+    countersigner_details.update(updater_json)
+    framework_agreement.countersigned_agreement_details = countersigner_details
+
+    audit_event = AuditEvent(
+        audit_type=AuditTypes.countersign_agreement,
+        user=updater_json['updated_by'],
+        data={
+            'supplierId': framework_agreement.supplier_id,
+            'frameworkSlug': framework_agreement.supplier_framework.framework.slug,
+            'status': 'countersigned'
+        },
+        db_object=framework_agreement
+    )
+
+    try:
+        db.session.add(framework_agreement)
+        db.session.add(audit_event)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message="Database Error: {0}".format(e)), 400
+
+    return jsonify(agreement=framework_agreement.serialize())
