@@ -1107,8 +1107,11 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'services_count': 0,
                         'supplierName': 'Supplier 1',
                         'agreementDetails': None,
+                        'agreementPath': None,
                         'countersigned': False,
                         'countersignedAt': None,
+                        'countersignedDetails': None,
+                        'countersignedPath': None,
                         'agreementStatus': None,
                         'agreementId': None,
                         'agreedVariations': {},
@@ -1137,8 +1140,11 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'services_count': 1,
                         'supplierName': 'Supplier 2',
                         'agreementDetails': None,
+                        'agreementPath': None,
                         'countersigned': False,
                         'countersignedAt': None,
+                        'countersignedDetails': None,
+                        'countersignedPath': None,
                         'agreementStatus': None,
                         'agreementId': None,
                         'agreedVariations': {},
@@ -1331,13 +1337,16 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                 'agreementId': framework_agreement.id,
                 'agreementReturned': False,
                 'agreementReturnedAt': None,
-                'countersigned': False,
-                'countersignedAt': None,
                 'agreementDetails': {
                     'signerName': 'thing 2',
                     'signerRole': 'thing 2',
                     'uploaderUserId': 30
                 },
+                'agreementPath': None,
+                'countersigned': False,
+                'countersignedAt': None,
+                'countersignedDetails': None,
+                'countersignedPath': None,
                 'agreementStatus': 'draft',
                 'agreedVariations': {}
             }
@@ -1380,8 +1389,11 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                 'agreementId': framework_agreement.id,
                 'agreementReturned': True,
                 'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
+                'agreementPath': '/agreement.pdf',
                 'countersigned': False,
                 'countersignedAt': None,
+                'countersignedDetails': None,
+                'countersignedPath': None,
                 'agreementDetails': {
                     'signerName': 'thing 2',
                     'signerRole': 'thing 2',
@@ -1438,8 +1450,11 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                     'signerRole': 'thing 2',
                     'uploaderUserId': 30
                 },
+                'agreementPath': '/agreement.pdf',
                 'countersigned': True,
                 'countersignedAt': '2017-02-01T01:01:01.000000Z',
+                'countersignedDetails': {'some': 'data'},
+                'countersignedPath': None,
                 'agreementStatus': 'countersigned',
                 'agreedVariations': {}
             }

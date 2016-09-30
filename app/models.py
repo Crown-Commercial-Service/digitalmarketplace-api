@@ -436,11 +436,14 @@ class SupplierFramework(db.Model):
                     agreement.signed_agreement_returned_at.strftime(DATETIME_FORMAT)
                 ),
                 'agreementDetails': agreement.signed_agreement_details,
+                'agreementPath': agreement.signed_agreement_path,
                 'countersigned': bool(agreement.countersigned_agreement_returned_at),
                 'countersignedAt': (
                     agreement.countersigned_agreement_returned_at and
                     agreement.countersigned_agreement_returned_at.strftime(DATETIME_FORMAT)
                 ),
+                'countersignedDetails': agreement.countersigned_agreement_details,
+                'countersignedPath': agreement.countersigned_agreement_path,
                 'agreementStatus': agreement.status
             })
         else:
@@ -449,8 +452,11 @@ class SupplierFramework(db.Model):
                 "agreementReturned": False,
                 "agreementReturnedAt": None,
                 "agreementDetails": None,
+                "agreementPath": None,
                 "countersigned": False,
                 "countersignedAt": None,
+                "countersignedDetails": None,
+                "countersignedPath": None,
                 "agreementStatus": None
             })
 
