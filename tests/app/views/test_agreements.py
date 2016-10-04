@@ -934,7 +934,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'status': 'countersigned',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'countersignedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z',
-            'countersignedAgreementDetails': {'countersignerName': 'The Boss', 'updated_by': 'chris@example.com'}
+            'countersignedAgreementDetails': {'countersignerName': 'The Boss', 'updatedBy': 'chris@example.com'}
         }
 
         with self.app.app_context():
@@ -993,7 +993,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'status': 'countersigned',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
-            'countersignedAgreementDetails': {'countersignerName': 'The Boss', 'updated_by': 'chris@example.com'}
+            'countersignedAgreementDetails': {'countersignerName': 'The Boss', 'updatedBy': 'chris@example.com'}
         }
 
     @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
