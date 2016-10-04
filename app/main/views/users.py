@@ -356,7 +356,10 @@ def record_supplier_invite():
 def get_buyers_stats():
     account_type = request.args['account_type']
     buyers = {
-        'total': User.query.filter(User.active.is_(True), User.role == account_type).count()
+        'total': User.query.filter(User.active.is_(True),
+                                   User.role == account_type,
+                                   User.email_address.contains("+").is_(False)
+                                   | User.email_address.contains("digital.gov.au").is_(False)).count()
     }
 
     return jsonify(buyers=buyers)
