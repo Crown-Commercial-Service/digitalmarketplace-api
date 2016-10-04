@@ -1138,6 +1138,7 @@ class Brief(db.Model):
     clarification_questions = db.relationship(
         "BriefClarificationQuestion",
         order_by="BriefClarificationQuestion.published_at")
+    work_order = db.relationship('WorkOrder', uselist=False)
 
     @validates('users')
     def validates_users(self, key, user):
@@ -1295,6 +1296,7 @@ class Brief(db.Model):
             'lot': self.lot.slug,
             'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
+            'work_order_id': 0 if self.work_order is None else self.work_order.id,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
             'clarificationQuestions': [
