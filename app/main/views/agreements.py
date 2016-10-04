@@ -247,6 +247,7 @@ def put_signed_framework_agreement_on_hold(agreement_id):
 
     return jsonify(agreement=framework_agreement.serialize())
 
+
 @main.route('/agreements/<int:agreement_id>/countersign', methods=['POST'])
 def countersign_agreement(agreement_id):
     framework_agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first_or_404()
@@ -263,7 +264,7 @@ def countersign_agreement(agreement_id):
     framework_agreement.signed_agreement_put_on_hold_at = None
     framework_agreement.countersigned_agreement_returned_at = datetime.utcnow()
 
-    countersigner_details = framework_agreement_details.get('agreement_countersigner_details', {})
+    countersigner_details = framework_agreement_details.get('agreementCountersignerDetails', {})
     countersigner_details.update(updater_json)
     framework_agreement.countersigned_agreement_details = countersigner_details
 
