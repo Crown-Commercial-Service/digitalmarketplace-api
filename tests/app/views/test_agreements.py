@@ -893,3 +893,125 @@ class TestPutFrameworkAgreementOnHold(BaseFrameworkAgreementTest):
         assert res.status_code == 400
         error_message = json.loads(res.get_data(as_text=True))['error']
         assert error_message == "Framework agreement must have a 'frameworkAgreementVersion' to be put on hold"
+
+
+class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
+    def countersign_framework_agreement(self, agreement_id):
+        return self.client.post(
+            '/agreements/{}/countersign'.format(agreement_id),
+            data=json.dumps(
+                {
+                    'updated_by': 'chris@example.com'
+                }),
+            content_type='application/json')
+
+    @fixture_params(
+        'live_example_framework', {
+            'framework_agreement_details': {
+                'frameworkAgreementVersion': 'v1.0',
+                'agreementCountersignerDetails': {
+                    'countersignerName': 'The Boss'}
+                }
+        }
+    )
+    def test_can_countersign_signed_framework_agreement(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1),
+        )
+
+        with freeze_time('2016-12-12'):
+            res = self.countersign_framework_agreement(agreement_id)
+
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert data['agreement'] == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'countersigned',
+            'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
+            'countersignedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z',
+            'countersignedAgreementDetails': {'countersignerName': 'The Boss', 'updated_by': 'chris@example.com'}
+        }
+
+        with self.app.app_context():
+            agreement = FrameworkAgreement.query.filter(
+                FrameworkAgreement.id == agreement_id
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == agreement
+            ).first()
+
+            assert audit.type == "countersign_agreement"
+            assert audit.user == "chris@example.com"
+            assert audit.data == {
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug'],
+                'status': 'countersigned'
+            }
+
+    @fixture_params(
+        'live_example_framework', {
+            'framework_agreement_details': {
+                'frameworkAgreementVersion': 'v1.0',
+                'agreementCountersignerDetails': {
+                    'countersignerName': 'The Boss'}
+            }
+        }
+    )
+    def test_can_countersign_on_hold_framework_agreement(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1),
+        )
+
+        with freeze_time('2016-10-02'):
+            on_hold_res = self.client.post(
+                '/agreements/{}/on-hold'.format(agreement_id),
+                data=json.dumps(
+                    {
+                        'updated_by': 'interested@example.com'
+                    }),
+                content_type='application/json')
+        assert on_hold_res.status_code == 200
+
+        with freeze_time('2016-10-03'):
+            res = self.countersign_framework_agreement(agreement_id)
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert 'signedAgreementPutOnHoldAt' not in data['agreement']
+        assert data['agreement'] == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'countersigned',
+            'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
+            'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
+            'countersignedAgreementDetails': {'countersignerName': 'The Boss', 'updated_by': 'chris@example.com'}
+        }
+
+    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
+    def test_can_not_countersign_unsigned_framework_agreement(self, supplier_framework):
+        agreement_id = self.create_agreement(supplier_framework)
+        res = self.countersign_framework_agreement(agreement_id)
+
+        assert res.status_code == 400
+        error_message = json.loads(res.get_data(as_text=True))['error']
+        assert error_message == "Framework agreement must have status 'signed' or 'on hold' to be countersigned"
+
+    def test_can_not_countersign_framework_agreement_that_has_no_framework_agreement_version(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1)
+        )
+        res = self.countersign_framework_agreement(agreement_id)
+
+        assert res.status_code == 400
+        error_message = json.loads(res.get_data(as_text=True))['error']
+        assert error_message == "Framework agreement must have a 'frameworkAgreementVersion' to be countersigned"
