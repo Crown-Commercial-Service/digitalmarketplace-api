@@ -258,13 +258,14 @@ def countersign_agreement(agreement_id):
     if framework_agreement.status not in ['signed', 'on hold']:
         abort(400, "Framework agreement must have status 'signed' or 'on hold' to be countersigned")
 
-    if not framework_agreement_details or not framework_agreement_details.get('frameworkAgreementVersion'):
-        abort(400, "Framework agreement must have a 'frameworkAgreementVersion' to be countersigned")
-
     framework_agreement.signed_agreement_put_on_hold_at = None
     framework_agreement.countersigned_agreement_returned_at = datetime.utcnow()
 
-    countersigner_details = {'countersignerName': framework_agreement_details.get('countersignerName', '')}
+    if framework_agreement_details and framework_agreement_details.get('countersignerName'):
+        countersigner_details = {'countersignerName': framework_agreement_details['countersignerName']}
+    else:
+        countersigner_details = {}
+
     countersigner_details.update({'updatedBy': updater_json['updated_by']})
     framework_agreement.countersigned_agreement_details = countersigner_details
 
