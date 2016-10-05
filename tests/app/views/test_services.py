@@ -353,20 +353,14 @@ class TestListServices(BaseApplicationTest):
         assert_equal(response.status_code, 404)
 
     def test_x_forwarded_proto(self):
-        prev_environ = os.environ.get('DM_HTTP_PROTO')
-        os.environ['DM_HTTP_PROTO'] = 'https'
         app = create_app('test')
 
         with app.app_context():
             client = app.test_client()
             self.setup_authorization(app)
-            response = client.get('/')
+            app.config['DM_HTTP_PROTO'] = 'https'
+            response = client.get('/', base_url="https://localhost", headers={'X-Forwarded-Proto': 'https'})
             data = json.loads(response.get_data())
-
-        if prev_environ is None:
-            del os.environ['DM_HTTP_PROTO']
-        else:
-            os.environ['DM_HTTP_PROTO'] = prev_environ
 
         assert data['links']['services.list'].startswith('https://')
 
