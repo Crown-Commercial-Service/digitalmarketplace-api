@@ -1138,6 +1138,7 @@ class Brief(db.Model):
     clarification_questions = db.relationship(
         "BriefClarificationQuestion",
         order_by="BriefClarificationQuestion.published_at")
+    work_order = db.relationship('WorkOrder', uselist=False)
 
     @validates('users')
     def validates_users(self, key, user):
@@ -1301,6 +1302,11 @@ class Brief(db.Model):
                 question.serialize() for question in self.clarification_questions
             ],
         })
+
+        if self.work_order:
+            data.update({
+                'work_order_id': self.work_order.id,
+            })
 
         if self.published_at:
             data.update({
