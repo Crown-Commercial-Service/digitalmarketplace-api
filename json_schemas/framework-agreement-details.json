@@ -17,6 +17,15 @@
         "properties": {
           "createdAt": {
             "type": "string"
+          },
+          "countersignedAt": {
+            "type": "string"
+          },
+          "countersignerName": {
+            "type": "string"
+          },
+          "countersignerRole": {
+            "type": "string"
           }
         },
         "required": [
