@@ -909,9 +909,8 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
         'live_example_framework', {
             'framework_agreement_details': {
                 'frameworkAgreementVersion': 'v1.0',
-                'agreementCountersignerDetails': {
-                    'countersignerName': 'The Boss'}
-                }
+                'countersignerName': 'The Boss'
+            }
         }
     )
     def test_can_countersign_signed_framework_agreement(self, supplier_framework):
@@ -958,8 +957,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
         'live_example_framework', {
             'framework_agreement_details': {
                 'frameworkAgreementVersion': 'v1.0',
-                'agreementCountersignerDetails': {
-                    'countersignerName': 'The Boss'}
+                'countersignerName': 'The Boss'
             }
         }
     )

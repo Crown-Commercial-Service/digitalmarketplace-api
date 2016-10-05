@@ -264,7 +264,7 @@ def countersign_agreement(agreement_id):
     framework_agreement.signed_agreement_put_on_hold_at = None
     framework_agreement.countersigned_agreement_returned_at = datetime.utcnow()
 
-    countersigner_details = framework_agreement_details.get('agreementCountersignerDetails', {})
+    countersigner_details = {'countersignerName': framework_agreement_details.get('countersignerName', '')}
     countersigner_details.update({'updatedBy': updater_json['updated_by']})
     framework_agreement.countersigned_agreement_details = countersigner_details
 
