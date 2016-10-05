@@ -434,7 +434,6 @@ class TestBriefs(BaseApplicationTest):
                     }
                 ],
                 "clarificationQuestions": [],
-                "work_order_id": 0,
             }
         )
 

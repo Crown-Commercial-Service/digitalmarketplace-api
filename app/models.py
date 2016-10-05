@@ -1296,13 +1296,17 @@ class Brief(db.Model):
             'lot': self.lot.slug,
             'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
-            'work_order_id': 0 if self.work_order is None else self.work_order.id,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
             'clarificationQuestions': [
                 question.serialize() for question in self.clarification_questions
             ],
         })
+
+        if self.work_order:
+            data.update({
+                'work_order_id': self.work_order.id,
+            })
 
         if self.published_at:
             data.update({
