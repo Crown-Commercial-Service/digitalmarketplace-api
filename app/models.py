@@ -469,6 +469,16 @@ class SupplierFramework(db.Model):
                 supplier_framework['agreementDetails']['uploaderUserName'] = user.name
                 supplier_framework['agreementDetails']['uploaderUserEmail'] = user.email_address
 
+        if supplier_framework['countersignedDetails'] \
+                and supplier_framework['countersignedDetails'].get('approvedByUserId'):
+            user = User.query.filter(
+                User.id == supplier_framework['countersignedDetails']['approvedByUserId']
+            ).first()
+
+            if user:
+                supplier_framework['countersignedDetails']['approvedByUserName'] = user.name
+                supplier_framework['countersignedDetails']['approvedByUserEmail'] = user.email_address
+
         return supplier_framework
 
 

@@ -2,7 +2,7 @@ import json
 import pytest
 from datetime import datetime
 from freezegun import freeze_time
-from app.models import AuditEvent, db, Framework, FrameworkAgreement
+from app.models import AuditEvent, db, Framework, FrameworkAgreement, User
 from ..helpers import BaseApplicationTest, fixture_params
 
 
@@ -938,7 +938,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'countersignedAgreementDetails': {
                 'countersignerName': 'The Boss',
                 'countersignerRole': 'Director of Strings',
-                'updatedById': '1234'
+                'approvedByUserId': '1234'
             }
         }
 
@@ -1001,7 +1001,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'countersignedAgreementDetails': {
                 'countersignerName': 'The Boss',
                 'countersignerRole': 'Director of Strings',
-                'updatedById': '1234'
+                'approvedByUserId': '1234'
             }
         }
 
@@ -1033,7 +1033,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'status': 'countersigned',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
-            'countersignedAgreementDetails': {'updatedById': '1234'}
+            'countersignedAgreementDetails': {'approvedByUserId': '1234'}
         }
 
     @fixture_params(
@@ -1062,5 +1062,48 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'status': 'countersigned',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
-            'countersignedAgreementDetails': {'updatedById': '1234'}
+            'countersignedAgreementDetails': {'approvedByUserId': '1234'}
         }
+
+    @fixture_params(
+        'live_example_framework', {
+            'framework_agreement_details': {
+                'frameworkAgreementVersion': 'v1.0',
+                'countersignerName': 'The Boss',
+                'countersignerRole': 'Director of Strings'
+            }
+        }
+    )
+    def test_serialized_supplier_framework_contains_updater_details_after_countersign(self, supplier_framework):
+        with self.app.app_context():
+            user = User(
+                id=1234,
+                name='Chris',
+                email_address='chris@example.com',
+                password='password',
+                active=True,
+                created_at=datetime.now(),
+                password_changed_at=datetime.now(),
+                role='admin-ccs-sourcing'
+                )
+            db.session.add(user)
+            db.session.commit()
+
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1),
+            signed_agreement_details={},
+            countersigned_agreement_details={
+                "countersignerRole": "Director of Strings",
+                "approvedByUserId": 1234,
+                "countersignerName": "The Boss"
+            },
+            countersigned_agreement_returned_at=datetime.now()
+        )
+
+        with self.app.app_context():
+            agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first()
+            supplier_framework = agreement.supplier_framework.serialize()
+
+        assert supplier_framework['countersignedDetails']['approvedByUserName'] == 'Chris'
+        assert supplier_framework['countersignedDetails']['approvedByUserEmail'] == 'chris@example.com'

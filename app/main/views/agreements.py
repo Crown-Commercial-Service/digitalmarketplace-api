@@ -255,7 +255,7 @@ def countersign_agreement(agreement_id):
 
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['userId'])
-    updater_id = json_payload['userId']
+    approved_by_user_id = json_payload['userId']
 
     updater_json = validate_and_return_updater_request()
 
@@ -276,7 +276,7 @@ def countersign_agreement(agreement_id):
                 'countersignerRole': framework_agreement_details['countersignerRole']
             })
 
-    countersigner_details.update({'updatedById': updater_id})
+    countersigner_details.update({'approvedByUserId': approved_by_user_id})
     framework_agreement.countersigned_agreement_details = countersigner_details
 
     audit_event = AuditEvent(
