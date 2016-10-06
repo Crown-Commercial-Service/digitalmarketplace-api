@@ -7,6 +7,10 @@
       "minLength": 1,
       "type": "string"
     },
+    "countersignerRole": {
+      "minLength": 1,
+      "type": "string"
+    },
     "frameworkAgreementVersion": {
       "minLength": 1,
       "type": "string"
