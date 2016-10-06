@@ -901,7 +901,8 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             '/agreements/{}/countersign'.format(agreement_id),
             data=json.dumps(
                 {
-                    'updated_by': 'chris@example.com'
+                    'updated_by': 'chris@example.com',
+                    'userId': '1234'
                 }),
             content_type='application/json')
 
@@ -909,7 +910,8 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
         'live_example_framework', {
             'framework_agreement_details': {
                 'frameworkAgreementVersion': 'v1.0',
-                'countersignerName': 'The Boss'
+                'countersignerName': 'The Boss',
+                'countersignerRole': 'Director of Strings'
             }
         }
     )
@@ -933,7 +935,11 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'status': 'countersigned',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'countersignedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z',
-            'countersignedAgreementDetails': {'countersignerName': 'The Boss', 'updatedBy': 'chris@example.com'}
+            'countersignedAgreementDetails': {
+                'countersignerName': 'The Boss',
+                'countersignerRole': 'Director of Strings',
+                'updatedById': '1234'
+            }
         }
 
         with self.app.app_context():
@@ -957,7 +963,8 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
         'live_example_framework', {
             'framework_agreement_details': {
                 'frameworkAgreementVersion': 'v1.0',
-                'countersignerName': 'The Boss'
+                'countersignerName': 'The Boss',
+                'countersignerRole': 'Director of Strings'
             }
         }
     )
@@ -991,7 +998,11 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'status': 'countersigned',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
-            'countersignedAgreementDetails': {'countersignerName': 'The Boss', 'updatedBy': 'chris@example.com'}
+            'countersignedAgreementDetails': {
+                'countersignerName': 'The Boss',
+                'countersignerRole': 'Director of Strings',
+                'updatedById': '1234'
+            }
         }
 
     @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
@@ -1022,7 +1033,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'status': 'countersigned',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
-            'countersignedAgreementDetails': {'updatedBy': 'chris@example.com'}
+            'countersignedAgreementDetails': {'updatedById': '1234'}
         }
 
     @fixture_params(
@@ -1032,7 +1043,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             }
         }
     )
-    def test_can_countersign_framework_agreement_with_agreement_version_but_no_name(self, supplier_framework):
+    def test_can_countersign_framework_agreement_with_agreement_version_but_no_name_or_role(self, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
             signed_agreement_returned_at=datetime(2016, 10, 1)
@@ -1051,5 +1062,5 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'status': 'countersigned',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
-            'countersignedAgreementDetails': {'updatedBy': 'chris@example.com'}
+            'countersignedAgreementDetails': {'updatedById': '1234'}
         }

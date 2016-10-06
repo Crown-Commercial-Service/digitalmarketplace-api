@@ -253,6 +253,10 @@ def countersign_agreement(agreement_id):
     framework_agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first_or_404()
     framework_agreement_details = framework_agreement.supplier_framework.framework.framework_agreement_details
 
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['userId'])
+    updater_id = json_payload['userId']
+
     updater_json = validate_and_return_updater_request()
 
     if framework_agreement.status not in ['signed', 'on hold']:
@@ -261,12 +265,18 @@ def countersign_agreement(agreement_id):
     framework_agreement.signed_agreement_put_on_hold_at = None
     framework_agreement.countersigned_agreement_returned_at = datetime.utcnow()
 
-    if framework_agreement_details and framework_agreement_details.get('countersignerName'):
-        countersigner_details = {'countersignerName': framework_agreement_details['countersignerName']}
-    else:
-        countersigner_details = {}
+    countersigner_details = {}
+    if framework_agreement_details:
+        if framework_agreement_details.get('countersignerName'):
+            countersigner_details.update({
+                'countersignerName': framework_agreement_details['countersignerName']
+            })
+        if framework_agreement_details.get('countersignerRole'):
+            countersigner_details.update({
+                'countersignerRole': framework_agreement_details['countersignerRole']
+            })
 
-    countersigner_details.update({'updatedBy': updater_json['updated_by']})
+    countersigner_details.update({'updatedById': updater_id})
     framework_agreement.countersigned_agreement_details = countersigner_details
 
     audit_event = AuditEvent(
