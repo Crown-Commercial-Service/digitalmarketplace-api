@@ -495,6 +495,121 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
             'error': {'signerName': 'answer_required', 'signerRole': 'answer_required'}
         }
 
+    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
+    def test_can_update_countersigned_agreement_path_for_framework_with_agreement_version(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_details={
+                'signerName': 'name',
+                'signerRole': 'role',
+            },
+            signed_agreement_path='path/file.pdf',
+            signed_agreement_returned_at=datetime(2016, 10, 1, 1, 1, 1),
+            countersigned_agreement_returned_at=datetime(2016, 11, 1, 1, 1, 1)
+        )
+        res = self.post_agreement_update(agreement_id, {
+            'countersignedAgreementPath': 'countersigned/file.jpg'
+        })
+
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))
+
+        expected_agreement_json = {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'countersigned',
+            'signedAgreementPath': 'path/file.pdf',
+            'signedAgreementDetails': {
+                'signerName': 'name',
+                'signerRole': 'role',
+            },
+            'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
+            'countersignedAgreementReturnedAt': '2016-11-01T01:01:01.000000Z',
+            'countersignedAgreementPath': 'countersigned/file.jpg'
+        }
+        assert data['agreement'] == expected_agreement_json
+
+        res2 = self.client.get('/agreements/{}'.format(agreement_id))
+        assert res2.status_code == 200
+        assert json.loads(res2.get_data(as_text=True))['agreement'] == expected_agreement_json
+
+    @fixture_params('live_example_framework', {'framework_agreement_details': None})
+    def test_can_update_countersigned_agreement_path_for_framework_without_agreement_version(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_path='path/file.pdf',
+            signed_agreement_returned_at=datetime(2016, 10, 1, 1, 1, 1),
+            countersigned_agreement_returned_at=datetime(2016, 11, 1, 1, 1, 1)
+        )
+        res = self.post_agreement_update(agreement_id, {
+            'countersignedAgreementPath': 'countersigned/file.jpg'
+        })
+
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))
+
+        expected_agreement_json = {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'countersigned',
+            'signedAgreementPath': 'path/file.pdf',
+            'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
+            'countersignedAgreementReturnedAt': '2016-11-01T01:01:01.000000Z',
+            'countersignedAgreementPath': 'countersigned/file.jpg'
+        }
+        assert data['agreement'] == expected_agreement_json
+
+        res2 = self.client.get('/agreements/{}'.format(agreement_id))
+        assert res2.status_code == 200
+        assert json.loads(res2.get_data(as_text=True))['agreement'] == expected_agreement_json
+
+    def test_cannot_update_countersigned_agreement_path_if_agreement_has_not_been_approved(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_path='path/file.pdf',
+            signed_agreement_returned_at=datetime(2016, 10, 1, 1, 1, 1)
+        )
+        res = self.post_agreement_update(agreement_id, {
+            'countersignedAgreementPath': 'countersigned/file.jpg'
+        })
+
+        assert res.status_code == 400
+        assert json.loads(res.get_data(as_text=True)) == {
+            'error': 'Can not update countersignedAgreementPath if agreement has not been approved for countersigning'
+        }
+
+    def test_can_unset_countersigned_agreement_path(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_path='path/file.pdf',
+            signed_agreement_returned_at=datetime(2016, 10, 1, 1, 1, 1),
+            countersigned_agreement_returned_at=datetime(2016, 11, 1, 1, 1, 1),
+            countersigned_agreement_path='countersigned/that/bad/boy.pdf'
+        )
+        res = self.post_agreement_update(agreement_id, {
+            'countersignedAgreementPath': None
+        })
+
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))
+
+        expected_agreement_json = {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'countersigned',
+            'signedAgreementPath': 'path/file.pdf',
+            'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
+            'countersignedAgreementReturnedAt': '2016-11-01T01:01:01.000000Z'
+        }
+        assert data['agreement'] == expected_agreement_json
+
+        res2 = self.client.get('/agreements/{}'.format(agreement_id))
+        assert res2.status_code == 200
+        assert json.loads(res2.get_data(as_text=True))['agreement'] == expected_agreement_json
+
 
 @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
 class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAgreementTest):
