@@ -106,7 +106,10 @@ def update_framework_agreement(agreement_id):
     json_has_required_keys(json_payload, ["agreement"])
     update_json = json_payload["agreement"]
 
-    json_has_keys(update_json, optional_keys=['signedAgreementDetails', 'signedAgreementPath'])
+    json_has_keys(
+        update_json,
+        optional_keys=['signedAgreementDetails', 'signedAgreementPath', 'countersignedAgreementPath']
+    )
 
     # TODO Behaviour to be introduced after next step of refactoring
     # if (
@@ -114,6 +117,9 @@ def update_framework_agreement(agreement_id):
     #     and ('signedAgreementDetails' in update_json or 'signedAgreementPath' in update_json)
     # ):
     #     abort(400, "Can not update signedAgreementDetails or signedAgreementPath if agreement has been signed")
+
+    if ('countersignedAgreementPath' in update_json and not framework_agreement.countersigned_agreement_returned_at):
+        abort(400, "Can not update countersignedAgreementPath if agreement has not been approved for countersigning")
 
     if update_json.get('signedAgreementDetails'):
         if not framework_agreement_details or not framework_agreement_details.get('frameworkAgreementVersion'):
@@ -130,6 +136,9 @@ def update_framework_agreement(agreement_id):
 
     if update_json.get('signedAgreementPath'):
         framework_agreement.signed_agreement_path = update_json['signedAgreementPath']
+    # Unlike signedAgreementPath, we allow unsetting of countersignedAgreementpath
+    if 'countersignedAgreementPath' in update_json:
+        framework_agreement.countersigned_agreement_path = update_json['countersignedAgreementPath']
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.update_agreement,
