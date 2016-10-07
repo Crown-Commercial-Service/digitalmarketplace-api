@@ -878,7 +878,7 @@ class TestFrameworkAgreements(BaseApplicationTest):
         )
         assert framework_agreement.status == 'on hold'
 
-    def test_countersigned_framework_agreement_status_is_countersigned(self):
+    def test_countersigned_framework_agreement_status_is_approved(self):
         framework_agreement = FrameworkAgreement(
             supplier_id=0,
             framework_id=1,
@@ -886,5 +886,17 @@ class TestFrameworkAgreements(BaseApplicationTest):
             signed_agreement_path='path',
             signed_agreement_returned_at=datetime.utcnow(),
             countersigned_agreement_returned_at=datetime.utcnow()
+        )
+        assert framework_agreement.status == 'approved'
+
+    def test_countersigned_framework_agreement_status_is_countersigned(self):
+        framework_agreement = FrameworkAgreement(
+            supplier_id=0,
+            framework_id=1,
+            signed_agreement_details={'agreement': 'details'},
+            signed_agreement_path='path',
+            signed_agreement_returned_at=datetime.utcnow(),
+            countersigned_agreement_returned_at=datetime.utcnow(),
+            countersigned_agreement_path='/path/to/the/countersignedAgreement.pdf'
         )
         assert framework_agreement.status == 'countersigned'

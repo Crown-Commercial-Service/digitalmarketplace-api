@@ -224,6 +224,30 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
             'signedAgreementPutOnHoldAt': '2016-11-01T01:01:01.000000Z',
         }
 
+    def test_it_gets_an_approved_framework_agreement_by_id(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1, 1, 1, 1),
+            signed_agreement_details={'details': 'here'},
+            signed_agreement_path='path',
+            countersigned_agreement_details={'countersigneddetails': 'here'},
+            countersigned_agreement_returned_at=datetime(2016, 11, 1, 1, 1, 1),
+        )
+        res = self.client.get('/agreements/{}'.format(agreement_id))
+
+        assert res.status_code == 200
+        assert json.loads(res.get_data(as_text=True))['agreement'] == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'approved',
+            'signedAgreementDetails': {'details': 'here'},
+            'signedAgreementPath': 'path',
+            'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
+            'countersignedAgreementDetails': {'countersigneddetails': 'here'},
+            'countersignedAgreementReturnedAt': '2016-11-01T01:01:01.000000Z',
+        }
+
     def test_it_gets_a_countersigned_framework_agreement_by_id(self, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
@@ -231,7 +255,8 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
             signed_agreement_details={'details': 'here'},
             signed_agreement_path='path',
             countersigned_agreement_details={'countersigneddetails': 'here'},
-            countersigned_agreement_returned_at=datetime(2016, 11, 1, 1, 1, 1)
+            countersigned_agreement_returned_at=datetime(2016, 11, 1, 1, 1, 1),
+            countersigned_agreement_path='path'
         )
         res = self.client.get('/agreements/{}'.format(agreement_id))
 
@@ -246,6 +271,7 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
             'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
             'countersignedAgreementDetails': {'countersigneddetails': 'here'},
             'countersignedAgreementReturnedAt': '2016-11-01T01:01:01.000000Z',
+            'countersignedAgreementPath': 'path'
         }
 
     def test_it_gets_a_countersigned_and_uploaded_framework_agreement_by_id(self, supplier_framework):
@@ -599,7 +625,7 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
-            'status': 'countersigned',
+            'status': 'approved',
             'signedAgreementPath': 'path/file.pdf',
             'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
             'countersignedAgreementReturnedAt': '2016-11-01T01:01:01.000000Z'
@@ -895,7 +921,7 @@ class TestPutFrameworkAgreementOnHold(BaseFrameworkAgreementTest):
         assert error_message == "Framework agreement must have a 'frameworkAgreementVersion' to be put on hold"
 
 
-class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
+class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
     def approve_framework_agreement(self, agreement_id):
         return self.client.post(
             '/agreements/{}/approve'.format(agreement_id),
@@ -932,7 +958,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
-            'status': 'countersigned',
+            'status': 'approved',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'countersignedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z',
             'countersignedAgreementDetails': {
@@ -982,7 +1008,11 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
                         'updated_by': 'interested@example.com'
                     }),
                 content_type='application/json')
+
         assert on_hold_res.status_code == 200
+
+        on_hold_data = json.loads(on_hold_res.get_data(as_text=True))['agreement']
+        assert on_hold_data['status'] == 'on hold'
 
         with freeze_time('2016-10-03'):
             res = self.approve_framework_agreement(agreement_id)
@@ -995,7 +1025,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
-            'status': 'countersigned',
+            'status': 'approved',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
             'countersignedAgreementDetails': {
@@ -1030,7 +1060,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
-            'status': 'countersigned',
+            'status': 'approved',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
             'countersignedAgreementDetails': {'approvedByUserId': '1234'}
@@ -1053,7 +1083,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
-            'status': 'countersigned',
+            'status': 'approved',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
             'countersignedAgreementDetails': {'approvedByUserId': '1234'}

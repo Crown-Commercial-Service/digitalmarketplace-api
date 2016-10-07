@@ -532,8 +532,10 @@ class FrameworkAgreement(db.Model):
 
     @hybrid_property
     def status(self):
-        if self.countersigned_agreement_returned_at:
+        if self.countersigned_agreement_path:
             return 'countersigned'
+        elif self.countersigned_agreement_returned_at:
+            return 'approved'
         elif self.signed_agreement_put_on_hold_at:
             return 'on hold'
         elif self.signed_agreement_returned_at:
