@@ -982,7 +982,7 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
             assert audit.data == {
                 'supplierId': supplier_framework['supplierId'],
                 'frameworkSlug': supplier_framework['frameworkSlug'],
-                'status': 'countersigned'
+                'status': 'approved'
             }
 
     @fixture_params(

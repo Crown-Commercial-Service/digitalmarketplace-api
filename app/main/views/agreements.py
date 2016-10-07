@@ -285,7 +285,7 @@ def approve_for_countersignature(agreement_id):
         data={
             'supplierId': framework_agreement.supplier_id,
             'frameworkSlug': framework_agreement.supplier_framework.framework.slug,
-            'status': 'countersigned'
+            'status': 'approved'
         },
         db_object=framework_agreement
     )
