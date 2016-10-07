@@ -246,3 +246,56 @@ def put_signed_framework_agreement_on_hold(agreement_id):
         return jsonify(message="Database Error: {0}".format(e)), 400
 
     return jsonify(agreement=framework_agreement.serialize())
+
+
+@main.route('/agreements/<int:agreement_id>/approve', methods=['POST'])
+def approve_for_countersignature(agreement_id):
+    framework_agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first_or_404()
+    framework_agreement_details = framework_agreement.supplier_framework.framework.framework_agreement_details
+
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['userId'])
+    approved_by_user_id = json_payload['userId']
+
+    updater_json = validate_and_return_updater_request()
+
+    if framework_agreement.status not in ['signed', 'on hold']:
+        abort(400, "Framework agreement must have status 'signed' or 'on hold' to be countersigned")
+
+    framework_agreement.signed_agreement_put_on_hold_at = None
+    framework_agreement.countersigned_agreement_returned_at = datetime.utcnow()
+
+    countersigner_details = {}
+    if framework_agreement_details:
+        if framework_agreement_details.get('countersignerName'):
+            countersigner_details.update({
+                'countersignerName': framework_agreement_details['countersignerName']
+            })
+        if framework_agreement_details.get('countersignerRole'):
+            countersigner_details.update({
+                'countersignerRole': framework_agreement_details['countersignerRole']
+            })
+
+    countersigner_details.update({'approvedByUserId': approved_by_user_id})
+    framework_agreement.countersigned_agreement_details = countersigner_details
+
+    audit_event = AuditEvent(
+        audit_type=AuditTypes.countersign_agreement,
+        user=updater_json['updated_by'],
+        data={
+            'supplierId': framework_agreement.supplier_id,
+            'frameworkSlug': framework_agreement.supplier_framework.framework.slug,
+            'status': 'approved'
+        },
+        db_object=framework_agreement
+    )
+
+    try:
+        db.session.add(framework_agreement)
+        db.session.add(audit_event)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message="Database Error: {0}".format(e)), 400
+
+    return jsonify(agreement=framework_agreement.serialize())

@@ -1422,6 +1422,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                     'some': 'data'
                 },
                 countersigned_agreement_returned_at=datetime(2017, 2, 1, 1, 1, 1),
+                countersigned_agreement_path='path'
             )
             db.session.add(framework_agreement)
             db.session.commit()
@@ -1454,7 +1455,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                 'countersigned': True,
                 'countersignedAt': '2017-02-01T01:01:01.000000Z',
                 'countersignedDetails': {'some': 'data'},
-                'countersignedPath': None,
+                'countersignedPath': 'path',
                 'agreementStatus': 'countersigned',
                 'agreedVariations': {}
             }

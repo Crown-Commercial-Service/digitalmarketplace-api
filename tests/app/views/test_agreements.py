@@ -2,7 +2,7 @@ import json
 import pytest
 from datetime import datetime
 from freezegun import freeze_time
-from app.models import AuditEvent, db, Framework, FrameworkAgreement
+from app.models import AuditEvent, db, Framework, FrameworkAgreement, User
 from ..helpers import BaseApplicationTest, fixture_params
 
 
@@ -224,6 +224,30 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
             'signedAgreementPutOnHoldAt': '2016-11-01T01:01:01.000000Z',
         }
 
+    def test_it_gets_an_approved_framework_agreement_by_id(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1, 1, 1, 1),
+            signed_agreement_details={'details': 'here'},
+            signed_agreement_path='path',
+            countersigned_agreement_details={'countersigneddetails': 'here'},
+            countersigned_agreement_returned_at=datetime(2016, 11, 1, 1, 1, 1),
+        )
+        res = self.client.get('/agreements/{}'.format(agreement_id))
+
+        assert res.status_code == 200
+        assert json.loads(res.get_data(as_text=True))['agreement'] == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'approved',
+            'signedAgreementDetails': {'details': 'here'},
+            'signedAgreementPath': 'path',
+            'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
+            'countersignedAgreementDetails': {'countersigneddetails': 'here'},
+            'countersignedAgreementReturnedAt': '2016-11-01T01:01:01.000000Z',
+        }
+
     def test_it_gets_a_countersigned_framework_agreement_by_id(self, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
@@ -231,7 +255,8 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
             signed_agreement_details={'details': 'here'},
             signed_agreement_path='path',
             countersigned_agreement_details={'countersigneddetails': 'here'},
-            countersigned_agreement_returned_at=datetime(2016, 11, 1, 1, 1, 1)
+            countersigned_agreement_returned_at=datetime(2016, 11, 1, 1, 1, 1),
+            countersigned_agreement_path='path'
         )
         res = self.client.get('/agreements/{}'.format(agreement_id))
 
@@ -246,6 +271,7 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
             'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
             'countersignedAgreementDetails': {'countersigneddetails': 'here'},
             'countersignedAgreementReturnedAt': '2016-11-01T01:01:01.000000Z',
+            'countersignedAgreementPath': 'path'
         }
 
     def test_it_gets_a_countersigned_and_uploaded_framework_agreement_by_id(self, supplier_framework):
@@ -599,7 +625,7 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
-            'status': 'countersigned',
+            'status': 'approved',
             'signedAgreementPath': 'path/file.pdf',
             'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
             'countersignedAgreementReturnedAt': '2016-11-01T01:01:01.000000Z'
@@ -893,3 +919,215 @@ class TestPutFrameworkAgreementOnHold(BaseFrameworkAgreementTest):
         assert res.status_code == 400
         error_message = json.loads(res.get_data(as_text=True))['error']
         assert error_message == "Framework agreement must have a 'frameworkAgreementVersion' to be put on hold"
+
+
+class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
+    def approve_framework_agreement(self, agreement_id):
+        return self.client.post(
+            '/agreements/{}/approve'.format(agreement_id),
+            data=json.dumps(
+                {
+                    'updated_by': 'chris@example.com',
+                    'userId': '1234'
+                }),
+            content_type='application/json')
+
+    @fixture_params(
+        'live_example_framework', {
+            'framework_agreement_details': {
+                'frameworkAgreementVersion': 'v1.0',
+                'countersignerName': 'The Boss',
+                'countersignerRole': 'Director of Strings'
+            }
+        }
+    )
+    def test_can_approve_signed_framework_agreement(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1),
+        )
+
+        with freeze_time('2016-12-12'):
+            res = self.approve_framework_agreement(agreement_id)
+
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert data['agreement'] == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'approved',
+            'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
+            'countersignedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z',
+            'countersignedAgreementDetails': {
+                'countersignerName': 'The Boss',
+                'countersignerRole': 'Director of Strings',
+                'approvedByUserId': '1234'
+            }
+        }
+
+        with self.app.app_context():
+            agreement = FrameworkAgreement.query.filter(
+                FrameworkAgreement.id == agreement_id
+            ).first()
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == agreement
+            ).first()
+
+            assert audit.type == "countersign_agreement"
+            assert audit.user == "chris@example.com"
+            assert audit.data == {
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug'],
+                'status': 'approved'
+            }
+
+    @fixture_params(
+        'live_example_framework', {
+            'framework_agreement_details': {
+                'frameworkAgreementVersion': 'v1.0',
+                'countersignerName': 'The Boss',
+                'countersignerRole': 'Director of Strings'
+            }
+        }
+    )
+    def test_can_approve_on_hold_framework_agreement(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1),
+        )
+
+        with freeze_time('2016-10-02'):
+            on_hold_res = self.client.post(
+                '/agreements/{}/on-hold'.format(agreement_id),
+                data=json.dumps(
+                    {
+                        'updated_by': 'interested@example.com'
+                    }),
+                content_type='application/json')
+
+        assert on_hold_res.status_code == 200
+
+        on_hold_data = json.loads(on_hold_res.get_data(as_text=True))['agreement']
+        assert on_hold_data['status'] == 'on hold'
+
+        with freeze_time('2016-10-03'):
+            res = self.approve_framework_agreement(agreement_id)
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert 'signedAgreementPutOnHoldAt' not in data['agreement']
+        assert data['agreement'] == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'approved',
+            'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
+            'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
+            'countersignedAgreementDetails': {
+                'countersignerName': 'The Boss',
+                'countersignerRole': 'Director of Strings',
+                'approvedByUserId': '1234'
+            }
+        }
+
+    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
+    def test_can_not_approve_unsigned_framework_agreement(self, supplier_framework):
+        agreement_id = self.create_agreement(supplier_framework)
+        res = self.approve_framework_agreement(agreement_id)
+
+        assert res.status_code == 400
+        error_message = json.loads(res.get_data(as_text=True))['error']
+        assert error_message == "Framework agreement must have status 'signed' or 'on hold' to be countersigned"
+
+    def test_can_approve_framework_agreement_that_has_no_framework_agreement_version(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1)
+        )
+
+        with freeze_time('2016-10-03'):
+            res = self.approve_framework_agreement(agreement_id)
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert data['agreement'] == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'approved',
+            'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
+            'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
+            'countersignedAgreementDetails': {'approvedByUserId': '1234'}
+        }
+
+    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
+    def test_can_approve_framework_agreement_with_agreement_version_but_no_name_or_role(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1)
+        )
+
+        with freeze_time('2016-10-03'):
+            res = self.approve_framework_agreement(agreement_id)
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert data['agreement'] == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'approved',
+            'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
+            'countersignedAgreementReturnedAt': '2016-10-03T00:00:00.000000Z',
+            'countersignedAgreementDetails': {'approvedByUserId': '1234'}
+        }
+
+    @fixture_params(
+        'live_example_framework', {
+            'framework_agreement_details': {
+                'frameworkAgreementVersion': 'v1.0',
+                'countersignerName': 'The Boss',
+                'countersignerRole': 'Director of Strings'
+            }
+        }
+    )
+    def test_serialized_supplier_framework_contains_updater_details_after_approval(self, supplier_framework):
+        with self.app.app_context():
+            user = User(
+                id=1234,
+                name='Chris',
+                email_address='chris@example.com',
+                password='password',
+                active=True,
+                created_at=datetime.now(),
+                password_changed_at=datetime.now(),
+                role='admin-ccs-sourcing'
+                )
+            db.session.add(user)
+            db.session.commit()
+
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1),
+            signed_agreement_details={},
+            countersigned_agreement_details={
+                "countersignerRole": "Director of Strings",
+                "approvedByUserId": 1234,
+                "countersignerName": "The Boss"
+            },
+            countersigned_agreement_returned_at=datetime.now()
+        )
+
+        with self.app.app_context():
+            agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first()
+            supplier_framework = agreement.supplier_framework.serialize()
+
+        assert supplier_framework['countersignedDetails']['approvedByUserName'] == 'Chris'
+        assert supplier_framework['countersignedDetails']['approvedByUserEmail'] == 'chris@example.com'
