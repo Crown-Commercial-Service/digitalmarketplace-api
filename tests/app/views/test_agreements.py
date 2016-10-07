@@ -896,9 +896,9 @@ class TestPutFrameworkAgreementOnHold(BaseFrameworkAgreementTest):
 
 
 class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
-    def countersign_framework_agreement(self, agreement_id):
+    def approve_framework_agreement(self, agreement_id):
         return self.client.post(
-            '/agreements/{}/countersign'.format(agreement_id),
+            '/agreements/{}/approve'.format(agreement_id),
             data=json.dumps(
                 {
                     'updated_by': 'chris@example.com',
@@ -915,14 +915,14 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             }
         }
     )
-    def test_can_countersign_signed_framework_agreement(self, supplier_framework):
+    def test_can_approve_signed_framework_agreement(self, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
             signed_agreement_returned_at=datetime(2016, 10, 1),
         )
 
         with freeze_time('2016-12-12'):
-            res = self.countersign_framework_agreement(agreement_id)
+            res = self.approve_framework_agreement(agreement_id)
 
         assert res.status_code == 200
 
@@ -968,7 +968,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             }
         }
     )
-    def test_can_countersign_on_hold_framework_agreement(self, supplier_framework):
+    def test_can_approve_on_hold_framework_agreement(self, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
             signed_agreement_returned_at=datetime(2016, 10, 1),
@@ -985,7 +985,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
         assert on_hold_res.status_code == 200
 
         with freeze_time('2016-10-03'):
-            res = self.countersign_framework_agreement(agreement_id)
+            res = self.approve_framework_agreement(agreement_id)
         assert res.status_code == 200
 
         data = json.loads(res.get_data(as_text=True))
@@ -1006,22 +1006,22 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
         }
 
     @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_can_not_countersign_unsigned_framework_agreement(self, supplier_framework):
+    def test_can_not_approve_unsigned_framework_agreement(self, supplier_framework):
         agreement_id = self.create_agreement(supplier_framework)
-        res = self.countersign_framework_agreement(agreement_id)
+        res = self.approve_framework_agreement(agreement_id)
 
         assert res.status_code == 400
         error_message = json.loads(res.get_data(as_text=True))['error']
         assert error_message == "Framework agreement must have status 'signed' or 'on hold' to be countersigned"
 
-    def test_can_countersign_framework_agreement_that_has_no_framework_agreement_version(self, supplier_framework):
+    def test_can_approve_framework_agreement_that_has_no_framework_agreement_version(self, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
             signed_agreement_returned_at=datetime(2016, 10, 1)
         )
 
         with freeze_time('2016-10-03'):
-            res = self.countersign_framework_agreement(agreement_id)
+            res = self.approve_framework_agreement(agreement_id)
         assert res.status_code == 200
 
         data = json.loads(res.get_data(as_text=True))
@@ -1036,21 +1036,15 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             'countersignedAgreementDetails': {'approvedByUserId': '1234'}
         }
 
-    @fixture_params(
-        'live_example_framework', {
-            'framework_agreement_details': {
-                'frameworkAgreementVersion': 'v1.0'
-            }
-        }
-    )
-    def test_can_countersign_framework_agreement_with_agreement_version_but_no_name_or_role(self, supplier_framework):
+    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
+    def test_can_approve_framework_agreement_with_agreement_version_but_no_name_or_role(self, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
             signed_agreement_returned_at=datetime(2016, 10, 1)
         )
 
         with freeze_time('2016-10-03'):
-            res = self.countersign_framework_agreement(agreement_id)
+            res = self.approve_framework_agreement(agreement_id)
         assert res.status_code == 200
 
         data = json.loads(res.get_data(as_text=True))
@@ -1074,7 +1068,7 @@ class TestCountersignFrameworkAgreement(BaseFrameworkAgreementTest):
             }
         }
     )
-    def test_serialized_supplier_framework_contains_updater_details_after_countersign(self, supplier_framework):
+    def test_serialized_supplier_framework_contains_updater_details_after_approval(self, supplier_framework):
         with self.app.app_context():
             user = User(
                 id=1234,

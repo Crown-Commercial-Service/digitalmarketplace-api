@@ -248,8 +248,8 @@ def put_signed_framework_agreement_on_hold(agreement_id):
     return jsonify(agreement=framework_agreement.serialize())
 
 
-@main.route('/agreements/<int:agreement_id>/countersign', methods=['POST'])
-def countersign_agreement(agreement_id):
+@main.route('/agreements/<int:agreement_id>/approve', methods=['POST'])
+def approve_for_countersignature(agreement_id):
     framework_agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first_or_404()
     framework_agreement_details = framework_agreement.supplier_framework.framework.framework_agreement_details
 
