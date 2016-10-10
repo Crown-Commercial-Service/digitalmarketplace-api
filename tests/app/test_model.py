@@ -878,7 +878,7 @@ class TestFrameworkAgreements(BaseApplicationTest):
         )
         assert framework_agreement.status == 'on hold'
 
-    def test_countersigned_framework_agreement_status_is_approved(self):
+    def test_approved_framework_agreement_status_is_approved(self):
         framework_agreement = FrameworkAgreement(
             supplier_id=0,
             framework_id=1,
@@ -900,3 +900,119 @@ class TestFrameworkAgreements(BaseApplicationTest):
             countersigned_agreement_path='/path/to/the/countersignedAgreement.pdf'
         )
         assert framework_agreement.status == 'countersigned'
+
+
+class TestCurrentFrameworkAgreement(BaseApplicationTest):
+    """
+    Tests the current_framework_agreement property of SupplierFramework objects
+    """
+    BASE_AGREEMENT_KWARGS = {
+        "supplier_id": 0,
+        "framework_id": 1,
+        "signed_agreement_details": {"agreement": "details"},
+        "signed_agreement_path": "path",
+    }
+
+    def setup(self):
+        super(TestCurrentFrameworkAgreement, self).setup()
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+
+            supplier_framework = SupplierFramework(supplier_id=0, framework_id=1)
+            db.session.add(supplier_framework)
+            db.session.commit()
+
+    def get_supplier_framework(self):
+        return SupplierFramework.query.filter(
+            SupplierFramework.supplier_id == 0,
+            SupplierFramework.framework_id == 1
+        ).first()
+
+    def test_current_framework_agreement_with_no_agreements(self):
+        with self.app.app_context():
+            supplier_framework = self.get_supplier_framework()
+            assert supplier_framework.current_framework_agreement is None
+
+    def test_current_framework_agreement_with_one_draft_only(self):
+        with self.app.app_context():
+            db.session.add(FrameworkAgreement(id=5, **self.BASE_AGREEMENT_KWARGS))
+            db.session.commit()
+            supplier_framework = self.get_supplier_framework()
+            assert supplier_framework.current_framework_agreement.id == 5
+
+    def test_current_framework_agreement_with_multiple_drafts(self):
+        with self.app.app_context():
+            db.session.add(FrameworkAgreement(id=5, **self.BASE_AGREEMENT_KWARGS))
+            db.session.add(FrameworkAgreement(id=6, **self.BASE_AGREEMENT_KWARGS))
+            db.session.commit()
+            supplier_framework = self.get_supplier_framework()
+            assert supplier_framework.current_framework_agreement.id == 6
+
+    def test_current_framework_agreement_with_one_signed(self):
+        with self.app.app_context():
+            db.session.add(FrameworkAgreement(
+                id=5, signed_agreement_returned_at=datetime(2016, 10, 9, 12, 00, 00), **self.BASE_AGREEMENT_KWARGS)
+            )
+            supplier_framework = self.get_supplier_framework()
+            assert supplier_framework.current_framework_agreement.id == 5
+
+    def test_current_framework_agreement_with_multiple_signed(self):
+        with self.app.app_context():
+            db.session.add(FrameworkAgreement(
+                id=5, signed_agreement_returned_at=datetime(2016, 10, 9, 12, 00, 00), **self.BASE_AGREEMENT_KWARGS)
+            )
+            db.session.add(FrameworkAgreement(
+                id=6, signed_agreement_returned_at=datetime(2016, 10, 10, 12, 00, 00), **self.BASE_AGREEMENT_KWARGS)
+            )
+            supplier_framework = self.get_supplier_framework()
+            assert supplier_framework.current_framework_agreement.id == 6
+
+    def test_current_framework_agreement_with_signed_and_old_draft(self):
+        # THIS IS GOING TO DIE ONCE WE STOP RETURNING DRAFTS IN SUPPLIER FRAMEWORK
+        # RELATIVE AGE IS DETERMINED BY ID ORDER
+        with self.app.app_context():
+            db.session.add(FrameworkAgreement(id=5, **self.BASE_AGREEMENT_KWARGS))
+            db.session.add(FrameworkAgreement(
+                id=6, signed_agreement_returned_at=datetime(2016, 10, 10, 12, 00, 00), **self.BASE_AGREEMENT_KWARGS)
+            )
+            supplier_framework = self.get_supplier_framework()
+            assert supplier_framework.current_framework_agreement.id == 6
+
+    def test_current_framework_agreement_with_signed_and_new_draft(self):
+        # THIS IS GOING TO DIE ONCE WE STOP RETURNING DRAFTS IN SUPPLIER FRAMEWORK
+        # RELATIVE AGE IS DETERMINED BY ID ORDER
+        with self.app.app_context():
+            db.session.add(FrameworkAgreement(id=6, **self.BASE_AGREEMENT_KWARGS))
+            db.session.add(FrameworkAgreement(
+                id=5, signed_agreement_returned_at=datetime(2016, 10, 10, 12, 00, 00), **self.BASE_AGREEMENT_KWARGS)
+            )
+            supplier_framework = self.get_supplier_framework()
+            assert supplier_framework.current_framework_agreement.id == 6
+
+    def test_current_framework_agreement_with_signed_and_new_countersigned(self):
+        with self.app.app_context():
+            db.session.add(FrameworkAgreement(
+                id=5, signed_agreement_returned_at=datetime(2016, 10, 9, 12, 00, 00), **self.BASE_AGREEMENT_KWARGS)
+            )
+            db.session.add(FrameworkAgreement(
+                id=6,
+                signed_agreement_returned_at=datetime(2016, 10, 10, 12, 00, 00),
+                countersigned_agreement_returned_at=datetime(2016, 10, 11, 12, 00, 00),
+                **self.BASE_AGREEMENT_KWARGS)
+            )
+            supplier_framework = self.get_supplier_framework()
+            assert supplier_framework.current_framework_agreement.id == 6
+
+    def test_current_framework_agreement_with_countersigned_and_new_signed(self):
+        with self.app.app_context():
+            db.session.add(FrameworkAgreement(
+                id=5, signed_agreement_returned_at=datetime(2016, 10, 11, 12, 00, 00), **self.BASE_AGREEMENT_KWARGS)
+            )
+            db.session.add(FrameworkAgreement(
+                id=6,
+                signed_agreement_returned_at=datetime(2016, 10, 9, 12, 00, 00),
+                countersigned_agreement_returned_at=datetime(2016, 10, 10, 12, 00, 00),
+                **self.BASE_AGREEMENT_KWARGS)
+            )
+            supplier_framework = self.get_supplier_framework()
+            assert supplier_framework.current_framework_agreement.id == 5
