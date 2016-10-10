@@ -2,6 +2,11 @@
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
   "properties": {
+    "additionalRelevantInformation": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,499}\\S+$)",
+      "type": "string"
+    },
     "additionalTerms": {
       "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
@@ -9,7 +14,7 @@
     },
     "backgroundInformation": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,499}\\S+$",
       "type": "string"
     },
     "budgetRange": {
@@ -69,7 +74,7 @@
     },
     "existingTeam": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,299}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,499}\\S+$",
       "type": "string"
     },
     "location": {
@@ -108,7 +113,7 @@
     },
     "outcome": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,499}\\S+$",
       "type": "string"
     },
     "phase": {
@@ -205,12 +210,12 @@
     },
     "workAlreadyDone": {
       "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
+      "pattern": "^$|(^(?:\\S+\\s+){0,499}\\S+$)",
       "type": "string"
     },
     "workingArrangements": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,499}\\S+$",
       "type": "string"
     },
     "workplaceAddress": {
