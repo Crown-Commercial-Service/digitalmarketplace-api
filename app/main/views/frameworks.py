@@ -212,31 +212,38 @@ def get_framework_suppliers(framework_slug):
         Framework.slug == framework_slug
     ).first_or_404()
 
-    agreement_returned = request.args.get('agreement_returned')
-
+    # Listing agreements is something done for Admin only (suppliers only retrieve their individual agreements)
+    # CCS always want to work from the oldest returned date to newest, so order by ascending date
     supplier_frameworks = SupplierFramework.query.filter(
         SupplierFramework.framework_id == framework.id
+    ).outerjoin(
+        SupplierFramework.framework_agreements
+    ).order_by(
+        FrameworkAgreement.signed_agreement_returned_at.asc()
     )
 
-    if agreement_returned is not None:
-        if convert_to_boolean(agreement_returned):
-            supplier_frameworks.outerjoin().order_by(
-                FrameworkAgreement.signed_agreement_returned_at.desc()
-            )
+    if request.args.get('agreement_returned') is not None or request.args.get('status') is not None:
+        requested_statuses = None
+        agreement_returned = request.args.get('agreement_returned')
+        if agreement_returned is not None:
+            if convert_to_boolean(agreement_returned):
+                requested_statuses = ('signed', 'on-hold', 'countersigned')
+            else:
+                supplier_frameworks = [sf for sf in supplier_frameworks if sf.current_framework_agreement is None
+                                       or (sf.current_framework_agreement
+                                           and sf.current_framework_agreement.status == 'draft'
+                                           )
+                                       ]
+                # TODO: The 'or' clause here can be deleted once drafts are excluded from current_framework_agreement
 
+        elif request.args.get('status') is not None:
+            requested_statuses = request.args.get('status').split(',')
+
+        if requested_statuses:
             supplier_frameworks = [
                 sf for sf in supplier_frameworks
-                if sf.current_framework_agreement and sf.current_framework_agreement.status != 'draft'
-            ]
-            supplier_frameworks.sort(
-                key=lambda x: x.current_framework_agreement.signed_agreement_returned_at,
-                reverse=True
-            )
-        else:
-            supplier_frameworks = [
-                sf for sf in supplier_frameworks
-                if not sf.current_framework_agreement or sf.current_framework_agreement.status == 'draft'
-            ]
+                if sf.current_framework_agreement and sf.current_framework_agreement.status in requested_statuses
+                ]
 
     return jsonify(supplierFrameworks=[
         supplier_framework.serialize() for supplier_framework in supplier_frameworks
