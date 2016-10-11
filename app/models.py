@@ -411,6 +411,7 @@ class Supplier(db.Model):
         cascade='all, delete-orphan'
     )
     references = db.relationship('SupplierReference', single_parent=True, cascade='all, delete-orphan')
+    caseStudies = db.relationship('CaseStudy', single_parent=True, cascade='all, delete-orphan')
     prices = db.relationship('PriceSchedule', single_parent=True, cascade='all, delete-orphan')
     creation_time = db.Column(db.DateTime(timezone=True),
                               index=False,
@@ -445,6 +446,7 @@ class Supplier(db.Model):
             'contacts': [c.serialize() for c in self.contacts],
             'references': [r.serialize() for r in self.references],
             'prices': [p.serialize() for p in self.prices],
+            'caseStudies': [c.serialize() for c in self.case_studies],
             'creationTime': self.creation_time.strftime(DATETIME_FORMAT),
             'lastUpdateTime': self.last_update_time.strftime(DATETIME_FORMAT),
         }
@@ -1512,6 +1514,47 @@ class WorkOrder(db.Model):
         new_data.update(data)
         self.data = new_data
 
+
+class CaseStudy(db.Model):
+    __tablename__ = 'case_study'
+
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(JSON, nullable=False)
+    supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
+    created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
+
+    supplier = db.relationship('Supplier', lazy='joined')
+
+    @validates('data')
+    def validates_data(self, key, data):
+        data = drop_foreign_fields(data, [
+            'supplierCode'
+        ])
+        data = strip_whitespace_from_data(data)
+        data = purge_nulls_from_data(data)
+
+        return data
+
+    def serialize(self):
+        data = self.data.copy()
+        data.update({
+            'id': self.id,
+            'supplierCode': self.supplier_code,
+            'supplierName': self.supplier.name,
+            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'links': {
+                'self': url_for('.get_work_order', work_order_id=self.id),
+                'supplier': url_for(".get_supplier", code=self.supplier_code),
+            }
+        })
+
+        return data
+
+    def update_from_json(self, data):
+        # Need this juggling because of the validates_data hook
+        new_data = dict(self.data)
+        new_data.update(data)
+        self.data = new_data
 
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
