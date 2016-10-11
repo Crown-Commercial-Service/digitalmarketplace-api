@@ -585,6 +585,17 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             times = [parse_time(item['agreementReturnedAt']) for item in data['supplierFrameworks']]
             assert times[0] > times[1]
 
+    def test_list_suppliers_with_agreements_not_returned(self):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-7/suppliers?agreement_returned=false')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 3
+
+            for sf in data['supplierFrameworks']:
+                assert sf['agreementReturnedAt'] is None
+
 
 class TestGetFrameworkInterest(BaseApplicationTest):
     def setup(self):

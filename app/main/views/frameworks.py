@@ -216,19 +216,27 @@ def get_framework_suppliers(framework_slug):
 
     supplier_frameworks = SupplierFramework.query.filter(
         SupplierFramework.framework_id == framework.id
-    ).outerjoin(SupplierFramework.framework_agreements)
+    )
 
     if agreement_returned is not None:
         if convert_to_boolean(agreement_returned):
-            supplier_frameworks = supplier_frameworks.filter(
-                FrameworkAgreement.signed_agreement_returned_at.isnot(None)
-            ).order_by(
+            supplier_frameworks.outerjoin().order_by(
                 FrameworkAgreement.signed_agreement_returned_at.desc()
             )
-        else:
-            supplier_frameworks = supplier_frameworks.filter(
-                FrameworkAgreement.signed_agreement_returned_at.is_(None)
+
+            supplier_frameworks = [
+                sf for sf in supplier_frameworks
+                if sf.current_framework_agreement and sf.current_framework_agreement.status != 'draft'
+            ]
+            supplier_frameworks.sort(
+                key=lambda x: x.current_framework_agreement.signed_agreement_returned_at,
+                reverse=True
             )
+        else:
+            supplier_frameworks = [
+                sf for sf in supplier_frameworks
+                if not sf.current_framework_agreement or sf.current_framework_agreement.status == 'draft'
+            ]
 
     return jsonify(supplierFrameworks=[
         supplier_framework.serialize() for supplier_framework in supplier_frameworks
