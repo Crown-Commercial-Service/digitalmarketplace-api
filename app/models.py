@@ -411,7 +411,6 @@ class Supplier(db.Model):
         cascade='all, delete-orphan'
     )
     references = db.relationship('SupplierReference', single_parent=True, cascade='all, delete-orphan')
-    caseStudies = db.relationship('CaseStudy', single_parent=True, cascade='all, delete-orphan')
     prices = db.relationship('PriceSchedule', single_parent=True, cascade='all, delete-orphan')
     creation_time = db.Column(db.DateTime(timezone=True),
                               index=False,
@@ -446,7 +445,6 @@ class Supplier(db.Model):
             'contacts': [c.serialize() for c in self.contacts],
             'references': [r.serialize() for r in self.references],
             'prices': [p.serialize() for p in self.prices],
-            'caseStudies': [c.serialize() for c in self.case_studies],
             'creationTime': self.creation_time.strftime(DATETIME_FORMAT),
             'lastUpdateTime': self.last_update_time.strftime(DATETIME_FORMAT),
         }

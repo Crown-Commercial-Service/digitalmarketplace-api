@@ -50,7 +50,7 @@ def update_case_study(case_study_id):
 
     case_study = CaseStudy.query.get(case_study_id)
     if case_study is None:
-        abort(404, "Work order '{}' does not exist".format(case_study_id))
+        abort(404, "Case study '{}' does not exist".format(case_study_id))
 
     case_study.update_from_json(case_study_json)
     save_case_study(case_study)
