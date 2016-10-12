@@ -231,7 +231,7 @@ def put_signed_framework_agreement_on_hold(agreement_id):
         data={
             'supplierId': framework_agreement.supplier_id,
             'frameworkSlug': framework_agreement.supplier_framework.framework.slug,
-            'status': 'on hold'
+            'status': 'on-hold'
         },
         db_object=framework_agreement
     )
@@ -260,7 +260,7 @@ def approve_for_countersignature(agreement_id):
 
     updater_json = validate_and_return_updater_request()
 
-    if framework_agreement.status not in ['signed', 'on hold']:
+    if framework_agreement.status not in ['signed', 'on-hold']:
         abort(400, "Framework agreement must have status 'signed' or 'on hold' to be countersigned")
 
     framework_agreement.signed_agreement_put_on_hold_at = None

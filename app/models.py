@@ -571,7 +571,7 @@ class FrameworkAgreement(db.Model):
         elif self.countersigned_agreement_returned_at:
             return 'approved'
         elif self.signed_agreement_put_on_hold_at:
-            return 'on hold'
+            return 'on-hold'
         elif self.signed_agreement_returned_at:
             return 'signed'
         else:

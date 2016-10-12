@@ -217,7 +217,7 @@ class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
-            'status': 'on hold',
+            'status': 'on-hold',
             'signedAgreementDetails': {'details': 'here'},
             'signedAgreementPath': 'path',
             'signedAgreementReturnedAt': '2016-10-01T01:01:01.000000Z',
@@ -865,7 +865,7 @@ class TestPutFrameworkAgreementOnHold(BaseFrameworkAgreementTest):
             'id': agreement_id,
             'supplierId': supplier_framework['supplierId'],
             'frameworkSlug': supplier_framework['frameworkSlug'],
-            'status': 'on hold',
+            'status': 'on-hold',
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
             'signedAgreementPutOnHoldAt': '2016-12-12T00:00:00.000000Z'
         }
@@ -884,7 +884,7 @@ class TestPutFrameworkAgreementOnHold(BaseFrameworkAgreementTest):
             assert audit.data == {
                 'supplierId': supplier_framework['supplierId'],
                 'frameworkSlug': supplier_framework['frameworkSlug'],
-                'status': 'on hold'
+                'status': 'on-hold'
             }
 
     @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
@@ -1012,7 +1012,7 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
         assert on_hold_res.status_code == 200
 
         on_hold_data = json.loads(on_hold_res.get_data(as_text=True))['agreement']
-        assert on_hold_data['status'] == 'on hold'
+        assert on_hold_data['status'] == 'on-hold'
 
         with freeze_time('2016-10-03'):
             res = self.approve_framework_agreement(agreement_id)

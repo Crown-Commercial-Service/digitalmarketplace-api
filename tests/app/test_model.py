@@ -876,7 +876,7 @@ class TestFrameworkAgreements(BaseApplicationTest):
             signed_agreement_returned_at=datetime.utcnow(),
             signed_agreement_put_on_hold_at=datetime.utcnow()
         )
-        assert framework_agreement.status == 'on hold'
+        assert framework_agreement.status == 'on-hold'
 
     def test_approved_framework_agreement_status_is_approved(self):
         framework_agreement = FrameworkAgreement(
