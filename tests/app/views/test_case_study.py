@@ -170,6 +170,14 @@ class TestGetCaseStudy(BaseCaseStudyTest):
         assert data['caseStudy']['id'] == self.case_study_id
         assert data['caseStudy']['supplierCode'] == 0
 
+    def test_get_supplier_with_case_study(self):
+        res = self.client.get('/suppliers/0')
+
+        data = json.loads(res.get_data())
+        assert res.status_code == 200
+        assert data['supplier']['code'] == 0
+        assert data['supplier']['case_study_ids'][0] == self.case_study_id
+
     def test_get_missing_case_study_returns_404(self):
         res = self.get_case_study(999)
 

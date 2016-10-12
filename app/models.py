@@ -410,6 +410,7 @@ class Supplier(db.Model):
         single_parent=True,
         cascade='all, delete-orphan'
     )
+    case_studies = db.relationship('CaseStudy', single_parent=True, cascade='all, delete-orphan')
     references = db.relationship('SupplierReference', single_parent=True, cascade='all, delete-orphan')
     prices = db.relationship('PriceSchedule', single_parent=True, cascade='all, delete-orphan')
     creation_time = db.Column(db.DateTime(timezone=True),
@@ -442,6 +443,7 @@ class Supplier(db.Model):
             'extraLinks': [l.serialize() for l in self.extra_links],
             'abn': self.abn,
             'acn': self.acn,
+            'case_study_ids': [c.id for c in self.case_studies],
             'contacts': [c.serialize() for c in self.contacts],
             'references': [r.serialize() for r in self.references],
             'prices': [p.serialize() for p in self.prices],
@@ -453,7 +455,7 @@ class Supplier(db.Model):
 
     def update_from_json(self, data):
         keys = ('code', 'dataVersion', 'name', 'longName', 'summary', 'description', 'address', 'website', 'extraLinks',
-                'abn', 'acn', 'contacts', 'references', 'prices')
+                'abn', 'acn', 'contacts', 'references', 'prices', 'case_study_ids')
         extra_keys = set(data.keys()) - set(keys)
         if extra_keys:
             raise ValidationError('Additional properties are not allowed: {}'.format(str(extra_keys)))
