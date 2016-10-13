@@ -1603,7 +1603,7 @@ class CaseStudy(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(JSON, nullable=False)
     supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
-    created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=datetime.utcnow)
 
     supplier = db.relationship('Supplier', lazy='joined')
 
@@ -1623,7 +1623,7 @@ class CaseStudy(db.Model):
             'id': self.id,
             'supplierCode': self.supplier_code,
             'supplierName': self.supplier.name,
-            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'createdAt':  self.created_at.to_iso8601_string(extended=True),
             'links': {
                 'self': url_for('.get_work_order', work_order_id=self.id),
                 'supplier': url_for(".get_supplier", code=self.supplier_code),
