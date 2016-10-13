@@ -2,6 +2,7 @@ import random
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 import pytz
+from workdays import workday
 import re
 
 from flask import current_app
@@ -10,18 +11,19 @@ from six import string_types
 
 from sqlalchemy import asc, desc
 from sqlalchemy import func
-from sqlalchemy.dialects.postgresql import JSON, INTERVAL
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.expression import cast as sql_cast
-from sqlalchemy.types import String
+from sqlalchemy.sql.expression import extract
+from sqlalchemy.sql.operators import is_
+from sqlalchemy.types import String, Date, Integer, Interval
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
 from dmutils.data_tools import ValidationError, normalise_abn, normalise_acn, parse_money
-from dmutils.formats import DATETIME_FORMAT
 from dmutils.dates import get_publishing_dates
 
 from . import db
@@ -32,9 +34,9 @@ from .validation import is_valid_service_id, get_validation_errors
 
 from dmutils.forms import is_government_email
 
+from .datetime_utils import DateTime, utcnow, parse_interval, parse_time_of_day, combine_date_and_time
 
-def getUtcTimestamp():
-    return datetime.now(pytz.utc)
+import pendulum
 
 
 class FrameworkLot(db.Model):
@@ -413,15 +415,17 @@ class Supplier(db.Model):
     case_studies = db.relationship('CaseStudy', single_parent=True, cascade='all, delete-orphan')
     references = db.relationship('SupplierReference', single_parent=True, cascade='all, delete-orphan')
     prices = db.relationship('PriceSchedule', single_parent=True, cascade='all, delete-orphan')
-    creation_time = db.Column(db.DateTime(timezone=True),
+    from .datetime_utils import localnow
+    # TODO: migrate these to plain (non-timezone) fields
+    creation_time = db.Column(DateTime(timezone=True),
                               index=False,
                               nullable=False,
-                              default=getUtcTimestamp)
-    # FIXME: remove meaningless default value after schema migration
-    last_update_time = db.Column(db.DateTime(timezone=True),
+                              default=localnow)
+
+    last_update_time = db.Column(DateTime(timezone=True),
                                  index=False,
                                  nullable=False,
-                                 default=getUtcTimestamp)
+                                 default=localnow)
 
     def get_service_counts(self):
         # FIXME: To be removed from Australian version
@@ -447,8 +451,8 @@ class Supplier(db.Model):
             'contacts': [c.serialize() for c in self.contacts],
             'references': [r.serialize() for r in self.references],
             'prices': [p.serialize() for p in self.prices],
-            'creationTime': self.creation_time.strftime(DATETIME_FORMAT),
-            'lastUpdateTime': self.last_update_time.strftime(DATETIME_FORMAT),
+            'creationTime': self.creation_time.to_iso8601_string(extended=True),
+            'lastUpdateTime': self.last_update_time.to_iso8601_string(extended=True),
         }
         serialized.update(data or {})
         return serialized
@@ -478,7 +482,8 @@ class Supplier(db.Model):
             self.references = [SupplierReference.from_json(r) for r in data['references']]
         if 'prices' in data:
             self.prices = [PriceSchedule.from_json(p) for p in data['prices']]
-        self.last_update_time = getUtcTimestamp()
+
+        self.last_update_time = utcnow()
         return self
 
     @validates('name')
@@ -517,8 +522,8 @@ class SupplierFramework(db.Model):
                              primary_key=True)
     declaration = db.Column(JSON)
     on_framework = db.Column(db.Boolean, nullable=True)
-    agreement_returned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
-    countersigned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
+    agreement_returned_at = db.Column(DateTime, index=False, unique=False, nullable=True)
+    countersigned_at = db.Column(DateTime, index=False, unique=False, nullable=True)
     agreement_details = db.Column(JSON)
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
@@ -583,11 +588,11 @@ class SupplierFramework(db.Model):
     def serialize(self, data=None):
         agreement_returned_at = self.agreement_returned_at
         if agreement_returned_at:
-            agreement_returned_at = agreement_returned_at.strftime(DATETIME_FORMAT)
+            agreement_returned_at = agreement_returned_at.to_iso8601_string(extended=True)
 
         countersigned_at = self.countersigned_at
         if countersigned_at:
-            countersigned_at = countersigned_at.strftime(DATETIME_FORMAT)
+            countersigned_at = countersigned_at.to_iso8601_string(extended=True)
 
         supplier_framework = dict({
             "supplierCode": self.supplier_code,
@@ -640,15 +645,15 @@ class User(db.Model):
     active = db.Column(db.Boolean, index=False, unique=False,
                        nullable=False)
 
-    created_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, index=False, unique=False,
-                           nullable=False, default=datetime.utcnow,
-                           onupdate=datetime.utcnow)
-    password_changed_at = db.Column(db.DateTime, index=False, unique=False,
+    created_at = db.Column(DateTime, index=False, unique=False,
+                           nullable=False, default=utcnow)
+    updated_at = db.Column(DateTime, index=False, unique=False,
+                           nullable=False, default=utcnow,
+                           onupdate=utcnow)
+    password_changed_at = db.Column(DateTime, index=False, unique=False,
                                     nullable=False)
-    logged_in_at = db.Column(db.DateTime, nullable=True)
-    terms_accepted_at = db.Column(db.DateTime, index=False, nullable=False, default=datetime.utcnow)
+    logged_in_at = db.Column(DateTime, nullable=True)
+    terms_accepted_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
 
     # used to determine whether account is `locked`. field is reset upon successful login or can
     # be reset manually to "unlock" an account.
@@ -681,7 +686,7 @@ class User(db.Model):
         if value is None or isinstance(value, datetime):
             return value
         try:
-            date = datetime.strptime(value, DATETIME_FORMAT)
+            date = pendulum.parse(value)
             return date
         except Exception as e:
             raise ValidationError('Invalid date for {}: {} - {}'.format(key, value, e.message))
@@ -712,13 +717,13 @@ class User(db.Model):
             'role': self.role,
             'active': self.active,
             'locked': self.locked,
-            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
-            'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
+            'createdAt': self.created_at.to_iso8601_string(extended=True),
+            'updatedAt': self.updated_at.to_iso8601_string(extended=True),
             'passwordChangedAt':
-                self.password_changed_at.strftime(DATETIME_FORMAT),
-            'loggedInAt': self.logged_in_at.strftime(DATETIME_FORMAT)
+                self.password_changed_at.to_iso8601_string(extended=True),
+            'loggedInAt': self.logged_in_at.to_iso8601_string(extended=True)
                 if self.logged_in_at else None,
-            'termsAcceptedAt': self.terms_accepted_at.strftime(DATETIME_FORMAT),
+            'termsAcceptedAt': self.terms_accepted_at.to_iso8601_string(extended=True),
             'failedLoginCount': self.failed_login_count,
         }
 
@@ -747,7 +752,7 @@ class SupplierUserInviteLog(db.Model):
         primary_key=True,
         nullable=False
     )
-    invite_sent = db.Column(db.DateTime, index=True, nullable=False, default=getUtcTimestamp)
+    invite_sent = db.Column(DateTime, index=True, nullable=False, default=utcnow)
     __table_args__ = (
         db.ForeignKeyConstraint(
             ('supplier_id', 'contact_id'),
@@ -772,10 +777,10 @@ class ServiceTableMixin(object):
     data = db.Column(JSON)
     status = db.Column(db.String, index=False, unique=False, nullable=False)
 
-    created_at = db.Column(db.DateTime, index=False, nullable=False,
-                           default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, index=False, nullable=False,
-                           default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(DateTime, index=False, nullable=False,
+                           default=utcnow)
+    updated_at = db.Column(DateTime, index=False, nullable=False,
+                           default=utcnow, onupdate=utcnow)
 
     @declared_attr
     def supplier_code(cls):
@@ -857,8 +862,8 @@ class ServiceTableMixin(object):
             'lot': self.lot.slug,
             'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
-            'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
-            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'updatedAt': self.updated_at.to_iso8601_string(extended=True),
+            'createdAt': self.created_at.to_iso8601_string(extended=True),
             'status': self.status
         })
 
@@ -1031,7 +1036,7 @@ class AuditEvent(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String, index=True, nullable=False)
-    created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
     user = db.Column(db.String)
     data = db.Column(JSON)
 
@@ -1050,7 +1055,7 @@ class AuditEvent(db.Model):
 
     acknowledged_by = db.Column(db.String)
     acknowledged_at = db.Column(
-        db.DateTime,
+        DateTime,
         nullable=True)
 
     def __init__(self, audit_type, user, data, db_object):
@@ -1079,7 +1084,7 @@ class AuditEvent(db.Model):
             'acknowledged': self.acknowledged,
             'user': self.user,
             'data': self.data,
-            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'createdAt': self.created_at.to_iso8601_string(extended=True),
             'links': filter_null_value_fields({
                 "self": url_for(".list_audits"),
                 "oldArchivedService": ArchivedService.link_object(
@@ -1094,7 +1099,7 @@ class AuditEvent(db.Model):
         if self.acknowledged:
             data.update({
                 'acknowledgedAt':
-                    self.acknowledged_at.strftime(DATETIME_FORMAT),
+                    self.acknowledged_at.to_iso8601_string(extended=True),
                 'acknowledgedBy':
                     self.acknowledged_by,
             })
@@ -1123,12 +1128,12 @@ class Brief(db.Model):
     _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lot.id'), nullable=False)
 
     data = db.Column(JSON)
-    created_at = db.Column(db.DateTime, index=True, nullable=False,
-                           default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, index=True, nullable=False,
-                           default=datetime.utcnow, onupdate=datetime.utcnow)
-    published_at = db.Column(db.DateTime, index=True, nullable=True)
-    withdrawn_at = db.Column(db.DateTime, index=True, nullable=True)
+    created_at = db.Column(DateTime, index=True, nullable=False,
+                           default=utcnow)
+    updated_at = db.Column(DateTime, index=True, nullable=False,
+                           default=utcnow, onupdate=utcnow)
+    published_at = db.Column(DateTime, index=True, nullable=True)
+    withdrawn_at = db.Column(DateTime, index=True, nullable=True)
 
     __table_args__ = (db.ForeignKeyConstraint([framework_id, _lot_id],
                                               ['framework_lot.framework_id', 'framework_lot.lot_id']),
@@ -1177,40 +1182,116 @@ class Brief(db.Model):
         return data
 
     @hybrid_property
-    def applications_closed_at(self):
+    def published_day(self):
+        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
+
+        if not self.published_at:
+            return None
+
+        local_dt = self.published_at.in_timezone(DEADLINES_TZ_NAME)
+        return local_dt.date()
+
+    @published_day.expression
+    def published_day(cls):
+        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
+
+        p_at_utc = cls.published_at.op('at time zone')('UTC')
+
+        p_at_local = p_at_utc.op('at time zone')(DEADLINES_TZ_NAME)
+
+        return sql_case(
+            [(cls.published_at.is_(None), None)],
+            else_=sql_cast(p_at_local, Date)
+        )
+
+    @hybrid_property
+    def requirements_length(self):
+        DEFAULT_REQUIREMENTS_DURATION = current_app.config['DEFAULT_REQUIREMENTS_DURATION']
+        return self.data.get(
+            'requirementsLength',
+            DEFAULT_REQUIREMENTS_DURATION)
+
+    @requirements_length.expression
+    def requirements_length(cls):
+        DEFAULT_REQUIREMENTS_DURATION = current_app.config['DEFAULT_REQUIREMENTS_DURATION']
+        return func.coalesce(
+            cls.data.op('->>')('requirementsLength'),
+            DEFAULT_REQUIREMENTS_DURATION)
+
+    @property
+    def questions_duration_workdays(self):
+        if self.requirements_length == '1 week':
+            return 2
+        else:
+            return 5
+
+    @property
+    def applications_closing_date(self):
         if self.published_at is None:
             return None
-        brief_publishing_date_and_length = self._build_date_and_length_data()
+        req_length = parse_interval(self.requirements_length)
+        return self.published_day + req_length
 
-        return get_publishing_dates(brief_publishing_date_and_length)['closing_date']
+    @hybrid_property
+    def applications_closed_at(self):
+        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
+        DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
+
+        if self.published_at is None:
+            return None
+        d = self.applications_closing_date
+        t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
+        combined = combine_date_and_time(d, t, DEADLINES_TZ_NAME)
+        return combined.in_timezone('UTC')
 
     @applications_closed_at.expression
     def applications_closed_at(cls):
-        return sql_case([
-            (cls.data['requirementsLength'].astext == '1 week', func.date_trunc('day', cls.published_at) + sql_cast(
-                '1 week 23:59:59', INTERVAL)),
-            ], else_=func.date_trunc('day', cls.published_at) + sql_cast(
-                '2 weeks 23:59:59', INTERVAL))
+        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
+        DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
+        t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
 
-    @hybrid_property
+        req_interval = sql_cast(cls.requirements_length, Interval)
+        day_count = sql_cast(func.extract('days', req_interval), Integer)
+        closing_day = cls.published_day + day_count
+        naive_deadline = func._(closing_day + t)
+        local_deadline = naive_deadline.op('at time zone')(DEADLINES_TZ_NAME)
+        utc_deadline = local_deadline.op('at time zone')('UTC')
+
+        return sql_case(
+            [(cls.published_at.is_(None), None)],
+            else_=utc_deadline
+        )
+
+    @property
     def clarification_questions_closed_at(self):
         if self.published_at is None:
             return None
-        brief_publishing_date_and_length = self._build_date_and_length_data()
+        DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
+        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
 
-        return get_publishing_dates(brief_publishing_date_and_length)['questions_close']
+        if self.published_at is None:
+            return None
+        d = workday(self.published_day, self.questions_duration_workdays)
 
-    @hybrid_property
+        t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
+        return combine_date_and_time(d, t, DEADLINES_TZ_NAME)
+
+    @property
     def clarification_questions_published_by(self):
         if self.published_at is None:
             return None
-        brief_publishing_date_and_length = self._build_date_and_length_data()
 
-        return get_publishing_dates(brief_publishing_date_and_length)['answers_close']
+        DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
+        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
 
-    @hybrid_property
+        d = workday(self.applications_closing_date, -1)
+
+        t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
+        return combine_date_and_time(d, t, DEADLINES_TZ_NAME)
+
+    @property
     def clarification_questions_are_closed(self):
-        return datetime.utcnow() > self.clarification_questions_closed_at
+        return utcnow() > self.clarification_questions_closed_at
 
     @hybrid_property
     def status(self):
@@ -1218,7 +1299,7 @@ class Brief(db.Model):
             return 'withdrawn'
         elif not self.published_at:
             return 'draft'
-        elif self.applications_closed_at > datetime.utcnow():
+        elif self.applications_closed_at > utcnow():
             return 'live'
         else:
             return 'closed'
@@ -1229,9 +1310,9 @@ class Brief(db.Model):
             return
 
         if value == 'live' and self.status == 'draft':
-            self.published_at = datetime.utcnow()
+            self.published_at = utcnow()
         elif value == 'withdrawn' and self.status == 'live':
-            self.withdrawn_at = datetime.utcnow()
+            self.withdrawn_at = utcnow()
         else:
             raise ValidationError("Cannot change brief status from '{}' to '{}'".format(self.status, value))
 
@@ -1240,7 +1321,7 @@ class Brief(db.Model):
         return sql_case([
             (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.published_at.is_(None), 'draft'),
-            (cls.applications_closed_at > datetime.utcnow(), 'live')
+            (cls.applications_closed_at > utcnow(), 'live')
         ], else_='closed')
 
     class query_class(BaseQuery):
@@ -1298,8 +1379,8 @@ class Brief(db.Model):
             'lot': self.lot.slug,
             'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
-            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
-            'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
+            'createdAt': self.created_at.to_iso8601_string(extended=True),
+            'updatedAt': self.updated_at.to_iso8601_string(extended=True),
             'clarificationQuestions': [
                 question.serialize() for question in self.clarification_questions
             ],
@@ -1312,17 +1393,18 @@ class Brief(db.Model):
 
         if self.published_at:
             data.update({
-                'publishedAt': self.published_at.strftime(DATETIME_FORMAT),
-                'applicationsClosedAt': self.applications_closed_at.strftime(DATETIME_FORMAT),
-                'clarificationQuestionsClosedAt': self.clarification_questions_closed_at.strftime(DATETIME_FORMAT),
-                'clarificationQuestionsPublishedBy': self.clarification_questions_published_by.strftime(
-                    DATETIME_FORMAT),
+                'publishedAt': self.published_at.to_iso8601_string(extended=True),
+                'applicationsClosedAt': self.applications_closed_at.to_iso8601_string(extended=True),
+                'clarificationQuestionsClosedAt':
+                    self.clarification_questions_closed_at.to_iso8601_string(extended=True),
+                'clarificationQuestionsPublishedBy':
+                    self.clarification_questions_published_by.to_iso8601_string(extended=True),
                 'clarificationQuestionsAreClosed': self.clarification_questions_are_closed,
             })
 
         if self.withdrawn_at:
             data.update({
-                'withdrawnAt': self.withdrawn_at.strftime(DATETIME_FORMAT)
+                'withdrawnAt': self.withdrawn_at.to_iso8601_string(extended=True)
             })
 
         data['links'] = {
@@ -1355,7 +1437,7 @@ class BriefResponse(db.Model):
     brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), nullable=False)
     supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
 
-    created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
 
     brief = db.relationship('Brief')
     supplier = db.relationship('Supplier', lazy='joined')
@@ -1404,7 +1486,7 @@ class BriefResponse(db.Model):
             'briefId': self.brief_id,
             'supplierCode': self.supplier_code,
             'supplierName': self.supplier.name,
-            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'createdAt': self.created_at.to_iso8601_string(extended=True),
             'links': {
                 'self': url_for('.get_brief_response', brief_response_id=self.id),
                 'brief': url_for('.get_brief', brief_id=self.brief_id),
@@ -1424,8 +1506,8 @@ class BriefClarificationQuestion(db.Model):
     question = db.Column(db.String, nullable=False)
     answer = db.Column(db.String, nullable=False)
 
-    published_at = db.Column(db.DateTime, index=True, nullable=False,
-                             default=datetime.utcnow)
+    published_at = db.Column(DateTime, index=True, nullable=False,
+                             default=utcnow)
 
     brief = db.relationship("Brief")
 
@@ -1463,7 +1545,7 @@ class BriefClarificationQuestion(db.Model):
         return {
             "question": self.question,
             "answer": self.answer,
-            "publishedAt": self.published_at.strftime(DATETIME_FORMAT),
+            "publishedAt": self.published_at.to_iso8601_string(extended=True),
         }
 
 
@@ -1476,7 +1558,7 @@ class WorkOrder(db.Model):
     brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), nullable=False, unique=True)
     supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
 
-    created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
 
     brief = db.relationship('Brief')
     supplier = db.relationship('Supplier', lazy='joined')
@@ -1498,7 +1580,7 @@ class WorkOrder(db.Model):
             'briefId': self.brief_id,
             'supplierCode': self.supplier_code,
             'supplierName': self.supplier.name,
-            'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'createdAt': self.created_at.to_iso8601_string(extended=True),
             'links': {
                 'self': url_for('.get_work_order', work_order_id=self.id),
                 'brief': url_for('.get_brief', brief_id=self.brief_id),

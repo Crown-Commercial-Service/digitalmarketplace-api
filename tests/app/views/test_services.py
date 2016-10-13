@@ -1,4 +1,6 @@
-from datetime import datetime, timedelta
+import pendulum
+from pendulum import create as datetime
+from datetime import timedelta
 import os
 
 from flask import json
@@ -12,7 +14,6 @@ from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
 from sqlalchemy.exc import IntegrityError
 from dmapiclient import HTTPError
-from dmutils.formats import DATETIME_FORMAT
 from dmapiclient.audit import AuditTypes
 import pytest
 
@@ -36,7 +37,7 @@ class TestListServicesOrdering(BaseApplicationTest):
     def setup_services(self):
         with self.app.app_context():
             self.app.config['DM_API_SERVICES_PAGE_SIZE'] = 10
-            now = datetime.utcnow()
+            now = pendulum.now('UTC')
 
             g5_saas = self.load_example_listing("G5")
             g5_paas = self.load_example_listing("G5")
@@ -179,8 +180,8 @@ class TestListServices(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
         try:
-            datetime.strptime(
-                data['services'][0]['updatedAt'], DATETIME_FORMAT)
+            pendulum.parse(
+                data['services'][0]['updatedAt'])
             assert True, "Parsed date"
         except ValueError:
             assert False, "Should be able to parse date"
@@ -1110,7 +1111,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPost, self).setup()
 
-        now = datetime.utcnow()
+        now = pendulum.now('UTC')
         payload = self.load_example_listing("G6-IaaS")
         g4_payload = self.load_example_listing("G4")
         with self.app.app_context():
@@ -1223,7 +1224,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPostStatusUpdate, self).setup()
 
-        now = datetime.utcnow()
+        now = pendulum.now('UTC')
         self.services = {}
 
         valid_statuses = [
@@ -1452,7 +1453,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 content_type='application/json')
 
             assert_equal(response.status_code, 201)
-            now = datetime.utcnow()
+            now = pendulum.now('UTC')
 
             response = self.client.get("/services/1234567890123456")
             service = json.loads(response.get_data())["services"]
@@ -1465,15 +1466,11 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 service["supplierCode"],
                 payload['supplierCode'])
 
-            assert_equal(
-                self.string_to_time_to_string(
-                    service["createdAt"],
-                    DATETIME_FORMAT,
-                    "%Y-%m-%dT%H:%M:%SZ"),
-                payload['createdAt'])
+            assert self.string_to_time(service["createdAt"]) == \
+                self.string_to_time(payload['createdAt'])
 
             assert_almost_equal(
-                self.string_to_time(service["updatedAt"], DATETIME_FORMAT),
+                self.string_to_time(service["updatedAt"]),
                 now,
                 delta=timedelta(seconds=2))
 
@@ -1579,7 +1576,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 payload.pop(field, None)
 
             assert_equal(response.status_code, 201, response.get_data())
-            now = datetime.utcnow()
+            now = pendulum.now('UTC')
             service = Service.query.filter(Service.service_id == "4-disabled").first()
             assert_equal(service.status, 'disabled')
             for key in service.data:
@@ -1714,7 +1711,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 class TestGetService(BaseApplicationTest):
     def setup(self):
         super(TestGetService, self).setup()
-        now = datetime.utcnow()
+        now = pendulum.now('UTC')
         with self.app.app_context():
             db.session.add(Framework(
                 id=123,

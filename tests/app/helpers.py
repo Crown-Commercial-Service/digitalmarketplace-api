@@ -3,12 +3,13 @@ from __future__ import absolute_import
 import os
 import json
 import pytest
+import pendulum
 from datetime import datetime, timedelta
 
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Address, Service, Supplier, Framework, Lot, User, FrameworkLot, Brief, getUtcTimestamp
+from app.models import Address, Service, Supplier, Framework, Lot, User, FrameworkLot, Brief, utcnow
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -87,7 +88,7 @@ class BaseApplicationTest(object):
                 password="fake password",
                 active=True,
                 role=role,
-                password_changed_at=datetime.now()
+                password_changed_at=utcnow()
             )
             db.session.add(user)
             db.session.commit()
@@ -125,12 +126,12 @@ class BaseApplicationTest(object):
             raise ValueError("If setting withdrawn_at then published_at must also be set")
         if not published_at:
             if status == 'closed':
-                published_at = datetime.utcnow() - timedelta(days=1000)
+                published_at = utcnow() - timedelta(days=1000)
             elif status == 'withdrawn':
-                published_at = datetime.utcnow() - timedelta(days=1000)
-                withdrawn_at = datetime.utcnow()
+                published_at = utcnow() - timedelta(days=1000)
+                withdrawn_at = utcnow()
             else:
-                published_at = None if status == 'draft' else datetime.utcnow()
+                published_at = None if status == 'draft' else utcnow()
         framework = Framework.query.filter(Framework.slug == framework_slug).first()
         lot = Lot.query.filter(Lot.slug == lot_slug).first()
 
@@ -188,7 +189,7 @@ class BaseApplicationTest(object):
 
     def setup_dummy_service(self, service_id, supplier_code=1, data=None,
                             status='published', framework_id=1, lot_id=1):
-        now = datetime.utcnow()
+        now = utcnow()
         db.session.add(Service(service_id=service_id,
                                supplier_code=supplier_code,
                                status=status,
@@ -266,13 +267,11 @@ class BaseApplicationTest(object):
         with open(file_path) as f:
             return json.load(f)
 
-    def string_to_time_to_string(self, value, from_format, to_format):
-        return datetime.strptime(
-            value, from_format).strftime(to_format)
+    def string_to_time_to_string(self, value):
+        return pendulum.parse(value).to_iso8601_string(extended=True)
 
-    def string_to_time(self, value, from_format):
-        return datetime.strptime(
-            value, from_format)
+    def string_to_time(self, value):
+        return pendulum.parse(value)
 
     def set_framework_status(self, slug, status):
         Framework.query.filter_by(slug=slug).update({'status': status})
@@ -320,8 +319,3 @@ class JSONUpdateTestMixin(JSONTestMixin):
 
         assert_equal(response.status_code, 400)
         assert_in("'updated_by' is a required property", response.get_data(as_text=True))
-
-
-def isRecentTimestamp(timestamp):
-    now = getUtcTimestamp()
-    return now - timestamp < timedelta(seconds=10)

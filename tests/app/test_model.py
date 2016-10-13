@@ -1,4 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import datetime as builtindatetime
+
+from pendulum import create as datetime
+from pendulum import interval
+
 from collections import Counter
 
 import mock
@@ -7,6 +11,7 @@ from nose.tools import assert_equal, assert_raises
 from sqlalchemy.exc import IntegrityError
 
 from app import db, create_app
+
 from app.models import (
     User, Lot, Framework, Service,
     Supplier, SupplierFramework,
@@ -16,12 +21,23 @@ from app.models import (
     WorkOrder
 )
 
+from app.datetime_utils import naive, vanilla
+
 from .helpers import BaseApplicationTest
+
+import pendulum
+
+from app.datetime_utils import utcnow, parse_interval
+
+
+def naive_datetime(*args, **kwargs):
+    p = pendulum.create(*args, **kwargs)
+    return naive(p)
 
 
 def test_should_not_return_password_on_user():
     app = create_app('test')
-    now = datetime.utcnow()
+    now = utcnow()
     user = User(
         email_address='email@digital.gov.au',
         name='name',
@@ -76,14 +92,91 @@ class TestBriefs(BaseApplicationTest):
             self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             self.lot = self.framework.get_lot('digital-outcomes')
 
+    def test_brief_datetimes(self):
+        TZ = 'Australia/Sydney'
+        with self.app.app_context():
+            for hour in range(24):
+                NOW = SYDNEY = pendulum.create(2016, 1, 3, hour, tz=TZ)
+                UTC = NOW.in_tz('UTC')
+                SYDNEY_DAY = SYDNEY.date()
+                CLOSING_DAY = SYDNEY_DAY + interval(weeks=1)
+                CLOSING_AT = pendulum.create(2016, 1, 10, 18, 0, 0, tz=TZ)
+                CLOSING_AT_UTC = CLOSING_AT.in_timezone('UTC')
+
+                QUESTIONS_CLOSING_AT_1 = CLOSING_AT.subtract(days=7).add(days=2)
+                QUESTIONS_CLOSING_AT_UTC_1 = QUESTIONS_CLOSING_AT_1.in_tz('UTC')
+
+                QUESTIONS_CLOSING_AT_2 = CLOSING_AT.subtract(days=14).add(days=5)
+                QUESTIONS_CLOSING_AT_UTC_2 = QUESTIONS_CLOSING_AT_2.in_tz('UTC')
+
+                assert SYDNEY_DAY.day == 3
+
+                brief = Brief(data={}, framework=self.framework, lot=self.lot)
+
+                db.session.add(brief)
+
+                with pendulum.test(NOW):
+                    db.session.commit()
+
+                assert brief.created_at == NOW
+                assert brief.requirements_length == '2 weeks'
+                assert brief.questions_duration_workdays == 5
+
+                assert brief.published_day is None
+                assert brief.applications_closing_date is None
+                assert brief.applications_closed_at is None
+                assert brief.clarification_questions_published_by is None
+
+                brief.data = {
+                    'requirementsLength': '2 weeks'
+                }
+
+                assert brief.requirements_length == '2 weeks'
+                assert brief.questions_duration_workdays == 5
+
+                brief.data = {
+                    'requirementsLength': '1 week'
+                }
+
+                brief.published_at = UTC
+                db.session.commit()
+
+                assert brief.requirements_length == '1 week'
+                assert brief.questions_duration_workdays == 2
+
+                assert brief.published_day == SYDNEY_DAY
+
+                assert brief.applications_closed_at == \
+                    CLOSING_AT_UTC
+
+                by_pday = Brief.query.filter(
+                    Brief.published_day == SYDNEY_DAY)
+                brief = by_pday.one()
+                assert brief.published_day == SYDNEY_DAY
+
+                by_close_utc = Brief.query.filter(
+                    Brief.applications_closed_at == CLOSING_AT_UTC)
+
+                brief = by_pday.one()
+                assert brief.applications_closed_at == CLOSING_AT_UTC
+
+                assert brief.clarification_questions_closed_at ==\
+                    QUESTIONS_CLOSING_AT_UTC_1
+
+                # day before is a saturday, so should return friday
+                assert brief.clarification_questions_published_by ==\
+                    CLOSING_AT_UTC.subtract(days=2)
+
+                db.session.delete(brief)
+
     def test_create_a_new_brief(self):
         with self.app.app_context():
             brief = Brief(data={}, framework=self.framework, lot=self.lot)
             db.session.add(brief)
             db.session.commit()
 
-            assert isinstance(brief.created_at, datetime)
-            assert isinstance(brief.updated_at, datetime)
+            assert isinstance(brief.created_at, builtindatetime)
+            assert isinstance(brief.updated_at, builtindatetime)
             assert brief.id is not None
             assert brief.data == dict()
 
@@ -121,16 +214,17 @@ class TestBriefs(BaseApplicationTest):
             assert brief.data == {'foo': 'bar'}
 
     def test_foreign_fields_stripped_from_brief_data(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot)
-        brief.data = {
-            'frameworkSlug': 'test',
-            'frameworkName': 'test',
-            'lot': 'test',
-            'lotName': 'test',
-            'title': 'test',
-        }
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
+            brief.data = {
+                'frameworkSlug': 'test',
+                'frameworkName': 'test',
+                'lot': 'test',
+                'lotName': 'test',
+                'title': 'test',
+            }
 
-        assert brief.data == {'title': 'test'}
+            assert brief.data == {'title': 'test'}
 
     def test_nulls_are_stripped_from_brief_data(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
@@ -160,10 +254,11 @@ class TestBriefs(BaseApplicationTest):
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'draft'
+            assert Brief.query.all()[0].published_day is None
 
     def test_query_live_brief(self):
         with self.app.app_context():
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow()))
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=utcnow()))
             db.session.commit()
 
             assert Brief.query.filter(Brief.status == 'draft').count() == 0
@@ -178,7 +273,7 @@ class TestBriefs(BaseApplicationTest):
         with self.app.app_context():
             db.session.add(Brief(
                 data={}, framework=self.framework, lot=self.lot,
-                published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
+                published_at=utcnow() - interval(days=1), withdrawn_at=utcnow()
             ))
             db.session.commit()
 
@@ -204,58 +299,75 @@ class TestBriefs(BaseApplicationTest):
             assert Brief.query.all()[0].status == 'closed'
 
     def test_live_status_for_briefs_with_published_at(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
-        assert brief.status == 'live'
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=utcnow())
+            assert brief.status == 'live'
 
     def test_applications_closed_at_is_none_for_drafts(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
-        assert brief.applications_closed_at is None
+            assert brief.applications_closed_at is None
 
     def test_closing_dates_are_set_with_published_at_when_no_requirements_length(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot,
-                      published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot,
+                          published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
 
-        assert brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)
-        assert brief.clarification_questions_closed_at == datetime(2016, 3, 10, 23, 59, 59)
-        assert brief.clarification_questions_published_by == datetime(2016, 3, 16, 23, 59, 59)
+            assert brief.applications_closed_at == datetime(2016, 3, 17, 7, 0, 0)
+            assert brief.clarification_questions_closed_at == datetime(2016, 3, 10, 7, 0, 0)
+            assert brief.clarification_questions_published_by == datetime(2016, 3, 16, 7, 0, 0)
 
     def test_closing_dates_are_set_with_published_at_when_requirements_length_is_two_weeks(self):
-        brief = Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
-                      published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
+        with self.app.app_context():
+            brief = Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
+                          published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
 
-        assert brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)
-        assert brief.clarification_questions_closed_at == datetime(2016, 3, 10, 23, 59, 59)
-        assert brief.clarification_questions_published_by == datetime(2016, 3, 16, 23, 59, 59)
+            assert brief.applications_closed_at == datetime(2016, 3, 17, 7, 0, 0)
+            assert brief.clarification_questions_closed_at == datetime(2016, 3, 10, 7, 0, 0)
+            assert brief.clarification_questions_published_by == datetime(2016, 3, 16, 7, 0, 0)
 
     def test_closing_dates_are_set_with_published_at_when_requirements_length_is_one_week(self):
-        brief = Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
-                      published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
+        with self.app.app_context():
+            brief = Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
+                          published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
 
-        assert brief.applications_closed_at == datetime(2016, 3, 10, 23, 59, 59)
-        assert brief.clarification_questions_closed_at == datetime(2016, 3, 7, 23, 59, 59)
-        assert brief.clarification_questions_published_by == datetime(2016, 3, 9, 23, 59, 59)
+            assert brief.applications_closed_at == datetime(2016, 3, 10, 7, 0, 0)
+            assert brief.clarification_questions_closed_at == datetime(2016, 3, 7, 7, 0, 0)
+            assert brief.clarification_questions_published_by == datetime(2016, 3, 9, 7, 0, 0)
 
     def test_query_brief_applications_closed_at_date_for_brief_with_no_requirements_length(self):
         with self.app.app_context():
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            b = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
+
+            db.session.add(b)
             db.session.commit()
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
+
+            apps_closed_py = b.applications_closed_at
+
+            assert apps_closed_py.timezone.name == 'UTC'
+
+            app_closed_query = db.session.query(Brief.applications_closed_at)
+
+            apps_closed_sql = app_closed_query.first()[0]
+
+            assert apps_closed_sql == apps_closed_py
+
+            assert Brief.query.filter(Brief.applications_closed_at == naive_datetime(2016, 3, 17, 7, 0, 0)).count() == 1
 
     def test_query_brief_applications_closed_at_date_for_one_week_brief(self):
         with self.app.app_context():
             db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
                                  published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
             db.session.commit()
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 10, 23, 59, 59)).count() == 1
+            assert Brief.query.filter(Brief.applications_closed_at == naive_datetime(2016, 3, 10, 7, 0, 0)).count() == 1
 
     def test_query_brief_applications_closed_at_date_for_two_week_brief(self):
         with self.app.app_context():
             db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
                                  published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
             db.session.commit()
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
+            assert Brief.query.filter(Brief.applications_closed_at == naive_datetime(2016, 3, 17, 7, 0, 0)).count() == 1
 
     def test_query_brief_applications_closed_at_date_for_mix_of_brief_lengths(self):
         with self.app.app_context():
@@ -266,34 +378,37 @@ class TestBriefs(BaseApplicationTest):
             db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
                                  published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
             db.session.commit()
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 3
+            assert Brief.query.filter(Brief.applications_closed_at == naive_datetime(2016, 3, 17, 7, 0, 0)).count() == 3
 
     def test_expired_status_for_a_brief_with_passed_close_date(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot,
-                      published_at=datetime.utcnow() - timedelta(days=1000))
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot,
+                          published_at=utcnow() - interval(days=1000))
 
-        assert brief.status == 'closed'
-        assert brief.clarification_questions_are_closed
-        assert brief.applications_closed_at < datetime.utcnow()
+            assert brief.status == 'closed'
+            assert brief.clarification_questions_are_closed
+            assert brief.applications_closed_at < utcnow()
 
     def test_can_set_draft_brief_to_the_same_status(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
         brief.status = 'draft'
 
     def test_publishing_a_brief_sets_published_at(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot)
-        assert brief.published_at is None
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
+            assert brief.published_at is None
 
-        brief.status = 'live'
-        assert not brief.clarification_questions_are_closed
-        assert isinstance(brief.published_at, datetime)
+            brief.status = 'live'
+            assert not brief.clarification_questions_are_closed
+            assert isinstance(brief.published_at, builtindatetime)
 
     def test_withdrawing_a_brief_sets_withdrawn_at(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
-        assert brief.withdrawn_at is None
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=utcnow())
+            assert brief.withdrawn_at is None
 
-        brief.status = 'withdrawn'
-        assert isinstance(brief.withdrawn_at, datetime)
+            brief.status = 'withdrawn'
+            assert isinstance(brief.withdrawn_at, builtindatetime)
 
     def test_status_must_be_valid(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
@@ -302,17 +417,19 @@ class TestBriefs(BaseApplicationTest):
             brief.status = 'invalid'
 
     def test_cannot_set_live_brief_to_draft(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=utcnow())
 
-        with pytest.raises(ValidationError):
-            brief.status = 'draft'
+            with pytest.raises(ValidationError):
+                brief.status = 'draft'
 
     def test_can_set_live_brief_to_withdrawn(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
-        brief.status = 'withdrawn'
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=utcnow())
+            brief.status = 'withdrawn'
 
-        assert brief.published_at is not None
-        assert brief.withdrawn_at is not None
+            assert brief.published_at is not None
+            assert brief.withdrawn_at is not None
 
     def test_cannot_set_brief_to_closed(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
@@ -329,7 +446,7 @@ class TestBriefs(BaseApplicationTest):
     def test_cannot_change_status_of_withdrawn_brief(self):
         brief = Brief(
             data={}, framework=self.framework, lot=self.lot,
-            published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
+            published_at=utcnow() - interval(days=1), withdrawn_at=utcnow()
         )
 
         for status in ['draft', 'live', 'closed']:
@@ -456,7 +573,7 @@ class TestBriefResponses(BaseApplicationTest):
             assert brief_response.id is not None
             assert brief_response.supplier_code == 0
             assert brief_response.brief_id == self.brief.id
-            assert isinstance(brief_response.created_at, datetime)
+            assert isinstance(brief_response.created_at, builtindatetime)
             assert brief_response.data == {}
 
     def test_foreign_fields_are_removed_from_brief_response_data(self):
@@ -537,7 +654,7 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
             db.session.add(question)
             db.session.commit()
 
-            assert isinstance(question.published_at, datetime)
+            assert isinstance(question.published_at, builtindatetime)
 
     def test_question_must_not_be_null(self):
         with self.app.app_context(), pytest.raises(IntegrityError):
@@ -771,14 +888,16 @@ class TestServices(BaseApplicationTest):
                 status='published',
                 framework_id=2)
 
+            now = pendulum.now('UTC')
+
             service = Service.query.filter(Service.service_id == '1000000000').first()
 
             updated_at = service.updated_at
             created_at = service.created_at
 
             service.update_from_json({'foo': 'bar'})
-
             db.session.add(service)
+            assert service.created_at.hour == now.hour
             db.session.commit()
 
             assert service.created_at == created_at
@@ -839,7 +958,7 @@ class TestWorkOrder(BaseApplicationTest):
             assert work_order.id is not None
             assert work_order.supplier_code == 0
             assert work_order.brief_id == self.brief.id
-            assert isinstance(work_order.created_at, datetime)
+            assert isinstance(work_order.created_at, builtindatetime)
             assert work_order.data == {}
 
     def test_foreign_fields_are_removed_from_work_order_data(self):

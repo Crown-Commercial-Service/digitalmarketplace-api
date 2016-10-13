@@ -22,7 +22,7 @@ def upgrade():
     from app import models
     import datetime
     SupplierTable = models.Supplier.__table__
-    timestamp = models.getUtcTimestamp()
+    timestamp = models.utcnow()
     op.execute(SupplierTable.update().values({'creation_time': timestamp, 'last_update_time': timestamp}))
     op.alter_column('supplier', 'creation_time', nullable=False)
     op.alter_column('supplier', 'last_update_time', nullable=False)

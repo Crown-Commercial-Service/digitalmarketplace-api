@@ -44,6 +44,10 @@ class Config:
 
     VCAP_SERVICES = None
 
+    DEADLINES_TZ_NAME = 'Australia/Sydney'
+    DEFAULT_REQUIREMENTS_DURATION = '2 weeks'
+    DEADLINES_TIME_OF_DAY = '18:00:00'
+
 
 class Test(Config):
     DM_SEARCH_API_AUTH_TOKEN = 'test'

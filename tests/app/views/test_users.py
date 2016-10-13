@@ -3,9 +3,9 @@ from freezegun import freeze_time
 from nose.tools import assert_equal, assert_not_equal, assert_in, assert_is_none
 from app import db, encryption
 from app.models import Address, User, Supplier
-from datetime import datetime
+import pendulum
+from pendulum import create as datetime
 from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
-from dmutils.formats import DATETIME_FORMAT
 
 
 class BaseUserTest(BaseApplicationTest):
@@ -562,7 +562,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = "/users/123"
 
     def setup(self):
-        now = datetime.utcnow()
+        now = pendulum.now('UTC')
         super(TestUsersUpdate, self).setup()
         with self.app.app_context():
             user = User(
@@ -985,7 +985,8 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(data['emailAddress'], 'myshinynew@digital.gov.au')
 
     def test_can_update_terms_acceptance_timestamp(self):
-        timestamp = datetime(2000, 01, 01).strftime(DATETIME_FORMAT)
+        timestamp = datetime(2000, 01, 01).to_iso8601_string(extended=True)
+
         with self.app.app_context():
             response = self.client.post(
                 '/users/456',
