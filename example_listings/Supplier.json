@@ -21,6 +21,7 @@
 	  "email": "media@digital.gov.au"
   }],
   "references": [],
+  "case_study_ids": [],
   "prices": [{
 	  "serviceRole": { "category": "Business Analysis", "role": "Junior Business Analyst" },
 	  "hourlyRate": "0.10",
