@@ -1274,7 +1274,7 @@ class Brief(db.Model):
         d = workday(self.published_day, self.questions_duration_workdays)
 
         t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
-        return combine_date_and_time(d, t, DEADLINES_TZ_NAME)
+        return combine_date_and_time(d, t, DEADLINES_TZ_NAME).in_tz('UTC')
 
     @property
     def clarification_questions_published_by(self):
@@ -1287,7 +1287,7 @@ class Brief(db.Model):
         d = workday(self.applications_closing_date, -1)
 
         t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
-        return combine_date_and_time(d, t, DEADLINES_TZ_NAME)
+        return combine_date_and_time(d, t, DEADLINES_TZ_NAME).in_tz('UTC')
 
     @property
     def clarification_questions_are_closed(self):
