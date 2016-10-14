@@ -254,8 +254,10 @@ def approve_for_countersignature(agreement_id):
     framework_agreement_details = framework_agreement.supplier_framework.framework.framework_agreement_details
 
     json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ['userId'])
-    approved_by_user_id = json_payload['userId']
+    json_has_required_keys(json_payload, ['agreement'])
+    update_json = json_payload["agreement"]
+    json_has_keys(update_json, required_keys=['userId'])
+    approved_by_user_id = update_json['userId']
 
     updater_json = validate_and_return_updater_request()
 

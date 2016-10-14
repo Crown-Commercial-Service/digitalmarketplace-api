@@ -928,7 +928,7 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
             data=json.dumps(
                 {
                     'updated_by': 'chris@example.com',
-                    'userId': '1234'
+                    'agreement': {'userId': '1234'}
                 }),
             content_type='application/json')
 
