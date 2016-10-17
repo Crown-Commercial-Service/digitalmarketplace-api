@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from datetime import timedelta
+import pendulum
 
 import mock
 from ..helpers import BaseApplicationTest, COMPLETE_DIGITAL_SPECIALISTS_BRIEF
@@ -434,21 +435,42 @@ class TestBriefs(BaseApplicationTest):
                     }
                 ],
                 "clarificationQuestions": [],
+                "dates": {
+                    'answers_close': None,
+                    'application_open_weeks': u'2 weeks',
+                    'closing_date': None,
+                    'closing_time': None,
+                    'published_date': None,
+                    'questions_close': None
+                }
             }
         )
 
-        assert json.loads(res.get_data(as_text=True)) == {"briefs": expected_data}
+        loaded = json.loads(res.get_data(as_text=True))
+        assert loaded == {"briefs": expected_data}
 
     def test_get_live_brief_has_published_at_time(self):
-        self.setup_dummy_briefs(1, status='live')
-        res = self.client.get('/briefs/1')
-        data = json.loads(res.get_data(as_text=True))
+        NOW = pendulum.create(2015, 1, 1, 12, 34, 56, tz='Australia/Sydney')
 
-        assert 'publishedAt' in data['briefs']
-        assert 'applicationsClosedAt' in data['briefs']
-        assert 'clarificationQuestionsClosedAt' in data['briefs']
-        assert 'clarificationQuestionsPublishedBy' in data['briefs']
-        assert not data['briefs']['clarificationQuestionsAreClosed']
+        with pendulum.test(NOW):
+            self.setup_dummy_briefs(1, status='live')
+            res = self.client.get('/briefs/1')
+            data = json.loads(res.get_data(as_text=True))
+
+            assert 'publishedAt' in data['briefs']
+            assert 'applicationsClosedAt' in data['briefs']
+            assert 'clarificationQuestionsClosedAt' in data['briefs']
+            assert 'clarificationQuestionsPublishedBy' in data['briefs']
+            assert not data['briefs']['clarificationQuestionsAreClosed']
+
+            assert data['briefs']['dates'] == {
+                'answers_close': '2015-01-14T07:00:00+00:00',
+                'application_open_weeks': u'2 weeks',
+                'closing_date': '2015-01-15',
+                'closing_time': '2015-01-15T07:00:00+00:00',
+                'published_date': '2015-01-01',
+                'questions_close': '2015-01-08T07:00:00+00:00'
+            }
 
     def test_get_brief_returns_404_if_not_found(self):
         res = self.client.get('/briefs/1')

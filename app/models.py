@@ -1147,6 +1147,24 @@ class Brief(db.Model):
         order_by="BriefClarificationQuestion.published_at")
     work_order = db.relationship('WorkOrder', uselist=False)
 
+    @property
+    def dates_for_serialization(self):
+        def as_s(x):
+            if x:
+                return str(x)
+
+        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
+
+        dates = {}
+
+        dates['published_date'] = self.published_day
+        dates['closing_date'] = self.applications_closing_date
+        dates['questions_close'] = self.clarification_questions_closed_at
+        dates['answers_close'] = self.clarification_questions_published_by
+        dates['application_open_weeks'] = self.requirements_length
+        dates['closing_time'] = self.applications_closed_at
+        return {k: as_s(v) for k, v in dates.items()}
+
     @validates('users')
     def validates_users(self, key, user):
         if user.role != 'buyer':
@@ -1418,6 +1436,7 @@ class Brief(db.Model):
                 for user in self.users
             ]
 
+        data['dates'] = self.dates_for_serialization
         return data
 
 
