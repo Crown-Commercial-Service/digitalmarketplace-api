@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "essentialRequirements": {
+      "items": {
+        "type": "boolean"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
+    },
+    "niceToHaveRequirements": {
+      "items": {
+        "type": "boolean"
+      },
+      "maxItems": 20,
+      "minItems": 0,
+      "type": "array"
+    },
+    "respondToEmailAddress": {
+      "format": "email",
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "essentialRequirements",
+    "respondToEmailAddress"
+  ],
+  "title": "Digital Outcomes and Specialists 2 User research participants Brief Response Schema",
+  "type": "object"
+}

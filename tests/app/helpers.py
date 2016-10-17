@@ -247,6 +247,25 @@ class BaseApplicationTest(object):
             )
             db.session.commit()
 
+    def setup_dos_2_framework(self, status='open', clarifications=True):
+        with self.app.app_context():
+            db.session.add(
+                Framework(
+                    id=101,
+                    slug=u"digital-outcomes-and-specialists-2",
+                    name=u"Digital Outcomes and Specialists 2",
+                    framework=u"dos",
+                    status=status,
+                    clarification_questions_open=clarifications,
+                    lots=[Lot.query.filter(Lot.slug == "digital-outcomes").first(),
+                          Lot.query.filter(Lot.slug == "digital-specialists").first(),
+                          Lot.query.filter(Lot.slug == "user-research-participants").first(),
+                          Lot.query.filter(Lot.slug == "user-research-studios").first(),
+                          ]
+                )
+            )
+            db.session.commit()
+
     def teardown(self):
         self.teardown_authorization()
         self.teardown_database()
