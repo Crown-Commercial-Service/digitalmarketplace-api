@@ -40,22 +40,6 @@ def create_framework_agreement():
             )
         )
 
-    # We enforce only one framework agreement per SupplierFramework for the moment
-    # This behaviour will be refactored out later to allow for multiple
-    existing_framework_agreement = FrameworkAgreement.query.filter(
-        FrameworkAgreement.supplier_id == update_json['supplierId']
-    ).filter(
-        Framework.slug == update_json['frameworkSlug']
-    ).first()
-
-    if existing_framework_agreement:
-        abort(
-            400,
-            "supplier_id '{}' already has a framework agreement for framework '{}'".format(
-                update_json['supplierId'], update_json['frameworkSlug']
-            )
-        )
-
     framework = Framework.query.filter(
         Framework.slug == update_json['frameworkSlug']
     ).first_or_404()

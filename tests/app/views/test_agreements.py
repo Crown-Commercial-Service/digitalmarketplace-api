@@ -129,27 +129,6 @@ class TestCreateFrameworkAgreement(BaseApplicationTest):
             "Invalid JSON must have 'frameworkSlug' keys"
         )
 
-    def test_can_not_make_more_than_one_framework_agreement_per_supplier_framework(self, supplier_framework):
-        res = self.post_create_agreement(
-            supplier_id=supplier_framework['supplierId'],
-            framework_slug=supplier_framework['frameworkSlug']
-        )
-
-        assert res.status_code == 201
-
-        res = self.post_create_agreement(
-            supplier_id=supplier_framework['supplierId'],
-            framework_slug=supplier_framework['frameworkSlug']
-        )
-
-        assert res.status_code == 400
-        assert (
-            json.loads(res.get_data(as_text=True))['error'] ==
-            "supplier_id '{}' already has a framework agreement for framework '{}'".format(
-                supplier_framework['supplierId'], supplier_framework['frameworkSlug']
-            )
-        )
-
 
 class TestGetFrameworkAgreement(BaseFrameworkAgreementTest):
     def test_it_gets_a_newly_created_framework_agreement_by_id(self, supplier_framework):
