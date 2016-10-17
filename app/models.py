@@ -1153,8 +1153,6 @@ class Brief(db.Model):
             if x:
                 return str(x)
 
-        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
-
         dates = {}
 
         dates['published_date'] = self.published_day
