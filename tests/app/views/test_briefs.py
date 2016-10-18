@@ -402,49 +402,53 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 404
 
     def test_get_brief(self):
-        self.setup_dummy_briefs(1, title="I need a Developer")
-        res = self.client.get('/briefs/1')
+        NOW = pendulum.create(2015, 1, 1, 12, 34, 56, tz='Australia/Sydney')
 
-        assert res.status_code == 200
-        expected_data = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
-        expected_data.update(
-            {
-                'id': 1,
-                'status': 'draft',
-                'frameworkSlug': 'digital-outcomes-and-specialists',
-                'frameworkFramework': 'dos',
-                'frameworkName': 'Digital Outcomes and Specialists',
-                'frameworkStatus': 'live',
-                'lot': 'digital-specialists',
-                'lotSlug': 'digital-specialists',
-                'lotName': 'Digital specialists',
-                'createdAt': mock.ANY,
-                'updatedAt': mock.ANY,
-                'links': {
-                    'framework': 'http://localhost/frameworks/digital-outcomes-and-specialists',
-                    'self': 'http://localhost/briefs/1',
-                },
-                'users': [
-                    {
-                        'id': 1,
-                        'emailAddress': 'test+1@digital.gov.au',
-                        'phoneNumber': None,
-                        'name': 'my name',
-                        'role': 'buyer',
-                        'active': True,
+        with pendulum.test(NOW):
+            self.setup_dummy_briefs(1, title="I need a Developer")
+            res = self.client.get('/briefs/1')
+
+            assert res.status_code == 200
+            expected_data = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
+            expected_data.update(
+                {
+                    'id': 1,
+                    'status': 'draft',
+                    'frameworkSlug': 'digital-outcomes-and-specialists',
+                    'frameworkFramework': 'dos',
+                    'frameworkName': 'Digital Outcomes and Specialists',
+                    'frameworkStatus': 'live',
+                    'lot': 'digital-specialists',
+                    'lotSlug': 'digital-specialists',
+                    'lotName': 'Digital specialists',
+                    'createdAt': mock.ANY,
+                    'updatedAt': mock.ANY,
+                    'links': {
+                        'framework': 'http://localhost/frameworks/digital-outcomes-and-specialists',
+                        'self': 'http://localhost/briefs/1',
+                    },
+                    'users': [
+                        {
+                            'id': 1,
+                            'emailAddress': 'test+1@digital.gov.au',
+                            'phoneNumber': None,
+                            'name': 'my name',
+                            'role': 'buyer',
+                            'active': True,
+                        }
+                    ],
+                    "clarificationQuestions": [],
+                    "dates": {
+                        'answers_close': None,
+                        'application_open_weeks': u'2 weeks',
+                        'closing_date': None,
+                        'closing_time': None,
+                        'published_date': None,
+                        'questions_close': None,
+                        'hypothetical_closing_time': '2015-01-15T07:00:00+00:00'
                     }
-                ],
-                "clarificationQuestions": [],
-                "dates": {
-                    'answers_close': None,
-                    'application_open_weeks': u'2 weeks',
-                    'closing_date': None,
-                    'closing_time': None,
-                    'published_date': None,
-                    'questions_close': None
                 }
-            }
-        )
+            )
 
         loaded = json.loads(res.get_data(as_text=True))
         assert loaded == {"briefs": expected_data}
@@ -469,7 +473,8 @@ class TestBriefs(BaseApplicationTest):
                 'closing_date': '2015-01-15',
                 'closing_time': '2015-01-15T07:00:00+00:00',
                 'published_date': '2015-01-01',
-                'questions_close': '2015-01-08T07:00:00+00:00'
+                'questions_close': '2015-01-08T07:00:00+00:00',
+                'hypothetical_closing_time': None
             }
 
     def test_get_brief_returns_404_if_not_found(self):

@@ -1161,6 +1161,7 @@ class Brief(db.Model):
         dates['answers_close'] = self.clarification_questions_published_by
         dates['application_open_weeks'] = self.requirements_length
         dates['closing_time'] = self.applications_closed_at
+        dates['hypothetical_closing_time'] = self.hypothetical_applications_closed_at
         return {k: as_s(v) for k, v in dates.items()}
 
     @validates('users')
@@ -1247,6 +1248,19 @@ class Brief(db.Model):
             return None
         req_length = parse_interval(self.requirements_length)
         return self.published_day + req_length
+
+    @hybrid_property
+    def hypothetical_applications_closed_at(self):
+        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
+        DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
+
+        if self.published_at is not None:
+            return None
+        d = pendulum.now(DEADLINES_TZ_NAME).date() + \
+            parse_interval(self.requirements_length)
+        t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
+        combined = combine_date_and_time(d, t, DEADLINES_TZ_NAME)
+        return combined.in_timezone('UTC')
 
     @hybrid_property
     def applications_closed_at(self):
