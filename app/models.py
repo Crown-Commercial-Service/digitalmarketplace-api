@@ -360,22 +360,16 @@ class SupplierFramework(db.Model):
             if self.framework_agreements[-1].status == 'draft':
                 return self.framework_agreements[-1]
 
-            def get_most_recent_time(framework_agreement):
-                if framework_agreement.countersigned_agreement_returned_at:
-                    return framework_agreement.countersigned_agreement_returned_at
-                else:
-                    return framework_agreement.signed_agreement_returned_at
-
             most_recently_signed_or_countersigned = self.framework_agreements[-1]
-            most_recent_time = get_most_recent_time(most_recently_signed_or_countersigned)
+            most_recent_time = most_recently_signed_or_countersigned.most_recent_signature_time
 
             for fa in self.framework_agreements:
                 if fa.status == "draft":
                     continue
 
-                if get_most_recent_time(fa) > most_recent_time:
+                if fa.most_recent_signature_time > most_recent_time:
                     most_recently_signed_or_countersigned = fa
-                    most_recent_time = get_most_recent_time(fa)
+                    most_recent_time = fa.most_recent_signature_time
 
             return most_recently_signed_or_countersigned
 
@@ -563,6 +557,14 @@ class FrameworkAgreement(db.Model):
         data = purge_nulls_from_data(data)
 
         return data
+
+    @property
+    def most_recent_signature_time(self):
+        # Time of most recent signing or countersignature
+        if self.countersigned_agreement_returned_at:
+            return self.countersigned_agreement_returned_at
+        else:
+            return self.signed_agreement_returned_at
 
     @hybrid_property
     def status(self):

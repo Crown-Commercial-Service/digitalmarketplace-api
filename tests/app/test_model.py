@@ -901,6 +901,24 @@ class TestFrameworkAgreements(BaseApplicationTest):
         )
         assert framework_agreement.status == 'countersigned'
 
+    def test_most_recent_signature_time(self):
+        framework_agreement = FrameworkAgreement(
+            supplier_id=0,
+            framework_id=1,
+        )
+        assert framework_agreement.most_recent_signature_time is None
+
+        framework_agreement.signed_agreement_details = {'agreement': 'details'}
+        framework_agreement.signed_agreement_path = '/path/to/the/agreement.pdf'
+        framework_agreement.signed_agreement_returned_at = datetime(2016, 9, 10, 11, 12, 0, 0)
+
+        assert framework_agreement.most_recent_signature_time == datetime(2016, 9, 10, 11, 12, 0, 0)
+
+        framework_agreement.countersigned_agreement_path = '/path/to/the/countersignedAgreement.pdf'
+        framework_agreement.countersigned_agreement_returned_at = datetime(2016, 10, 11, 10, 12, 0, 0)
+
+        assert framework_agreement.most_recent_signature_time == datetime(2016, 10, 11, 10, 12, 0, 0)
+
 
 class TestCurrentFrameworkAgreement(BaseApplicationTest):
     """
