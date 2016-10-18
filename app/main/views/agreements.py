@@ -17,8 +17,6 @@ from ...utils import (
 from ...supplier_utils import validate_agreement_details_data
 
 
-# This route not currently used and not yet supported by API client
-# It will be brought into use following migration of franmework agreement data
 @main.route('/agreements', methods=['POST'])
 def create_framework_agreement():
     json_payload = get_json_from_request()
@@ -48,7 +46,6 @@ def create_framework_agreement():
         supplier_id=update_json['supplierId'],
         framework_id=framework.id
     )
-
     try:
         db.session.add(framework_agreement)
         db.session.flush()
