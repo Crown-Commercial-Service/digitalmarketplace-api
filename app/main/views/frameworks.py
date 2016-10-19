@@ -224,10 +224,13 @@ def get_framework_suppliers(framework_slug):
 
     if request.args.get('agreement_returned') is not None or request.args.get('status') is not None:
         requested_statuses = None
+        if request.args.get('status') is not None:
+            requested_statuses = request.args.get('status').split(',')
+
         agreement_returned = request.args.get('agreement_returned')
         if agreement_returned is not None:
             if convert_to_boolean(agreement_returned):
-                requested_statuses = ('signed', 'on-hold', 'countersigned')
+                requested_statuses = requested_statuses or ('signed', 'on-hold', 'countersigned')
             else:
                 supplier_frameworks = [sf for sf in supplier_frameworks if sf.current_framework_agreement is None
                                        or (sf.current_framework_agreement
@@ -235,9 +238,6 @@ def get_framework_suppliers(framework_slug):
                                            )
                                        ]
                 # TODO: The 'or' clause here can be deleted once drafts are excluded from current_framework_agreement
-
-        elif request.args.get('status') is not None:
-            requested_statuses = request.args.get('status').split(',')
 
         if requested_statuses:
             supplier_frameworks = [

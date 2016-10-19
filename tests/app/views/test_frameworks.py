@@ -845,6 +845,27 @@ class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
             assert len(data['supplierFrameworks']) == 3
             self.assert_supplier_ids(data, (3, 5, 6))
 
+    def test_list_suppliers_by_multiple_statuses_and_agreement_returned_true(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get(
+                '/frameworks/g-cloud-8/suppliers?status=approved,countersigned&agreement_returned=true'
+            )
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 4
+            self.assert_supplier_ids(data, (6, 7, 8, 9))
+
+    def test_list_suppliers_by_multiple_statuses_and_agreement_returned_false(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get(
+                '/frameworks/g-cloud-8/suppliers?status=approved,countersigned&agreement_returned=false'
+            )
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 0
+
 
 class TestGetFrameworkInterest(BaseApplicationTest):
     def setup(self):
