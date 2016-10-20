@@ -1170,23 +1170,6 @@ class Brief(db.Model):
 
         return dates
 
-    @property
-    def hypothetical_dates_for_serialization(self):
-        def as_s(x):
-            if x:
-                return str(x)
-
-        dates = {}
-
-        dates['published_date'] = self.published_day
-        dates['closing_date'] = self.applications_closing_date
-        dates['questions_close'] = self.clarification_questions_closed_at
-        dates['answers_close'] = self.clarification_questions_published_by
-        dates['application_open_weeks'] = self.requirements_length
-        dates['closing_time'] = self.applications_closed_at
-        dates['hypothetical_closing_time'] = self.hypothetical_applications_closed_at
-        return {k: as_s(v) for k, v in dates.items()}
-
     @validates('users')
     def validates_users(self, key, user):
         if user.role != 'buyer':
