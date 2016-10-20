@@ -1,7 +1,6 @@
 import random
-from datetime import datetime, timedelta
-from decimal import Decimal, InvalidOperation
-import pytz
+from datetime import datetime
+from decimal import InvalidOperation
 from workdays import workday
 import re
 
@@ -18,13 +17,9 @@ from sqlalchemy.orm import validates
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.expression import cast as sql_cast
-from sqlalchemy.sql.expression import extract
-from sqlalchemy.sql.operators import is_
 from sqlalchemy.types import String, Date, Integer, Interval
-from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
 from dmutils.data_tools import ValidationError, normalise_abn, normalise_acn, parse_money
-from dmutils.dates import get_publishing_dates
 
 from . import db
 from app.utils import (
@@ -305,7 +300,7 @@ class ServiceRole(db.Model):
     @staticmethod
     def lookup(as_dict):
         category_name = as_dict.get('category', 'no category specified')
-        category = ServiceCategory.lookup({'name': category_name})
+        ServiceCategory.lookup({'name': category_name})
         role_name = as_dict.get('role', 'no role specified')
         result = ServiceRole.query.filter_by(name=role_name).first()
         if result is None:
@@ -1654,7 +1649,7 @@ class CaseStudy(db.Model):
             'id': self.id,
             'supplierCode': self.supplier_code,
             'supplierName': self.supplier.name,
-            'createdAt':  self.created_at.to_iso8601_string(extended=True),
+            'createdAt': self.created_at.to_iso8601_string(extended=True),
             'links': {
                 'self': url_for('.get_work_order', work_order_id=self.id),
                 'supplier': url_for(".get_supplier", code=self.supplier_code),

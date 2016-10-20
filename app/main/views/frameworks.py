@@ -58,10 +58,10 @@ def create_framework():
                 data={'update': json_payload['frameworks']})
         )
         db.session.commit()
-    except DataError as e:
+    except DataError:
         db.session.rollback()
         abort(400, "Invalid framework")
-    except IntegrityError as e:
+    except IntegrityError:
         db.session.rollback()
         abort(400, "Slug '{}' already in use".format(json_payload["frameworks"]["slug"]))
 

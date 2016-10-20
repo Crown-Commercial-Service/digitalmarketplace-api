@@ -3,7 +3,7 @@ import json
 from . import es_client, db
 from models import Supplier
 
-from flask import jsonify, abort, request, current_app
+from flask import current_app
 from elasticsearch import Elasticsearch
 from elasticsearch.client import IndicesClient
 

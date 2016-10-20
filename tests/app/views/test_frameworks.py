@@ -4,10 +4,8 @@ from flask import json
 from nose.tools import assert_equal, assert_in
 from dateutil.parser import parse as parse_time
 
-from dmapiclient.audit import AuditTypes
-
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
-from app.models import db, Framework, SupplierFramework, DraftService, AuditEvent, Supplier, User, FrameworkLot
+from app.models import db, Framework, SupplierFramework, DraftService, User, FrameworkLot
 
 
 class TestListFrameworks(BaseApplicationTest):

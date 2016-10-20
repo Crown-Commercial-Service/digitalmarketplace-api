@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import os
 import json
 
-import pytest
 from nose.tools import assert_equal, assert_in, assert_not_in
 from jsonschema import validate, SchemaError, ValidationError
 
@@ -49,7 +48,7 @@ def test_for_valid_date():
     ]
 
     for example, expected in cases:
-        yield assert_equal, is_valid_date(example), expected, example
+        assert_equal(is_valid_date(example), expected, example)
 
 
 def test_for_valid_acknowledged_state():
@@ -62,7 +61,7 @@ def test_for_valid_acknowledged_state():
     ]
 
     for example, expected in cases:
-        yield assert_equal, is_valid_acknowledged_state(example), expected
+        assert_equal(is_valid_acknowledged_state(example), expected)
 
 
 def test_for_valid_service_id():
@@ -81,7 +80,7 @@ def test_for_valid_service_id():
     ]
 
     for example, expected in cases:
-        yield assert_equal, is_valid_service_id(example), expected, example
+        assert_equal(is_valid_service_id(example), expected, example)
 
 
 def test_for_valid_string():
@@ -97,16 +96,16 @@ def test_for_valid_string():
         ("123-and-strings", 1, 200, True),
     ]
 
-    for example, min, max, expected in cases:
-        yield assert_equal, is_valid_string(
-            example, min, max), expected, example
+    for example, vmin, vmax, expected in cases:
+        assert_equal(is_valid_string(
+            example, vmin, vmax), expected, example)
 
 
 def test_all_schemas_are_valid():
     for file_name in os.listdir('json_schemas'):
         file_path = 'json_schemas/%s' % file_name
         if os.path.isfile(file_path) and file_path.endswith(".json"):
-            yield check_schema_file, file_path
+            check_schema_file(file_path)
 
 
 def test_updater_json_validates_correctly():
@@ -215,7 +214,7 @@ def test_user_creation_validates():
 
     for example, expected, message in case:
         result = validates_against_schema('users', example)
-        yield assert_equal, result, expected, message
+        assert_equal(result, expected, message)
 
 
 def test_auth_user_validates():
@@ -244,7 +243,7 @@ def test_auth_user_validates():
 
     for example, expected, message in case:
         result = validates_against_schema('users-auth', example)
-        yield assert_equal, result, expected, message
+        assert_equal(result, expected, message)
 
 
 def test_g7_missing_required_field_has_validation_error():
@@ -365,11 +364,11 @@ def test_price_not_money_format_validation_error():
         assert field in errs
         assert "not_money_format" in errs[field]
 
-    yield check_min_price_error, 'priceMin', ""
+    check_min_price_error('priceMin', "")
 
     for case in cases:
-        yield check_min_price_error, 'priceMin', case
-        yield check_min_price_error, 'priceMax', case
+        check_min_price_error('priceMin', case)
+        check_min_price_error('priceMax', case)
 
 
 def test_price_not_money_format_valid_cases():
@@ -388,11 +387,11 @@ def test_price_not_money_format_valid_cases():
         errs = get_validation_errors("services-g-cloud-7-scs", data)
         assert "not_money_format" not in errs.get(field, "")
 
-    yield check_min_price_valid, 'priceMax', ""
+    check_min_price_valid('priceMax', "")
 
     for case in cases:
-        yield check_min_price_valid, 'priceMin', case
-        yield check_min_price_valid, 'priceMax', case
+        check_min_price_valid('priceMin', case)
+        check_min_price_valid('priceMax', case)
 
 
 def test_min_price_larger_than_max_price_causes_validation_error():
@@ -403,7 +402,7 @@ def test_min_price_larger_than_max_price_causes_validation_error():
         data.update({"priceMax": price_max})
         errs = get_validation_errors("services-g-cloud-7-scs", data)
 
-        yield assert_in, 'max_less_than_min', errs['priceMax']
+        assert_in('max_less_than_min', errs['priceMax'])
 
 
 def test_max_price_larger_than_min_price():
@@ -414,7 +413,7 @@ def test_max_price_larger_than_min_price():
         data.update({"priceMax": price_max})
         errs = get_validation_errors("services-g-cloud-7-scs", data)
 
-        yield assert_not_in, 'priceMax', errs
+        assert_not_in('priceMax', errs)
 
 
 def test_max_price_larger_than_min_price_with_multiple_price_fields():

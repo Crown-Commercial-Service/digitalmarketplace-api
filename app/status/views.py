@@ -1,4 +1,3 @@
-import os
 from flask import jsonify, current_app, request
 from sqlalchemy.exc import SQLAlchemyError
 

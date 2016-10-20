@@ -735,7 +735,7 @@ class TestBriefs(BaseApplicationTest):
                 'update_details': {'updated_by': 'example'}
             }),
             content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
+        json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
 
@@ -840,7 +840,7 @@ class TestBriefs(BaseApplicationTest):
                 'update_details': {'updated_by': 'example'}
             }),
             content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
+        json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
 
@@ -889,7 +889,7 @@ class TestBriefs(BaseApplicationTest):
                 'update_details': {'updated_by': 'example'}
             }),
             content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
+        json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
 
@@ -1150,7 +1150,8 @@ class TestBriefs(BaseApplicationTest):
         audits = [
             event for event in data["auditEvents"]
             if event["type"] == AuditTypes.add_brief_clarification_question.value
-            ]
+        ]
+
         assert len(audits) == 1
         assert audits[0]['data'] == {
             "question": "What?",

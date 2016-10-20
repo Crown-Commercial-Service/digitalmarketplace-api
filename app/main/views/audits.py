@@ -1,7 +1,7 @@
 from flask import jsonify, abort, request, current_app
 from datetime import datetime, timedelta
 from ...models import AuditEvent
-from sqlalchemy import asc, desc, Date, cast
+from sqlalchemy import asc, desc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import true, false
 from ...utils import pagination_links, get_valid_page_or_1

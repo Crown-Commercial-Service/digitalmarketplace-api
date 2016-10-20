@@ -1,12 +1,12 @@
 from flask import jsonify, abort, request, current_app
-from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.exc import IntegrityError
 
 from app.main import main
-from app.models import db, CaseStudy, AuditEvent
+from app.models import db, CaseStudy
 from app.utils import (
     get_json_from_request, json_has_required_keys, get_int_or_400,
     pagination_links, get_valid_page_or_1, url_for,
-    validate_and_return_updater_request, get_positive_int_or_400
+    get_positive_int_or_400
 )
 
 from app.service_utils import validate_and_return_supplier

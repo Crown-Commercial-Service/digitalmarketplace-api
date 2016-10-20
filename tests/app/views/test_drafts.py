@@ -2,7 +2,7 @@ from tests.app.helpers import BaseApplicationTest, JSONUpdateTestMixin
 from datetime import datetime
 from flask import json
 import mock
-from app.models import Supplier, Service, Framework, DraftService, Address, ArchivedService
+from app.models import Supplier, Service, Framework, DraftService, Address
 from app import db
 
 from nose.tools import assert_equal, assert_in, assert_false

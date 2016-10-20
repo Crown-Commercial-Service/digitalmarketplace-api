@@ -141,9 +141,8 @@ def list_briefs():
         ))
 
     if request.args.get('status'):
-        briefs = briefs.has_statuses(*(
-            status.strip() for status in request.args['status'].split(',')
-            ))
+        stripped = (status.strip() for status in request.args['status'].split(','))
+        briefs = briefs.has_statuses(*stripped)
 
     if user_id:
         return jsonify(

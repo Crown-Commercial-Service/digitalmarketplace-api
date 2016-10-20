@@ -2,12 +2,11 @@ from flask import json
 import pytest
 import urllib2
 from freezegun import freeze_time
-from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_none, assert_true, assert_is, assert_false
+from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_none, assert_true, assert_false
 
 from app import db
-from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, DraftService, Service
+from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework
 from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
-from random import randint
 from decimal import Decimal
 
 import pendulum
@@ -29,7 +28,7 @@ class TestGetSupplier(BaseApplicationTest):
                     'supplier': self.supplier
                 }),
                 content_type='application/json')
-            data = json.loads(response.get_data())
+            json.loads(response.get_data())
             assert_equal(response.status_code, 201)
 
     def test_get_non_existent_supplier(self):

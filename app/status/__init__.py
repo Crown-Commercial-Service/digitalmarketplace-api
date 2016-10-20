@@ -5,3 +5,5 @@ from flask import Blueprint
 status = Blueprint('status', __name__)  # noqa
 
 from . import views
+
+__all__ = ['status', 'views']

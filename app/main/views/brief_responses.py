@@ -11,7 +11,6 @@ from ...utils import (
     validate_and_return_updater_request,
 )
 
-from ...brief_utils import get_supplier_service_eligible_for_brief
 from ...service_utils import validate_and_return_supplier
 
 

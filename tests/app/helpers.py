@@ -4,7 +4,7 @@ import os
 import json
 import pytest
 import pendulum
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from nose.tools import assert_equal, assert_in
 
@@ -18,7 +18,7 @@ COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
     "essentialRequirements": ["MS Paint", "GIMP"],
     "startDate": "31/12/2016",
     "evaluationType": ["Reference", "Interview"],
-    "niceToHaveRequirements":  ["LISP"],
+    "niceToHaveRequirements": ["LISP"],
     "existingTeam": "Nice people.",
     "specialistWork": "All the things",
     "workingArrangements": "Just get the work done.",
@@ -100,7 +100,7 @@ class BaseApplicationTest(object):
         user_id = self.setup_dummy_user(id=user_id)
 
         with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").first()
+            Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").first()
             lot = Lot.query.filter(Lot.slug == lot).first()
             data = data or COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
             data["title"] = title
@@ -122,7 +122,7 @@ class BaseApplicationTest(object):
     ):
         if published_at is not None and status is not None:
             raise ValueError("Cannot provide both status and published_at")
-        if withdrawn_at is not None and publish_at is None:
+        if withdrawn_at is not None and published_at is None:
             raise ValueError("If setting withdrawn_at then published_at must also be set")
         if not published_at:
             if status == 'closed':
@@ -168,7 +168,7 @@ class BaseApplicationTest(object):
 
     def setup_additional_dummy_suppliers(self, n, initial):
         with self.app.app_context():
-            for i in range(1000, n+1000):
+            for i in range(1000, n + 1000):
                 db.session.add(
                     Supplier(
                         code=str(i),

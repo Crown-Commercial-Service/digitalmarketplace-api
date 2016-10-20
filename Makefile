@@ -26,6 +26,10 @@ test: test_pep8 test_migrations test_unit
 test_pep8: virtualenv
 	${VIRTUALENV_ROOT}/bin/pep8 .
 
+lint:
+	flake8 app
+	flake8 tests
+
 test_migrations: virtualenv
 	${VIRTUALENV_ROOT}/bin/python ./scripts/list_migrations.py 1>/dev/null
 

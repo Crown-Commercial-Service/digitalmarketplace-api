@@ -1,7 +1,5 @@
 import pendulum
-from pendulum import create as datetime
 from datetime import timedelta
-import os
 
 from flask import json
 from nose.tools import assert_equal, assert_in, assert_true, \
@@ -15,7 +13,6 @@ from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
 from sqlalchemy.exc import IntegrityError
 from dmapiclient import HTTPError
 from dmapiclient.audit import AuditTypes
-import pytest
 
 
 class TestRoleListing(BaseApplicationTest):
@@ -293,12 +290,13 @@ class TestListServices(BaseApplicationTest):
         response = self.client.get('/services')
         data = json.loads(response.get_data())
 
-        service = data['services'][0]
+        data['services'][0]
 
         framework_info = {
             key: value for key, value in data['services'][0].items()
             if key.startswith('framework') or key.startswith('lot')
-            }
+        }
+
         assert framework_info == {
             'frameworkSlug': 'g-cloud-6',
             'frameworkName': 'G-Cloud 6',
@@ -1812,7 +1810,8 @@ class TestGetService(BaseApplicationTest):
         framework_info = {
             key: value for key, value in data['services'].items()
             if key.startswith('framework') or key.startswith('lot')
-            }
+        }
+
         assert framework_info == {
             'frameworkSlug': 'g-cloud-6',
             'frameworkName': 'G-Cloud 6',
@@ -1902,7 +1901,7 @@ class TestGetService(BaseApplicationTest):
                 }
             )
             # make a published service use the expired framework
-            service = Service.query.filter(
+            Service.query.filter(
                 Service.service_id == '123-published-456'
             ).update({
                 'framework_id': 123
@@ -1937,7 +1936,7 @@ class TestGetService(BaseApplicationTest):
                 }
             )
             # make a disabled service use the expired framework
-            service = Service.query.filter(
+            Service.query.filter(
                 Service.service_id == '123-disabled-456'
             ).update({
                 'framework_id': 123

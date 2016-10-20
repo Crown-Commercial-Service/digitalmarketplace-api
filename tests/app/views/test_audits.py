@@ -120,7 +120,7 @@ class TestAuditEvents(BaseApplicationTest):
         self.add_audit_events_with_db_object()
 
         response = self.client.get('/audit-events?object-type=suppliers&object-id=100000')
-        data = json.loads(response.get_data())
+        json.loads(response.get_data())
 
         assert_equal(response.status_code, 404)
 

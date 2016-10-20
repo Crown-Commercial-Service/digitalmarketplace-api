@@ -3,8 +3,6 @@ from datetime import datetime as builtindatetime
 from pendulum import create as datetime
 from pendulum import interval
 
-from collections import Counter
-
 import mock
 import pytest
 from nose.tools import assert_equal, assert_raises
@@ -21,13 +19,13 @@ from app.models import (
     WorkOrder
 )
 
-from app.datetime_utils import naive, vanilla
+from app.datetime_utils import naive
 
 from .helpers import BaseApplicationTest
 
 import pendulum
 
-from app.datetime_utils import utcnow, parse_interval
+from app.datetime_utils import utcnow
 
 
 def naive_datetime(*args, **kwargs):
@@ -106,9 +104,6 @@ class TestBriefs(BaseApplicationTest):
                 QUESTIONS_CLOSING_AT_1 = CLOSING_AT.subtract(days=7).add(days=2)
                 QUESTIONS_CLOSING_AT_UTC_1 = QUESTIONS_CLOSING_AT_1.in_tz('UTC')
 
-                QUESTIONS_CLOSING_AT_2 = CLOSING_AT.subtract(days=14).add(days=5)
-                QUESTIONS_CLOSING_AT_UTC_2 = QUESTIONS_CLOSING_AT_2.in_tz('UTC')
-
                 assert SYDNEY_DAY.day == 3
 
                 brief = Brief(data={}, framework=self.framework, lot=self.lot)
@@ -145,6 +140,7 @@ class TestBriefs(BaseApplicationTest):
                 assert brief.questions_duration_workdays == 2
 
                 assert brief.published_day == SYDNEY_DAY
+                assert brief.applications_closing_date == CLOSING_DAY
 
                 assert brief.applications_closed_at == \
                     CLOSING_AT_UTC
@@ -155,9 +151,9 @@ class TestBriefs(BaseApplicationTest):
                 assert brief.published_day == SYDNEY_DAY
 
                 by_close_utc = Brief.query.filter(
-                    Brief.applications_closed_at == CLOSING_AT_UTC)
+                    Brief.applications_closed_at == naive(CLOSING_AT_UTC))
 
-                brief = by_pday.one()
+                brief = by_close_utc.one()
                 assert brief.applications_closed_at == CLOSING_AT_UTC
 
                 assert brief.clarification_questions_closed_at ==\
@@ -546,7 +542,7 @@ class TestBriefs(BaseApplicationTest):
             lot=self.lot
         )
         with pytest.raises(ValidationError) as e:
-            copy = brief.copy()
+            brief.copy()
 
         assert str(e.value.message) == "Framework is not live"
 

@@ -93,7 +93,7 @@ def list_users():
     )
 
     return jsonify(
-        users=[user.serialize() for user in users.items],
+        users=[u.serialize() for u in users.items],
         links=pagination_links(
             users,
             '.list_users',
@@ -355,11 +355,18 @@ def record_supplier_invite():
 @main.route('/users/count', methods=['GET'])
 def get_buyers_stats():
     account_type = request.args['account_type']
+
+    not_internal = \
+        User.email_address.contains("+").is_(False) | \
+        User.email_address.contains("digital.gov.au").is_(False)
+
+    q_count = User.query.filter(
+        User.active.is_(True),
+        User.role == account_type,
+        not_internal).count()
+
     buyers = {
-        'total': User.query.filter(User.active.is_(True),
-                                   User.role == account_type,
-                                   User.email_address.contains("+").is_(False)
-                                   | User.email_address.contains("digital.gov.au").is_(False)).count()
+        'total': q_count
     }
 
     return jsonify(buyers=buyers)

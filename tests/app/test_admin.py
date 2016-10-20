@@ -1,12 +1,8 @@
-import base64
-
-from flask import json, current_app
 from nose.tools import assert_equal
 
 from .helpers import BaseApplicationTest
 
 from app.search_indices import delete_indices, indices_exist
-from werkzeug.datastructures import Headers
 
 
 class TestAdminRebuildIndex(BaseApplicationTest):

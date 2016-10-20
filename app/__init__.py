@@ -2,7 +2,6 @@ from functools import wraps
 from flask import Flask
 from flask.ext.elasticsearch import FlaskElasticsearch
 from flask.ext.sqlalchemy import SQLAlchemy
-import json
 
 import dmapiclient
 from dmutils import init_app, flask_featureflags

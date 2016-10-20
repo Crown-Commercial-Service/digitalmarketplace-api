@@ -18,7 +18,7 @@ def generic_error_handler(e):
     elif e.code == 500:
         error = "Internal error"
 
-    return jsonify(error=error),  e.code, headers
+    return jsonify(error=error), e.code, headers
 
 
 for code in range(400, 599):

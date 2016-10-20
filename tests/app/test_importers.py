@@ -1,9 +1,8 @@
 import csv
 
-from app import create_app, db
 from app.models import Supplier
 from helpers import BaseApplicationTest
-from nose.tools import assert_equal, assert_greater, assert_in, assert_is_not_none, assert_true, assert_is
+from nose.tools import assert_equal, assert_greater, assert_in, assert_is_not_none
 
 from scripts.importers import import_prices, import_suppliers
 

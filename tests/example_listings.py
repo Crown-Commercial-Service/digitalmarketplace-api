@@ -3,7 +3,7 @@ from hypothesis import settings
 from hypothesis.strategies import (
     fixed_dictionaries, lists,
     booleans, integers, text, none,
-    composite, sampled_from, one_of,
+    composite, one_of,
     just)
 
 from functools import partial
@@ -20,11 +20,11 @@ _descriptive_alphabet = (
     # start with some normal alphanumerics
     u"abcdefghijklmnopABCDEFGHIJKLMNOP123"
     # some characters likely to fudge up poor escaping
-    + u"\"\'<&%"
+    u"\"\'<&%"
     # some printable unicode oddities
-    + u"£Ⰶⶼ"
+    u"£Ⰶⶼ"
     # various weird types of spaces
-    + u" \u200d\u2029\u202f"
+    u" \u200d\u2029\u202f"
 )
 _nonspace_cluster_re = re.compile(r"\S+", flags=re.UNICODE)
 

@@ -1,5 +1,4 @@
 from datetime import datetime
-from operator import itemgetter
 
 from flask import abort, current_app, jsonify, request, url_for
 from elasticsearch import TransportError
@@ -7,25 +6,19 @@ from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
 from ...models import (
-    Supplier, AuditEvent, ServiceRole, PriceSchedule,
-    Service, SupplierFramework, Framework, PriceSchedule, User
+    Supplier, AuditEvent, SupplierFramework, Framework, PriceSchedule, User
 )
 
 from app.search_indices import (
     create_indices, delete_indices, es_client, get_supplier_index_name, index_supplier, SUPPLIER_DOC_TYPE
 )
 
-from ...validation import (
-    validate_supplier_json_or_400,
-    validate_contact_information_json_or_400,
-    is_valid_string_or_400
-)
 from app.utils import (
-    drop_foreign_fields, get_json_from_request, get_nonnegative_int_or_400, get_positive_int_or_400,
-    get_valid_page_or_1, json_has_matching_id, json_has_required_keys, pagination_links,
+    get_json_from_request, get_nonnegative_int_or_400, get_positive_int_or_400,
+    get_valid_page_or_1, json_has_required_keys, pagination_links,
     validate_and_return_updater_request
 )
-from ...supplier_utils import validate_and_return_supplier_request, validate_agreement_details_data
+from ...supplier_utils import validate_agreement_details_data
 from dmapiclient.audit import AuditTypes
 
 
@@ -87,7 +80,7 @@ def get_supplier(code):
         Supplier.code == code
     ).first_or_404()
 
-    service_counts = supplier.get_service_counts()
+    supplier.get_service_counts()
 
     return jsonify(supplier=supplier.serialize())
 
@@ -99,9 +92,10 @@ def delete_supplier(code):
     ).first_or_404()
 
     try:
-        result = es_client.delete(index=get_supplier_index_name(),
-                                  doc_type=SUPPLIER_DOC_TYPE,
-                                  id=supplier.code)
+        es_client.delete(
+            index=get_supplier_index_name(),
+            doc_type=SUPPLIER_DOC_TYPE,
+            id=supplier.code)
         db.session.delete(supplier)
         db.session.commit()
     except TransportError, e:
@@ -159,7 +153,6 @@ def supplier_search():
 
 def update_supplier_data_impl(supplier, supplier_data, success_code):
     try:
-        import json
         if 'prices' in supplier_data:
             db.session.query(PriceSchedule).filter(PriceSchedule.supplier_id == supplier.id).delete()
 

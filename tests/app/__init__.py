@@ -5,7 +5,6 @@ from flask.ext.script import Manager
 from alembic.command import upgrade
 from alembic.config import Config
 from sqlalchemy import inspect
-from app.models import Framework, Lot
 
 
 def setup():
