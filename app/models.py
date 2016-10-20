@@ -6,7 +6,7 @@ from flask import current_app
 from flask_sqlalchemy import BaseQuery
 from six import string_types, iteritems
 
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, and_
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON, INTERVAL
 from sqlalchemy.ext.declarative import declared_attr
@@ -340,38 +340,19 @@ class SupplierFramework(db.Model):
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
-    @property
-    def current_framework_agreement(self):
-        """
-        For the moment, we include drafts in the SupplierFramework to keep our interface the same whilst we refactor the
-        frontend to allow multiple framework agreements per supplier framework. This means that if a draft is created
-        after any other framework agreement then it must take precident (as the supplier frontend for the moment only
-        knows about one framework agreement (the current framework agreement) we must expose the draft so it can be
-        edited as they complete the signing flow). Note, as we have no timestamp for framework agreements being created
-        we instead have to use the highest `id`. Also note, this means that for a short while, if someone has
-        signed/countersigned a supplier framework and then starts a new draft then the supplier framework will return to
-        'draft' status and will lose knowledge of the previous signing.
-
-        After the supplier frontend has been refactored so that the signing flow deals with a framework agreement rather
-        than a suqpplier framework then we will be able to ignore drafts and not include them in the current framework
-        agreement
-        """
-        if self.framework_agreements:
-            if self.framework_agreements[-1].status == 'draft':
-                return self.framework_agreements[-1]
-
-            most_recently_signed_or_countersigned = self.framework_agreements[-1]
-            most_recent_time = most_recently_signed_or_countersigned.most_recent_signature_time
-
-            for fa in self.framework_agreements:
-                if fa.status == "draft":
-                    continue
-
-                if fa.most_recent_signature_time > most_recent_time:
-                    most_recently_signed_or_countersigned = fa
-                    most_recent_time = fa.most_recent_signature_time
-
-            return most_recently_signed_or_countersigned
+    current_framework_agreement = db.relationship(
+        lambda: FrameworkAgreement,
+        lazy="subquery",
+        order_by=lambda: desc(FrameworkAgreement.most_recent_signature_time),
+        primaryjoin=lambda: and_(
+            SupplierFramework.supplier_id == FrameworkAgreement.supplier_id,
+            SupplierFramework.framework_id == FrameworkAgreement.framework_id,
+            FrameworkAgreement.status != "draft",
+        ),
+        distinct_target_key=True,
+        uselist=False,
+        viewonly=True,
+    )
 
     @validates('declaration')
     def validates_declaration(self, key, value):
@@ -558,13 +539,15 @@ class FrameworkAgreement(db.Model):
 
         return data
 
-    @property
+    @hybrid_property
     def most_recent_signature_time(self):
         # Time of most recent signing or countersignature
-        if self.countersigned_agreement_returned_at:
-            return self.countersigned_agreement_returned_at
-        else:
-            return self.signed_agreement_returned_at
+        return self.countersigned_agreement_returned_at or self.signed_agreement_returned_at
+
+    @most_recent_signature_time.expression
+    def most_recent_signature_time(cls):
+        # Time of most recent signing or countersignature
+        return func.coalesce(cls.countersigned_agreement_returned_at, cls.signed_agreement_returned_at)
 
     @hybrid_property
     def status(self):
