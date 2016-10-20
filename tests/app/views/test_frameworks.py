@@ -583,7 +583,288 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             assert len(data['supplierFrameworks']) == 2
 
             times = [parse_time(item['agreementReturnedAt']) for item in data['supplierFrameworks']]
-            assert times[0] > times[1]
+            assert times[0] < times[1]
+
+    def test_list_suppliers_with_agreements_not_returned(self):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-7/suppliers?agreement_returned=false')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 3
+
+            for sf in data['supplierFrameworks']:
+                assert sf['agreementReturnedAt'] is None
+
+
+class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
+    def setup(self):
+        """Sets up supplier frameworks as follows:
+
+        Suppliers with IDs 0-9 have a G-Cloud 8 SupplierFramework record ("have registered interest")
+        Supplier 0 has returned a G-Cloud 7 agreement but not G-Cloud 8
+        Suppliers 1 and 2 have drafts of G-Cloud 8 agreements
+        Suppliers 3, 4 and 5 have returned their G-Cloud 8 agreements
+        Supplier 4's agreement has been put on hold
+        Supplier 6's has been approved for countersignature but doesn't have a file yet
+        Suppliers 7, 8 and 9 have countersigned agreements
+
+        """
+        super(TestGetFrameworkSuppliersByFrameworkAgreementStatus, self).setup()
+
+        self.setup_dummy_suppliers(10)
+        self.setup_dummy_user(id=123, role='supplier')
+
+        with self.app.app_context():
+            db.session.execute("UPDATE frameworks SET status='open' WHERE slug='g-cloud-7'")
+            db.session.execute("UPDATE frameworks SET status='open' WHERE slug='g-cloud-8'")
+            db.session.commit()
+
+            # Supplier zero is on G-Cloud 7
+            response = self.client.put(
+                '/suppliers/0/frameworks/g-cloud-7',
+                data=json.dumps({
+                    'updated_by': 'example'
+                }),
+                content_type='application/json')
+            assert response.status_code == 201, response.get_data(as_text=True)
+
+            response = self.client.post(
+                '/suppliers/0/frameworks/g-cloud-7',
+                data=json.dumps({
+                    'updated_by': 'example',
+                    'frameworkInterest': {'onFramework': True}
+                }),
+                content_type='application/json')
+            assert response.status_code == 200, response.get_data(as_text=True)
+
+            response = self.client.post(
+                '/agreements',
+                data=json.dumps({
+                    'updated_by': 'example',
+                    'agreement': {'supplierId': 0, 'frameworkSlug': 'g-cloud-7'},
+                }),
+                content_type='application/json')
+            data = json.loads(response.get_data())
+            agreement_id = data['agreement']['id']
+
+            response = self.client.post(
+                '/agreements/{}'.format(agreement_id),
+                data=json.dumps({
+                    'updated_by': 'example',
+                    'agreement': {'signedAgreementPath': '/path-to-g-cloud-7.pdf'},
+                }),
+                content_type='application/json')
+            assert response.status_code == 200, response.get_data(as_text=True)
+
+            response = self.client.post(
+                '/agreements/{}/sign'.format(agreement_id),
+                data=json.dumps({
+                    'updated_by': 'example',
+                    'agreement': {},
+                }),
+                content_type='application/json')
+            assert response.status_code == 200, response.get_data(as_text=True)
+
+            # Everyone is on G-Cloud 8
+            for supplier_id in range(10):
+                response = self.client.put(
+                    '/suppliers/{}/frameworks/g-cloud-8'.format(supplier_id),
+                    data=json.dumps({
+                        'updated_by': 'example'
+                    }),
+                    content_type='application/json')
+                assert response.status_code == 201, response.get_data(as_text=True)
+
+                response = self.client.post(
+                    '/suppliers/{}/frameworks/g-cloud-8'.format(supplier_id),
+                    data=json.dumps({
+                        'updated_by': 'example',
+                        'frameworkInterest': {'onFramework': True}
+                    }),
+                    content_type='application/json')
+                assert response.status_code == 200, response.get_data(as_text=True)
+
+            # Suppliers 1-9 have started to return a G-Cloud 8 agreement (created a draft)
+            agreement_ids = {}
+            for supplier_id in range(1, 10):
+                response = self.client.post(
+                    '/agreements',
+                    data=json.dumps({
+                        'updated_by': 'example',
+                        'agreement': {'supplierId': supplier_id, 'frameworkSlug': 'g-cloud-8'},
+                    }),
+                    content_type='application/json'
+                )
+                data = json.loads(response.get_data())
+                agreement_ids[supplier_id] = data['agreement']['id']
+
+            for supplier_id in range(1, 10):
+                response = self.client.post(
+                    '/agreements/{}'.format(agreement_ids[supplier_id]),
+                    data=json.dumps({
+                        'updated_by': 'example',
+                        'agreement': {
+                            'signedAgreementPath': 'path/to/agreement/{}.pdf'.format(supplier_id),
+                            'signedAgreementDetails': {
+                                'signerName': 'name_{}'.format(supplier_id),
+                                'signerRole': 'job_{}'.format(supplier_id)
+                            },
+                        }
+                    }),
+                    content_type='application/json'
+                )
+                assert response.status_code == 200, response.get_data(as_text=True)
+
+            # Suppliers 3-9 have returned their G-Cloud 8 agreement
+            for supplier_id in range(3, 10):
+                response = self.client.post(
+                    '/agreements/{}/sign'.format(agreement_ids[supplier_id]),
+                    data=json.dumps({
+                        'updated_by': 'example',
+                        'agreement': {'signedAgreementDetails': {
+                            'uploaderUserId': 123,
+                        },
+                        }
+                    }),
+                    content_type='application/json'
+                )
+                assert response.status_code == 200, response.get_data(as_text=True)
+
+            # Supplier 4's agreement has been put on hold
+            response = self.client.post(
+                '/agreements/{}/on-hold'.format(agreement_ids[4]),
+                data=json.dumps({'updated_by': 'example'}),
+                content_type='application/json'
+            )
+            assert response.status_code == 200, response.get_data(as_text=True)
+
+            # Suppliers 6-9 have been approved for countersignature
+            for supplier_id in range(6, 10):
+                response = self.client.post(
+                    '/agreements/{}/approve'.format(agreement_ids[supplier_id]),
+                    data=json.dumps({
+                        'updated_by': 'example',
+                        "agreement": {'userId': 123},
+                    }),
+                    content_type='application/json'
+                )
+                assert response.status_code == 200, response.get_data(as_text=True)
+
+            # Suppliers 7, 8 and 9 have countersigned agreements
+            for supplier_id in range(7, 10):
+                response = self.client.post(
+                    '/agreements/{}'.format(agreement_ids[supplier_id]),
+                    data=json.dumps({
+                        'updated_by': 'example',
+                        'agreement': {
+                            'countersignedAgreementPath': 'path/to/countersigned{}.pdf'.format(supplier_id)
+                        }
+                    }),
+                    content_type='application/json'
+                )
+                assert response.status_code == 200, response.get_data(as_text=True)
+
+    def assert_supplier_ids(self, data, expected_ids):
+        returned_ids = set(sf['supplierId'] for sf in data['supplierFrameworks'])
+        assert returned_ids == set(expected_ids)
+
+    def test_list_suppliers_related_to_a_framework(self, live_g8_framework):
+        with self.app.app_context():
+            # One G7 supplier
+            response = self.client.get('/frameworks/g-cloud-7/suppliers')
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 1
+            # Ten G8 suppliers
+            response = self.client.get('/frameworks/g-cloud-8/suppliers')
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 10
+
+    def test_list_suppliers_by_status_draft(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-8/suppliers?status=draft')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 2
+            self.assert_supplier_ids(data, (1, 2))
+
+    def test_list_suppliers_by_status_signed(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-8/suppliers?status=signed')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 2
+            self.assert_supplier_ids(data, (3, 5))
+
+    def test_list_suppliers_by_status_on_hold(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-8/suppliers?status=on-hold')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 1
+            self.assert_supplier_ids(data, (4,))
+
+    def test_list_suppliers_by_status_approved(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-8/suppliers?status=approved')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 1
+            self.assert_supplier_ids(data, (6,))
+
+    def test_list_suppliers_by_status_countersigned(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-8/suppliers?status=countersigned')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 3
+            self.assert_supplier_ids(data, (7, 8, 9))
+
+    def test_list_suppliers_by_multiple_statuses_1(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-8/suppliers?status=approved,countersigned')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 4
+            self.assert_supplier_ids(data, (6, 7, 8, 9))
+
+    def test_list_suppliers_by_multiple_statuses_2(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get('/frameworks/g-cloud-8/suppliers?status=signed,approved')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 3
+            self.assert_supplier_ids(data, (3, 5, 6))
+
+    def test_list_suppliers_by_multiple_statuses_and_agreement_returned_true(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get(
+                '/frameworks/g-cloud-8/suppliers?status=approved,countersigned&agreement_returned=true'
+            )
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 4
+            self.assert_supplier_ids(data, (6, 7, 8, 9))
+
+    def test_list_suppliers_by_multiple_statuses_and_agreement_returned_false(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get(
+                '/frameworks/g-cloud-8/suppliers?status=approved,countersigned&agreement_returned=false'
+            )
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 0
 
 
 class TestGetFrameworkInterest(BaseApplicationTest):

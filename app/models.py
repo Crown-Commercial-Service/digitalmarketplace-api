@@ -342,8 +342,36 @@ class SupplierFramework(db.Model):
 
     @property
     def current_framework_agreement(self):
+        """
+        For the moment, we include drafts in the SupplierFramework to keep our interface the same whilst we refactor the
+        frontend to allow multiple framework agreements per supplier framework. This means that if a draft is created
+        after any other framework agreement then it must take precident (as the supplier frontend for the moment only
+        knows about one framework agreement (the current framework agreement) we must expose the draft so it can be
+        edited as they complete the signing flow). Note, as we have no timestamp for framework agreements being created
+        we instead have to use the highest `id`. Also note, this means that for a short while, if someone has
+        signed/countersigned a supplier framework and then starts a new draft then the supplier framework will return to
+        'draft' status and will lose knowledge of the previous signing.
+
+        After the supplier frontend has been refactored so that the signing flow deals with a framework agreement rather
+        than a suqpplier framework then we will be able to ignore drafts and not include them in the current framework
+        agreement
+        """
         if self.framework_agreements:
-            return self.framework_agreements[0]
+            if self.framework_agreements[-1].status == 'draft':
+                return self.framework_agreements[-1]
+
+            most_recently_signed_or_countersigned = self.framework_agreements[-1]
+            most_recent_time = most_recently_signed_or_countersigned.most_recent_signature_time
+
+            for fa in self.framework_agreements:
+                if fa.status == "draft":
+                    continue
+
+                if fa.most_recent_signature_time > most_recent_time:
+                    most_recently_signed_or_countersigned = fa
+                    most_recent_time = fa.most_recent_signature_time
+
+            return most_recently_signed_or_countersigned
 
     @validates('declaration')
     def validates_declaration(self, key, value):
@@ -507,7 +535,7 @@ class FrameworkAgreement(db.Model):
     supplier_framework = db.relationship(
         SupplierFramework,
         lazy="joined",
-        backref=backref('framework_agreements', lazy="joined")
+        backref=backref('framework_agreements', lazy="joined", order_by="FrameworkAgreement.id")
     )
 
     def update_signed_agreement_details_from_json(self, data):
@@ -530,6 +558,14 @@ class FrameworkAgreement(db.Model):
 
         return data
 
+    @property
+    def most_recent_signature_time(self):
+        # Time of most recent signing or countersignature
+        if self.countersigned_agreement_returned_at:
+            return self.countersigned_agreement_returned_at
+        else:
+            return self.signed_agreement_returned_at
+
     @hybrid_property
     def status(self):
         if self.countersigned_agreement_path:
@@ -537,7 +573,7 @@ class FrameworkAgreement(db.Model):
         elif self.countersigned_agreement_returned_at:
             return 'approved'
         elif self.signed_agreement_put_on_hold_at:
-            return 'on hold'
+            return 'on-hold'
         elif self.signed_agreement_returned_at:
             return 'signed'
         else:

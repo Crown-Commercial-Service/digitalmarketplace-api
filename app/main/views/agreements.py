@@ -17,8 +17,6 @@ from ...utils import (
 from ...supplier_utils import validate_agreement_details_data
 
 
-# This route not currently used and not yet supported by API client
-# It will be brought into use following migration of franmework agreement data
 @main.route('/agreements', methods=['POST'])
 def create_framework_agreement():
     json_payload = get_json_from_request()
@@ -40,22 +38,6 @@ def create_framework_agreement():
             )
         )
 
-    # We enforce only one framework agreement per SupplierFramework for the moment
-    # This behaviour will be refactored out later to allow for multiple
-    existing_framework_agreement = FrameworkAgreement.query.filter(
-        FrameworkAgreement.supplier_id == update_json['supplierId']
-    ).filter(
-        Framework.slug == update_json['frameworkSlug']
-    ).first()
-
-    if existing_framework_agreement:
-        abort(
-            400,
-            "supplier_id '{}' already has a framework agreement for framework '{}'".format(
-                update_json['supplierId'], update_json['frameworkSlug']
-            )
-        )
-
     framework = Framework.query.filter(
         Framework.slug == update_json['frameworkSlug']
     ).first_or_404()
@@ -64,7 +46,6 @@ def create_framework_agreement():
         supplier_id=update_json['supplierId'],
         framework_id=framework.id
     )
-
     try:
         db.session.add(framework_agreement)
         db.session.flush()
@@ -88,7 +69,6 @@ def create_framework_agreement():
     return jsonify(agreement=framework_agreement.serialize()), 201
 
 
-# TODO Do we really need this route?
 @main.route('/agreements/<int:agreement_id>', methods=['GET'])
 def get_framework_agreement(agreement_id):
     framework_agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first_or_404()
@@ -232,7 +212,7 @@ def put_signed_framework_agreement_on_hold(agreement_id):
         data={
             'supplierId': framework_agreement.supplier_id,
             'frameworkSlug': framework_agreement.supplier_framework.framework.slug,
-            'status': 'on hold'
+            'status': 'on-hold'
         },
         db_object=framework_agreement
     )
@@ -261,7 +241,7 @@ def approve_for_countersignature(agreement_id):
 
     updater_json = validate_and_return_updater_request()
 
-    if framework_agreement.status not in ['signed', 'on hold']:
+    if framework_agreement.status not in ['signed', 'on-hold']:
         abort(400, "Framework agreement must have status 'signed' or 'on hold' to be countersigned")
 
     framework_agreement.signed_agreement_put_on_hold_at = None

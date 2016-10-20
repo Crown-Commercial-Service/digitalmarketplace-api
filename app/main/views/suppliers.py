@@ -441,10 +441,7 @@ def update_supplier_framework_details(supplier_id, framework_slug):
     if 'agreementDetails' in update_json and framework.framework_agreement_details is None:
         abort(400, "Framework '{}' does not accept 'agreementDetails'".format(framework_slug))
 
-    framework_agreement = FrameworkAgreement.query.filter(
-        FrameworkAgreement.supplier_id == supplier.supplier_id,
-        FrameworkAgreement.framework_id == framework.id
-    ).first()
+    framework_agreement = interest_record.current_framework_agreement
 
     if not framework_agreement:
         framework_agreement = FrameworkAgreement(
