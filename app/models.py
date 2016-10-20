@@ -1170,7 +1170,6 @@ class Brief(db.Model):
 
         return dates
 
-
     @property
     def hypothetical_dates_for_serialization(self):
         def as_s(x):
@@ -1187,7 +1186,6 @@ class Brief(db.Model):
         dates['closing_time'] = self.applications_closed_at
         dates['hypothetical_closing_time'] = self.hypothetical_applications_closed_at
         return {k: as_s(v) for k, v in dates.items()}
-
 
     @validates('users')
     def validates_users(self, key, user):

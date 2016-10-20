@@ -445,7 +445,7 @@ class TestBriefs(BaseApplicationTest):
                         'closing_time': None,
                         'published_date': None,
                         'questions_close': None,
-                        'hypothetical' : {
+                        'hypothetical': {
                             'answers_close': '2015-01-14T07:00:00+00:00',
                             'application_open_weeks': u'2 weeks',
                             'closing_date': '2015-01-15',
