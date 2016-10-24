@@ -1319,6 +1319,13 @@ class BriefResponse(db.Model):
 
         return data
 
+    @hybrid_property
+    def status(self):
+        if self.submitted_at:
+            return 'submitted'
+        else:
+            return 'draft'
+
     def validate(self, enforce_required=True, required_fields=None, max_day_rate=None):
         errs = get_validation_errors(
             'brief-responses-{}-{}'.format(self.brief.framework.slug, self.brief.lot.slug),
@@ -1357,6 +1364,7 @@ class BriefResponse(db.Model):
             'submittedAt': (
                 self.submitted_at and self.submitted_at.strftime(DATETIME_FORMAT)
             ),
+            'status': self.status,
             'links': {
                 'self': url_for('.get_brief_response', brief_response_id=self.id),
                 'brief': url_for('.get_brief', brief_id=self.brief_id),

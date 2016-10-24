@@ -475,6 +475,14 @@ class TestBriefResponses(BaseApplicationTest):
 
         assert brief_response.data == {'foo': 'bar', 'bar': ['foo']}
 
+    def test_submitted_status_for_brief_response_with_submitted_at(self):
+        brief_response = BriefResponse(created_at=datetime.utcnow(), submitted_at=datetime.utcnow())
+        assert brief_response.status == 'submitted'
+
+    def test_draft_status_for_brief_response_with_no_submitted_at(self):
+        brief_response = BriefResponse(created_at=datetime.utcnow())
+        assert brief_response.status == 'draft'
+
     def test_brief_response_can_be_serialized(self):
         with self.app.app_context():
             brief_response = BriefResponse(
@@ -492,6 +500,7 @@ class TestBriefResponses(BaseApplicationTest):
                     'supplierName': 'Supplier 0',
                     'createdAt': mock.ANY,
                     'submittedAt': '2016-09-28T00:00:00.000000Z',
+                    'status': 'submitted',
                     'foo': 'bar',
                     'links': {
                         'self': (('.get_brief_response',), {'brief_response_id': brief_response.id}),
@@ -516,6 +525,7 @@ class TestBriefResponses(BaseApplicationTest):
                     'supplierId': 0,
                     'supplierName': 'Supplier 0',
                     'createdAt': mock.ANY,
+                    'status': 'draft',
                     'foo': 'bar',
                     'links': {
                         'self': (('.get_brief_response',), {'brief_response_id': brief_response.id}),
