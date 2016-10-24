@@ -477,7 +477,34 @@ class TestBriefResponses(BaseApplicationTest):
 
     def test_brief_response_can_be_serialized(self):
         with self.app.app_context():
-            brief_response = BriefResponse(data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier)
+            brief_response = BriefResponse(
+                data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier, submitted_at=datetime(2016, 9, 28)
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+
+            with mock.patch('app.models.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert brief_response.serialize() == {
+                    'id': brief_response.id,
+                    'briefId': self.brief.id,
+                    'supplierId': 0,
+                    'supplierName': 'Supplier 0',
+                    'createdAt': mock.ANY,
+                    'submittedAt': '2016-09-28T00:00:00.000000Z',
+                    'foo': 'bar',
+                    'links': {
+                        'self': (('.get_brief_response',), {'brief_response_id': brief_response.id}),
+                        'brief': (('.get_brief',), {'brief_id': self.brief.id}),
+                        'supplier': (('.get_supplier',), {'supplier_id': 0}),
+                    }
+                }
+
+    def test_brief_response_can_be_serialized_with_no_submitted_at_time(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(
+                data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier
+            )
             db.session.add(brief_response)
             db.session.commit()
 

@@ -1354,6 +1354,9 @@ class BriefResponse(db.Model):
             'supplierId': self.supplier_id,
             'supplierName': self.supplier.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'submittedAt': (
+                self.submitted_at and self.submitted_at.strftime(DATETIME_FORMAT)
+            ),
             'links': {
                 'self': url_for('.get_brief_response', brief_response_id=self.id),
                 'brief': url_for('.get_brief', brief_id=self.brief_id),
@@ -1361,7 +1364,7 @@ class BriefResponse(db.Model):
             }
         })
 
-        return data
+        return purge_nulls_from_data(data)
 
 
 class BriefClarificationQuestion(db.Model):
