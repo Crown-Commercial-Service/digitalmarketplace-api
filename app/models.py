@@ -1304,6 +1304,7 @@ class BriefResponse(db.Model):
     supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.supplier_id'), nullable=False)
 
     created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
+    submitted_at = db.Column(db.DateTime, nullable=True)
 
     brief = db.relationship('Brief')
     supplier = db.relationship('Supplier', lazy='joined')
