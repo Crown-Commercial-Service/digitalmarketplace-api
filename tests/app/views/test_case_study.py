@@ -154,6 +154,24 @@ class TestUpdateCaseStudy(BaseCaseStudyTest):
         res = self.client.patch('/case-studies/1', data={'notACaseStudy': 'no'})
         assert res.status_code == 400
 
+    def test_can_delete_a_case_study(self):
+        delete = self.client.delete(
+            '/case-studies/{}'.format(self.case_study_id),
+            data=json.dumps({'update_details': {'updated_by': 'deleter'}}),
+            content_type='application/json')
+        assert delete.status_code == 200
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        audit_data = json.loads(audit_response.get_data(as_text=True))
+        assert len(audit_data['auditEvents']) == 1
+        assert audit_data['auditEvents'][0]['type'] == 'delete_casestudy'
+        assert audit_data['auditEvents'][0]['user'] == 'deleter'
+        assert audit_data['auditEvents'][0]['data']['caseStudyId'] == self.case_study_id
+
+        fetch_again = self.client.get('/case-studies/{}'.format(self.case_study_id))
+        assert fetch_again.status_code == 404
+
 
 class TestGetCaseStudy(BaseCaseStudyTest):
     def setup(self):
