@@ -441,6 +441,7 @@ class TestBriefResponses(BaseApplicationTest):
             self.brief = Brief(data={}, framework=framework, lot=lot)
             db.session.add(self.brief)
             db.session.commit()
+            self.brief_id = self.brief.id
 
             self.setup_dummy_suppliers(1)
             self.supplier = Supplier.query.filter(Supplier.supplier_id == 0).first()
@@ -482,6 +483,30 @@ class TestBriefResponses(BaseApplicationTest):
     def test_draft_status_for_brief_response_with_no_submitted_at(self):
         brief_response = BriefResponse(created_at=datetime.utcnow())
         assert brief_response.status == 'draft'
+
+    def test_query_draft_brief_response(self):
+        with self.app.app_context():
+            db.session.add(BriefResponse(brief_id=self.brief_id, supplier_id=0))
+            db.session.commit()
+
+            assert BriefResponse.query.filter(BriefResponse.status == 'draft').count() == 1
+            assert BriefResponse.query.filter(BriefResponse.status == 'submitted').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert BriefResponse.query.all()[0].status == 'draft'
+
+    def test_query_submitted_brief_response(self):
+        with self.app.app_context():
+            db.session.add(BriefResponse(
+                brief_id=self.brief_id, supplier_id=0, submitted_at=datetime.utcnow())
+            )
+            db.session.commit()
+
+            assert BriefResponse.query.filter(BriefResponse.status == 'submitted').count() == 1
+            assert BriefResponse.query.filter(BriefResponse.status == 'draft').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert BriefResponse.query.all()[0].status == 'submitted'
 
     def test_brief_response_can_be_serialized(self):
         with self.app.app_context():

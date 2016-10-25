@@ -1326,6 +1326,12 @@ class BriefResponse(db.Model):
         else:
             return 'draft'
 
+    @status.expression
+    def status(cls):
+        return sql_case([
+            (cls.submitted_at.isnot(None), 'submitted'),
+        ], else_='draft')
+
     def validate(self, enforce_required=True, required_fields=None, max_day_rate=None):
         errs = get_validation_errors(
             'brief-responses-{}-{}'.format(self.brief.framework.slug, self.brief.lot.slug),
