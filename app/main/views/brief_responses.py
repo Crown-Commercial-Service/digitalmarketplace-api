@@ -147,7 +147,7 @@ def list_brief_responses():
     brief_id = get_int_or_400(request.args, 'brief_id')
     supplier_id = get_int_or_400(request.args, 'supplier_id')
 
-    brief_responses = BriefResponse.query
+    brief_responses = BriefResponse.query.filter(BriefResponse.status == 'submitted')
     if supplier_id is not None:
         brief_responses = brief_responses.filter(BriefResponse.supplier_id == supplier_id)
 

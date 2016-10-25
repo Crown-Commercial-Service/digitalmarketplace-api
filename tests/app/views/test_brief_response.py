@@ -1,5 +1,6 @@
 import json
 import pytest
+from datetime import datetime
 
 from hypothesis import given
 from freezegun import freeze_time
@@ -53,11 +54,12 @@ class BaseBriefResponseTest(BaseApplicationTest):
             self.brief_id = brief.id
             self.specialist_brief_id = specialist_brief.id
 
-    def setup_dummy_brief_response(self, brief_id=None, supplier_id=0):
+    def setup_dummy_brief_response(self, brief_id=None, supplier_id=0, submitted_at=datetime(2016, 1, 2)):
         with self.app.app_context():
             brief_response = BriefResponse(
                 data=example_listings.brief_response_data().example(),
-                supplier_id=supplier_id, brief_id=brief_id or self.brief_id
+                supplier_id=supplier_id, brief_id=brief_id or self.brief_id,
+                submitted_at=submitted_at
             )
 
             db.session.add(brief_response)
@@ -537,3 +539,13 @@ class TestListBriefResponses(BaseBriefResponseTest):
 
         assert res.status_code == 400
         assert data['error'] == 'Invalid supplier_id: not-valid'
+
+    def test_do_not_include_drafts_in_brief_response_list(self):
+        self.setup_dummy_brief_response()
+        self.setup_dummy_brief_response(submitted_at=None)
+
+        res = self.list_brief_responses()
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 1
