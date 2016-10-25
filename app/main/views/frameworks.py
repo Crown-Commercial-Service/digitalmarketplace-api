@@ -238,6 +238,7 @@ def get_framework_suppliers(framework_slug):
                                            )
                                        ]
                 # TODO: The 'or' clause here can be deleted once drafts are excluded from current_framework_agreement
+                # TODO: Much of the logic here would be better done querying with SQL than manipulating with Python
 
         if requested_statuses:
             supplier_frameworks = [
