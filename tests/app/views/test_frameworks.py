@@ -538,69 +538,6 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
     def setup(self):
         """Sets up supplier frameworks as follows:
 
-        Suppliers with IDs 0-4 have a SupplierFramework record ("have registered interest")
-        Suppliers 3 and 4 have returned their agreements - will be saved in FrameworkAgreement, NOT SupplierFramework
-        No further details are saved in anyone's SupplierFramework record
-        """
-        super(TestGetFrameworkSuppliers, self).setup()
-
-        self.setup_dummy_suppliers(5)
-        with self.app.app_context():
-            db.session.execute("UPDATE frameworks SET status='open' WHERE id=4")
-            db.session.commit()
-            for supplier_id in range(5):
-                response = self.client.put(
-                    '/suppliers/{}/frameworks/g-cloud-7'.format(supplier_id),
-                    data=json.dumps({
-                        'updated_by': 'example'
-                    }),
-                    content_type='application/json')
-                assert response.status_code == 201, response.get_data(as_text=True)
-            for supplier_id in range(3, 5):
-                response = self.client.post(
-                    '/suppliers/{}/frameworks/g-cloud-7'.format(supplier_id),
-                    data=json.dumps({
-                        'updated_by': 'example',
-                        'frameworkInterest': {'agreementReturned': True},
-                    }),
-                    content_type='application/json')
-                assert response.status_code == 200, response.get_data(as_text=True)
-
-    def test_list_suppliers_related_to_a_framework(self):
-        with self.app.app_context():
-            response = self.client.get('/frameworks/g-cloud-7/suppliers')
-
-            assert response.status_code == 200
-            data = json.loads(response.get_data())
-            assert len(data['supplierFrameworks']) == 5
-
-    def test_list_suppliers_with_agreements_returned(self):
-        with self.app.app_context():
-            response = self.client.get('/frameworks/g-cloud-7/suppliers?agreement_returned=true')
-
-            assert response.status_code == 200
-            data = json.loads(response.get_data())
-            assert len(data['supplierFrameworks']) == 2
-
-            times = [parse_time(item['agreementReturnedAt']) for item in data['supplierFrameworks']]
-            assert times[0] < times[1]
-
-    def test_list_suppliers_with_agreements_not_returned(self):
-        with self.app.app_context():
-            response = self.client.get('/frameworks/g-cloud-7/suppliers?agreement_returned=false')
-
-            assert response.status_code == 200
-            data = json.loads(response.get_data())
-            assert len(data['supplierFrameworks']) == 3
-
-            for sf in data['supplierFrameworks']:
-                assert sf['agreementReturnedAt'] is None
-
-
-class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
-    def setup(self):
-        """Sets up supplier frameworks as follows:
-
         Suppliers with IDs 0-9 have a G-Cloud 8 SupplierFramework record ("have registered interest")
         Supplier 0 has returned a G-Cloud 7 agreement but not G-Cloud 8
         Suppliers 1 and 2 have drafts of G-Cloud 8 agreements
@@ -610,7 +547,7 @@ class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
         Suppliers 7, 8 and 9 have countersigned agreements
 
         """
-        super(TestGetFrameworkSuppliersByFrameworkAgreementStatus, self).setup()
+        super(TestGetFrameworkSuppliers, self).setup()
 
         self.setup_dummy_suppliers(10)
         self.setup_dummy_user(id=123, role='supplier')
@@ -765,7 +702,7 @@ class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
                 )
                 assert response.status_code == 200, response.get_data(as_text=True)
 
-    def assert_supplier_ids(self, data, expected_ids):
+    def _assert_supplier_ids(self, data, expected_ids):
         returned_ids = set(sf['supplierId'] for sf in data['supplierFrameworks'])
         assert returned_ids == set(expected_ids)
 
@@ -782,6 +719,33 @@ class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
             data = json.loads(response.get_data())
             assert len(data['supplierFrameworks']) == 10
 
+    def test_list_suppliers_by_agreement_returned_true(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get(
+                '/frameworks/g-cloud-8/suppliers?agreement_returned=true'
+            )
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 7
+            self._assert_supplier_ids(data, (3, 4, 5, 6, 7, 8, 9))
+
+            times = [parse_time(item['agreementReturnedAt']) for item in data['supplierFrameworks']]
+            assert times[0] < times[1] < times[2] < times[3] < times[4] < times[5] < times[6]
+
+    def test_list_suppliers_by_agreement_returned_false(self, live_g8_framework):
+        with self.app.app_context():
+            response = self.client.get(
+                '/frameworks/g-cloud-8/suppliers?agreement_returned=false'
+            )
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert len(data['supplierFrameworks']) == 3
+            self._assert_supplier_ids(data, (0, 1, 2))
+            for sf in data['supplierFrameworks']:
+                assert sf['agreementReturnedAt'] is None
+
     def test_list_suppliers_by_status_draft(self, live_g8_framework):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-8/suppliers?status=draft')
@@ -789,7 +753,7 @@ class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
             assert response.status_code == 200
             data = json.loads(response.get_data())
             assert len(data['supplierFrameworks']) == 2
-            self.assert_supplier_ids(data, (1, 2))
+            self._assert_supplier_ids(data, (1, 2))
 
     def test_list_suppliers_by_status_signed(self, live_g8_framework):
         with self.app.app_context():
@@ -798,7 +762,7 @@ class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
             assert response.status_code == 200
             data = json.loads(response.get_data())
             assert len(data['supplierFrameworks']) == 2
-            self.assert_supplier_ids(data, (3, 5))
+            self._assert_supplier_ids(data, (3, 5))
 
     def test_list_suppliers_by_status_on_hold(self, live_g8_framework):
         with self.app.app_context():
@@ -807,7 +771,7 @@ class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
             assert response.status_code == 200
             data = json.loads(response.get_data())
             assert len(data['supplierFrameworks']) == 1
-            self.assert_supplier_ids(data, (4,))
+            self._assert_supplier_ids(data, (4,))
 
     def test_list_suppliers_by_status_approved(self, live_g8_framework):
         with self.app.app_context():
@@ -816,7 +780,7 @@ class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
             assert response.status_code == 200
             data = json.loads(response.get_data())
             assert len(data['supplierFrameworks']) == 1
-            self.assert_supplier_ids(data, (6,))
+            self._assert_supplier_ids(data, (6,))
 
     def test_list_suppliers_by_status_countersigned(self, live_g8_framework):
         with self.app.app_context():
@@ -825,7 +789,7 @@ class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
             assert response.status_code == 200
             data = json.loads(response.get_data())
             assert len(data['supplierFrameworks']) == 3
-            self.assert_supplier_ids(data, (7, 8, 9))
+            self._assert_supplier_ids(data, (7, 8, 9))
 
     def test_list_suppliers_by_multiple_statuses_1(self, live_g8_framework):
         with self.app.app_context():
@@ -834,7 +798,7 @@ class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
             assert response.status_code == 200
             data = json.loads(response.get_data())
             assert len(data['supplierFrameworks']) == 4
-            self.assert_supplier_ids(data, (6, 7, 8, 9))
+            self._assert_supplier_ids(data, (6, 7, 8, 9))
 
     def test_list_suppliers_by_multiple_statuses_2(self, live_g8_framework):
         with self.app.app_context():
@@ -843,7 +807,7 @@ class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
             assert response.status_code == 200
             data = json.loads(response.get_data())
             assert len(data['supplierFrameworks']) == 3
-            self.assert_supplier_ids(data, (3, 5, 6))
+            self._assert_supplier_ids(data, (3, 5, 6))
 
     def test_list_suppliers_by_multiple_statuses_and_agreement_returned_true(self, live_g8_framework):
         with self.app.app_context():
@@ -854,7 +818,7 @@ class TestGetFrameworkSuppliersByFrameworkAgreementStatus(BaseApplicationTest):
             assert response.status_code == 200
             data = json.loads(response.get_data())
             assert len(data['supplierFrameworks']) == 4
-            self.assert_supplier_ids(data, (6, 7, 8, 9))
+            self._assert_supplier_ids(data, (6, 7, 8, 9))
 
     def test_list_suppliers_by_multiple_statuses_and_agreement_returned_false(self, live_g8_framework):
         with self.app.app_context():
