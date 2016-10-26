@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
 
@@ -80,6 +82,54 @@ def create_brief_response():
     db.session.commit()
 
     return jsonify(briefResponses=brief_response.serialize()), 201
+
+
+@main.route('/brief-responses/<int:brief_response_id>/submit', methods=['POST'])
+def submit_brief_response(brief_response_id):
+    json_payload = get_json_from_request()
+    updater_json = validate_and_return_updater_request()
+
+    brief_response = BriefResponse.query.filter(
+        BriefResponse.id == brief_response_id
+    ).first_or_404()
+
+    brief = brief_response.brief
+    supplier = brief_response.supplier
+    brief_service = get_supplier_service_eligible_for_brief(supplier, brief)
+
+    if brief_response.status != 'draft':
+        abort(400, "Brief response must be a draft")
+
+    if brief.framework.status != 'live':
+        abort(400, "Brief framework must be live")
+
+    brief_role = brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
+    service_max_day_rate = brief_service.data[brief_role + "PriceMax"] if brief_role else None
+
+    brief_response.validate(max_day_rate=service_max_day_rate)
+
+    brief_response.submitted_at = datetime.utcnow()
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.submit_brief_response,
+        user=updater_json['updated_by'],
+        data={
+            'briefResponseId': brief_response.id
+        },
+        db_object=brief_response,
+    )
+
+    db.session.add(brief_response)
+    db.session.add(audit)
+
+    try:
+        db.session.flush()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
+    db.session.commit()
+
+    return jsonify(briefResponses=brief_response.serialize()), 200
 
 
 @main.route('/brief-responses/<int:brief_response_id>', methods=['GET'])
