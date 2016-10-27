@@ -15,5 +15,6 @@ def add_cache_control(response):
 
 # These modules depend on main already being set up.  PEP8 rule disabled.
 # FIXME: refactor out circular import
-from .views import suppliers, services, users, drafts, audits, frameworks, briefs, brief_responses, work_orders, case_studies  # noqa
+from .views import suppliers, services, users, drafts, audits, frameworks, briefs, \
+    brief_responses, work_orders, case_studies, metrics  # noqa
 from . import errors  # noqa
