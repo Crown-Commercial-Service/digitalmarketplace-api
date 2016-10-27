@@ -1506,255 +1506,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
         assert data['frameworkInterest']['onFramework'] is False
 
-    def test_can_set_agreement_returned_without_agreement_details_for_framework_with_no_agreement_version(
-            self, supplier_framework
-    ):
-        with freeze_time('2012-12-12'):
-            response = self.supplier_framework_interest(
-                supplier_framework,
-                update={'agreementReturned': True}
-            )
-            assert response.status_code == 200
-            data = json.loads(response.get_data())
-            assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
-            assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
-            assert data['frameworkInterest']['agreementReturned'] is True
-            assert data['frameworkInterest']['agreementReturnedAt'] == "2012-12-12T00:00:00.000000Z"
-            assert data['frameworkInterest']['countersigned'] is False
-            assert data['frameworkInterest']['countersignedAt'] is None
-            assert data['frameworkInterest']['agreementDetails'] is None
-
-    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_can_set_agreement_returned_with_agreement_details_for_framework_with_agreement_version(
-            self, user_role_supplier, supplier_framework
-    ):
-        with freeze_time('2012-12-12'):
-            response = self.supplier_framework_interest(
-                supplier_framework,
-                update={
-                    'agreementReturned': True,
-                    'agreementDetails': {
-                        'signerName': 'name',
-                        'signerRole': 'role',
-                        'uploaderUserId': 1
-                    }
-                }
-            )
-            assert response.status_code == 200
-            data = json.loads(response.get_data())
-            assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
-            assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
-            assert data['frameworkInterest']['agreementReturned'] is True
-            assert data['frameworkInterest']['agreementReturnedAt'] == "2012-12-12T00:00:00.000000Z"
-            assert data['frameworkInterest']['countersigned'] is False
-            assert data['frameworkInterest']['countersignedAt'] is None
-            assert data['frameworkInterest']['agreementDetails'] == {
-                'signerName': 'name',
-                'signerRole': 'role',
-                'uploaderUserEmail': 'test+1@digital.gov.uk',
-                'uploaderUserId': 1,
-                'uploaderUserName': 'my name',
-                'frameworkAgreementVersion': 'v1.0'
-            }
-
-    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_can_not_set_agreement_returned_without_agreement_details_for_framework_with_agreement_version(
-            self, supplier_framework
-    ):
-        with freeze_time('2012-12-12'):
-            response = self.supplier_framework_interest(
-                supplier_framework,
-                update={'agreementReturned': True}
-            )
-            assert response.status_code == 400
-            data = json.loads(response.get_data())
-            assert data['error'] == {
-                'uploaderUserId': 'answer_required',
-                'signerRole': 'answer_required',
-                'signerName': 'answer_required'
-            }
-
-    def test_agreement_returned_at_timestamp_cannot_be_set(self, supplier_framework):
-        with freeze_time('2012-12-12'):
-            response = self.supplier_framework_interest(
-                supplier_framework,
-                update={'agreementReturned': True, 'agreementReturnedAt': '2013-13-13T00:00:00.000000Z'}
-            )
-            assert response.status_code == 200
-            data = json.loads(response.get_data())
-            assert data['frameworkInterest']['agreementReturnedAt'] == '2012-12-12T00:00:00.000000Z'
-
-    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_agreement_returned_at_and_agreement_details_are_unset_when_agreement_returned_is_false(
-            self, user_role_supplier, supplier_framework
-    ):
-        response = self.supplier_framework_interest(
-            supplier_framework,
-            update={
-                'agreementReturned': True,
-                'agreementDetails': {
-                    'signerName': 'name',
-                    'signerRole': 'role',
-                    'uploaderUserId': 1
-                }
-            })
-        data = json.loads(response.get_data())
-        assert response.status_code == 200
-        assert data['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == "v1.0"
-
-        response2 = self.supplier_framework_interest(
-            supplier_framework, update={'agreementReturned': False}
-        )
-
-        assert response2.status_code == 200
-        data2 = json.loads(response2.get_data())
-        assert data2['frameworkInterest']['agreementReturned'] is False
-        assert data2['frameworkInterest']['agreementReturnedAt'] is None
-        assert data2['frameworkInterest']['agreementDetails'] is None
-
-    def test_can_not_set_agreement_details_on_frameworks_without_framework_agreement_version(self, supplier_framework):
-        agreement_details_payload = {
-            "signerName": "name",
-            "signerRole": "role",
-            "uploaderUserId": 1,
-        }
-        response = self.supplier_framework_interest(
-            supplier_framework, update={'agreementDetails': agreement_details_payload}
-        )
-
-        assert response.status_code == 400
-        data = json.loads(response.get_data())
-        strings_we_expect_in_the_error_message = [
-            'Framework', supplier_framework['frameworkSlug'], 'does not accept',  'agreementDetails']
-        for error_string in strings_we_expect_in_the_error_message:
-            assert error_string in data['error']
-
-    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_can_not_set_agreement_details_with_nonexistent_user_id(self, supplier_framework):
-        agreement_details_payload = {
-            "signerName": "name",
-            "signerRole": "role",
-            "uploaderUserId": 999
-        }
-        response = self.supplier_framework_interest(
-            supplier_framework, update={'agreementDetails': agreement_details_payload}
-        )
-
-        data = json.loads(response.get_data())
-        assert response.status_code == 400
-        strings_we_expect_in_the_error_message = [
-            'No user found with id', '999']
-        for error_string in strings_we_expect_in_the_error_message:
-            assert error_string in data['error']
-
-    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_schema_validation_fails_if_unknown_fields_present_in_agreement_details(self, supplier_framework):
-        agreement_details_payload = {
-            "signerName": "Normal Person",
-            "disallowedKey": "value",
-        }
-        response = self.supplier_framework_interest(
-            supplier_framework, update={'agreementDetails': agreement_details_payload}
-        )
-
-        assert response.status_code == 400
-        data = json.loads(response.get_data())
-        # split assertions into keyphrases due to nested unicode string in python 2
-        strings_we_expect_in_the_error_message = [
-            'Additional properties are not allowed', 'disallowedKey', 'was unexpected']
-        for error_string in strings_we_expect_in_the_error_message:
-            assert error_string in data['error']['_form'][0]
-
-    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_schema_validation_fails_if_empty_object_sent_as_agreement_details(self, supplier_framework):
-        response = self.supplier_framework_interest(
-            supplier_framework, update={'agreementDetails': {}}
-        )
-
-        assert response.status_code == 400
-        data = json.loads(response.get_data())
-        error_message = '{} does not have enough properties'
-        assert error_message in data['error']['_form'][0]
-
-    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_schema_validation_fails_if_empty_strings_sent_as_agreement_details(self, supplier_framework):
-        agreement_details_payload = {
-            "signerName": "",
-            "signerRole": "",
-        }
-        response = self.supplier_framework_interest(
-            supplier_framework, update={'agreementDetails': agreement_details_payload}
-        )
-
-        assert response.status_code == 400
-        data = json.loads(response.get_data())
-        expected_error_dict = {'signerName': 'answer_required', 'signerRole': 'answer_required'}
-        assert expected_error_dict == data['error']
-
-    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_cannot_save_if_required_signer_field_is_missing_from_not_yet_set_agreement_details(
-            self, supplier_framework
-    ):
-        # missing signerRole
-        agreement_details_payload = {
-            "signerName": "name",
-        }
-        response = self.supplier_framework_interest(
-            supplier_framework, update={'agreementDetails': agreement_details_payload}
-        )
-
-        assert response.status_code == 400
-        data = json.loads(response.get_data())
-        expected_error_dict = {'signerRole': 'answer_required'}
-        assert expected_error_dict == data['error']
-
-    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_cannot_return_agreement_if_signer_details_fields_are_missing_from_agreement_details(
-            self, supplier_framework
-    ):
-        # missing signerName and signerRole
-        agreement_details_payload = {
-            "uploaderUserId": 1,
-        }
-        response = self.supplier_framework_interest(
-            supplier_framework,
-            update={
-                'agreementReturned': True,
-                'agreementDetails': agreement_details_payload
-            }
-        )
-
-        assert response.status_code == 400
-        data = json.loads(response.get_data())
-        expected_error_dict = {'signerName': 'answer_required', 'signerRole': 'answer_required'}
-        assert expected_error_dict == data['error']
-
-    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_can_manually_override_framework_agreement_version_for_returned_framework_agreement(
-            self, user_role_supplier, supplier_framework
-    ):
-        response = self.supplier_framework_interest(
-            supplier_framework,
-            update={
-                'agreementReturned': True,
-                'agreementDetails': {
-                    'signerName': 'name',
-                    'signerRole': 'role',
-                    'uploaderUserId': 1
-                }
-            }
-        )
-        assert response.status_code == 200
-        data = json.loads(response.get_data())
-        assert data['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == 'v1.0'
-
-        response2 = self.supplier_framework_interest(
-            supplier_framework, update={'agreementDetails': {'frameworkAgreementVersion': 'v2.0'}}
-        )
-        assert response2.status_code == 200
-        data2 = json.loads(response2.get_data())
-        assert data2['frameworkInterest']['agreementDetails']['frameworkAgreementVersion'] == 'v2.0'
-
     def test_changing_on_framework_from_failed_to_passed(self, supplier_framework):
         response = self.supplier_framework_interest(
             supplier_framework,
@@ -1796,13 +1547,12 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
     def test_changing_on_framework_to_passed_creates_audit_event(self, supplier_framework):
         self.supplier_framework_interest(
             supplier_framework,
-            update={'onFramework': True, 'agreementReturned': True}
+            update={'onFramework': True}
         )
         with self.app.app_context():
             supplier = Supplier.query.filter(
                 Supplier.supplier_id == supplier_framework['supplierId']
             ).first()
-
             audit = AuditEvent.query.filter(
                 AuditEvent.object == supplier,
                 AuditEvent.type == "supplier_update"
@@ -1812,7 +1562,15 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             assert audit.data['supplierId'] == supplier_framework['supplierId']
             assert audit.data['frameworkSlug'] == supplier_framework['frameworkSlug']
             assert audit.data['update']['onFramework'] is True
-            assert audit.data['update']['agreementReturned'] is True
+
+    def test_can_only_update_on_framework_with_this_route(self, supplier_framework):
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={'onFramework': True, 'agreementReturned': True}
+        )
+        assert response.status_code == 400
+        error_message = json.loads(response.get_data(as_text=True))['error']
+        assert error_message == "Invalid JSON must only have ['onFramework'] keys"
 
 
 class TestSupplierFrameworkVariation(BaseApplicationTest):
