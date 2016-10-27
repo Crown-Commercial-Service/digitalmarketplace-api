@@ -91,12 +91,11 @@ def update_framework_agreement(agreement_id):
         optional_keys=['signedAgreementDetails', 'signedAgreementPath', 'countersignedAgreementPath']
     )
 
-    # TODO Behaviour to be introduced after next step of refactoring
-    # if (
-    #     framework_agreement.signed_agreement_returned_at
-    #     and ('signedAgreementDetails' in update_json or 'signedAgreementPath' in update_json)
-    # ):
-    #     abort(400, "Can not update signedAgreementDetails or signedAgreementPath if agreement has been signed")
+    if (
+        framework_agreement.signed_agreement_returned_at
+        and ('signedAgreementDetails' in update_json or 'signedAgreementPath' in update_json)
+    ):
+        abort(400, "Can not update signedAgreementDetails or signedAgreementPath if agreement has been signed")
 
     if ('countersignedAgreementPath' in update_json and not framework_agreement.countersigned_agreement_returned_at):
         abort(400, "Can not update countersignedAgreementPath if agreement has not been approved for countersigning")

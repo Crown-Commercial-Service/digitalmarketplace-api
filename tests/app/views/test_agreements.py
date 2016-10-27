@@ -433,18 +433,17 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
                 }
             }
 
-    # TODO Behaviour to be introduced after next step of refactoring
-    # @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    # def test_400_cannot_update_signed_agreement(self, supplier_framework):
-    #     agreement_id = self.create_agreement(supplier_framework, signed_agreement_returned_at=datetime.utcnow())
-    #     res = self.post_agreement_update(agreement_id, {
-    #         'signedAgreementPath': '/example.pdf'
-    #     })
+    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
+    def test_400_cannot_update_signed_agreement(self, supplier_framework):
+        agreement_id = self.create_agreement(supplier_framework, signed_agreement_returned_at=datetime.utcnow())
+        res = self.post_agreement_update(agreement_id, {
+            'signedAgreementPath': '/example.pdf'
+        })
 
-    #     assert res.status_code == 400
-    #     assert json.loads(res.get_data(as_text=True)) == {
-    #         'error': 'Can not update signedAgreementDetails or signedAgreementPath if agreement has been signed'
-    #     }
+        assert res.status_code == 400
+        assert json.loads(res.get_data(as_text=True)) == {
+            'error': 'Can not update signedAgreementDetails or signedAgreementPath if agreement has been signed'
+        }
 
     @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
     def test_400_if_some_random_key_in_update_json(self, supplier_framework):
