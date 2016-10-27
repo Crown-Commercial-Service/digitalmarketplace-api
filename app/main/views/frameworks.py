@@ -232,12 +232,8 @@ def get_framework_suppliers(framework_slug):
             if convert_to_boolean(agreement_returned):
                 requested_statuses = requested_statuses or ('signed', 'on-hold', 'approved', 'countersigned')
             else:
-                supplier_frameworks = [sf for sf in supplier_frameworks if sf.current_framework_agreement is None
-                                       or (sf.current_framework_agreement
-                                           and sf.current_framework_agreement.status == 'draft'
-                                           )
-                                       ]
-                # TODO: The 'or' clause here can be deleted once drafts are excluded from current_framework_agreement
+                supplier_frameworks = [sf for sf in supplier_frameworks if sf.current_framework_agreement is None]
+
                 # TODO: Much of the logic here would be better done querying with SQL than manipulating with Python
 
         if requested_statuses:

@@ -1301,7 +1301,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
         assert data['frameworkInterest']['agreementDetails'] is None
         assert data['frameworkInterest']['agreementStatus'] is None
 
-    def test_get_supplier_framework_returns_framework_agreement(self, supplier_framework):
+    def test_get_supplier_framework_does_not_return_draft_framework_agreement(self, supplier_framework):
         with self.app.app_context():
             supplier_framework_object = SupplierFramework.find_by_supplier_and_framework(
                 supplier_framework['supplierId'], supplier_framework['frameworkSlug']
@@ -1334,20 +1334,16 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                 'frameworkSlug': supplier_framework['frameworkSlug'],
                 'declaration': {'an_answer': 'Yes it is'},
                 'onFramework': True,
-                'agreementId': framework_agreement.id,
+                'agreementId': None,
                 'agreementReturned': False,
                 'agreementReturnedAt': None,
-                'agreementDetails': {
-                    'signerName': 'thing 2',
-                    'signerRole': 'thing 2',
-                    'uploaderUserId': 30
-                },
+                'agreementDetails': None,
                 'agreementPath': None,
                 'countersigned': False,
                 'countersignedAt': None,
                 'countersignedDetails': None,
                 'countersignedPath': None,
-                'agreementStatus': 'draft',
+                'agreementStatus': None,
                 'agreedVariations': {}
             }
 
@@ -1615,44 +1611,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data2['frameworkInterest']['agreementReturned'] is False
         assert data2['frameworkInterest']['agreementReturnedAt'] is None
         assert data2['frameworkInterest']['agreementDetails'] is None
-
-    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_setting_signer_details_and_then_returning_agreement(self, user_role_supplier, supplier_framework):
-        agreement_details_payload = {
-            "signerName": "name",
-            "signerRole": "role",
-        }
-        response = self.supplier_framework_interest(
-            supplier_framework, update={'agreementDetails': agreement_details_payload}
-        )
-
-        assert response.status_code == 200
-        data = json.loads(response.get_data())
-        assert data['frameworkInterest']['agreementDetails'] == agreement_details_payload
-
-        # while we're at it let's test the agreementDetails partial updating behaviour
-        agreement_details_update_payload = {
-            "uploaderUserId": 1,
-        }
-        response2 = self.supplier_framework_interest(
-            supplier_framework,
-            update={
-                'agreementReturned': True,
-                'agreementDetails': agreement_details_update_payload
-            }
-        )
-
-        agreement_details_payload.update(agreement_details_update_payload)
-        assert response2.status_code == 200
-        data2 = json.loads(response2.get_data())
-        assert data2['frameworkInterest']['agreementDetails'] == {
-            "signerName": "name",
-            "signerRole": "role",
-            "uploaderUserId": 1,
-            "uploaderUserName": "my name",
-            "uploaderUserEmail": "test+1@digital.gov.uk",
-            "frameworkAgreementVersion": "v1.0",
-        }
 
     def test_can_not_set_agreement_details_on_frameworks_without_framework_agreement_version(self, supplier_framework):
         agreement_details_payload = {
