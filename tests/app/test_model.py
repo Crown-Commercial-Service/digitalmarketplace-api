@@ -441,6 +441,7 @@ class TestBriefResponses(BaseApplicationTest):
             self.brief = Brief(data={}, framework=framework, lot=lot)
             db.session.add(self.brief)
             db.session.commit()
+            self.brief_id = self.brief.id
 
             self.setup_dummy_suppliers(1)
             self.supplier = Supplier.query.filter(Supplier.supplier_id == 0).first()
@@ -475,9 +476,43 @@ class TestBriefResponses(BaseApplicationTest):
 
         assert brief_response.data == {'foo': 'bar', 'bar': ['foo']}
 
+    def test_submitted_status_for_brief_response_with_submitted_at(self):
+        brief_response = BriefResponse(created_at=datetime.utcnow(), submitted_at=datetime.utcnow())
+        assert brief_response.status == 'submitted'
+
+    def test_draft_status_for_brief_response_with_no_submitted_at(self):
+        brief_response = BriefResponse(created_at=datetime.utcnow())
+        assert brief_response.status == 'draft'
+
+    def test_query_draft_brief_response(self):
+        with self.app.app_context():
+            db.session.add(BriefResponse(brief_id=self.brief_id, supplier_id=0))
+            db.session.commit()
+
+            assert BriefResponse.query.filter(BriefResponse.status == 'draft').count() == 1
+            assert BriefResponse.query.filter(BriefResponse.status == 'submitted').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert BriefResponse.query.all()[0].status == 'draft'
+
+    def test_query_submitted_brief_response(self):
+        with self.app.app_context():
+            db.session.add(BriefResponse(
+                brief_id=self.brief_id, supplier_id=0, submitted_at=datetime.utcnow())
+            )
+            db.session.commit()
+
+            assert BriefResponse.query.filter(BriefResponse.status == 'submitted').count() == 1
+            assert BriefResponse.query.filter(BriefResponse.status == 'draft').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert BriefResponse.query.all()[0].status == 'submitted'
+
     def test_brief_response_can_be_serialized(self):
         with self.app.app_context():
-            brief_response = BriefResponse(data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier)
+            brief_response = BriefResponse(
+                data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier, submitted_at=datetime(2016, 9, 28)
+            )
             db.session.add(brief_response)
             db.session.commit()
 
@@ -489,6 +524,33 @@ class TestBriefResponses(BaseApplicationTest):
                     'supplierId': 0,
                     'supplierName': 'Supplier 0',
                     'createdAt': mock.ANY,
+                    'submittedAt': '2016-09-28T00:00:00.000000Z',
+                    'status': 'submitted',
+                    'foo': 'bar',
+                    'links': {
+                        'self': (('.get_brief_response',), {'brief_response_id': brief_response.id}),
+                        'brief': (('.get_brief',), {'brief_id': self.brief.id}),
+                        'supplier': (('.get_supplier',), {'supplier_id': 0}),
+                    }
+                }
+
+    def test_brief_response_can_be_serialized_with_no_submitted_at_time(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(
+                data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+
+            with mock.patch('app.models.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert brief_response.serialize() == {
+                    'id': brief_response.id,
+                    'briefId': self.brief.id,
+                    'supplierId': 0,
+                    'supplierName': 'Supplier 0',
+                    'createdAt': mock.ANY,
+                    'status': 'draft',
                     'foo': 'bar',
                     'links': {
                         'self': (('.get_brief_response',), {'brief_response_id': brief_response.id}),

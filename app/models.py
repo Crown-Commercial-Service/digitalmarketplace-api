@@ -1304,6 +1304,7 @@ class BriefResponse(db.Model):
     supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.supplier_id'), nullable=False)
 
     created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
+    submitted_at = db.Column(db.DateTime, nullable=True)
 
     brief = db.relationship('Brief')
     supplier = db.relationship('Supplier', lazy='joined')
@@ -1317,6 +1318,19 @@ class BriefResponse(db.Model):
         data = purge_nulls_from_data(data)
 
         return data
+
+    @hybrid_property
+    def status(self):
+        if self.submitted_at:
+            return 'submitted'
+        else:
+            return 'draft'
+
+    @status.expression
+    def status(cls):
+        return sql_case([
+            (cls.submitted_at.isnot(None), 'submitted'),
+        ], else_='draft')
 
     def validate(self, enforce_required=True, required_fields=None, max_day_rate=None):
         errs = get_validation_errors(
@@ -1353,6 +1367,10 @@ class BriefResponse(db.Model):
             'supplierId': self.supplier_id,
             'supplierName': self.supplier.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
+            'submittedAt': (
+                self.submitted_at and self.submitted_at.strftime(DATETIME_FORMAT)
+            ),
+            'status': self.status,
             'links': {
                 'self': url_for('.get_brief_response', brief_response_id=self.id),
                 'brief': url_for('.get_brief', brief_id=self.brief_id),
@@ -1360,7 +1378,7 @@ class BriefResponse(db.Model):
             }
         })
 
-        return data
+        return purge_nulls_from_data(data)
 
 
 class BriefClarificationQuestion(db.Model):
