@@ -89,6 +89,26 @@ class BaseBriefResponseTest(BaseApplicationTest):
     def list_brief_responses(self, **parameters):
         return self.client.get('/brief-responses', query_string=parameters)
 
+    def _update_brief_response(self, brief_response_id, brief_response_data):
+        return self.client.post(
+            '/brief-responses/{}'.format(brief_response_id),
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+                'briefResponses': brief_response_data,
+                'page_questions': list(brief_response_data.keys())
+            }),
+            content_type='application/json'
+        )
+
+    def _submit_brief_response(self, brief_response_id):
+        return self.client.post(
+            '/brief-responses/{}/submit'.format(brief_response_id),
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+            }),
+            content_type='application/json'
+        )
+
 
 class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
     endpoint = '/brief-responses'
@@ -366,6 +386,129 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert data == {'error': {'dayRate': 'max_less_than_min'}}
 
 
+class TestUpdateBriefResponse(BaseBriefResponseTest):
+    def _create_brief_response(self):
+        res = self.client.post(
+            '/brief-responses',
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+                'briefResponses': {
+                    'briefId': self.brief_id,
+                    'supplierId': 0
+                },
+                'page_questions': []
+            }),
+            content_type='application/json'
+        )
+        self.brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
+
+    def test_brief_response_can_be_updated(self, live_dos_framework):
+        self._create_brief_response()
+
+        res = self._update_brief_response(self.brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))['briefResponses']
+        assert data['id'] == self.brief_response_id
+        assert data['briefId'] == self.brief_id
+        assert data['supplierId'] == 0
+        assert data['respondToEmailAddress'] == 'newemail@email.com'
+
+    def test_update_brief_response_creates_audit_event(self, live_dos_framework):
+        self._create_brief_response()
+
+        res = self._update_brief_response(self.brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
+        assert res.status_code == 200
+
+        with self.app.app_context():
+            audit_events = AuditEvent.query.filter(
+                AuditEvent.type == AuditTypes.update_brief_response.value
+            ).all()
+
+        assert len(audit_events) == 1
+        assert audit_events[0].data == {
+            'briefResponseId': self.brief_response_id,
+            'briefResponseData': {'respondToEmailAddress': 'newemail@email.com'}
+        }
+
+    def test_update_brief_response_that_does_not_exist_will_404(self, live_dos_framework):
+        res = self._update_brief_response(100, {'respondToEmailAddress': 'newemail@email.com'})
+        assert res.status_code == 404
+
+    def test_can_not_update_brief_response_for_framework_that_is_not_live(self, live_dos_framework):
+        self._create_brief_response()
+
+        with self.app.app_context():
+            # Change live framework to be expired
+            db.session.execute("UPDATE frameworks SET status='expired' WHERE slug='digital-outcomes-and-specialists'")
+
+            res = self._update_brief_response(self.brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
+            data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 400
+            assert data == {'error': 'Brief framework must be live'}
+
+    def test_can_not_update_brief_response_if_supplier_is_ineligible_for_brief(self, live_dos_framework):
+        self._create_brief_response()
+
+        with mock.patch('app.main.views.brief_responses.get_supplier_service_eligible_for_brief') as mock_patch:
+            mock_patch.return_value = None
+
+            res = self._update_brief_response(self.brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
+            data = json.loads(res.get_data(as_text=True))
+
+            assert res.status_code == 400
+            assert data == {'error': 'Supplier is not eligible to apply to this brief'}
+
+    def test_can_not_update_brief_response_that_has_already_been_submitted(self, live_dos_framework):
+        # Create brief response
+        res = self.create_brief_response({
+            'briefId': self.brief_id,
+            'supplierId': 0,
+            'essentialRequirements': [False, False, False, False, False],
+            'niceToHaveRequirements': [False, False, False, False, False],
+            'availability': u'a',
+            'respondToEmailAddress': 'supplier@email.com'
+        })
+        assert res.status_code == 201
+        brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
+
+        # Submit brief response
+        res = self._submit_brief_response(brief_response_id)
+        assert res.status_code == 200
+
+        # Update brief response
+        res = self._update_brief_response(brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
+        assert res.status_code == 400
+        data = json.loads(res.get_data(as_text=True))
+        assert data == {'error': 'Brief response must be a draft'}
+
+    def test_can_not_update_brief_response_with_invalid_content(self, live_dos_framework):
+        self._create_brief_response()
+
+        res = self._update_brief_response(
+            self.brief_response_id, {'essentialRequirements': [False, False, False, False]}
+        )
+        assert res.status_code == 400
+        data = json.loads(res.get_data(as_text=True))
+        assert data == {'error': {'essentialRequirements': 'answer_required'}}
+
+    def test_update_brief_response_with_missing_response_to_page_question_will_error(self, live_dos_framework):
+        self._create_brief_response()
+
+        res = self.client.post(
+            '/brief-responses/{}'.format(self.brief_response_id),
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+                'briefResponses': {'respondToEmailAddress': 'newemail@email.com'},
+                'page_questions': ['respondToEmailAddress', 'niceToHaveRequirements']
+            }),
+            content_type='application/json'
+        )
+
+        assert res.status_code == 400
+        data = json.loads(res.get_data(as_text=True))
+        assert data == {'error': {'niceToHaveRequirements': 'answer_required'}}
+
+
 class TestSubmitBriefResponse(BaseBriefResponseTest):
 
     def _setup_existing_brief_response(self, brief_response_data):
@@ -376,15 +519,6 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
         assert res.status_code == 201
 
         self.brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
-
-    def _submit_brief_response(self, brief_response_id):
-        return self.client.post(
-            '/brief-responses/{}/submit'.format(brief_response_id),
-            data=json.dumps({
-                'updated_by': 'test@example.com',
-            }),
-            content_type='application/json'
-        )
 
     @given(example_listings.brief_response_data())
     def test_valid_draft_brief_response_can_be_submitted(self, live_dos_framework, brief_response_data):
