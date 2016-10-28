@@ -1319,6 +1319,12 @@ class BriefResponse(db.Model):
 
         return data
 
+    def update_from_json(self, data):
+        current_data = dict(self.data.items())
+        current_data.update(data)
+
+        self.data = current_data
+
     @hybrid_property
     def status(self):
         if self.submitted_at:
