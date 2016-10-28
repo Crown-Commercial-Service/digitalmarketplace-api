@@ -10,7 +10,7 @@ from ...models import db, Brief, BriefResponse, AuditEvent
 from ...utils import (
     get_json_from_request, json_has_required_keys, get_int_or_400,
     pagination_links, get_valid_page_or_1, url_for,
-    validate_and_return_updater_request,
+    validate_and_return_updater_request, get_request_page_questions
 )
 
 from ...brief_utils import get_supplier_service_eligible_for_brief
@@ -21,6 +21,7 @@ from ...service_utils import validate_and_return_supplier
 def create_brief_response():
     json_payload = get_json_from_request()
     updater_json = validate_and_return_updater_request()
+    page_questions = get_request_page_questions()
 
     json_has_required_keys(json_payload, ['briefResponses'])
     brief_response_json = json_payload['briefResponses']
@@ -59,7 +60,7 @@ def create_brief_response():
     brief_role = brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
     service_max_day_rate = brief_service.data[brief_role + "PriceMax"] if brief_role else None
 
-    brief_response.validate(max_day_rate=service_max_day_rate)
+    brief_response.validate(enforce_required=False, required_fields=page_questions, max_day_rate=service_max_day_rate)
 
     db.session.add(brief_response)
     try:

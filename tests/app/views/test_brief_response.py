@@ -72,6 +72,13 @@ class BaseBriefResponseTest(BaseApplicationTest):
             data=json.dumps({
                 'updated_by': 'test@example.com',
                 'briefResponses': data,
+                'page_questions': [
+                    'respondToEmailAddress',
+                    'essentialRequirements',
+                    'niceToHaveRequirements',
+                    'availability',
+                    'dayRate'
+                ]
             }),
             content_type='application/json'
         )
@@ -100,6 +107,46 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert data['briefResponses']['supplierName'] == 'Supplier 0'
         assert data['briefResponses']['briefId'] == self.brief_id
 
+    def test_create_new_brief_response_with_no_page_questions(self, live_dos_framework):
+        res = self.client.post(
+            '/brief-responses',
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+                'briefResponses': {
+                    'briefId': self.brief_id,
+                    'supplierId': 0
+                },
+                'page_questions': []
+            }),
+            content_type='application/json'
+        )
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 201, data
+        assert data['briefResponses']['supplierName'] == 'Supplier 0'
+        assert data['briefResponses']['briefId'] == self.brief_id
+
+    def test_create_new_brief_response_with_missing_response_to_page_question_will_error(self, live_dos_framework):
+        res = self.client.post(
+            '/brief-responses',
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+                'briefResponses': {
+                    'briefId': self.brief_id,
+                    'supplierId': 0,
+                    'respondToEmailAddress': 'email@email.com'
+                },
+                'page_questions': ['respondToEmailAddress', 'availability']
+            }),
+            content_type='application/json'
+        )
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data == {'error': {'availability': 'answer_required'}}
+        
     @given(example_listings.brief_response_data())
     def test_create_brief_response_creates_an_audit_event(self, live_dos_framework, brief_response_data):
         res = self.create_brief_response(dict(brief_response_data, **{
@@ -135,18 +182,11 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400
 
     def test_cannot_create_brief_response_with_invalid_json(self, live_dos_framework):
-        res = self.client.post(
-            '/brief-responses',
-            data=json.dumps({
-                'updated_by': 'test@example.com',
-                'briefResponses': {
-                    'briefId': self.brief_id,
-                    'supplierId': 0,
-                    'niceToHaveRequirements': 10
-                }
-            }),
-            content_type='application/json'
-        )
+        res = self.create_brief_response({
+            'briefId': self.brief_id,
+            'supplierId': 0,
+            'niceToHaveRequirements': 10
+        })
 
         data = json.loads(res.get_data(as_text=True))
 
@@ -420,29 +460,34 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
             assert res.status_code == 400
             assert data == {'error': 'Supplier is not eligible to apply to this brief'}
 
-    @given(example_listings.brief_response_data())
     def test_can_not_submit_an_invalid_brief_response(
-        self, live_dos_framework, brief_response_data
+        self, live_dos_framework
     ):
-        self._setup_existing_brief_response(brief_response_data)
+        res = self.client.post(
+            '/brief-responses',
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+                'briefResponses': {
+                    'briefId': self.brief_id,
+                    'supplierId': 0,
+                },
+                'page_questions': []
+            }),
+            content_type='application/json'
+        )
+        brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
 
-        with self.app.app_context():
-            # Set data to make brief_response invalid.
-            # TODO When we change the create_brief_response to not enforce all questions when validating, we can instead
-            # create a half complete brief response
-            db.session.execute("UPDATE brief_responses SET data='{}' WHERE id={}".format({}, self.brief_response_id))
-
-            res = self._submit_brief_response(self.brief_response_id)
-            data = json.loads(res.get_data(as_text=True))
-            assert res.status_code == 400
-            assert data == {
-                'error': {
-                    'availability': 'answer_required',
-                    'essentialRequirements': 'answer_required',
-                    'niceToHaveRequirements': 'answer_required',
-                    'respondToEmailAddress': 'answer_required'
-                }
+        res = self._submit_brief_response(brief_response_id)
+        data = json.loads(res.get_data(as_text=True))
+        assert res.status_code == 400
+        assert data == {
+            'error': {
+                'availability': 'answer_required',
+                'essentialRequirements': 'answer_required',
+                'niceToHaveRequirements': 'answer_required',
+                'respondToEmailAddress': 'answer_required'
             }
+        }
 
 
 class TestGetBriefResponse(BaseBriefResponseTest):
