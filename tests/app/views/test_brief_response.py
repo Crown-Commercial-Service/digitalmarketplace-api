@@ -1,7 +1,9 @@
 import json
 import pytest
+import mock
 
 from hypothesis import given
+from freezegun import freeze_time
 
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 from ... import example_listings
@@ -211,7 +213,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         })
 
         assert res.status_code == 400
-        assert 'Supplier not eligible' in res.get_data(as_text=True)
+        assert 'Supplier is not eligible to apply to this brief' in res.get_data(as_text=True)
 
     def test_cannot_respond_to_a_brief_that_isnt_live(self, live_dos_framework):
         with self.app.app_context():
@@ -322,6 +324,125 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
         assert res.status_code == 400, data
         assert data == {'error': {'dayRate': 'max_less_than_min'}}
+
+
+class TestSubmitBriefResponse(BaseBriefResponseTest):
+
+    def _setup_existing_brief_response(self, brief_response_data):
+        res = self.create_brief_response(dict(brief_response_data, **{
+            'briefId': self.brief_id,
+            'supplierId': 0,
+        }))
+        assert res.status_code == 201
+
+        self.brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
+
+    def _submit_brief_response(self, brief_response_id):
+        return self.client.post(
+            '/brief-responses/{}/submit'.format(brief_response_id),
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+            }),
+            content_type='application/json'
+        )
+
+    @given(example_listings.brief_response_data())
+    def test_valid_draft_brief_response_can_be_submitted(self, live_dos_framework, brief_response_data):
+        self._setup_existing_brief_response(brief_response_data)
+
+        with freeze_time('2016-9-28'):
+            res = self._submit_brief_response(self.brief_response_id)
+        assert res.status_code == 200
+
+        brief_response = json.loads(res.get_data(as_text=True))['briefResponses']
+
+        assert brief_response['status'] == 'submitted'
+        assert brief_response['submittedAt'] == '2016-09-28T00:00:00.000000Z'
+
+    @given(example_listings.brief_response_data())
+    def test_submit_brief_response_creates_an_audit_event(self, live_dos_framework, brief_response_data):
+        self._setup_existing_brief_response(brief_response_data)
+
+        res = self._submit_brief_response(self.brief_response_id)
+
+        with self.app.app_context():
+            audit_events = AuditEvent.query.filter(
+                AuditEvent.type == AuditTypes.submit_brief_response.value
+            ).all()
+
+        assert len(audit_events) == 1
+        assert audit_events[0].data == {
+            'briefResponseId': self.brief_response_id
+        }
+
+    def test_submit_brief_response_that_doesnt_exist_will_404(self):
+        res = self._submit_brief_response(100)
+        assert res.status_code == 404
+
+    @given(example_listings.brief_response_data())
+    def test_can_not_submit_a_brief_response_that_already_been_submitted(self, live_dos_framework, brief_response_data):
+        self._setup_existing_brief_response(brief_response_data)
+
+        res = self._submit_brief_response(self.brief_response_id)
+        assert res.status_code == 200
+
+        repeat_res = self._submit_brief_response(self.brief_response_id)
+        assert repeat_res.status_code == 400
+
+        data = json.loads(repeat_res.get_data(as_text=True))
+        assert data == {'error': 'Brief response must be a draft'}
+
+    @given(example_listings.brief_response_data())
+    def test_can_not_submit_a_brief_response_for_a_framework_that_is_not_live(
+        self, live_dos_framework, brief_response_data
+    ):
+        self._setup_existing_brief_response(brief_response_data)
+
+        with self.app.app_context():
+            # Change live framework to be expired
+            db.session.execute("UPDATE frameworks SET status='expired' WHERE slug='digital-outcomes-and-specialists'")
+
+            res = self._submit_brief_response(self.brief_response_id)
+            data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 400
+            assert data == {'error': 'Brief framework must be live'}
+
+    @given(example_listings.brief_response_data())
+    def test_can_not_submit_response_if_supplier_is_ineligble_for_brief(self, live_dos_framework, brief_response_data):
+        self._setup_existing_brief_response(brief_response_data)
+
+        with mock.patch('app.main.views.brief_responses.get_supplier_service_eligible_for_brief') as mock_patch:
+            mock_patch.return_value = None
+
+            res = self._submit_brief_response(self.brief_response_id)
+            data = json.loads(res.get_data(as_text=True))
+
+            assert res.status_code == 400
+            assert data == {'error': 'Supplier is not eligible to apply to this brief'}
+
+    @given(example_listings.brief_response_data())
+    def test_can_not_submit_an_invalid_brief_response(
+        self, live_dos_framework, brief_response_data
+    ):
+        self._setup_existing_brief_response(brief_response_data)
+
+        with self.app.app_context():
+            # Set data to make brief_response invalid.
+            # TODO When we change the create_brief_response to not enforce all questions when validating, we can instead
+            # create a half complete brief response
+            db.session.execute("UPDATE brief_responses SET data='{}' WHERE id={}".format({}, self.brief_response_id))
+
+            res = self._submit_brief_response(self.brief_response_id)
+            data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 400
+            assert data == {
+                'error': {
+                    'availability': 'answer_required',
+                    'essentialRequirements': 'answer_required',
+                    'niceToHaveRequirements': 'answer_required',
+                    'respondToEmailAddress': 'answer_required'
+                }
+            }
 
 
 class TestGetBriefResponse(BaseBriefResponseTest):
