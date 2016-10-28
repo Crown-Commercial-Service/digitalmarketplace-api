@@ -1,6 +1,7 @@
 import json
 import pytest
 import mock
+from datetime import datetime
 
 from hypothesis import given
 from freezegun import freeze_time
@@ -54,11 +55,12 @@ class BaseBriefResponseTest(BaseApplicationTest):
             self.brief_id = brief.id
             self.specialist_brief_id = specialist_brief.id
 
-    def setup_dummy_brief_response(self, brief_id=None, supplier_id=0):
+    def setup_dummy_brief_response(self, brief_id=None, supplier_id=0, submitted_at=datetime(2016, 1, 2)):
         with self.app.app_context():
             brief_response = BriefResponse(
                 data=example_listings.brief_response_data().example(),
-                supplier_id=supplier_id, brief_id=brief_id or self.brief_id
+                supplier_id=supplier_id, brief_id=brief_id or self.brief_id,
+                submitted_at=submitted_at
             )
 
             db.session.add(brief_response)
@@ -166,7 +168,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
         assert res.status_code == 400
         assert data == {'error': {'availability': 'answer_required'}}
-        
+
     @given(example_listings.brief_response_data())
     def test_create_brief_response_creates_an_audit_event(self, live_dos_framework, brief_response_data):
         res = self.create_brief_response(dict(brief_response_data, **{
@@ -732,3 +734,46 @@ class TestListBriefResponses(BaseBriefResponseTest):
 
         assert res.status_code == 400
         assert data['error'] == 'Invalid supplier_id: not-valid'
+
+    def test_do_not_include_drafts_in_brief_response_list_by_default(self):
+        expected_brief_id = self.setup_dummy_brief_response()
+        self.setup_dummy_brief_response(submitted_at=None)
+
+        res = self.list_brief_responses()
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 1
+        assert data['briefResponses'][0]['id'] == expected_brief_id
+
+    def test_filter_brief_response_list_by_draft_status(self):
+        self.setup_dummy_brief_response()
+        expected_brief_id = self.setup_dummy_brief_response(submitted_at=None)
+
+        res = self.list_brief_responses(status='draft')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 1
+        assert data['briefResponses'][0]['id'] == expected_brief_id
+
+    def test_filter_brief_response_list_by_submitted_status(self):
+        expected_brief_id = self.setup_dummy_brief_response()
+        self.setup_dummy_brief_response(submitted_at=None)
+
+        res = self.list_brief_responses(status='submitted')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 1
+        assert data['briefResponses'][0]['id'] == expected_brief_id
+
+    def test_filter_brief_response_list_by_both_draft_and_submitted_status(self):
+        self.setup_dummy_brief_response()
+        self.setup_dummy_brief_response(submitted_at=None)
+
+        res = self.list_brief_responses(status='draft,submitted')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 2

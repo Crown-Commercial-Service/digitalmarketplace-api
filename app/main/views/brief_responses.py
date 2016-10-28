@@ -202,7 +202,12 @@ def list_brief_responses():
     brief_id = get_int_or_400(request.args, 'brief_id')
     supplier_id = get_int_or_400(request.args, 'supplier_id')
 
-    brief_responses = BriefResponse.query
+    if request.args.get('status'):
+        statuses = request.args['status'].split(',')
+    else:
+        statuses = ['submitted']
+    brief_responses = BriefResponse.query.filter(BriefResponse.status.in_(statuses))
+
     if supplier_id is not None:
         brief_responses = brief_responses.filter(BriefResponse.supplier_id == supplier_id)
 
