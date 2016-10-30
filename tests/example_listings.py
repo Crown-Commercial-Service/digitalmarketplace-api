@@ -2,7 +2,7 @@
 from hypothesis import settings
 from hypothesis.strategies import (
     fixed_dictionaries, lists,
-    booleans, integers, text, none,
+    text, integers, text, none,
     composite, one_of,
     just)
 
@@ -44,7 +44,7 @@ def _word_count_filter(s, min_words=1, max_words=None):
 @composite
 def requirements_list(draw, length, answers=False):
     if answers:
-        elements = booleans() if length is not None else one_of(booleans(), none())
+        elements = text() if length is not None else one_of(text(), none())
     else:
         elements = text(min_size=1, average_size=10, max_size=300, alphabet=_descriptive_alphabet).filter(
             partial(_word_count_filter, max_words=30)

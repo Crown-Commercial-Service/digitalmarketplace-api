@@ -94,9 +94,15 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
         data = json.loads(res.get_data(as_text=True))
 
-        assert res.status_code == 201, data
-        assert data['briefResponses']['supplierName'] == 'Supplier 0'
-        assert data['briefResponses']['briefId'] == self.brief_id
+        ess = brief_response_data['essentialRequirements']
+        nth = brief_response_data['niceToHaveRequirements']
+
+        if all(ess) and all(nth):
+            assert res.status_code == 201, data
+            assert data['briefResponses']['supplierName'] == 'Supplier 0'
+            assert data['briefResponses']['briefId'] == self.brief_id
+        else:
+            assert res.status_code == 400, data
 
     @given(example_listings.brief_response_data())
     def test_create_brief_response_creates_an_audit_event(self, live_framework, brief_response_data):
@@ -105,21 +111,30 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
             'supplierCode': 0,
         }))
 
-        assert res.status_code == 201, res.get_data(as_text=True)
+        ess = brief_response_data['essentialRequirements']
+        nth = brief_response_data['niceToHaveRequirements']
+
+        if all(ess) and all(nth):
+            assert res.status_code == 201, res.get_data(as_text=True)
+        else:
+            assert res.status_code == 400, res.get_data(as_text=True)
 
         with self.app.app_context():
             audit_events = AuditEvent.query.filter(
                 AuditEvent.type == AuditTypes.create_brief_response.value
             ).all()
 
-        assert len(audit_events) == 1
-        assert audit_events[0].data == {
-            'briefResponseId': json.loads(res.get_data(as_text=True))['briefResponses']['id'],
-            'briefResponseJson': dict(brief_response_data, **{
-                'briefId': self.brief_id,
-                'supplierCode': 0,
-            })
-        }
+        if all(ess) and all(nth):
+            assert len(audit_events) == 1
+            assert audit_events[0].data == {
+                'briefResponseId': json.loads(res.get_data(as_text=True))['briefResponses']['id'],
+                'briefResponseJson': dict(brief_response_data, **{
+                    'briefId': self.brief_id,
+                    'supplierCode': 0,
+                })
+            }
+        else:
+            assert len(audit_events) == 0
 
     def test_cannot_create_brief_response_with_empty_json(self, live_framework):
         res = self.client.post(
@@ -233,18 +248,22 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
     @given(example_listings.brief_response_data())
     def test_cannot_respond_to_a_brief_more_than_once_from_the_same_supplier(self, live_framework, brief_response_data):
-        self.create_brief_response(dict(brief_response_data, **{
-            'briefId': self.brief_id,
-            'supplierCode': 0,
-        }))
+        ess = brief_response_data['essentialRequirements']
+        nth = brief_response_data['niceToHaveRequirements']
 
-        res = self.create_brief_response(dict(brief_response_data, **{
-            'briefId': self.brief_id,
-            'supplierCode': 0,
-        }))
+        if all(ess) and all(nth):
+            self.create_brief_response(dict(brief_response_data, **{
+                'briefId': self.brief_id,
+                'supplierCode': 0,
+            }))
 
-        assert res.status_code == 400, res.get_data(as_text=True)
-        assert 'Brief response already exists' in res.get_data(as_text=True)
+            res = self.create_brief_response(dict(brief_response_data, **{
+                'briefId': self.brief_id,
+                'supplierCode': 0,
+            }))
+
+            assert res.status_code == 400, res.get_data(as_text=True)
+            assert 'Brief response already exists' in res.get_data(as_text=True)
 
     @given(example_listings.brief_response_data(None, 5).filter(
         lambda x: len(x['essentialRequirements']) != 5 and all(i is not None for i in x['essentialRequirements'])))
@@ -283,10 +302,13 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400, res.get_data(as_text=True)
-        assert data['error']['niceToHaveRequirements'] == 'answer_required'
+        assert data['error']['niceToHaveRequirements'] == "None is not of type u'string'"
 
     @given(example_listings.specialists_brief_response_data())
     def test_create_digital_specialists_brief_response(self, live_framework, brief_response_data):
+        ess = brief_response_data['essentialRequirements']
+        nth = brief_response_data['niceToHaveRequirements']
+
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.specialist_brief_id,
             'supplierCode': 0,
@@ -294,7 +316,10 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
         data = json.loads(res.get_data(as_text=True))
 
-        assert res.status_code == 201, data
+        if all(ess) and all(nth):
+            assert res.status_code == 201, data
+        else:
+            assert res.status_code == 400, data
 
 
 class TestGetBriefResponse(BaseBriefResponseTest):

@@ -9,7 +9,7 @@
     },
     "essentialRequirements": {
       "items": {
-        "type": "boolean"
+        "type": "string"
       },
       "maxItems": 20,
       "minItems": 1,
@@ -17,7 +17,7 @@
     },
     "niceToHaveRequirements": {
       "items": {
-        "type": "boolean"
+        "type": "string"
       },
       "maxItems": 20,
       "minItems": 0,

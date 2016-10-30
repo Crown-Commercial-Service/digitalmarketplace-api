@@ -551,6 +551,7 @@ class TestBriefResponses(BaseApplicationTest):
     def setup(self):
         super(TestBriefResponses, self).setup()
         with self.app.app_context():
+
             framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             lot = framework.get_lot('digital-outcomes')
             self.brief = Brief(data={}, framework=framework, lot=lot)
@@ -561,6 +562,43 @@ class TestBriefResponses(BaseApplicationTest):
             self.supplier = Supplier.query.filter(Supplier.code == 0).first()
 
     def test_create_a_new_brief_response(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(data={}, brief=self.brief, supplier=self.supplier)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            assert brief_response.id is not None
+            assert brief_response.supplier_code == 0
+            assert brief_response.brief_id == self.brief.id
+            assert isinstance(brief_response.created_at, builtindatetime)
+            assert brief_response.data == {}
+
+    def test_create_a_new_brief_response_with_data(self):
+        ERSPEC = {'essentialRequirements': ['be cool', 'be rad']}
+        FIELDS = {'essentialRequirements': ['i am cool', 'i am rad']}
+
+        with self.app.app_context():
+            self.brief.data = ERSPEC
+            db.session.add(self.brief)
+            db.session.commit()
+            brief_response = BriefResponse(data=FIELDS, brief=self.brief, supplier=self.supplier)
+
+            db.session.add(brief_response)
+            db.session.commit()
+
+            try:
+                brief_response.validate()
+            except ValidationError as v:
+                errors = v.message
+                assert 'essentialRequirements' not in errors
+
+            assert brief_response.id is not None
+            assert brief_response.supplier_code == 0
+            assert brief_response.brief_id == self.brief.id
+            assert isinstance(brief_response.created_at, builtindatetime)
+            assert brief_response.data == FIELDS
+
+    def test_create_a_brief_with_comments(self):
         with self.app.app_context():
             brief_response = BriefResponse(data={}, brief=self.brief, supplier=self.supplier)
             db.session.add(brief_response)
