@@ -212,14 +212,10 @@ def get_framework_suppliers(framework_slug):
         Framework.slug == framework_slug
     ).first_or_404()
 
-    # Listing agreements is something done for Admin only (suppliers only retrieve their individual agreements)
-    # CCS always want to work from the oldest returned date to newest, so order by ascending date
     supplier_frameworks = SupplierFramework.query.filter(
         SupplierFramework.framework_id == framework.id
     ).outerjoin(
         SupplierFramework.framework_agreements
-    ).order_by(
-        FrameworkAgreement.signed_agreement_returned_at.asc()
     )
 
     if request.args.get('agreement_returned') is not None or request.args.get('status') is not None:
@@ -245,6 +241,17 @@ def get_framework_suppliers(framework_slug):
                 sf for sf in supplier_frameworks
                 if sf.current_framework_agreement and sf.current_framework_agreement.status in requested_statuses
                 ]
+
+    # Listing agreements is something done for Admin only (suppliers only retrieve their individual agreements)
+    # CCS always want to work from the oldest returned date to newest, so order by ascending date
+
+    # FIXME: This is a TEMPORARY massive hack to patch up the required behaviour for the functional tests and admin
+    # FIXME: users in advance of a larger forthcoming API pull-request (work in progress) that will make
+    # FIXME: current_framework_agreement a hybrid property that can be ordered-by directly in the SQLAlchemy query
+    def signed_agreement_date_or_millenium(k):
+        return k.current_framework_agreement and k.current_framework_agreement.signed_agreement_returned_at \
+            or datetime.datetime(2000, 1, 1, 00, 00, 0, 1)
+    supplier_frameworks = sorted(supplier_frameworks, key=lambda k: signed_agreement_date_or_millenium(k))
 
     return jsonify(supplierFrameworks=[
         supplier_framework.serialize() for supplier_framework in supplier_frameworks
