@@ -354,7 +354,7 @@ def record_supplier_invite():
 
 @main.route('/users/count', methods=['GET'])
 def get_buyers_stats():
-    account_type = request.args['account_type']
+    account_type = request.args.get('account_type', 'buyer')
 
     not_internal = \
         User.email_address.contains("+").is_(False) | \
