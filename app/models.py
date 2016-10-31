@@ -520,7 +520,7 @@ class FrameworkAgreement(db.Model):
     supplier_framework = db.relationship(
         SupplierFramework,
         lazy="joined",
-        backref=backref('framework_agreements', lazy="joined", order_by="FrameworkAgreement.id")
+        backref=backref('framework_agreements', lazy="joined")
     )
 
     def update_signed_agreement_details_from_json(self, data):
