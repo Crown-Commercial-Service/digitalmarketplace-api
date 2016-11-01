@@ -1140,24 +1140,24 @@ class Brief(db.Model):
                 '2 weeks 23:59:59', INTERVAL))
 
     @hybrid_property
-    def clarification_questions_closed_at(self):
-        if self.published_at is None:
+    def clarification_questions_closed_at(self_or_cls):
+        if self_or_cls.published_at is None:
             return None
-        brief_publishing_date_and_length = self._build_date_and_length_data()
+        brief_publishing_date_and_length = self_or_cls._build_date_and_length_data()
 
         return get_publishing_dates(brief_publishing_date_and_length)['questions_close']
 
     @hybrid_property
-    def clarification_questions_published_by(self):
-        if self.published_at is None:
+    def clarification_questions_published_by(self_or_cls):
+        if self_or_cls.published_at is None:
             return None
-        brief_publishing_date_and_length = self._build_date_and_length_data()
+        brief_publishing_date_and_length = self_or_cls._build_date_and_length_data()
 
         return get_publishing_dates(brief_publishing_date_and_length)['answers_close']
 
     @hybrid_property
-    def clarification_questions_are_closed(self):
-        return datetime.utcnow() > self.clarification_questions_closed_at
+    def clarification_questions_are_closed(self_or_cls):
+        return datetime.utcnow() > self_or_cls.clarification_questions_closed_at
 
     @hybrid_property
     def status(self):
