@@ -97,7 +97,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         ess = brief_response_data['essentialRequirements']
         nth = brief_response_data['niceToHaveRequirements']
 
-        if all(ess) and all(nth):
+        if all(ess):
             assert res.status_code == 201, data
             assert data['briefResponses']['supplierName'] == 'Supplier 0'
             assert data['briefResponses']['briefId'] == self.brief_id
@@ -114,7 +114,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         ess = brief_response_data['essentialRequirements']
         nth = brief_response_data['niceToHaveRequirements']
 
-        if all(ess) and all(nth):
+        if all(ess):
             assert res.status_code == 201, res.get_data(as_text=True)
         else:
             assert res.status_code == 400, res.get_data(as_text=True)
@@ -124,7 +124,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
                 AuditEvent.type == AuditTypes.create_brief_response.value
             ).all()
 
-        if all(ess) and all(nth):
+        if all(ess):
             assert len(audit_events) == 1
             assert audit_events[0].data == {
                 'briefResponseId': json.loads(res.get_data(as_text=True))['briefResponses']['id'],

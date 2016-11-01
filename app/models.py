@@ -1484,7 +1484,19 @@ class BriefResponse(db.Model):
         data = drop_foreign_fields(data, [
             'supplierCode', 'briefId',
         ])
+
+        NTF = 'niceToHaveRequirements'
+        excluded_keys = [NTF]
+        excluded = dict()
+
+        for k in excluded_keys:
+            if k in data:
+                excluded[k] = data.pop(NTF)
+
         data = strip_whitespace_from_data(data)
+
+        data.update(excluded)
+
         data = purge_nulls_from_data(data)
 
         return data
