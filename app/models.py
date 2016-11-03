@@ -395,6 +395,7 @@ class Supplier(db.Model):
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'), index=False, nullable=False)
     address = db.relationship('Address', single_parent=True, cascade='all, delete-orphan')
     website = db.Column(db.String(255), index=False, nullable=True)
+    linkedin = db.Column(db.String(255), index=False, nullable=True)
     extra_links = db.relationship('WebsiteLink',
                                   secondary=SupplierExtraLinks.__table__,
                                   single_parent=True,
@@ -439,6 +440,7 @@ class Supplier(db.Model):
             'summary': self.summary,
             'description': self.description,
             'website': self.website,
+            'linkedin': self.linkedin,
             'extraLinks': [l.serialize() for l in self.extra_links],
             'abn': self.abn,
             'acn': self.acn,
@@ -454,7 +456,7 @@ class Supplier(db.Model):
 
     def update_from_json(self, data):
         keys = ('code', 'dataVersion', 'name', 'longName', 'summary', 'description', 'address', 'website', 'extraLinks',
-                'abn', 'acn', 'contacts', 'references', 'prices', 'case_study_ids')
+                'abn', 'acn', 'contacts', 'references', 'prices', 'case_study_ids', 'linkedin')
         extra_keys = set(data.keys()) - set(keys)
         if extra_keys:
             raise ValidationError('Additional properties are not allowed: {}'.format(str(extra_keys)))
@@ -465,6 +467,7 @@ class Supplier(db.Model):
         self.summary = data.get('summary', self.summary)
         self.description = data.get('description', self.description)
         self.website = data.get('website', self.website)
+        self.linkedin = data.get('linkedin', self.linkedin)
         self.abn = data.get('abn', self.abn)
         self.acn = data.get('acn', self.acn)
         if 'address' in data:
