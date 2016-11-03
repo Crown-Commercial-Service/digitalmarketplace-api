@@ -434,6 +434,29 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
             }
 
     @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
+    def test_can_not_set_framework_agreement_version_directly(self, supplier_framework):
+        agreement_id = self.create_agreement(supplier_framework)
+        res = self.post_agreement_update(agreement_id, {
+            'frameworkAgreementVersion': 'v23.4'
+        })
+        assert res.status_code == 400
+        assert json.loads(res.get_data(as_text=True)) == {
+            'error': "Invalid JSON should not have 'frameworkAgreementVersion' keys"
+        }
+
+    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
+    def test_agreement_returned_at_timestamp_cannot_be_set(self, supplier_framework):
+        agreement_id = self.create_agreement(supplier_framework)
+        res = self.post_agreement_update(agreement_id, {
+            'signedAgreementReturnedAt': '2013-13-13T00:00:00.000000Z'
+        })
+
+        assert res.status_code == 400
+        assert json.loads(res.get_data(as_text=True)) == {
+            'error': "Invalid JSON should not have 'signedAgreementReturnedAt' keys"
+        }
+
+    @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
     def test_400_cannot_update_signed_agreement(self, supplier_framework):
         agreement_id = self.create_agreement(supplier_framework, signed_agreement_returned_at=datetime.utcnow())
         res = self.post_agreement_update(agreement_id, {
@@ -446,7 +469,7 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
         }
 
     @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_400_if_some_random_key_in_update_json(self, supplier_framework):
+    def test_400_if_unknown_field_present_in_update_json(self, supplier_framework):
         agreement_id = self.create_agreement(supplier_framework)
         res = self.post_agreement_update(agreement_id, {
             'signedRandomKey': 'banana'
@@ -458,7 +481,7 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
         }
 
     @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
-    def test_400_if_signed_agreement_details_contains_some_random_key(self, supplier_framework):
+    def test_400_if_unknown_field_present_in_signed_agreement_details(self, supplier_framework):
         agreement_id = self.create_agreement(supplier_framework)
         res = self.post_agreement_update(agreement_id, {
             'signedAgreementDetails': {
