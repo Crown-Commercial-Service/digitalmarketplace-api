@@ -38,13 +38,15 @@ deployment:
     branch: master
     commands:
       - cf login -a https://api.system.staging.digital.gov.au -o dto -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
-      - APP_GROUP=dm-dev-api ENVIRONMENT=staging MANIFEST=manifest.yml ./scripts/cf_deploy_all.sh
+      - cf target -o dto -s digital-marketplace
+      - cf push -f manifest.yml
 
   production:
     tag: /release-.*/
     commands:
       - cf login -a https://api.system.platform.digital.gov.au -o dto -u $CF_USER_PROD -p $CF_PASSWORD_PROD
-      - APP_GROUP=dm-api ENVIRONMENT=platform MANIFEST=manifest.production.yml ./scripts/cf_deploy_all.sh
+      - cf target -o dto -s digital-marketplace
+      - cf push -f manifest.production.yml
       - ./scripts/ci-notify.sh
 
   monitoring:
