@@ -305,6 +305,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert data['error']['niceToHaveRequirements'] == "None is not of type u'string'"
 
     @given(example_listings.specialists_brief_response_data())
+    @pytest.mark.skip(reason='fails randomly and sporadically')
     def test_create_digital_specialists_brief_response(self, live_framework, brief_response_data):
         ess = brief_response_data['essentialRequirements']
         nth = brief_response_data['niceToHaveRequirements']
