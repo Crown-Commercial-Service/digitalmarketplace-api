@@ -34,8 +34,8 @@
     },
     "culturalWeighting": {
       "exclusiveMaximum": false,
-      "maximum": 20,
-      "minimum": 5,
+      "maximum": 100,
+      "minimum": 0,
       "type": "integer"
     },
     "earlyMarketEngagement": {
@@ -139,8 +139,8 @@
     },
     "priceWeighting": {
       "exclusiveMaximum": false,
-      "maximum": 85,
-      "minimum": 20,
+      "maximum": 100,
+      "minimum": 0,
       "type": "integer"
     },
     "questionAndAnswerSessionDetails": {
@@ -175,8 +175,8 @@
     },
     "technicalWeighting": {
       "exclusiveMaximum": false,
-      "maximum": 75,
-      "minimum": 10,
+      "maximum": 100,
+      "minimum": 0,
       "type": "integer"
     },
     "title": {
