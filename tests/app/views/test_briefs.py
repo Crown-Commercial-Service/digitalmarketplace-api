@@ -358,7 +358,7 @@ class TestBriefs(BaseApplicationTest):
         res = self.client.post(
             '/briefs/1',
             data=json.dumps({
-                'briefs': {'technicalWeighting': 15, 'culturalWeighting': 75, 'priceWeighting': 10},
+                'briefs': {'technicalWeighting': 15, 'culturalWeighting': 105, 'priceWeighting': -1},
                 'update_details': {'updated_by': 'example'},
             }),
             content_type='application/json')
