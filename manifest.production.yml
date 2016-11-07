@@ -13,4 +13,4 @@ routes:
 - route: dm-api.apps.staging.digital.gov.au
 applications:
 - name: dm-api-blue
-- name: dm-api-green
+- name: dm-api
