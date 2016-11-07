@@ -317,7 +317,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
         data = json.loads(res.get_data(as_text=True))
 
-        if all(ess) and all(nth):
+        if all(ess):
             assert res.status_code == 201, data
         else:
             assert res.status_code == 400, data
