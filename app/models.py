@@ -330,13 +330,6 @@ class SupplierFramework(db.Model):
     on_framework = db.Column(db.Boolean, nullable=True)
     agreed_variations = db.Column(JSON)
 
-    # The following three fields are deprecated and MUST NOT BE USED
-    # Data may be outdated and should not be used for reading/updating
-    # The framework_agreements table is now the source of truth for this data
-    agreement_returned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
-    countersigned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
-    agreement_details = db.Column(JSON)
-
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
