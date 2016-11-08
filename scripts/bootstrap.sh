@@ -16,12 +16,10 @@ fi
 # that older pips don't understand
 pip install "pip>=8.0"
 
-# Install Python development dependencies
-pip install -r requirements_for_test.txt
-
 # Create Postgres databases
 createdb digitalmarketplace
 createdb digitalmarketplace_test
 
+# Install Python development dependencies
 # Upgrade databases
-python application.py db upgrade
+make requirements_for_test run_migrations
