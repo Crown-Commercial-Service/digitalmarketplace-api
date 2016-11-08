@@ -1,0 +1,256 @@
+import json
+
+from tests.app.helpers import BaseApplicationTest
+
+from app.models import db, Application
+
+
+class BaseApplicationsTest(BaseApplicationTest):
+    def setup(self):
+        super(BaseApplicationsTest, self).setup()
+
+        with self.app.app_context():
+            self.setup_dummy_user(id=0, role="applicant")
+            self.setup_dummy_user(id=1, role="applicant")
+            db.session.commit()
+
+    def setup_dummy_application(self, user_id=0, data=None):
+        if data is None:
+            data = self.application_data
+        with self.app.app_context():
+
+            application = Application(
+                data=data,
+                user_id=user_id
+            )
+
+            db.session.add(application)
+            db.session.commit()
+
+            return application.id
+
+    def create_application(self, data):
+        return self.client.post(
+            '/applications',
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+                'application': data,
+            }),
+            content_type='application/json'
+        )
+
+    def patch_application(self, application_id, data):
+        return self.client.patch(
+            '/applications/{}'.format(application_id),
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+                'application': data,
+            }),
+            content_type='application/json'
+        )
+
+    def get_application(self, application_id):
+        return self.client.get('/applications/{}'.format(application_id))
+
+    def list_applications(self, **parameters):
+        return self.client.get('/applications', query_string=parameters)
+
+    @property
+    def application_data(self):
+        return {'foo': 'bar'}
+
+
+class TestCreateApplication(BaseApplicationsTest):
+    endpoint = '/applications'
+    method = 'post'
+
+    def test_create_new_application(self):
+
+        res = self.create_application(
+            dict(self.application_data, user_id=0)
+        )
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 201, data
+        assert data['application']['user_id'] == 0
+
+    def test_cannot_create_application_with_empty_json(self):
+        res = self.client.post(
+            '/applications',
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+            }),
+            content_type='application/json'
+        )
+
+        assert res.status_code == 400
+
+    def test_cannot_create_application_without_user_id(self):
+        res = self.create_application({
+        })
+
+        assert res.status_code == 400
+        assert 'user_id' in res.get_data(as_text=True)
+
+    def test_cannot_create_application_with_non_integer_user_id(self):
+        res = self.create_application({
+            'user_id': 'not a number',
+        })
+
+        assert res.status_code == 400
+        assert 'Invalid user id' in res.get_data(as_text=True)
+
+    def test_cannot_create_application_when_applicant_doesnt_exist(self):
+        res = self.create_application({
+            'user_id': 999
+        })
+
+        assert res.status_code == 400
+        assert 'Invalid user id' in res.get_data(as_text=True)
+
+
+class TestUpdateApplication(BaseApplicationsTest):
+
+    def setup(self):
+        super(TestUpdateApplication, self).setup()
+
+        self.application_id = self.setup_dummy_application(user_id=0, data=self.application_data)
+
+    def test_patch_existing_order(self):
+        application_data = self.application_data
+        application_data['foo'] = 'baz'
+
+        res = self.patch_application(
+            application_id=self.application_id,
+            data=application_data
+        )
+
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))
+        assert data['application']['user_id'] == 0
+        assert data['application']['foo'] == 'baz'
+
+    def test_empty_patch(self):
+        res = self.patch_application(
+            application_id=self.application_id,
+            data={}
+        )
+
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))
+        assert data['application']['user_id'] == 0
+        assert data['application']['foo'] == self.application_data['foo']
+
+    def test_patch_missing_order(self):
+        res = self.patch_application(
+            application_id=9,
+            data={}
+        )
+
+        assert res.status_code == 404
+
+    def test_malformed_request(self):
+        res = self.client.patch('/applications/1', data={'notAApplication': 'no'})
+        assert res.status_code == 400
+
+    def test_can_delete_a_application(self):
+        delete = self.client.delete(
+            '/applications/{}'.format(self.application_id),
+            content_type='application/json')
+        assert delete.status_code == 200
+
+        fetch_again = self.client.get('/applications/{}'.format(self.application_id))
+        assert fetch_again.status_code == 404
+
+
+class TestGetApplication(BaseApplicationsTest):
+    def setup(self):
+        super(TestGetApplication, self).setup()
+
+        self.application_id = self.setup_dummy_application()
+
+    def test_get_application(self):
+        res = self.get_application(self.application_id)
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['application']['id'] == self.application_id
+        assert data['application']['user_id'] == 0
+
+    def test_get_missing_application_returns_404(self):
+        res = self.get_application(999)
+
+        assert res.status_code == 404
+
+
+class TestListApplications(BaseApplicationsTest):
+    def test_list_empty_applications(self):
+        res = self.list_applications()
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['applications'] == []
+        assert 'self' in data['links'], data
+
+    def test_list_applications(self):
+        for i in range(3):
+            self.setup_dummy_application()
+
+        res = self.list_applications()
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['applications']) == 3
+        assert 'self' in data['links']
+
+    def test_list_applications_pagination(self):
+        for i in range(8):
+            self.setup_dummy_application()
+
+        res = self.list_applications()
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['applications']) == 5
+        assert 'next' in data['links']
+
+        res = self.list_applications(page=2)
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['applications']) == 3
+        assert 'prev' in data['links']
+
+    def test_results_per_page(self):
+        for i in range(8):
+            self.setup_dummy_application()
+
+        response = self.client.get('/applications?per_page=2')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert 'applications' in data
+        assert len(data['applications']) == 2
+
+    def test_list_applications_for_user_id(self):
+        for i in range(3):
+            self.setup_dummy_application(user_id=0)
+            self.setup_dummy_application(user_id=1)
+
+        res = self.list_applications(user_id=1)
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['applications']) == 3
+        assert all(br['user_id'] == 1 for br in data['applications'])
+        assert 'self' in data['links']
+
+    def test_cannot_list_applications_for_non_integer_user_id(self):
+        res = self.list_applications(user_id="not-valid")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == 'Invalid user_id: not-valid'
