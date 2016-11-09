@@ -1649,6 +1649,47 @@ class WorkOrder(db.Model):
         self.data = new_data
 
 
+class Application(db.Model):
+    __tablename__ = 'application'
+
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(JSON, nullable=False)
+    user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=datetime.utcnow)
+
+    user = db.relationship('User', lazy='joined')
+
+    @validates('data')
+    def validates_data(self, key, data):
+        data = drop_foreign_fields(data, [
+            'user_id'
+        ])
+        data = strip_whitespace_from_data(data)
+        data = purge_nulls_from_data(data)
+
+        return data
+
+    def serialize(self):
+        data = self.data.copy()
+        data.update({
+            'id': self.id,
+            'user_id': self.user_id,
+            'createdAt': self.created_at.to_iso8601_string(extended=True),
+            'links': {
+                'self': url_for('.get_work_order', work_order_id=self.id),
+                'user': url_for(".get_user_by_id", user_id=self.user_id),
+            }
+        })
+
+        return data
+
+    def update_from_json(self, data):
+        # Need this juggling because of the validates_data hook
+        new_data = dict(self.data)
+        new_data.update(data)
+        self.data = new_data
+
+
 class CaseStudy(db.Model):
     __tablename__ = 'case_study'
 
