@@ -10,7 +10,7 @@ env:
     DM_SEARCH_API_URL: https://dm-dev-search-api.apps.staging.digital.gov.au/
     DM_ELASTICSEARCH_URL: https://search-digital-marketplace-prod-knuhl4vhapyej53rycvfx55wce.ap-southeast-2.es.amazonaws.com:443
 routes:
-- route: dm-api.apps.staging.digital.gov.au
+- route: dm-api.apps.platform.digital.gov.au
 applications:
 - name: dm-api-blue
 - name: dm-api
