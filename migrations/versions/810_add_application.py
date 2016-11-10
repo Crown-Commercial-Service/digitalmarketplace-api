@@ -25,7 +25,17 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_application_created_at'), 'application', ['created_at'], unique=False)
-    op.execute("ALTER TYPE user_roles_enum ADD value 'applicant';")
+    #op.execute("ALTER TYPE user_roles_enum ADD value 'applicant';")
+    op.execute("""
+        alter table "public"."user" alter column "role" set data type varchar;
+
+        drop type "public"."user_roles_enum";
+
+        create type "public"."user_roles_enum" as enum ('buyer', 'supplier', 'admin', 'admin-ccs-category', 'admin-ccs-sourcing', 'applicant');
+
+        alter table "public"."user" alter column "role" set data type user_roles_enum using "role"::user_roles_enum;
+    """)
+
     ### end Alembic commands ###
 
 
