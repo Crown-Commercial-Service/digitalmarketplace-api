@@ -1319,6 +1319,12 @@ class BriefResponse(db.Model):
 
         return data
 
+    def update_from_json(self, data):
+        current_data = dict(self.data.items())
+        current_data.update(data)
+
+        self.data = current_data
+
     @hybrid_property
     def status(self):
         if self.submitted_at:
@@ -1341,18 +1347,23 @@ class BriefResponse(db.Model):
         )
 
         if (
+            (required_fields and 'essentialRequirements' in required_fields or enforce_required) and
             'essentialRequirements' not in errs and
             len(self.data.get('essentialRequirements', [])) != len(self.brief.data['essentialRequirements'])
         ):
             errs['essentialRequirements'] = 'answer_required'
 
         if (
+            (required_fields and 'niceToHaveRequirements' in required_fields or enforce_required) and
             'niceToHaveRequirements' not in errs and
             len(self.data.get('niceToHaveRequirements', [])) != len(self.brief.data.get('niceToHaveRequirements', []))
         ):
             errs['niceToHaveRequirements'] = 'answer_required'
 
-        if max_day_rate and 'dayRate' not in errs:
+        if (
+            (required_fields and 'dayRate' in required_fields or enforce_required) and
+            max_day_rate and 'dayRate' not in errs
+        ):
             if float(self.data['dayRate']) > float(max_day_rate):
                 errs['dayRate'] = 'max_less_than_min'
 
