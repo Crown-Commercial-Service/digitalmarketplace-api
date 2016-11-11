@@ -746,15 +746,6 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             for sf in data['supplierFrameworks']:
                 assert sf['agreementReturnedAt'] is None
 
-    def test_list_suppliers_by_status_draft(self, live_g8_framework):
-        with self.app.app_context():
-            response = self.client.get('/frameworks/g-cloud-8/suppliers?status=draft')
-
-            assert response.status_code == 200
-            data = json.loads(response.get_data())
-            assert len(data['supplierFrameworks']) == 2
-            self._assert_supplier_ids(data, (1, 2))
-
     def test_list_suppliers_by_status_signed(self, live_g8_framework):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-8/suppliers?status=signed')

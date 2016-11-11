@@ -1,5 +1,5 @@
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 import re
 
 from flask import current_app
@@ -11,10 +11,9 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON, INTERVAL
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import validates, backref
+from sqlalchemy.orm import validates, backref, mapper
 from sqlalchemy.orm.session import Session
-from sqlalchemy.sql.expression import case as sql_case
-from sqlalchemy.sql.expression import cast as sql_cast
+from sqlalchemy.sql.expression import case as sql_case, cast as sql_cast, select as sql_select
 from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
@@ -330,48 +329,10 @@ class SupplierFramework(db.Model):
     on_framework = db.Column(db.Boolean, nullable=True)
     agreed_variations = db.Column(JSON)
 
-    # The following three fields are deprecated and MUST NOT BE USED
-    # Data may be outdated and should not be used for reading/updating
-    # This framework_agreements table is now the source of truth for this data
-    agreement_returned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
-    countersigned_at = db.Column(db.DateTime, index=False, unique=False, nullable=True)
-    agreement_details = db.Column(JSON)
-
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
-    @property
-    def current_framework_agreement(self):
-        """
-        For the moment, we include drafts in the SupplierFramework to keep our interface the same whilst we refactor the
-        frontend to allow multiple framework agreements per supplier framework. This means that if a draft is created
-        after any other framework agreement then it must take precident (as the supplier frontend for the moment only
-        knows about one framework agreement (the current framework agreement) we must expose the draft so it can be
-        edited as they complete the signing flow). Note, as we have no timestamp for framework agreements being created
-        we instead have to use the highest `id`. Also note, this means that for a short while, if someone has
-        signed/countersigned a supplier framework and then starts a new draft then the supplier framework will return to
-        'draft' status and will lose knowledge of the previous signing.
-
-        After the supplier frontend has been refactored so that the signing flow deals with a framework agreement rather
-        than a suqpplier framework then we will be able to ignore drafts and not include them in the current framework
-        agreement
-        """
-        if self.framework_agreements:
-            if self.framework_agreements[-1].status == 'draft':
-                return self.framework_agreements[-1]
-
-            most_recently_signed_or_countersigned = self.framework_agreements[-1]
-            most_recent_time = most_recently_signed_or_countersigned.most_recent_signature_time
-
-            for fa in self.framework_agreements:
-                if fa.status == "draft":
-                    continue
-
-                if fa.most_recent_signature_time > most_recent_time:
-                    most_recently_signed_or_countersigned = fa
-                    most_recent_time = fa.most_recent_signature_time
-
-            return most_recently_signed_or_countersigned
+    # vvvv current_framework_agreement defined further down (after FrameworkAgreement) vvvv
 
     @validates('declaration')
     def validates_declaration(self, key, value):
@@ -535,7 +496,7 @@ class FrameworkAgreement(db.Model):
     supplier_framework = db.relationship(
         SupplierFramework,
         lazy="joined",
-        backref=backref('framework_agreements', lazy="joined", order_by="FrameworkAgreement.id")
+        backref=backref('framework_agreements', lazy="joined")
     )
 
     def update_signed_agreement_details_from_json(self, data):
@@ -558,13 +519,15 @@ class FrameworkAgreement(db.Model):
 
         return data
 
-    @property
+    @hybrid_property
     def most_recent_signature_time(self):
         # Time of most recent signing or countersignature
-        if self.countersigned_agreement_returned_at:
-            return self.countersigned_agreement_returned_at
-        else:
-            return self.signed_agreement_returned_at
+        return self.countersigned_agreement_returned_at or self.signed_agreement_returned_at
+
+    @most_recent_signature_time.expression
+    def most_recent_signature_time(cls):
+        # Time of most recent signing or countersignature
+        return func.coalesce(cls.countersigned_agreement_returned_at, cls.signed_agreement_returned_at)
 
     @hybrid_property
     def status(self):
@@ -578,6 +541,15 @@ class FrameworkAgreement(db.Model):
             return 'signed'
         else:
             return 'draft'
+
+    @status.expression
+    def status(cls):
+        return sql_case([
+            (cls.countersigned_agreement_path.isnot(None), 'countersigned'),
+            (cls.countersigned_agreement_returned_at.isnot(None), 'approved'),
+            (cls.signed_agreement_put_on_hold_at.isnot(None), 'on-hold'),
+            (cls.signed_agreement_returned_at.isnot(None), 'signed')
+        ], else_='draft')
 
     def serialize(self):
         return purge_nulls_from_data({
@@ -602,6 +574,29 @@ class FrameworkAgreement(db.Model):
             ),
             'countersignedAgreementPath': self.countersigned_agreement_path
         })
+
+
+# a non_primary mapper representing the "current" framework agreement of each SupplierFramework
+SupplierFramework._CurrentFrameworkAgreement = mapper(
+    FrameworkAgreement,
+    sql_select([FrameworkAgreement]).where(
+        FrameworkAgreement.status != "draft",
+    ).order_by(
+        FrameworkAgreement.supplier_id,
+        FrameworkAgreement.framework_id,
+        desc(FrameworkAgreement.most_recent_signature_time),
+    ).distinct(
+        FrameworkAgreement.supplier_id,
+        FrameworkAgreement.framework_id,
+    ).alias(),
+    non_primary=True,
+)
+SupplierFramework.current_framework_agreement = db.relationship(
+    SupplierFramework._CurrentFrameworkAgreement,
+    lazy="joined",
+    uselist=False,
+    viewonly=True,
+)
 
 
 class User(db.Model):
@@ -1144,24 +1139,24 @@ class Brief(db.Model):
                 '2 weeks 23:59:59', INTERVAL))
 
     @hybrid_property
-    def clarification_questions_closed_at(self):
-        if self.published_at is None:
+    def clarification_questions_closed_at(self_or_cls):
+        if self_or_cls.published_at is None:
             return None
-        brief_publishing_date_and_length = self._build_date_and_length_data()
+        brief_publishing_date_and_length = self_or_cls._build_date_and_length_data()
 
         return get_publishing_dates(brief_publishing_date_and_length)['questions_close']
 
     @hybrid_property
-    def clarification_questions_published_by(self):
-        if self.published_at is None:
+    def clarification_questions_published_by(self_or_cls):
+        if self_or_cls.published_at is None:
             return None
-        brief_publishing_date_and_length = self._build_date_and_length_data()
+        brief_publishing_date_and_length = self_or_cls._build_date_and_length_data()
 
         return get_publishing_dates(brief_publishing_date_and_length)['answers_close']
 
     @hybrid_property
-    def clarification_questions_are_closed(self):
-        return datetime.utcnow() > self.clarification_questions_closed_at
+    def clarification_questions_are_closed(self_or_cls):
+        return datetime.utcnow() > self_or_cls.clarification_questions_closed_at
 
     @hybrid_property
     def status(self):

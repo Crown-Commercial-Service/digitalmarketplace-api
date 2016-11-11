@@ -212,14 +212,13 @@ def get_framework_suppliers(framework_slug):
         Framework.slug == framework_slug
     ).first_or_404()
 
+    # TODO: Work out a way to order by current_framework_agreement.signed_agreement_returned_at
     # Listing agreements is something done for Admin only (suppliers only retrieve their individual agreements)
     # CCS always want to work from the oldest returned date to newest, so order by ascending date
+
+    # TODO: Work out a way to query.filter() on current_framework_agreement rather than manipulating with Python
     supplier_frameworks = SupplierFramework.query.filter(
         SupplierFramework.framework_id == framework.id
-    ).outerjoin(
-        SupplierFramework.framework_agreements
-    ).order_by(
-        FrameworkAgreement.signed_agreement_returned_at.asc()
     )
 
     if request.args.get('agreement_returned') is not None or request.args.get('status') is not None:
@@ -232,13 +231,7 @@ def get_framework_suppliers(framework_slug):
             if convert_to_boolean(agreement_returned):
                 requested_statuses = requested_statuses or ('signed', 'on-hold', 'approved', 'countersigned')
             else:
-                supplier_frameworks = [sf for sf in supplier_frameworks if sf.current_framework_agreement is None
-                                       or (sf.current_framework_agreement
-                                           and sf.current_framework_agreement.status == 'draft'
-                                           )
-                                       ]
-                # TODO: The 'or' clause here can be deleted once drafts are excluded from current_framework_agreement
-                # TODO: Much of the logic here would be better done querying with SQL than manipulating with Python
+                supplier_frameworks = [sf for sf in supplier_frameworks if sf.current_framework_agreement is None]
 
         if requested_statuses:
             supplier_frameworks = [

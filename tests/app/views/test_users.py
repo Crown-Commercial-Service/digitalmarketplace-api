@@ -1189,8 +1189,24 @@ class TestUsersExport(BaseUserTest):
 
         assert response.status_code == 200
 
-    def _post_framework_agreement(self):
-        self._post_framework_interest({'frameworkInterest': {'agreementReturned': True}})
+    def _create_and_sign_framework_agreement(self):
+        response = self.client.post(
+            '/agreements',
+            data=json.dumps(
+                {
+                    'updated_by': 'interested@example.com',
+                    'agreement': {
+                        'supplierId': self.supplier_id,
+                        'frameworkSlug': self.framework_slug
+                    },
+                }),
+            content_type='application/json')
+        agreement_id = json.loads(response.get_data(as_text=True))['agreement']['id']
+        self.client.post(
+            "/agreements/{}/sign".format(agreement_id),
+            data=json.dumps({'updated_by': 'interested@example.com'}),
+            content_type='application/json'
+        )
 
     def _post_result(self, result):
         data = {'frameworkInterest': {'onFramework': result}, 'updated_by': 'Paul'}
@@ -1328,27 +1344,12 @@ class TestUsersExport(BaseUserTest):
                 'framework_agreement': ''
             })
 
-    # Test users for supplier with completed declaration one draft and framework agreement
-    def test_response_submitted_framework_agreement_on_framework(self):
+    def test_response_awarded_on_framework_and_submitted_framework_agreement(self):
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
-        self._post_framework_agreement()
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
-        assert len(data) == len(self.users)
-        for datum in data:
-            self._assert_things_about_export_response(datum, parameters={
-                'declaration_status': 'complete',
-                'application_status': '',
-                'framework_agreement': True
-            })
-
-    def test_response_awarded_on_framework(self):
-        self._setup()
-        self._put_complete_declaration()
-        self._post_complete_draft_service()
-        self._post_framework_agreement()
         self._post_result(True)
+        self._create_and_sign_framework_agreement()
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
@@ -1413,7 +1414,7 @@ class TestUsersExport(BaseUserTest):
         self._put_complete_declaration()
         self._post_complete_draft_service()
         self._post_result(True)
-        self._post_framework_agreement()
+        self._create_and_sign_framework_agreement()
         self._set_framework_variation()
         self._put_variation_agreement()
         data = json.loads(self._return_users_export_after_setting_framework_status(status='live').get_data())["users"]
