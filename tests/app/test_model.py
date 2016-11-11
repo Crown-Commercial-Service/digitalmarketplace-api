@@ -859,6 +859,23 @@ class TestSupplierFrameworks(BaseApplicationTest):
 
         assert supplier_framework.declaration == {'foo': 'bar', 'bar': '', 'other': ''}
 
+    def test_create_supplier_framework(self):
+        # the intention of this test is to ensure a SupplierFramework without any FrameworkAgreements is visible through
+        # the default query - i.e. none of our custom relationships are causing it to do an inner join which would
+        # cause such a SupplierFramework to be invisible
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+
+            supplier_framework = SupplierFramework(supplier_id=0, framework_id=1)
+            db.session.add(supplier_framework)
+            db.session.commit()
+
+            assert len(
+                SupplierFramework.query.filter(
+                    SupplierFramework.supplier_id == 0
+                ).all()
+            ) == 1
+
 
 class TestLot(BaseApplicationTest):
     def test_lot_data_is_serialized(self):
