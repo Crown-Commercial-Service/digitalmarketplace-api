@@ -224,6 +224,9 @@ def get_framework_suppliers(framework_slug):
 
     supplier_frameworks = supplier_frameworks.filter(
         SupplierFramework.framework_id == framework.id
+    ).order_by(
+        cfa.most_recent_signature_time.asc().nullsfirst(),
+        SupplierFramework.supplier_id,
     )
 
     #
