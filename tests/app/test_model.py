@@ -878,7 +878,8 @@ class TestLot(BaseApplicationTest):
 
 
 class TestFrameworkAgreements(BaseApplicationTest):
-    def test_supplier_has_to_be_associated_with_a_framework(self):
+    def setup(self):
+        super(TestFrameworkAgreements, self).setup()
         with self.app.app_context():
             self.setup_dummy_suppliers(1)
 
@@ -886,20 +887,18 @@ class TestFrameworkAgreements(BaseApplicationTest):
             db.session.add(supplier_framework)
             db.session.commit()
 
+    def test_supplier_has_to_be_associated_with_a_framework(self):
+        with self.app.app_context():
+            # Supplier 0 and SupplierFramework(supplier_id=0, framework_id=1) are created in setup() so these IDs exist
             framework_agreement = FrameworkAgreement(supplier_id=0, framework_id=1)
             db.session.add(framework_agreement)
             db.session.commit()
 
             assert framework_agreement.id
 
-    def test_supplier_fails_if_not_associated_with_a_framework(self):
+    def test_supplier_cannot_have_a_framework_agreement_for_a_framework_they_are_not_associated_with(self):
         with self.app.app_context():
-            self.setup_dummy_suppliers(1)
-
-            supplier_framework = SupplierFramework(supplier_id=0, framework_id=1)
-            db.session.add(supplier_framework)
-            db.session.commit()
-
+            # SupplierFramework(supplier_id=0, framework_id=2) does not exist so this should fail
             framework_agreement = FrameworkAgreement(supplier_id=0, framework_id=2)
             db.session.add(framework_agreement)
 
@@ -907,61 +906,97 @@ class TestFrameworkAgreements(BaseApplicationTest):
                 db.session.commit()
 
     def test_new_framework_agreement_status_is_draft(self):
-        framework_agreement = FrameworkAgreement(supplier_id=0, framework_id=1)
-        assert framework_agreement.status == 'draft'
+        with self.app.app_context():
+            framework_agreement = FrameworkAgreement(supplier_id=0, framework_id=1)
+            db.session.add(framework_agreement)
+            db.session.commit()
+
+            # Check python implementation gives same result as the sql implementation
+            assert framework_agreement.status == 'draft'
+            assert FrameworkAgreement.query.all()[0].status == 'draft'
 
     def test_partially_signed_framework_agreement_status_is_draft(self):
-        framework_agreement = FrameworkAgreement(
-            supplier_id=0,
-            framework_id=1,
-            signed_agreement_details={'agreement': 'details'},
-            signed_agreement_path='path'
-        )
-        assert framework_agreement.status == 'draft'
+        with self.app.app_context():
+            framework_agreement = FrameworkAgreement(
+                supplier_id=0,
+                framework_id=1,
+                signed_agreement_details={'agreement': 'details'},
+                signed_agreement_path='path'
+            )
+            db.session.add(framework_agreement)
+            db.session.commit()
+
+            # Check python implementation gives same result as the sql implementation
+            assert framework_agreement.status == 'draft'
+            assert FrameworkAgreement.query.all()[0].status == 'draft'
 
     def test_signed_framework_agreement_status_is_signed(self):
-        framework_agreement = FrameworkAgreement(
-            supplier_id=0,
-            framework_id=1,
-            signed_agreement_details={'agreement': 'details'},
-            signed_agreement_path='path',
-            signed_agreement_returned_at=datetime.utcnow()
-        )
-        assert framework_agreement.status == 'signed'
+        with self.app.app_context():
+            framework_agreement = FrameworkAgreement(
+                supplier_id=0,
+                framework_id=1,
+                signed_agreement_details={'agreement': 'details'},
+                signed_agreement_path='path',
+                signed_agreement_returned_at=datetime.utcnow()
+            )
+            db.session.add(framework_agreement)
+            db.session.commit()
+
+            # Check python implementation gives same result as the sql implementation
+            assert framework_agreement.status == 'signed'
+            assert FrameworkAgreement.query.all()[0].status == 'signed'
 
     def test_on_hold_framework_agreement_status_is_on_hold(self):
-        framework_agreement = FrameworkAgreement(
-            supplier_id=0,
-            framework_id=1,
-            signed_agreement_details={'agreement': 'details'},
-            signed_agreement_path='path',
-            signed_agreement_returned_at=datetime.utcnow(),
-            signed_agreement_put_on_hold_at=datetime.utcnow()
-        )
-        assert framework_agreement.status == 'on-hold'
+        with self.app.app_context():
+            framework_agreement = FrameworkAgreement(
+                supplier_id=0,
+                framework_id=1,
+                signed_agreement_details={'agreement': 'details'},
+                signed_agreement_path='path',
+                signed_agreement_returned_at=datetime.utcnow(),
+                signed_agreement_put_on_hold_at=datetime.utcnow()
+            )
+            db.session.add(framework_agreement)
+            db.session.commit()
+
+            # Check python implementation gives same result as the sql implementation
+            assert framework_agreement.status == 'on-hold'
+            assert FrameworkAgreement.query.all()[0].status == 'on-hold'
 
     def test_approved_framework_agreement_status_is_approved(self):
-        framework_agreement = FrameworkAgreement(
-            supplier_id=0,
-            framework_id=1,
-            signed_agreement_details={'agreement': 'details'},
-            signed_agreement_path='path',
-            signed_agreement_returned_at=datetime.utcnow(),
-            countersigned_agreement_returned_at=datetime.utcnow()
-        )
-        assert framework_agreement.status == 'approved'
+        with self.app.app_context():
+            framework_agreement = FrameworkAgreement(
+                supplier_id=0,
+                framework_id=1,
+                signed_agreement_details={'agreement': 'details'},
+                signed_agreement_path='path',
+                signed_agreement_returned_at=datetime.utcnow(),
+                countersigned_agreement_returned_at=datetime.utcnow()
+            )
+            db.session.add(framework_agreement)
+            db.session.commit()
+
+            # Check python implementation gives same result as the sql implementation
+            assert framework_agreement.status == 'approved'
+            assert FrameworkAgreement.query.all()[0].status == 'approved'
 
     def test_countersigned_framework_agreement_status_is_countersigned(self):
-        framework_agreement = FrameworkAgreement(
-            supplier_id=0,
-            framework_id=1,
-            signed_agreement_details={'agreement': 'details'},
-            signed_agreement_path='path',
-            signed_agreement_returned_at=datetime.utcnow(),
-            countersigned_agreement_returned_at=datetime.utcnow(),
-            countersigned_agreement_path='/path/to/the/countersignedAgreement.pdf'
-        )
-        assert framework_agreement.status == 'countersigned'
+        with self.app.app_context():
+            framework_agreement = FrameworkAgreement(
+                supplier_id=0,
+                framework_id=1,
+                signed_agreement_details={'agreement': 'details'},
+                signed_agreement_path='path',
+                signed_agreement_returned_at=datetime.utcnow(),
+                countersigned_agreement_returned_at=datetime.utcnow(),
+                countersigned_agreement_path='/path/to/the/countersignedAgreement.pdf'
+            )
+            db.session.add(framework_agreement)
+            db.session.commit()
+
+            # Check python implementation gives same result as the sql implementation
+            assert framework_agreement.status == 'countersigned'
+            assert FrameworkAgreement.query.all()[0].status == 'countersigned'
 
     def test_most_recent_signature_time(self):
         framework_agreement = FrameworkAgreement(
