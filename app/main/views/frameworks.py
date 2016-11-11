@@ -212,32 +212,37 @@ def get_framework_suppliers(framework_slug):
         Framework.slug == framework_slug
     ).first_or_404()
 
-    # TODO: Work out a way to order by current_framework_agreement.signed_agreement_returned_at
-    # Listing agreements is something done for Admin only (suppliers only retrieve their individual agreements)
-    # CCS always want to work from the oldest returned date to newest, so order by ascending date
+    # we're going to need an alias for the current_framework_agreement join
+    cfa = orm.aliased(SupplierFramework._CurrentFrameworkAgreement)
+    supplier_frameworks = SupplierFramework.query.outerjoin(
+        cfa, SupplierFramework.current_framework_agreement
+    ).options(
+        orm.contains_eager(
+            SupplierFramework.current_framework_agreement, alias=cfa
+        )
+    )
 
-    # TODO: Work out a way to query.filter() on current_framework_agreement rather than manipulating with Python
-    supplier_frameworks = SupplierFramework.query.filter(
+    supplier_frameworks = supplier_frameworks.filter(
         SupplierFramework.framework_id == framework.id
     )
 
-    if request.args.get('agreement_returned') is not None or request.args.get('status') is not None:
-        requested_statuses = None
-        if request.args.get('status') is not None:
-            requested_statuses = request.args.get('status').split(',')
+    #
+    # bit of an oddly designed interface here in that the two filterable parameters aren't
+    # really orthogonal. implementing them as such anyway for clarity.
+    #
 
-        agreement_returned = request.args.get('agreement_returned')
-        if agreement_returned is not None:
-            if convert_to_boolean(agreement_returned):
-                requested_statuses = requested_statuses or ('signed', 'on-hold', 'approved', 'countersigned')
-            else:
-                supplier_frameworks = [sf for sf in supplier_frameworks if sf.current_framework_agreement is None]
+    agreement_returned = request.args.get('agreement_returned')
+    if agreement_returned is not None:
+        supplier_frameworks = supplier_frameworks.filter(
+            # using the not-nullable FrameworkAgreement.id as a proxy for testing row null-ness
+            cfa.id.isnot(None) if convert_to_boolean(agreement_returned) else cfa.id.is_(None)
+        )
 
-        if requested_statuses:
-            supplier_frameworks = [
-                sf for sf in supplier_frameworks
-                if sf.current_framework_agreement and sf.current_framework_agreement.status in requested_statuses
-                ]
+    status = request.args.get('status')
+    if status is not None:
+        supplier_frameworks = supplier_frameworks.filter(
+            cfa.status.in_(status.split(","))
+        )
 
     return jsonify(supplierFrameworks=[
         supplier_framework.serialize() for supplier_framework in supplier_frameworks
