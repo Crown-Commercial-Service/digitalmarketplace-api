@@ -1,11 +1,13 @@
-from flask import jsonify
+from flask import jsonify, current_app
 
 from . import main
 from ..models import ValidationError
 
 
 @main.app_errorhandler(ValidationError)
-def validatation_error(e):
+def validation_error(e):
+    msg = 'validation error: {}'.format(e.message)
+    current_app.logger.error(msg)
     return jsonify(error=e.message), 400
 
 
