@@ -30,7 +30,8 @@
         "supplier",
         "admin",
         "admin-ccs-category",
-        "admin-ccs-sourcing"
+        "admin-ccs-sourcing",
+        "applicant"
       ]
     },
     "supplierCode": {
