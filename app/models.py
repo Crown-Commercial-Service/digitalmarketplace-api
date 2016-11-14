@@ -627,6 +627,7 @@ class User(db.Model):
                                # admin actions.
         'admin-ccs-category',  # generally restricted to read-only access to admin views.
         'admin-ccs-sourcing',  # can perform admin actions involving supplier acceptance.
+        'applicant'
     ]
 
     id = db.Column(db.Integer, primary_key=True)
