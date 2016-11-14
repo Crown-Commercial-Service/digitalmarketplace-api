@@ -539,14 +539,14 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
     def setup(self):
         """Sets up supplier frameworks as follows:
 
-        Suppliers with IDs 0-9 have a G-Cloud 8 SupplierFramework record ("have registered interest")
+        Suppliers with IDs 0-10 have a G-Cloud 8 SupplierFramework record ("have registered interest")
         Supplier 0 has returned a G-Cloud 7 agreement but not G-Cloud 8
         Suppliers 1 and 2 have drafts of G-Cloud 8 agreements
         Suppliers 3, 4 and 5 have returned their G-Cloud 8 agreements
         Supplier 4 and 9's agreements were put on hold
         Supplier 6's has been approved for countersignature but doesn't have a file yet
-        Suppliers 7, 8 and 9 have countersigned agreements
-        Supplier 10 has nothing to do with anything or anyone
+        Suppliers 7, 8, 9 and 10 have countersigned agreements
+        Supplier 11 has nothing to do with anything or anyone
 
         We use freeze_time to create a non-trivial ordering of creation/signing events in time, so that different
         suppliers event timelines overlap in slightly complex ways, ensuring we test things like ordering properly.
@@ -554,7 +554,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
         super(TestGetFrameworkSuppliers, self).setup()
 
         with freeze_time("2016-10-09", tick=True):
-            self.setup_dummy_suppliers(11)
+            self.setup_dummy_suppliers(12)
             self.setup_dummy_user(id=123, role='supplier')
 
         with self.app.app_context():
@@ -588,6 +588,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                         'agreement': {'supplierId': 0, 'frameworkSlug': 'g-cloud-7'},
                     }),
                     content_type='application/json')
+                assert response.status_code == 201, response.get_data(as_text=True)
                 data = json.loads(response.get_data())
                 agreement_id = data['agreement']['id']
 
@@ -610,7 +611,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                 assert response.status_code == 200, response.get_data(as_text=True)
 
             # (Almost) everyone is on G-Cloud 8
-            for supplier_id in range(10):
+            for supplier_id in range(11):
                 with freeze_time(datetime.datetime(2016, 10, supplier_id+2)):
                     response = self.client.put(
                         '/suppliers/{}/frameworks/g-cloud-8'.format(supplier_id),
@@ -630,9 +631,9 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                         content_type='application/json')
                     assert response.status_code == 200, response.get_data(as_text=True)
 
-            # Suppliers 1-9 have started to return a G-Cloud 8 agreement (created a draft)
+            # Suppliers 1-10 have started to return a G-Cloud 8 agreement (created a draft)
             agreement_ids = {}
-            for supplier_id in range(1, 10):
+            for supplier_id in range(1, 11):
                 with freeze_time(datetime.datetime(2016, 11, (supplier_id+1)*2)):
                     response = self.client.post(
                         '/agreements',
@@ -642,10 +643,23 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                         }),
                         content_type='application/json'
                     )
+                    assert response.status_code == 201, response.get_data(as_text=True)
                     data = json.loads(response.get_data())
                     agreement_ids[supplier_id] = data['agreement']['id']
 
-            for supplier_id in range(1, 10):
+            # (supplier 10 created a superfluous agreement which they then didn't use
+            with freeze_time(datetime.datetime(2016, 11, 26)):
+                response = self.client.post(
+                    '/agreements',
+                    data=json.dumps({
+                        'updated_by': 'example',
+                        'agreement': {'supplierId': 10, 'frameworkSlug': 'g-cloud-8'},
+                    }),
+                    content_type='application/json'
+                )
+                assert response.status_code == 201, response.get_data(as_text=True)
+
+            for supplier_id in range(1, 11):
                 with freeze_time(datetime.datetime(2016, 11, (supplier_id+1)*2, 10)):
                     response = self.client.post(
                         '/agreements/{}'.format(agreement_ids[supplier_id]),
@@ -663,9 +677,9 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                     )
                     assert response.status_code == 200, response.get_data(as_text=True)
 
-            # Suppliers 3-9 have returned their G-Cloud 8 agreement
-            for supplier_id in range(3, 10):
-                with freeze_time(datetime.datetime(2016, 11, 30, 10-supplier_id)):
+            # Suppliers 3-10 have returned their G-Cloud 8 agreement
+            for supplier_id in range(3, 11):
+                with freeze_time(datetime.datetime(2016, 11, 30, 11-supplier_id)):
                     response = self.client.post(
                         '/agreements/{}/sign'.format(agreement_ids[supplier_id]),
                         data=json.dumps({
@@ -682,7 +696,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
 
             # Supplier 4 and 9's agreements were put on hold (only 4 subsequently remained on hold)
             for supplier_id in (4, 9,):
-                with freeze_time(datetime.datetime(2016, 11, 30, 11-(supplier_id//3))):
+                with freeze_time(datetime.datetime(2016, 11, 30, 12-(supplier_id//3))):
                     response = self.client.post(
                         '/agreements/{}/on-hold'.format(agreement_ids[supplier_id]),
                         data=json.dumps({'updated_by': 'example'}),
@@ -690,8 +704,8 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                     )
                     assert response.status_code == 200, response.get_data(as_text=True)
 
-            # Suppliers 6-9 have been approved for countersignature
-            for supplier_id in range(6, 10):
+            # Suppliers 6-10 have been approved for countersignature
+            for supplier_id in range(6, 11):
                 with freeze_time(datetime.datetime(2016, 11, 30, 15-supplier_id)):
                     response = self.client.post(
                         '/agreements/{}/approve'.format(agreement_ids[supplier_id]),
@@ -703,8 +717,8 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                     )
                     assert response.status_code == 200, response.get_data(as_text=True)
 
-            # Suppliers 7, 8 and 9 have countersigned agreements
-            for supplier_id in range(7, 10):
+            # Suppliers 7-10 have countersigned agreements
+            for supplier_id in range(7, 11):
                 with freeze_time(datetime.datetime(2016, 12, 25, 5+supplier_id)):
                     response = self.client.post(
                         '/agreements/{}'.format(agreement_ids[supplier_id]),
@@ -729,7 +743,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             response = self.client.get('/frameworks/g-cloud-8/suppliers')
             assert response.status_code == 200
             data = json.loads(response.get_data())
-            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (0, 1, 2, 5, 4, 9, 3, 8, 7, 6,)
+            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (0, 1, 2, 10, 5, 9, 4, 8, 3, 7, 6)
 
     def test_list_suppliers_by_agreement_returned_true(self, live_g8_framework):
         with self.app.app_context():
@@ -739,7 +753,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
 
             assert response.status_code == 200
             data = json.loads(response.get_data())
-            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (5, 4, 9, 3, 8, 7, 6)
+            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 5, 9, 4, 8, 3, 7, 6)
             assert all(sf["agreementReturnedAt"] for sf in data["supplierFrameworks"])
 
     def test_list_suppliers_by_agreement_returned_false(self, live_g8_framework):
@@ -786,7 +800,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
 
             assert response.status_code == 200
             data = json.loads(response.get_data())
-            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (9, 8, 7,)
+            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 9, 8, 7,)
             assert all(sf['agreementStatus'] == "countersigned" for sf in data['supplierFrameworks'])
 
     def test_list_suppliers_by_multiple_statuses_1(self, live_g8_framework):
@@ -795,7 +809,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
 
             assert response.status_code == 200
             data = json.loads(response.get_data())
-            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (9, 8, 7, 6,)
+            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 9, 8, 7, 6,)
             assert all(sf['agreementStatus'] in ("approved", "countersigned") for sf in data['supplierFrameworks'])
 
     def test_list_suppliers_by_multiple_statuses_2(self, live_g8_framework):
@@ -815,7 +829,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
 
             assert response.status_code == 200
             data = json.loads(response.get_data())
-            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (9, 8, 7, 6,)
+            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 9, 8, 7, 6,)
             assert all(sf['agreementStatus'] in ("approved", "countersigned") for sf in data['supplierFrameworks'])
             assert all(sf["agreementReturnedAt"] for sf in data["supplierFrameworks"])
 
