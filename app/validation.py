@@ -156,15 +156,40 @@ def get_validation_errors(validator_name, json_data,
     errors = validator.iter_errors(json_data)
     form_errors = []
     for error in errors:
-        if error.path:
+        # validate follow-up questions are answered: eg evidence given for a 'yes' nice-to-have
+        if error.validator == 'oneOf':
+            key, index = error.path
+            if key not in error_map:
+                error_map[key] = []
+
+            # figure out which field has failed
+            required_contexts = [e for e in error.context if e.validator == 'required']
+            if required_contexts:
+                field = re.search(r"'(.*)'", required_contexts[0].message).group(1)
+
+                error_map[key].append({
+                    'field': field,
+                    'index': index,
+                    'error': 'answer_required'
+                })
+
+            else:
+                error_map[key].append({
+                    'index': index,
+                    'error': error.message
+                })
+
+        elif error.path:
             key = error.path[0]
             error_map[key] = _translate_json_schema_error(
                 key, error.validator, error.validator_value, error.message
             )
+        # validate multiquestion dependencies: eg for specialist roles check that all fields are present or none are
         elif error.validator in ['required', 'dependencies']:
             regex = r'u?\'(\w+)\' is a dependency of u?\'(\w+)\'' if error.validator == 'dependencies' else r'\'(.*)\''
             key = re.search(regex, error.message).group(1)
             error_map[key] = 'answer_required'
+        # validate at least one item exists: eg specialist/outcome exists when submitting a dos service
         elif error.validator == 'anyOf':
             if error.validator_value[0].get('title'):
                 form_errors.append('{}_required'.format(error.validator_value[0].get('title')))
