@@ -743,7 +743,10 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             response = self.client.get('/frameworks/g-cloud-8/suppliers')
             assert response.status_code == 200
             data = json.loads(response.get_data())
-            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (0, 1, 2, 10, 5, 9, 4, 8, 3, 7, 6)
+
+            # supplierFrameworks are returned in order of ID if they don't have a framework agreement
+            # returned, and from oldest to newest returned if they do
+            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (0, 1, 2, 10, 9, 8, 7, 6, 5, 4, 3,)
 
     def test_list_suppliers_by_agreement_returned_true(self, live_g8_framework):
         with self.app.app_context():
@@ -753,7 +756,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
 
             assert response.status_code == 200
             data = json.loads(response.get_data())
-            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 5, 9, 4, 8, 3, 7, 6)
+            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 9, 8, 7, 6, 5, 4, 3,)
             assert all(sf["agreementReturnedAt"] for sf in data["supplierFrameworks"])
 
     def test_list_suppliers_by_agreement_returned_false(self, live_g8_framework):
@@ -818,7 +821,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
 
             assert response.status_code == 200
             data = json.loads(response.get_data())
-            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (5, 3, 6,)
+            assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (6, 5, 3,)
             assert all(sf['agreementStatus'] in ("approved", "signed") for sf in data['supplierFrameworks'])
 
     def test_list_suppliers_by_multiple_statuses_and_agreement_returned_true(self, live_g8_framework):
