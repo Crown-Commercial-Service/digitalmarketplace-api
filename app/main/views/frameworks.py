@@ -212,7 +212,8 @@ def get_framework_suppliers(framework_slug):
         Framework.slug == framework_slug
     ).first_or_404()
 
-    # we're going to need an alias for the current_framework_agreement join
+    # we're going to need an "alias" for the current_framework_agreement join
+    # so that we can refer to it in later clauses
     cfa = orm.aliased(SupplierFramework._CurrentFrameworkAgreement)
     supplier_frameworks = SupplierFramework.query.outerjoin(
         cfa, SupplierFramework.current_framework_agreement
@@ -221,18 +222,20 @@ def get_framework_suppliers(framework_slug):
             SupplierFramework.current_framework_agreement, alias=cfa
         )
     )
+    # now we can use the alias `cfa` to refer to the joinedload that
+    # SupplierFramework.current_framework_agreement would usually cause
 
     supplier_frameworks = supplier_frameworks.filter(
         SupplierFramework.framework_id == framework.id
     ).order_by(
+        # Listing agreements is something done for Admin only (suppliers only retrieve their individual agreements)
+        # and CCS always want to work from the oldest returned date to newest, so order by ascending date
         cfa.signed_agreement_returned_at.asc().nullsfirst(),
         SupplierFramework.supplier_id,
     )
 
-    #
-    # bit of an oddly designed interface here in that the two filterable parameters aren't
+    # endpoint has evolved a bit of an oddly designed interface here in that the two filterable parameters aren't
     # really orthogonal. implementing them as such anyway for clarity.
-    #
 
     agreement_returned = request.args.get('agreement_returned')
     if agreement_returned is not None:
