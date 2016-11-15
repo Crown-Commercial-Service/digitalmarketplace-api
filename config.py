@@ -27,7 +27,10 @@ class Config:
     # Feature Flags
     RAISE_ERROR_ON_MISSING_FEATURES = True
 
-    FEATURE_FLAGS_TRANSACTION_ISOLATION = False
+    # List all your feature flags below
+    FEATURE_FLAGS = {
+        'TRANSACTION_ISOLATION': False
+    }
 
     DM_API_SERVICES_PAGE_SIZE = 100
     DM_API_SUPPLIERS_PAGE_SIZE = 100
@@ -62,7 +65,10 @@ class Test(Config):
     DM_API_BRIEFS_PAGE_SIZE = 5
     DM_API_BRIEF_RESPONSES_PAGE_SIZE = 5
     DM_API_PAGE_SIZE = 5
-    FEATURE_FLAGS_TRANSACTION_ISOLATION = enabled_since('2015-08-27')
+    # List all your feature flags below
+    FEATURE_FLAGS = {
+        'TRANSACTION_ISOLATION': True
+    }
     DM_API_ADMIN_USERNAME = None
 
 
@@ -83,7 +89,10 @@ class Live(Config):
 
 
 class Preview(Live):
-    FEATURE_FLAGS_TRANSACTION_ISOLATION = enabled_since('2015-08-27')
+    # List all your feature flags below
+    FEATURE_FLAGS = {
+        'TRANSACTION_ISOLATION': True
+    }
 
 
 class Staging(Live):
