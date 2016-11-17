@@ -1,9 +1,9 @@
-import os
 from flask import jsonify, current_app, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from . import status
 from . import utils
+from ..models import Framework
 from dmutils.status import get_flags
 
 
@@ -20,6 +20,7 @@ def status_no_db():
     try:
         return jsonify(
             status="ok",
+            frameworks={f.slug: f.status for f in Framework.query.all()},
             version=version,
             db_version=utils.get_db_version(),
             flags=get_flags(current_app)
