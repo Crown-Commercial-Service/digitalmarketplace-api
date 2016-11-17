@@ -403,7 +403,7 @@ class SupplierFramework(db.Model):
             "agreedUserEmail": user.email_address,
         })
 
-    def serialize(self, data=None, with_users=True):
+    def serialize(self, data=None, with_users=False):
         agreed_variations = {
             k: self.serialize_agreed_variation(v, with_users=with_users)
             for k, v in iteritems(self.agreed_variations or {})

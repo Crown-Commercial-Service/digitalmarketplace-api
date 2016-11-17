@@ -341,7 +341,7 @@ def get_supplier_framework_info(supplier_id, framework_slug):
     if supplier_framework is None:
         abort(404)
 
-    return jsonify(frameworkInterest=supplier_framework.serialize())
+    return jsonify(frameworkInterest=supplier_framework.serialize(with_users=True))
 
 
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['PUT'])
