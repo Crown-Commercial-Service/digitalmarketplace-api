@@ -388,8 +388,8 @@ class SupplierFramework(db.Model):
         }
 
     @staticmethod
-    def serialize_agreed_variation(agreed_variation):
-        if not agreed_variation.get("agreedUserId"):
+    def serialize_agreed_variation(agreed_variation, with_users=True):
+        if not (with_users and agreed_variation.get("agreedUserId")):
             return agreed_variation
 
         user = User.query.filter(
@@ -403,8 +403,11 @@ class SupplierFramework(db.Model):
             "agreedUserEmail": user.email_address,
         })
 
-    def serialize(self, data=None):
-        agreed_variations = {k: self.serialize_agreed_variation(v) for k, v in iteritems(self.agreed_variations or {})}
+    def serialize(self, data=None, with_users=True):
+        agreed_variations = {
+            k: self.serialize_agreed_variation(v, with_users=with_users)
+            for k, v in iteritems(self.agreed_variations or {})
+        }
 
         supplier_framework = dict({
             "supplierId": self.supplier_id,
@@ -449,24 +452,24 @@ class SupplierFramework(db.Model):
                 "agreementStatus": None
             })
 
-        if supplier_framework['agreementDetails'] and supplier_framework['agreementDetails'].get('uploaderUserId'):
-            user = User.query.filter(
-                User.id == supplier_framework['agreementDetails']['uploaderUserId']
-            ).first()
+        if with_users:
+            if (supplier_framework.get("agreementDetails") or {}).get("uploaderUserId"):
+                user = User.query.filter(
+                    User.id == supplier_framework['agreementDetails']['uploaderUserId']
+                ).first()
 
-            if user:
-                supplier_framework['agreementDetails']['uploaderUserName'] = user.name
-                supplier_framework['agreementDetails']['uploaderUserEmail'] = user.email_address
+                if user:
+                    supplier_framework['agreementDetails']['uploaderUserName'] = user.name
+                    supplier_framework['agreementDetails']['uploaderUserEmail'] = user.email_address
 
-        if supplier_framework['countersignedDetails'] \
-                and supplier_framework['countersignedDetails'].get('approvedByUserId'):
-            user = User.query.filter(
-                User.id == supplier_framework['countersignedDetails']['approvedByUserId']
-            ).first()
+            if (supplier_framework.get("countersignedDetails") or {}).get("approvedByUserId"):
+                user = User.query.filter(
+                    User.id == supplier_framework['countersignedDetails']['approvedByUserId']
+                ).first()
 
-            if user:
-                supplier_framework['countersignedDetails']['approvedByUserName'] = user.name
-                supplier_framework['countersignedDetails']['approvedByUserEmail'] = user.email_address
+                if user:
+                    supplier_framework['countersignedDetails']['approvedByUserName'] = user.name
+                    supplier_framework['countersignedDetails']['approvedByUserEmail'] = user.email_address
 
         return supplier_framework
 

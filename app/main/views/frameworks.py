@@ -250,8 +250,9 @@ def get_framework_suppliers(framework_slug):
             cfa.status.in_(status.split(","))
         )
 
+    with_users = convert_to_boolean(request.args.get("with_users", default="false"))
     return jsonify(supplierFrameworks=[
-        supplier_framework.serialize() for supplier_framework in supplier_frameworks
+        supplier_framework.serialize(with_users=with_users) for supplier_framework in supplier_frameworks
     ])
 
 
