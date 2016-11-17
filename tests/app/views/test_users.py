@@ -1081,6 +1081,21 @@ class TestUsersGet(BaseUserTest):
         assert len(data['users']) == 1
         assert buyer['name'] == 'Chris'
 
+    def test_list_users_by_admin_role(self):
+        self._post_user({
+            "emailAddress": "admin@gov.uk",
+            "name": "Admin",
+            "role": "admin",
+            "password": "minimum10characterpassword"
+        })
+
+        response = self.client.get("/users?role=admin")
+        data = json.loads(response.get_data())
+
+        assert response.status_code == 200
+        assert len(data['users']) == 1
+        assert data['users'][0]['name'] == 'Admin'
+
     def test_400_returned_if_role_param_is_not_valid(self):
         response = self.client.get('/users?role=incorrect')
         data = response.get_data(as_text=True)

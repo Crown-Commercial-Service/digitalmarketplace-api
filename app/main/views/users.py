@@ -65,7 +65,7 @@ def list_users():
 
     role = request.args.get('role')
     if role:
-        if role in ['buyer']:
+        if role in User.ROLES:
             user_query = user_query.filter(
                 User.role == role
             )
