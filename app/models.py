@@ -388,7 +388,7 @@ class SupplierFramework(db.Model):
         }
 
     @staticmethod
-    def serialize_agreed_variation(agreed_variation, with_users=True):
+    def serialize_agreed_variation(agreed_variation, with_users=False):
         if not (with_users and agreed_variation.get("agreedUserId")):
             return agreed_variation
 
