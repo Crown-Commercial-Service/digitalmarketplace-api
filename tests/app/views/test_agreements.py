@@ -1128,7 +1128,7 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
 
         with self.app.app_context():
             agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first()
-            supplier_framework = agreement.supplier_framework.serialize()
+            supplier_framework = agreement.supplier_framework.serialize(with_users=True)
 
         assert supplier_framework['countersignedDetails']['approvedByUserName'] == 'Chris'
         assert supplier_framework['countersignedDetails']['approvedByUserEmail'] == 'chris@example.com'

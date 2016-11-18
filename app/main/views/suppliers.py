@@ -324,12 +324,12 @@ def get_supplier_frameworks_info(supplier_id):
     ).all()
 
     return jsonify(frameworkInterest=[
-        framework.serialize({
-            'drafts_count': service_counts.get((framework.framework_id, 'not-submitted'), 0),
-            'complete_drafts_count': service_counts.get((framework.framework_id, 'submitted'), 0),
-            'services_count': service_counts.get((framework.framework_id, 'published'), 0)
+        supplier_framework.serialize({
+            'drafts_count': service_counts.get((supplier_framework.framework_id, 'not-submitted'), 0),
+            'complete_drafts_count': service_counts.get((supplier_framework.framework_id, 'submitted'), 0),
+            'services_count': service_counts.get((supplier_framework.framework_id, 'published'), 0)
         })
-        for framework in supplier_frameworks]
+        for supplier_framework in supplier_frameworks]
     )
 
 
@@ -341,7 +341,7 @@ def get_supplier_framework_info(supplier_id, framework_slug):
     if supplier_framework is None:
         abort(404)
 
-    return jsonify(frameworkInterest=supplier_framework.serialize())
+    return jsonify(frameworkInterest=supplier_framework.serialize(with_users=True))
 
 
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['PUT'])

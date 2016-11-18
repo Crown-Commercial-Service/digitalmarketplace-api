@@ -1699,10 +1699,13 @@ class TestSupplierFrameworkVariation(BaseApplicationTest):
 
         expected_variation = {
             "agreedUserId": 1,
-            "agreedUserEmail": "test+1@digital.gov.uk",
-            "agreedUserName": "my name",
             "agreedAt": "2016-06-06T00:00:00.000000Z",
         }
+        expected_variation_with_user = dict(
+            expected_variation,
+            agreedUserEmail="test+1@digital.gov.uk",
+            agreedUserName="my name",
+        )
 
         assert response.status_code == 200
         response_json = json.loads(response.get_data())
@@ -1711,7 +1714,7 @@ class TestSupplierFrameworkVariation(BaseApplicationTest):
         response2 = self.client.get("/suppliers/1/frameworks/g-cloud-8")
         assert response2.status_code == 200
         assert json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"] == {
-            "banana": expected_variation,
+            "banana": expected_variation_with_user,
         }
 
         with app.app_context():
@@ -1749,10 +1752,13 @@ class TestSupplierFrameworkVariation(BaseApplicationTest):
 
         expected_variation_toblerone = {
             "agreedUserId": 2,
-            "agreedUserEmail": "test+2@digital.gov.uk",
-            "agreedUserName": "my name",
             "agreedAt": "2016-06-06T00:00:00.000000Z",
         }
+        expected_variation_toblerone_with_user = dict(
+            expected_variation_toblerone,
+            agreedUserEmail="test+2@digital.gov.uk",
+            agreedUserName="my name",
+        )
 
         assert response.status_code == 200
         response_json = json.loads(response.get_data())
@@ -1761,7 +1767,7 @@ class TestSupplierFrameworkVariation(BaseApplicationTest):
         response2 = self.client.get("/suppliers/2/frameworks/g-cloud-8")
         assert response2.status_code == 200
         assert json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"] == {
-            "toblerone": expected_variation_toblerone,
+            "toblerone": expected_variation_toblerone_with_user,
         }
 
         # check we've left the other supplier alone
@@ -1779,10 +1785,13 @@ class TestSupplierFrameworkVariation(BaseApplicationTest):
 
         expected_variation_banana = {
             "agreedUserId": 2,
-            "agreedUserEmail": "test+2@digital.gov.uk",
-            "agreedUserName": "my name",
             "agreedAt": "2016-07-07T00:00:00.000000Z",
         }
+        expected_variation_banana_with_user = dict(
+            expected_variation_banana,
+            agreedUserEmail="test+2@digital.gov.uk",
+            agreedUserName="my name",
+        )
 
         assert response4.status_code == 200
         response4_json = json.loads(response4.get_data())
@@ -1791,8 +1800,8 @@ class TestSupplierFrameworkVariation(BaseApplicationTest):
         response5 = self.client.get("/suppliers/2/frameworks/g-cloud-8")
         assert response5.status_code == 200
         assert json.loads(response5.get_data())["frameworkInterest"]["agreedVariations"] == {
-            "banana": expected_variation_banana,
-            "toblerone": expected_variation_toblerone,
+            "banana": expected_variation_banana_with_user,
+            "toblerone": expected_variation_toblerone_with_user,
         }
 
         # check we can't agree a second time
@@ -1808,8 +1817,8 @@ class TestSupplierFrameworkVariation(BaseApplicationTest):
         response7 = self.client.get("/suppliers/2/frameworks/g-cloud-8")
         assert response7.status_code == 200
         assert json.loads(response7.get_data())["frameworkInterest"]["agreedVariations"] == {
-            "banana": expected_variation_banana,
-            "toblerone": expected_variation_toblerone,
+            "banana": expected_variation_banana_with_user,
+            "toblerone": expected_variation_toblerone_with_user,
         }
 
         with app.app_context():
