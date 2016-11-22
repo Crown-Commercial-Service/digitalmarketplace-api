@@ -33,6 +33,9 @@ from .datetime_utils import DateTime, utcnow, parse_interval, parse_time_of_day,
 
 import pendulum
 
+from functools import partial
+utcnow = partial(pendulum.now, 'UTC')
+
 
 class FrameworkLot(db.Model):
     __tablename__ = 'framework_lot'
@@ -307,6 +310,13 @@ class ServiceRole(db.Model):
             raise ValidationError('Unknown role: {}'.format(role_name))
         return result
 
+    @staticmethod
+    def lookupbyrolename(role_name):
+        result = ServiceRole.query.filter_by(name=role_name).first()
+        if result is None:
+            raise ValidationError('Unknown role: {}'.format(role_name))
+        return result
+
     def serialize(self):
         serialized = {
             'category': self.category.name,
@@ -339,6 +349,22 @@ class PriceSchedule(db.Model):
             raise ValidationError('Price schedule missing required field: {}'.format(e))
         except InvalidOperation, e:
             raise ValidationError('Invalid rate value: {}'.format(e))
+
+    @staticmethod
+    def from_submitted_pricing_json(as_dict):
+        def it():
+            for k, v in as_dict.iteritems():
+                for level in ['Junior', 'Senior']:
+                    if level == 'Junior':
+                        price_field = 'minPrice'
+                    elif level == 'Senior':
+                        price_field = 'maxPrice'
+
+                    rolename = '{} {}'.format(level, k)
+                    service_role = ServiceRole.lookupbyrolename(rolename)
+                    hourly_rate = v[price_field]
+                    yield PriceSchedule(service_role=service_role, hourly_rate=hourly_rate)
+        return list(it())
 
     def serialize(self):
         serialized = {
@@ -411,6 +437,21 @@ class Supplier(db.Model):
     case_studies = db.relationship('CaseStudy', single_parent=True, cascade='all, delete-orphan')
     references = db.relationship('SupplierReference', single_parent=True, cascade='all, delete-orphan')
     prices = db.relationship('PriceSchedule', single_parent=True, cascade='all, delete-orphan')
+    status = db.Column(
+        db.Enum(
+            *[
+                'limited',
+                'complete',
+                'deleted'
+            ],
+            name='supplier_status_enum'
+        ),
+        default='complete',
+        index=False,
+        unique=False,
+        nullable=False
+    )
+
     from .datetime_utils import localnow
     # TODO: migrate these to plain (non-timezone) fields
     creation_time = db.Column(DateTime(timezone=True),
@@ -455,11 +496,21 @@ class Supplier(db.Model):
         return serialized
 
     def update_from_json(self, data):
-        keys = ('code', 'dataVersion', 'name', 'longName', 'summary', 'description', 'address', 'website', 'extraLinks',
-                'abn', 'acn', 'contacts', 'references', 'prices', 'case_study_ids', 'linkedin')
+        keys = ['code', 'dataVersion', 'name', 'longName', 'summary', 'description', 'address', 'website', 'extraLinks',
+                'abn', 'acn', 'contacts', 'references', 'prices', 'case_study_ids', 'linkedin', 'services']
+
+        keys += ['status']
+        keys += ['description']  # unused
+        keys += ['services']  # this key is generated during the seller registration process but is redundant
+        keys += ['pricing']  # slightly different field name used by seller registration
+
+        keys += ['email', 'phone', 'representative']  # for the contact
+
         extra_keys = set(data.keys()) - set(keys)
+
         if extra_keys:
             raise ValidationError('Additional properties are not allowed: {}'.format(str(extra_keys)))
+
         self.code = data.get('code', self.code)
         self.data_version = data.get('dataVersion', self.data_version)
         self.name = data.get('name', self.name)
@@ -470,17 +521,28 @@ class Supplier(db.Model):
         self.linkedin = data.get('linkedin', self.linkedin)
         self.abn = data.get('abn', self.abn)
         self.acn = data.get('acn', self.acn)
+        self.status = data.get('status', self.status)
+
         if 'address' in data:
             self.address = Address.from_json(data['address'])
         if 'extraLinks' in data:
             self.extra_links = [WebsiteLink.from_json(l) for l in data['extraLinks']]
         if 'contacts' in data:
             self.contacts = [Contact.from_json(c) for c in data['contacts']]
+        elif 'representative' in data:
+            self.contacts = [
+                Contact.from_json(c) for c in [{
+                    'name': data.get('representative'),
+                    'email': data.get('email'),
+                    'phone': data.get('phone')
+                }]
+            ]
         if 'references' in data:
             self.references = [SupplierReference.from_json(r) for r in data['references']]
         if 'prices' in data:
             self.prices = [PriceSchedule.from_json(p) for p in data['prices']]
-
+        if 'pricing' in data:
+            self.prices = PriceSchedule.from_submitted_pricing_json(data['pricing'])
         self.last_update_time = utcnow()
         return self
 
@@ -1656,9 +1718,35 @@ class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(JSON, nullable=False)
     user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=False)
-    created_at = db.Column(DateTime, index=True, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+
+    status = db.Column(
+        db.Enum(
+            *[
+                'saved',
+                'submitted',
+                'approved',
+                'complete',
+                'approval_rejected',
+                'assessment_rejected'
+            ],
+            name='application_status_enum'
+        ),
+        default='saved',
+        index=False,
+        unique=False,
+        nullable=False
+    )
+
+    status = db.Column(String, index=True, nullable=False, default='saved')
 
     user = db.relationship('User', lazy='joined')
+
+    supplier_code = db.Column(db.BigInteger,
+                              db.ForeignKey('supplier.code'),
+                              nullable=True)
+
+    supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
 
     @validates('data')
     def validates_data(self, key, data):
@@ -1672,13 +1760,15 @@ class Application(db.Model):
 
     def serialize(self):
         data = self.data.copy()
+
         data.update({
             'id': self.id,
             'user_id': self.user_id,
+            'status': self.status,
             'createdAt': self.created_at.to_iso8601_string(extended=True),
             'links': {
-                'self': url_for('.get_work_order', work_order_id=self.id),
-                'user': url_for(".get_user_by_id", user_id=self.user_id),
+                'self': url_for('main.get_work_order', work_order_id=self.id),
+                'user': url_for("main.get_user_by_id", user_id=self.user_id),
             }
         })
 
@@ -1690,6 +1780,59 @@ class Application(db.Model):
         new_data.update(data)
         self.data = new_data
 
+        try:
+            self.status = data['status']
+        except KeyError:
+            pass
+
+    def submit_for_approval(self):
+        if self.status != 'saved':
+            raise ValidationError("Only as 'saved' application can be set to 'submitted'.")
+
+        self.status = 'submitted'
+
+    def set_approval(self, approved):
+        if self.status != 'submitted':
+            raise ValidationError("Only a 'submitted' application can be subject to an approval decision.")
+
+        if approved:
+            supplier = Supplier()
+            supplier.update_from_json(self.data)
+
+            self.supplier = supplier
+            self.supplier.status = 'limited'
+
+            self.status = 'approved'
+
+            self.user.role = 'supplier'
+            self.user.supplier_id = supplier.id
+        else:
+            self.status = 'approval_rejected'
+
+    def set_assessment_result(self, successful):
+        if self.status != 'approved':
+            raise ValidationError("Only an 'approved' application can be subject to an assessment decision.")
+
+        if successful:
+            self.status = 'complete'
+            self.supplier.status = 'complete'
+        else:
+            self.status = 'assessment_rejected'
+            self.supplier.status = 'deleted'
+
+    def unassess(self):
+        if self.status not in ('complete', 'assessment_rejected'):
+            raise ValidationError("Only a 'complete' or 'assessment_rejected' application can be reset to unassessed.")
+
+        self.status = 'approved'
+        self.supplier.status = 'limited'
+
+    def unreject_approval(self):
+        if self.status not in ('approval_rejected'):
+            raise ValidationError("Only a 'complete' or 'assessment_rejected' application can be reset to unassessed.")
+
+        self.status = 'submitted'
+
 
 class CaseStudy(db.Model):
     __tablename__ = 'case_study'
@@ -1697,7 +1840,7 @@ class CaseStudy(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(JSON, nullable=False)
     supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
-    created_at = db.Column(DateTime, index=True, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
 
     supplier = db.relationship('Supplier', lazy='joined')
 

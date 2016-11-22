@@ -1,6 +1,6 @@
 import json
 
-from tests.app.helpers import BaseApplicationTest
+from tests.app.helpers import BaseApplicationTest, INCOMING_APPLICATION_DATA
 
 from app.models import db, Application
 
@@ -18,13 +18,15 @@ class BaseApplicationsTest(BaseApplicationTest):
         if data is None:
             data = self.application_data
         with self.app.app_context():
-
             application = Application(
                 data=data,
                 user_id=user_id
             )
 
             db.session.add(application)
+            db.session.flush()
+
+            application.submit_for_approval()
             db.session.commit()
 
             return application.id
@@ -55,9 +57,14 @@ class BaseApplicationsTest(BaseApplicationTest):
     def list_applications(self, **parameters):
         return self.client.get('/applications', query_string=parameters)
 
+    def approve_application(self, application_id):
+        return self.client.post(
+            '/applications/{}/approve'.format(self.application_id),
+            content_type='application/json')
+
     @property
     def application_data(self):
-        return {'foo': 'bar'}
+        return INCOMING_APPLICATION_DATA
 
 
 class TestCreateApplication(BaseApplicationsTest):
@@ -108,6 +115,31 @@ class TestCreateApplication(BaseApplicationsTest):
 
         assert res.status_code == 400
         assert 'Invalid user id' in res.get_data(as_text=True)
+
+
+class TestApproveApplication(BaseApplicationsTest):
+    def setup(self):
+        super(TestApproveApplication, self).setup()
+        self.application_id = self.setup_dummy_application(user_id=0, data=self.application_data)
+
+    def test_approve_application(self):
+        self.patch_application(self.application_id, data={'status': 'saved'})
+        a = self.get_application(self.application_id)
+
+        j = json.loads(a.get_data(as_text=True))['application']
+        assert j['status'] == 'saved'
+
+        a = self.approve_application(self.application_id)
+        assert a.status_code == 400
+
+        a = self.patch_application(self.application_id, data={'status': 'submitted'})
+        j = json.loads(a.get_data(as_text=True))['application']
+        assert j['status'] == 'submitted'
+
+        a = self.approve_application(self.application_id)
+        assert a.status_code == 200
+        j = json.loads(a.get_data(as_text=True))['application']
+        assert j['status'] == 'approved'
 
 
 class TestUpdateApplication(BaseApplicationsTest):

@@ -65,6 +65,17 @@ def update_application(application_id):
     return jsonify(application=application.serialize()), 200
 
 
+@main.route('/applications/<int:application_id>/approve', methods=['POST'])
+def approve_application(application_id):
+    application = Application.query.get(application_id)
+
+    if application is None:
+        abort(404, "Application '{}' does not exist".format(application_id))
+
+    application.set_approval(approved=True)
+    return jsonify(application=application.serialize()), 200
+
+
 @main.route('/applications/<int:application_id>', methods=['GET'])
 def get_application(application_id):
     application = Application.query.filter(

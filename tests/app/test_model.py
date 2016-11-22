@@ -16,16 +16,20 @@ from app.models import (
     Brief, BriefResponse,
     ValidationError,
     BriefClarificationQuestion,
-    WorkOrder
+    WorkOrder, ServiceCategory, ServiceRole, Application
 )
 
 from app.datetime_utils import naive
 
-from .helpers import BaseApplicationTest
+from .helpers import BaseApplicationTest, INCOMING_APPLICATION_DATA
 
 import pendulum
 
 from app.datetime_utils import utcnow
+
+from itertools import product
+
+from pytest import raises
 
 
 def naive_datetime(*args, **kwargs):
@@ -1034,3 +1038,83 @@ class TestWorkOrder(BaseApplicationTest):
                         'supplier': (('.get_supplier',), {'code': 0}),
                     }
                 }
+
+
+class TestApplication(BaseApplicationTest):
+    def setup(self):
+        super(TestApplication, self).setup()
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            lot = framework.get_lot('digital-outcomes')
+
+            self.setup_dummy_user(role='applicant')
+            self.user = User.query.first()
+            db.session.add(self.user)
+
+            self.setup_dummy_suppliers(1)
+            db.session.commit()
+            self.supplier = Supplier.query.filter(Supplier.code == 0).first()
+
+    def test_full_application(self):
+        with self.app.app_context():
+            x = Application(data=INCOMING_APPLICATION_DATA, user=self.user)
+
+            # flushing to database in order to set defaults (very annoying "feature" of sqlalchemy)
+            db.session.add(x)
+            db.session.flush()
+
+            assert x.status == 'saved'
+
+            x.submit_for_approval()
+
+            assert x.status == 'submitted'
+            assert x.supplier is None
+
+            with raises(ValidationError):
+                x.submit_for_approval()
+
+            x.set_approval(approved=False)
+
+            assert x.status == 'approval_rejected'
+
+            x.unreject_approval()
+            assert x.status == 'submitted'
+
+            x.set_approval(approved=True)
+
+            with raises(ValidationError):
+                x.set_approval(True)
+
+            assert x.status == 'approved'
+            assert x.supplier.status == 'limited'
+
+            assert len(x.supplier.contacts) == 1
+            assert len(x.supplier.prices) == 6
+
+            rolenames = [_.service_role.name for _ in x.supplier.prices]
+
+            EXPECTED_ROLES = [' '.join(_) for _ in product(
+                ['Junior', 'Senior'],
+                ['Product Manager', 'Business Analyst', 'Delivery Manager']
+            )]
+
+            assert set(rolenames) == set(EXPECTED_ROLES)
+
+            x.set_assessment_result(successful=False)
+
+            assert x.status == 'assessment_rejected'
+            assert x.supplier.status == 'deleted'
+
+            x.unassess()
+
+            x.set_assessment_result(successful=True)
+
+            assert x.status == 'complete'
+            assert x.supplier.status == 'complete'
+
+            x.unassess()
+
+            assert x.status == 'approved'
+            assert x.supplier.status == 'limited'
+
+            db.session.flush()

@@ -39,6 +39,44 @@ COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
 }
 
 
+INCOMING_APPLICATION_DATA = {
+    "representative": "representative",
+    "name": "name",
+    "code": 666,
+    "abn": " 51824 753556 ",
+    "phone": "phone",
+    "email": "email",
+    "summary": "summary",
+    "website": "website",
+    "linkedin": "linkedin",
+    "address": {
+        "addressLine": "data_addressLine",
+        "suburb": "St Ives",
+        "state": "NSW",
+        "postalCode": "90210"
+    },
+    "services": {
+        "Product Manager": True,
+        "Business Analyst": True,
+        "Delivery Manager": True
+    },
+    "pricing": {
+        "Product Manager": {
+            "minPrice": "50",
+            "maxPrice": "150"
+        },
+        "Business Analyst": {
+            "minPrice": "20",
+            "maxPrice": "120"
+        },
+        "Delivery Manager": {
+            "minPrice": "300",
+            "maxPrice": "400"
+        }
+    }
+}
+
+
 class WSGIApplicationWithEnvironment(object):
     def __init__(self, app, **kwargs):
         self.app = app
@@ -62,6 +100,7 @@ class BaseApplicationTest(object):
 
     def setup(self):
         self.app = create_app('test')
+        self.app.config['SERVER_NAME'] = 'localhost'
         self.client = self.app.test_client()
         self.setup_authorization(self.app)
 
