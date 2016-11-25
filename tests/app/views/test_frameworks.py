@@ -733,7 +733,28 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                     )
                     assert response.status_code == 200, response.get_data(as_text=True)
 
-    def test_list_suppliers_related_to_a_framework(self, live_g8_framework):
+    def test_list_suppliers_combined(self, live_g8_framework):
+        # it would be nice to implement the following as individual tests, but the setup method is too expensive and has
+        # a detrimental effect on testrun time. since this is a readonly endpoint we shouldn't me mutating state between
+        # calls anyway, and we're always testing the same state setup by the same setup routine, so a quick fix for now
+        # is to merge these into a combined supertest. they are still kept apart as separate methods to avoid locals
+        # leaking from one test to another and disguising broken tests.
+        # TODO perhaps fix db global teardown fixture so that db isn't mandatorily cleared after every test, allowing
+        # us to use shared-setup fixtures.
+        self._subtest_list_suppliers_related_to_a_framework()
+        self._subtest_list_suppliers_by_agreement_returned_false()
+        self._subtest_list_suppliers_by_agreement_returned_true()
+        self._subtest_list_suppliers_by_agreement_returned_false()
+        self._subtest_list_suppliers_by_status_signed()
+        self._subtest_list_suppliers_by_status_on_hold()
+        self._subtest_list_suppliers_by_status_approved()
+        self._subtest_list_suppliers_by_status_countersigned()
+        self._subtest_list_suppliers_by_multiple_statuses_1()
+        self._subtest_list_suppliers_by_multiple_statuses_2()
+        self._subtest_list_suppliers_by_multiple_statuses_and_agreement_returned_true()
+        self._subtest_list_suppliers_by_multiple_statuses_and_agreement_returned_false()
+
+    def _subtest_list_suppliers_related_to_a_framework(self):
         with self.app.app_context():
             # One G7 supplier
             response = self.client.get('/frameworks/g-cloud-7/suppliers')
@@ -756,7 +777,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                 (sf.get("agreementDetails") or {}).get("uploaderUserEmail") for sf in data["supplierFrameworks"]
             )
 
-    def test_list_suppliers_by_agreement_returned_true(self, live_g8_framework):
+    def _subtest_list_suppliers_by_agreement_returned_true(self):
         with self.app.app_context():
             response = self.client.get(
                 '/frameworks/g-cloud-8/suppliers?with_users=false&agreement_returned=true'
@@ -767,7 +788,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 9, 8, 7, 6, 5, 4, 3,)
             assert all(sf["agreementReturnedAt"] for sf in data["supplierFrameworks"])
 
-    def test_list_suppliers_by_agreement_returned_false(self, live_g8_framework):
+    def _subtest_list_suppliers_by_agreement_returned_false(self):
         with self.app.app_context():
             response = self.client.get(
                 '/frameworks/g-cloud-8/suppliers?agreement_returned=false'
@@ -778,7 +799,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (0, 1, 2,)
             assert all(sf['agreementReturnedAt'] is None for sf in data['supplierFrameworks'])
 
-    def test_list_suppliers_by_status_signed(self, live_g8_framework):
+    def _subtest_list_suppliers_by_status_signed(self):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-8/suppliers?status=signed')
 
@@ -787,7 +808,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (5, 3,)
             assert all(sf['agreementStatus'] == "signed" for sf in data['supplierFrameworks'])
 
-    def test_list_suppliers_by_status_on_hold(self, live_g8_framework):
+    def _subtest_list_suppliers_by_status_on_hold(self):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-8/suppliers?status=on-hold')
 
@@ -796,7 +817,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (4,)
             assert all(sf['agreementStatus'] == "on-hold" for sf in data['supplierFrameworks'])
 
-    def test_list_suppliers_by_status_approved(self, live_g8_framework):
+    def _subtest_list_suppliers_by_status_approved(self):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-8/suppliers?status=approved')
 
@@ -805,7 +826,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (6,)
             assert all(sf['agreementStatus'] == "approved" for sf in data['supplierFrameworks'])
 
-    def test_list_suppliers_by_status_countersigned(self, live_g8_framework):
+    def _subtest_list_suppliers_by_status_countersigned(self):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-8/suppliers?status=countersigned')
 
@@ -814,7 +835,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 9, 8, 7,)
             assert all(sf['agreementStatus'] == "countersigned" for sf in data['supplierFrameworks'])
 
-    def test_list_suppliers_by_multiple_statuses_1(self, live_g8_framework):
+    def _subtest_list_suppliers_by_multiple_statuses_1(self):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-8/suppliers?status=approved,countersigned&with_users=true')
 
@@ -823,7 +844,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 9, 8, 7, 6,)
             assert all(sf['agreementStatus'] in ("approved", "countersigned") for sf in data['supplierFrameworks'])
 
-    def test_list_suppliers_by_multiple_statuses_2(self, live_g8_framework):
+    def _subtest_list_suppliers_by_multiple_statuses_2(self):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-8/suppliers?status=signed,approved')
 
@@ -832,7 +853,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (6, 5, 3,)
             assert all(sf['agreementStatus'] in ("approved", "signed") for sf in data['supplierFrameworks'])
 
-    def test_list_suppliers_by_multiple_statuses_and_agreement_returned_true(self, live_g8_framework):
+    def _subtest_list_suppliers_by_multiple_statuses_and_agreement_returned_true(self):
         with self.app.app_context():
             response = self.client.get(
                 '/frameworks/g-cloud-8/suppliers?status=approved,countersigned&agreement_returned=true'
@@ -844,7 +865,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
             assert all(sf['agreementStatus'] in ("approved", "countersigned") for sf in data['supplierFrameworks'])
             assert all(sf["agreementReturnedAt"] for sf in data["supplierFrameworks"])
 
-    def test_list_suppliers_by_multiple_statuses_and_agreement_returned_false(self, live_g8_framework):
+    def _subtest_list_suppliers_by_multiple_statuses_and_agreement_returned_false(self):
         with self.app.app_context():
             response = self.client.get(
                 '/frameworks/g-cloud-8/suppliers?status=approved,countersigned&agreement_returned=false'
