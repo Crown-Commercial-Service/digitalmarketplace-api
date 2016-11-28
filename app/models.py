@@ -6,6 +6,8 @@ import re
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
+import flask_featureflags as feature
+
 from six import string_types
 
 from sqlalchemy import asc, desc
@@ -34,6 +36,9 @@ from .datetime_utils import DateTime, utcnow, parse_interval, parse_time_of_day,
 import pendulum
 
 from functools import partial
+
+from .jiraapi import get_api as get_jira_api
+
 utcnow = partial(pendulum.now, 'UTC')
 
 
@@ -1767,7 +1772,7 @@ class Application(db.Model):
             'status': self.status,
             'createdAt': self.created_at.to_iso8601_string(extended=True),
             'links': {
-                'self': url_for('main.get_work_order', work_order_id=self.id),
+                'self': url_for('main.get_application_by_id', application_id=self.id),
                 'user': url_for("main.get_user_by_id", user_id=self.user_id),
             }
         })
@@ -1806,6 +1811,8 @@ class Application(db.Model):
 
             self.user.role = 'supplier'
             self.user.supplier_id = supplier.id
+            db.session.flush()
+            self.create_assessment_task()
         else:
             self.status = 'approval_rejected'
 
@@ -1832,6 +1839,14 @@ class Application(db.Model):
             raise ValidationError("Only a 'complete' or 'assessment_rejected' application can be reset to unassessed.")
 
         self.status = 'submitted'
+
+    def create_assessment_task(self):
+        if feature.is_active('JIRA_FEATURES'):
+            j = get_jira_api()
+            j.create_assessment_task(self.id, 'Task')
+        else:
+            current_app.logger.info(
+                'Skipping assessment task creation because JIRA features disabled')
 
 
 class CaseStudy(db.Model):

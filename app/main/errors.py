@@ -1,4 +1,5 @@
 from flask import jsonify, current_app
+from werkzeug import exceptions
 
 from . import main
 from ..models import ValidationError
@@ -23,5 +24,9 @@ def generic_error_handler(e):
     return jsonify(error=error), e.code, headers
 
 
-for code in range(400, 599):
-    main.app_errorhandler(code)(generic_error_handler)
+def setup_generic_error_handlers():
+    for k in exceptions.default_exceptions.keys():
+        main.register_error_handler(k, generic_error_handler)
+
+
+setup_generic_error_handlers()

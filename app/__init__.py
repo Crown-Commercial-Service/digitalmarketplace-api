@@ -1,14 +1,15 @@
 from functools import wraps
 from flask import Flask
-from flask.ext.elasticsearch import FlaskElasticsearch
-from flask.ext.sqlalchemy import SQLAlchemy
-
+from flask_elasticsearch import FlaskElasticsearch
 import dmapiclient
 from dmutils import init_app, flask_featureflags
 
 from config import configs
 
+from .modelsbase import MySQLAlchemy as SQLAlchemy
+
 db = SQLAlchemy()
+
 es_client = FlaskElasticsearch()
 
 search_api_client = dmapiclient.SearchAPIClient()

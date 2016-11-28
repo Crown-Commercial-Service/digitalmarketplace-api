@@ -3,7 +3,6 @@ from dmutils.status import enabled_since, get_version_label
 
 
 class Config:
-
     VERSION = get_version_label(
         os.path.abspath(os.path.dirname(__file__))
     )
@@ -29,7 +28,8 @@ class Config:
 
     # List all your feature flags below
     FEATURE_FLAGS = {
-        'TRANSACTION_ISOLATION': False
+        'TRANSACTION_ISOLATION': False,
+        'JIRA_FEATURES': True
     }
 
     DM_API_SERVICES_PAGE_SIZE = 100
@@ -51,6 +51,9 @@ class Config:
     DEFAULT_REQUIREMENTS_DURATION = '2 weeks'
     DEADLINES_TIME_OF_DAY = '18:00:00'
 
+    JIRA_URL = 'https://govausites.atlassian.net'
+    JIRA_CREDS = None
+
 
 class Test(Config):
     DM_SEARCH_API_AUTH_TOKEN = 'test'
@@ -67,9 +70,12 @@ class Test(Config):
     DM_API_PAGE_SIZE = 5
     # List all your feature flags below
     FEATURE_FLAGS = {
-        'TRANSACTION_ISOLATION': True
+        'TRANSACTION_ISOLATION': True,
+        'JIRA_FEATURES': True
     }
     DM_API_ADMIN_USERNAME = None
+    JIRA_URL = 'https://jira.example.com'
+    JIRA_CREDS = 'a:b'
 
 
 class Development(Config):
@@ -81,17 +87,26 @@ class Development(Config):
     DM_SEARCH_API_URL = 'http://localhost:5001'
     DM_API_ADMIN_PASSWORD = 'admin'
 
+    FEATURE_FLAGS = {
+        'TRANSACTION_ISOLATION': False,
+        'JIRA_FEATURES': True
+    }
 
 class Live(Config):
     """Base config for deployed environments"""
     DEBUG = False
     DM_HTTP_PROTO = 'https'
 
+    FEATURE_FLAGS = {
+        'TRANSACTION_ISOLATION': False,
+        'JIRA_FEATURES': False
+    }
 
 class Preview(Live):
     # List all your feature flags below
     FEATURE_FLAGS = {
-        'TRANSACTION_ISOLATION': True
+        'TRANSACTION_ISOLATION': True,
+        'JIRA_FEATURES': True
     }
 
 

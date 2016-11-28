@@ -3,6 +3,7 @@ from datetime import datetime as builtindatetime
 from pendulum import create as datetime
 from pendulum import interval
 
+import json
 import mock
 import pytest
 from nose.tools import assert_equal, assert_raises
@@ -1055,13 +1056,24 @@ class TestApplication(BaseApplicationTest):
             db.session.commit()
             self.supplier = Supplier.query.filter(Supplier.code == 0).first()
 
-    def test_full_application(self):
+    @mock.patch('app.jiraapi.JIRA')
+    def test_full_application(self, jira):
         with self.app.app_context():
             x = Application(data=INCOMING_APPLICATION_DATA, user=self.user)
 
             # flushing to database in order to set defaults (very annoying "feature" of sqlalchemy)
             db.session.add(x)
             db.session.flush()
+
+            x_from_manual = x.serialize()
+            x_from_deterministic = json.loads(x.json)
+
+            subset = {
+                k: v for k, v
+                in x_from_deterministic.items()
+                if k in x_from_manual
+            }
+            assert subset == x_from_manual
 
             assert x.status == 'saved'
 

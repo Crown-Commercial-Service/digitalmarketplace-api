@@ -1,4 +1,5 @@
 import json
+import mock
 
 from tests.app.helpers import BaseApplicationTest, INCOMING_APPLICATION_DATA
 
@@ -122,7 +123,8 @@ class TestApproveApplication(BaseApplicationsTest):
         super(TestApproveApplication, self).setup()
         self.application_id = self.setup_dummy_application(user_id=0, data=self.application_data)
 
-    def test_approve_application(self):
+    @mock.patch('app.jiraapi.JIRA')
+    def test_approve_application(self, jira):
         self.patch_application(self.application_id, data={'status': 'saved'})
         a = self.get_application(self.application_id)
 
@@ -266,6 +268,27 @@ class TestListApplications(BaseApplicationsTest):
         data = json.loads(response.get_data())
         assert 'applications' in data
         assert len(data['applications']) == 2
+
+    def test_results_ordering(self):
+        from itertools import tee, izip
+
+        def pairwise(iterable):
+            a, b = tee(iterable)
+            next(b, None)
+            return izip(a, b)
+
+        def is_sorted(iterable, key=lambda a, b: a <= b):
+            return all(key(a, b) for a, b in pairwise(iterable))
+
+        for i in range(8):
+            self.setup_dummy_application()
+
+        response = self.client.get('/applications')
+        data = json.loads(response.get_data())
+
+        created_ats = [_['createdAt'] for _ in data['applications']]
+        created_ats.reverse()
+        assert is_sorted(created_ats)
 
     def test_list_applications_for_user_id(self):
         for i in range(3):

@@ -77,7 +77,7 @@ def approve_application(application_id):
 
 
 @main.route('/applications/<int:application_id>', methods=['GET'])
-def get_application(application_id):
+def get_application_by_id(application_id):
     application = Application.query.filter(
         Application.id == application_id
     ).first_or_404()
@@ -116,6 +116,11 @@ def list_applications():
     if user_id is not None:
         applications = applications.filter(Application.user_id == user_id)
 
+    ordering = request.args.get('order_by', 'application.created_at desc')
+    order_by = ordering.split(',')
+
+    applications = applications.order_by(*order_by)
+
     if user_id:
         return jsonify(
             applications=[application.serialize() for application in applications.all()],
@@ -134,7 +139,7 @@ def list_applications():
     )
 
     return jsonify(
-        applications=[application.serialize() for application in applications.items],
+        applications=[_.serialize() for _ in applications.items],
         links=pagination_links(
             applications,
             '.list_applications',
