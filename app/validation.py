@@ -150,10 +150,15 @@ def validates_against_schema(validator_name, submitted_json):
 def get_validation_errors(validator_name, json_data,
                           enforce_required=True,
                           required_fields=None):
-    error_map = {}
     validator = get_validator(validator_name, enforce_required,
                               required_fields)
     errors = validator.iter_errors(json_data)
+
+    return translate_json_schema_errors(errors, json_data)
+
+
+def translate_json_schema_errors(errors, json_data):
+    error_map = {}
     form_errors = []
     for error in errors:
         # validate follow-up questions are answered: eg evidence given for a 'yes' nice-to-have
