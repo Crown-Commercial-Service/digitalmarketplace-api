@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "availability": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "dayRate": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "essentialRequirementsMet": {
+      "enum": [
+        true
+      ],
+      "type": "boolean"
+    },
+    "niceToHaveRequirements": {
+      "items": {
+        "type": "boolean"
+      },
+      "maxItems": 20,
+      "minItems": 0,
+      "type": "array"
+    },
+    "respondToEmailAddress": {
+      "format": "email",
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "availability",
+    "dayRate",
+    "essentialRequirementsMet",
+    "respondToEmailAddress"
+  ],
+  "title": "Digital Outcomes and Specialists Digital specialists Brief Response Schema",
+  "type": "object"
+}
