@@ -8,7 +8,7 @@ from flask import current_app
 from flask_sqlalchemy import BaseQuery
 import flask_featureflags as feature
 
-from six import string_types
+from six import string_types, text_type, binary_type
 
 from sqlalchemy import asc, desc
 from sqlalchemy import func
@@ -1573,6 +1573,35 @@ class BriefResponse(db.Model):
         return data
 
     def validate(self, enforce_required=True, required_fields=None, max_day_rate=None):
+        def clean_non_strings():
+            # short term hacky fix for frontend yaml-parsing bug
+
+            def to_text(x):
+                if isinstance(x, binary_type):
+                    return x.decode('utf-8')
+                else:
+                    return text_type(x)
+
+            def clean(answers):
+                return [to_text(x) for x in answers]
+
+            try:
+                self.data['essentialRequirements'] = \
+                    clean(self.data['essentialRequirements'])
+            except KeyError:
+                pass
+
+            try:
+                self.data['niceToHaveRequirements'] = \
+                    clean(self.data['niceToHaveRequirements'])
+            except KeyError:
+                pass
+
+        try:
+            clean_non_strings()
+        except TypeError:
+            pass
+
         errs = get_validation_errors(
             'brief-responses-{}-{}'.format(self.brief.framework.slug, self.brief.lot.slug),
             self.data,

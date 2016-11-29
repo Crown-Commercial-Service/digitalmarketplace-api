@@ -87,6 +87,12 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
     @given(example_listings.brief_response_data())
     def test_create_new_brief_response(self, live_framework, brief_response_data):
+
+        # tests for the case where the buggy frontend returns yaml
+        # this case is handled with clean_non_strings in the brief response validator
+        brief_response_data['essentialRequirements'][0] = True
+        brief_response_data['niceToHaveRequirements'][0] = True
+
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.brief_id,
             'supplierCode': 0,
@@ -302,7 +308,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400, res.get_data(as_text=True)
-        assert data['error']['niceToHaveRequirements'] == "None is not of type u'string'"
+        assert data['error']['niceToHaveRequirements'] == "answer_required"
 
     @given(example_listings.specialists_brief_response_data())
     @pytest.mark.skip(reason='fails randomly and sporadically')
