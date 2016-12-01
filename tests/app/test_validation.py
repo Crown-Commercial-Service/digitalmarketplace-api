@@ -10,7 +10,7 @@ from jsonschema import validate, SchemaError, ValidationError
 from app.utils import drop_foreign_fields
 from app.validation import validates_against_schema, is_valid_service_id, is_valid_date, \
     is_valid_acknowledged_state, get_validation_errors, is_valid_string, min_price_less_than_max_price, \
-    is_valid_buyer_email
+    is_valid_buyer_email, translate_json_schema_errors
 
 EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                     '..', '..', 'example_listings'))
@@ -537,3 +537,41 @@ def check_schema(schema):
 ])
 def test_is_valid_buyer_email(email, expected):
     assert is_valid_buyer_email(email) == expected
+
+
+def api_error(errors):
+    schema_errors = []
+    for error_data in errors:
+        context_errors = []
+        for context_error in error_data.get('context', []):
+            context_errors.append(
+                ValidationError(message=context_error['message'], validator=context_error['validator'])
+            )
+
+        error_data['context'] = context_errors
+
+        schema_errors.append(ValidationError(**error_data))
+
+    return translate_json_schema_errors(schema_errors, {})
+
+
+def test_translate_oneof_errors():
+    assert api_error([{
+        'validator': 'oneOf',
+        'message': "failed",
+        'path': ['example', 0],
+        'context': [
+            {'message': "'example-field' required", 'validator': 'required'}
+        ],
+    }]) == {'example': [{'error': 'answer_required', 'field': 'example-field', 'index': 0}]}
+
+
+def test_translate_unknown_oneoff_eerror():
+    assert api_error([{
+        'validator': 'oneOf',
+        'message': "failed",
+        'path': ['example', 0],
+        'context': [
+            {'message': "Unknown type", 'validator': 'type'}
+        ],
+    }]) == {'example': [{'error': 'failed', 'index': 0}]}
