@@ -6,6 +6,7 @@ from models import Supplier
 from flask import current_app
 from elasticsearch import Elasticsearch
 from elasticsearch.client import IndicesClient
+from .modelsbase import jsondumps
 
 
 SUPPLIER_DOC_TYPE = 'supplier'
@@ -27,7 +28,7 @@ def index_supplier(supplier):
             'Attempting to add "{supplier_name}" to supplier search index',
             extra={'supplier_name': supplier.name}
         )
-        supplier_json = json.dumps(supplier.serialize())
+        supplier_json = jsondumps(supplier.serialize())
         es_client.index(index=get_supplier_index_name(),
                         doc_type=SUPPLIER_DOC_TYPE,
                         body=supplier_json,
@@ -46,7 +47,7 @@ def _get_raw_elasticsearch_connection():
 def create_supplier_index(index_client):
     name = get_supplier_index_name()
 
-    settings_json = json.dumps({
+    settings_json = jsondumps({
         'settings': {
             'index': {
                 'analysis': {
@@ -62,7 +63,7 @@ def create_supplier_index(index_client):
     })
     index_client.create(index=name, body=settings_json)
 
-    mapping_json = json.dumps({
+    mapping_json = jsondumps({
         'properties': {
             'name': {
                 'type': 'multi_field',

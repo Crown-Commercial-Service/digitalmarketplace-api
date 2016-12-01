@@ -919,29 +919,37 @@ class TestServices(BaseApplicationTest):
             assert_equal(services.count(), 2)
 
     def test_update_from_json(self):
+        now = pendulum.now('UTC')
+        later = now.add(hours=1)
+
         with self.app.app_context():
-            self.setup_dummy_suppliers(1)
-            self.setup_dummy_service(
-                service_id='1000000000',
-                supplier_code=0,
-                status='published',
-                framework_id=2)
+            with pendulum.test(now):
 
-            now = pendulum.now('UTC')
+                self.setup_dummy_suppliers(1)
+                self.setup_dummy_service(
+                    service_id='1000000000',
+                    supplier_code=0,
+                    status='published',
+                    framework_id=2)
 
-            service = Service.query.filter(Service.service_id == '1000000000').first()
+                service = Service.query.filter(Service.service_id == '1000000000').first()
 
-            updated_at = service.updated_at
-            created_at = service.created_at
+                assert service.updated_at == now
+                assert service.created_at == now
 
-            service.update_from_json({'foo': 'bar'})
-            db.session.add(service)
-            assert service.created_at.hour == now.hour
-            db.session.commit()
+            with pendulum.test(later):
+                assert service.updated_at == now
+                service.update_from_json({'foo': 'bar'})
+                db.session.flush()
+                assert service.updated_at == later
 
-            assert service.created_at == created_at
-            assert service.updated_at > updated_at
-            assert service.data == {'foo': 'bar', 'serviceName': 'Service 1000000000'}
+                db.session.add(service)
+                assert service.created_at == now
+                db.session.commit()
+
+                assert service.created_at == now
+                assert service.updated_at == later
+                assert service.data == {'foo': 'bar', 'serviceName': 'Service 1000000000'}
 
 
 class TestSupplierFrameworks(BaseApplicationTest):
@@ -1058,7 +1066,7 @@ class TestApplication(BaseApplicationTest):
 
     @mock.patch('app.jiraapi.JIRA')
     def test_full_application(self, jira):
-        with self.app.app_context():
+        with self.app.test_request_context('/hello'):
             x = Application(data=INCOMING_APPLICATION_DATA, user=self.user)
 
             # flushing to database in order to set defaults (very annoying "feature" of sqlalchemy)
@@ -1100,17 +1108,13 @@ class TestApplication(BaseApplicationTest):
             assert x.status == 'approved'
             assert x.supplier.status == 'limited'
 
+            assert x.supplier.data['services'] == \
+                {
+                    'Content & publishing': {'assessed': False},
+                    'User research & design': {'assessed': False}
+                }
+
             assert len(x.supplier.contacts) == 1
-            assert len(x.supplier.prices) == 6
-
-            rolenames = [_.service_role.name for _ in x.supplier.prices]
-
-            EXPECTED_ROLES = [' '.join(_) for _ in product(
-                ['Junior', 'Senior'],
-                ['Product Manager', 'Business Analyst', 'Delivery Manager']
-            )]
-
-            assert set(rolenames) == set(EXPECTED_ROLES)
 
             x.set_assessment_result(successful=False)
 

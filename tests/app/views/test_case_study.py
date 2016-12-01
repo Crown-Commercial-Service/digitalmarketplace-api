@@ -189,6 +189,12 @@ class TestGetCaseStudy(BaseCaseStudyTest):
         assert data['caseStudy']['supplierCode'] == 0
 
     def test_get_supplier_with_case_study(self):
+        from app.models import Supplier
+        with self.app.app_context():
+            s = Supplier.query.first()
+            from pprint import pprint
+            pprint(s.serializable)
+
         res = self.client.get('/suppliers/0')
 
         data = json.loads(res.get_data())

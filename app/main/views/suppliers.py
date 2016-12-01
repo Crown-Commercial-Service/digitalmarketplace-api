@@ -81,7 +81,6 @@ def get_supplier(code):
     ).first_or_404()
 
     supplier.get_service_counts()
-
     return jsonify(supplier=supplier.serialize())
 
 

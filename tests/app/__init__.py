@@ -22,7 +22,6 @@ def setup():
     with app.app_context():
         upgrade(config, 'head')
         search_indices.create_indices()
-
     print("Done db setup")
 
 
@@ -31,7 +30,10 @@ def teardown():
     with app.app_context():
         search_indices.delete_indices()
         db.session.remove()
+
+        db.engine.execute('drop sequence if exists supplier_code_seq cascade')
         db.drop_all()
+
         db.engine.execute("drop table alembic_version")
         insp = inspect(db.engine)
         for enum in insp.get_enums():

@@ -28,8 +28,7 @@ class Config:
 
     # List all your feature flags below
     FEATURE_FLAGS = {
-        'TRANSACTION_ISOLATION': False,
-        'JIRA_FEATURES': True
+        'TRANSACTION_ISOLATION': False
     }
 
     DM_API_SERVICES_PAGE_SIZE = 100
@@ -54,6 +53,8 @@ class Config:
     JIRA_URL = 'https://govausites.atlassian.net'
     JIRA_CREDS = None
 
+    JIRA_FEATURES = False
+
 
 class Test(Config):
     DM_SEARCH_API_AUTH_TOKEN = 'test'
@@ -70,12 +71,13 @@ class Test(Config):
     DM_API_PAGE_SIZE = 5
     # List all your feature flags below
     FEATURE_FLAGS = {
-        'TRANSACTION_ISOLATION': True,
-        'JIRA_FEATURES': True
+        'TRANSACTION_ISOLATION': True
     }
     DM_API_ADMIN_USERNAME = None
     JIRA_URL = 'https://jira.example.com'
     JIRA_CREDS = 'a:b'
+
+    JIRA_FEATURES = True
 
 
 class Development(Config):
@@ -88,9 +90,9 @@ class Development(Config):
     DM_API_ADMIN_PASSWORD = 'admin'
 
     FEATURE_FLAGS = {
-        'TRANSACTION_ISOLATION': False,
-        'JIRA_FEATURES': True
+        'TRANSACTION_ISOLATION': False
     }
+
 
 class Live(Config):
     """Base config for deployed environments"""
@@ -99,19 +101,18 @@ class Live(Config):
 
     FEATURE_FLAGS = {
         'TRANSACTION_ISOLATION': False,
-        'JIRA_FEATURES': False
     }
+
 
 class Preview(Live):
     # List all your feature flags below
     FEATURE_FLAGS = {
-        'TRANSACTION_ISOLATION': True,
-        'JIRA_FEATURES': True
+        'TRANSACTION_ISOLATION': True
     }
 
 
-class Staging(Live):
-    pass
+class Staging(Development):
+    JIRA_FEATURES = True
 
 
 class Production(Live):

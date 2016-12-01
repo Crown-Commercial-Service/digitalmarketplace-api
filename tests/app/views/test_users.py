@@ -5,7 +5,12 @@ from app import db, encryption
 from app.models import Address, User, Supplier
 import pendulum
 from pendulum import create as datetime
-from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
+from ..helpers import \
+    BaseApplicationTest, \
+    JSONTestMixin, \
+    JSONUpdateTestMixin, \
+    assert_api_compatible, \
+    assert_api_compatible_list
 
 
 class BaseUserTest(BaseApplicationTest):
@@ -1476,7 +1481,8 @@ class TestSupplierInviteLog(BaseUserTest):
             results = json.loads(response.get_data())['results']
             assert len(results) == len(self.contacts)
             result_contacts = [r['contact'] for r in results]
-            assert sorted(result_contacts) == sorted(self.contacts)
+
+            assert_api_compatible_list(self.contacts, result_contacts)
 
             for result in results:
                 assert result['supplierCode'] == self.email_supplier_code[result['contact']['email']]
@@ -1528,6 +1534,10 @@ class TestSupplierInviteLog(BaseUserTest):
             'supplierCode': supplier_who_responds['code'],
             'supplierName': supplier_who_responds['name'],
         }
+
+        test_invite_data['contact']['contact_for'] = \
+            test_invite_data['contact']['contactFor']
+
         with self.app.app_context():
             # Invites are sent and recorded
             for supplier in self.suppliers:

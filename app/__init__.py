@@ -7,6 +7,8 @@ from dmutils import init_app, flask_featureflags
 from config import configs
 
 from .modelsbase import MySQLAlchemy as SQLAlchemy
+from .modelsbase import enc, CustomEncoder
+
 
 db = SQLAlchemy()
 
@@ -44,6 +46,8 @@ def create_app(config_name):
     application.register_blueprint(status_blueprint)
     import admin.blueprint
     application.register_blueprint(admin.blueprint.admin)
+
+    application.json_encoder = CustomEncoder
 
     return application
 

@@ -15,12 +15,14 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.expression import cast as sql_cast
 from sqlalchemy.types import String, Date, Integer, Interval
 from sqlalchemy_utils import generic_relationship
+from sqlalchemy.schema import Sequence
 from dmutils.data_tools import ValidationError, normalise_abn, normalise_acn, parse_money
 
 from . import db
@@ -31,15 +33,14 @@ from .validation import is_valid_service_id, get_validation_errors
 
 from dmutils.forms import is_government_email
 
-from .datetime_utils import DateTime, utcnow, parse_interval, parse_time_of_day, combine_date_and_time
+from .datetime_utils import DateTime, utcnow, parse_interval, parse_time_of_day, combine_date_and_time, localnow, utcnow
 
 import pendulum
 
 from functools import partial
 
 from .jiraapi import get_api as get_jira_api
-
-utcnow = partial(pendulum.now, 'UTC')
+from .modelsbase import normalize_key_case
 
 
 class FrameworkLot(db.Model):
@@ -56,14 +57,11 @@ class Lot(db.Model):
     slug = db.Column(db.String, nullable=False, index=True)
     name = db.Column(db.String, nullable=False)
     one_service_limit = db.Column(db.Boolean, nullable=False, default=False)
-    data = db.Column(JSON)
+    data = db.Column(MutableDict.as_mutable(JSON))
 
     @property
     def allows_brief(self):
         return self.one_service_limit
-
-    def __repr__(self):
-        return '<{}: {}>'.format(self.__class__.__name__, self.name)
 
     def serialize(self):
         data = dict(self.data.items())
@@ -143,9 +141,6 @@ class Framework(db.Model):
             raise ValidationError("Invalid slug value '{}'".format(slug))
         return slug
 
-    def __repr__(self):
-        return '<{}: {} slug={}>'.format(self.__class__.__name__, self.name, self.slug)
-
 
 class WebsiteLink(db.Model):
     __tablename__ = 'website_link'
@@ -182,11 +177,13 @@ class Address(db.Model):
 
     @staticmethod
     def from_json(as_dict):
+        as_dict = normalize_key_case(as_dict)
+
         try:
-            return Address(address_line=as_dict.get('addressLine'),
+            return Address(address_line=as_dict.get('address_line'),
                            suburb=as_dict.get('suburb'),
                            state=as_dict.get('state'),
-                           postal_code=as_dict.get('postalCode'),
+                           postal_code=as_dict.get('postal_code'),
                            country=as_dict.get('country', 'Australia'))
         except KeyError, e:
             raise ValidationError('Contact missing required field: {}'.format(e))
@@ -211,7 +208,6 @@ class Address(db.Model):
 
 class Contact(db.Model):
     __tablename__ = 'contact'
-
     id = db.Column(db.Integer, primary_key=True)
     contact_for = db.Column(db.String, index=False, nullable=True)
     name = db.Column(db.String, index=False, nullable=False)
@@ -222,8 +218,10 @@ class Contact(db.Model):
 
     @staticmethod
     def from_json(as_dict):
+        as_dict = normalize_key_case(as_dict)
+
         try:
-            return Contact(contact_for=as_dict.get('contactFor', None),
+            return Contact(contact_for=as_dict.get('contact_for', None),
                            name=as_dict.get('name'),
                            role=as_dict.get('role', None),
                            email=as_dict.get('email', None),
@@ -232,9 +230,14 @@ class Contact(db.Model):
         except KeyError, e:
             raise ValidationError('Contact missing required field: {}'.format(e))
 
+    def serializable_after(self, data):
+        data['contactFor'] = data['contact_for']
+        return data
+
     def serialize(self):
         serialized = {
             'contactFor': self.contact_for,
+            'contact_for': self.contact_for,
             'name': self.name,
             'role': self.role,
             'email': self.email,
@@ -256,22 +259,16 @@ class SupplierReference(db.Model):
 
     @staticmethod
     def from_json(as_dict):
+
         try:
-            return SupplierReference(name=as_dict.get('name'),
-                                     organisation=as_dict.get('organisation'),
-                                     role=as_dict.get('role', None),
-                                     email=as_dict.get('email'))
+            s = SupplierReference()
+            s.update_from_json(as_dict)
+            return s
         except KeyError, e:
             raise ValidationError('Supplier reference missing required field: {}'.format(e))
 
     def serialize(self):
-        serialized = {
-            'name': self.name,
-            'organisation': self.organisation,
-            'role': self.role,
-            'email': self.email,
-        }
-        return filter_null_value_fields(serialized)
+        return s.json
 
 
 class ServiceCategory(db.Model):
@@ -290,6 +287,8 @@ class ServiceCategory(db.Model):
         return result
 
     def serialize(self):
+        return s.json
+
         serialized = {
             'name': self.name,
         }
@@ -321,6 +320,11 @@ class ServiceRole(db.Model):
         if result is None:
             raise ValidationError('Unknown role: {}'.format(role_name))
         return result
+
+    def serializable_after(self, data):
+        data['category'] = self.category.name
+        data['role'] = self.name
+        return data
 
     def serialize(self):
         serialized = {
@@ -371,6 +375,13 @@ class PriceSchedule(db.Model):
                     yield PriceSchedule(service_role=service_role, hourly_rate=hourly_rate)
         return list(it())
 
+    def serializable_after(self, data):
+        data['dailyRate'] = data.get('daily_rate', None)
+        data['hourlyRate'] = data.get('hourly_rate', None)
+        data['serviceRole'] = data.get('service_role', None)
+        data['gstIncluded'] = data.get('gst_included', None)
+        return data
+
     def serialize(self):
         serialized = {
             'serviceRole': self.service_role.serialize(),
@@ -411,14 +422,22 @@ class SupplierContact(db.Model):
     contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'), primary_key=True, nullable=False)
 
 
+supplier_code_seq = Sequence('supplier_code_seq')
+
+
 class Supplier(db.Model):
     DUMMY_ABN = '50 110 219 460'
 
     __tablename__ = 'supplier'
 
     id = db.Column(db.Integer, primary_key=True)
-    data_version = db.Column(db.Integer, index=False)
-    code = db.Column(db.BigInteger, index=True, unique=True, nullable=False)
+    code = db.Column(
+        db.BigInteger,
+        supplier_code_seq,
+        index=True,
+        unique=True,
+        nullable=False,
+        server_default=supplier_code_seq.next_value())
     name = db.Column(db.String(255), nullable=False)
     long_name = db.Column(db.String(255), nullable=True)
     summary = db.Column(db.String(511), index=False, nullable=True)
@@ -456,8 +475,8 @@ class Supplier(db.Model):
         unique=False,
         nullable=False
     )
+    data = db.Column(MutableDict.as_mutable(JSON), default=dict)
 
-    from .datetime_utils import localnow
     # TODO: migrate these to plain (non-timezone) fields
     creation_time = db.Column(DateTime(timezone=True),
                               index=False,
@@ -477,79 +496,59 @@ class Supplier(db.Model):
         return url_for(".get_supplier", code=self.code)
 
     def serialize(self, data=None):
-        serialized = {
-            'code': self.code,
-            'dataVersion': self.data_version,
-            'name': self.name,
+        existing = {
             'longName': self.long_name,
             'address': self.address.serialize(),
-            'summary': self.summary,
-            'description': self.description,
-            'website': self.website,
-            'linkedin': self.linkedin,
             'extraLinks': [l.serialize() for l in self.extra_links],
-            'abn': self.abn,
-            'acn': self.acn,
             'case_study_ids': [c.id for c in self.case_studies],
-            'contacts': [c.serialize() for c in self.contacts],
-            'references': [r.serialize() for r in self.references],
-            'prices': [p.serialize() for p in self.prices],
             'creationTime': self.creation_time.to_iso8601_string(extended=True),
             'lastUpdateTime': self.last_update_time.to_iso8601_string(extended=True),
         }
-        serialized.update(data or {})
+
+        serialized = self.serializable
+        serialized.update(existing)
         return serialized
 
-    def update_from_json(self, data):
-        keys = ['code', 'dataVersion', 'name', 'longName', 'summary', 'description', 'address', 'website', 'extraLinks',
-                'abn', 'acn', 'contacts', 'references', 'prices', 'case_study_ids', 'linkedin', 'services']
+    def update_from_json_before(self, data):
+        if 'abn' in data:
+            self.abn = data.pop('abn')
 
-        keys += ['status']
-        keys += ['description']  # unused
-        keys += ['services']  # this key is generated during the seller registration process but is redundant
-        keys += ['pricing']  # slightly different field name used by seller registration
+        if 'longName' in data:
+            self.long_name = data['longName']
 
-        keys += ['email', 'phone', 'representative']  # for the contact
-
-        extra_keys = set(data.keys()) - set(keys)
-
-        if extra_keys:
-            raise ValidationError('Additional properties are not allowed: {}'.format(str(extra_keys)))
-
-        self.code = data.get('code', self.code)
-        self.data_version = data.get('dataVersion', self.data_version)
-        self.name = data.get('name', self.name)
-        self.long_name = data.get('longName', self.long_name)
-        self.summary = data.get('summary', self.summary)
-        self.description = data.get('description', self.description)
-        self.website = data.get('website', self.website)
-        self.linkedin = data.get('linkedin', self.linkedin)
-        self.abn = data.get('abn', self.abn)
-        self.acn = data.get('acn', self.acn)
-        self.status = data.get('status', self.status)
-
-        if 'address' in data:
-            self.address = Address.from_json(data['address'])
         if 'extraLinks' in data:
             self.extra_links = [WebsiteLink.from_json(l) for l in data['extraLinks']]
-        if 'contacts' in data:
-            self.contacts = [Contact.from_json(c) for c in data['contacts']]
-        elif 'representative' in data:
-            self.contacts = [
+
+        if 'representative' in data:
+            self.contacts += [
                 Contact.from_json(c) for c in [{
                     'name': data.get('representative'),
                     'email': data.get('email'),
                     'phone': data.get('phone')
                 }]
             ]
-        if 'references' in data:
-            self.references = [SupplierReference.from_json(r) for r in data['references']]
-        if 'prices' in data:
-            self.prices = [PriceSchedule.from_json(p) for p in data['prices']]
-        if 'pricing' in data:
-            self.prices = PriceSchedule.from_submitted_pricing_json(data['pricing'])
+
+        overridden = [
+            'longName',
+            'extraLinks',
+            'representative'
+        ]
+
+        for k in overridden:
+            if k in data:
+                del data[k]
+
+        if 'services' in data:
+            data['services'] = {
+                k: {'assessed': False}
+                for k in data['services'].keys()
+            }
+
+        return data
+
+    def update_from_json_after(self, data):
         self.last_update_time = utcnow()
-        return self
+        return data
 
     @validates('name')
     def validate_name(self, key, name):
@@ -569,12 +568,6 @@ class Supplier(db.Model):
             acn = normalise_acn(acn)
         return acn
 
-    @validates('abn')
-    def validate_abn(self, key, abn):
-        if abn is not None:
-            abn = normalise_abn(abn)
-        return abn
-
 
 class SupplierFramework(db.Model):
     __tablename__ = 'supplier_framework'
@@ -585,11 +578,11 @@ class SupplierFramework(db.Model):
     framework_id = db.Column(db.Integer,
                              db.ForeignKey('framework.id'),
                              primary_key=True)
-    declaration = db.Column(JSON)
+    declaration = db.Column(MutableDict.as_mutable(JSON))
     on_framework = db.Column(db.Boolean, nullable=True)
     agreement_returned_at = db.Column(DateTime, index=False, unique=False, nullable=True)
     countersigned_at = db.Column(DateTime, index=False, unique=False, nullable=True)
-    agreement_details = db.Column(JSON)
+    agreement_details = db.Column(MutableDict.as_mutable(JSON))
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
@@ -829,7 +822,6 @@ class SupplierUserInviteLog(db.Model):
 
 
 class ServiceTableMixin(object):
-
     STATUSES = ('disabled', 'enabled', 'published')
 
     # not used as the externally-visible "pk" by actual Services in favour of service_id
@@ -840,7 +832,7 @@ class ServiceTableMixin(object):
     # Service publishing time.
     service_id = db.Column(db.String, index=True, unique=True, nullable=False)
 
-    data = db.Column(JSON)
+    data = db.Column(MutableDict.as_mutable(JSON))
     status = db.Column(db.String, index=False, unique=False, nullable=False)
 
     created_at = db.Column(DateTime, index=False, nullable=False,
@@ -910,6 +902,12 @@ class ServiceTableMixin(object):
 
         return data
 
+    def update_from_json(self, data):
+        current_data = dict(self.data.items())
+        current_data.update(data)
+
+        self.data = current_data
+
     def serialize(self):
         """
         :return: dictionary representation of a service
@@ -939,20 +937,10 @@ class ServiceTableMixin(object):
 
         return data
 
-    def update_from_json(self, data):
-        current_data = dict(self.data.items())
-        current_data.update(data)
-
-        self.data = current_data
-
-    def __repr__(self):
-        return '<{}: service_id={}, supplier_code={}, lot={}>'.format(
-            self.__class__.__name__,
-            self.service_id, self.supplier_code, self.lot
-        )
+    ADDITIONAL_REPR_FIELDS = ['service_id', 'supplier_code', 'lot']
 
 
-class Service(db.Model, ServiceTableMixin):
+class Service(ServiceTableMixin, db.Model):
     __tablename__ = 'service'
 
     @staticmethod
@@ -1001,7 +989,7 @@ class Service(db.Model, ServiceTableMixin):
         return url_for(".get_service", service_id=self.service_id)
 
 
-class ArchivedService(db.Model, ServiceTableMixin):
+class ArchivedService(ServiceTableMixin, db.Model):
     """
         A record of a Service's past state
     """
@@ -1037,7 +1025,7 @@ class ArchivedService(db.Model, ServiceTableMixin):
         raise NotImplementedError('Archived services should not be changed')
 
 
-class DraftService(db.Model, ServiceTableMixin):
+class DraftService(ServiceTableMixin, db.Model):
     __tablename__ = 'draft_service'
 
     STATUSES = ('not-submitted', 'submitted', 'enabled', 'disabled', 'published', 'failed')
@@ -1104,7 +1092,7 @@ class AuditEvent(db.Model):
     type = db.Column(db.String, index=True, nullable=False)
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
     user = db.Column(db.String)
-    data = db.Column(JSON)
+    data = db.Column(MutableDict.as_mutable(JSON), default=dict)
 
     object_type = db.Column(db.String)
     object_id = db.Column(db.BigInteger)
@@ -1193,7 +1181,7 @@ class Brief(db.Model):
     framework_id = db.Column(db.Integer, db.ForeignKey('framework.id'), nullable=False)
     _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lot.id'), nullable=False)
 
-    data = db.Column(JSON)
+    data = db.Column(MutableDict.as_mutable(JSON))
     created_at = db.Column(DateTime, index=True, nullable=False,
                            default=utcnow)
     updated_at = db.Column(DateTime, index=True, nullable=False,
@@ -1870,7 +1858,7 @@ class Application(db.Model):
         self.status = 'submitted'
 
     def create_assessment_task(self):
-        if feature.is_active('JIRA_FEATURES'):
+        if current_app.config['JIRA_FEATURES']:
             j = get_jira_api()
             j.create_assessment_task(self.id, 'Task')
         else:
@@ -1882,7 +1870,7 @@ class CaseStudy(db.Model):
     __tablename__ = 'case_study'
 
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(JSON, nullable=False)
+    data = db.Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
     supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
 
@@ -1913,11 +1901,14 @@ class CaseStudy(db.Model):
 
         return data
 
-    def update_from_json(self, data):
-        # Need this juggling because of the validates_data hook
-        new_data = dict(self.data)
-        new_data.update(data)
-        self.data = new_data
+    @staticmethod
+    def from_json(data):
+        def y():
+            for k, v in data.items():
+                c = CaseStudy()
+                c.update_from_json(v)
+                yield c
+        return list(y())
 
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,

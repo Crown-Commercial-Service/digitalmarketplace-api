@@ -6,11 +6,15 @@ from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_no
 
 from app import db
 from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework
-from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
+from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, assert_api_compatible
 from decimal import Decimal
 
 import pendulum
 from pendulum import create as dt
+
+from collections import Mapping, Iterable
+from itertools import izip_longest
+from six import string_types
 
 
 class TestGetSupplier(BaseApplicationTest):
@@ -265,7 +269,6 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         payload.update({'name': 'New Name'})
         supplier = json.loads(response.get_data())['supplier']
 
-        supplier.pop('dataVersion')
         supplier.pop('creationTime')
         supplier.pop('lastUpdateTime')
 
@@ -273,9 +276,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             if v is None:
                 supplier.pop(k)
 
-        assert (set(supplier.keys()) == set(payload.keys()))
-        for key in payload.keys():
-            assert supplier[key] == payload[key]
+        assert_api_compatible(payload, supplier)
 
     def test_update_all_fields(self):
         response = self.update_request({
@@ -306,7 +307,11 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             'name': "New Name"
         })
 
-        assert_equal(response.status_code, 400)
+        assert_equal(response.status_code, 200)
+
+        response_data = response.get_data(as_text=True)
+        response_json = json.loads(response_data)
+        assert 'new_key' in response_json['supplier']
 
     @pytest.mark.skipif(True, reason="failing for AU")
     def test_update_without_updated_by(self):
@@ -352,7 +357,7 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
 
     def test_when_supplier_has_a_missing_name(self):
         payload = self.load_example_listing("Supplier")
-        payload.pop('name')
+        payload['name'] = ''
 
         response = self.post_supplier(payload)
         assert_equal(response.status_code, 400)
@@ -365,15 +370,16 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         with self.app.app_context():
             response = self.post_supplier(payload)
             assert_equal(response.status_code, 201)
-            assert_equal(Supplier.query.filter_by(code=payload['code']).first().abn, '50 110 219 460')
+
+            # just returns the same string now because abns get validated/formatted client side
+            assert_equal(Supplier.query.filter_by(code=payload['code']).first().abn, '50110219460 ')
 
     def test_bad_abn(self):
         payload = self.load_example_listing("Supplier")
         payload['abn'] = 'bad'
 
         response = self.post_supplier(payload)
-        assert_equal(response.status_code, 400)
-        assert_in('ABN', json.loads(response.get_data())['error'])
+        assert_equal(response.status_code, 201)
 
     def test_acn_normalisation(self):
         payload = self.load_example_listing("Supplier")
@@ -438,9 +444,8 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         payload.update({'newKey': 1})
 
         response = self.post_supplier(payload)
-        assert_equal(response.status_code, 400)
-        assert_in('Additional properties are not allowed',
-                  json.loads(response.get_data())['error'])
+        assert_equal(response.status_code, 201)
+        assert 'newKey' in json.loads(response.data)['supplier']
 
 
 class TestSupplierSearch(BaseApplicationTest):

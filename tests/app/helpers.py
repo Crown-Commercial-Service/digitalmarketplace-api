@@ -11,6 +11,11 @@ from nose.tools import assert_equal, assert_in
 from app import create_app, db
 from app.models import Address, Service, Supplier, Framework, Lot, User, FrameworkLot, Brief, utcnow
 
+from collections import Mapping, Iterable
+from six import string_types
+from itertools import izip_longest
+
+
 TEST_SUPPLIERS_COUNT = 3
 
 
@@ -40,39 +45,55 @@ COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
 
 
 INCOMING_APPLICATION_DATA = {
-    "representative": "representative",
-    "name": "name",
-    "code": 666,
-    "abn": " 51824 753556 ",
-    "phone": "phone",
-    "email": "email",
-    "summary": "summary",
-    "website": "website",
-    "linkedin": "linkedin",
+    "representative": "Business Rep",
+    "name": "Business Name",
+    "abn": "ABN",
+    "phone": "Rep number",
+    "email": "Rep email",
+    "summary": "Summary",
+    "website": "",
+    "linkedin": "",
     "address": {
-        "addressLine": "data_addressLine",
-        "suburb": "St Ives",
-        "state": "NSW",
-        "postalCode": "90210"
+        "address_line": "Add",
+        "suburb": "sub",
+        "state": "state",
+        "postal_code": "2000"
     },
     "services": {
-        "Product Manager": True,
-        "Business Analyst": True,
-        "Delivery Manager": True
+        "Content & publishing": True,
+        "User research & design": True
     },
-    "pricing": {
-        "Product Manager": {
-            "minPrice": "50",
-            "maxPrice": "150"
-        },
-        "Business Analyst": {
-            "minPrice": "20",
-            "maxPrice": "120"
-        },
-        "Delivery Manager": {
-            "minPrice": "300",
-            "maxPrice": "400"
+    "case_studies": {
+        "c98932c6-b948-08f6-c782-6e3aa83451d4": {
+            "approach": "app",
+            "client": "client",
+            "opportunity": "opp",
+            "outcome": [
+                "outcome"
+            ],
+            "project_links": [],
+            "roles": "role",
+            "service": "Content & publishing",
+            "timeframe": "time frame",
+            "title": "case study"
         }
+    },
+    "documents": {
+        "financial": "Marketplace_Frontend_1.png",
+        "liability": "Marketplace_Frontend.png",
+        "workers": "apple-touch-icon_360.png",
+        "deed": "workorder_5.pdf"
+    },
+    "references": [],
+    "steps": {
+        "casestudy": "complete",
+        "digital": "complete",
+        "info": "complete",
+        "pricing": "complete",
+        "profile": "complete",
+        "review": "complete",
+        "start": "complete",
+        "documents": "complete"
     }
 }
 
@@ -358,3 +379,25 @@ class JSONUpdateTestMixin(JSONTestMixin):
 
         assert_equal(response.status_code, 400)
         assert_in("'updated_by' is a required property", response.get_data(as_text=True))
+
+
+def assert_api_compatible(old, new):
+    def equality(a, b):
+        assert a == b
+
+    for k in old:
+        v_old = old[k]
+        v_new = new[k]
+
+        if isinstance(v_old, Mapping):
+            assert_api_compatible(v_old, v_new)
+        elif not isinstance(v_old, string_types) and isinstance(v_old, Iterable):
+            for a, b in izip_longest(v_old, v_new):
+                assert_api_compatible(a, b)
+        else:
+            equality(v_old, v_new)
+
+
+def assert_api_compatible_list(old, new):
+    for x0, x1 in izip_longest(old, new):
+        assert_api_compatible(x0, x1)

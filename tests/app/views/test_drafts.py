@@ -440,6 +440,7 @@ class TestDraftServices(BaseApplicationTest):
             '/draft-services/{}'.format(draft_id),
             data=json.dumps(draft_update_json),
             content_type='application/json')
+        print(res3.data)
         assert_equal(res3.status_code, 200)
         data3 = json.loads(res3.get_data())['services']
         assert ('serviceName' in data3)
