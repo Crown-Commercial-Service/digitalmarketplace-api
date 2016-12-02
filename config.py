@@ -55,6 +55,8 @@ class Config:
 
     JIRA_FEATURES = False
 
+    ROLLBAR_TOKEN = None
+
 
 class Test(Config):
     DM_SEARCH_API_AUTH_TOKEN = 'test'

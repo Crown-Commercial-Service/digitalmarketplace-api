@@ -1,4 +1,4 @@
--e git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@25.21.2#egg=dto-digitalmarketplace-utils==25.21.2
+-e git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@25.21.2#egg=dto-digitalmarketplace-utils==25.21.5
 -e git+https://github.com/AusDTO/dto-digitalmarketplace-apiclient.git@6.11.1#egg=dto-digitalmarketplace-apiclient==6.11.1
 
 -e .
@@ -14,3 +14,5 @@ coverage
 pytest-cov
 python-coveralls
 hypothesis
+rollbar
+blinker
