@@ -768,6 +768,68 @@ class TestSubmitBriefReponseWhenFeatureFlagIsOff(TestSubmitBriefReponseForBriefC
         self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
 
 
+class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseSharedTests):
+    valid_brief_response_data = {
+        'essentialRequirementsMet': True,
+        'niceToHaveRequirements': [True, False, True, False, True],
+        'availability': u'a',
+        'respondToEmailAddress': 'supplier@email.com'
+    }
+
+    feature_flag_date = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
+
+    def setup(self):
+        super(TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag, self).setup()
+
+        # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ago meaning
+        # briefs are created after the feature flag
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
+
+    def test_can_not_submit_an_invalid_brief_response(self, live_dos_framework):
+        res = self.create_brief_response()
+        brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
+
+        res = self._submit_brief_response(brief_response_id)
+        data = json.loads(res.get_data(as_text=True))
+        assert res.status_code == 400
+        assert data == {
+            'error': {
+                'availability': 'answer_required',
+                'essentialRequirementsMet': 'answer_required',
+                'niceToHaveRequirements': 'answer_required',
+                'respondToEmailAddress': 'answer_required'
+            }
+        }
+
+    def test_can_not_submit_brief_response_with_legacy_data(self, live_dos_framework):
+        # To create a brief_resonse with an invalid key from the new schema, we need to switch the feature flag on.
+        # We switch it back off after creation to allow us to exhibit the behaviour we're testing.
+        feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+
+        legacy_brief_response_data = {
+            'essentialRequirements': [True, True, True, True, True],
+            'niceToHaveRequirements': [True, False, True, False, True],
+            'availability': u'a',
+            'respondToEmailAddress': 'supplier@email.com'
+        }
+
+        create_res = self.create_brief_response(data=legacy_brief_response_data)
+        assert create_res.status_code == 201
+
+        brief_response_id = json.loads(create_res.get_data(as_text=True))['briefResponses']['id']
+
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
+
+        submit_res = self._submit_brief_response(brief_response_id)
+        data = json.loads(submit_res.get_data(as_text=True))
+
+        assert submit_res.status_code == 400
+        assert (data['error']['_form'][0] ==
+                "Additional properties are not allowed (u'essentialRequirements' was unexpected)")
+        assert data['error']['essentialRequirementsMet'] == "answer_required"
+
+
 class TestGetBriefResponse(BaseBriefResponseTest):
     def setup(self):
         super(TestGetBriefResponse, self).setup()
