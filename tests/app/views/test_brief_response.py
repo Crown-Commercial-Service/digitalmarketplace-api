@@ -624,20 +624,18 @@ class TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag(UpdateBriefResponse
         assert data['essentialRequirementsMet'] is True
 
 
-class TestSubmitBriefResponse(BaseBriefResponseTest):
+class SubmitBriefResponseSharedTests(BaseBriefResponseTest):
+    def setup(self):
+        super(SubmitBriefResponseSharedTests, self).setup()
 
-    def _setup_existing_brief_response(self, brief_response_data):
-        res = self.create_brief_response(dict(brief_response_data, **{
-            'briefId': self.brief_id,
-            'supplierId': 0,
-        }))
+    def _setup_existing_brief_response(self):
+        res = self.create_brief_response(data=self.valid_brief_response_data)
+
         assert res.status_code == 201
-
         self.brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
 
-    @given(example_listings.brief_response_data())
-    def test_valid_draft_brief_response_can_be_submitted(self, live_dos_framework, brief_response_data):
-        self._setup_existing_brief_response(brief_response_data)
+    def test_valid_draft_brief_response_can_be_submitted(self, live_dos_framework):
+        self._setup_existing_brief_response()
 
         with freeze_time('2016-9-28'):
             res = self._submit_brief_response(self.brief_response_id)
@@ -648,10 +646,8 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
         assert brief_response['status'] == 'submitted'
         assert brief_response['submittedAt'] == '2016-09-28T00:00:00.000000Z'
 
-    @given(example_listings.brief_response_data())
-    def test_submit_brief_response_creates_an_audit_event(self, live_dos_framework, brief_response_data):
-        self._setup_existing_brief_response(brief_response_data)
-
+    def test_submit_brief_response_creates_an_audit_event(self, live_dos_framework):
+        self._setup_existing_brief_response()
         res = self._submit_brief_response(self.brief_response_id)
 
         with self.app.app_context():
@@ -668,10 +664,8 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
         res = self._submit_brief_response(100)
         assert res.status_code == 404
 
-    @given(example_listings.brief_response_data())
-    def test_can_not_submit_a_brief_response_that_already_been_submitted(self, live_dos_framework, brief_response_data):
-        self._setup_existing_brief_response(brief_response_data)
-
+    def test_can_not_submit_a_brief_response_that_already_been_submitted(self, live_dos_framework):
+        self._setup_existing_brief_response()
         res = self._submit_brief_response(self.brief_response_id)
         assert res.status_code == 200
 
@@ -681,12 +675,8 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
         data = json.loads(repeat_res.get_data(as_text=True))
         assert data == {'error': 'Brief response must be a draft'}
 
-    @given(example_listings.brief_response_data())
-    def test_can_not_submit_a_brief_response_for_a_framework_that_is_not_live(
-        self, live_dos_framework, brief_response_data
-    ):
-        self._setup_existing_brief_response(brief_response_data)
-
+    def test_can_not_submit_a_brief_response_for_a_framework_that_is_not_live(self, live_dos_framework):
+        self._setup_existing_brief_response()
         with self.app.app_context():
             # Change live framework to be expired
             db.session.execute("UPDATE frameworks SET status='expired' WHERE slug='digital-outcomes-and-specialists'")
@@ -696,10 +686,8 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
             assert res.status_code == 400
             assert data == {'error': 'Brief framework must be live'}
 
-    @given(example_listings.brief_response_data())
-    def test_can_not_submit_response_if_supplier_is_ineligble_for_brief(self, live_dos_framework, brief_response_data):
-        self._setup_existing_brief_response(brief_response_data)
-
+    def test_can_not_submit_response_if_supplier_is_ineligble_for_brief(self, live_dos_framework):
+        self._setup_existing_brief_response()
         with mock.patch('app.main.views.brief_responses.get_supplier_service_eligible_for_brief') as mock_patch:
             mock_patch.return_value = None
 
@@ -709,21 +697,27 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
             assert res.status_code == 400
             assert data == {'error': 'Supplier is not eligible to apply to this brief'}
 
+
+class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponseSharedTests):
+    valid_brief_response_data = {
+        'essentialRequirements': [True, True, True, True, True],
+        'niceToHaveRequirements': [True, False, True, False, True],
+        'availability': u'a',
+        'respondToEmailAddress': 'supplier@email.com'
+    }
+
+    def setup(self):
+        super(TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag, self).setup()
+
+        # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ahead meaning
+        # briefs are created before the feature flag
+        feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+
     def test_can_not_submit_an_invalid_brief_response(
         self, live_dos_framework
     ):
-        res = self.client.post(
-            '/brief-responses',
-            data=json.dumps({
-                'updated_by': 'test@example.com',
-                'briefResponses': {
-                    'briefId': self.brief_id,
-                    'supplierId': 0,
-                },
-                'page_questions': []
-            }),
-            content_type='application/json'
-        )
+        res = self.create_brief_response()
         brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
 
         res = self._submit_brief_response(brief_response_id)
