@@ -121,6 +121,7 @@ class CreateBriefResponseSharedTests(BaseBriefResponseTest, JSONUpdateTestMixin)
             'briefId': brief_id or self.brief_id,
             'supplierId': supplier_id,
         }
+
         if data:
             brief_responses_data = dict(data, **brief_responses_data)
 
@@ -420,6 +421,17 @@ class TestCreateBriefResponseForBriefCreatedBeforeFeatureFlag(CreateBriefRespons
 
         data = json.loads(res.get_data(as_text=True))
         assert res.status_code == 400
+
+
+class TestCreateBriefResponseWhenFeatureFlagIsFalse(TestCreateBriefResponseForBriefCreatedBeforeFeatureFlag):
+    def setup(self):
+        super(TestCreateBriefResponseWhenFeatureFlagIsFalse, self).setup()
+
+        # This is to make sure that we get the same behaviour is the feature flag is set to False, as when a brief
+        # response is created before the feature flag ie we're using the legacy schema. This situation will occur when
+        # the code is pushed to production and waiting to be activated via the feature flag. 
+
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = False
 
 
 class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponseSharedTests):
