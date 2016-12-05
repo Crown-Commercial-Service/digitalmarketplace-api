@@ -483,15 +483,6 @@ class UpdateBriefResponseSharedTests(BaseBriefResponseTest):
         res = self.create_brief_response()
         self.brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
 
-    def test_brief_response_can_be_updated(self, live_dos_framework):
-        res = self._update_brief_response(self.brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
-        assert res.status_code == 200
-        data = json.loads(res.get_data(as_text=True))['briefResponses']
-        assert data['id'] == self.brief_response_id
-        assert data['briefId'] == self.brief_id
-        assert data['supplierId'] == 0
-        assert data['respondToEmailAddress'] == 'newemail@email.com'
-
     def test_update_brief_response_creates_audit_event(self, live_dos_framework):
         res = self._update_brief_response(self.brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
         assert res.status_code == 200
@@ -577,6 +568,19 @@ class TestUpdateBriefResponseForBriefCreatedBeforeFeatureFlag(UpdateBriefRespons
         assert (data["error"]["_form"] ==
                 ["Additional properties are not allowed (u'essentialRequirementsMet' was unexpected)"])
 
+    def test_brief_response_can_be_updated_with_legacy_data(self, live_dos_framework):
+        res = self._update_brief_response(
+            self.brief_response_id, {'essentialRequirements': [True, True, True, True, True]}
+        )
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))['briefResponses']
+
+        assert data['id'] == self.brief_response_id
+        assert data['briefId'] == self.brief_id
+        assert data['supplierId'] == 0
+        assert data['essentialRequirements'] == [True, True, True, True, True]
+
 
 class TestUpdateBriefResponseWhenFeatureFlagIsFalse(TestUpdateBriefResponseForBriefCreatedBeforeFeatureFlag):
     def setup(self):
@@ -605,6 +609,19 @@ class TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag(UpdateBriefResponse
         data = json.loads(res.get_data(as_text=True))
         assert (data["error"]["_form"] ==
                 ["Additional properties are not allowed (u'essentialRequirements' was unexpected)"])
+
+    def test_brief_response_can_be_updated_with_non_legacy_data(self, live_dos_framework):
+        res = self._update_brief_response(
+            self.brief_response_id, {'essentialRequirementsMet': True}
+        )
+        assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))['briefResponses']
+
+        assert data['id'] == self.brief_response_id
+        assert data['briefId'] == self.brief_id
+        assert data['supplierId'] == 0
+        assert data['essentialRequirementsMet'] is True
 
 
 class TestSubmitBriefResponse(BaseBriefResponseTest):
