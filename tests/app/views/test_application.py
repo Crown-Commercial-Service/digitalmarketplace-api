@@ -143,6 +143,16 @@ class TestApproveApplication(BaseApplicationsTest):
 
         assert j['status'] == 'approved'
         assert 'supplier_code' in j
+        assert j['supplier_code'] == j['supplier']['code']
+        assert 'supplier' in j['links']
+
+        a = self.get_application(self.application_id)
+        assert a.status_code == 200
+        j = json.loads(a.get_data(as_text=True))['application']
+
+        assert j['status'] == 'approved'
+        assert 'supplier_code' in j
+        assert j['supplier_code'] == j['supplier']['code']
         assert 'supplier' in j['links']
 
 

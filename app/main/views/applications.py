@@ -48,7 +48,7 @@ def create_application():
 
     save_application(application)
 
-    return jsonify(application=application.serialize()), 201
+    return jsonify(application=application.serializable), 201
 
 
 @main.route('/applications/<int:application_id>', methods=['PATCH'])
@@ -62,7 +62,7 @@ def update_application(application_id):
     application.update_from_json(application_json)
     save_application(application)
 
-    return jsonify(application=application.serialize()), 200
+    return jsonify(application=application.serializable), 200
 
 
 @main.route('/applications/<int:application_id>/approve', methods=['POST'])
@@ -82,8 +82,7 @@ def get_application_by_id(application_id):
     application = Application.query.filter(
         Application.id == application_id
     ).first_or_404()
-
-    return jsonify(application=application.serialize())
+    return jsonify(application=application.serializable)
 
 
 @main.route('/applications/<int:application_id>', methods=['DELETE'])
@@ -140,7 +139,7 @@ def list_applications():
     )
 
     return jsonify(
-        applications=[_.serialize() for _ in applications.items],
+        applications=[_.serializable for _ in applications.items],
         links=pagination_links(
             applications,
             '.list_applications',

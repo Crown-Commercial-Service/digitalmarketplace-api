@@ -792,7 +792,6 @@ class User(db.Model):
                 "name": self.supplier.name
             }
             user['supplier'] = supplier
-
         return user
 
 
@@ -1828,9 +1827,13 @@ class Application(db.Model):
 
             self.status = 'approved'
 
+            db.session.flush()
+
             self.user.role = 'supplier'
+
             self.user.supplier_id = supplier.id
             db.session.flush()
+
             self.create_assessment_task()
         else:
             self.status = 'approval_rejected'
