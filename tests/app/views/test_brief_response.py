@@ -477,16 +477,11 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
         assert res.status_code == 400
 
 
-class TestUpdateBriefResponse(BaseBriefResponseTest):
+class UpdateBriefResponseSharedTests(BaseBriefResponseTest):
 
     def setup(self):
-        super(TestUpdateBriefResponse, self).setup()
-        res = self.create_brief_response({
-            'briefId': self.brief_id,
-            'supplierId': 0,
-            },
-            page_questions=[]
-        )
+        super(UpdateBriefResponseSharedTests, self).setup()
+        res = self.create_brief_response()
         self.brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
 
     def test_brief_response_can_be_updated(self, live_dos_framework):
@@ -558,17 +553,9 @@ class TestUpdateBriefResponse(BaseBriefResponseTest):
         assert data == {'error': {'essentialRequirements': 'answer_required'}}
 
     def test_update_brief_response_with_missing_response_to_page_question_will_error(self, live_dos_framework):
-        res = self.create_brief_response({
-            'briefId': self.brief_id + 1,
-            'supplierId': 0,
-            },
-            page_questions=[],
-        )
-
-        brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
 
         res = self.client.post(
-            '/brief-responses/{}'.format(brief_response_id),
+            '/brief-responses/{}'.format(self.brief_response_id),
             data=json.dumps({
                 'updated_by': 'test@example.com',
                 'briefResponses': {'respondToEmailAddress': 'newemail@email.com'},
@@ -580,6 +567,17 @@ class TestUpdateBriefResponse(BaseBriefResponseTest):
         assert res.status_code == 400
         data = json.loads(res.get_data(as_text=True))
         assert data == {'error': {'niceToHaveRequirements': 'answer_required'}}
+
+
+class TestUpdateBriefResponseForBriefCreatedBeforeFeatureFlag(UpdateBriefResponseSharedTests):
+    def setup(self):
+        super(TestUpdateBriefResponseForBriefCreatedBeforeFeatureFlag, self).setup()
+
+        # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ahead meaning
+        # briefs are created before the feature flag
+        feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+
 
 
 class TestSubmitBriefResponse(BaseBriefResponseTest):
