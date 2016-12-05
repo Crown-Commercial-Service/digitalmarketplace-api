@@ -623,6 +623,14 @@ class TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag(UpdateBriefResponse
         assert data['supplierId'] == 0
         assert data['essentialRequirementsMet'] is True
 
+    def test_essential_requirements_met_must_be_answered_as_true(self, live_dos_framework):
+        res = self._update_brief_response(
+            self.brief_response_id, {'essentialRequirementsMet': False}
+        )
+        assert res.status_code == 400
+        data = json.loads(res.get_data(as_text=True))
+        assert data["error"] == {'essentialRequirementsMet': 'not_required_value'}
+
 
 class SubmitBriefResponseSharedTests(BaseBriefResponseTest):
     def setup(self):
