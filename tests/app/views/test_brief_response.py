@@ -706,13 +706,13 @@ class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponse
         'respondToEmailAddress': 'supplier@email.com'
     }
 
+    # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ahead meaning
+    # briefs are created before the feature flag
+    feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
+
     def setup(self):
         super(TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag, self).setup()
-
-        # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ahead meaning
-        # briefs are created before the feature flag
-        feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
 
     def test_can_not_submit_an_invalid_brief_response(self, live_dos_framework):
         res = self.create_brief_response()
@@ -748,8 +748,7 @@ class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponse
 
         brief_response_id = json.loads(create_res.get_data(as_text=True))['briefResponses']['id']
 
-        feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
 
         submit_res = self._submit_brief_response(brief_response_id)
         data = json.loads(submit_res.get_data(as_text=True))
@@ -758,6 +757,15 @@ class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponse
         assert (data['error']['_form'][0] ==
                 "Additional properties are not allowed (u'essentialRequirementsMet' was unexpected)")
         assert data['error']['essentialRequirements'] == "answer_required"
+
+
+class TestSubmitBriefReponseWhenFeatureFlagIsOff(TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag):
+
+    feature_flag_date = False
+
+    def setup(self):
+        super(TestSubmitBriefReponseWhenFeatureFlagIsOff, self).setup()
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
 
 
 class TestGetBriefResponse(BaseBriefResponseTest):
