@@ -1738,7 +1738,7 @@ class Application(db.Model):
     __tablename__ = 'application'
 
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(JSON, nullable=False)
+    data = db.Column(MutableDict.as_mutable(JSON), default=dict)
     user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
 
@@ -1780,6 +1780,19 @@ class Application(db.Model):
 
         return data
 
+    def serializable_after(self, j):
+        if 'created_at' in j:
+            j['createdAt'] = j['created_at']
+        return j
+
+    def update_from_json_before(self, data):
+        try:
+            self.status = data['status']
+        except KeyError:
+            pass
+
+        return data
+
     def serialize(self):
         data = self.data.copy()
 
@@ -1795,17 +1808,6 @@ class Application(db.Model):
         })
 
         return data
-
-    def update_from_json(self, data):
-        # Need this juggling because of the validates_data hook
-        new_data = dict(self.data)
-        new_data.update(data)
-        self.data = new_data
-
-        try:
-            self.status = data['status']
-        except KeyError:
-            pass
 
     def submit_for_approval(self):
         if self.status != 'saved':

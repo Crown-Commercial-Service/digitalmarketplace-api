@@ -259,11 +259,15 @@ class MyModel(Model):
                 data[r] = get_related(getattr(self, r))
 
             fk_attr = '{}_id'.format(r)
+            alternate_fk_id = '{}_code'.format(r)
 
             try:
                 fk_id = getattr(self, fk_attr)
             except AttributeError:
-                continue
+                try:
+                    fk_id = getattr(self, alternate_fk_id)
+                except AttributeError:
+                    continue
 
             if fk_id is not None:
                 data['links'][r] = identity_link(r, fk_id)

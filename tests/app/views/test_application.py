@@ -73,7 +73,6 @@ class TestCreateApplication(BaseApplicationsTest):
     method = 'post'
 
     def test_create_new_application(self):
-
         res = self.create_application(
             dict(self.application_data, user_id=0)
         )
@@ -141,7 +140,10 @@ class TestApproveApplication(BaseApplicationsTest):
         a = self.approve_application(self.application_id)
         assert a.status_code == 200
         j = json.loads(a.get_data(as_text=True))['application']
+
         assert j['status'] == 'approved'
+        assert 'supplier_code' in j
+        assert 'supplier' in j['links']
 
 
 class TestUpdateApplication(BaseApplicationsTest):

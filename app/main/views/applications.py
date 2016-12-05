@@ -42,10 +42,10 @@ def create_application():
     if not applicant:
         abort(400, "Invalid user id '{}'".format(user_id))
 
-    application = Application(
-        data=application_json,
-        user_id=user_id
-    )
+    application = Application()
+    application_json['user_id'] = user_id
+    application.update_from_json(application_json)
+
     save_application(application)
 
     return jsonify(application=application.serialize()), 201
@@ -73,7 +73,8 @@ def approve_application(application_id):
         abort(404, "Application '{}' does not exist".format(application_id))
 
     application.set_approval(approved=True)
-    return jsonify(application=application.serialize()), 200
+    db.session.commit()
+    return jsonify(application=application.serializable), 200
 
 
 @main.route('/applications/<int:application_id>', methods=['GET'])
