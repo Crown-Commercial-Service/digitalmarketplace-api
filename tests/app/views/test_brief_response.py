@@ -714,9 +714,7 @@ class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponse
         feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
         self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
 
-    def test_can_not_submit_an_invalid_brief_response(
-        self, live_dos_framework
-    ):
+    def test_can_not_submit_an_invalid_brief_response(self, live_dos_framework):
         res = self.create_brief_response()
         brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
 
@@ -731,6 +729,35 @@ class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponse
                 'respondToEmailAddress': 'answer_required'
             }
         }
+
+    def test_can_not_submit_brief_response_with_non_legacy_data(self, live_dos_framework):
+        # To create a brief_resonse with an invalid key from the new schema, we need to switch the feature flag on.
+        # We switch it back off after creation to allow us to exhibit the behaviour we're testing.
+        feature_flag_date = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+
+        non_legacy_brief_response_data = {
+            'essentialRequirementsMet': True,
+            'niceToHaveRequirements': [True, False, True, False, True],
+            'availability': u'a',
+            'respondToEmailAddress': 'supplier@email.com'
+        }
+
+        create_res = self.create_brief_response(data=non_legacy_brief_response_data)
+        assert create_res.status_code == 201
+
+        brief_response_id = json.loads(create_res.get_data(as_text=True))['briefResponses']['id']
+
+        feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+
+        submit_res = self._submit_brief_response(brief_response_id)
+        data = json.loads(submit_res.get_data(as_text=True))
+
+        assert submit_res.status_code == 400
+        assert (data['error']['_form'][0] ==
+                "Additional properties are not allowed (u'essentialRequirementsMet' was unexpected)")
+        assert data['error']['essentialRequirements'] == "answer_required"
 
 
 class TestGetBriefResponse(BaseBriefResponseTest):
