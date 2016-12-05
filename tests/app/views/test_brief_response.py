@@ -68,19 +68,21 @@ class BaseBriefResponseTest(BaseApplicationTest):
 
             return brief_response.id
 
-    def create_brief_response(self, data, page_questions=[
-        'respondToEmailAddress',
-        'essentialRequirements',
-        'niceToHaveRequirements',
-        'availability',
-        'dayRate'
-    ]):
+    def create_brief_response(self, supplier_id=0, brief_id=None, data=None):
+        brief_responses_data = {
+            'briefId': brief_id or self.brief_id,
+            'supplierId': supplier_id,
+        }
+
+        if data:
+            brief_responses_data = dict(data, **brief_responses_data)
+
         return self.client.post(
             '/brief-responses',
             data=json.dumps({
                 'updated_by': 'test@example.com',
-                'briefResponses': data,
-                'page_questions': page_questions
+                'briefResponses': brief_responses_data,
+                'page_questions': list(data) if data else None
             }),
             content_type='application/json'
         )
@@ -115,25 +117,6 @@ class BaseBriefResponseTest(BaseApplicationTest):
 class CreateBriefResponseSharedTests(BaseBriefResponseTest, JSONUpdateTestMixin):
     endpoint = '/brief-responses'
     method = 'post'
-
-    def create_brief_response(self, supplier_id=0, brief_id=None, data=None):
-        brief_responses_data = {
-            'briefId': brief_id or self.brief_id,
-            'supplierId': supplier_id,
-        }
-
-        if data:
-            brief_responses_data = dict(data, **brief_responses_data)
-
-        return self.client.post(
-            '/brief-responses',
-            data=json.dumps({
-                'updated_by': 'test@example.com',
-                'briefResponses': brief_responses_data,
-                'page_questions': data.keys() if data else None
-            }),
-            content_type='application/json'
-        )
 
     def test_create_new_brief_response_with_no_page_questions(self, live_dos_framework):
         res = self.create_brief_response()
@@ -429,7 +412,7 @@ class TestCreateBriefResponseWhenFeatureFlagIsFalse(TestCreateBriefResponseForBr
 
         # This is to make sure that we get the same behaviour is the feature flag is set to False, as when a brief
         # response is created before the feature flag ie we're using the legacy schema. This situation will occur when
-        # the code is pushed to production and waiting to be activated via the feature flag. 
+        # the code is pushed to production and waiting to be activated via the feature flag.
 
         self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = False
 
