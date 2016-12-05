@@ -478,7 +478,6 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
 
 
 class UpdateBriefResponseSharedTests(BaseBriefResponseTest):
-
     def setup(self):
         super(UpdateBriefResponseSharedTests, self).setup()
         res = self.create_brief_response()
@@ -533,27 +532,18 @@ class UpdateBriefResponseSharedTests(BaseBriefResponseTest):
             assert data == {'error': 'Supplier is not eligible to apply to this brief'}
 
     def test_can_not_update_brief_response_that_has_already_been_submitted(self, live_dos_framework):
-            # Create dummy brief_response which will validate when submitted.
-            brief_response_id = self.setup_dummy_brief_response(
-                brief_id=self.brief_id,
-            )
-
-            # Update brief response
-            res = self._update_brief_response(brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
-            assert res.status_code == 400
-            data = json.loads(res.get_data(as_text=True))
-            assert data == {'error': 'Brief response must be a draft'}
-
-    def test_can_not_update_brief_response_with_invalid_content(self, live_dos_framework):
-        res = self._update_brief_response(
-            self.brief_response_id, {'essentialRequirements': [False, False, False, False]}
+        # Create dummy brief_response which has been submitted
+        brief_response_id = self.setup_dummy_brief_response(
+            brief_id=self.brief_id,
         )
+
+        # Update brief response
+        res = self._update_brief_response(brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
         assert res.status_code == 400
         data = json.loads(res.get_data(as_text=True))
-        assert data == {'error': {'essentialRequirements': 'answer_required'}}
+        assert data == {'error': 'Brief response must be a draft'}
 
     def test_update_brief_response_with_missing_response_to_page_question_will_error(self, live_dos_framework):
-
         res = self.client.post(
             '/brief-responses/{}'.format(self.brief_response_id),
             data=json.dumps({
@@ -578,6 +568,33 @@ class TestUpdateBriefResponseForBriefCreatedBeforeFeatureFlag(UpdateBriefRespons
         feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
         self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
 
+    def test_can_not_update_brief_response_with_non_legacy_schema_content(self, live_dos_framework):
+        res = self._update_brief_response(
+            self.brief_response_id, {'essentialRequirementsMet': True}
+        )
+        assert res.status_code == 400
+        data = json.loads(res.get_data(as_text=True))
+        assert (data["error"]["_form"] ==
+                ["Additional properties are not allowed (u'essentialRequirementsMet' was unexpected)"])
+
+
+class TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag(UpdateBriefResponseSharedTests):
+    def setup(self):
+        super(TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag, self).setup()
+
+        # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ago meaning
+        # briefs are created after the feature flag
+        feature_flag_date = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+
+    def test_can_not_update_brief_response_with_legacy_schema_content(self, live_dos_framework):
+        res = self._update_brief_response(
+            self.brief_response_id, {'essentialRequirements': [True, True, True, True, True]}
+        )
+        assert res.status_code == 400
+        data = json.loads(res.get_data(as_text=True))
+        assert (data["error"]["_form"] ==
+                ["Additional properties are not allowed (u'essentialRequirements' was unexpected)"])
 
 
 class TestSubmitBriefResponse(BaseBriefResponseTest):
