@@ -239,7 +239,7 @@ class MyModel(Model):
         except AttributeError:
             data = {}
 
-        data.update(self._fieldsdict)
+        data.update({k: v for k, v in self._fieldsdict.items() if k != 'data'})
 
         data['links'] = {}
 

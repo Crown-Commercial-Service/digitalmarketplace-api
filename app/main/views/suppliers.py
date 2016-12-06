@@ -68,7 +68,7 @@ def list_suppliers():
                 'self': url_for('.list_suppliers', _external=True, **request.args),
             }
             supplier_results = suppliers.all()
-        supplier_data = [supplier.serialize() for supplier in supplier_results]
+        supplier_data = [supplier.serializable for supplier in supplier_results]
     except DataError:
         abort(400, 'invalid framework')
     return jsonify(suppliers=supplier_data, links=links)
@@ -81,7 +81,7 @@ def get_supplier(code):
     ).first_or_404()
 
     supplier.get_service_counts()
-    return jsonify(supplier=supplier.serialize())
+    return jsonify(supplier=supplier.serializable)
 
 
 @main.route('/suppliers/<int:code>', methods=['DELETE'])
@@ -166,7 +166,7 @@ def update_supplier_data_impl(supplier, supplier_data, success_code):
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
 
-    return jsonify(supplier=supplier.serialize()), success_code
+    return jsonify(supplier=supplier.serializable), success_code
 
 
 @main.route('/suppliers', methods=['POST'])

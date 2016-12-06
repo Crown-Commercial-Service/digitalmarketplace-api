@@ -28,7 +28,8 @@ def index_supplier(supplier):
             'Attempting to add "{supplier_name}" to supplier search index',
             extra={'supplier_name': supplier.name}
         )
-        supplier_json = jsondumps(supplier.serialize())
+        supplier_json = jsondumps(supplier.serializable)
+
         es_client.index(index=get_supplier_index_name(),
                         doc_type=SUPPLIER_DOC_TYPE,
                         body=supplier_json,

@@ -188,15 +188,13 @@ class Address(db.Model):
         except KeyError, e:
             raise ValidationError('Contact missing required field: {}'.format(e))
 
-    def serialize(self):
-        serialized = {
+    def serializable_after(self, j):
+        legacy = {
             'addressLine': self.address_line,
-            'suburb': self.suburb,
-            'state': self.state,
-            'postalCode': self.postal_code,
-            'country': self.country,
+            'postalCode': self.postal_code
         }
-        return filter_null_value_fields(serialized)
+        j.update(legacy)
+        return j
 
     @validates('postal_code')
     def validate_postal_code(self, key, code):
@@ -495,19 +493,17 @@ class Supplier(db.Model):
     def get_link(self):
         return url_for(".get_supplier", code=self.code)
 
-    def serialize(self, data=None):
-        existing = {
+    def serializable_after(self, j):
+        legacy = {
             'longName': self.long_name,
-            'address': self.address.serialize(),
             'extraLinks': [l.serialize() for l in self.extra_links],
             'case_study_ids': [c.id for c in self.case_studies],
-            'creationTime': self.creation_time.to_iso8601_string(extended=True),
-            'lastUpdateTime': self.last_update_time.to_iso8601_string(extended=True),
+            'creationTime': self.creation_time,
+            'lastUpdateTime': self.last_update_time,
+            'supplierCode': self.code
         }
-
-        serialized = self.serializable
-        serialized.update(existing)
-        return serialized
+        j.update(legacy)
+        return j
 
     def update_from_json_before(self, data):
         if 'abn' in data:
@@ -767,32 +763,27 @@ class User(db.Model):
     def get_link(self):
         return url_for('.get_user_by_id', user_id=self.id)
 
-    def serialize(self):
-        user = {
-            'id': self.id,
+    def serializable_after(self, j):
+        del j['password']
+
+        legacy = {
             'emailAddress': self.email_address,
             'phoneNumber': self.phone_number,
-            'name': self.name,
-            'role': self.role,
-            'active': self.active,
-            'locked': self.locked,
-            'createdAt': self.created_at.to_iso8601_string(extended=True),
-            'updatedAt': self.updated_at.to_iso8601_string(extended=True),
+            'createdAt': self.created_at,
+            'updatedAt': self.updated_at,
             'passwordChangedAt':
-                self.password_changed_at.to_iso8601_string(extended=True),
-            'loggedInAt': self.logged_in_at.to_iso8601_string(extended=True)
+                self.password_changed_at,
+            'loggedInAt': self.logged_in_at
                 if self.logged_in_at else None,
-            'termsAcceptedAt': self.terms_accepted_at.to_iso8601_string(extended=True),
+            'termsAcceptedAt': self.terms_accepted_at,
             'failedLoginCount': self.failed_login_count,
+            'locked': self.locked
         }
+        j.update(legacy)
+        return j
 
-        if self.role == 'supplier':
-            supplier = {
-                "supplierCode": self.supplier.code,
-                "name": self.supplier.name
-            }
-            user['supplier'] = supplier
-        return user
+    def serialize(self):
+        return self.serializable
 
 
 class SupplierUserInviteLog(db.Model):
@@ -1830,8 +1821,8 @@ class Application(db.Model):
             db.session.flush()
 
             self.user.role = 'supplier'
+            self.user.supplier_code = supplier.code
 
-            self.user.supplier_id = supplier.id
             db.session.flush()
 
             self.create_assessment_task()

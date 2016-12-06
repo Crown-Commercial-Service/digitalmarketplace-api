@@ -1108,6 +1108,16 @@ class TestApplication(BaseApplicationTest):
             assert x.status == 'approved'
             assert x.supplier.status == 'limited'
 
+            assert x.supplier.id is not None
+            assert x.supplier.code is not None
+            assert self.user.role == 'supplier'
+            assert self.user.supplier_code == x.supplier.code
+
+            db.session.flush()
+            db.session.refresh(self.user)
+
+            assert self.user.supplier == x.supplier
+
             assert x.supplier.data['services'] == \
                 {
                     'Content & publishing': {'assessed': False},
