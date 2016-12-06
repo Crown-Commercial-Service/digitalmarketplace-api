@@ -1,6 +1,7 @@
 alembic==0.8.8
 backoff==1.0.7
 bcrypt==3.1.1
+blinker==1.4
 boto==2.43.0
 boto3==1.4.1
 botocore==1.4.78
@@ -13,7 +14,7 @@ cryptography==1.6
 docopt==0.6.2
 docutils==0.12
 -e git+https://github.com/AusDTO/dto-digitalmarketplace-apiclient.git@0be545325410a9c018796d9171cc03842257d540#egg=dto_digitalmarketplace_apiclient
--e git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@90a35720fd421fa706e46736e9e5eae679726143#egg=dto_digitalmarketplace_utils
+-e git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@900083f76a1662b03ad19ef0fe811cdb96e2913a#egg=dto_digitalmarketplace_utils
 elasticsearch==1.9.0
 enum34==1.1.2
 flake8==3.2.1
@@ -69,7 +70,9 @@ requests==2.12.1
 requests-mock==1.1.0
 requests-oauthlib==0.7.0
 requests-toolbelt==0.7.0
+responses==0.5.1
 rfc3987==1.3.7
+rollbar==0.13.8
 s3transfer==0.1.9
 six==1.10.0
 SQLAlchemy==1.0.5
