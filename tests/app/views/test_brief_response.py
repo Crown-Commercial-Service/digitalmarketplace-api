@@ -302,7 +302,9 @@ class TestCreateBriefResponseForBriefCreatedBeforeFeatureFlag(CreateBriefRespons
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
-        assert data['error']['essentialRequirements'] == "10 is not of type u'array'"
+        # Split assertions due to unicode python 2/3 differences
+        assert "10 is not of type" in data['error']['essentialRequirements']
+        assert "array" in data['error']['essentialRequirements']
 
     def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(self, live_dos_framework):
         res = self.client.post(
@@ -434,7 +436,7 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
                 'briefResponses': {
                     "supplierId": 0,
                     "briefId": self.brief_id,
-                    "essentialRequirementsMet": [True, True]
+                    "essentialRequirementsMet": 'string'
                 },
                 'page_questions': ["essentialRequirementsMet"]
             }),
@@ -565,8 +567,7 @@ class TestUpdateBriefResponseForBriefCreatedBeforeFeatureFlag(UpdateBriefRespons
         )
         assert res.status_code == 400
         data = json.loads(res.get_data(as_text=True))
-        assert (data["error"]["_form"] ==
-                ["Additional properties are not allowed (u'essentialRequirementsMet' was unexpected)"])
+        assert "'essentialRequirementsMet' was unexpected" in data["error"]["_form"][0]
 
     def test_brief_response_can_be_updated_with_legacy_data(self, live_dos_framework):
         res = self._update_brief_response(
@@ -607,8 +608,7 @@ class TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag(UpdateBriefResponse
         )
         assert res.status_code == 400
         data = json.loads(res.get_data(as_text=True))
-        assert (data["error"]["_form"] ==
-                ["Additional properties are not allowed (u'essentialRequirements' was unexpected)"])
+        assert "'essentialRequirements' was unexpected" in data["error"]["_form"][0]
 
     def test_brief_response_can_be_updated_with_non_legacy_data(self, live_dos_framework):
         res = self._update_brief_response(
@@ -762,8 +762,7 @@ class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponse
         data = json.loads(submit_res.get_data(as_text=True))
 
         assert submit_res.status_code == 400
-        assert (data['error']['_form'][0] ==
-                "Additional properties are not allowed (u'essentialRequirementsMet' was unexpected)")
+        assert "'essentialRequirementsMet' was unexpected" in data['error']['_form'][0]
         assert data['error']['essentialRequirements'] == "answer_required"
 
 
@@ -833,8 +832,7 @@ class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseS
         data = json.loads(submit_res.get_data(as_text=True))
 
         assert submit_res.status_code == 400
-        assert (data['error']['_form'][0] ==
-                "Additional properties are not allowed (u'essentialRequirements' was unexpected)")
+        assert "'essentialRequirements' was unexpected" in data['error']['_form'][0]
         assert data['error']['essentialRequirementsMet'] == "answer_required"
 
 
