@@ -645,7 +645,7 @@ class User(db.Model):
     failed_login_count = db.Column(db.Integer, nullable=False, default=0)
 
     # used by frontends to determine whether view access should be allowed
-    role = db.Column(db.Enum(ROLES, name='user_roles_enum'), index=False, unique=False, nullable=False)
+    role = db.Column(db.Enum(*ROLES, name='user_roles_enum'), index=False, unique=False, nullable=False)
 
     supplier_id = db.Column(db.BigInteger,
                             db.ForeignKey('suppliers.supplier_id'),
