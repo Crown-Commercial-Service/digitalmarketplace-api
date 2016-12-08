@@ -14,6 +14,11 @@ from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service
 
 
 class BaseBriefResponseTest(BaseApplicationTest):
+    # The following dates are used as we regularly need to set the new supplier flow feature flag to varying times so we
+    # can test our functionality works in expected ways for different values of the feature flag
+    datetime_one_week_ago = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
+    datetime_one_week_ahead = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
+
     def setup(self):
         super(BaseBriefResponseTest, self).setup()
 
@@ -138,7 +143,7 @@ class CreateBriefResponseSharedTests(BaseBriefResponseTest, JSONUpdateTestMixin)
         assert data['briefResponses']['supplierName'] == 'Supplier 0'
         assert data['briefResponses']['briefId'] == self.brief_id
 
-    def test_create_new_brief_response_with_missing_response_to_page_question_will_error(self, live_dos_framework):
+    def test_create_new_brief_response_with_missing_answer_to_page_question_will_error(self, live_dos_framework):
         res = self.client.post(
             '/brief-responses',
             data=json.dumps({
@@ -281,8 +286,7 @@ class TestCreateBriefResponseForBriefCreatedBeforeFeatureFlag(CreateBriefRespons
 
         # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ahead meaning
         # briefs are created before the feature flag
-        feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = BaseBriefResponseTest.datetime_one_week_ahead
 
     def test_cannot_create_brief_response_with_invalid_json(self, live_dos_framework):
         res = self.client.post(
@@ -412,7 +416,7 @@ class TestCreateBriefResponseWhenFeatureFlagIsFalse(TestCreateBriefResponseForBr
     def setup(self):
         super(TestCreateBriefResponseWhenFeatureFlagIsFalse, self).setup()
 
-        # This is to make sure that we get the same behaviour is the feature flag is set to False, as when a brief
+        # This is to make sure that we get the same behaviour if the feature flag is set to False, as when a brief
         # response is created before the feature flag ie we're using the legacy schema. This situation will occur when
         # the code is pushed to production and waiting to be activated via the feature flag.
 
@@ -425,8 +429,7 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
 
         # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ago meaning
         # briefs are created after the feature flag
-        feature_flag_date = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = BaseBriefResponseTest.datetime_one_week_ago
 
     def test_cannot_create_brief_response_with_invalid_json(self, live_dos_framework):
         res = self.client.post(
@@ -536,7 +539,7 @@ class UpdateBriefResponseSharedTests(BaseBriefResponseTest):
         data = json.loads(res.get_data(as_text=True))
         assert data == {'error': 'Brief response must be a draft'}
 
-    def test_update_brief_response_with_missing_response_to_page_question_will_error(self, live_dos_framework):
+    def test_update_brief_response_with_missing_answer_to_page_question_will_error(self, live_dos_framework):
         res = self.client.post(
             '/brief-responses/{}'.format(self.brief_response_id),
             data=json.dumps({
@@ -558,8 +561,7 @@ class TestUpdateBriefResponseForBriefCreatedBeforeFeatureFlag(UpdateBriefRespons
 
         # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ahead meaning
         # briefs are created before the feature flag
-        feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = BaseBriefResponseTest.datetime_one_week_ahead
 
     def test_can_not_update_brief_response_with_non_legacy_schema_content(self, live_dos_framework):
         res = self._update_brief_response(
@@ -587,7 +589,7 @@ class TestUpdateBriefResponseWhenFeatureFlagIsFalse(TestUpdateBriefResponseForBr
     def setup(self):
         super(TestUpdateBriefResponseWhenFeatureFlagIsFalse, self).setup()
 
-        # This is to make sure that we get the same behaviour is the feature flag is set to False, as when a brief
+        # This is to make sure that we get the same behaviour if the feature flag is set to False, as when a brief
         # response is created before the feature flag ie we're using the legacy schema. This situation will occur when
         # the code is pushed to production and waiting to be activated via the feature flag.
         self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = False
@@ -599,8 +601,7 @@ class TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag(UpdateBriefResponse
 
         # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ago meaning
         # briefs are created after the feature flag
-        feature_flag_date = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = BaseBriefResponseTest.datetime_one_week_ago
 
     def test_can_not_update_brief_response_with_legacy_schema_content(self, live_dos_framework):
         res = self._update_brief_response(
@@ -716,7 +717,7 @@ class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponse
 
     # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ahead meaning
     # briefs are created before the feature flag
-    feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
+    feature_flag_date = BaseBriefResponseTest.datetime_one_week_ahead
 
     def setup(self):
         super(TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag, self).setup()
@@ -740,9 +741,7 @@ class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponse
 
     def test_can_not_submit_brief_response_with_non_legacy_data(self, live_dos_framework):
         # To create a brief_resonse with an invalid key from the new schema, we need to switch the feature flag on.
-        # We switch it back off after creation to allow us to exhibit the behaviour we're testing.
-        feature_flag_date = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = BaseBriefResponseTest.datetime_one_week_ago
 
         non_legacy_brief_response_data = {
             'essentialRequirementsMet': True,
@@ -756,6 +755,7 @@ class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponse
 
         brief_response_id = json.loads(create_res.get_data(as_text=True))['briefResponses']['id']
 
+        # Switch feature flag back to it's original value so we can test submitting the brief response
         self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
 
         submit_res = self._submit_brief_response(brief_response_id)
@@ -768,6 +768,9 @@ class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponse
 
 class TestSubmitBriefReponseWhenFeatureFlagIsOff(TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag):
 
+    # This is to make sure that we get the same behaviour if the feature flag is set to False, as when a brief
+    # response is created before the feature flag ie we're using the legacy schema. This situation will occur when
+    # the code is pushed to production and waiting to be activated via the feature flag.
     feature_flag_date = False
 
     def setup(self):
@@ -783,7 +786,9 @@ class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseS
         'respondToEmailAddress': 'supplier@email.com'
     }
 
-    feature_flag_date = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
+    # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ago meaning
+    # briefs are created after the feature flag
+    feature_flag_date = BaseBriefResponseTest.datetime_one_week_ago
 
     def setup(self):
         super(TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag, self).setup()
@@ -810,9 +815,7 @@ class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseS
 
     def test_can_not_submit_brief_response_with_legacy_data(self, live_dos_framework):
         # To create a brief_resonse with an invalid key from the new schema, we need to switch the feature flag on.
-        # We switch it back off after creation to allow us to exhibit the behaviour we're testing.
-        feature_flag_date = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = feature_flag_date
+        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = BaseBriefResponseTest.datetime_one_week_ahead
 
         legacy_brief_response_data = {
             'essentialRequirements': [True, True, True, True, True],
@@ -826,6 +829,7 @@ class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseS
 
         brief_response_id = json.loads(create_res.get_data(as_text=True))['briefResponses']['id']
 
+        # Switch feature flag back to it's original value so we can test submitting the brief response
         self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
 
         submit_res = self._submit_brief_response(brief_response_id)
