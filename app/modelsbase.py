@@ -243,6 +243,12 @@ class MyModel(Model):
 
         data['links'] = {}
 
+        try:
+            self.id
+        except AttributeError:
+            # return early as this is likely a many-to-many
+            return data
+
         if self.id is not None:
             data['links']['self'] = identity_link(self._name, self.id)
 

@@ -1,6 +1,7 @@
 from flask import json
 import pytest
 import urllib2
+import time
 from freezegun import freeze_time
 from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_none, assert_true, assert_false
 
@@ -459,13 +460,29 @@ class TestSupplierSearch(BaseApplicationTest):
                                data=json.dumps(query_body),
                                content_type='application/json')
 
+    def post_supplier(self, supplier):
+        return self.client.post(
+            '/suppliers',
+            data=json.dumps({
+                'supplier': supplier
+            }),
+            content_type='application/json')
+
     def test_basic_search_hit(self):
-        response = self.search({'query': {'term': {'code': 1}}})
-        assert_equal(response.status_code, 200)
-        result = json.loads(response.get_data())
-        assert_equal(result['hits']['total'], 1)
-        assert_equal(len(result['hits']['hits']), 1)
-        assert_equal(result['hits']['hits'][0]['_source']['code'], 1)
+        payload = self.load_example_listing("Supplier")
+        response = self.post_supplier(payload)
+
+        # give the supplier search results time to update
+        # (eventual consistency is the root of all evil)
+        time.sleep(1)
+
+        with self.app.app_context():
+            response = self.search({'query': {'term': {'code': 1}}})
+            assert_equal(response.status_code, 200)
+            result = json.loads(response.get_data())
+            assert_equal(result['hits']['total'], 1)
+            assert_equal(len(result['hits']['hits']), 1)
+            assert_equal(result['hits']['hits'][0]['_source']['code'], 1)
 
     def test_basic_search_miss(self):
         response = self.search({'query': {'term': {'code': 654321}}})
@@ -487,6 +504,30 @@ class TestCounts(BaseApplicationTest):
     def test_get_suppliers(self):
         response = self.client.get('/suppliers/count')
         assert response.status_code == 200
+
+
+class TestDomains(BaseApplicationTest):
+    def test_get_domains(self):
+        response = self.client.get('/domains')
+
+        assert response.status_code == 200
+        domains_json = json.loads(response.get_data())['domains']
+
+        assert [_['name'] for _ in domains_json] == [
+            'Change & transformation',
+            'Content & publishing',
+            'Cyber security',
+            'Data science',
+            'Emerging technology',
+            'Engineering & development',
+            'Marketing, comms & engagement',
+            'Operations',
+            'Policy & law',
+            'Products',
+            'Recruitment',
+            'Strategy, delivery, and governance',
+            'User research & design'
+        ]
 
 
 class TestDeleteSupplier(BaseApplicationTest):

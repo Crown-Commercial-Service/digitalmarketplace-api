@@ -14,6 +14,7 @@ from app import db, create_app
 from app.models import (
     User, Lot, Framework, Service,
     Supplier, SupplierFramework,
+    SupplierDomain, Domain,
     Brief, BriefResponse,
     ValidationError,
     BriefClarificationQuestion,
@@ -1144,3 +1145,37 @@ class TestApplication(BaseApplicationTest):
             assert x.supplier.status == 'limited'
 
             db.session.flush()
+
+    def test_application_and_supplier_domains(self):
+        with self.app.test_request_context('/hello'):
+            supp = self.supplier
+            db.session.add(supp)
+
+            assert supp.legacy_domains == []
+
+            supp.update_from_json(
+                {"prices": [{
+                    "serviceRole": {"category": "Business Analysis", "role": "Junior Business Analyst"},
+                    "hourlyRate": "1.10",
+                    "dailyRate": "2.90"}]}
+            )
+
+            db.session.commit()
+
+            assert supp.legacy_domains == ['Strategy, delivery & governance']
+            assert supp.assessed_domains == ['Strategy, delivery & governance']
+            assert supp.unassessed_domains == []
+
+            supp.add_unassessed_domain('Change & transformation')
+
+            assert supp.legacy_domains == ['Strategy, delivery & governance']
+            assert supp.assessed_domains == ['Strategy, delivery & governance']
+            assert supp.unassessed_domains == ['Change & transformation']
+
+            supp.update_domain_assessment('Change & transformation', True)
+
+            assert supp.legacy_domains == ['Strategy, delivery & governance']
+            assert supp.assessed_domains == [
+                'Change & transformation', 'Strategy, delivery & governance'
+            ]
+            assert supp.unassessed_domains == []

@@ -3,6 +3,8 @@ from datetime import datetime
 from decimal import InvalidOperation
 from workdays import workday
 import re
+import io
+import yaml
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
@@ -12,11 +14,13 @@ from six import string_types, text_type, binary_type
 
 from sqlalchemy import asc, desc
 from sqlalchemy import func
+from sqlalchemy import event
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy.orm import validates
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm import validates, relationship
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.expression import cast as sql_cast
@@ -26,6 +30,8 @@ from sqlalchemy.schema import Sequence
 from dmutils.data_tools import ValidationError, normalise_abn, normalise_acn, parse_money
 
 from . import db
+from . import search_indices
+
 from app.utils import (
     link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data, filter_fields
 )
@@ -41,6 +47,11 @@ from functools import partial
 
 from .jiraapi import get_api as get_jira_api
 from .modelsbase import normalize_key_case
+from .utils import sorted_uniques
+
+
+with io.open('data/domain_mapping_old_to_new.yaml') as f:
+    DOMAIN_MAPPING = yaml.load(f.read())
 
 
 class FrameworkLot(db.Model):
@@ -423,6 +434,17 @@ class SupplierContact(db.Model):
 supplier_code_seq = Sequence('supplier_code_seq')
 
 
+class SupplierDomain(db.Model):
+    __tablename__ = 'supplier_domain'
+
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), primary_key=True)
+    domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), primary_key=True)
+    assessed = db.Column(db.Boolean, nullable=False, default=False)
+
+    domain = relationship("Domain", back_populates="suppliers")
+    supplier = relationship("Supplier", back_populates="domains")
+
+
 class Supplier(db.Model):
     DUMMY_ABN = '50 110 219 460'
 
@@ -443,7 +465,7 @@ class Supplier(db.Model):
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'), index=False, nullable=False)
     address = db.relationship('Address', single_parent=True, cascade='all, delete-orphan')
     website = db.Column(db.String(255), index=False, nullable=True)
-    linkedin = db.Column(db.String(255), index=False, nullable=True)
+    linkedin = db.Column(db.String, index=False, nullable=True)
     extra_links = db.relationship('WebsiteLink',
                                   secondary=SupplierExtraLinks.__table__,
                                   single_parent=True,
@@ -486,6 +508,67 @@ class Supplier(db.Model):
                                  nullable=False,
                                  default=localnow)
 
+    domains = relationship("SupplierDomain", back_populates="supplier")
+
+    def add_unassessed_domain(self, name):
+        d = Domain.query.filter_by(name=name).first()
+
+        if not d:
+            raise ValidationError('bad domain name: {}'.format(name))
+
+        sd = SupplierDomain(supplier=self, domain=d)
+        db.session.add(sd)
+        db.session.flush()
+
+    def update_domain_assessment(self, name, assessed=True):
+        d = Domain.query.filter_by(name=name).first()
+
+        if not d:
+            raise ValidationError('bad domain name: {}'.format(name))
+
+        sd = SupplierDomain.query.filter_by(supplier_id=self.id, domain_id=d.id).first()
+
+        if not sd:
+            raise ValidationError('no domain assessment exists for: {}'.format(name))
+
+        sd.assessed = assessed
+        db.session.flush()
+
+    @property
+    def assessed_domains(self):
+        approved_new_domains = [sd.domain.name for sd in self.domains if sd.assessed]
+        result = approved_new_domains + self.legacy_domains
+        return sorted_uniques(result)
+
+    @property
+    def unassessed_domains(self):
+        result = [sd.domain.name for sd in self.domains if not sd.assessed]
+        return sorted_uniques(result)
+
+    @property
+    def legacy_domains(self):
+        def map_legacy_to_new(legacy_name):
+            n = legacy_name
+
+            PREFIX = ['Senior ', 'Junior ']
+
+            for pre in PREFIX:
+                if legacy_name.startswith(pre):
+                    n = n[len(pre):]
+
+            try:
+                return DOMAIN_MAPPING[n]
+            except KeyError:
+                raise ValueError('invalid legacy domain')
+
+        legacy_domains = [
+            map_legacy_to_new(p.service_role.name)
+            for p in self.prices
+        ]
+
+        legacy_domains.sort()
+        return legacy_domains
+
     def get_service_counts(self):
         # FIXME: To be removed from Australian version
         return {}
@@ -503,9 +586,18 @@ class Supplier(db.Model):
             'supplierCode': self.code
         }
         j.update(legacy)
+
+        j['domains'] = {
+            'assessed': self.assessed_domains,
+            'unassessed': self.unassessed_domains,
+            'legacy': self.legacy_domains
+        }
+
         return j
 
     def update_from_json_before(self, data):
+        self.data = self.data or {}
+
         if 'abn' in data:
             self.abn = data.pop('abn')
 
@@ -524,25 +616,31 @@ class Supplier(db.Model):
                 }]
             ]
 
+        if 'services' in data:
+            # TODO: remove this?
+            self.data['services'] = {
+                k: {'assessed': False}
+                for k in data['services'].keys()
+            }
+
         overridden = [
             'longName',
             'extraLinks',
-            'representative'
+            'representative',
+            'services'
         ]
 
         for k in overridden:
             if k in data:
                 del data[k]
 
-        if 'services' in data:
-            data['services'] = {
-                k: {'assessed': False}
-                for k in data['services'].keys()
-            }
-
         return data
 
     def update_from_json_after(self, data):
+        if 'services' in self.data:
+            for k in self.data['services'].keys():
+                self.add_unassessed_domain(k)
+
         self.last_update_time = utcnow()
         return data
 
@@ -563,6 +661,23 @@ class Supplier(db.Model):
         if acn is not None:
             acn = normalise_acn(acn)
         return acn
+
+
+def after_change_listener(mapper, connection, target):
+    search_indices.delete_indices()
+    search_indices.create_indices()
+
+event.listen(Supplier, 'after_insert', after_change_listener)
+event.listen(Supplier, 'after_update', after_change_listener)
+
+
+class Domain(db.Model):
+    __tablename__ = 'domain'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+
+    suppliers = relationship("SupplierDomain", back_populates="domain")
+    assoc_suppliers = association_proxy('suppliers', 'supplier')
 
 
 class SupplierFramework(db.Model):
@@ -1728,7 +1843,7 @@ class Application(db.Model):
     __tablename__ = 'application'
 
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(MutableDict.as_mutable(JSON), default=dict)
+    data = db.Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
     user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
 
@@ -1745,12 +1860,10 @@ class Application(db.Model):
             name='application_status_enum'
         ),
         default='saved',
-        index=False,
+        index=True,
         unique=False,
         nullable=False
     )
-
-    status = db.Column(String, index=True, nullable=False, default='saved')
 
     user = db.relationship('User', lazy='joined')
 
@@ -1811,6 +1924,7 @@ class Application(db.Model):
 
         if approved:
             supplier = Supplier()
+
             supplier.update_from_json(self.data)
 
             self.supplier = supplier

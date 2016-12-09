@@ -315,7 +315,13 @@ class BaseApplicationTest(object):
         with self.app.app_context():
             db.session.remove()
             for table in reversed(db.metadata.sorted_tables):
-                if table.name not in ["lot", "framework", "framework_lot", "service_category", "service_role"]:
+                if table.name not in [
+                        "lot",
+                        "framework",
+                        "framework_lot",
+                        "service_category",
+                        "service_role",
+                        "domain"]:
                     db.engine.execute(table.delete())
             FrameworkLot.query.filter(FrameworkLot.framework_id >= 100).delete()
             Framework.query.filter(Framework.id >= 100).delete()

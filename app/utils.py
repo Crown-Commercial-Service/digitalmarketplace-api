@@ -6,6 +6,10 @@ from werkzeug.exceptions import BadRequest
 from .validation import validate_updater_json_or_400
 
 
+def sorted_uniques(sequence):
+    return list(sorted(set(sequence)))
+
+
 def validate_and_return_updater_request():
     json_payload = get_json_from_request()
 

@@ -1,7 +1,7 @@
 import json
 
 from . import es_client, db
-from models import Supplier
+
 
 from flask import current_app
 from elasticsearch import Elasticsearch
@@ -18,6 +18,9 @@ def index_supplier(supplier):
 
     Raises TransportError on failure.
     """
+
+    from models import Supplier
+
     if supplier.abn == Supplier.DUMMY_ABN:
         current_app.logger.info(
             'Not indexing example supplier "{supplier_name}"',
@@ -46,6 +49,8 @@ def _get_raw_elasticsearch_connection():
 
 
 def create_supplier_index(index_client):
+    from models import Supplier
+
     name = get_supplier_index_name()
 
     settings_json = jsondumps({
@@ -97,6 +102,14 @@ def create_supplier_index(index_client):
                 'type': 'string',
                 'index': 'no',
             },
+            'domains': {
+                'properties': {
+                    'assessed': {
+                        'type': 'string',
+                        'index': 'not_analyzed'
+                    }
+                }
+            },
             'prices': {
                 'properties': {
                     'serviceRole': {
@@ -116,25 +129,26 @@ def create_supplier_index(index_client):
         },
     })
     index_client.put_mapping(index=name, doc_type=SUPPLIER_DOC_TYPE, body=mapping_json)
-    try:
-        db.session.execute('LOCK TABLE supplier IN SHARE MODE')  # block supplier updates but not reads
-        for supplier in Supplier.query.all():
-            index_supplier(supplier)
-    finally:
-        db.session.commit()  # release table lock
+
+    db.session.execute('LOCK TABLE supplier IN SHARE MODE')  # block supplier updates but not reads
+
+    for supplier in Supplier.query.all():
+        index_supplier(supplier)
 
 
-def create_indices():
+def create_indices(recreate=True):
     # TODO: use index alias juggling to create indices without downtime
     es = _get_raw_elasticsearch_connection()
     ic = IndicesClient(es)
-    create_supplier_index(ic)
+    if not indices_exist(ic):
+        create_supplier_index(ic)
 
 
 def delete_indices():
     es = _get_raw_elasticsearch_connection()
     ic = IndicesClient(es)
-    ic.delete(get_supplier_index_name())
+    if indices_exist(ic):
+        ic.delete(get_supplier_index_name())
 
 
 def indices_exist(index_client=None):

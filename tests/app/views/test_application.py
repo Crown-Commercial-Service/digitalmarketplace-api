@@ -1,5 +1,6 @@
 import json
 import mock
+import time
 
 from tests.app.helpers import BaseApplicationTest, INCOMING_APPLICATION_DATA
 
@@ -122,6 +123,16 @@ class TestApproveApplication(BaseApplicationsTest):
         super(TestApproveApplication, self).setup()
         self.application_id = self.setup_dummy_application(user_id=0, data=self.application_data)
 
+    def search(self, query_body, **args):
+        if args:
+            params = '&'.join('{}={}'.format(k, urllib2.quote(v)) for k, v in args.items())
+            q = "?{}".format(params)
+        else:
+            q = ''
+        return self.client.get('/suppliers/search{}'.format(q),
+                               data=json.dumps(query_body),
+                               content_type='application/json')
+
     @mock.patch('app.jiraapi.JIRA')
     def test_approve_application(self, jira):
         self.patch_application(self.application_id, data={'status': 'saved'})
@@ -154,6 +165,15 @@ class TestApproveApplication(BaseApplicationsTest):
         assert 'supplier_code' in j
         assert j['supplier_code'] == j['supplier']['code']
         assert 'supplier' in j['links']
+
+        time.sleep(1)
+
+        response = self.search({'query': {'term': {'code': j['supplier_code']}}})
+        assert response.status_code == 200
+        result = json.loads(response.get_data())
+        assert result['hits']['total'] == 1
+        assert len(result['hits']['hits']) == 1
+        assert result['hits']['hits'][0]['_source']['code'] == j['supplier_code']
 
 
 class TestUpdateApplication(BaseApplicationsTest):

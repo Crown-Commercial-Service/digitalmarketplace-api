@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
 from ...models import (
-    Supplier, AuditEvent, SupplierFramework, Framework, PriceSchedule, User
+    Supplier, AuditEvent, SupplierFramework, Framework, PriceSchedule, User, Domain
 )
 
 from app.search_indices import (
@@ -133,6 +133,8 @@ def get_suppliers_stats():
 
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
+    create_indices()
+
     starting_offset = get_nonnegative_int_or_400(request.args, 'from', 0)
     result_count = get_positive_int_or_400(request.args, 'size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'])
 
@@ -431,3 +433,9 @@ def update_supplier_framework_details(code, framework_slug):
         return jsonify(message="Database Error: {0}".format(e)), 400
 
     return jsonify(frameworkInterest=interest_record.serialize()), 200
+
+
+@main.route('/domains', methods=['GET'])
+def get_domains_list():
+    result = [d.serializable for d in Domain.query.order_by('name').all()]
+    return jsonify(domains=result)
