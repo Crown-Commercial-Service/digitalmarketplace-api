@@ -5,8 +5,7 @@
     "essentialRequirementsMet": {
       "enum": [
         true
-      ],
-      "type": "boolean"
+      ]
     },
     "niceToHaveRequirements": {
       "items": {

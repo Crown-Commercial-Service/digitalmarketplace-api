@@ -449,7 +449,7 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
-        assert data['error']['essentialRequirementsMet'] == 'answer_required'
+        assert data['error']['essentialRequirementsMet'] == 'not_required_value'
 
     def test_create_digital_specialists_brief_response(self, live_dos_framework):
         res = self.create_brief_response(
