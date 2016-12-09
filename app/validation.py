@@ -24,6 +24,9 @@ SCHEMA_NAMES = [
     'brief-responses-digital-outcomes-and-specialists-digital-outcomes',
     'brief-responses-digital-outcomes-and-specialists-digital-specialists',
     'brief-responses-digital-outcomes-and-specialists-user-research-participants',
+    'brief-responses-digital-outcomes-and-specialists-digital-outcomes-legacy',
+    'brief-responses-digital-outcomes-and-specialists-digital-specialists-legacy',
+    'brief-responses-digital-outcomes-and-specialists-user-research-participants-legacy',
     'briefs-digital-outcomes-and-specialists-2-digital-outcomes',
     'briefs-digital-outcomes-and-specialists-2-digital-specialists',
     'briefs-digital-outcomes-and-specialists-2-user-research-participants',
@@ -304,6 +307,9 @@ def _translate_json_schema_error(key, validator, validator_value, message):
             return 'not_money_format'
 
         return 'under_{}_words'.format(_get_word_count(validator_value))
+
+    elif validator == 'enum' and key == 'essentialRequirementsMet':
+        return 'not_required_value'
 
     elif validator == 'enum' and key == 'priceUnit':
         return 'no_unit_specified'

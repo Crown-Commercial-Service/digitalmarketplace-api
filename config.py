@@ -25,6 +25,7 @@ class Config:
     RAISE_ERROR_ON_MISSING_FEATURES = True
 
     FEATURE_FLAGS_TRANSACTION_ISOLATION = False
+    FEATURE_FLAGS_NEW_SUPPLIER_FLOW = False
 
     DM_API_SERVICES_PAGE_SIZE = 100
     DM_API_SUPPLIERS_PAGE_SIZE = 100
@@ -51,6 +52,7 @@ class Test(Config):
     DM_API_BRIEFS_PAGE_SIZE = 5
     DM_API_BRIEF_RESPONSES_PAGE_SIZE = 5
     FEATURE_FLAGS_TRANSACTION_ISOLATION = enabled_since('2015-08-27')
+    FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2016-11-29')
 
 
 class Development(Config):
@@ -59,6 +61,8 @@ class Development(Config):
     DM_API_AUTH_TOKENS = 'myToken'
     DM_SEARCH_API_AUTH_TOKEN = 'myToken'
     DM_SEARCH_API_URL = 'http://localhost:5001'
+
+    FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2016-11-29')
 
 
 class Live(Config):
@@ -71,6 +75,7 @@ class Live(Config):
 
 class Preview(Live):
     FEATURE_FLAGS_TRANSACTION_ISOLATION = enabled_since('2015-08-27')
+    FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2016-11-29')
 
 
 class Staging(Live):

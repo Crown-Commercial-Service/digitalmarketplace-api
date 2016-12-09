@@ -7,14 +7,13 @@
       "minLength": 1,
       "type": "string"
     },
-    "dayRate": {
-      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
-      "type": "string"
-    },
-    "essentialRequirementsMet": {
-      "enum": [
-        true
-      ]
+    "essentialRequirements": {
+      "items": {
+        "type": "boolean"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
     },
     "niceToHaveRequirements": {
       "items": {
@@ -32,10 +31,9 @@
   },
   "required": [
     "availability",
-    "dayRate",
-    "essentialRequirementsMet",
+    "essentialRequirements",
     "respondToEmailAddress"
   ],
-  "title": "Digital Outcomes and Specialists Digital specialists Brief Response Schema",
+  "title": "Digital Outcomes and Specialists Digital outcomes Brief Response Schema",
   "type": "object"
 }
