@@ -51,6 +51,10 @@ def upgrade():
     op.execute('alter sequence supplier_code_seq restart with 311;')
 
     op.execute("""
+        update supplier set status = 'complete' where status is null;
+    """)
+
+    op.execute("""
         alter table "public"."application" alter column "status" set not null;
 
         alter table "public"."application" alter column "status" set data type application_status_enum using status::application_status_enum;
