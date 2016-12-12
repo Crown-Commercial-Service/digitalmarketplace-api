@@ -155,7 +155,7 @@ def get_framework_stats(framework_slug):
         ]
 
     is_declaration_complete = case([
-        (SupplierFramework.declaration['status'].cast(String) == 'complete', True)
+        (SupplierFramework.declaration['status'].astext == 'complete', True)
     ], else_=False)
 
     return jsonify({
@@ -188,7 +188,7 @@ def get_framework_stats(framework_slug):
         'interested_suppliers': label_columns(
             ['declaration_status', 'has_completed_services', 'count'],
             db.session.query(
-                SupplierFramework.declaration['status'].cast(String),
+                SupplierFramework.declaration['status'].astext,
                 drafts_alias.supplier_id.isnot(None), func.count()
             ).select_from(
                 Supplier
@@ -200,7 +200,7 @@ def get_framework_stats(framework_slug):
                 SupplierFramework.framework_id == framework.id,
                 cast(SupplierFramework.declaration, String) != 'null'
             ).group_by(
-                SupplierFramework.declaration['status'].cast(String), drafts_alias.supplier_id.isnot(None)
+                SupplierFramework.declaration['status'].astext, drafts_alias.supplier_id.isnot(None)
             ).all()
         )
     })
