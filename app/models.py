@@ -1317,7 +1317,7 @@ class BriefResponse(db.Model):
     __tablename__ = 'brief_responses'
 
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(JSON, nullable=False)
+    data = db.Column(JSON(none_as_null=True), nullable=False)
 
     brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), nullable=False)
     supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.supplier_id'), nullable=False)

@@ -488,7 +488,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
 
     def test_query_draft_brief_response(self):
         with self.app.app_context():
-            db.session.add(BriefResponse(brief_id=self.brief_id, supplier_id=0))
+            db.session.add(BriefResponse(brief_id=self.brief_id, supplier_id=0, data={}))
             db.session.commit()
 
             assert BriefResponse.query.filter(BriefResponse.status == 'draft').count() == 1
@@ -500,7 +500,8 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
     def test_query_submitted_brief_response(self):
         with self.app.app_context():
             db.session.add(BriefResponse(
-                brief_id=self.brief_id, supplier_id=0, submitted_at=datetime.utcnow())
+                brief_id=self.brief_id, supplier_id=0, submitted_at=datetime.utcnow(),
+                data={})
             )
             db.session.commit()
 
