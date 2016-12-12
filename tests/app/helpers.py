@@ -60,8 +60,8 @@ INCOMING_APPLICATION_DATA = {
         "postal_code": "2000"
     },
     "services": {
-        "Content & publishing": True,
-        "User research & design": True
+        "Content and publishing": True,
+        "User research and design": True
     },
     "case_studies": {
         "c98932c6-b948-08f6-c782-6e3aa83451d4": {
@@ -73,7 +73,7 @@ INCOMING_APPLICATION_DATA = {
             ],
             "project_links": [],
             "roles": "role",
-            "service": "Content & publishing",
+            "service": "Content and publishing",
             "timeframe": "time frame",
             "title": "case study"
         }

@@ -1121,8 +1121,8 @@ class TestApplication(BaseApplicationTest):
 
             assert x.supplier.data['services'] == \
                 {
-                    'Content & publishing': {'assessed': False},
-                    'User research & design': {'assessed': False}
+                    'Content and publishing': {'assessed': False},
+                    'User research and design': {'assessed': False}
                 }
 
             assert len(x.supplier.contacts) == 1
@@ -1162,20 +1162,20 @@ class TestApplication(BaseApplicationTest):
 
             db.session.commit()
 
-            assert supp.legacy_domains == ['Strategy, delivery & governance']
-            assert supp.assessed_domains == ['Strategy, delivery & governance']
+            assert supp.legacy_domains == ['Strategy, delivery and governance']
+            assert supp.assessed_domains == ['Strategy, delivery and governance']
             assert supp.unassessed_domains == []
 
-            supp.add_unassessed_domain('Change & transformation')
+            supp.add_unassessed_domain('Change and transformation')
 
-            assert supp.legacy_domains == ['Strategy, delivery & governance']
-            assert supp.assessed_domains == ['Strategy, delivery & governance']
-            assert supp.unassessed_domains == ['Change & transformation']
+            assert supp.legacy_domains == ['Strategy, delivery and governance']
+            assert supp.assessed_domains == ['Strategy, delivery and governance']
+            assert supp.unassessed_domains == ['Change and transformation']
 
-            supp.update_domain_assessment('Change & transformation', True)
+            supp.update_domain_assessment('Change and transformation', True)
 
-            assert supp.legacy_domains == ['Strategy, delivery & governance']
+            assert supp.legacy_domains == ['Strategy, delivery and governance']
             assert supp.assessed_domains == [
-                'Change & transformation', 'Strategy, delivery & governance'
+                'Change and transformation', 'Strategy, delivery and governance'
             ]
             assert supp.unassessed_domains == []

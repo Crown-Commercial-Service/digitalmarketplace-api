@@ -511,7 +511,9 @@ class Supplier(db.Model):
     domains = relationship("SupplierDomain", back_populates="supplier")
 
     def add_unassessed_domain(self, name):
-        d = Domain.query.filter_by(name=name).first()
+        d = Domain.query.filter(
+            func.lower(Domain.name) == func.lower(name)
+        ).first()
 
         if not d:
             raise ValidationError('bad domain name: {}'.format(name))
@@ -521,7 +523,9 @@ class Supplier(db.Model):
         db.session.flush()
 
     def update_domain_assessment(self, name, assessed=True):
-        d = Domain.query.filter_by(name=name).first()
+        d = Domain.query.filter(
+            func.lower(Domain.name) == func.lower(name)
+        ).first()
 
         if not d:
             raise ValidationError('bad domain name: {}'.format(name))
@@ -566,8 +570,7 @@ class Supplier(db.Model):
             for p in self.prices
         ]
 
-        legacy_domains.sort()
-        return legacy_domains
+        return sorted_uniques(legacy_domains)
 
     def get_service_counts(self):
         # FIXME: To be removed from Australian version

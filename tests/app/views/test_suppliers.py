@@ -514,19 +514,19 @@ class TestDomains(BaseApplicationTest):
         domains_json = json.loads(response.get_data())['domains']
 
         assert [_['name'] for _ in domains_json] == [
-            'Change & transformation',
-            'Content & publishing',
+            'Change and transformation',
+            'Content and publishing',
             'Cyber security',
             'Data science',
             'Emerging technology',
-            'Engineering & development',
-            'Marketing, comms & engagement',
+            'Engineering and development',
+            'Marketing, comms and engagement',
             'Operations',
-            'Policy & law',
-            'Products',
+            'Performance and web analytics',
+            'Policy and law',
             'Recruitment',
             'Strategy, delivery, and governance',
-            'User research & design'
+            'User research and design'
         ]
 
 
