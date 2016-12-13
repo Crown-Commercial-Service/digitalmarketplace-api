@@ -278,7 +278,7 @@ class Supplier(db.Model):
 
     companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
 
-    clients = db.Column(JSON, default=list)
+    clients = db.Column(JSON(none_as_null=True), default=list)
 
     # Drop this method once the supplier front end is using SupplierFramework counts
     def get_service_counts(self):
