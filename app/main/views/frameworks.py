@@ -172,7 +172,7 @@ def get_framework_stats(framework_slug):
             ).filter(
                 SupplierFramework.framework_id == framework.id,
                 DraftService.framework_id == framework.id,
-                cast(SupplierFramework.declaration, String) != 'null'
+                SupplierFramework.declaration.isnot(None)
             ).all()
         ),
         'supplier_users': label_columns(
@@ -198,7 +198,7 @@ def get_framework_stats(framework_slug):
                 drafts_alias
             ).filter(
                 SupplierFramework.framework_id == framework.id,
-                cast(SupplierFramework.declaration, String) != 'null'
+                SupplierFramework.declaration.isnot(None)
             ).group_by(
                 SupplierFramework.declaration['status'].astext, drafts_alias.supplier_id.isnot(None)
             ).all()
