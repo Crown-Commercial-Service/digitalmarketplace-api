@@ -234,6 +234,7 @@ def export_users_for_framework(framework_slug):
     if framework.status == 'coming':
         abort(400, 'framework not yet open')
 
+    suppliers_with_a_complete_service = framework.get_supplier_ids_for_completed_service()
     supplier_frameworks_and_users = db.session.query(
         SupplierFramework, User
     ).join(
@@ -250,6 +251,9 @@ def export_users_for_framework(framework_slug):
 
         # always get the declaration status
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
+        application_status = 'application' if (
+            declaration_status == 'complete' and sf.supplier_id in suppliers_with_a_complete_service
+        ) else 'no_application'
         application_result = ''
         framework_agreement = ''
         variations_agreed = ''
@@ -268,7 +272,7 @@ def export_users_for_framework(framework_slug):
             'user_name': u.name,
             'supplier_id': sf.supplier_id,
             'declaration_status': declaration_status,
-            'application_status': '',
+            'application_status': application_status,
             'framework_agreement': framework_agreement,
             'application_result': application_result,
             'variations_agreed': variations_agreed

@@ -119,6 +119,19 @@ class Framework(db.Model):
             'lots': [lot.serialize() for lot in self.lots],
         }
 
+    def get_supplier_ids_for_completed_service(self):
+        """Only suppliers whose service has a status of submitted or failed."""
+        unpack_list_of_lists = lambda l: set(item for sublist in l for item in sublist)
+        results = db.session.query(
+            DraftService
+        ).filter(
+            DraftService.status.in_(('submitted', 'failed')),
+            DraftService.framework_id == self.id
+        ).with_entities(
+            DraftService.supplier_id
+        ).distinct()
+        return unpack_list_of_lists(results)
+
     @validates('status')
     def validates_status(self, key, value):
         if value not in self.STATUSES:

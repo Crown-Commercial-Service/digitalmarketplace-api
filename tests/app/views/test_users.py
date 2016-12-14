@@ -1260,7 +1260,7 @@ class TestUsersExport(BaseUserTest):
     def _assert_things_about_export_response(self, row, parameters=None):
         _parameters = {
             'application_result': 'no result',
-            'application_status': '',
+            'application_status': 'no_application',
             'declaration_status': 'unstarted',
             'framework_agreement': False,
         }
@@ -1341,7 +1341,7 @@ class TestUsersExport(BaseUserTest):
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
                 'declaration_status': 'complete',
-                'application_status': ''
+                'application_status': 'application'
             })
 
     # Test users for supplier with completed declaration one draft but framework still open
@@ -1354,7 +1354,7 @@ class TestUsersExport(BaseUserTest):
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
                 'declaration_status': 'complete',
-                'application_status': '',
+                'application_status': 'application',
                 'application_result': '',
                 'framework_agreement': ''
             })
@@ -1370,7 +1370,7 @@ class TestUsersExport(BaseUserTest):
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
                 'declaration_status': 'complete',
-                'application_status': '',
+                'application_status': 'application',
                 'framework_agreement': True,
                 'application_result': 'pass'
             })
@@ -1385,7 +1385,7 @@ class TestUsersExport(BaseUserTest):
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
                 'declaration_status': 'complete',
-                'application_status': '',
+                'application_status': 'application',
                 'framework_agreement': False,
                 'application_result': 'fail'
             })
@@ -1437,7 +1437,7 @@ class TestUsersExport(BaseUserTest):
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
                 'declaration_status': 'complete',
-                'application_status': '',
+                'application_status': 'application',
                 'application_result': 'pass',
                 'framework_agreement': True,
                 'agreed_variations': '1'

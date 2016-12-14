@@ -4,11 +4,14 @@ from datetime import datetime
 from itertools import product
 from six import iteritems, iterkeys
 import pytest
+import mock
 
 from .app import setup, teardown
 
 from app import create_app
-from app.models import db, Framework, SupplierFramework, Supplier, User, ContactInformation
+from app.models import (
+    db, Framework, SupplierFramework, Supplier, User, ContactInformation, DraftService, Lot, Service, FrameworkLot
+)
 
 
 @pytest.fixture(autouse=True, scope='session')
@@ -20,6 +23,48 @@ def db_migration(request):
 @pytest.fixture(scope='session')
 def app(request):
     return create_app('test')
+
+
+@pytest.fixture(params=[{}])
+def draft_service(request, app, supplier_framework):
+    with app.app_context():
+        supplier_id = Supplier.query.filter(Supplier.supplier_id == supplier_framework['supplierId']).first()
+        framework = Framework.query.filter(Framework.slug == supplier_framework['frameworkSlug']).first()
+        lot = Lot.query.filter(Lot.slug == 'digital-specialists').first()
+        fl_query = {
+            'framework_id': framework.id,
+            'lot_id': lot.id
+        }
+        fl = FrameworkLot(**fl_query)
+
+        ds = DraftService(
+            framework=framework,
+            lot=lot,
+            service_id="1234567890",
+            supplier=supplier_id,
+            data={},
+            status='submitted',
+            updated_at=datetime.now(),
+            created_at=datetime.now()
+        )
+        db.session.add(fl)
+        db.session.add(ds)
+        db.session.commit()
+
+        def teardown():
+            with app.app_context():
+                FrameworkLot.query.filter(
+                    *[getattr(FrameworkLot, k) == v for k, v in fl_query.items()]
+                ).delete(synchronize_session=False)
+                Service.query.filter(Service.service_id == ds.service_id).delete(synchronize_session=False)
+                DraftService.query.filter(DraftService.service_id == ds.service_id).delete(synchronize_session=False)
+                db.session.commit()
+
+        request.addfinalizer(teardown)
+
+        with mock.patch('app.models.url_for', autospec=lambda i, **values: 'test.url/test'):
+            Service.create_from_draft(ds, 'enabled')
+            return ds.serialize()
 
 
 @pytest.fixture(params=[{'supplier_id': None}])
@@ -49,6 +94,7 @@ def supplier_framework(request, app, supplier, live_example_framework):
         db.session.commit()
 
         return sf.serialize()
+
 
 _framework_kwargs_whitelist = set(("status", "framework", "framework_agreement_details",))
 
@@ -115,6 +161,7 @@ def _framework_fixture_inner(request, app, slug, **kwargs):
         )
         return inner_func(request, app, slug, **kwargs)
 
+
 _generic_framework_agreement_details = {"frameworkAgreementVersion": "v1.0"}
 
 _g8_framework_defaults = {
@@ -167,6 +214,7 @@ def _supplierframework_fixture_inner(request, app, sf_kwargs=None):
                     SupplierFramework.framework_id == framework_id,
                 ).delete()
             db.session.commit()
+
     request.addfinalizer(teardown)
 
 
@@ -203,6 +251,7 @@ def _supplier_fixture_inner(request, app, supplier_kwargs=None, ci_kwargs=None):
             ContactInformation.query.filter(ContactInformation.id == contact_information_id).delete()
             Supplier.query.filter(Supplier.supplier_id == supplier_id).delete()
             db.session.commit()
+
     request.addfinalizer(teardown)
     return supplier_id
 
@@ -235,8 +284,10 @@ def _user_fixture_inner(request, app, user_kwargs=None):
         with app.app_context():
             User.query.filter(User.id == user_id).delete()
             db.session.commit()
+
     request.addfinalizer(teardown)
     return user_id
+
 
 # Frameworks
 
@@ -345,7 +396,7 @@ def live_g8_framework_2_variations_suppliers_not_on_framework(
         app,
         live_g8_framework_2_variations,
         user_role_supplier,
-        ):
+):
     _supplierframework_fixture_inner(request, app)
 
 
@@ -355,7 +406,7 @@ def live_g8_framework_2_variations_suppliers_on_framework(
         app,
         live_g8_framework_2_variations,
         user_role_supplier,
-        ):
+):
     _supplierframework_fixture_inner(request, app, sf_kwargs={"on_framework": True})
 
 
@@ -366,7 +417,7 @@ def live_g8_framework_2_variations_suppliers_on_framework_with_alt(
         live_g8_framework_2_variations,
         user_role_supplier,
         user_role_supplier_alt,
-        ):
+):
     _supplierframework_fixture_inner(request, app, sf_kwargs={"on_framework": True})
 
 
@@ -376,5 +427,5 @@ def live_g8_framework_suppliers_on_framework(
         app,
         live_g8_framework,
         user_role_supplier,
-        ):
+):
     _supplierframework_fixture_inner(request, app, sf_kwargs={"on_framework": True})
