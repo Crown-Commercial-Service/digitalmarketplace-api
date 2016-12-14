@@ -8,7 +8,8 @@ from six import string_types, iteritems
 
 from sqlalchemy import asc, desc
 from sqlalchemy import func
-from sqlalchemy.dialects.postgresql import JSON, INTERVAL
+from sqlalchemy.dialects.postgresql import INTERVAL
+import sqlalchemy.dialects.postgresql
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates, backref, mapper
@@ -26,6 +27,16 @@ from dmutils.dates import get_publishing_dates
 from . import db
 from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
 from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
+
+
+class JSON(sqlalchemy.dialects.postgresql.JSON):
+    """
+    Override SQLAlchemy JSON class to enforce None=>SQL-NULL mapping.
+    (We want to avoid JSON-null and have consistency across our models.)
+    """
+
+    def __init__(self, astext_type=None):
+        super(JSON, self).__init__(none_as_null=True, astext_type=astext_type)
 
 
 class FrameworkLot(db.Model):
@@ -278,7 +289,7 @@ class Supplier(db.Model):
 
     companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
 
-    clients = db.Column(JSON(none_as_null=True), default=list)
+    clients = db.Column(JSON, default=list)
 
     # Drop this method once the supplier front end is using SupplierFramework counts
     def get_service_counts(self):
@@ -1317,7 +1328,7 @@ class BriefResponse(db.Model):
     __tablename__ = 'brief_responses'
 
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(JSON(none_as_null=True), nullable=False)
+    data = db.Column(JSON, nullable=False)
 
     brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), nullable=False)
     supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.supplier_id'), nullable=False)
