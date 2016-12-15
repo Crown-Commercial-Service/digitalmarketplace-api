@@ -791,137 +791,6 @@ class SupplierFramework(db.Model):
         return supplier_framework
 
 
-class Application(db.Model):
-    __tablename__ = 'application'
-
-    id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
-    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
-
-    status = db.Column(
-        db.Enum(
-            *[
-                'saved',
-                'submitted',
-                'approved',
-                'complete',
-                'approval_rejected',
-                'assessment_rejected'
-            ],
-            name='application_status_enum'
-        ),
-        default='saved',
-        index=True,
-        unique=False,
-        nullable=False
-    )
-
-    supplier_code = db.Column(db.BigInteger,
-                              db.ForeignKey('supplier.code'),
-                              nullable=True)
-
-    supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
-
-    @validates('data')
-    def validates_data(self, key, data):
-        data = strip_whitespace_from_data(data)
-        data = purge_nulls_from_data(data)
-
-        return data
-
-    def serializable_after(self, j):
-        if 'created_at' in j:
-            j['createdAt'] = j['created_at']
-        return j
-
-    def update_from_json_before(self, data):
-        try:
-            self.status = data['status']
-        except KeyError:
-            pass
-
-        return data
-
-    def serialize(self):
-        data = self.data.copy()
-
-        data.update({
-            'id': self.id,
-            'status': self.status,
-            'createdAt': self.created_at.to_iso8601_string(extended=True),
-            'links': {
-                'self': url_for('main.get_application_by_id', application_id=self.id),
-            }
-        })
-
-        return data
-
-    def submit_for_approval(self):
-        if self.status != 'saved':
-            raise ValidationError("Only as 'saved' application can be set to 'submitted'.")
-
-        self.status = 'submitted'
-
-    def set_approval(self, approved):
-        if self.status != 'submitted':
-            raise ValidationError("Only a 'submitted' application can be subject to an approval decision.")
-
-        if approved:
-            supplier = Supplier()
-
-            supplier.update_from_json(self.data)
-
-            self.supplier = supplier
-            self.supplier.status = 'limited'
-
-            self.status = 'approved'
-
-            db.session.flush()
-
-            users = User.query.filter(User.application_id == self.id)
-            for user in users:
-                user.role = 'supplier'
-                user.supplier_code = supplier.code
-
-            db.session.flush()
-
-            self.create_assessment_task()
-        else:
-            self.status = 'approval_rejected'
-
-    def set_assessment_result(self, successful):
-        if self.status != 'approved':
-            raise ValidationError("Only an 'approved' application can be subject to an assessment decision.")
-
-        if successful:
-            self.status = 'complete'
-            self.supplier.status = 'complete'
-        else:
-            self.status = 'assessment_rejected'
-            self.supplier.status = 'deleted'
-
-    def unassess(self):
-        if self.status not in ('complete', 'assessment_rejected'):
-            raise ValidationError("Only a 'complete' or 'assessment_rejected' application can be reset to unassessed.")
-
-        self.status = 'approved'
-        self.supplier.status = 'limited'
-
-    def unreject_approval(self):
-        if self.status not in ('approval_rejected'):
-            raise ValidationError("Only a 'complete' or 'assessment_rejected' application can be reset to unassessed.")
-
-        self.status = 'submitted'
-
-    def create_assessment_task(self):
-        if current_app.config['JIRA_FEATURES']:
-            j = get_jira_api()
-            j.create_assessment_task(self)
-        else:
-            current_app.logger.info(
-                'Skipping assessment task creation because JIRA features disabled')
-
-
 class User(db.Model):
     __tablename__ = 'user'
 
@@ -977,7 +846,7 @@ class User(db.Model):
                                db.ForeignKey('application.id', ondelete='cascade'),
                                index=True, unique=False, nullable=True)
 
-    application = db.relationship(Application, lazy='joined', innerjoin=False)
+    application = db.relationship('Application', lazy='joined', innerjoin=False)
 
     @validates('email_address')
     def validate_email_address(self, key, value):
@@ -1977,6 +1846,137 @@ class WorkOrder(db.Model):
         new_data = dict(self.data)
         new_data.update(data)
         self.data = new_data
+
+
+class Application(db.Model):
+    __tablename__ = 'application'
+
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+
+    status = db.Column(
+        db.Enum(
+            *[
+                'saved',
+                'submitted',
+                'approved',
+                'complete',
+                'approval_rejected',
+                'assessment_rejected'
+            ],
+            name='application_status_enum'
+        ),
+        default='saved',
+        index=True,
+        unique=False,
+        nullable=False
+    )
+
+    supplier_code = db.Column(db.BigInteger,
+                              db.ForeignKey('supplier.code'),
+                              nullable=True)
+
+    supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
+
+    @validates('data')
+    def validates_data(self, key, data):
+        data = strip_whitespace_from_data(data)
+        data = purge_nulls_from_data(data)
+
+        return data
+
+    def serializable_after(self, j):
+        if 'created_at' in j:
+            j['createdAt'] = j['created_at']
+        return j
+
+    def update_from_json_before(self, data):
+        try:
+            self.status = data['status']
+        except KeyError:
+            pass
+
+        return data
+
+    def serialize(self):
+        data = self.data.copy()
+
+        data.update({
+            'id': self.id,
+            'status': self.status,
+            'createdAt': self.created_at.to_iso8601_string(extended=True),
+            'links': {
+                'self': url_for('main.get_application_by_id', application_id=self.id),
+            }
+        })
+
+        return data
+
+    def submit_for_approval(self):
+        if self.status != 'saved':
+            raise ValidationError("Only as 'saved' application can be set to 'submitted'.")
+
+        self.status = 'submitted'
+
+    def set_approval(self, approved):
+        if self.status != 'submitted':
+            raise ValidationError("Only a 'submitted' application can be subject to an approval decision.")
+
+        if approved:
+            supplier = Supplier()
+
+            supplier.update_from_json(self.data)
+
+            self.supplier = supplier
+            self.supplier.status = 'limited'
+
+            self.status = 'approved'
+
+            db.session.flush()
+
+            users = User.query.filter(User.application_id == self.id)
+            for user in users:
+                user.role = 'supplier'
+                user.supplier_code = supplier.code
+
+            db.session.flush()
+
+            self.create_assessment_task()
+        else:
+            self.status = 'approval_rejected'
+
+    def set_assessment_result(self, successful):
+        if self.status != 'approved':
+            raise ValidationError("Only an 'approved' application can be subject to an assessment decision.")
+
+        if successful:
+            self.status = 'complete'
+            self.supplier.status = 'complete'
+        else:
+            self.status = 'assessment_rejected'
+            self.supplier.status = 'deleted'
+
+    def unassess(self):
+        if self.status not in ('complete', 'assessment_rejected'):
+            raise ValidationError("Only a 'complete' or 'assessment_rejected' application can be reset to unassessed.")
+
+        self.status = 'approved'
+        self.supplier.status = 'limited'
+
+    def unreject_approval(self):
+        if self.status not in ('approval_rejected'):
+            raise ValidationError("Only a 'complete' or 'assessment_rejected' application can be reset to unassessed.")
+
+        self.status = 'submitted'
+
+    def create_assessment_task(self):
+        if current_app.config['JIRA_FEATURES']:
+            j = get_jira_api()
+            j.create_assessment_task(self)
+        else:
+            current_app.logger.info(
+                'Skipping assessment task creation because JIRA features disabled')
 
 
 class CaseStudy(db.Model):
