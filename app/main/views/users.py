@@ -212,7 +212,7 @@ def update_user(user_id):
         user.terms_accepted_at = user_update['termsAcceptedAt']
 
     check_supplier_role(user.role, user.supplier_code)
-    check_applicant_role(user.role, user.applicatoin_id)
+    check_applicant_role(user.role, user.application_id)
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_user,

@@ -2,10 +2,10 @@ from __future__ import unicode_literals
 
 import mock
 from flask import current_app
-from app.jiraapi import get_api, get_api_oauth, JIRAAPI
+from app.jiraapi import get_api, get_api_oauth
 
 from .helpers import BaseApplicationTest
-from app.models import Application, User
+from app.models import Application
 
 
 class TestJira(BaseApplicationTest):
@@ -41,13 +41,10 @@ class TestJira(BaseApplicationTest):
             j = JIRAAPI()
             get_api_oauth.return_value = j
 
-            u_id = self.setup_dummy_user()
-            user = User.query.get(u_id)
-
             x = Application(
                 id=99,
                 status='submitted',
                 data={'name': 'Umbrella Corporation'},
-                user=user)
+            )
             x.set_approval(True)
             j.create_assessment_task.assert_called_with(x)

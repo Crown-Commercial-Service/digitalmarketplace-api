@@ -916,7 +916,7 @@ class Application(db.Model):
     def create_assessment_task(self):
         if current_app.config['JIRA_FEATURES']:
             j = get_jira_api()
-            j.create_assessment_task(self.id, 'Task')
+            j.create_assessment_task(self)
         else:
             current_app.logger.info(
                 'Skipping assessment task creation because JIRA features disabled')

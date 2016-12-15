@@ -422,7 +422,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
 
         data = json.loads(response.get_data())["error"]
         assert_equal(response.status_code, 400)
-        assert_equal(data, "Invalid supplier code")
+        assert_equal(data, "Invalid supplier code or application id")
 
     def test_should_reject_a_supplier_user_with_no_supplier_code(self):
         response = self.client.post(
