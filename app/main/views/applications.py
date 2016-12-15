@@ -32,18 +32,7 @@ def save_application(application):
 def create_application():
     application_json = get_application_json()
 
-    json_has_required_keys(application_json, ['user_id'])
-    user_id = application_json.get('user_id')
-    try:
-        applicant = User.query.filter(User.id == user_id).first()
-    except DataError:
-        applicant = None
-
-    if not applicant:
-        abort(400, "Invalid user id '{}'".format(user_id))
-
     application = Application()
-    application_json['user_id'] = user_id
     application.update_from_json(application_json)
 
     save_application(application)
@@ -110,22 +99,13 @@ def delete_application(application_id):
 @main.route('/applications', methods=['GET'])
 def list_applications():
     page = get_valid_page_or_1()
-    user_id = get_int_or_400(request.args, 'user_id')
 
     applications = Application.query
-    if user_id is not None:
-        applications = applications.filter(Application.user_id == user_id)
 
     ordering = request.args.get('order_by', 'application.created_at desc')
     order_by = ordering.split(',')
 
     applications = applications.order_by(*order_by)
-
-    if user_id:
-        return jsonify(
-            applications=[application.serialize() for application in applications.all()],
-            links={'self': url_for('.list_applications', user_id=user_id)}
-        )
 
     results_per_page = get_positive_int_or_400(
         request.args,

@@ -1068,14 +1068,27 @@ class TestApplication(BaseApplicationTest):
     @mock.patch('app.jiraapi.JIRA')
     def test_full_application(self, jira):
         with self.app.test_request_context('/hello'):
-            x = Application(data=INCOMING_APPLICATION_DATA, user=self.user)
+            app = Application(data=INCOMING_APPLICATION_DATA)
+            user = User(
+                email_address='email@digital.gov.au',
+                name='name',
+                role='buyer',
+                password='password',
+                active=True,
+                failed_login_count=0,
+                created_at=utcnow(),
+                updated_at=utcnow(),
+                password_changed_at=utcnow(),
+                application=app
+            )
 
             # flushing to database in order to set defaults (very annoying "feature" of sqlalchemy)
-            db.session.add(x)
+            db.session.add(app)
+            db.session.add(user)
             db.session.flush()
 
-            x_from_manual = x.serialize()
-            x_from_deterministic = json.loads(x.json)
+            x_from_manual = app.serialize()
+            x_from_deterministic = json.loads(app.json)
 
             subset = {
                 k: v for k, v
@@ -1084,65 +1097,62 @@ class TestApplication(BaseApplicationTest):
             }
             assert subset == x_from_manual
 
-            assert x.status == 'saved'
+            assert app.status == 'saved'
 
-            x.submit_for_approval()
+            app.submit_for_approval()
 
-            assert x.status == 'submitted'
-            assert x.supplier is None
-
-            with raises(ValidationError):
-                x.submit_for_approval()
-
-            x.set_approval(approved=False)
-
-            assert x.status == 'approval_rejected'
-
-            x.unreject_approval()
-            assert x.status == 'submitted'
-
-            x.set_approval(approved=True)
+            assert app.status == 'submitted'
+            assert app.supplier is None
 
             with raises(ValidationError):
-                x.set_approval(True)
+                app.submit_for_approval()
 
-            assert x.status == 'approved'
-            assert x.supplier.status == 'limited'
+            app.set_approval(approved=False)
 
-            assert x.supplier.id is not None
-            assert x.supplier.code is not None
-            assert self.user.role == 'supplier'
-            assert self.user.supplier_code == x.supplier.code
+            assert app.status == 'approval_rejected'
+
+            app.unreject_approval()
+            assert app.status == 'submitted'
+
+            app.set_approval(approved=True)
+
+            with raises(ValidationError):
+                app.set_approval(True)
+
+            assert app.status == 'approved'
+            assert app.supplier.status == 'limited'
+
+            assert app.supplier.id is not None
+            assert app.supplier.code is not None
+            assert user.role == 'supplier'
+            assert user.supplier_code == app.supplier.code
 
             db.session.flush()
-            db.session.refresh(self.user)
 
-            assert self.user.supplier == x.supplier
-
-            assert x.supplier.data['services'] == \
+            assert app.supplier.data['services'] == \
                 {
                     'Content and publishing': {'assessed': False},
                     'User research and design': {'assessed': False}
                 }
 
-            assert len(x.supplier.contacts) == 1
+            assert len(app.supplier.contacts) == 1
 
-            x.set_assessment_result(successful=False)
+            app.set_assessment_result(successful=False)
 
-            assert x.status == 'assessment_rejected'
-            assert x.supplier.status == 'deleted'
+            assert app.status == 'assessment_rejected'
+            assert app.supplier.status == 'deleted'
 
-            x.unassess()
+            app.unassess()
 
-            x.set_assessment_result(successful=True)
+            app.set_assessment_result(successful=True)
 
-            assert x.status == 'complete'
-            assert x.supplier.status == 'complete'
+            assert app.status == 'complete'
+            assert app.supplier.status == 'complete'
 
-            x.unassess()
+            app.unassess()
 
-            assert x.status == 'approved'
-            assert x.supplier.status == 'limited'
+            assert app.status == 'approved'
+            assert app.supplier.status == 'limited'
 
             db.session.flush()
 

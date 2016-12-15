@@ -4,7 +4,7 @@ import time
 
 from tests.app.helpers import BaseApplicationTest, INCOMING_APPLICATION_DATA
 
-from app.models import db, Application
+from app.models import db, Application, User, utcnow
 
 
 class BaseApplicationsTest(BaseApplicationTest):
@@ -16,13 +16,12 @@ class BaseApplicationsTest(BaseApplicationTest):
             self.setup_dummy_user(id=1, role="applicant")
             db.session.commit()
 
-    def setup_dummy_application(self, user_id=0, data=None):
+    def setup_dummy_application(self, data=None):
         if data is None:
             data = self.application_data
         with self.app.app_context():
             application = Application(
                 data=data,
-                user_id=user_id
             )
 
             db.session.add(application)
@@ -32,6 +31,25 @@ class BaseApplicationsTest(BaseApplicationTest):
             db.session.commit()
 
             return application.id
+
+    def setup_dummy_applicant(self, id, application_id):
+        with self.app.app_context():
+            if User.query.get(id):
+                return id
+            user = User(
+                id=id,
+                email_address="test+{}@digital.gov.au".format(id),
+                name="my name",
+                password="fake password",
+                active=True,
+                role='applicant',
+                password_changed_at=utcnow(),
+                application_id=application_id
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            return user.id
 
     def create_application(self, data):
         return self.client.post(
@@ -64,6 +82,10 @@ class BaseApplicationsTest(BaseApplicationTest):
             '/applications/{}/approve'.format(self.application_id),
             content_type='application/json')
 
+    def get_user(self, user_id):
+        user = self.client.get('/users/{}'.format(user_id))
+        return json.loads(user.get_data(as_text=True))['users']
+
     @property
     def application_data(self):
         return INCOMING_APPLICATION_DATA
@@ -75,13 +97,12 @@ class TestCreateApplication(BaseApplicationsTest):
 
     def test_create_new_application(self):
         res = self.create_application(
-            dict(self.application_data, user_id=0)
+            dict(self.application_data)
         )
 
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 201, data
-        assert data['application']['user_id'] == 0
 
     def test_cannot_create_application_with_empty_json(self):
         res = self.client.post(
@@ -94,34 +115,11 @@ class TestCreateApplication(BaseApplicationsTest):
 
         assert res.status_code == 400
 
-    def test_cannot_create_application_without_user_id(self):
-        res = self.create_application({
-        })
-
-        assert res.status_code == 400
-        assert 'user_id' in res.get_data(as_text=True)
-
-    def test_cannot_create_application_with_non_integer_user_id(self):
-        res = self.create_application({
-            'user_id': 'not a number',
-        })
-
-        assert res.status_code == 400
-        assert 'Invalid user id' in res.get_data(as_text=True)
-
-    def test_cannot_create_application_when_applicant_doesnt_exist(self):
-        res = self.create_application({
-            'user_id': 999
-        })
-
-        assert res.status_code == 400
-        assert 'Invalid user id' in res.get_data(as_text=True)
-
 
 class TestApproveApplication(BaseApplicationsTest):
     def setup(self):
         super(TestApproveApplication, self).setup()
-        self.application_id = self.setup_dummy_application(user_id=0, data=self.application_data)
+        self.application_id = self.setup_dummy_application(data=self.application_data)
 
     def search(self, query_body, **args):
         if args:
@@ -137,6 +135,7 @@ class TestApproveApplication(BaseApplicationsTest):
     def test_approve_application(self, jira):
         self.patch_application(self.application_id, data={'status': 'saved'})
         a = self.get_application(self.application_id)
+        user_id = self.setup_dummy_applicant(2, self.application_id)
 
         j = json.loads(a.get_data(as_text=True))['application']
         assert j['status'] == 'saved'
@@ -156,6 +155,10 @@ class TestApproveApplication(BaseApplicationsTest):
         assert 'supplier_code' in j
         assert j['supplier_code'] == j['supplier']['code']
         assert 'supplier' in j['links']
+
+        user = self.get_user(user_id)
+        assert user['role'] == 'supplier'
+        assert user['supplier_code'] == j['supplier_code']
 
         a = self.get_application(self.application_id)
         assert a.status_code == 200
@@ -181,7 +184,7 @@ class TestUpdateApplication(BaseApplicationsTest):
     def setup(self):
         super(TestUpdateApplication, self).setup()
 
-        self.application_id = self.setup_dummy_application(user_id=0, data=self.application_data)
+        self.application_id = self.setup_dummy_application(data=self.application_data)
 
     def test_patch_existing_order(self):
         application_data = self.application_data
@@ -195,7 +198,6 @@ class TestUpdateApplication(BaseApplicationsTest):
         assert res.status_code == 200
 
         data = json.loads(res.get_data(as_text=True))
-        assert data['application']['user_id'] == 0
         assert data['application']['foo'] == 'baz'
 
     def test_empty_patch(self):
@@ -207,7 +209,6 @@ class TestUpdateApplication(BaseApplicationsTest):
         assert res.status_code == 200
 
         data = json.loads(res.get_data(as_text=True))
-        assert data['application']['user_id'] == 0
         assert data['application']['foo'] == self.application_data['foo']
 
     def test_patch_missing_order(self):
@@ -245,7 +246,6 @@ class TestGetApplication(BaseApplicationsTest):
 
         assert res.status_code == 200
         assert data['application']['id'] == self.application_id
-        assert data['application']['user_id'] == 0
 
     def test_get_missing_application_returns_404(self):
         res = self.get_application(999)
@@ -321,23 +321,3 @@ class TestListApplications(BaseApplicationsTest):
         created_ats = [_['createdAt'] for _ in data['applications']]
         created_ats.reverse()
         assert is_sorted(created_ats)
-
-    def test_list_applications_for_user_id(self):
-        for i in range(3):
-            self.setup_dummy_application(user_id=0)
-            self.setup_dummy_application(user_id=1)
-
-        res = self.list_applications(user_id=1)
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 200
-        assert len(data['applications']) == 3
-        assert all(br['user_id'] == 1 for br in data['applications'])
-        assert 'self' in data['links']
-
-    def test_cannot_list_applications_for_non_integer_user_id(self):
-        res = self.list_applications(user_id="not-valid")
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 400
-        assert data['error'] == 'Invalid user_id: not-valid'
