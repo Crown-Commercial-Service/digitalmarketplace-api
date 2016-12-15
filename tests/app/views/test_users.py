@@ -2,7 +2,7 @@ from flask import json
 from freezegun import freeze_time
 from nose.tools import assert_equal, assert_not_equal, assert_in, assert_is_none
 from app import db, encryption
-from app.models import Address, User, Supplier
+from app.models import Address, User, Supplier, Application
 import pendulum
 from pendulum import create as datetime
 from ..helpers import \
@@ -375,6 +375,30 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
         assert_equal(data["supplier"]["name"], "Supplier 1")
         assert_equal(data["supplier"]["supplierCode"], 1)
 
+    def test_can_post_an_applicant_user(self):
+        with self.app.app_context():
+            db.session.add(
+                Application(id=1, data={"name": "my company"}, status='saved')
+            )
+            db.session.commit()
+
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'application_id': 1,
+                    'role': 'applicant',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 201)
+        data = json.loads(response.get_data())["users"]
+        assert_equal(data["emailAddress"], "joeblogs@email.com")
+        assert_equal(data["application"]["name"], "my company")
+        assert_equal(data["application"]["id"], 1)
+
     def test_post_a_user_creates_audit_event(self):
         with self.app.app_context():
             db.session.add(
@@ -454,6 +478,53 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
         assert_equal(response.status_code, 400)
         data = json.loads(response.get_data())["error"]
         assert_equal(data, "'supplier_code' is only valid for users with 'supplier' role, not 'admin'")
+
+    def test_should_reject_a_applicant_user_with_invalid_application_id(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'application_id': 999,
+                    'role': 'applicant',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        data = json.loads(response.get_data())["error"]
+        assert_equal(response.status_code, 400)
+        assert_equal(data, "Invalid supplier code or application id")
+
+    def test_should_reject_a_applicant_with_no_application_id(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'role': 'applicant',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 400)
+        data = json.loads(response.get_data())["error"]
+        assert_equal(data, "'application id' is required for users with 'applicant' role")
+
+    def test_should_reject_non_applicant_with_application_id(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': '1234567890',
+                    'role': 'admin',
+                    'application_id': 1,
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert_equal(response.status_code, 400)
+        data = json.loads(response.get_data())["error"]
+        assert_equal(data, "'application_id' is only valid for users with 'applicant' role, not 'admin'")
 
     def test_should_reject_user_with_invalid_role(self):
         response = self.client.post(

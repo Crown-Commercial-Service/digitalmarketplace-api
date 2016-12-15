@@ -1072,7 +1072,7 @@ class TestApplication(BaseApplicationTest):
             user = User(
                 email_address='email@digital.gov.au',
                 name='name',
-                role='buyer',
+                role='applicant',
                 password='password',
                 active=True,
                 failed_login_count=0,
