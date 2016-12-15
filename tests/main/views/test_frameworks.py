@@ -454,61 +454,54 @@ class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
         self.setup_framework_data('digital-outcomes-and-specialists')
 
         response = self.client.get('/frameworks/g-cloud-7/stats')
-        json_response = json.loads(response.get_data())
+        assert json.loads(response.get_data()) == {
+            u'services': [
+                {u'count': 1, u'status': u'not-submitted',
+                 u'declaration_made': False, u'lot': u'iaas'},
+                {u'count': 2, u'status': u'not-submitted',
+                 u'declaration_made': True, u'lot': u'iaas'},
+                {u'count': 2, u'status': u'not-submitted',
+                 u'declaration_made': False, u'lot': u'paas'},
+                {u'count': 2, u'status': u'not-submitted',
+                 u'declaration_made': True, u'lot': u'paas'},
+                {u'count': 3, u'status': u'not-submitted',
+                 u'declaration_made': False, u'lot': u'saas'},
+                {u'count': 2, u'status': u'not-submitted',
+                 u'declaration_made': True, u'lot': u'saas'},
+                {u'count': 1, u'status': u'not-submitted',
+                 u'declaration_made': True, u'lot': u'scs'},
 
-        services = json_response[u'services']
-        assert services[0] == {u'count': 1, u'status': u'not-submitted',
-                               u'declaration_made': False, u'lot': u'iaas'}
-        assert services[1] == {u'count': 2, u'status': u'not-submitted',
-                               u'declaration_made': True, u'lot': u'iaas'}
-        assert services[2] == {u'count': 2, u'status': u'not-submitted',
-                               u'declaration_made': False, u'lot': u'paas'}
-        assert services[3] == {u'count': 2, u'status': u'not-submitted',
-                               u'declaration_made': True, u'lot': u'paas'}
-        assert services[4] == {u'count': 3, u'status': u'not-submitted',
-                               u'declaration_made': False, u'lot': u'saas'}
-        assert services[5] == {u'count': 2, u'status': u'not-submitted',
-                               u'declaration_made': True, u'lot': u'saas'}
-        assert services[6] == {u'count': 1, u'status': u'not-submitted',
-                               u'declaration_made': True, u'lot': u'scs'}
-        assert services[7] == {u'count': 2, u'status': u'submitted',
-                               u'declaration_made': False, u'lot': u'iaas'}
-        assert services[8] == {u'count': 4, u'status': u'submitted',
-                               u'declaration_made': True, u'lot': u'iaas'}
-        assert services[9] == {u'count': 4, u'status': u'submitted',
-                               u'declaration_made': False, u'lot': u'paas'}
-        assert services[10] == {u'count': 4, u'status': u'submitted',
-                                u'declaration_made': True, u'lot': u'paas'}
-        assert services[11] == {u'count': 4, u'status': u'submitted',
-                                u'declaration_made': False, u'lot': u'saas'}
-        assert services[12] == {u'count': 4, u'status': u'submitted',
-                                u'declaration_made': True, u'lot': u'saas'}
-        assert services[13] == {u'count': 1, u'status': u'submitted',
-                                u'declaration_made': False, u'lot': u'scs'}
-        assert services[14] == {u'count': 3, u'status': u'submitted',
-                                u'declaration_made': True, u'lot': u'scs'}
-        assert len(services) == 15  # and no more
-
-        interested_suppliers = json_response[u'interested_suppliers']
-        assert interested_suppliers[0] == {u'count': 7, u'declaration_status': None,
-                                           u'has_completed_services': False}
-        assert interested_suppliers[1] == {u'count': 1, u'declaration_status': None,
-                                           u'has_completed_services': True}
-        assert interested_suppliers[2] == {u'count': 5, u'declaration_status': 'complete',
-                                           u'has_completed_services': False}
-        assert interested_suppliers[3] == {u'count': 1, u'declaration_status': 'complete',
-                                           u'has_completed_services': True}
-        assert interested_suppliers[4] == {u'count': 4, u'declaration_status': 'started',
-                                           u'has_completed_services': False}
-        assert interested_suppliers[5] == {u'count': 2, u'declaration_status': 'started',
-                                           u'has_completed_services': True}
-        assert len(interested_suppliers) == 6  # and no more
-
-        supplier_users = json_response[u'supplier_users']
-        assert supplier_users[0] == {u'count': 4, u'recent_login': False}
-        assert supplier_users[1] == {u'count': 2, u'recent_login': None}
-        assert supplier_users[2] == {u'count': 5, u'recent_login': True}
-        assert len(supplier_users) == 3  # and no more
+                {u'count': 2, u'status': u'submitted',
+                 u'declaration_made': False, u'lot': u'iaas'},
+                {u'count': 4, u'status': u'submitted',
+                 u'declaration_made': True, u'lot': u'iaas'},
+                {u'count': 4, u'status': u'submitted',
+                 u'declaration_made': False, u'lot': u'paas'},
+                {u'count': 4, u'status': u'submitted',
+                 u'declaration_made': True, u'lot': u'paas'},
+                {u'count': 4, u'status': u'submitted',
+                 u'declaration_made': False, u'lot': u'saas'},
+                {u'count': 4, u'status': u'submitted',
+                 u'declaration_made': True, u'lot': u'saas'},
+                {u'count': 1, u'status': u'submitted',
+                 u'declaration_made': False, u'lot': u'scs'},
+                {u'count': 3, u'status': u'submitted',
+                 u'declaration_made': True, u'lot': u'scs'},
+            ],
+            u'interested_suppliers': [
+                {u'count': 7, u'declaration_status': None, u'has_completed_services': False},
+                {u'count': 1, u'declaration_status': None, u'has_completed_services': True},
+                {u'count': 5, u'declaration_status': 'complete', u'has_completed_services': False},
+                {u'count': 1, u'declaration_status': 'complete', u'has_completed_services': True},
+                {u'count': 4, u'declaration_status': 'started', u'has_completed_services': False},
+                {u'count': 2, u'declaration_status': 'started', u'has_completed_services': True},
+            ],
+            u'supplier_users': [
+                {u'count': 4, u'recent_login': False},
+                {u'count': 2, u'recent_login': None},
+                {u'count': 5, u'recent_login': True},
+            ]
+        }
 
     def test_stats_are_for_g_cloud_7_only(self):
         self.setup_data('g-cloud-6')
