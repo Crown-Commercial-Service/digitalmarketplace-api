@@ -51,7 +51,8 @@ class Config:
     DEADLINES_TIME_OF_DAY = '18:00:00'
 
     JIRA_URL = 'https://govausites.atlassian.net'
-    JIRA_CREDS = None
+    JIRA_CREDS = ''
+    JIRA_CREDS_OAUTH = ''
 
     JIRA_FEATURES = False
 
@@ -78,6 +79,7 @@ class Test(Config):
     DM_API_ADMIN_USERNAME = None
     JIRA_URL = 'https://jira.example.com'
     JIRA_CREDS = 'a:b'
+    JIRA_CREDS_OAUTH = 'at,ats,ck,kc'
 
     JIRA_FEATURES = True
 
@@ -124,7 +126,6 @@ class Production(Live):
 configs = {
     'development': Development,
     'test': Test,
-
     'preview': Preview,
     'staging': Staging,
     'production': Production,
