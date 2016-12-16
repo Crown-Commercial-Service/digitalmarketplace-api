@@ -383,6 +383,19 @@ class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
             assert_in(item,
                       json.loads(response.get_data())['error'])
 
+    def test_when_supplier_has_malformed_contact_information(self):
+        payload = self.load_example_listing("Supplier")
+        payload['contactInformation'] = {
+            'wobble': 'woo'
+        }
+
+        response = self.put_import_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['JSON was not a valid format',
+                     "is not of type u'array'"]:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
     def test_when_supplier_has_a_missing_key(self):
         payload = self.load_example_listing("Supplier")
         payload.pop('id')
@@ -938,6 +951,19 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         response = self.post_supplier(payload)
         assert_equal(response.status_code, 400)
         for item in ['Invalid JSON must have', '\'contactInformation\'']:
+            assert_in(item,
+                      json.loads(response.get_data())['error'])
+
+    def test_when_supplier_has_malformed_contact_information(self):
+        payload = self.load_example_listing("new-supplier")
+        payload['contactInformation'] = {
+            'waa': 'woo'
+        }
+
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 400)
+        for item in ['JSON was not a valid format',
+                     "is not of type u'array'"]:
             assert_in(item,
                       json.loads(response.get_data())['error'])
 
