@@ -125,7 +125,7 @@ class BaseApplicationTest(object):
     ):
         if published_at is not None and status is not None:
             raise ValueError("Cannot provide both status and published_at")
-        if withdrawn_at is not None and publish_at is None:
+        if withdrawn_at is not None and published_at is None:
             raise ValueError("If setting withdrawn_at then published_at must also be set")
         if not published_at:
             if status == 'closed':
