@@ -1074,6 +1074,8 @@ class TestApplication(BaseApplicationTest):
             db.session.add(x)
             db.session.flush()
 
+            assert 'expiry_dates' in x.serializable
+
             x_from_manual = x.serialize()
             x_from_deterministic = json.loads(x.json)
 
