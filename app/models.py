@@ -352,7 +352,7 @@ class SupplierFramework(db.Model):
     framework_id = db.Column(db.Integer,
                              db.ForeignKey('frameworks.id'),
                              primary_key=True)
-    declaration = db.Column(JSON, default=dict)
+    declaration = db.Column(JSON)
     on_framework = db.Column(db.Boolean, nullable=True)
     agreed_variations = db.Column(JSON)
 
@@ -751,7 +751,7 @@ class ServiceTableMixin(object):
     # Service publishing time.
     service_id = db.Column(db.String, index=True, unique=True, nullable=False)
 
-    data = db.Column(JSON, nullable=False, default=dict)
+    data = db.Column(JSON, nullable=False)
     status = db.Column(db.String, index=False, unique=False, nullable=False)
 
     created_at = db.Column(db.DateTime, index=False, nullable=False,
