@@ -392,7 +392,8 @@ class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
         response = self.put_import_supplier(payload)
         assert_equal(response.status_code, 400)
         for item in ['JSON was not a valid format',
-                     "is not of type u'array'"]:
+                     'is not of type',
+                     'array']:
             assert_in(item,
                       json.loads(response.get_data())['error'])
 
@@ -963,7 +964,8 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         response = self.post_supplier(payload)
         assert_equal(response.status_code, 400)
         for item in ['JSON was not a valid format',
-                     "is not of type u'array'"]:
+                     'is not of type',
+                     'array']:
             assert_in(item,
                       json.loads(response.get_data())['error'])
 
