@@ -524,7 +524,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
 
         assert_equal(response.status_code, 400)
         data = json.loads(response.get_data())["error"]
-        assert_equal(data, "'application_id' is only valid for users with 'applicant' role, not 'admin'")
+        assert_equal(data, "'application_id' is only valid for users with 'applicant' or 'supplier' role, not 'admin'")
 
     def test_should_reject_user_with_invalid_role(self):
         response = self.client.post(
