@@ -59,10 +59,6 @@ INCOMING_APPLICATION_DATA = {
         "state": "state",
         "postal_code": "2000"
     },
-    "services": {
-        "Content and publishing": True,
-        "User research and design": True
-    },
     "case_studies": {
         "c98932c6-b948-08f6-c782-6e3aa83451d4": {
             "approach": "app",

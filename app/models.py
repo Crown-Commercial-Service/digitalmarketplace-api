@@ -619,18 +619,13 @@ class Supplier(db.Model):
                 }]
             ]
 
-        if 'services' in data:
-            # TODO: remove this?
-            self.data['services'] = {
-                k: {'assessed': False}
-                for k in data['services'].keys()
-            }
+        if 'services' in self.data:
+            del self.data['services']
 
         overridden = [
             'longName',
             'extraLinks',
-            'representative',
-            'services'
+            'representative'
         ]
 
         for k in overridden:
@@ -640,10 +635,6 @@ class Supplier(db.Model):
         return data
 
     def update_from_json_after(self, data):
-        if 'services' in self.data:
-            for k in self.data['services'].keys():
-                self.add_unassessed_domain(k)
-
         self.last_update_time = utcnow()
         return data
 
@@ -1890,6 +1881,9 @@ class Application(db.Model):
         if 'created_at' in j:
             j['createdAt'] = j['created_at']
 
+        if 'documents' not in j:
+            j['documents'] = {}
+
         if 'expiry_dates' not in j:
             j['expiry_dates'] = {
                 "deed": {},
@@ -1897,6 +1891,15 @@ class Application(db.Model):
                 "liability": {},
                 "workers": {}
             }
+
+        # j['expiry_dates'] = {
+        #     "deed": '2016-12-25',
+        #     "financial": '2016-12-25',
+        #     "liability": '2016-12-25',
+        #     "workers": '2016-12-25'
+        # }
+        # from pprint import pprint as p
+        # p(j)
         return j
 
     def update_from_json_before(self, data):

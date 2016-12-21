@@ -1131,11 +1131,8 @@ class TestApplication(BaseApplicationTest):
 
             db.session.flush()
 
-            assert app.supplier.data['services'] == \
-                {
-                    'Content and publishing': {'assessed': False},
-                    'User research and design': {'assessed': False}
-                }
+            # we removed this field
+            assert 'services' not in app.supplier.data
 
             assert len(app.supplier.contacts) == 1
 
