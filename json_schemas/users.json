@@ -36,6 +36,9 @@
     },
     "supplierCode": {
       "type": "integer"
+    },
+    "application_id": {
+      "type": "integer"
     }
   },
   "required": [

@@ -842,6 +842,12 @@ class User(db.Model):
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
 
+    application_id = db.Column(db.BigInteger,
+                               db.ForeignKey('application.id', ondelete='cascade'),
+                               index=True, unique=False, nullable=True)
+
+    application = db.relationship('Application', lazy='joined', innerjoin=False)
+
     @validates('email_address')
     def validate_email_address(self, key, value):
         if value and self.role == 'buyer' and not is_government_email(value):
@@ -1847,7 +1853,6 @@ class Application(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
-    user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
 
     status = db.Column(
@@ -1868,8 +1873,6 @@ class Application(db.Model):
         nullable=False
     )
 
-    user = db.relationship('User', lazy='joined')
-
     supplier_code = db.Column(db.BigInteger,
                               db.ForeignKey('supplier.code'),
                               nullable=True)
@@ -1878,9 +1881,6 @@ class Application(db.Model):
 
     @validates('data')
     def validates_data(self, key, data):
-        data = drop_foreign_fields(data, [
-            'user_id'
-        ])
         data = strip_whitespace_from_data(data)
         data = purge_nulls_from_data(data)
 
@@ -1912,12 +1912,10 @@ class Application(db.Model):
 
         data.update({
             'id': self.id,
-            'user_id': self.user_id,
             'status': self.status,
             'createdAt': self.created_at.to_iso8601_string(extended=True),
             'links': {
                 'self': url_for('main.get_application_by_id', application_id=self.id),
-                'user': url_for("main.get_user_by_id", user_id=self.user_id),
             }
         })
 
@@ -1945,8 +1943,10 @@ class Application(db.Model):
 
             db.session.flush()
 
-            self.user.role = 'supplier'
-            self.user.supplier_code = supplier.code
+            users = User.query.filter(User.application_id == self.id)
+            for user in users:
+                user.role = 'supplier'
+                user.supplier_code = supplier.code
 
             db.session.flush()
 

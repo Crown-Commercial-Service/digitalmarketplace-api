@@ -142,6 +142,11 @@ def create_user():
 
     check_supplier_role(user.role, user.supplier_code)
 
+    if "application_id" in json_payload:
+        user.application_id = json_payload['application_id']
+
+    check_applicant_role(user.role, user.application_id)
+
     try:
         db.session.add(user)
         db.session.flush()
@@ -157,7 +162,7 @@ def create_user():
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        abort(400, "Invalid supplier code")
+        abort(400, "Invalid supplier code or application id")
     except DataError:
         db.session.rollback()
         abort(400, "Invalid user role")
@@ -199,12 +204,15 @@ def update_user(user_id):
         user.role = user_update['role']
     if 'supplierCode' in user_update:
         user.supplier_code = user_update['supplierCode']
+    if 'application_id' in user_update:
+        user.application_id = user_update['application_id']
     if 'locked' in user_update and not user_update['locked']:
         user.failed_login_count = 0
     if 'termsAcceptedAt' in user_update:
         user.terms_accepted_at = user_update['termsAcceptedAt']
 
     check_supplier_role(user.role, user.supplier_code)
+    check_applicant_role(user.role, user.application_id)
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_user,
@@ -377,3 +385,10 @@ def check_supplier_role(role, supplier_code):
         abort(400, "'supplier_code' is required for users with 'supplier' role")
     elif role != 'supplier' and supplier_code is not None:
         abort(400, "'supplier_code' is only valid for users with 'supplier' role, not '{}'".format(role))
+
+
+def check_applicant_role(role, application_id):
+    if role == 'applicant' and application_id is None:
+        abort(400, "'application id' is required for users with 'applicant' role")
+    elif role != 'applicant' and application_id is not None:
+        abort(400, "'application_id' is only valid for users with 'applicant' role, not '{}'".format(role))
