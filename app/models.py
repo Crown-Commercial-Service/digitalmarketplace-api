@@ -1881,9 +1881,6 @@ class Application(db.Model):
         if 'created_at' in j:
             j['createdAt'] = j['created_at']
 
-        if 'documents' not in j:
-            j['documents'] = {}
-
         if 'expiry_dates' not in j:
             j['expiry_dates'] = {
                 "deed": {},
@@ -1892,14 +1889,6 @@ class Application(db.Model):
                 "workers": {}
             }
 
-        # j['expiry_dates'] = {
-        #     "deed": '2016-12-25',
-        #     "financial": '2016-12-25',
-        #     "liability": '2016-12-25',
-        #     "workers": '2016-12-25'
-        # }
-        # from pprint import pprint as p
-        # p(j)
         return j
 
     def update_from_json_before(self, data):
