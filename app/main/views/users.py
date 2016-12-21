@@ -390,5 +390,6 @@ def check_supplier_role(role, supplier_code):
 def check_applicant_role(role, application_id):
     if role == 'applicant' and application_id is None:
         abort(400, "'application id' is required for users with 'applicant' role")
-    elif role != 'applicant' and application_id is not None:
-        abort(400, "'application_id' is only valid for users with 'applicant' role, not '{}'".format(role))
+    elif role != 'applicant' and role != 'supplier' and application_id is not None:
+        abort(400, "'application_id' is only valid for users with 'applicant' or 'supplier' role, not '{}'"
+              .format(role))
