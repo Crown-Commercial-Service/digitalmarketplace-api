@@ -9,11 +9,7 @@ def validate_and_return_supplier_request(supplier_id=None):
     json_has_required_keys(json_payload['suppliers'], ['contactInformation'])
 
     # remove unnecessary fields
-    json_payload['suppliers'] = drop_foreign_fields(json_payload['suppliers'], ['links'])
-    json_payload['suppliers']['contactInformation'] = [
-        drop_foreign_fields(contact_data, ['links'])
-        for contact_data in json_payload['suppliers']['contactInformation']
-    ]
+    json_payload['suppliers'] = drop_foreign_fields(json_payload['suppliers'], ['links'], recurse=True)
 
     if supplier_id:
         validate_supplier_json_or_400(json_payload['suppliers'])
