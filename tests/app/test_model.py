@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from collections import Counter
 
 import mock
 import pytest
@@ -14,7 +13,6 @@ from app.models import (
     ValidationError,
     BriefClarificationQuestion
 )
-
 from .helpers import BaseApplicationTest
 
 
@@ -897,12 +895,11 @@ class TestLot(BaseApplicationTest):
 class TestFrameworkAgreements(BaseApplicationTest):
     def setup(self):
         super(TestFrameworkAgreements, self).setup()
-        with self.app.app_context():
-            self.setup_dummy_suppliers(1)
+        self.setup_dummy_suppliers(1)
 
-            supplier_framework = SupplierFramework(supplier_id=0, framework_id=1)
-            db.session.add(supplier_framework)
-            db.session.commit()
+        supplier_framework = SupplierFramework(supplier_id=0, framework_id=1)
+        db.session.add(supplier_framework)
+        db.session.commit()
 
     def test_supplier_has_to_be_associated_with_a_framework(self):
         with self.app.app_context():
@@ -1032,6 +1029,14 @@ class TestFrameworkAgreements(BaseApplicationTest):
         framework_agreement.countersigned_agreement_returned_at = datetime(2016, 10, 11, 10, 12, 0, 0)
 
         assert framework_agreement.most_recent_signature_time == datetime(2016, 10, 11, 10, 12, 0, 0)
+
+
+class TestFrameworks(BaseApplicationTest):
+    """Test stuff."""
+
+    def test_fixture(self, draft_service):
+        assert draft_service.id
+        assert draft_service.serialize()
 
 
 class TestCurrentFrameworkAgreement(BaseApplicationTest):
