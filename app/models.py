@@ -5,6 +5,7 @@ from workdays import workday
 import re
 import io
 import yaml
+import six
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
@@ -510,25 +511,14 @@ class Supplier(db.Model):
 
     domains = relationship("SupplierDomain", back_populates="supplier")
 
-    def add_unassessed_domain(self, name):
-        d = Domain.query.filter(
-            func.lower(Domain.name) == func.lower(name)
-        ).first()
-
-        if not d:
-            raise ValidationError('bad domain name: {}'.format(name))
-
+    def add_unassessed_domain(self, name_or_id):
+        d = Domain.get_by_name_or_id(name_or_id)
         sd = SupplierDomain(supplier=self, domain=d)
         db.session.add(sd)
         db.session.flush()
 
-    def update_domain_assessment(self, name, assessed=True):
-        d = Domain.query.filter(
-            func.lower(Domain.name) == func.lower(name)
-        ).first()
-
-        if not d:
-            raise ValidationError('bad domain name: {}'.format(name))
+    def update_domain_assessment(self, name_or_id, assessed=True):
+        d = Domain.get_by_name_or_id(name_or_id)
 
         sd = SupplierDomain.query.filter_by(supplier_id=self.id, domain_id=d.id).first()
 
@@ -537,6 +527,12 @@ class Supplier(db.Model):
 
         sd.assessed = assessed
         db.session.flush()
+
+    @property
+    def all_domains(self):
+        new_domains = [sd.domain.name for sd in self.domains]
+        result = new_domains + self.legacy_domains
+        return sorted_uniques(result)
 
     @property
     def assessed_domains(self):
@@ -596,6 +592,12 @@ class Supplier(db.Model):
             'legacy': self.legacy_domains
         }
 
+        j['services'] = {
+            d: True for d in self.assessed_domains
+        }
+
+        del j['prices']
+
         return j
 
     def update_from_json_before(self, data):
@@ -620,6 +622,9 @@ class Supplier(db.Model):
             ]
 
         if 'services' in self.data:
+            for name, checked in self.data['services'].items():
+                if name not in self.all_domains and checked:
+                    self.add_unassessed_domain(name)
             del self.data['services']
 
         overridden = [
@@ -672,6 +677,19 @@ class Domain(db.Model):
 
     suppliers = relationship("SupplierDomain", back_populates="domain")
     assoc_suppliers = association_proxy('suppliers', 'supplier')
+
+    @staticmethod
+    def get_by_name_or_id(name_or_id):
+        if isinstance(name_or_id, six.string_types):
+            d = Domain.query.filter(
+                func.lower(Domain.name) == func.lower(name_or_id)
+            ).first()
+        else:
+            d = Domain.query.filter_by(id=name_or_id).first()
+
+        if not d:
+            raise ValidationError('bad domain name: {}'.format(name))
+        return d
 
 
 class SupplierFramework(db.Model):
@@ -1919,19 +1937,29 @@ class Application(db.Model):
 
         self.status = 'submitted'
 
+    @property
+    def is_existing(self):
+        return self.supplier is not None
+
     def set_approval(self, approved):
+        existing = self.is_existing
+
         if self.status != 'submitted':
             raise ValidationError("Only a 'submitted' application can be subject to an approval decision.")
 
         if approved:
-            supplier = Supplier()
+            if existing:
+                supplier = self.supplier
+            else:
+                supplier = Supplier()
 
             supplier.update_from_json(self.data)
 
-            self.supplier = supplier
-            self.supplier.status = 'limited'
+            if not existing:
+                self.supplier = supplier
+                self.supplier.status = 'limited'
 
-            self.status = 'approved'
+                self.status = 'approved'
 
             db.session.flush()
 

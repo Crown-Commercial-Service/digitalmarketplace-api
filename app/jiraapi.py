@@ -52,7 +52,7 @@ class JIRAAPI(object):
     def create_assessment_task(self, application):
         task_details = dict(
             project=MARKETPLACE_PROJECT,
-            summary='Review this Supplier Application: {}'.format(application.data['name']),
+            summary='Review this Supplier Application: {}'.format(application.supplier.name),
             description=TICKET_DESCRIPTION.format(application.json),
             issuetype={'name': ASSESSMENT_ISSUE_TYPE}
         )

@@ -79,7 +79,22 @@ class BaseApplicationsTest(BaseApplicationTest):
 
     def approve_application(self, application_id):
         return self.client.post(
-            '/applications/{}/approve'.format(self.application_id),
+            '/applications/{}/approve'.format(application_id),
+            content_type='application/json')
+
+    def reject_application(self, application_id):
+        return self.client.post(
+            '/applications/{}/approve'.format(application_id),
+            content_type='application/json')
+
+    def assess_domain_for_application(self, application_id, domain_id):
+        return self.client.post(
+            '/applications/{}/assess/{}'.format(self.application_id, domain_id),
+            content_type='application/json')
+
+    def unassess_domain_for_application(self, application_id, domain_id):
+        return self.client.post(
+            '/applications/{}/unassess/{}'.format(self.application_id, domain_id),
             content_type='application/json')
 
     def get_user(self, user_id):
@@ -132,7 +147,7 @@ class TestApproveApplication(BaseApplicationsTest):
                                content_type='application/json')
 
     @mock.patch('app.jiraapi.JIRA')
-    def test_approve_application(self, jira):
+    def test_application_assessments_and_domain_approvals(self, jira):
         self.patch_application(self.application_id, data={'status': 'saved'})
         a = self.get_application(self.application_id)
         user_id = self.setup_dummy_applicant(2, self.application_id)
@@ -177,6 +192,10 @@ class TestApproveApplication(BaseApplicationsTest):
         assert result['hits']['total'] == 1
         assert len(result['hits']['hits']) == 1
         assert result['hits']['hits'][0]['_source']['code'] == j['supplier_code']
+
+        a = self.get_application(self.application_id)
+        assert a.status_code == 200
+        j = json.loads(a.get_data(as_text=True))['application']
 
 
 class TestUpdateApplication(BaseApplicationsTest):

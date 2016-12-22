@@ -56,12 +56,43 @@ def update_application(application_id):
 
 @main.route('/applications/<int:application_id>/approve', methods=['POST'])
 def approve_application(application_id):
+    return domain_approval(application_id, True)
+
+
+@main.route('/applications/<int:application_id>/reject', methods=['POST'])
+def reject_application(application_id):
+    return domain_approval(application_id, False)
+
+
+@main.route('/applications/<int:application_id>/assess/<int:domain_id>', methods=['POST'])
+def assess_application_for_domain(application_id, domain_id):
+    return domain_assessment(application_id, domain_id, True)
+
+
+@main.route('/applications/<int:application_id>/unassess/<int:domain_id>', methods=['POST'])
+def unassess_application_for_domain(application_id, domain_id):
+    return domain_assessment(application_id, domain_id, False)
+
+
+def domain_approval(application_id, result):
     application = Application.query.get(application_id)
 
     if application is None:
         abort(404, "Application '{}' does not exist".format(application_id))
 
-    application.set_approval(approved=True)
+    application.set_approval(approved=result)
+    db.session.commit()
+    return jsonify(application=application.serializable), 200
+
+
+def domain_assessment(application_id, domain_id, result):
+    application = Application.query.get(application_id)
+    domain = Domain.get_by_name_or_id(domain_id)
+
+    if application is None:
+        abort(404, "Application '{}' does not exist".format(application_id))
+
+    application.update_domain_assessment(result=True)
     db.session.commit()
     return jsonify(application=application.serializable), 200
 

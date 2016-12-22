@@ -1132,7 +1132,6 @@ class TestApplication(BaseApplicationTest):
             db.session.flush()
 
             # we removed this field
-            assert 'services' not in app.supplier.data
 
             assert len(app.supplier.contacts) == 1
 
@@ -1154,6 +1153,27 @@ class TestApplication(BaseApplicationTest):
             assert app.supplier.status == 'limited'
 
             db.session.flush()
+
+            new_data = INCOMING_APPLICATION_DATA
+            new_data['summary'] = 'New Summary'
+
+            # use this application to do an existing seller update
+            app.data = new_data
+            app.status = 'submitted'
+            app.supplier.status = 'complete'
+
+            db.session.flush()
+
+            app.set_approval(True)
+
+            # check that the update took place
+            assert app.supplier.summary == 'New Summary'
+
+            # make sure this didn't change
+            assert app.supplier.status == 'complete'
+
+            assert app.supplier.all_domains == \
+                ['Content and publishing']
 
     def test_application_and_supplier_domains(self):
         with self.app.test_request_context('/hello'):

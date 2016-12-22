@@ -81,6 +81,10 @@ INCOMING_APPLICATION_DATA = {
         "deed": "workorder_5.pdf"
     },
     "references": [],
+    "services": {
+        "Content and publishing": True,
+        "User research and design": False
+    },
     "steps": {
         "casestudy": "complete",
         "digital": "complete",
