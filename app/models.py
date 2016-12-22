@@ -596,8 +596,6 @@ class Supplier(db.Model):
             d: True for d in self.assessed_domains
         }
 
-        del j['prices']
-
         return j
 
     def update_from_json_before(self, data):

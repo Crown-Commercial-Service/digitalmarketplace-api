@@ -277,8 +277,6 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             if v is None:
                 supplier.pop(k)
 
-        # we dont want this key in the api response
-        del payload['prices']
         assert_api_compatible(payload, supplier)
 
     def test_update_all_fields(self):
