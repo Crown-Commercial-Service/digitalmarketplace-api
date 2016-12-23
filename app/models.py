@@ -611,7 +611,7 @@ class Supplier(db.Model):
             self.extra_links = [WebsiteLink.from_json(l) for l in data['extraLinks']]
 
         if 'representative' in data:
-            self.contacts += [
+            self.contacts = [
                 Contact.from_json(c) for c in [{
                     'name': data.get('representative'),
                     'email': data.get('email'),

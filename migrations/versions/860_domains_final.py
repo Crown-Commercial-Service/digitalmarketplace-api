@@ -18,8 +18,6 @@ domainlist = yaml.load(open('data/domains.yaml'))
 
 
 def upgrade():
-    op.execute('create extension if not exists pg_trgm;')
-
     op.execute('alter table supplier_domain drop constraint "supplier_domain_domain_id_fkey"')
     op.execute('delete from domain;')
     op.execute('ALTER SEQUENCE domain_id_seq RESTART WITH 1;')
