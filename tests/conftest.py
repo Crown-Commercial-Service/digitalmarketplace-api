@@ -13,6 +13,7 @@ from app.models import (
 from tests.app import setup, teardown
 from tests.app.helpers import WSGIApplicationWithEnvironment
 
+
 @pytest.fixture(autouse=True, scope='session')
 def test_db(request):
     """Run setup and teardown for the test database."""
@@ -51,8 +52,6 @@ def support_classes(request, app):
     request.cls.app = app
     request.cls.client = app.test_client()
     request.cls._auth_tokens = app.config['DM_API_AUTH_TOKENS']
-
-
 
 
 @pytest.fixture()
@@ -371,8 +370,10 @@ def live_g8_framework_2_variations_suppliers_on_framework(
 
 @pytest.fixture()
 def live_g8_framework_2_variations_suppliers_on_framework_with_alt(
-        live_g8_framework_2_variations, user_role_supplier, user_role_supplier_alt
-    ):
+        live_g8_framework_2_variations,
+        user_role_supplier,
+        user_role_supplier_alt
+        ):
     _supplierframework_fixture_inner(sf_kwargs={"on_framework": True})
 
 

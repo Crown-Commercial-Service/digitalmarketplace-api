@@ -69,7 +69,7 @@ class BaseApplicationTest(object):
         valid_token = 'valid-token'
         app.wsgi_app = WSGIApplicationWithEnvironment(
             app.wsgi_app,
-            HTTP_AUTHORIZATION = 'Bearer {}'.format(valid_token))
+            HTTP_AUTHORIZATION='Bearer {}'.format(valid_token))
         app.config['DM_API_AUTH_TOKENS'] = valid_token
 
     def do_not_provide_access_token(self):
