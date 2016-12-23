@@ -32,7 +32,7 @@ class TestAuditEvents(BaseApplicationTest):
             return ae.id
 
     def add_audit_events(self, number, type=AuditTypes.supplier_update, db_object=None):
-        ids=[]
+        ids = []
         for user_id in range(number):
             ids.append(self.add_audit_event(user=user_id, type=type, db_object=db_object))
         return ids
@@ -50,7 +50,6 @@ class TestAuditEvents(BaseApplicationTest):
         aid = self.add_audit_event(0)
         response = self.client.get('/audit-events')
         data = json.loads(response.get_data())
-
         assert_equal(response.status_code, 200)
         expected = {
             'links': {'self': mock.ANY},
