@@ -672,6 +672,7 @@ class Domain(db.Model):
     __tablename__ = 'domain'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
+    ordering = db.Column(db.Integer, nullable=False)
 
     suppliers = relationship("SupplierDomain", back_populates="domain")
     assoc_suppliers = association_proxy('suppliers', 'supplier')

@@ -1191,20 +1191,21 @@ class TestApplication(BaseApplicationTest):
 
             db.session.commit()
 
-            assert supp.legacy_domains == ['Strategy, delivery and governance']
-            assert supp.assessed_domains == ['Strategy, delivery and governance']
+            assert supp.legacy_domains == ['Agile delivery and governance']
+            assert supp.assessed_domains == ['Agile delivery and governance']
             assert supp.unassessed_domains == []
 
-            supp.add_unassessed_domain('Change and transformation')
+            supp.add_unassessed_domain('Change, training and transformation')
 
-            assert supp.legacy_domains == ['Strategy, delivery and governance']
-            assert supp.assessed_domains == ['Strategy, delivery and governance']
-            assert supp.unassessed_domains == ['Change and transformation']
+            assert supp.legacy_domains == ['Agile delivery and governance']
+            assert supp.assessed_domains == ['Agile delivery and governance']
+            assert supp.unassessed_domains == ['Change, training and transformation']
 
-            supp.update_domain_assessment('Change and transformation', True)
+            supp.update_domain_assessment('Change, training and transformation', True)
 
-            assert supp.legacy_domains == ['Strategy, delivery and governance']
+            assert supp.legacy_domains == ['Agile delivery and governance']
             assert supp.assessed_domains == [
-                'Change and transformation', 'Strategy, delivery and governance'
+                'Agile delivery and governance',
+                'Change, training and transformation'
             ]
             assert supp.unassessed_domains == []

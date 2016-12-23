@@ -437,5 +437,5 @@ def update_supplier_framework_details(code, framework_slug):
 
 @main.route('/domains', methods=['GET'])
 def get_domains_list():
-    result = [d.serializable for d in Domain.query.order_by('name').all()]
+    result = [d.serializable for d in Domain.query.order_by('ordering').all()]
     return jsonify(domains=result)
