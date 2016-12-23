@@ -187,6 +187,36 @@ def translate_json_schema_errors(errors, json_data):
                     'error': error.message
                 })
 
+        # validate fields two deep that have required properties e.g. no evidence given for essentialRequirements[1]
+        elif error.path and len(error.path) == 2 and error.validator == 'required':
+            key, index = error.path
+            if key not in error_map:
+                error_map[key] = []
+
+            field = re.search(r"'(.*)'", error.message).group(1)
+
+            error_map[key].append({
+                'field': field,
+                'index': index,
+                'error': 'answer_required'
+            })
+
+        # validate dynamic list questions that are 3 elements deep, e.g. essentialRequirements[1]['evidence']
+        elif error.path and len(error.path) == 3:
+            key, index, field = error.path
+            if key not in error_map:
+                error_map[key] = []
+
+            error_message = _translate_json_schema_error(
+                key, error.validator, error.validator_value, error.message
+            )
+
+            error_map[key].append({
+                'field': field,
+                'index': index,
+                'error': error_message
+            })
+
         elif error.path:
             key = error.path[0]
             error_map[key] = _translate_json_schema_error(
