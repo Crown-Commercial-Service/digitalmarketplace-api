@@ -1,17 +1,20 @@
-from tests.app.helpers import BaseApplicationTest
-from flask import json
+# -*- coding: UTF-8 -*-
 from datetime import datetime
-from app.models import AuditEvent
-from app import db
-from app.models import Supplier
+import mock
+from nose.tools import assert_equal, assert_in, assert_true, assert_false
+from flask import json
+
 from dmapiclient.audit import AuditTypes
 
-from nose.tools import assert_equal, assert_in, assert_true, assert_false
+from app import db
+from app.models import AuditEvent
+from app.models import Supplier
+from tests.app.helpers import BaseApplicationTest
 
 
 class TestAuditEvents(BaseApplicationTest):
     @staticmethod
-    def audit_event(user, type, db_object=None):
+    def audit_event(user=0, type=AuditTypes.supplier_update, db_object=None):
         return AuditEvent(
             audit_type=type,
             db_object=db_object,
@@ -19,13 +22,20 @@ class TestAuditEvents(BaseApplicationTest):
             data={'request': "data"}
         )
 
-    def add_audit_events(self, number, type=AuditTypes.supplier_update, db_object=None):
+    def add_audit_event(self, user=0, type=AuditTypes.supplier_update, db_object=None):
         with self.app.app_context():
-            for i in range(number):
-                db.session.add(
-                    self.audit_event(i, type, db_object)
-                )
+            ae = self.audit_event(user, type, db_object)
+            db.session.add(
+                ae
+            )
             db.session.commit()
+            return ae.id
+
+    def add_audit_events(self, number, type=AuditTypes.supplier_update, db_object=None):
+        ids = []
+        for user_id in range(number):
+            ids.append(self.add_audit_event(user=user_id, type=type, db_object=db_object))
+        return ids
 
     def add_audit_events_with_db_object(self):
         self.setup_dummy_suppliers(3)
@@ -36,15 +46,27 @@ class TestAuditEvents(BaseApplicationTest):
                 db.session.add(event)
             db.session.commit()
 
+    def test_only_one_audit_event_created(self):
+        with self.app.app_context():
+            count = AuditEvent.query.count()
+            self.add_audit_event()
+            assert AuditEvent.query.count() == count + 1
+
     def test_should_get_audit_event(self):
-        self.add_audit_events(1)
+        aid = self.add_audit_event(0)
         response = self.client.get('/audit-events')
         data = json.loads(response.get_data())
-
         assert_equal(response.status_code, 200)
-        assert_equal(len(data['auditEvents']), 1)
-        assert_equal(data['auditEvents'][0]['user'], '0')
-        assert_equal(data['auditEvents'][0]['data']['request'], 'data')
+        expected = {
+            'links': {'self': mock.ANY},
+            'type': 'supplier_update',
+            'acknowledged': False,
+            'user': '0',
+            'data': {'request': 'data'},
+            'id': aid,
+            'createdAt': mock.ANY
+        }
+        assert expected in data['auditEvents']
 
     def test_should_get_audit_events_sorted(self):
         self.add_audit_events(5)
@@ -65,7 +87,7 @@ class TestAuditEvents(BaseApplicationTest):
     def test_should_get_audit_event_using_audit_date(self):
         today = datetime.utcnow().strftime("%Y-%m-%d")
 
-        self.add_audit_events(1)
+        self.add_audit_event()
         response = self.client.get('/audit-events?audit-date={}'.format(today))
         data = json.loads(response.get_data())
 
@@ -75,7 +97,7 @@ class TestAuditEvents(BaseApplicationTest):
         assert_equal(data['auditEvents'][0]['data']['request'], 'data')
 
     def test_should_not_get_audit_event_for_date_with_no_events(self):
-        self.add_audit_events(1)
+        self.add_audit_event()
         response = self.client.get('/audit-events?audit-date=2000-01-01')
         data = json.loads(response.get_data())
 
@@ -83,14 +105,14 @@ class TestAuditEvents(BaseApplicationTest):
         assert_equal(len(data['auditEvents']), 0)
 
     def test_should_reject_invalid_audit_dates(self):
-        self.add_audit_events(1)
+        self.add_audit_event()
         response = self.client.get('/audit-events?audit-date=invalid')
 
         assert_equal(response.status_code, 400)
 
     def test_should_get_audit_event_by_type(self):
-        self.add_audit_events(1, AuditTypes.contact_update)
-        self.add_audit_events(1, AuditTypes.supplier_update)
+        self.add_audit_event(type=AuditTypes.contact_update)
+        self.add_audit_event(type=AuditTypes.supplier_update)
         response = self.client.get('/audit-events?audit-type=contact_update')
         data = json.loads(response.get_data())
 
@@ -101,7 +123,7 @@ class TestAuditEvents(BaseApplicationTest):
         assert_equal(data['auditEvents'][0]['data']['request'], 'data')
 
     def test_should_reject_invalid_audit_type(self):
-        self.add_audit_events(1)
+        self.add_audit_event()
         response = self.client.get('/audit-events?audit-type=invalid')
 
         assert_equal(response.status_code, 400)
@@ -186,13 +208,13 @@ class TestAuditEvents(BaseApplicationTest):
         assert_equal(data['auditEvents'][0]['user'], '0')
 
     def test_should_reject_invalid_page(self):
-        self.add_audit_events(1)
+        self.add_audit_event()
         response = self.client.get('/audit-events?page=invalid')
 
         assert_equal(response.status_code, 400)
 
     def test_should_reject_missing_page(self):
-        self.add_audit_events(1)
+        self.add_audit_event()
         response = self.client.get('/audit-events?page=')
 
         assert_equal(response.status_code, 400)
@@ -252,7 +274,7 @@ class TestAuditEvents(BaseApplicationTest):
         assert_false('next' in data['links'])
 
     def test_paginated_audit_with_invalid_custom_page_size(self):
-        self.add_audit_events(1)
+        self.add_audit_event()
         response = self.client.get('/audit-events?per_page=foo')
         assert_equal(response.status_code, 400)
 
@@ -273,7 +295,7 @@ class TestAuditEvents(BaseApplicationTest):
         assert_equal(res.status_code, 400)
 
     def test_should_update_audit_event(self):
-        self.add_audit_events(1)
+        self.add_audit_event()
         response = self.client.get('/audit-events')
         data = json.loads(response.get_data())
 
