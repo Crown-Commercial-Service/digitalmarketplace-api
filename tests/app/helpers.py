@@ -63,8 +63,8 @@ class BaseApplicationTest(object):
 
     config = None
 
-    @classmethod
-    def setup_authorization(cls, app):
+    @staticmethod
+    def setup_authorization(app):
         """Set up bearer token and pass on all requests"""
         valid_token = 'valid-token'
         app.wsgi_app = WSGIApplicationWithEnvironment(
