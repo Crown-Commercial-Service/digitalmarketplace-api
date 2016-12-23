@@ -11,7 +11,8 @@ from app.utils import (display_list,
                        json_has_matching_id,
                        json_has_required_keys,
                        link,
-                       purge_nulls_from_data)
+                       purge_nulls_from_data,
+                       keyfilter_json)
 
 
 def test_link():
@@ -34,6 +35,36 @@ class TestJSONHasMatchingId(BaseApplicationTest):
         with self.app.app_context():
             with pytest.raises(HTTPException):
                 json_has_matching_id(self.data, 78910)
+
+
+class TestKeyFilterJSON(object):
+    def test_null(self):
+        assert keyfilter_json(None, lambda k: True) is None
+        assert keyfilter_json(None, lambda k: False) is None
+
+    def test_recursion(self):
+        assert keyfilter_json({
+            'somelist': [
+                {
+                    'something': 'yes',
+                    'otherthing': 'no'
+                },
+                {
+                    'something': 'maybe',
+                    'otherthing': 'definitely'
+                }
+            ],
+            'something': 'woo'
+        }, lambda k: k != 'something') == {
+            'somelist': [
+                {
+                    'otherthing': 'no'
+                },
+                {
+                    'otherthing': 'definitely'
+                }
+            ],
+        }
 
 
 def test_display_list_two_items():

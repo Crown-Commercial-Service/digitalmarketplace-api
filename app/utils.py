@@ -92,12 +92,31 @@ def json_only_has_required_keys(data, keys):
         abort(400, "Invalid JSON must only have {} keys".format(keys))
 
 
-def drop_foreign_fields(json_object, list_of_keys):
-    json_object = json_object.copy()
-    for key in list_of_keys:
-        json_object.pop(key, None)
-
+def drop_foreign_fields(json_object, list_of_keys, recurse=False):
+    json_object = keyfilter_json(json_object, lambda k: k not in list_of_keys, recurse)
     return json_object
+
+
+def keyfilter_json(json_object, filter_func, recurse=True):
+    """
+    Filter arbitrary JSON structure by filter_func, recursing into the structure if necessary
+    :param json_object:
+    :param filter_func: a function to apply to each key found in json_object
+    :param recurse: True to look recurse into lists and dicts inside json_object
+    :return: a filtered copy of json_object with identical types at each level
+    """
+    filtered_object = json_object
+    if isinstance(json_object, list) and recurse:
+        filtered_object = list()
+        for item in json_object:
+            filtered_object.append(keyfilter_json(item, filter_func))
+    elif isinstance(json_object, dict):
+        filtered_object = dict()
+        for k, v in iteritems(json_object):
+            if filter_func(k):
+                filtered_object[k] = keyfilter_json(v, filter_func) if recurse else v
+
+    return filtered_object
 
 
 def json_has_matching_id(data, id):
