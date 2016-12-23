@@ -454,18 +454,19 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
     def setup(self):
         payload = self.load_example_listing("G6-IaaS")
         self.service_id = str(payload['id'])
-        db.session.add(
-            Supplier(supplier_id=1, name=u"Supplier 1")
-        )
-        db.session.add(
-            ContactInformation(
-                supplier_id=1,
-                contact_name=u"Liz",
-                email=u"liz@royal.gov.uk",
-                postcode=u"SW1A 1AA"
+        with self.app.app_context():
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
             )
-        )
-        db.session.commit()
+            db.session.add(
+                ContactInformation(
+                    supplier_id=1,
+                    contact_name=u"Liz",
+                    email=u"liz@royal.gov.uk",
+                    postcode=u"SW1A 1AA"
+                )
+            )
+            db.session.commit()
 
         self.client.put(
             '/services/%s' % self.service_id,
