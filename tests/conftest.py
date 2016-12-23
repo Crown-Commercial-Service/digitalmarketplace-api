@@ -2,24 +2,27 @@ from __future__ import absolute_import
 
 from datetime import datetime
 from itertools import product
-from six import iteritems, iterkeys
+
 import pytest
+from six import iteritems, iterkeys
 
-from .app import setup, teardown
-
-from app import create_app
+from app import create_app, db
 from app.models import (
-    db, Framework, SupplierFramework, Supplier, User, ContactInformation, DraftService, Lot, Service, FrameworkLot
+    Framework, SupplierFramework, Supplier, User, ContactInformation, DraftService, Lot, Service, FrameworkLot
 )
+from tests.app import setup, teardown
 
-# @pytest.fixture(autouse=True, scope='function')
-# def foo(request):
-#     print request.node.name
 
 @pytest.fixture(autouse=True, scope='session')
-def db_migration(request):
-    setup()
+def test_db(request):
     request.addfinalizer(teardown)
+    return setup()
+
+
+@pytest.fixture(scope='function')
+def session(request, test_db):
+    test_db.session.begin_nested()
+    request.addfinalizer(test_db.session.rollback)
 
 
 @pytest.fixture(autouse=True, scope='session')
@@ -27,9 +30,7 @@ def app(request):
     app = create_app('test')
     ctx = app.test_request_context()
     ctx.push()
-    def teardown():
-        ctx.pop()
-    request.addfinalizer(teardown)
+    request.addfinalizer(ctx.pop)
     request._app = app
     return app
 
@@ -270,27 +271,27 @@ def live_g8_framework_2_variations():
 
 
 @pytest.fixture()
-def open_g6_framework():
+def open_g6_framework(session):
     return _framework_fixture_inner(**dict(_g6_framework_defaults, status="open"))
 
 
 @pytest.fixture()
-def expired_g6_framework():
+def expired_g6_framework(session):
     return _framework_fixture_inner(**dict(_g6_framework_defaults, status="expired"))
 
 
 @pytest.fixture()
-def open_dos_framework():
+def open_dos_framework(session):
     return _framework_fixture_inner(**dict(_dos_framework_defaults, status="open"))
 
 
 @pytest.fixture()
-def live_dos_framework():
+def live_dos_framework(session):
     return _framework_fixture_inner(**dict(_dos_framework_defaults, status="live"))
 
 
 @pytest.fixture()
-def expired_dos_framework():
+def expired_dos_framework(session):
     return _framework_fixture_inner(**dict(_dos_framework_defaults, status="expired"))
 
 

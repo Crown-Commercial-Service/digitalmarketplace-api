@@ -22,6 +22,7 @@ def setup():
     with app.app_context():
         upgrade(config, 'head')
     print("Done db setup")
+    return db
 
 
 def teardown():
