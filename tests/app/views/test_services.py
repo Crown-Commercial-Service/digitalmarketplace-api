@@ -1653,62 +1653,63 @@ class TestGetService(BaseApplicationTest):
     def setup(self):
         super(TestGetService, self).setup()
         now = datetime.utcnow()
-        db.session.add(Framework(
-            id=123,
-            name="expired",
-            slug="expired",
-            framework="g-cloud",
-            status="expired",
-        ))
-        db.session.commit()
-        db.session.add(FrameworkLot(
-            framework_id=123,
-            lot_id=1
-        ))
-        db.session.add(
-            Supplier(supplier_id=1, name=u"Supplier 1")
-        )
-        db.session.add(
-            ContactInformation(
-                supplier_id=1,
-                contact_name=u"Liz",
-                email=u"liz@royal.gov.uk",
-                postcode=u"SW1A 1AA"
+        with self.app.app_context():
+            db.session.add(Framework(
+                id=123,
+                name="expired",
+                slug="expired",
+                framework="g-cloud",
+                status="expired",
+            ))
+            db.session.commit()
+            db.session.add(FrameworkLot(
+                framework_id=123,
+                lot_id=1
+            ))
+            db.session.add(
+                Supplier(supplier_id=1, name=u"Supplier 1")
             )
-        )
-        db.session.add(Service(service_id="123-published-456",
-                               supplier_id=1,
-                               updated_at=now,
-                               created_at=now,
-                               status='published',
-                               data={'foo': 'bar'},
-                               lot_id=1,
-                               framework_id=1))
-        db.session.add(Service(service_id="123-disabled-456",
-                               supplier_id=1,
-                               updated_at=now,
-                               created_at=now,
-                               status='disabled',
-                               data={'foo': 'bar'},
-                               lot_id=1,
-                               framework_id=1))
-        db.session.add(Service(service_id="123-enabled-456",
-                               supplier_id=1,
-                               updated_at=now,
-                               created_at=now,
-                               status='enabled',
-                               data={'foo': 'bar'},
-                               lot_id=1,
-                               framework_id=1))
-        db.session.add(Service(service_id="123-expired-456",
-                               supplier_id=1,
-                               updated_at=now,
-                               created_at=now,
-                               status='enabled',
-                               data={'foo': 'bar'},
-                               lot_id=1,
-                               framework_id=123))
-        db.session.commit()
+            db.session.add(
+                ContactInformation(
+                    supplier_id=1,
+                    contact_name=u"Liz",
+                    email=u"liz@royal.gov.uk",
+                    postcode=u"SW1A 1AA"
+                )
+            )
+            db.session.add(Service(service_id="123-published-456",
+                                   supplier_id=1,
+                                   updated_at=now,
+                                   created_at=now,
+                                   status='published',
+                                   data={'foo': 'bar'},
+                                   lot_id=1,
+                                   framework_id=1))
+            db.session.add(Service(service_id="123-disabled-456",
+                                   supplier_id=1,
+                                   updated_at=now,
+                                   created_at=now,
+                                   status='disabled',
+                                   data={'foo': 'bar'},
+                                   lot_id=1,
+                                   framework_id=1))
+            db.session.add(Service(service_id="123-enabled-456",
+                                   supplier_id=1,
+                                   updated_at=now,
+                                   created_at=now,
+                                   status='enabled',
+                                   data={'foo': 'bar'},
+                                   lot_id=1,
+                                   framework_id=1))
+            db.session.add(Service(service_id="123-expired-456",
+                                   supplier_id=1,
+                                   updated_at=now,
+                                   created_at=now,
+                                   status='enabled',
+                                   data={'foo': 'bar'},
+                                   lot_id=1,
+                                   framework_id=123))
+            db.session.commit()
 
     def test_get_non_existent_service(self):
         response = self.client.get('/services/9999999999')
