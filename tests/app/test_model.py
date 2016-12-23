@@ -1173,7 +1173,7 @@ class TestApplication(BaseApplicationTest):
             assert app.supplier.status == 'complete'
 
             assert app.supplier.all_domains == \
-                ['Content and publishing']
+                ['Content and Publishing']
 
     def test_application_and_supplier_domains(self):
         with self.app.test_request_context('/hello'):
@@ -1191,21 +1191,21 @@ class TestApplication(BaseApplicationTest):
 
             db.session.commit()
 
-            assert supp.legacy_domains == ['Agile delivery and governance']
-            assert supp.assessed_domains == ['Agile delivery and governance']
+            assert supp.legacy_domains == ['Agile delivery and Governance']
+            assert supp.assessed_domains == ['Agile delivery and Governance']
             assert supp.unassessed_domains == []
 
-            supp.add_unassessed_domain('Change, training and transformation')
+            supp.add_unassessed_domain('Change, Training and Transformation')
 
-            assert supp.legacy_domains == ['Agile delivery and governance']
-            assert supp.assessed_domains == ['Agile delivery and governance']
-            assert supp.unassessed_domains == ['Change, training and transformation']
+            assert supp.legacy_domains == ['Agile delivery and Governance']
+            assert supp.assessed_domains == ['Agile delivery and Governance']
+            assert supp.unassessed_domains == ['Change, Training and Transformation']
 
-            supp.update_domain_assessment('Change, training and transformation', True)
+            supp.update_domain_assessment('Change, Training and Transformation', True)
 
-            assert supp.legacy_domains == ['Agile delivery and governance']
+            assert supp.legacy_domains == ['Agile delivery and Governance']
             assert supp.assessed_domains == [
-                'Agile delivery and governance',
-                'Change, training and transformation'
+                'Agile delivery and Governance',
+                'Change, Training and Transformation'
             ]
             assert supp.unassessed_domains == []
