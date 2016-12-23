@@ -21,8 +21,8 @@ def test_db(request):
 
 @pytest.fixture(scope='function')
 def session(request, test_db):
-    test_db.session.begin_nested()
     request.addfinalizer(test_db.session.rollback)
+    test_db.session.begin_nested()
 
 
 @pytest.fixture(autouse=True, scope='session')
