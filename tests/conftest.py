@@ -41,9 +41,9 @@ def draft_service(supplier_framework):
         Supplier.supplier_id == supplier_framework['supplierId']
     ).first()
     framework = Framework.query.filter(
-        Framework.slug==supplier_framework['frameworkSlug']
+        Framework.slug == supplier_framework['frameworkSlug']
     ).first()
-    lot = Lot.query.filter(Lot.slug=='digital-specialists').first()
+    lot = Lot.query.filter(Lot.slug == 'digital-specialists').first()
 
     ds = DraftService(
         framework=framework,
@@ -178,6 +178,7 @@ def _supplierframework_fixture_inner(sf_kwargs=None):
         db.session.add(supplier_framework)
 
     db.session.commit()
+
 
 def _supplier_fixture_inner(supplier_kwargs=None, ci_kwargs=None):
     supplier_kwargs = supplier_kwargs or {}
@@ -350,10 +351,8 @@ def live_g8_framework_2_variations_suppliers_on_framework(
 
 @pytest.fixture()
 def live_g8_framework_2_variations_suppliers_on_framework_with_alt(
-       live_g8_framework_2_variations,
-        user_role_supplier,
-        user_role_supplier_alt,
-        ):
+        live_g8_framework_2_variations, user_role_supplier, user_role_supplier_alt
+    ):
     _supplierframework_fixture_inner(sf_kwargs={"on_framework": True})
 
 
