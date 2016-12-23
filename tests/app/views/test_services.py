@@ -90,7 +90,6 @@ class TestListServicesOrdering(BaseApplicationTest):
         assert_equal(p1.status_code, 200)
         assert_equal(p2.status_code, 200)
 
-        print [d['id'] for d in services]
         assert_equal([d['id'] for d in services], [
             '123-g5-paas',
             '123-g5-saas',
@@ -761,25 +760,23 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
                 ['My Iaas Service', 'new service name'])
 
     def test_updated_service_should_be_archived_on_each_update(self):
-        archived_state = self.client.get(
-            '/archived-services?service-id=' +
-            self.service_id).get_data()
-        for i in range(5):
-            response = self.client.post(
-                '/services/%s' % self.service_id,
-                data=json.dumps(
-                    {'updated_by': 'joeblogs',
-                     'services': {
-                         'serviceName': 'new service name' + str(i)}}),
-                content_type='application/json')
+        with self.app.app_context():
+            for i in range(5):
+                response = self.client.post(
+                    '/services/%s' % self.service_id,
+                    data=json.dumps(
+                        {'updated_by': 'joeblogs',
+                         'services': {
+                             'serviceName': 'new service name' + str(i)}}),
+                    content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+                assert_equal(response.status_code, 200)
 
-        archived_state = self.client.get(
-            '/archived-services?service-id=' +
-            self.service_id).get_data()
-        # There is an update in the setup, there are actually 6
-        assert_equal(len(json.loads(archived_state)['services']), 5)
+            archived_state = self.client.get(
+                '/archived-services?service-id=' +
+                self.service_id).get_data()
+            # There is an update in the setup, there are actually 6
+            assert_equal(len(json.loads(archived_state)['services']), 5)
 
     def test_writing_full_service_back(self):
         with self.app.app_context():
