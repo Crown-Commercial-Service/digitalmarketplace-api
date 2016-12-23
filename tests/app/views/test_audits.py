@@ -46,6 +46,11 @@ class TestAuditEvents(BaseApplicationTest):
                 db.session.add(event)
             db.session.commit()
 
+    def test_only_one_audit_event_created(self):
+        count = AuditEvent.query.count()
+        self.add_audit_event()
+        assert AuditEvent.query.count() == count + 1
+
     def test_should_get_audit_event(self):
         aid = self.add_audit_event(0)
         response = self.client.get('/audit-events')
