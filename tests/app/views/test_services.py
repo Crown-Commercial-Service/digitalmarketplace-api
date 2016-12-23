@@ -1,25 +1,26 @@
-from datetime import datetime, timedelta
 import os
+from datetime import datetime, timedelta
 
+import mock
+from dmapiclient import HTTPError
+from dmapiclient.audit import AuditTypes
+from dmutils.formats import DATETIME_FORMAT
 from flask import json
 from nose.tools import assert_equal, assert_in, assert_true, \
     assert_almost_equal, assert_false, assert_is_not_none, assert_not_in
+from sqlalchemy.exc import IntegrityError
+
+from app import db, create_app
 from app.models import Service, Supplier, ContactInformation, Framework, \
     AuditEvent, FrameworkLot
-import mock
-from app import db, create_app
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
     TEST_SUPPLIERS_COUNT
-from sqlalchemy.exc import IntegrityError
-from dmapiclient import HTTPError
-from dmutils.formats import DATETIME_FORMAT
-from dmapiclient.audit import AuditTypes
 
 
 class TestListServicesOrdering(BaseApplicationTest):
+
     def setup_services(self):
         with self.app.app_context():
-            self.app.config['DM_API_SERVICES_PAGE_SIZE'] = 10
             now = datetime.utcnow()
 
             g5_saas = self.load_example_listing("G5")
@@ -81,11 +82,16 @@ class TestListServicesOrdering(BaseApplicationTest):
     def test_all_services_list_ordered_by_id(self):
         self.setup_services()
 
-        response = self.client.get('/services')
-        data = json.loads(response.get_data())
+        p1 = self.client.get('/services')
+        p2 = self.client.get('/services?page=2')
 
-        assert_equal(response.status_code, 200)
-        assert_equal([d['id'] for d in data['services']], [
+        services = json.loads(p1.get_data())['services'] + json.loads(p2.get_data())['services']
+
+        assert_equal(p1.status_code, 200)
+        assert_equal(p2.status_code, 200)
+
+        print [d['id'] for d in services]
+        assert_equal([d['id'] for d in services], [
             '123-g5-paas',
             '123-g5-saas',
             '123-g6-iaas-1',
@@ -97,6 +103,7 @@ class TestListServicesOrdering(BaseApplicationTest):
 
 
 class TestListServices(BaseApplicationTest):
+
     def setup_services(self):
         with self.app.app_context():
             self.setup_dummy_suppliers(1)
@@ -444,25 +451,22 @@ class TestListServices(BaseApplicationTest):
 class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = '/services/{self.service_id}'
     method = 'post'
-    service_id = None
 
     def setup(self):
-        super(TestPostService, self).setup()
         payload = self.load_example_listing("G6-IaaS")
         self.service_id = str(payload['id'])
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
+        db.session.add(
+            Supplier(supplier_id=1, name=u"Supplier 1")
+        )
+        db.session.add(
+            ContactInformation(
+                supplier_id=1,
+                contact_name=u"Liz",
+                email=u"liz@royal.gov.uk",
+                postcode=u"SW1A 1AA"
             )
-            db.session.add(
-                ContactInformation(
-                    supplier_id=1,
-                    contact_name=u"Liz",
-                    email=u"liz@royal.gov.uk",
-                    postcode=u"SW1A 1AA"
-                )
-            )
-            db.session.commit()
+        )
+        db.session.commit()
 
         self.client.put(
             '/services/%s' % self.service_id,
@@ -757,22 +761,25 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
                 ['My Iaas Service', 'new service name'])
 
     def test_updated_service_should_be_archived_on_each_update(self):
-        with self.app.app_context():
-            for i in range(5):
-                response = self.client.post(
-                    '/services/%s' % self.service_id,
-                    data=json.dumps(
-                        {'updated_by': 'joeblogs',
-                         'services': {
-                             'serviceName': 'new service name' + str(i)}}),
-                    content_type='application/json')
+        archived_state = self.client.get(
+            '/archived-services?service-id=' +
+            self.service_id).get_data()
+        for i in range(5):
+            response = self.client.post(
+                '/services/%s' % self.service_id,
+                data=json.dumps(
+                    {'updated_by': 'joeblogs',
+                     'services': {
+                         'serviceName': 'new service name' + str(i)}}),
+                content_type='application/json')
 
-                assert_equal(response.status_code, 200)
+            assert_equal(response.status_code, 200)
 
-            archived_state = self.client.get(
-                '/archived-services?service-id=' +
-                self.service_id).get_data()
-            assert_equal(len(json.loads(archived_state)['services']), 5)
+        archived_state = self.client.get(
+            '/archived-services?service-id=' +
+            self.service_id).get_data()
+        # There is an update in the setup, there are actually 6
+        assert_equal(len(json.loads(archived_state)['services']), 5)
 
     def test_writing_full_service_back(self):
         with self.app.app_context():
@@ -991,7 +998,6 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
 @mock.patch('app.service_utils.search_api_client')
 class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
     def setup(self):
-        super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
@@ -1061,7 +1067,6 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
 @mock.patch('app.service_utils.search_api_client')
 class TestShouldCallSearchApiOnPost(BaseApplicationTest):
     def setup(self):
-        super(TestShouldCallSearchApiOnPost, self).setup()
         now = datetime.utcnow()
         payload = self.load_example_listing("G6-IaaS")
         g4_payload = self.load_example_listing("G4")
@@ -1167,7 +1172,6 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
 
 class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
     def setup(self):
-        super(TestShouldCallSearchApiOnPostStatusUpdate, self).setup()
         now = datetime.utcnow()
         self.services = {}
 
@@ -1333,7 +1337,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = "/services/1234567890123456"
 
     def setup(self):
-        super(TestPutService, self).setup()
         payload = self.load_example_listing("G6-IaaS")
         del payload['id']
         with self.app.app_context():
@@ -1651,7 +1654,6 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
 
 class TestGetService(BaseApplicationTest):
     def setup(self):
-        super(TestGetService, self).setup()
         now = datetime.utcnow()
         with self.app.app_context():
             db.session.add(Framework(

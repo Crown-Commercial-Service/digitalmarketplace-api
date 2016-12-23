@@ -11,10 +11,11 @@ from app.models import (
     Framework, SupplierFramework, Supplier, User, ContactInformation, DraftService, Lot, Service, FrameworkLot
 )
 from tests.app import setup, teardown
-
+from tests.app.helpers import WSGIApplicationWithEnvironment
 
 @pytest.fixture(autouse=True, scope='session')
 def test_db(request):
+    """Run setup and teardown for the test database."""
     request.addfinalizer(teardown)
     return setup()
 
@@ -27,12 +28,31 @@ def session(request, test_db):
 
 @pytest.fixture(autouse=True, scope='session')
 def app(request):
+
     app = create_app('test')
     ctx = app.test_request_context()
     ctx.push()
     request.addfinalizer(ctx.pop)
     request._app = app
     return app
+
+
+@pytest.fixture(autouse=True, scope='class')
+def support_classes(request, app):
+    if request.cls is None:
+        return
+
+    valid_token = 'valid-token'
+    app.config['DM_API_AUTH_TOKENS'] = valid_token
+    app.wsgi_app = WSGIApplicationWithEnvironment(
+        app.wsgi_app,
+        HTTP_AUTHORIZATION='Bearer {}'.format(valid_token)
+    )
+    request.cls.app = app
+    request.cls.client = app.test_client()
+    request.cls._auth_tokens = app.config['DM_API_AUTH_TOKENS']
+
+
 
 
 @pytest.fixture()

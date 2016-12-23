@@ -15,8 +15,6 @@ from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, f
 
 class TestGetSupplier(BaseApplicationTest):
     def setup(self):
-        super(TestGetSupplier, self).setup()
-
         with self.app.app_context():
             payload = self.load_example_listing("Supplier")
             self.supplier = payload
@@ -99,8 +97,6 @@ class TestGetSupplier(BaseApplicationTest):
 
 class TestListSuppliers(BaseApplicationTest):
     def setup(self):
-        super(TestListSuppliers, self).setup()
-
         # Supplier names like u"Supplier {n}"
         self.setup_dummy_suppliers(7)
 
@@ -183,8 +179,6 @@ class TestListSuppliers(BaseApplicationTest):
 class TestListSuppliersOnFramework(BaseApplicationTest):
 
     def setup(self):
-        super(TestListSuppliersOnFramework, self).setup()
-
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=1, name=u"Active")
@@ -245,8 +239,6 @@ class TestListSuppliersOnFramework(BaseApplicationTest):
 class TestListSuppliersByDunsNumber(BaseApplicationTest):
 
     def setup(self):
-        super(TestListSuppliersByDunsNumber, self).setup()
-
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=1, name=u"Duns 123", duns_number="123")
@@ -283,9 +275,6 @@ class TestListSuppliersByDunsNumber(BaseApplicationTest):
 class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
     method = "put"
     endpoint = "/suppliers/123456"
-
-    def setup(self):
-        super(TestPutSupplier, self).setup()
 
     def put_import_supplier(self, supplier, route_parameter=None):
 
@@ -511,8 +500,6 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = "/suppliers/123456"
 
     def setup(self):
-        super(TestUpdateSupplier, self).setup()
-
         with self.app.app_context():
             payload = self.load_example_listing("Supplier")
             self.supplier = payload
@@ -656,8 +643,6 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = "/suppliers/123456/contact-information/{self.contact_id}"
 
     def setup(self):
-        super(TestUpdateContactInformation, self).setup()
-
         with self.app.app_context():
             payload = self.load_example_listing("Supplier")
             self.supplier = payload
@@ -826,7 +811,6 @@ class TestSetSupplierDeclarations(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = '/suppliers/0/frameworks/g-cloud-4/declaration'
 
     def setup(self):
-        super(TestSetSupplierDeclarations, self).setup()
         with self.app.app_context():
             framework = Framework(
                 slug='test-open',
@@ -909,9 +893,6 @@ class TestSetSupplierDeclarations(BaseApplicationTest, JSONUpdateTestMixin):
 class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
     method = "post"
     endpoint = "/suppliers"
-
-    def setup(self):
-        super(TestPostSupplier, self).setup()
 
     def post_supplier(self, supplier):
 
@@ -1068,8 +1049,6 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
 
 class TestGetSupplierFrameworks(BaseApplicationTest):
     def setup(self):
-        super(TestGetSupplierFrameworks, self).setup()
-
         with self.app.app_context():
 
             db.session.add_all([
@@ -1203,8 +1182,6 @@ class TestRegisterFrameworkInterest(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = "/suppliers/1/frameworks/digital-outcomes-and-specialists"
 
     def setup(self):
-        super(TestRegisterFrameworkInterest, self).setup()
-
         with self.app.app_context():
             self.set_framework_status('digital-outcomes-and-specialists', 'open')
 
@@ -1603,7 +1580,6 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
 
 class TestSupplierFrameworkVariation(BaseApplicationTest):
     def setup(self):
-        super(TestSupplierFrameworkVariation, self).setup()
         self.setup_dummy_suppliers(1)
         self.setup_dummy_user(1, role='supplier')
         self.supplier_id = 0

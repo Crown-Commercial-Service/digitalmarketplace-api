@@ -201,8 +201,6 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
     method = 'post'
 
     def setup(self):
-        super(TestUpdateFramework, self).setup()
-
         self.framework_attributes_and_values_for_update = {
             'id': 1,
             'name': "Example Framework 2",
@@ -551,8 +549,6 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
         We use freeze_time to create a non-trivial ordering of creation/signing events in time, so that different
         suppliers event timelines overlap in slightly complex ways, ensuring we test things like ordering properly.
         """
-        super(TestGetFrameworkSuppliers, self).setup()
-
         with freeze_time("2016-10-09", tick=True):
             self.setup_dummy_suppliers(12)
             self.setup_dummy_user(id=123, role='supplier')
@@ -867,8 +863,6 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
 
 class TestGetFrameworkInterest(BaseApplicationTest):
     def setup(self):
-        super(TestGetFrameworkInterest, self).setup()
-
         self.register_g7_interest(5)
 
     def register_g7_interest(self, num):

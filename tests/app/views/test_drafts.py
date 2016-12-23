@@ -15,8 +15,6 @@ class TestDraftServices(BaseApplicationTest):
     create_draft_json = None
 
     def setup(self):
-        super(TestDraftServices, self).setup()
-
         payload = self.load_example_listing("G6-IaaS")
 
         self.service_id = str(payload['id'])
@@ -1020,8 +1018,6 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
     method = 'post'
 
     def setup(self):
-        super(TestCopyDraft, self).setup()
-
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
@@ -1137,8 +1133,6 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
     method = 'post'
 
     def setup(self):
-        super(TestCompleteDraft, self).setup()
-
         with self.app.app_context():
             db.session.add(Supplier(supplier_id=1, name=u"Supplier 1"))
             db.session.add(
@@ -1236,8 +1230,6 @@ class TestDOSServices(BaseApplicationTest):
     create_draft_json = None
 
     def setup(self):
-        super(TestDOSServices, self).setup()
-
         payload = self.load_example_listing("DOS-digital-specialist")
         self.updater_json = {
             'updated_by': 'joeblogs'
@@ -1498,8 +1490,6 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
     method = 'post'
 
     def setup(self):
-        super(TestUpdateDraftStatus, self).setup()
-
         with self.app.app_context():
             db.session.add(Supplier(supplier_id=1, name=u"Supplier 1"))
             db.session.add(

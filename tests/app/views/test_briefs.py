@@ -13,7 +13,6 @@ from app.models import Brief, Framework
 
 class TestBriefs(BaseApplicationTest):
     def setup(self):
-        super(TestBriefs, self).setup()
         self.user_id = self.setup_dummy_user(role='buyer')
 
         with self.app.app_context():
