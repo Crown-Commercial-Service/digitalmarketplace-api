@@ -608,8 +608,12 @@ class TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag(UpdateBriefResponse
             self.brief_response_id, {'essentialRequirements': [True, True, True, True, True]}
         )
         assert res.status_code == 400
+
         data = json.loads(res.get_data(as_text=True))
-        assert "'essentialRequirements' was unexpected" in data["error"]["_form"][0]
+        message = data['error']['essentialRequirements']
+
+        assert 'True is not of type' in message
+        assert 'object' in message
 
     def test_brief_response_can_be_updated_with_non_legacy_data(self, live_dos_framework):
         res = self._update_brief_response(
@@ -781,6 +785,7 @@ class TestSubmitBriefReponseWhenFeatureFlagIsOff(TestSubmitBriefReponseForBriefC
 class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseSharedTests):
     valid_brief_response_data = {
         'essentialRequirementsMet': True,
+        'essentialRequirements': [{'evidence': 'text'}] * 5,
         'niceToHaveRequirements': [True, False, True, False, True],
         'availability': u'a',
         'respondToEmailAddress': 'supplier@email.com'
@@ -807,6 +812,7 @@ class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseS
         assert data == {
             'error': {
                 'availability': 'answer_required',
+                'essentialRequirements': 'answer_required',
                 'essentialRequirementsMet': 'answer_required',
                 'niceToHaveRequirements': 'answer_required',
                 'respondToEmailAddress': 'answer_required'
@@ -833,11 +839,14 @@ class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseS
         self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
 
         submit_res = self._submit_brief_response(brief_response_id)
-        data = json.loads(submit_res.get_data(as_text=True))
-
         assert submit_res.status_code == 400
-        assert "'essentialRequirements' was unexpected" in data['error']['_form'][0]
+
+        data = json.loads(submit_res.get_data(as_text=True))
         assert data['error']['essentialRequirementsMet'] == "answer_required"
+
+        message = data['error']['essentialRequirements']
+        assert 'True is not of type' in message
+        assert 'object' in message
 
 
 class TestGetBriefResponse(BaseBriefResponseTest):
