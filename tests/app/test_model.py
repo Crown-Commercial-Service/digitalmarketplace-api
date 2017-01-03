@@ -474,9 +474,9 @@ class TestBriefResponses(BaseApplicationTest):
 
     def test_whitespace_is_stripped_from_brief_response_data(self):
         brief_response = BriefResponse(data={})
-        brief_response.data = {'foo': ' bar ', 'bar': ['', '  foo']}
+        brief_response.data = {'foo': ' bar ', 'bar': ['', '  foo', {'evidence': ' some '}]}
 
-        assert brief_response.data == {'foo': 'bar', 'bar': ['foo']}
+        assert brief_response.data == {'foo': 'bar', 'bar': ['foo', {'evidence': 'some'}]}
 
     def test_submitted_status_for_brief_response_with_submitted_at(self):
         brief_response = BriefResponse(created_at=datetime.utcnow(), submitted_at=datetime.utcnow())

@@ -653,6 +653,7 @@ class TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag(UpdateBriefResponse
             self.brief_response_id, {'essentialRequirementsMet': False}
         )
         assert res.status_code == 400
+
         data = json.loads(res.get_data(as_text=True))
         assert data["error"] == {'essentialRequirementsMet': 'not_required_value'}
 
