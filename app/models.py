@@ -1370,7 +1370,6 @@ class BriefResponse(db.Model):
         )
 
         if (
-            legacy and
             (required_fields and 'essentialRequirements' in required_fields or enforce_required) and
             'essentialRequirements' not in errs and
             len(self.data.get('essentialRequirements', [])) != len(self.brief.data['essentialRequirements'])

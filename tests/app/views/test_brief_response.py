@@ -481,6 +481,26 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
         data = json.loads(res.get_data(as_text=True))
         assert res.status_code == 400
 
+    def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(self, live_dos_framework):
+        res = self.client.post(
+            '/brief-responses',
+            data=json.dumps({
+                'updated_by': 'test@example.com',
+                'briefResponses': {
+                    "supplierId": 0,
+                    "briefId": self.brief_id,
+                    "essentialRequirements": [{'evidence': 'Some'}]
+                },
+                'page_questions': ["essentialRequirements"]
+            }),
+            content_type='application/json'
+        )
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400, res.get_data(as_text=True)
+        assert data['error']['essentialRequirements'] == 'answer_required'
+
 
 class UpdateBriefResponseSharedTests(BaseBriefResponseTest):
     def setup(self):
