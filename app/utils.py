@@ -136,17 +136,15 @@ def display_list(l):
 
 
 def strip_whitespace_from_data(data):
-    for key, value in data.items():
-        if isinstance(value, list):
-            # Strip whitespace and remove empty items from lists
-            data[key] = list(
-                filter(lambda x: x != '',
-                       map(lambda x: x.strip() if isinstance(x, string_types) else x, value))
-            )
-        elif isinstance(value, string_types):
-            # Strip whitespace from strings
-            data[key] = value.strip()
-    return data
+    """Recursively strips whitespace and removes empty items from lists"""
+    if isinstance(data, string_types):
+        return data.strip()
+    elif isinstance(data, dict):
+        return {key: strip_whitespace_from_data(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return list(filter(lambda x: x != '', map(strip_whitespace_from_data, data)))
+    else:
+        return data
 
 
 def purge_nulls_from_data(data):
