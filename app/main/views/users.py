@@ -264,7 +264,7 @@ def export_users_for_framework(framework_slug):
             variations_agreed = ', '.join(sf.agreed_variations.keys()) if sf.agreed_variations else ''
 
         user_rows.append({
-            'user_email': u.email_address,
+            'email address': u.email_address,
             'user_name': u.name,
             'supplier_id': sf.supplier_id,
             'declaration_status': declaration_status,
