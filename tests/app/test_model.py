@@ -1175,6 +1175,24 @@ class TestApplication(BaseApplicationTest):
             assert app.supplier.all_domains == \
                 ['Content and Publishing']
 
+            # test application-from-existing-seller scenario
+
+            supplier = app.supplier
+
+            db.session.delete(app)
+            db.session.flush()
+
+            app_from_existing = Application()
+            app_from_existing.update_from_json(supplier.json)
+
+            db.session.add(app_from_existing)
+            db.session.flush()
+            db.session.refresh(app_from_existing)
+
+            assert app_from_existing.supplier_code == supplier.code
+            assert app_from_existing.supplier.code == supplier.code
+            assert app_from_existing.supplier == supplier
+
     def test_application_and_supplier_domains(self):
         with self.app.test_request_context('/hello'):
             supp = self.supplier

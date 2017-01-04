@@ -1914,6 +1914,11 @@ class Application(db.Model):
         except KeyError:
             pass
 
+        try:
+            self.supplier_code = data['code']
+        except KeyError:
+            pass
+
         return data
 
     def serialize(self):
