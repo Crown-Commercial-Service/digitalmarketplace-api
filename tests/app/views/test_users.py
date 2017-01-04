@@ -1268,7 +1268,7 @@ class TestUsersExport(BaseUserTest):
         if parameters is not None and isinstance(parameters, dict):
             _parameters.update(parameters)
 
-        assert row['user_email'] in [user['emailAddress'] for user in self.users]
+        assert row['email address'] in [user['emailAddress'] for user in self.users]
         assert row['user_name'] in [user['name'] for user in self.users]
         assert row['supplier_id'] == self.supplier_id
         assert row['application_result'] == _parameters['application_result']
