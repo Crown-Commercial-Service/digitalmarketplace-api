@@ -20,8 +20,6 @@ class BaseBriefResponseTest(BaseApplicationTest):
     datetime_one_week_ahead = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
 
     def setup(self):
-        super(BaseBriefResponseTest, self).setup()
-
         with self.app.app_context():
             self.setup_dummy_suppliers(2)
             brief = Brief(

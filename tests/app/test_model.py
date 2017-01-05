@@ -69,7 +69,6 @@ def test_framework_should_accept_valid_statuses():
 
 class TestBriefs(BaseApplicationTest):
     def setup(self):
-        super(TestBriefs, self).setup()
         with self.app.app_context():
             self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             self.lot = self.framework.get_lot('digital-outcomes')
@@ -434,7 +433,6 @@ class TestBriefs(BaseApplicationTest):
 
 class TestBriefResponses(BaseApplicationTest):
     def setup(self):
-        super(TestBriefResponses, self).setup()
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             lot = framework.get_lot('digital-outcomes')
@@ -562,7 +560,6 @@ class TestBriefResponses(BaseApplicationTest):
 
 class TestBriefClarificationQuestion(BaseApplicationTest):
     def setup(self):
-        super(TestBriefClarificationQuestion, self).setup()
         with self.app.app_context():
             self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             self.lot = self.framework.get_lot('digital-outcomes')
@@ -896,7 +893,6 @@ class TestLot(BaseApplicationTest):
 
 class TestFrameworkAgreements(BaseApplicationTest):
     def setup(self):
-        super(TestFrameworkAgreements, self).setup()
         with self.app.app_context():
             self.setup_dummy_suppliers(1)
 
@@ -1046,7 +1042,6 @@ class TestCurrentFrameworkAgreement(BaseApplicationTest):
     }
 
     def setup(self):
-        super(TestCurrentFrameworkAgreement, self).setup()
         with self.app.app_context():
             self.setup_dummy_suppliers(1)
 

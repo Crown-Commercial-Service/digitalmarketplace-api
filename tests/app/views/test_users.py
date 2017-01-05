@@ -14,7 +14,6 @@ class BaseUserTest(BaseApplicationTest):
     users = None
 
     def setup(self):
-        super(BaseUserTest, self).setup()
         payload = self.load_example_listing("Supplier")
         self.supplier = payload
         self.supplier_id = payload['id']
@@ -552,7 +551,6 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
 
     def setup(self):
         now = datetime.utcnow()
-        super(TestUsersUpdate, self).setup()
         with self.app.app_context():
             user = User(
                 id=123,

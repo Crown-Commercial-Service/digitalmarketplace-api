@@ -63,18 +63,13 @@ class BaseApplicationTest(object):
 
     config = None
 
-    def setup(self):
-        self.app = create_app('test')
-        self.client = self.app.test_client()
-        self.setup_authorization(self.app)
-
-    def setup_authorization(self, app):
+    @staticmethod
+    def setup_authorization(app):
         """Set up bearer token and pass on all requests"""
         valid_token = 'valid-token'
         app.wsgi_app = WSGIApplicationWithEnvironment(
             app.wsgi_app,
             HTTP_AUTHORIZATION='Bearer {}'.format(valid_token))
-        self._auth_tokens = app.config['DM_API_AUTH_TOKENS']
         app.config['DM_API_AUTH_TOKENS'] = valid_token
 
     def do_not_provide_access_token(self):
