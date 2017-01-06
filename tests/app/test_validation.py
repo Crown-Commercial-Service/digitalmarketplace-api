@@ -490,6 +490,37 @@ def test_max_price_larger_than_min_does_not_overwrite_previous_errors():
     assert_equal(errors, {'developerPriceMax': 'max_less_than_min'})
 
 
+def test_brief_response_essential_requirements():
+    assert get_validation_errors(
+        "brief-responses-digital-outcomes-and-specialists-digital-specialists",
+        {
+            "availability": "valid start date",
+            "dayRate": "100",
+            "essentialRequirementsMet": True,
+            "essentialRequirements": [
+                {"evidence": "valid evidence"},
+                {"evidence": "word " * 100},
+                {"evidence": "some more valid evidence"},
+                {}
+            ],
+            "respondToEmailAddress": "valid@email.com"
+        }
+    ) == {
+        'essentialRequirements': [
+            {
+                'error': 'under_100_words',
+                'field': u'evidence',
+                'index': 1
+            },
+            {
+                'error': 'answer_required',
+                'field': u'evidence',
+                'index': 3
+            },
+        ]
+    }
+
+
 def test_api_type_is_optional():
     data = load_example_listing("G6-PaaS")
     del data["apiType"]

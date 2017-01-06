@@ -12,6 +12,22 @@
         true
       ]
     },
+    "essentialRequirements": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence": {
+            "minLength": 1,
+            "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": ["evidence"]
+      },
+      "minItems": 0,
+      "type": "array"
+    },
     "niceToHaveRequirements": {
       "items": {
         "type": "boolean"
@@ -29,6 +45,7 @@
   "required": [
     "availability",
     "essentialRequirementsMet",
+    "essentialRequirements",
     "respondToEmailAddress"
   ],
   "title": "Digital Outcomes and Specialists Digital outcomes Brief Response Schema",

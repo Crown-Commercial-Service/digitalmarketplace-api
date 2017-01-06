@@ -79,13 +79,23 @@ def test_display_list_three_items():
     assert display_list(test_list) == expected
 
 
-def test_strip_whitespace_from_data():
+def test_strip_whitespace_from_data_with_string_data():
     struct = {"eggs": "  ham "}
     assert strip_whitespace_from_data(struct)['eggs'] == "ham"
+
+
+def test_strip_whitespace_from_data_with_list_data():
     struct_with_list = {"eggs": ["  spam  ", "  ham  ", "  eggs "]}
     after_strip = strip_whitespace_from_data(struct_with_list)
     for item in after_strip['eggs']:
         assert " " not in item
+
+
+def test_strip_whitespace_from_data_with_dict_data():
+    struct = {"eggs": [{'evidence': ' whitespace in here '}, {'evidence': 'no white space'}]}
+    assert strip_whitespace_from_data(struct) == {
+        "eggs": [{'evidence': 'whitespace in here'}, {'evidence': 'no white space'}]
+    }
 
 
 def test_purge_nulls():

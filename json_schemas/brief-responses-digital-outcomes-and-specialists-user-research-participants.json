@@ -2,6 +2,22 @@
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
   "properties": {
+    "essentialRequirements": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence": {
+            "minLength": 1,
+            "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": ["evidence"]
+      },
+      "minItems": 0,
+      "type": "array"
+    },
     "essentialRequirementsMet": {
       "enum": [
         true
@@ -23,6 +39,7 @@
   },
   "required": [
     "essentialRequirementsMet",
+    "essentialRequirements",
     "respondToEmailAddress"
   ],
   "title": "Digital Outcomes and Specialists User research participants Brief Response Schema",
