@@ -503,6 +503,9 @@ def test_brief_response_essential_requirements():
                 {"evidence": "some more valid evidence"},
                 {}
             ],
+            "niceToHaveRequirements": [
+                {"yesNo": False}
+            ],
             "respondToEmailAddress": "valid@email.com"
         }
     ) == {
@@ -517,6 +520,46 @@ def test_brief_response_essential_requirements():
                 'field': u'evidence',
                 'index': 3
             },
+        ]
+    }
+
+
+def test_brief_response_nice_to_have_requirements():
+    assert get_validation_errors(
+        "brief-responses-digital-outcomes-and-specialists-digital-specialists",
+        {
+            "availability": "valid start date",
+            "dayRate": "100",
+            "essentialRequirementsMet": True,
+            "essentialRequirements": [
+                {"evidence": "valid evidence"},
+            ],
+            "niceToHaveRequirements": [
+                {},
+                {"yesNo": True, "evidence": "valid evidence"},
+                {"yesNo": True, "evidence": "word " * 100},
+                {"yesNo": True},
+                {"yesNo": False}
+            ],
+            "respondToEmailAddress": "valid@email.com"
+        }
+    ) == {
+        'niceToHaveRequirements': [
+            {
+                'error': 'answer_required',
+                'field': u'yesNo',
+                'index': 0
+            },
+            {
+                'error': 'under_100_words',
+                'field': u'evidence',
+                'index': 2
+            },
+            {
+                'error': 'answer_required',
+                'field': u'evidence',
+                'index': 3
+            }
         ]
     }
 
