@@ -7,11 +7,6 @@
       "minLength": 1,
       "type": "string"
     },
-    "essentialRequirementsMet": {
-      "enum": [
-        true
-      ]
-    },
     "essentialRequirements": {
       "items": {
         "additionalProperties": false,
@@ -22,17 +17,72 @@
             "type": "string"
           }
         },
-        "type": "object",
-        "required": ["evidence"]
+        "required": [
+          "evidence"
+        ],
+        "type": "object"
       },
       "minItems": 0,
       "type": "array"
     },
+    "essentialRequirementsMet": {
+      "enum": [
+        true
+      ]
+    },
     "niceToHaveRequirements": {
       "items": {
-        "type": "boolean"
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "oneOf": [
+              {
+                "properties": {
+                  "evidence": {
+                    "type": "null"
+                  },
+                  "yesNo": {
+                    "enum": [
+                      false
+                    ]
+                  }
+                },
+                "required": [
+                  "yesNo"
+                ]
+              },
+              {
+                "properties": {
+                  "evidence": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "yesNo": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "yesNo",
+                  "evidence"
+                ]
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "evidence": {
+            "minLength": 1,
+            "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+            "type": "string"
+          },
+          "yesNo": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
       },
-      "maxItems": 20,
       "minItems": 0,
       "type": "array"
     },
@@ -44,8 +94,9 @@
   },
   "required": [
     "availability",
-    "essentialRequirementsMet",
     "essentialRequirements",
+    "essentialRequirementsMet",
+    "niceToHaveRequirements",
     "respondToEmailAddress"
   ],
   "title": "Digital Outcomes and Specialists Digital outcomes Brief Response Schema",
