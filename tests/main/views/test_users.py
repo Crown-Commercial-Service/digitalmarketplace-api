@@ -4,11 +4,11 @@ from nose.tools import assert_equal, assert_not_equal, assert_in, assert_is_none
 from app import db, encryption
 from app.models import User, Supplier
 from datetime import datetime
-from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
-from dmutils.formats import DATETIME_FORMAT
+from tests.bases import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
+from tests.helpers import FixtureMixin, ExampleListingMixin
 
 
-class BaseUserTest(BaseApplicationTest):
+class BaseUserTest(BaseApplicationTest, ExampleListingMixin):
     supplier = None
     supplier_id = None
     users = None
@@ -1104,7 +1104,7 @@ class TestUsersGet(BaseUserTest):
         assert_in("Invalid user role: incorrect", data)
 
 
-class TestUsersExport(BaseUserTest):
+class TestUsersExport(BaseUserTest, FixtureMixin):
     framework_slug = None
     updater_json = None
 

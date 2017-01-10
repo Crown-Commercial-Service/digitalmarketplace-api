@@ -1,4 +1,4 @@
-from ..helpers import BaseApplicationTest
+from tests.bases import BaseApplicationTest
 
 from nose.tools import assert_equal
 

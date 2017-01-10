@@ -3,7 +3,8 @@ import pytest
 from datetime import datetime
 from freezegun import freeze_time
 from app.models import AuditEvent, db, Framework, FrameworkAgreement, User
-from ..helpers import BaseApplicationTest, fixture_params
+from tests.helpers import fixture_params
+from tests.bases import BaseApplicationTest
 
 
 class BaseFrameworkAgreementTest(BaseApplicationTest):

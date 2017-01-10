@@ -6,14 +6,15 @@ from datetime import datetime, timedelta
 from hypothesis import given
 from freezegun import freeze_time
 
-from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
+from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
+from tests.helpers import FixtureMixin
 from ... import example_listings
 
 from dmapiclient.audit import AuditTypes
 from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service
 
 
-class BaseBriefResponseTest(BaseApplicationTest):
+class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
     # The following dates are used as we regularly need to set the new supplier flow feature flag to varying times so we
     # can test our functionality works in expected ways for different values of the feature flag
     datetime_one_week_ago = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")

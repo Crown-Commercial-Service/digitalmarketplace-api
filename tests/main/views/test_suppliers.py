@@ -10,10 +10,12 @@ from dmapiclient.audit import AuditTypes
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
     SupplierFramework, Framework, FrameworkAgreement, DraftService, Service
-from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, fixture_params
+from tests.bases import JSONTestMixin, JSONUpdateTestMixin
+from tests.helpers import fixture_params, FixtureMixin, ExampleListingMixin
+from tests.bases import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
 
 
-class TestGetSupplier(BaseApplicationTest):
+class TestGetSupplier(BaseApplicationTest, ExampleListingMixin, FixtureMixin):
     def setup(self):
         super(TestGetSupplier, self).setup()
 
@@ -97,7 +99,7 @@ class TestGetSupplier(BaseApplicationTest):
         })
 
 
-class TestListSuppliers(BaseApplicationTest):
+class TestListSuppliers(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestListSuppliers, self).setup()
 
@@ -180,7 +182,7 @@ class TestListSuppliers(BaseApplicationTest):
         assert_equal(response.status_code, 404)
 
 
-class TestListSuppliersOnFramework(BaseApplicationTest):
+class TestListSuppliersOnFramework(BaseApplicationTest, FixtureMixin):
 
     def setup(self):
         super(TestListSuppliersOnFramework, self).setup()
@@ -280,7 +282,7 @@ class TestListSuppliersByDunsNumber(BaseApplicationTest):
         assert_equal(2, len(data['suppliers']))
 
 
-class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
+class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
     method = "put"
     endpoint = "/suppliers/123456"
 
@@ -506,7 +508,7 @@ class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
 
-class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
+class TestUpdateSupplier(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMixin):
     method = "post"
     endpoint = "/suppliers/123456"
 
@@ -651,7 +653,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(response.status_code, 400)
 
 
-class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
+class TestUpdateContactInformation(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMixin):
     method = "post"
     endpoint = "/suppliers/123456/contact-information/{self.contact_id}"
 
@@ -821,7 +823,7 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
         assert_equal(response.status_code, 400)
 
 
-class TestSetSupplierDeclarations(BaseApplicationTest, JSONUpdateTestMixin):
+class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateTestMixin):
     method = 'put'
     endpoint = '/suppliers/0/frameworks/g-cloud-4/declaration'
 
@@ -906,7 +908,7 @@ class TestSetSupplierDeclarations(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(supplier_framework.declaration['question'], 'answer2')
 
 
-class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
+class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
     method = "post"
     endpoint = "/suppliers"
 
@@ -1198,7 +1200,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
         assert_equal(response.status_code, 404)
 
 
-class TestRegisterFrameworkInterest(BaseApplicationTest, JSONUpdateTestMixin):
+class TestRegisterFrameworkInterest(BaseApplicationTest, FixtureMixin, JSONUpdateTestMixin):
     method = "put"
     endpoint = "/suppliers/1/frameworks/digital-outcomes-and-specialists"
 
@@ -1601,7 +1603,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert error_message == "Invalid JSON must only have ['onFramework'] keys"
 
 
-class TestSupplierFrameworkVariation(BaseApplicationTest):
+class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestSupplierFrameworkVariation, self).setup()
         self.setup_dummy_suppliers(1)

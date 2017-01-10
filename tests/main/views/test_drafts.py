@@ -1,4 +1,4 @@
-from tests.app.helpers import BaseApplicationTest, JSONUpdateTestMixin
+from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from datetime import datetime
 from flask import json
 import mock
@@ -8,8 +8,10 @@ from app import db
 
 from nose.tools import assert_equal, assert_in, assert_false
 
+from tests.helpers import FixtureMixin, ExampleListingMixin
 
-class TestDraftServices(BaseApplicationTest):
+
+class TestDraftServices(BaseApplicationTest, ExampleListingMixin):
     service_id = None
     updater_json = None
     create_draft_json = None
@@ -1132,7 +1134,7 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
         assert_false("sfiaRateDocumentURL" in data['services'])
 
 
-class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
+class TestCompleteDraft(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMixin):
     endpoint = '/draft-services/{self.draft_id}/complete'
     method = 'post'
 
@@ -1231,7 +1233,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
         assert_in('serviceSummary', errors)
 
 
-class TestDOSServices(BaseApplicationTest):
+class TestDOSServices(BaseApplicationTest, FixtureMixin, ExampleListingMixin):
     updater_json = None
     create_draft_json = None
 
@@ -1493,7 +1495,7 @@ class TestDOSServices(BaseApplicationTest):
         assert_equal(complete.status_code, 400)
 
 
-class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
+class TestUpdateDraftStatus(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMixin):
     endpoint = '/draft-services/{self.draft_id}/update-status'
     method = 'post'
 

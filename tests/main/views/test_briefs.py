@@ -4,14 +4,16 @@ from datetime import timedelta
 
 import pytest
 import mock
-from ..helpers import BaseApplicationTest, COMPLETE_DIGITAL_SPECIALISTS_BRIEF
+from tests.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, FixtureMixin
+from tests.bases import BaseApplicationTest
 
 from dmapiclient.audit import AuditTypes
 from app import db
 from app.models import Brief, Framework
 
 
-class TestBriefs(BaseApplicationTest):
+class TestBriefs(BaseApplicationTest, FixtureMixin):
+
     def setup(self):
         super(TestBriefs, self).setup()
         self.user_id = self.setup_dummy_user(role='buyer')
@@ -1096,7 +1098,7 @@ class TestBriefs(BaseApplicationTest):
         assert brief_audits[0]['data']['briefId'] > 1
 
 
-class TestSupplierIsEligibleForBrief(BaseApplicationTest):
+class TestSupplierIsEligibleForBrief(BaseApplicationTest, FixtureMixin):
     def setup_services(self):
         with self.app.app_context():
             self.setup_dummy_suppliers(2)

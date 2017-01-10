@@ -8,15 +8,15 @@ from app.models import Service, Supplier, ContactInformation, Framework, \
     AuditEvent, FrameworkLot
 import mock
 from app import db, create_app
-from ..helpers import BaseApplicationTest, JSONUpdateTestMixin, \
-    TEST_SUPPLIERS_COUNT
+from tests.helpers import TEST_SUPPLIERS_COUNT, FixtureMixin, ExampleListingMixin
+from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from sqlalchemy.exc import IntegrityError
 from dmapiclient import HTTPError
 from dmutils.formats import DATETIME_FORMAT
 from dmapiclient.audit import AuditTypes
 
 
-class TestListServicesOrdering(BaseApplicationTest):
+class TestListServicesOrdering(BaseApplicationTest, ExampleListingMixin):
     def setup_services(self):
         with self.app.app_context():
             self.app.config['DM_API_SERVICES_PAGE_SIZE'] = 10
@@ -96,7 +96,7 @@ class TestListServicesOrdering(BaseApplicationTest):
         ])
 
 
-class TestListServices(BaseApplicationTest):
+class TestListServices(BaseApplicationTest, FixtureMixin):
     def setup_services(self):
         with self.app.app_context():
             self.setup_dummy_suppliers(1)
@@ -441,7 +441,7 @@ class TestListServices(BaseApplicationTest):
         assert data['error'] == 'Role must be specified for Digital Specialists'
 
 
-class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
+class TestPostService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMixin):
     endpoint = '/services/{self.service_id}'
     method = 'post'
     service_id = None
@@ -989,7 +989,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
 
 
 @mock.patch('app.service_utils.search_api_client')
-class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
+class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest, ExampleListingMixin):
     def setup(self):
         super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
         with self.app.app_context():
@@ -1059,7 +1059,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
 
 
 @mock.patch('app.service_utils.search_api_client')
-class TestShouldCallSearchApiOnPost(BaseApplicationTest):
+class TestShouldCallSearchApiOnPost(BaseApplicationTest, ExampleListingMixin):
     def setup(self):
         super(TestShouldCallSearchApiOnPost, self).setup()
         now = datetime.utcnow()
@@ -1165,7 +1165,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
             assert_equal(response.status_code, 200, response.get_data())
 
 
-class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
+class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, ExampleListingMixin):
     def setup(self):
         super(TestShouldCallSearchApiOnPostStatusUpdate, self).setup()
         now = datetime.utcnow()
@@ -1328,7 +1328,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
         assert_equal(response.status_code, 200)
 
 
-class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
+class TestPutService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMixin):
     method = "put"
     endpoint = "/services/1234567890123456"
 
@@ -1406,14 +1406,12 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
                 payload['supplierId'])
 
             assert_equal(
-                self.string_to_time_to_string(
-                    service["createdAt"],
-                    DATETIME_FORMAT,
-                    "%Y-%m-%dT%H:%M:%SZ"),
-                payload['createdAt'])
+                datetime.strptime(service["createdAt"], DATETIME_FORMAT).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                payload['createdAt']
+            )
 
             assert_almost_equal(
-                self.string_to_time(service["updatedAt"], DATETIME_FORMAT),
+                datetime.strptime(service["updatedAt"], DATETIME_FORMAT),
                 now,
                 delta=timedelta(seconds=2))
 
