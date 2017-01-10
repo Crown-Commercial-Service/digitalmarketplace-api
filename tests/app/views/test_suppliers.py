@@ -6,7 +6,7 @@ from freezegun import freeze_time
 from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_none, assert_true, assert_false
 
 from app import db
-from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework
+from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, Domain
 from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, assert_api_compatible
 from decimal import Decimal
 
@@ -528,6 +528,35 @@ class TestDomains(BaseApplicationTest):
             'Digital products',
             'Emerging technology'
         ]
+
+    def test_domain_approvals(self):
+        SAMPLE_DOMAIN = 'data science'
+
+        with self.app.app_context():
+            payload = self.setup_dummy_suppliers(1)
+            payload = self.setup_dummy_briefs(1)
+
+            supplier = Supplier.query.first()
+            supplier.add_unassessed_domain(SAMPLE_DOMAIN)
+
+            suppliers_url = '/suppliers/{}'.format(
+                supplier.id,
+            )
+
+            supplier_id = supplier.id
+            domain_id = Domain.get_by_name_or_id('data science').id
+
+            assessment_url = '/suppliers/{}/domains/{}/assessed'.format(
+                supplier.id,
+                Domain.get_by_name_or_id('data science').id
+            )
+
+            response = self.client.post(assessment_url)
+            assert_equal(response.status_code, 200)
+
+            supplier = json.loads(response.get_data(as_text=True))['supplier']
+            assessed = supplier['domains']['assessed']
+            assert 'Data science' in assessed
 
 
 class TestDeleteSupplier(BaseApplicationTest):

@@ -440,10 +440,24 @@ class SupplierDomain(db.Model):
 
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), primary_key=True)
     domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), primary_key=True)
-    assessed = db.Column(db.Boolean, nullable=False, default=False)
 
     domain = relationship("Domain", back_populates="suppliers")
     supplier = relationship("Supplier", back_populates="domains")
+
+    status = db.Column(
+        db.Enum(
+            *[
+                'unassessed',
+                'assessed',
+                'rejected'
+            ],
+            name='supplier_domain_status_enum'
+        ),
+        default='unassessed',
+        index=False,
+        unique=False,
+        nullable=False
+    )
 
 
 class Supplier(db.Model):
@@ -513,11 +527,11 @@ class Supplier(db.Model):
 
     def add_unassessed_domain(self, name_or_id):
         d = Domain.get_by_name_or_id(name_or_id)
-        sd = SupplierDomain(supplier=self, domain=d)
+        sd = SupplierDomain(supplier=self, domain=d, status='unassessed')
         db.session.add(sd)
         db.session.flush()
 
-    def update_domain_assessment(self, name_or_id, assessed=True):
+    def update_domain_assessment_status(self, name_or_id, status):
         d = Domain.get_by_name_or_id(name_or_id)
 
         sd = SupplierDomain.query.filter_by(supplier_id=self.id, domain_id=d.id).first()
@@ -525,7 +539,7 @@ class Supplier(db.Model):
         if not sd:
             raise ValidationError('no domain assessment exists for: {}'.format(name))
 
-        sd.assessed = assessed
+        sd.status = status
         db.session.flush()
 
     @property
@@ -536,13 +550,13 @@ class Supplier(db.Model):
 
     @property
     def assessed_domains(self):
-        approved_new_domains = [sd.domain.name for sd in self.domains if sd.assessed]
+        approved_new_domains = [sd.domain.name for sd in self.domains if sd.status == 'assessed']
         result = approved_new_domains + self.legacy_domains
         return sorted_uniques(result)
 
     @property
     def unassessed_domains(self):
-        result = [sd.domain.name for sd in self.domains if not sd.assessed]
+        result = [sd.domain.name for sd in self.domains if not sd.status == 'assessed']
         return sorted_uniques(result)
 
     @property
@@ -1303,6 +1317,8 @@ class Brief(db.Model):
     framework_id = db.Column(db.Integer, db.ForeignKey('framework.id'), nullable=False)
     _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lot.id'), nullable=False)
 
+    domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), nullable=True)
+
     data = db.Column(MutableDict.as_mutable(JSON))
     created_at = db.Column(DateTime, index=True, nullable=False,
                            default=utcnow)
@@ -1322,6 +1338,7 @@ class Brief(db.Model):
         "BriefClarificationQuestion",
         order_by="BriefClarificationQuestion.published_at")
     work_order = db.relationship('WorkOrder', uselist=False)
+    domain = db.relationship('Domain', lazy='joined')
 
     @property
     def dates_for_serialization(self):

@@ -439,3 +439,20 @@ def update_supplier_framework_details(code, framework_slug):
 def get_domains_list():
     result = [d.serializable for d in Domain.query.order_by('ordering').all()]
     return jsonify(domains=result)
+
+
+@main.route('/suppliers/<int:supplier_id>/domains/<int:domain_id>/<string:status>', methods=['POST'])
+def assess_supplier_for_domain(supplier_id, domain_id, status):
+    return update_domain_status(supplier_id, domain_id, status)
+
+
+def update_domain_status(supplier_id, domain_id, status):
+    supplier = Supplier.query.get(supplier_id)
+
+    if supplier is None:
+        abort(404, "Supplier '{}' does not exist".format(application_id))
+
+    supplier.update_domain_assessment_status(domain_id, status)
+    db.session.commit()
+    db.session.refresh(supplier)
+    return jsonify(supplier=supplier.serializable), 200

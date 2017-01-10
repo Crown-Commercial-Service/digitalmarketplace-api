@@ -6,8 +6,9 @@ from pendulum import interval
 import json
 import mock
 import pytest
+from pytest import raises
 from nose.tools import assert_equal, assert_raises
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 
 from app import db, create_app
 
@@ -1219,11 +1220,15 @@ class TestApplication(BaseApplicationTest):
             assert supp.assessed_domains == ['Agile delivery and Governance']
             assert supp.unassessed_domains == ['Change, Training and Transformation']
 
-            supp.update_domain_assessment('Change, Training and Transformation', True)
+            supp.update_domain_assessment_status('Change, Training and Transformation', 'assessed')
 
             assert supp.legacy_domains == ['Agile delivery and Governance']
             assert supp.assessed_domains == [
                 'Agile delivery and Governance',
                 'Change, Training and Transformation'
             ]
+
             assert supp.unassessed_domains == []
+
+            with raises(DataError):
+                supp.update_domain_assessment_status('Change, Training and Transformation', 'bad_status_value')

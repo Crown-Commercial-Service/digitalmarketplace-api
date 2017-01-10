@@ -87,16 +87,6 @@ class BaseApplicationsTest(BaseApplicationTest):
             '/applications/{}/approve'.format(application_id),
             content_type='application/json')
 
-    def assess_domain_for_application(self, application_id, domain_id):
-        return self.client.post(
-            '/applications/{}/assess/{}'.format(self.application_id, domain_id),
-            content_type='application/json')
-
-    def unassess_domain_for_application(self, application_id, domain_id):
-        return self.client.post(
-            '/applications/{}/unassess/{}'.format(self.application_id, domain_id),
-            content_type='application/json')
-
     def get_user(self, user_id):
         user = self.client.get('/users/{}'.format(user_id))
         return json.loads(user.get_data(as_text=True))['users']
@@ -199,7 +189,6 @@ class TestApproveApplication(BaseApplicationsTest):
 
 
 class TestUpdateApplication(BaseApplicationsTest):
-
     def setup(self):
         super(TestUpdateApplication, self).setup()
 
