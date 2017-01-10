@@ -539,7 +539,8 @@ def test_brief_response_nice_to_have_requirements():
                 {"yesNo": True, "evidence": "valid evidence"},
                 {"yesNo": True, "evidence": "word " * 100},
                 {"yesNo": True},
-                {"yesNo": False}
+                {"yesNo": False},
+                {"yesNo": False, "evidence": "shouldnt be here"}
             ],
             "respondToEmailAddress": "valid@email.com"
         }
@@ -559,6 +560,10 @@ def test_brief_response_nice_to_have_requirements():
                 'error': 'answer_required',
                 'field': u'evidence',
                 'index': 3
+            },
+            {
+                'error': "{'yesNo': False, 'evidence': 'shouldnt be here'} is not valid under any of the given schemas",
+                'index': 5
             }
         ]
     }
