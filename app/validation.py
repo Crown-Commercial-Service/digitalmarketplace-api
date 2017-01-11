@@ -181,7 +181,12 @@ def translate_json_schema_errors(errors, json_data):
                     'error': 'answer_required'
                 })
 
-            else:
+            elif type(error_map[key]) is list:
+                # It is possible that error_map[key] is a single error message string. This may happen if you send
+                # a boolean instead of a dictionary as an item of a dynamic list. In this case, we no longer wish to
+                # append errors (also avoiding an attribute error if we attempted to appending to a string) so will do
+                # nothing for this iteration of error in errors. In the end, this function would return the string error
+                # message.
                 error_map[key].append({
                     'index': index,
                     'error': error.message

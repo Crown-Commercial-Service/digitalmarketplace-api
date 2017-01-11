@@ -568,6 +568,47 @@ def test_brief_response_nice_to_have_requirements():
         ]
     }
 
+    # Purely boolean nice to have requirements
+    assert get_validation_errors(
+        "brief-responses-digital-outcomes-and-specialists-digital-specialists",
+        {
+            "availability": "valid start date",
+            "dayRate": "100",
+            "essentialRequirementsMet": True,
+            "essentialRequirements": [
+                {"evidence": "valid evidence"},
+            ],
+            "niceToHaveRequirements": [
+                True, True, True
+            ],
+            "respondToEmailAddress": "valid@email.com"
+        }
+    ) == {
+        'niceToHaveRequirements': "True is not of type u'object'"
+    }
+
+    # Mix of dict and boolean nice to have requirements
+    assert get_validation_errors(
+        "brief-responses-digital-outcomes-and-specialists-digital-specialists",
+        {
+            "availability": "valid start date",
+            "dayRate": "100",
+            "essentialRequirementsMet": True,
+            "essentialRequirements": [
+                {"evidence": "valid evidence"},
+            ],
+            "niceToHaveRequirements": [
+                {"yesNo": False, "evidence": "shouldnt be here"},
+                True,
+                {'yesNo': False},
+                {"yesNo": False, "evidence": "shouldnt be here"}
+            ],
+            "respondToEmailAddress": "valid@email.com"
+        }
+    ) == {
+        'niceToHaveRequirements': "True is not of type u'object'"
+    }
+
 
 def test_api_type_is_optional():
     data = load_example_listing("G6-PaaS")
