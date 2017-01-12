@@ -642,7 +642,6 @@ class Supplier(db.Model):
         overridden = [
             'longName',
             'extraLinks',
-            'representative'
         ]
 
         for k in overridden:
