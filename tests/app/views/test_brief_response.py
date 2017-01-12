@@ -279,6 +279,17 @@ class CreateBriefResponseSharedTests(BaseBriefResponseTest, JSONUpdateTestMixin)
         assert res.status_code == 400, res.get_data(as_text=True)
         assert 'Brief response already exists' in res.get_data(as_text=True)
 
+    def test_day_rate_should_be_less_than_service_max_price(self, live_dos_framework):
+        res = self.create_brief_response(
+            brief_id=self.specialist_brief_id,
+            data={"dayRate": "100000"}
+        )
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data["error"]["dayRate"] == 'max_less_than_min'
+
 
 class TestCreateBriefResponseForBriefCreatedBeforeFeatureFlag(CreateBriefResponseSharedTests):
     def setup(self):
@@ -370,17 +381,6 @@ class TestCreateBriefResponseForBriefCreatedBeforeFeatureFlag(CreateBriefRespons
         assert res.status_code == 400, res.get_data(as_text=True)
         assert data['error']['niceToHaveRequirements'] == 'answer_required'
 
-    def test_day_rate_should_be_less_than_service_max_price(self, live_dos_framework):
-        res = self.create_brief_response(
-            brief_id=self.specialist_brief_id,
-            data={"dayRate": "100000"}
-        )
-
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 400
-        assert data["error"]["dayRate"] == 'max_less_than_min'
-
     def test_create_digital_specialists_brief_response(self, live_dos_framework):
         res = self.create_brief_response(
             brief_id=self.specialist_brief_id,
@@ -456,7 +456,6 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
             brief_id=self.specialist_brief_id,
             data={
                 "essentialRequirementsMet": True,
-                "niceToHaveRequirements": [True, True, False, True, False],
                 "respondToEmailAddress": "supplier@email.com",
                 "availability": "24/12/2016",
                 "dayRate": "500",
@@ -471,7 +470,7 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
             brief_id=self.specialist_brief_id,
             data={
                 "essentialRequirements": [True, True, True, True, True],
-                "niceToHaveRequirements": [True, True, False, True, False],
+                "niceToHaveRequirements": [True, True, False, False, True],
                 "respondToEmailAddress": "supplier@email.com",
                 "availability": "24/12/2016",
                 "dayRate": "500",
@@ -481,7 +480,12 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
         data = json.loads(res.get_data(as_text=True))
         assert res.status_code == 400
 
-    def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(self, live_dos_framework):
+        for key in ('essentialRequirements', 'niceToHaveRequirements'):
+            message = data['error'][key]
+            assert 'True is not of type' in message
+            assert 'object' in message
+
+    def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_or_nice_to_have_reqs(self, live_dos_framework):
         res = self.client.post(
             '/brief-responses',
             data=json.dumps({
@@ -489,9 +493,10 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
                 'briefResponses': {
                     "supplierId": 0,
                     "briefId": self.brief_id,
-                    "essentialRequirements": [{'evidence': 'Some'}]
+                    "essentialRequirements": [{'evidence': 'Some'}],
+                    "niceToHaveRequirements": [{'yesNo': True, 'evidence': 'Some'}]
                 },
-                'page_questions': ["essentialRequirements"]
+                'page_questions': ["essentialRequirements", "niceToHaveRequirements"]
             }),
             content_type='application/json'
         )
@@ -500,6 +505,7 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
 
         assert res.status_code == 400, res.get_data(as_text=True)
         assert data['error']['essentialRequirements'] == 'answer_required'
+        assert data['error']['niceToHaveRequirements'] == 'answer_required'
 
 
 class UpdateBriefResponseSharedTests(BaseBriefResponseTest):
@@ -657,6 +663,21 @@ class TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag(UpdateBriefResponse
         data = json.loads(res.get_data(as_text=True))
         assert data["error"] == {'essentialRequirementsMet': 'not_required_value'}
 
+    def test_cannot_update_brief_response_with_wrong_number_of_essential_or_nice_to_have_reqs(self, live_dos_framework):
+        res = self._update_brief_response(
+            self.brief_response_id,
+            {
+                "essentialRequirements": [{'evidence': 'Some'}],
+                "niceToHaveRequirements": [{'yesNo': True, 'evidence': 'Some'}]
+            }
+        )
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400, res.get_data(as_text=True)
+        assert data['error']['essentialRequirements'] == 'answer_required'
+        assert data['error']['niceToHaveRequirements'] == 'answer_required'
+
 
 class SubmitBriefResponseSharedTests(BaseBriefResponseTest):
     def setup(self):
@@ -770,9 +791,6 @@ class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponse
 
         non_legacy_brief_response_data = {
             'essentialRequirementsMet': True,
-            'niceToHaveRequirements': [True, False, True, False, True],
-            'availability': u'a',
-            'respondToEmailAddress': 'supplier@email.com'
         }
 
         create_res = self.create_brief_response(data=non_legacy_brief_response_data)
@@ -788,7 +806,6 @@ class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponse
 
         assert submit_res.status_code == 400
         assert "'essentialRequirementsMet' was unexpected" in data['error']['_form'][0]
-        assert data['error']['essentialRequirements'] == "answer_required"
 
 
 class TestSubmitBriefReponseWhenFeatureFlagIsOff(TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag):
@@ -807,7 +824,7 @@ class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseS
     valid_brief_response_data = {
         'essentialRequirementsMet': True,
         'essentialRequirements': [{'evidence': 'text'}] * 5,
-        'niceToHaveRequirements': [True, False, True, False, True],
+        'niceToHaveRequirements': [{'yesNo': True, 'evidence': 'text'}] * 5,
         'availability': u'a',
         'respondToEmailAddress': 'supplier@email.com'
     }
@@ -865,9 +882,10 @@ class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseS
         data = json.loads(submit_res.get_data(as_text=True))
         assert data['error']['essentialRequirementsMet'] == "answer_required"
 
-        message = data['error']['essentialRequirements']
-        assert 'True is not of type' in message
-        assert 'object' in message
+        for key in ('essentialRequirements', 'niceToHaveRequirements'):
+            message = data['error'][key]
+            assert 'True is not of type' in message
+            assert 'object' in message
 
 
 class TestGetBriefResponse(BaseBriefResponseTest):
