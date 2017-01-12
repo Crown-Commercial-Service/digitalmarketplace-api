@@ -1088,8 +1088,6 @@ class TestApplication(BaseApplicationTest):
             db.session.add(user)
             db.session.flush()
 
-            assert 'expiry_dates' in app.serializable
-
             x_from_manual = app.serialize()
             x_from_deterministic = json.loads(app.json)
 
