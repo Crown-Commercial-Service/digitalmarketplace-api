@@ -1914,14 +1914,6 @@ class Application(db.Model):
         if 'created_at' in j:
             j['createdAt'] = j['created_at']
 
-        if 'expiry_dates' not in j:
-            j['expiry_dates'] = {
-                "deed": {},
-                "financial": {},
-                "liability": {},
-                "workers": {}
-            }
-
         return j
 
     def update_from_json_before(self, data):
