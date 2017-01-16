@@ -7,6 +7,7 @@ import pendulum
 import json
 import StringIO
 import csv
+from collections import defaultdict
 from flask import jsonify, make_response
 
 
@@ -68,6 +69,27 @@ def get_application_metrics():
         for category in ['existing_seller', 'new_seller', 'total']:
             if "application_status_{}_{}_count".format(status, category) not in metrics:
                 metrics["application_status_{}_{}_count".format(status, category)] = {"value": 0, "ts": timestamp}
+
+    return jsonify(metrics)
+
+
+@main.route('/metrics/applications/history', methods=['GET'])
+def get_application_historical_metrics():
+    metrics = defaultdict(list)
+    period = pendulum.period(pendulum.Pendulum(2017, 1, 1), pendulum.now())
+    for dt in period.range('days'):
+        date = dt.to_date_string()
+        timestamp = dt.to_iso8601_string()
+        query = '''
+                SELECT type, count(*) total_count
+                FROM
+                  (SELECT DISTINCT ON (object_id) date_trunc('day', created_at) AS day, type, object_id FROM audit_event
+                  WHERE (object_type = 'Application' OR object_type = 'SupplierDomain') AND created_at < :date
+                  ORDER BY object_id, created_at DESC ) a
+                GROUP BY type
+                '''
+        for row in db.session.execute(query, {'date': date}).fetchall():
+            metrics[row['type']+"_count"].append({"value": row["total_count"], "ts": timestamp})
 
     return jsonify(metrics)
 
