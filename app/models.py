@@ -29,6 +29,7 @@ from sqlalchemy.types import String, Date, Integer, Interval
 from sqlalchemy_utils import generic_relationship
 from sqlalchemy.schema import Sequence
 from dmutils.data_tools import ValidationError, normalise_abn, normalise_acn, parse_money
+from dmapiclient.audit import AuditTypes
 
 from . import db
 from . import search_indices
@@ -46,7 +47,7 @@ import pendulum
 
 from functools import partial
 
-from .jiraapi import get_api_oauth as get_jira_api
+from .jiraapi import get_marketplace_jira
 from .modelsbase import normalize_key_case
 from .utils import sorted_uniques
 
@@ -557,6 +558,12 @@ class Supplier(db.Model):
         d = Domain.get_by_name_or_id(name_or_id)
         sd = SupplierDomain(supplier=self, domain=d, status='unassessed')
         db.session.add(sd)
+        db.session.add(AuditEvent(
+            audit_type=AuditTypes.unassessed_domain,
+            user='',
+            data={},
+            db_object=sd
+        ))
         db.session.flush()
 
     def update_domain_assessment_status(self, name_or_id, status):
@@ -568,6 +575,13 @@ class Supplier(db.Model):
             raise ValidationError('no domain assessment exists for: {}'.format(name))
 
         sd.status = status
+        if status == 'assessed':
+            db.session.add(AuditEvent(
+                audit_type=AuditTypes.assessed_domain,
+                user='',
+                data={},
+                db_object=sd
+            ))
         db.session.flush()
 
     @property
@@ -2040,7 +2054,7 @@ class Application(db.Model):
 
     def create_assessment_task(self):
         if current_app.config['JIRA_FEATURES']:
-            j = get_jira_api()
+            j = get_marketplace_jira()
             j.create_assessment_task(self)
         else:
             current_app.logger.info(

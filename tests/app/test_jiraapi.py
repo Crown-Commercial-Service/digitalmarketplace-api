@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import mock
 from flask import current_app
-from app.jiraapi import get_api, get_api_oauth
+from app.jiraapi import get_api, get_api_oauth, get_marketplace_jira
 
 from .helpers import BaseApplicationTest
 from app.models import Application
@@ -32,14 +32,16 @@ class TestJira(BaseApplicationTest):
                 }
             )
 
-    @mock.patch('app.jiraapi.JIRA')
     @mock.patch('app.jiraapi.get_api_oauth')
     @mock.patch('app.jiraapi.get_api')
-    @mock.patch('app.jiraapi.JIRAAPI')
-    def test_create_assessment_task(self, JIRAAPI, get_api, get_api_oauth, JIRA):
-        with self.app.app_context():
-            j = JIRAAPI()
+    @mock.patch('app.jiraapi.JIRA')
+    @mock.patch('app.jiraapi.MarketplaceJIRA')
+    def test_create_assessment_task(self, MarketplaceJIRA, JIRA, get_api, get_api_oauth):
+        with self.app.app_context() as a:
+            j = JIRA()
             get_api_oauth.return_value = j
+
+            mj = get_marketplace_jira()
 
             x = Application(
                 id=99,
@@ -47,4 +49,54 @@ class TestJira(BaseApplicationTest):
                 data={'name': 'Umbrella Corporation'},
             )
             x.set_approval(True)
-            j.create_assessment_task.assert_called_with(x)
+            mj.create_assessment_task.assert_called_with(x)
+
+    @mock.patch('app.jiraapi.get_api_oauth')
+    @mock.patch('app.jiraapi.JIRA')
+    def test_assessment_tasks_by_application_id(self, JIRA, get_api_oauth):
+        with self.app.app_context() as a:
+            j = JIRA()
+            get_api_oauth.return_value = j
+
+            mj = get_marketplace_jira()
+
+            issue_object = mock.Mock()
+
+            issue_object.raw = {
+                'fields': {
+                    'customfield_99999': 9,
+                    'subtasks': [{
+                        'id': 99
+                    }],
+                    'summary': 'a task',
+                    'status': {'name': 'To Do'}
+                },
+                'self': 'http://topissue'
+            }
+
+            j.search_issues.return_value = [issue_object]
+
+            specific = mock.Mock()
+            specific.return_value = {
+                'fields': {
+                    'summary': 'A subtask',
+                    'status': {'name': 'Done'}
+                },
+                'self': 'http://subissue'
+            }
+            mj.generic_jira.get_specific_issue = specific
+
+            assert mj.assessment_tasks_by_application_id() == {
+                9: {
+                    u'self': u'http://topissue',
+                    u'status': u'To Do',
+                    u'subtasks': [
+                        {
+                            u'self': u'http://subissue',
+                            u'status': u'Done',
+                            u'summary': u'A subtask'
+                        }
+                    ],
+                    u'summary': u'a task'
+                }
+            }
