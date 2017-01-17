@@ -410,6 +410,34 @@ class PriceSchedule(db.Model):
         return rate
 
 
+class Agreement(db.Model):
+    __tablename__ = 'agreement'
+
+    id = db.Column(db.Integer, primary_key=True)
+    version = db.Column(db.String, unique=True, nullable=False)
+    url = db.Column(db.String(15), nullable=False)
+    is_current = db.Column(db.Boolean, nullable=True)
+
+
+class SignedAgreement(db.Model):
+    __tablename__ = 'signed_agreement'
+
+    id = db.Column(db.Integer, primary_key=True)
+    agreement_id = db.Column(
+        db.Integer,
+        db.ForeignKey('agreement.id', ondelete='cascade'),
+        primary_key=True,
+        nullable=False
+    )
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user.id', ondelete='cascade'),
+        primary_key=True,
+        nullable=False
+    )
+    signed_at = db.Column(DateTime, index=False, unique=False, nullable=True)
+
+
 class SupplierExtraLinks(db.Model):
     __tablename__ = 'supplier__extra_links'
     supplier_id = db.Column(
