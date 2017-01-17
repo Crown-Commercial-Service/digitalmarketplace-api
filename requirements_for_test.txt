@@ -1,5 +1,5 @@
--e git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@25.21.2#egg=dto-digitalmarketplace-utils==25.21.5
--e git+https://github.com/AusDTO/dto-digitalmarketplace-apiclient.git@6.11.1#egg=dto-digitalmarketplace-apiclient==6.11.1
+-e git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@master#egg=dto-digitalmarketplace-utils
+-e git+https://github.com/AusDTO/dto-digitalmarketplace-apiclient.git@master#egg=dto-digitalmarketplace-apiclient
 
 -e .
 
