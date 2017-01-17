@@ -77,6 +77,9 @@ class BaseApplicationsTest(BaseApplicationTest):
     def list_applications(self, **parameters):
         return self.client.get('/applications', query_string=parameters)
 
+    def list_applications_with_task_status(self, **parameters):
+        return self.client.get('/applications/tasks', query_string=parameters)
+
     def approve_application(self, application_id):
         return self.client.post(
             '/applications/{}/approve'.format(application_id),
@@ -137,7 +140,8 @@ class TestApproveApplication(BaseApplicationsTest):
                                content_type='application/json')
 
     @mock.patch('app.jiraapi.JIRA')
-    def test_application_assessments_and_domain_approvals(self, jira):
+    @mock.patch('app.main.views.applications.get_marketplace_jira')
+    def test_application_assessments_and_domain_approvals(self, get_marketplace_jira, jira):
         self.patch_application(self.application_id, data={'status': 'saved'})
         a = self.get_application(self.application_id)
         user_id = self.setup_dummy_applicant(2, self.application_id)
@@ -186,6 +190,18 @@ class TestApproveApplication(BaseApplicationsTest):
         a = self.get_application(self.application_id)
         assert a.status_code == 200
         j = json.loads(a.get_data(as_text=True))['application']
+
+        a = self.list_applications()
+
+        DUMMY_TASKS = {u'self': u'http://topissue'}
+
+        mj = mock.Mock()
+        mj.assessment_tasks_by_application_id.return_value = {self.application_id: DUMMY_TASKS}
+        get_marketplace_jira.return_value = mj
+
+        applist = self.list_applications_with_task_status()
+        applist_j = json.loads(applist.get_data(as_text=True))
+        assert applist_j['applications'][0]['tasks'] == DUMMY_TASKS
 
 
 class TestUpdateApplication(BaseApplicationsTest):

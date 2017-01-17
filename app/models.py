@@ -46,7 +46,7 @@ import pendulum
 
 from functools import partial
 
-from .jiraapi import get_api_oauth as get_jira_api
+from .jiraapi import get_marketplace_jira
 from .modelsbase import normalize_key_case
 from .utils import sorted_uniques
 
@@ -2012,7 +2012,7 @@ class Application(db.Model):
 
     def create_assessment_task(self):
         if current_app.config['JIRA_FEATURES']:
-            j = get_jira_api()
+            j = get_marketplace_jira()
             j.create_assessment_task(self)
         else:
             current_app.logger.info(

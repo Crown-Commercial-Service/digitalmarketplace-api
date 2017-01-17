@@ -1,6 +1,7 @@
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
 
+from app.jiraapi import get_marketplace_jira
 from app.main import main
 from app.models import db, Application, User
 from app.utils import (
@@ -105,8 +106,7 @@ def delete_application(application_id):
     return jsonify(message="done"), 200
 
 
-@main.route('/applications', methods=['GET'])
-def list_applications():
+def applications_list_response(with_task_status=False):
     page = get_valid_page_or_1()
 
     applications = Application.query
@@ -127,11 +127,35 @@ def list_applications():
         per_page=results_per_page
     )
 
+    apps_results = [_.serializable for _ in applications.items]
+
+    if with_task_status and current_app.config['JIRA_FEATURES']:
+        def annotate_app(app):
+            try:
+                app['tasks'] = tasks_by_id[app['id']]
+            except KeyError:
+                pass
+            return app
+
+        jira = get_marketplace_jira()
+        tasks_by_id = jira.assessment_tasks_by_application_id()
+        apps_results = [annotate_app(_) for _ in apps_results]
+
     return jsonify(
-        applications=[_.serializable for _ in applications.items],
+        applications=apps_results,
         links=pagination_links(
             applications,
             '.list_applications',
             request.args
         )
     )
+
+
+@main.route('/applications', methods=['GET'])
+def list_applications():
+    return applications_list_response(with_task_status=False)
+
+
+@main.route('/applications/tasks', methods=['GET'])
+def list_applications_taskstatus():
+    return applications_list_response(with_task_status=True)

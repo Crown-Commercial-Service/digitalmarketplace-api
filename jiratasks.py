@@ -1,9 +1,9 @@
 import sys
 from contextlib import contextmanager
-from app.jiraapi import get_api, get_api_oauth
+from app.jiraapi import get_marketplace_jira
 from app import create_app
 from app.models import Application
-from pprint import pprint
+from pprint import pprint as p
 
 app = create_app('development')
 
@@ -11,7 +11,7 @@ app = create_app('development')
 @contextmanager
 def jira_with_app_context():
     with app.app_context():
-        j = get_api_oauth()
+        j = get_marketplace_jira()
         yield j
 
 
@@ -26,7 +26,25 @@ def list_assessment_tasks():
         assessment_tasks = j.get_assessment_tasks()
 
         for t in assessment_tasks:
-            pprint(t.raw)
+            p(t.raw)
+
+
+def list_assessment_tasks_with_subtasks():
+    with jira_with_app_context() as j:
+        p(j.assessment_tasks_by_supplier_id())
+
+
+def create_subtask_issuetype():
+    with jira_with_app_context() as j:
+        j.create_issuetype(
+            'Supplier Assessment Step',
+            'A necessary step for carrying out a supplier assessment',
+            subtask=True)
+
+
+def connect():
+    with jira_with_app_context() as j:
+        p(j)
 
 
 if __name__ == '__main__':

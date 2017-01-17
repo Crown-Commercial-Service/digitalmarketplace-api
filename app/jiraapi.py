@@ -9,9 +9,7 @@ import json
 from functools import partial
 
 
-MARKETPLACE_PROJECT = 'MAR'
 ASSESSMENT_ISSUE_TYPE = 'Supplier Assessment'
-
 
 TICKET_DESCRIPTION = """Please review this potential supplier to determine if they meet the requirements.
 
@@ -22,7 +20,70 @@ The application comprises the following information:
 """
 
 
-class JIRAAPI(object):
+class MarketplaceJIRA(object):
+    def __init__(self, generic_jira, marketplace_project_code=None, application_field_code=None):
+        if not marketplace_project_code:
+            marketplace_project_code = current_app.config.get('JIRA_MARKETPLACE_PROJECT_CODE')
+        self.marketplace_project_code = marketplace_project_code
+
+        if not application_field_code:
+            application_field_code = current_app.config.get('JIRA_APPLICATION_FIELD_CODE')
+        self.application_field_code = application_field_code
+
+        self.generic_jira = generic_jira
+
+    def create_assessment_task(self, application):
+        task_details = dict(
+            project=self.marketplace_project_code,
+            summary='Review this Supplier Application: {}'.format(application.supplier.name),
+            description=TICKET_DESCRIPTION.format(application.json),
+            issuetype={'name': ASSESSMENT_ISSUE_TYPE}
+        )
+        new_issue = self.generic_jira.jira.create_issue(**task_details)
+        update = {self.application_field_code: '88'}
+        new_issue.update(**update)
+
+    def get_assessment_tasks(self):
+        SEARCH = "project={} and type='{}'".format(
+            self.marketplace_project_code,
+            self.application_field_code)
+        return self.jira.search_issues(SEARCH)
+
+    def assessment_tasks_by_application_id(self):
+        assessment_issues = self.generic_jira.issues_with_subtasks(
+            self.marketplace_project_code,
+            ASSESSMENT_ISSUE_TYPE
+        )
+
+        def task_info(t):
+            info = {
+                'self': t['self'],
+                'summary': t['fields']['summary'],
+                'status': t['fields']['status']['name']
+            }
+
+            try:
+                info['subtasks'] = [task_info(st) for st in t['full_subtasks']]
+            except KeyError:
+                pass
+            return info
+
+        return {_['fields'][self.application_field_code]: task_info(_) for _ in assessment_issues}
+
+    def custom_fields():
+        f = self.generic_jira.get_fields()
+
+        return {
+            x['name']: x
+            for x in f
+            if x['custom']
+        }
+
+    def assessment_issue_type_attached(self):
+        return self.generic_jira.issue_type_is_attached_to_project(ASSESSMENT_ISSUE_TYPE, self.marketplace_project_code)
+
+
+class GenericJIRA(object):
     def __init__(self, jira):
         self.jira = jira
         self.s = self.jira._session
@@ -43,33 +104,54 @@ class JIRAAPI(object):
     def __getattr__(self, name):
         return partial(self.http, name)
 
-    def get_assessment_tasks(self):
+    def get_issues_of_type(self, project_code, issuetype_name):
         SEARCH = "project={} and type='{}'".format(
-            MARKETPLACE_PROJECT,
-            ASSESSMENT_ISSUE_TYPE)
-        return self.jira.search_issues(SEARCH)
+            project_code,
+            issuetype_name)
+        results = self.jira.search_issues(SEARCH)
+        return results
 
-    def create_assessment_task(self, application):
-        task_details = dict(
-            project=MARKETPLACE_PROJECT,
-            summary='Review this Supplier Application: {}'.format(application.supplier.name),
-            description=TICKET_DESCRIPTION.format(application.json),
-            issuetype={'name': ASSESSMENT_ISSUE_TYPE}
-        )
-        new_issue = self.jira.create_issue(**task_details)
+    def issues_with_subtasks(self, project_code, issuetype_name):
+        issues = self.get_issues_of_type(project_code, issuetype_name)
+
+        def fully_populated_issue(issue):
+            issue['full_subtasks'] = [
+                self.get_specific_issue(subtask['id'])
+                for subtask in issue['fields']['subtasks']
+            ]
+            return issue
+
+        return [fully_populated_issue(_.raw) for _ in issues]
+
+    def get_specific_issue(self, task_id):
+        url = self.jira._get_url('issue/{}'.format(task_id))
+        response = self.s.get(url)
+        return response.json()
+
+    def get_issue_fields(self, issue_id):
+        url = self.jira._get_url('issue/{}/editmeta'.format(issue_id))
+        response = self.s.get(url)
+        return response.json()
 
     def get_issuetypes(self):
         url = self.jira._get_url('issuetype')
         response = self.s.get(url)
         return response.json()
 
-    def create_issuetype(self, issuetype_name, description):
+    def get_fields(self):
+        url = self.jira._get_url('field')
+        response = self.s.get(url)
+        return response.json()
+
+    def create_issuetype(self, issuetype_name, description, subtask=False):
+        typename = 'standard' if not subtask else 'subtask'
+
         url = self.jira._get_url('issuetype')
 
         data = {
             "name": issuetype_name,
             "description": description,
-            "type": "standard"
+            "type": typename
         }
 
         response = self.s.post(url, data=json.dumps(data))
@@ -98,17 +180,13 @@ class JIRAAPI(object):
         issuetype_names = [_['name'] for _ in proj['issueTypes']]
         return issuetype in issuetype_names
 
-    def assessment_issue_type_attached(self):
-        self.issue_type_is_attached_to_project(ASSESSMENT_ISSUE_TYPE, MARKETPLACE_PROJECT)
-
 
 def get_api():
     JIRA_URL = current_app.config['JIRA_URL']
     JIRA_CREDS = current_app.config['JIRA_CREDS']
     creds = JIRA_CREDS.split(':', 1)
 
-    jira = JIRA(JIRA_URL, basic_auth=creds)
-    return JIRAAPI(jira)
+    return JIRA(JIRA_URL, basic_auth=creds)
 
 
 def get_api_oauth():
@@ -124,5 +202,13 @@ def get_api_oauth():
         'key_cert': kc
     }
 
-    authed_jira = JIRA(JIRA_URL, oauth=oauth_dict)
-    return JIRAAPI(authed_jira)
+    return JIRA(JIRA_URL, oauth=oauth_dict)
+
+
+def get_marketplace_jira(oauth=True):
+    if oauth:
+        api = get_api_oauth()
+    else:
+        api = get_api()
+
+    return MarketplaceJIRA(GenericJIRA(api))

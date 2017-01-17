@@ -54,6 +54,9 @@ class Config:
     JIRA_CREDS = ''
     JIRA_CREDS_OAUTH = ''
 
+    JIRA_MARKETPLACE_PROJECT_CODE = 'JIRAPROJECT'
+    JIRA_APPLICATION_FIELD_CODE = 'customfield_99999'
+
     JIRA_FEATURES = False
 
     ROLLBAR_TOKEN = None
@@ -77,7 +80,7 @@ class Test(Config):
         'TRANSACTION_ISOLATION': True
     }
     DM_API_ADMIN_USERNAME = None
-    JIRA_URL = 'https://jira.example.com'
+    JIRA_URL = 'http://jira.example.com'
     JIRA_CREDS = 'a:b'
     JIRA_CREDS_OAUTH = 'at,ats,ck,kc'
 
@@ -96,6 +99,9 @@ class Development(Config):
     FEATURE_FLAGS = {
         'TRANSACTION_ISOLATION': False
     }
+
+    JIRA_MARKETPLACE_PROJECT_CODE = 'MARADMIN'
+    JIRA_APPLICATION_FIELD_CODE = 'customfield_11000'
 
 
 class Live(Config):
