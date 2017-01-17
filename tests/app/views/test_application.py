@@ -4,7 +4,7 @@ import time
 
 from tests.app.helpers import BaseApplicationTest, INCOMING_APPLICATION_DATA
 
-from app.models import db, Application, User, utcnow
+from app.models import db, Application, User, utcnow, Agreement
 
 
 class BaseApplicationsTest(BaseApplicationTest):
@@ -50,6 +50,18 @@ class BaseApplicationsTest(BaseApplicationTest):
             db.session.commit()
 
             return user.id
+
+    def setup_agreement(self):
+        with self.app.app_context():
+            agreement = Agreement(
+                version='1.0',
+                url='http://url',
+                is_current=True
+            )
+            db.session.add(agreement)
+            db.session.commit()
+
+            return agreement.id
 
     def create_application(self, data):
         return self.client.post(
@@ -345,3 +357,64 @@ class TestListApplications(BaseApplicationsTest):
         created_ats = [_['createdAt'] for _ in data['applications']]
         created_ats.reverse()
         assert is_sorted(created_ats)
+
+
+class TestSubmitApplication(BaseApplicationsTest):
+    def setup(self):
+        super(TestSubmitApplication, self).setup()
+        self.application_id = self.setup_dummy_application(data=self.application_data)
+
+    def test_invalid_application_id(self):
+        self.patch_application(self.application_id, data={'status': 'submitted'})
+
+        response = self.client.post('/applications/{}/submit'.format(999))
+
+        assert response.status_code == 404
+
+    def test_application_already_submitted(self):
+        self.patch_application(self.application_id, data={'status': 'submitted'})
+
+        response = self.client.post('/applications/{}/submit'.format(self.application_id))
+
+        assert response.status_code == 400
+        assert 'Application is already submitted' in response.get_data()
+
+    def test_application_unauthorized_user(self):
+        self.patch_application(self.application_id, data={'status': 'saved'})
+        application_id = self.setup_dummy_application(data=self.application_data)
+        user_id = self.setup_dummy_applicant(2, application_id)
+        self.setup_agreement()
+
+        response = self.client.post(
+            '/applications/{}/submit'.format(self.application_id),
+            data=json.dumps({'user_id': user_id}),
+            content_type='application/json')
+
+        assert response.status_code == 400
+        assert 'User is not authorized to submit application' in response.get_data()
+
+    def test_no_current_agreeement(self):
+        self.patch_application(self.application_id, data={'status': 'saved'})
+        user_id = self.setup_dummy_applicant(2, self.application_id)
+
+        response = self.client.post(
+            '/applications/{}/submit'.format(self.application_id),
+            data=json.dumps({'user_id': user_id}),
+            content_type='application/json')
+
+        assert response.status_code == 404
+
+    def test_application_submitted(self):
+        self.patch_application(self.application_id, data={'status': 'saved'})
+        user_id = self.setup_dummy_applicant(2, self.application_id)
+        self.setup_agreement()
+
+        response = self.client.post(
+            '/applications/{}/submit'.format(self.application_id),
+            data=json.dumps({'user_id': user_id}),
+            content_type='application/json')
+
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['application']['status'] == 'submitted'
+        assert data['signed_agreement']['user_id'] == user_id

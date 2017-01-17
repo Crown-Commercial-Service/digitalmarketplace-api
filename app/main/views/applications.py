@@ -1,14 +1,15 @@
 from flask import jsonify, abort, request, current_app
-from sqlalchemy.exc import IntegrityError, DataError
-
+from sqlalchemy.exc import IntegrityError
 from app.jiraapi import get_marketplace_jira
 from app.main import main
-from app.models import db, AuditEvent, Application, User
+from app.models import db, Application, Agreement, SignedAgreement, User, AuditEvent
 from app.utils import (
-    get_json_from_request, json_has_required_keys, get_int_or_400,
-    pagination_links, get_valid_page_or_1, url_for,
-    get_positive_int_or_400, validate_and_return_updater_request
+    get_json_from_request, json_has_required_keys,
+    pagination_links, get_valid_page_or_1,
+    get_positive_int_or_400
 )
+import pendulum
+from sqlalchemy.sql.expression import true
 from dmapiclient.audit import AuditTypes
 
 
@@ -177,6 +178,45 @@ def applications_list_response(with_task_status=False):
             request.args
         )
     )
+
+
+@main.route('/applications/<int:application_id>/submit', methods=['POST'])
+def submit_application(application_id):
+    current_time = pendulum.now('UTC').to_iso8601_string(extended=True)
+
+    application = Application.query.get(application_id)
+    if application is None:
+        abort(404, "Application '{}' does not exist".format(application_id))
+
+    if application.status == 'submitted':
+        abort(400, 'Application is already submitted')
+
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['user_id'])
+    user_id = json_payload['user_id']
+
+    user = User.query.get(user_id)
+
+    if user.application_id != application.id:
+        abort(400, 'User is not authorized to submit application')
+
+    current_agreement = Agreement.query.filter(
+        Agreement.is_current == true()
+    ).first_or_404()
+
+    application.update_from_json({'status': 'submitted',
+                                  'submitted_at': current_time})
+    save_application(application)
+
+    signed_agreement = SignedAgreement()
+    signed_agreement.user_id = user_id
+    signed_agreement.agreement_id = current_agreement.id
+    signed_agreement.signed_at = current_time
+
+    save_application(signed_agreement)
+
+    return jsonify(application=application.serializable,
+                   signed_agreement=signed_agreement)
 
 
 @main.route('/applications', methods=['GET'])
