@@ -44,6 +44,7 @@ setup(
         'Flask-Elasticsearch',
 
         'pendulum',
-        'jira'
+        'jira',
+        'pyjwt'
     ]
 )
