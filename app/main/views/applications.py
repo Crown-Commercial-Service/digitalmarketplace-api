@@ -1,26 +1,16 @@
 from flask import jsonify, abort, request, current_app
-<<<<<<< HEAD
 from sqlalchemy.exc import IntegrityError
-from app.main import main
-from app.models import db, Application, Agreement, SignedAgreement, User
-=======
-from sqlalchemy.exc import IntegrityError, DataError
-
 from app.jiraapi import get_marketplace_jira
 from app.main import main
-from app.models import db, AuditEvent, Application, User
->>>>>>> master
+from app.models import db, Application, Agreement, SignedAgreement, User, AuditEvent
 from app.utils import (
     get_json_from_request, json_has_required_keys,
     pagination_links, get_valid_page_or_1,
     get_positive_int_or_400
 )
-<<<<<<< HEAD
 import pendulum
 from sqlalchemy.sql.expression import true
-=======
 from dmapiclient.audit import AuditTypes
->>>>>>> master
 
 
 def get_application_json():
