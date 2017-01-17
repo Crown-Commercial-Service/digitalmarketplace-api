@@ -415,7 +415,7 @@ class Agreement(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     version = db.Column(db.String, unique=True, nullable=False)
-    url = db.Column(db.String(15), nullable=False)
+    url = db.Column(db.String, nullable=False)
     is_current = db.Column(db.Boolean, nullable=True)
 
 

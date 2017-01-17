@@ -19,7 +19,7 @@ def upgrade():
     op.create_table('agreement',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('version', sa.String(), nullable=False),
-    sa.Column('url', sa.String(length=15), nullable=False),
+    sa.Column('url', sa.String(), nullable=False),
     sa.Column('is_current', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('version')
