@@ -90,7 +90,6 @@
   "required": [
     "essentialRequirements",
     "essentialRequirementsMet",
-    "niceToHaveRequirements",
     "respondToEmailAddress"
   ],
   "title": "Digital Outcomes and Specialists User research participants Brief Response Schema",
