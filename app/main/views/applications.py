@@ -206,14 +206,14 @@ def submit_application(application_id):
 
     application.update_from_json({'status': 'submitted',
                                   'submitted_at': current_time})
-    save_application(application)
 
     signed_agreement = SignedAgreement()
     signed_agreement.user_id = user_id
     signed_agreement.agreement_id = current_agreement.id
     signed_agreement.signed_at = current_time
 
-    save_application(signed_agreement)
+    db.session.add(signed_agreement)
+    db.session.commit()
 
     return jsonify(application=application.serializable,
                    signed_agreement=signed_agreement)
