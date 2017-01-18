@@ -4,7 +4,8 @@ import time
 
 from tests.app.helpers import BaseApplicationTest, INCOMING_APPLICATION_DATA
 
-from app.models import db, Application, User, utcnow, Agreement
+from app.models import db, Application, AuditEvent, User, utcnow, Agreement
+from dmapiclient.audit import AuditTypes
 
 
 class BaseApplicationsTest(BaseApplicationTest):
@@ -416,5 +417,12 @@ class TestSubmitApplication(BaseApplicationsTest):
 
         assert response.status_code == 200
         data = json.loads(response.get_data())
+
         assert data['application']['status'] == 'submitted'
         assert data['signed_agreement']['user_id'] == user_id
+        with self.app.app_context():
+            audit = AuditEvent.query.filter(
+                AuditEvent.type == "submit_application"
+            ).first()
+
+            assert audit.object_id == self.application_id

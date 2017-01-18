@@ -20,6 +20,8 @@ AUDIT_OBJECT_TYPES = {
     "frameworks": models.Framework,
     "users": models.User,
     "briefs": models.Brief,
+    "applications": models.Application,
+    "supplier_domains": models.SupplierDomain
 }
 
 AUDIT_OBJECT_ID_FIELDS = {
@@ -28,6 +30,8 @@ AUDIT_OBJECT_ID_FIELDS = {
     "frameworks": models.Framework.slug,
     "users": models.User.id,
     "briefs": models.Brief.id,
+    "applications": models.Application.id,
+    "supplier_domains": models.SupplierDomain.id
 }
 
 
