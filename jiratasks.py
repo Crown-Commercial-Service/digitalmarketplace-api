@@ -31,7 +31,7 @@ def list_assessment_tasks():
 
 def list_assessment_tasks_with_subtasks():
     with jira_with_app_context() as j:
-        p(j.assessment_tasks_by_supplier_id())
+        p(j.assessment_tasks_by_application_id())
 
 
 def create_subtask_issuetype():

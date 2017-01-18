@@ -159,15 +159,16 @@ def applications_list_response(with_task_status=False):
     apps_results = [_.serializable for _ in applications.items]
 
     if with_task_status and current_app.config['JIRA_FEATURES']:
+        jira = get_marketplace_jira()
+        tasks_by_id = jira.assessment_tasks_by_application_id()
+
         def annotate_app(app):
             try:
-                app['tasks'] = tasks_by_id[app['id']]
+                app['tasks'] = tasks_by_id[str(app['id'])]
             except KeyError:
                 pass
             return app
 
-        jira = get_marketplace_jira()
-        tasks_by_id = jira.assessment_tasks_by_application_id()
         apps_results = [annotate_app(_) for _ in apps_results]
 
     return jsonify(
@@ -227,3 +228,10 @@ def list_applications():
 @main.route('/applications/tasks', methods=['GET'])
 def list_applications_taskstatus():
     return applications_list_response(with_task_status=True)
+
+
+@main.route('/tasks', methods=['GET'])
+def list_task_status():
+    jira = get_marketplace_jira()
+    tasks_by_id = jira.assessment_tasks_by_application_id()
+    return jsonify(tasks=tasks_by_id)

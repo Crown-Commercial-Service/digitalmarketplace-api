@@ -92,6 +92,9 @@ class BaseApplicationsTest(BaseApplicationTest):
     def list_applications_with_task_status(self, **parameters):
         return self.client.get('/applications/tasks', query_string=parameters)
 
+    def list_task_status(self, **parameters):
+        return self.client.get('/tasks', query_string=parameters)
+
     def approve_application(self, application_id):
         return self.client.post(
             '/applications/{}/approve'.format(application_id),
@@ -208,12 +211,17 @@ class TestApproveApplication(BaseApplicationsTest):
         DUMMY_TASKS = {u'self': u'http://topissue'}
 
         mj = mock.Mock()
-        mj.assessment_tasks_by_application_id.return_value = {self.application_id: DUMMY_TASKS}
+        mj.assessment_tasks_by_application_id.return_value = \
+            {str(self.application_id): DUMMY_TASKS}
         get_marketplace_jira.return_value = mj
 
         applist = self.list_applications_with_task_status()
         applist_j = json.loads(applist.get_data(as_text=True))
         assert applist_j['applications'][0]['tasks'] == DUMMY_TASKS
+
+        tasks = self.list_task_status()
+        tasks_j = json.loads(tasks.get_data(as_text=True))['tasks']
+        assert str(self.application_id) in tasks_j
 
 
 class TestUpdateApplication(BaseApplicationsTest):
