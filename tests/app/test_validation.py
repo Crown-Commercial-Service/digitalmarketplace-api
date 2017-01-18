@@ -536,6 +536,9 @@ def test_brief_response_nice_to_have_requirements():
         "respondToEmailAddress": "valid@email.com"
     }
 
+    # Nice-to-have requirements are optional.
+    assert not get_validation_errors(schema_name, data)
+
     data["niceToHaveRequirements"] = [
         {},
         {"yesNo": True, "evidence": "valid evidence"},

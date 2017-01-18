@@ -840,6 +840,25 @@ class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseS
         # briefs are created after the feature flag
         self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
 
+    def test_can_submit_a_brief_response_with_no_nice_to_have_requirements(self, live_dos_framework):
+        with self.app.app_context():
+            brief = Brief.query.get(self.brief_id)
+            brief_data = brief.data.copy()
+            brief_data['niceToHaveRequirements'] = []
+            brief.data = brief_data
+            db.session.add(brief)
+            db.session.commit()
+
+        response_data = self.valid_brief_response_data
+        response_data.pop('niceToHaveRequirements')
+
+        create_res = self.create_brief_response(data=response_data)
+
+        brief_response_id = json.loads(create_res.get_data(as_text=True))['briefResponses']['id']
+
+        submit_res = self._submit_brief_response(brief_response_id)
+        assert submit_res.status_code == 200
+
     def test_can_not_submit_an_invalid_brief_response(self, live_dos_framework):
         res = self.create_brief_response()
         brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
