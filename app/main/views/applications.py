@@ -205,6 +205,13 @@ def submit_application(application_id):
         Agreement.is_current == true()
     ).first_or_404()
 
+    db.session.add(AuditEvent(
+        audit_type=AuditTypes.submit_application,
+        user='',
+        data={},
+        db_object=application
+    ))
+
     application.update_from_json({'status': 'submitted',
                                   'submitted_at': current_time})
 

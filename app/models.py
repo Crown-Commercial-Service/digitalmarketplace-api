@@ -467,6 +467,7 @@ supplier_code_seq = Sequence('supplier_code_seq')
 class SupplierDomain(db.Model):
     __tablename__ = 'supplier_domain'
 
+    id = db.Column(db.Integer)
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), primary_key=True)
     domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), primary_key=True)
 

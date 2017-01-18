@@ -76,7 +76,7 @@ def get_application_metrics():
 @main.route('/metrics/applications/history', methods=['GET'])
 def get_application_historical_metrics():
     metrics = defaultdict(list)
-    period = pendulum.period(pendulum.Pendulum(2017, 1, 1), pendulum.now())
+    period = pendulum.period(pendulum.Pendulum(2016, 11, 1), pendulum.tomorrow())
     for dt in period.range('days'):
         date = dt.to_date_string()
         timestamp = dt.to_iso8601_string()
