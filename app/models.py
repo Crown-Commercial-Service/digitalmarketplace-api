@@ -436,6 +436,12 @@ class SignedAgreement(db.Model):
         primary_key=True,
         nullable=False
     )
+    application_id = db.Column(
+        db.Integer,
+        db.ForeignKey('application.id', ondelete='cascade'),
+        primary_key=True,
+        nullable=False
+    )
     signed_at = db.Column(DateTime, index=False, unique=False, nullable=True)
 
 
@@ -1953,11 +1959,12 @@ class Application(db.Model):
 
         return data
 
-    def serializable_after(self, j):
-        if 'created_at' in j:
-            j['createdAt'] = j['created_at']
+    def serializable_after(self, data):
+        if 'created_at' in data:
+            data['createdAt'] = data['created_at']
 
-        return j
+        data['signed_agreements'] = self.signed_agreements()
+        return data
 
     def update_from_json_before(self, data):
         try:
@@ -2060,6 +2067,17 @@ class Application(db.Model):
         else:
             current_app.logger.info(
                 'Skipping assessment task creation because JIRA features disabled')
+
+    def signed_agreements(self):
+        agreements = db.session.query(
+            Agreement.version, Agreement.url, User.name, User.email_address, SignedAgreement.signed_at
+        ).join(
+            SignedAgreement, User
+        ).filter(
+            SignedAgreement.application_id == self.id
+        ).all()
+
+        return [a._asdict() for a in agreements]
 
 
 class CaseStudy(db.Model):
