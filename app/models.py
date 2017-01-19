@@ -820,7 +820,7 @@ class ServiceTableMixin(object):
             'frameworkFramework': self.framework.framework,
             'frameworkName': self.framework.name,
             'frameworkStatus': self.framework.status,
-            'lot': self.lot.slug,
+            'lot': self.lot.slug,  # deprecated, use lotSlug instead
             'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
@@ -1260,7 +1260,7 @@ class Brief(db.Model):
             'frameworkFramework': self.framework.framework,
             'frameworkName': self.framework.name,
             'frameworkStatus': self.framework.status,
-            'lot': self.lot.slug,
+            'lot': self.lot.slug,  # deprecated, use lotSlug instead
             'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
