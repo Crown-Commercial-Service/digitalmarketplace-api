@@ -212,6 +212,7 @@ def submit_application(application_id):
     signed_agreement.user_id = user_id
     signed_agreement.agreement_id = current_agreement.id
     signed_agreement.signed_at = current_time
+    signed_agreement.application_id = application_id
 
     db.session.add(signed_agreement)
     db.session.commit()
