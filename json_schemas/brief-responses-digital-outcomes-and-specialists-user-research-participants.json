@@ -12,8 +12,10 @@
             "type": "string"
           }
         },
-        "type": "object",
-        "required": ["evidence"]
+        "required": [
+          "evidence"
+        ],
+        "type": "object"
       },
       "minItems": 0,
       "type": "array"
@@ -25,9 +27,57 @@
     },
     "niceToHaveRequirements": {
       "items": {
-        "type": "boolean"
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "oneOf": [
+              {
+                "properties": {
+                  "evidence": {
+                    "type": "null"
+                  },
+                  "yesNo": {
+                    "enum": [
+                      false
+                    ]
+                  }
+                },
+                "required": [
+                  "yesNo"
+                ]
+              },
+              {
+                "properties": {
+                  "evidence": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "yesNo": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "yesNo",
+                  "evidence"
+                ]
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "evidence": {
+            "minLength": 1,
+            "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+            "type": "string"
+          },
+          "yesNo": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
       },
-      "maxItems": 20,
       "minItems": 0,
       "type": "array"
     },
@@ -38,8 +88,8 @@
     }
   },
   "required": [
-    "essentialRequirementsMet",
     "essentialRequirements",
+    "essentialRequirementsMet",
     "respondToEmailAddress"
   ],
   "title": "Digital Outcomes and Specialists User research participants Brief Response Schema",
