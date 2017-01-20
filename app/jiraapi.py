@@ -32,6 +32,14 @@ class MarketplaceJIRA(object):
 
         self.generic_jira = generic_jira
 
+    @property
+    def server_url(self):
+        jj = self.generic_jira.jira.server_info()
+        return jj['baseUrl']
+
+    def make_link(self, key):
+        return self.server_url + '/browse/' + key
+
     def create_assessment_task(self, application):
         task_details = dict(
             project=self.marketplace_project_code,
@@ -44,10 +52,10 @@ class MarketplaceJIRA(object):
         new_issue.update(**update)
 
     def get_assessment_tasks(self):
-        SEARCH = "project={} and type='{}'".format(
+        return self.generic_jira.issues_with_subtasks(
             self.marketplace_project_code,
-            self.application_field_code)
-        return self.jira.search_issues(SEARCH)
+            ASSESSMENT_ISSUE_TYPE
+        )
 
     def assessment_tasks_by_application_id(self):
         assessment_issues = self.generic_jira.issues_with_subtasks(
@@ -57,7 +65,10 @@ class MarketplaceJIRA(object):
 
         def task_info(t):
             info = {
+                'id': t['id'],
+                'key': t['key'],
                 'self': t['self'],
+                'link': self.make_link(t['key']),
                 'summary': t['fields']['summary'],
                 'status': t['fields']['status']['name']
             }

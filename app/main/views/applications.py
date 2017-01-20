@@ -164,7 +164,7 @@ def applications_list_response(with_task_status=False):
 
         def annotate_app(app):
             try:
-                app['tasks'] = tasks_by_id[str(app['id'])]
+                app['tasks'] = tasks_by_id.get(str(app['id']), None)
             except KeyError:
                 pass
             return app

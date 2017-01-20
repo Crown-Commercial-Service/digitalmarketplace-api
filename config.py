@@ -103,6 +103,8 @@ class Development(Config):
     JIRA_MARKETPLACE_PROJECT_CODE = 'MARADMIN'
     JIRA_APPLICATION_FIELD_CODE = 'customfield_11000'
 
+    JIRA_FEATURES = True
+
 
 class Live(Config):
     """Base config for deployed environments"""

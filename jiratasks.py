@@ -21,15 +21,15 @@ def create_assessment_task(application_id):
         j.create_assessment_task(a)
 
 
-def list_assessment_tasks():
+def list_tasks():
     with jira_with_app_context() as j:
         assessment_tasks = j.get_assessment_tasks()
 
         for t in assessment_tasks:
-            p(t.raw)
+            p(t)
 
 
-def list_assessment_tasks_with_subtasks():
+def tasks_by_id():
     with jira_with_app_context() as j:
         p(j.assessment_tasks_by_application_id())
 
@@ -50,6 +50,6 @@ def connect():
 if __name__ == '__main__':
     try:
         task_method = getattr(sys.modules[__name__], sys.argv[1])
+        task_method(*sys.argv[2:])
     except AttributeError:
         print('no such task')
-    task_method(*sys.argv[2:])

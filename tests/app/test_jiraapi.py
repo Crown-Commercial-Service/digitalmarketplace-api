@@ -56,6 +56,7 @@ class TestJira(BaseApplicationTest):
     def test_assessment_tasks_by_application_id(self, JIRA, get_api_oauth):
         with self.app.app_context() as a:
             j = JIRA()
+            j.server_info.return_value = {'baseUrl': 'http://jira.example.com'}
             get_api_oauth.return_value = j
 
             mj = get_marketplace_jira()
@@ -71,28 +72,38 @@ class TestJira(BaseApplicationTest):
                     'summary': 'a task',
                     'status': {'name': 'To Do'}
                 },
-                'self': 'http://topissue'
+                'self': 'http://api/topissue',
+                'id': 98,
+                'key': 'T-98'
             }
 
             j.search_issues.return_value = [issue_object]
 
             specific = mock.Mock()
             specific.return_value = {
+                'id': 99,
+                'key': 'T-99',
                 'fields': {
                     'summary': 'A subtask',
                     'status': {'name': 'Done'}
                 },
-                'self': 'http://subissue'
+                'self': 'http://api/subissue'
             }
             mj.generic_jira.get_specific_issue = specific
 
             assert mj.assessment_tasks_by_application_id() == {
                 9: {
-                    u'self': u'http://topissue',
+                    'id': 98,
+                    'key': 'T-98',
+                    u'self': u'http://api/topissue',
+                    u'link': 'http://jira.example.com/browse/T-98',
                     u'status': u'To Do',
                     u'subtasks': [
                         {
-                            u'self': u'http://subissue',
+                            'id': 99,
+                            'key': 'T-99',
+                            u'self': u'http://api/subissue',
+                            u'link': 'http://jira.example.com/browse/T-99',
                             u'status': u'Done',
                             u'summary': u'A subtask'
                         }
