@@ -8,10 +8,10 @@ from app import db
 
 from nose.tools import assert_equal, assert_in, assert_false
 
-from tests.helpers import FixtureMixin, ExampleListingMixin
+from tests.helpers import FixtureMixin, load_example_listing
 
 
-class TestDraftServices(BaseApplicationTest, ExampleListingMixin):
+class TestDraftServices(BaseApplicationTest):
     service_id = None
     updater_json = None
     create_draft_json = None
@@ -19,7 +19,7 @@ class TestDraftServices(BaseApplicationTest, ExampleListingMixin):
     def setup(self):
         super(TestDraftServices, self).setup()
 
-        payload = self.load_example_listing("G6-IaaS")
+        payload = load_example_listing("G6-IaaS")
 
         self.service_id = str(payload['id'])
         self.updater_json = {
@@ -913,7 +913,7 @@ class TestDraftServices(BaseApplicationTest, ExampleListingMixin):
         assert_equal(res.status_code, 201)
         draft = json.loads(res.get_data())['services']
 
-        g7_complete = self.load_example_listing("G7-SCS").copy()
+        g7_complete = load_example_listing("G7-SCS").copy()
         g7_complete.pop('id')
         draft_update_json = {'services': g7_complete,
                              'updated_by': 'joeblogs'}
@@ -1134,7 +1134,7 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
         assert_false("sfiaRateDocumentURL" in data['services'])
 
 
-class TestCompleteDraft(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMixin):
+class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = '/draft-services/{self.draft_id}/complete'
     method = 'post'
 
@@ -1153,7 +1153,7 @@ class TestCompleteDraft(BaseApplicationTest, ExampleListingMixin, JSONUpdateTest
             )
             Framework.query.filter_by(slug='g-cloud-7').update(dict(status='open'))
             db.session.commit()
-        draft_json = self.load_example_listing("G7-SCS")
+        draft_json = load_example_listing("G7-SCS")
         draft_json['frameworkSlug'] = 'g-cloud-7'
         create_draft_json = {
             'updated_by': 'joeblogs',
@@ -1233,14 +1233,14 @@ class TestCompleteDraft(BaseApplicationTest, ExampleListingMixin, JSONUpdateTest
         assert_in('serviceSummary', errors)
 
 
-class TestDOSServices(BaseApplicationTest, FixtureMixin, ExampleListingMixin):
+class TestDOSServices(BaseApplicationTest, FixtureMixin):
     updater_json = None
     create_draft_json = None
 
     def setup(self):
         super(TestDOSServices, self).setup()
 
-        payload = self.load_example_listing("DOS-digital-specialist")
+        payload = load_example_listing("DOS-digital-specialist")
         self.updater_json = {
             'updated_by': 'joeblogs'
         }
@@ -1495,7 +1495,7 @@ class TestDOSServices(BaseApplicationTest, FixtureMixin, ExampleListingMixin):
         assert_equal(complete.status_code, 400)
 
 
-class TestUpdateDraftStatus(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMixin):
+class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = '/draft-services/{self.draft_id}/update-status'
     method = 'post'
 
@@ -1514,7 +1514,7 @@ class TestUpdateDraftStatus(BaseApplicationTest, ExampleListingMixin, JSONUpdate
             )
             Framework.query.filter_by(slug='g-cloud-7').update(dict(status='open'))
             db.session.commit()
-        draft_json = self.load_example_listing("G7-SCS")
+        draft_json = load_example_listing("G7-SCS")
         draft_json['frameworkSlug'] = 'g-cloud-7'
         create_draft_json = {
             'updated_by': 'joeblogs',

@@ -8,7 +8,7 @@ from app.models import Service, Supplier, ContactInformation, Framework, \
     AuditEvent, FrameworkLot
 import mock
 from app import db, create_app
-from tests.helpers import TEST_SUPPLIERS_COUNT, FixtureMixin, ExampleListingMixin
+from tests.helpers import TEST_SUPPLIERS_COUNT, FixtureMixin, load_example_listing
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from sqlalchemy.exc import IntegrityError
 from dmapiclient import HTTPError
@@ -16,19 +16,19 @@ from dmutils.formats import DATETIME_FORMAT
 from dmapiclient.audit import AuditTypes
 
 
-class TestListServicesOrdering(BaseApplicationTest, ExampleListingMixin):
+class TestListServicesOrdering(BaseApplicationTest):
     def setup_services(self):
         with self.app.app_context():
             self.app.config['DM_API_SERVICES_PAGE_SIZE'] = 10
             now = datetime.utcnow()
 
-            g5_saas = self.load_example_listing("G5")
-            g5_paas = self.load_example_listing("G5")
-            g6_paas_2 = self.load_example_listing("G6-PaaS")
-            g6_iaas_1 = self.load_example_listing("G6-IaaS")
-            g6_paas_1 = self.load_example_listing("G6-PaaS")
-            g6_saas = self.load_example_listing("G6-SaaS")
-            g6_iaas_2 = self.load_example_listing("G6-IaaS")
+            g5_saas = load_example_listing("G5")
+            g5_paas = load_example_listing("G5")
+            g6_paas_2 = load_example_listing("G6-PaaS")
+            g6_iaas_1 = load_example_listing("G6-IaaS")
+            g6_paas_1 = load_example_listing("G6-PaaS")
+            g6_saas = load_example_listing("G6-SaaS")
+            g6_iaas_2 = load_example_listing("G6-IaaS")
 
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
@@ -441,14 +441,14 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
         assert data['error'] == 'Role must be specified for Digital Specialists'
 
 
-class TestPostService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMixin):
+class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = '/services/{self.service_id}'
     method = 'post'
     service_id = None
 
     def setup(self):
         super(TestPostService, self).setup()
-        payload = self.load_example_listing("G6-IaaS")
+        payload = load_example_listing("G6-IaaS")
         self.service_id = str(payload['id'])
         with self.app.app_context():
             db.session.add(
@@ -967,7 +967,7 @@ class TestPostService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMi
 
     def test_update_g5_service(self):
         with self.app.app_context():
-            payload = self.load_example_listing('G5')
+            payload = load_example_listing('G5')
 
             response = self.client.put('/services/{}'.format(payload['id']),
                                        data=json.dumps({
@@ -989,7 +989,7 @@ class TestPostService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMi
 
 
 @mock.patch('app.service_utils.search_api_client')
-class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest, ExampleListingMixin):
+class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
         with self.app.app_context():
@@ -1003,7 +1003,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest, ExampleLi
         with self.app.app_context():
             search_api_client.index.return_value = True
 
-            payload = self.load_example_listing("G6-IaaS")
+            payload = load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             response = self.client.put(
                 '/services/1234567890123456',
@@ -1025,7 +1025,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest, ExampleLi
         with self.app.app_context():
             search_api_client.index.return_value = True
 
-            payload = self.load_example_listing("G4")
+            payload = load_example_listing("G4")
             res = self.client.put(
                 '/services/' + payload["id"],
                 data=json.dumps(
@@ -1044,7 +1044,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest, ExampleLi
         with self.app.app_context():
             search_api_client.index.side_effect = HTTPError()
 
-            payload = self.load_example_listing("G6-IaaS")
+            payload = load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             response = self.client.put(
                 '/services/1234567890123456',
@@ -1059,12 +1059,12 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest, ExampleLi
 
 
 @mock.patch('app.service_utils.search_api_client')
-class TestShouldCallSearchApiOnPost(BaseApplicationTest, ExampleListingMixin):
+class TestShouldCallSearchApiOnPost(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPost, self).setup()
         now = datetime.utcnow()
-        payload = self.load_example_listing("G6-IaaS")
-        g4_payload = self.load_example_listing("G4")
+        payload = load_example_listing("G6-IaaS")
+        g4_payload = load_example_listing("G4")
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
@@ -1091,7 +1091,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, ExampleListingMixin):
         with self.app.app_context():
             search_api_client.index.return_value = True
 
-            payload = self.load_example_listing("G6-IaaS")
+            payload = load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             self.client.post(
                 '/services/1234567890123456',
@@ -1116,7 +1116,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, ExampleListingMixin):
             db_session_commit.side_effect = IntegrityError(
                 'message', 'statement', 'params', 'orig')
 
-            payload = self.load_example_listing("G6-IaaS")
+            payload = load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             self.client.post(
                 '/services/1234567890123456',
@@ -1134,7 +1134,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, ExampleListingMixin):
         with self.app.app_context():
             search_api_client.index.return_value = True
 
-            payload = self.load_example_listing("G4")
+            payload = load_example_listing("G4")
             res = self.client.post(
                 '/services/4-G2-0123-456',
                 data=json.dumps(
@@ -1151,7 +1151,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, ExampleListingMixin):
         with self.app.app_context():
             search_api_client.index.side_effect = HTTPError()
 
-            payload = self.load_example_listing("G6-IaaS")
+            payload = load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             response = self.client.post(
                 '/services/1234567890123456',
@@ -1165,7 +1165,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, ExampleListingMixin):
             assert_equal(response.status_code, 200, response.get_data())
 
 
-class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, ExampleListingMixin):
+class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPostStatusUpdate, self).setup()
         now = datetime.utcnow()
@@ -1183,7 +1183,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, ExampleList
             )
 
             for index, status in enumerate(valid_statuses):
-                payload = self.load_example_listing("G6-IaaS")
+                payload = load_example_listing("G6-IaaS")
 
                 # give each service a different id.
                 new_id = int(payload['id']) + index
@@ -1328,13 +1328,13 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, ExampleList
         assert_equal(response.status_code, 200)
 
 
-class TestPutService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMixin):
+class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
     method = "put"
     endpoint = "/services/1234567890123456"
 
     def setup(self):
         super(TestPutService, self).setup()
-        payload = self.load_example_listing("G6-IaaS")
+        payload = load_example_listing("G6-IaaS")
         del payload['id']
         with self.app.app_context():
             db.session.add(
@@ -1355,7 +1355,7 @@ class TestPutService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMix
             'supplierName', 'links', 'frameworkSlug', 'updatedAt', 'createdAt', 'frameworkName', 'status', 'id',
             'supplierId', 'updatedAt', 'createdAt']
         with self.app.app_context():
-            payload = self.load_example_listing("G6-IaaS")
+            payload = load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
 
             response = self.client.put(
@@ -1380,7 +1380,7 @@ class TestPutService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMix
         with self.app.app_context():
             search_api_client.index.return_value = "bar"
 
-            payload = self.load_example_listing("G6-IaaS")
+            payload = load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             response = self.client.put(
                 '/services/1234567890123456',
@@ -1420,7 +1420,7 @@ class TestPutService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMix
         with self.app.app_context():
             search_api_client.index.return_value = "bar"
 
-            payload = self.load_example_listing("G6-IaaS")
+            payload = load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             payload['serviceSummary'] = "    A new summary with   space    "
             payload['serviceFeatures'] = ["    ",
@@ -1460,7 +1460,7 @@ class TestPutService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMix
         with self.app.app_context():
             search_api_client.index.return_value = "bar"
 
-            payload = self.load_example_listing("G6-IaaS")
+            payload = load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             response = self.client.put(
                 '/services/1234567890123456',
@@ -1501,7 +1501,7 @@ class TestPutService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMix
 
     def test_add_a_new_service_with_status_disabled(self):
         with self.app.app_context():
-            payload = self.load_example_listing("G4")
+            payload = load_example_listing("G4")
             payload['id'] = "4-disabled"
             payload['status'] = "disabled"
             response = self.client.put(
@@ -1561,7 +1561,7 @@ class TestPutService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMix
         assert_in(b'Invalid service ID supplied', response.get_data())
 
     def test_invalid_service_status(self):
-        payload = self.load_example_listing("G4")
+        payload = load_example_listing("G4")
         payload['id'] = "4-invalid-status"
         payload['status'] = "foo"
         response = self.client.put(
@@ -1575,7 +1575,7 @@ class TestPutService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMix
         assert_in("Invalid status value 'foo'", json.loads(response.get_data())['error'])
 
     def test_invalid_service_lot(self):
-        payload = self.load_example_listing("G4")
+        payload = load_example_listing("G4")
         payload['id'] = "4-invalid-lot"
         payload['lot'] = "foo"
         response = self.client.put(
@@ -1589,7 +1589,7 @@ class TestPutService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMix
         assert_in("Incorrect lot 'foo' for framework 'g-cloud-4'", json.loads(response.get_data())['error'])
 
     def test_invalid_service_data(self):
-        payload = self.load_example_listing("G6-IaaS")
+        payload = load_example_listing("G6-IaaS")
         payload['id'] = "1234567890123456"
 
         payload['priceMin'] = 23.45
@@ -1607,7 +1607,7 @@ class TestPutService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMix
 
     def test_add_a_service_with_unknown_supplier_id(self):
         with self.app.app_context():
-            payload = self.load_example_listing("G6-IaaS")
+            payload = load_example_listing("G6-IaaS")
             payload['id'] = "6543210987654321"
             payload['supplierId'] = 100
             response = self.client.put(
@@ -1624,7 +1624,7 @@ class TestPutService(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMix
 
     def test_supplier_name_in_service_data_is_shadowed(self):
         with self.app.app_context():
-            payload = self.load_example_listing("G6-IaaS")
+            payload = load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             payload['supplierId'] = 1
             payload['supplierName'] = u'New Name'

@@ -1,26 +1,23 @@
 from datetime import datetime
-from flask import json
-import pytest
-from freezegun import freeze_time
-from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true, assert_is
 from random import randint
 
-from dmapiclient.audit import AuditTypes
+from flask import json
+from freezegun import freeze_time
+from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true
 
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
     SupplierFramework, Framework, FrameworkAgreement, DraftService, Service
-from tests.bases import JSONTestMixin, JSONUpdateTestMixin
-from tests.helpers import fixture_params, FixtureMixin, ExampleListingMixin
 from tests.bases import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
+from tests.helpers import fixture_params, FixtureMixin, load_example_listing
 
 
-class TestGetSupplier(BaseApplicationTest, ExampleListingMixin, FixtureMixin):
+class TestGetSupplier(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestGetSupplier, self).setup()
 
         with self.app.app_context():
-            payload = self.load_example_listing("Supplier")
+            payload = load_example_listing("Supplier")
             self.supplier = payload
             self.supplier_id = payload['id']
 
@@ -59,7 +56,7 @@ class TestGetSupplier(BaseApplicationTest, ExampleListingMixin, FixtureMixin):
     def test_supplier_client_key_still_exists_even_without_clients(self):
         # Insert a new supplier with a different id and no clients
         with self.app.app_context():
-            new_payload = self.load_example_listing("Supplier")
+            new_payload = load_example_listing("Supplier")
             new_payload['id'] = 111111
             new_payload['clients'] = []
             new_payload['dunsNumber'] = str(randint(111111111, 9999999999))
@@ -282,7 +279,7 @@ class TestListSuppliersByDunsNumber(BaseApplicationTest):
         assert_equal(2, len(data['suppliers']))
 
 
-class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
+class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
     method = "put"
     endpoint = "/suppliers/123456"
 
@@ -303,7 +300,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
 
     def test_add_a_new_supplier(self):
         with self.app.app_context():
-            payload = self.load_example_listing("Supplier")
+            payload = load_example_listing("Supplier")
             response = self.put_import_supplier(payload)
             assert_equal(response.status_code, 201)
             supplier = Supplier.query.filter(
@@ -313,7 +310,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
 
     def test_null_clients_list(self):
         with self.app.app_context():
-            payload = self.load_example_listing("Supplier")
+            payload = load_example_listing("Supplier")
             del payload['clients']
 
             response = self.put_import_supplier(payload)
@@ -327,7 +324,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
 
     def test_reinserting_the_same_supplier(self):
         with self.app.app_context():
-            payload = self.load_example_listing("Supplier")
+            payload = load_example_listing("Supplier")
             example_listing_contact_information = payload['contactInformation']
 
             # Exact loop number is arbitrary
@@ -362,13 +359,13 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                 )
 
     def test_cannot_put_to_root_suppliers_url(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
 
         response = self.put_import_supplier(payload, "")
         assert_equal(response.status_code, 405)
 
     def test_supplier_json_id_does_not_match_route_id_parameter(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
 
         response = self.put_import_supplier(payload, '/1234567890')
         assert_equal(response.status_code, 400)
@@ -376,7 +373,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                   json.loads(response.get_data())['error'])
 
     def test_when_supplier_has_missing_contact_information(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
         payload.pop('contactInformation')
 
         response = self.put_import_supplier(payload)
@@ -386,7 +383,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
     def test_when_supplier_has_malformed_contact_information(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
         payload['contactInformation'] = {
             'wobble': 'woo'
         }
@@ -400,7 +397,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
     def test_when_supplier_has_a_missing_key(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
         payload.pop('id')
 
         response = self.put_import_supplier(payload)
@@ -412,7 +409,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                 item, json.loads(response.get_data())['error'])
 
     def test_when_supplier_has_missing_keys(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
 
         # only one key is returned in the error message
         payload.pop('id')
@@ -427,7 +424,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                 item, json.loads(response.get_data())['error'])
 
     def test_when_supplier_contact_information_has_a_missing_key(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
 
         payload['contactInformation'][0].pop('email')
 
@@ -440,7 +437,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                 item, json.loads(response.get_data())['error'])
 
     def test_when_supplier_contact_information_has_missing_keys(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
 
         # only one key is returned in the error message
         payload['contactInformation'][0].pop('email')
@@ -455,7 +452,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                 item, json.loads(response.get_data())['error'])
 
     def test_when_supplier_has_extra_keys(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
 
         payload.update({'newKey': 1})
 
@@ -465,7 +462,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                   json.loads(response.get_data())['error'])
 
     def test_when_supplier_contact_information_has_extra_keys(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
 
         payload['contactInformation'][0].update({'newKey': 1})
 
@@ -475,7 +472,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                   json.loads(response.get_data())['error'])
 
     def test_supplier_duns_number_invalid(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
 
         payload.update({'dunsNumber': "only-digits-permitted"})
 
@@ -486,7 +483,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
     def test_supplier_esourcing_id_invalid(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
 
         payload.update({'eSourcingId': "only-digits-permitted"})
 
@@ -497,7 +494,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
     def test_when_supplier_contact_information_email_invalid(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
 
         payload['contactInformation'][0].update({'email': "bad-email-99"})
 
@@ -508,7 +505,7 @@ class TestPutSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
 
-class TestUpdateSupplier(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMixin):
+class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
     method = "post"
     endpoint = "/suppliers/123456"
 
@@ -516,7 +513,7 @@ class TestUpdateSupplier(BaseApplicationTest, ExampleListingMixin, JSONUpdateTes
         super(TestUpdateSupplier, self).setup()
 
         with self.app.app_context():
-            payload = self.load_example_listing("Supplier")
+            payload = load_example_listing("Supplier")
             self.supplier = payload
             self.supplier_id = payload['id']
 
@@ -568,7 +565,7 @@ class TestUpdateSupplier(BaseApplicationTest, ExampleListingMixin, JSONUpdateTes
             })
 
     def test_update_response_matches_payload(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
         response = self.update_request({'name': "New Name"})
         assert_equal(response.status_code, 200)
 
@@ -653,7 +650,7 @@ class TestUpdateSupplier(BaseApplicationTest, ExampleListingMixin, JSONUpdateTes
         assert_equal(response.status_code, 400)
 
 
-class TestUpdateContactInformation(BaseApplicationTest, ExampleListingMixin, JSONUpdateTestMixin):
+class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
     method = "post"
     endpoint = "/suppliers/123456/contact-information/{self.contact_id}"
 
@@ -661,7 +658,7 @@ class TestUpdateContactInformation(BaseApplicationTest, ExampleListingMixin, JSO
         super(TestUpdateContactInformation, self).setup()
 
         with self.app.app_context():
-            payload = self.load_example_listing("Supplier")
+            payload = load_example_listing("Supplier")
             self.supplier = payload
             self.supplier_id = payload['id']
 
@@ -720,7 +717,7 @@ class TestUpdateContactInformation(BaseApplicationTest, ExampleListingMixin, JSO
             })
 
     def test_update_response_matches_payload(self):
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
         response = self.update_request({
             'city': "New City"
         })
@@ -908,7 +905,7 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
             assert_equal(supplier_framework.declaration['question'], 'answer2')
 
 
-class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
+class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
     method = "post"
     endpoint = "/suppliers"
 
@@ -926,7 +923,7 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
 
     def test_add_a_new_supplier(self):
         with self.app.app_context():
-            payload = self.load_example_listing("new-supplier")
+            payload = load_example_listing("new-supplier")
             response = self.post_supplier(payload)
             assert_equal(response.status_code, 201)
             assert_is_not_none(Supplier.query.filter(
@@ -935,7 +932,7 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
 
     def test_null_clients_list(self):
         with self.app.app_context():
-            payload = self.load_example_listing("new-supplier")
+            payload = load_example_listing("new-supplier")
             del payload['clients']
 
             response = self.post_supplier(payload)
@@ -948,7 +945,7 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
             assert_equal(supplier.clients, [])
 
     def test_when_supplier_has_missing_contact_information(self):
-        payload = self.load_example_listing("new-supplier")
+        payload = load_example_listing("new-supplier")
         payload.pop('contactInformation')
 
         response = self.post_supplier(payload)
@@ -958,7 +955,7 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
     def test_when_supplier_has_malformed_contact_information(self):
-        payload = self.load_example_listing("new-supplier")
+        payload = load_example_listing("new-supplier")
         payload['contactInformation'] = {
             'waa': 'woo'
         }
@@ -972,7 +969,7 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
     def test_when_supplier_has_a_missing_key(self):
-        payload = self.load_example_listing("new-supplier")
+        payload = load_example_listing("new-supplier")
         payload.pop('name')
 
         response = self.post_supplier(payload)
@@ -982,7 +979,7 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
     def test_when_supplier_contact_information_has_a_missing_key(self):
-        payload = self.load_example_listing("new-supplier")
+        payload = load_example_listing("new-supplier")
 
         payload['contactInformation'][0].pop('email')
 
@@ -993,7 +990,7 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
     def test_when_supplier_has_extra_keys(self):
-        payload = self.load_example_listing("new-supplier")
+        payload = load_example_listing("new-supplier")
 
         payload.update({'newKey': 1})
 
@@ -1003,7 +1000,7 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                   json.loads(response.get_data())['error'])
 
     def test_when_supplier_contact_information_has_extra_keys(self):
-        payload = self.load_example_listing("new-supplier")
+        payload = load_example_listing("new-supplier")
 
         payload['contactInformation'][0].update({'newKey': 1})
 
@@ -1013,7 +1010,7 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                   json.loads(response.get_data())['error'])
 
     def test_supplier_duns_number_invalid(self):
-        payload = self.load_example_listing("new-supplier")
+        payload = load_example_listing("new-supplier")
 
         payload.update({'dunsNumber': "only-digits-permitted"})
 
@@ -1024,7 +1021,7 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
     def test_supplier_esourcing_id_invalid(self):
-        payload = self.load_example_listing("new-supplier")
+        payload = load_example_listing("new-supplier")
 
         payload.update({'eSourcingId': "only-digits-permitted"})
 
@@ -1035,7 +1032,7 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
     def test_supplier_companies_house_invalid(self):
-        payload = self.load_example_listing("new-supplier")
+        payload = load_example_listing("new-supplier")
 
         payload.update({'companiesHouseNumber': "longer-than-allowed"})
 
@@ -1046,7 +1043,7 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
     def test_when_supplier_contact_information_email_invalid(self):
-        payload = self.load_example_listing("new-supplier")
+        payload = load_example_listing("new-supplier")
 
         payload['contactInformation'][0].update({'email': "bad-email-99"})
 
@@ -1057,8 +1054,8 @@ class TestPostSupplier(BaseApplicationTest, ExampleListingMixin, JSONTestMixin):
                       json.loads(response.get_data())['error'])
 
     def test_should_not_be_able_to_import_same_duns_number(self):
-        payload1 = self.load_example_listing("new-supplier")
-        payload2 = self.load_example_listing("new-supplier")
+        payload1 = load_example_listing("new-supplier")
+        payload2 = load_example_listing("new-supplier")
 
         response = self.post_supplier(payload1)
         assert_equal(response.status_code, 201)

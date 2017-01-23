@@ -5,17 +5,17 @@ from app import db, encryption
 from app.models import User, Supplier
 from datetime import datetime
 from tests.bases import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
-from tests.helpers import FixtureMixin, ExampleListingMixin
+from tests.helpers import FixtureMixin, load_example_listing
 
 
-class BaseUserTest(BaseApplicationTest, ExampleListingMixin):
+class BaseUserTest(BaseApplicationTest):
     supplier = None
     supplier_id = None
     users = None
 
     def setup(self):
         super(BaseUserTest, self).setup()
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
         self.supplier = payload
         self.supplier_id = payload['id']
         self.users = []
@@ -1173,7 +1173,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         self._put_declaration(status='started')
 
     def _post_complete_draft_service(self):
-        payload = self.load_example_listing("DOS-digital-specialist")
+        payload = load_example_listing("DOS-digital-specialist")
 
         self.draft_json = {'services': payload}
         self.draft_json['services']['supplierId'] = self.supplier_id
