@@ -4,12 +4,14 @@ import os
 import json
 import pytest
 import pendulum
+import mock
 from datetime import timedelta
 
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Address, Service, Supplier, Framework, Lot, User, FrameworkLot, Brief, utcnow, PriceSchedule
+from app.models import Address, Service, Supplier, Framework, Lot, User, FrameworkLot, \
+    Brief, utcnow, Application, PriceSchedule
 
 from collections import Mapping, Iterable
 from six import string_types
@@ -383,6 +385,27 @@ class BaseApplicationTest(object):
     def set_framework_status(self, slug, status):
         Framework.query.filter_by(slug=slug).update({'status': status})
         db.session.commit()
+
+    @mock.patch('app.models.get_marketplace_jira')
+    def setup_dummy_application(self, mj, data=None):
+        if data is None:
+            data = self.application_data
+        with self.app.app_context():
+            application = Application(
+                data=data,
+            )
+
+            db.session.add(application)
+            db.session.flush()
+
+            application.submit_for_approval()
+            db.session.commit()
+
+            return application.id
+
+    @property
+    def application_data(self):
+        return INCOMING_APPLICATION_DATA
 
 
 class JSONTestMixin(object):

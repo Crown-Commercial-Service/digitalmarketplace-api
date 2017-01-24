@@ -7,7 +7,7 @@ from flask import current_app
 from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_none, assert_true, assert_false
 
 from app import db
-from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, Domain
+from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, Domain, User, utcnow
 from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, assert_api_compatible
 from decimal import Decimal
 
@@ -1185,3 +1185,78 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             assert audit.data['frameworkSlug'] == 'digital-outcomes-and-specialists'
             assert audit.data['update']['onFramework'] is True
             assert audit.data['update']['agreementReturned'] is True
+
+
+class TestSupplierApplication(BaseApplicationTest):
+    def setup(self):
+        super(TestSupplierApplication, self).setup()
+        with self.app.app_context():
+            payload = self.load_example_listing("Supplier")
+            self.supplier = payload
+            self.supplier_code = payload['code']
+
+            response = self.client.post(
+                '/suppliers'.format(self.supplier_code),
+                data=json.dumps({
+                    'supplier': self.supplier
+                }),
+                content_type='application/json')
+            json.loads(response.get_data())
+            assert_equal(response.status_code, 201)
+
+    def test_supplier_already_has_application(self):
+        application_id = self.setup_dummy_application()
+
+        with self.app.app_context():
+            response = self.client.patch(
+                '/suppliers/{}'.format(self.supplier_code),
+                data=json.dumps({
+                    'supplier': {'application_id': application_id},
+                    'updated_by': 'supplier@user.dmdev'
+                }),
+                content_type='application/json')
+
+            response = self.client.post(
+                '/suppliers/{}/create-application'.format(self.supplier_code),
+                data=json.dumps({'current_user': ''}),
+                content_type='application/json'
+            )
+
+            assert response.status_code == 400
+            assert 'Supplier already has application' in response.get_data()
+
+    def test_supplier_create_application(self):
+        with self.app.app_context():
+            user = User(
+                id=1,
+                email_address="test+1@digital.gov.au".format(id),
+                name="my name",
+                password="fake password",
+                active=True,
+                role='supplier',
+                password_changed_at=utcnow(),
+                supplier_code=self.supplier_code
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            response = self.client.post(
+                '/suppliers/{}/create-application'.format(self.supplier_code),
+                data=json.dumps({'current_user': {
+                    'name': 'my name',
+                    'email_address': 'test+1@digital.gov.au'}
+                }),
+                content_type='application/json'
+            )
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert 'application' in data
+            application = data['application']
+            assert application['status'] == 'saved'
+
+            user = User.query.filter(User.id == 1).first()
+            assert user.application_id == application['id']
+
+            supplier = Supplier.query.filter(Supplier.code == self.supplier_code).first()
+            assert supplier.data['application_id'] == application['id']
