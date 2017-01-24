@@ -622,12 +622,27 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
                         content_type='application/json')
                     assert response.status_code == 201, response.get_data(as_text=True)
 
+                with freeze_time(datetime.datetime(2016, 10, supplier_id+2, 10)):
+                    response = self.client.put(
+                        '/suppliers/{}/frameworks/g-cloud-8/declaration'.format(supplier_id),
+                        data=json.dumps({
+                            'updated_by': 'example',
+                            'declaration': {
+                                "status": "complete",
+                                "firstRegistered": "16/06/1904",
+                            },
+                        }),
+                        content_type='application/json')
+                    assert response.status_code == 201, response.get_data(as_text=True)
+
                 with freeze_time(datetime.datetime(2016, 10, supplier_id+3)):
                     response = self.client.post(
                         '/suppliers/{}/frameworks/g-cloud-8'.format(supplier_id),
                         data=json.dumps({
                             'updated_by': 'example',
-                            'frameworkInterest': {'onFramework': True}
+                            'frameworkInterest': {
+                                'onFramework': True,
+                            },
                         }),
                         content_type='application/json')
                     assert response.status_code == 200, response.get_data(as_text=True)
@@ -775,6 +790,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
         assert not any(
             (sf.get("agreementDetails") or {}).get("uploaderUserEmail") for sf in data["supplierFrameworks"]
         )
+        assert all(sf['declaration'] for sf in data['supplierFrameworks'])
 
     def _subtest_list_suppliers_by_agreement_returned_true(self):
         response = self.client.get(
@@ -785,6 +801,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 9, 8, 7, 6, 5, 4, 3,)
         assert all(sf["agreementReturnedAt"] for sf in data["supplierFrameworks"])
+        assert all(sf['declaration'] for sf in data['supplierFrameworks'])
 
     def _subtest_list_suppliers_by_agreement_returned_false(self):
         response = self.client.get(
@@ -795,14 +812,16 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (0, 1, 2,)
         assert all(sf['agreementReturnedAt'] is None for sf in data['supplierFrameworks'])
+        assert all(sf['declaration'] for sf in data['supplierFrameworks'])
 
     def _subtest_list_suppliers_by_status_signed(self):
-        response = self.client.get('/frameworks/g-cloud-8/suppliers?status=signed')
+        response = self.client.get('/frameworks/g-cloud-8/suppliers?status=signed&with_declarations=false')
 
         assert response.status_code == 200
         data = json.loads(response.get_data())
         assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (5, 3,)
         assert all(sf['agreementStatus'] == "signed" for sf in data['supplierFrameworks'])
+        assert not any('declaration' in sf for sf in data['supplierFrameworks'])
 
     def _subtest_list_suppliers_by_status_on_hold(self):
         response = self.client.get('/frameworks/g-cloud-8/suppliers?status=on-hold')
@@ -811,6 +830,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (4,)
         assert all(sf['agreementStatus'] == "on-hold" for sf in data['supplierFrameworks'])
+        assert all(sf['declaration'] for sf in data['supplierFrameworks'])
 
     def _subtest_list_suppliers_by_status_approved(self):
         response = self.client.get('/frameworks/g-cloud-8/suppliers?status=approved')
@@ -819,6 +839,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (6,)
         assert all(sf['agreementStatus'] == "approved" for sf in data['supplierFrameworks'])
+        assert all(sf['declaration'] for sf in data['supplierFrameworks'])
 
     def _subtest_list_suppliers_by_status_countersigned(self):
         response = self.client.get('/frameworks/g-cloud-8/suppliers?status=countersigned')
@@ -827,6 +848,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 9, 8, 7,)
         assert all(sf['agreementStatus'] == "countersigned" for sf in data['supplierFrameworks'])
+        assert all(sf['declaration'] for sf in data['supplierFrameworks'])
 
     def _subtest_list_suppliers_by_multiple_statuses_1(self):
         response = self.client.get('/frameworks/g-cloud-8/suppliers?status=approved,countersigned&with_users=true')
@@ -835,14 +857,16 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 9, 8, 7, 6,)
         assert all(sf['agreementStatus'] in ("approved", "countersigned") for sf in data['supplierFrameworks'])
+        assert all(sf['declaration'] for sf in data['supplierFrameworks'])
 
     def _subtest_list_suppliers_by_multiple_statuses_2(self):
-        response = self.client.get('/frameworks/g-cloud-8/suppliers?status=signed,approved')
+        response = self.client.get('/frameworks/g-cloud-8/suppliers?with_declarations=true&status=signed,approved')
 
         assert response.status_code == 200
         data = json.loads(response.get_data())
         assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (6, 5, 3,)
         assert all(sf['agreementStatus'] in ("approved", "signed") for sf in data['supplierFrameworks'])
+        assert all(sf['declaration'] for sf in data['supplierFrameworks'])
 
     def _subtest_list_suppliers_by_multiple_statuses_and_agreement_returned_true(self):
         response = self.client.get(
@@ -854,6 +878,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
         assert tuple(sf["supplierId"] for sf in data["supplierFrameworks"]) == (10, 9, 8, 7, 6,)
         assert all(sf['agreementStatus'] in ("approved", "countersigned") for sf in data['supplierFrameworks'])
         assert all(sf["agreementReturnedAt"] for sf in data["supplierFrameworks"])
+        assert all(sf['declaration'] for sf in data['supplierFrameworks'])
 
     def _subtest_list_suppliers_by_multiple_statuses_and_agreement_returned_false(self):
         response = self.client.get(

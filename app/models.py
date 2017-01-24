@@ -419,20 +419,25 @@ class SupplierFramework(db.Model):
             "agreedUserEmail": user.email_address,
         })
 
-    def serialize(self, data=None, with_users=False):
+    def serialize(self, data=None, with_users=False, with_declaration=True):
         agreed_variations = {
             k: self.serialize_agreed_variation(v, with_users=with_users)
             for k, v in iteritems(self.agreed_variations or {})
         }
 
-        supplier_framework = dict({
+        supplier_framework = {
             "supplierId": self.supplier_id,
             "supplierName": self.supplier.name,
             "frameworkSlug": self.framework.slug,
-            "declaration": self.declaration,
             "onFramework": self.on_framework,
             "agreedVariations": agreed_variations,
-        }, **(data or {}))
+        }
+        if with_declaration:
+            supplier_framework.update({
+                "declaration": self.declaration,
+            })
+        if data:
+            supplier_framework.update(data)
 
         agreement = self.current_framework_agreement
         if agreement:
