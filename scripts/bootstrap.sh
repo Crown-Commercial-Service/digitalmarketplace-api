@@ -8,7 +8,7 @@
 set -o pipefail
 
 if [ ! $VIRTUAL_ENV ]; then
-  virtualenv ./venv
+  make virtualenv
   . ./venv/bin/activate
 fi
 
