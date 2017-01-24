@@ -3,6 +3,16 @@ machine:
     - docker  # For monitoring
   timezone:
     Australia/Sydney
+  pre:
+    - sudo service postgresql stop
+    - sudo apt-get purge -y postgresql*
+    - sudo rm -rf /etc/postgresql
+    - sudo rm -rf /var/lib/postgresql
+    - sudo apt-get update
+    - sudo apt-get install postgresql-9.6
+    - sudo su - postgres -c "echo \"create user ubuntu with password 'ubuntu';\" | psql"
+    - sudo su - postgres -c "echo \"alter user ubuntu with superuser;\" | psql"
+    - sudo su - postgres -c "echo \"create database ubuntu;\" | psql"
   post:
     # For monitoring:
     - pip install awscli
@@ -15,18 +25,9 @@ dependencies:
     - curl -v -L -o cf-cli_amd64.deb 'https://cli.run.pivotal.io/stable?release=debian64&source=github'
     - sudo dpkg -i cf-cli_amd64.deb
     - cf -v
-  post:
-    - wget https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.5.0.tar.gz
-    - tar -xvf elasticsearch-1.5.0.tar.gz
-    - elasticsearch-1.5.0/bin/elasticsearch: {background: true}
-    # Make sure that Elasticsearch is up before running tests:
-    - sleep 10 && curl --retry 10 --retry-delay 5 -v http://127.0.0.1:9200/
+
   override:
     - pip install -r requirements.txt
-
-database:
-  override:
-    - psql -c 'create database digitalmarketplace_test;' -U postgres
 
 test:
   override:

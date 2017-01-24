@@ -3,6 +3,7 @@ import pytest
 import urllib2
 import time
 from freezegun import freeze_time
+from flask import current_app
 from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_none, assert_true, assert_false
 
 from app import db
@@ -468,13 +469,17 @@ class TestSupplierSearch(BaseApplicationTest):
             }),
             content_type='application/json')
 
+    def do_search(self, search_json):
+        with self.app.app_context():
+            response = self.search(search_json)
+            assert_equal(response.status_code, 200)
+            result = json.loads(response.get_data())
+        hits = result['hits']['hits']
+        return [h['_source'] for h in hits]
+
     def test_basic_search_hit(self):
         payload = self.load_example_listing("Supplier")
         response = self.post_supplier(payload)
-
-        # give the supplier search results time to update
-        # (eventual consistency is the root of all evil)
-        time.sleep(1)
 
         with self.app.app_context():
             response = self.search({'query': {'term': {'code': 1}}})
@@ -498,6 +503,83 @@ class TestSupplierSearch(BaseApplicationTest):
         result = json.loads(response.get_data())
         assert_equal(result['hits']['total'], 0)
         assert_equal(len(result['hits']['hits']), 0)
+
+    def test_search_results(self):
+        self.setup_dummy_suppliers_with_old_and_new_domains(5)
+
+        MATCH_ALL_SEARCH = {
+            "query": {
+                "match_all": {
+                }
+            },
+            "sort": [{'name': {"order": "desc", "mode": "min"}}]
+        }
+
+        CODE_SEARCH = {'query': {'term': {'code': 1}}}
+
+        KEYWORD_NAME_SEARCH = {
+            "query": {
+                "match_phrase_prefix": {
+                    'name': 'suppler 2'  # (sic)
+                }
+            }
+        }
+
+        LEGACY_DOMAIN_SEARCH = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "terms": {
+                            "prices.serviceRole.role": [
+                                {'role': 'Senior Ethical Hacker'},
+                                {'role': 'Junior Ethical Hacker'},
+                            ]
+                        }
+                    }
+                }
+            },
+        }
+
+        NEW_DOMAIN_SEARCH = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "terms": {
+                            "domains.assessed": ['Data science', 'Cyber security']
+                        }
+                    }
+                }
+            },
+        }
+
+        TRANSITION_DOMAIN_SEARCH = NEW_DOMAIN_SEARCH
+
+        results = self.do_search(MATCH_ALL_SEARCH)
+
+        assert len(results) == 5
+        assert results[0]['name'] == 'Supplier 4'
+
+        results = self.do_search(CODE_SEARCH)
+        assert len(results) == 1
+
+        results = self.do_search(KEYWORD_NAME_SEARCH)
+        assert len(results) == 5
+        assert results[0]['name'] == 'Supplier 2'
+
+        results = self.do_search(LEGACY_DOMAIN_SEARCH)
+        assert len(results) == 1
+        assert results[0]['name'] == 'Supplier 1'
+
+        results = self.do_search(TRANSITION_DOMAIN_SEARCH)
+        assert len(results) == 2
+        assert [_['name'] for _ in results] == ['Supplier 1', 'Supplier 2']
+
+        with self.app.app_context():
+            current_app.config['LEGACY_ROLE_MAPPING'] = False
+            results = self.do_search(NEW_DOMAIN_SEARCH)
+            assert len(results) == 1
+            assert results[0]['name'] == 'Supplier 2'
+            current_app.config['LEGACY_ROLE_MAPPING'] = True
 
 
 class TestCounts(BaseApplicationTest):

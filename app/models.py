@@ -32,7 +32,6 @@ from dmutils.data_tools import ValidationError, normalise_abn, normalise_acn, pa
 from dmapiclient.audit import AuditTypes
 
 from . import db
-from . import search_indices
 
 from app.utils import (
     link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data, filter_fields
@@ -720,14 +719,6 @@ class Supplier(db.Model):
         if acn is not None:
             acn = normalise_acn(acn)
         return acn
-
-
-def after_change_listener(mapper, connection, target):
-    search_indices.delete_indices()
-    search_indices.create_indices()
-
-event.listen(Supplier, 'after_insert', after_change_listener)
-event.listen(Supplier, 'after_update', after_change_listener)
 
 
 class Domain(db.Model):

@@ -1,6 +1,5 @@
 from functools import wraps
 from flask import Flask
-from flask_elasticsearch import FlaskElasticsearch
 import dmapiclient
 from dmutils import init_app, flask_featureflags
 
@@ -11,8 +10,6 @@ from .modelsbase import enc, CustomEncoder
 
 
 db = SQLAlchemy()
-
-es_client = FlaskElasticsearch()
 
 search_api_client = dmapiclient.SearchAPIClient()
 
@@ -27,8 +24,6 @@ def create_app(config_name):
         db=db,
         search_api_client=search_api_client
     )
-
-    es_client.init_app(application)
 
     if not application.config['DM_API_AUTH_TOKENS']:
         raise Exception("No DM_API_AUTH_TOKENS provided")

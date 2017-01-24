@@ -1,17 +1,15 @@
 from datetime import datetime
 
 from flask import abort, current_app, jsonify, request, url_for
-from elasticsearch import TransportError
 from sqlalchemy.exc import IntegrityError, DataError
 from .. import main
 from ... import db
 from ...models import (
-    Supplier, AuditEvent, SupplierFramework, Framework, PriceSchedule, User, Domain
+    Supplier, AuditEvent, SupplierFramework, Framework, PriceSchedule, User, Domain, ServiceRole, SupplierDomain
 )
 
-from app.search_indices import (
-    create_indices, delete_indices, es_client, get_supplier_index_name, index_supplier, SUPPLIER_DOC_TYPE
-)
+from sqlalchemy.sql import func, desc, or_, asc
+from functools import reduce
 
 from app.utils import (
     get_json_from_request, get_nonnegative_int_or_400, get_positive_int_or_400,
@@ -91,10 +89,6 @@ def delete_supplier(code):
     ).first_or_404()
 
     try:
-        es_client.delete(
-            index=get_supplier_index_name(),
-            doc_type=SUPPLIER_DOC_TYPE,
-            id=supplier.code)
         db.session.delete(supplier)
         db.session.commit()
     except TransportError, e:
@@ -111,8 +105,6 @@ def delete_suppliers():
     try:
         Supplier.query.delete()
         db.session.commit()
-        delete_indices()
-        create_indices()
     except TransportError, e:
         return jsonify(message=str(e)), e.status_code
     except IntegrityError as e:
@@ -133,23 +125,100 @@ def get_suppliers_stats():
 
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
-    create_indices()
+    search_query = get_json_from_request()
 
-    starting_offset = get_nonnegative_int_or_400(request.args, 'from', 0)
+    new_domains = False
+
+    offset = get_nonnegative_int_or_400(request.args, 'from', 0)
     result_count = get_positive_int_or_400(request.args, 'size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'])
 
     try:
-        result = es_client.search(index=get_supplier_index_name(),
-                                  doc_type=SUPPLIER_DOC_TYPE,
-                                  body=get_json_from_request(),
-                                  from_=starting_offset,
-                                  size=result_count)
-    except TransportError as e:
-        return jsonify(message=str(e)), e.status_code
+        sort_dir = search_query['sort'][0].values()[0]['order']
+    except (KeyError, IndexError):
+        sort_dir = 'asc'
+
+    try:
+        terms = search_query['query']['filtered']['filter']['terms']
+
+        new_domains = 'prices.serviceRole.role' not in terms
+
+        if new_domains:
+            roleslist = terms['domains.assessed']
+        else:
+            roles = terms['prices.serviceRole.role']
+            roleslist = set(_['role'][7:] for _ in roles)
+    except (KeyError, IndexError):
+        roleslist = []
+
+    try:
+        search_term = search_query['query']['match_phrase_prefix']['name']
+    except KeyError:
+        search_term = ''
+
+    EXCLUDE_LEGACY_ROLES = not current_app.config['LEGACY_ROLE_MAPPING']
+
+    if new_domains:
+        q = db.session.query(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
+    else:
+        q = db.session.query(Supplier).outerjoin(PriceSchedule).outerjoin(ServiceRole)
+
+    try:
+        code = search_query['query']['term']['code']
+        q = q.filter(Supplier.code == code)
+    except KeyError:
+        pass
+
+    if roleslist:
+        if new_domains:
+            if EXCLUDE_LEGACY_ROLES:
+                # can use this more efficient and faster code once
+                # lecacy roles have been fully migrated
+                condition = reduce(or_, ((Domain.name == _) for _ in roleslist))
+                q = q.filter(condition)
+        else:
+            condition = reduce(or_, (ServiceRole.name.like('%{}'.format(_)) for _ in roleslist))
+            q = q.filter(condition)
+
+    if sort_dir == 'desc':
+        ob = [desc(Supplier.name)]
+    else:
+        ob = [asc(Supplier.name)]
+
+    if search_term:
+        ob = [
+            desc(
+                func.similarity(
+                    search_term,
+                    Supplier.name)
+            )
+        ] + ob
+
+    q = q.order_by(*ob)
+    results = list(q)
+
+    if roleslist and new_domains and not EXCLUDE_LEGACY_ROLES:
+        # this code includes lecacy domains in results but is slower.
+        # can be removed once fully migrated to new domains.
+        results = [
+            _ for _ in results
+            if (
+                set(_.assessed_domains) & set(roleslist)
+            )
+        ]
+
+    sliced_results = results[offset:offset+result_count]
+
+    result = {
+        'hits': {
+            'total': len(results),
+            'hits': [{'_source': r} for r in sliced_results]
+        }
+    }
+
+    try:
+        return jsonify(result), 200
     except Exception as e:
         return jsonify(message=str(e)), 500
-
-    return jsonify(result), 200
 
 
 def update_supplier_data_impl(supplier, supplier_data, success_code):
@@ -161,9 +230,6 @@ def update_supplier_data_impl(supplier, supplier_data, success_code):
 
         db.session.add(supplier)
         db.session.commit()
-        index_supplier(supplier)
-    except TransportError, e:
-        return jsonify(message=str(e)), e.status_code
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400

@@ -2,16 +2,22 @@ from __future__ import absolute_import
 
 import pytest
 
-from .app import setup, teardown
-
 from app import create_app
 from app.models import db, Framework
 
 
+from sqlbag import temporary_database, S
+
+from .app import setup
+
+
 @pytest.fixture(autouse=True, scope='session')
-def db_migration(request):
-    setup()
-    request.addfinalizer(teardown)
+def db_initialization(request):
+    with temporary_database() as dburi:
+        with S(dburi) as s:
+            s.execute('create extension if not exists pg_trgm;')
+        setup(dburi)
+        yield
 
 
 @pytest.fixture(scope='session')

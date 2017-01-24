@@ -39,10 +39,6 @@ setup(
         'docopt',
         'six',
 
-        # Elasticsearch 1.0
-        'elasticsearch>=1.0.0,<2.0.0',
-        'Flask-Elasticsearch',
-
         'pendulum',
         'jira',
         'pyjwt'

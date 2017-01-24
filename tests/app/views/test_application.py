@@ -194,8 +194,6 @@ class TestApproveApplication(BaseApplicationsTest):
         assert j['supplier_code'] == j['supplier']['code']
         assert 'supplier' in j['links']
 
-        time.sleep(1)
-
         response = self.search({'query': {'term': {'code': j['supplier_code']}}})
         assert response.status_code == 200
         result = json.loads(response.get_data())
@@ -244,17 +242,6 @@ class TestUpdateApplication(BaseApplicationsTest):
 
         data = json.loads(res.get_data(as_text=True))
         assert data['application']['foo'] == 'baz'
-
-    def test_empty_patch(self):
-        res = self.patch_application(
-            application_id=self.application_id,
-            data={}
-        )
-
-        assert res.status_code == 200
-
-        data = json.loads(res.get_data(as_text=True))
-        assert data['application']['foo'] == self.application_data['foo']
 
     def test_patch_missing_order(self):
         res = self.patch_application(

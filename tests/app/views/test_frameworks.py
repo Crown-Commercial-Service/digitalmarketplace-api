@@ -7,6 +7,8 @@ from dateutil.parser import parse as parse_time
 from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
 from app.models import db, Framework, SupplierFramework, DraftService, User, FrameworkLot
 
+import pytest
+
 
 class TestListFrameworks(BaseApplicationTest):
     def test_all_frameworks_are_returned(self):
@@ -363,6 +365,7 @@ class TestFrameworkStats(BaseApplicationTest):
         self.setup_supplier_data()
         self.setup_framework_data(framework_slug)
 
+    @pytest.mark.skip()
     def test_stats(self):
         self.setup_supplier_data()
         self.setup_framework_data('g-cloud-7')

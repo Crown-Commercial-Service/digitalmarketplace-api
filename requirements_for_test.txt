@@ -12,7 +12,11 @@ freezegun
 nose
 coverage
 pytest-cov
+pytest-xdist
+pytest-sugar
 python-coveralls
 hypothesis
 rollbar
 blinker
+sqlbag
+migra

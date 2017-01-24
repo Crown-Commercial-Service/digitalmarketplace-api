@@ -9,8 +9,6 @@ class Config:
     DM_SEARCH_API_URL = None
     DM_SEARCH_API_AUTH_TOKEN = None
     DM_API_AUTH_TOKENS = None
-    ELASTICSEARCH_HOST = os.getenv('DM_ELASTICSEARCH_URL', 'localhost:9200')
-    DM_API_ELASTICSEARCH_INDEX_SUFFIX = ''
     ES_ENABLED = True
     AUTH_REQUIRED = True
     DM_HTTP_PROTO = 'http'
@@ -39,7 +37,7 @@ class Config:
     DM_API_PAGE_SIZE = 100
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     SQLALCHEMY_RECORD_QUERIES = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace'
+    SQLALCHEMY_DATABASE_URI = 'postgresql:///digitalmarketplace'
     BASE_TEMPLATE_DATA = {}
 
     DM_FAILED_LOGIN_LIMIT = 5
@@ -61,14 +59,15 @@ class Config:
 
     ROLLBAR_TOKEN = None
 
+    LEGACY_ROLE_MAPPING = True
+
 
 class Test(Config):
     DM_SEARCH_API_AUTH_TOKEN = 'test'
     DM_SEARCH_API_URL = 'http://localhost'
-    DM_API_ELASTICSEARCH_INDEX_SUFFIX = '_test'
     DEBUG = True
     ES_ENABLED = False
-    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace_test'
+    SQLALCHEMY_DATABASE_URI = 'postgresql:///digitalmarketplace_test'
     DM_API_AUTH_TOKENS = 'myToken'
     DM_API_SERVICES_PAGE_SIZE = 5
     DM_API_SUPPLIERS_PAGE_SIZE = 5
@@ -91,7 +90,6 @@ class Development(Config):
     DEBUG = True
 
     DM_API_AUTH_TOKENS = 'myToken'
-    DM_API_ELASTICSEARCH_INDEX_SUFFIX = '_dev'
     DM_SEARCH_API_AUTH_TOKEN = 'myToken'
     DM_SEARCH_API_URL = 'http://localhost:5001'
     DM_API_ADMIN_PASSWORD = 'admin'

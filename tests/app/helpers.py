@@ -9,7 +9,7 @@ from datetime import timedelta
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Address, Service, Supplier, Framework, Lot, User, FrameworkLot, Brief, utcnow
+from app.models import Address, Service, Supplier, Framework, Lot, User, FrameworkLot, Brief, utcnow, PriceSchedule
 
 from collections import Mapping, Iterable
 from six import string_types
@@ -208,22 +208,63 @@ class BaseApplicationTest(object):
     def setup_dummy_suppliers(self, n):
         with self.app.app_context():
             for i in range(n):
-                db.session.add(
-                    Supplier(
-                        code=(i),
-                        name=u"Supplier {}".format(i),
-                        description="",
-                        summary="",
-                        address=Address(address_line="{} Dummy Street".format(i),
-                                        suburb="Dummy",
-                                        state="ZZZ",
-                                        postal_code="0000",
-                                        country='Australia'),
-                        contacts=[],
-                        references=[],
-                        prices=[],
-                    )
+                s = Supplier(
+                    code=(i),
+                    name=u"Supplier {}".format(i),
+                    description="",
+                    summary="",
+                    address=Address(address_line="{} Dummy Street".format(i),
+                                    suburb="Dummy",
+                                    state="ZZZ",
+                                    postal_code="0000",
+                                    country='Australia'),
+                    contacts=[],
+                    references=[],
+                    prices=[],
                 )
+                db.session.add(s)
+
+            db.session.commit()
+
+    def setup_dummy_suppliers_with_old_and_new_domains(self, n):
+        with self.app.app_context():
+            for i in range(n):
+                if i == 1:
+                    ps = PriceSchedule.from_json({
+                        'serviceRole': {
+                            'category': 'Technical Architecture, Development, Ethical Hacking and Web Operations',
+                            'role': 'Senior Ethical Hacker'},
+                        'hourlyRate': 999,
+                        'dailyRate': 9999,
+                        'gstIncluded': True
+                    })
+                    prices = [ps]
+                else:
+                    prices = []
+
+                s = Supplier(
+                    code=(i),
+                    name=u"Supplier {}".format(i),
+                    description="",
+                    summary="",
+                    address=Address(address_line="{} Dummy Street".format(i),
+                                    suburb="Dummy",
+                                    state="ZZZ",
+                                    postal_code="0000",
+                                    country='Australia'),
+                    contacts=[],
+                    references=[],
+                    prices=prices,
+                )
+
+                if i == 2:
+                    s.add_unassessed_domain('Content and Publishing')
+
+                    s.add_unassessed_domain('Data science')
+                    s.update_domain_assessment_status('Data science', 'assessed')
+
+                db.session.add(s)
+
             db.session.commit()
 
     def setup_additional_dummy_suppliers(self, n, initial):

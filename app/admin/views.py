@@ -1,8 +1,6 @@
 from flask import current_app, jsonify, render_template, request, Response
 import streql  # Constant-time string comparison
-from elasticsearch import TransportError
 
-from app.search_indices import delete_indices, create_indices
 from app.admin.blueprint import admin
 
 
@@ -22,14 +20,3 @@ def basic_auth():
 @admin.route('/_admin', methods=['GET'])
 def admin_index():
     return render_template('index.html')
-
-
-@admin.route('/_admin/rebuild-index', methods=['POST'])
-def rebuild_index():
-    try:
-        delete_indices()
-    except TransportError, e:
-        if e.status_code != 404:
-            raise
-    create_indices()
-    return jsonify(message="done"), 200
