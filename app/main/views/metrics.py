@@ -1,6 +1,6 @@
 from .. import main
 from . import briefs, users, suppliers
-from ...models import Application, Brief, User, Supplier, BriefResponse
+from ...models import Application, Brief, Domain, User, Supplier, SupplierDomain, BriefResponse
 from ... import db
 from sqlalchemy import desc, func, select, and_
 import pendulum
@@ -29,6 +29,28 @@ def get_metrics():
     metrics["buyer_count"] = {"value": buyer_count, "ts": timestamp}
     supplier_count = json.loads(suppliers.get_suppliers_stats().data)["suppliers"]['total']
     metrics["supplier_count"] = {"value": supplier_count, "ts": timestamp}
+    return jsonify(metrics)
+
+
+@main.route('/metrics/domains', methods=['GET'])
+def get_domain_metrics():
+    metrics = {}
+
+    for status in ['assessed', 'unassessed']:
+        query = '''
+                                SELECT name, count(status)
+                                FROM
+                                  supplier_domain INNER JOIN domain ON supplier_domain.domain_id = domain.id
+                                  WHERE status = :status
+                                GROUP BY name
+                                '''
+        for (domain, count) in db.session.execute(query, {"status": status}).fetchall():
+            if domain not in metrics:
+                metrics[domain] = {}
+                metrics[domain]['domain'] = domain
+                metrics[domain]['timestamp'] = pendulum.now().to_iso8601_string()
+            metrics[domain][status] = count
+    metrics = list(metrics.values())
     return jsonify(metrics)
 
 
