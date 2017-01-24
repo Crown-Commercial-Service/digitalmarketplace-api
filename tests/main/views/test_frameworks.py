@@ -5,8 +5,9 @@ from nose.tools import assert_equal, assert_in
 from dateutil.parser import parse as parse_time
 from freezegun import freeze_time
 
-from ..helpers import BaseApplicationTest, JSONUpdateTestMixin
+from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from app.models import db, Framework, SupplierFramework, DraftService, User, FrameworkLot
+from tests.helpers import FixtureMixin
 
 
 class TestListFrameworks(BaseApplicationTest):
@@ -343,7 +344,7 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
                 assert response.status_code == 400
 
 
-class TestFrameworkStats(BaseApplicationTest):
+class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
     def make_declaration(self, framework_id, supplier_ids, status=None):
         with self.app.app_context():
             db.session.query(
@@ -535,7 +536,7 @@ class TestFrameworkStats(BaseApplicationTest):
         assert response.status_code == 200
 
 
-class TestGetFrameworkSuppliers(BaseApplicationTest):
+class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
     def setup(self):
         """Sets up supplier frameworks as follows:
 
@@ -890,7 +891,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest):
         assert len(data['supplierFrameworks']) == 0
 
 
-class TestGetFrameworkInterest(BaseApplicationTest):
+class TestGetFrameworkInterest(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestGetFrameworkInterest, self).setup()
 

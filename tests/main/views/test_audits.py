@@ -9,10 +9,11 @@ from dmapiclient.audit import AuditTypes
 from app import db
 from app.models import AuditEvent
 from app.models import Supplier
-from tests.app.helpers import BaseApplicationTest
+from tests.bases import BaseApplicationTest
+from tests.helpers import FixtureMixin
 
 
-class TestAuditEvents(BaseApplicationTest):
+class TestAuditEvents(BaseApplicationTest, FixtureMixin):
     @staticmethod
     def audit_event(user=0, type=AuditTypes.supplier_update, db_object=None):
         return AuditEvent(
@@ -381,7 +382,7 @@ class TestAuditEvents(BaseApplicationTest):
         )
 
 
-class TestCreateAuditEvent(BaseApplicationTest):
+class TestCreateAuditEvent(BaseApplicationTest, FixtureMixin):
     @staticmethod
     def audit_event():
         audit_event = {

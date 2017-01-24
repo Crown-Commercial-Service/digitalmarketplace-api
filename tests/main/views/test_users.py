@@ -4,8 +4,8 @@ from nose.tools import assert_equal, assert_not_equal, assert_in, assert_is_none
 from app import db, encryption
 from app.models import User, Supplier
 from datetime import datetime
-from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
-from dmutils.formats import DATETIME_FORMAT
+from tests.bases import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
+from tests.helpers import FixtureMixin, load_example_listing
 
 
 class BaseUserTest(BaseApplicationTest):
@@ -15,7 +15,7 @@ class BaseUserTest(BaseApplicationTest):
 
     def setup(self):
         super(BaseUserTest, self).setup()
-        payload = self.load_example_listing("Supplier")
+        payload = load_example_listing("Supplier")
         self.supplier = payload
         self.supplier_id = payload['id']
         self.users = []
@@ -1104,7 +1104,7 @@ class TestUsersGet(BaseUserTest):
         assert_in("Invalid user role: incorrect", data)
 
 
-class TestUsersExport(BaseUserTest):
+class TestUsersExport(BaseUserTest, FixtureMixin):
     framework_slug = None
     updater_json = None
 
@@ -1173,7 +1173,7 @@ class TestUsersExport(BaseUserTest):
         self._put_declaration(status='started')
 
     def _post_complete_draft_service(self):
-        payload = self.load_example_listing("DOS-digital-specialist")
+        payload = load_example_listing("DOS-digital-specialist")
 
         self.draft_json = {'services': payload}
         self.draft_json['services']['supplierId'] = self.supplier_id

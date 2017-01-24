@@ -3,7 +3,7 @@ import pytest
 from nose.tools import assert_equal
 from werkzeug.exceptions import BadRequest, HTTPException
 
-from .helpers import BaseApplicationTest
+from tests.bases import BaseApplicationTest
 
 from app.utils import (display_list,
                        strip_whitespace_from_data,

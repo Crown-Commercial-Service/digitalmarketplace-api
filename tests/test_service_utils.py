@@ -1,7 +1,7 @@
 import pytest
 import mock
 
-from tests.app.helpers import BaseApplicationTest
+from tests.bases import BaseApplicationTest
 from app.service_utils import index_service
 from app.models import Service, Framework
 

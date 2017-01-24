@@ -11,9 +11,7 @@ from app.utils import drop_foreign_fields
 from app.validation import validates_against_schema, is_valid_service_id, is_valid_date, \
     is_valid_acknowledged_state, get_validation_errors, is_valid_string, min_price_less_than_max_price, \
     is_valid_buyer_email, translate_json_schema_errors
-
-EXAMPLE_LISTING_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                    '..', '..', 'example_listings'))
+from tests.helpers import load_example_listing
 
 
 def drop_api_exported_fields_so_that_api_import_will_validate(data):
@@ -598,18 +596,6 @@ def test_api_type_is_optional():
     errs = get_validation_errors("services-g-cloud-7-paas", data)
 
     assert not errs.get('apiType', None)
-
-
-def assert_example(name, result, expected):
-    assert_equal(result, expected)
-
-
-def load_example_listing(name):
-    listing_path = os.path.join(EXAMPLE_LISTING_PATH, '{}.json'.format(name))
-    with open(listing_path) as json_file:
-        json_data = json.load(json_file)
-
-        return json_data
 
 
 def check_schema_file(file_path):

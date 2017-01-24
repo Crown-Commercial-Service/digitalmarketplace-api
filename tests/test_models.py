@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from collections import Counter
 
 import mock
 import pytest
@@ -17,7 +16,8 @@ from app.models import (
     FrameworkLot
 )
 
-from .helpers import BaseApplicationTest
+from tests.bases import BaseApplicationTest
+from tests.helpers import FixtureMixin
 
 
 def test_should_not_return_password_on_user():
@@ -69,7 +69,7 @@ def test_framework_should_accept_valid_statuses():
             db.session.commit()
 
 
-class TestBriefs(BaseApplicationTest):
+class TestBriefs(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestBriefs, self).setup()
         with self.app.app_context():
@@ -434,7 +434,7 @@ class TestBriefs(BaseApplicationTest):
         assert str(e.value.message) == "Framework is not live"
 
 
-class TestBriefResponses(BaseApplicationTest):
+class TestBriefResponses(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestBriefResponses, self).setup()
         with self.app.app_context():
@@ -674,7 +674,7 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
             question.validate()
 
 
-class TestServices(BaseApplicationTest):
+class TestServices(BaseApplicationTest, FixtureMixin):
     def test_framework_is_live_only_returns_live_frameworks(self):
         with self.app.app_context():
             self.setup_dummy_service(
@@ -848,7 +848,7 @@ class TestServices(BaseApplicationTest):
             assert service.data == {'foo': 'bar', 'serviceName': 'Service 1000000000'}
 
 
-class TestSupplierFrameworks(BaseApplicationTest):
+class TestSupplierFrameworks(BaseApplicationTest, FixtureMixin):
     def test_nulls_are_stripped_from_declaration(self):
         supplier_framework = SupplierFramework()
         supplier_framework.declaration = {'foo': 'bar', 'bar': None}
@@ -949,7 +949,7 @@ class TestFrameworkSupplierIds(BaseApplicationTest):
             assert len(supplier_ids_with_completed_service) == 0
 
 
-class TestFrameworkSupplierIdsMany(BaseApplicationTest):
+class TestFrameworkSupplierIdsMany(BaseApplicationTest, FixtureMixin):
     """Test multiple suppliers, multiple services."""
 
     def test_multiple_services(self):
@@ -994,7 +994,7 @@ class TestFrameworkSupplierIdsMany(BaseApplicationTest):
             assert sorted(framework.get_supplier_ids_for_completed_service()) == [0, 2, 4]
 
 
-class TestFrameworkAgreements(BaseApplicationTest):
+class TestFrameworkAgreements(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestFrameworkAgreements, self).setup()
         with self.app.app_context():
@@ -1134,7 +1134,7 @@ class TestFrameworkAgreements(BaseApplicationTest):
         assert framework_agreement.most_recent_signature_time == datetime(2016, 10, 11, 10, 12, 0, 0)
 
 
-class TestCurrentFrameworkAgreement(BaseApplicationTest):
+class TestCurrentFrameworkAgreement(BaseApplicationTest, FixtureMixin):
     """
     Tests the current_framework_agreement property of SupplierFramework objects
     """

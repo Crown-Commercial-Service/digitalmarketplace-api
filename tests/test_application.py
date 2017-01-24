@@ -4,7 +4,7 @@ Tests for the application infrastructure
 from flask import json
 from nose.tools import assert_equal
 
-from .helpers import BaseApplicationTest
+from tests.bases import BaseApplicationTest
 
 
 class TestApplication(BaseApplicationTest):
