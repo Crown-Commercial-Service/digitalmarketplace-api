@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import io
+import re
 
 from jira import JIRA
 from flask import current_app
@@ -20,8 +21,19 @@ The application comprises the following information:
 """
 
 
+def to_snake(s, sep='-'):
+    s = s.replace(' ', '')
+    return (s[0].lower() + re.sub(
+        r'([A-Z])', lambda m: sep + m.group(0).lower(), s[1:]))
+
+
 class MarketplaceJIRA(object):
-    def __init__(self, generic_jira, marketplace_project_code=None, application_field_code=None):
+    def __init__(
+            self,
+            generic_jira,
+            marketplace_project_code=None,
+            application_field_code=None,
+            supplier_field_code=None):
         if not marketplace_project_code:
             marketplace_project_code = current_app.config.get('JIRA_MARKETPLACE_PROJECT_CODE')
         self.marketplace_project_code = marketplace_project_code
@@ -29,6 +41,10 @@ class MarketplaceJIRA(object):
         if not application_field_code:
             application_field_code = current_app.config.get('JIRA_APPLICATION_FIELD_CODE')
         self.application_field_code = application_field_code
+
+        if not supplier_field_code:
+            supplier_field_code = current_app.config.get('JIRA_SUPPLIER_FIELD_CODE')
+        self.supplier_field_code = supplier_field_code
 
         self.generic_jira = generic_jira
 
@@ -40,16 +56,48 @@ class MarketplaceJIRA(object):
     def make_link(self, key):
         return self.server_url + '/browse/' + key
 
-    def create_assessment_task(self, application):
+    def create_supplier_domain_assessment_task(self, supplier, domains):
+        if not domains:
+            return
         task_details = dict(
             project=self.marketplace_project_code,
-            summary='Review this Supplier Application: {}'.format(application.supplier.name),
-            description=TICKET_DESCRIPTION.format(application.json),
+            summary='Assess "{}" for domain(s)'.format(supplier.name),
+            description=TICKET_DESCRIPTION.format(supplier.json),
             issuetype={'name': ASSESSMENT_ISSUE_TYPE}
         )
         new_issue = self.generic_jira.jira.create_issue(**task_details)
-        update = {self.application_field_code: '88'}
-        new_issue.update(**update)
+        new_issue.update({self.supplier_field_code: str(supplier.id)})
+
+        for domain in domains:
+            name = domain.name
+            child_issue = self.generic_jira.create_issue(
+                self.marketplace_project_code,
+                name,
+                name,
+                'Supplier Assessment Step',
+                parent={'key': str(new_issue)})
+
+    def create_application_approval_task(self, application):
+        summary = 'Application assessment: {}'.format(application.data.get('name'))
+        description = TICKET_DESCRIPTION.format(application.json)
+
+        details = dict(
+            project=self.marketplace_project_code,
+            summary=summary,
+            description=description,
+            issuetype_name=ASSESSMENT_ISSUE_TYPE
+        )
+
+        new_issue = self.generic_jira.create_issue(**details)
+        new_issue.update({self.application_field_code: str(application.id)})
+
+        for label in ['Check Profile', 'Check Documents']:
+            child_issue = self.generic_jira.create_issue(
+                self.marketplace_project_code,
+                label,
+                label,
+                'Supplier Assessment Step',
+                parent={'key': str(new_issue)})
 
     def get_assessment_tasks(self):
         return self.generic_jira.issues_with_subtasks(
@@ -70,7 +118,8 @@ class MarketplaceJIRA(object):
                 'self': t['self'],
                 'link': self.make_link(t['key']),
                 'summary': t['fields']['summary'],
-                'status': t['fields']['status']['name']
+                'status': to_snake(t['fields']['status']['name'], '-'),
+                'link': self.make_link(t['key'])
             }
 
             try:
@@ -81,7 +130,7 @@ class MarketplaceJIRA(object):
 
         return {_['fields'][self.application_field_code]: task_info(_) for _ in assessment_issues}
 
-    def custom_fields():
+    def custom_fields(self):
         f = self.generic_jira.get_fields()
 
         return {
@@ -98,6 +147,7 @@ class GenericJIRA(object):
     def __init__(self, jira):
         self.jira = jira
         self.s = self.jira._session
+        self.server_info = self.jira.server_info()
 
     def http(self, method, resource, url=None, data=None):
         method = getattr(self.s, method)
@@ -114,6 +164,18 @@ class GenericJIRA(object):
 
     def __getattr__(self, name):
         return partial(self.http, name)
+
+    def create_issue(self, project, summary, description, issuetype_name, **kwargs):
+        details = dict(
+            project=project,
+            summary=summary,
+            description=description,
+            issuetype={'name': issuetype_name}
+        )
+
+        details.update(**kwargs)
+        new_issue = self.jira.create_issue(**details)
+        return new_issue
 
     def get_issues_of_type(self, project_code, issuetype_name):
         SEARCH = "project={} and type='{}'".format(

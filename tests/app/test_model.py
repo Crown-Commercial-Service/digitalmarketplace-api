@@ -184,6 +184,20 @@ class TestBriefs(BaseApplicationTest):
             assert brief.id is not None
             assert brief.data == dict()
 
+    def test_brief_domains(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot)
+            db.session.add(brief)
+            db.session.commit()
+
+            assert brief.domain is None
+
+            brief.data['specialistRole'] = 'userResearcher'
+            db.session.commit()
+            db.session.refresh(brief)
+
+            assert brief.domain.name == 'User research and Design'
+
     def test_updating_a_brief_updates_dates(self):
         with self.app.app_context():
             brief = Brief(data={}, framework=self.framework, lot=self.lot)

@@ -16,7 +16,7 @@ import sqlalchemy as sa
 
 def upgrade():
     op.execute("""
-      create sequence "public"."supplier_domain_id_seq";
+      create sequence if not exists "public"."supplier_domain_id_seq";
 
       alter table "public"."supplier_domain"
       add column id INTEGER DEFAULT nextval('supplier_domain_id_seq'::regclass);

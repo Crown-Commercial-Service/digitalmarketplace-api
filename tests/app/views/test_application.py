@@ -17,7 +17,8 @@ class BaseApplicationsTest(BaseApplicationTest):
             self.setup_dummy_user(id=1, role="applicant")
             db.session.commit()
 
-    def setup_dummy_application(self, data=None):
+    @mock.patch('app.models.get_marketplace_jira')
+    def setup_dummy_application(self, mj, data=None):
         if data is None:
             data = self.application_data
         with self.app.app_context():

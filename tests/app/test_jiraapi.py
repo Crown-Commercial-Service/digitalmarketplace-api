@@ -5,7 +5,8 @@ from flask import current_app
 from app.jiraapi import get_api, get_api_oauth, get_marketplace_jira
 
 from .helpers import BaseApplicationTest
-from app.models import Application
+from app.models import Application, Supplier, Brief, BriefResponse, Address, Framework, Domain
+from app import db
 
 
 class TestJira(BaseApplicationTest):
@@ -36,20 +37,62 @@ class TestJira(BaseApplicationTest):
     @mock.patch('app.jiraapi.get_api')
     @mock.patch('app.jiraapi.JIRA')
     @mock.patch('app.jiraapi.MarketplaceJIRA')
-    def test_create_assessment_task(self, MarketplaceJIRA, JIRA, get_api, get_api_oauth):
+    def test_create_approval_task(self, MarketplaceJIRA, JIRA, get_api, get_api_oauth):
         with self.app.app_context() as a:
             j = JIRA()
             get_api_oauth.return_value = j
 
             mj = get_marketplace_jira()
 
-            x = Application(
+            application = Application(
                 id=99,
-                status='submitted',
+                status='saved',
                 data={'name': 'Umbrella Corporation'},
             )
-            x.set_approval(True)
-            mj.create_assessment_task.assert_called_with(x)
+            application.submit_for_approval()
+            mj.create_application_approval_task.assert_called_with(application)
+
+    @mock.patch('app.jiraapi.get_api_oauth')
+    @mock.patch('app.jiraapi.get_api')
+    @mock.patch('app.jiraapi.JIRA')
+    @mock.patch('app.jiraapi.MarketplaceJIRA')
+    def test_create_domain_assessment_task(self, MarketplaceJIRA, JIRA, get_api, get_api_oauth):
+        with self.app.app_context() as a:
+            j = JIRA()
+            get_api_oauth.return_value = j
+
+            address = Address(state='NSW', postal_code=1240)
+
+            supplier = Supplier(
+                id=99,
+                name='A supplier',
+                address=address,
+            )
+
+            self.setup_dummy_user()
+            self.setup_dummy_briefs(1)
+
+            brief = Brief.query.all()[0]
+
+            assert supplier.assessed_domains == []
+
+            mj = get_marketplace_jira()
+
+            b_response = BriefResponse(
+                brief=brief)
+
+            assert b_response.brief.domain.name == 'Software engineering and Development'
+            b_response.supplier = supplier
+
+            db.session.add(b_response)
+            db.session.commit()
+
+            b_response.create_just_in_time_assessment_tasks()
+
+            mj.create_supplier_domain_assessment_task.assert_called_with(
+                supplier,
+                [b_response.brief.domain]
+            )
 
     @mock.patch('app.jiraapi.get_api_oauth')
     @mock.patch('app.jiraapi.JIRA')
@@ -97,14 +140,14 @@ class TestJira(BaseApplicationTest):
                     'key': 'T-98',
                     u'self': u'http://api/topissue',
                     u'link': 'http://jira.example.com/browse/T-98',
-                    u'status': u'To Do',
+                    u'status': u'to-do',
                     u'subtasks': [
                         {
                             'id': 99,
                             'key': 'T-99',
                             u'self': u'http://api/subissue',
                             u'link': 'http://jira.example.com/browse/T-99',
-                            u'status': u'Done',
+                            u'status': u'done',
                             u'summary': u'A subtask'
                         }
                     ],

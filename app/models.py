@@ -54,6 +54,9 @@ from .utils import sorted_uniques
 with io.open('data/domain_mapping_old_to_new.yaml') as f:
     DOMAIN_MAPPING = yaml.load(f.read())
 
+with io.open('data/specialist_role_old_to_new.yaml') as f:
+    DOMAIN_MAPPING_SPECIALISTS = yaml.load(f.read())
+
 
 class FrameworkLot(db.Model):
     __tablename__ = 'framework_lot'
@@ -1380,6 +1383,16 @@ class Brief(db.Model):
     domain = db.relationship('Domain', lazy='joined')
 
     @property
+    def domain(self):
+        specialist_role = self.data.get('specialistRole')
+
+        if not specialist_role:
+            return None
+
+        name = DOMAIN_MAPPING_SPECIALISTS[specialist_role]
+        return Domain.get_by_name_or_id(name)
+
+    @property
     def dates_for_serialization(self):
         def as_s(x):
             if x:
@@ -1811,6 +1824,35 @@ class BriefResponse(db.Model):
 
         return data
 
+    def create_just_in_time_assessment_tasks(self):
+        supplier = self.supplier
+        assessed_domains = supplier.assessed_domains
+
+        if assessed_domains:
+            return
+
+        if current_app.config['JIRA_FEATURES'] and \
+                current_app.config['JUST_IN_TIME_ASSESSMENTS']:
+
+            mj = get_marketplace_jira()
+
+            domain = self.brief.domain
+
+            if domain:
+                # brief has an associated domain, assess this one
+                domains = [domain]
+            else:
+                # create assessment task for each domain
+                domains = [
+                    Domain.get_by_name_or_id(name)
+                    for name
+                    in supplier.unassessed_domains
+                ]
+
+            mj.create_supplier_domain_assessment_task(
+                supplier,
+                domains)
+
 
 class BriefClarificationQuestion(db.Model):
     __tablename__ = 'brief_clarification_question'
@@ -1987,7 +2029,7 @@ class Application(db.Model):
     def submit_for_approval(self):
         if self.status != 'saved':
             raise ValidationError("Only as 'saved' application can be set to 'submitted'.")
-
+        self.create_approval_task()
         self.status = 'submitted'
 
     @property
@@ -2022,8 +2064,6 @@ class Application(db.Model):
                 user.supplier_code = supplier.code
 
             db.session.flush()
-
-            self.create_assessment_task()
         else:
             self.status = 'approval_rejected'
 
@@ -2051,13 +2091,10 @@ class Application(db.Model):
 
         self.status = 'submitted'
 
-    def create_assessment_task(self):
+    def create_approval_task(self):
         if current_app.config['JIRA_FEATURES']:
-            j = get_marketplace_jira()
-            j.create_assessment_task(self)
-        else:
-            current_app.logger.info(
-                'Skipping assessment task creation because JIRA features disabled')
+            mj = get_marketplace_jira()
+            mj.create_application_approval_task(self)
 
     def signed_agreements(self):
         agreements = db.session.query(
