@@ -661,6 +661,12 @@ class Supplier(db.Model):
             d: True for d in self.assessed_domains
         }
 
+        if self.contacts:
+            contact = self.contacts[0]
+            j['representative'] = contact.name
+            j['email'] = contact.email
+            j['phone'] = contact.phone
+
         return j
 
     def update_from_json_before(self, data):

@@ -1,11 +1,9 @@
 import json
 import mock
-import time
 
-from tests.app.helpers import BaseApplicationTest, INCOMING_APPLICATION_DATA
+from tests.app.helpers import BaseApplicationTest
 
-from app.models import db, Application, AuditEvent, User, utcnow, Agreement
-from dmapiclient.audit import AuditTypes
+from app.models import db, AuditEvent, User, utcnow, Agreement
 
 
 class BaseApplicationsTest(BaseApplicationTest):
@@ -16,23 +14,6 @@ class BaseApplicationsTest(BaseApplicationTest):
             self.setup_dummy_user(id=0, role="applicant")
             self.setup_dummy_user(id=1, role="applicant")
             db.session.commit()
-
-    @mock.patch('app.models.get_marketplace_jira')
-    def setup_dummy_application(self, mj, data=None):
-        if data is None:
-            data = self.application_data
-        with self.app.app_context():
-            application = Application(
-                data=data,
-            )
-
-            db.session.add(application)
-            db.session.flush()
-
-            application.submit_for_approval()
-            db.session.commit()
-
-            return application.id
 
     def setup_dummy_applicant(self, id, application_id):
         with self.app.app_context():
@@ -110,10 +91,6 @@ class BaseApplicationsTest(BaseApplicationTest):
     def get_user(self, user_id):
         user = self.client.get('/users/{}'.format(user_id))
         return json.loads(user.get_data(as_text=True))['users']
-
-    @property
-    def application_data(self):
-        return INCOMING_APPLICATION_DATA
 
 
 class TestCreateApplication(BaseApplicationsTest):

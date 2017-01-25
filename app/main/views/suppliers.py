@@ -2,10 +2,12 @@ from datetime import datetime
 
 from flask import abort, current_app, jsonify, request, url_for
 from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.sql.expression import true
 from .. import main
 from ... import db
 from ...models import (
-    Supplier, AuditEvent, SupplierFramework, Framework, PriceSchedule, User, Domain, ServiceRole, SupplierDomain
+    Supplier, AuditEvent, SupplierFramework, Framework, PriceSchedule, User, Domain, Application,
+    ServiceRole, SupplierDomain
 )
 
 from sqlalchemy.sql import func, desc, or_, asc
@@ -18,6 +20,8 @@ from app.utils import (
 )
 from ...supplier_utils import validate_agreement_details_data
 from dmapiclient.audit import AuditTypes
+from dmutils.logging import notify_team
+import json
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -505,6 +509,58 @@ def update_supplier_framework_details(code, framework_slug):
 def get_domains_list():
     result = [d.serializable for d in Domain.query.order_by('ordering').all()]
     return jsonify(domains=result)
+
+
+@main.route('/suppliers/<int:code>/create-application', methods=['POST'])
+def create_application_from_supplier(code):
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ["current_user"])
+    current_user = json_payload["current_user"]
+
+    supplier = Supplier.query.filter(
+        Supplier.code == code
+    ).first_or_404()
+
+    if 'application_id' in supplier.data:
+        return abort(400, 'Supplier already has application')
+
+    data = json.loads(supplier.json)
+
+    data['status'] = 'saved'
+    data = {key: data[key] for key in data if key not in ['id', 'contacts', 'domains', 'prices']}
+
+    application = Application()
+    application.update_from_json(data)
+
+    db.session.add(application)
+    db.session.add(AuditEvent(
+        audit_type=AuditTypes.create_application,
+        user='',
+        data={},
+        db_object=application
+    ))
+
+    db.session.flush()
+
+    notification_message = '{}\nApplication Id:{}\nBy: {} ({})'.format(
+        data['name'],
+        application.id,
+        current_user['name'],
+        current_user['email_address']
+    )
+    notify_team('An existing seller has started a new application', notification_message)
+
+    supplier.update_from_json({'application_id': application.id})
+    users = User.query.filter(
+        User.supplier_code == code and User.active == true()
+    ).all()
+
+    for user in users:
+        user.application_id = application.id
+
+    db.session.commit()
+
+    return jsonify(application=application)
 
 
 @main.route('/suppliers/<int:supplier_id>/domains/<int:domain_id>/<string:status>', methods=['POST'])

@@ -61,6 +61,7 @@ class Config:
     JUST_IN_TIME_ASSESSMENTS = False
 
     ROLLBAR_TOKEN = None
+    DM_TEAM_SLACK_WEBHOOK = None
 
     LEGACY_ROLE_MAPPING = True
 
