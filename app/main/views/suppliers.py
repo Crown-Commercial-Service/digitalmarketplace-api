@@ -557,7 +557,6 @@ def create_application_from_supplier(code):
 
     for user in users:
         user.application_id = application.id
-        db.session.add(user)
 
     db.session.commit()
 
