@@ -8,7 +8,8 @@ from six import string_types, iteritems
 
 from sqlalchemy import asc, desc
 from sqlalchemy import func
-from sqlalchemy.dialects.postgresql import JSON, INTERVAL
+from sqlalchemy.dialects.postgresql import INTERVAL
+import sqlalchemy.dialects.postgresql
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates, backref, mapper
@@ -26,6 +27,16 @@ from dmutils.dates import get_publishing_dates
 from . import db
 from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
 from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
+
+
+class JSON(sqlalchemy.dialects.postgresql.JSON):
+    """
+    Override SQLAlchemy JSON class to enforce None=>SQL-NULL mapping.
+    (We want to avoid JSON-null and have consistency across our models.)
+    """
+
+    def __init__(self, astext_type=None):
+        super(JSON, self).__init__(none_as_null=True, astext_type=astext_type)
 
 
 class FrameworkLot(db.Model):
@@ -278,7 +289,7 @@ class Supplier(db.Model):
 
     companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
 
-    clients = db.Column(JSON, default=list)
+    clients = db.Column(JSON, default=list, nullable=False)
 
     # Drop this method once the supplier front end is using SupplierFramework counts
     def get_service_counts(self):
@@ -663,7 +674,7 @@ class User(db.Model):
     failed_login_count = db.Column(db.Integer, nullable=False, default=0)
 
     # used by frontends to determine whether view access should be allowed
-    role = db.Column(db.Enum(ROLES, name='user_roles_enum'), index=False, unique=False, nullable=False)
+    role = db.Column(db.Enum(*ROLES, name='user_roles_enum'), index=False, unique=False, nullable=False)
 
     supplier_id = db.Column(db.BigInteger,
                             db.ForeignKey('suppliers.supplier_id'),
@@ -740,7 +751,7 @@ class ServiceTableMixin(object):
     # Service publishing time.
     service_id = db.Column(db.String, index=True, unique=True, nullable=False)
 
-    data = db.Column(JSON)
+    data = db.Column(JSON, nullable=False)
     status = db.Column(db.String, index=False, unique=False, nullable=False)
 
     created_at = db.Column(db.DateTime, index=False, nullable=False,
@@ -1004,7 +1015,7 @@ class AuditEvent(db.Model):
     type = db.Column(db.String, index=True, nullable=False)
     created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
     user = db.Column(db.String)
-    data = db.Column(JSON)
+    data = db.Column(JSON, nullable=False)
 
     object_type = db.Column(db.String)
     object_id = db.Column(db.BigInteger)
@@ -1093,7 +1104,7 @@ class Brief(db.Model):
     framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), nullable=False)
     _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lots.id'), nullable=False)
 
-    data = db.Column(JSON)
+    data = db.Column(JSON, nullable=False)
     created_at = db.Column(db.DateTime, index=True, nullable=False,
                            default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, index=True, nullable=False,

@@ -454,7 +454,7 @@ class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
         self.setup_framework_data('digital-outcomes-and-specialists')
 
         response = self.client.get('/frameworks/g-cloud-7/stats')
-        assert_equal(json.loads(response.get_data()), {
+        assert json.loads(response.get_data()) == {
             u'services': [
                 {u'count': 1, u'status': u'not-submitted',
                  u'declaration_made': False, u'lot': u'iaas'},
@@ -501,7 +501,7 @@ class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
                 {u'count': 2, u'recent_login': None},
                 {u'count': 5, u'recent_login': True},
             ]
-        })
+        }
 
     def test_stats_are_for_g_cloud_7_only(self):
         self.setup_data('g-cloud-6')
