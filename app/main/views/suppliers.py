@@ -511,7 +511,7 @@ def get_domains_list():
     return jsonify(domains=result)
 
 
-@main.route('/suppliers/<int:code>/create-application', methods=['POST'])
+@main.route('/suppliers/<int:code>/application', methods=['POST'])
 def create_application_from_supplier(code):
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ["current_user"])

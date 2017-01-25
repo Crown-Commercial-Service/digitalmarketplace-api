@@ -1217,7 +1217,7 @@ class TestSupplierApplication(BaseApplicationTest):
                 content_type='application/json')
 
             response = self.client.post(
-                '/suppliers/{}/create-application'.format(self.supplier_code),
+                '/suppliers/{}/application'.format(self.supplier_code),
                 data=json.dumps({'current_user': ''}),
                 content_type='application/json'
             )
@@ -1241,7 +1241,7 @@ class TestSupplierApplication(BaseApplicationTest):
             db.session.commit()
 
             response = self.client.post(
-                '/suppliers/{}/create-application'.format(self.supplier_code),
+                '/suppliers/{}/application'.format(self.supplier_code),
                 data=json.dumps({'current_user': {
                     'name': 'my name',
                     'email_address': 'test+1@digital.gov.au'}
