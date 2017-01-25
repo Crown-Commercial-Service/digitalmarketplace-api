@@ -1,0 +1,253 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "additionalRelevantInformation": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,499}\\S+$)",
+      "type": "string"
+    },
+    "additionalTerms": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
+    "backgroundInformation": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,499}\\S+$",
+      "type": "string"
+    },
+    "budgetRange": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
+      "type": "string"
+    },
+    "contractLength": {
+      "maxLength": 100,
+      "minLength": 0,
+      "type": "string"
+    },
+    "culturalFitCriteria": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
+    },
+    "culturalWeighting": {
+      "exclusiveMaximum": false,
+      "maximum": 100,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "endUsers": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,499}\\S+$",
+      "type": "string"
+    },
+    "essentialRequirements": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
+    },
+    "evaluationType": {
+      "items": {
+        "enum": [
+          "Case study",
+          "Work history",
+          "Reference",
+          "Presentation"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "existingTeam": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,499}\\S+$",
+      "type": "string"
+    },
+    "location": {
+      "enum": [
+        "Australian Capital Territory",
+        "New South Wales",
+        "Northern Territory",
+        "Queensland",
+        "South Australia",
+        "Tasmania",
+        "Victoria",
+        "Western Australia",
+        "Offsite"
+      ]
+    },
+    "niceToHaveRequirements": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 0,
+      "type": "array"
+    },
+    "numberOfSuppliers": {
+      "exclusiveMaximum": false,
+      "maximum": 15,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "organisation": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "outcome": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,499}\\S+$",
+      "type": "string"
+    },
+    "phase": {
+      "enum": [
+        "not_started",
+        "discovery",
+        "alpha",
+        "beta",
+        "live",
+        "other"
+      ]
+    },
+    "priceCriteria": {
+      "enum": [
+        "Fixed price",
+        "Time and materials",
+        "Capped time and materials"
+      ]
+    },
+    "priceWeighting": {
+      "exclusiveMaximum": false,
+      "maximum": 100,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "questionAndAnswerSessionDetails": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
+    "requirementsLength": {
+      "enum": [
+        "1 week",
+        "2 weeks"
+      ]
+    },
+    "securityClearance": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
+      "type": "string"
+    },
+    "sellerEmail": {
+      "maxLength": 300,
+      "minLength": 0,
+      "type": "string"
+    },
+    "sellerEmailList": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 15,
+      "minItems": 0,
+      "type": "array"
+    },
+    "sellerSelector": {
+      "enum": [
+        "allSellers",
+        "someSellers",
+        "oneSeller"
+      ]
+    },
+    "startDate": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "successCriteria": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
+    },
+    "summary": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "technicalWeighting": {
+      "exclusiveMaximum": false,
+      "maximum": 100,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "title": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "workAlreadyDone": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,499}\\S+$)",
+      "type": "string"
+    },
+    "workingArrangements": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,499}\\S+$",
+      "type": "string"
+    },
+    "workplaceAddress": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "backgroundInformation",
+    "culturalFitCriteria",
+    "culturalWeighting",
+    "endUsers",
+    "essentialRequirements",
+    "existingTeam",
+    "location",
+    "numberOfSuppliers",
+    "organisation",
+    "outcome",
+    "phase",
+    "priceCriteria",
+    "priceWeighting",
+    "requirementsLength",
+    "sellerSelector",
+    "startDate",
+    "successCriteria",
+    "summary",
+    "technicalWeighting",
+    "title",
+    "workingArrangements",
+    "workplaceAddress"
+  ],
+  "title": "Digital Outcome Brief Schema",
+  "type": "object"
+}
