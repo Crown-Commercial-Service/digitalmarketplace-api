@@ -1,4 +1,6 @@
-from flask import abort
+from flask import abort, request
+import json
+import rollbar
 
 from .models import Service
 from .validation import get_validation_errors
@@ -22,6 +24,7 @@ def validate_brief_data(brief, enforce_required=True, required_fields=None):
                 errs[key] = 'total_should_be_100'
 
     if errs:
+        rollbar.report_message(json.dumps(errs), 'error', request)
         abort(400, errs)
 
 
