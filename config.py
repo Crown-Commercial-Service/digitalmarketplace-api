@@ -89,7 +89,7 @@ class Test(Config):
 
     JIRA_FEATURES = True
 
-    JUST_IN_TIME_ASSESSMENTS = True
+    JUST_IN_TIME_ASSESSMENTS = False
 
 
 class Development(Config):
@@ -110,7 +110,7 @@ class Development(Config):
 
     JIRA_FEATURES = True
 
-    JUST_IN_TIME_ASSESSMENTS = True
+    JUST_IN_TIME_ASSESSMENTS = False
 
 
 class Live(Config):
