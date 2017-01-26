@@ -95,7 +95,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.brief_id,
-            'supplierCode': 0,
+            'supplierCode': 1,
         }))
 
         data = json.loads(res.get_data(as_text=True))
@@ -105,7 +105,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
         if all(ess):
             assert res.status_code == 201, data
-            assert data['briefResponses']['supplierName'] == 'Supplier 0'
+            assert data['briefResponses']['supplierName'] == 'Supplier 1'
             assert data['briefResponses']['briefId'] == self.brief_id
         else:
             assert res.status_code == 400, data
@@ -114,7 +114,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
     def test_create_brief_response_creates_an_audit_event(self, live_framework, brief_response_data):
         res = self.create_brief_response(dict(brief_response_data, **{
             'briefId': self.brief_id,
-            'supplierCode': 0,
+            'supplierCode': 1,
         }))
 
         ess = brief_response_data['essentialRequirements']
@@ -136,7 +136,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
                 'briefResponseId': json.loads(res.get_data(as_text=True))['briefResponses']['id'],
                 'briefResponseJson': dict(brief_response_data, **{
                     'briefId': self.brief_id,
-                    'supplierCode': 0,
+                    'supplierCode': 1,
                 })
             }
         else:
