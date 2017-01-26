@@ -9,7 +9,7 @@
     },
     "additionalTerms": {
       "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "pattern": "^$|(^(?:\\S+\\s+){0,499}\\S+$)",
       "type": "string"
     },
     "backgroundInformation": {
