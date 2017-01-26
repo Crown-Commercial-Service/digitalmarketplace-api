@@ -58,41 +58,43 @@ class TestJira(BaseApplicationTest):
     @mock.patch('app.jiraapi.MarketplaceJIRA')
     def test_create_domain_assessment_task(self, MarketplaceJIRA, JIRA, get_api, get_api_oauth):
         with self.app.app_context() as a:
-            j = JIRA()
-            get_api_oauth.return_value = j
+            if current_app.config['JIRA_FEATURES'] and \
+                    current_app.config['JUST_IN_TIME_ASSESSMENTS']:
+                j = JIRA()
+                get_api_oauth.return_value = j
 
-            address = Address(state='NSW', postal_code=1240)
+                address = Address(state='NSW', postal_code=1240)
 
-            supplier = Supplier(
-                id=99,
-                name='A supplier',
-                address=address,
-            )
+                supplier = Supplier(
+                    id=99,
+                    name='A supplier',
+                    address=address,
+                )
 
-            self.setup_dummy_user()
-            self.setup_dummy_briefs(1)
+                self.setup_dummy_user()
+                self.setup_dummy_briefs(1)
 
-            brief = Brief.query.all()[0]
+                brief = Brief.query.all()[0]
 
-            assert supplier.assessed_domains == []
+                assert supplier.assessed_domains == []
 
-            mj = get_marketplace_jira()
+                mj = get_marketplace_jira()
 
-            b_response = BriefResponse(
-                brief=brief)
+                b_response = BriefResponse(
+                    brief=brief)
 
-            assert b_response.brief.domain.name == 'Software engineering and Development'
-            b_response.supplier = supplier
+                assert b_response.brief.domain.name == 'Software engineering and Development'
+                b_response.supplier = supplier
 
-            db.session.add(b_response)
-            db.session.commit()
+                db.session.add(b_response)
+                db.session.commit()
 
-            b_response.create_just_in_time_assessment_tasks()
+                b_response.create_just_in_time_assessment_tasks()
 
-            mj.create_supplier_domain_assessment_task.assert_called_with(
-                supplier,
-                [b_response.brief.domain]
-            )
+                mj.create_supplier_domain_assessment_task.assert_called_with(
+                    supplier,
+                    [b_response.brief.domain]
+                )
 
     @mock.patch('app.jiraapi.get_api_oauth')
     @mock.patch('app.jiraapi.JIRA')
