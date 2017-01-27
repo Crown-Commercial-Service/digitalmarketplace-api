@@ -149,46 +149,6 @@ def update_service(service_id):
     return jsonify(message="done"), 200
 
 
-@main.route('/services/<string:service_id>', methods=['PUT'])
-def import_service(service_id):
-    """Import services from legacy digital marketplace
-
-    This endpoint creates new services where we have an existing ID, it
-    should not be used as a model for how we add new services.
-    """
-    is_valid_service_id_or_400(service_id)
-
-    service = Service.query.filter(
-        Service.service_id == service_id
-    ).first()
-
-    if service is not None:
-        abort(400, "Cannot update service by PUT")
-
-    updater_json = validate_and_return_updater_request()
-    service_data = validate_and_return_service_request(service_id)
-
-    framework, lot, supplier = validate_and_return_related_objects(service_data)
-
-    service = Service(
-        service_id=service_id,
-        supplier=supplier,
-        lot=lot,
-        framework=framework,
-        status=service_data.get('status', 'published'),
-        created_at=service_data.get('createdAt'),
-        updated_at=service_data.get('updatedAt'),
-        data=service_data,
-    )
-
-    validate_service_data(service)
-
-    commit_and_archive_service(service, updater_json, AuditTypes.import_service)
-    index_service(service)
-
-    return jsonify(services=service.serialize()), 201
-
-
 @main.route('/services/<string:service_id>', methods=['GET'])
 def get_service(service_id):
     service = Service.query.filter(
