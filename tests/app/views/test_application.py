@@ -3,7 +3,7 @@ import mock
 
 from tests.app.helpers import BaseApplicationTest
 
-from app.models import db, AuditEvent, User, utcnow, Agreement
+from app.models import db, AuditEvent, Framework, User, utcnow, Agreement
 
 
 class BaseApplicationsTest(BaseApplicationTest):
@@ -136,69 +136,74 @@ class TestApproveApplication(BaseApplicationsTest):
     @mock.patch('app.jiraapi.JIRA')
     @mock.patch('app.main.views.applications.get_marketplace_jira')
     def test_application_assessments_and_domain_approvals(self, get_marketplace_jira, jira):
-        self.patch_application(self.application_id, data={'status': 'saved'})
-        a = self.get_application(self.application_id)
-        user_id = self.setup_dummy_applicant(2, self.application_id)
+        with self.app.app_context():
+            self.patch_application(self.application_id, data={'status': 'saved'})
+            a = self.get_application(self.application_id)
+            user_id = self.setup_dummy_applicant(2, self.application_id)
 
-        j = json.loads(a.get_data(as_text=True))['application']
-        assert j['status'] == 'saved'
+            j = json.loads(a.get_data(as_text=True))['application']
+            assert j['status'] == 'saved'
 
-        a = self.approve_application(self.application_id)
-        assert a.status_code == 400
+            a = self.approve_application(self.application_id)
+            assert a.status_code == 400
 
-        a = self.patch_application(self.application_id, data={'status': 'submitted'})
-        j = json.loads(a.get_data(as_text=True))['application']
-        assert j['status'] == 'submitted'
+            a = self.patch_application(self.application_id, data={'status': 'submitted'})
+            j = json.loads(a.get_data(as_text=True))['application']
+            assert j['status'] == 'submitted'
 
-        a = self.approve_application(self.application_id)
-        assert a.status_code == 200
-        j = json.loads(a.get_data(as_text=True))['application']
+            a = self.approve_application(self.application_id)
+            assert a.status_code == 200
+            f = Framework.query.filter(
+                Framework.slug == 'digital-marketplace'
+            ).first()
+            j = json.loads(a.get_data(as_text=True))['application']
 
-        assert j['status'] == 'approved'
-        assert 'supplier_code' in j
-        assert j['supplier_code'] == j['supplier']['code']
-        assert 'supplier' in j['links']
+            assert j['status'] == 'approved'
+            assert 'supplier_code' in j
+            assert j['supplier_code'] == j['supplier']['code']
+            assert 'supplier' in j['links']
+            assert j['supplier']['frameworks'][0]['framework_id'] == f.id
 
-        user = self.get_user(user_id)
-        assert user['role'] == 'supplier'
-        assert user['supplier_code'] == j['supplier_code']
+            user = self.get_user(user_id)
+            assert user['role'] == 'supplier'
+            assert user['supplier_code'] == j['supplier_code']
 
-        a = self.get_application(self.application_id)
-        assert a.status_code == 200
-        j = json.loads(a.get_data(as_text=True))['application']
+            a = self.get_application(self.application_id)
+            assert a.status_code == 200
+            j = json.loads(a.get_data(as_text=True))['application']
 
-        assert j['status'] == 'approved'
-        assert 'supplier_code' in j
-        assert j['supplier_code'] == j['supplier']['code']
-        assert 'supplier' in j['links']
+            assert j['status'] == 'approved'
+            assert 'supplier_code' in j
+            assert j['supplier_code'] == j['supplier']['code']
+            assert 'supplier' in j['links']
 
-        response = self.search({'query': {'term': {'code': j['supplier_code']}}})
-        assert response.status_code == 200
-        result = json.loads(response.get_data())
-        assert result['hits']['total'] == 1
-        assert len(result['hits']['hits']) == 1
-        assert result['hits']['hits'][0]['_source']['code'] == j['supplier_code']
+            response = self.search({'query': {'term': {'code': j['supplier_code']}}})
+            assert response.status_code == 200
+            result = json.loads(response.get_data())
+            assert result['hits']['total'] == 1
+            assert len(result['hits']['hits']) == 1
+            assert result['hits']['hits'][0]['_source']['code'] == j['supplier_code']
 
-        a = self.get_application(self.application_id)
-        assert a.status_code == 200
-        j = json.loads(a.get_data(as_text=True))['application']
+            a = self.get_application(self.application_id)
+            assert a.status_code == 200
+            j = json.loads(a.get_data(as_text=True))['application']
 
-        a = self.list_applications()
+            a = self.list_applications()
 
-        DUMMY_TASKS = {u'self': u'http://topissue'}
+            DUMMY_TASKS = {u'self': u'http://topissue'}
 
-        mj = mock.Mock()
-        mj.assessment_tasks_by_application_id.return_value = \
-            {str(self.application_id): DUMMY_TASKS}
-        get_marketplace_jira.return_value = mj
+            mj = mock.Mock()
+            mj.assessment_tasks_by_application_id.return_value = \
+                {str(self.application_id): DUMMY_TASKS}
+            get_marketplace_jira.return_value = mj
 
-        applist = self.list_applications_with_task_status()
-        applist_j = json.loads(applist.get_data(as_text=True))
-        assert applist_j['applications'][0]['tasks'] == DUMMY_TASKS
+            applist = self.list_applications_with_task_status()
+            applist_j = json.loads(applist.get_data(as_text=True))
+            assert applist_j['applications'][0]['tasks'] == DUMMY_TASKS
 
-        tasks = self.list_task_status()
-        tasks_j = json.loads(tasks.get_data(as_text=True))['tasks']
-        assert str(self.application_id) in tasks_j
+            tasks = self.list_task_status()
+            tasks_j = json.loads(tasks.get_data(as_text=True))['tasks']
+            assert str(self.application_id) in tasks_j
 
 
 class TestUpdateApplication(BaseApplicationsTest):
