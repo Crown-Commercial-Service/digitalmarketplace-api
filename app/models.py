@@ -562,6 +562,7 @@ class Supplier(db.Model):
                                  default=localnow)
 
     domains = relationship("SupplierDomain", back_populates="supplier")
+    frameworks = relationship("SupplierFramework")
 
     def add_unassessed_domain(self, name_or_id):
         d = Domain.get_by_name_or_id(name_or_id)
@@ -2063,6 +2064,20 @@ class Application(db.Model):
                 self.status = 'approved'
 
             db.session.flush()
+
+            # associate supplier with digital marketplace framework
+
+            framework = Framework.query.filter(
+                Framework.slug == 'digital-marketplace'
+            ).first()
+            if not SupplierFramework.query.filter(SupplierFramework.supplier_code == supplier.code,
+                                                  SupplierFramework.framework_id == framework.id).first():
+                sf = SupplierFramework(
+                    supplier_code=supplier.code,
+                    framework_id=framework.id,
+                    declaration={}
+                )
+                db.session.add(sf)
 
             users = User.query.filter(User.application_id == self.id)
             for user in users:
