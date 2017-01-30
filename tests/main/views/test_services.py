@@ -1,11 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 
 from flask import json
-from nose.tools import assert_equal, assert_in, assert_true, \
-    assert_almost_equal, assert_false, assert_is_not_none, assert_not_in
 from app.models import Service, Supplier, ContactInformation, Framework, \
-    AuditEvent, FrameworkLot
+    AuditEvent, FrameworkLot, ServiceTableMixin
 import mock
 from app import db, create_app
 from tests.helpers import TEST_SUPPLIERS_COUNT, FixtureMixin, load_example_listing
@@ -16,11 +14,10 @@ from dmutils.formats import DATETIME_FORMAT
 from dmapiclient.audit import AuditTypes
 
 
-class TestListServicesOrdering(BaseApplicationTest):
+class TestListServicesOrdering(BaseApplicationTest, FixtureMixin):
     def setup_services(self):
         with self.app.app_context():
             self.app.config['DM_API_SERVICES_PAGE_SIZE'] = 10
-            now = datetime.utcnow()
 
             g5_saas = load_example_listing("G5")
             g5_paas = load_example_listing("G5")
@@ -35,14 +32,12 @@ class TestListServicesOrdering(BaseApplicationTest):
             )
 
             def insert_service(listing, service_id, lot_id, framework_id):
-                db.session.add(Service(service_id=service_id,
-                                       supplier_id=1,
-                                       updated_at=now,
-                                       status='published',
-                                       created_at=now,
-                                       lot_id=lot_id,
-                                       framework_id=framework_id,
-                                       data=listing))
+                self.setup_dummy_service(
+                    service_id=service_id,
+                    lot_id=lot_id,
+                    framework_id=framework_id,
+                    **listing
+                )
 
             # override certain fields to create ordering difference
             g6_iaas_1['serviceName'] = "b service name"
@@ -462,31 +457,18 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             )
             self.setup_dummy_service(
                 service_id=self.service_id,
+                **payload
             )
             db.session.commit()
-            self._post_update_service()
 
-    def _post_update_service(self):
-        """
-        updates the minimal service we created in the setup.
-        means that we can copy this service as a publishable draft
-
-        :return: response from POST request
-        """
-        service_update = load_example_listing("G6-SaaS")
-        # don't overwrite the name, as tests rely on this
-        service_update.pop('serviceName')
-
-        res = self.client.post(
-            '/services/{}'.format(self.service_id),
+    def _post_service_update(self, service_data, service_id=None):
+        return self.client.post(
+            '/services/{}'.format(service_id or self.service_id),
             data=json.dumps({
                 'updated_by': 'joeblogs',
-                'services': service_update
+                'services': service_data
             }),
-            content_type='application/json'
-        )
-        assert res.status_code == 200
-        return res
+            content_type='application/json')
 
     def test_can_not_post_to_root_services_url(self):
         response = self.client.post(
@@ -547,67 +529,41 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
     def test_can_post_a_valid_service_update(self):
         with self.app.app_context():
-            response = self.client.post(
-                '/services/%s' % self.service_id,
-                data=json.dumps(
-                    {'updated_by': 'joeblogs',
-                     'services': {
-                         'serviceName': 'new service name'}}),
-                content_type='application/json')
-
+            response = self._post_service_update({'serviceName': 'new service name'})
             assert response.status_code == 200
 
-            response = self.client.get('/services/%s' % self.service_id)
-
+            response = self.client.get('/services/{}'.format(self.service_id))
             data = json.loads(response.get_data())
             assert data['services']['serviceName'] == 'new service name'
             assert response.status_code == 200
 
     def test_valid_service_update_creates_audit_event(self):
         with self.app.app_context():
-            response = self.client.post(
-                '/services/%s' % self.service_id,
-                data=json.dumps(
-                    {'updated_by': 'joeblogs',
-                     'services': {
-                         'serviceName': 'new service name'}}),
-                content_type='application/json')
-
+            response = self._post_service_update({'serviceName': 'new service name'})
             assert response.status_code == 200
 
             audit_response = self.client.get('/audit-events')
             assert audit_response.status_code == 200
             data = json.loads(audit_response.get_data())
 
-            assert len(data['auditEvents']) == 2
-            assert data['auditEvents'][0]['type'] == 'update_service'
+            assert len(data['auditEvents']) == 1
 
-            update_event = data['auditEvents'][1]
+            update_event = data['auditEvents'][0]
             assert update_event['type'] == 'update_service'
             assert update_event['user'] == 'joeblogs'
             assert update_event['data']['serviceId'] == self.service_id
 
     def test_service_update_audit_event_links_to_both_archived_services(self):
         with self.app.app_context():
-            self.client.post(
-                '/services/%s' % self.service_id,
-                data=json.dumps(
-                    {'updated_by': 'joeblogs',
-                     'services': {'serviceName': 'new service name'}}),
-                content_type='application/json')
-
-            self.client.post(
-                '/services/%s' % self.service_id,
-                data=json.dumps(
-                    {'updated_by': 'joeblogs',
-                     'services': {'serviceName': 'new new service name'}}),
-                content_type='application/json')
+            for name in ['new service name', 'new new service name']:
+                response = self._post_service_update({'serviceName': name})
+                assert response.status_code == 200
 
             audit_response = self.client.get('/audit-events')
             assert audit_response.status_code == 200
             data = json.loads(audit_response.get_data())
 
-            assert len(data['auditEvents']) == 3
+            assert len(data['auditEvents']) == 2
             update_event = data['auditEvents'][1]
 
             old_version = update_event['links']['oldArchivedService']
@@ -615,32 +571,20 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
             assert '/archived-services/' in old_version
             assert '/archived-services/' in new_version
-            assert (
-                int(old_version.split('/')[-1]) + 1 ==
-                int(new_version.split('/')[-1]))
-            assert (
-                data['auditEvents'][0]['data']['supplierName'] ==
-                'Supplier 1')
-            assert (
-                data['auditEvents'][0]['data']['supplierId'] ==
-                1)
+            assert (int(old_version.split('/')[-1]) + 1 == int(new_version.split('/')[-1]))
+            assert (data['auditEvents'][0]['data']['supplierName'] == 'Supplier 1')
+            assert (data['auditEvents'][0]['data']['supplierId'] == 1)
 
     def test_can_post_a_valid_service_update_on_several_fields(self):
         with self.app.app_context():
-            response = self.client.post(
-                '/services/%s' % self.service_id,
-                data=json.dumps(
-                    {'updated_by': 'joeblogs',
-                     'services': {
-                         'serviceName': 'new service name',
-                         'incidentEscalation': False,
-                         'serviceTypes': ['Software development tools']}}),
-                content_type='application/json')
-
+            response = self._post_service_update({
+                'serviceName': 'new service name',
+                'incidentEscalation': False,
+                'serviceTypes': ['Software development tools']}
+            )
             assert response.status_code == 200
 
             response = self.client.get('/services/%s' % self.service_id)
-
             data = json.loads(response.get_data())
             assert data['services']['serviceName'] == 'new service name'
             assert data['services']['incidentEscalation'] is False
@@ -649,16 +593,8 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
     def test_can_post_a_valid_service_update_with_list(self):
         with self.app.app_context():
-            support_types = ['Service desk', 'Email',
-                             'Phone', 'Live chat', 'Onsite']
-            response = self.client.post(
-                '/services/%s' % self.service_id,
-                data=json.dumps(
-                    {'updated_by': 'joeblogs',
-                     'services': {
-                         'supportTypes': support_types}}),
-                content_type='application/json')
-
+            support_types = ['Service desk', 'Email', 'Phone', 'Live chat', 'Onsite']
+            response = self._post_service_update({'supportTypes': support_types})
             assert response.status_code == 200
 
             response = self.client.get('/services/%s' % self.service_id)
@@ -670,21 +606,10 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     def test_can_post_a_valid_service_update_with_object(self):
         with self.app.app_context():
             identity_authentication_controls = {
-                "value": [
-                    "Authentication federation"
-                ],
+                "value": ["Authentication federation"],
                 "assurance": "CESG-assured components"
             }
-
-            response = self.client.post(
-                '/services/%s' % self.service_id,
-                data=json.dumps(
-                    {'updated_by': 'joeblogs',
-                     'services': {
-                         'identityAuthenticationControls':
-                             identity_authentication_controls}}),
-                content_type='application/json')
-
+            response = self._post_service_update({'identityAuthenticationControls': identity_authentication_controls})
             assert response.status_code == 200
 
             response = self.client.get('/services/%s' % self.service_id)
@@ -699,13 +624,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
     def test_invalid_field_not_accepted_on_update(self):
         with self.app.app_context():
-            response = self.client.post(
-                "/services/" + self.service_id,
-                data=json.dumps(
-                    {'updated_by': 'joeblogs',
-                     'services': {
-                         'thisIsInvalid': 'so I should never see this'}}),
-                content_type='application/json')
+            response = self._post_service_update({'thisIsInvalid': 'so I should never see this'})
 
             assert response.status_code == 400
             assert ('Additional properties are not allowed' in "{}".format(
@@ -714,91 +633,55 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
     def test_invalid_field_value_not_accepted_on_update(self):
         with self.app.app_context():
-            response = self.client.post(
-                "/services/" + self.service_id,
-                data=json.dumps(
-                    {'updated_by': 'joeblogs',
-                     'services': {
-                         'priceUnit': 'per Truth'}}),
-                content_type='application/json')
+            response = self._post_service_update({'priceUnit': 'per Truth'})
 
             assert response.status_code == 400
             assert ("no_unit_specified" in json.loads(response.get_data())['error']['priceUnit'])
 
     def test_updated_service_is_archived_right_away(self):
         with self.app.app_context():
-            response = self.client.post(
-                '/services/%s' % self.service_id,
-                data=json.dumps(
-                    {'updated_by': 'joeblogs',
-                     'services': {
-                         'serviceName': 'new service name'}}),
-                content_type='application/json')
-
+            response = self._post_service_update({'serviceName': 'new service name'})
             assert response.status_code == 200
 
             archived_state = self.client.get(
-                '/archived-services?service-id=' +
-                self.service_id).get_data()
+                '/archived-services?service-id=' + self.service_id).get_data()
             archived_service_json = json.loads(archived_state)['services'][-1]
 
             assert (archived_service_json['serviceName'] == 'new service name')
 
     def test_updated_service_archive_is_listed_in_chronological_order(self):
         with self.app.app_context():
-            response = self.client.post(
-                '/services/%s' % self.service_id,
-                data=json.dumps(
-                    {'updated_by': 'joeblogs',
-                     'services': {
-                         'serviceName': 'new service name'}}),
-                content_type='application/json')
-
-            assert response.status_code == 200
+            for name in ['new service name', 'new new service name']:
+                response = self._post_service_update({'serviceName': name})
+                assert response.status_code == 200
 
             archived_state = self.client.get(
                 '/archived-services?service-id=' +
                 self.service_id).get_data()
             archived_service_json = json.loads(archived_state)['services']
 
+            # initial service creation is done using `setup_dummy_service` in setup(), which skips the archiving process
+            # only the two updates done at the beginning of this test will be archived
             assert (
-                [s['serviceName'] for s in archived_service_json] ==
-                ['Service 1234567890123458', 'new service name'])
+                [s['serviceName'] for s in archived_service_json] == ['new service name', 'new new service name'])
 
     def test_updated_service_should_be_archived_on_each_update(self):
         with self.app.app_context():
             for i in range(5):
-                response = self.client.post(
-                    '/services/%s' % self.service_id,
-                    data=json.dumps(
-                        {'updated_by': 'joeblogs',
-                         'services': {
-                             'serviceName': 'new service name' + str(i)}}),
-                    content_type='application/json')
-
+                response = self._post_service_update({'serviceName': 'new service name' + str(i)})
                 assert response.status_code == 200
 
             archived_state = self.client.get(
-                '/archived-services?service-id=' +
-                self.service_id).get_data()
+                '/archived-services?service-id=' + self.service_id).get_data()
             assert len(json.loads(archived_state)['services']) == 5
 
     def test_writing_full_service_back(self):
         with self.app.app_context():
             response = self.client.get('/services/%s' % self.service_id)
             data = json.loads(response.get_data())
+            response = self._post_service_update(data['services'])
 
-            response = self.client.post(
-                '/services/%s' % self.service_id,
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': data['services']
-                    }
-                ),
-                content_type='application/json')
-
-            assert response.status_code == 200, response.get_data()
+            assert response.status_code == 200
 
     def test_should_404_if_no_archived_service_found_by_pk(self):
         response = self.client.get('/archived-services/5')
@@ -837,14 +720,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert (b'id parameter must match id in data' in response.get_data())
 
     def test_should_not_update_status_through_service_post(self):
-        response = self.client.post(
-            '/services/%s' % self.service_id,
-            data=json.dumps(
-                {'updated_by': 'joeblogs',
-                 'services': {
-                     'status': 'enabled'}}),
-            content_type='application/json')
-
+        response = self._post_service_update({'status': 'enabled'})
         assert response.status_code == 200
 
         response = self.client.get('/services/%s' % self.service_id)
@@ -853,12 +729,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert data['services']['status'] == 'published'
 
     def test_should_update_service_with_valid_statuses(self):
-        # Statuses are defined in the Supplier model
-        valid_statuses = [
-            "published",
-            "enabled",
-            "disabled"
-        ]
+        valid_statuses = ServiceTableMixin.STATUSES
 
         for status in valid_statuses:
             response = self.client.post(
@@ -892,27 +763,25 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
 
-        assert len(data['auditEvents']) == 2
-        assert data['auditEvents'][0]['type'] == 'update_service'
-        assert data['auditEvents'][1]['type'] == 'update_service_status'
-        assert data['auditEvents'][1]['user'] == 'joeblogs'
-        assert (
-            data['auditEvents'][1]['data']['serviceId'] == self.service_id)
-        assert data['auditEvents'][1]['data']['new_status'] == 'disabled'
-        assert data['auditEvents'][1]['data']['old_status'] == 'published'
-        assert ('/archived-services/' in data['auditEvents'][1]['links']['oldArchivedService'])
-        assert ('/archived-services/' in data['auditEvents'][1]['links']['newArchivedService'])
+        assert len(data['auditEvents']) == 1
+        assert data['auditEvents'][0]['type'] == 'update_service_status'
+        assert data['auditEvents'][0]['user'] == 'joeblogs'
+        assert data['auditEvents'][0]['data']['serviceId'] == self.service_id
+        assert data['auditEvents'][0]['data']['new_status'] == 'disabled'
+        assert data['auditEvents'][0]['data']['old_status'] == 'published'
+
+        # initial service creation is done using `setup_dummy_service` in setup(), which skips the archiving process
+        # only the two updates done at the beginning of this test will be archived
+        assert data['auditEvents'][0]['data']['oldArchivedServiceId'] is None
+        assert 'oldArchivedService' not in data['auditEvents'][0]['links']
+
+        assert data['auditEvents'][0]['data']['newArchivedServiceId'] is not None
+        assert '/archived-services/' in data['auditEvents'][0]['links']['newArchivedService']
 
     def test_should_400_with_invalid_statuses(self):
         invalid_statuses = [
             "unpublished",  # not a permissible state
             "enabeld",  # typo
-        ]
-
-        valid_statuses = [
-            "published",
-            "enabled",
-            "disabled"
         ]
 
         for status in invalid_statuses:
@@ -929,7 +798,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             assert response.status_code == 400
             assert ('is not a valid status' in json.loads(response.get_data())['error'])
             # assert that valid status names are returned in the response
-            for valid_status in valid_statuses:
+            for valid_status in ServiceTableMixin.STATUSES:
                 assert (valid_status in json.loads(response.get_data())['error'])
 
     def test_should_404_without_status_parameter(self):
@@ -951,19 +820,10 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             response = self.client.get('/services/{}'.format(self.service_id))
             data = json.loads(response.get_data())
 
-            response = self.client.post(
-                '/services/{}'.format(self.service_id),
-                data=json.dumps({
-                    'updated_by': 'joeblogs',
-                    'services': data['services'],
-                }),
-                content_type='application/json')
-
+            response = self._post_service_update(data['services'])
             assert response.status_code == 200
 
-            service = Service.query.filter(
-                Service.service_id == self.service_id
-            ).first()
+            service = Service.query.filter(Service.service_id == self.service_id).first()
 
             for key in non_json_fields:
                 assert key not in service.data
@@ -977,7 +837,6 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, FixtureMixin):
 
     def setup(self):
         super(TestShouldCallSearchApiOnPost, self).setup()
-        now = datetime.utcnow()
         self.payload = load_example_listing("G6-SaaS")
         self.payload_g4 = load_example_listing("G4")
         with self.app.app_context():
@@ -986,15 +845,13 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, FixtureMixin):
             )
             self.setup_dummy_service(
                 service_id=self.payload['id'],
+                **self.payload
             )
-            db.session.add(Service(service_id="4-G2-0123-456",
-                                   supplier_id=1,
-                                   updated_at=now,
-                                   status='published',
-                                   created_at=now,
-                                   lot_id=3,
-                                   framework_id=2,  # G-Cloud 4  <---UGH
-                                   data=self.payload_g4))
+
+            self.setup_dummy_service(
+                service_id=self.payload_g4['id'],
+                **self.payload_g4
+            )
             db.session.commit()
 
     def test_should_index_on_service_post(self, search_api_client):
@@ -1071,17 +928,13 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, FixtureMixin):
             assert response.status_code == 200, response.get_data()
 
 
-class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
+class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestShouldCallSearchApiOnPostStatusUpdate, self).setup()
         now = datetime.utcnow()
         self.services = {}
 
-        valid_statuses = [
-            'published',
-            'enabled',
-            'disabled'
-        ]
+        valid_statuses = ServiceTableMixin.STATUSES
 
         with self.app.app_context():
             db.session.add(
@@ -1095,16 +948,13 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
                 new_id = int(payload['id']) + index
                 payload['id'] = "{}".format(new_id)
 
-                self.services[status] = payload
+                self.services[status] = payload.copy()
 
-                db.session.add(Service(service_id=self.services[status]['id'],
-                                       supplier_id=1,
-                                       updated_at=now,
-                                       status=status,
-                                       created_at=now,
-                                       lot_id=1,
-                                       framework_id=1,
-                                       data=self.services[status]))
+                self.setup_dummy_service(
+                    service_id=self.services[status]['id'],
+                    status=status,
+                    **payload
+                )
 
             db.session.commit()
             assert 3 == db.session.query(Service).count()
@@ -1423,7 +1273,7 @@ class TestGetService(BaseApplicationTest):
                 }
             )
             # make a published service use the expired framework
-            service = Service.query.filter(
+            Service.query.filter(
                 Service.service_id == '123-published-456'
             ).update({
                 'framework_id': 123
@@ -1457,7 +1307,7 @@ class TestGetService(BaseApplicationTest):
                 }
             )
             # make a disabled service use the expired framework
-            service = Service.query.filter(
+            Service.query.filter(
                 Service.service_id == '123-disabled-456'
             ).update({
                 'framework_id': 123

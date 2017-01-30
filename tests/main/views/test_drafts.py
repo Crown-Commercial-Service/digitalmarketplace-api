@@ -49,30 +49,9 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
 
             self.setup_dummy_service(
                 service_id=self.service_id,
+                **payload
             )
             db.session.commit()
-
-    def _post_update_service(self):
-        """
-        updates the minimal service we created in the setup.
-        means that we can copy this service as a publishable draft
-
-        :return: response from POST request
-        """
-        service_update = load_example_listing("G6-SaaS")
-        # don't overwrite the name, as tests rely on this
-        service_update.pop('serviceName')
-
-        res = self.client.post(
-            '/services/{}'.format(self.service_id),
-            data=json.dumps({
-                'updated_by': 'joeblogs',
-                'services': service_update
-            }),
-            content_type='application/json'
-        )
-        assert res.status_code == 200
-        return res
 
     def service_count(self):
         with self.app.app_context():
@@ -746,11 +725,9 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
 
     @mock.patch('app.service_utils.search_api_client')
     def test_should_be_able_to_publish_valid_copied_draft_service(self, search_api_client):
-        self._post_update_service()
-
         initial = self.client.get('/services/{}'.format(self.service_id))
         assert initial.status_code == 200
-        assert json.loads(initial.get_data())['services']['serviceName'] == 'Service 1234567890123458'
+        assert json.loads(initial.get_data())['services']['serviceName'] == 'A SaaS with lots of options'
 
         res = self.client.put(
             '/draft-services/copy-from/{}'.format(self.service_id),
@@ -760,7 +737,7 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         first_draft = self.client.get(
             '/draft-services/{}'.format(draft_id))
         assert first_draft.status_code == 200
-        assert json.loads(first_draft.get_data())['services']['serviceName'] == 'Service 1234567890123458'
+        assert json.loads(first_draft.get_data())['services']['serviceName'] == 'A SaaS with lots of options'
 
         self.client.post(
             '/draft-services/{}'.format(draft_id),
@@ -787,11 +764,10 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
 
-        assert len(data['auditEvents']) == 4
-        assert data['auditEvents'][0]['type'] == 'update_service'
-        assert data['auditEvents'][1]['type'] == 'create_draft_service'
-        assert data['auditEvents'][2]['type'] == 'update_draft_service'
-        assert data['auditEvents'][3]['type'] == 'publish_draft_service'
+        assert len(data['auditEvents']) == 3
+        assert data['auditEvents'][0]['type'] == 'create_draft_service'
+        assert data['auditEvents'][1]['type'] == 'update_draft_service'
+        assert data['auditEvents'][2]['type'] == 'publish_draft_service'
 
         # draft should no longer exist
         fetch = self.client.get('/draft-services/{}'.format(self.service_id))
@@ -806,7 +782,7 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         archives = self.client.get(
             '/archived-services?service-id={}'.format(self.service_id))
         assert archives.status_code == 200
-        assert json.loads(archives.get_data())['services'][0]['serviceName'] == 'Service 1234567890123458'
+        assert json.loads(archives.get_data())['services'][0]['serviceName'] == 'chickens'
         assert search_api_client.index.called
 
     def test_should_not_be_able_to_publish_submission_if_not_submitted(self):
@@ -932,8 +908,6 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         assert self.draft_service_count() == 1
 
     def test_drafts_made_from_services_are_deleted_when_published(self):
-        self._post_update_service()
-
         res = self.client.put(
             '/draft-services/copy-from/{}'.format(self.service_id),
             data=json.dumps(self.updater_json),

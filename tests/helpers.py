@@ -152,18 +152,22 @@ class FixtureMixin(object):
             db.session.commit()
 
     def setup_dummy_service(self, service_id, supplier_id=1, data=None,
-                            status='published', framework_id=1, lot_id=1):
+                            status='published', framework_id=1, lot_id=1, **kwargs):
         now = datetime.utcnow()
+
+        # lot and framework ids aren't in json responses, so we'll look for them first
+        lot = Lot.query.filter(Lot.slug == kwargs.pop('lot', '')).first()
+        framework = Framework.query.filter(Framework.slug == kwargs.pop('frameworkSlug', '')).first()
 
         service_kwargs = {
             'service_id': service_id,
-            'supplier_id': supplier_id,
-            'status': status,
-            'data': data or {'serviceName': 'Service {}'.format(service_id)},
-            'framework_id': framework_id,
-            'lot_id': lot_id,
-            'created_at': now,
-            'updated_at': now
+            'supplier_id': kwargs.pop('supplierId', supplier_id),
+            'status': kwargs.pop('status', status),
+            'framework_id': framework.id if framework else framework_id,
+            'lot_id': lot.id if lot else lot_id,
+            'created_at': kwargs.pop('createdAt', now),
+            'updated_at': kwargs.pop('updatedAt', now),
+            'data': data or kwargs or {'serviceName': 'Service {}'.format(service_id)}
         }
 
         db.session.add(Service(**service_kwargs))
