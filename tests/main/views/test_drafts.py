@@ -725,6 +725,12 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
 
     @mock.patch('app.service_utils.search_api_client')
     def test_should_be_able_to_publish_valid_copied_draft_service(self, search_api_client):
+        """
+        this test creates a draft from a (live) service, updates the draft, and then publishes it.
+        publishing the draft updates the original service -- it doesn't create a new one
+        this was an alternative editing model proposed by martyn way way back.
+        we're not actually doing this anywhere, but it's tested and it looks like it works.
+        """
         initial = self.client.get('/services/{}'.format(self.service_id))
         assert initial.status_code == 200
         assert json.loads(initial.get_data())['services']['serviceName'] == 'A SaaS with lots of options'
