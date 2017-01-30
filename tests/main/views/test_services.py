@@ -441,14 +441,14 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
         assert data['error'] == 'Role must be specified for Digital Specialists'
 
 
-class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
+class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     endpoint = '/services/{self.service_id}'
     method = 'post'
     service_id = None
 
     def setup(self):
         super(TestPostService, self).setup()
-        payload = load_example_listing("G6-IaaS")
+        payload = load_example_listing("G6-SaaS")
         self.service_id = str(payload['id'])
         with self.app.app_context():
             db.session.add(
@@ -462,14 +462,33 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
                     postcode=u"SW1A 1AA"
                 )
             )
+            self.setup_dummy_service(
+                service_id=self.service_id,
+            )
             db.session.commit()
+            self._post_update_service()
 
-        self.client.put(
-            '/services/%s' % self.service_id,
-            data=json.dumps(
-                {'updated_by': 'joeblogs',
-                 'services': payload}),
-            content_type='application/json')
+    def _post_update_service(self):
+        """
+        updates the minimal service we created in the setup.
+        means that we can copy this service as a publishable draft
+
+        :return: response from POST request
+        """
+        service_update = load_example_listing("G6-SaaS")
+        # don't overwrite the name, as tests rely on this
+        service_update.pop('serviceName')
+
+        res = self.client.post(
+            '/services/{}'.format(self.service_id),
+            data=json.dumps({
+                'updated_by': 'joeblogs',
+                'services': service_update
+            }),
+            content_type='application/json'
+        )
+        assert res.status_code == 200
+        return res
 
     def test_can_not_post_to_root_services_url(self):
         response = self.client.post(
@@ -563,7 +582,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             data = json.loads(audit_response.get_data())
 
             assert_equal(len(data['auditEvents']), 2)
-            assert_equal(data['auditEvents'][0]['type'], 'import_service')
+            assert_equal(data['auditEvents'][0]['type'], 'update_service')
 
             update_event = data['auditEvents'][1]
             assert_equal(update_event['type'], 'update_service')
@@ -620,7 +639,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
                      'services': {
                          'serviceName': 'new service name',
                          'incidentEscalation': False,
-                         'serviceTypes': ['Compute']}}),
+                         'serviceTypes': ['Software development tools']}}),
                 content_type='application/json')
 
             assert_equal(response.status_code, 200)
@@ -630,7 +649,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             data = json.loads(response.get_data())
             assert_equal(data['services']['serviceName'], 'new service name')
             assert_equal(data['services']['incidentEscalation'], False)
-            assert_equal(data['services']['serviceTypes'][0], 'Compute')
+            assert_equal(data['services']['serviceTypes'][0], 'Software development tools')
             assert_equal(response.status_code, 200)
 
     def test_can_post_a_valid_service_update_with_list(self):
@@ -754,7 +773,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
 
             assert_equal(
                 [s['serviceName'] for s in archived_service_json],
-                ['My Iaas Service', 'new service name'])
+                ['Service 1234567890123458', 'new service name'])
 
     def test_updated_service_should_be_archived_on_each_update(self):
         with self.app.app_context():
@@ -885,7 +904,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
         data = json.loads(audit_response.get_data())
 
         assert_equal(len(data['auditEvents']), 2)
-        assert_equal(data['auditEvents'][0]['type'], 'import_service')
+        assert_equal(data['auditEvents'][0]['type'], 'update_service')
         assert_equal(data['auditEvents'][1]['type'], 'update_service_status')
         assert_equal(data['auditEvents'][1]['user'], 'joeblogs')
         assert_equal(
@@ -965,145 +984,50 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin):
             for key in non_json_fields:
                 assert_not_in(key, service.data)
 
-    def test_update_g5_service(self):
-        with self.app.app_context():
-            payload = load_example_listing('G5')
-
-            response = self.client.put('/services/{}'.format(payload['id']),
-                                       data=json.dumps({
-                                           'services': payload,
-                                           "updated_by": "joeblogs",
-                                       }),
-                                       content_type='application/json')
-            assert_equal(response.status_code, 201)
-
-            response = self.client.post('/services/{}'.format(payload['id']),
-                                        data=json.dumps({
-                                            "services": {
-                                                "serviceName": "fooo",
-                                            },
-                                            "updated_by": "joeblogs"
-                                        }),
-                                        content_type='application/json')
-            assert_equal(response.status_code, 200)
-
 
 @mock.patch('app.service_utils.search_api_client')
-class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
-    def setup(self):
-        super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
-            )
+class TestShouldCallSearchApiOnPost(BaseApplicationTest, FixtureMixin):
 
-            db.session.commit()
+    payload = None
+    payload_g4 = None
 
-    def test_should_index_on_service_put(self, search_api_client):
-        with self.app.app_context():
-            search_api_client.index.return_value = True
-
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
-            response = self.client.put(
-                '/services/1234567890123456',
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            search_api_client.index.assert_called_with(
-                "1234567890123456",
-                json.loads(response.get_data())['services']
-            )
-
-    def test_should_not_index_on_service_on_expired_frameworks(
-            self, search_api_client
-    ):
-        with self.app.app_context():
-            search_api_client.index.return_value = True
-
-            payload = load_example_listing("G4")
-            res = self.client.put(
-                '/services/' + payload["id"],
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            assert_equal(res.status_code, 201)
-            assert_is_not_none(Service.query.filter(
-                Service.service_id == payload["id"]).first())
-            assert_false(search_api_client.index.called)
-
-    def test_should_ignore_index_error_on_service_put(self, search_api_client):
-        with self.app.app_context():
-            search_api_client.index.side_effect = HTTPError()
-
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
-            response = self.client.put(
-                '/services/1234567890123456',
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
-
-@mock.patch('app.service_utils.search_api_client')
-class TestShouldCallSearchApiOnPost(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPost, self).setup()
         now = datetime.utcnow()
-        payload = load_example_listing("G6-IaaS")
-        g4_payload = load_example_listing("G4")
+        self.payload = load_example_listing("G6-SaaS")
+        self.payload_g4 = load_example_listing("G4")
         with self.app.app_context():
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
-            db.session.add(Service(service_id="1234567890123456",
-                                   supplier_id=1,
-                                   updated_at=now,
-                                   status='published',
-                                   created_at=now,
-                                   lot_id=3,
-                                   framework_id=1,
-                                   data=payload))
+            self.setup_dummy_service(
+                service_id=self.payload['id'],
+            )
             db.session.add(Service(service_id="4-G2-0123-456",
                                    supplier_id=1,
                                    updated_at=now,
                                    status='published',
                                    created_at=now,
                                    lot_id=3,
-                                   framework_id=2,  # G-Cloud 4
-                                   data=g4_payload))
+                                   framework_id=2,  # G-Cloud 4  <---UGH
+                                   data=self.payload_g4))
             db.session.commit()
 
     def test_should_index_on_service_post(self, search_api_client):
         with self.app.app_context():
             search_api_client.index.return_value = True
 
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
             self.client.post(
-                '/services/1234567890123456',
+                '/services/{}'.format(self.payload['id']),
                 data=json.dumps(
                     {
                         'updated_by': 'joeblogs',
-                        'services': payload}
+                        'services': self.payload}
                 ),
                 content_type='application/json')
 
             search_api_client.index.assert_called_with(
-                "1234567890123456",
+                self.payload['id'],
                 mock.ANY
             )
 
@@ -1116,10 +1040,9 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
             db_session_commit.side_effect = IntegrityError(
                 'message', 'statement', 'params', 'orig')
 
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
+            payload = load_example_listing("G6-SaaS")
             self.client.post(
-                '/services/1234567890123456',
+                '/services/{}'.format(self.payload['id']),
                 data=json.dumps(
                     {
                         'updated_by': 'joeblogs',
@@ -1136,7 +1059,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
 
             payload = load_example_listing("G4")
             res = self.client.post(
-                '/services/4-G2-0123-456',
+                '/services/{}'.format(self.payload_g4['id']),
                 data=json.dumps(
                     {
                         'updated_by': 'joeblogs',
@@ -1151,10 +1074,9 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
         with self.app.app_context():
             search_api_client.index.side_effect = HTTPError()
 
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
+            payload = load_example_listing("G6-SaaS")
             response = self.client.post(
-                '/services/1234567890123456',
+                '/services/{}'.format(self.payload['id']),
                 data=json.dumps(
                     {
                         'updated_by': 'joeblogs',
@@ -1183,7 +1105,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
             )
 
             for index, status in enumerate(valid_statuses):
-                payload = load_example_listing("G6-IaaS")
+                payload = load_example_listing("G6-SaaS")
 
                 # give each service a different id.
                 new_id = int(payload['id']) + index
@@ -1326,325 +1248,6 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
         )
 
         assert_equal(response.status_code, 200)
-
-
-class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
-    method = "put"
-    endpoint = "/services/1234567890123456"
-
-    def setup(self):
-        super(TestPutService, self).setup()
-        payload = load_example_listing("G6-IaaS")
-        del payload['id']
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
-            )
-            db.session.add(
-                ContactInformation(
-                    supplier_id=1,
-                    contact_name=u"Liz",
-                    email=u"liz@royal.gov.uk",
-                    postcode=u"SW1A 1AA"
-                )
-            )
-            db.session.commit()
-
-    def test_json_postgres_data_column_should_not_include_column_fields(self):
-        non_json_fields = [
-            'supplierName', 'links', 'frameworkSlug', 'updatedAt', 'createdAt', 'frameworkName', 'status', 'id',
-            'supplierId', 'updatedAt', 'createdAt']
-        with self.app.app_context():
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
-
-            response = self.client.put(
-                '/services/1234567890123456',
-                data=json.dumps({
-                    'updated_by': 'joeblogs',
-                    'services': payload,
-                }),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
-            service = Service.query.filter(
-                Service.service_id == "1234567890123456"
-            ).first()
-
-            for key in non_json_fields:
-                assert_not_in(key, service.data)
-
-    @mock.patch('app.search_api_client')
-    def test_add_a_new_service(self, search_api_client):
-        with self.app.app_context():
-            search_api_client.index.return_value = "bar"
-
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
-            response = self.client.put(
-                '/services/1234567890123456',
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-            now = datetime.utcnow()
-
-            response = self.client.get("/services/1234567890123456")
-            service = json.loads(response.get_data())["services"]
-
-            assert_equal(
-                service["id"],
-                payload['id'])
-
-            assert_equal(
-                service["supplierId"],
-                payload['supplierId'])
-
-            assert_equal(
-                datetime.strptime(service["createdAt"], DATETIME_FORMAT).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                payload['createdAt']
-            )
-
-            assert_almost_equal(
-                datetime.strptime(service["updatedAt"], DATETIME_FORMAT),
-                now,
-                delta=timedelta(seconds=2))
-
-    @mock.patch('app.search_api_client')
-    def test_whitespace_is_stripped_on_import(self, search_api_client):
-        with self.app.app_context():
-            search_api_client.index.return_value = "bar"
-
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
-            payload['serviceSummary'] = "    A new summary with   space    "
-            payload['serviceFeatures'] = ["    ",
-                                          "    A feature   with space    ",
-                                          "",
-                                          "    A second feature with space   "]
-            response = self.client.put(
-                '/services/1234567890123456',
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201, response.get_data())
-
-            response = self.client.get("/services/1234567890123456")
-            service = json.loads(response.get_data())["services"]
-
-            assert_equal(
-                service["serviceSummary"],
-                "A new summary with   space"
-            )
-            assert_equal(len(service["serviceFeatures"]), 2)
-            assert_equal(
-                service["serviceFeatures"][0],
-                "A feature   with space"
-            )
-            assert_equal(
-                service["serviceFeatures"][1],
-                "A second feature with space"
-            )
-
-    @mock.patch('app.search_api_client')
-    def test_add_a_new_service_creates_audit_event(self, search_api_client):
-        with self.app.app_context():
-            search_api_client.index.return_value = "bar"
-
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
-            response = self.client.put(
-                '/services/1234567890123456',
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
-            audit_response = self.client.get('/audit-events')
-            assert_equal(audit_response.status_code, 200)
-            data = json.loads(audit_response.get_data())
-
-            assert_equal(len(data['auditEvents']), 1)
-            assert_equal(data['auditEvents'][0]['type'], 'import_service')
-            assert_equal(
-                data['auditEvents'][0]['user'],
-                'joeblogs')
-            assert_equal(data['auditEvents'][0]['data']['serviceId'],
-                         "1234567890123456")
-            assert_equal(data['auditEvents'][0]['data']['supplierName'],
-                         "Supplier 1")
-            assert_equal(data['auditEvents'][0]['data']['supplierId'],
-                         1)
-            assert_equal(
-                data['auditEvents'][0]['data']['oldArchivedServiceId'], None
-            )
-            assert_not_in('old_archived_service',
-                          data['auditEvents'][0]['links'])
-
-            assert_true(isinstance(
-                data['auditEvents'][0]['data']['newArchivedServiceId'], int
-            ))
-            assert_in('newArchivedService', data['auditEvents'][0]['links'])
-
-    def test_add_a_new_service_with_status_disabled(self):
-        with self.app.app_context():
-            payload = load_example_listing("G4")
-            payload['id'] = "4-disabled"
-            payload['status'] = "disabled"
-            response = self.client.put(
-                '/services/4-disabled',
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            for field in ['id', 'lot', 'supplierId', 'status']:
-                payload.pop(field, None)
-            assert_equal(response.status_code, 201, response.get_data())
-            now = datetime.utcnow()
-            service = Service.query.filter(Service.service_id == "4-disabled").first()
-            assert_equal(service.status, 'disabled')
-            for key in service.data:
-                assert_equal(service.data[key], payload[key])
-            assert_almost_equal(service.created_at, service.updated_at,
-                                delta=timedelta(seconds=0.5))
-            assert_almost_equal(now, service.created_at,
-                                delta=timedelta(seconds=2))
-
-    def test_when_service_payload_has_mismatched_id(self):
-        response = self.client.put(
-            '/services/1234567890123456',
-            data=json.dumps({
-                'updated_by': 'joeblogs',
-                'services': {'id': "1234567890123457", 'foo': 'bar'}}),
-            content_type='application/json')
-
-        assert_equal(response.status_code, 400)
-        assert_in(b'id parameter must match id in data',
-                  response.get_data())
-
-    def test_invalid_service_id_too_short(self):
-        response = self.client.put(
-            '/services/abc123456',
-            data=json.dumps({
-                'updated_by': 'joeblogs',
-                'services': {'id': 'abc123456', 'foo': 'bar'}}),
-            content_type='application/json')
-
-        assert_equal(response.status_code, 400)
-        assert_in(b'Invalid service ID supplied', response.get_data())
-
-    def test_invalid_service_id_too_long(self):
-        response = self.client.put(
-            '/services/abcdefghij12345678901',
-            data=json.dumps({
-                'updated_by': 'joeblogs',
-                'services': {'id': 'abcdefghij12345678901', 'foo': 'bar'}}),
-            content_type='application/json')
-
-        assert_equal(response.status_code, 400)
-        assert_in(b'Invalid service ID supplied', response.get_data())
-
-    def test_invalid_service_status(self):
-        payload = load_example_listing("G4")
-        payload['id'] = "4-invalid-status"
-        payload['status'] = "foo"
-        response = self.client.put(
-            '/services/4-invalid-status',
-            data=json.dumps({
-                'updated_by': 'joeblogs',
-                'services': payload}),
-            content_type='application/json')
-
-        assert_equal(response.status_code, 400)
-        assert_in("Invalid status value 'foo'", json.loads(response.get_data())['error'])
-
-    def test_invalid_service_lot(self):
-        payload = load_example_listing("G4")
-        payload['id'] = "4-invalid-lot"
-        payload['lot'] = "foo"
-        response = self.client.put(
-            '/services/4-invalid-lot',
-            data=json.dumps({
-                'updated_by': 'joeblogs',
-                'services': payload}),
-            content_type='application/json')
-
-        assert_equal(response.status_code, 400)
-        assert_in("Incorrect lot 'foo' for framework 'g-cloud-4'", json.loads(response.get_data())['error'])
-
-    def test_invalid_service_data(self):
-        payload = load_example_listing("G6-IaaS")
-        payload['id'] = "1234567890123456"
-
-        payload['priceMin'] = 23.45
-
-        response = self.client.put(
-            '/services/1234567890123456',
-            data=json.dumps({
-                'updated_by': 'joeblogs',
-                'services': payload
-            }),
-            content_type='application/json')
-
-        assert_equal(response.status_code, 400)
-        assert_in("23.45 is not of type", json.loads(response.get_data())['error']['priceMin'])
-
-    def test_add_a_service_with_unknown_supplier_id(self):
-        with self.app.app_context():
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "6543210987654321"
-            payload['supplierId'] = 100
-            response = self.client.put(
-                '/services/6543210987654321',
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 400)
-            assert_in("Invalid supplier ID '100'", json.loads(response.get_data())['error'])
-
-    def test_supplier_name_in_service_data_is_shadowed(self):
-        with self.app.app_context():
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
-            payload['supplierId'] = 1
-            payload['supplierName'] = u'New Name'
-
-            response = self.client.put(
-                '/services/1234567890123456',
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            assert_equal(response.status_code, 201)
-
-            response = self.client.get('/services/1234567890123456')
-            data = json.loads(response.get_data())
-
-            assert_equal(response.status_code, 200)
-            assert_equal(data['services']['supplierName'], u'Supplier 1')
 
 
 class TestGetService(BaseApplicationTest):
