@@ -212,8 +212,9 @@ def submit_application(application_id):
         db_object=application
     ))
 
-    application.update_from_json({'status': 'submitted',
-                                  'submitted_at': current_time})
+    application.submit_for_approval()
+
+    application.update_from_json({'submitted_at': current_time})
 
     signed_agreement = SignedAgreement()
     signed_agreement.user_id = user_id

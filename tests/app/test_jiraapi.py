@@ -102,9 +102,6 @@ class TestJira(BaseApplicationTest):
         with self.app.app_context() as a:
             j = JIRA()
             j.server_info.return_value = {'baseUrl': 'http://jira.example.com'}
-            get_api_oauth.return_value = j
-
-            mj = get_marketplace_jira()
 
             issue_object = mock.Mock()
 
@@ -112,7 +109,13 @@ class TestJira(BaseApplicationTest):
                 'fields': {
                     'customfield_99999': 9,
                     'subtasks': [{
-                        'id': 99
+                        'id': 99,
+                        'key': 'T-99',
+                        'fields': {
+                            'summary': 'A subtask',
+                            'status': {'name': 'Done'}
+                        },
+                        'self': 'http://api/subissue'
                     }],
                     'summary': 'a task',
                     'status': {'name': 'To Do'}
@@ -122,19 +125,10 @@ class TestJira(BaseApplicationTest):
                 'key': 'T-98'
             }
 
-            j.search_issues.return_value = [issue_object]
+            get_api_oauth.return_value = j
+            mj = get_marketplace_jira()
 
-            specific = mock.Mock()
-            specific.return_value = {
-                'id': 99,
-                'key': 'T-99',
-                'fields': {
-                    'summary': 'A subtask',
-                    'status': {'name': 'Done'}
-                },
-                'self': 'http://api/subissue'
-            }
-            mj.generic_jira.get_specific_issue = specific
+            mj.generic_jira.jira.search_issues.return_value = [issue_object]
 
             assert mj.assessment_tasks_by_application_id() == {
                 9: {

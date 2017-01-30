@@ -9,6 +9,8 @@ from flask import current_app
 import json
 from functools import partial
 
+import logging
+
 
 ASSESSMENT_ISSUE_TYPE = 'Supplier Assessment'
 
@@ -19,6 +21,18 @@ The application comprises the following information:
 {}
 
 """
+
+
+log = logging.getLogger('jiraapi')
+log.setLevel(level=logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s %(name)-12s: %(levelname)-8s %(message)s')
+
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+console.setFormatter(formatter)
+
+log.addHandler(console)
 
 
 def to_snake(s, sep='-'):
@@ -119,11 +133,10 @@ class MarketplaceJIRA(object):
                 'link': self.make_link(t['key']),
                 'summary': t['fields']['summary'],
                 'status': to_snake(t['fields']['status']['name'], '-'),
-                'link': self.make_link(t['key'])
             }
 
             try:
-                info['subtasks'] = [task_info(st) for st in t['full_subtasks']]
+                info['subtasks'] = [task_info(st) for st in t['fields']['subtasks']]
             except KeyError:
                 pass
             return info
@@ -184,17 +197,19 @@ class GenericJIRA(object):
         results = self.jira.search_issues(SEARCH)
         return results
 
-    def issues_with_subtasks(self, project_code, issuetype_name):
+    def issues_with_subtasks(self, project_code, issuetype_name, full_subtasks=False):
+        log.info('requesting: all issues')
         issues = self.get_issues_of_type(project_code, issuetype_name)
 
-        def fully_populated_issue(issue):
-            issue['full_subtasks'] = [
-                self.get_specific_issue(subtask['id'])
-                for subtask in issue['fields']['subtasks']
-            ]
+        def augment(issue):
+            if full_subtasks:
+                issue['full_subtasks'] = [
+                    self.get_specific_issue(subtask['id'])
+                    for subtask in issue['fields']['subtasks']
+                ]
             return issue
 
-        return [fully_populated_issue(_.raw) for _ in issues]
+        return [augment(_.raw) for _ in issues]
 
     def get_specific_issue(self, task_id):
         url = self.jira._get_url('issue/{}'.format(task_id))

@@ -378,7 +378,8 @@ class TestSubmitApplication(BaseApplicationsTest):
 
         assert response.status_code == 404
 
-    def test_application_submitted(self):
+    @mock.patch('app.jiraapi.JIRA')
+    def test_application_submitted(self, jira):
         self.patch_application(self.application_id, data={'status': 'saved'})
         user_id = self.setup_dummy_applicant(2, self.application_id)
         self.setup_agreement()

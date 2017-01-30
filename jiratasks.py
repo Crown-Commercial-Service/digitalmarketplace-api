@@ -51,10 +51,8 @@ def create_subtask_issuetype():
 
 def connect():
     with jira_with_app_context() as j:
-        p(j)
         si = j.generic_jira.jira.server_info()
         p(si)
-        p(j.base_url)
 
 
 if __name__ == '__main__':
