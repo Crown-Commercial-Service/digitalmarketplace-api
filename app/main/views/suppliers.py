@@ -200,6 +200,9 @@ def supplier_search():
     q = q.order_by(*ob)
     results = list(q)
 
+    # remove 'hidden' example listing from result
+    results = [_ for _ in results if _.abn != _.DUMMY_ABN]
+
     if roleslist and new_domains and not EXCLUDE_LEGACY_ROLES:
         # this code includes lecacy domains in results but is slower.
         # can be removed once fully migrated to new domains.

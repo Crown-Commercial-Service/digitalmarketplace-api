@@ -230,8 +230,8 @@ class BaseApplicationTest(object):
 
     def setup_dummy_suppliers_with_old_and_new_domains(self, n):
         with self.app.app_context():
-            for i in range(n):
-                if i == 1:
+            for i in range(1, n+1):
+                if i == 2:
                     ps = PriceSchedule.from_json({
                         'serviceRole': {
                             'category': 'Technical Architecture, Development, Ethical Hacking and Web Operations',
@@ -245,8 +245,8 @@ class BaseApplicationTest(object):
                     prices = []
 
                 s = Supplier(
-                    code=(i),
-                    name=u"Supplier {}".format(i),
+                    code=i,
+                    name=u"Supplier {}".format(i-1),
                     description="",
                     summary="",
                     address=Address(address_line="{} Dummy Street".format(i),
@@ -259,13 +259,34 @@ class BaseApplicationTest(object):
                     prices=prices,
                 )
 
-                if i == 2:
+                if i == 3:
                     s.add_unassessed_domain('Content and Publishing')
 
                     s.add_unassessed_domain('Data science')
                     s.update_domain_assessment_status('Data science', 'assessed')
 
                 db.session.add(s)
+
+            ds = Supplier(
+                name=u"Dummy Supplier",
+                abn=Supplier.DUMMY_ABN,
+                description="",
+                summary="",
+                address=Address(address_line="{} Dummy Street".format(i),
+                                suburb="Dummy",
+                                state="ZZZ",
+                                postal_code="0000",
+                                country='Australia'),
+                contacts=[],
+                references=[],
+                prices=prices,
+            )
+
+            ds.add_unassessed_domain('Content and Publishing')
+            ds.add_unassessed_domain('Data science')
+            ds.update_domain_assessment_status('Data science', 'assessed')
+
+            db.session.add(ds)
 
             db.session.commit()
 
