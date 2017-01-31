@@ -110,6 +110,7 @@ class FixtureMixin(object):
         ))
 
     def setup_dummy_suppliers(self, n):
+        supplier_ids = []
         with self.app.app_context():
             for i in range(n):
                 db.session.add(
@@ -128,7 +129,9 @@ class FixtureMixin(object):
                         postcode=u'SW1A 1AA'
                     )
                 )
+                supplier_ids.append(i)
             db.session.commit()
+        return supplier_ids
 
     def setup_additional_dummy_suppliers(self, n, initial):
         with self.app.app_context():

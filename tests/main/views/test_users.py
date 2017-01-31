@@ -9,24 +9,11 @@ from tests.helpers import FixtureMixin, load_example_listing
 
 
 class BaseUserTest(BaseApplicationTest):
-    supplier = None
-    supplier_id = None
     users = None
 
     def setup(self):
         super(BaseUserTest, self).setup()
-        payload = load_example_listing("Supplier")
-        self.supplier = payload
-        self.supplier_id = payload['id']
         self.users = []
-
-    def _post_supplier(self):
-        response = self.client.put(
-            '/suppliers/{}'.format(self.supplier_id),
-            data=json.dumps({'suppliers': self.supplier}),
-            content_type='application/json')
-
-        assert response.status_code == 201
 
     def _post_user(self, user):
         response = self.client.post(
@@ -340,20 +327,14 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
         error = json.loads(response.get_data())['error']
         assert_in("'admin-ccs' is not one of", error)
 
-    def test_can_post_a_supplier_user(self):
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
-            )
-            db.session.commit()
-
+    def test_can_post_a_supplier_user(self, supplier_basic):
         response = self.client.post(
             '/users',
             data=json.dumps({
                 'users': {
                     'emailAddress': 'joeblogs@email.com',
                     'password': '1234567890',
-                    'supplierId': 1,
+                    'supplierId': supplier_basic,
                     'role': 'supplier',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
@@ -361,23 +342,16 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
         assert_equal(response.status_code, 201)
         data = json.loads(response.get_data())["users"]
         assert_equal(data["emailAddress"], "joeblogs@email.com")
-        assert_equal(data["supplier"]["name"], "Supplier 1")
-        assert_equal(data["supplier"]["supplierId"], 1)
+        assert_equal(data["supplier"]["supplierId"], supplier_basic)
 
-    def test_post_a_user_creates_audit_event(self):
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
-            )
-            db.session.commit()
-
+    def test_post_a_user_creates_audit_event(self, supplier_basic):
         response = self.client.post(
             '/users',
             data=json.dumps({
                 'users': {
                     'emailAddress': 'joeblogs@email.com',
                     'password': '1234567890',
-                    'supplierId': 1,
+                    'supplierId': supplier_basic,
                     'role': 'supplier',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
@@ -390,7 +364,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
 
         assert_equal(len(data['auditEvents']), 1)
         assert_equal(data['auditEvents'][0]['type'], 'create_user')
-        assert_equal(data['auditEvents'][0]['data']['supplier_id'], 1)
+        assert_equal(data['auditEvents'][0]['data']['supplier_id'], supplier_basic)
 
     def test_should_reject_a_supplier_user_with_invalid_supplier_id(self):
         response = self.client.post(
@@ -972,11 +946,16 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(data['emailAddress'], 'myshinynew@digital.gov.uk')
 
 
-class TestUsersGet(BaseUserTest):
+class TestUsersGet(BaseUserTest, FixtureMixin):
+    supplier_id = None
+
     def setup(self):
         super(TestUsersGet, self).setup()
+
+        # get the last supplier_id returned
+        # it turns out we have some logic that doesn't recognise "0" as a supplier_id for users
+        self.supplier_id = self.setup_dummy_suppliers(2)[-1]
         with self.app.app_context():
-            self._post_supplier()
             self._post_users()
 
     def _post_users(self):
@@ -1251,7 +1230,8 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
 
     def _setup(self, post_supplier=True, post_users=True, register_supplier_with_framework=True):
         if post_supplier:
-            self._post_supplier()
+            # set the supplier_id to the id of the last supplier created
+            self.supplier_id = self.setup_dummy_suppliers(2)[-1]
         if post_users:
             self._post_users()
         if register_supplier_with_framework:
