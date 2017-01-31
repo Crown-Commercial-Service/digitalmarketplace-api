@@ -552,6 +552,18 @@ class TestSupplierSearch(BaseApplicationTest):
             },
         }
 
+        SELLER_TYPES_SEARCH = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "terms": {
+                            "seller_types": ['sme', 'start_up']
+                        }
+                    }
+                }
+            },
+        }
+
         TRANSITION_DOMAIN_SEARCH = NEW_DOMAIN_SEARCH
 
         results = self.do_search(MATCH_ALL_SEARCH)
@@ -573,6 +585,10 @@ class TestSupplierSearch(BaseApplicationTest):
         results = self.do_search(TRANSITION_DOMAIN_SEARCH)
         assert len(results) == 2
         assert [_['name'] for _ in results] == ['Supplier 1', 'Supplier 2']
+
+        results = self.do_search(SELLER_TYPES_SEARCH)
+        assert len(results) == 1
+        assert [_['name'] for _ in results] == ['Supplier 1']
 
         with self.app.app_context():
             current_app.config['LEGACY_ROLE_MAPPING'] = False

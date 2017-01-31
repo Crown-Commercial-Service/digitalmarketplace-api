@@ -3,6 +3,9 @@ from datetime import datetime
 from flask import abort, current_app, jsonify, request, url_for
 from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.sql.expression import true
+from sqlalchemy.sql import cast
+from sqlalchemy import Boolean
+
 from .. import main
 from ... import db
 from ...models import (
@@ -143,16 +146,28 @@ def supplier_search():
 
     try:
         terms = search_query['query']['filtered']['filter']['terms']
+    except (KeyError, IndexError):
+        terms = {}
 
+    roles_list = None
+    seller_types_list = None
+
+    if terms:
         new_domains = 'prices.serviceRole.role' not in terms
 
-        if new_domains:
-            roleslist = terms['domains.assessed']
-        else:
-            roles = terms['prices.serviceRole.role']
-            roleslist = set(_['role'][7:] for _ in roles)
-    except (KeyError, IndexError):
-        roleslist = []
+        try:
+            if new_domains:
+                roles_list = terms['domains.assessed']
+            else:
+                roles = terms['prices.serviceRole.role']
+                roles_list = set(_['role'][7:] for _ in roles)
+        except KeyError:
+            pass
+
+        try:
+            seller_types_list = terms['seller_types']
+        except:
+            pass
 
     try:
         search_term = search_query['query']['match_phrase_prefix']['name']
@@ -172,16 +187,23 @@ def supplier_search():
     except KeyError:
         pass
 
-    if roleslist:
+    if roles_list is not None:
         if new_domains:
             if EXCLUDE_LEGACY_ROLES:
                 # can use this more efficient and faster code once
                 # lecacy roles have been fully migrated
-                condition = reduce(or_, ((Domain.name == _) for _ in roleslist))
+                condition = reduce(or_, ((Domain.name == _) for _ in roles_list))
                 q = q.filter(condition)
         else:
-            condition = reduce(or_, (ServiceRole.name.like('%{}'.format(_)) for _ in roleslist))
+            condition = reduce(or_, (ServiceRole.name.like('%{}'.format(_)) for _ in roles_list))
             q = q.filter(condition)
+
+    if seller_types_list is not None:
+        def is_seller_type(typecode):
+            return cast(Supplier.data[('seller_type', typecode)].astext, Boolean) == True  # noqa
+
+        condition = reduce(or_, (is_seller_type(_) for _ in seller_types_list))
+        q = q.filter(condition)
 
     if sort_dir == 'desc':
         ob = [desc(Supplier.name)]
@@ -198,18 +220,19 @@ def supplier_search():
         ] + ob
 
     q = q.order_by(*ob)
+
     results = list(q)
 
     # remove 'hidden' example listing from result
     results = [_ for _ in results if _.abn != _.DUMMY_ABN]
 
-    if roleslist and new_domains and not EXCLUDE_LEGACY_ROLES:
+    if roles_list and new_domains and not EXCLUDE_LEGACY_ROLES:
         # this code includes lecacy domains in results but is slower.
         # can be removed once fully migrated to new domains.
         results = [
             _ for _ in results
             if (
-                set(_.assessed_domains) & set(roleslist)
+                set(_.assessed_domains) & set(roles_list)
             )
         ]
 

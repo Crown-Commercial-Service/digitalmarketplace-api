@@ -249,6 +249,9 @@ class BaseApplicationTest(object):
                     name=u"Supplier {}".format(i-1),
                     description="",
                     summary="",
+                    data={
+                        'seller_type': {'sme': True, 'start': False}
+                    } if i == 2 else {},
                     address=Address(address_line="{} Dummy Street".format(i),
                                     suburb="Dummy",
                                     state="ZZZ",
