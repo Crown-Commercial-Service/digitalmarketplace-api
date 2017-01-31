@@ -102,6 +102,45 @@ def get_supplier(supplier_id):
     }))
 
 
+@main.route('/suppliers/<int:supplier_id>', methods=['PUT'])
+def import_supplier(supplier_id):
+    supplier_data = validate_and_return_supplier_request(supplier_id)
+
+    contact_informations_data = supplier_data['contactInformation']
+    supplier_data = drop_foreign_fields(
+        supplier_data,
+        ['contactInformation']
+    )
+
+    supplier = Supplier.query.filter(
+        Supplier.supplier_id == supplier_data['id']
+    ).first()
+
+    if supplier is None:
+        supplier = Supplier(supplier_id=supplier_data['id'])
+
+    # if a supplier was found, remove all contact information
+    else:
+        for contact in supplier.contact_information:
+            db.session.delete(contact)
+
+    supplier.update_from_json(supplier_data)
+
+    for contact_information_data in contact_informations_data:
+        contact_information = ContactInformation.from_json(contact_information_data)
+        supplier.contact_information.append(contact_information)
+
+        db.session.add(supplier)
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, "Database Error: {0}".format(e))
+
+    return jsonify(suppliers=supplier.serialize()), 201
+
+
 @main.route('/suppliers', methods=['POST'])
 def create_supplier():
     supplier_data = validate_and_return_supplier_request()
