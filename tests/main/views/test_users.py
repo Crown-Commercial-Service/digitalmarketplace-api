@@ -437,7 +437,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
 
         data = json.loads(response.get_data())["error"]
         assert_equal(response.status_code, 400)
-        assert_equal(data, "'supplier_id' is only valid for users with 'supplier' role, not 'admin'")
+        assert_equal(data, "'supplierId' is only valid for users with 'supplier' role, not 'admin'")
 
     def test_should_reject_user_with_invalid_role(self):
         response = self.client.post(
@@ -942,7 +942,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
 
         data = json.loads(response.get_data())["error"]
         assert_equal(response.status_code, 400)
-        assert_in("'supplier_id' is required for users with 'supplier' role", data)
+        assert_in("'supplierId' is required for users with 'supplier' role", data)
 
     def test_can_update_email_address(self):
         with self.app.app_context():
