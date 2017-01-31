@@ -1,9 +1,7 @@
 import json
-import pytest
 import mock
 from datetime import datetime, timedelta
 
-from hypothesis import given
 from freezegun import freeze_time
 
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin

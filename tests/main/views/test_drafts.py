@@ -2,8 +2,7 @@ from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from datetime import datetime
 from flask import json
 import mock
-from app.models import Supplier, ContactInformation, Service, Framework, \
-    DraftService
+from app.models import Supplier, ContactInformation, Service, Framework, DraftService
 from app import db
 
 from tests.helpers import FixtureMixin, load_example_listing

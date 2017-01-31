@@ -2,7 +2,6 @@ import datetime
 
 from flask import json
 from nose.tools import assert_equal, assert_in
-from dateutil.parser import parse as parse_time
 from freezegun import freeze_time
 
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
