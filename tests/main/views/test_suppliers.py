@@ -279,6 +279,178 @@ class TestListSuppliersByDunsNumber(BaseApplicationTest):
         assert 2 == len(data['suppliers'])
 
 
+class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
+    method = "put"
+    endpoint = "/suppliers/{self.supplier_id}"
+    supplier = supplier_id = None
+
+    def setup(self):
+        super(TestPutSupplier, self).setup()
+        self.supplier = load_example_listing("Supplier")
+        self.supplier_id = self.supplier['id']
+
+    def put_import_supplier(self, supplier, route_parameter=None):
+        if route_parameter is None:
+            route_parameter = '/{}'.format(supplier.get('id', 1))
+
+        return self.client.put(
+            '/suppliers' + route_parameter,
+            data=json.dumps({
+                'suppliers': supplier
+            }),
+            content_type='application/json')
+
+    def test_add_a_new_supplier(self):
+        with self.app.app_context():
+            response = self.put_import_supplier(self.supplier)
+            assert response.status_code == 201
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == self.supplier_id
+            ).first()
+            assert supplier.name == self.supplier['name']
+
+    def test_null_clients_list(self):
+        with self.app.app_context():
+            del self.supplier['clients']
+
+            response = self.put_import_supplier(self.supplier)
+            assert response.status_code == 201
+
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == self.supplier_id
+            ).first()
+
+            assert supplier.clients == []
+
+    def test_reinserting_the_same_supplier(self):
+        with self.app.app_context():
+            example_listing_contact_information = self.supplier['contactInformation']
+
+            # Exact loop number is arbitrary
+            for i in range(3):
+                response = self.put_import_supplier(self.supplier)
+
+                assert response.status_code == 201
+
+                supplier = Supplier.query.filter(
+                    Supplier.supplier_id == self.supplier_id
+                ).first()
+                assert supplier.name == self.supplier['name']
+
+                contact_informations = ContactInformation.query.filter(
+                    ContactInformation.supplier_id == supplier.supplier_id
+                ).all()
+
+                assert len(example_listing_contact_information) == len(contact_informations)
+
+                # Contact Information without a supplier_id should not exist
+                contact_informations_no_supplier_id = \
+                    ContactInformation.query.filter(
+                        ContactInformation.supplier_id == None  # noqa
+                    ).all()
+
+                assert len(contact_informations_no_supplier_id) == 0
+
+    def test_cannot_put_to_root_suppliers_url(self):
+        response = self.put_import_supplier(self.supplier, "")
+        assert response.status_code == 405
+
+    def test_supplier_json_id_does_not_match_route_id_parameter(self):
+        response = self.put_import_supplier(self.supplier, '/1234567890')
+        assert response.status_code == 400
+        assert 'id parameter must match id in data' in json.loads(response.get_data())['error']
+
+    def test_when_supplier_has_missing_contact_information(self):
+        self.supplier.pop('contactInformation')
+
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['Invalid JSON must have', '\'contactInformation\'']:
+            assert item in json.loads(response.get_data())['error']
+
+    def test_when_supplier_has_malformed_contact_information(self):
+        self.supplier['contactInformation'] = {'wobble': 'woo'}
+
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['JSON was not a valid format', 'is not of type', 'array']:
+            assert item in json.loads(response.get_data())['error']
+
+    def test_when_supplier_has_a_missing_key(self):
+        self.supplier.pop('id')
+
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['JSON was not a valid format', '\'id\'', 'is a required property']:
+            assert item in json.loads(response.get_data())['error']
+
+    def test_when_supplier_has_missing_keys(self):
+        # only one key is returned in the error message
+        self.supplier.pop('id')
+        self.supplier.pop('name')
+
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['JSON was not a valid format', '\'id\'', 'is a required property']:
+            assert item in json.loads(response.get_data())['error']
+
+    def test_when_supplier_contact_information_has_a_missing_key(self):
+        self.supplier['contactInformation'][0].pop('email')
+
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['JSON was not a valid format', '\'email\'', 'is a required property']:
+            assert item in json.loads(response.get_data())['error']
+
+    def test_when_supplier_contact_information_has_missing_keys(self):
+        # only one key is returned in the error message
+        self.supplier['contactInformation'][0].pop('email')
+        self.supplier['contactInformation'][0].pop('contactName')
+
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['JSON was not a valid format', '\'contactName\'', 'is a required property']:
+            assert item in json.loads(response.get_data())['error']
+
+    def test_when_supplier_has_extra_keys(self):
+        self.supplier.update({'newKey': 1})
+
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        assert 'Additional properties are not allowed' in json.loads(response.get_data())['error']
+
+    def test_when_supplier_contact_information_has_extra_keys(self):
+        self.supplier['contactInformation'][0].update({'newKey': 1})
+
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        assert 'Additional properties are not allowed' in json.loads(response.get_data())['error']
+
+    def test_supplier_duns_number_invalid(self):
+        self.supplier.update({'dunsNumber': "only-digits-permitted"})
+
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['only-digits-permitted', 'does not match']:
+            assert item in json.loads(response.get_data())['error']
+
+    def test_supplier_esourcing_id_invalid(self):
+        self.supplier.update({'eSourcingId': "only-digits-permitted"})
+
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['only-digits-permitted', 'does not match']:
+            assert item in json.loads(response.get_data())['error']
+
+    def test_when_supplier_contact_information_email_invalid(self):
+        self.supplier['contactInformation'][0].update({'email': "bad-email-99"})
+
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['bad-email-99', 'is not a']:
+            assert item in json.loads(response.get_data())['error']
+
+
 class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
     method = "post"
     endpoint = "/suppliers/{self.supplier_id}"
