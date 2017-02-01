@@ -75,7 +75,7 @@ class Live(Config):
 
 class Preview(Live):
     FEATURE_FLAGS_TRANSACTION_ISOLATION = enabled_since('2015-08-27')
-    FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2017-02-01')
+    FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2017-02-08')
 
 
 class Staging(Live):
