@@ -356,9 +356,7 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
         data = json.loads(response.get_data())
 
         assert response.status_code == 200
-        assert (
-            list(filter(lambda s: s['supplierId'] == 1, data['services'])) ==
-            data['services'])
+        assert list(filter(lambda s: s['supplierId'] == 1, data['services'])) == data['services']
 
     def test_supplier_id_with_no_services_filter(self):
         self.setup_dummy_services_including_unpublished(15)
@@ -369,9 +367,7 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
         data = json.loads(response.get_data())
 
         assert response.status_code == 200
-        assert (
-            list() ==
-            data['services'])
+        assert list() == data['services']
 
     def test_supplier_should_get_all_service_on_one_page(self):
         self.setup_dummy_services_including_unpublished(21)
@@ -572,9 +568,9 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
             assert '/archived-services/' in old_version
             assert '/archived-services/' in new_version
-            assert (int(old_version.split('/')[-1]) + 1 == int(new_version.split('/')[-1]))
-            assert (data['auditEvents'][0]['data']['supplierName'] == 'Supplier 1')
-            assert (data['auditEvents'][0]['data']['supplierId'] == 1)
+            assert int(old_version.split('/')[-1]) + 1 == int(new_version.split('/')[-1])
+            assert data['auditEvents'][0]['data']['supplierName'] == 'Supplier 1'
+            assert data['auditEvents'][0]['data']['supplierId'] == 1
 
     def test_can_post_a_valid_service_update_on_several_fields(self):
         with self.app.app_context():
@@ -619,7 +615,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             updated_auth_controls = \
                 data['services']['identityAuthenticationControls']
             assert response.status_code == 200
-            assert (updated_auth_controls['assurance'] == 'CESG-assured components')
+            assert updated_auth_controls['assurance'] == 'CESG-assured components'
             assert len(updated_auth_controls['value']) == 1
             assert ('Authentication federation' in updated_auth_controls['value']) is True
 
@@ -628,16 +624,16 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             response = self._post_service_update({'thisIsInvalid': 'so I should never see this'})
 
             assert response.status_code == 400
-            assert ('Additional properties are not allowed' in "{}".format(
+            assert 'Additional properties are not allowed' in "{}".format(
                 json.loads(response.get_data())['error']['_form']
-            ))
+            )
 
     def test_invalid_field_value_not_accepted_on_update(self):
         with self.app.app_context():
             response = self._post_service_update({'priceUnit': 'per Truth'})
 
             assert response.status_code == 400
-            assert ("no_unit_specified" in json.loads(response.get_data())['error']['priceUnit'])
+            assert "no_unit_specified" in json.loads(response.get_data())['error']['priceUnit']
 
     def test_updated_service_is_archived_right_away(self):
         with self.app.app_context():
@@ -648,7 +644,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
                 '/archived-services?service-id=' + self.service_id).get_data()
             archived_service_json = json.loads(archived_state)['services'][-1]
 
-            assert (archived_service_json['serviceName'] == 'new service name')
+            assert archived_service_json['serviceName'] == 'new service name'
 
     def test_updated_service_archive_is_listed_in_chronological_order(self):
         with self.app.app_context():
@@ -663,8 +659,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
             # initial service creation is done using `setup_dummy_service` in setup(), which skips the archiving process
             # only the two updates done at the beginning of this test will be archived
-            assert (
-                [s['serviceName'] for s in archived_service_json] == ['new service name', 'new new service name'])
+            assert [s['serviceName'] for s in archived_service_json] == ['new service name', 'new new service name']
 
     def test_updated_service_should_be_archived_on_each_update(self):
         with self.app.app_context():
@@ -718,7 +713,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             content_type='application/json')
 
         assert response.status_code == 400
-        assert (b'id parameter must match id in data' in response.get_data())
+        assert b'id parameter must match id in data' in response.get_data()
 
     def test_should_not_update_status_through_service_post(self):
         response = self._post_service_update({'status': 'enabled'})
@@ -797,10 +792,10 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             )
 
             assert response.status_code == 400
-            assert ('is not a valid status' in json.loads(response.get_data())['error'])
+            assert 'is not a valid status' in json.loads(response.get_data())['error']
             # assert that valid status names are returned in the response
             for valid_status in ServiceTableMixin.STATUSES:
-                assert (valid_status in json.loads(response.get_data())['error'])
+                assert valid_status in json.loads(response.get_data())['error']
 
     def test_should_404_without_status_parameter(self):
         response = self.client.post(
@@ -1025,7 +1020,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, FixtureMixi
                     **payload
                 )
 
-            assert 3 == db.session.query(Service).count()
+            assert db.session.query(Service).count() == 3
 
     def _get_service_from_database_by_service_id(self, service_id):
         with self.app.app_context():
@@ -1474,29 +1469,29 @@ class TestGetService(BaseApplicationTest):
 
     def test_get_non_existent_service(self):
         response = self.client.get('/services/9999999999')
-        assert 404 == response.status_code
+        assert response.status_code == 404
 
     def test_invalid_service_id(self):
         response = self.client.get('/services/abc123')
-        assert 404 == response.status_code
+        assert response.status_code == 404
 
     def test_get_published_service(self):
         response = self.client.get('/services/123-published-456')
         data = json.loads(response.get_data())
-        assert 200 == response.status_code
-        assert "123-published-456" == data['services']['id']
+        assert response.status_code == 200
+        assert data['services']['id'] == "123-published-456"
 
     def test_get_disabled_service(self):
         response = self.client.get('/services/123-disabled-456')
         data = json.loads(response.get_data())
-        assert 200 == response.status_code
-        assert "123-disabled-456" == data['services']['id']
+        assert response.status_code == 200
+        assert data['services']['id'] == "123-disabled-456"
 
     def test_get_enabled_service(self):
         response = self.client.get('/services/123-enabled-456')
         data = json.loads(response.get_data())
-        assert 200 == response.status_code
-        assert "123-enabled-456" == data['services']['id']
+        assert response.status_code == 200
+        assert data['services']['id'] == "123-enabled-456"
 
     def test_get_service_returns_supplier_info(self):
         response = self.client.get('/services/123-published-456')

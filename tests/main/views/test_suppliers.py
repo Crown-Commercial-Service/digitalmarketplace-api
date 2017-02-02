@@ -32,17 +32,17 @@ class TestGetSupplier(BaseApplicationTest, FixtureMixin):
 
     def test_get_non_existent_supplier(self):
         response = self.client.get('/suppliers/100')
-        assert 404 == response.status_code
+        assert response.status_code == 404
 
     def test_invalid_supplier_id(self):
         response = self.client.get('/suppliers/abc123')
-        assert 404 == response.status_code
+        assert response.status_code == 404
 
     def test_get_supplier(self):
         response = self.client.get('/suppliers/{}'.format(self.supplier_id))
 
         data = json.loads(response.get_data())
-        assert 200 == response.status_code
+        assert response.status_code == 200
         assert self.supplier_id == data['suppliers']['id']
         assert self.supplier['name'] == data['suppliers']['name']
 
@@ -50,9 +50,9 @@ class TestGetSupplier(BaseApplicationTest, FixtureMixin):
         response = self.client.get('/suppliers/{}'.format(self.supplier_id))
 
         data = json.loads(response.get_data())
-        assert 200 == response.status_code
+        assert response.status_code == 200
         assert 'clients' in data['suppliers'].keys()
-        assert 3 == len(data['suppliers']['clients'])
+        assert len(data['suppliers']['clients']) == 3
 
     def test_supplier_client_key_still_exists_even_without_clients(self):
         # Insert a new supplier with a different id and no clients
@@ -73,9 +73,9 @@ class TestGetSupplier(BaseApplicationTest, FixtureMixin):
         response = self.client.get('/suppliers/{}'.format(new_payload['id']))
 
         data = json.loads(response.get_data())
-        assert 200 == response.status_code
+        assert response.status_code == 200
         assert 'clients' in data['suppliers'].keys()
-        assert 0 == len(data['suppliers']['clients'])
+        assert len(data['suppliers']['clients']) == 0
 
     def test_get_supplier_returns_service_counts(self):
         self.setup_dummy_services(
@@ -106,17 +106,17 @@ class TestListSuppliers(BaseApplicationTest, FixtureMixin):
 
     def test_query_string_missing(self):
         response = self.client.get('/suppliers')
-        assert 200 == response.status_code
+        assert response.status_code == 200
 
     def test_query_string_prefix_empty(self):
         response = self.client.get('/suppliers?prefix=')
-        assert 200 == response.status_code
+        assert response.status_code == 200
 
     def test_query_string_prefix_returns_none(self):
         response = self.client.get('/suppliers?prefix=canada')
-        assert 200 == response.status_code
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert 0 == len(data['suppliers'])
+        assert len(data['suppliers']) == 0
 
     def test_other_prefix_returns_non_alphanumeric_suppliers(self):
         with self.app.app_context():
@@ -128,19 +128,17 @@ class TestListSuppliers(BaseApplicationTest, FixtureMixin):
             response = self.client.get('/suppliers?prefix=other')
 
             data = json.loads(response.get_data())
-            assert 200 == response.status_code
-            assert 1 == len(data['suppliers'])
-            assert 999 == data['suppliers'][0]['id']
-            assert (
-                u"999 Supplier" ==
-                data['suppliers'][0]['name'])
+            assert response.status_code == 200
+            assert len(data['suppliers']) == 1
+            assert data['suppliers'][0]['id'] == 999
+            assert u"999 Supplier" == data['suppliers'][0]['name']
 
     def test_query_string_prefix_returns_paginated_page_one(self):
         response = self.client.get('/suppliers?prefix=s')
         data = json.loads(response.get_data())
 
-        assert 200 == response.status_code
-        assert 5 == len(data['suppliers'])
+        assert response.status_code == 200
+        assert len(data['suppliers']) == 5
         next_link = data['links']['next']
         assert 'page=2' in next_link
 
@@ -158,8 +156,8 @@ class TestListSuppliers(BaseApplicationTest, FixtureMixin):
         response = self.client.get('/suppliers?prefix=t')
         data = json.loads(response.get_data())
 
-        assert 200 == response.status_code
-        assert 5 == len(data['suppliers'])
+        assert response.status_code == 200
+        assert len(data['suppliers']) == 5
         assert ['self'] == list(data['links'].keys())
 
     def test_query_string_prefix_page_out_of_range(self):
@@ -208,22 +206,22 @@ class TestListSuppliersOnFramework(BaseApplicationTest, FixtureMixin):
 
     def test_invalid_framework_returns_400(self):
         response = self.client.get('/suppliers?framework=invalid!')
-        assert 400 == response.status_code
+        assert response.status_code == 400
 
     def test_should_return_suppliers_on_framework_backwards_compatibility(self):
         # TODO: REMOVE WHEN BUYER APP IS UPDATED
         response = self.client.get('/suppliers?framework=gcloud')
-        assert 200 == response.status_code
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert 1 == len(data['suppliers'])
-        assert 'Active' == data['suppliers'][0]['name']
+        assert len(data['suppliers']) == 1
+        assert data['suppliers'][0]['name'] == 'Active'
 
     def test_should_return_suppliers_on_framework(self):
         response = self.client.get('/suppliers?framework=g-cloud')
-        assert 200 == response.status_code
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert 1 == len(data['suppliers'])
-        assert 'Active' == data['suppliers'][0]['name']
+        assert len(data['suppliers']) == 1
+        assert data['suppliers'][0]['name'] == 'Active'
 
     def test_should_return_no_suppliers_no_framework(self):
         response = self.client.get('/suppliers?framework=bad')
@@ -234,9 +232,9 @@ class TestListSuppliersOnFramework(BaseApplicationTest, FixtureMixin):
 
     def test_should_return_all_suppliers_if_no_framework(self):
         response = self.client.get('/suppliers')
-        assert 200 == response.status_code
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert 3 == len(data['suppliers'])
+        assert len(data['suppliers']) == 3
 
 
 class TestListSuppliersByDunsNumber(BaseApplicationTest):
@@ -255,26 +253,26 @@ class TestListSuppliersByDunsNumber(BaseApplicationTest):
 
     def test_invalid_duns_number_returns_400(self):
         response = self.client.get('/suppliers?duns_number=invalid!')
-        assert 400 == response.status_code
+        assert response.status_code == 400
 
     def test_should_return_suppliers_by_duns_number(self):
         response = self.client.get('/suppliers?duns_number=123')
-        assert 200 == response.status_code
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert 1 == len(data['suppliers'])
-        assert 'Duns 123' == data['suppliers'][0]['name']
+        assert len(data['suppliers']) == 1
+        assert data['suppliers'][0]['name'] == 'Duns 123'
 
     def test_should_return_no_suppliers_if_nonexisting_duns(self):
         response = self.client.get('/suppliers?duns_number=not-existing')
         data = json.loads(response.get_data())
-        assert 200 == response.status_code
-        assert 0 == len(data['suppliers'])
+        assert response.status_code == 200
+        assert len(data['suppliers']) == 0
 
     def test_should_return_all_suppliers_if_no_duns_number(self):
         response = self.client.get('/suppliers')
-        assert 200 == response.status_code
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert 2 == len(data['suppliers'])
+        assert len(data['suppliers']) == 2
 
 
 class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
@@ -1121,15 +1119,10 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
         response = self.client.get('/suppliers/3/frameworks')
         data = json.loads(response.get_data())
         assert response.status_code == 200
-        assert (
-            data ==
-            {
-                'frameworkInterest': []
-            })
+        assert data == {'frameworkInterest': []}
 
     def test_supplier_that_doesnt_exist(self):
         response = self.client.get('/suppliers/4/frameworks')
-        data = json.loads(response.get_data())
         assert response.status_code == 404
 
 
