@@ -1126,7 +1126,6 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest, FixtureMixin):
                 lot_id=6,  # digital-specialists
                 data={"developerLocations": ["Wales"]}
             )
-            db.session.commit()
 
     def test_supplier_is_eligible_for_specialist(self):
         self.setup_services()

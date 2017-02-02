@@ -50,7 +50,6 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
                 service_id=self.service_id,
                 **payload
             )
-            db.session.commit()
 
     def service_count(self):
         with self.app.app_context():

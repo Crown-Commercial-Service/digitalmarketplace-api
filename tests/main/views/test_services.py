@@ -55,8 +55,6 @@ class TestListServicesOrdering(BaseApplicationTest, FixtureMixin):
             insert_service(g6_paas_2, "123-g6-paas-2", 2, 1)
             insert_service(g6_saas, "123-g6-saas", 1, 1)
 
-            db.session.commit()
-
     def test_should_order_supplier_services_by_framework_lot_name(self):
         self.setup_services()
 
@@ -120,7 +118,6 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
                 lot_id=6,  # digital-specialists
                 data={"agileCoachLocations": ["Wales"]}
             )
-            db.session.commit()
 
     def test_list_services_with_no_services(self):
         response = self.client.get('/services')
@@ -152,11 +149,13 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
 
     def test_list_services_gets_only_active_frameworks(self):
         with self.app.app_context():
+            # the side effect of this method is to create four suppliers with ids between 0-3
+            self.setup_dummy_services_including_unpublished(1)
             self.setup_dummy_service(
                 service_id='2000000999',
                 status='published',
+                supplier_id=0,
                 framework_id=2)
-            self.setup_dummy_services_including_unpublished(1)
 
             response = self.client.get('/services')
             data = json.loads(response.get_data())
@@ -191,11 +190,13 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
 
     def test_gets_only_active_frameworks_with_status_filter(self):
         with self.app.app_context():
+            # the side effect of this method is to create four suppliers with ids between 0-3
+            self.setup_dummy_services_including_unpublished(1)
             self.setup_dummy_service(
                 service_id='2000000999',
                 status='published',
+                supplier_id=0,
                 framework_id=2)
-            self.setup_dummy_services_including_unpublished(1)
 
             response = self.client.get('/services?status=published')
             data = json.loads(response.get_data())
@@ -460,7 +461,6 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
                 service_id=self.service_id,
                 **payload
             )
-            db.session.commit()
 
     def _post_service_update(self, service_data, service_id=None):
         return self.client.post(
@@ -922,7 +922,6 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, FixtureMixin):
                 service_id=self.payload_g4['id'],
                 **self.payload_g4
             )
-            db.session.commit()
 
     def test_should_index_on_service_post(self, search_api_client):
         with self.app.app_context():
@@ -1026,7 +1025,6 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, FixtureMixi
                     **payload
                 )
 
-            db.session.commit()
             assert 3 == db.session.query(Service).count()
 
     def _get_service_from_database_by_service_id(self, service_id):

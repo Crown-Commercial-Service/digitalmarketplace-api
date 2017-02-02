@@ -78,7 +78,6 @@ class FixtureMixin(object):
                     status=status,
                     published_at=published_at,
                 )
-            db.session.commit()
 
     def setup_dummy_brief(
             self, id=None, user_id=1, status=None, data=None, published_at=None, withdrawn_at=None,
@@ -108,6 +107,7 @@ class FixtureMixin(object):
             published_at=published_at,
             withdrawn_at=withdrawn_at,
         ))
+        db.session.commit()
 
     def setup_dummy_suppliers(self, n):
         supplier_ids = []
@@ -174,6 +174,7 @@ class FixtureMixin(object):
         }
 
         db.session.add(Service(**service_kwargs))
+        db.session.commit()
 
     def setup_dummy_services(self, n, supplier_id=None, framework_id=1,
                              start_id=0, lot_id=1):
@@ -185,8 +186,6 @@ class FixtureMixin(object):
                     framework_id=framework_id,
                     lot_id=lot_id
                 )
-
-            db.session.commit()
 
     def setup_dummy_services_including_unpublished(self, n):
         self.setup_dummy_suppliers(TEST_SUPPLIERS_COUNT)

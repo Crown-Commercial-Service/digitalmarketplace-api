@@ -124,7 +124,6 @@ class TestListSuppliers(BaseApplicationTest, FixtureMixin):
                 Supplier(supplier_id=999, name=u"999 Supplier")
             )
             self.setup_dummy_service(service_id='1230000000', supplier_id=999)
-            db.session.commit()
 
             response = self.client.get('/suppliers?prefix=other')
 
@@ -206,7 +205,6 @@ class TestListSuppliersOnFramework(BaseApplicationTest, FixtureMixin):
             self.setup_dummy_service(
                 service_id='1000000003', supplier_id=3, status='enabled'
             )
-            db.session.commit()
 
     def test_invalid_framework_returns_400(self):
         response = self.client.get('/suppliers?framework=invalid!')
