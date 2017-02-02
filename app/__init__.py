@@ -3,6 +3,7 @@ from flask import Flask
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
 import json
+from sqlalchemy import MetaData
 
 import dmapiclient
 from dmutils import init_app, flask_featureflags
@@ -10,7 +11,13 @@ from dmutils import init_app, flask_featureflags
 from config import configs
 
 bootstrap = Bootstrap()
-db = SQLAlchemy()
+db = SQLAlchemy(metadata=MetaData(naming_convention={
+    "ix": 'ix_%(column_0_label)s',
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}))
 search_api_client = dmapiclient.SearchAPIClient()
 feature_flags = flask_featureflags.FeatureFlag()
 
