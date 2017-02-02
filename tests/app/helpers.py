@@ -15,7 +15,7 @@ from app.models import Address, Service, Supplier, Framework, Lot, User, Framewo
 
 from collections import Mapping, Iterable
 from six import string_types
-from itertools import izip_longest
+from itertools import izip_longest, tee, izip
 
 
 TEST_SUPPLIERS_COUNT = 3
@@ -244,11 +244,19 @@ class BaseApplicationTest(object):
                 else:
                     prices = []
 
+                NON_MATCHING_STRING = 'aaaaaaaaaaaaaaaaa'
+
+                name = "Supplier {}".format(i-1)
+                summary = "suppliers of supplies" if name != 'Supplier 3' else NON_MATCHING_STRING
+                name = name if name != 'Supplier 3' else NON_MATCHING_STRING
+
+                t = pendulum.now('UTC')
+
                 s = Supplier(
                     code=i,
-                    name=u"Supplier {}".format(i-1),
+                    name=name,
                     description="",
-                    summary="",
+                    summary=summary,
                     data={
                         'seller_type': {'sme': True, 'start': False}
                     } if i == 2 else {},
@@ -257,9 +265,11 @@ class BaseApplicationTest(object):
                                     state="ZZZ",
                                     postal_code="0000",
                                     country='Australia'),
+
                     contacts=[],
                     references=[],
                     prices=prices,
+                    last_update_time=t + pendulum.interval(seconds=(i % 3))
                 )
 
                 if i == 3:
@@ -495,3 +505,13 @@ def assert_api_compatible(old, new):
 def assert_api_compatible_list(old, new):
     for x0, x1 in izip_longest(old, new):
         assert_api_compatible(x0, x1)
+
+
+def pairwise(iterable):
+    a, b = tee(iterable)
+    next(b, None)
+    return izip(a, b)
+
+
+def is_sorted(iterable, key=lambda a, b: a <= b):
+    return all(key(a, b) for a, b in pairwise(iterable))

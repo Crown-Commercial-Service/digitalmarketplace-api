@@ -66,6 +66,9 @@ class Config:
 
     LEGACY_ROLE_MAPPING = True
 
+    SEARCH_MINIMUM_MATCH_SCORE_NAME = 0
+    SEARCH_MINIMUM_MATCH_SCORE_SUMMARY = 0.02
+
 
 class Test(Config):
     DM_SEARCH_API_AUTH_TOKEN = 'test'

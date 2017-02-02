@@ -8,7 +8,7 @@ from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_no
 
 from app import db
 from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, Domain, User, utcnow
-from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, assert_api_compatible
+from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, assert_api_compatible, is_sorted
 from decimal import Decimal
 
 import pendulum
@@ -564,6 +564,14 @@ class TestSupplierSearch(BaseApplicationTest):
             },
         }
 
+        SORT_BY_SEARCH = {
+            "query": {
+                "match_all": {
+                }
+            },
+            "sort": [{'name': {"sort_by": "latest", "mode": "min"}}]
+        }
+
         TRANSITION_DOMAIN_SEARCH = NEW_DOMAIN_SEARCH
 
         results = self.do_search(MATCH_ALL_SEARCH)
@@ -575,7 +583,7 @@ class TestSupplierSearch(BaseApplicationTest):
         assert len(results) == 1
 
         results = self.do_search(KEYWORD_NAME_SEARCH)
-        assert len(results) == 5
+        assert len(results) == 4  # eliminates non-matching example supplier
         assert results[0]['name'] == 'Supplier 2'
 
         results = self.do_search(LEGACY_DOMAIN_SEARCH)
@@ -589,6 +597,13 @@ class TestSupplierSearch(BaseApplicationTest):
         results = self.do_search(SELLER_TYPES_SEARCH)
         assert len(results) == 1
         assert [_['name'] for _ in results] == ['Supplier 1']
+
+        results = self.do_search(SORT_BY_SEARCH)
+        assert len(results) == 5
+
+        times = [_['last_update_time'] for _ in results]
+
+        assert is_sorted(reversed(times))
 
         with self.app.app_context():
             current_app.config['LEGACY_ROLE_MAPPING'] = False

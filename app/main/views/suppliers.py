@@ -145,6 +145,11 @@ def supplier_search():
         sort_dir = 'asc'
 
     try:
+        sort_by = search_query['sort'][0].values()[0]['sort_by']
+    except (KeyError, IndexError):
+        sort_by = None
+
+    try:
         terms = search_query['query']['filtered']['filter']['terms']
     except (KeyError, IndexError):
         terms = {}
@@ -205,10 +210,16 @@ def supplier_search():
         condition = reduce(or_, (is_seller_type(_) for _ in seller_types_list))
         q = q.filter(condition)
 
-    if sort_dir == 'desc':
-        ob = [desc(Supplier.name)]
+    if sort_by:
+        if sort_by == 'latest':
+            ob = [desc(Supplier.last_update_time)]
+        else:
+            ob = [asc(Supplier.name)]
     else:
-        ob = [asc(Supplier.name)]
+        if sort_dir == 'desc':
+            ob = [desc(Supplier.name)]
+        else:
+            ob = [asc(Supplier.name)]
 
     if search_term:
         ob = [
@@ -216,10 +227,28 @@ def supplier_search():
                 func.similarity(
                     search_term,
                     Supplier.name)
+            ),
+            desc(
+                func.similarity(
+                    search_term,
+                    Supplier.summary)
             )
         ] + ob
 
     q = q.order_by(*ob)
+
+    if search_term:
+        NAME_MINIMUM = \
+            current_app.config['SEARCH_MINIMUM_MATCH_SCORE_NAME']
+        SUMMARY_MINIMUM = \
+            current_app.config['SEARCH_MINIMUM_MATCH_SCORE_SUMMARY']
+
+        condition = or_(
+            func.similarity(search_term, Supplier.name) > NAME_MINIMUM,
+            func.similarity(search_term, Supplier.summary) >= SUMMARY_MINIMUM
+        )
+
+        q = q.filter(condition)
 
     results = list(q)
 
