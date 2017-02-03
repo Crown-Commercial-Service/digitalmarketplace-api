@@ -1531,7 +1531,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         )
         assert response.status_code == 400
         error_message = json.loads(response.get_data(as_text=True))['error']
-        assert error_message == "Invalid JSON must only have ['onFramework'] keys"
+        assert error_message == "Invalid JSON should not have 'agreementReturned' keys"
 
 
 class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):

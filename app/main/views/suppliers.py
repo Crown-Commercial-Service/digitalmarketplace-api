@@ -17,6 +17,7 @@ from ...utils import (
     pagination_links,
     drop_foreign_fields,
     get_json_from_request,
+    json_has_keys,
     json_has_required_keys,
     json_only_has_required_keys,
     json_has_matching_id,
@@ -395,7 +396,7 @@ def register_framework_interest(supplier_id, framework_slug):
 
 
 @main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['POST'])
-def update_supplier_on_framework(supplier_id, framework_slug):
+def update_supplier_framework(supplier_id, framework_slug):
     framework = Framework.query.filter(
         Framework.slug == framework_slug
     ).first_or_404()
@@ -408,7 +409,7 @@ def update_supplier_on_framework(supplier_id, framework_slug):
     updater_json = validate_and_return_updater_request()
     json_has_required_keys(json_payload, ["frameworkInterest"])
     update_json = json_payload["frameworkInterest"]
-    json_only_has_required_keys(update_json, ["onFramework"])
+    json_has_keys(update_json, optional_keys=("onFramework", "prefillDeclarationFromFrameworkSlug",))
 
     interest_record = SupplierFramework.query.filter(
         SupplierFramework.supplier_id == supplier.supplier_id,
@@ -418,7 +419,21 @@ def update_supplier_on_framework(supplier_id, framework_slug):
     if not interest_record:
         abort(404, "supplier_id '{}' has not registered interest in {}".format(supplier_id, framework_slug))
 
-    interest_record.on_framework = update_json['onFramework']
+    if "onFramework" in update_json:
+        interest_record.on_framework = update_json["onFramework"]
+    if "prefillDeclarationFromFrameworkSlug" in update_json:
+        if update_json["prefillDeclarationFromFrameworkSlug"] is not None:
+            prefill_declaration_from_framework_id = db.session.query(SupplierFramework.framework_id).filter(
+                SupplierFramework.framework.has(Framework.slug == update_json["prefillDeclarationFromFrameworkSlug"]),
+                SupplierFramework.supplier_id == supplier.supplier_id,
+            ).scalar()
+            if prefill_declaration_from_framework_id is None:
+                abort(400, "Supplier hasn't registered interest in a framework with slug '{}'".format(
+                    update_json["prefillDeclarationFromFrameworkSlug"]
+                ))
+        else:
+            prefill_declaration_from_framework_id = None
+        interest_record.prefill_declaration_from_framework_id = prefill_declaration_from_framework_id
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.supplier_update,
