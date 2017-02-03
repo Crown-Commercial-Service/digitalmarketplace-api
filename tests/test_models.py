@@ -880,6 +880,38 @@ class TestSupplierFrameworks(BaseApplicationTest, FixtureMixin):
                 ).all()
             ) == 1
 
+    def test_prefill_declaration_from_framework(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(2)
+
+            supplier_framework0 = SupplierFramework(supplier_id=0, framework_id=1)
+            db.session.add(supplier_framework0)
+
+            supplier_framework1 = SupplierFramework(
+                supplier_id=0,
+                framework_id=2,
+                prefill_declaration_from_framework_id=1,
+            )
+            db.session.add(supplier_framework1)
+
+            db.session.commit()
+
+            # check the relationships operate properly
+            assert supplier_framework1.prefill_declaration_from_framework is supplier_framework0.framework
+            assert supplier_framework1.prefill_declaration_from_supplier_framework is supplier_framework0
+
+            # check the serialization does the right thing
+            assert supplier_framework0.serialize()["prefillDeclarationFromFrameworkSlug"] is None
+            assert supplier_framework1.serialize()["prefillDeclarationFromFrameworkSlug"] == \
+                supplier_framework0.framework.slug
+
+            # before we tear things down we'll test prefill_declaration_from_framework's
+            # SupplierFramework->SupplierFramework constraint
+            db.session.delete(supplier_framework0)
+            with pytest.raises(IntegrityError):
+                # this should fail because it removes the sf that supplier_framework1 implicitly points to
+                db.session.commit()
+
 
 class TestLot(BaseApplicationTest):
     def test_lot_data_is_serialized(self):

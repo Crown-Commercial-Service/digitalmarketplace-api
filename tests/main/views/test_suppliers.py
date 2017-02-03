@@ -1079,6 +1079,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'agreementStatus': None,
                         'agreementId': None,
                         'agreedVariations': {},
+                        'prefillDeclarationFromFrameworkSlug': None,
                     }
                 ]
             })
@@ -1111,6 +1112,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'agreementStatus': None,
                         'agreementId': None,
                         'agreedVariations': {},
+                        'prefillDeclarationFromFrameworkSlug': None,
                     }
                 ]
             })
@@ -1300,7 +1302,8 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                 'countersignedDetails': None,
                 'countersignedPath': None,
                 'agreementStatus': None,
-                'agreedVariations': {}
+                'agreedVariations': {},
+                'prefillDeclarationFromFrameworkSlug': None,
             }
 
     def test_get_supplier_framework_returns_signed_framework_agreement(self, supplier_framework):
@@ -1352,7 +1355,8 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                     'uploaderUserId': 30
                 },
                 'agreementStatus': 'signed',
-                'agreedVariations': {}
+                'agreedVariations': {},
+                'prefillDeclarationFromFrameworkSlug': None,
             }
 
     def test_get_supplier_framework_returns_countersigned_framework_agreement(self, supplier_framework, supplier):
@@ -1409,7 +1413,8 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                 'countersignedDetails': {'some': 'data'},
                 'countersignedPath': 'path',
                 'agreementStatus': 'countersigned',
-                'agreedVariations': {}
+                'agreedVariations': {},
+                'prefillDeclarationFromFrameworkSlug': None,
             }
 
     def test_get_supplier_framework_info_with_non_existent_framework(self, supplier_framework):
