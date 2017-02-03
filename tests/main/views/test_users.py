@@ -1,6 +1,5 @@
 from flask import json
 from freezegun import freeze_time
-from nose.tools import assert_equal, assert_not_equal, assert_in, assert_is_none
 from app import db, encryption
 from app.models import User, Supplier
 from datetime import datetime
@@ -9,24 +8,11 @@ from tests.helpers import FixtureMixin, load_example_listing
 
 
 class BaseUserTest(BaseApplicationTest):
-    supplier = None
-    supplier_id = None
     users = None
 
     def setup(self):
         super(BaseUserTest, self).setup()
-        payload = load_example_listing("Supplier")
-        self.supplier = payload
-        self.supplier_id = payload['id']
         self.users = []
-
-    def _post_supplier(self):
-        response = self.client.put(
-            '/suppliers/{}'.format(self.supplier_id),
-            data=json.dumps({'suppliers': self.supplier}),
-            content_type='application/json')
-
-        assert response.status_code == 201
 
     def _post_user(self, user):
         response = self.client.post(
@@ -79,7 +65,7 @@ class TestUsersAuth(BaseUserTest):
             response = self.valid_login()
 
             data = json.loads(response.get_data())['users']
-            assert_equal(data['emailAddress'], 'joeblogs@email.com')
+            assert data['emailAddress'] == 'joeblogs@email.com'
 
     def test_should_validate_mixedcase_credentials(self):
         self.create_user()
@@ -92,9 +78,9 @@ class TestUsersAuth(BaseUserTest):
                         'password': '1234567890'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['emailAddress'], 'joeblogs@email.com')
+            assert data['emailAddress'] == 'joeblogs@email.com'
 
     def test_should_return_404_for_no_user(self):
         with self.app.app_context():
@@ -106,9 +92,9 @@ class TestUsersAuth(BaseUserTest):
                         'password': '1234567890'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 404)
+            assert response.status_code == 404
             data = json.loads(response.get_data())
-            assert_equal(data['authorization'], False)
+            assert data['authorization'] is False
 
     def test_should_return_403_for_bad_password(self):
         self.create_user()
@@ -121,9 +107,9 @@ class TestUsersAuth(BaseUserTest):
                         'password': 'this is not right'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 403)
+            assert response.status_code == 403
             data = json.loads(response.get_data())
-            assert_equal(data['authorization'], False)
+            assert data['authorization'] is False
 
     def test_logged_in_at_is_updated_on_successful_login(self):
         self.create_user()
@@ -131,7 +117,7 @@ class TestUsersAuth(BaseUserTest):
             self.valid_login()
             user = User.get_by_email_address('joeblogs@email.com')
 
-            assert_equal(user.logged_in_at, datetime(2015, 6, 6))
+            assert user.logged_in_at == datetime(2015, 6, 6)
 
     def test_logged_in_at_is_not_updated_on_failed_login(self):
         self.create_user()
@@ -139,7 +125,7 @@ class TestUsersAuth(BaseUserTest):
             self.invalid_password()
             user = User.get_by_email_address('joeblogs@email.com')
 
-            assert_equal(user.logged_in_at, None)
+            assert user.logged_in_at is None
 
     def test_failed_login_should_increment_failed_login_counter(self):
         self.create_user()
@@ -147,7 +133,7 @@ class TestUsersAuth(BaseUserTest):
             self.invalid_password()
             user = User.get_by_email_address('joeblogs@email.com')
 
-            assert_equal(user.failed_login_count, 1)
+            assert user.failed_login_count == 1
 
     def test_successful_login_resets_failed_login_counter(self):
         self.create_user()
@@ -156,7 +142,7 @@ class TestUsersAuth(BaseUserTest):
             self.valid_login()
 
             user = User.get_by_email_address('joeblogs@email.com')
-            assert_equal(user.failed_login_count, 0)
+            assert user.failed_login_count == 0
 
     def test_user_is_locked_after_too_many_failed_login_attempts(self):
         self.create_user()
@@ -167,7 +153,7 @@ class TestUsersAuth(BaseUserTest):
             self.invalid_password()
             user = User.get_by_email_address('joeblogs@email.com')
 
-            assert_equal(user.locked, True)
+            assert user.locked is True
 
     def test_all_login_attempts_fail_for_locked_users(self):
         self.create_user()
@@ -199,10 +185,10 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 201)
+        assert response.status_code == 201
         data = json.loads(response.get_data())["users"]
-        assert_equal(data["emailAddress"], "joeblogs@email.gov.uk")
-        assert_equal(data["phoneNumber"], "01234 567890")
+        assert data["emailAddress"] == "joeblogs@email.gov.uk"
+        assert data["phoneNumber"] == "01234 567890"
 
     def test_creating_buyer_user_with_bad_email_domain_fails(self):
         response = self.client.post(
@@ -277,7 +263,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
 
         assert response.status_code == 201
         data = json.loads(response.get_data())['users']
-        assert_equal(data['phoneNumber'], None)
+        assert data['phoneNumber'] is None
 
     def test_can_post_an_admin_user(self):
         response = self.client.post(
@@ -290,9 +276,9 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 201)
+        assert response.status_code == 201
         data = json.loads(response.get_data())["users"]
-        assert_equal(data["emailAddress"], "joeblogs@email.com")
+        assert data["emailAddress"] == "joeblogs@email.com"
 
     def test_can_post_an_admin_ccs_category_user(self):
         response = self.client.post(
@@ -305,9 +291,9 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 201)
+        assert response.status_code == 201
         data = json.loads(response.get_data())["users"]
-        assert_equal(data["emailAddress"], "joeblogs@email.com")
+        assert data["emailAddress"] == "joeblogs@email.com"
 
     def test_can_post_an_admin_ccs_sourcing_user(self):
         response = self.client.post(
@@ -320,9 +306,9 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 201)
+        assert response.status_code == 201
         data = json.loads(response.get_data())["users"]
-        assert_equal(data["emailAddress"], "joeblogs+sourcing@email.com")
+        assert data["emailAddress"] == "joeblogs+sourcing@email.com"
 
     # The admin-ccs role is no longer in use
     def test_can_not_post_an_admin_ccs_user(self):
@@ -336,61 +322,48 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
         error = json.loads(response.get_data())['error']
-        assert_in("'admin-ccs' is not one of", error)
+        assert "'admin-ccs' is not one of" in error
 
-    def test_can_post_a_supplier_user(self):
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
-            )
-            db.session.commit()
-
+    def test_can_post_a_supplier_user(self, supplier_basic):
         response = self.client.post(
             '/users',
             data=json.dumps({
                 'users': {
                     'emailAddress': 'joeblogs@email.com',
                     'password': '1234567890',
-                    'supplierId': 1,
+                    'supplierId': supplier_basic,
                     'role': 'supplier',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 201)
+        assert response.status_code == 201
         data = json.loads(response.get_data())["users"]
-        assert_equal(data["emailAddress"], "joeblogs@email.com")
-        assert_equal(data["supplier"]["name"], "Supplier 1")
-        assert_equal(data["supplier"]["supplierId"], 1)
+        assert data["emailAddress"] == "joeblogs@email.com"
+        assert data["supplier"]["supplierId"] == supplier_basic
 
-    def test_post_a_user_creates_audit_event(self):
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
-            )
-            db.session.commit()
-
+    def test_post_a_user_creates_audit_event(self, supplier_basic):
         response = self.client.post(
             '/users',
             data=json.dumps({
                 'users': {
                     'emailAddress': 'joeblogs@email.com',
                     'password': '1234567890',
-                    'supplierId': 1,
+                    'supplierId': supplier_basic,
                     'role': 'supplier',
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 201)
+        assert response.status_code == 201
 
         audit_response = self.client.get('/audit-events')
-        assert_equal(audit_response.status_code, 200)
+        assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
 
-        assert_equal(len(data['auditEvents']), 1)
-        assert_equal(data['auditEvents'][0]['type'], 'create_user')
-        assert_equal(data['auditEvents'][0]['data']['supplier_id'], 1)
+        assert len(data['auditEvents']) == 1
+        assert data['auditEvents'][0]['type'] == 'create_user'
+        assert data['auditEvents'][0]['data']['supplier_id'] == supplier_basic
 
     def test_should_reject_a_supplier_user_with_invalid_supplier_id(self):
         response = self.client.post(
@@ -405,8 +378,8 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             content_type='application/json')
 
         data = json.loads(response.get_data())["error"]
-        assert_equal(response.status_code, 400)
-        assert_equal(data, "Invalid supplier id")
+        assert response.status_code == 400
+        assert data == "Invalid supplier id"
 
     def test_should_reject_a_supplier_user_with_no_supplier_id(self):
         response = self.client.post(
@@ -420,8 +393,8 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             content_type='application/json')
 
         data = json.loads(response.get_data())["error"]
-        assert_equal(response.status_code, 400)
-        assert_equal(data, "No supplier id provided for supplier user")
+        assert response.status_code == 400
+        assert data == "No supplier id provided for supplier user"
 
     def test_should_reject_non_supplier_user_with_supplier_id(self):
         response = self.client.post(
@@ -436,8 +409,8 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             content_type='application/json')
 
         data = json.loads(response.get_data())["error"]
-        assert_equal(response.status_code, 400)
-        assert_equal(data, "'supplier_id' is only valid for users with 'supplier' role, not 'admin'")
+        assert response.status_code == 400
+        assert data == "'supplierId' is only valid for users with 'supplier' role, not 'admin'"
 
     def test_should_reject_user_with_invalid_role(self):
         response = self.client.post(
@@ -450,7 +423,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
 
     def test_can_post_a_user_with_hashed_password(self):
         with self.app.app_context():
@@ -465,11 +438,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                         'name': 'joe bloggs'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 201)
+            assert response.status_code == 201
             user = User.query.filter(
                 User.email_address == 'joeblogs@email.com') \
                 .first()
-            assert_not_equal(user.password, '1234567890')
+            assert user.password != '1234567890'
 
     def test_can_post_a_user_without_hashed_password(self):
         with self.app.app_context():
@@ -484,11 +457,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                         'name': 'joe bloggs'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 201)
+            assert response.status_code == 201
             user = User.query.filter(
                 User.email_address == 'joeblogs@email.com') \
                 .first()
-            assert_equal(user.password, '1234567890')
+            assert user.password == '1234567890'
 
     def test_posting_same_email_twice_is_an_error(self):
         response = self.client.post(
@@ -501,7 +474,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 201)
+        assert response.status_code == 201
 
         response = self.client.post(
             '/users',
@@ -513,7 +486,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 409)
+        assert response.status_code == 409
 
     def test_return_400_for_invalid_user_json(self):
         response = self.client.post(
@@ -526,9 +499,9 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
         data = json.loads(response.get_data())["error"]
-        assert_in("JSON was not a valid format", data)
+        assert "JSON was not a valid format" in data
 
     def test_return_400_for_invalid_user_role(self):
         response = self.client.post(
@@ -541,9 +514,9 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
 
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
         data = json.loads(response.get_data())["error"]
-        assert_in("JSON was not a valid format", data)
+        assert "JSON was not a valid format" in data
 
 
 class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
@@ -597,7 +570,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                     }}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
 
             response = self.client.post(
                 '/users/auth',
@@ -607,9 +580,9 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                         'password': '1234567890'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['emailAddress'], 'test@digital.gov.uk')
+            assert data['emailAddress'] == 'test@digital.gov.uk'
 
     def test_new_password_is_not_audited(self):
         with self.app.app_context():
@@ -622,7 +595,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                     }}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
 
             response = self.client.post(
                 '/users/auth',
@@ -632,21 +605,18 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                         'password': 'not-in-my-audit-event'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['emailAddress'], 'test@digital.gov.uk')
+            assert data['emailAddress'] == 'test@digital.gov.uk'
 
             audit_response = self.client.get('/audit-events')
-            assert_equal(audit_response.status_code, 200)
+            assert audit_response.status_code == 200
             data = json.loads(audit_response.get_data())
 
-            assert_equal(len(data['auditEvents']), 1)
-            assert_equal(data['auditEvents'][0]['type'], 'update_user')
-            assert_equal(
-                data['auditEvents'][0]['data']['update']['password'],
-                'updated'
-            )
-            assert("not-in-my-audit-event" not in "{}".format(data))
+            assert len(data['auditEvents']) == 1
+            assert data['auditEvents'][0]['type'] == 'update_user'
+            assert data['auditEvents'][0]['data']['update']['password'] == 'updated'
+            assert "not-in-my-audit-event" not in "{}".format(data)
 
     def test_can_update_active(self):
         with self.app.app_context():
@@ -659,9 +629,9 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                     }}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['active'], False)
+            assert data['active'] is False
 
             response = self.client.post(
                 '/users/auth',
@@ -671,7 +641,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                         'password': 'my long password'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 403)
+            assert response.status_code == 403
 
     def test_can_unlock_user(self):
 
@@ -694,10 +664,10 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 '/users/123',
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['locked'], True)
-            assert_equal(data['failedLoginCount'], 1)
+            assert data['locked'] is True
+            assert data['failedLoginCount'] == 1
 
             response = self.client.post(
                 '/users/123',
@@ -708,18 +678,18 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                     }}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['locked'], False)
+            assert data['locked'] is False
 
             response = self.client.get(
                 '/users/123',
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['locked'], False)
-            assert_equal(data['failedLoginCount'], 0)
+            assert data['locked'] is False
+            assert data['failedLoginCount'] == 0
 
     def test_cant_lock_a_user(self):
         with self.app.app_context():
@@ -728,10 +698,10 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 '/users/123',
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['locked'], False)
-            assert_equal(data['failedLoginCount'], 0)
+            assert data['locked'] is False
+            assert data['failedLoginCount'] == 0
 
             response = self.client.post(
                 '/users/123',
@@ -742,18 +712,18 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                     }}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['locked'], False)
+            assert data['locked'] is False
 
             response = self.client.get(
                 '/users/123',
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['locked'], False)
-            assert_equal(data['failedLoginCount'], 0)
+            assert data['locked'] is False
+            assert data['failedLoginCount'] == 0
 
     def test_can_update_name(self):
         with self.app.app_context():
@@ -766,9 +736,9 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                     }}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['name'], 'I Just Got Married')
+            assert data['name'] == 'I Just Got Married'
 
             response = self.client.post(
                 '/users/auth',
@@ -778,9 +748,9 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                         'password': 'my long password'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['name'], 'I Just Got Married')
+            assert data['name'] == 'I Just Got Married'
 
     def test_update_creates_audit_event(self):
         with self.app.app_context():
@@ -793,18 +763,15 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                     }}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
 
             audit_response = self.client.get('/audit-events')
-            assert_equal(audit_response.status_code, 200)
+            assert audit_response.status_code == 200
             data = json.loads(audit_response.get_data())
 
-            assert_equal(len(data['auditEvents']), 1)
-            assert_equal(data['auditEvents'][0]['type'], 'update_user')
-            assert_equal(
-                data['auditEvents'][0]['data']['update']['name'],
-                'I Just Got Married'
-            )
+            assert len(data['auditEvents']) == 1
+            assert data['auditEvents'][0]['type'] == 'update_user'
+            assert data['auditEvents'][0]['data']['update']['name'] == 'I Just Got Married'
 
     def test_can_update_role_and_suppler_id(self):
         with self.app.app_context():
@@ -818,9 +785,9 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                     }}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['role'], 'supplier')
+            assert data['role'] == 'supplier'
 
             response = self.client.post(
                 '/users/auth',
@@ -830,9 +797,9 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                         'password': 'my long password'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['role'], 'supplier')
+            assert data['role'] == 'supplier'
 
     def test_can_update_role_to_buyer_from_supplier(self):
         with self.app.app_context():
@@ -845,10 +812,10 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                     }}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['role'], 'buyer')
-            assert_is_none(data.get('supplierId', None))
+            assert data['role'] == 'buyer'
+            assert data.get('supplierId', None) is None
 
             response = self.client.post(
                 '/users/auth',
@@ -858,9 +825,9 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                         'password': 'my long password'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['role'], 'buyer')
+            assert data['role'] == 'buyer'
 
     def test_cannot_update_supplier_user_with_invalid_email_address_to_buyer(self):
         response = self.client.post(
@@ -910,10 +877,10 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                     }}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['role'], 'buyer')
-            assert_is_none(data.get('supplierId', None))
+            assert data['role'] == 'buyer'
+            assert data.get('supplierId', None) is None
 
     def test_can_not_update_role_to_invalid_value(self):
         with self.app.app_context():
@@ -927,8 +894,8 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 content_type='application/json')
 
             data = json.loads(response.get_data())["error"]
-            assert_equal(response.status_code, 400)
-            assert_in("Could not update user", data)
+            assert response.status_code == 400
+            assert "Could not update user" in data
 
     def test_supplier_role_update_requires_supplier_id(self):
         response = self.client.post(
@@ -941,8 +908,8 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json')
 
         data = json.loads(response.get_data())["error"]
-        assert_equal(response.status_code, 400)
-        assert_in("'supplier_id' is required for users with 'supplier' role", data)
+        assert response.status_code == 400
+        assert "'supplierId' is required for users with 'supplier' role" in data
 
     def test_can_update_email_address(self):
         with self.app.app_context():
@@ -955,9 +922,9 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                     }}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['emailAddress'], 'myshinynew@digital.gov.uk')
+            assert data['emailAddress'] == 'myshinynew@digital.gov.uk'
 
             response = self.client.post(
                 '/users/auth',
@@ -967,16 +934,21 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                         'password': 'my long password'}}),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert_equal(data['emailAddress'], 'myshinynew@digital.gov.uk')
+            assert data['emailAddress'] == 'myshinynew@digital.gov.uk'
 
 
-class TestUsersGet(BaseUserTest):
+class TestUsersGet(BaseUserTest, FixtureMixin):
+    supplier_id = None
+
     def setup(self):
         super(TestUsersGet, self).setup()
+
+        # get the last supplier_id returned
+        # it turns out we have some logic that doesn't recognise "0" as a supplier_id for users
+        self.supplier_id = self.setup_dummy_suppliers(2)[-1]
         with self.app.app_context():
-            self._post_supplier()
             self._post_users()
 
     def _post_users(self):
@@ -1002,31 +974,31 @@ class TestUsersGet(BaseUserTest):
 
     @staticmethod
     def _assert_things_about_users(user_from_api, user_to_compare_to):
-        assert_equal(user_from_api['emailAddress'], user_to_compare_to['emailAddress'])
-        assert_equal(user_from_api['name'], user_to_compare_to['name'])
-        assert_equal(user_from_api['role'], user_to_compare_to['role'])
-        assert_equal(user_from_api['active'], user_to_compare_to['active'])
-        assert_equal(user_from_api['locked'], False)
-        assert_equal('password' in user_from_api, False)
+        assert user_from_api['emailAddress'] == user_to_compare_to['emailAddress']
+        assert user_from_api['name'] == user_to_compare_to['name']
+        assert user_from_api['role'] == user_to_compare_to['role']
+        assert user_from_api['active'] == user_to_compare_to['active']
+        assert user_from_api['locked'] is False
+        assert ('password' in user_from_api) is False
 
     def test_can_get_a_user_by_id(self):
         with self.app.app_context():
             response = self.client.get("/users/{}".format(self.users[0]["id"]))
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())["users"]
             self._assert_things_about_users(data, self.users[0])
 
     def test_can_get_a_user_by_email(self):
         with self.app.app_context():
             response = self.client.get("/users?email_address=j@examplecompany.biz")
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())["users"][0]
             self._assert_things_about_users(data, self.users[0])
 
     def test_can_list_users(self):
         with self.app.app_context():
             response = self.client.get("/users")
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())["users"]
             for index, user in enumerate(data):
                 self._assert_things_about_users(user, self.users[index])
@@ -1034,36 +1006,31 @@ class TestUsersGet(BaseUserTest):
     def test_can_list_users_by_supplier_id(self):
         with self.app.app_context():
             response = self.client.get("/users?supplier_id={}".format(self.supplier_id))
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())["users"]
             for index, user in enumerate(data):
                 self._assert_things_about_users(user, self.users[index])
 
     def test_returns_404_for_non_int_id(self):
         response = self.client.get("/users/bogus")
-        assert_equal(response.status_code, 404)
+        assert response.status_code == 404
 
     def test_returns_404_for_nonexistent_email_address(self):
         non_existent_email = "jbond@mi6.biz"
         response = self.client.get("/users?email_address={}".format(non_existent_email))
-        assert_equal(response.status_code, 404)
+        assert response.status_code == 404
 
     def test_returns_400_for_non_int_supplier_id(self):
         bad_supplier_id = 'not_an_integer'
         response = self.client.get("/users?supplier_id={}".format(bad_supplier_id))
-        assert_equal(response.status_code, 400)
-        assert_in(
-            "Invalid supplier_id: {}".format(bad_supplier_id),
-            response.get_data(as_text=True)
-        )
+        assert response.status_code == 400
+        assert "Invalid supplier_id: {}".format(bad_supplier_id) in response.get_data(as_text=True)
 
     def test_returns_404_for_nonexistent_supplier(self):
         non_existent_supplier = self.supplier_id + 1
         response = self.client.get("/users?supplier_id={}".format(non_existent_supplier))
-        assert_equal(response.status_code, 404)
-        assert_in(
-            "supplier_id '{}' not found".format(non_existent_supplier),
-            response.get_data(as_text=True))
+        assert response.status_code == 404
+        assert "supplier_id '{}' not found".format(non_existent_supplier) in response.get_data(as_text=True)
 
     def test_only_buyers_returned_with_role_param_set_to_buyer(self):
         self._post_user({
@@ -1101,7 +1068,7 @@ class TestUsersGet(BaseUserTest):
         data = response.get_data(as_text=True)
 
         assert response.status_code == 400
-        assert_in("Invalid user role: incorrect", data)
+        assert "Invalid user role: incorrect" in data
 
 
 class TestUsersExport(BaseUserTest, FixtureMixin):
@@ -1251,7 +1218,8 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
 
     def _setup(self, post_supplier=True, post_users=True, register_supplier_with_framework=True):
         if post_supplier:
-            self._post_supplier()
+            # set the supplier_id to the id of the last supplier created
+            self.supplier_id = self.setup_dummy_suppliers(2)[-1]
         if post_users:
             self._post_users()
         if register_supplier_with_framework:

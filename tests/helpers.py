@@ -78,7 +78,6 @@ class FixtureMixin(object):
                     status=status,
                     published_at=published_at,
                 )
-            db.session.commit()
 
     def setup_dummy_brief(
             self, id=None, user_id=1, status=None, data=None, published_at=None, withdrawn_at=None,
@@ -108,8 +107,10 @@ class FixtureMixin(object):
             published_at=published_at,
             withdrawn_at=withdrawn_at,
         ))
+        db.session.commit()
 
     def setup_dummy_suppliers(self, n):
+        supplier_ids = []
         with self.app.app_context():
             for i in range(n):
                 db.session.add(
@@ -128,7 +129,9 @@ class FixtureMixin(object):
                         postcode=u'SW1A 1AA'
                     )
                 )
+                supplier_ids.append(i)
             db.session.commit()
+        return supplier_ids
 
     def setup_additional_dummy_suppliers(self, n, initial):
         with self.app.app_context():
@@ -152,21 +155,26 @@ class FixtureMixin(object):
             db.session.commit()
 
     def setup_dummy_service(self, service_id, supplier_id=1, data=None,
-                            status='published', framework_id=1, lot_id=1):
+                            status='published', framework_id=1, lot_id=1, **kwargs):
         now = datetime.utcnow()
+
+        # lot and framework ids aren't in json responses, so we'll look for them first
+        lot = Lot.query.filter(Lot.slug == kwargs.pop('lot', '')).first()
+        framework = Framework.query.filter(Framework.slug == kwargs.pop('frameworkSlug', '')).first()
 
         service_kwargs = {
             'service_id': service_id,
-            'supplier_id': supplier_id,
-            'status': status,
-            'data': data or {'serviceName': 'Service {}'.format(service_id)},
-            'framework_id': framework_id,
-            'lot_id': lot_id,
-            'created_at': now,
-            'updated_at': now
+            'supplier_id': kwargs.pop('supplierId', supplier_id),
+            'status': kwargs.pop('status', status),
+            'framework_id': framework.id if framework else framework_id,
+            'lot_id': lot.id if lot else lot_id,
+            'created_at': kwargs.pop('createdAt', now),
+            'updated_at': kwargs.pop('updatedAt', now),
+            'data': data or kwargs or {'serviceName': 'Service {}'.format(service_id)}
         }
 
         db.session.add(Service(**service_kwargs))
+        db.session.commit()
 
     def setup_dummy_services(self, n, supplier_id=None, framework_id=1,
                              start_id=0, lot_id=1):
@@ -178,8 +186,6 @@ class FixtureMixin(object):
                     framework_id=framework_id,
                     lot_id=lot_id
                 )
-
-            db.session.commit()
 
     def setup_dummy_services_including_unpublished(self, n):
         self.setup_dummy_suppliers(TEST_SUPPLIERS_COUNT)

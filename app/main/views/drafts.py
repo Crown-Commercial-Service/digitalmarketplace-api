@@ -230,6 +230,11 @@ def publish_draft_service(draft_id):
         abort(400, "Cannot re-publish a submitted service")
 
     if draft.service_id:
+        """
+        Publishing the draft with a "service_id" updates the original service -- it doesn't create a new one
+        This was an alternative editing model proposed by @minglis way way back.
+        We're not actually doing this anywhere, but it's tested and it looks like it works.
+        """
         service = Service.query.filter(
             Service.service_id == draft.service_id
         ).first_or_404()

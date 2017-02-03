@@ -292,6 +292,6 @@ def email_has_valid_buyer_domain():
 
 def check_supplier_role(role, supplier_id):
     if role == 'supplier' and not supplier_id:
-        abort(400, "'supplier_id' is required for users with 'supplier' role")
+        abort(400, "'supplierId' is required for users with 'supplier' role")
     elif role != 'supplier' and supplier_id:
-        abort(400, "'supplier_id' is only valid for users with 'supplier' role, not '{}'".format(role))
+        abort(400, "'supplierId' is only valid for users with 'supplier' role, not '{}'".format(role))

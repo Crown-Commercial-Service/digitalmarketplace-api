@@ -3,7 +3,6 @@ from random import randint
 
 from flask import json
 from freezegun import freeze_time
-from nose.tools import assert_equal, assert_in, assert_is_not_none, assert_true
 
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
@@ -13,68 +12,70 @@ from tests.helpers import fixture_params, FixtureMixin, load_example_listing
 
 
 class TestGetSupplier(BaseApplicationTest, FixtureMixin):
+    supplier = supplier_id = None
+
     def setup(self):
         super(TestGetSupplier, self).setup()
 
         with self.app.app_context():
-            payload = load_example_listing("Supplier")
+            payload = load_example_listing("supplier_creation")
             self.supplier = payload
-            self.supplier_id = payload['id']
 
-            response = self.client.put(
-                '/suppliers/{}'.format(self.supplier_id),
+            response = self.client.post(
+                '/suppliers',
                 data=json.dumps({
                     'suppliers': self.supplier
                 }),
                 content_type='application/json')
-            assert_equal(response.status_code, 201)
+            assert response.status_code == 201
+            self.supplier_id = json.loads(response.get_data())['suppliers']['id']
 
     def test_get_non_existent_supplier(self):
         response = self.client.get('/suppliers/100')
-        assert_equal(404, response.status_code)
+        assert response.status_code == 404
 
     def test_invalid_supplier_id(self):
         response = self.client.get('/suppliers/abc123')
-        assert_equal(404, response.status_code)
+        assert response.status_code == 404
 
     def test_get_supplier(self):
         response = self.client.get('/suppliers/{}'.format(self.supplier_id))
 
         data = json.loads(response.get_data())
-        assert_equal(200, response.status_code)
-        assert_equal(self.supplier_id, data['suppliers']['id'])
-        assert_equal(self.supplier['name'], data['suppliers']['name'])
+        assert response.status_code == 200
+        assert self.supplier_id == data['suppliers']['id']
+        assert self.supplier['name'] == data['suppliers']['name']
 
     def test_supplier_clients_exist(self):
         response = self.client.get('/suppliers/{}'.format(self.supplier_id))
 
         data = json.loads(response.get_data())
-        assert_equal(200, response.status_code)
-        assert_in('clients', data['suppliers'].keys())
-        assert_equal(3, len(data['suppliers']['clients']))
+        assert response.status_code == 200
+        assert 'clients' in data['suppliers'].keys()
+        assert len(data['suppliers']['clients']) == 3
 
     def test_supplier_client_key_still_exists_even_without_clients(self):
         # Insert a new supplier with a different id and no clients
         with self.app.app_context():
-            new_payload = load_example_listing("Supplier")
-            new_payload['id'] = 111111
+            new_payload = load_example_listing("supplier_creation")
             new_payload['clients'] = []
             new_payload['dunsNumber'] = str(randint(111111111, 9999999999))
 
-            response = self.client.put(
-                '/suppliers/{}'.format(new_payload['id']),
+            response = self.client.post(
+                '/suppliers',
                 data=json.dumps({
                     'suppliers': new_payload
                 }),
                 content_type='application/json')
-            assert_equal(response.status_code, 201)
+            assert response.status_code == 201
+            new_payload['id'] = json.loads(response.get_data())['suppliers']['id']
 
         response = self.client.get('/suppliers/{}'.format(new_payload['id']))
 
         data = json.loads(response.get_data())
-        assert_equal(200, response.status_code)
-        assert_in('clients', data['suppliers'].keys())
-        assert_equal(0, len(data['suppliers']['clients']))
+        assert response.status_code == 200
+        assert 'clients' in data['suppliers'].keys()
+        assert len(data['suppliers']['clients']) == 0
 
     def test_get_supplier_returns_service_counts(self):
         self.setup_dummy_services(
@@ -90,32 +91,32 @@ class TestGetSupplier(BaseApplicationTest, FixtureMixin):
         response = self.client.get('/suppliers/{}'.format(self.supplier_id))
 
         data = json.loads(response.get_data())
-        assert_equal(data['suppliers']['service_counts'], {
+        assert data['suppliers']['service_counts'] == {
             u'G-Cloud 5': 15,
             u'G-Cloud 6': 5
-        })
+        }
 
 
 class TestListSuppliers(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestListSuppliers, self).setup()
 
-        # Supplier names like u"Supplier {n}"
+        # Supplier names look like "Supplier {n}"
         self.setup_dummy_suppliers(7)
 
     def test_query_string_missing(self):
         response = self.client.get('/suppliers')
-        assert_equal(200, response.status_code)
+        assert response.status_code == 200
 
     def test_query_string_prefix_empty(self):
         response = self.client.get('/suppliers?prefix=')
-        assert_equal(200, response.status_code)
+        assert response.status_code == 200
 
     def test_query_string_prefix_returns_none(self):
         response = self.client.get('/suppliers?prefix=canada')
-        assert_equal(200, response.status_code)
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert_equal(0, len(data['suppliers']))
+        assert len(data['suppliers']) == 0
 
     def test_other_prefix_returns_non_alphanumeric_suppliers(self):
         with self.app.app_context():
@@ -123,60 +124,56 @@ class TestListSuppliers(BaseApplicationTest, FixtureMixin):
                 Supplier(supplier_id=999, name=u"999 Supplier")
             )
             self.setup_dummy_service(service_id='1230000000', supplier_id=999)
-            db.session.commit()
 
             response = self.client.get('/suppliers?prefix=other')
 
             data = json.loads(response.get_data())
-            assert_equal(200, response.status_code)
-            assert_equal(1, len(data['suppliers']))
-            assert_equal(999, data['suppliers'][0]['id'])
-            assert_equal(
-                u"999 Supplier",
-                data['suppliers'][0]['name']
-            )
+            assert response.status_code == 200
+            assert len(data['suppliers']) == 1
+            assert data['suppliers'][0]['id'] == 999
+            assert u"999 Supplier" == data['suppliers'][0]['name']
 
     def test_query_string_prefix_returns_paginated_page_one(self):
         response = self.client.get('/suppliers?prefix=s')
         data = json.loads(response.get_data())
 
-        assert_equal(200, response.status_code)
-        assert_equal(5, len(data['suppliers']))
+        assert response.status_code == 200
+        assert len(data['suppliers']) == 5
         next_link = data['links']['next']
-        assert_in('page=2', next_link)
+        assert 'page=2' in next_link
 
     def test_query_string_prefix_returns_paginated_page_two(self):
         response = self.client.get('/suppliers?prefix=s&page=2')
         data = json.loads(response.get_data())
 
-        assert_equal(response.status_code, 200)
-        assert_equal(len(data['suppliers']), 2)
+        assert response.status_code == 200
+        assert len(data['suppliers']) == 2
         prev_link = data['links']['prev']
-        assert_in('page=1', prev_link)
+        assert 'page=1' in prev_link
 
     def test_query_string_prefix_returns_no_pagination_for_single_page(self):
         self.setup_additional_dummy_suppliers(5, 'T')
         response = self.client.get('/suppliers?prefix=t')
         data = json.loads(response.get_data())
 
-        assert_equal(200, response.status_code)
-        assert_equal(5, len(data['suppliers']))
-        assert_equal(['self'], list(data['links'].keys()))
+        assert response.status_code == 200
+        assert len(data['suppliers']) == 5
+        assert ['self'] == list(data['links'].keys())
 
     def test_query_string_prefix_page_out_of_range(self):
         response = self.client.get('/suppliers?prefix=s&page=10')
 
-        assert_equal(response.status_code, 404)
+        assert response.status_code == 404
 
     def test_query_string_prefix_invalid_page_argument(self):
         response = self.client.get('/suppliers?prefix=s&page=a')
 
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
 
     def test_below_one_page_number_is_404(self):
         response = self.client.get('/suppliers?page=0')
 
-        assert_equal(response.status_code, 404)
+        assert response.status_code == 404
 
 
 class TestListSuppliersOnFramework(BaseApplicationTest, FixtureMixin):
@@ -206,26 +203,25 @@ class TestListSuppliersOnFramework(BaseApplicationTest, FixtureMixin):
             self.setup_dummy_service(
                 service_id='1000000003', supplier_id=3, status='enabled'
             )
-            db.session.commit()
 
     def test_invalid_framework_returns_400(self):
         response = self.client.get('/suppliers?framework=invalid!')
-        assert_equal(400, response.status_code)
+        assert response.status_code == 400
 
     def test_should_return_suppliers_on_framework_backwards_compatibility(self):
         # TODO: REMOVE WHEN BUYER APP IS UPDATED
         response = self.client.get('/suppliers?framework=gcloud')
-        assert_equal(200, response.status_code)
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert_equal(1, len(data['suppliers']))
-        assert_equal('Active', data['suppliers'][0]['name'])
+        assert len(data['suppliers']) == 1
+        assert data['suppliers'][0]['name'] == 'Active'
 
     def test_should_return_suppliers_on_framework(self):
         response = self.client.get('/suppliers?framework=g-cloud')
-        assert_equal(200, response.status_code)
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert_equal(1, len(data['suppliers']))
-        assert_equal('Active', data['suppliers'][0]['name'])
+        assert len(data['suppliers']) == 1
+        assert data['suppliers'][0]['name'] == 'Active'
 
     def test_should_return_no_suppliers_no_framework(self):
         response = self.client.get('/suppliers?framework=bad')
@@ -236,9 +232,9 @@ class TestListSuppliersOnFramework(BaseApplicationTest, FixtureMixin):
 
     def test_should_return_all_suppliers_if_no_framework(self):
         response = self.client.get('/suppliers')
-        assert_equal(200, response.status_code)
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert_equal(3, len(data['suppliers']))
+        assert len(data['suppliers']) == 3
 
 
 class TestListSuppliersByDunsNumber(BaseApplicationTest):
@@ -257,37 +253,39 @@ class TestListSuppliersByDunsNumber(BaseApplicationTest):
 
     def test_invalid_duns_number_returns_400(self):
         response = self.client.get('/suppliers?duns_number=invalid!')
-        assert_equal(400, response.status_code)
+        assert response.status_code == 400
 
     def test_should_return_suppliers_by_duns_number(self):
         response = self.client.get('/suppliers?duns_number=123')
-        assert_equal(200, response.status_code)
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert_equal(1, len(data['suppliers']))
-        assert_equal('Duns 123', data['suppliers'][0]['name'])
+        assert len(data['suppliers']) == 1
+        assert data['suppliers'][0]['name'] == 'Duns 123'
 
     def test_should_return_no_suppliers_if_nonexisting_duns(self):
         response = self.client.get('/suppliers?duns_number=not-existing')
         data = json.loads(response.get_data())
-        assert_equal(200, response.status_code)
-        assert_equal(0, len(data['suppliers']))
+        assert response.status_code == 200
+        assert len(data['suppliers']) == 0
 
     def test_should_return_all_suppliers_if_no_duns_number(self):
         response = self.client.get('/suppliers')
-        assert_equal(200, response.status_code)
+        assert response.status_code == 200
         data = json.loads(response.get_data())
-        assert_equal(2, len(data['suppliers']))
+        assert len(data['suppliers']) == 2
 
 
 class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
     method = "put"
-    endpoint = "/suppliers/123456"
+    endpoint = "/suppliers/{self.supplier_id}"
+    supplier = supplier_id = None
 
     def setup(self):
         super(TestPutSupplier, self).setup()
+        self.supplier = load_example_listing("Supplier")
+        self.supplier_id = self.supplier['id']
 
     def put_import_supplier(self, supplier, route_parameter=None):
-
         if route_parameter is None:
             route_parameter = '/{}'.format(supplier.get('id', 1))
 
@@ -300,52 +298,46 @@ class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
 
     def test_add_a_new_supplier(self):
         with self.app.app_context():
-            payload = load_example_listing("Supplier")
-            response = self.put_import_supplier(payload)
-            assert_equal(response.status_code, 201)
+            response = self.put_import_supplier(self.supplier)
+            assert response.status_code == 201
             supplier = Supplier.query.filter(
-                Supplier.supplier_id == 123456
+                Supplier.supplier_id == self.supplier_id
             ).first()
-            assert_equal(supplier.name, payload['name'])
+            assert supplier.name == self.supplier['name']
 
     def test_null_clients_list(self):
         with self.app.app_context():
-            payload = load_example_listing("Supplier")
-            del payload['clients']
+            del self.supplier['clients']
 
-            response = self.put_import_supplier(payload)
-            assert_equal(response.status_code, 201)
+            response = self.put_import_supplier(self.supplier)
+            assert response.status_code == 201
 
             supplier = Supplier.query.filter(
-                Supplier.supplier_id == 123456
+                Supplier.supplier_id == self.supplier_id
             ).first()
 
-            assert_equal(supplier.clients, [])
+            assert supplier.clients == []
 
     def test_reinserting_the_same_supplier(self):
         with self.app.app_context():
-            payload = load_example_listing("Supplier")
-            example_listing_contact_information = payload['contactInformation']
+            example_listing_contact_information = self.supplier['contactInformation']
 
             # Exact loop number is arbitrary
             for i in range(3):
-                response = self.put_import_supplier(payload)
+                response = self.put_import_supplier(self.supplier)
 
-                assert_equal(response.status_code, 201)
+                assert response.status_code == 201
 
                 supplier = Supplier.query.filter(
-                    Supplier.supplier_id == 123456
+                    Supplier.supplier_id == self.supplier_id
                 ).first()
-                assert_equal(supplier.name, payload['name'])
+                assert supplier.name == self.supplier['name']
 
                 contact_informations = ContactInformation.query.filter(
                     ContactInformation.supplier_id == supplier.supplier_id
                 ).all()
 
-                assert_equal(
-                    len(example_listing_contact_information),
-                    len(contact_informations)
-                )
+                assert len(example_listing_contact_information) == len(contact_informations)
 
                 # Contact Information without a supplier_id should not exist
                 contact_informations_no_supplier_id = \
@@ -353,177 +345,131 @@ class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
                         ContactInformation.supplier_id == None  # noqa
                     ).all()
 
-                assert_equal(
-                    0,
-                    len(contact_informations_no_supplier_id)
-                )
+                assert len(contact_informations_no_supplier_id) == 0
 
     def test_cannot_put_to_root_suppliers_url(self):
-        payload = load_example_listing("Supplier")
-
-        response = self.put_import_supplier(payload, "")
-        assert_equal(response.status_code, 405)
+        response = self.put_import_supplier(self.supplier, "")
+        assert response.status_code == 405
 
     def test_supplier_json_id_does_not_match_route_id_parameter(self):
-        payload = load_example_listing("Supplier")
-
-        response = self.put_import_supplier(payload, '/1234567890')
-        assert_equal(response.status_code, 400)
-        assert_in('id parameter must match id in data',
-                  json.loads(response.get_data())['error'])
+        response = self.put_import_supplier(self.supplier, '/1234567890')
+        assert response.status_code == 400
+        assert 'id parameter must match id in data' in json.loads(response.get_data())['error']
 
     def test_when_supplier_has_missing_contact_information(self):
-        payload = load_example_listing("Supplier")
-        payload.pop('contactInformation')
+        self.supplier.pop('contactInformation')
 
-        response = self.put_import_supplier(payload)
-        assert_equal(response.status_code, 400)
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
         for item in ['Invalid JSON must have', '\'contactInformation\'']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+            assert item in json.loads(response.get_data())['error']
 
     def test_when_supplier_has_malformed_contact_information(self):
-        payload = load_example_listing("Supplier")
-        payload['contactInformation'] = {
-            'wobble': 'woo'
-        }
+        self.supplier['contactInformation'] = {'wobble': 'woo'}
 
-        response = self.put_import_supplier(payload)
-        assert_equal(response.status_code, 400)
-        for item in ['JSON was not a valid format',
-                     'is not of type',
-                     'array']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['JSON was not a valid format', 'is not of type', 'array']:
+            assert item in json.loads(response.get_data())['error']
 
     def test_when_supplier_has_a_missing_key(self):
-        payload = load_example_listing("Supplier")
-        payload.pop('id')
+        self.supplier.pop('id')
 
-        response = self.put_import_supplier(payload)
-        assert_equal(response.status_code, 400)
-        for item in ['JSON was not a valid format',
-                     '\'id\'',
-                     'is a required property']:
-            assert_in(
-                item, json.loads(response.get_data())['error'])
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['JSON was not a valid format', '\'id\'', 'is a required property']:
+            assert item in json.loads(response.get_data())['error']
 
     def test_when_supplier_has_missing_keys(self):
-        payload = load_example_listing("Supplier")
-
         # only one key is returned in the error message
-        payload.pop('id')
-        payload.pop('name')
+        self.supplier.pop('id')
+        self.supplier.pop('name')
 
-        response = self.put_import_supplier(payload)
-        assert_equal(response.status_code, 400)
-        for item in ['JSON was not a valid format',
-                     '\'id\'',
-                     'is a required property']:
-            assert_in(
-                item, json.loads(response.get_data())['error'])
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['JSON was not a valid format', '\'id\'', 'is a required property']:
+            assert item in json.loads(response.get_data())['error']
 
     def test_when_supplier_contact_information_has_a_missing_key(self):
-        payload = load_example_listing("Supplier")
+        self.supplier['contactInformation'][0].pop('email')
 
-        payload['contactInformation'][0].pop('email')
-
-        response = self.put_import_supplier(payload)
-        assert_equal(response.status_code, 400)
-        for item in ['JSON was not a valid format',
-                     '\'email\'',
-                     'is a required property']:
-            assert_in(
-                item, json.loads(response.get_data())['error'])
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['JSON was not a valid format', '\'email\'', 'is a required property']:
+            assert item in json.loads(response.get_data())['error']
 
     def test_when_supplier_contact_information_has_missing_keys(self):
-        payload = load_example_listing("Supplier")
-
         # only one key is returned in the error message
-        payload['contactInformation'][0].pop('email')
-        payload['contactInformation'][0].pop('contactName')
+        self.supplier['contactInformation'][0].pop('email')
+        self.supplier['contactInformation'][0].pop('contactName')
 
-        response = self.put_import_supplier(payload)
-        assert_equal(response.status_code, 400)
-        for item in ['JSON was not a valid format',
-                     '\'contactName\'',
-                     'is a required property']:
-            assert_in(
-                item, json.loads(response.get_data())['error'])
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        for item in ['JSON was not a valid format', '\'contactName\'', 'is a required property']:
+            assert item in json.loads(response.get_data())['error']
 
     def test_when_supplier_has_extra_keys(self):
-        payload = load_example_listing("Supplier")
+        self.supplier.update({'newKey': 1})
 
-        payload.update({'newKey': 1})
-
-        response = self.put_import_supplier(payload)
-        assert_equal(response.status_code, 400)
-        assert_in('Additional properties are not allowed',
-                  json.loads(response.get_data())['error'])
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        assert 'Additional properties are not allowed' in json.loads(response.get_data())['error']
 
     def test_when_supplier_contact_information_has_extra_keys(self):
-        payload = load_example_listing("Supplier")
+        self.supplier['contactInformation'][0].update({'newKey': 1})
 
-        payload['contactInformation'][0].update({'newKey': 1})
-
-        response = self.put_import_supplier(payload)
-        assert_equal(response.status_code, 400)
-        assert_in('Additional properties are not allowed',
-                  json.loads(response.get_data())['error'])
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
+        assert 'Additional properties are not allowed' in json.loads(response.get_data())['error']
 
     def test_supplier_duns_number_invalid(self):
-        payload = load_example_listing("Supplier")
+        self.supplier.update({'dunsNumber': "only-digits-permitted"})
 
-        payload.update({'dunsNumber': "only-digits-permitted"})
-
-        response = self.put_import_supplier(payload)
-        assert_equal(response.status_code, 400)
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
         for item in ['only-digits-permitted', 'does not match']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+            assert item in json.loads(response.get_data())['error']
 
     def test_supplier_esourcing_id_invalid(self):
-        payload = load_example_listing("Supplier")
+        self.supplier.update({'eSourcingId': "only-digits-permitted"})
 
-        payload.update({'eSourcingId': "only-digits-permitted"})
-
-        response = self.put_import_supplier(payload)
-        assert_equal(response.status_code, 400)
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
         for item in ['only-digits-permitted', 'does not match']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+            assert item in json.loads(response.get_data())['error']
 
     def test_when_supplier_contact_information_email_invalid(self):
-        payload = load_example_listing("Supplier")
+        self.supplier['contactInformation'][0].update({'email': "bad-email-99"})
 
-        payload['contactInformation'][0].update({'email': "bad-email-99"})
-
-        response = self.put_import_supplier(payload)
-        assert_equal(response.status_code, 400)
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 400
         for item in ['bad-email-99', 'is not a']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+            assert item in json.loads(response.get_data())['error']
 
 
 class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
     method = "post"
-    endpoint = "/suppliers/123456"
+    endpoint = "/suppliers/{self.supplier_id}"
+    supplier = supplier_id = None
 
     def setup(self):
         super(TestUpdateSupplier, self).setup()
 
         with self.app.app_context():
-            payload = load_example_listing("Supplier")
+            payload = load_example_listing("supplier_creation")
             self.supplier = payload
-            self.supplier_id = payload['id']
 
-            self.client.put('/suppliers/{}'.format(self.supplier_id),
-                            data=json.dumps({'suppliers': self.supplier}),
-                            content_type='application/json')
+            response = self.client.post(
+                '/suppliers',
+                data=json.dumps({'suppliers': self.supplier}),
+                content_type='application/json')
+
+            assert response.status_code == 201
+            self.supplier_id = json.loads(response.get_data())['suppliers']['id']
 
     def update_request(self, data=None, user=None, full_data=None):
         return self.client.post(
-            self.endpoint,
+            '/suppliers/{}'.format(self.supplier_id),
             data=json.dumps({
                 'suppliers': data,
                 'updated_by': user or 'supplier@user.dmdev',
@@ -533,41 +479,41 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_empty_update_supplier(self):
         response = self.update_request({})
-        assert_equal(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_name_update(self):
         response = self.update_request({'name': "New Name"})
-        assert_equal(response.status_code, 200)
+        assert response.status_code == 200
 
         with self.app.app_context():
             supplier = Supplier.query.filter(
-                Supplier.supplier_id == 123456
+                Supplier.supplier_id == self.supplier_id
             ).first()
 
-            assert_equal(supplier.name, "New Name")
+            assert supplier.name == "New Name"
 
     def test_supplier_update_creates_audit_event(self):
         self.update_request({'name': "Name"})
 
         with self.app.app_context():
             supplier = Supplier.query.filter(
-                Supplier.supplier_id == 123456
+                Supplier.supplier_id == self.supplier_id
             ).first()
 
             audit = AuditEvent.query.filter(
                 AuditEvent.object == supplier
             ).first()
 
-            assert_equal(audit.type, "supplier_update")
-            assert_equal(audit.user, "supplier@user.dmdev")
-            assert_equal(audit.data, {
+            assert audit.type == "supplier_update"
+            assert audit.user == "supplier@user.dmdev"
+            assert audit.data == {
                 'update': {'name': "Name"},
-            })
+            }
 
     def test_update_response_matches_payload(self):
-        payload = load_example_listing("Supplier")
+        payload = load_example_listing("supplier_creation")
         response = self.update_request({'name': "New Name"})
-        assert_equal(response.status_code, 200)
+        assert response.status_code == 200
 
         payload.update({'name': 'New Name'})
         supplier = json.loads(response.get_data())['suppliers']
@@ -575,8 +521,9 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         payload.pop('contactInformation')
         supplier.pop('contactInformation')
         supplier.pop('links')
+        supplier.pop('id')
 
-        assert_equal(supplier, payload)
+        assert supplier == payload
 
     def test_update_all_fields(self):
         response = self.update_request({
@@ -588,27 +535,27 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             'clients': ["Client1", "Client2"]
         })
 
-        assert_equal(response.status_code, 200)
+        assert response.status_code == 200
 
         with self.app.app_context():
             supplier = Supplier.query.filter(
-                Supplier.supplier_id == 123456
+                Supplier.supplier_id == self.supplier_id
             ).first()
 
-        assert_equal(supplier.name, 'New Name')
-        assert_equal(supplier.description, "New Description")
-        assert_equal(supplier.duns_number, "010101")
-        assert_equal(supplier.companies_house_number, "AA123456")
-        assert_equal(supplier.esourcing_id, "010101")
-        assert_equal(supplier.clients, ["Client1", "Client2"])
+        assert supplier.name == 'New Name'
+        assert supplier.description == "New Description"
+        assert supplier.duns_number == "010101"
+        assert supplier.companies_house_number == "AA123456"
+        assert supplier.esourcing_id == "010101"
+        assert supplier.clients == ["Client1", "Client2"]
 
     def test_supplier_json_id_does_not_match_original_id(self):
         response = self.update_request({
-            'id': 234567,
+            'id': self.supplier_id + 1,
             'name': "New Name"
         })
 
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
 
     def test_update_missing_supplier(self):
         response = self.client.post(
@@ -617,7 +564,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json',
         )
 
-        assert_equal(response.status_code, 404)
+        assert response.status_code == 404
 
     def test_links_and_contact_information_are_ignored(self):
         response = self.update_request(full_data={'suppliers': {
@@ -628,11 +575,11 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
         with self.app.app_context():
             supplier = Supplier.query.filter(
-                Supplier.supplier_id == 123456
+                Supplier.supplier_id == self.supplier_id
             ).first()
 
-        assert_equal(response.status_code, 200)
-        assert_equal(len(supplier.contact_information), 2)
+        assert response.status_code == 200
+        assert len(supplier.contact_information) == 2
 
     def test_update_with_unexpected_keys(self):
         response = self.update_request({
@@ -640,38 +587,40 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             'name': "New Name"
         })
 
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
 
     def test_update_without_updated_by(self):
         response = self.update_request(full_data={
             'suppliers': {'name': "New Name"},
         })
 
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
 
 
 class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
     method = "post"
-    endpoint = "/suppliers/123456/contact-information/{self.contact_id}"
+    endpoint = "/suppliers/{self.supplier_id}/contact-information/{self.contact_id}"
+    supplier = supplier_id = contact_id = None
 
     def setup(self):
         super(TestUpdateContactInformation, self).setup()
 
         with self.app.app_context():
-            payload = load_example_listing("Supplier")
+            payload = load_example_listing("supplier_creation")
             self.supplier = payload
-            self.supplier_id = payload['id']
 
-            response = self.client.put(
-                '/suppliers/{}'.format(self.supplier_id),
+            response = self.client.post(
+                '/suppliers',
                 data=json.dumps({'suppliers': self.supplier}),
                 content_type='application/json')
+            assert response.status_code == 201
             supplier = json.loads(response.get_data())['suppliers']
+            self.supplier_id = supplier['id']
             self.contact_id = supplier['contactInformation'][0]['id']
 
     def update_request(self, data=None, user=None, full_data=None):
         return self.client.post(
-            '/suppliers/123456/contact-information/{}'.format(self.contact_id),
+            '/suppliers/{}/contact-information/{}'.format(self.supplier_id, self.contact_id),
             data=json.dumps({
                 'contactInformation': data,
                 'updated_by': user or 'supplier@user.dmdev',
@@ -681,20 +630,20 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_empty_update(self):
         response = self.update_request({})
-        assert_equal(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_simple_field_update(self):
         response = self.update_request({
             'city': "New City"
         })
-        assert_equal(response.status_code, 200)
+        assert response.status_code == 200
 
         with self.app.app_context():
             contact = ContactInformation.query.filter(
                 ContactInformation.id == self.contact_id
             ).first()
 
-            assert_equal(contact.city, "New City")
+            assert contact.city == "New City"
 
     def test_update_creates_audit_event(self):
         self.update_request({
@@ -710,18 +659,18 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
                 AuditEvent.object == contact.supplier
             ).first()
 
-            assert_equal(audit.type, "contact_update")
-            assert_equal(audit.user, "supplier@user.dmdev")
-            assert_equal(audit.data, {
+            assert audit.type == "contact_update"
+            assert audit.user == "supplier@user.dmdev"
+            assert audit.data == {
                 'update': {'city': "New City"},
-            })
+            }
 
     def test_update_response_matches_payload(self):
         payload = load_example_listing("Supplier")
         response = self.update_request({
             'city': "New City"
         })
-        assert_equal(response.status_code, 200)
+        assert response.status_code == 200
 
         payload = payload['contactInformation'][0]
         payload.update({'city': 'New City'})
@@ -730,7 +679,7 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
         contact.pop('id')
         contact.pop('links')
 
-        assert_equal(contact, payload)
+        assert contact == payload
 
     def test_update_all_fields(self):
         response = self.update_request({
@@ -745,22 +694,22 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
             "postcode": "New postcode",
         })
 
-        assert_equal(response.status_code, 200)
+        assert response.status_code == 200
 
         with self.app.app_context():
             contact = ContactInformation.query.filter(
                 ContactInformation.id == self.contact_id
             ).first()
 
-        assert_equal(contact.contact_name, "New contact")
-        assert_equal(contact.phone_number, "New phone")
-        assert_equal(contact.email, "new-value@example.com")
-        assert_equal(contact.website, "example.com")
-        assert_equal(contact.address1, "New address1")
-        assert_equal(contact.address2, "New address2")
-        assert_equal(contact.city, "New city")
-        assert_equal(contact.country, "New country")
-        assert_equal(contact.postcode, "New postcode")
+        assert contact.contact_name == "New contact"
+        assert contact.phone_number == "New phone"
+        assert contact.email == "new-value@example.com"
+        assert contact.website == "example.com"
+        assert contact.address1 == "New address1"
+        assert contact.address2 == "New address2"
+        assert contact.city == "New city"
+        assert contact.country == "New country"
+        assert contact.postcode == "New postcode"
 
     def test_supplier_json_id_does_not_match_oiginal_id(self):
         response = self.update_request({
@@ -768,7 +717,7 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
             'city': "New City"
         })
 
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
 
     def test_json_id_does_not_match_oiginal_id(self):
         response = self.update_request({
@@ -776,7 +725,7 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
             'city': "New City"
         })
 
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
 
     def test_update_missing_supplier(self):
         response = self.client.post(
@@ -785,7 +734,7 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json',
         )
 
-        assert_equal(response.status_code, 404)
+        assert response.status_code == 404
 
     def test_update_missing_contact_information(self):
         response = self.client.post(
@@ -794,7 +743,7 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
             content_type='application/json',
         )
 
-        assert_equal(response.status_code, 404)
+        assert response.status_code == 404
 
     def test_update_with_unexpected_keys(self):
         response = self.update_request({
@@ -802,7 +751,7 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
             'city': "New City"
         })
 
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
 
     def test_update_ignores_links(self):
         response = self.update_request({
@@ -810,14 +759,14 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
             'city': "New City"
         })
 
-        assert_equal(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_update_without_updated_by(self):
         response = self.update_request(full_data={
             'contactInformation': {'city': "New City"},
         })
 
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
 
 
 class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateTestMixin):
@@ -858,10 +807,10 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
                 }),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 201)
+            assert response.status_code == 201
             answers = SupplierFramework \
                 .find_by_supplier_and_framework(0, 'test-open')
-            assert_equal(answers.declaration['question'], 'answer')
+            assert answers.declaration['question'] == 'answer'
 
     def test_add_null_declaration_should_result_in_dict(self):
         with self.app.app_context():
@@ -899,10 +848,10 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
                 }),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             supplier_framework = SupplierFramework \
                 .find_by_supplier_and_framework(0, 'test-open')
-            assert_equal(supplier_framework.declaration['question'], 'answer2')
+            assert supplier_framework.declaration['question'] == 'answer2'
 
 
 class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
@@ -916,19 +865,17 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
 
         return self.client.post(
             '/suppliers',
-            data=json.dumps({
-                'suppliers': supplier
-            }),
+            data=json.dumps({'suppliers': supplier}),
             content_type='application/json')
 
     def test_add_a_new_supplier(self):
         with self.app.app_context():
             payload = load_example_listing("new-supplier")
             response = self.post_supplier(payload)
-            assert_equal(response.status_code, 201)
-            assert_is_not_none(Supplier.query.filter(
+            assert response.status_code == 201
+            assert Supplier.query.filter(
                 Supplier.name == payload['name']
-            ).first())
+            ).first() is not None
 
     def test_null_clients_list(self):
         with self.app.app_context():
@@ -936,23 +883,22 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
             del payload['clients']
 
             response = self.post_supplier(payload)
-            assert_equal(response.status_code, 201)
+            assert response.status_code == 201
 
             supplier = Supplier.query.filter(
                 Supplier.name == payload['name']
             ).first()
 
-            assert_equal(supplier.clients, [])
+            assert supplier.clients == []
 
     def test_when_supplier_has_missing_contact_information(self):
         payload = load_example_listing("new-supplier")
         payload.pop('contactInformation')
 
         response = self.post_supplier(payload)
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
         for item in ['Invalid JSON must have', '\'contactInformation\'']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+            assert item in json.loads(response.get_data())['error']
 
     def test_when_supplier_has_malformed_contact_information(self):
         payload = load_example_listing("new-supplier")
@@ -961,22 +907,20 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         }
 
         response = self.post_supplier(payload)
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
         for item in ['JSON was not a valid format',
                      'is not of type',
                      'array']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+            assert item in json.loads(response.get_data())['error']
 
     def test_when_supplier_has_a_missing_key(self):
         payload = load_example_listing("new-supplier")
         payload.pop('name')
 
         response = self.post_supplier(payload)
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
         for item in ['JSON was not a valid format', '\'name\'', 'is a required property']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+            assert item in json.loads(response.get_data())['error']
 
     def test_when_supplier_contact_information_has_a_missing_key(self):
         payload = load_example_listing("new-supplier")
@@ -984,10 +928,9 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         payload['contactInformation'][0].pop('email')
 
         response = self.post_supplier(payload)
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
         for item in ['JSON was not a valid format', '\'email\'', 'is a required property']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+            assert item in json.loads(response.get_data())['error']
 
     def test_when_supplier_has_extra_keys(self):
         payload = load_example_listing("new-supplier")
@@ -995,9 +938,8 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         payload.update({'newKey': 1})
 
         response = self.post_supplier(payload)
-        assert_equal(response.status_code, 400)
-        assert_in('Additional properties are not allowed',
-                  json.loads(response.get_data())['error'])
+        assert response.status_code == 400
+        assert 'Additional properties are not allowed' in json.loads(response.get_data())['error']
 
     def test_when_supplier_contact_information_has_extra_keys(self):
         payload = load_example_listing("new-supplier")
@@ -1005,9 +947,8 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         payload['contactInformation'][0].update({'newKey': 1})
 
         response = self.post_supplier(payload)
-        assert_equal(response.status_code, 400)
-        assert_in('Additional properties are not allowed',
-                  json.loads(response.get_data())['error'])
+        assert response.status_code == 400
+        assert 'Additional properties are not allowed' in json.loads(response.get_data())['error']
 
     def test_supplier_duns_number_invalid(self):
         payload = load_example_listing("new-supplier")
@@ -1015,10 +956,9 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         payload.update({'dunsNumber': "only-digits-permitted"})
 
         response = self.post_supplier(payload)
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
         for item in ['only-digits-permitted', 'does not match']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+            assert item in json.loads(response.get_data())['error']
 
     def test_supplier_esourcing_id_invalid(self):
         payload = load_example_listing("new-supplier")
@@ -1026,10 +966,9 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         payload.update({'eSourcingId': "only-digits-permitted"})
 
         response = self.post_supplier(payload)
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
         for item in ['only-digits-permitted', 'does not match']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+            assert item in json.loads(response.get_data())['error']
 
     def test_supplier_companies_house_invalid(self):
         payload = load_example_listing("new-supplier")
@@ -1037,10 +976,9 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         payload.update({'companiesHouseNumber': "longer-than-allowed"})
 
         response = self.post_supplier(payload)
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
         for item in ['longer-than-allowed', 'is too long']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+            assert item in json.loads(response.get_data())['error']
 
     def test_when_supplier_contact_information_email_invalid(self):
         payload = load_example_listing("new-supplier")
@@ -1048,21 +986,20 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         payload['contactInformation'][0].update({'email': "bad-email-99"})
 
         response = self.post_supplier(payload)
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
         for item in ['bad-email-99', 'is not a']:
-            assert_in(item,
-                      json.loads(response.get_data())['error'])
+            assert item in json.loads(response.get_data())['error']
 
     def test_should_not_be_able_to_import_same_duns_number(self):
         payload1 = load_example_listing("new-supplier")
         payload2 = load_example_listing("new-supplier")
 
         response = self.post_supplier(payload1)
-        assert_equal(response.status_code, 201)
+        assert response.status_code == 201
         response = self.post_supplier(payload2)
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400
         data = json.loads(response.get_data())
-        assert_true('duplicate key value violates unique constraint "ix_suppliers_duns_number"' in data['message'])
+        assert 'duplicate key value violates unique constraint "ix_suppliers_duns_number"' in data['message']
 
 
 class TestGetSupplierFrameworks(BaseApplicationTest):
@@ -1117,9 +1054,9 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
     def test_supplier_with_drafts(self):
         response = self.client.get('/suppliers/1/frameworks')
         data = json.loads(response.get_data())
-        assert_equal(response.status_code, 200)
-        assert_equal(
-            data,
+        assert response.status_code == 200
+        assert (
+            data ==
             {
                 'frameworkInterest': [
                     {
@@ -1144,15 +1081,14 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'agreedVariations': {},
                     }
                 ]
-            }
-        )
+            })
 
     def test_supplier_with_service(self):
         response = self.client.get('/suppliers/2/frameworks')
         data = json.loads(response.get_data())
-        assert_equal(response.status_code, 200)
-        assert_equal(
-            data,
+        assert response.status_code == 200
+        assert (
+            data ==
             {
                 'frameworkInterest': [
                     {
@@ -1177,24 +1113,17 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'agreedVariations': {},
                     }
                 ]
-            }
-        )
+            })
 
     def test_supplier_with_no_drafts_or_services(self):
         response = self.client.get('/suppliers/3/frameworks')
         data = json.loads(response.get_data())
-        assert_equal(response.status_code, 200)
-        assert_equal(
-            data,
-            {
-                'frameworkInterest': []
-            }
-        )
+        assert response.status_code == 200
+        assert data == {'frameworkInterest': []}
 
     def test_supplier_that_doesnt_exist(self):
         response = self.client.get('/suppliers/4/frameworks')
-        data = json.loads(response.get_data())
-        assert_equal(response.status_code, 404)
+        assert response.status_code == 404
 
 
 class TestRegisterFrameworkInterest(BaseApplicationTest, FixtureMixin, JSONUpdateTestMixin):
@@ -1230,33 +1159,33 @@ class TestRegisterFrameworkInterest(BaseApplicationTest, FixtureMixin, JSONUpdat
         with self.app.app_context():
             response = self.register_interest(1, 'digital-outcomes-and-specialists')
 
-            assert_equal(response.status_code, 201)
+            assert response.status_code == 201
             data = json.loads(response.get_data())
-            assert_equal(data['frameworkInterest']['supplierId'], 1)
-            assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+            assert data['frameworkInterest']['supplierId'] == 1
+            assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
             assert isinstance(data['frameworkInterest']['declaration'], dict)
 
     def test_can_not_register_interest_in_not_open_framework_(self):
         with self.app.app_context():
             response = self.register_interest(1, 'g-cloud-5')
 
-            assert_equal(response.status_code, 400)
+            assert response.status_code == 400
             data = json.loads(response.get_data())
-            assert_equal(data['error'], "'g-cloud-5' framework is not open")
+            assert data['error'] == "'g-cloud-5' framework is not open"
 
     def test_can_not_register_interest_more_than_once_in_open_framework(self):
         with self.app.app_context():
             response1 = self.register_interest(1, 'digital-outcomes-and-specialists')
-            assert_equal(response1.status_code, 201)
+            assert response1.status_code == 201
             data = json.loads(response1.get_data())
-            assert_equal(data['frameworkInterest']['supplierId'], 1)
-            assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+            assert data['frameworkInterest']['supplierId'] == 1
+            assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
 
             response2 = self.register_interest(1, 'digital-outcomes-and-specialists', user='another@example.com')
-            assert_equal(response2.status_code, 200)
+            assert response2.status_code == 200
             data = json.loads(response2.get_data())
-            assert_equal(data['frameworkInterest']['supplierId'], 1)
-            assert_equal(data['frameworkInterest']['frameworkSlug'], 'digital-outcomes-and-specialists')
+            assert data['frameworkInterest']['supplierId'] == 1
+            assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
 
     def test_can_not_send_payload_to_register_interest_endpoint(self):
         with self.app.app_context():
@@ -1269,9 +1198,9 @@ class TestRegisterFrameworkInterest(BaseApplicationTest, FixtureMixin, JSONUpdat
                     }),
                 content_type='application/json')
 
-            assert_equal(response.status_code, 400)
+            assert response.status_code == 400
             data = json.loads(response.get_data())
-            assert_equal(data['error'], 'This PUT endpoint does not take a payload.')
+            assert data['error'] == 'This PUT endpoint does not take a payload.'
 
     def test_register_interest_creates_audit_event(self):
         self.register_interest(1, 'digital-outcomes-and-specialists')
@@ -1285,24 +1214,24 @@ class TestRegisterFrameworkInterest(BaseApplicationTest, FixtureMixin, JSONUpdat
                 AuditEvent.object == supplier
             ).first()
 
-            assert_equal(audit.type, "register_framework_interest")
-            assert_equal(audit.user, "interested@example.com")
-            assert_equal(audit.data['supplierId'], 1)
-            assert_equal(audit.data['frameworkSlug'], 'digital-outcomes-and-specialists')
+            assert audit.type == "register_framework_interest"
+            assert audit.user == "interested@example.com"
+            assert audit.data['supplierId'] == 1
+            assert audit.data['frameworkSlug'] == 'digital-outcomes-and-specialists'
 
     def test_can_get_registered_frameworks_for_a_supplier(self):
         with self.app.app_context():
             response1 = self.client.get("/suppliers/1/frameworks/interest")
-            assert_equal(response1.status_code, 200)
+            assert response1.status_code == 200
             data = json.loads(response1.get_data())
-            assert_equal(data['frameworks'], [])
+            assert data['frameworks'] == []
 
             self.register_interest(1, 'digital-outcomes-and-specialists')
 
             response2 = self.client.get("/suppliers/1/frameworks/interest")
-            assert_equal(response2.status_code, 200)
+            assert response2.status_code == 200
             data = json.loads(response2.get_data())
-            assert_equal(data['frameworks'], ['digital-outcomes-and-specialists'])
+            assert data['frameworks'] == ['digital-outcomes-and-specialists']
 
 
 @fixture_params('supplier_framework', {

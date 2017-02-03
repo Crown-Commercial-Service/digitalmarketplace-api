@@ -1,5 +1,4 @@
 import json
-import pytest
 from datetime import datetime
 from freezegun import freeze_time
 from app.models import AuditEvent, db, Framework, FrameworkAgreement, User

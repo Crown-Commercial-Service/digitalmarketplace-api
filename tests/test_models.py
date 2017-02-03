@@ -678,11 +678,13 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
 class TestServices(BaseApplicationTest, FixtureMixin):
     def test_framework_is_live_only_returns_live_frameworks(self):
         with self.app.app_context():
+            # the side effect of this method is to create four suppliers with ids between 0-3
+            self.setup_dummy_services_including_unpublished(1)
             self.setup_dummy_service(
                 service_id='1000000000',
+                supplier_id=0,
                 status='published',
                 framework_id=2)
-            self.setup_dummy_services_including_unpublished(1)
 
             services = Service.query.framework_is_live()
 
@@ -693,13 +695,12 @@ class TestServices(BaseApplicationTest, FixtureMixin):
     def test_lot_must_be_associated_to_the_framework(self):
         with self.app.app_context():
             self.setup_dummy_suppliers(1)
-            self.setup_dummy_service(
-                service_id='10000000001',
-                supplier_id=0,
-                framework_id=5,  # Digital Outcomes and Specialists
-                lot_id=1)  # SaaS
             with pytest.raises(IntegrityError) as excinfo:
-                db.session.commit()
+                self.setup_dummy_service(
+                    service_id='10000000001',
+                    supplier_id=0,
+                    framework_id=5,  # Digital Outcomes and Specialists
+                    lot_id=1)  # SaaS
 
             assert 'not present in table "framework_lots"' in "{}".format(excinfo.value)
 
