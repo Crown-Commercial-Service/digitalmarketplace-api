@@ -691,12 +691,6 @@ class Supplier(db.Model):
                 }]
             ]
 
-        if 'services' in self.data:
-            for name, checked in self.data['services'].items():
-                if name not in self.all_domains and checked:
-                    self.add_unassessed_domain(name)
-            del self.data['services']
-
         overridden = [
             'longName',
             'extraLinks',
@@ -710,6 +704,13 @@ class Supplier(db.Model):
 
     def update_from_json_after(self, data):
         self.last_update_time = utcnow()
+
+        if 'services' in self.data:
+            for name, checked in self.data['services'].items():
+                if name not in self.all_domains and checked:
+                    self.add_unassessed_domain(name)
+            del self.data['services']
+
         return data
 
     @validates('name')
@@ -2087,24 +2088,6 @@ class Application(db.Model):
             db.session.flush()
         else:
             self.status = 'approval_rejected'
-
-    def set_assessment_result(self, successful):
-        if self.status != 'approved':
-            raise ValidationError("Only an 'approved' application can be subject to an assessment decision.")
-
-        if successful:
-            self.status = 'complete'
-            self.supplier.status = 'complete'
-        else:
-            self.status = 'assessment_rejected'
-            self.supplier.status = 'deleted'
-
-    def unassess(self):
-        if self.status not in ('complete', 'assessment_rejected'):
-            raise ValidationError("Only a 'complete' or 'assessment_rejected' application can be reset to unassessed.")
-
-        self.status = 'approved'
-        self.supplier.status = 'limited'
 
     def unreject_approval(self):
         if self.status not in ('approval_rejected'):
