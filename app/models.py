@@ -59,6 +59,11 @@ with io.open('data/specialist_role_old_to_new.yaml') as f:
     DOMAIN_MAPPING_SPECIALISTS = yaml.load(f.read())
 
 
+class AlembicVersion(db.Model):
+    __tablename__ = 'alembic_version'
+    version_num = db.Column(db.String(32), primary_key=True)
+
+
 class FrameworkLot(db.Model):
     __tablename__ = 'framework_lot'
 
@@ -470,13 +475,13 @@ class SupplierContact(db.Model):
     contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'), primary_key=True, nullable=False)
 
 
-supplier_code_seq = Sequence('supplier_code_seq')
+supplier_domain_id_seq = Sequence('supplier_domain_id_seq')
 
 
 class SupplierDomain(db.Model):
     __tablename__ = 'supplier_domain'
 
-    id = db.Column(db.Integer)
+    id = db.Column(db.Integer, supplier_domain_id_seq)
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), primary_key=True)
     domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), primary_key=True)
 
@@ -497,6 +502,9 @@ class SupplierDomain(db.Model):
         unique=False,
         nullable=False
     )
+
+
+supplier_code_seq = Sequence('supplier_code_seq')
 
 
 class Supplier(db.Model):

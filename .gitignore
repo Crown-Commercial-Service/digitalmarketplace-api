@@ -60,3 +60,5 @@ version_label
 
 .hypothesis
 .env*
+
+DB/dumps

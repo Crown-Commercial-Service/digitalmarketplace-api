@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='dto-digitalmarketplace-api',
-    version='440',  # TODO: Use semver?
+    version='500',  # TODO: Use semver?
     url='https://github.com/ausdto/dto-digitalmarketplace-api',
     license='MIT',
     author='GDS Developers',
@@ -14,6 +14,7 @@ setup(
     long_description=__doc__,
     packages=find_packages(),
     include_package_data=True,
+    package_data={'app': ['DB/*']},
     zip_safe=False,
     install_requires=[
         'dto-digitalmarketplace-utils',

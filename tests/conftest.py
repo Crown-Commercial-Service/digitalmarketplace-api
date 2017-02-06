@@ -8,15 +8,28 @@ from app.models import db, Framework
 
 from sqlbag import temporary_database, S
 
-from .app import setup
+
+from migrations import \
+    load_from_app_model, load_test_fixtures, load_from_alembic_migrations
+
+
+INIT_TEST_DB_WITH_ALEMBIC = True
 
 
 @pytest.fixture(autouse=True, scope='session')
 def db_initialization(request):
-    with temporary_database() as dburi:
-        with S(dburi) as s:
-            s.execute('create extension if not exists pg_trgm;')
-        setup(dburi)
+    from config import configs
+
+    with temporary_database(do_not_delete=False) as dburi:
+        test_config = configs['test']
+        test_config.SQLALCHEMY_DATABASE_URI = dburi
+
+        if INIT_TEST_DB_WITH_ALEMBIC:
+            load_from_alembic_migrations(dburi)
+        else:
+            load_from_app_model(dburi)
+            load_test_fixtures(dburi)
+
         yield
 
 
