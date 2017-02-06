@@ -1079,6 +1079,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'agreementStatus': None,
                         'agreementId': None,
                         'agreedVariations': {},
+                        'prefillDeclarationFromFrameworkSlug': None,
                     }
                 ]
             })
@@ -1111,6 +1112,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'agreementStatus': None,
                         'agreementId': None,
                         'agreedVariations': {},
+                        'prefillDeclarationFromFrameworkSlug': None,
                     }
                 ]
             })
@@ -1300,7 +1302,8 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                 'countersignedDetails': None,
                 'countersignedPath': None,
                 'agreementStatus': None,
-                'agreedVariations': {}
+                'agreedVariations': {},
+                'prefillDeclarationFromFrameworkSlug': None,
             }
 
     def test_get_supplier_framework_returns_signed_framework_agreement(self, supplier_framework):
@@ -1352,7 +1355,8 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                     'uploaderUserId': 30
                 },
                 'agreementStatus': 'signed',
-                'agreedVariations': {}
+                'agreedVariations': {},
+                'prefillDeclarationFromFrameworkSlug': None,
             }
 
     def test_get_supplier_framework_returns_countersigned_framework_agreement(self, supplier_framework, supplier):
@@ -1409,7 +1413,8 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                 'countersignedDetails': {'some': 'data'},
                 'countersignedPath': 'path',
                 'agreementStatus': 'countersigned',
-                'agreedVariations': {}
+                'agreedVariations': {},
+                'prefillDeclarationFromFrameworkSlug': None,
             }
 
     def test_get_supplier_framework_info_with_non_existent_framework(self, supplier_framework):
@@ -1440,7 +1445,38 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
                 }),
             content_type='application/json')
 
-    def test_adding_supplier_has_passed(self, supplier_framework):
+    @staticmethod
+    def _refetch_serialized_sf(supplier_framework):
+        # must be performed within an app context
+        return SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == supplier_framework["frameworkSlug"])
+        ).filter(
+            SupplierFramework.supplier_id == supplier_framework["supplierId"]
+        ).order_by(Supplier.id.asc()).first().serialize()
+
+    @staticmethod
+    def _latest_supplier_update_audit_event(supplier_id):
+        # must be performed within an app context
+        return AuditEvent.query.filter(
+            AuditEvent.object == Supplier.query.filter(
+                Supplier.supplier_id == supplier_id
+            ).first(),
+            AuditEvent.type == "supplier_update",
+        ).order_by(AuditEvent.created_at.desc()).first()
+
+    @classmethod
+    def _assert_and_return_audit_event(cls, supplier_framework):
+        # must be performed within an app context
+        audit = cls._latest_supplier_update_audit_event(supplier_framework['supplierId'])
+        assert audit.type == "supplier_update"
+        assert audit.user == "interested@example.com"
+        assert audit.data['supplierId'] == supplier_framework['supplierId']
+        assert audit.data['frameworkSlug'] == supplier_framework['frameworkSlug']
+        # we also return the audit object as the caller will probably want to do some test-specific assertions
+        # of its own
+        return audit
+
+    def test_adding_supplier_has_passed_then_failed(self, supplier_framework):
         response = self.supplier_framework_interest(
             supplier_framework,
             update={'onFramework': True}
@@ -1450,46 +1486,12 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
         assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
         assert data['frameworkInterest']['onFramework'] is True
-
-    def test_adding_supplier_has_not_passed(self, supplier_framework):
-        response = self.supplier_framework_interest(
-            supplier_framework,
-            update={'onFramework': False}
-        )
-        assert response.status_code == 200
-        data = json.loads(response.get_data())
-        assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
-        assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
-        assert data['frameworkInterest']['onFramework'] is False
-
-    def test_changing_on_framework_from_failed_to_passed(self, supplier_framework):
-        response = self.supplier_framework_interest(
-            supplier_framework,
-            update={'onFramework': False}
-        )
-        assert response.status_code == 200
-        data = json.loads(response.get_data())
-        assert data['frameworkInterest']['onFramework'] is False
         assert data['frameworkInterest']['agreementReturned'] is False
 
-        response2 = self.supplier_framework_interest(
-            supplier_framework,
-            update={'onFramework': True}
-        )
-        assert response2.status_code, 200
-        data = json.loads(response2.get_data())
-        assert data['frameworkInterest']['onFramework'] is True
-        assert data['frameworkInterest']['agreementReturned'] is False
-
-    def test_changing_on_framework_from_passed_to_failed(self, supplier_framework):
-        response = self.supplier_framework_interest(
-            supplier_framework,
-            update={'onFramework': True}
-        )
-        assert response.status_code == 200
-        data = json.loads(response.get_data())
-        assert data['frameworkInterest']['onFramework'] is True
-        assert data['frameworkInterest']['agreementReturned'] is False
+        with self.app.app_context():
+            assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+            audit = self._assert_and_return_audit_event(supplier_framework)
+            assert audit.data['update']['onFramework'] is True
 
         response2 = self.supplier_framework_interest(
             supplier_framework,
@@ -1497,36 +1499,184 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         )
         assert response2.status_code == 200
         data = json.loads(response2.get_data())
+        assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
+        assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
         assert data['frameworkInterest']['onFramework'] is False
         assert data['frameworkInterest']['agreementReturned'] is False
 
-    def test_changing_on_framework_to_passed_creates_audit_event(self, supplier_framework):
-        self.supplier_framework_interest(
+        with self.app.app_context():
+            assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+            audit = self._assert_and_return_audit_event(supplier_framework)
+            assert audit.data['update']['onFramework'] is False
+
+    def test_adding_supplier_has_failed_then_passed(self, supplier_framework):
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={'onFramework': False}
+        )
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
+        assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
+        assert data['frameworkInterest']['onFramework'] is False
+        assert data['frameworkInterest']['agreementReturned'] is False
+
+        with self.app.app_context():
+            assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+            audit = self._assert_and_return_audit_event(supplier_framework)
+            assert audit.data['update']['onFramework'] is False
+
+        response2 = self.supplier_framework_interest(
             supplier_framework,
             update={'onFramework': True}
         )
+        assert response2.status_code == 200
+        data = json.loads(response2.get_data())
+        assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
+        assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
+        assert data['frameworkInterest']['onFramework'] is True
+        assert data['frameworkInterest']['agreementReturned'] is False
+
         with self.app.app_context():
-            supplier = Supplier.query.filter(
-                Supplier.supplier_id == supplier_framework['supplierId']
-            ).first()
-            audit = AuditEvent.query.filter(
-                AuditEvent.object == supplier,
-                AuditEvent.type == "supplier_update"
-            ).first()
-            assert audit.type == "supplier_update"
-            assert audit.user == "interested@example.com"
-            assert audit.data['supplierId'] == supplier_framework['supplierId']
-            assert audit.data['frameworkSlug'] == supplier_framework['frameworkSlug']
+            assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+            audit = self._assert_and_return_audit_event(supplier_framework)
             assert audit.data['update']['onFramework'] is True
 
-    def test_can_only_update_on_framework_with_this_route(self, supplier_framework):
+    def test_can_only_update_whitelisted_properties_with_this_route(self, supplier_framework):
         response = self.supplier_framework_interest(
             supplier_framework,
             update={'onFramework': True, 'agreementReturned': True}
         )
         assert response.status_code == 400
         error_message = json.loads(response.get_data(as_text=True))['error']
-        assert error_message == "Invalid JSON must only have ['onFramework'] keys"
+        assert error_message == "Invalid JSON should not have 'agreementReturned' keys"
+
+        with self.app.app_context():
+            # check nothing has changed on db
+            assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
+            assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
+
+    def test_setting_unsetting_prefill_declaration_from_framework_happy_path(
+            self,
+            open_g8_framework_live_dos_framework_suppliers_on_framework,
+            ):
+        with self.app.app_context():
+            supplier_framework = SupplierFramework.query.filter(
+                SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            ).order_by(Supplier.id.asc()).first().serialize()
+
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={'prefillDeclarationFromFrameworkSlug': "g-cloud-8"}
+        )
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
+        assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
+        assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+
+        with self.app.app_context():
+            assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+            audit = self._assert_and_return_audit_event(supplier_framework)
+            assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={'prefillDeclarationFromFrameworkSlug': None},
+        )
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
+        assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
+        assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] is None
+
+        with self.app.app_context():
+            assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+            audit = self._assert_and_return_audit_event(supplier_framework)
+            assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] is None
+
+    def test_setting_prefill_declaration_from_framework_invalid_framework_slug(
+            self,
+            open_g8_framework_live_dos_framework_suppliers_on_framework,
+            ):
+        with self.app.app_context():
+            supplier_framework = SupplierFramework.query.filter(
+                SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            ).order_by(Supplier.id.asc()).first().serialize()
+
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={'prefillDeclarationFromFrameworkSlug': "metempsychosis"}
+        )
+        assert response.status_code == 400
+
+        with self.app.app_context():
+            # check nothing has changed on db
+            assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
+            assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
+
+    def test_multiple_simultaneous_property_updates(
+            self,
+            open_g8_framework_live_dos_framework_suppliers_on_framework,
+            ):
+        with self.app.app_context():
+            supplier_framework = SupplierFramework.query.filter(
+                SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            ).order_by(Supplier.id.asc()).first().serialize()
+
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={
+                "prefillDeclarationFromFrameworkSlug": "g-cloud-8",
+                "onFramework": False,
+            },
+        )
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
+        assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
+        assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+
+        with self.app.app_context():
+            supplier_framework2 = self._refetch_serialized_sf(data['frameworkInterest'])
+            assert data['frameworkInterest'] == supplier_framework2
+            audit = self._assert_and_return_audit_event(supplier_framework)
+            assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+
+        # now we make sure that a single property update failure prevents any db changes
+        response2 = self.supplier_framework_interest(
+            supplier_framework,
+            update={
+                "prefillDeclarationFromFrameworkSlug": "met-him-pike-hoses",
+                "onFramework": True,
+            },
+        )
+        assert response2.status_code == 400
+
+        with self.app.app_context():
+            # check nothing has changed on db
+            assert supplier_framework2 == self._refetch_serialized_sf(supplier_framework2)
+            assert self._latest_supplier_update_audit_event(supplier_framework2["supplierId"]).id == audit.id
+
+    def test_setting_prefill_declaration_from_framework_supplier_not_on_other_framework(
+            self,
+            open_g8_framework_live_dos_framework_suppliers_dos_sf,
+            ):
+        with self.app.app_context():
+            supplier_framework = SupplierFramework.query.filter(
+                SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            ).order_by(Supplier.id.asc()).first().serialize()
+
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={'prefillDeclarationFromFrameworkSlug': "g-cloud-8"}
+        )
+        assert response.status_code == 400
+
+        with self.app.app_context():
+            # check nothing has changed on db
+            assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
+            assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
 
 
 class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):

@@ -356,8 +356,34 @@ class SupplierFramework(db.Model):
     on_framework = db.Column(db.Boolean, nullable=True)
     agreed_variations = db.Column(JSON)
 
+    prefill_declaration_from_framework_id = db.Column(
+        db.Integer,
+        db.ForeignKey('frameworks.id'),
+        nullable=True,
+    )
+
+    __table_args__ = (
+        db.ForeignKeyConstraint(
+            [supplier_id, prefill_declaration_from_framework_id],
+            # looks weird, but remember this is a self-relationship
+            [supplier_id, framework_id],
+        ),
+        {}
+    )
+
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
-    framework = db.relationship(Framework, lazy='joined', innerjoin=True)
+    framework = db.relationship(Framework, lazy='joined', innerjoin=True, foreign_keys=(framework_id,))
+
+    prefill_declaration_from_framework = db.relationship(Framework, lazy='joined', innerjoin=False,  foreign_keys=(
+        prefill_declaration_from_framework_id,
+    ))
+
+    prefill_declaration_from_supplier_framework = db.relationship(
+        "SupplierFramework",
+        lazy="select",
+        foreign_keys=(supplier_id, prefill_declaration_from_framework_id,),
+        remote_side=(supplier_id, framework_id,),
+    )
 
     # vvvv current_framework_agreement defined further down (after FrameworkAgreement) vvvv
 
@@ -442,6 +468,9 @@ class SupplierFramework(db.Model):
             "frameworkSlug": self.framework.slug,
             "onFramework": self.on_framework,
             "agreedVariations": agreed_variations,
+            "prefillDeclarationFromFrameworkSlug": (
+                self.prefill_declaration_from_framework and self.prefill_declaration_from_framework.slug
+            ),
         }
         if with_declaration:
             supplier_framework.update({
@@ -531,7 +560,7 @@ class FrameworkAgreement(db.Model):
     supplier_framework = db.relationship(
         SupplierFramework,
         lazy="joined",
-        backref=backref('framework_agreements', lazy="joined")
+        backref=backref('framework_agreements', lazy="joined"),
     )
 
     def update_signed_agreement_details_from_json(self, data):

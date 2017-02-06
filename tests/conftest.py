@@ -222,17 +222,24 @@ _example_framework_details = {
 
 
 def _supplierframework_fixture_inner(request, app, sf_kwargs=None):
+    """
+        if @sf_kwargs is a callable, it will be called with each supplier, framework combination as arguments to
+        generate the kwargs for each SupplierFramework. a returned value of None will prevent that SupplierFramework
+        being created.
+    """
     sf_kwargs = sf_kwargs or {}
     supplier_framework_id_pairs = set()
     with app.app_context():
-        for framework, supplier in product(Framework.query.all(), Supplier.query.all()):
-            supplier_framework = SupplierFramework(
-                supplier=supplier,
-                framework=framework,
-                **sf_kwargs
-            )
-            supplier_framework_id_pairs.add((supplier.supplier_id, framework.id,))
-            db.session.add(supplier_framework)
+        for supplier, framework in product(Supplier.query.all(), Framework.query.all()):
+            kwargs = sf_kwargs(supplier, framework) if callable(sf_kwargs) else sf_kwargs
+            if kwargs is not None:
+                supplier_framework = SupplierFramework(
+                    supplier=supplier,
+                    framework=framework,
+                    **kwargs
+                )
+                supplier_framework_id_pairs.add((supplier.supplier_id, framework.id,))
+                db.session.add(supplier_framework)
 
         db.session.commit()
 
@@ -459,3 +466,27 @@ def live_g8_framework_suppliers_on_framework(
         user_role_supplier,
 ):
     _supplierframework_fixture_inner(request, app, sf_kwargs={"on_framework": True})
+
+
+@pytest.fixture()
+def open_g8_framework_live_dos_framework_suppliers_on_framework(
+        request,
+        app,
+        open_g8_framework,
+        live_dos_framework,
+        user_role_supplier,
+):
+    _supplierframework_fixture_inner(request, app, sf_kwargs={"on_framework": True})
+
+
+@pytest.fixture()
+def open_g8_framework_live_dos_framework_suppliers_dos_sf(
+        request,
+        app,
+        open_g8_framework,
+        live_dos_framework,
+        user_role_supplier,
+):
+    _supplierframework_fixture_inner(request, app, sf_kwargs=(
+        lambda supplier, framework: None if framework.slug == "g-cloud-8" else {}
+    ))
