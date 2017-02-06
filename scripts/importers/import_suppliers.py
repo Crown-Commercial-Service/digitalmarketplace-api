@@ -7,7 +7,7 @@ import json
 import re
 import logging
 
-from utils import nonEmptyOrNone, makeClient
+from .utils import nonEmptyOrNone, makeClient
 
 
 def run_import(input_file, client):

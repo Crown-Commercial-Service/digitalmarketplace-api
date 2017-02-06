@@ -1,4 +1,5 @@
 import pendulum
+import six
 
 from sqlalchemy import types
 
@@ -52,7 +53,7 @@ def naive(pendulum_dt):
 
 
 def is_textual(x):
-    return isinstance(x, str) or isinstance(x, unicode)
+    return isinstance(x, six.text_type) or isinstance(x, six.binary_type)
 
 
 class DateTime(types.TypeDecorator):

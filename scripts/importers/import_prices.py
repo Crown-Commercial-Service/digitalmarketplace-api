@@ -8,10 +8,10 @@ import json
 import logging
 import re
 import sys
-import urllib2
+from six.moves.urllib import parse as url_parse
 
 from dmutils.data_tools import ValidationError, parse_money
-from utils import nonEmptyOrNone, makeClient
+from .utils import nonEmptyOrNone, makeClient
 
 
 Role = namedtuple('Role', 'role category')
@@ -33,7 +33,7 @@ def getRoleTable(client):
 
 def getSupplierCodeFromName(client, name):
     name = name.strip()
-    path = '/suppliers?name={}'.format(urllib2.quote(name))
+    path = '/suppliers?name={}'.format(url_parse.quote(name))
     result = client.get(path)
     if result.status_code >= 400:
         logging.error('Failed to find supplier "{}".  HTTP error {}: {}'.format(name, result.status_code, result.data))

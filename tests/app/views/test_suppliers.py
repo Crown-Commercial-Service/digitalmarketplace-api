@@ -1,6 +1,6 @@
 from flask import json
 import pytest
-import urllib2
+from six.moves.urllib import parse as urlparse
 import time
 from freezegun import freeze_time
 from flask import current_app
@@ -15,7 +15,6 @@ import pendulum
 from pendulum import create as dt
 
 from collections import Mapping, Iterable
-from itertools import izip_longest
 from six import string_types
 
 
@@ -98,7 +97,7 @@ class TestListSuppliers(BaseApplicationTest):
     def test_invalid_results_per_page(self):
         response = self.client.get('/suppliers?per_page=bork')
         assert_equal(400, response.status_code)
-        assert 'per_page' in response.get_data()
+        assert 'per_page' in response.get_data(as_text=True)
 
     def test_query_string_prefix_empty(self):
         response = self.client.get('/suppliers?prefix=')
@@ -274,7 +273,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         supplier.pop('creationTime')
         supplier.pop('lastUpdateTime')
 
-        for k, v in supplier.items():
+        for k, v in dict(supplier).items():
             if v is None:
                 supplier.pop(k)
 
@@ -453,7 +452,7 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
 class TestSupplierSearch(BaseApplicationTest):
     def search(self, query_body, **args):
         if args:
-            params = '&'.join('{}={}'.format(k, urllib2.quote(v)) for k, v in args.items())
+            params = '&'.join('{}={}'.format(k, urlparse.quote(v)) for k, v in args.items())
             q = "?{}".format(params)
         else:
             q = ''
@@ -1254,7 +1253,7 @@ class TestSupplierApplication(BaseApplicationTest):
             )
 
             assert response.status_code == 400
-            assert 'Supplier already has application' in response.get_data()
+            assert 'Supplier already has application' in response.get_data(as_text=True)
 
     def test_supplier_create_application(self):
         with self.app.app_context():

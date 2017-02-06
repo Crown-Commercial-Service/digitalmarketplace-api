@@ -40,7 +40,8 @@ from .validation import is_valid_service_id, get_validation_errors
 
 from dmutils.forms import is_government_email
 
-from .datetime_utils import DateTime, utcnow, parse_interval, parse_time_of_day, combine_date_and_time, localnow, utcnow
+from .datetime_utils import DateTime, utcnow, parse_interval, is_textual, \
+    parse_time_of_day, combine_date_and_time, localnow, utcnow
 
 import pendulum
 
@@ -169,7 +170,7 @@ class WebsiteLink(db.Model):
         try:
             return WebsiteLink(url=as_dict.get('url'),
                                label=as_dict.get('label'))
-        except KeyError, e:
+        except KeyError as e:
             raise ValidationError('Website link missing required field: {}'.format(e))
 
     def serialize(self):
@@ -200,7 +201,7 @@ class Address(db.Model):
                            state=as_dict.get('state'),
                            postal_code=as_dict.get('postal_code'),
                            country=as_dict.get('country', 'Australia'))
-        except KeyError, e:
+        except KeyError as e:
             raise ValidationError('Contact missing required field: {}'.format(e))
 
     def serializable_after(self, j):
@@ -240,7 +241,7 @@ class Contact(db.Model):
                            email=as_dict.get('email', None),
                            phone=as_dict.get('phone', None),
                            fax=as_dict.get('fax', None))
-        except KeyError, e:
+        except KeyError as e:
             raise ValidationError('Contact missing required field: {}'.format(e))
 
     def serializable_after(self, data):
@@ -277,7 +278,7 @@ class SupplierReference(db.Model):
             s = SupplierReference()
             s.update_from_json(as_dict)
             return s
-        except KeyError, e:
+        except KeyError as e:
             raise ValidationError('Supplier reference missing required field: {}'.format(e))
 
     def serialize(self):
@@ -367,9 +368,9 @@ class PriceSchedule(db.Model):
                                  hourly_rate=as_dict.get('hourlyRate'),
                                  daily_rate=as_dict.get('dailyRate'),
                                  gst_included=as_dict.get('gstIncluded'))
-        except KeyError, e:
+        except KeyError as e:
             raise ValidationError('Price schedule missing required field: {}'.format(e))
-        except InvalidOperation, e:
+        except InvalidOperation as e:
             raise ValidationError('Invalid rate value: {}'.format(e))
 
     @staticmethod
@@ -408,7 +409,7 @@ class PriceSchedule(db.Model):
     def validate_rate(self, key, rate):
         if rate is None:
             return None
-        if type(rate) is str or type(rate) is unicode:
+        if is_textual(rate):
             return parse_money(rate)
         return rate
 
@@ -939,7 +940,11 @@ class User(db.Model):
             date = pendulum.parse(value)
             return date
         except Exception as e:
-            raise ValidationError('Invalid date for {}: {} - {}'.format(key, value, e.message))
+            try:
+                msg = e.message
+            except AttributeError:
+                msg = str(e)
+            raise ValidationError('Invalid date for {}: {} - {}'.format(key, value, msg))
 
     @property
     def locked(self):

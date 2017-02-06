@@ -5,6 +5,9 @@ from tests.app.helpers import BaseApplicationTest
 
 from app.models import db, AuditEvent, Framework, User, utcnow, Agreement
 
+from itertools import tee
+from six.moves import zip as izip
+
 
 class BaseApplicationsTest(BaseApplicationTest):
     def setup(self):
@@ -317,8 +320,6 @@ class TestListApplications(BaseApplicationsTest):
         assert len(data['applications']) == 2
 
     def test_results_ordering(self):
-        from itertools import tee, izip
-
         def pairwise(iterable):
             a, b = tee(iterable)
             next(b, None)
@@ -356,7 +357,7 @@ class TestSubmitApplication(BaseApplicationsTest):
         response = self.client.post('/applications/{}/submit'.format(self.application_id))
 
         assert response.status_code == 400
-        assert 'Application is already submitted' in response.get_data()
+        assert 'Application is already submitted' in response.get_data(as_text=True)
 
     def test_application_unauthorized_user(self):
         self.patch_application(self.application_id, data={'status': 'saved'})
@@ -370,7 +371,7 @@ class TestSubmitApplication(BaseApplicationsTest):
             content_type='application/json')
 
         assert response.status_code == 400
-        assert 'User is not authorized to submit application' in response.get_data()
+        assert 'User is not authorized to submit application' in response.get_data(as_text=True)
 
     def test_no_current_agreeement(self):
         self.patch_application(self.application_id, data={'status': 'saved'})

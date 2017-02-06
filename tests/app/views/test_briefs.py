@@ -689,14 +689,14 @@ class TestBriefs(BaseApplicationTest):
         self.setup_dummy_briefs(7)
         response = self.client.get('/briefs?per_page=2')
         assert response.status_code == 200
-        data = json.loads(response.get_data())
+        data = json.loads(response.get_data(as_text=True))
         assert 'briefs' in data
         assert len(data['briefs']) == 2
 
     def test_invalid_results_per_page(self):
         response = self.client.get('/briefs?per_page=bork')
         assert response.status_code == 400
-        assert 'per_page' in response.get_data()
+        assert 'per_page' in response.get_data(as_text=True)
 
     def test_make_a_brief_live(self):
         self.setup_dummy_briefs(1, title='The Title')

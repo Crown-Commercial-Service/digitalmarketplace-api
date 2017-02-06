@@ -116,7 +116,7 @@ def drop_foreign_fields(json_object, list_of_keys):
 
 def filter_fields(dictionary, list_of_keys):
     key_set = set(list_of_keys)
-    return {k: v for k, v in dictionary.iteritems() if k in key_set}
+    return {k: v for k, v in dictionary.items() if k in key_set}
 
 
 def json_has_matching_id(data, id):

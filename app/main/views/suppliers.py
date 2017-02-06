@@ -98,7 +98,7 @@ def delete_supplier(code):
     try:
         db.session.delete(supplier)
         db.session.commit()
-    except TransportError, e:
+    except TransportError as e:
         return jsonify(message=str(e)), e.status_code
     except IntegrityError as e:
         db.session.rollback()
@@ -112,7 +112,7 @@ def delete_suppliers():
     try:
         Supplier.query.delete()
         db.session.commit()
-    except TransportError, e:
+    except TransportError as e:
         return jsonify(message=str(e)), e.status_code
     except IntegrityError as e:
         db.session.rollback()
@@ -140,12 +140,12 @@ def supplier_search():
     result_count = get_positive_int_or_400(request.args, 'size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'])
 
     try:
-        sort_dir = search_query['sort'][0].values()[0]['order']
+        sort_dir = list(search_query['sort'][0].values())[0]['order']
     except (KeyError, IndexError):
         sort_dir = 'asc'
 
     try:
-        sort_by = search_query['sort'][0].values()[0]['sort_by']
+        sort_by = list(search_query['sort'][0].values())[0]['sort_by']
     except (KeyError, IndexError):
         sort_by = None
 

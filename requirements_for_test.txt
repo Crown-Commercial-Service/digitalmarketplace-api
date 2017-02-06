@@ -20,3 +20,4 @@ rollbar
 blinker
 sqlbag
 migra
+tox

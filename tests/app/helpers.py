@@ -15,7 +15,8 @@ from app.models import Address, Service, Supplier, Framework, Lot, User, Framewo
 
 from collections import Mapping, Iterable
 from six import string_types
-from itertools import izip_longest, tee, izip
+from itertools import tee
+from six.moves import zip, zip_longest
 
 
 TEST_SUPPLIERS_COUNT = 3
@@ -496,21 +497,21 @@ def assert_api_compatible(old, new):
         if isinstance(v_old, Mapping):
             assert_api_compatible(v_old, v_new)
         elif not isinstance(v_old, string_types) and isinstance(v_old, Iterable):
-            for a, b in izip_longest(v_old, v_new):
+            for a, b in zip_longest(v_old, v_new):
                 assert_api_compatible(a, b)
         else:
             equality(v_old, v_new)
 
 
 def assert_api_compatible_list(old, new):
-    for x0, x1 in izip_longest(old, new):
+    for x0, x1 in zip_longest(old, new):
         assert_api_compatible(x0, x1)
 
 
 def pairwise(iterable):
     a, b = tee(iterable)
     next(b, None)
-    return izip(a, b)
+    return zip(a, b)
 
 
 def is_sorted(iterable, key=lambda a, b: a <= b):

@@ -1061,7 +1061,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             assert_equal(data['emailAddress'], 'myshinynew@digital.gov.au')
 
     def test_can_update_terms_acceptance_timestamp(self):
-        timestamp = datetime(2000, 01, 01).to_iso8601_string(extended=True)
+        timestamp = datetime(2000, 1, 1).to_iso8601_string(extended=True)
 
         with self.app.app_context():
             response = self.client.post(
@@ -1089,8 +1089,8 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
                 content_type='application/json')
 
             assert_equal(response.status_code, 400)
-            data = response.get_data()
-            assert_in('terms_accepted_at', data)
+            data = response.get_data(as_text=True)
+            assert 'terms_accepted_at' in data
 
 
 class TestUsersGet(BaseUserTest):
@@ -1163,7 +1163,7 @@ class TestUsersGet(BaseUserTest):
         with self.app.app_context():
             response = self.client.get('/users?per_page=invalid')
             assert_equal(response.status_code, 400)
-            assert_in('per_page', response.get_data())
+            assert 'per_page' in response.get_data(as_text=True)
 
     def test_can_list_users_by_supplier_code(self):
         with self.app.app_context():

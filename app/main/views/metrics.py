@@ -5,7 +5,7 @@ from ... import db
 from sqlalchemy import desc, func, select, and_
 import pendulum
 import json
-import StringIO
+import io
 import csv
 from collections import defaultdict
 from flask import jsonify, make_response
@@ -120,7 +120,7 @@ def get_application_historical_metrics():
 def get_application_metrics_csv():
     metrics = json.loads(get_application_metrics().data)
     timestamp = pendulum.now().to_iso8601_string()
-    si = StringIO.StringIO()
+    si = io.StringIO()
 
     writer = csv.writer(si, delimiter=',', quotechar='"')
     writer.writerow(metrics.keys())
