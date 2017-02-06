@@ -61,11 +61,7 @@ class MarketplaceJIRA(object):
         self.supplier_field_code = supplier_field_code
 
         self.generic_jira = generic_jira
-
-    @property
-    def server_url(self):
-        jj = self.generic_jira.jira.server_info()
-        return jj['baseUrl']
+        self.server_url = current_app.config['JIRA_URL']
 
     def make_link(self, key):
         return self.server_url + '/browse/' + key
