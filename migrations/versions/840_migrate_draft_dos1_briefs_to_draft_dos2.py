@@ -13,12 +13,33 @@ down_revision = '830'
 from alembic import op
 
 def upgrade():
-    # Change framework of draft DOS1 briefs from DOS1 (framework_id == 5) to DOS2 (framework_id == 7)
+    conn = op.get_bind()
+
+    dos1_res = conn.execute("""
+        SELECT id FROM frameworks
+        WHERE name = 'Digital Outcomes and Specialists'
+    """)
+    dos1_framework_id = dos1_res.fetchall()[0][0]
+
+    dos2_res = conn.execute("""
+        SELECT id FROM frameworks
+        WHERE name = 'Digital Outcomes and Specialists 2'
+    """)
+
+    # DOS2 framework was not created with a migration, it was created via the API. This means that when the tests run
+    # and set up the test database by running the migrations, there is no DOS2 framework to query to find it's ID. The
+    # following check will bail out of the migration if this is the case.
+    query_results = dos2_res.fetchall()
+    if not query_results:
+        return
+
+    dos2_framework_id = query_results[0][0]
+
     op.execute("""
         UPDATE briefs
-        SET framework_id = 7
-        WHERE framework_id = 5 AND published_at IS NULL
-    """)
+        SET framework_id = {}
+        WHERE framework_id = {} AND published_at IS NULL
+    """.format(dos2_framework_id, dos1_framework_id))
 
 
 def downgrade():
