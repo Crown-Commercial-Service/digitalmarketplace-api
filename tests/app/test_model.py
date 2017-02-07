@@ -1082,7 +1082,7 @@ class TestApplication(BaseApplicationTest):
             self.supplier = Supplier.query.filter(Supplier.code == 0).first()
 
     @mock.patch('app.jiraapi.JIRA')
-    def test_full_application(self, jira):
+    def test_new_seller_application(self, jira):
         with self.app.test_request_context('/hello'):
             app = Application(data=INCOMING_APPLICATION_DATA)
             user = User(
@@ -1145,27 +1145,29 @@ class TestApplication(BaseApplicationTest):
 
             db.session.flush()
 
-            # we removed this field
-
             assert len(app.supplier.contacts) == 1
+            assert app.supplier.unassessed_domains == ['Content and Publishing']
 
-            app.set_assessment_result(successful=False)
+    @mock.patch('app.jiraapi.JIRA')
+    def test_existing_seller_application(self, jira):
+        with self.app.test_request_context('/hello'):
+            app = Application(data=INCOMING_APPLICATION_DATA, supplier=self.supplier)
+            user = User(
+                email_address='email@digital.gov.au',
+                name='name',
+                role='supplier',
+                password='password',
+                active=True,
+                failed_login_count=0,
+                created_at=utcnow(),
+                updated_at=utcnow(),
+                password_changed_at=utcnow(),
+                application=app,
+                supplier=self.supplier
+            )
 
-            assert app.status == 'assessment_rejected'
-            assert app.supplier.status == 'deleted'
-
-            app.unassess()
-
-            app.set_assessment_result(successful=True)
-
-            assert app.status == 'complete'
-            assert app.supplier.status == 'complete'
-
-            app.unassess()
-
-            assert app.status == 'approved'
-            assert app.supplier.status == 'limited'
-
+            db.session.add(app)
+            db.session.add(user)
             db.session.flush()
 
             new_data = INCOMING_APPLICATION_DATA
@@ -1174,7 +1176,6 @@ class TestApplication(BaseApplicationTest):
             # use this application to do an existing seller update
             app.data = new_data
             app.status = 'submitted'
-            app.supplier.status = 'complete'
 
             db.session.flush()
 
