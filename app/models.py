@@ -383,6 +383,8 @@ class SupplierFramework(db.Model):
         lazy="select",
         foreign_keys=(supplier_id, prefill_declaration_from_framework_id,),
         remote_side=(supplier_id, framework_id,),
+        # we probably don't want people inadvertantly flipping the supplier_id through writing to this relationship
+        viewonly=True,
     )
 
     # vvvv current_framework_agreement defined further down (after FrameworkAgreement) vvvv
