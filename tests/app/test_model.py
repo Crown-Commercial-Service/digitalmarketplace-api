@@ -1279,7 +1279,6 @@ class TestApplication(BaseApplicationTest):
 
             now = pendulum.now('UTC')
             signed_agreement = SignedAgreement(
-                id=1,
                 agreement_id=agreement.id,
                 user_id=user.id,
                 application_id=app.id,

@@ -26,6 +26,16 @@ def upgrade():
 
     ])
 
+    # corrections
+    op.execute("""
+        create sequence if not exists "public"."signed_agreement_id_seq";
+
+        alter table "public"."alembic_version" drop constraint "alembic_version_pkc";
+
+        drop index if exists "public"."alembic_version_pkc";
+
+        alter table "public"."signed_agreement" alter column "id" set default nextval('signed_agreement_id_seq'::regclass);
+    """)
 
 def downgrade():
     pass

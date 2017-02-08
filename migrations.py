@@ -47,6 +47,7 @@ def alembic_setup(dburi, environment_name='test', target='head'):
     config.set_main_option(
         "script_location",
         "migrations")
+
     with app.app_context():
         upgrade(config, target)
     print("Done db setup")
@@ -59,7 +60,12 @@ def prompt(question):
 
 def load_current_production_state(dburl):
     with S(dburl) as s:
-        load_sql_from_file(s, 'DB/dumps/production.schema.dump.sql')
+        load_sql_from_file(s, 'DB/dumps/prod.schema.dump.sql')
+
+
+def load_current_staging_state(dburl):
+    with S(dburl) as s:
+        load_sql_from_file(s, 'DB/dumps/staging.schema.dump.sql')
 
 
 def load_post_migration(dburl):
@@ -126,10 +132,38 @@ def pending(write_to_file=False):
                     w.write(m.sql)
 
 
-def alembic_errors():
+def alembic_vs_model(target='head'):
     with temporary_db() as CURRENT_DB_URL, temporary_db() as TARGET_DB_URL:
-        load_from_alembic_migrations(CURRENT_DB_URL)
+        load_from_alembic_migrations(CURRENT_DB_URL, target=target)
+        load_from_app_model(TARGET_DB_URL)
+
+        with S(CURRENT_DB_URL) as s_current, S(TARGET_DB_URL) as s_target:
+            m = Migration(s_current, s_target)
+
+            m.set_safety(False)
+            m.add_all_changes()
+
+            print('Differences:\n{}'.format(m.sql))
+
+
+def alembic_vs_prod(target='head'):
+    with temporary_db() as CURRENT_DB_URL, temporary_db() as TARGET_DB_URL:
+        load_from_alembic_migrations(CURRENT_DB_URL, target=target)
         load_current_production_state(TARGET_DB_URL)
+
+        with S(CURRENT_DB_URL) as s_current, S(TARGET_DB_URL) as s_target:
+            m = Migration(s_current, s_target)
+
+            m.set_safety(False)
+            m.add_all_changes()
+
+            print('Differences:\n{}'.format(m.sql))
+
+
+def alembic_vs_app():
+    with temporary_db() as CURRENT_DB_URL, temporary_db() as TARGET_DB_URL:
+        load_from_alembic_migrations(CURRENT_DB_URL, target='head')
+        load_from_app_model(TARGET_DB_URL)
 
         with S(CURRENT_DB_URL) as s_current, S(TARGET_DB_URL) as s_target:
             m = Migration(s_current, s_target)
@@ -152,11 +186,20 @@ def model_errors():
             m.add_all_changes()
 
             print('Differences:\n{}'.format(m.sql))
-            m.apply()
 
+
+def staging_errors():
+    with temporary_db() as CURRENT_DB_URL, temporary_db() as TARGET_DB_URL:
+        load_current_staging_state(CURRENT_DB_URL)
+        load_current_production_state(TARGET_DB_URL)
+
+        with S(CURRENT_DB_URL) as s_current, S(TARGET_DB_URL) as s_target:
+            m = Migration(s_current, s_target)
+
+            m.set_safety(False)
             m.add_all_changes()
 
-            print('Pending:\n{}'.format(m.sql))
+            print('Differences:\n{}'.format(m.sql))
 
 
 def dump_fixtures():
@@ -165,7 +208,7 @@ def dump_fixtures():
 
         COMMAND = 'pg_dump --no-owner --no-privileges --data-only --column-inserts -f {} {}'
 
-        output = 'fixtures.dump.sql'
+        output = 'DB/data/test_fixtures.sql'
 
         command = COMMAND.format(output, CURRENT_DB_URL)
 

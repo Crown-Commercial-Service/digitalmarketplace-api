@@ -26,7 +26,7 @@ dburl = application.config['SQLALCHEMY_DATABASE_URI']
 
 
 def do_startup():
-    with S(dburl, echo=True) as s:
+    with S(dburl, echo=False) as s:
         load_sql_from_file(s, 'DB/data/on_startup.sql')
 
 

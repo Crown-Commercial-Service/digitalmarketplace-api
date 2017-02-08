@@ -13,9 +13,7 @@ import flask_featureflags as feature
 
 from six import string_types, text_type, binary_type
 
-from sqlalchemy import asc, desc
-from sqlalchemy import func
-from sqlalchemy import event
+from sqlalchemy import asc, desc, func, PrimaryKeyConstraint
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -61,7 +59,10 @@ with io.open('data/specialist_role_old_to_new.yaml') as f:
 
 class AlembicVersion(db.Model):
     __tablename__ = 'alembic_version'
-    version_num = db.Column(db.String(32), primary_key=True)
+    __table_args__ = (
+        PrimaryKeyConstraint('version_num', name='alembic_version_pkc'),
+    )
+    version_num = db.Column(db.String(32))
 
 
 class FrameworkLot(db.Model):
@@ -109,10 +110,10 @@ class Framework(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     slug = db.Column(db.String, nullable=False, unique=True, index=True)
-    name = db.Column(db.String(255), nullable=False)
-    framework = db.Column(db.String(), index=True, nullable=False)
+    name = db.Column(db.String, nullable=False)
+    framework = db.Column(db.String, index=True, nullable=False)
     framework_agreement_details = db.Column(JSON, nullable=True)
-    status = db.Column(db.String(),
+    status = db.Column(db.String,
                        index=True, nullable=False,
                        default='pending')
     clarification_questions_open = db.Column(db.Boolean, nullable=False, default=False)
@@ -193,7 +194,7 @@ class Address(db.Model):
     address_line = db.Column(db.String, index=False, nullable=True)
     suburb = db.Column(db.String, index=False, nullable=True)
     state = db.Column(db.String, index=False, nullable=False)
-    postal_code = db.Column(db.String(8), index=False, nullable=False)
+    postal_code = db.Column(db.String, index=False, nullable=False)
     country = db.Column(db.String, index=False, nullable=False, default='Australia')
 
     @staticmethod
@@ -295,7 +296,7 @@ class ServiceCategory(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
-    abbreviation = db.Column(db.String(15), nullable=False)
+    abbreviation = db.Column(db.String, nullable=False)
 
     @staticmethod
     def lookup(as_dict):
@@ -321,7 +322,7 @@ class ServiceRole(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('service_category.id'), nullable=False)
     category = db.relationship('ServiceCategory')
     name = db.Column(db.String, nullable=False)
-    abbreviation = db.Column(db.String(15), nullable=False)
+    abbreviation = db.Column(db.String, nullable=False)
 
     @staticmethod
     def lookup(as_dict):
@@ -431,7 +432,6 @@ class Agreement(db.Model):
 class SignedAgreement(db.Model):
     __tablename__ = 'signed_agreement'
 
-    id = db.Column(db.Integer, primary_key=True)
     agreement_id = db.Column(
         db.Integer,
         db.ForeignKey('agreement.id', ondelete='cascade'),
@@ -481,7 +481,12 @@ supplier_domain_id_seq = Sequence('supplier_domain_id_seq')
 class SupplierDomain(db.Model):
     __tablename__ = 'supplier_domain'
 
-    id = db.Column(db.Integer, supplier_domain_id_seq)
+    id = db.Column(
+        db.Integer,
+        supplier_domain_id_seq,
+        server_default=supplier_domain_id_seq.next_value(),
+        index=True,
+        unique=True)
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), primary_key=True)
     domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), primary_key=True)
 
@@ -520,20 +525,20 @@ class Supplier(db.Model):
         unique=True,
         nullable=False,
         server_default=supplier_code_seq.next_value())
-    name = db.Column(db.String(255), nullable=False)
-    long_name = db.Column(db.String(255), nullable=True)
-    summary = db.Column(db.String(511), index=False, nullable=True)
+    name = db.Column(db.String, nullable=False)
+    long_name = db.Column(db.String, nullable=True)
+    summary = db.Column(db.String, index=False, nullable=True)
     description = db.Column(db.String, index=False, nullable=True)
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'), index=False, nullable=False)
     address = db.relationship('Address', single_parent=True, cascade='all, delete-orphan')
-    website = db.Column(db.String(255), index=False, nullable=True)
+    website = db.Column(db.String, index=False, nullable=True)
     linkedin = db.Column(db.String, index=False, nullable=True)
     extra_links = db.relationship('WebsiteLink',
                                   secondary=SupplierExtraLinks.__table__,
                                   single_parent=True,
                                   cascade='all, delete-orphan')
-    abn = db.Column(db.String(15), nullable=True)
-    acn = db.Column(db.String(15), nullable=True)
+    abn = db.Column(db.String, nullable=True)
+    acn = db.Column(db.String, nullable=True)
     contacts = db.relationship(
         'Contact',
         secondary=SupplierContact.__table__,

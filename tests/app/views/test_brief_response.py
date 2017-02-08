@@ -252,6 +252,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         assert res.status_code == 400
         assert "Brief framework must be live" in res.get_data(as_text=True)
 
+    @pytest.mark.skip()
     @given(example_listings.brief_response_data())
     def test_cannot_respond_to_a_brief_more_than_once_from_the_same_supplier(self, live_framework, brief_response_data):
         ess = brief_response_data['essentialRequirements']

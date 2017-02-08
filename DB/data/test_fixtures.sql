@@ -1,3 +1,25 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 9.6.1
+-- Dumped by pg_dump version 9.6.1
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET search_path = public, pg_catalog;
+
+--
+-- Data for Name: address; Type: TABLE DATA; Schema: public; Owner: -
+--
+
 
 
 --
@@ -24,7 +46,7 @@ SELECT pg_catalog.setval('agreement_id_seq', 1, false);
 -- Data for Name: alembic_version; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO alembic_version (version_num) VALUES ('920');
+INSERT INTO alembic_version (version_num) VALUES ('930');
 
 
 --
@@ -63,16 +85,16 @@ INSERT INTO framework (id, slug, name, framework, status, clarification_question
 -- Data for Name: lot; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (1, 'saas', 'Software as a Service', false, '{"unitPlural": "services", "unitSingular": "service"}');
-INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (2, 'paas', 'Platform as a Service', false, '{"unitPlural": "services", "unitSingular": "service"}');
-INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (3, 'iaas', 'Infrastructure as a Service', false, '{"unitPlural": "services", "unitSingular": "service"}');
-INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (4, 'scs', 'Specialist Cloud Services', false, '{"unitPlural": "services", "unitSingular": "service"}');
-INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (5, 'digital-outcomes', 'Digital outcomes', true, '{"unitPlural": "services", "unitSingular": "service"}');
-INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (6, 'digital-specialists', 'Digital specialists', true, '{"unitPlural": "services", "unitSingular": "service"}');
-INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (7, 'user-research-participants', 'User research participants', true, '{"unitPlural": "services", "unitSingular": "service"}');
-INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (8, 'user-research-studios', 'User research studios', false, '{"unitPlural": "labs", "unitSingular": "lab"}');
-INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (9, 'digital-professionals', 'Digital professionals', true, '{"unitPlural": "services", "unitSingular": "service"}');
-INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (10, 'digital-outcome', 'Digital outcome', true, '{"unitPlural": "services", "unitSingular": "service"}');
+INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (1, 'saas', 'Software as a Service', false, '{"unitSingular": "service", "unitPlural": "services"}');
+INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (2, 'paas', 'Platform as a Service', false, '{"unitSingular": "service", "unitPlural": "services"}');
+INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (3, 'iaas', 'Infrastructure as a Service', false, '{"unitSingular": "service", "unitPlural": "services"}');
+INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (4, 'scs', 'Specialist Cloud Services', false, '{"unitSingular": "service", "unitPlural": "services"}');
+INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (5, 'digital-outcomes', 'Digital outcomes', true, '{"unitSingular": "service", "unitPlural": "services"}');
+INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (6, 'digital-specialists', 'Digital specialists', true, '{"unitSingular": "service", "unitPlural": "services"}');
+INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (7, 'user-research-participants', 'User research participants', true, '{"unitSingular": "service", "unitPlural": "services"}');
+INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (8, 'user-research-studios', 'User research studios', false, '{"unitSingular": "lab", "unitPlural": "labs"}');
+INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (9, 'digital-professionals', 'Digital professionals', true, '{"unitSingular": "service", "unitPlural": "services"}');
+INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (10, 'digital-outcome', 'Digital outcome', true, '{"unitSingular": "service", "unitPlural": "services"}');
 
 
 --
@@ -352,13 +374,6 @@ SELECT pg_catalog.setval('service_role_id_seq', 1, false);
 
 
 --
--- Name: signed_agreement_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
-
-SELECT pg_catalog.setval('signed_agreement_id_seq', 1, false);
-
-
---
 -- Data for Name: supplier__contact; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -458,3 +473,4 @@ SELECT pg_catalog.setval('work_order_id_seq', 1, false);
 --
 -- PostgreSQL database dump complete
 --
+
