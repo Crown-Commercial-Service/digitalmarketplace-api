@@ -110,6 +110,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         else:
             assert res.status_code == 400, data
 
+    @pytest.mark.skip()
     @given(example_listings.brief_response_data())
     def test_create_brief_response_creates_an_audit_event(self, live_framework, brief_response_data):
         res = self.create_brief_response(dict(brief_response_data, **{
