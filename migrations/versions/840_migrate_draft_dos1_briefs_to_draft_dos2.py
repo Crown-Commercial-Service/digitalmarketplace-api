@@ -11,6 +11,7 @@ revision = '840'
 down_revision = '830'
 
 from alembic import op
+from sqlalchemy.sql import text
 
 def upgrade():
     conn = op.get_bind()
@@ -35,11 +36,16 @@ def upgrade():
 
     dos2_framework_id = query_results[0][0]
 
-    op.execute("""
+    framework_ids = {
+        "dos1_id": dos1_framework_id,
+        "dos2_id": dos2_framework_id
+    }
+
+    conn.execute(text("""
         UPDATE briefs
-        SET framework_id = {}
-        WHERE framework_id = {} AND published_at IS NULL
-    """.format(dos2_framework_id, dos1_framework_id))
+        SET framework_id = :dos2_id
+        WHERE framework_id = :dos1_id AND published_at IS NULL
+    """), **framework_ids)
 
 
 def downgrade():
