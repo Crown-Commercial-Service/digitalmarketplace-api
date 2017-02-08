@@ -2,19 +2,7 @@
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
   "properties": {
-    "allTheThingsToSee": {
-      "items": {
-        "enum": [
-          "option_one",
-          "option_two"
-        ]
-      },
-      "maxItems": 2,
-      "minItems": 1,
-      "type": "array",
-      "uniqueItems": true
-    },
-    "productBenefits": {
+    "buyerResponsibilities": {
       "items": {
         "maxLength": 100,
         "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
@@ -24,7 +12,17 @@
       "minItems": 1,
       "type": "array"
     },
-    "productCategories": {
+    "serviceBenefits": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "serviceCategories": {
       "items": {
         "enum": [
           "support_category_one",
@@ -32,17 +30,27 @@
         ]
       },
       "maxItems": 2,
-      "minItems": 1,
+      "minItems": 0,
       "type": "array",
       "uniqueItems": true
     },
-    "productDescription": {
+    "serviceConstraints": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "serviceDescription": {
       "maxLength": 500,
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
-    "productFeatures": {
+    "serviceFeatures": {
       "items": {
         "maxLength": 100,
         "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
@@ -59,11 +67,11 @@
     }
   },
   "required": [
-    "allTheThingsToSee",
-    "productBenefits",
-    "productCategories",
-    "productDescription",
-    "productFeatures",
+    "buyerResponsibilities",
+    "serviceBenefits",
+    "serviceConstraints",
+    "serviceDescription",
+    "serviceFeatures",
     "serviceName"
   ],
   "title": "G-Cloud 9 Cloud Support Product Schema",
