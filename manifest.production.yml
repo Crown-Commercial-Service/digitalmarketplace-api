@@ -1,5 +1,5 @@
 command: ./scripts/cf_run_app.sh
-buildpack: https://github.com/cloudfoundry/buildpack-python.git#v1.5.7
+buildpack: https://github.com/cloudfoundry/buildpack-python.git
 health-check-type: port
 instances: 2
 memory: 256M

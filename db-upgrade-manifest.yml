@@ -1,5 +1,5 @@
 command: python application.py db upgrade
-buildpack: https://github.com/cloudfoundry/buildpack-python.git#v1.5.15
+buildpack: https://github.com/cloudfoundry/buildpack-python.git
 health-check-type: none
 instances: 1
 memory: 128M
