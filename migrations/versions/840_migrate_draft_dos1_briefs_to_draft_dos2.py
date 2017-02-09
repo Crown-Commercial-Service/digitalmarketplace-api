@@ -18,13 +18,13 @@ def upgrade():
 
     dos1_res = conn.execute("""
         SELECT id FROM frameworks
-        WHERE name = 'Digital Outcomes and Specialists'
+        WHERE slug = 'digital-outcomes-and-specialists'
     """)
     dos1_framework_id = dos1_res.fetchall()[0][0]
 
     dos2_res = conn.execute("""
         SELECT id FROM frameworks
-        WHERE name = 'Digital Outcomes and Specialists 2'
+        WHERE slug = 'digital-outcomes-and-specialists-2'
     """)
 
     # DOS2 framework was not created with a migration, it was created via the API. This means that when the tests run
@@ -66,8 +66,6 @@ def upgrade():
         SET framework_id = :dos2_id
         WHERE framework_id = :dos1_id AND published_at IS NULL
     """), **framework_ids)
-
-
 
 def downgrade():
     # No downgrade
