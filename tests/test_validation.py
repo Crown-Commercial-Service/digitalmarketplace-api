@@ -489,105 +489,108 @@ def test_max_price_larger_than_min_does_not_overwrite_previous_errors():
 
 
 def test_brief_response_essential_requirements():
-    assert get_validation_errors(
-        "brief-responses-digital-outcomes-and-specialists-digital-specialists",
-        {
+    for schema_name in ("brief-responses-digital-outcomes-and-specialists-digital-specialists",
+                        "brief-responses-digital-outcomes-and-specialists-2-digital-specialists"):
+        assert get_validation_errors(
+            schema_name,
+            {
+                "availability": "valid start date",
+                "dayRate": "100",
+                "essentialRequirementsMet": True,
+                "essentialRequirements": [
+                    {"evidence": "valid evidence"},
+                    {"evidence": "word " * 100},
+                    {"evidence": "some more valid evidence"},
+                    {}
+                ],
+                "niceToHaveRequirements": [
+                    {"yesNo": False}
+                ],
+                "respondToEmailAddress": "valid@email.com"
+            }
+        ) == {
+            'essentialRequirements': [
+                {
+                    'error': 'under_100_words',
+                    'field': u'evidence',
+                    'index': 1
+                },
+                {
+                    'error': 'answer_required',
+                    'field': u'evidence',
+                    'index': 3
+                },
+            ]
+        }
+
+
+def test_brief_response_nice_to_have_requirements():
+    for schema_name in ("brief-responses-digital-outcomes-and-specialists-digital-specialists",
+                        "brief-responses-digital-outcomes-and-specialists-2-digital-specialists"):
+        data = {
             "availability": "valid start date",
             "dayRate": "100",
             "essentialRequirementsMet": True,
             "essentialRequirements": [
                 {"evidence": "valid evidence"},
-                {"evidence": "word " * 100},
-                {"evidence": "some more valid evidence"},
-                {}
-            ],
-            "niceToHaveRequirements": [
-                {"yesNo": False}
             ],
             "respondToEmailAddress": "valid@email.com"
         }
-    ) == {
-        'essentialRequirements': [
+
+        # Nice-to-have requirements are optional.
+        assert not get_validation_errors(schema_name, data)
+
+        data["niceToHaveRequirements"] = [
+            {},
+            {"yesNo": True, "evidence": "valid evidence"},
+            {"yesNo": True, "evidence": "word " * 100},
+            {"yesNo": True},
+            {"yesNo": False},
+            {"yesNo": False, "evidence": "shouldnt be here"}
+        ]
+        error_messages = get_validation_errors(schema_name, data)["niceToHaveRequirements"]
+        assert error_messages[:3] == [
+            {
+                'error': 'answer_required',
+                'field': u'yesNo',
+                'index': 0
+            },
             {
                 'error': 'under_100_words',
                 'field': u'evidence',
-                'index': 1
+                'index': 2
             },
             {
                 'error': 'answer_required',
                 'field': u'evidence',
                 'index': 3
-            },
+            }
         ]
-    }
+        assert error_messages[3]["index"] == 5
+        # Python 3 dictionary ordering is unpredicatable so we have to cover both possible orders as it is converted to
+        # a string
+        assert error_messages[3]["error"] in [
+            "{'yesNo': False, 'evidence': 'shouldnt be here'} is not valid under any of the given schemas",
+            "{'evidence': 'shouldnt be here', 'yesNo': False} is not valid under any of the given schemas"
+        ]
+        assert len(error_messages) == 4
 
+        # Purely boolean nice to have requirements
+        data["niceToHaveRequirements"] = [True, True, True]
+        error_messages = get_validation_errors(schema_name, data)["niceToHaveRequirements"]
+        assert "True is not of type" in error_messages
+        assert "object" in error_messages
 
-def test_brief_response_nice_to_have_requirements():
-    schema_name = "brief-responses-digital-outcomes-and-specialists-digital-specialists"
-    data = {
-        "availability": "valid start date",
-        "dayRate": "100",
-        "essentialRequirementsMet": True,
-        "essentialRequirements": [
-            {"evidence": "valid evidence"},
-        ],
-        "respondToEmailAddress": "valid@email.com"
-    }
-
-    # Nice-to-have requirements are optional.
-    assert not get_validation_errors(schema_name, data)
-
-    data["niceToHaveRequirements"] = [
-        {},
-        {"yesNo": True, "evidence": "valid evidence"},
-        {"yesNo": True, "evidence": "word " * 100},
-        {"yesNo": True},
-        {"yesNo": False},
-        {"yesNo": False, "evidence": "shouldnt be here"}
-    ]
-    error_messages = get_validation_errors(schema_name, data)["niceToHaveRequirements"]
-    assert error_messages[:3] == [
-        {
-            'error': 'answer_required',
-            'field': u'yesNo',
-            'index': 0
-        },
-        {
-            'error': 'under_100_words',
-            'field': u'evidence',
-            'index': 2
-        },
-        {
-            'error': 'answer_required',
-            'field': u'evidence',
-            'index': 3
-        }
-    ]
-    assert error_messages[3]["index"] == 5
-    # Python 3 dictionary ordering is unpredicatable so we have to cover both possible orders as it is converted to
-    # a string
-    assert error_messages[3]["error"] in [
-        "{'yesNo': False, 'evidence': 'shouldnt be here'} is not valid under any of the given schemas",
-        "{'evidence': 'shouldnt be here', 'yesNo': False} is not valid under any of the given schemas"
-    ]
-    assert len(error_messages) == 4
-
-    # Purely boolean nice to have requirements
-    data["niceToHaveRequirements"] = [True, True, True]
-    error_messages = get_validation_errors(schema_name, data)["niceToHaveRequirements"]
-    assert "True is not of type" in error_messages
-    assert "object" in error_messages
-
-    # Mix of dict and boolean nice to have requirements
-    data["niceToHaveRequirements"] = [
-        {"yesNo": False, "evidence": "shouldnt be here"},
-        True,
-        {'yesNo': False},
-        {"yesNo": False, "evidence": "shouldnt be here"}
-    ]
-    error_messages = get_validation_errors(schema_name, data)["niceToHaveRequirements"]
-    assert "True is not of type" in error_messages
-    assert "object" in error_messages
+        # Mix of dict and boolean nice to have requirements
+        data["niceToHaveRequirements"] = [
+            {"yesNo": False, "evidence": "shouldnt be here"},
+            True,
+            {'yesNo': False},
+            {"yesNo": False, "evidence": "shouldnt be here"}
+        ]
+        error_messages = get_validation_errors(schema_name, data)["niceToHaveRequirements"]
+        assert "True is not of type" in error_messages
+        assert "object" in error_messages
 
 
 def test_api_type_is_optional():
