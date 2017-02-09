@@ -42,10 +42,31 @@ def upgrade():
     }
 
     conn.execute(text("""
+        INSERT INTO audit_events (
+            type,
+            created_at,
+            "user",
+            data,
+            object_type,
+            object_id,
+            acknowledged
+        ) SELECT
+            'update_brief_framework_id',
+            NOW(),
+            'Migration 840',
+            '{ "previousFrameworkId": :dos1_id, "newFrameworkId": :dos2_id }',
+            'Brief',
+            briefs.id,
+            false
+        FROM briefs WHERE framework_id = :dos1_id AND published_at IS NULL
+    """), **framework_ids)
+
+    conn.execute(text("""
         UPDATE briefs
         SET framework_id = :dos2_id
         WHERE framework_id = :dos1_id AND published_at IS NULL
     """), **framework_ids)
+
 
 
 def downgrade():
