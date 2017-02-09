@@ -273,6 +273,9 @@ class BaseApplicationTest(object):
                     last_update_time=t + pendulum.interval(seconds=(i % 3))
                 )
 
+                if i == 4:
+                    s.add_unassessed_domain('Content and Publishing')
+
                 if i == 3:
                     s.add_unassessed_domain('Content and Publishing')
 

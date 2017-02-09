@@ -544,7 +544,7 @@ class TestSupplierSearch(BaseApplicationTest):
                 "filtered": {
                     "filter": {
                         "terms": {
-                            "domains.assessed": ['Data science', 'Cyber security']
+                            "domains.assessed": ['Data science', 'Cyber security', 'Content and Publishing']
                         }
                     }
                 }
@@ -590,8 +590,11 @@ class TestSupplierSearch(BaseApplicationTest):
         assert results[0]['name'] == 'Supplier 1'
 
         results = self.do_search(TRANSITION_DOMAIN_SEARCH)
-        assert len(results) == 2
-        assert [_['name'] for _ in results] == ['Supplier 1', 'Supplier 2']
+        assert [_['name'] for _ in results] == [
+            'aaaaaaaaaaaaaaaaa',
+            'Supplier 1',
+            'Supplier 2'
+        ]
 
         results = self.do_search(SELLER_TYPES_SEARCH)
         assert len(results) == 1
@@ -607,8 +610,8 @@ class TestSupplierSearch(BaseApplicationTest):
         with self.app.app_context():
             current_app.config['LEGACY_ROLE_MAPPING'] = False
             results = self.do_search(NEW_DOMAIN_SEARCH)
-            assert len(results) == 1
-            assert results[0]['name'] == 'Supplier 2'
+            assert len(results) == 2
+            assert [_['name'] for _ in results] == ['aaaaaaaaaaaaaaaaa', 'Supplier 2']
             current_app.config['LEGACY_ROLE_MAPPING'] = True
 
 

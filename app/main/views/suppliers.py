@@ -261,7 +261,7 @@ def supplier_search():
         results = [
             _ for _ in results
             if (
-                set(_.assessed_domains) & set(roles_list)
+                (set(_.assessed_domains) | set(_.unassessed_domains)) & set(roles_list)
             )
         ]
 
