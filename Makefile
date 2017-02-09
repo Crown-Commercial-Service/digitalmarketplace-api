@@ -25,7 +25,7 @@ requirements_freeze:
 	${VIRTUALENV_ROOT}/bin/pip install --upgrade pip
 	${VIRTUALENV_ROOT}/bin/pip install --upgrade -r requirements_for_test.txt
 	${VIRTUALENV_ROOT}/bin/pip freeze | grep -v marketplace-api.git > requirements.txt
-
+	sed '/^-e /s/-e //' -i requirements.txt
 
 test: test_pep8 test_migrations test_unit
 
