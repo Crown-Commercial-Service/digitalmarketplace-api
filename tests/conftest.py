@@ -1,9 +1,14 @@
 from __future__ import absolute_import
 
 import pytest
+import os
+import json
+import io
+import mock
+
 
 from app import create_app
-from app.models import db, Framework
+from app.models import db, Framework, Application
 
 
 from sqlbag import temporary_database, S
@@ -36,6 +41,31 @@ def db_initialization(request):
 @pytest.fixture(scope='session')
 def app(request):
     return create_app('test')
+
+
+def application_json_examples():
+    FOLDER_PATH = 'tests/DATA/applications'
+
+    for fname in os.listdir(FOLDER_PATH):
+        with io.open(os.path.join(FOLDER_PATH, fname)) as f:
+            yield json.loads(f.read())
+
+
+@pytest.fixture(params=application_json_examples())
+def sample_submitted_application(app, request):
+    with mock.patch('app.models.get_marketplace_jira'):
+        with app.app_context():
+            application = Application(
+                data=request.param,
+            )
+
+            db.session.add(application)
+            db.session.flush()
+
+            application.submit_for_approval()
+            db.session.commit()
+
+            yield application
 
 
 @pytest.fixture()

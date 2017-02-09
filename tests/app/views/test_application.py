@@ -9,6 +9,12 @@ from itertools import tee
 from six.moves import zip as izip
 
 
+def test_approval(sample_submitted_application):
+    assert sample_submitted_application.supplier is None
+    sample_submitted_application.set_approval(True)
+    assert sample_submitted_application.supplier is not None
+
+
 class BaseApplicationsTest(BaseApplicationTest):
     def setup(self):
         super(BaseApplicationsTest, self).setup()
