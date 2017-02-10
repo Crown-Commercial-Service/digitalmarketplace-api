@@ -576,6 +576,9 @@ def create_application_from_supplier(code):
         Supplier.code == code
     ).first_or_404()
 
+    # hotfix for exception. shouldn't need to do this
+    supplier.data = supplier.data or {}
+
     if 'application_id' in supplier.data:
         return abort(400, 'Supplier already has application')
 
