@@ -5,7 +5,6 @@ Create Date: 2017-02-06 11:09:26.852142
 """
 from alembic import op
 from datetime import datetime
-from dateutil import tz
 import sqlalchemy as sa
 
 
@@ -22,8 +21,6 @@ frameworks_table = sa.table(
     sa.Column('application_close_date', sa.DateTime)
 )
 
-tz_utc = tz.tzoffset('utc', 0)
-
 
 def upgrade():
     op.add_column('frameworks', sa.Column('application_close_date', sa.DateTime(), nullable=True))
@@ -34,9 +31,9 @@ def upgrade():
 
     fields = ('slug', 'application_close_date', 'allow_declaration_reuse')
     new_values = (
-        ('digital-outcomes-and-specialists', datetime(2016, 1, 1, 15, tzinfo=tz_utc), False),
-        ('digital-outcomes-and-specialists-2', datetime(2017, 1, 16, 17, tzinfo=tz_utc), True),
-        ('g-cloud-8', datetime(2016, 6, 1, 17, tzinfo=tz_utc), True),
+        ('digital-outcomes-and-specialists', datetime(2016, 1, 1, 15), True),
+        ('digital-outcomes-and-specialists-2', datetime(2017, 1, 16, 17), True),
+        ('g-cloud-8', datetime(2016, 6, 1, 17), True),
 
     )
     new_values = [dict(zip(fields, i)) for i in new_values]
