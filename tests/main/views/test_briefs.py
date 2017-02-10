@@ -414,7 +414,7 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
                 'id': 1,
                 'status': 'draft',
                 'frameworkSlug': 'digital-outcomes-and-specialists',
-                'frameworkFramework': 'dos',
+                'frameworkFramework': 'digital-outcomes-and-specialists',
                 'frameworkName': 'Digital Outcomes and Specialists',
                 'frameworkStatus': 'live',
                 'lot': 'digital-specialists',

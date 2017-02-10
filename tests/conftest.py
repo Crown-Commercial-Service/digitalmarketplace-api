@@ -211,7 +211,7 @@ _g6_framework_defaults = {
 }
 _dos_framework_defaults = {
     "slug": "digital-outcomes-and-specialists",
-    "framework": "dos",
+    "framework": "digital-outcomes-and-specialists",
     "framework_agreement_details": None,
 }
 _example_framework_details = {

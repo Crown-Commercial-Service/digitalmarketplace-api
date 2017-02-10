@@ -223,7 +223,7 @@ class FixtureMixin(object):
                     id=101,
                     slug=u'digital-outcomes-and-specialists-2',
                     name=u'Digital Outcomes and Specialists 2',
-                    framework=u'dos',
+                    framework=u'digital-outcomes-and-specialists',
                     status=status,
                     clarification_questions_open=clarifications,
                     lots=[Lot.query.filter(Lot.slug == 'digital-outcomes').first(),

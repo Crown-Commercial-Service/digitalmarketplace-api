@@ -207,7 +207,7 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
             'id': 1,
             'name': "Example Framework 2",
             'slug': "example-framework-2",
-            'framework': "dos",
+            'framework': "digital-outcomes-and-specialists",
             'frameworkAgreementDetails': {
                 "countersignerName": "Dan Saxby",
                 "frameworkAgreementVersion": "v1.0",
