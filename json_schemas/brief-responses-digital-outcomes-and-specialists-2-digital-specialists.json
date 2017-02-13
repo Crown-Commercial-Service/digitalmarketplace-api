@@ -26,7 +26,7 @@
         ],
         "type": "object"
       },
-      "minItems": 0,
+      "minItems": 1,
       "type": "array"
     },
     "essentialRequirementsMet": {
@@ -50,17 +50,10 @@
                       false
                     ]
                   }
-                },
-                "required": [
-                  "yesNo"
-                ]
+                }
               },
               {
                 "properties": {
-                  "evidence": {
-                    "minLength": 1,
-                    "type": "string"
-                  },
                   "yesNo": {
                     "enum": [
                       true
@@ -85,6 +78,9 @@
             "type": "boolean"
           }
         },
+        "required": [
+          "yesNo"
+        ],
         "type": "object"
       },
       "minItems": 0,
