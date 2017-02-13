@@ -94,7 +94,7 @@ class BaseApplicationsTest(BaseApplicationTest):
 
     def reject_application(self, application_id):
         return self.client.post(
-            '/applications/{}/approve'.format(application_id),
+            '/applications/{}/reject'.format(application_id),
             content_type='application/json')
 
     def get_user(self, user_id):
@@ -144,9 +144,16 @@ class TestApproveApplication(BaseApplicationsTest):
 
     @mock.patch('app.jiraapi.JIRA')
     @mock.patch('app.main.views.applications.get_marketplace_jira')
-    def test_application_assessments_and_domain_approvals(self, get_marketplace_jira, jira):
+    @mock.patch('app.emails.util.send_email')
+    def test_application_assessments_and_domain_approvals(self, send_email, get_marketplace_jira, jira):
         with self.app.app_context():
+            self.patch_application(self.application_id, data={'status': 'submitted'})
+            a = self.reject_application(self.application_id)
+
+            assert a.status_code == 200
+
             self.patch_application(self.application_id, data={'status': 'saved'})
+
             a = self.get_application(self.application_id)
             user_id = self.setup_dummy_applicant(2, self.application_id)
 
@@ -161,6 +168,7 @@ class TestApproveApplication(BaseApplicationsTest):
             assert j['status'] == 'submitted'
 
             a = self.approve_application(self.application_id)
+
             assert a.status_code == 200
             f = Framework.query.filter(
                 Framework.slug == 'digital-marketplace'

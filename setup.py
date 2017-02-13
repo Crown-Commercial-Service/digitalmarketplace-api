@@ -42,6 +42,8 @@ setup(
 
         'pendulum',
         'jira',
-        'pyjwt'
+        'pyjwt',
+
+        'markdown'
     ]
 )

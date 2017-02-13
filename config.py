@@ -69,6 +69,44 @@ class Config:
     SEARCH_MINIMUM_MATCH_SCORE_NAME = 0
     SEARCH_MINIMUM_MATCH_SCORE_SUMMARY = 0.02
 
+    # EMAIL CONFIG
+    DM_SEND_EMAIL_TO_STDERR = False
+
+    DM_CLARIFICATION_QUESTION_EMAIL = 'no-reply@marketplace.digital.gov.au'
+    DM_FRAMEWORK_AGREEMENTS_EMAIL = 'enquiries@example.com'
+
+    GENERIC_CONTACT_EMAIL = 'marketplace@digital.gov.au'
+    DM_GENERIC_NOREPLY_EMAIL = 'no-reply@marketplace.digital.gov.au'
+    DM_GENERIC_ADMIN_NAME = 'Digital Marketplace Admin'
+    DM_GENERIC_SUPPORT_NAME = 'Digital Marketplace'
+
+    RESET_PASSWORD_EMAIL_NAME = DM_GENERIC_ADMIN_NAME
+    RESET_PASSWORD_EMAIL_FROM = 'no-reply@marketplace.digital.gov.au'
+    RESET_PASSWORD_EMAIL_SUBJECT = 'Reset your Digital Marketplace password'
+
+    INVITE_EMAIL_NAME = DM_GENERIC_ADMIN_NAME
+    INVITE_EMAIL_FROM = 'no-reply@marketplace.digital.gov.au'
+    INVITE_EMAIL_SUBJECT = 'Activate your new Marketplace account'
+
+    NEW_SUPPLIER_INVITE_SUBJECT = 'Digital Marketplace - invitation to create seller account'
+
+    CLARIFICATION_EMAIL_NAME = DM_GENERIC_ADMIN_NAME
+    CLARIFICATION_EMAIL_FROM = 'no-reply@marketplace.digital.gov.au'
+    CLARIFICATION_EMAIL_SUBJECT = 'Thanks for your clarification question'
+    DM_FOLLOW_UP_EMAIL_TO = 'digitalmarketplace@mailinator.com'
+
+    CREATE_USER_SUBJECT = 'Create your Digital Marketplace account'
+    SECRET_KEY = None
+    SHARED_EMAIL_KEY = None
+    RESET_PASSWORD_SALT = 'ResetPasswordSalt'
+    SUPPLIER_INVITE_TOKEN_SALT = 'SupplierInviteEmail'
+
+    GENERIC_EMAIL_DOMAINS = ['gmail.com', 'bigpond.com', 'outlook.com', 'hotmail.com', 'yahoo.com']
+
+    FRONTEND_ADDRESS = 'https://dm-dev.apps.staging.digital.gov.au'
+
+    SEND_EMAILS = True
+
 
 class Test(Config):
     DM_SEARCH_API_AUTH_TOKEN = 'test'
@@ -94,6 +132,7 @@ class Test(Config):
     JIRA_FEATURES = True
 
     JUST_IN_TIME_ASSESSMENTS = False
+    DM_SEND_EMAIL_TO_STDERR = False
 
 
 class Development(Config):
@@ -116,6 +155,8 @@ class Development(Config):
 
     JUST_IN_TIME_ASSESSMENTS = False
 
+    SEND_EMAILS = False
+
 
 class Live(Config):
     """Base config for deployed environments"""
@@ -125,6 +166,10 @@ class Live(Config):
     FEATURE_FLAGS = {
         'TRANSACTION_ISOLATION': False,
     }
+
+    FRONTEND_ADDRESS = 'https://marketplace.service.gov.au'
+
+    SEND_EMAILS = False
 
 
 class Preview(Live):

@@ -11,6 +11,7 @@ from app.utils import (
 import pendulum
 from sqlalchemy.sql.expression import true
 from dmapiclient.audit import AuditTypes
+from app.emails import send_approval_notification, send_rejection_notification
 
 
 def get_application_json():
@@ -74,12 +75,16 @@ def update_application(application_id):
 
 @main.route('/applications/<int:application_id>/approve', methods=['POST'])
 def approve_application(application_id):
-    return application_approval(application_id, True)
+    application_response = application_approval(application_id, True)
+    send_approval_notification(application_id)
+    return application_response
 
 
 @main.route('/applications/<int:application_id>/reject', methods=['POST'])
 def reject_application(application_id):
-    return application_approval(application_id, False)
+    application_response = application_approval(application_id, False)
+    send_rejection_notification(application_id)
+    return application_response
 
 
 def application_approval(application_id, result):

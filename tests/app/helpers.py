@@ -51,6 +51,7 @@ INCOMING_APPLICATION_DATA = {
     "representative": "Business Rep",
     "name": "Business Name",
     "abn": "ABN",
+    "contact_name": "Rep name",
     "phone": "Rep number",
     "email": "Rep email",
     "summary": "Summary",
