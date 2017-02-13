@@ -409,14 +409,18 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
 
         assert res.status_code == 200
         expected_data = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
+
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+
         expected_data.update(
             {
                 'id': 1,
                 'status': 'draft',
-                'frameworkSlug': 'digital-outcomes-and-specialists',
-                'frameworkFramework': 'dos',
-                'frameworkName': 'Digital Outcomes and Specialists',
-                'frameworkStatus': 'live',
+                'frameworkSlug': framework.slug,
+                'frameworkFramework': framework.framework,
+                'frameworkName': framework.name,
+                'frameworkStatus': framework.status,
                 'lot': 'digital-specialists',
                 'lotSlug': 'digital-specialists',
                 'lotName': 'Digital specialists',

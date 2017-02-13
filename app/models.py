@@ -88,6 +88,7 @@ class Framework(db.Model):
     FRAMEWORKS = (
         'g-cloud',
         'dos',
+        'digital-outcomes-and-specialists',
     )
 
     id = db.Column(db.Integer, primary_key=True)
