@@ -5,7 +5,40 @@
     "API": {
       "type": "boolean"
     },
-    "accessControlsTestedRegularly": {
+    "APIDocumentation": {
+      "type": "boolean"
+    },
+    "APIDocumentatonFormats": {
+      "items": {
+        "enum": [
+          "Open API (also known as Swagger)",
+          "HTML",
+          "ODF",
+          "PDF",
+          "Other"
+        ]
+      },
+      "maxItems": 5,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "APISandbox": {
+      "type": "boolean"
+    },
+    "APIUsage": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "accessRestrictionManagementAndSupport": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "accessRestrictionTesting": {
       "enum": [
         "At least every 6 months",
         "At least once a year",
@@ -13,80 +46,115 @@
         "Never"
       ]
     },
-    "accessRestrictionsManagementAndSupport": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
-      "type": "string"
-    },
-    "accessToAuditInformationAboutBuyersUsersActions": {
-      "enum": [
-        "Users have access to real-time audit information",
-        "Users receive audit information on a regular basis",
-        "Users contact the support team to get audit information",
-        "You control when users can access audit information",
-        "No audit information available"
-      ]
-    },
-    "accessToAuditInformationAboutSuppliersUsersActions": {
-      "enum": [
-        "Users have access to real-time audit information",
-        "Users receive audit information on a regular basis",
-        "Users contact the support team to get audit information",
-        "You control when users can access audit information",
-        "No audit information available"
-      ]
+    "analyticsAvailable": {
+      "type": "boolean"
     },
     "approachToResilience": {
       "maxLength": 500,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
-    "auditDataFormats": {
-      "items": {
-        "maxLength": 100,
-        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
-        "type": "string"
-      },
-      "maxItems": 10,
-      "minItems": 0,
-      "type": "array"
+    "auditBuyersActions": {
+      "enum": [
+        "Users have access to real-time audit information",
+        "Users receive audit information on a regular basis",
+        "Users contact the support team to get audit information",
+        "You control when users can access audit information",
+        "No audit information available"
+      ]
+    },
+    "auditBuyersActionsStorage": {
+      "enum": [
+        "User-defined",
+        "At least 12 months",
+        "Between 6 months and 12 months",
+        "Between 1 month and 6 months",
+        "Less than 1 month"
+      ]
+    },
+    "auditSuppliersActions": {
+      "enum": [
+        "Users have access to real-time audit information",
+        "Users receive audit information on a regular basis",
+        "Users contact the support team to get audit information",
+        "You control when users can access audit information",
+        "No audit information available"
+      ]
+    },
+    "auditSuppliersActionsStorage": {
+      "enum": [
+        "User-defined",
+        "At least 12 months",
+        "Between 6 months and 12 months",
+        "Between 1 month and 6 months",
+        "Less than 1 month"
+      ]
     },
     "boardLevelServiceSecurity": {
       "type": "boolean"
     },
-    "buyerResponsibilities": {
+    "browsersAccess": {
+      "type": "boolean"
+    },
+    "browsersSupported": {
       "items": {
-        "maxLength": 100,
-        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
-        "type": "string"
+        "enum": [
+          "Internet Explorer 7",
+          "Internet Explorer 8",
+          "Internet Explorer 9",
+          "Internet Explorer 10+",
+          "Microsoft Edge",
+          "Firefox",
+          "Chrome",
+          "Safari 9+",
+          "Opera"
+        ]
       },
-      "maxItems": 10,
+      "maxItems": 9,
       "minItems": 1,
-      "type": "array"
+      "type": "array",
+      "uniqueItems": true
+    },
+    "cloudDeploymentModel": {
+      "enum": [
+        "Public cloud",
+        "Community cloud",
+        "Private cloud",
+        "Hybrid cloud"
+      ]
     },
     "configurationAndChangeManagementProcesses": {
       "maxLength": 500,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
     "configurationAndChangeManagementType": {
       "enum": [
-        "Conforms to a recognised standard, for example CSA CCM v3.0 or SSAE-16 / ISAE 3402",
-        "Supplier-defined controls"
+        "recognised_standard",
+        "supplier_defined"
       ]
+    },
+    "customisationAvailable": {
+      "type": "boolean"
+    },
+    "customisationDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
     },
     "dataExportFormats": {
       "items": {
         "enum": [
           "CSV",
-          "ODF"
+          "ODF",
+          "Other"
         ]
       },
-      "maxItems": 2,
-      "minItems": 0,
+      "maxItems": 3,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
@@ -103,51 +171,84 @@
     "dataExportHow": {
       "maxLength": 500,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
-    "dataProtectionBetweenBuyersAndSuppliersNetworks": {
+    "dataImportFormats": {
       "items": {
         "enum": [
-          "Private WAN service",
+          "CSV",
+          "ODF",
+          "Other"
+        ]
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataImportFormatsOther": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 0,
+      "type": "array"
+    },
+    "dataProtectionBetweenNetworks": {
+      "items": {
+        "enum": [
+          "Private network or public sector network",
           "TLS (Version 1.2 or above)",
           "IPsec or TLS VPN gateway",
           "Bonded fibre optic connections",
-          "Legacy SSL and TLS (under 1.2)"
+          "Legacy SSL and TLS (under 1.2)",
+          "Other"
         ]
       },
-      "maxItems": 5,
-      "minItems": 0,
+      "maxItems": 6,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
-    "dataProtectionWithinSuppliersNetwork": {
+    "dataProtectionBetweenNetworksOther": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "dataProtectionWithinNetwork": {
       "items": {
         "enum": [
           "Private WAN service",
           "TLS (Version 1.2 or above)",
           "IPsec or TLS VPN gateway",
-          "Legacy SSL and TLS (under 1.2)"
+          "Legacy SSL and TLS (under 1.2)",
+          "Other"
         ]
       },
-      "maxItems": 4,
-      "minItems": 0,
+      "maxItems": 5,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
-    "dataSanitisationApproach": {
+    "dataProtectionWithinNetworkOther": {
       "maxLength": 500,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
     "dataSanitisationType": {
       "enum": [
         "Explicit overwriting of storage before reallocation",
-        "Assurances media can't be directly 'addressed'",
-        "Hardware containing data is completely destroyed",
+        "Assurances media can\u2019t be directly \u2019addressed\u2019",
         "No data sanitisation process"
       ]
+    },
+    "dataStorageAndProcessingKnowledge": {
+      "type": "boolean"
     },
     "dataStorageAndProcessingLocations": {
       "items": {
@@ -159,18 +260,21 @@
         ]
       },
       "maxItems": 4,
-      "minItems": 0,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
+    "dataStorageAndProcessingUserControl": {
+      "type": "boolean"
+    },
     "datacentreSecurityStandards": {
       "enum": [
-        "Complies with a recognised standard, for example CSA CCM v3.0 or SSAE-16 / ISAE 3402",
-        "Supplier-defined controls",
-        "Undisclosed"
+        "recognised_standard",
+        "supplier_defined",
+        "third_party"
       ]
     },
-    "devicesForManagement": {
+    "devicesUsersManageTheServiceThrough": {
       "items": {
         "enum": [
           "Dedicated device on a segregated network (providers own provision)",
@@ -181,7 +285,7 @@
         ]
       },
       "maxItems": 5,
-      "minItems": 0,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
@@ -195,120 +299,200 @@
         ]
       },
       "maxItems": 4,
-      "minItems": 0,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
-    "educationPricing": {
-      "type": "boolean"
-    },
-    "emailSupport": {
-      "type": "boolean"
-    },
-    "endOfContractDataExtraction": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
-      "type": "string"
-    },
-    "equipmentDisposalApproach": {
-      "enum": [
-        "Complying with a recognised standard, for example CSA CCM v.30 or ISO/IEC 27001",
-        "Complying with NCSC or CESG Assured Service (Destruction) scheme",
-        "In-house destruction process",
-        "A third-party destruction service",
-        "Undisclosed"
-      ]
-    },
-    "gettingStarted": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
-      "type": "string"
-    },
-    "governmentWANS": {
-      "items": {
-        "enum": [
-          "Public Services Network (PSN)",
-          "Police National Network (PNN)",
-          "New NHS Network (N3)",
-          "Joint Academic Network (JANET)",
-          "Scottish Wide Area Network (SWAN)"
-        ]
-      },
-      "maxItems": 5,
-      "minItems": 0,
-      "type": "array",
-      "uniqueItems": true
-    },
-    "guaranteedAvailability": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
-      "type": "string"
-    },
-    "howSharedInfrastructureIsKeptSeparate": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
-      "type": "string"
-    },
-    "incidentManagementApproach": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
-      "type": "string"
-    },
-    "incidentManagementType": {
-      "enum": [
-        "Conforms to a recognised standard, for example, CSA CCM v3.0 or ISO/IEC 27035:2011 or SSAE-16 / ISAE 3402",
-        "Supplier-defined controls",
-        "Undisclosed"
-      ]
-    },
-    "informationSecurityPoliciesAndProcesses": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
-      "type": "string"
-    },
-    "metricsTypes": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
-      "type": "string"
-    },
-    "onlineTIcketingSupportAccessibility": {
-      "enum": [
-        "AAA",
-        "AA",
-        "A",
-        "No"
-      ]
-    },
-    "onlineTicketingSupport": {
-      "type": "boolean"
-    },
-    "onsiteSupport": {
-      "type": "boolean"
-    },
-    "otherNetworks": {
-      "type": "boolean"
-    },
-    "otherWANs": {
+    "documentationFormatsOther": {
       "items": {
         "maxLength": 100,
         "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
         "type": "string"
       },
       "maxItems": 10,
-      "minItems": 0,
+      "minItems": 1,
       "type": "array"
+    },
+    "documentationService": {
+      "type": "boolean"
+    },
+    "educationPricing": {
+      "type": "boolean"
+    },
+    "emailOrTicketingSupport": {
+      "enum": [
+        "Yes",
+        "Yes, at extra cost",
+        "No"
+      ]
+    },
+    "emailOrTicketingSupportAccessibility": {
+      "enum": [
+        "WCAG 2.0 AAA",
+        "WCAG 2.0 AA or EN 301 549",
+        "WCAG 2.0 A",
+        "None or don\u2019t know"
+      ]
+    },
+    "emailOrTicketingSupportPriority": {
+      "type": "boolean"
+    },
+    "emailOrTicketingSupportResponseTimes": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "emailOrTicketingSupportTicketing": {
+      "type": "boolean"
+    },
+    "endOfContractDataExtraction": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "endOfContractProcess": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "equipmentDisposalApproach": {
+      "enum": [
+        "recognised_standard",
+        "cas(s)",
+        "in_house",
+        "third_party",
+        "undisclosed"
+      ]
+    },
+    "freeVersionDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "freeVersionLink": {
+      "maxLength": 1000,
+      "minLength": 0,
+      "type": "string"
+    },
+    "freeVersionTrialOption": {
+      "type": "boolean"
+    },
+    "gettingStarted": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "guaranteedAvailability": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "howLongSystemLogsStored": {
+      "enum": [
+        "User-defined",
+        "At least 12 months",
+        "Between 6 months and 12 months",
+        "Between 1 month and 6 months",
+        "Less than 1 month."
+      ]
+    },
+    "incidentManagementApproach": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "incidentManagementType": {
+      "enum": [
+        "recognised_standard",
+        "supplier_defined",
+        "undisclosed"
+      ]
+    },
+    "informationSecurityPoliciesAndProcesses": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "installation": {
+      "type": "boolean"
+    },
+    "installationCompatibleOperatingSystems": {
+      "items": {
+        "enum": [
+          "iOS",
+          "Linux or Unix",
+          "MacOS",
+          "Android",
+          "Windows",
+          "Windows Phone",
+          "Other"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "managementAccessAuthentication": {
+      "items": {
+        "enum": [
+          "2-factor authentication",
+          "Public key authentication (including by TLS client certificate)",
+          "Identity federation with existing provider (for example Google apps)",
+          "Limited access over government network (for example PSN)",
+          "Dedicated link (for example VPN or bonded fibre)",
+          "Username or password",
+          "Other"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "managementAccessAuthenticationDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "metricsAvailable": {
+      "type": "boolean"
+    },
+    "metricsTypes": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "mobile": {
+      "type": "boolean"
+    },
+    "mobileDifferences": {
+      "maxLength": 500,
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
+      "type": "string"
+    },
+    "onsiteSupport": {
+      "enum": [
+        "Yes",
+        "Yes, at extra cost",
+        "No"
+      ]
     },
     "outageReporting": {
       "maxLength": 500,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
     "penetrationTesting": {
@@ -319,19 +503,27 @@
         "Never"
       ]
     },
+    "penetrationTestingApproach": {
+      "enum": [
+        "\u2019IT Health Check\u2019 performed by a CHECK service provider",
+        "\u2019IT Health Check\u2019 performed by a Tigerscheme qualified provider or a CREST-approved service provider",
+        "Another external penetration testing organisation",
+        "In-house"
+      ]
+    },
     "phoneSupport": {
       "type": "boolean"
     },
     "phoneSupportAvailability": {
       "enum": [
         "24 hours, 7 days a week",
-        "9 to 5, 5 days a week"
+        "Standard UK office hours"
       ]
     },
     "placeholderStandardsAndCertifications": {
       "maxLength": 500,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
     "priceInterval": {
@@ -372,6 +564,10 @@
         "Terabyte"
       ]
     },
+    "pricingDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
     "protectionOfDataAtRest": {
       "items": {
         "enum": [
@@ -379,13 +575,20 @@
           "Physical access control, complying with SSAE-16 / ISAE 3402",
           "Physical access control, complying with another standard",
           "Encryption of all physical media",
-          "'Scale, obfuscating techniques, or data storage sharding'"
+          "Scale, obfuscating techniques, or data storage sharding",
+          "Other"
         ]
       },
-      "maxItems": 5,
-      "minItems": 0,
+      "maxItems": 6,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "protectionOfDataAtRestOther": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
     },
     "protectiveMonitoringApproach": {
       "minLength": 1,
@@ -393,42 +596,89 @@
     },
     "protectiveMonitoringType": {
       "enum": [
-        "Conforms to a recognised standard, for example CSA CCM v3.0 or SSAE-16 / ISAE 3402",
-        "Supplier-defined controls",
-        "Undisclosed"
+        "recognised_standard",
+        "supplier_defined",
+        "undisclosed"
       ]
     },
-    "reportingTypes": {
+    "publicSectorNetworkTypes": {
       "items": {
         "enum": [
-          "API access",
+          "Public Services Network (PSN)",
+          "Police National Network (PNN)",
+          "New NHS Network (N3)",
+          "Joint Academic Network (JANET)",
+          "Scottish Wide Area Network (SWAN)",
+          "Other"
+        ]
+      },
+      "maxItems": 6,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "publicSectorNetworks": {
+      "type": "boolean"
+    },
+    "publicSectorNetworksOther": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 0,
+      "type": "array"
+    },
+    "reportingTypesMetrics": {
+      "items": {
+        "enum": [
+          "Through an API",
           "Real-time dashboards",
           "Regular reports",
           "Reports on request"
         ]
       },
       "maxItems": 4,
-      "minItems": 0,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
-    "resellerRelationship": {
+    "resellerType": {
+      "enum": [
+        "I\u2019m not a reseller",
+        "I\u2019m a reseller providing extra features and support not available from the original supplier",
+        "I\u2019m a reseller providing extra support",
+        "I\u2019m a reseller not providing extra features or support"
+      ]
+    },
+    "scalingSoftwareCost": {
       "maxLength": 500,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
+    },
+    "scalingSoftwareIndependence": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "scalingSoftwareScalability": {
+      "type": "boolean"
     },
     "secureDevelopment": {
       "enum": [
-        "Independent review of processes",
-        "Conforms to a recognised standard, but self-assessed",
-        "Supplier-defined process"
+        "independent_review",
+        "recognised_standard",
+        "supplier_defined"
       ]
+    },
+    "securityGovernanceAccreditation": {
+      "type": "boolean"
     },
     "securityGovernanceApproach": {
       "maxLength": 500,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
     "securityGovernanceStandards": {
@@ -440,9 +690,28 @@
         ]
       },
       "maxItems": 3,
-      "minItems": 0,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
+    },
+    "securityGovernanceStandardsOther": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "serviceAddOnDetails": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "serviceAddOnType": {
+      "enum": [
+        "Yes",
+        "Yes, but can also be used as a standalone service",
+        "No"
+      ]
     },
     "serviceBenefits": {
       "items": {
@@ -457,8 +726,8 @@
     "serviceCategories": {
       "items": {
         "enum": [
-          "software_category_one",
-          "software_category_two"
+          "This will be...",
+          "...all funky and new"
         ]
       },
       "maxItems": 2,
@@ -476,6 +745,10 @@
       "minItems": 1,
       "type": "array"
     },
+    "serviceDefinitionDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
     "serviceDescription": {
       "maxLength": 500,
       "minLength": 1,
@@ -492,67 +765,52 @@
       "minItems": 1,
       "type": "array"
     },
+    "serviceInterfaceAccessibility": {
+      "enum": [
+        "WCAG 2.0 AAA",
+        "WCAG 2.0 AA or EN 301 549",
+        "WCAG 2.0 A",
+        "None or don\u2019t know"
+      ]
+    },
+    "serviceInterfaceAccessibilityDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "serviceInterfaceTesting": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
     "serviceName": {
       "maxLength": 100,
       "minLength": 1,
       "type": "string"
     },
+    "sfiaRateDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
     "staffSecurityClearanceChecks": {
       "enum": [
         "Staff screening performed with conforms to BS7858:2012",
-        "Staff screening performed but doesn't conform with BS7858:2012",
+        "Staff screening performed but doesn\u2019t conform with BS7858:2012",
         "Staff screening not performed"
       ]
     },
-    "supplierType": {
-      "enum": [
-        "I\u2019m not a reseller",
-        "I\u2019m a reseller providing extra features and support not available from the original supplier",
-        "I\u2019m a reseller providing extra support",
-        "I\u2019m a reseller not providing extra features or support"
-      ]
+    "supportAvailableToThirdParty": {
+      "type": "boolean"
     },
     "supportLevels": {
       "maxLength": 500,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
-    "supportResponseTimes": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
-      "type": "string"
-    },
-    "trialOption": {
-      "type": "boolean"
-    },
-    "userAuthentication": {
-      "items": {
-        "enum": [
-          "2-factor authentication",
-          "Public key authentication (including by TLS client certificate)",
-          "Identity federation with existing provider (for example Google apps)",
-          "Limited access over \u2018community network\u2019 (for example PSN)",
-          "Dedicated link",
-          "Username or password"
-        ]
-      },
-      "maxItems": 6,
-      "minItems": 0,
-      "type": "array",
-      "uniqueItems": true
-    },
-    "userControlOverDataStorageAndProcessingLocations": {
-      "type": "boolean"
-    },
-    "usingTheAPI": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
-      "type": "string"
-    },
-    "virtualisationTechnologiesUsed": {
+    "systemRequirements": {
       "items": {
         "maxLength": 100,
         "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
@@ -562,114 +820,190 @@
       "minItems": 1,
       "type": "array"
     },
-    "virtualisationUsedForSeparation": {
+    "termsAndConditionsDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
+    "userAuthentication": {
+      "items": {
+        "enum": [
+          "2-factor authentication",
+          "Public key authentication (including by TLS client certificate)",
+          "Identity federation with existing provider (for example Google apps)",
+          "Limited access over government network (for example PSN)",
+          "Dedicated link (for example VPN or bonded fibre)",
+          "Username or password",
+          "Other"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "userAuthenticationDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "userAuthenticationNeeded": {
       "type": "boolean"
     },
     "vulnerabilityManagementApproach": {
       "maxLength": 500,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
     "vulnerabilityManagementType": {
       "enum": [
-        "Conforms to a recognised standard, for example CSA CCM v3.0 or SSAE-16 / ISAE 3402",
-        "Supplier-defined controls",
-        "Undisclosed"
+        "recognised_standard",
+        "supplier_defined",
+        "undisclosed"
       ]
     },
+    "webChatAccessibilityDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
     "webChatSupport": {
-      "type": "boolean"
+      "enum": [
+        "Yes",
+        "Yes, at an extra cost",
+        "No"
+      ]
     },
     "webChatSupportAccessibility": {
       "enum": [
-        "AAA",
-        "AA",
-        "A",
-        "No"
+        "WCAG 2.0 AAA",
+        "WCAG 2.0 AA or EN 301 549 9: Web",
+        "WCAG 2.0 A",
+        "None or don\u2019t know"
       ]
     },
     "webChatSupportAvailability": {
       "enum": [
         "24 hours, 7 days a week",
-        "9 to 5, 5 days a week"
-      ]
-    },
-    "webInterface": {
-      "type": "boolean"
-    },
-    "webInterfaceAccessibilityStandards": {
-      "enum": [
-        "WCAG 2.0 AAA or EN 301 549",
-        "WCAG 2.0 AA",
-        "WCAG 2.0 A",
-        "None or don\u2019t know"
+        "Standard UK office hours"
       ]
     }
   },
   "required": [
     "API",
-    "accessControlsTestedRegularly",
-    "accessRestrictionsManagementAndSupport",
-    "accessToAuditInformationAboutBuyersUsersActions",
-    "accessToAuditInformationAboutSuppliersUsersActions",
+    "APIDocumentation",
+    "APIDocumentatonFormats",
+    "APISandbox",
+    "APIUsage",
+    "accessRestrictionManagementAndSupport",
+    "accessRestrictionTesting",
+    "analyticsAvailable",
     "approachToResilience",
+    "auditBuyersActions",
+    "auditBuyersActionsStorage",
+    "auditSuppliersActions",
+    "auditSuppliersActionsStorage",
     "boardLevelServiceSecurity",
-    "buyerResponsibilities",
+    "browsersAccess",
+    "browsersSupported",
+    "cloudDeploymentModel",
     "configurationAndChangeManagementProcesses",
     "configurationAndChangeManagementType",
+    "customisationAvailable",
+    "customisationDescription",
+    "dataExportFormats",
     "dataExportHow",
-    "dataSanitisationApproach",
+    "dataImportFormats",
+    "dataProtectionBetweenNetworks",
+    "dataProtectionBetweenNetworksOther",
+    "dataProtectionWithinNetwork",
+    "dataProtectionWithinNetworkOther",
     "dataSanitisationType",
+    "dataStorageAndProcessingKnowledge",
+    "dataStorageAndProcessingLocations",
+    "dataStorageAndProcessingUserControl",
     "datacentreSecurityStandards",
+    "devicesUsersManageTheServiceThrough",
+    "documentationFormats",
+    "documentationFormatsOther",
+    "documentationService",
     "educationPricing",
-    "emailSupport",
+    "emailOrTicketingSupport",
+    "emailOrTicketingSupportAccessibility",
+    "emailOrTicketingSupportPriority",
+    "emailOrTicketingSupportResponseTimes",
+    "emailOrTicketingSupportTicketing",
     "endOfContractDataExtraction",
+    "endOfContractProcess",
     "equipmentDisposalApproach",
+    "freeVersionDescription",
+    "freeVersionTrialOption",
     "gettingStarted",
     "guaranteedAvailability",
-    "howSharedInfrastructureIsKeptSeparate",
+    "howLongSystemLogsStored",
     "incidentManagementApproach",
     "incidentManagementType",
     "informationSecurityPoliciesAndProcesses",
+    "installation",
+    "installationCompatibleOperatingSystems",
+    "managementAccessAuthentication",
+    "managementAccessAuthenticationDescription",
+    "metricsAvailable",
     "metricsTypes",
-    "onlineTIcketingSupportAccessibility",
-    "onlineTicketingSupport",
+    "mobile",
     "onsiteSupport",
-    "otherNetworks",
     "outageReporting",
     "penetrationTesting",
+    "penetrationTestingApproach",
     "phoneSupport",
     "phoneSupportAvailability",
     "placeholderStandardsAndCertifications",
     "priceMin",
     "priceUnit",
+    "pricingDocumentURL",
+    "protectionOfDataAtRest",
+    "protectionOfDataAtRestOther",
     "protectiveMonitoringApproach",
     "protectiveMonitoringType",
-    "resellerRelationship",
+    "publicSectorNetworkTypes",
+    "publicSectorNetworks",
+    "reportingTypesMetrics",
+    "resellerType",
+    "scalingSoftwareCost",
+    "scalingSoftwareIndependence",
+    "scalingSoftwareScalability",
     "secureDevelopment",
+    "securityGovernanceAccreditation",
     "securityGovernanceApproach",
+    "securityGovernanceStandards",
+    "securityGovernanceStandardsOther",
+    "serviceAddOnDetails",
+    "serviceAddOnType",
     "serviceBenefits",
     "serviceConstraints",
+    "serviceDefinitionDocumentURL",
     "serviceDescription",
     "serviceFeatures",
+    "serviceInterfaceAccessibility",
+    "serviceInterfaceAccessibilityDescription",
+    "serviceInterfaceTesting",
     "serviceName",
     "staffSecurityClearanceChecks",
-    "supplierType",
+    "supportAvailableToThirdParty",
     "supportLevels",
-    "supportResponseTimes",
-    "trialOption",
-    "userControlOverDataStorageAndProcessingLocations",
-    "usingTheAPI",
-    "virtualisationTechnologiesUsed",
-    "virtualisationUsedForSeparation",
+    "systemRequirements",
+    "termsAndConditionsDocumentURL",
+    "userAuthentication",
+    "userAuthenticationDescription",
+    "userAuthenticationNeeded",
     "vulnerabilityManagementApproach",
     "vulnerabilityManagementType",
+    "webChatAccessibilityDescription",
     "webChatSupport",
     "webChatSupportAccessibility",
-    "webChatSupportAvailability",
-    "webInterface",
-    "webInterfaceAccessibilityStandards"
+    "webChatSupportAvailability"
   ],
   "title": "G-Cloud 9 Cloud Software Product Schema",
   "type": "object"

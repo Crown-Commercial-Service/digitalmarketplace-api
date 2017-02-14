@@ -2,7 +2,51 @@
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
   "properties": {
-    "buyerResponsibilities": {
+    "QAAndTesting": {
+      "type": "boolean"
+    },
+    "QAAndTestingDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "emailOrTicketingSupport": {
+      "enum": [
+        "Yes",
+        "Yes, at extra cost",
+        "No"
+      ]
+    },
+    "emailOrTicketingSupportResponseTimes": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "ongoingSupport": {
+      "type": "boolean"
+    },
+    "ongoingSupportDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "ongoingSupportServices": {
+      "items": {
+        "enum": [
+          "buyer",
+          "supplier",
+          "third_party"
+        ]
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "ongoingSupportServicesList": {
       "items": {
         "maxLength": 100,
         "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
@@ -12,7 +56,22 @@
       "minItems": 1,
       "type": "array"
     },
-    "serviceBenefits": {
+    "phoneSupport": {
+      "type": "boolean"
+    },
+    "phoneSupportAvailability": {
+      "enum": [
+        "24 hours, 7 days a week",
+        "Standard UK office hours"
+      ]
+    },
+    "planningService": {
+      "type": "boolean"
+    },
+    "planningServiceCompatability": {
+      "type": "boolean"
+    },
+    "planningServiceCompatabilityList": {
       "items": {
         "maxLength": 100,
         "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
@@ -21,6 +80,68 @@
       "maxItems": 10,
       "minItems": 1,
       "type": "array"
+    },
+    "planningServiceDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "pricingDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
+    "securityStaff": {
+      "type": "boolean"
+    },
+    "securityStaffClearances": {
+      "items": {
+        "enum": [
+          "dv",
+          "sc",
+          "bpss"
+        ]
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "securityTesting": {
+      "type": "boolean"
+    },
+    "securityTestingCCP": {
+      "type": "boolean"
+    },
+    "securityTestingCHECK": {
+      "type": "boolean"
+    },
+    "securityTestingCSC": {
+      "type": "boolean"
+    },
+    "securityTestingOther": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "securityTestingType": {
+      "items": {
+        "enum": [
+          "Penetration testing",
+          "IT Health Checks",
+          "Risk analysis",
+          "Other"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
     },
     "serviceCategories": {
       "items": {
@@ -44,13 +165,34 @@
       "minItems": 1,
       "type": "array"
     },
+    "serviceDefinitionDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
     "serviceDescription": {
       "maxLength": 500,
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
       "type": "string"
     },
-    "serviceFeatures": {
+    "serviceName": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "setupAndMigrationService": {
+      "type": "boolean"
+    },
+    "setupAndMigrationServiceDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "setupAndMigrationServiceSpecific": {
+      "type": "boolean"
+    },
+    "setupAndMigrationServiceSpecificList": {
       "items": {
         "maxLength": 100,
         "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
@@ -60,19 +202,119 @@
       "minItems": 1,
       "type": "array"
     },
-    "serviceName": {
-      "maxLength": 100,
-      "minLength": 1,
+    "sfiaRateDocumentURL": {
+      "format": "uri",
       "type": "string"
+    },
+    "supportLevels": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "termsAndConditionsDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
+    "training": {
+      "type": "boolean"
+    },
+    "trainingDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "trainingServiceSpecific": {
+      "type": "boolean"
+    },
+    "trainingServiceSpecificList": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "webChatAccessibilityDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "webChatAccessibilityTesting": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "webChatSupport": {
+      "enum": [
+        "Yes",
+        "Yes, at an extra cost",
+        "No"
+      ]
+    },
+    "webChatSupportAccessibility": {
+      "enum": [
+        "WCAG 2.0 AAA",
+        "WCAG 2.0 AA or EN 301 549 9: Web",
+        "WCAG 2.0 A",
+        "None or don\u2019t know"
+      ]
+    },
+    "webChatSupportAvailability": {
+      "enum": [
+        "24 hours, 7 days a week",
+        "Standard UK office hours"
+      ]
     }
   },
   "required": [
-    "buyerResponsibilities",
-    "serviceBenefits",
+    "QAAndTesting",
+    "QAAndTestingDescription",
+    "emailOrTicketingSupport",
+    "emailOrTicketingSupportResponseTimes",
+    "ongoingSupport",
+    "ongoingSupportDescription",
+    "ongoingSupportServices",
+    "ongoingSupportServicesList",
+    "phoneSupport",
+    "phoneSupportAvailability",
+    "planningService",
+    "planningServiceCompatability",
+    "planningServiceCompatabilityList",
+    "planningServiceDescription",
+    "pricingDocumentURL",
+    "securityStaff",
+    "securityStaffClearances",
+    "securityTesting",
+    "securityTestingCCP",
+    "securityTestingCHECK",
+    "securityTestingCSC",
+    "securityTestingOther",
+    "securityTestingType",
     "serviceConstraints",
+    "serviceDefinitionDocumentURL",
     "serviceDescription",
-    "serviceFeatures",
-    "serviceName"
+    "serviceName",
+    "setupAndMigrationService",
+    "setupAndMigrationServiceDescription",
+    "setupAndMigrationServiceSpecific",
+    "setupAndMigrationServiceSpecificList",
+    "supportLevels",
+    "termsAndConditionsDocumentURL",
+    "training",
+    "trainingDescription",
+    "trainingServiceSpecific",
+    "trainingServiceSpecificList",
+    "webChatAccessibilityDescription",
+    "webChatAccessibilityTesting",
+    "webChatSupport",
+    "webChatSupportAccessibility",
+    "webChatSupportAvailability"
   ],
   "title": "G-Cloud 9 Cloud Support Product Schema",
   "type": "object"
