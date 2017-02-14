@@ -95,16 +95,22 @@ class Framework(db.Model):
     name = db.Column(db.String(255), nullable=False)
     framework = db.Column(db.String(), index=True, nullable=False)
     framework_agreement_details = db.Column(JSON, nullable=True)
-    status = db.Column(db.String(),
-                       index=True, nullable=False,
-                       default='pending')
+    status = db.Column(
+        db.String(),
+        index=True, nullable=False,
+        default='pending'
+    )
     clarification_questions_open = db.Column(db.Boolean, nullable=False, default=False)
     lots = db.relationship(
-        'Lot', secondary="framework_lots",
-        lazy='joined', innerjoin=False,
+        'Lot',
+        secondary="framework_lots",
+        lazy='joined',
+        innerjoin=False,
         order_by=Lot.id,
         backref='frameworks'
     )
+    allow_declaration_reuse = db.Column(db.Boolean, nullable=False, default=False)
+    application_close_date = db.Column(db.DateTime, nullable=True)
 
     def get_lot(self, lot_slug):
         return next(
@@ -118,16 +124,16 @@ class Framework(db.Model):
             'name': self.name,
             'slug': self.slug,
             'framework': self.framework,
-            'countersignerName': (
-                self.framework_agreement_details or {}
-            ).get("countersignerName"),
-            'frameworkAgreementVersion': (
-                self.framework_agreement_details or {}
-            ).get("frameworkAgreementVersion"),
+            'countersignerName': (self.framework_agreement_details or {}).get("countersignerName"),
+            'frameworkAgreementVersion': (self.framework_agreement_details or {}).get("frameworkAgreementVersion"),
             'variations': (self.framework_agreement_details or {}).get("variations", {}),
             'status': self.status,
             'clarificationQuestionsOpen': self.clarification_questions_open,
             'lots': [lot.serialize() for lot in self.lots],
+            'application_close_date': (
+                self.application_close_date and self.application_close_date.strftime(DATETIME_FORMAT)
+            ),
+            'allow_declaration_reuse': self.allow_declaration_reuse
         }
 
     def get_supplier_ids_for_completed_service(self):
