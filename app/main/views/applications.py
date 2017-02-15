@@ -83,7 +83,8 @@ def approve_application(application_id):
 @main.route('/applications/<int:application_id>/reject', methods=['POST'])
 def reject_application(application_id):
     application_response = application_approval(application_id, False)
-    send_rejection_notification(application_id)
+    # rejection email is disabled for now
+    # send_rejection_notification(application_id)
     return application_response
 
 
