@@ -87,7 +87,6 @@ class Framework(db.Model):
     )
     FRAMEWORKS = (
         'g-cloud',
-        'dos',
         'digital-outcomes-and-specialists',
     )
 
