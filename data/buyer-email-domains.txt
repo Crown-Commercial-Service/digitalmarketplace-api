@@ -48,6 +48,7 @@ fasst.org.uk
 fca.org.uk
 financial-ombudsman.org.uk
 fscs.org.uk
+fundraisingregulator.org.uk
 futureshg.co.uk
 fyldecoastymca.org
 geant.org
@@ -148,6 +149,7 @@ visitbritain.org
 visitengland.org
 wfd.org
 wheatley-group.com
+wmfs.net
 wwutilities.co.uk
 ymcahousing.org.uk
 ymcayactive.org
