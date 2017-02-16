@@ -201,8 +201,7 @@ def translate_json_schema_errors(errors, json_data):
                 field = re.search(r"'(.*)'", required_contexts[0].message).group(1)
                 error_map[field] = 'answer_required'
             else:
-                field = re.search(r"'([^']*)'", error.message).group(1)
-                error_map[field] = error.message
+                form_errors.append(error.message)
 
         # validate fields two deep that have required properties e.g. no evidence given for essentialRequirements[1]
         elif error.path and len(error.path) == 2 and error.validator == 'required':

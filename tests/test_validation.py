@@ -646,7 +646,7 @@ def test_g9_followup_questions():
             "freeVersionLink": "https://gov.uk",
         }
         yield check, schema_name, ["freeVersionTrialOption"], data, {
-            'freeVersionLink': u'{} is not valid under any of the given schemas'.format(data)
+            '_form': [u'{} is not valid under any of the given schemas'.format(data)]
         }
 
         data = {
@@ -654,7 +654,7 @@ def test_g9_followup_questions():
             "freeVersionDescription": "description",
         }
         yield check, schema_name, ["freeVersionTrialOption"], data, {
-            'freeVersionDescription': u'{} is not valid under any of the given schemas'.format(data)
+            '_form': [u'{} is not valid under any of the given schemas'.format(data)]
         }
 
         # Followup answers when the original question answer is missing
@@ -690,7 +690,7 @@ def test_g9_followup_questions():
             "securityGovernanceStandardsOther": "some other standards"
         }
         yield check, schema_name, ["securityGovernanceStandards"], data, {
-            "securityGovernanceStandardsOther": u'{} is not valid under any of the given schemas'.format(data)
+            "_form": [u'{} is not valid under any of the given schemas'.format(data)]
         }
 
         # Followup answers when the original question answer is missing
