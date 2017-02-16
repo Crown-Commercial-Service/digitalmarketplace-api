@@ -38,8 +38,8 @@ def create_brief_response():
     if brief.status != 'live':
         abort(400, "Brief must be live")
 
-    if brief.framework.status != 'live':
-        abort(400, "Brief framework must be live")
+    if brief.framework.status not in ['live', 'expired']:
+        abort(400, "Brief framework must be live or expired")
 
     supplier = validate_and_return_supplier(brief_response_json)
 
@@ -107,8 +107,8 @@ def update_brief_response(brief_response_id):
     if brief_response.status != 'draft':
         abort(400, "Brief response must be a draft")
 
-    if brief.framework.status != 'live':
-        abort(400, "Brief framework must be live")
+    if brief.framework.status not in ['live', 'expired']:
+        abort(400, "Brief framework must be live or expired")
 
     brief_role = brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
     service_max_day_rate = brief_service.data[brief_role + "PriceMax"] if brief_role else None
@@ -156,8 +156,8 @@ def submit_brief_response(brief_response_id):
     if brief_response.status != 'draft':
         abort(400, "Brief response must be a draft")
 
-    if brief.framework.status != 'live':
-        abort(400, "Brief framework must be live")
+    if brief.framework.status not in ['live', 'expired']:
+        abort(400, "Brief framework must be live or expired")
 
     brief_role = brief.data["specialistRole"] if brief.lot.slug == "digital-specialists" else None
     service_max_day_rate = brief_service.data[brief_role + "PriceMax"] if brief_role else None
