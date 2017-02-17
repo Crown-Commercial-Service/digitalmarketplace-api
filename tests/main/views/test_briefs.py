@@ -180,7 +180,7 @@ class TestCreateBrief(FrameworkSetupAndTeardown):
         assert json.loads(res.get_data(as_text=True))['error'] == "Framework 'not-exists' does not exist"
 
     def test_create_brief_fails_if_framework_not_live(self):
-        for framework_status in ['coming', 'open', 'pending', 'standstill', 'expired']:
+        for framework_status in [status for status in Framework.STATUSES if status != 'live']:
             with self.app.app_context():
                 framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
                 self._original_framework_status = framework.status
@@ -795,7 +795,7 @@ class TestPublishAndWithdrawBrief(FrameworkSetupAndTeardown):
     def test_cannot_publish_a_brief_if_the_framework_is_not_live(self):
         self.setup_dummy_briefs(1, title='The title')
 
-        for framework_status in ['coming', 'open', 'pending', 'standstill', 'expired']:
+        for framework_status in [status for status in Framework.STATUSES if status != 'live']:
             with self.app.app_context():
                 framework = Framework.query.get(5)
                 framework.status = framework_status
@@ -1062,7 +1062,7 @@ class TestCopyBrief(FrameworkSetupAndTeardown):
     def test_cannot_make_a_draft_copy_of_a_brief_if_the_framework_is_not_live(self):
         self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
 
-        for framework_status in ['coming', 'open', 'pending', 'standstill', 'expired']:
+        for framework_status in [status for status in Framework.STATUSES if status != 'live']:
             with self.app.app_context():
                 framework = Framework.query.get(5)
                 framework.status = framework_status
