@@ -261,12 +261,16 @@ class CreateBriefResponseSharedTests(BaseBriefResponseTest, JSONUpdateTestMixin)
         assert res.status_code == 400
         assert 'Supplier is not eligible to apply to this brief' in res.get_data(as_text=True)
 
-    def test_cannot_create_a_brief_response_if_framework_status_is_not_live_or_expired(self, expired_dos_framework):
+    def test_cannot_create_a_brief_response_if_framework_status_is_not_live_or_expired(self, live_dos_framework):
+        framework_id = live_dos_framework['id']
         for framework_status in ['coming', 'open', 'pending', 'standstill']:
             with self.app.app_context():
                 db.session.execute(
-                    "UPDATE frameworks SET status=:status WHERE slug='digital-outcomes-and-specialists'",
-                    {'status': framework_status},
+                    "UPDATE frameworks SET status=:status WHERE id = :framework_id",
+                    {
+                        'status': framework_status,
+                        'framework_id': framework_id,
+                    },
                 )
 
                 res = self.create_brief_response()
