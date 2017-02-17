@@ -12,10 +12,9 @@ from app import db
 from app.models import Brief, Framework
 
 
-class TestBriefs(BaseApplicationTest, FixtureMixin):
-
+class FrameworkSetupAndTeardown(BaseApplicationTest, FixtureMixin):
     def setup(self):
-        super(TestBriefs, self).setup()
+        super(FrameworkSetupAndTeardown, self).setup()
         self.user_id = self.setup_dummy_user(role='buyer')
 
         with self.app.app_context():
@@ -33,8 +32,10 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
 
             db.session.add(framework)
             db.session.commit()
-        super(TestBriefs, self).teardown()
+        super(FrameworkSetupAndTeardown, self).teardown()
 
+
+class TestCreateBrief(FrameworkSetupAndTeardown):
     def test_create_brief_with_no_data(self):
         res = self.client.post(
             '/briefs',
@@ -98,34 +99,6 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
 
         assert res.status_code == 400
         assert data['error'] == {'title': 'answer_required'}
-
-    def test_can_only_create_briefs_on_live_frameworks(self):
-        with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            self._original_framework_status = framework.status
-            framework.status = 'open'
-
-            db.session.add(framework)
-            db.session.commit()
-
-        res = self.client.post(
-            '/briefs',
-            data=json.dumps({
-                'briefs': {
-                    'userId': self.user_id,
-                    'frameworkSlug': 'digital-outcomes-and-specialists',
-                    'lot': 'digital-specialists',
-                    'title': 'the title',
-                },
-                'update_details': {
-                    'updated_by': 'example'
-                }
-            }),
-            content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 400
-        assert data['error'] == 'Framework must be live'
 
     def test_create_brief_creates_audit_event(self):
         self.client.post(
@@ -206,6 +179,35 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         assert res.status_code == 400
         assert json.loads(res.get_data(as_text=True))['error'] == "Framework 'not-exists' does not exist"
 
+    def test_create_brief_fails_if_framework_not_live(self):
+        for framework_status in [status for status in Framework.STATUSES if status != 'live']:
+            with self.app.app_context():
+                framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+                self._original_framework_status = framework.status
+                framework.status = framework_status
+
+                db.session.add(framework)
+                db.session.commit()
+
+            res = self.client.post(
+                '/briefs',
+                data=json.dumps({
+                    'briefs': {
+                        'userId': self.user_id,
+                        'frameworkSlug': 'digital-outcomes-and-specialists',
+                        'lot': 'digital-specialists',
+                        'title': 'the title',
+                    },
+                    'update_details': {
+                        'updated_by': 'example'
+                    }
+                }),
+                content_type='application/json')
+            data = json.loads(res.get_data(as_text=True))
+
+            assert res.status_code == 400
+            assert data['error'] == 'Framework must be live'
+
     def test_create_brief_fails_if_lot_does_not_exist(self):
         res = self.client.post(
             '/briefs',
@@ -223,6 +225,8 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         assert json.loads(res.get_data(as_text=True))['error'] == \
             "Incorrect lot 'not-exists' for framework 'digital-outcomes-and-specialists'"
 
+
+class TestUpdateBrief(FrameworkSetupAndTeardown):
     def test_update_brief(self):
         self.setup_dummy_briefs(1)
 
@@ -403,6 +407,8 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
 
         assert res.status_code == 404
 
+
+class TestGetBrief(FrameworkSetupAndTeardown):
     def test_get_brief(self):
         self.setup_dummy_briefs(1, title="I need a Developer")
         res = self.client.get('/briefs/1')
@@ -462,6 +468,8 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
 
         assert res.status_code == 404
 
+
+class TestListBrief(FrameworkSetupAndTeardown):
     def test_list_briefs(self):
         self.setup_dummy_briefs(3)
 
@@ -687,6 +695,8 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         assert len(data['briefs']) == 7
         assert data['links'] == {}
 
+
+class TestPublishAndWithdrawBrief(FrameworkSetupAndTeardown):
     def test_publish_a_brief(self):
         self.setup_dummy_briefs(1, title='The Title')
 
@@ -782,25 +792,26 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         withdrawn_at = json.loads(res.get_data(as_text=True))['briefs']['withdrawnAt']
         assert withdrawn_at == original_withdrawn_at
 
-    def test_cannot_publish_a_brief_if_the_framework_is_no_longer_live(self):
+    def test_cannot_publish_a_brief_if_the_framework_is_not_live(self):
         self.setup_dummy_briefs(1, title='The title')
 
-        with self.app.app_context():
-            framework = Framework.query.get(5)
-            framework.status = 'expired'
-            db.session.add(framework)
-            db.session.commit()
+        for framework_status in [status for status in Framework.STATUSES if status != 'live']:
+            with self.app.app_context():
+                framework = Framework.query.get(5)
+                framework.status = framework_status
+                db.session.add(framework)
+                db.session.commit()
 
-        res = self.client.post(
-            '/briefs/1/publish',
-            data=json.dumps({
-                'updated_by': 'example'
-            }),
-            content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
+            res = self.client.post(
+                '/briefs/1/publish',
+                data=json.dumps({
+                    'updated_by': 'example'
+                }),
+                content_type='application/json')
+            data = json.loads(res.get_data(as_text=True))
 
-        assert res.status_code == 400
-        assert data['error'] == "Framework is not live"
+            assert res.status_code == 400
+            assert data['error'] == "Framework is not live"
 
     def test_publish_brief_makes_audit_event(self):
         self.setup_dummy_briefs(1, title='The Title')
@@ -848,6 +859,8 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             'briefStatus': 'withdrawn',
         }
 
+
+class TestDeleteBrief(FrameworkSetupAndTeardown):
     def test_can_delete_a_draft_brief(self):
         res = self.client.post(
             '/briefs',
@@ -933,6 +946,8 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         )
         assert res.status_code == 404
 
+
+class TestAddBriefClarificationQuestion(FrameworkSetupAndTeardown):
     def test_add_clarification_question(self):
         self.setup_dummy_briefs(1, title="The Title", status="live")
 
@@ -1042,23 +1057,26 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             "answer": "That",
         }
 
-    def test_cannot_make_a_draft_copy_of_a_brief_if_the_framework_is_closed(self):
+
+class TestCopyBrief(FrameworkSetupAndTeardown):
+    def test_cannot_make_a_draft_copy_of_a_brief_if_the_framework_is_not_live(self):
         self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
 
-        with self.app.app_context():
-            framework = Framework.query.get(5)
-            framework.status = 'expired'
-            db.session.add(framework)
-            db.session.commit()
+        for framework_status in [status for status in Framework.STATUSES if status != 'live']:
+            with self.app.app_context():
+                framework = Framework.query.get(5)
+                framework.status = framework_status
+                db.session.add(framework)
+                db.session.commit()
 
-        res = self.client.post(
-            "/briefs/1/copy",
-            data=json.dumps({'updated_by': 'example'}),
-            content_type="application/json")
-        data = json.loads(res.get_data(as_text=True))
+            res = self.client.post(
+                "/briefs/1/copy",
+                data=json.dumps({'updated_by': 'example'}),
+                content_type="application/json")
+            data = json.loads(res.get_data(as_text=True))
 
-        assert res.status_code == 400
-        assert data['error'] == "Framework is not live"
+            assert res.status_code == 400
+            assert data['error'] == "Framework is not live"
 
     def test_make_a_draft_copy_of_a_brief(self):
         # Set up brief with clarification question

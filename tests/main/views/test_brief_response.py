@@ -142,6 +142,15 @@ class CreateBriefResponseSharedTests(BaseBriefResponseTest, JSONUpdateTestMixin)
         assert data['briefResponses']['supplierName'] == 'Supplier 0'
         assert data['briefResponses']['briefId'] == self.brief_id
 
+    def test_create_new_brief_response_with_expired_framework(self, expired_dos_framework):
+        res = self.create_brief_response()
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 201, data
+        assert data['briefResponses']['supplierName'] == 'Supplier 0'
+        assert data['briefResponses']['briefId'] == self.brief_id
+
     def test_create_new_brief_response_with_missing_answer_to_page_question_will_error(self, live_dos_framework):
         res = self.client.post(
             '/brief-responses',
@@ -252,6 +261,24 @@ class CreateBriefResponseSharedTests(BaseBriefResponseTest, JSONUpdateTestMixin)
         assert res.status_code == 400
         assert 'Supplier is not eligible to apply to this brief' in res.get_data(as_text=True)
 
+    def test_cannot_create_a_brief_response_if_framework_status_is_not_live_or_expired(self, live_dos_framework):
+        framework_id = live_dos_framework['id']
+        for framework_status in ['coming', 'open', 'pending', 'standstill']:
+            with self.app.app_context():
+                db.session.execute(
+                    "UPDATE frameworks SET status=:status WHERE id = :framework_id",
+                    {
+                        'status': framework_status,
+                        'framework_id': framework_id,
+                    },
+                )
+
+                res = self.create_brief_response()
+                data = json.loads(res.get_data(as_text=True))
+
+                assert res.status_code == 400
+                assert data == {'error': 'Brief framework must be live or expired'}
+
     def test_cannot_respond_to_a_brief_that_isnt_live(self, live_dos_framework):
         with self.app.app_context():
             brief = Brief(
@@ -264,12 +291,6 @@ class CreateBriefResponseSharedTests(BaseBriefResponseTest, JSONUpdateTestMixin)
 
             assert res.status_code == 400
             assert "Brief must be live" in res.get_data(as_text=True)
-
-    def test_cannot_respond_to_an_expired_framework_brief(self, expired_dos_framework):
-        res = self.create_brief_response()
-
-        assert res.status_code == 400
-        assert "Brief framework must be live" in res.get_data(as_text=True)
 
     def test_cannot_respond_to_a_brief_more_than_once_from_the_same_supplier(self, live_dos_framework):
         self.create_brief_response()
@@ -528,19 +549,31 @@ class UpdateBriefResponseSharedTests(BaseBriefResponseTest):
             'briefResponseData': {'respondToEmailAddress': 'newemail@email.com'}
         }
 
+    def test_update_brief_response_with_expired_framework(self, expired_dos_framework):
+        res = self._update_brief_response(self.brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
+
+        assert res.status_code == 200
+
     def test_update_brief_response_that_does_not_exist_will_404(self, live_dos_framework):
         res = self._update_brief_response(100, {'respondToEmailAddress': 'newemail@email.com'})
         assert res.status_code == 404
 
-    def test_can_not_update_brief_response_for_framework_that_is_not_live(self, live_dos_framework):
-        with self.app.app_context():
-            # Change live framework to be expired
-            db.session.execute("UPDATE frameworks SET status='expired' WHERE slug='digital-outcomes-and-specialists'")
+    def test_can_not_update_brief_response_for_framework_that_is_not_live_or_expired(self, live_dos_framework):
+        for framework_status in ['coming', 'open', 'pending', 'standstill']:
+            with self.app.app_context():
+                db.session.execute(
+                    "UPDATE frameworks SET status=:status WHERE slug='digital-outcomes-and-specialists'",
+                    {'status': framework_status},
+                )
 
-            res = self._update_brief_response(self.brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
-            data = json.loads(res.get_data(as_text=True))
-            assert res.status_code == 400
-            assert data == {'error': 'Brief framework must be live'}
+                res = self._update_brief_response(
+                    self.brief_response_id,
+                    {'respondToEmailAddress': 'newemail@email.com'}
+                )
+
+                data = json.loads(res.get_data(as_text=True))
+                assert res.status_code == 400
+                assert data == {'error': 'Brief framework must be live or expired'}
 
     def test_can_not_update_brief_response_if_supplier_is_ineligible_for_brief(self, live_dos_framework):
         with mock.patch('app.main.views.brief_responses.get_supplier_service_eligible_for_brief') as mock_patch:
@@ -688,7 +721,19 @@ class SubmitBriefResponseSharedTests(BaseBriefResponseTest):
         assert res.status_code == 201
         self.brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
 
-    def test_valid_draft_brief_response_can_be_submitted(self, live_dos_framework):
+    def test_valid_draft_brief_response_can_be_submitted_for_live_framework(self, live_dos_framework):
+        self._setup_existing_brief_response()
+
+        with freeze_time('2016-9-28'):
+            res = self._submit_brief_response(self.brief_response_id)
+        assert res.status_code == 200
+
+        brief_response = json.loads(res.get_data(as_text=True))['briefResponses']
+
+        assert brief_response['status'] == 'submitted'
+        assert brief_response['submittedAt'] == '2016-09-28T00:00:00.000000Z'
+
+    def test_valid_draft_brief_response_can_be_submitted_for_expired_framework(self, expired_dos_framework):
         self._setup_existing_brief_response()
 
         with freeze_time('2016-9-28'):
@@ -729,16 +774,32 @@ class SubmitBriefResponseSharedTests(BaseBriefResponseTest):
         data = json.loads(repeat_res.get_data(as_text=True))
         assert data == {'error': 'Brief response must be a draft'}
 
-    def test_can_not_submit_a_brief_response_for_a_framework_that_is_not_live(self, live_dos_framework):
-        self._setup_existing_brief_response()
-        with self.app.app_context():
-            # Change live framework to be expired
-            db.session.execute("UPDATE frameworks SET status='expired' WHERE slug='digital-outcomes-and-specialists'")
+    def test_can_not_submit_a_brief_response_for_a_framework_that_is_not_live_or_expired(self, live_dos_framework):
+            with self.app.app_context():
+                for framework_status in ['coming', 'open', 'pending', 'standstill']:
 
-            res = self._submit_brief_response(self.brief_response_id)
-            data = json.loads(res.get_data(as_text=True))
-            assert res.status_code == 400
-            assert data == {'error': 'Brief framework must be live'}
+                    # If a brief response already exists delete the last one. Suppliers can only have one response.
+                    existing_brief_response = db.session.query(BriefResponse).all()
+                    if existing_brief_response:
+                        db.session.delete(existing_brief_response[-1])
+                        db.session.commit()
+
+                    # Make framework live so a brief response can be created.
+                    db.session.execute(
+                        "UPDATE frameworks SET status='live' WHERE slug='digital-outcomes-and-specialists'"
+                    )
+                    self._setup_existing_brief_response()
+
+                    # Set framework status to the invalid status currently under test.
+                    db.session.execute(
+                        "UPDATE frameworks SET status=:status WHERE slug='digital-outcomes-and-specialists'",
+                        {'status': framework_status},
+                    )
+
+                    res = self._submit_brief_response(self.brief_response_id)
+                    data = json.loads(res.get_data(as_text=True))
+                    assert res.status_code == 400
+                    assert data == {'error': 'Brief framework must be live or expired'}
 
     def test_can_not_submit_response_if_supplier_is_ineligble_for_brief(self, live_dos_framework):
         self._setup_existing_brief_response()
