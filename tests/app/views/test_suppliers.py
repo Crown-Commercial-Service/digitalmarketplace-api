@@ -113,11 +113,11 @@ class TestListSuppliers(BaseApplicationTest):
         with self.app.app_context():
             db.session.add(
                 Supplier(code=999, name=u"999 Supplier",
-                         address=Address(address_line="Asdf",
-                                         suburb="Asdf",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia')
+                         addresses=[Address(address_line="Asdf",
+                                            suburb="Asdf",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')]
                          )
             )
             self.setup_dummy_service(service_id='1230000000', supplier_code=999)
@@ -401,7 +401,7 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
 
     def test_bad_postal_code(self):
         payload = self.load_example_listing("Supplier")
-        payload['address']['postalCode'] = 'bad'
+        payload['addresses'][0]['postal_code'] = 'bad'
 
         response = self.post_supplier(payload)
         assert_equal(response.status_code, 400)
@@ -447,6 +447,37 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         response = self.post_supplier(payload)
         assert_equal(response.status_code, 201)
         assert 'newKey' in json.loads(response.data)['supplier']
+
+    def test_multiple_addresses_in_dict(self):
+        payload = self.load_example_listing("Supplier")
+        addresses = {
+            'addresses': {
+                '0': {
+                    'address_line': 'commonwealth st',
+                    'suburb': 'surrey hills',
+                    'state': 'NSW',
+                    'postal_code': '2001'
+                },
+                '1': {
+                    'address_line': 'line2',
+                    'suburb': 'suburb2',
+                    'state': 'ACT',
+                    'postal_code': '5001'
+
+                }
+            }
+        }
+
+        payload.update(addresses)
+        response = self.post_supplier(payload)
+        assert_equal(response.status_code, 201)
+
+        data = json.loads(response.data)['supplier']
+        assert 'addresses' in data
+        assert addresses['addresses']['0'].viewitems() <= data['addresses'][0].viewitems()
+        assert addresses['addresses']['1'].viewitems() <= data['addresses'][1].viewitems()
+        assert 'address' in data
+        assert addresses['addresses']['0'].viewitems() <= data['address'].viewitems()
 
 
 class TestSupplierSearch(BaseApplicationTest):
@@ -718,13 +749,6 @@ class TestDeleteAllSuppliers(BaseApplicationTest):
                     }),
                     content_type='application/json')
                 assert_equal(response.status_code, 201)
-
-    def test_delete_all(self):
-        with self.app.app_context():
-            assert_true(Supplier.query.all())
-            response = self.client.delete('/suppliers')
-            assert_equal(200, response.status_code)
-            assert_false(Supplier.query.all())
 
 
 class TestSupplierFrameworkUpdates(BaseApplicationTest):

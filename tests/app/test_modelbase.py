@@ -32,6 +32,7 @@ class TestModelbase(BaseApplicationTest):
                 for_update['new_key'] = 'new_value'
 
                 # don't test domains round trip as legacy values are round trip only
+                del for_update['address']
                 del for_update['domains']
 
                 s.update_from_json(for_update)

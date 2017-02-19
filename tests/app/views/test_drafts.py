@@ -32,11 +32,11 @@ class TestDraftServices(BaseApplicationTest):
         with self.app.app_context():
             db.session.add(
                 Supplier(code=1, name=u"Supplier 1",
-                         address=Address(address_line="{} Dummy Street 1",
-                                         suburb="Dummy",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'))
+                         addresses=[Address(address_line="{} Dummy Street 1",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')])
             )
             Framework.query.filter_by(slug='g-cloud-5') \
                 .update(dict(status='live'))
@@ -1084,11 +1084,11 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
         with self.app.app_context():
             db.session.add(
                 Supplier(code=1, name=u"Supplier 1",
-                         address=Address(address_line="{} Dummy Street 1",
-                                         suburb="Dummy",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'))
+                         addresses=[Address(address_line="{} Dummy Street 1",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')])
             )
 
             Framework.query.filter_by(slug='g-cloud-5') \
@@ -1199,11 +1199,11 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
 
         with self.app.app_context():
             db.session.add(Supplier(code=1, name=u"Supplier 1",
-                                    address=Address(address_line="{} Dummy Street 1",
-                                                    suburb="Dummy",
-                                                    state="ZZZ",
-                                                    postal_code="0000",
-                                                    country='Australia'))
+                                    addresses=[Address(address_line="{} Dummy Street 1",
+                                                       suburb="Dummy",
+                                                       state="ZZZ",
+                                                       postal_code="0000",
+                                                       country='Australia')])
                            )
 
             Framework.query.filter_by(slug='g-cloud-7').update(dict(status='open'))
@@ -1308,11 +1308,11 @@ class TestDOSServices(BaseApplicationTest):
 
             db.session.add(
                 Supplier(code=1, name=u"Supplier 1",
-                         address=Address(address_line="{} Dummy Street 1",
-                                         suburb="Dummy",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'))
+                         addresses=[Address(address_line="{} Dummy Street 1",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')])
             )
             db.session.commit()
 
@@ -1553,11 +1553,11 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
 
         with self.app.app_context():
             db.session.add(Supplier(code=1, name=u"Supplier 1",
-                                    address=Address(address_line="{} Dummy Street 1",
-                                                    suburb="Dummy",
-                                                    state="ZZZ",
-                                                    postal_code="0000",
-                                                    country='Australia'))
+                                    addresses=[Address(address_line="{} Dummy Street 1",
+                                                       suburb="Dummy",
+                                                       state="ZZZ",
+                                                       postal_code="0000",
+                                                       country='Australia')])
                            )
 
             Framework.query.filter_by(slug='g-cloud-7').update(dict(status='open'))

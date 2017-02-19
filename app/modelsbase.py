@@ -149,8 +149,14 @@ class MyModel(Model):
             subj = j[k]
 
             if isinstance(subj, Mapping):
-                from_json = c.from_json(subj)
+                if all(_.isdigit() for _ in subj.keys()):
+                    # {'0': {'a': 'b'}, '1': {'a': 'c'}}
+                    from_json = [c.from_json(_) for _ in sorted(subj.values())]
+                else:
+                    # {'a': 'b'}
+                    from_json = c.from_json(subj)
             else:
+                # [{'a': 'b'}, {'a': 'c'}]
                 from_json = [c.from_json(_) for _ in subj]
 
             setattr(self, k, from_json)

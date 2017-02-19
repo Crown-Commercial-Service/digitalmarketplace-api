@@ -4,13 +4,20 @@
   "code": 1,
   "description": "Working on things that matter.",
   "summary": "Simpler, clearer, faster public services.",
-  "address": {
-	  "addressLine": "50 Marcus Clarke Street",
+  "addresses": [{
+	  "address_line": "50 Marcus Clarke Street",
 	  "suburb": "Canberra",
 	  "state": "ACT",
-	  "postalCode": "2601",
+	  "postal_code": "2601",
 	  "country": "Australia"
   },
+  {
+    "address_line": "60 Marcus Clarke Street",
+    "suburb": "Sydney",
+    "state": "NSW",
+    "postal_code": "4053",
+    "country": "Australia"
+  }],
   "website": "https://www.dto.gov.au/",
   "extraLinks": [],
   "abn": "96 257 979 159",

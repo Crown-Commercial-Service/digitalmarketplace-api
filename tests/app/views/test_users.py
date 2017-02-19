@@ -350,11 +350,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             db.session.add(
                 Supplier(code=1,
                          name=u"Supplier 1",
-                         address=Address(address_line="{} Dummy Street",
-                                         suburb="Dummy",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'))
+                         addresses=[Address(address_line="{} Dummy Street",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')])
             )
             db.session.commit()
 
@@ -403,11 +403,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
         with self.app.app_context():
             db.session.add(
                 Supplier(code=1, name=u"Supplier 1",
-                         address=Address(address_line="{} Dummy Street",
-                                         suburb="Dummy",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'))
+                         addresses=[Address(address_line="{} Dummy Street",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')])
             )
             db.session.commit()
 
@@ -655,11 +655,11 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             supplier = Supplier(
                 code=456,
                 name="A test supplier",
-                address=Address(address_line="{} Dummy Street",
-                                suburb="Dummy",
-                                state="ZZZ",
-                                postal_code="0000",
-                                country='Australia')
+                addresses=[Address(address_line="{} Dummy Street",
+                                   suburb="Dummy",
+                                   state="ZZZ",
+                                   postal_code="0000",
+                                   country='Australia')]
             )
             supplier_user = User(
                 id=456,

@@ -49,11 +49,11 @@ class TestListServicesOrdering(BaseApplicationTest):
                          name=u"Supplier 1",
                          description="",
                          summary="",
-                         address=Address(address_line="{} Dummy Street 1",
-                                         suburb="Dummy",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'),
+                         addresses=[Address(address_line="{} Dummy Street 1",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')],
                          contacts=[],
                          references=[],
                          prices=[],
@@ -487,11 +487,11 @@ class TestPostService(BaseApplicationTest):
         with self.app.app_context():
             db.session.add(
                 Supplier(code=1, name=u"Supplier 1",
-                         address=Address(address_line="{} Dummy Street 1",
-                                         suburb="Dummy",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'))
+                         addresses=[Address(address_line="{} Dummy Street 1",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')])
             )
             db.session.commit()
 
@@ -1036,11 +1036,11 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
         with self.app.app_context():
             db.session.add(
                 Supplier(code=1, name=u"Supplier 1",
-                         address=Address(address_line="{} Dummy Street 1",
-                                         suburb="Dummy",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'))
+                         addresses=[Address(address_line="{} Dummy Street 1",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')])
             )
 
             db.session.commit()
@@ -1115,11 +1115,11 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
         with self.app.app_context():
             db.session.add(
                 Supplier(code=1, name=u"Supplier 1",
-                         address=Address(address_line="{} Dummy Street 1",
-                                         suburb="Dummy",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'))
+                         addresses=[Address(address_line="{} Dummy Street 1",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')])
             )
             db.session.add(Service(service_id="1234567890123456",
                                    supplier_code=1,
@@ -1234,11 +1234,11 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
         with self.app.app_context():
             db.session.add(
                 Supplier(code=1, name=u"Supplier 1",
-                         address=Address(address_line="{} Dummy Street 1",
-                                         suburb="Dummy",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'))
+                         addresses=[Address(address_line="{} Dummy Street 1",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')])
             )
 
             for index, status in enumerate(valid_statuses):
@@ -1401,11 +1401,11 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         with self.app.app_context():
             db.session.add(
                 Supplier(code=1, name=u"Supplier 1",
-                         address=Address(address_line="{} Dummy Street 1",
-                                         suburb="Dummy",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'))
+                         addresses=[Address(address_line="{} Dummy Street 1",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')])
             )
             db.session.commit()
 
@@ -1725,11 +1725,11 @@ class TestGetService(BaseApplicationTest):
             ))
             db.session.add(
                 Supplier(code=1, name=u"Supplier 1",
-                         address=Address(address_line="{} Dummy Street 1",
-                                         suburb="Dummy",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'))
+                         addresses=[Address(address_line="{} Dummy Street 1",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')])
             )
             db.session.add(Service(service_id="123-published-456",
                                    supplier_code=1,

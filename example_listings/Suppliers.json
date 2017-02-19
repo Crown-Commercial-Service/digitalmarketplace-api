@@ -5,13 +5,13 @@
 	  "code": 0,
 	  "description": "Example PTY LTD is an example company.",
 	  "summary": "An example company",
-	  "address": {
-		  "addressLine": "0 Foo Street",
+	  "addresses": [{
+		  "address_line": "0 Foo Street",
 		  "suburb": "Brisbane",
 		  "state": "QLD",
-		  "postalCode": "4120",
+		  "postal_code": "4120",
 		  "country": "Australia"
-	  },
+	  }],
 	  "website": "https://example.com/",
 	  "extraLinks": [{
 		  "url": "https://social-media.example.com/example-pty-ltd",
@@ -41,13 +41,13 @@
 	  "code": 1,
 	  "description": "Working on things that matter.",
 	  "summary": "Simpler, clearer, faster public services.",
-	  "address": {
-		  "addressLine": "50 Marcus Clarke Street",
+	  "addresses": [{
+		  "address_line": "50 Marcus Clarke Street",
 		  "suburb": "Canberra",
 		  "state": "ACT",
-		  "postalCode": "2601",
+		  "postal_code": "2601",
 		  "country": "Australia"
-	  },
+	  }],
 	  "website": "https://www.dto.gov.au/",
 	  "extraLinks": [],
 	  "abn": "96 257 979 159",

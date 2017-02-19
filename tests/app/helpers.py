@@ -57,11 +57,19 @@ INCOMING_APPLICATION_DATA = {
     "summary": "Summary",
     "website": "",
     "linkedin": "",
-    "address": {
-        "address_line": "Add",
-        "suburb": "sub",
-        "state": "state",
-        "postal_code": "2000"
+    "addresses": {
+        "0": {
+            "address_line": "Add",
+            "suburb": "sub",
+            "state": "state",
+            "postal_code": "2000"
+        },
+        "1": {
+            "address_line": "Add2",
+            "suburb": "sub2",
+            "state": "state2",
+            "postal_code": "3000"
+        }
     },
     "case_studies": {
         "c98932c6-b948-08f6-c782-6e3aa83451d4": {
@@ -217,11 +225,11 @@ class BaseApplicationTest(object):
                     name=u"Supplier {}".format(i),
                     description="",
                     summary="",
-                    address=Address(address_line="{} Dummy Street".format(i),
-                                    suburb="Dummy",
-                                    state="ZZZ",
-                                    postal_code="0000",
-                                    country='Australia'),
+                    addresses=[Address(address_line="{} Dummy Street".format(i),
+                                       suburb="Dummy",
+                                       state="ZZZ",
+                                       postal_code="0000",
+                                       country='Australia')],
                     contacts=[],
                     references=[],
                     prices=[],
@@ -262,12 +270,11 @@ class BaseApplicationTest(object):
                     data={
                         'seller_type': {'sme': True, 'start': False}
                     } if i == 2 else {},
-                    address=Address(address_line="{} Dummy Street".format(i),
-                                    suburb="Dummy",
-                                    state="ZZZ",
-                                    postal_code="0000",
-                                    country='Australia'),
-
+                    addresses=[Address(address_line="{} Dummy Street".format(i),
+                                       suburb="Dummy",
+                                       state="ZZZ",
+                                       postal_code="0000",
+                                       country='Australia')],
                     contacts=[],
                     references=[],
                     prices=prices,
@@ -290,11 +297,11 @@ class BaseApplicationTest(object):
                 abn=Supplier.DUMMY_ABN,
                 description="",
                 summary="",
-                address=Address(address_line="{} Dummy Street".format(i),
-                                suburb="Dummy",
-                                state="ZZZ",
-                                postal_code="0000",
-                                country='Australia'),
+                addresses=[Address(address_line="{} Dummy Street".format(i),
+                                   suburb="Dummy",
+                                   state="ZZZ",
+                                   postal_code="0000",
+                                   country='Australia')],
                 contacts=[],
                 references=[],
                 prices=prices,
@@ -317,11 +324,11 @@ class BaseApplicationTest(object):
                         name=u"{} suppliers Ltd {}".format(initial, i),
                         description="",
                         summary="",
-                        address=Address(address_line="{} Additional Street".format(i),
-                                        suburb="Additional",
-                                        state="ZZZ",
-                                        postal_code="0000",
-                                        country='Australia'),
+                        addresses=[Address(address_line="{} Additional Street".format(i),
+                                           suburb="Additional",
+                                           state="ZZZ",
+                                           postal_code="0000",
+                                           country='Australia')],
                         contacts=[],
                         references=[],
                         prices=[],
@@ -374,11 +381,11 @@ class BaseApplicationTest(object):
             db.session.add(
                 Supplier(code=TEST_SUPPLIERS_COUNT, name=u"Supplier {}"
                          .format(TEST_SUPPLIERS_COUNT),
-                         address=Address(address_line="{} Empty Street".format(TEST_SUPPLIERS_COUNT),
-                                         suburb="Empty",
-                                         state="ZZZ",
-                                         postal_code="0000",
-                                         country='Australia'),
+                         addresses=[Address(address_line="{} Empty Street".format(TEST_SUPPLIERS_COUNT),
+                                            suburb="Empty",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')],
                          )
             )
             db.session.commit()

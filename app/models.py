@@ -197,26 +197,15 @@ class Address(db.Model):
     postal_code = db.Column(db.String, index=False, nullable=False)
     country = db.Column(db.String, index=False, nullable=False, default='Australia')
 
+    supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=True)
+    supplier = db.relationship('Supplier', lazy='joined')
+
     @staticmethod
     def from_json(as_dict):
-        as_dict = normalize_key_case(as_dict)
+        if 'links' in as_dict:
+            del as_dict['links']
 
-        try:
-            return Address(address_line=as_dict.get('address_line'),
-                           suburb=as_dict.get('suburb'),
-                           state=as_dict.get('state'),
-                           postal_code=as_dict.get('postal_code'),
-                           country=as_dict.get('country', 'Australia'))
-        except KeyError as e:
-            raise ValidationError('Contact missing required field: {}'.format(e))
-
-    def serializable_after(self, j):
-        legacy = {
-            'addressLine': self.address_line,
-            'postalCode': self.postal_code
-        }
-        j.update(legacy)
-        return j
+        return Address(**as_dict)
 
     @validates('postal_code')
     def validate_postal_code(self, key, code):
@@ -529,8 +518,7 @@ class Supplier(db.Model):
     long_name = db.Column(db.String, nullable=True)
     summary = db.Column(db.String, index=False, nullable=True)
     description = db.Column(db.String, index=False, nullable=True)
-    address_id = db.Column(db.Integer, db.ForeignKey('address.id'), index=False, nullable=False)
-    address = db.relationship('Address', single_parent=True, cascade='all, delete-orphan')
+    addresses = db.relationship('Address', single_parent=True, cascade='all, delete-orphan')
     website = db.Column(db.String, index=False, nullable=True)
     linkedin = db.Column(db.String, index=False, nullable=True)
     extra_links = db.relationship('WebsiteLink',
@@ -655,6 +643,16 @@ class Supplier(db.Model):
     def get_link(self):
         return url_for(".get_supplier", code=self.code)
 
+    # TODO: address.serializable hits recursion limit
+    def serialize_address(self, address):
+        return {
+            'address_line': address.address_line,
+            'suburb': address.suburb,
+            'state': address.state,
+            'postal_code': address.postal_code,
+            'country': address.country
+        }
+
     def serializable_after(self, j):
         legacy = {
             'longName': self.long_name,
@@ -681,6 +679,9 @@ class Supplier(db.Model):
             j['representative'] = contact.name
             j['email'] = contact.email
             j['phone'] = contact.phone
+
+        if self.addresses:
+            j['address'] = self.serialize_address(self.addresses[0])
 
         return j
 
