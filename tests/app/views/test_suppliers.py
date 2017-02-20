@@ -16,6 +16,7 @@ from pendulum import create as dt
 
 from collections import Mapping, Iterable
 from six import string_types
+import six
 
 
 class TestGetSupplier(BaseApplicationTest):
@@ -474,10 +475,24 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
 
         data = json.loads(response.data)['supplier']
         assert 'addresses' in data
-        assert addresses['addresses']['0'].viewitems() <= data['addresses'][0].viewitems()
-        assert addresses['addresses']['1'].viewitems() <= data['addresses'][1].viewitems()
-        assert 'address' in data
-        assert addresses['addresses']['0'].viewitems() <= data['address'].viewitems()
+
+        def assert_subset(d_sub, d_super):
+            assert six.viewitems(d_sub) <= six.viewitems(d_super)
+
+        assert_subset(
+            addresses['addresses']['0'],
+            data['addresses'][0]
+        )
+
+        assert_subset(
+            addresses['addresses']['1'],
+            data['addresses'][1]
+        )
+
+        assert_subset(
+            addresses['addresses']['0'],
+            data['address']
+        )
 
 
 class TestSupplierSearch(BaseApplicationTest):

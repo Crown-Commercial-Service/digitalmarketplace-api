@@ -151,7 +151,8 @@ class MyModel(Model):
             if isinstance(subj, Mapping):
                 if all(_.isdigit() for _ in subj.keys()):
                     # {'0': {'a': 'b'}, '1': {'a': 'c'}}
-                    from_json = [c.from_json(_) for _ in sorted(subj.values())]
+                    items = [(int(i), v) for i, v in dict(subj).items()]
+                    from_json = [c.from_json(v) for _, v in sorted(items)]
                 else:
                     # {'a': 'b'}
                     from_json = c.from_json(subj)
@@ -160,7 +161,6 @@ class MyModel(Model):
                 from_json = [c.from_json(_) for _ in subj]
 
             setattr(self, k, from_json)
-
         if hasattr(self, 'data'):
             leftover_dict = {k: j[k] for k in leftovers}
 
