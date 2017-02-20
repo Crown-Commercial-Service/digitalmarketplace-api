@@ -7,7 +7,7 @@ from flask import current_app
 from nose.tools import assert_equal, assert_in, assert_is_none, assert_is_not_none, assert_true, assert_false
 
 from app import db
-from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, Domain, User, utcnow
+from app.models import Address, Supplier, AuditEvent, SupplierFramework, Framework, Domain, User, utcnow, Product
 from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, assert_api_compatible, is_sorted
 from decimal import Decimal
 
@@ -506,6 +506,16 @@ class TestSupplierSearch(BaseApplicationTest):
                                data=json.dumps(query_body),
                                content_type='application/json')
 
+    def search_products(self, query_body, **args):
+        if args:
+            params = '&'.join('{}={}'.format(k, urlparse.quote(v)) for k, v in args.items())
+            q = "?{}".format(params)
+        else:
+            q = ''
+        return self.client.get('/products/search{}'.format(q),
+                               data=json.dumps(query_body),
+                               content_type='application/json')
+
     def post_supplier(self, supplier):
         return self.client.post(
             '/suppliers',
@@ -514,9 +524,12 @@ class TestSupplierSearch(BaseApplicationTest):
             }),
             content_type='application/json')
 
-    def do_search(self, search_json):
+    def do_search(self, search_json, products=False):
         with self.app.app_context():
-            response = self.search(search_json)
+            if products:
+                response = self.search_products(search_json)
+            else:
+                response = self.search(search_json)
             assert_equal(response.status_code, 200)
             result = json.loads(response.get_data())
         hits = result['hits']['hits']
@@ -538,13 +551,6 @@ class TestSupplierSearch(BaseApplicationTest):
         response = self.search({'query': {'term': {'code': 654321}}})
         assert_equal(response.status_code, 200)
 
-        result = json.loads(response.get_data())
-        assert_equal(result['hits']['total'], 0)
-        assert_equal(len(result['hits']['hits']), 0)
-
-    def test_example_pty_ltd_missing(self):
-        response = self.search({'query': {'term': {'name': 'Example'}}})
-        assert_equal(response.status_code, 200)
         result = json.loads(response.get_data())
         assert_equal(result['hits']['total'], 0)
         assert_equal(len(result['hits']['hits']), 0)
@@ -585,12 +591,24 @@ class TestSupplierSearch(BaseApplicationTest):
             },
         }
 
+        TRANSITION_DOMAIN_SEARCH = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "terms": {
+                            "domains.assessed": ['Data science', 'Cyber security']
+                        }
+                    }
+                }
+            },
+        }
+
         NEW_DOMAIN_SEARCH = {
             "query": {
                 "filtered": {
                     "filter": {
                         "terms": {
-                            "domains.assessed": ['Data science', 'Cyber security', 'Content and Publishing']
+                            "domains.assessed": ['Data science', 'Content and Publishing']
                         }
                     }
                 }
@@ -617,8 +635,6 @@ class TestSupplierSearch(BaseApplicationTest):
             "sort": [{'name': {"sort_by": "latest", "mode": "min"}}]
         }
 
-        TRANSITION_DOMAIN_SEARCH = NEW_DOMAIN_SEARCH
-
         results = self.do_search(MATCH_ALL_SEARCH)
 
         assert len(results) == 5
@@ -637,9 +653,7 @@ class TestSupplierSearch(BaseApplicationTest):
 
         results = self.do_search(TRANSITION_DOMAIN_SEARCH)
         assert [_['name'] for _ in results] == [
-            'aaaaaaaaaaaaaaaaa',
-            'Supplier 1',
-            'Supplier 2'
+            'Supplier 1'
         ]
 
         results = self.do_search(SELLER_TYPES_SEARCH)
@@ -656,9 +670,33 @@ class TestSupplierSearch(BaseApplicationTest):
         with self.app.app_context():
             current_app.config['LEGACY_ROLE_MAPPING'] = False
             results = self.do_search(NEW_DOMAIN_SEARCH)
-            assert len(results) == 2
-            assert [_['name'] for _ in results] == ['aaaaaaaaaaaaaaaaa', 'Supplier 2']
+            assert [_['name'] for _ in results] == ['Supplier 2']
             current_app.config['LEGACY_ROLE_MAPPING'] = True
+
+    def test_product_search_results(self):
+        self.setup_dummy_suppliers_with_old_and_new_domains(5)
+
+        PRODUCT_SEARCH = {
+            'sort_dir': 'z-a',
+            'domains': ['Content and Publishing', 'Data science'],
+        }
+
+        results = self.do_search(PRODUCT_SEARCH, products=True)
+        titles = [_['name'] for _ in results]
+
+        assert titles == ['zzz 3', 'otherproduct 3']
+
+        PRODUCT_SEARCH_WITH_TERM_AND_SELLER_TYPE = {
+            'seller_types': ['start_up'],
+            'search_term': 'otherproduct'
+        }
+        results = self.do_search(PRODUCT_SEARCH_WITH_TERM_AND_SELLER_TYPE, products=True)
+
+        titles = [_['name'] for _ in results]
+
+        assert titles == [
+            'otherproduct 2'
+        ]
 
 
 class TestCounts(BaseApplicationTest):

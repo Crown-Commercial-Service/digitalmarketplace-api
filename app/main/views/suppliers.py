@@ -4,16 +4,20 @@ from flask import abort, current_app, jsonify, request, url_for
 from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.sql.expression import true
 from sqlalchemy.sql import cast
-from sqlalchemy import Boolean
+from sqlalchemy import Boolean, select, column
+from sqlalchemy.dialects.postgresql import ARRAY, array
+from sqlalchemy.dialects import postgresql as postgres
+from sqlalchemy import String, literal
+from sqlalchemy.types import TEXT
 
 from .. import main
 from ... import db
 from ...models import (
     Supplier, AuditEvent, SupplierFramework, Framework, PriceSchedule, User, Domain, Application,
-    ServiceRole, SupplierDomain
+    ServiceRole, SupplierDomain, Product
 )
 
-from sqlalchemy.sql import func, desc, or_, asc
+from sqlalchemy.sql import func, desc, or_, asc, and_
 from functools import reduce
 
 from app.utils import (
@@ -114,6 +118,102 @@ def get_suppliers_stats():
     return jsonify(suppliers=suppliers)
 
 
+def _is_seller_type(typecode):
+    return cast(Supplier.data[('seller_type', typecode)].astext, Boolean) == True  # noqa
+
+
+@main.route('/products/search', methods=['GET'])
+def product_search():
+    search_query = get_json_from_request()
+
+    offset = get_nonnegative_int_or_400(request.args, 'from', 0)
+    result_count = get_positive_int_or_400(request.args, 'size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'])
+
+    sort_dir = search_query.get('sort_dir', 'asc')
+    sort_by = search_query.get('sort_by', None)
+    domains = search_query.get('domains', None)
+    seller_types = search_query.get('seller_types', None)
+    search_term = search_query.get('search_term', None)
+
+    q = db.session.query(Product).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
+    q = q.group_by(Product.id, Supplier.id)
+
+    if domains is not None:
+        d_agg = postgres.array_agg(cast(Domain.name, TEXT))
+        q = q.having(d_agg.contains(array(domains)))
+
+    if seller_types is not None:
+        selected_seller_types = select(
+            [postgres.array_agg(column('key'))],
+            from_obj=func.json_each_text(Supplier.data[('seller_type',)]),
+            whereclause=cast(column('value'), Boolean)
+        ).as_scalar()
+
+        q = q.filter(selected_seller_types.contains(array(seller_types)))
+
+    if sort_dir in ('desc', 'z-a'):
+        ob = [desc(Product.name)]
+    else:
+        ob = [asc(Product.name)]
+
+    if search_term:
+        ob = [
+            desc(
+                func.similarity(
+                    search_term,
+                    Product.name)
+            ),
+            desc(
+                func.similarity(
+                    search_term,
+                    Product.summary)
+            )
+        ] + ob
+
+    q = q.order_by(*ob)
+
+    if search_term:
+        NAME_MINIMUM = \
+            current_app.config['SEARCH_MINIMUM_MATCH_SCORE_NAME']
+        SUMMARY_MINIMUM = \
+            current_app.config['SEARCH_MINIMUM_MATCH_SCORE_SUMMARY']
+
+        condition = or_(
+            func.similarity(search_term, Product.name) > NAME_MINIMUM,
+            func.similarity(search_term, Product.summary) >= SUMMARY_MINIMUM
+        )
+        q = q.filter(condition)
+
+    results = list(q)
+
+    # remove 'hidden' example listing from result
+    results = [_ for _ in results if _.supplier.abn != Supplier.DUMMY_ABN]
+
+    if domains:
+        # this code includes lecacy domains in results but is slower.
+        # can be removed once fully migrated to new domains.
+        results = [
+            _ for _ in results
+            if (
+                (set(_.supplier.assessed_domains) | set(_.supplier.unassessed_domains)) >= set(domains)
+            )
+        ]
+
+    sliced_results = results[offset:offset+result_count]
+
+    result = {
+        'hits': {
+            'total': len(results),
+            'hits': [{'_source': r} for r in sliced_results]
+        }
+    }
+
+    try:
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify(message=str(e)), 500
+
+
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
     search_query = get_json_from_request()
@@ -170,6 +270,8 @@ def supplier_search():
     else:
         q = db.session.query(Supplier).outerjoin(PriceSchedule).outerjoin(ServiceRole)
 
+    q = q.group_by(Supplier.id)
+
     try:
         code = search_query['query']['term']['code']
         q = q.filter(Supplier.code == code)
@@ -179,20 +281,20 @@ def supplier_search():
     if roles_list is not None:
         if new_domains:
             if EXCLUDE_LEGACY_ROLES:
-                # can use this more efficient and faster code once
-                # lecacy roles have been fully migrated
-                condition = reduce(or_, ((Domain.name == _) for _ in roles_list))
-                q = q.filter(condition)
+                d_agg = postgres.array_agg(cast(Domain.name, TEXT))
+                q = q.having(d_agg.contains(array(roles_list)))
         else:
-            condition = reduce(or_, (ServiceRole.name.like('%{}'.format(_)) for _ in roles_list))
-            q = q.filter(condition)
+            sr_agg = postgres.array_agg(cast(func.substring(ServiceRole.name, 8), TEXT))
+            q = q.having(sr_agg.contains(array(roles_list)))
 
     if seller_types_list is not None:
-        def is_seller_type(typecode):
-            return cast(Supplier.data[('seller_type', typecode)].astext, Boolean) == True  # noqa
+        selected_seller_types = select(
+            [postgres.array_agg(column('key'))],
+            from_obj=func.json_each_text(Supplier.data[('seller_type',)]),
+            whereclause=cast(column('value'), Boolean)
+        ).as_scalar()
 
-        condition = reduce(or_, (is_seller_type(_) for _ in seller_types_list))
-        q = q.filter(condition)
+        q = q.filter(selected_seller_types.contains(array(seller_types_list)))
 
     if sort_by:
         if sort_by == 'latest':
@@ -237,7 +339,7 @@ def supplier_search():
     results = list(q)
 
     # remove 'hidden' example listing from result
-    results = [_ for _ in results if _.abn != _.DUMMY_ABN]
+    results = [_ for _ in results if _.abn != Supplier.DUMMY_ABN]
 
     if roles_list and new_domains and not EXCLUDE_LEGACY_ROLES:
         # this code includes lecacy domains in results but is slower.
@@ -245,7 +347,7 @@ def supplier_search():
         results = [
             _ for _ in results
             if (
-                (set(_.assessed_domains) | set(_.unassessed_domains)) & set(roles_list)
+                (set(_.assessed_domains) | set(_.unassessed_domains)) >= set(roles_list)
             )
         ]
 

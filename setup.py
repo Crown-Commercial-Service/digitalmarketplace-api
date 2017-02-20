@@ -25,7 +25,7 @@ setup(
         'Flask-Script',
         'Flask-SQLAlchemy',
         'psycopg2',
-        'SQLAlchemy==1.0.5',
+        'SQLAlchemy',
         'SQLAlchemy-Utils',
         'streql',
         'newrelic',

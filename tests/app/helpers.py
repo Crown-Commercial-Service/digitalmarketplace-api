@@ -11,7 +11,7 @@ from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
 from app.models import Address, Service, Supplier, Framework, Lot, User, FrameworkLot, \
-    Brief, utcnow, Application, PriceSchedule
+    Brief, utcnow, Application, PriceSchedule, Product
 
 from collections import Mapping, Iterable
 from six import string_types
@@ -268,27 +268,38 @@ class BaseApplicationTest(object):
                     description="",
                     summary=summary,
                     data={
-                        'seller_type': {'sme': True, 'start': False}
-                    } if i == 2 else {},
-                    addresses=[Address(address_line="{} Dummy Street".format(i),
-                                       suburb="Dummy",
-                                       state="ZZZ",
-                                       postal_code="0000",
-                                       country='Australia')],
+                        'seller_type': {'sme': True, 'start_up': True}
+                    } if i == 2 else {'sme': True, 'start_up': False},
+                    addresses=[
+                        Address(
+                            address_line="{} Dummy Street".format(i),
+                            suburb="Dummy",
+                            state="ZZZ",
+                            postal_code="0000",
+                            country='Australia'
+                        )
+                    ],
                     contacts=[],
                     references=[],
                     prices=prices,
                     last_update_time=t + pendulum.interval(seconds=(i % 3))
                 )
 
+                if i == 2:
+                    s.add_unassessed_domain('Data science')
+
                 if i == 4:
                     s.add_unassessed_domain('Content and Publishing')
 
                 if i == 3:
                     s.add_unassessed_domain('Content and Publishing')
-
                     s.add_unassessed_domain('Data science')
                     s.update_domain_assessment_status('Data science', 'assessed')
+
+                p1 = Product(name='zzz {}'.format(i), summary='summary {}'.format(i))
+                p2 = Product(name='otherproduct {}'.format(i), summary='othersummary {}'.format(i))
+
+                s.products = [p1, p2]
 
                 db.session.add(s)
 

@@ -15,8 +15,8 @@ from app import db, create_app
 from app.models import (
     User, Lot, Framework, Service,
     Supplier, SupplierFramework,
-    SupplierDomain, Domain,
-    Brief, BriefResponse,
+    SupplierDomain, Domain, Product,
+    Brief, BriefResponse, Address,
     ValidationError,
     BriefClarificationQuestion,
     WorkOrder, ServiceCategory, ServiceRole, Application,
@@ -89,6 +89,34 @@ def test_framework_should_accept_valid_statuses():
             )
             db.session.add(f)
             db.session.commit()
+
+
+def test_product_models(app_context):
+    address = Address(state='NSW', postal_code='1234')
+    product = Product(name='product')
+
+    supplier = Supplier(name='supplier', addresses=[address], products=[product])
+
+    supplier.products = [product]
+    db.session.add(supplier)
+    db.session.commit()
+
+    supplier = Supplier.query.all()[0]
+    assert supplier.products == [product]
+
+    db.session.delete(supplier)
+    db.session.commit()
+
+    # confirm associated objects are gone too
+    assert Product.query.all() == []
+    assert Address.query.all() == []
+
+    JSON = {
+        'name': 'product',
+        'summary': 'summary of product'
+    }
+
+    assert Product.from_json(JSON).serializable == Product(**JSON).serializable
 
 
 class TestBriefs(BaseApplicationTest):

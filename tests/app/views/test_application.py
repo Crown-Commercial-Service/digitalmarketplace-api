@@ -3,16 +3,31 @@ import mock
 
 from tests.app.helpers import BaseApplicationTest
 
-from app.models import db, AuditEvent, Framework, User, utcnow, Agreement
+from app.models import db, AuditEvent, Framework, User, utcnow, Agreement, Product
 
 from itertools import tee
 from six.moves import zip as izip
 
 
 def test_approval(sample_submitted_application):
-    assert sample_submitted_application.supplier is None
+    a = sample_submitted_application
+    assert a.supplier is None
     sample_submitted_application.set_approval(True)
-    assert sample_submitted_application.supplier is not None
+    assert a.supplier is not None
+
+    product_query = Product.query.filter(Product.supplier_code == a.supplier.code)
+    products = product_query.all()
+    assert a.supplier.products == products
+
+    product_from_submitted = a.data['products']['0']
+    product_from_submitted['id'] = products[0].id
+    product_from_submitted['supplier_code'] = a.supplier.code
+    product_from_submitted['links'] = {
+        'self': '/products/{}'.format(products[0].id),
+        'supplier': '/suppliers/{}'.format(a.supplier.code)
+    }
+
+    assert a.supplier.serializable['products'] == [product_from_submitted]
 
 
 class BaseApplicationsTest(BaseApplicationTest):

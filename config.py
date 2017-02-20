@@ -13,7 +13,7 @@ class Config:
     AUTH_REQUIRED = True
     DM_HTTP_PROTO = 'http'
     # Logging
-    DM_LOG_LEVEL = 'DEBUG'
+    DM_LOG_LEVEL = 'INFO'
     DM_LOG_PATH = None
     DM_APP_NAME = 'api'
     DM_REQUEST_ID_HEADER = 'DM-Request-ID'
@@ -111,6 +111,7 @@ class Config:
 class Test(Config):
     DM_SEARCH_API_AUTH_TOKEN = 'test'
     DM_SEARCH_API_URL = 'http://localhost'
+    DM_LOG_LEVEL = 'WARN'
     DEBUG = True
     ES_ENABLED = False
     SQLALCHEMY_DATABASE_URI = 'postgresql:///digitalmarketplace_test'
@@ -142,6 +143,7 @@ class Development(Config):
     DM_SEARCH_API_AUTH_TOKEN = 'myToken'
     DM_SEARCH_API_URL = 'http://localhost:5001'
     DM_API_ADMIN_PASSWORD = 'admin'
+    DM_LOG_LEVEL = 'INFO'
 
     FEATURE_FLAGS = {
         'TRANSACTION_ISOLATION': False

@@ -18,7 +18,7 @@ from migrations import \
     load_from_app_model, load_test_fixtures, load_from_alembic_migrations
 
 
-INIT_TEST_DB_WITH_ALEMBIC = True
+INIT_TEST_DB_WITH_ALEMBIC = False
 
 
 @pytest.fixture(autouse=True, scope='session')
@@ -41,6 +41,13 @@ def db_initialization(request):
 @pytest.fixture(scope='session')
 def app(request):
     return create_app('test')
+
+
+@pytest.fixture()
+def app_context():
+    app = create_app('test')
+    with app.app_context() as c:
+        yield c
 
 
 def application_json_examples():

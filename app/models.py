@@ -534,6 +534,7 @@ class Supplier(db.Model):
         cascade='all, delete-orphan'
     )
     case_studies = db.relationship('CaseStudy', single_parent=True, cascade='all, delete-orphan')
+    products = db.relationship('Product', single_parent=True, cascade='all, delete-orphan')
     references = db.relationship('SupplierReference', single_parent=True, cascade='all, delete-orphan')
     prices = db.relationship('PriceSchedule', single_parent=True, cascade='all, delete-orphan')
     status = db.Column(
@@ -766,8 +767,39 @@ class Domain(db.Model):
             d = Domain.query.filter_by(id=name_or_id).first()
 
         if not d:
-            raise ValidationError('bad domain name: {}'.format(name))
+            raise ValidationError('cannot find domain: {}'.format(name_or_id))
         return d
+
+
+class Product(db.Model):
+    __tablename__ = 'product'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    pricing = db.Column(db.String)
+    summary = db.Column(db.String)
+    support = db.Column(db.String)
+    website = db.Column(db.String)
+
+    supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
+
+    supplier = db.relationship('Supplier', lazy='select', innerjoin=True)
+
+    @staticmethod
+    def get_by_name_or_id(name_or_id):
+        if isinstance(name_or_id, six.string_types):
+            d = Product.query.filter(
+                func.lower(Product.name) == func.lower(name_or_id)
+            ).first()
+        else:
+            d = Product.query.filter_by(id=name_or_id).first()
+
+        if not d:
+            raise ValidationError('cannot find product: {}'.format(name_or_id))
+        return d
+
+    @staticmethod
+    def from_json(data):
+        return Product(**data)
 
 
 class SupplierFramework(db.Model):
