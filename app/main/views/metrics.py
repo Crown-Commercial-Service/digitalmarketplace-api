@@ -22,7 +22,7 @@ def get_metrics():
 
     brief_response_count = BriefResponse.query\
         .filter(BriefResponse.data.isnot(None))\
-        .order_by(desc(BriefResponse.created_at)).all().count(BriefResponse.id)
+        .order_by(desc(BriefResponse.created_at)).count()
     metrics["brief_response_count"] = {"value": brief_response_count, "ts": timestamp}
 
     buyer_count = json.loads(users.get_buyers_stats().data)["buyers"]['total']
