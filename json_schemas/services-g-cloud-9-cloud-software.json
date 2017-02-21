@@ -1,6 +1,102 @@
 {
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "freeVersionLink": {
+              "type": "null"
+            },
+            "freeVersionTrialOption": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "freeVersionTrialOption": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "freeVersionTrialOption"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "freeVersionDescription": {
+              "type": "null"
+            },
+            "freeVersionTrialOption": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "freeVersionTrialOption": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "freeVersionTrialOption",
+            "freeVersionDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityGovernanceStandards": {
+              "items": {
+                "enum": [
+                  "CSA CCM v3.0",
+                  "ISO/IEC 27001"
+                ]
+              }
+            },
+            "securityGovernanceStandardsOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityGovernanceStandards": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "CSA CCM v3.0",
+                    "ISO/IEC 27001"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityGovernanceStandards",
+            "securityGovernanceStandardsOther"
+          ]
+        }
+      ]
+    }
+  ],
   "properties": {
     "API": {
       "type": "boolean"
@@ -938,7 +1034,6 @@
     "endOfContractDataExtraction",
     "endOfContractProcess",
     "equipmentDisposalApproach",
-    "freeVersionDescription",
     "freeVersionTrialOption",
     "gettingStarted",
     "guaranteedAvailability",
@@ -978,7 +1073,6 @@
     "securityGovernanceAccreditation",
     "securityGovernanceApproach",
     "securityGovernanceStandards",
-    "securityGovernanceStandardsOther",
     "serviceAddOnDetails",
     "serviceAddOnType",
     "serviceBenefits",

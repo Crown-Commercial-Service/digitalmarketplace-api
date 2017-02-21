@@ -593,6 +593,115 @@ def test_brief_response_nice_to_have_requirements():
         assert "object" in error_messages
 
 
+def test_g9_followup_questions():
+
+    def check(schema, required_fields, data, errors):
+        api_errors = get_validation_errors(
+            schema_name, data, enforce_required=False, required_fields=required_fields)
+
+        assert api_errors == errors
+
+    for schema_name in ("services-g-cloud-9-cloud-software", "services-g-cloud-9-cloud-hosting"):
+
+        # Valid responses for boolean question with followup
+
+        yield check, schema_name, ["freeVersionTrial"], {
+            "freeVersionTrialOption": False
+        }, {}
+
+        yield check, schema_name, ["freeVersionTrialOption"], {
+            "freeVersionTrialOption": True,
+            "freeVersionDescription": "description",
+            "freeVersionLink": "https://gov.uk",
+        }, {}
+
+        # Missing followup answers
+
+        yield check, schema_name, ["freeVersionTrialOption"], {
+            "freeVersionTrialOption": True,
+        }, {
+            "freeVersionDescription": "answer_required",
+        }
+
+        yield check, schema_name, ["freeVersionTrialOption"], {
+            "freeVersionTrialOption": True,
+            "freeVersionLink": "https://gov.uk",
+        }, {
+            "freeVersionDescription": "answer_required",
+        }
+
+        # Missing followup question is not required if it's optional
+
+        yield check, schema_name, ["freeVersionTrialOption"], {
+            "freeVersionTrialOption": True,
+            "freeVersionDescription": "description",
+        }, {}
+
+        # Followup answers when none should be present. These return the original
+        # schema error since they shouldn't happen when request is coming from the
+        # frontend app so we don't need to display an error message.
+
+        data = {
+            "freeVersionTrialOption": False,
+            "freeVersionLink": "https://gov.uk",
+        }
+        yield check, schema_name, ["freeVersionTrialOption"], data, {
+            '_form': [u'{} is not valid under any of the given schemas'.format(data)]
+        }
+
+        data = {
+            "freeVersionTrialOption": False,
+            "freeVersionDescription": "description",
+        }
+        yield check, schema_name, ["freeVersionTrialOption"], data, {
+            '_form': [u'{} is not valid under any of the given schemas'.format(data)]
+        }
+
+        # Followup answers when the original question answer is missing
+
+        yield check, schema_name, ["freeVersionTrialOption"], {
+            "freeVersionDescription": "description",
+            "freeVersionLink": "https://gov.uk",
+        }, {"freeVersionTrialOption": "answer_required"}
+
+        # Valid responses for checkbox question with followups
+
+        yield check, schema_name, ["securityGovernanceStandards"], {
+            "securityGovernanceStandards": ["CSA CCM v3.0"]
+        }, {}
+
+        yield check, schema_name, ["securityGovernanceStandards"], {
+            "securityGovernanceStandards": ["CSA CCM v3.0", "Other"],
+            "securityGovernanceStandardsOther": "some other standards"
+        }, {}
+
+        # Missing followup answers for checkbox question
+
+        yield check, schema_name, ["securityGovernanceStandards"], {
+            "securityGovernanceStandards": ["CSA CCM v3.0", "Other"]
+        }, {
+            "securityGovernanceStandardsOther": "answer_required"
+        }
+
+        # Followup answers when none should be present
+
+        data = {
+            "securityGovernanceStandards": ["CSA CCM v3.0"],
+            "securityGovernanceStandardsOther": "some other standards"
+        }
+        yield check, schema_name, ["securityGovernanceStandards"], data, {
+            "_form": [u'{} is not valid under any of the given schemas'.format(data)]
+        }
+
+        # Followup answers when the original question answer is missing
+
+        yield check, schema_name, ["securityGovernanceStandards"], {
+            "securityGovernanceStandardsOther": "some other standards"
+        }, {
+            "securityGovernanceStandards": "answer_required"
+        }
+
+
 def test_api_type_is_optional():
     data = load_example_listing("G6-PaaS")
     del data["apiType"]

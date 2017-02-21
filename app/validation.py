@@ -168,7 +168,7 @@ def translate_json_schema_errors(errors, json_data):
     form_errors = []
     for error in errors:
         # validate follow-up questions are answered: eg evidence given for a 'yes' nice-to-have
-        if error.validator == 'oneOf':
+        if error.validator == 'oneOf' and error.path:
             key, index = error.path
             if key not in error_map:
                 error_map[key] = []
@@ -194,6 +194,14 @@ def translate_json_schema_errors(errors, json_data):
                     'index': index,
                     'error': error.message
                 })
+
+        elif error.validator == 'oneOf':
+            required_contexts = [e for e in error.context if e.validator == 'required']
+            if required_contexts:
+                field = re.search(r"'(.*)'", required_contexts[0].message).group(1)
+                error_map[field] = 'answer_required'
+            else:
+                form_errors.append(error.message)
 
         # validate fields two deep that have required properties e.g. no evidence given for essentialRequirements[1]
         elif error.path and len(error.path) == 2 and error.validator == 'required':
