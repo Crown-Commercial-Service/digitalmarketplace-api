@@ -1,14 +1,14 @@
 """Migrate draft DOS1 briefs to draft DOS2 briefs
 
-Revision ID: 840
-Revises: 830
+Revision ID: 860
+Revises: 850
 Create Date: 2017-02-07 15:31:50.715832
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '840'
-down_revision = '830'
+revision = '860'
+down_revision = '850'
 
 from alembic import op
 from sqlalchemy.sql import text
@@ -53,7 +53,7 @@ def upgrade():
         ) SELECT
             'update_brief_framework_id',
             NOW(),
-            'Migration 840',
+            'Migration 860',
             '{ "previousFrameworkId": :dos1_id, "newFrameworkId": :dos2_id }',
             'Brief',
             briefs.id,
