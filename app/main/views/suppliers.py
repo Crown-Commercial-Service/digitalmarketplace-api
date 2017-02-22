@@ -666,7 +666,10 @@ def create_application_from_supplier(code):
     supplier.data = supplier.data or {}
 
     if 'application_id' in supplier.data:
-        return abort(400, 'Supplier already has application')
+        application = Application.query.filter(
+            Application.id == supplier.data['application_id']
+        ).first()
+        return jsonify(application=application.serializable)
 
     data = json.loads(supplier.json)
 

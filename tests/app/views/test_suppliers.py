@@ -1332,8 +1332,10 @@ class TestSupplierApplication(BaseApplicationTest):
                 content_type='application/json'
             )
 
-            assert response.status_code == 400
-            assert 'Supplier already has application' in response.get_data(as_text=True)
+            assert response.status_code == 200
+            data = json.loads(response.get_data())
+            assert 'application' in data
+            assert six.viewitems(self.application_data) <= six.viewitems(data['application'])
 
     def test_supplier_create_application(self):
         with self.app.app_context():
