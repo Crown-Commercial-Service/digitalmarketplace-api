@@ -667,18 +667,26 @@ def test_g9_followup_questions():
         # Valid responses for checkbox question with followups
 
         yield check, schema_name, ["securityGovernanceStandards"], {
-            "securityGovernanceStandards": ["CSA CCM v3.0"]
+            "securityGovernanceAccreditation": True,
+            "securityGovernanceStandards": ["csa_ccm"]
         }, {}
 
         yield check, schema_name, ["securityGovernanceStandards"], {
-            "securityGovernanceStandards": ["CSA CCM v3.0", "Other"],
+            "securityGovernanceAccreditation": False,
+            "securityGovernanceApproach": "some other approach"
+        }, {}
+
+        yield check, schema_name, ["securityGovernanceStandards"], {
+            "securityGovernanceAccreditation": True,
+            "securityGovernanceStandards": ["csa_ccm", "other"],
             "securityGovernanceStandardsOther": "some other standards"
         }, {}
 
         # Missing followup answers for checkbox question
 
         yield check, schema_name, ["securityGovernanceStandards"], {
-            "securityGovernanceStandards": ["CSA CCM v3.0", "Other"]
+            "securityGovernanceAccreditation": True,
+            "securityGovernanceStandards": ["csa_ccm", "other"]
         }, {
             "securityGovernanceStandardsOther": "answer_required"
         }
@@ -686,7 +694,8 @@ def test_g9_followup_questions():
         # Followup answers when none should be present
 
         data = {
-            "securityGovernanceStandards": ["CSA CCM v3.0"],
+            "securityGovernanceAccreditation": True,
+            "securityGovernanceStandards": ["csa_ccm"],
             "securityGovernanceStandardsOther": "some other standards"
         }
         yield check, schema_name, ["securityGovernanceStandards"], data, {
@@ -694,6 +703,12 @@ def test_g9_followup_questions():
         }
 
         # Followup answers when the original question answer is missing
+
+        yield check, schema_name, ["securityGovernanceAccreditation"], {
+            "securityGovernanceStandards": ["csa_ccm"]
+        }, {
+            "securityGovernanceAccreditation": "answer_required"
+        }
 
         yield check, schema_name, ["securityGovernanceStandards"], {
             "securityGovernanceStandardsOther": "some other standards"
