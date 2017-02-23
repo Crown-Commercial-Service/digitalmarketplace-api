@@ -36,20 +36,54 @@ def get_metrics():
 def get_domain_metrics():
     metrics = {}
 
-    for status in ['assessed', 'unassessed']:
-        query = '''
-                                SELECT name, count(status)
-                                FROM
-                                  supplier_domain INNER JOIN domain ON supplier_domain.domain_id = domain.id
-                                  WHERE status = :status
-                                GROUP BY name
-                                '''
-        for (domain, count) in db.session.execute(query, {"status": status}).fetchall():
-            if domain not in metrics:
-                metrics[domain] = {}
-                metrics[domain]['domain'] = domain
-                metrics[domain]['timestamp'] = pendulum.now().to_iso8601_string()
-            metrics[domain][status] = count
+    query = '''
+                            SELECT name, count(status), status::text
+                            FROM
+                              supplier_domain INNER JOIN domain ON supplier_domain.domain_id = domain.id
+                              WHERE status = 'assessed' or status = 'unassessed'
+                            GROUP BY name, status::text
+                            UNION
+                            SELECT key, count(*), 'unsubmitted' FROM
+                              application, json_each(application.data->'services') badge
+                            GROUP BY key
+                            '''
+    for (domain, count, status) in db.session.execute(query).fetchall():
+        if domain not in metrics:
+            metrics[domain] = {}
+            metrics[domain]['domain'] = domain
+            metrics[domain]['timestamp'] = pendulum.now().to_iso8601_string()
+        metrics[domain][status] = count
+
+    metrics = list(metrics.values())
+    return jsonify(metrics)
+
+
+@main.route('/metrics/applications/seller_types', methods=['GET'])
+def get_seller_type_metrics():
+    metrics = {}
+
+    query = "SELECT key, count(*) FROM application, json_each(application.data->'seller_type') badge GROUP BY key"
+    for (seller_type, count) in db.session.execute(query).fetchall():
+        metrics[seller_type] = {}
+        metrics[seller_type]['seller_type'] = seller_type
+        metrics[seller_type]['timestamp'] = pendulum.now().to_iso8601_string()
+        metrics[seller_type]['count'] = count
+
+    metrics = list(metrics.values())
+    return jsonify(metrics)
+
+
+@main.route('/metrics/applications/steps', methods=['GET'])
+def get_step_metrics():
+    metrics = {}
+
+    query = "SELECT key, count(*) FROM application, json_each(application.data->'steps') steps GROUP BY key"
+    for (step, count) in db.session.execute(query).fetchall():
+        metrics[step] = {}
+        metrics[step]['step'] = step
+        metrics[step]['timestamp'] = pendulum.now().to_iso8601_string()
+        metrics[step]['count'] = count
+
     metrics = list(metrics.values())
     return jsonify(metrics)
 
