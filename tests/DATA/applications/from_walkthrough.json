@@ -81,6 +81,7 @@
         }
     },
     "representative": "Mike Dirt",
+    "recruiter": "yes",
     "seller_type": {
         "indigenous": false,
         "start_up": true
