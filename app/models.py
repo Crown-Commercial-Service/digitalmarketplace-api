@@ -551,7 +551,6 @@ class Supplier(db.Model):
         unique=False,
         nullable=False
     )
-    is_recruiter = db.Column(db.String, nullable=False, default=False)
     data = db.Column(MutableDict.as_mutable(JSON), default=dict)
 
     # TODO: migrate these to plain (non-timezone) fields
@@ -699,10 +698,6 @@ class Supplier(db.Model):
         if 'extraLinks' in data:
             self.extra_links = [WebsiteLink.from_json(l) for l in data['extraLinks']]
 
-        if 'recruiter' in data:
-            self.is_recruiter = data['recruiter'].lower() in ('yes', 'true')
-            del data['recruiter']
-
         if 'representative' in data:
             self.contacts = [
                 Contact.from_json(c) for c in [{
@@ -731,11 +726,6 @@ class Supplier(db.Model):
                 if name not in self.all_domains and checked:
                     self.add_unassessed_domain(name)
             del self.data['services']
-
-        if 'seller_types' in self.data:
-            self.data['seller_types']['recruitment'] = self.is_recruiter
-        else:
-            self.data['seller_types'] = {'recruitment': self.is_recruiter}
 
         return data
 

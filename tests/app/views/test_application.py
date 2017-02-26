@@ -28,8 +28,6 @@ def test_approval(sample_submitted_application):
     }
 
     assert a.supplier.serializable['products'] == [product_from_submitted]
-    assert 'recruitment' in a.supplier.serializable['seller_types']
-    assert a.supplier.is_recruiter
 
 
 class BaseApplicationsTest(BaseApplicationTest):
