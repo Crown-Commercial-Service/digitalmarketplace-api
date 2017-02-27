@@ -8,6 +8,68 @@ from app.models import Application
 from .util import render_email_template, send_or_handle_error
 
 
+def send_submitted_existing_seller_notification(application_id):
+    TEMPLATE_FILENAME = 'application_submitted_existing_seller.md'
+
+    FRONTEND_ADDRESS = current_app.config['FRONTEND_ADDRESS']
+
+    application = Application.query.get(application_id)
+
+    to_address = application.data['email']
+
+    url_sellers_guide = FRONTEND_ADDRESS + '/sellers-guide'
+
+    # prepare copy
+    email_body = render_email_template(
+        TEMPLATE_FILENAME,
+        business_name=application.supplier.name,
+        contact_name=application.data['contact_name'],
+        url_sellers_guide=url_sellers_guide
+    )
+
+    subject = "Digital Marketplace profile update application received"
+
+    send_or_handle_error(
+        to_address,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='application submitted - existing seller'
+    )
+
+
+def send_submitted_new_seller_notification(application_id):
+    TEMPLATE_FILENAME = 'application_submitted_new_seller.md'
+
+    FRONTEND_ADDRESS = current_app.config['FRONTEND_ADDRESS']
+
+    application = Application.query.get(application_id)
+
+    to_address = application.data['email']
+
+    url_sellers_guide = FRONTEND_ADDRESS + '/sellers-guide'
+
+    # prepare copy
+    email_body = render_email_template(
+        TEMPLATE_FILENAME,
+        business_name=application.data['name'],
+        contact_name=application.data['contact_name'],
+        url_sellers_guide=url_sellers_guide
+    )
+
+    subject = "Thanks for your Digital Marketplace application"
+
+    send_or_handle_error(
+        to_address,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='application submitted - new seller'
+    )
+
+
 def send_approval_notification(application_id):
     TEMPLATE_FILENAME = 'application_approved.md'
 

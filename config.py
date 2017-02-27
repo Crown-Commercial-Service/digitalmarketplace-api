@@ -133,7 +133,7 @@ class Test(Config):
     JIRA_FEATURES = True
 
     JUST_IN_TIME_ASSESSMENTS = False
-    DM_SEND_EMAIL_TO_STDERR = False
+    DM_SEND_EMAIL_TO_STDERR = True
 
 
 class Development(Config):

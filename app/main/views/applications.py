@@ -11,7 +11,8 @@ from app.utils import (
 import pendulum
 from sqlalchemy.sql.expression import true
 from dmapiclient.audit import AuditTypes
-from app.emails import send_approval_notification, send_rejection_notification
+from app.emails import send_approval_notification, send_rejection_notification, \
+    send_submitted_existing_seller_notification, send_submitted_new_seller_notification
 
 
 def get_application_json():
@@ -230,6 +231,11 @@ def submit_application(application_id):
 
     db.session.add(signed_agreement)
     db.session.commit()
+
+    if application.supplier_code:
+        send_submitted_existing_seller_notification(application.id)
+    else:
+        send_submitted_new_seller_notification(application.id)
 
     return jsonify(application=application.serializable,
                    signed_agreement=signed_agreement)
