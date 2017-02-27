@@ -112,6 +112,11 @@ class BaseApplicationsTest(BaseApplicationTest):
             '/applications/{}/reject'.format(application_id),
             content_type='application/json')
 
+    def revert_application(self, application_id):
+        return self.client.post(
+            '/applications/{}/revert'.format(application_id),
+            content_type='application/json')
+
     def get_user(self, user_id):
         user = self.client.get('/users/{}'.format(user_id))
         return json.loads(user.get_data(as_text=True))['users']
@@ -432,6 +437,45 @@ class TestSubmitApplication(BaseApplicationsTest):
         with self.app.app_context():
             audit = AuditEvent.query.filter(
                 AuditEvent.type == "submit_application"
+            ).first()
+
+            assert audit.object_id == self.application_id
+
+
+class TestRevertApplication(BaseApplicationsTest):
+    def setup(self):
+        super(TestRevertApplication, self).setup()
+        self.application_id = self.setup_dummy_application(data=self.application_data)
+
+    def test_invalid_application_id(self):
+        self.patch_application(self.application_id, data={'status': 'submitted'})
+
+        response = self.client.post('/applications/{}/revert'.format(999))
+
+        assert response.status_code == 404
+
+    def test_application_already_reverted(self):
+        self.patch_application(self.application_id, data={'status': 'saved'})
+
+        response = self.client.post('/applications/{}/revert'.format(self.application_id))
+
+        assert response.status_code == 400
+        assert 'not in submitted state for reverting' in response.get_data(as_text=True)
+
+    def test_application_submitted(self):
+        self.patch_application(self.application_id, data={'status': 'submitted'})
+
+        response = self.client.post(
+            '/applications/{}/revert'.format(self.application_id),
+            content_type='application/json')
+
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+
+        assert data['application']['status'] == 'saved'
+        with self.app.app_context():
+            audit = AuditEvent.query.filter(
+                AuditEvent.type == "revert_application"
             ).first()
 
             assert audit.object_id == self.application_id
