@@ -89,6 +89,28 @@ def reject_application(application_id):
     return application_response
 
 
+@main.route('/applications/<int:application_id>/revert', methods=['POST'])
+def revert_application(application_id):
+    application = Application.query.get(application_id)
+
+    if application is None:
+        abort(404, "Application '{}' does not exist".format(application_id))
+
+    if application.status != 'submitted':
+        abort(400, "Application '{}' is not in submitted state for reverting ".format(application_id))
+
+    db.session.add(AuditEvent(
+        audit_type=AuditTypes.revert_application,
+        user='',
+        data={},
+        db_object=application
+    ))
+
+    application.status = 'saved'
+    db.session.commit()
+    return jsonify(application=application.serializable), 200
+
+
 def application_approval(application_id, result):
     application = Application.query.get(application_id)
 
