@@ -9,7 +9,7 @@ from tests.helpers import FixtureMixin
 from ... import example_listings
 
 from dmapiclient.audit import AuditTypes
-from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service
+from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service, Framework
 
 
 class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
@@ -258,7 +258,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
     def test_cannot_create_a_brief_response_if_framework_status_is_not_live_or_expired(self, live_dos_framework):
         framework_id = live_dos_framework['id']
-        for framework_status in ['coming', 'open', 'pending', 'standstill']:
+        for framework_status in [status for status in Framework.STATUSES if status not in ('live', 'expired')]:
             with self.app.app_context():
                 db.session.execute(
                     "UPDATE frameworks SET status=:status WHERE id = :framework_id",
@@ -401,7 +401,7 @@ class TestUpdateBriefResponse(BaseBriefResponseTest):
         assert res.status_code == 404
 
     def test_can_not_update_brief_response_for_framework_that_is_not_live_or_expired(self, live_dos_framework):
-        for framework_status in ['coming', 'open', 'pending', 'standstill']:
+        for framework_status in [status for status in Framework.STATUSES if status not in ('live', 'expired')]:
             with self.app.app_context():
                 db.session.execute(
                     "UPDATE frameworks SET status=:status WHERE slug='digital-outcomes-and-specialists'",
@@ -552,7 +552,7 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
 
     def test_can_not_submit_a_brief_response_for_a_framework_that_is_not_live_or_expired(self, live_dos_framework):
             with self.app.app_context():
-                for framework_status in ['coming', 'open', 'pending', 'standstill']:
+                for framework_status in [status for status in Framework.STATUSES if status not in ('live', 'expired')]:
 
                     # If a brief response already exists delete the last one. Suppliers can only have one response.
                     existing_brief_response = db.session.query(BriefResponse).all()
