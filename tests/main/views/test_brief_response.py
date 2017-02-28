@@ -13,11 +13,6 @@ from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service
 
 
 class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
-    # The following dates are used as we regularly need to set the new supplier flow feature flag to varying times so we
-    # can test our functionality works in expected ways for different values of the feature flag
-    datetime_one_week_ago = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
-    datetime_one_week_ahead = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
-
     def setup(self):
         super(BaseBriefResponseTest, self).setup()
 
@@ -118,7 +113,7 @@ class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
         )
 
 
-class CreateBriefResponseSharedTests(BaseBriefResponseTest, JSONUpdateTestMixin):
+class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
     endpoint = '/brief-responses'
     method = 'post'
 
@@ -310,147 +305,6 @@ class CreateBriefResponseSharedTests(BaseBriefResponseTest, JSONUpdateTestMixin)
         assert res.status_code == 400
         assert data["error"]["dayRate"] == 'max_less_than_min'
 
-
-class TestCreateBriefResponseForBriefCreatedBeforeFeatureFlag(CreateBriefResponseSharedTests):
-    def setup(self):
-        super(TestCreateBriefResponseForBriefCreatedBeforeFeatureFlag, self).setup()
-
-        # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ahead meaning
-        # briefs are created before the feature flag
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = BaseBriefResponseTest.datetime_one_week_ahead
-
-    def test_cannot_create_brief_response_with_invalid_json(self, live_dos_framework):
-        res = self.client.post(
-            '/brief-responses',
-            data=json.dumps({
-                'updated_by': 'test@example.com',
-                'briefResponses': {
-                    "supplierId": 0,
-                    "briefId": self.brief_id,
-                    "essentialRequirements": 10
-                },
-                'page_questions': ["essentialRequirements"]
-            }),
-            content_type='application/json'
-        )
-
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 400
-        # Split assertions due to unicode python 2/3 differences
-        assert "10 is not of type" in data['error']['essentialRequirements']
-        assert "array" in data['error']['essentialRequirements']
-
-    def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(self, live_dos_framework):
-        res = self.client.post(
-            '/brief-responses',
-            data=json.dumps({
-                'updated_by': 'test@example.com',
-                'briefResponses': {
-                    "supplierId": 0,
-                    "briefId": self.brief_id,
-                    "essentialRequirements": [True, True]
-                },
-                'page_questions': ["essentialRequirements"]
-            }),
-            content_type='application/json'
-        )
-
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 400, res.get_data(as_text=True)
-        assert data['error']['essentialRequirements'] == 'answer_required'
-
-    def test_cannot_respond_to_a_brief_with_wrong_number_of_nicetohave_reqs(self, live_dos_framework):
-        res = self.client.post(
-            '/brief-responses',
-            data=json.dumps({
-                'updated_by': 'test@example.com',
-                'briefResponses': {
-                    "supplierId": 0,
-                    "briefId": self.brief_id,
-                    "niceToHaveRequirements": [True, True]
-                },
-                'page_questions': ["niceToHaveRequirements"]
-            }),
-            content_type='application/json'
-        )
-
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 400, res.get_data(as_text=True)
-        assert data['error']['niceToHaveRequirements'] == 'answer_required'
-
-    def test_cannot_respond_to_a_brief_with_none_values_for_nicetohave_requirements(self, live_dos_framework):
-        res = self.client.post(
-            '/brief-responses',
-            data=json.dumps({
-                'updated_by': 'test@example.com',
-                'briefResponses': {
-                    "supplierId": 0,
-                    "briefId": self.brief_id,
-                    "niceToHaveRequirements": [None, None, None, None, None]
-                },
-                'page_questions': ["niceToHaveRequirements"]
-            }),
-            content_type='application/json'
-        )
-
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 400, res.get_data(as_text=True)
-        assert data['error']['niceToHaveRequirements'] == 'answer_required'
-
-    def test_create_digital_specialists_brief_response(self, live_dos_framework):
-        res = self.create_brief_response(
-            brief_id=self.specialist_brief_id,
-            data={
-                "essentialRequirements": [True, True, True, True, True],
-                "niceToHaveRequirements": [True, True, False, True, False],
-                "respondToEmailAddress": "supplier@email.com",
-                "availability": "24/12/2016",
-                "dayRate": "500",
-            }
-        )
-
-        data = json.loads(res.get_data(as_text=True))
-        assert res.status_code == 201
-
-    def test_can_not_create_brief_response_with_non_legacy_schema_data(self, live_dos_framework):
-        res = self.create_brief_response(
-            brief_id=self.specialist_brief_id,
-            data={
-                "essentialRequirementsMet": True,
-                "niceToHaveRequirements": [True, True, False, True, False],
-                "respondToEmailAddress": "supplier@email.com",
-                "availability": "24/12/2016",
-                "dayRate": "500",
-            }
-        )
-
-        data = json.loads(res.get_data(as_text=True))
-        assert res.status_code == 400
-
-
-class TestCreateBriefResponseWhenFeatureFlagIsFalse(TestCreateBriefResponseForBriefCreatedBeforeFeatureFlag):
-    def setup(self):
-        super(TestCreateBriefResponseWhenFeatureFlagIsFalse, self).setup()
-
-        # This is to make sure that we get the same behaviour if the feature flag is set to False, as when a brief
-        # response is created before the feature flag ie we're using the legacy schema. This situation will occur when
-        # the code is pushed to production and waiting to be activated via the feature flag.
-
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = False
-
-
-class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponseSharedTests):
-    def setup(self):
-        super(TestCreateBriefResponseForBriefCreatedAfterFeatureFlag, self).setup()
-
-        # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ago meaning
-        # briefs are created after the feature flag
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = BaseBriefResponseTest.datetime_one_week_ago
-
     def test_cannot_create_brief_response_with_invalid_json(self, live_dos_framework):
         res = self.client.post(
             '/brief-responses',
@@ -485,26 +339,6 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
         data = json.loads(res.get_data(as_text=True))
         assert res.status_code == 201
 
-    def test_can_not_create_brief_response_with_legacy_schema_data(self, live_dos_framework):
-        res = self.create_brief_response(
-            brief_id=self.specialist_brief_id,
-            data={
-                "essentialRequirements": [True, True, True, True, True],
-                "niceToHaveRequirements": [True, True, False, False, True],
-                "respondToEmailAddress": "supplier@email.com",
-                "availability": "24/12/2016",
-                "dayRate": "500",
-            }
-        )
-
-        data = json.loads(res.get_data(as_text=True))
-        assert res.status_code == 400
-
-        for key in ('essentialRequirements', 'niceToHaveRequirements'):
-            message = data['error'][key]
-            assert 'True is not of type' in message
-            assert 'object' in message
-
     def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_or_nice_to_have_reqs(self, live_dos_framework):
         res = self.client.post(
             '/brief-responses',
@@ -528,15 +362,24 @@ class TestCreateBriefResponseForBriefCreatedAfterFeatureFlag(CreateBriefResponse
         assert data['error']['niceToHaveRequirements'] == 'answer_required'
 
 
-class UpdateBriefResponseSharedTests(BaseBriefResponseTest):
+class TestUpdateBriefResponse(BaseBriefResponseTest):
     def setup(self):
-        super(UpdateBriefResponseSharedTests, self).setup()
+        super(TestUpdateBriefResponse, self).setup()
         res = self.create_brief_response()
         self.brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
 
-    def test_update_brief_response_creates_audit_event(self, live_dos_framework):
-        res = self._update_brief_response(self.brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
+    def test_update_brief_response_succeeds_and_creates_audit_event(self, live_dos_framework):
+        res = self._update_brief_response(
+            self.brief_response_id, {'essentialRequirementsMet': True}
+        )
         assert res.status_code == 200
+
+        data = json.loads(res.get_data(as_text=True))['briefResponses']
+
+        assert data['id'] == self.brief_response_id
+        assert data['briefId'] == self.brief_id
+        assert data['supplierId'] == 0
+        assert data['essentialRequirementsMet'] is True
 
         with self.app.app_context():
             audit_events = AuditEvent.query.filter(
@@ -546,12 +389,11 @@ class UpdateBriefResponseSharedTests(BaseBriefResponseTest):
         assert len(audit_events) == 1
         assert audit_events[0].data == {
             'briefResponseId': self.brief_response_id,
-            'briefResponseData': {'respondToEmailAddress': 'newemail@email.com'}
+            'briefResponseData': {'essentialRequirementsMet': True}
         }
 
     def test_update_brief_response_with_expired_framework(self, expired_dos_framework):
         res = self._update_brief_response(self.brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
-
         assert res.status_code == 200
 
     def test_update_brief_response_that_does_not_exist_will_404(self, live_dos_framework):
@@ -612,80 +454,6 @@ class UpdateBriefResponseSharedTests(BaseBriefResponseTest):
         data = json.loads(res.get_data(as_text=True))
         assert data == {'error': {'niceToHaveRequirements': 'answer_required'}}
 
-
-class TestUpdateBriefResponseForBriefCreatedBeforeFeatureFlag(UpdateBriefResponseSharedTests):
-    def setup(self):
-        super(TestUpdateBriefResponseForBriefCreatedBeforeFeatureFlag, self).setup()
-
-        # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ahead meaning
-        # briefs are created before the feature flag
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = BaseBriefResponseTest.datetime_one_week_ahead
-
-    def test_can_not_update_brief_response_with_non_legacy_schema_content(self, live_dos_framework):
-        res = self._update_brief_response(
-            self.brief_response_id, {'essentialRequirementsMet': True}
-        )
-        assert res.status_code == 400
-        data = json.loads(res.get_data(as_text=True))
-        assert "'essentialRequirementsMet' was unexpected" in data["error"]["_form"][0]
-
-    def test_brief_response_can_be_updated_with_legacy_data(self, live_dos_framework):
-        res = self._update_brief_response(
-            self.brief_response_id, {'essentialRequirements': [True, True, True, True, True]}
-        )
-        assert res.status_code == 200
-
-        data = json.loads(res.get_data(as_text=True))['briefResponses']
-
-        assert data['id'] == self.brief_response_id
-        assert data['briefId'] == self.brief_id
-        assert data['supplierId'] == 0
-        assert data['essentialRequirements'] == [True, True, True, True, True]
-
-
-class TestUpdateBriefResponseWhenFeatureFlagIsFalse(TestUpdateBriefResponseForBriefCreatedBeforeFeatureFlag):
-    def setup(self):
-        super(TestUpdateBriefResponseWhenFeatureFlagIsFalse, self).setup()
-
-        # This is to make sure that we get the same behaviour if the feature flag is set to False, as when a brief
-        # response is created before the feature flag ie we're using the legacy schema. This situation will occur when
-        # the code is pushed to production and waiting to be activated via the feature flag.
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = False
-
-
-class TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag(UpdateBriefResponseSharedTests):
-    def setup(self):
-        super(TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag, self).setup()
-
-        # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ago meaning
-        # briefs are created after the feature flag
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = BaseBriefResponseTest.datetime_one_week_ago
-
-    def test_can_not_update_brief_response_with_legacy_schema_content(self, live_dos_framework):
-        res = self._update_brief_response(
-            self.brief_response_id, {'essentialRequirements': [True, True, True, True, True]}
-        )
-        assert res.status_code == 400
-
-        data = json.loads(res.get_data(as_text=True))
-        message = data['error']['essentialRequirements']
-
-        assert 'True is not of type' in message
-        assert 'object' in message
-
-    def test_brief_response_can_be_updated_with_non_legacy_data(self, live_dos_framework):
-        res = self._update_brief_response(
-            self.brief_response_id, {'essentialRequirementsMet': True}
-        )
-        assert res.status_code == 200
-
-        data = json.loads(res.get_data(as_text=True))['briefResponses']
-
-        assert data['id'] == self.brief_response_id
-        assert data['briefId'] == self.brief_id
-        assert data['supplierId'] == 0
-        assert data['essentialRequirementsMet'] is True
-
     def test_essential_requirements_met_must_be_answered_as_true(self, live_dos_framework):
         res = self._update_brief_response(
             self.brief_response_id, {'essentialRequirementsMet': False}
@@ -711,9 +479,17 @@ class TestUpdateBriefResponseForBriefCreatedAfterFeatureFlag(UpdateBriefResponse
         assert data['error']['niceToHaveRequirements'] == 'answer_required'
 
 
-class SubmitBriefResponseSharedTests(BaseBriefResponseTest):
+class TestSubmitBriefResponse(BaseBriefResponseTest):
+    valid_brief_response_data = {
+        'essentialRequirementsMet': True,
+        'essentialRequirements': [{'evidence': 'text'}] * 5,
+        'niceToHaveRequirements': [{'yesNo': True, 'evidence': 'text'}] * 5,
+        'availability': u'a',
+        'respondToEmailAddress': 'supplier@email.com'
+    }
+
     def setup(self):
-        super(SubmitBriefResponseSharedTests, self).setup()
+        super(TestSubmitBriefResponse, self).setup()
 
     def _setup_existing_brief_response(self):
         res = self.create_brief_response(data=self.valid_brief_response_data)
@@ -812,94 +588,6 @@ class SubmitBriefResponseSharedTests(BaseBriefResponseTest):
             assert res.status_code == 400
             assert data == {'error': 'Supplier is not eligible to apply to this brief'}
 
-
-class TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag(SubmitBriefResponseSharedTests):
-    valid_brief_response_data = {
-        'essentialRequirements': [True, True, True, True, True],
-        'niceToHaveRequirements': [True, False, True, False, True],
-        'availability': u'a',
-        'respondToEmailAddress': 'supplier@email.com'
-    }
-
-    # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ahead meaning
-    # briefs are created before the feature flag
-    feature_flag_date = BaseBriefResponseTest.datetime_one_week_ahead
-
-    def setup(self):
-        super(TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag, self).setup()
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
-
-    def test_can_not_submit_an_invalid_brief_response(self, live_dos_framework):
-        res = self.create_brief_response()
-        brief_response_id = json.loads(res.get_data(as_text=True))['briefResponses']['id']
-
-        res = self._submit_brief_response(brief_response_id)
-        data = json.loads(res.get_data(as_text=True))
-        assert res.status_code == 400
-        assert data == {
-            'error': {
-                'availability': 'answer_required',
-                'essentialRequirements': 'answer_required',
-                'niceToHaveRequirements': 'answer_required',
-                'respondToEmailAddress': 'answer_required'
-            }
-        }
-
-    def test_can_not_submit_brief_response_with_non_legacy_data(self, live_dos_framework):
-        # To create a brief_resonse with an invalid key from the new schema, we need to switch the feature flag on.
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = BaseBriefResponseTest.datetime_one_week_ago
-
-        non_legacy_brief_response_data = {
-            'essentialRequirementsMet': True,
-        }
-
-        create_res = self.create_brief_response(data=non_legacy_brief_response_data)
-        assert create_res.status_code == 201
-
-        brief_response_id = json.loads(create_res.get_data(as_text=True))['briefResponses']['id']
-
-        # Switch feature flag back to it's original value so we can test submitting the brief response
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
-
-        submit_res = self._submit_brief_response(brief_response_id)
-        data = json.loads(submit_res.get_data(as_text=True))
-
-        assert submit_res.status_code == 400
-        assert "'essentialRequirementsMet' was unexpected" in data['error']['_form'][0]
-
-
-class TestSubmitBriefReponseWhenFeatureFlagIsOff(TestSubmitBriefReponseForBriefCreatedBeforeFeatureFlag):
-
-    # This is to make sure that we get the same behaviour if the feature flag is set to False, as when a brief
-    # response is created before the feature flag ie we're using the legacy schema. This situation will occur when
-    # the code is pushed to production and waiting to be activated via the feature flag.
-    feature_flag_date = False
-
-    def setup(self):
-        super(TestSubmitBriefReponseWhenFeatureFlagIsOff, self).setup()
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
-
-
-class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseSharedTests):
-    valid_brief_response_data = {
-        'essentialRequirementsMet': True,
-        'essentialRequirements': [{'evidence': 'text'}] * 5,
-        'niceToHaveRequirements': [{'yesNo': True, 'evidence': 'text'}] * 5,
-        'availability': u'a',
-        'respondToEmailAddress': 'supplier@email.com'
-    }
-
-    # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ago meaning
-    # briefs are created after the feature flag
-    feature_flag_date = BaseBriefResponseTest.datetime_one_week_ago
-
-    def setup(self):
-        super(TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag, self).setup()
-
-        # As brief fixtures for this test are created on the fly, we set the feature flag to be one week ago meaning
-        # briefs are created after the feature flag
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
-
     def test_can_submit_a_brief_response_with_no_nice_to_have_requirements(self, live_dos_framework):
         with self.app.app_context():
             brief = Brief.query.get(self.brief_id)
@@ -935,36 +623,6 @@ class TestSubmitBriefReponseForBriefCreatedAfterFeatureFlag(SubmitBriefResponseS
                 'respondToEmailAddress': 'answer_required'
             }
         }
-
-    def test_can_not_submit_brief_response_with_legacy_data(self, live_dos_framework):
-        # To create a brief_resonse with an invalid key from the new schema, we need to switch the feature flag on.
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = BaseBriefResponseTest.datetime_one_week_ahead
-
-        legacy_brief_response_data = {
-            'essentialRequirements': [True, True, True, True, True],
-            'niceToHaveRequirements': [True, False, True, False, True],
-            'availability': u'a',
-            'respondToEmailAddress': 'supplier@email.com'
-        }
-
-        create_res = self.create_brief_response(data=legacy_brief_response_data)
-        assert create_res.status_code == 201
-
-        brief_response_id = json.loads(create_res.get_data(as_text=True))['briefResponses']['id']
-
-        # Switch feature flag back to it's original value so we can test submitting the brief response
-        self.app.config["FEATURE_FLAGS_NEW_SUPPLIER_FLOW"] = self.feature_flag_date
-
-        submit_res = self._submit_brief_response(brief_response_id)
-        assert submit_res.status_code == 400
-
-        data = json.loads(submit_res.get_data(as_text=True))
-        assert data['error']['essentialRequirementsMet'] == "answer_required"
-
-        for key in ('essentialRequirements', 'niceToHaveRequirements'):
-            message = data['error'][key]
-            assert 'True is not of type' in message
-            assert 'object' in message
 
 
 class TestGetBriefResponse(BaseBriefResponseTest):
