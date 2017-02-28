@@ -27,14 +27,13 @@ fi
 
 # Some of the specified packages use syntax in their requirements.txt
 # that older pips don't understand
-pip install "pip>=8.0"
+pip install -U pip
 
 # Install Python development dependencies
 pip install -r requirements_for_test.txt
 
 # Create Postgres databases
 createdb digitalmarketplace
-createdb digitalmarketplace_test
 
 # Upgrade databases
 python application.py db upgrade

@@ -44,6 +44,8 @@ setup(
         'jira',
         'pyjwt',
 
-        'markdown'
+        'markdown',
+	    'sshtunnel',
+        'paramiko'
     ]
 )

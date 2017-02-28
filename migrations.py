@@ -128,7 +128,7 @@ def pending(write_to_file=False):
             print('Pending:\n{}'.format(m.sql))
 
             if write_to_file:
-                with io.open('DB/migration/pending.sql', 'w') as w:
+                with io.open('DB/migration/pending/pending.sql', 'w') as w:
                     w.write(m.sql)
 
 
@@ -178,6 +178,20 @@ def staging_vs_app():
     with temporary_db() as CURRENT_DB_URL, temporary_db() as TARGET_DB_URL:
         load_current_staging_state(CURRENT_DB_URL)
         load_from_app_model(TARGET_DB_URL)
+
+        with S(CURRENT_DB_URL) as s_current, S(TARGET_DB_URL) as s_target:
+            m = Migration(s_current, s_target)
+
+            m.set_safety(False)
+            m.add_all_changes()
+
+            print('Differences:\n{}'.format(m.sql))
+
+
+def staging_vs_prod():
+    with temporary_db() as CURRENT_DB_URL, temporary_db() as TARGET_DB_URL:
+        load_current_staging_state(CURRENT_DB_URL)
+        load_current_production_state(TARGET_DB_URL)
 
         with S(CURRENT_DB_URL) as s_current, S(TARGET_DB_URL) as s_target:
             m = Migration(s_current, s_target)
