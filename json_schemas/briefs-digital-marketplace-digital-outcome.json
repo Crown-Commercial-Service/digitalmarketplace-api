@@ -12,6 +12,21 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,499}\\S+$)",
       "type": "string"
     },
+    "areaOfExpertise": {
+      "enum": [
+        "Strategy and Policy",
+        "User research and Design",
+        "Agile delivery and Governance",
+        "Software engineering and Development",
+        "Support and Operations",
+        "Content and Publishing",
+        "Change, Training and Transformation",
+        "Marketing, Communications and Engagement",
+        "Cyber security",
+        "Data science",
+        "Emerging technologies"
+      ]
+    },
     "backgroundInformation": {
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,499}\\S+$",
@@ -25,6 +40,7 @@
     "contractLength": {
       "maxLength": 100,
       "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
     "culturalFitCriteria": {
@@ -225,6 +241,7 @@
     }
   },
   "required": [
+    "areaOfExpertise",
     "backgroundInformation",
     "culturalFitCriteria",
     "culturalWeighting",
