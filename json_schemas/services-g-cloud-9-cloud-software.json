@@ -6,6 +6,1496 @@
       "oneOf": [
         {
           "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "emailOrTicketingSupportPriority": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "emailOrTicketingSupport",
+            "emailOrTicketingSupportPriority"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "emailOrTicketingSupportResponseTimes": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "emailOrTicketingSupport",
+            "emailOrTicketingSupportResponseTimes"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "emailOrTicketingSupportAccessibility": {
+              "type": "null"
+            },
+            "emailOrTicketingSupportPriority": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "emailOrTicketingSupportPriority": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "emailOrTicketingSupportPriority",
+            "emailOrTicketingSupportAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                false
+              ]
+            },
+            "metricsDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "metrics",
+            "metricsDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                false
+              ]
+            },
+            "metricsHow": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "metrics"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "auditBuyersActions": {
+              "enum": [
+                "not_available"
+              ]
+            },
+            "auditBuyersActionsStorage": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "auditBuyersActions": {
+              "enum": [
+                "real_time",
+                "regular",
+                "support_request",
+                "supplier_controlled"
+              ]
+            }
+          },
+          "required": [
+            "auditBuyersActions",
+            "auditBuyersActionsStorage"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "userAuthentication": {
+              "type": "null"
+            },
+            "userAuthenticationNeeded": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "userAuthenticationNeeded": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "userAuthenticationNeeded",
+            "userAuthentication"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "userAuthentication": {
+              "items": {
+                "enum": [
+                  "dedicated_link",
+                  "government_network",
+                  "identity_federation",
+                  "pka",
+                  "two_factor",
+                  "username_or_password"
+                ]
+              }
+            },
+            "userAuthenticationDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "userAuthentication": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "dedicated_link",
+                    "government_network",
+                    "identity_federation",
+                    "pka",
+                    "two_factor",
+                    "username_or_password"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "userAuthentication",
+            "userAuthenticationDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsCSASTARLevel": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsCSASTAR",
+            "standardsCSASTARLevel"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsCSASTARExclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsCSASTAR",
+            "standardsCSASTARExclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsCSASTARWhen": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsCSASTAR",
+            "standardsCSASTARWhen"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAccessibility": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAvailability": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAvailability"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAccessibilityTesting": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAccessibilityTesting"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupportAccessibility": {
+              "enum": [
+                "wcag_a",
+                "wcag_aa",
+                "wcag_aaa"
+              ]
+            },
+            "webChatSupportAccessibilityDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupportAccessibility": {
+              "enum": [
+                "none_or_not_sure"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupportAccessibility",
+            "webChatSupportAccessibilityDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "documentation": {
+              "enum": [
+                false
+              ]
+            },
+            "documentationFormats": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "documentation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "documentation",
+            "documentationFormats"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "documentationFormats": {
+              "items": {
+                "enum": [
+                  "html",
+                  "odf",
+                  "pdf"
+                ]
+              }
+            },
+            "documentationFormatsOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "documentationFormats": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "html",
+                    "odf",
+                    "pdf"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "documentationFormats",
+            "documentationFormatsOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "serviceAddOnDetails": {
+              "type": "null"
+            },
+            "serviceAddOnType": {
+              "enum": [
+                "no"
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "serviceAddOnType": {
+              "enum": [
+                "yes",
+                "yes_but_can_standalone"
+              ]
+            }
+          },
+          "required": [
+            "serviceAddOnType",
+            "serviceAddOnDetails"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "phoneSupport": {
+              "enum": [
+                false
+              ]
+            },
+            "phoneSupportAvailability": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "phoneSupport": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "phoneSupport",
+            "phoneSupportAvailability"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsPCIWho": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsPCI",
+            "standardsPCIWho"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsPCIWhen": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsPCI",
+            "standardsPCIWhen"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsPCIExclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsPCI",
+            "standardsPCIExclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISO28000When": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISO28000",
+            "standardsISO28000When"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISO28000Exclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISO28000",
+            "standardsISO28000Exclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISO28000Who": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISO28000",
+            "standardsISO28000Who"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataProtectionBetweenNetworks": {
+              "items": {
+                "enum": [
+                  "bonded_fibre",
+                  "ipsec_or_vpn",
+                  "legacy_ssl",
+                  "private_or_psn",
+                  "tls"
+                ]
+              }
+            },
+            "dataProtectionBetweenNetworksOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataProtectionBetweenNetworks": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "bonded_fibre",
+                    "ipsec_or_vpn",
+                    "legacy_ssl",
+                    "private_or_psn",
+                    "tls"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "dataProtectionBetweenNetworks",
+            "dataProtectionBetweenNetworksOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "serviceInterfaceAccessibility": {
+              "enum": [
+                "none",
+                "wcag_a",
+                "wcag_aa",
+                "wcag_aaa"
+              ]
+            },
+            "serviceInterfaceAccessibilityDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "serviceInterfaceAccessibility": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "serviceInterfaceAccessibility",
+            "serviceInterfaceAccessibilityDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "penetrationTesting": {
+              "enum": [
+                "never"
+              ]
+            },
+            "penetrationTestingApproach": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "penetrationTesting": {
+              "enum": [
+                "at_least_every_6_months",
+                "at_least_once_a_year",
+                "less_than_once_a_year"
+              ]
+            }
+          },
+          "required": [
+            "penetrationTesting",
+            "penetrationTestingApproach"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityGovernanceAccreditation": {
+              "enum": [
+                true
+              ]
+            },
+            "securityGovernanceApproach": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityGovernanceAccreditation": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "securityGovernanceAccreditation",
+            "securityGovernanceApproach"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityGovernanceAccreditation": {
+              "enum": [
+                false
+              ]
+            },
+            "securityGovernanceStandards": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityGovernanceAccreditation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "securityGovernanceAccreditation",
+            "securityGovernanceStandards"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityGovernanceStandards": {
+              "items": {
+                "enum": [
+                  "csa_ccm",
+                  "iso_iec_27001"
+                ]
+              }
+            },
+            "securityGovernanceStandardsOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityGovernanceStandards": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "csa_ccm",
+                    "iso_iec_27001"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityGovernanceStandards",
+            "securityGovernanceStandardsOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataImportFormats": {
+              "items": {
+                "enum": [
+                  "csv",
+                  "odf"
+                ]
+              }
+            },
+            "dataImportFormatsOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataImportFormats": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "csv",
+                    "odf"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "dataImportFormats"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataExportFormats": {
+              "items": {
+                "enum": [
+                  "csv",
+                  "odf"
+                ]
+              }
+            },
+            "dataExportFormatsOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataExportFormats": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "csv",
+                    "odf"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "dataExportFormats"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "publicSectorNetworks": {
+              "enum": [
+                false
+              ]
+            },
+            "publicSectorNetworksTypes": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "publicSectorNetworks": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "publicSectorNetworks",
+            "publicSectorNetworksTypes"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "publicSectorNetworksOther": {
+              "type": "null"
+            },
+            "publicSectorNetworksTypes": {
+              "items": {
+                "enum": [
+                  "janet",
+                  "n3",
+                  "other",
+                  "pnn",
+                  "psn",
+                  "swan"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "publicSectorNetworksTypes": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "janet",
+                    "n3",
+                    "other",
+                    "pnn",
+                    "psn",
+                    "swan"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "publicSectorNetworksTypes",
+            "publicSectorNetworksOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataSanitisation": {
+              "enum": [
+                false
+              ]
+            },
+            "dataSanitisationType": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataSanitisation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "dataSanitisation",
+            "dataSanitisationType"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "protectionOfDataAtRest": {
+              "items": {
+                "enum": [
+                  "csa_ccm",
+                  "encrypted_media",
+                  "other_standard",
+                  "scale_obfuscation_sharding",
+                  "ssae_isae"
+                ]
+              }
+            },
+            "protectionOfDataAtRestOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "protectionOfDataAtRest": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "csa_ccm",
+                    "encrypted_media",
+                    "other_standard",
+                    "scale_obfuscation_sharding",
+                    "ssae_isae"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "protectionOfDataAtRest",
+            "protectionOfDataAtRestOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "managementAccessAuthentication": {
+              "items": {
+                "enum": [
+                  "dedicated_link",
+                  "government_network",
+                  "identity_federation",
+                  "other",
+                  "public_key",
+                  "two_factor",
+                  "username_or_password"
+                ]
+              }
+            },
+            "managementAccessAuthenticationDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "managementAccessAuthentication": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "dedicated_link",
+                    "government_network",
+                    "identity_federation",
+                    "other",
+                    "public_key",
+                    "two_factor",
+                    "username_or_password"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "managementAccessAuthentication",
+            "managementAccessAuthenticationDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "auditSuppliersActions": {
+              "enum": [
+                "not_available"
+              ]
+            },
+            "auditSuppliersActionsStorage": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "auditSuppliersActions": {
+              "enum": [
+                "real_time",
+                "regular",
+                "support_request",
+                "supplier_controlled"
+              ]
+            }
+          },
+          "required": [
+            "auditSuppliersActions",
+            "auditSuppliersActionsStorage"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "browsersAccess": {
+              "enum": [
+                false
+              ]
+            },
+            "browsersSupported": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "browsersAccess": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "browsersAccess",
+            "browsersSupported"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataStorageAndProcessing": {
+              "enum": [
+                false
+              ]
+            },
+            "dataStorageAndProcessingLocations": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataStorageAndProcessing": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "dataStorageAndProcessing",
+            "dataStorageAndProcessingLocations"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataStorageAndProcessing": {
+              "enum": [
+                false
+              ]
+            },
+            "dataStorageAndProcessingUserControl": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataStorageAndProcessing": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "dataStorageAndProcessing",
+            "dataStorageAndProcessingUserControl"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISOIEC27001When": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISOIEC27001",
+            "standardsISOIEC27001When"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISOIEC27001Exclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISOIEC27001",
+            "standardsISOIEC27001Exclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISOIEC27001Who": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISOIEC27001",
+            "standardsISOIEC27001Who"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "mobile": {
+              "enum": [
+                false
+              ]
+            },
+            "mobileDifferences": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "mobile": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "mobile"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "customisationAvailable": {
+              "enum": [
+                false
+              ]
+            },
+            "customisationDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "customisationAvailable": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "customisationAvailable",
+            "customisationDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "freeVersionLink": {
               "type": "null"
             },
@@ -63,55 +1553,230 @@
       "oneOf": [
         {
           "properties": {
-            "securityGovernanceStandards": {
-              "items": {
-                "enum": [
-                  "CSA CCM v3.0",
-                  "ISO/IEC 27001"
-                ]
-              }
+            "APISoftware": {
+              "enum": [
+                false
+              ]
             },
-            "securityGovernanceStandardsOther": {
+            "APIUsage": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "securityGovernanceStandards": {
+            "APISoftware": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "APISoftware",
+            "APIUsage"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "APIDocumentation": {
+              "type": "null"
+            },
+            "APISoftware": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "APISoftware": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "APISoftware",
+            "APIDocumentation"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "APISandbox": {
+              "type": "null"
+            },
+            "APISoftware": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "APISoftware": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "APISoftware",
+            "APISandbox"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "APIDocumentation": {
+              "enum": [
+                false
+              ]
+            },
+            "APIDocumentationFormats": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "APIDocumentation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "APIDocumentation",
+            "APIDocumentationFormats"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "installation": {
+              "enum": [
+                false
+              ]
+            },
+            "installationCompatibleOperatingSystems": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "installation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "installation",
+            "installationCompatibleOperatingSystems"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataProtectionWithinNetwork": {
+              "items": {
+                "enum": [
+                  "ipsec_or_vpn",
+                  "ssl",
+                  "tls"
+                ]
+              }
+            },
+            "dataProtectionWithinNetworkOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataProtectionWithinNetwork": {
               "not": {
                 "items": {
                   "enum": [
-                    "CSA CCM v3.0",
-                    "ISO/IEC 27001"
+                    "ipsec_or_vpn",
+                    "ssl",
+                    "tls"
                   ]
                 }
               }
             }
           },
           "required": [
-            "securityGovernanceStandards",
-            "securityGovernanceStandardsOther"
+            "dataProtectionWithinNetwork",
+            "dataProtectionWithinNetworkOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "resellingOrganisations": {
+              "type": "null"
+            },
+            "resellingType": {
+              "enum": [
+                "not_reseller"
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "resellingType": {
+              "enum": [
+                "reseller_extra_features_and_support",
+                "reseller_extra_support",
+                "reseller_no_extras"
+              ]
+            }
+          },
+          "required": [
+            "resellingType",
+            "resellingOrganisations"
           ]
         }
       ]
     }
   ],
   "properties": {
-    "API": {
-      "type": "boolean"
-    },
     "APIDocumentation": {
       "type": "boolean"
     },
-    "APIDocumentatonFormats": {
+    "APIDocumentationFormats": {
       "items": {
         "enum": [
-          "Open API (also known as Swagger)",
-          "HTML",
-          "ODF",
-          "PDF",
-          "Other"
+          "openapi",
+          "html",
+          "odf",
+          "pdf",
+          "other"
         ]
       },
       "maxItems": 5,
@@ -122,69 +1787,69 @@
     "APISandbox": {
       "type": "boolean"
     },
+    "APISoftware": {
+      "type": "boolean"
+    },
     "APIUsage": {
-      "maxLength": 500,
+      "maxLength": 2000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "accessRestrictionManagementAndSupport": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "accessRestrictionTesting": {
       "enum": [
-        "At least every 6 months",
-        "At least once a year",
-        "Less than once a year",
-        "Never"
+        "at_least_every_6_months",
+        "at_least_once_a_year",
+        "less_than_once_a_year",
+        "never"
       ]
     },
-    "analyticsAvailable": {
-      "type": "boolean"
-    },
     "approachToResilience": {
-      "maxLength": 500,
+      "maxLength": 2000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "auditBuyersActions": {
       "enum": [
-        "Users have access to real-time audit information",
-        "Users receive audit information on a regular basis",
-        "Users contact the support team to get audit information",
-        "You control when users can access audit information",
-        "No audit information available"
+        "real_time",
+        "regular",
+        "support_request",
+        "supplier_controlled",
+        "not_available"
       ]
     },
     "auditBuyersActionsStorage": {
       "enum": [
-        "User-defined",
-        "At least 12 months",
-        "Between 6 months and 12 months",
-        "Between 1 month and 6 months",
-        "Less than 1 month"
+        "user_defined",
+        "at_least_12_months",
+        "6_to_12_months",
+        "1_to_6_months",
+        "less_than_1_month"
       ]
     },
     "auditSuppliersActions": {
       "enum": [
-        "Users have access to real-time audit information",
-        "Users receive audit information on a regular basis",
-        "Users contact the support team to get audit information",
-        "You control when users can access audit information",
-        "No audit information available"
+        "real_time",
+        "regular",
+        "support_request",
+        "supplier_controlled",
+        "not_available"
       ]
     },
     "auditSuppliersActionsStorage": {
       "enum": [
-        "User-defined",
-        "At least 12 months",
-        "Between 6 months and 12 months",
-        "Between 1 month and 6 months",
-        "Less than 1 month"
+        "user_defined",
+        "over_12_months",
+        "6_to_12_months",
+        "1_to_6_months",
+        "under_1_month"
       ]
     },
     "boardLevelServiceSecurity": {
@@ -196,15 +1861,15 @@
     "browsersSupported": {
       "items": {
         "enum": [
-          "Internet Explorer 7",
-          "Internet Explorer 8",
-          "Internet Explorer 9",
-          "Internet Explorer 10+",
-          "Microsoft Edge",
-          "Firefox",
-          "Chrome",
-          "Safari 9+",
-          "Opera"
+          "ie7",
+          "ie8",
+          "ie9",
+          "ie10+",
+          "edge",
+          "firefox",
+          "chrome",
+          "safari",
+          "opera"
         ]
       },
       "maxItems": 9,
@@ -214,16 +1879,16 @@
     },
     "cloudDeploymentModel": {
       "enum": [
-        "Public cloud",
-        "Community cloud",
-        "Private cloud",
-        "Hybrid cloud"
+        "public",
+        "private",
+        "community",
+        "hybrid"
       ]
     },
     "configurationAndChangeManagementProcesses": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "configurationAndChangeManagementType": {
@@ -232,21 +1897,24 @@
         "supplier_defined"
       ]
     },
+    "creditOrDebitCardInformation": {
+      "type": "boolean"
+    },
     "customisationAvailable": {
       "type": "boolean"
     },
     "customisationDescription": {
-      "maxLength": 500,
+      "maxLength": 2000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "dataExportFormats": {
       "items": {
         "enum": [
-          "CSV",
-          "ODF",
-          "Other"
+          "csv",
+          "odf",
+          "other"
         ]
       },
       "maxItems": 3,
@@ -265,17 +1933,17 @@
       "type": "array"
     },
     "dataExportHow": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "dataImportFormats": {
       "items": {
         "enum": [
-          "CSV",
-          "ODF",
-          "Other"
+          "csv",
+          "odf",
+          "other"
         ]
       },
       "maxItems": 3,
@@ -296,12 +1964,12 @@
     "dataProtectionBetweenNetworks": {
       "items": {
         "enum": [
-          "Private network or public sector network",
-          "TLS (Version 1.2 or above)",
-          "IPsec or TLS VPN gateway",
-          "Bonded fibre optic connections",
-          "Legacy SSL and TLS (under 1.2)",
-          "Other"
+          "private_or_psn",
+          "tls",
+          "ipsec_or_vpn",
+          "bonded_fibre",
+          "legacy_ssl",
+          "other"
         ]
       },
       "maxItems": 6,
@@ -310,49 +1978,56 @@
       "uniqueItems": true
     },
     "dataProtectionBetweenNetworksOther": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "dataProtectionWithinNetwork": {
       "items": {
         "enum": [
-          "Private WAN service",
-          "TLS (Version 1.2 or above)",
-          "IPsec or TLS VPN gateway",
-          "Legacy SSL and TLS (under 1.2)",
-          "Other"
+          "tls",
+          "ipsec_or_vpn",
+          "ssl",
+          "other"
         ]
       },
-      "maxItems": 5,
+      "maxItems": 4,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
     "dataProtectionWithinNetworkOther": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
-    "dataSanitisationType": {
-      "enum": [
-        "Explicit overwriting of storage before reallocation",
-        "Assurances media can\u2019t be directly \u2019addressed\u2019",
-        "No data sanitisation process"
-      ]
+    "dataSanitisation": {
+      "type": "boolean"
     },
-    "dataStorageAndProcessingKnowledge": {
+    "dataSanitisationType": {
+      "items": {
+        "enum": [
+          "overwriting",
+          "no_access"
+        ]
+      },
+      "maxItems": 2,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataStorageAndProcessing": {
       "type": "boolean"
     },
     "dataStorageAndProcessingLocations": {
       "items": {
         "enum": [
-          "United Kingdom",
-          "European Economic Area (EEA)",
-          "EU-US Privacy Shield agreement locations",
-          "Other locations"
+          "uk",
+          "eea",
+          "privacy_shield",
+          "other"
         ]
       },
       "maxItems": 4,
@@ -370,28 +2045,16 @@
         "third_party"
       ]
     },
-    "devicesUsersManageTheServiceThrough": {
-      "items": {
-        "enum": [
-          "Dedicated device on a segregated network (providers own provision)",
-          "Dedicated device on a government network (for example PSN)",
-          "Dedicated device over multiple services or networks",
-          "Any device but through a bastion host",
-          "Directly from any device which may also be used for normal business"
-        ]
-      },
-      "maxItems": 5,
-      "minItems": 1,
-      "type": "array",
-      "uniqueItems": true
+    "documentation": {
+      "type": "boolean"
     },
     "documentationFormats": {
       "items": {
         "enum": [
-          "HTML",
-          "ODF",
-          "PDF",
-          "Other"
+          "html",
+          "odf",
+          "pdf",
+          "other"
         ]
       },
       "maxItems": 4,
@@ -409,58 +2072,50 @@
       "minItems": 1,
       "type": "array"
     },
-    "documentationService": {
-      "type": "boolean"
-    },
     "educationPricing": {
       "type": "boolean"
     },
     "emailOrTicketingSupport": {
       "enum": [
-        "Yes",
-        "Yes, at extra cost",
-        "No"
+        "yes",
+        "yes_extra_cost",
+        "no"
       ]
     },
     "emailOrTicketingSupportAccessibility": {
       "enum": [
-        "WCAG 2.0 AAA",
-        "WCAG 2.0 AA or EN 301 549",
-        "WCAG 2.0 A",
-        "None or don\u2019t know"
+        "wcag_aaa",
+        "wcag_aa",
+        "wcag_a",
+        "none"
       ]
     },
     "emailOrTicketingSupportPriority": {
       "type": "boolean"
     },
     "emailOrTicketingSupportResponseTimes": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
-    "emailOrTicketingSupportTicketing": {
-      "type": "boolean"
-    },
     "endOfContractDataExtraction": {
-      "maxLength": 500,
+      "maxLength": 2000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "endOfContractProcess": {
-      "maxLength": 500,
+      "maxLength": 2000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "equipmentDisposalApproach": {
       "enum": [
         "recognised_standard",
-        "cas(s)",
         "in_house",
-        "third_party",
-        "undisclosed"
+        "third_party"
       ]
     },
     "freeVersionDescription": {
@@ -478,30 +2133,30 @@
       "type": "boolean"
     },
     "gettingStarted": {
-      "maxLength": 500,
+      "maxLength": 2000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "guaranteedAvailability": {
-      "maxLength": 500,
+      "maxLength": 2000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "howLongSystemLogsStored": {
       "enum": [
-        "User-defined",
-        "At least 12 months",
-        "Between 6 months and 12 months",
-        "Between 1 month and 6 months",
-        "Less than 1 month."
+        "user_defined",
+        "at_least_12_months",
+        "6_to_12_months",
+        "1_to_6_months",
+        "less_than_1_month"
       ]
     },
     "incidentManagementApproach": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "incidentManagementType": {
@@ -511,10 +2166,16 @@
         "undisclosed"
       ]
     },
-    "informationSecurityPoliciesAndProcesses": {
-      "maxLength": 500,
+    "independenceOfResources": {
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "informationSecurityPoliciesAndProcesses": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "installation": {
@@ -523,13 +2184,13 @@
     "installationCompatibleOperatingSystems": {
       "items": {
         "enum": [
-          "iOS",
-          "Linux or Unix",
-          "MacOS",
-          "Android",
-          "Windows",
-          "Windows Phone",
-          "Other"
+          "android",
+          "ios",
+          "linux_or_unix",
+          "macos",
+          "windows",
+          "windows_phone",
+          "other"
         ]
       },
       "maxItems": 7,
@@ -540,13 +2201,13 @@
     "managementAccessAuthentication": {
       "items": {
         "enum": [
-          "2-factor authentication",
-          "Public key authentication (including by TLS client certificate)",
-          "Identity federation with existing provider (for example Google apps)",
-          "Limited access over government network (for example PSN)",
-          "Dedicated link (for example VPN or bonded fibre)",
-          "Username or password",
-          "Other"
+          "two_factor",
+          "public_key",
+          "identity_federation",
+          "government_network",
+          "dedicated_link",
+          "username_or_password",
+          "other"
         ]
       },
       "maxItems": 7,
@@ -555,56 +2216,70 @@
       "uniqueItems": true
     },
     "managementAccessAuthenticationDescription": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
-    "metricsAvailable": {
+    "metrics": {
       "type": "boolean"
     },
-    "metricsTypes": {
-      "maxLength": 500,
+    "metricsDescription": {
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
+    },
+    "metricsHow": {
+      "items": {
+        "enum": [
+          "api",
+          "real_time",
+          "regular_reports",
+          "on_request"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
     },
     "mobile": {
       "type": "boolean"
     },
     "mobileDifferences": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
     "onsiteSupport": {
       "enum": [
-        "Yes",
-        "Yes, at extra cost",
-        "No"
+        "yes",
+        "yes_extra_cost",
+        "no"
       ]
     },
     "outageReporting": {
-      "maxLength": 500,
+      "maxLength": 2000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "penetrationTesting": {
       "enum": [
-        "At least every 6 months",
-        "At least once a year",
-        "Less than once a year",
-        "Never"
+        "at_least_every_6_months",
+        "at_least_once_a_year",
+        "less_than_once_a_year",
+        "never"
       ]
     },
     "penetrationTestingApproach": {
       "enum": [
-        "\u2019IT Health Check\u2019 performed by a CHECK service provider",
-        "\u2019IT Health Check\u2019 performed by a Tigerscheme qualified provider or a CREST-approved service provider",
-        "Another external penetration testing organisation",
-        "In-house"
+        "it_health_check_check_provider",
+        "it_health_check_tigerscheme_or_crest_provider",
+        "other_penetration_testing_organisation",
+        "in_house"
       ]
     },
     "phoneSupport": {
@@ -612,15 +2287,10 @@
     },
     "phoneSupportAvailability": {
       "enum": [
-        "24 hours, 7 days a week",
-        "Standard UK office hours"
+        "24_7",
+        "9_to_5_7_days",
+        "9_to_5_mon_to_fri"
       ]
-    },
-    "placeholderStandardsAndCertifications": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
-      "type": "string"
     },
     "priceInterval": {
       "enum": [
@@ -667,12 +2337,12 @@
     "protectionOfDataAtRest": {
       "items": {
         "enum": [
-          "Physical access control, cmomplying with CSA CCM v3.0",
-          "Physical access control, complying with SSAE-16 / ISAE 3402",
-          "Physical access control, complying with another standard",
-          "Encryption of all physical media",
-          "Scale, obfuscating techniques, or data storage sharding",
-          "Other"
+          "csa_ccm",
+          "ssae_isae",
+          "other_standard",
+          "encrypted_media",
+          "scale_obfuscation_sharding",
+          "other"
         ]
       },
       "maxItems": 6,
@@ -681,13 +2351,15 @@
       "uniqueItems": true
     },
     "protectionOfDataAtRestOther": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "protectiveMonitoringApproach": {
+      "maxLength": 1000,
       "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "protectiveMonitoringType": {
@@ -696,22 +2368,6 @@
         "supplier_defined",
         "undisclosed"
       ]
-    },
-    "publicSectorNetworkTypes": {
-      "items": {
-        "enum": [
-          "Public Services Network (PSN)",
-          "Police National Network (PNN)",
-          "New NHS Network (N3)",
-          "Joint Academic Network (JANET)",
-          "Scottish Wide Area Network (SWAN)",
-          "Other"
-        ]
-      },
-      "maxItems": 6,
-      "minItems": 1,
-      "type": "array",
-      "uniqueItems": true
     },
     "publicSectorNetworks": {
       "type": "boolean"
@@ -723,43 +2379,38 @@
         "type": "string"
       },
       "maxItems": 10,
-      "minItems": 0,
+      "minItems": 1,
       "type": "array"
     },
-    "reportingTypesMetrics": {
+    "publicSectorNetworksTypes": {
       "items": {
         "enum": [
-          "Through an API",
-          "Real-time dashboards",
-          "Regular reports",
-          "Reports on request"
+          "psn",
+          "pnn",
+          "n3",
+          "janet",
+          "swan",
+          "other"
         ]
       },
-      "maxItems": 4,
+      "maxItems": 6,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
-    "resellerType": {
+    "resellingOrganisations": {
+      "maxLength": 100,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+      "type": "string"
+    },
+    "resellingType": {
       "enum": [
-        "I\u2019m not a reseller",
-        "I\u2019m a reseller providing extra features and support not available from the original supplier",
-        "I\u2019m a reseller providing extra support",
-        "I\u2019m a reseller not providing extra features or support"
+        "not_reseller",
+        "reseller_extra_features_and_support",
+        "reseller_extra_support",
+        "reseller_no_extras"
       ]
-    },
-    "scalingSoftwareCost": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
-      "type": "string"
-    },
-    "scalingSoftwareIndependence": {
-      "minLength": 1,
-      "type": "string"
-    },
-    "scalingSoftwareScalability": {
-      "type": "boolean"
     },
     "secureDevelopment": {
       "enum": [
@@ -772,17 +2423,17 @@
       "type": "boolean"
     },
     "securityGovernanceApproach": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "securityGovernanceStandards": {
       "items": {
         "enum": [
-          "CSA CCM v3.0",
-          "ISO/IEC 27001",
-          "Other"
+          "csa_ccm",
+          "iso_iec_27001",
+          "other"
         ]
       },
       "maxItems": 3,
@@ -804,9 +2455,9 @@
     },
     "serviceAddOnType": {
       "enum": [
-        "Yes",
-        "Yes, but can also be used as a standalone service",
-        "No"
+        "yes",
+        "yes_but_can_standalone",
+        "no"
       ]
     },
     "serviceBenefits": {
@@ -827,19 +2478,15 @@
         ]
       },
       "maxItems": 2,
-      "minItems": 0,
+      "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
     "serviceConstraints": {
-      "items": {
-        "maxLength": 100,
-        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
-        "type": "string"
-      },
-      "maxItems": 10,
-      "minItems": 1,
-      "type": "array"
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
     },
     "serviceDefinitionDocumentURL": {
       "format": "uri",
@@ -863,22 +2510,22 @@
     },
     "serviceInterfaceAccessibility": {
       "enum": [
-        "WCAG 2.0 AAA",
-        "WCAG 2.0 AA or EN 301 549",
-        "WCAG 2.0 A",
-        "None or don\u2019t know"
+        "wcag_aaa",
+        "wcag_aa",
+        "wcag_a",
+        "none"
       ]
     },
     "serviceInterfaceAccessibilityDescription": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "serviceInterfaceTesting": {
-      "maxLength": 500,
+      "maxLength": 2000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "serviceName": {
@@ -892,18 +2539,111 @@
     },
     "staffSecurityClearanceChecks": {
       "enum": [
-        "Staff screening performed with conforms to BS7858:2012",
-        "Staff screening performed but doesn\u2019t conform with BS7858:2012",
-        "Staff screening not performed"
+        "staff_screening_to_bs7858_2012",
+        "staff_screening_not_bs7858_2012",
+        "none"
       ]
+    },
+    "standardsCSASTAR": {
+      "type": "boolean"
+    },
+    "standardsCSASTARExclusions": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "standardsCSASTARLevel": {
+      "enum": [
+        "level_1_csa_star_self_assessment",
+        "level_2_csa_star_attestation",
+        "level_3_csa_star_certification",
+        "level_4_csa_cstar_assessment",
+        "level_5_csa_star_continuous_monitoring"
+      ]
+    },
+    "standardsCSASTARWhen": {
+      "maxLength": 50,
+      "minLength": 1,
+      "type": "string"
+    },
+    "standardsISO28000": {
+      "type": "boolean"
+    },
+    "standardsISO28000Exclusions": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "standardsISO28000When": {
+      "maxLength": 50,
+      "minLength": 1,
+      "type": "string"
+    },
+    "standardsISO28000Who": {
+      "maxLength": 100,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+      "type": "string"
+    },
+    "standardsISOIEC27001": {
+      "type": "boolean"
+    },
+    "standardsISOIEC27001Exclusions": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "standardsISOIEC27001When": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "standardsISOIEC27001Who": {
+      "maxLength": 100,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+      "type": "string"
+    },
+    "standardsOther": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 0,
+      "type": "array"
+    },
+    "standardsPCI": {
+      "type": "boolean"
+    },
+    "standardsPCIExclusions": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "standardsPCIWhen": {
+      "maxLength": 50,
+      "minLength": 1,
+      "type": "string"
+    },
+    "standardsPCIWho": {
+      "maxLength": 100,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+      "type": "string"
     },
     "supportAvailableToThirdParty": {
       "type": "boolean"
     },
     "supportLevels": {
-      "maxLength": 500,
+      "maxLength": 2000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "systemRequirements": {
@@ -923,13 +2663,13 @@
     "userAuthentication": {
       "items": {
         "enum": [
-          "2-factor authentication",
-          "Public key authentication (including by TLS client certificate)",
-          "Identity federation with existing provider (for example Google apps)",
-          "Limited access over government network (for example PSN)",
-          "Dedicated link (for example VPN or bonded fibre)",
-          "Username or password",
-          "Other"
+          "two_factor",
+          "pka",
+          "identity_federation",
+          "government_network",
+          "dedicated_link",
+          "username_or_password",
+          "other"
         ]
       },
       "maxItems": 7,
@@ -938,18 +2678,18 @@
       "uniqueItems": true
     },
     "userAuthenticationDescription": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "userAuthenticationNeeded": {
       "type": "boolean"
     },
     "vulnerabilityManagementApproach": {
-      "maxLength": 500,
+      "maxLength": 1000,
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "vulnerabilityManagementType": {
@@ -959,78 +2699,66 @@
         "undisclosed"
       ]
     },
-    "webChatAccessibilityDescription": {
-      "maxLength": 500,
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
-      "type": "string"
-    },
     "webChatSupport": {
       "enum": [
-        "Yes",
-        "Yes, at an extra cost",
-        "No"
+        "yes",
+        "yes_extra_cost",
+        "no"
       ]
     },
     "webChatSupportAccessibility": {
       "enum": [
-        "WCAG 2.0 AAA",
-        "WCAG 2.0 AA or EN 301 549 9: Web",
-        "WCAG 2.0 A",
-        "None or don\u2019t know"
+        "wcag_aaa",
+        "wcag_aa",
+        "wcag_a",
+        "none_or_not_sure"
       ]
+    },
+    "webChatSupportAccessibilityDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "webChatSupportAccessibilityTesting": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
     },
     "webChatSupportAvailability": {
       "enum": [
-        "24 hours, 7 days a week",
-        "Standard UK office hours"
+        "24_7",
+        "9_to_5_7_days",
+        "9_to_5_mon_to_fri"
       ]
     }
   },
   "required": [
-    "API",
-    "APIDocumentation",
-    "APIDocumentatonFormats",
-    "APISandbox",
-    "APIUsage",
+    "APISoftware",
     "accessRestrictionManagementAndSupport",
     "accessRestrictionTesting",
-    "analyticsAvailable",
     "approachToResilience",
     "auditBuyersActions",
-    "auditBuyersActionsStorage",
     "auditSuppliersActions",
-    "auditSuppliersActionsStorage",
     "boardLevelServiceSecurity",
     "browsersAccess",
-    "browsersSupported",
     "cloudDeploymentModel",
     "configurationAndChangeManagementProcesses",
     "configurationAndChangeManagementType",
+    "creditOrDebitCardInformation",
     "customisationAvailable",
-    "customisationDescription",
     "dataExportFormats",
     "dataExportHow",
     "dataImportFormats",
     "dataProtectionBetweenNetworks",
-    "dataProtectionBetweenNetworksOther",
     "dataProtectionWithinNetwork",
-    "dataProtectionWithinNetworkOther",
-    "dataSanitisationType",
-    "dataStorageAndProcessingKnowledge",
-    "dataStorageAndProcessingLocations",
-    "dataStorageAndProcessingUserControl",
+    "dataSanitisation",
+    "dataStorageAndProcessing",
     "datacentreSecurityStandards",
-    "devicesUsersManageTheServiceThrough",
-    "documentationFormats",
-    "documentationFormatsOther",
-    "documentationService",
+    "documentation",
     "educationPricing",
     "emailOrTicketingSupport",
-    "emailOrTicketingSupportAccessibility",
-    "emailOrTicketingSupportPriority",
-    "emailOrTicketingSupportResponseTimes",
-    "emailOrTicketingSupportTicketing",
     "endOfContractDataExtraction",
     "endOfContractProcess",
     "equipmentDisposalApproach",
@@ -1040,64 +2768,48 @@
     "howLongSystemLogsStored",
     "incidentManagementApproach",
     "incidentManagementType",
+    "independenceOfResources",
     "informationSecurityPoliciesAndProcesses",
     "installation",
-    "installationCompatibleOperatingSystems",
     "managementAccessAuthentication",
-    "managementAccessAuthenticationDescription",
-    "metricsAvailable",
-    "metricsTypes",
+    "metrics",
     "mobile",
     "onsiteSupport",
     "outageReporting",
     "penetrationTesting",
-    "penetrationTestingApproach",
     "phoneSupport",
-    "phoneSupportAvailability",
-    "placeholderStandardsAndCertifications",
     "priceMin",
     "priceUnit",
     "pricingDocumentURL",
     "protectionOfDataAtRest",
-    "protectionOfDataAtRestOther",
     "protectiveMonitoringApproach",
     "protectiveMonitoringType",
-    "publicSectorNetworkTypes",
     "publicSectorNetworks",
-    "reportingTypesMetrics",
-    "resellerType",
-    "scalingSoftwareCost",
-    "scalingSoftwareIndependence",
-    "scalingSoftwareScalability",
+    "resellingType",
     "secureDevelopment",
     "securityGovernanceAccreditation",
-    "securityGovernanceApproach",
-    "securityGovernanceStandards",
-    "serviceAddOnDetails",
     "serviceAddOnType",
     "serviceBenefits",
+    "serviceCategories",
     "serviceConstraints",
-    "serviceDefinitionDocumentURL",
     "serviceDescription",
     "serviceFeatures",
     "serviceInterfaceAccessibility",
-    "serviceInterfaceAccessibilityDescription",
     "serviceInterfaceTesting",
     "serviceName",
     "staffSecurityClearanceChecks",
+    "standardsCSASTAR",
+    "standardsISO28000",
+    "standardsISOIEC27001",
+    "standardsPCI",
     "supportAvailableToThirdParty",
     "supportLevels",
     "systemRequirements",
     "termsAndConditionsDocumentURL",
-    "userAuthentication",
-    "userAuthenticationDescription",
     "userAuthenticationNeeded",
     "vulnerabilityManagementApproach",
     "vulnerabilityManagementType",
-    "webChatAccessibilityDescription",
-    "webChatSupport",
-    "webChatSupportAccessibility",
-    "webChatSupportAvailability"
+    "webChatSupport"
   ],
   "title": "G-Cloud 9 Cloud Software Product Schema",
   "type": "object"
