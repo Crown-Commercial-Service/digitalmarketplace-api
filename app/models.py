@@ -35,7 +35,7 @@ from . import db
 from app.utils import (
     link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data, filter_fields
 )
-from .validation import is_valid_service_id, get_validation_errors
+from .validation import is_valid_service_id, get_validation_errors, get_validator
 
 from dmutils.forms import is_government_email
 
@@ -2079,6 +2079,8 @@ class Application(db.Model):
             self.supplier_code = data['code']
         except KeyError:
             pass
+
+        get_validator('application').validate(data)
 
         return data
 

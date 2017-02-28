@@ -55,7 +55,7 @@ INCOMING_APPLICATION_DATA = {
     "phone": "Rep number",
     "email": "Rep email",
     "summary": "Summary",
-    "website": "",
+    "website": "http://website",
     "linkedin": "",
     "addresses": {
         "0": {
@@ -106,6 +106,22 @@ INCOMING_APPLICATION_DATA = {
         "review": "complete",
         "start": "complete",
         "documents": "complete"
+    },
+    "products": {
+        "0": {
+            "name": "product 1",
+            "pricing": "http://pricing",
+            "summary": "product summary",
+            "support": "http://support",
+            "website": "http://website"
+        },
+        "1": {
+            "name": "product 2",
+            "pricing": "http://pricing2",
+            "summary": "product summary2",
+            "support": "http://support2",
+            "website": "http://website2"
+        }
     }
 }
 
