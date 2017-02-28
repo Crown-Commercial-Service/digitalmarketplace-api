@@ -1,1 +1,1 @@
-alter table "public"."supplier" add column "is_recruiter" character varying not null;
+alter table "public"."supplier" add column "is_recruiter" character varying not null default false;

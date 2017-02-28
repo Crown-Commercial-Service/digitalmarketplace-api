@@ -13,6 +13,7 @@ import flask_featureflags as feature
 
 from six import string_types, text_type, binary_type
 
+from sqlalchemy import text
 from sqlalchemy import asc, desc, func, PrimaryKeyConstraint
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
@@ -551,7 +552,7 @@ class Supplier(db.Model):
         unique=False,
         nullable=False
     )
-    is_recruiter = db.Column(db.String, nullable=False, default=False)
+    is_recruiter = db.Column(db.String, nullable=False, default=False, server_default=text('false'))
     data = db.Column(MutableDict.as_mutable(JSON), default=dict)
 
     # TODO: migrate these to plain (non-timezone) fields
