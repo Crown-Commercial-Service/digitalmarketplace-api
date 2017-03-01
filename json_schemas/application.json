@@ -29,6 +29,8 @@
                         "website": {"type": "string", "pattern": "^http"}
                     }
                 }
+            },{
+                "type": "null"
             }]
         }
     }
