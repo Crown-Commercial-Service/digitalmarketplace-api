@@ -19,6 +19,7 @@ requirements_freeze:
 	pip install --upgrade pip
 	pip install --upgrade -r requirements_for_test.txt
 	pip freeze | grep -v marketplace-api.git > requirements.txt
+	sed '/^-e /s/$$/==whatever/' -i requirements.txt
 	sed '/^-e /s/-e //' -i requirements.txt
 
 test: lint tox
