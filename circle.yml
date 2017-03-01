@@ -42,6 +42,8 @@ deployment:
       - python ./db_tasks.py do_migration $DB_CONNECTION_INFO_STAGING
       - cf login -a https://api.system.staging.digital.gov.au -o dto -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
       - cf target -o dto -s digital-marketplace
+      - mkdir -p vendor
+      - pip install --upgrade --download vendor -r requirements.txt
       - cf push -f manifest.yml
 
   production:
