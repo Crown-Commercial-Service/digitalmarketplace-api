@@ -1,4 +1,4 @@
-alembic==0.8.10
+alembic==0.9.0
 apipkg==1.4
 appdirs==1.4.2
 backoff==1.4.0
@@ -6,7 +6,7 @@ bcrypt==3.1.3
 blinker==1.4
 boto==2.46.1
 boto3==1.4.4
-botocore==1.5.18
+botocore==1.5.19
 cffi==1.9.1
 click==6.7
 contextlib2==0.5.4
@@ -16,7 +16,7 @@ defusedxml==0.5.0
 docopt==0.6.2
 docutils==0.13.1
 git+https://github.com/AusDTO/dto-digitalmarketplace-apiclient.git@f128e346db262119363693b86e54f439d07867d6#egg=dto_digitalmarketplace_apiclient
-git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@f6bce5be246dcada10ee4b0bb08f07abb3e489f9#egg=dto_digitalmarketplace_utils
+git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@1f4e0eb2514aa2dca599c6899527eaef265c4a89#egg=dto_digitalmarketplace_utils
 enum34==1.1.6
 execnet==1.4.1
 flake8==3.3.0
@@ -30,7 +30,7 @@ Flask-Script==2.0.5
 Flask-SQLAlchemy==2.1
 freezegun==0.3.8
 hypothesis==3.6.1
-idna==2.2
+idna==2.4
 inflection==0.3.1
 itsdangerous==0.24
 Jinja2==2.9.5
@@ -44,13 +44,13 @@ mccabe==0.6.1
 migra==0.1.1470919406
 mock==2.0.0
 monotonic==1.2
-newrelic==2.80.0.60
+newrelic==2.80.1.61
 nose==1.3.7
 oauthlib==2.0.1
 packaging==16.8
 paramiko==2.1.2
 pathlib==1.0.1
-pbr==1.10.0
+pbr==2.0.0
 pendulum==1.1.0
 pep8==1.7.0
 pluggy==0.4.0
@@ -71,7 +71,7 @@ python-dateutil==2.6.0
 python-editor==1.0.3
 python-json-logger==0.1.6
 pytz==2016.10
-pytzdata==2016.10
+pytzdata==2017.1
 PyYAML==3.12
 requests==2.13.0
 requests-mock==1.3.0
@@ -82,7 +82,7 @@ rollbar==0.13.11
 s3transfer==0.1.10
 schemainspect==0.1.1488167750
 six==1.10.0
-SQLAlchemy==1.1.5
+SQLAlchemy==1.1.6
 SQLAlchemy-Utils==0.32.12
 sqlbag==0.1.1487916199
 sshtunnel==0.1.2

@@ -23,7 +23,7 @@ setup(
         'Flask-Bcrypt',
         'Flask-Migrate',
         'Flask-Script',
-        'Flask-SQLAlchemy',
+        'Flask-SQLAlchemy<2.2',
         'psycopg2',
         'SQLAlchemy',
         'SQLAlchemy-Utils',
