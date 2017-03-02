@@ -8,15 +8,13 @@ import os
 
 from migra import Migration
 
-from sqlbag import S, temporary_database as temporary_db, load_sql_from_file
+from sqlbag import S, temporary_database as temporary_db, load_sql_from_file, load_sql_from_folder
 
 
 from config import configs
 
 from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager
-from alembic.command import upgrade
-from alembic.config import Config
 import subprocess
 
 
@@ -26,31 +24,6 @@ from app import create_app, db
 
 if six.PY2:
     input = raw_input
-
-
-def alembic_setup(dburi, environment_name='test', target='head'):
-    print("Doing db setup")
-
-    test_config = configs[environment_name]
-    test_config.SQLALCHEMY_DATABASE_URI = dburi
-
-    with S(dburi) as s:
-        s.execute('create extension if not exists pg_trgm;')
-
-    app = create_app(environment_name)
-    Migrate(app, db)
-    Manager(db, MigrateCommand)
-    ALEMBIC_CONFIG = \
-        os.path.join(os.path.dirname(__file__),
-                     'migrations/alembic.ini')
-    config = Config(ALEMBIC_CONFIG)
-    config.set_main_option(
-        "script_location",
-        "migrations")
-
-    with app.app_context():
-        upgrade(config, target)
-    print("Done db setup")
 
 
 def prompt(question):
@@ -68,11 +41,11 @@ def load_current_staging_state(dburl):
         load_sql_from_file(s, 'DB/dumps/staging.schema.dump.sql')
 
 
-def load_post_migration(dburl):
+def load_post_migration_state(dburl):
     load_current_production_state(dburl)
 
     with S(dburl) as s:
-        load_sql_from_file(s, 'DB/migration/pending.sql')
+        load_sql_from_folder(s, 'DB/migration/pending')
 
 
 def load_from_app_model(dburl):
@@ -84,10 +57,6 @@ def load_from_app_model(dburl):
 def load_test_fixtures(dburl):
     with S(dburl) as s:
         load_sql_from_file(s, 'DB/data/test_fixtures.sql')
-
-
-def load_from_alembic_migrations(dburl, target='head'):
-    alembic_setup(dburl, environment_name='development', target=target)
 
 
 def sync():
@@ -132,37 +101,9 @@ def pending(write_to_file=False):
                     w.write(m.sql)
 
 
-def alembic_vs_model(target='head'):
+def check_migration_result():
     with temporary_db() as CURRENT_DB_URL, temporary_db() as TARGET_DB_URL:
-        load_from_alembic_migrations(CURRENT_DB_URL, target=target)
-        load_from_app_model(TARGET_DB_URL)
-
-        with S(CURRENT_DB_URL) as s_current, S(TARGET_DB_URL) as s_target:
-            m = Migration(s_current, s_target)
-
-            m.set_safety(False)
-            m.add_all_changes()
-
-            print('Differences:\n{}'.format(m.sql))
-
-
-def alembic_vs_prod(target='head'):
-    with temporary_db() as CURRENT_DB_URL, temporary_db() as TARGET_DB_URL:
-        load_from_alembic_migrations(CURRENT_DB_URL, target=target)
-        load_current_production_state(TARGET_DB_URL)
-
-        with S(CURRENT_DB_URL) as s_current, S(TARGET_DB_URL) as s_target:
-            m = Migration(s_current, s_target)
-
-            m.set_safety(False)
-            m.add_all_changes()
-
-            print('Differences:\n{}'.format(m.sql))
-
-
-def alembic_vs_app():
-    with temporary_db() as CURRENT_DB_URL, temporary_db() as TARGET_DB_URL:
-        load_from_alembic_migrations(CURRENT_DB_URL, target='head')
+        load_post_migration_state(CURRENT_DB_URL)
         load_from_app_model(TARGET_DB_URL)
 
         with S(CURRENT_DB_URL) as s_current, S(TARGET_DB_URL) as s_target:
@@ -228,24 +169,6 @@ def staging_errors():
             m.add_all_changes()
 
             print('Differences:\n{}'.format(m.sql))
-
-
-def dump_fixtures():
-    with temporary_db() as CURRENT_DB_URL:
-        load_from_alembic_migrations(CURRENT_DB_URL)
-
-        COMMAND = 'pg_dump --no-owner --no-privileges --data-only --column-inserts -f {} {}'
-
-        output = 'DB/data/test_fixtures.sql'
-
-        command = COMMAND.format(output, CURRENT_DB_URL)
-
-        print(command)
-
-        output = subprocess.check_output(
-            command,
-            shell=True)
-        print(output)
 
 
 def get_current_app_db_url():

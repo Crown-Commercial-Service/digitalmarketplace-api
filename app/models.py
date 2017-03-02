@@ -479,9 +479,12 @@ class SupplierDomain(db.Model):
         unique=True)
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), primary_key=True)
     domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), primary_key=True)
+    recruiter_info_id = db.Column(db.Integer, db.ForeignKey('recruiter_info.id'))
 
     domain = relationship("Domain", back_populates="suppliers")
     supplier = relationship("Supplier", back_populates="domains")
+
+    recruiter_info = relationship("RecruiterInfo", back_populates="suppliers")
 
     status = db.Column(
         db.Enum(
@@ -677,6 +680,16 @@ class Supplier(db.Model):
             d: True for d in self.assessed_domains
         }
 
+        def without_id(dictionary):
+            d = dict(dictionary)
+            del d['id']
+            return d
+
+        j['recruiter_info'] = {
+            d.domain.name: without_id(d.recruiter_info._fieldsdict)
+            for d in self.domains if d.recruiter_info
+        }
+
         if self.contacts:
             contact = self.contacts[0]
             j['representative'] = contact.name
@@ -738,6 +751,13 @@ class Supplier(db.Model):
         else:
             self.data['seller_types'] = {'recruitment': self.is_recruiter}
 
+        if 'recruiter_info' in self.data:
+            for d in self.domains:
+                if d.domain.name in self.data['recruiter_info']:
+                    info = self.data['recruiter_info'][d.domain.name]
+                    d.recruiter_info = RecruiterInfo(**info)
+            del self.data['recruiter_info']
+
         return data
 
     @validates('name')
@@ -780,6 +800,19 @@ class Domain(db.Model):
         if not d:
             raise ValidationError('cannot find domain: {}'.format(name_or_id))
         return d
+
+
+class RecruiterInfo(db.Model):
+    __tablename__ = 'recruiter_info'
+    id = db.Column(db.Integer, primary_key=True)
+    active_candidates = db.Column(db.String, nullable=False)
+    database_size = db.Column(db.String, nullable=False)
+    placed_candidates = db.Column(db.String, nullable=False)
+    margin = db.Column(db.String, nullable=False)
+    markup = db.Column(db.String, nullable=False)
+
+    suppliers = relationship("SupplierDomain", back_populates="recruiter_info")
+    assoc_suppliers = association_proxy('suppliers', 'supplier')
 
 
 class Product(db.Model):

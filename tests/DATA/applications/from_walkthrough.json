@@ -80,6 +80,29 @@
             "website": "http://www.rtwtwtwt.com"
         }
     },
+    "recruiter_info": {
+        "Agile delivery and Governance": {
+            "active_candidates": "6",
+            "database_size": "5",
+            "placed_candidates": "99",
+            "margin": "8",
+            "markup": "7"
+        },
+        "Software engineering and Development": {
+            "active_candidates": "0",
+            "database_size": "9",
+            "placed_candidates": "99",
+            "margin": "s",
+            "markup": "a"
+        },
+        "Strategy and Policy": {
+            "active_candidates": "2",
+            "database_size": "1",
+            "placed_candidates": "99",
+            "margin": "4",
+            "markup": "3"
+        }
+    },
     "representative": "Mike Dirt",
     "recruiter": "yes",
     "seller_type": {

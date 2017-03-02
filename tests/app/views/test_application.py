@@ -7,6 +7,7 @@ from app.models import db, AuditEvent, Framework, User, utcnow, Agreement, Produ
 
 from itertools import tee
 from six.moves import zip as izip
+import six
 
 
 def test_approval(sample_submitted_application):
@@ -30,6 +31,14 @@ def test_approval(sample_submitted_application):
     assert a.supplier.serializable['products'] == [product_from_submitted]
     assert 'recruitment' in a.supplier.serializable['seller_types']
     assert a.supplier.is_recruiter
+
+    r_info = a.supplier.domains[0].recruiter_info._fieldsdict
+    r_info_from_application = a.data['recruiter_info']['Strategy and Policy']
+
+    assert six.viewitems(r_info) >= six.viewitems(r_info_from_application)
+
+    assert six.viewitems(a.supplier.serializable['recruiter_info']) <= \
+        six.viewitems(a.data['recruiter_info'])
 
 
 class BaseApplicationsTest(BaseApplicationTest):

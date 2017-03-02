@@ -86,6 +86,29 @@ INCOMING_APPLICATION_DATA = {
             "title": "case study"
         }
     },
+    "recruiter_info": {
+        "Agile delivery and Governance": {
+            "active_candidates": "6",
+            "database_size": "5",
+            "placed_candidates": "5",
+            "margin": "8",
+            "markup": "7"
+        },
+        "Software engineering and Development": {
+            "active_candidates": "0",
+            "database_size": "9",
+            "placed_candidates": "5",
+            "margin": "s",
+            "markup": "a"
+        },
+        "Change, Training and Transformation": {
+            "active_candidates": "2",
+            "database_size": "1",
+            "placed_candidates": "5",
+            "margin": "4",
+            "markup": "3"
+        }
+    },
     "documents": {
         "financial": "Marketplace_Frontend_1.png",
         "liability": "Marketplace_Frontend.png",
