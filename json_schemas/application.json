@@ -5,7 +5,7 @@
     "additionalProperties": true,
     "properties": {
         "linkedin": {"type": ["string", "null"], "pattern": "^$|^http"},
-        "website": {"type": "string", "pattern": "^(?!javascript).+"},
+        "website": {"oneOf": [{"type": "string", "pattern": "^(?!javascript).+"}, {"type": "string", "maxLength": 0}]},
         "products": {
             "oneOf": [{
                 "type": "object",
