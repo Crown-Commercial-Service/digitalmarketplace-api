@@ -868,18 +868,6 @@
       "minItems": 1,
       "type": "array"
     },
-    "serviceCategories": {
-      "items": {
-        "enum": [
-          "support_category_one",
-          "support_category_two"
-        ]
-      },
-      "maxItems": 2,
-      "minItems": 1,
-      "type": "array",
-      "uniqueItems": true
-    },
     "serviceConstraints": {
       "maxLength": 1000,
       "minLength": 1,
@@ -1017,7 +1005,6 @@
     "resellingType",
     "securityStaff",
     "serviceBenefits",
-    "serviceCategories",
     "serviceConstraints",
     "serviceDescription",
     "serviceFeatures",

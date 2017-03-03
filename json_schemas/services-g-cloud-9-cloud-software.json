@@ -680,6 +680,53 @@
       "oneOf": [
         {
           "properties": {
+            "managementAccessAuthentication": {
+              "items": {
+                "enum": [
+                  "dedicated_link",
+                  "government_network",
+                  "identity_federation",
+                  "other",
+                  "public_key",
+                  "two_factor",
+                  "username_or_password"
+                ]
+              }
+            },
+            "managementAccessAuthenticationDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "managementAccessAuthentication": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "dedicated_link",
+                    "government_network",
+                    "identity_federation",
+                    "other",
+                    "public_key",
+                    "two_factor",
+                    "username_or_password"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "managementAccessAuthentication",
+            "managementAccessAuthenticationDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "standardsISO28000": {
               "enum": [
                 false
@@ -1178,53 +1225,6 @@
           "required": [
             "protectionOfDataAtRest",
             "protectionOfDataAtRestOther"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "managementAccessAuthentication": {
-              "items": {
-                "enum": [
-                  "dedicated_link",
-                  "government_network",
-                  "identity_federation",
-                  "other",
-                  "public_key",
-                  "two_factor",
-                  "username_or_password"
-                ]
-              }
-            },
-            "managementAccessAuthenticationDescription": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "managementAccessAuthentication": {
-              "not": {
-                "items": {
-                  "enum": [
-                    "dedicated_link",
-                    "government_network",
-                    "identity_federation",
-                    "other",
-                    "public_key",
-                    "two_factor",
-                    "username_or_password"
-                  ]
-                }
-              }
-            }
-          },
-          "required": [
-            "managementAccessAuthentication",
-            "managementAccessAuthenticationDescription"
           ]
         }
       ]
@@ -2473,11 +2473,256 @@
     "serviceCategories": {
       "items": {
         "enum": [
-          "This will be...",
-          "...all funky and new"
+          "API connectors and interface engines",
+          "Academic",
+          "Accessibility",
+          "Accessibility checking",
+          "Accounts payable",
+          "Accounts receivable",
+          "Advertising",
+          "Affiliate marketing",
+          "Agile project management and issue tracking",
+          "Airport management",
+          "Alumni management",
+          "Analytics",
+          "Anti-spam and CAPTCHA",
+          "Applicant tracking",
+          "Application lifecycle management",
+          "Applications",
+          "Asset management",
+          "Assisted living monitoring",
+          "Asynchronous learning",
+          "Audit tools",
+          "Authentication, identity and access management",
+          "Aviation maintenance",
+          "Backup, recovery and archival",
+          "Behavioural targeting",
+          "Benefits administration",
+          "Billing and invoicing",
+          "Blogging",
+          "Booking, scheduling and diary management",
+          "Brand management",
+          "Budgeting",
+          "Bug tracking",
+          "Build tools",
+          "Building information modelling (BIM)",
+          "Business intelligence",
+          "Business management",
+          "Business performance management",
+          "Business process management (BPM)",
+          "Business process modelling (BPM)",
+          "Business transformation and organisational change management",
+          "CRM system",
+          "Calendar",
+          "Call accounting",
+          "Call centre",
+          "Campaign management",
+          "Campus management",
+          "Carbon, energy and sustainability management",
+          "Case management",
+          "Chiropractic",
+          "Classroom management",
+          "Clinical decision support",
+          "Clinical trial management",
+          "Code generation",
+          "Community management",
+          "Complex event processing",
+          "Configuration and patch management",
+          "Configure, price and quote (CPQ)",
+          "Constituent engagement",
+          "Contact management",
+          "Content management system (CMS)",
+          "Content storage and sharing",
+          "Contextual marketing",
+          "Contract management",
+          "Culture management",
+          "Customer helpdesk (service desk)",
+          "Customer service and support",
+          "Data mining, analysis tools and analytics",
+          "Data visualisation",
+          "Debt collection",
+          "Dental",
+          "Design",
+          "Desktop as a Service",
+          "Development tools",
+          "Diagram and wireframe",
+          "Digital asset management",
+          "Digital publishing",
+          "Digital signatures",
+          "Display advertising",
+          "Distribution",
+          "Document management",
+          "Electronic data interchange (EDI)",
+          "Electronic discovery (legal)",
+          "Electronic medical records",
+          "Electronic signatures",
+          "Email and secure email",
+          "Email marketing",
+          "Employee scheduling",
+          "Employee self-service",
+          "Encryption",
+          "Enterprise resource planning (ERP)",
+          "Enterprise social networking",
+          "Examination (applicant testing)",
+          "Examination or applicant testing",
+          "Expense management, expense reporting",
+          "Facility management",
+          "Farming and farm management",
+          "Fault management, monitoring and alerting",
+          "Fax",
+          "Feedback and reviews management",
+          "Field service management",
+          "File sending and file sharing",
+          "File sending and sharing",
+          "File storage",
+          "Financial compliance",
+          "Financial management",
+          "Financial risk management",
+          "Fleet management",
+          "Fleet tracking",
+          "Form building",
+          "Forms and surveys",
+          "Freight management",
+          "Geographic information systems and mapping",
+          "Governance, risk management and compliance (GRC)",
+          "Healthcare analytics",
+          "Healthcare management",
+          "Holiday planning and absence management",
+          "Home healthcare",
+          "IT asset management",
+          "Idea management",
+          "Image management and picture archiving",
+          "Instant messaging (IM) and chat",
+          "Integrated development environment (IDE)",
+          "Interactive voice response (IVR)",
+          "Inventory management",
+          "Land management",
+          "Law enforcement",
+          "Law practice management",
+          "Legal billing",
+          "Legal calendar",
+          "Legal case management",
+          "Legal document management",
+          "Library automation",
+          "Library management",
+          "Licence management",
+          "Live chat",
+          "Log management",
+          "Long-term care",
+          "Machine learning and artificial intelligence",
+          "Marine",
+          "Marketing analytics",
+          "Marketing automation",
+          "Marketing data",
+          "Medical billing",
+          "Medical imaging",
+          "Medical lab",
+          "Medical practice",
+          "Medical scheduling and booking",
+          "Meeting management",
+          "Mental health",
+          "Mobile development",
+          "Mobile device management",
+          "Mobile marketing",
+          "Natural language and speech processing",
+          "Network services (DNS)",
+          "Online courses",
+          "Online display advertising",
+          "Online forum or community",
+          "Online forums",
+          "Online grading",
+          "Online meetings",
+          "Optometry",
+          "Order management",
+          "Other CRM services",
+          "Other accounting and finance services",
+          "Other information and communications technology (ICT) services",
+          "Other marketing services",
+          "Other operations management services",
+          "Other sales services",
+          "Other transport and logistics services",
+          "Partner relationship management (PRM)",
+          "Password management",
+          "Patient case management, care pathway management",
+          "Payment gateway",
+          "Payroll",
+          "Performance management",
+          "Personalisation and behavioral targeting",
+          "Pharmacy",
+          "Pharmacy management",
+          "Photography and multimedia",
+          "Physical therapy",
+          "Portfolio analysis",
+          "Post (mailing services)",
+          "Presentations and slides (office productivity)",
+          "Printing",
+          "Procurement",
+          "Product lifecycle management",
+          "Professional services automation (PSA)",
+          "Project collaboration",
+          "Project management",
+          "Project portfolio management (PPM)",
+          "Public relations",
+          "Purchasing",
+          "Recruitment",
+          "Recurring billing and subscription management",
+          "Remote access",
+          "Reporting and dashboards",
+          "Revenue cycle management",
+          "SMS",
+          "Salary",
+          "Sales and operations planning",
+          "Sales intelligence tracking",
+          "Sales performance management",
+          "Scheduling and appointments",
+          "School accounting",
+          "School administration",
+          "Search",
+          "Search marketing",
+          "Secure content and threat management",
+          "Security",
+          "Security risk management",
+          "Shipping",
+          "Social marketing",
+          "Social media marketing",
+          "Social media monitoring",
+          "Social networking",
+          "Source code management",
+          "Spreadsheets (office productivity)",
+          "Student management",
+          "Supply chain management",
+          "Synchronous learning",
+          "Systems monitoring",
+          "Talent (retention management)",
+          "Task management",
+          "Tax management",
+          "Telecoms expense management",
+          "Telephony (including VOIP and SIP connectivity)",
+          "Testing and optimisation",
+          "Time and expense tracking",
+          "Training",
+          "Transportation dispatch",
+          "Trucking solutions",
+          "Trust accounting",
+          "Unified communications",
+          "Usability",
+          "Version control",
+          "Video conferencing",
+          "Virtual agents",
+          "Virtual private network (VPN)",
+          "Visitor management",
+          "Warehouse management",
+          "Webinars",
+          "Website builder",
+          "Word processing (office productivity)",
+          "Workflow",
+          "Workforce analytics",
+          "Workforce management",
+          "eCommerce and shopping cart",
+          "eLearning"
         ]
       },
-      "maxItems": 2,
+      "maxItems": 20,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
