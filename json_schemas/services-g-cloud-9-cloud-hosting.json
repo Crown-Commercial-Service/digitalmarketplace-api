@@ -95,6 +95,105 @@
       "oneOf": [
         {
           "properties": {
+            "metrics": {
+              "enum": [
+                false
+              ]
+            },
+            "metricsHow": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "metrics",
+            "metricsHow"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                false
+              ]
+            },
+            "metricsWhat": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "metrics",
+            "metricsWhat"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "metricsWhat": {
+              "items": {
+                "enum": [
+                  "cpu",
+                  "disk",
+                  "memory",
+                  "network"
+                ]
+              }
+            },
+            "metricsWhatOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "metricsWhat": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "cpu",
+                    "disk",
+                    "memory",
+                    "network"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "metricsWhat",
+            "metricsWhatOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "webInterface": {
               "enum": [
                 false
@@ -610,27 +709,27 @@
       "oneOf": [
         {
           "properties": {
-            "standardsISOIEC27001": {
+            "standardsPCI": {
               "enum": [
                 false
               ]
             },
-            "standardsISOIEC27001When": {
+            "standardsPCIWho": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "standardsISOIEC27001": {
+            "standardsPCI": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "standardsISOIEC27001",
-            "standardsISOIEC27001When"
+            "standardsPCI",
+            "standardsPCIWho"
           ]
         }
       ]
@@ -639,27 +738,27 @@
       "oneOf": [
         {
           "properties": {
-            "standardsISOIEC27001": {
+            "standardsPCI": {
               "enum": [
                 false
               ]
             },
-            "standardsISOIEC27001Exclusions": {
+            "standardsPCIWhen": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "standardsISOIEC27001": {
+            "standardsPCI": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "standardsISOIEC27001",
-            "standardsISOIEC27001Exclusions"
+            "standardsPCI",
+            "standardsPCIWhen"
           ]
         }
       ]
@@ -668,27 +767,27 @@
       "oneOf": [
         {
           "properties": {
-            "standardsISOIEC27001": {
+            "standardsPCI": {
               "enum": [
                 false
               ]
             },
-            "standardsISOIEC27001Who": {
+            "standardsPCIExclusions": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "standardsISOIEC27001": {
+            "standardsPCI": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "standardsISOIEC27001",
-            "standardsISOIEC27001Who"
+            "standardsPCI",
+            "standardsPCIExclusions"
           ]
         }
       ]
@@ -1259,6 +1358,93 @@
       "oneOf": [
         {
           "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISOIEC27001When": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISOIEC27001",
+            "standardsISOIEC27001When"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISOIEC27001Exclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISOIEC27001",
+            "standardsISOIEC27001Exclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISOIEC27001Who": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISOIEC27001",
+            "standardsISOIEC27001Who"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "auditSuppliersActions": {
               "enum": [
                 "not_available"
@@ -1283,105 +1469,6 @@
           "required": [
             "auditSuppliersActions",
             "auditSuppliersActionsStorage"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "metrics": {
-              "enum": [
-                false
-              ]
-            },
-            "metricsHow": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "metrics": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "metrics",
-            "metricsHow"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "metrics": {
-              "enum": [
-                false
-              ]
-            },
-            "metricsWhat": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "metrics": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "metrics",
-            "metricsWhat"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "metricsWhat": {
-              "items": {
-                "enum": [
-                  "cpu",
-                  "disk",
-                  "memory",
-                  "network"
-                ]
-              }
-            },
-            "metricsWhatOther": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "metricsWhat": {
-              "not": {
-                "items": {
-                  "enum": [
-                    "cpu",
-                    "disk",
-                    "memory",
-                    "network"
-                  ]
-                }
-              }
-            }
-          },
-          "required": [
-            "metricsWhat",
-            "metricsWhatOther"
           ]
         }
       ]
@@ -1688,93 +1775,6 @@
           "required": [
             "APIDocumentation",
             "APIDocumentationFormats"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsPCI": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsPCIWho": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsPCI": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsPCI",
-            "standardsPCIWho"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsPCI": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsPCIWhen": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsPCI": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsPCI",
-            "standardsPCIWhen"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsPCI": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsPCIExclusions": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsPCI": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsPCI",
-            "standardsPCIExclusions"
           ]
         }
       ]
@@ -2729,12 +2729,31 @@
     "serviceCategories": {
       "items": {
         "enum": [
-          "Hosting type 1",
-          "Hosting type 2",
-          "Or maybe hosting doesn\u2019t have categories at all?"
+          "Archiving, backup and disaster recovery",
+          "Block storage",
+          "Compute and application hosting",
+          "Container service",
+          "Content delivery network",
+          "Data warehousing",
+          "Distributed denial of service attack (DDOS) protection",
+          "Firewall",
+          "Infrastructure and platform security",
+          "Intrusion detection",
+          "Load balancing",
+          "Logging and analysis",
+          "Message queuing and processing",
+          "Networking (including network as a service)",
+          "NoSQL database",
+          "Object storage",
+          "Other database services",
+          "Other storage services",
+          "Platform as a service (PaaS)",
+          "Protective monitoring",
+          "Relational database",
+          "Search"
         ]
       },
-      "maxItems": 3,
+      "maxItems": 10,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
