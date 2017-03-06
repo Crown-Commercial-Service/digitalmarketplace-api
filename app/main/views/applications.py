@@ -182,7 +182,7 @@ def applications_list_response(with_task_status=False):
 
     applications = applications.paginate(
         page=page,
-        per_page=results_per_page
+        per_page=1000
     )
 
     apps_results = [_.serializable for _ in applications.items]

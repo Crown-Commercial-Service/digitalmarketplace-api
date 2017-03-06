@@ -344,7 +344,8 @@ class TestListApplications(BaseApplicationsTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['applications']) == 5
+        assert len(data['applications']) == 8
+        return  # skip these checks while we disable pagination temporarily
         assert 'next' in data['links']
 
         res = self.list_applications(page=2)
@@ -362,7 +363,7 @@ class TestListApplications(BaseApplicationsTest):
         assert response.status_code == 200
         data = json.loads(response.get_data())
         assert 'applications' in data
-        assert len(data['applications']) == 2
+        assert len(data['applications']) == 8
 
     def test_results_ordering(self):
         def pairwise(iterable):
