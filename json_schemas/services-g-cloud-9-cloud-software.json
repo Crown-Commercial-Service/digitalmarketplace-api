@@ -859,7 +859,6 @@
           "properties": {
             "serviceInterfaceAccessibility": {
               "enum": [
-                "none",
                 "wcag_a",
                 "wcag_aa",
                 "wcag_aaa"
@@ -874,7 +873,7 @@
           "properties": {
             "serviceInterfaceAccessibility": {
               "enum": [
-                true
+                "none"
               ]
             }
           },
@@ -1439,6 +1438,35 @@
       "oneOf": [
         {
           "properties": {
+            "accreditationsOther": {
+              "enum": [
+                false
+              ]
+            },
+            "accreditationsOtherList": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "accreditationsOther": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "accreditationsOther",
+            "accreditationsOtherList"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "mobile": {
               "enum": [
                 false
@@ -1810,6 +1838,19 @@
         "never"
       ]
     },
+    "accreditationsOther": {
+      "type": "boolean"
+    },
+    "accreditationsOtherList": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
     "approachToResilience": {
       "maxLength": 2000,
       "minLength": 1,
@@ -2137,6 +2178,14 @@
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
+    },
+    "governmentSecurityClearances": {
+      "enum": [
+        "dv",
+        "sc",
+        "bpss",
+        "none"
+      ]
     },
     "guaranteedAvailability": {
       "maxLength": 2000,
@@ -2852,16 +2901,6 @@
       "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
       "type": "string"
     },
-    "standardsOther": {
-      "items": {
-        "maxLength": 100,
-        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
-        "type": "string"
-      },
-      "maxItems": 10,
-      "minItems": 0,
-      "type": "array"
-    },
     "standardsPCI": {
       "type": "boolean"
     },
@@ -2983,6 +3022,7 @@
     "APISoftware",
     "accessRestrictionManagementAndSupport",
     "accessRestrictionTesting",
+    "accreditationsOther",
     "approachToResilience",
     "auditBuyersActions",
     "auditSuppliersActions",
@@ -3009,6 +3049,7 @@
     "equipmentDisposalApproach",
     "freeVersionTrialOption",
     "gettingStarted",
+    "governmentSecurityClearances",
     "guaranteedAvailability",
     "howLongSystemLogsStored",
     "incidentManagementApproach",

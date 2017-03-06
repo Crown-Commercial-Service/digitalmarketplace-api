@@ -425,114 +425,27 @@
       "oneOf": [
         {
           "properties": {
-            "planningService": {
+            "QAAndTesting": {
               "enum": [
                 false
               ]
             },
-            "planningServiceDescription": {
+            "QAAndTestingDescription": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "planningService": {
+            "QAAndTesting": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "planningService",
-            "planningServiceDescription"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "planningService": {
-              "enum": [
-                false
-              ]
-            },
-            "planningServiceCompatibility": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "planningService": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "planningService",
-            "planningServiceCompatibility"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "planningServiceCompatibility": {
-              "enum": [
-                false
-              ]
-            },
-            "planningServiceCompatibilityList": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "planningServiceCompatibility": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "planningServiceCompatibility",
-            "planningServiceCompatibilityList"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "securityStaff": {
-              "enum": [
-                false
-              ]
-            },
-            "securityStaffClearances": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "securityStaff": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "securityStaff",
-            "securityStaffClearances"
+            "QAAndTesting",
+            "QAAndTestingDescription"
           ]
         }
       ]
@@ -659,27 +572,85 @@
       "oneOf": [
         {
           "properties": {
-            "QAAndTesting": {
+            "planningService": {
               "enum": [
                 false
               ]
             },
-            "QAAndTestingDescription": {
+            "planningServiceDescription": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "QAAndTesting": {
+            "planningService": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "QAAndTesting",
-            "QAAndTestingDescription"
+            "planningService",
+            "planningServiceDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "planningService": {
+              "enum": [
+                false
+              ]
+            },
+            "planningServiceCompatibility": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "planningService": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "planningService",
+            "planningServiceCompatibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "planningServiceCompatibility": {
+              "enum": [
+                false
+              ]
+            },
+            "planningServiceCompatibilityList": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "planningServiceCompatibility": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "planningServiceCompatibility",
+            "planningServiceCompatibilityList"
           ]
         }
       ]
@@ -721,6 +692,14 @@
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
+    },
+    "governmentSecurityClearances": {
+      "enum": [
+        "dv",
+        "sc",
+        "bpss",
+        "none"
+      ]
     },
     "ongoingSupport": {
       "type": "boolean"
@@ -842,22 +821,6 @@
         "reseller_no_extras"
       ]
     },
-    "securityStaff": {
-      "type": "boolean"
-    },
-    "securityStaffClearances": {
-      "items": {
-        "enum": [
-          "dv",
-          "sc",
-          "bpss"
-        ]
-      },
-      "maxItems": 3,
-      "minItems": 1,
-      "type": "array",
-      "uniqueItems": true
-    },
     "serviceBenefits": {
       "items": {
         "maxLength": 100,
@@ -924,6 +887,13 @@
     "sfiaRateDocumentURL": {
       "format": "uri",
       "type": "string"
+    },
+    "staffSecurityClearanceChecks": {
+      "enum": [
+        "staff_screening_to_bs7858_2012",
+        "staff_screening_not_bs7858_2012",
+        "none"
+      ]
     },
     "supportLevels": {
       "maxLength": 2000,
@@ -996,6 +966,7 @@
     "QAAndTesting",
     "educationPricing",
     "emailOrTicketingSupport",
+    "governmentSecurityClearances",
     "ongoingSupport",
     "phoneSupport",
     "planningService",
@@ -1003,13 +974,13 @@
     "priceUnit",
     "pricingDocumentURL",
     "resellingType",
-    "securityStaff",
     "serviceBenefits",
     "serviceConstraints",
     "serviceDescription",
     "serviceFeatures",
     "serviceName",
     "setupAndMigrationService",
+    "staffSecurityClearanceChecks",
     "supportLevels",
     "termsAndConditionsDocumentURL",
     "training",
