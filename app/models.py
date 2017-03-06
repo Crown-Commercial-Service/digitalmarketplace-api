@@ -538,9 +538,9 @@ class Supplier(db.Model):
         cascade='all, delete-orphan'
     )
     case_studies = db.relationship('CaseStudy', single_parent=True, cascade='all, delete-orphan')
-    work_orders = db.relationship('WorkOrder', single_parent=True, cascade='all, delete-orphan')
-    applications = db.relationship('Application', single_parent=True, cascade='all, delete-orphan')
-    brief_responses = db.relationship('BriefResponse', single_parent=True, cascade='all, delete-orphan')
+    # work_orders = db.relationship('WorkOrder', single_parent=True, cascade='all, delete-orphan')
+    # applications = db.relationship('Application', single_parent=True, cascade='all, delete-orphan')
+    # brief_responses = db.relationship('BriefResponse', single_parent=True, cascade='all, delete-orphan')
     products = db.relationship('Product', single_parent=True, cascade='all, delete-orphan')
     references = db.relationship('SupplierReference', single_parent=True, cascade='all, delete-orphan')
     prices = db.relationship('PriceSchedule', single_parent=True, cascade='all, delete-orphan')
