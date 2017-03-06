@@ -214,15 +214,7 @@ def product_search():
         return jsonify(message=str(e)), 500
 
 
-@main.route('/suppliers/search', methods=['GET'])
-def supplier_search():
-    search_query = get_json_from_request()
-
-    new_domains = False
-
-    offset = get_nonnegative_int_or_400(request.args, 'from', 0)
-    result_count = get_positive_int_or_400(request.args, 'size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'])
-
+def do_search(search_query, offset, result_count, new_domains):
     try:
         sort_dir = list(search_query['sort'][0].values())[0]['order']
     except (KeyError, IndexError):
@@ -351,11 +343,24 @@ def supplier_search():
             )
         ]
 
-    sliced_results = results[offset:offset+result_count]
+    sliced_results = results[offset:(offset + result_count)]
+    return sliced_results, len(results)
+
+
+@main.route('/suppliers/search', methods=['GET'])
+def supplier_search():
+    search_query = get_json_from_request()
+
+    new_domains = False
+
+    offset = get_nonnegative_int_or_400(request.args, 'from', 0)
+    result_count = get_positive_int_or_400(request.args, 'size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'])
+
+    sliced_results, count = do_search(search_query, offset, result_count, new_domains=new_domains)
 
     result = {
         'hits': {
-            'total': len(results),
+            'total': count,
             'hits': [{'_source': r} for r in sliced_results]
         }
     }

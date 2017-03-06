@@ -62,5 +62,6 @@ version_label
 .env*
 
 DB/dumps
+searchtests
 dumps
 dump.py
