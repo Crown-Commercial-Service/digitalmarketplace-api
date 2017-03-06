@@ -153,41 +153,6 @@
       "oneOf": [
         {
           "properties": {
-            "ongoingSupportServices": {
-              "items": {
-                "enum": [
-                  "buyer"
-                ]
-              }
-            },
-            "ongoingSupportServicesList": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "ongoingSupportServices": {
-              "not": {
-                "items": {
-                  "enum": [
-                    "buyer"
-                  ]
-                }
-              }
-            }
-          },
-          "required": [
-            "ongoingSupportServices",
-            "ongoingSupportServicesList"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
             "webChatSupport": {
               "enum": [
                 "no"
@@ -417,6 +382,216 @@
           "required": [
             "phoneSupport",
             "phoneSupportAvailability"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityTesting": {
+              "enum": [
+                false
+              ]
+            },
+            "securityTestingWhat": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTesting": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "securityTesting",
+            "securityTestingWhat"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityTestingCCP": {
+              "type": "null"
+            },
+            "securityTestingWhat": {
+              "items": {
+                "enum": [
+                  "it_health_checks",
+                  "other",
+                  "penetration_testing"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTestingWhat": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "it_health_checks",
+                    "other",
+                    "penetration_testing"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityTestingWhat",
+            "securityTestingCCP"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityTestingWhat": {
+              "items": {
+                "enum": [
+                  "it_health_checks",
+                  "penetration_testing",
+                  "risk_analysis"
+                ]
+              }
+            },
+            "securityTestingWhatOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTestingWhat": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "it_health_checks",
+                    "penetration_testing",
+                    "risk_analysis"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityTestingWhat",
+            "securityTestingWhatOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityTestingAccredited": {
+              "type": "null"
+            },
+            "securityTestingWhat": {
+              "items": {
+                "enum": [
+                  "other",
+                  "risk_analysis"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTestingWhat": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "other",
+                    "risk_analysis"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityTestingWhat",
+            "securityTestingAccredited"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityTestingAccreditations": {
+              "type": "null"
+            },
+            "securityTestingAccredited": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTestingAccredited": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "securityTestingAccredited",
+            "securityTestingAccreditations"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityTestingAccreditations": {
+              "items": {
+                "enum": [
+                  "crest",
+                  "tigerscheme"
+                ]
+              }
+            },
+            "securityTestingAccreditationsOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTestingAccreditations": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "crest",
+                    "tigerscheme"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityTestingAccreditations",
+            "securityTestingAccreditationsOther"
           ]
         }
       ]
@@ -723,16 +898,6 @@
       "type": "array",
       "uniqueItems": true
     },
-    "ongoingSupportServicesList": {
-      "items": {
-        "maxLength": 100,
-        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
-        "type": "string"
-      },
-      "maxItems": 10,
-      "minItems": 1,
-      "type": "array"
-    },
     "phoneSupport": {
       "type": "boolean"
     },
@@ -820,6 +985,62 @@
         "reseller_extra_support",
         "reseller_no_extras"
       ]
+    },
+    "securityTesting": {
+      "type": "boolean"
+    },
+    "securityTestingAccreditations": {
+      "items": {
+        "enum": [
+          "tigerscheme",
+          "crest",
+          "other"
+        ]
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "securityTestingAccreditationsOther": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "securityTestingAccredited": {
+      "type": "boolean"
+    },
+    "securityTestingCCP": {
+      "type": "boolean"
+    },
+    "securityTestingWhat": {
+      "items": {
+        "enum": [
+          "penetration_testing",
+          "it_health_checks",
+          "risk_analysis",
+          "other"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "securityTestingWhatOther": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
     },
     "serviceBenefits": {
       "items": {
@@ -974,6 +1195,7 @@
     "priceUnit",
     "pricingDocumentURL",
     "resellingType",
+    "securityTesting",
     "serviceBenefits",
     "serviceConstraints",
     "serviceDescription",

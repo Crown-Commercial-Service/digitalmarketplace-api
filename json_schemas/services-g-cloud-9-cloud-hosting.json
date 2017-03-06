@@ -158,8 +158,10 @@
                 "enum": [
                   "cpu",
                   "disk",
+                  "http",
                   "memory",
-                  "network"
+                  "network",
+                  "num_instances"
                 ]
               }
             },
@@ -176,8 +178,10 @@
                   "enum": [
                     "cpu",
                     "disk",
+                    "http",
                     "memory",
-                    "network"
+                    "network",
+                    "num_instances"
                   ]
                 }
               }
@@ -2273,9 +2277,6 @@
         "supplier_defined"
       ]
     },
-    "creditOrDebitCardInformation": {
-      "type": "boolean"
-    },
     "dataProtectionBetweenNetworks": {
       "items": {
         "enum": [
@@ -2565,12 +2566,14 @@
         "enum": [
           "cpu",
           "disk",
+          "http",
           "memory",
           "network",
+          "num_instances",
           "other"
         ]
       },
-      "maxItems": 5,
+      "maxItems": 7,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
@@ -2722,11 +2725,10 @@
       "items": {
         "enum": [
           "automatic",
-          "user_intervention",
-          "support_request"
+          "user_intervention"
         ]
       },
-      "maxItems": 3,
+      "maxItems": 2,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
@@ -3124,7 +3126,6 @@
     "commandLineInterface",
     "configurationAndChangeManagementProcesses",
     "configurationAndChangeManagementType",
-    "creditOrDebitCardInformation",
     "dataProtectionBetweenNetworks",
     "dataProtectionWithinNetwork",
     "dataSanitisation",

@@ -1486,7 +1486,8 @@
             }
           },
           "required": [
-            "mobile"
+            "mobile",
+            "mobileDifferences"
           ]
         }
       ]
@@ -1938,9 +1939,6 @@
         "supplier_defined"
       ]
     },
-    "creditOrDebitCardInformation": {
-      "type": "boolean"
-    },
     "customisationAvailable": {
       "type": "boolean"
     },
@@ -2298,8 +2296,8 @@
     },
     "mobileDifferences": {
       "maxLength": 1000,
-      "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
     "onsiteSupport": {
@@ -3031,7 +3029,6 @@
     "cloudDeploymentModel",
     "configurationAndChangeManagementProcesses",
     "configurationAndChangeManagementType",
-    "creditOrDebitCardInformation",
     "customisationAvailable",
     "dataExportFormats",
     "dataExportHow",
