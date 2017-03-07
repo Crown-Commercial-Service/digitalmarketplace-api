@@ -62,7 +62,8 @@ def get_domain_metrics():
 def get_seller_type_metrics():
     metrics = {}
 
-    query = "SELECT key, count(*) FROM application, json_each(application.data->'seller_type') badge GROUP BY key"
+    query = "SELECT key, count(*) FROM application, json_each(application.data->'seller_type') badge GROUP BY key " \
+            "UNION select 'product', count(*) FROM application WHERE application.data->'products'->'0' IS NOT null"
     for (seller_type, count) in db.session.execute(query).fetchall():
         metrics[seller_type] = {}
         metrics[seller_type]['seller_type'] = seller_type

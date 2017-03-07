@@ -685,13 +685,14 @@ def create_application_from_supplier(code):
     application.update_from_json(data)
 
     db.session.add(application)
+    db.session.flush()
+
     db.session.add(AuditEvent(
         audit_type=AuditTypes.create_application,
         user='',
         data={},
         db_object=application
     ))
-
     db.session.flush()
 
     notification_message = '{}\nApplication Id:{}\nBy: {} ({})'.format(
