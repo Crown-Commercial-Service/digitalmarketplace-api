@@ -1372,3 +1372,8 @@ class TestSupplierApplication(BaseApplicationTest):
 
             supplier = Supplier.query.filter(Supplier.code == self.supplier_code).first()
             assert supplier.data['application_id'] == application['id']
+
+            audit = AuditEvent.query.filter(
+                AuditEvent.type == "create_application"
+            ).first()
+            assert audit.object_id == application['id']
