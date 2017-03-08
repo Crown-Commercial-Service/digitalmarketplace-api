@@ -440,7 +440,12 @@ class SignedAgreement(db.Model):
         primary_key=True,
         nullable=False
     )
-    signed_at = db.Column(DateTime, index=False, unique=False, nullable=True)
+    signed_at = db.Column(
+        DateTime,
+        primary_key=True,
+        index=False,
+        unique=False,
+        nullable=True)
 
 
 class SupplierExtraLinks(db.Model):
