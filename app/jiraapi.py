@@ -175,6 +175,12 @@ class GenericJIRA(object):
         return partial(self.http, name)
 
     def create_issue(self, project, summary, description, issuetype_name, **kwargs):
+        MAX_LENGTH = 30000
+
+        if description and len(description) > MAX_LENGTH:
+            log.warning('truncating long issue description')
+            description = description[:MAX_LENGTH]
+
         details = dict(
             project=project,
             summary=summary,
