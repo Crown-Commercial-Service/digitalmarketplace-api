@@ -84,6 +84,10 @@ def identity_link(name, id):
 DEFAULT_REPR_FIELDS = ['id', 'name', 'slug']
 
 
+class ExcludedException(Exception):
+    pass
+
+
 @six.python_2_unicode_compatible
 class MyModel(Model):
     def __str__(self):
@@ -235,10 +239,16 @@ class MyModel(Model):
 
     @property
     def serializable(self):
-        return self._serializable(exclude=[self._name])
+        return self._serializable()
 
     def _serializable(self, exclude=None, recurse=0):
         exclude = exclude or []
+        exclude = list(exclude)
+
+        if self._name in exclude:
+            raise ExcludedException()
+
+        exclude.append(self._name)
 
         try:
             data = self.data.copy()
@@ -262,13 +272,27 @@ class MyModel(Model):
             if x is None:
                 return None
             elif not isinstance(x, string_types) and isinstance(x, Iterable):
-                return [_._serializable(exclude + [_._name], recurse=recurse+1) for _ in x]
+                return [_._serializable(exclude, recurse=recurse+1) for _ in x]
             else:
-                return x._serializable(exclude + [x._name], recurse=recurse+1)
+                return x._serializable(exclude, recurse=recurse+1)
+
+        if len(exclude) != len(set(exclude)):
+            print('duplicates in exclude!')
+            raise ValueError
 
         for r in self._relationships:
-            if r not in exclude:
-                data[r] = get_related(getattr(self, r))
+            no_serialize = False
+            try:
+                if r in self.EXCLUDE_FOR_SERIALIZATION:
+                    no_serialize = True
+            except AttributeError:
+                pass
+
+            if not no_serialize:
+                try:
+                    data[r] = get_related(getattr(self, r))
+                except ExcludedException:
+                    pass
 
             fk_attr = '{}_id'.format(r)
             alternate_fk_id = '{}_code'.format(r)

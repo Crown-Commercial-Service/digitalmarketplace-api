@@ -1,6 +1,6 @@
 
 
-from app.models import Supplier, DraftService
+from app.models import Supplier, DraftService, Domain
 
 from .helpers import BaseApplicationTest, assert_api_compatible
 
@@ -24,6 +24,8 @@ class TestModelbase(BaseApplicationTest):
             with self.app.test_request_context('/hello'):
                 self.setup_dummy_suppliers(1)
                 s = Supplier.query.first()
+
+                assert 'brief_responses' not in s.serializable
                 assert set(s._relationships + s._fields) == set(s._props)
 
                 # testing a round trip update of fields

@@ -54,6 +54,7 @@ from .utils import sorted_uniques
 with io.open('data/domain_mapping_old_to_new.yaml') as f:
     DOMAIN_MAPPING = yaml.load(f.read())
 
+
 with io.open('data/specialist_role_old_to_new.yaml') as f:
     DOMAIN_MAPPING_SPECIALISTS = yaml.load(f.read())
 
@@ -511,6 +512,11 @@ supplier_code_seq = Sequence('supplier_code_seq')
 
 
 class Supplier(db.Model):
+    EXCLUDE_FOR_SERIALIZATION = [
+        'work_orders',
+        'applications',
+        'brief_responses']
+
     DUMMY_ABN = '50 110 219 460'
 
     __tablename__ = 'supplier'
@@ -543,9 +549,9 @@ class Supplier(db.Model):
         cascade='all, delete-orphan'
     )
     case_studies = db.relationship('CaseStudy', single_parent=True, cascade='all, delete-orphan')
-    # work_orders = db.relationship('WorkOrder', single_parent=True, cascade='all, delete-orphan')
-    # applications = db.relationship('Application', single_parent=True, cascade='all, delete-orphan')
-    # brief_responses = db.relationship('BriefResponse', single_parent=True, cascade='all, delete-orphan')
+    work_orders = db.relationship('WorkOrder', single_parent=True, cascade='all, delete-orphan')
+    applications = db.relationship('Application', single_parent=True, cascade='all, delete-orphan')
+    brief_responses = db.relationship('BriefResponse', single_parent=True, cascade='all, delete-orphan')
     products = db.relationship('Product', single_parent=True, cascade='all, delete-orphan')
     references = db.relationship('SupplierReference', single_parent=True, cascade='all, delete-orphan')
     prices = db.relationship('PriceSchedule', single_parent=True, cascade='all, delete-orphan')
