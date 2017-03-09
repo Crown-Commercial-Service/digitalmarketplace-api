@@ -933,6 +933,16 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
                 }),
             content_type='application/json')
 
+    def unapprove_framework_agreement(self, agreement_id):
+        return self.client.post(
+            '/agreements/{}/approve'.format(agreement_id),
+            data=json.dumps(
+                {
+                    'updated_by': 'made-a-whoopsie@example.com',
+                    'agreement': {'userId': '1234', 'unapprove': True}
+                }),
+            content_type='application/json')
+
     @fixture_params(
         'live_example_framework', {
             'framework_agreement_details': {
@@ -1132,3 +1142,84 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
 
         assert supplier_framework['countersignedDetails']['approvedByUserName'] == 'Chris'
         assert supplier_framework['countersignedDetails']['approvedByUserEmail'] == 'chris@example.com'
+
+    def test_can_unapprove_approved_agreement(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1)
+        )
+
+        with freeze_time('2016-12-12'):
+            res1 = self.approve_framework_agreement(agreement_id)
+            agreement_before_unapprove_data = json.loads(res1.get_data(as_text=True))
+
+            # Check that the agreement is definitely approved
+            assert agreement_before_unapprove_data['agreement'] == {
+                'id': agreement_id,
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug'],
+                'status': 'approved',
+                'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
+                'countersignedAgreementReturnedAt': '2016-12-12T00:00:00.000000Z',
+                'countersignedAgreementDetails': {'approvedByUserId': '1234'}
+            }
+
+        res2 = self.unapprove_framework_agreement(agreement_id)
+        assert res2.status_code == 200
+
+        unapproved_agreement_data = json.loads(res2.get_data(as_text=True))
+        # Check that status is reverted to 'signed' and countersigned info has been removed
+        assert unapproved_agreement_data['agreement'] == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'signed',
+            'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
+        }
+
+        with self.app.app_context():
+            agreement = FrameworkAgreement.query.filter(
+                FrameworkAgreement.id == agreement_id
+            ).first()
+
+            # Get the most recent audit event and check it is the "unapprove" event
+            audit = AuditEvent.query.filter(
+                AuditEvent.object == agreement
+            ).order_by(AuditEvent.created_at.desc()).first()
+
+            assert audit.type == "countersign_agreement"
+            assert audit.user == "made-a-whoopsie@example.com"
+            assert audit.data == {
+                'supplierId': supplier_framework['supplierId'],
+                'frameworkSlug': supplier_framework['frameworkSlug'],
+                'status': 'unapproved'
+            }
+
+    def test_can_not_unapprove_countersigned_agreement(self, supplier_framework):
+        agreement_id = self.create_agreement(
+            supplier_framework,
+            signed_agreement_returned_at=datetime(2016, 10, 1),
+            countersigned_agreement_returned_at=datetime(2016, 10, 2),
+            countersigned_agreement_path='/path/to/countersigned/document'
+        )
+        res1 = self.client.get('/agreements/{}'.format(agreement_id))
+        data1 = json.loads(res1.get_data(as_text=True))['agreement']
+        assert data1['status'] == 'countersigned'
+
+        res2 = self.unapprove_framework_agreement(agreement_id)
+        data2 = json.loads(res2.get_data(as_text=True))
+        assert res2.status_code == 400
+        assert data2['error'] == "Framework agreement must have status 'approved' to be unapproved"
+
+        # Check that status has not been changed
+        res3 = self.client.get('/agreements/{}'.format(agreement_id))
+        data3 = json.loads(res3.get_data(as_text=True))['agreement']
+        assert data3 == {
+            'id': agreement_id,
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'countersigned',
+            'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
+            'countersignedAgreementReturnedAt': '2016-10-02T00:00:00.000000Z',
+            'countersignedAgreementPath': '/path/to/countersigned/document'
+        }
