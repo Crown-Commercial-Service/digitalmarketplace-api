@@ -1406,17 +1406,10 @@ class BriefResponse(db.Model):
         ], else_='draft')
 
     def validate(self, enforce_required=True, required_fields=None, max_day_rate=None):
-        legacy = True
-        if feature.is_active('NEW_SUPPLIER_FLOW'):
-            new_flow_date = datetime.strptime(current_app.config['FEATURE_FLAGS_NEW_SUPPLIER_FLOW'], "%Y-%m-%d")
-            if self.brief.published_at >= new_flow_date:
-                legacy = False
-
         errs = get_validation_errors(
-            'brief-responses-{}-{}{}'.format(
+            'brief-responses-{}-{}'.format(
                 self.brief.framework.slug,
-                self.brief.lot.slug,
-                '-legacy' if legacy else ''),
+                self.brief.lot.slug),
             self.data,
             enforce_required=enforce_required,
             required_fields=required_fields
