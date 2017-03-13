@@ -8,7 +8,7 @@ from app import db, encryption
 from app.main import main
 from app.models import (
     AuditEvent, Contact, DraftService, Framework, Supplier, SupplierContact, SupplierFramework, SupplierUserInviteLog,
-    User
+    User, Application
 )
 from app.utils import (
     get_json_from_request, get_positive_int_or_400, get_valid_page_or_1, json_has_required_keys, json_has_matching_id,
@@ -144,6 +144,9 @@ def create_user():
 
     if "application_id" in json_payload:
         user.application_id = json_payload['application_id']
+    elif user.supplier_code is not None:
+        appl = Application.query.filter_by(supplier_code=user.supplier_code).first()
+        user.application_id = appl and appl.id or None
 
     check_applicant_role(user.role, user.application_id)
 

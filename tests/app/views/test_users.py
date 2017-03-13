@@ -356,6 +356,9 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                                             postal_code="0000",
                                             country='Australia')])
             )
+            db.session.add(
+                Application(id=1, data={"name": "my company"}, status='saved', supplier_code=1)
+            )
             db.session.commit()
 
         response = self.client.post(
