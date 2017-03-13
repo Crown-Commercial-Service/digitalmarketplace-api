@@ -651,6 +651,14 @@ def update_supplier_framework_details(code, framework_slug):
     return jsonify(frameworkInterest=interest_record.serialize()), 200
 
 
+@main.route('/domain/<domain_id>', methods=['GET'])
+def get_domain(domain_id):
+    if domain_id.isdigit():
+        domain_id = int(domain_id)
+    result = Domain.get_by_name_or_id(domain_id).serializable
+    return jsonify(domain=result)
+
+
 @main.route('/domains', methods=['GET'])
 def get_domains_list():
     result = [d.serializable for d in Domain.query.order_by('ordering').all()]
