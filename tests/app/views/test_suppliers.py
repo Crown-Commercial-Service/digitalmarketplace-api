@@ -706,6 +706,23 @@ class TestCounts(BaseApplicationTest):
 
 
 class TestDomains(BaseApplicationTest):
+
+    def test_get_domain_by_id(self):
+        response = self.client.get('/domain/1')
+        assert_equal(200, response.status_code)
+        data = json.loads(response.get_data())
+        assert 'domain' in data
+        assert 'name' in data['domain']
+        assert 'links' in data['domain']
+
+    def test_get_domain_by_name(self):
+        response = self.client.get('/domain/Emerging Technology')
+        assert_equal(200, response.status_code)
+        data = json.loads(response.get_data())
+        assert 'domain' in data
+        assert 'name' in data['domain']
+        assert 'links' in data['domain']
+
     def test_get_domains(self):
         response = self.client.get('/domains')
 
