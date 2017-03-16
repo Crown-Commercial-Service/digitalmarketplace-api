@@ -324,18 +324,50 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_schema_validation_for_framework_agreement_details(self, open_example_framework):
         invalid_framework_agreement_details = [
-            # should be a string
-            {'frameworkAgreementVersion': 1},
-            # cannot be empty
-            {'frameworkAgreementVersion': ""},
-            # should be an object
-            {'variations': 1},
-            # object must have 'createdAt' key
-            {'variations': {"created_at": "today"}},
-            # countersigner cannot be empty
-            {'countersignerName': ""},
+            # frameworkAgreementVersion should be a string
+            {
+                'variations': {},
+                'frameworkAgreementVersion': 1,
+            },
+            # can't have a numeric lotDescription
+            {
+                'variations': {},
+                'frameworkAgreementVersion': "1",
+                'lotDescriptions': {"test-lot": 4321},
+            },
+            # can't have empty lotOrder
+            {
+                'variations': {},
+                'frameworkAgreementVersion': "1",
+                'lotOrder': [],
+            },
+            # frameworkAgreementVersion cannot be empty
+            {
+                'variations': {},
+                'frameworkAgreementVersion': "",
+            },
+            # variations should be an object
+            {
+                'variations': 1,
+                'frameworkAgreementVersion': "1.1.1",
+            },
+            # variations object must have 'createdAt' key
+            {
+                'frameworkAgreementVersion': "2",
+                'variations': {"created_at": "today"},
+            },
+            # countersignerName cannot be empty
+            {
+                'variations': {},
+                'frameworkAgreementVersion': "1",
+                'countersignerName': "",
+            },
             # invalid key
-            {'frameworkAgreementDessert': "Portuguese tart"},
+            {
+                'variations': {},
+                'frameworkAgreementVersion': "1",
+                'frameworkAgreementDessert': "Portuguese tart",
+            },
             # empty update
             {}
         ]
