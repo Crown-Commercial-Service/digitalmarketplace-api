@@ -45,6 +45,7 @@ def get_domain_metrics():
                             UNION
                             SELECT key, count(*), 'unsubmitted' FROM
                               application, json_each(application.data->'services') badge
+                            WHERE "value"::text = 'true'
                             GROUP BY key
                             '''
     for (domain, count, status) in db.session.execute(query).fetchall():
