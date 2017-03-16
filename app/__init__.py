@@ -7,6 +7,9 @@ from config import configs
 
 from .modelsbase import MySQLAlchemy as SQLAlchemy
 from .modelsbase import enc, CustomEncoder
+from . import logs
+
+from .utils import log
 
 
 db = SQLAlchemy()

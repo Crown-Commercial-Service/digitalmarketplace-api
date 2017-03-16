@@ -1,6 +1,10 @@
 SHELL := /bin/bash
 
-run_app: python application.py runserver
+app_run:
+	FLASK_DEBUG=true FLASK_APP=wsgi.py flask run --host=0.0.0.0
+
+app_shell:
+	FLASK_DEBUG=true FLASK_APP=wsgi.py flask shell
 
 bootstrap:
 	pip install -U pip

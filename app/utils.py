@@ -6,6 +6,12 @@ from werkzeug.exceptions import BadRequest
 from .validation import validate_updater_json_or_400
 
 
+from .logs import get_logger, add_std_handler, load_config
+
+log = get_logger('api')
+load_config()
+
+
 def sorted_uniques(sequence):
     return list(sorted(set(sequence)))
 

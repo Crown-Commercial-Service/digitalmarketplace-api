@@ -21,8 +21,6 @@ setup(
         'dto-digitalmarketplace-apiclient',
         'Flask',
         'Flask-Bcrypt',
-        'Flask-Migrate',
-        'Flask-Script',
         'Flask-SQLAlchemy<2.2',
         'psycopg2',
         'SQLAlchemy',

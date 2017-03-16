@@ -1,0 +1,30 @@
+version: 1
+disable_existing_loggers: no
+
+level: DEBUG
+
+loggers:
+  sqlalchemy:
+    level: WARN
+    handlers: [stdHandler]
+    qualname: sqlalchemy.engine
+
+  api:
+    level: DEBUG
+    handlers: [stdHandler]
+#
+handlers:
+  consoleHander:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: console
+    stream: ext://sys.stderr
+
+  stdHandler:
+    class: app.logs.StdHandler
+    level: INFO
+    formatter: console
+
+formatters:
+  console:
+    format: '%(name)s %(asctime)s %(levelname)s %(message)s'

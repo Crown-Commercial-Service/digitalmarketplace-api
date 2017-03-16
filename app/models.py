@@ -48,7 +48,7 @@ from functools import partial
 
 from .jiraapi import get_marketplace_jira
 from .modelsbase import normalize_key_case
-from .utils import sorted_uniques
+from .utils import sorted_uniques, log
 
 
 with io.open('data/domain_mapping_old_to_new.yaml') as f:
@@ -441,12 +441,7 @@ class SignedAgreement(db.Model):
         primary_key=True,
         nullable=False
     )
-    signed_at = db.Column(
-        DateTime,
-        primary_key=True,
-        index=False,
-        unique=False,
-        nullable=True)
+    signed_at = db.Column(DateTime, index=False, unique=False, nullable=True)
 
 
 class SupplierExtraLinks(db.Model):
