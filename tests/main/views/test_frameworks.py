@@ -221,11 +221,12 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
                     "toblerone": {
                         "createdAt": "2016-07-06T21:09:09.000000Z",
                     },
-                }
+                },
+                "lotOrder": ['iaas', 'scs', 'saas', 'paas'],
             },
             'status': "standstill",
             'clarificationQuestionsOpen': False,
-            'lots': ['saas', 'paas', 'iaas', 'scs']
+            'lots': ['saas', 'paas', 'iaas', 'scs'],
         }
 
         self.attribute_whitelist = [

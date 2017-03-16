@@ -15,6 +15,54 @@
       "minLength": 1,
       "type": "string"
     },
+    "frameworkRefDate": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "frameworkStartDate": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "frameworkEndDate": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "frameworkExtensionLength": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "frameworkURL": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "signaturePageNumber": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "pageTotal": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "contractNoticeNumber": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "lotOrder": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "lotDescriptions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "minLength": 1,
+        "type": "string"
+      }
+    },
     "variations": {
       "additionalProperties": {
         "additionalProperties": false,
