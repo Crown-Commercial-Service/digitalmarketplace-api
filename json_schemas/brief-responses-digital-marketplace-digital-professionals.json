@@ -2,6 +2,9 @@
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
   "properties": {
+    "attachedDocumentURL": {
+      "type": "string"
+    },
     "availability": {
       "maxLength": 100,
       "minLength": 1,
@@ -34,6 +37,7 @@
     }
   },
   "required": [
+    "attachedDocumentURL",
     "availability",
     "dayRate",
     "essentialRequirements",
