@@ -2115,6 +2115,10 @@ class Application(db.Model):
             data['createdAt'] = data['created_at']
 
         data['signed_agreements'] = self.signed_agreements()
+
+        if self.supplier:
+            data['assessed_domains'] = self.supplier.assessed_domains
+
         return data
 
     def update_from_json_before(self, data):
