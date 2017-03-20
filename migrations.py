@@ -13,6 +13,7 @@ from sqlbag import S, temporary_database as temporary_db, load_sql_from_file, lo
 
 from config import configs
 
+from flask_script import Manager
 import subprocess
 
 
@@ -47,9 +48,20 @@ def load_post_migration_state(dburl):
 
 
 def load_from_app_model(dburl):
+    def create_tables(include=None, exclude=None):
+        tables = set(
+            t for t in db.metadata.tables.values()
+            if ((include is None) or t.name in include)
+            and ((exclude is None) or t.name not in exclude)
+        )
+        db.metadata.create_all(s.bind.engine, tables=tables)
+
     with S(dburl) as s:
-        db.metadata.create_all(s.bind.engine)
-        load_sql_from_file(s, 'DB/migration/setup.sql')
+        load_sql_from_file(s, 'DB/migration/setup-pre.sql')
+        create_tables()
+
+    with S(dburl) as s:
+        load_sql_from_file(s, 'DB/migration/setup-post.sql')
 
 
 def load_test_fixtures(dburl):

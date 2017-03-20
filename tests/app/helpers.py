@@ -149,6 +149,24 @@ INCOMING_APPLICATION_DATA = {
 }
 
 
+def setup_dummy_user(id=123, role='buyer'):
+    if User.query.get(id):
+        return id
+    user = User(
+        id=id,
+        email_address="test+{}@digital.gov.au".format(id),
+        name="my name",
+        password="fake password",
+        active=True,
+        role=role,
+        password_changed_at=utcnow()
+    )
+    db.session.add(user)
+    db.session.commit()
+
+    return user.id
+
+
 class WSGIApplicationWithEnvironment(object):
     def __init__(self, app, **kwargs):
         self.app = app

@@ -1,9 +1,17 @@
-alter table "public"."signed_agreement" drop constraint "signed_agreement_pkey";
-
-drop index if exists "public"."signed_agreement_pkey";
-
-alter table "public"."signed_agreement" alter column "signed_at" set not null;
-
-CREATE UNIQUE INDEX signed_agreement_pkey ON signed_agreement USING btree (agreement_id, user_id, application_id, signed_at);
-
-alter table "public"."signed_agreement" add constraint "signed_agreement_pkey" PRIMARY KEY using index "signed_agreement_pkey";
+create view "public"."vuser" as  SELECT u.id,
+    u.name,
+    u.email_address,
+    u.phone_number,
+    u.password,
+    u.active,
+    u.created_at,
+    u.updated_at,
+    u.password_changed_at,
+    u.logged_in_at,
+    u.terms_accepted_at,
+    u.failed_login_count,
+    u.role,
+    u.supplier_code,
+    u.application_id,
+    split_part((u.email_address)::text, '@'::text, 2) AS email_domain
+   FROM "user" u;

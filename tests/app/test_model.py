@@ -25,7 +25,7 @@ from app.models import (
 
 from app.datetime_utils import naive
 
-from .helpers import BaseApplicationTest, INCOMING_APPLICATION_DATA
+from .helpers import BaseApplicationTest, INCOMING_APPLICATION_DATA, setup_dummy_user
 
 import pendulum
 
@@ -39,6 +39,16 @@ from pytest import raises
 def naive_datetime(*args, **kwargs):
     p = pendulum.create(*args, **kwargs)
     return naive(p)
+
+
+def test_views(app_context):
+    setup_dummy_user(role='buyer')
+
+    u = User.query.first()
+    u.email_address = 'abc@whatever.gov.au'
+    db.session.flush()
+    db.session.commit()
+    assert u.viewrow().email_domain == 'whatever.gov.au'
 
 
 def test_should_not_return_password_on_user():

@@ -1091,6 +1091,12 @@ class User(db.Model):
     def serialize(self):
         return self.serializable
 
+    def viewrow(self):
+        select = db.session.execute("""
+            select * from "vuser" where id = :id
+        """, {'id': self.id})
+        return list(select)[0]
+
 
 class SupplierUserInviteLog(db.Model):
     __tablename__ = 'supplier_user_invite_log'

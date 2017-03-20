@@ -22,7 +22,7 @@ from migrations import \
 def db_initialization(request):
     from config import configs
 
-    with temporary_database(do_not_delete=False) as dburi:
+    with temporary_database() as dburi:
         test_config = configs['test']
         test_config.SQLALCHEMY_DATABASE_URI = dburi
 
