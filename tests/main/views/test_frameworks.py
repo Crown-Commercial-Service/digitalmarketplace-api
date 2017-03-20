@@ -24,6 +24,7 @@ class TestListFrameworks(BaseApplicationTest):
                     'clarificationQuestionsOpen',
                     'framework',
                     'frameworkAgreementVersion',
+                    'frameworkAgreementDetails',
                     'id',
                     'lots',
                     'name',
@@ -32,7 +33,7 @@ class TestListFrameworks(BaseApplicationTest):
                     'variations',
                     'countersignerName',
                     'application_close_date',
-                    'allow_declaration_reuse'
+                    'allow_declaration_reuse',
                 ]))
 
 
@@ -220,11 +221,12 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
                     "toblerone": {
                         "createdAt": "2016-07-06T21:09:09.000000Z",
                     },
-                }
+                },
+                "lotOrder": ['iaas', 'scs', 'saas', 'paas'],
             },
             'status': "standstill",
             'clarificationQuestionsOpen': False,
-            'lots': ['saas', 'paas', 'iaas', 'scs']
+            'lots': ['saas', 'paas', 'iaas', 'scs'],
         }
 
         self.attribute_whitelist = [
@@ -270,14 +272,15 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
                 assert response.status_code == 200
                 post_data = json.loads(response.get_data())['frameworks']
 
-                # `frameworkAgreementDetails` is not included in Framework.serialize() itself, but instead
-                # each (key, value) in `frameworkAgreementDetails` is un-nested and returned with other top-level keys
+                # certain keys of `frameworkAgreementDetails` are un-nested and returned with other top-level keys
                 if isinstance(value, dict):
                     for nested_key, nested_value in value.items():
-                        assert post_data[nested_key] == nested_value
-                else:
-                    assert post_data[key] == value
+                        if nested_key in ("countersignerName", "frameworkAgreementVersion", "variations",):
+                            assert post_data[nested_key] == nested_value
 
+                assert post_data[key] == value
+
+                # check the same data was actually persisted
                 get_data = json.loads(
                     self.client.get('/frameworks/example-framework').get_data()
                 )['frameworks']
@@ -321,18 +324,50 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_schema_validation_for_framework_agreement_details(self, open_example_framework):
         invalid_framework_agreement_details = [
-            # should be a string
-            {'frameworkAgreementVersion': 1},
-            # cannot be empty
-            {'frameworkAgreementVersion': ""},
-            # should be an object
-            {'variations': 1},
-            # object must have 'createdAt' key
-            {'variations': {"created_at": "today"}},
-            # countersigner cannot be empty
-            {'countersignerName': ""},
+            # frameworkAgreementVersion should be a string
+            {
+                'variations': {},
+                'frameworkAgreementVersion': 1,
+            },
+            # can't have a numeric lotDescription
+            {
+                'variations': {},
+                'frameworkAgreementVersion': "1",
+                'lotDescriptions': {"test-lot": 4321},
+            },
+            # can't have empty lotOrder
+            {
+                'variations': {},
+                'frameworkAgreementVersion': "1",
+                'lotOrder': [],
+            },
+            # frameworkAgreementVersion cannot be empty
+            {
+                'variations': {},
+                'frameworkAgreementVersion': "",
+            },
+            # variations should be an object
+            {
+                'variations': 1,
+                'frameworkAgreementVersion': "1.1.1",
+            },
+            # variations object must have 'createdAt' key
+            {
+                'frameworkAgreementVersion': "2",
+                'variations': {"created_at": "today"},
+            },
+            # countersignerName cannot be empty
+            {
+                'variations': {},
+                'frameworkAgreementVersion': "1",
+                'countersignerName': "",
+            },
             # invalid key
-            {'frameworkAgreementDessert': "Portuguese tart"},
+            {
+                'variations': {},
+                'frameworkAgreementVersion': "1",
+                'frameworkAgreementDessert': "Portuguese tart",
+            },
             # empty update
             {}
         ]

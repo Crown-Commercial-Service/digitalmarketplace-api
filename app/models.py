@@ -124,16 +124,19 @@ class Framework(db.Model):
             'name': self.name,
             'slug': self.slug,
             'framework': self.framework,
-            'countersignerName': (self.framework_agreement_details or {}).get("countersignerName"),
-            'frameworkAgreementVersion': (self.framework_agreement_details or {}).get("frameworkAgreementVersion"),
-            'variations': (self.framework_agreement_details or {}).get("variations", {}),
             'status': self.status,
             'clarificationQuestionsOpen': self.clarification_questions_open,
             'lots': [lot.serialize() for lot in self.lots],
             'application_close_date': (
                 self.application_close_date and self.application_close_date.strftime(DATETIME_FORMAT)
             ),
-            'allow_declaration_reuse': self.allow_declaration_reuse
+            'allow_declaration_reuse': self.allow_declaration_reuse,
+            'frameworkAgreementDetails': self.framework_agreement_details or {},
+            # the following are specific extracts of the above frameworkAgreementDetails which were previously used but
+            # should now possibly be deprecated:
+            'countersignerName': (self.framework_agreement_details or {}).get("countersignerName"),
+            'frameworkAgreementVersion': (self.framework_agreement_details or {}).get("frameworkAgreementVersion"),
+            'variations': (self.framework_agreement_details or {}).get("variations", {}),
         }
 
     def get_supplier_ids_for_completed_service(self):
