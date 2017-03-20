@@ -33,7 +33,6 @@
     }
   },
   "required": [
-    "attachedDocumentURL",
     "availability",
     "essentialRequirements",
     "respondToEmailAddress"
