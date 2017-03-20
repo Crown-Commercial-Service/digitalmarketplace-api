@@ -127,10 +127,15 @@ class Framework(db.Model):
             'status': self.status,
             'clarificationQuestionsOpen': self.clarification_questions_open,
             'lots': [lot.serialize() for lot in self.lots],
+            # TODO: Remove snake_case keys after frontend update to use the new camelCase versions
             'application_close_date': (
                 self.application_close_date and self.application_close_date.strftime(DATETIME_FORMAT)
             ),
             'allow_declaration_reuse': self.allow_declaration_reuse,
+            'applicationCloseDate': (
+                self.application_close_date and self.application_close_date.strftime(DATETIME_FORMAT)
+            ),
+            'allowDeclarationReuse': self.allow_declaration_reuse,
             'frameworkAgreementDetails': self.framework_agreement_details or {},
             # the following are specific extracts of the above frameworkAgreementDetails which were previously used but
             # should now possibly be deprecated:

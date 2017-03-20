@@ -34,6 +34,8 @@ class TestListFrameworks(BaseApplicationTest):
                     'countersignerName',
                     'application_close_date',
                     'allow_declaration_reuse',
+                    'applicationCloseDate',
+                    'allowDeclarationReuse',
                 ]))
 
 
