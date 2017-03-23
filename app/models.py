@@ -2093,7 +2093,8 @@ class Application(db.Model):
                 'approved',
                 'complete',
                 'approval_rejected',
-                'assessment_rejected'
+                'assessment_rejected',
+                'deleted'
             ],
             name='application_status_enum'
         ),
