@@ -1,1 +1,1 @@
-ALTER TYPE application_type_enum ADD VALUE 'deleted';
+ALTER TYPE application_status_enum ADD VALUE 'deleted';
