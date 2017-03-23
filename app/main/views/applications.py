@@ -133,6 +133,8 @@ def get_application_by_id(application_id):
     application = Application.query.filter(
         Application.id == application_id
     ).first_or_404()
+    if application.status == 'deleted':
+        abort(404)
     return jsonify(application=application.serializable)
 
 
@@ -154,7 +156,7 @@ def delete_application(application_id):
         data={},
         db_object=application
     ))
-    db.session.delete(application)
+    application.status = 'deleted'
     try:
         db.session.commit()
     except IntegrityError as e:
@@ -167,7 +169,7 @@ def delete_application(application_id):
 def applications_list_response(with_task_status=False):
     page = get_valid_page_or_1()
 
-    applications = Application.query
+    applications = Application.query.filter(Application.status != 'deleted')
 
     ordering = request.args.get('order_by', 'application.created_at desc')
     order_by = ordering.split(',')

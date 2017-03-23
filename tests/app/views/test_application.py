@@ -3,7 +3,7 @@ import mock
 
 from tests.app.helpers import BaseApplicationTest
 
-from app.models import db, AuditEvent, Framework, User, utcnow, Agreement, Product
+from app.models import db, Application, AuditEvent, Framework, User, utcnow, Agreement, Product
 
 from itertools import tee
 from six.moves import zip as izip
@@ -329,12 +329,22 @@ class TestListApplications(BaseApplicationsTest):
         for i in range(3):
             self.setup_dummy_application()
 
-        res = self.list_applications()
-        data = json.loads(res.get_data(as_text=True))
+        with self.app.app_context():
+            application = Application(
+                data=self.application_data,
+                status='deleted'
+            )
 
-        assert res.status_code == 200
-        assert len(data['applications']) == 3
-        assert 'self' in data['links']
+            db.session.add(application)
+            db.session.flush()
+            db.session.commit()
+
+            res = self.list_applications()
+            data = json.loads(res.get_data(as_text=True))
+
+            assert res.status_code == 200
+            assert len(data['applications']) == 3
+            assert 'self' in data['links']
 
     def test_list_applications_pagination(self):
         for i in range(8):
