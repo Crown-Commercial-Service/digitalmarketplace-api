@@ -3,7 +3,11 @@
   "additionalProperties": false,
   "properties": {
     "attachedDocumentURL": {
-      "type": "string"
+      "items": {
+        "minLength": 0,
+        "type": "string"
+      },
+      "type": "array"
     },
     "availability": {
       "maxLength": 100,
