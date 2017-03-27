@@ -59,12 +59,23 @@ with io.open('data/specialist_role_old_to_new.yaml') as f:
     DOMAIN_MAPPING_SPECIALISTS = yaml.load(f.read())
 
 
-class AlembicVersion(db.Model):
-    __tablename__ = 'alembic_version'
-    __table_args__ = (
-        PrimaryKeyConstraint('version_num', name='alembic_version_pkc'),
-    )
-    version_num = db.Column(db.String(32))
+class Agency(db.Model):
+    __tablename__ = 'agency'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    domain = db.Column(db.String, nullable=False, unique=True, index=True)
+    category = db.Column(db.String)
+    state = db.Column(db.String)
+
+
+class Council(db.Model):
+    __tablename__ = 'council'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    domain = db.Column(db.String, nullable=False, unique=True, index=True)
+    home_page = db.Column(db.String)
 
 
 class FrameworkLot(db.Model):

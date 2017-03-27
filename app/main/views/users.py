@@ -8,13 +8,15 @@ from app import db, encryption
 from app.main import main
 from app.models import (
     AuditEvent, Contact, DraftService, Framework, Supplier, SupplierContact, SupplierFramework, SupplierUserInviteLog,
-    User, Application
+    User, Application, Brief
 )
 from app.utils import (
     get_json_from_request, get_positive_int_or_400, get_valid_page_or_1, json_has_required_keys, json_has_matching_id,
     pagination_links, validate_and_return_updater_request
 )
 from app.validation import validate_user_json_or_400, validate_user_auth_json_or_400
+
+from collections import defaultdict
 
 
 @main.route('/users/auth', methods=['POST'])
@@ -49,6 +51,52 @@ def get_user_by_id(user_id):
         User.id == user_id
     ).first_or_404()
     return jsonify(users=user.serialize())
+
+
+@main.route('/teammembers/<string:domain>', methods=['GET'])
+def get_teammembers(domain):
+    userlist = User.query.filter_by(role='buyer')
+    teammembers = [_ for _ in userlist if _.viewrow().email_domain == domain]
+
+    query = db.session.execute("""
+        select * from govdomains
+        where domain = :domain
+    """, {'domain': domain})
+
+    results = list(query)
+
+    try:
+        name = results[0].name
+    except IndexError:
+        name = 'Unknown'
+
+    query = db.session.execute("""
+        select * from users_with_briefs
+        where email_domain = :domain
+    """, {'domain': domain})
+
+    def process_row(r):
+        row = dict(r)
+
+        briefs = [
+            {'id': b_id, 'title': b_title}
+            for b_id, b_title in
+            zip(r.brief_ids, r.brief_titles)
+            if b_id
+        ]
+
+        if None in briefs:
+            del briefs[None]
+        del row['brief_ids']
+        del row['brief_titles']
+        row['briefs'] = briefs
+        return row
+
+    teammembers = [process_row(_) for _ in query]
+
+    # print(teammembers)
+
+    return jsonify(teammembers=teammembers, teamname=name)
 
 
 @main.route('/users', methods=['GET'])

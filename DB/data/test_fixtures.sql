@@ -43,13 +43,6 @@ SELECT pg_catalog.setval('agreement_id_seq', 1, false);
 
 
 --
--- Data for Name: alembic_version; Type: TABLE DATA; Schema: public; Owner: -
---
-
-INSERT INTO alembic_version (version_num) VALUES ('930');
-
-
---
 -- Data for Name: supplier; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -473,4 +466,3 @@ SELECT pg_catalog.setval('work_order_id_seq', 1, false);
 --
 -- PostgreSQL database dump complete
 --
-

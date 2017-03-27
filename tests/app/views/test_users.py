@@ -2,7 +2,7 @@ from flask import json
 from freezegun import freeze_time
 from nose.tools import assert_equal, assert_not_equal, assert_in, assert_is_none
 from app import db, encryption
-from app.models import Address, User, Supplier, Application
+from app.models import Address, User, Supplier, Application, Brief
 import pendulum
 from pendulum import create as datetime
 from ..helpers import \
@@ -1201,6 +1201,62 @@ class TestUsersGet(BaseUserTest):
         assert_in(
             "supplier_code '{}' not found".format(non_existent_supplier),
             response.get_data(as_text=True))
+
+
+class TestTeamsGet(BaseUserTest):
+    def setup(self):
+        super(TestTeamsGet, self).setup()
+        with self.app.app_context():
+            self._post_supplier()
+            self._post_users()
+
+    def _post_users(self):
+        users = [
+            {
+                "emailAddress": "j@begavalley.nsw.gov.au",
+                "name": "John Buyer",
+                "password": "minimum10characterpassword",
+                "role": "buyer"
+            },
+            {
+                "emailAddress": "j@examplecompany.biz",
+                "name": "John Example",
+                "password": "minimum10characterpassword",
+                "role": "supplier",
+                "supplierCode": self.supplier_code
+            },
+            {
+                "emailAddress": "don@don.com",
+                "name": "Don",
+                "password": "minimum10characterpassword",
+                "role": "supplier",
+                "supplierCode": self.supplier_code
+            }
+        ]
+
+        for user in users:
+            self._post_user(user)
+
+        u = User.query.filter_by(name='John Buyer').first()
+        self.u_id = u.id
+        self.setup_dummy_briefs(2, user_id=u.id, title='brieftitle')
+
+    def test_teammembers(self):
+        response = self.client.get('teammembers/begavalley.nsw.gov.au')
+        assert response.status_code == 200
+
+        data = response.get_data(as_text=True)
+        jdata = json.loads(data)
+
+        assert jdata['teammembers'][0] == {
+            'briefs': [{'id': 1, 'title': 'brieftitle'}, {'id': 2, 'title': 'brieftitle'}],
+            'email_address': 'j@begavalley.nsw.gov.au',
+            'email_domain': 'begavalley.nsw.gov.au',
+            'id': self.u_id,
+            'name': 'John Buyer'
+        }
+
+        assert jdata['teamname'] == 'Bega Valley Shire Council'
 
 
 class TestUsersExport(BaseUserTest):

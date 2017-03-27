@@ -6,6 +6,7 @@ import os
 import sys
 
 from app import create_app, db
+from app.loading import populate_agency_and_council_from_csv_files
 
 from sqlbag import S, load_sql_from_file
 
@@ -15,9 +16,14 @@ application = create_app(os.getenv('DM_ENVIRONMENT') or 'development')
 
 dburl = application.config['SQLALCHEMY_DATABASE_URI']
 
+
 def do_startup():
     with S(dburl) as s:
+        populate_agency_and_council_from_csv_files(s)
+
+    with S(dburl) as s:
         load_sql_from_file(s, 'DB/data/on_startup.sql')
+
 
 do_startup()
 

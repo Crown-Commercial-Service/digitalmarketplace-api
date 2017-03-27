@@ -478,7 +478,9 @@ class BaseApplicationTest(object):
                         "framework_lot",
                         "service_category",
                         "service_role",
-                        "domain"]:
+                        "domain",
+                        "agency",
+                        "council"]:
                     db.engine.execute(table.delete())
             FrameworkLot.query.filter(FrameworkLot.framework_id >= 100).delete()
             Framework.query.filter(Framework.id >= 100).delete()

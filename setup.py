@@ -44,6 +44,7 @@ setup(
 
         'markdown',
 	    'sshtunnel',
-        'paramiko'
+        'paramiko',
+        'csvx'
     ]
 )
