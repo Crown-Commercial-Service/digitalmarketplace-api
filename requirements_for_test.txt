@@ -21,3 +21,4 @@ blinker
 sqlbag
 migra
 tox
+faker

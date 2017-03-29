@@ -172,7 +172,7 @@ class MyModel(Model):
                 self.data.update(leftover_dict)
             except AttributeError:
                 self.data = leftover_dict
-        else:
+        elif leftovers:
             leftover_list = ', '.join(sorted(leftovers))
             raise ValidationError('unrecognized field(s): {}'.format(leftover_list))
 

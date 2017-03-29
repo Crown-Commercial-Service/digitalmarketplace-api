@@ -2290,6 +2290,46 @@ class CaseStudy(db.Model):
                 yield c
         return list(y())
 
+
+class BriefAssessment(db.Model):
+    __tablename__ = 'brief_assessment'
+
+    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), primary_key=True)
+    assessment_id = db.Column(db.Integer, db.ForeignKey('assessment.id'), primary_key=True)
+
+
+class Assessment(db.Model):
+    __tablename__ = 'assessment'
+
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+    supplier_domain_id = db.Column(db.Integer, db.ForeignKey('supplier_domain.id'))
+    supplier_domain = db.relationship(SupplierDomain, lazy='joined', innerjoin=False)
+
+    briefs = db.relationship('Brief', secondary='brief_assessment')
+
+    def update_from_json_before(self, data):
+        if 'supplier_code' in data and 'domain_name' in data:
+            self.supplier_domain = db.session.query(
+                SupplierDomain
+            ).join(
+                Supplier, Domain
+            ).filter(
+                Supplier.code == data['supplier_code'],
+                Domain.name == data['domain_name']
+            ) .first()
+
+            del data['supplier_code']
+            del data['domain_name']
+
+        if 'brief_id' in data:
+            self.briefs = [Brief.query.filter_by(id=data['brief_id']).first()]
+
+            del data['brief_id']
+
+        return data
+
+
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
 # which takes a long time for old events
