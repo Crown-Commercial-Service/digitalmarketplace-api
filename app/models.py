@@ -1842,6 +1842,10 @@ class Brief(db.Model):
         data['dates'] = self.dates_for_serialization
         return data
 
+    def serializable_after(self, data):
+        data['dates'] = self.dates_for_serialization
+        return data
+
 
 class BriefUser(db.Model):
     __tablename__ = 'brief_user'
