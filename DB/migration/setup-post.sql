@@ -14,7 +14,7 @@ create view govdomains as (
     1, 2
 );
 
-create view users_with_briefs as (
+create view vuser_users_with_briefs as (
   select
     u.id,
     u.name,

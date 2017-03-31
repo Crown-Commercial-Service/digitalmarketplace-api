@@ -71,7 +71,7 @@ def get_teammembers(domain):
         name = 'Unknown'
 
     query = db.session.execute("""
-        select * from users_with_briefs
+        select * from vuser_users_with_briefs
         where email_domain = :domain
     """, {'domain': domain})
 
