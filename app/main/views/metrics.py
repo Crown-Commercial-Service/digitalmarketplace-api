@@ -18,7 +18,7 @@ def get_metrics():
     brief_metrics = json.loads(briefs.get_briefs_stats().data)["briefs"]
     for key, metric in brief_metrics.items():
         if type(metric) == int:
-            metrics["briefs_"+key] = {"value": metric, "ts": timestamp}
+            metrics["briefs_" + key] = {"value": metric, "ts": timestamp}
 
     brief_response_count = BriefResponse.query\
         .filter(BriefResponse.data.isnot(None))\
@@ -37,16 +37,22 @@ def get_domain_metrics():
     metrics = {}
 
     query = '''
-                            SELECT name, count(status), status::text
+                            SELECT name, count(status), status::TEXT
                             FROM
                               supplier_domain INNER JOIN domain ON supplier_domain.domain_id = domain.id
-                              WHERE status = 'assessed' or status = 'unassessed'
-                            GROUP BY name, status::text
+                              WHERE status = 'assessed' OR status = 'unassessed'
+                            GROUP BY name, status::TEXT
                             UNION
-                            SELECT key, count(*), 'unsubmitted' FROM
+                            SELECT key, count(*),
+                            (CASE
+                                WHEN application.status = 'submitted' THEN 'submitted'
+                                WHEN application.status = 'saved' THEN 'unsubmitted'
+                            END) status
+                            FROM
                               application, json_each(application.data->'services') badge
-                            WHERE "value"::text = 'true'
-                            GROUP BY key
+                            WHERE "value"::TEXT = 'true'
+                            AND (application.status = 'saved' OR application.status = 'submitted')
+                            GROUP BY key, status
                             '''
     for (domain, count, status) in db.session.execute(query).fetchall():
         if domain not in metrics:
@@ -63,7 +69,9 @@ def get_domain_metrics():
 def get_seller_type_metrics():
     metrics = {}
 
-    query = "SELECT key, count(*) FROM application, json_each(application.data->'seller_type') badge GROUP BY key " \
+    query = "SELECT key, count(*) FROM application, json_each(application.data->'seller_type') badge " \
+            "where key != 'recruiter' GROUP BY key " \
+            "union select 'recruiter', count(*) from application where application.data->>'recruiter' = 'yes'" \
             "UNION select 'product', count(*) FROM application WHERE application.data->'products'->'0' IS NOT null"
     for (seller_type, count) in db.session.execute(query).fetchall():
         metrics[seller_type] = {}
@@ -142,12 +150,15 @@ def get_application_historical_metrics():
                 SELECT type, count(*) total_count
                 FROM
                   (SELECT DISTINCT ON (object_id) date_trunc('day', created_at) AS day, type, object_id FROM audit_event
-                  WHERE (object_type = 'Application' OR object_type = 'SupplierDomain') AND created_at < :date
+                  WHERE ((object_type = 'Application'
+                          and object_id not in (SELECT id from application where status = 'deleted') )
+                          OR object_type = 'SupplierDomain')
+                  AND created_at < :date
                   ORDER BY object_id, created_at DESC ) a
                 GROUP BY type
                 '''
         for row in db.session.execute(query, {'date': date}).fetchall():
-            metrics[row['type']+"_count"].append({"value": row["total_count"], "ts": timestamp})
+            metrics[row['type'] + "_count"].append({"value": row["total_count"], "ts": timestamp})
 
     return jsonify(metrics)
 
