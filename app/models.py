@@ -452,7 +452,6 @@ class SignedAgreement(db.Model):
         primary_key=True,
         nullable=False
     )
-
     signed_at = db.Column(
         DateTime,
         primary_key=True,
@@ -2258,7 +2257,7 @@ class CaseStudy(db.Model):
     supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
 
-    supplier = db.relationship('Supplier', lazy='joined')
+    supplier = db.relationship('Supplier', lazy='select', innerjoin=True)
 
     @validates('data')
     def validates_data(self, key, data):

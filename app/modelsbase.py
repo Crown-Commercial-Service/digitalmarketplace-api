@@ -241,11 +241,18 @@ class MyModel(Model):
     def serializable(self):
         return self._serializable()
 
-    def _serializable(self, exclude=None, recurse=0):
+    def get_serializable(self, only=None):
+        only = only or [self._name]
+        return self._serializable(only=[self._name])
+
+    def _serializable(self, exclude=None, only=None, recurse=0):
         exclude = exclude or []
         exclude = list(exclude)
 
         if self._name in exclude:
+            raise ExcludedException()
+
+        if only is not None and self._name not in only:
             raise ExcludedException()
 
         exclude.append(self._name)
@@ -272,9 +279,9 @@ class MyModel(Model):
             if x is None:
                 return None
             elif not isinstance(x, string_types) and isinstance(x, Iterable):
-                return [_._serializable(exclude, recurse=recurse+1) for _ in x]
+                return [_._serializable(exclude=exclude, only=only, recurse=recurse+1) for _ in x]
             else:
-                return x._serializable(exclude, recurse=recurse+1)
+                return x._serializable(exclude=exclude, only=only, recurse=recurse+1)
 
         if len(exclude) != len(set(exclude)):
             print('duplicates in exclude!')

@@ -14,7 +14,7 @@ from .. import main
 from ... import db
 from ...models import (
     Supplier, AuditEvent, SupplierFramework, Framework, PriceSchedule, User, Domain, Application,
-    ServiceRole, SupplierDomain, Product
+    ServiceRole, SupplierDomain, Product, CaseStudy
 )
 
 from sqlalchemy.sql import func, desc, or_, asc, and_
@@ -124,6 +124,7 @@ def _is_seller_type(typecode):
 
 @main.route('/products/search', methods=['GET'])
 def product_search():
+
     search_query = get_json_from_request()
 
     offset = get_nonnegative_int_or_400(request.args, 'from', 0)
@@ -138,11 +139,11 @@ def product_search():
     q = db.session.query(Product).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
     q = q.group_by(Product.id, Supplier.id)
 
-    if domains is not None:
+    if domains:
         d_agg = postgres.array_agg(cast(Domain.name, TEXT))
         q = q.having(d_agg.contains(array(domains)))
 
-    if seller_types is not None:
+    if seller_types:
         selected_seller_types = select(
             [postgres.array_agg(column('key'))],
             from_obj=func.json_each_text(Supplier.data[('seller_type',)]),
@@ -189,6 +190,8 @@ def product_search():
     # remove 'hidden' example listing from result
     results = [_ for _ in results if _.supplier.abn != Supplier.DUMMY_ABN]
 
+    total_results = len(results)
+
     if domains:
         # this code includes lecacy domains in results but is slower.
         # can be removed once fully migrated to new domains.
@@ -199,11 +202,11 @@ def product_search():
             )
         ]
 
-    sliced_results = results[offset:offset+result_count]
+    sliced_results = results[offset:(offset + result_count)]
 
     result = {
         'hits': {
-            'total': len(results),
+            'total': total_results,
             'hits': [{'_source': r} for r in sliced_results]
         }
     }
@@ -212,6 +215,98 @@ def product_search():
         return jsonify(result), 200
     except Exception as e:
         return jsonify(message=str(e)), 500
+
+
+@main.route('/casestudies/search', methods=['GET'])
+def casestudies_search():
+    search_query = get_json_from_request()
+
+    offset = get_nonnegative_int_or_400(request.args, 'from', 0)
+    result_count = get_positive_int_or_400(request.args, 'size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'])
+
+    sort_dir = search_query.get('sort_dir', 'asc')
+    sort_by = search_query.get('sort_by', None)
+    domains = search_query.get('domains', None)
+    seller_types = search_query.get('seller_types', None)
+    search_term = search_query.get('search_term', None)
+
+    q = db.session.query(CaseStudy).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
+    q = q.group_by(CaseStudy.id)
+
+    if domains:
+        d_agg = postgres.array_agg(cast(Domain.name, TEXT))
+        q = q.having(d_agg.contains(array(domains)))
+
+    if seller_types:
+        selected_seller_types = select(
+            [postgres.array_agg(column('key'))],
+            from_obj=func.json_each_text(Supplier.data[('seller_type',)]),
+            whereclause=cast(column('value'), Boolean)
+        ).as_scalar()
+
+        q = q.filter(selected_seller_types.contains(array(seller_types)))
+
+    if sort_dir in ('desc', 'z-a'):
+        ob = [desc(CaseStudy.data['title'].astext)]
+    else:
+        ob = [asc(CaseStudy.data['title'].astext)]
+
+    if search_term:
+        ob = [
+            desc(
+                func.similarity(
+                    search_term,
+                    CaseStudy.data['title'].astext)
+            ),
+            desc(
+                func.similarity(
+                    search_term,
+                    CaseStudy.data['approach'].astext)
+            )
+        ] + ob
+
+    q = q.order_by(*ob)
+
+    if search_term:
+        NAME_MINIMUM = \
+            current_app.config['SEARCH_MINIMUM_MATCH_SCORE_NAME']
+        SUMMARY_MINIMUM = \
+            current_app.config['SEARCH_MINIMUM_MATCH_SCORE_SUMMARY']
+
+        condition = or_(
+            func.similarity(search_term, CaseStudy.data['title'].astext) > NAME_MINIMUM,
+            func.similarity(search_term, CaseStudy.data['approach'].astext) >= SUMMARY_MINIMUM
+        )
+        q = q.filter(condition)
+
+    results = list(q)
+    total_results = len(results)
+
+    if domains:
+        # this code includes lecacy domains in results but is slower.
+        # can be removed once fully migrated to new domains.
+        results = [
+            _ for _ in results
+            if (
+                (set(_.supplier.assessed_domains) | set(_.supplier.unassessed_domains)) >= set(domains)
+            )
+        ]
+
+    sliced_results = results[offset:(offset + result_count)]
+
+    result = {
+        'hits': {
+            'total': total_results,
+            'hits': [{'_source': r} for r in sliced_results]
+        }
+    }
+
+    try:
+        response = jsonify(result), 200
+    except Exception as e:
+        response = jsonify(message=str(e)), 500
+
+    return response
 
 
 def do_search(search_query, offset, result_count, new_domains):
@@ -661,7 +756,8 @@ def get_domain(domain_id):
 
 @main.route('/domains', methods=['GET'])
 def get_domains_list():
-    result = [d.serializable for d in Domain.query.order_by('ordering').all()]
+    result = [d.get_serializable() for d in Domain.query.order_by('ordering').all()]
+
     return jsonify(domains=result)
 
 

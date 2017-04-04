@@ -16,7 +16,6 @@ application = create_app(os.getenv('DM_ENVIRONMENT') or 'development')
 
 dburl = application.config['SQLALCHEMY_DATABASE_URI']
 
-
 def do_startup():
     with S(dburl) as s:
         populate_agency_and_council_from_csv_files(s)

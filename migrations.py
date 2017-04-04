@@ -13,7 +13,7 @@ from sqlbag import S, temporary_database as temporary_db, load_sql_from_file, lo
 
 from config import configs
 
-from flask_script import Manager
+
 import subprocess
 
 
