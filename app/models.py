@@ -2306,7 +2306,7 @@ class Assessment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
-    supplier_domain_id = db.Column(db.Integer, db.ForeignKey('supplier_domain.id'))
+    supplier_domain_id = db.Column(db.Integer, db.ForeignKey('supplier_domain.id'), nullable=False)
     supplier_domain = db.relationship(SupplierDomain, lazy='joined', innerjoin=False)
 
     briefs = db.relationship('Brief', secondary='brief_assessment')

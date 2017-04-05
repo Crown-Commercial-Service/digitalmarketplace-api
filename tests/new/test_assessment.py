@@ -27,27 +27,48 @@ def test_create_assessment(client, suppliers, domains, supplier_domains, briefs)
     assert assessment['supplier_domain']['id'] == supplier_domain.id
 
 
-def test_create_assessment_with_supplier_domain(client, supplier_domains, briefs):
-    supplier_domain = supplier_domains[0]
+def test_create_assessment_with_invalid_supplier_domain(client, suppliers, domains, supplier_domains, briefs):
+    domain = domains[-1]
+    supplier = suppliers[0]
     brief = briefs[0]
 
     res = client.post(
         '/assessments',
         data=json.dumps({
             'assessment': {
-                'supplier_domain_id': supplier_domain.id,
+                'supplier_code': supplier.code,
+                'domain_name': domain.name,
                 'brief_id': brief.id
             }
         }),
         content_type='application/json'
     )
+    assert res.status_code == 400
 
+
+def test_create_assessment_with_existing_assessment(client, assessments):
+    assessment = assessments[0]
+    domain = assessment.supplier_domain.domain
+    supplier = assessment.supplier_domain.supplier
+    brief = assessment.briefs[0]
+
+    res = client.post(
+        '/assessments',
+        data=json.dumps({
+            'assessment': {
+                'supplier_code': supplier.code,
+                'domain_name': domain.name,
+                'brief_id': brief.id
+            }
+        }),
+        content_type='application/json'
+    )
     assert res.status_code == 201
     data = json.loads(res.get_data(as_text=True))
-    assessment = data['assessment']
+    result = data['assessment']
 
-    assert assessment['briefs'][0]['id'] == brief.id
-    assert assessment['supplier_domain']['id'] == supplier_domain.id
+    assert result['briefs'][0]['id'] == brief.id
+    assert result['supplier_domain']['id'] == assessment.supplier_domain.id
 
 
 def test_list_assessment(client, assessments):
