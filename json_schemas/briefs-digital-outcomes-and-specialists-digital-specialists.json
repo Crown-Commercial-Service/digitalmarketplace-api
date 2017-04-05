@@ -154,7 +154,8 @@
       "type": "string"
     },
     "startDate": {
-      "format": "date",
+      "maxLength": 100,
+      "minLength": 1,
       "type": "string"
     },
     "summary": {
