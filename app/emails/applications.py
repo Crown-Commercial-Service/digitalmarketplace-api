@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 
 from flask import current_app
-from app.models import Application
+from app.models import Application, User, Supplier, Domain
 
 from .util import render_email_template, send_or_handle_error
 
@@ -127,4 +127,39 @@ def send_rejection_notification(application_id):
         current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
         current_app.config['DM_GENERIC_SUPPORT_NAME'],
         event_description_for_errors='application rejected'
+    )
+
+
+def send_assessment_approval_notification(supplier_id, domain_id):
+    TEMPLATE_FILENAME = 'assessment_approved.md'
+
+    FRONTEND_ADDRESS = current_app.config['FRONTEND_ADDRESS']
+
+    supplier = Supplier.query.get(supplier_id)
+    domain = Domain.query.get(domain_id)
+
+    users = User.query.filter(User.supplier_code == supplier.code).all()
+
+    email_addresses = [u.email_address for u in users]
+    url_latest_opportunities = FRONTEND_ADDRESS + '/digital-service-professionals/opportunities'
+    url_seller_page = FRONTEND_ADDRESS + '/supplier/' + str(supplier.code)
+
+    # prepare copy
+    email_body = render_email_template(
+        TEMPLATE_FILENAME,
+        business_name=supplier.name,
+        domain_name=domain.name,
+        url_latest_opportunities=url_latest_opportunities,
+        url_seller_page=url_seller_page
+    )
+
+    subject = "You’re approved for a new service in the Digital Marketplace"
+
+    send_or_handle_error(
+        email_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='assessment approved'
     )

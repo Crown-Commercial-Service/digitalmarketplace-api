@@ -28,6 +28,7 @@ from app.utils import (
 from ...supplier_utils import validate_agreement_details_data
 from dmapiclient.audit import AuditTypes
 from dmutils.logging import notify_team
+from app.emails import send_assessment_approval_notification
 import json
 
 
@@ -833,5 +834,9 @@ def update_domain_status(supplier_id, domain_id, status):
 
     supplier.update_domain_assessment_status(domain_id, status)
     db.session.commit()
+
+    if status == 'assessed':
+        send_assessment_approval_notification(supplier_id, domain_id)
+
     db.session.refresh(supplier)
     return jsonify(supplier=supplier.serializable), 200
