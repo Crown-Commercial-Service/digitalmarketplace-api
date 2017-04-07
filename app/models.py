@@ -2199,7 +2199,7 @@ class Application(db.Model):
                 self.supplier = supplier
                 self.supplier.status = 'limited'
 
-                self.status = 'approved'
+            self.status = 'approved'
 
             db.session.flush()
 
