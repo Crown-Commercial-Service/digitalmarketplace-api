@@ -94,6 +94,9 @@ def send_approval_notification(application_id):
 
     subject = "You’re now listed in the Digital Marketplace"
 
+    if not current_app.config['SEND_APPLICATION_APPROVAL_EMAIL']:
+        return
+
     send_or_handle_error(
         to_address,
         email_body,

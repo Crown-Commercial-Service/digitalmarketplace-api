@@ -106,6 +106,7 @@ class Config:
     FRONTEND_ADDRESS = 'https://dm-dev.apps.staging.digital.gov.au'
 
     SEND_EMAILS = True
+    SEND_APPLICATION_APPROVAL_EMAIL = True
 
 
 class Test(Config):
@@ -171,7 +172,8 @@ class Live(Config):
 
     FRONTEND_ADDRESS = 'https://marketplace.service.gov.au'
 
-    SEND_EMAILS = False
+    SEND_EMAILS = True
+    SEND_APPLICATION_APPROVAL_EMAIL = False
 
 
 class Preview(Live):
