@@ -235,7 +235,7 @@ def export_users_for_framework(framework_slug):
     if framework.status == 'coming':
         abort(400, 'framework not yet open')
 
-    suppliers_with_a_complete_service = framework.get_supplier_ids_for_completed_service()
+    suppliers_with_a_complete_service = frozenset(framework.get_supplier_ids_for_completed_service())
     supplier_frameworks_and_users = db.session.query(
         SupplierFramework, User
     ).filter(
