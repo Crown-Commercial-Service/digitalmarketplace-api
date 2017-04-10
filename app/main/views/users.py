@@ -1,6 +1,7 @@
 from datetime import datetime
 from dmapiclient.audit import AuditTypes
 from sqlalchemy import func
+from sqlalchemy.orm import lazyload
 from sqlalchemy.exc import IntegrityError, DataError
 from flask import jsonify, abort, request, current_app
 
@@ -237,12 +238,21 @@ def export_users_for_framework(framework_slug):
     suppliers_with_a_complete_service = framework.get_supplier_ids_for_completed_service()
     supplier_frameworks_and_users = db.session.query(
         SupplierFramework, User
-    ).join(
-        User, SupplierFramework.supplier_id == User.supplier_id
     ).filter(
-        SupplierFramework.framework == framework
+        SupplierFramework.supplier_id == User.supplier_id
+    ).filter(
+        SupplierFramework.framework_id == framework.id
     ).filter(
         User.active.is_(True)
+    ).options(
+        lazyload(User.supplier),
+        lazyload(SupplierFramework.supplier),
+        lazyload(SupplierFramework.framework),
+        lazyload(SupplierFramework.prefill_declaration_from_framework),
+        lazyload(SupplierFramework.framework_agreements),
+    ).order_by(
+        SupplierFramework.supplier_id,
+        User.id,
     ).all()
 
     user_rows = []
