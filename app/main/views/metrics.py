@@ -147,15 +147,20 @@ def get_application_historical_metrics():
         date = dt.to_date_string()
         timestamp = dt.to_iso8601_string()
         query = '''
-                SELECT type, count(*) total_count
+  WITH app_metrics AS (SELECT type, count(*) total_count
                 FROM
                   (SELECT DISTINCT ON (object_id) date_trunc('day', created_at) AS day, type, object_id FROM audit_event
                   WHERE ((object_type = 'Application'
-                          and object_id not in (SELECT id from application where status = 'deleted') )
+                          AND object_id NOT IN (SELECT id FROM application WHERE status = 'deleted') )
                           OR object_type = 'SupplierDomain')
                   AND created_at < :date
                   ORDER BY object_id, created_at DESC ) a
-                GROUP BY type
+                GROUP BY type)
+    SELECT * FROM app_metrics
+    UNION SELECT 'started_application', sum(total_count) FROM app_metrics
+      WHERE type IN ('submit_application','approve_application','create_application','revert_application')
+    UNION SELECT 'completed_application', sum(total_count) FROM app_metrics
+      WHERE type IN ('submit_application','approve_application','revert_application')
                 '''
         for row in db.session.execute(query, {'date': date}).fetchall():
             metrics[row['type'] + "_count"].append({"value": row["total_count"], "ts": timestamp})
