@@ -166,10 +166,13 @@ def delete_application(application_id):
     return jsonify(message="done"), 200
 
 
-def applications_list_response(with_task_status=False):
+def applications_list_response(with_task_status=False, status=None):
     page = get_valid_page_or_1()
 
-    applications = Application.query.filter(Application.status != 'deleted')
+    if status:
+        applications = Application.query.filter(Application.status == status)
+    else:
+        applications = Application.query.filter(Application.status != 'deleted')
 
     ordering = request.args.get('order_by', 'application.created_at desc')
     order_by = ordering.split(',')
@@ -268,6 +271,11 @@ def submit_application(application_id):
 @main.route('/applications', methods=['GET'])
 def list_applications():
     return applications_list_response(with_task_status=False)
+
+
+@main.route('/applications/status/<string:status>', methods=['GET'])
+def list_applications_by_status(status):
+    return applications_list_response(with_task_status=False, status=status)
 
 
 @main.route('/applications/tasks', methods=['GET'])

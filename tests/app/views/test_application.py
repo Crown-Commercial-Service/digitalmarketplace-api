@@ -107,6 +107,9 @@ class BaseApplicationsTest(BaseApplicationTest):
     def list_applications(self, **parameters):
         return self.client.get('/applications', query_string=parameters)
 
+    def list_applications_by_status(self, status):
+        return self.client.get('/applications/status/{}'.format(status))
+
     def list_applications_with_task_status(self, **parameters):
         return self.client.get('/applications/tasks', query_string=parameters)
 
@@ -334,7 +337,14 @@ class TestListApplications(BaseApplicationsTest):
                 data=self.application_data,
                 status='deleted'
             )
+            db.session.add(application)
+            db.session.flush()
+            db.session.commit()
 
+            application = Application(
+                data=self.application_data,
+                status='saved'
+            )
             db.session.add(application)
             db.session.flush()
             db.session.commit()
@@ -343,7 +353,14 @@ class TestListApplications(BaseApplicationsTest):
             data = json.loads(res.get_data(as_text=True))
 
             assert res.status_code == 200
-            assert len(data['applications']) == 3
+            assert len(data['applications']) == 4
+            assert 'self' in data['links']
+
+            res = self.list_applications_by_status(status='saved')
+            data = json.loads(res.get_data(as_text=True))
+
+            assert res.status_code == 200
+            assert len(data['applications']) == 1
             assert 'self' in data['links']
 
     def test_list_applications_pagination(self):
