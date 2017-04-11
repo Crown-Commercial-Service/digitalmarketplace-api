@@ -751,6 +751,9 @@ class Supplier(db.Model):
                 }]
             ]
 
+        if 'addresses' in data and isinstance(data['addresses'], list):
+            data['addresses'] = [a for a in data['addresses'] if a is not None]
+
         overridden = [
             'longName',
             'extraLinks',
@@ -2139,6 +2142,9 @@ class Application(db.Model):
 
         if self.supplier:
             data['assessed_domains'] = self.supplier.assessed_domains
+
+        if 'addresses' in data and isinstance(data['addresses'], list):
+            data['addresses'] = [a for a in data['addresses'] if a is not None]
 
         return data
 
