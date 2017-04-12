@@ -830,7 +830,7 @@ def update_domain_status(supplier_id, domain_id, status):
     supplier = Supplier.query.get(supplier_id)
 
     if supplier is None:
-        abort(404, "Supplier '{}' does not exist".format(application_id))
+        abort(404, "Supplier '{}' does not exist".format(supplier_id))
 
     supplier.update_domain_assessment_status(domain_id, status)
     db.session.commit()
