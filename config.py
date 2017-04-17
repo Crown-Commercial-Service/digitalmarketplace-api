@@ -32,7 +32,7 @@ class Config:
     DM_API_BRIEF_RESPONSES_PAGE_SIZE = 100
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     SQLALCHEMY_RECORD_QUERIES = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace?client_encoding=utf8'
 
     DM_FAILED_LOGIN_LIMIT = 5
 
