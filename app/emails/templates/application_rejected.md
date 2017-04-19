@@ -1,6 +1,6 @@
-Hi {{contact_name}},
+Dear {{contact_name}},
 
-Unfortunately your application to join the Digital Marketplace didn't meet initial assessment standards.
+Unfortunately your application to join the Digital Marketplace didn't meet our initial assessment standards.
 
 If you still wish to be part of the Digital Marketplace, you can update your application then resubmit for further assessment.
 
