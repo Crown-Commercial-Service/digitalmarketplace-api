@@ -1,4 +1,4 @@
-Dear {{contact_name}},
+Hi {{contact_name}},
 
 Thanks for updating your profile and accepting the new Master Agreement.
 
