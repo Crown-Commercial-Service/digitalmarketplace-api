@@ -1,10 +1,8 @@
-Dear {{contact_name}},
+Hi {{contact_name}},
 
-Your application to join the Digital Marketplace has now been safely received. 
+Your application to join the Digital Marketplace has now been received. 
 
-We’ll send you an email soon to let you know the outcome of the initial assessment.
-
-If you’re approved as a registered seller your profile page will be available in the seller catalogue in a few weeks. 
+We’ll send you an email to let you know the outcome of the initial assessment soon.
 
 **In the meantime**
 
