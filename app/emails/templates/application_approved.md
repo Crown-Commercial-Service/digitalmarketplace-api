@@ -13,5 +13,7 @@ This is important because you may need to be assessed before you can apply for t
 **Where to next?**
 
 [Read the seller guide]({{url_sellers_guide}})
+
 [View the latest opportunities]({{url_latest_opportunities}})
+
 [View your page in the catalogue]({{url_seller_page}})
