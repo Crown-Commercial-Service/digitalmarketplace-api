@@ -71,15 +71,22 @@ def send_submitted_new_seller_notification(application_id):
 
 
 def send_approval_notification(application_id):
-    TEMPLATE_FILENAME = 'application_approved.md'
 
     FRONTEND_ADDRESS = current_app.config['FRONTEND_ADDRESS']
 
     application = Application.query.get(application_id)
 
+    if len(application.supplier.legacy_domains) > 0:
+        TEMPLATE_FILENAME = 'application_approved_existing_seller.md'
+        subject = "Your updated profile is live"
+    else:
+        TEMPLATE_FILENAME = 'application_approved_new_seller.md'
+        subject = "You’re now listed in the Digital Marketplace"
+
     to_address = application.supplier.contacts[0].email
 
     url_sellers_guide = FRONTEND_ADDRESS + '/sellers-guide'
+    url_assessments = FRONTEND_ADDRESS + '/sellers-guide#assessments'
     url_latest_opportunities = FRONTEND_ADDRESS + '/digital-service-professionals/opportunities'
     url_seller_page = FRONTEND_ADDRESS + '/supplier/' + str(application.supplier.code)
 
@@ -87,15 +94,11 @@ def send_approval_notification(application_id):
     email_body = render_email_template(
         TEMPLATE_FILENAME,
         business_name=application.supplier.name,
+        url_assessments=url_assessments,
         url_sellers_guide=url_sellers_guide,
         url_latest_opportunities=url_latest_opportunities,
         url_seller_page=url_seller_page
     )
-
-    subject = "You’re now listed in the Digital Marketplace"
-
-    if not current_app.config['SEND_APPLICATION_APPROVAL_EMAIL']:
-        return
 
     send_or_handle_error(
         to_address,
