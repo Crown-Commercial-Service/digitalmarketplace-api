@@ -2,21 +2,11 @@ Hi {{contact_name}},
 
 Thanks for updating your profile and accepting the new Master Agreement.
 
-Your new content will go live when we form the Digital Marketplace Panel in a few weeks. Our approach to market was published on AusTender on 23/02/2017 and a minimum of 25 days must pass before a new panel can be formed.
+The changes are now being reviewed before publishing on the seller catalogue. We’ll send you an email to let you know when the changes are live.
 
-We’ll send you an email to let you know when the changes are live.
+If you've added new services we recommend reading our [seller guide]({{url_sellers_guide}}). It explains the assessment process for each new service and why you need to express interest as early as possible.
 
-**You can still apply for opportunities while you wait for the changes to appear.** 
-
-We also recommend reading our [seller guide]({{url_sellers_guide}}).
-
-It explains:
-
-1. Why you need to express interest in opportunities early
-2. The assessment process
-3. How to offer new products or services
-
-Thanks for your ongoing participation in the Marketplace.
+Thanks being part of the Digital Marketplace.
 
 The Marketplace team
 
