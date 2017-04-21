@@ -19,7 +19,7 @@ def upgrade():
     op.add_column('briefs', sa.Column('lot_id', sa.Integer(), nullable=False))
     op.create_foreign_key(None, 'briefs', 'frameworks', ['framework_id'], ['id'])
     op.create_foreign_key(None, 'briefs', 'lots', ['lot_id'], ['id'])
-    op.create_foreign_key(None, 'briefs', 'framework_lots', ['framework_id', 'lot_id'], ['framework_id', 'lot_id'])
+    op.create_foreign_key('briefs_framework_id_fkey1', 'briefs', 'framework_lots', ['framework_id', 'lot_id'], ['framework_id', 'lot_id'])
 
 
 def downgrade():
