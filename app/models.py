@@ -739,7 +739,7 @@ class Supplier(db.Model):
             self.extra_links = [WebsiteLink.from_json(l) for l in data['extraLinks']]
 
         if 'recruiter' in data:
-            self.is_recruiter = data['recruiter'].lower() in ('yes', 'true')
+            self.is_recruiter = data['recruiter'].lower() in ('yes', 'true', 't')
             del data['recruiter']
 
         if 'representative' in data:

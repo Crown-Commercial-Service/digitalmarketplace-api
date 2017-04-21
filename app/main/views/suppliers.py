@@ -376,7 +376,7 @@ def do_search(search_query, offset, result_count, new_domains):
             q = q.having(sr_agg.contains(array(roles_list)))
 
     if seller_types_list is not None and 'recruiter' in seller_types_list:
-        q = q.filter(Supplier.is_recruiter == 't')
+        q = q.filter(Supplier.is_recruiter == 'true')
         seller_types_list.remove('recruiter')
         if len(seller_types_list) == 0:
             seller_types_list = None
