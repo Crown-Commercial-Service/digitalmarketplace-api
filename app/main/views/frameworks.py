@@ -252,12 +252,15 @@ def get_framework_suppliers(framework_slug):
 
     with_declarations = convert_to_boolean(request.args.get("with_declarations", "true"))
 
-    return jsonify(supplierFrameworks=[
-        supplier_framework.serialize(
-            with_users=False,
-            with_declaration=with_declarations,
-        ) for supplier_framework in supplier_frameworks
-    ])
+    return jsonify(
+        supplierFrameworks=[
+            supplier_framework.serialize(
+                with_users=False,
+                with_declaration=with_declarations,
+            ) for supplier_framework in supplier_frameworks
+        ],
+        links=dict()
+    )
 
 
 @main.route('/frameworks/<string:framework_slug>/interest', methods=['GET'])
