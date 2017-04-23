@@ -4,9 +4,9 @@ Congratulations!
 
 And this has now been updated on your [seller profile]({{url_seller_page}}).
 
-This means you can apply for any opportunities that require {{domain_name}} in future. 
+You can now apply for [any open opportunities]({{url_latest_opportunities}}) that require {{domain_name}}. 
 
-Thanks for being part of the Marketplace — and good luck!
+Thanks for being part of the Marketplace
 
 The Marketplace team
 
