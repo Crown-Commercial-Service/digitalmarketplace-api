@@ -11,3 +11,7 @@ Thanks for being part of the Marketplace
 The Marketplace team
 
 [View the latest opportunities]({{url_latest_opportunities}})
+
+**Your feedback shapes the Marketplace**
+
+The Digital Marketplace is an agile development in Beta. This means it evolves over time in response to user needs. If you have any questions, feedback or would like to take part in user research, please email [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).
