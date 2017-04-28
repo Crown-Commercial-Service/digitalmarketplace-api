@@ -640,7 +640,11 @@ class TestSupplierSearch(BaseApplicationTest):
         results = self.do_search(MATCH_ALL_SEARCH)
 
         assert len(results) == 5
-        assert results[1]['name'] == 'Supplier 4'
+        for result in results:
+            if result['code'] == 4:
+                pass
+            if result['code'] == 5:
+                assert result['name'] == "Supplier 4"
 
         results = self.do_search(CODE_SEARCH)
         assert len(results) == 1
