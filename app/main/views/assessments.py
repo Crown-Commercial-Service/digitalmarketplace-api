@@ -51,3 +51,12 @@ def list_assessments():
     result = [_.serializable for _ in assessments]
 
     return jsonify(assessments=result), 200
+
+
+@main.route('/assessments/<int:id>', methods=['GET'])
+def get_assessment(id):
+    assessment = Assessment.query.get(id)
+    if assessment is None:
+        return abort(404)
+
+    return jsonify(assessment.serializable), 200

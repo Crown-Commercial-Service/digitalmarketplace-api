@@ -4,10 +4,14 @@ Congratulations!
 
 And this has now been updated on your [seller profile]({{url_seller_page}}).
 
-This means you can directly apply for any opportunities that require {{domain_name}} in future. 
+You can now apply for [any open opportunities]({{url_latest_opportunities}}) that require {{domain_name}}. 
 
-Thanks for being part of the Marketplace — and good luck!
+Thanks for being part of the Marketplace
 
 The Marketplace team
 
 [View the latest opportunities]({{url_latest_opportunities}})
+
+**Your feedback shapes the Marketplace**
+
+The Digital Marketplace is an agile development in Beta. This means it evolves over time in response to user needs. If you have any questions, feedback or would like to take part in user research, please email [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).

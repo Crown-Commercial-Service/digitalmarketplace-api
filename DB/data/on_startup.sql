@@ -12,5 +12,5 @@ insert into domain(id, name, ordering) values
   (9, 'Marketing, Communications and Engagement',     8),
   (10, 'Support and Operations',                      5),
   (11, 'Data science',                                10),
-  (13, 'Emerging technology',                         11)
+  (13, 'Emerging technologies',                         11)
 on conflict(id) do update set name = excluded.name, ordering = excluded.ordering;

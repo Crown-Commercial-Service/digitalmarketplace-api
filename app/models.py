@@ -739,7 +739,7 @@ class Supplier(db.Model):
             self.extra_links = [WebsiteLink.from_json(l) for l in data['extraLinks']]
 
         if 'recruiter' in data:
-            self.is_recruiter = data['recruiter'].lower() in ('yes', 'true')
+            self.is_recruiter = data['recruiter'].lower() in ('yes', 'true', 't')
             del data['recruiter']
 
         if 'representative' in data:
@@ -750,6 +750,9 @@ class Supplier(db.Model):
                     'phone': data.get('phone')
                 }]
             ]
+
+        if 'addresses' in data and isinstance(data['addresses'], list):
+            data['addresses'] = [a for a in data['addresses'] if a is not None]
 
         overridden = [
             'longName',
@@ -2139,6 +2142,9 @@ class Application(db.Model):
 
         if self.supplier:
             data['assessed_domains'] = self.supplier.assessed_domains
+
+        if 'addresses' in data and isinstance(data['addresses'], list):
+            data['addresses'] = [a for a in data['addresses'] if a is not None]
 
         return data
 
