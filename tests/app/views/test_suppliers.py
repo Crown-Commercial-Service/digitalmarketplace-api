@@ -530,8 +530,10 @@ class TestSupplierSearch(BaseApplicationTest):
                 response = self.search_products(search_json)
             else:
                 response = self.search(search_json)
+
             assert_equal(response.status_code, 200)
             result = json.loads(response.get_data())
+
         hits = result['hits']['hits']
         return [h['_source'] for h in hits]
 
@@ -638,7 +640,7 @@ class TestSupplierSearch(BaseApplicationTest):
         results = self.do_search(MATCH_ALL_SEARCH)
 
         assert len(results) == 5
-        assert results[0]['name'] == 'Supplier 4'
+        assert results[1]['name'] == 'Supplier 4'
 
         results = self.do_search(CODE_SEARCH)
         assert len(results) == 1

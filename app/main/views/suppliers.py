@@ -138,6 +138,13 @@ def product_search():
     search_term = search_query.get('search_term', None)
 
     q = db.session.query(Product).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
+    q = q.add_column(func.ts_headline(
+            'english',
+            Product.summary,
+            func.plainto_tsquery(search_term),
+            'MaxWords=400, MinWords=100, ShortWord=3, HighlightAll=FALSE, MaxFragments=3, FragmentDelimiter=" ... " '
+        )
+    )
     q = q.group_by(Product.id, Supplier.id)
 
     if domains:
@@ -188,13 +195,15 @@ def product_search():
 
     results = list(q)
 
-    # remove 'hidden' example listing from result
-    results = [_ for _ in results if _.supplier.abn != Supplier.DUMMY_ABN]
+    for x in range(len(results)):
+        if results[x][1] is not None:
+            results[x][0].summary = results[x][1]
+    results = [results[x][0] for x in range(len(results)) if results[x][0].supplier.abn != Supplier.DUMMY_ABN]
 
     total_results = len(results)
 
     if domains:
-        # this code includes lecacy domains in results but is slower.
+        # this code includes legacy domains in results but is slower.
         # can be removed once fully migrated to new domains.
         results = [
             _ for _ in results
@@ -232,6 +241,15 @@ def casestudies_search():
     search_term = search_query.get('search_term', None)
 
     q = db.session.query(CaseStudy).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
+    q = q.add_column(func.ts_headline(
+        'english',
+        func.concat(
+            CaseStudy.data['approach'].astext,
+            CaseStudy.data['role'].astext),
+        func.plainto_tsquery(search_term),
+        'MaxWords=400, MinWords=100, ShortWord=3, HighlightAll=FALSE, FragmentDelimiter=" ... " '
+    ))
+
     q = q.group_by(CaseStudy.id)
 
     if domains:
@@ -279,8 +297,13 @@ def casestudies_search():
             func.similarity(search_term, CaseStudy.data['approach'].astext) >= SUMMARY_MINIMUM
         )
         q = q.filter(condition)
-
     results = list(q)
+
+    for x in range(len(results)):
+        if results[x][1] is not None:
+            results[x][0].data['approach'] = results[x][1]
+    results = [results[x][0] for x in range(len(results)) if results[x][0].supplier.abn != Supplier.DUMMY_ABN]
+
     total_results = len(results)
 
     if domains:
@@ -358,6 +381,12 @@ def do_search(search_query, offset, result_count, new_domains):
     else:
         q = db.session.query(Supplier).outerjoin(PriceSchedule).outerjoin(ServiceRole)
 
+    q = q.add_column(func.ts_headline(
+        'english',
+        Supplier.summary,
+        func.plainto_tsquery(search_term),
+        'MaxWords=400, MinWords=100, ShortWord=3, HighlightAll=FALSE, MaxFragments=3, FragmentDelimiter=" ... " '
+    ))
     q = q.group_by(Supplier.id)
 
     try:
@@ -416,7 +445,6 @@ def do_search(search_query, offset, result_count, new_domains):
             current_app.config['SEARCH_MINIMUM_MATCH_SCORE_NAME']
         SUMMARY_MINIMUM = \
             current_app.config['SEARCH_MINIMUM_MATCH_SCORE_SUMMARY']
-
         condition = or_(
             func.similarity(search_term, Supplier.name) > NAME_MINIMUM,
             func.similarity(search_term, Supplier.summary) >= SUMMARY_MINIMUM
@@ -427,7 +455,10 @@ def do_search(search_query, offset, result_count, new_domains):
     results = list(q)
 
     # remove 'hidden' example listing from result
-    results = [_ for _ in results if _.abn != Supplier.DUMMY_ABN]
+    for x in range(len(results)):
+        if results[x][1] is not None:
+            results[x][0].summary = results[x][1]
+    results = [results[x][0] for x in range(len(results)) if results[x][0].abn != Supplier.DUMMY_ABN]
 
     if roles_list and new_domains and not EXCLUDE_LEGACY_ROLES:
         # this code includes lecacy domains in results but is slower.
@@ -446,7 +477,6 @@ def do_search(search_query, offset, result_count, new_domains):
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
     search_query = get_json_from_request()
-
     new_domains = False
 
     offset = get_nonnegative_int_or_400(request.args, 'from', 0)
