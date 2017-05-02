@@ -1059,25 +1059,6 @@ class TestAddBriefClarificationQuestion(FrameworkSetupAndTeardown):
 
 
 class TestCopyBrief(FrameworkSetupAndTeardown):
-    def test_cannot_make_a_draft_copy_of_a_brief_if_the_framework_is_not_live(self):
-        self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
-
-        for framework_status in [status for status in Framework.STATUSES if status != 'live']:
-            with self.app.app_context():
-                framework = Framework.query.get(5)
-                framework.status = framework_status
-                db.session.add(framework)
-                db.session.commit()
-
-            res = self.client.post(
-                "/briefs/1/copy",
-                data=json.dumps({'updated_by': 'example'}),
-                content_type="application/json")
-            data = json.loads(res.get_data(as_text=True))
-
-            assert res.status_code == 400
-            assert data['error'] == "Framework is not live"
-
     def test_make_a_draft_copy_of_a_brief(self):
         # Set up brief with clarification question
         self.setup_dummy_briefs(1, title="The Title", status="live")

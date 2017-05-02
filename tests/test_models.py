@@ -405,7 +405,6 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
 
     def test_copy_brief(self):
         with self.app.app_context():
-            self.framework.status = 'live'
             self.setup_dummy_user(role='buyer')
 
             brief = Brief(
@@ -421,17 +420,6 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         assert brief.framework == copy.framework
         assert brief.lot == copy.lot
         assert brief.users == copy.users
-
-    def test_copy_brief_raises_error_if_framework_is_not_live(self):
-        brief = Brief(
-            data={},
-            framework=self.framework,
-            lot=self.lot
-        )
-        with pytest.raises(ValidationError) as e:
-            copy = brief.copy()
-
-        assert str(e.value.message) == "Framework is not live"
 
 
 class TestBriefResponses(BaseApplicationTest, FixtureMixin):

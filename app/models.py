@@ -1287,9 +1287,6 @@ class Brief(db.Model):
         self.data = current_data
 
     def copy(self):
-        if self.framework.status != 'live':
-            raise ValidationError("Framework is not live")
-
         return Brief(
             data=self.data,
             framework=self.framework,
