@@ -408,20 +408,26 @@ class TestCopyBrief(BaseApplicationTest, FixtureMixin):
 
     def setup(self, *args, **kwargs):
         super(TestCopyBrief, self).setup(*args, **kwargs)
-        with self.app.app_context():
-            self.setup_dummy_user(role='buyer')
-            self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            self.lot = self.framework.get_lot('digital-outcomes')
-            self.brief = Brief(
-                data={'title': 'my title'},
-                framework=self.framework,
-                lot=self.lot,
-                users=User.query.all()
-            )
+        self.app.app_context().push()
+        self.setup_dummy_user(role='buyer')
+        self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+        self.lot = self.framework.get_lot('digital-outcomes')
 
-
-    def teardown(self, *args, **kwargs):
-        super(TestCopyBrief, self).teardown(*args, **kwargs)
+        self.brief = Brief(
+            data={'title': 'my title'},
+            framework=self.framework,
+            lot=self.lot,
+            users=User.query.all(),
+            status="live"
+        )
+        db.session.add(self.brief)
+        question = BriefClarificationQuestion(
+            brief=self.brief,
+            question='hi',
+            answer='there',
+        )
+        db.session.add(question)
+        db.session.commit()
 
     def test_copy_brief(self):
 
@@ -430,6 +436,7 @@ class TestCopyBrief(BaseApplicationTest, FixtureMixin):
         assert copy.framework == self.brief.framework
         assert copy.lot == self.brief.lot
         assert copy.users == self.brief.users
+        assert not copy.clarification_questions
 
     def test_brief_title_under_96_chars_adds_copy_string(self):
         title = 't' * 95
@@ -446,12 +453,17 @@ class TestCopyBrief(BaseApplicationTest, FixtureMixin):
         assert copy.data['title'] == title
 
     def test_fields_to_remove_are_removed_on_copy(self):
-        pass
+        self.brief.data = {
+            "other key": "to be kept",
+            "startDate": "21-4-2016",
+            "questionAndAnswerSessionDetails": "details"
+        }
+        copy = self.brief.copy()
+        assert copy.data == {"other key": "to be kept"}
 
     def test_clarification_questions_are_removed(self):
-        pass
-
-
+        assert self.brief.clarification_questions
+        assert not self.brief.copy().clarification_questions
 
 
 class TestBriefResponses(BaseApplicationTest, FixtureMixin):
