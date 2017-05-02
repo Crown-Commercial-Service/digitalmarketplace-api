@@ -2121,6 +2121,21 @@ class Application(db.Model):
         nullable=False
     )
 
+    type = db.Column(
+        db.Enum(
+            *[
+                'upgrade',
+                'new',
+                'edit',
+            ],
+            name='application_type_enum'
+        ),
+        default='upgrade',
+        index=True,
+        unique=False,
+        nullable=True
+    )
+
     supplier_code = db.Column(db.BigInteger,
                               db.ForeignKey('supplier.code'),
                               nullable=True)

@@ -1342,10 +1342,9 @@ class TestSupplierApplication(BaseApplicationTest):
 
         with self.app.app_context():
             response = self.client.patch(
-                '/suppliers/{}'.format(self.supplier_code),
+                '/applications/{}'.format(application_id),
                 data=json.dumps({
-                    'supplier': {'application_id': application_id},
-                    'updated_by': 'supplier@user.dmdev'
+                    'application': {'status': 'saved', 'supplier_code': self.supplier_code},
                 }),
                 content_type='application/json')
 
@@ -1389,6 +1388,7 @@ class TestSupplierApplication(BaseApplicationTest):
             assert 'application' in data
             application = data['application']
             assert application['status'] == 'saved'
+            assert application['type'] == 'upgrade'
 
             user = User.query.filter(User.id == 1).first()
             assert user.application_id == application['id']

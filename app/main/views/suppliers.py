@@ -4,7 +4,7 @@ from flask import abort, current_app, jsonify, request, url_for
 from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.sql.expression import true
 from sqlalchemy.sql import cast
-from sqlalchemy import Boolean, select, column
+from sqlalchemy import Boolean, select, column, or_
 from sqlalchemy.dialects.postgresql import ARRAY, array
 from sqlalchemy.dialects import postgresql as postgres
 from sqlalchemy import String, literal
@@ -799,7 +799,8 @@ def get_domains_list():
 
 
 @main.route('/suppliers/<int:code>/application', methods=['POST'])
-def create_application_from_supplier(code):
+@main.route('/suppliers/<int:code>/application/<application_type>', methods=['POST'])
+def create_application_from_supplier(code, application_type=None):
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ["current_user"])
     current_user = json_payload["current_user"]
@@ -810,12 +811,14 @@ def create_application_from_supplier(code):
 
     # hotfix for exception. shouldn't need to do this
     supplier.data = supplier.data or {}
+    application_type = application_type or 'upgrade'
 
-    if 'application_id' in supplier.data:
-        application = Application.query.filter(
-            Application.id == supplier.data['application_id']
-        ).first()
-        return jsonify(application=application.serializable)
+    existing_application = Application.query.filter(
+        Application.supplier_code == supplier.code,
+        or_(Application.status == 'submitted', Application.status == 'saved')
+    ).first()
+    if existing_application:
+        return jsonify(application=existing_application.serializable)
 
     data = json.loads(supplier.json)
 
@@ -824,12 +827,14 @@ def create_application_from_supplier(code):
 
     application = Application()
     application.update_from_json(data)
+    application.type = application_type
 
     db.session.add(application)
     db.session.flush()
 
+    audit_type = application_type == 'edit' and AuditTypes.supplier_update or AuditTypes.create_application
     db.session.add(AuditEvent(
-        audit_type=AuditTypes.create_application,
+        audit_type=audit_type,
         user='',
         data={},
         db_object=application
@@ -842,8 +847,13 @@ def create_application_from_supplier(code):
         current_user['name'],
         current_user['email_address']
     )
-    notify_team('An existing seller has started a new application', notification_message)
 
+    notification_text = application_type == 'edit' and 'An existing seller is editing their profile' or \
+        'An existing seller has started a new application'
+
+    notify_team(notification_text, notification_message)
+
+    # TODO stop using application_id on user
     supplier.update_from_json({'application_id': application.id})
     users = User.query.filter(
         User.supplier_code == code and User.active == true()
