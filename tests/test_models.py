@@ -403,23 +403,55 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             assert brief.clarification_questions[0].question == "How?"
             assert brief.clarification_questions[1].question == "When"
 
-    def test_copy_brief(self):
+
+class TestCopyBrief(BaseApplicationTest, FixtureMixin):
+
+    def setup(self, *args, **kwargs):
+        super(TestCopyBrief, self).setup(*args, **kwargs)
         with self.app.app_context():
             self.setup_dummy_user(role='buyer')
-
-            brief = Brief(
+            self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self.lot = self.framework.get_lot('digital-outcomes')
+            self.brief = Brief(
                 data={'title': 'my title'},
                 framework=self.framework,
                 lot=self.lot,
                 users=User.query.all()
             )
 
-        copy = brief.copy()
 
-        assert brief.data == {'title': 'my title'}
-        assert brief.framework == copy.framework
-        assert brief.lot == copy.lot
-        assert brief.users == copy.users
+    def teardown(self, *args, **kwargs):
+        super(TestCopyBrief, self).teardown(*args, **kwargs)
+
+    def test_copy_brief(self):
+
+        copy = self.brief.copy()
+
+        assert copy.framework == self.brief.framework
+        assert copy.lot == self.brief.lot
+        assert copy.users == self.brief.users
+
+    def test_brief_title_under_96_chars_adds_copy_string(self):
+        title = 't' * 95
+        self.brief.data['title'] = title
+        copy = self.brief.copy()
+
+        assert copy.data['title'] == title + ' copy'
+
+    def test_brief_title_over_95_chars_does_not_add_copy_string(self):
+        title = 't' * 96
+        self.brief.data['title'] = title
+        copy = self.brief.copy()
+
+        assert copy.data['title'] == title
+
+    def test_fields_to_remove_are_removed_on_copy(self):
+        pass
+
+    def test_clarification_questions_are_removed(self):
+        pass
+
+
 
 
 class TestBriefResponses(BaseApplicationTest, FixtureMixin):
