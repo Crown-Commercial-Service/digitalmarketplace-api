@@ -1060,13 +1060,7 @@ class TestAddBriefClarificationQuestion(FrameworkSetupAndTeardown):
 
 class TestCopyBrief(FrameworkSetupAndTeardown):
     def test_make_a_draft_copy_of_a_brief(self):
-        # Set up brief with clarification question
         self.setup_dummy_briefs(1, title="The Title", status="live")
-        with self.app.app_context():
-            brief = Brief.query.get(1)
-            brief.add_clarification_question('question', 'answer')
-            db.session.add(brief)
-            db.session.commit()
 
         res = self.client.post(
             "/briefs/1/copy",
@@ -1079,8 +1073,6 @@ class TestCopyBrief(FrameworkSetupAndTeardown):
         assert data["briefs"]["lot"] == 'digital-specialists'
         assert data["briefs"]["frameworkSlug"] == 'digital-outcomes-and-specialists'
         assert data["briefs"]["status"] == 'draft'
-        assert data["briefs"]["title"] == 'The Title'
-        assert not data["briefs"]["clarificationQuestions"]
 
     def test_make_a_draft_copy_of_a_brief_makes_audit_event(self):
         self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
