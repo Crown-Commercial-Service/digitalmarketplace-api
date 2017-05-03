@@ -1292,7 +1292,7 @@ class Brief(db.Model):
         if 0 < len(title) <= 95:
             data['title'] = u"{} copy".format(title)
 
-        do_not_copy = ["startDate", "questionAndAnswerSessionDetails"]
+        do_not_copy = ["startDate", "questionAndAnswerSessionDetails", "researchDates"]
         data = {key: value for key, value in data.items() if key not in do_not_copy}
 
         return Brief(

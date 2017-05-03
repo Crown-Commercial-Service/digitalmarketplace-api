@@ -456,7 +456,8 @@ class TestCopyBrief(BaseApplicationTest, FixtureMixin):
         self.brief.data = {
             "other key": "to be kept",
             "startDate": "21-4-2016",
-            "questionAndAnswerSessionDetails": "details"
+            "questionAndAnswerSessionDetails": "details",
+            "researchDates": "some date"
         }
         copy = self.brief.copy()
         assert copy.data == {"other key": "to be kept"}
