@@ -1143,6 +1143,7 @@ class Brief(db.Model):
 
     framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), nullable=False)
     _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lots.id'), nullable=False)
+    copied_from_brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), nullable=True)
 
     data = db.Column(JSON, nullable=False)
     created_at = db.Column(db.DateTime, index=True, nullable=False,
@@ -1297,6 +1298,7 @@ class Brief(db.Model):
 
         return Brief(
             data=data,
+            copied_from_brief_id=self.id,
             framework=self.framework,
             lot=self.lot,
             users=self.users

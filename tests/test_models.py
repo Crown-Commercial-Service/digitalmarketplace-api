@@ -436,6 +436,7 @@ class TestCopyBrief(BaseApplicationTest, FixtureMixin):
         assert copy.framework == self.brief.framework
         assert copy.lot == self.brief.lot
         assert copy.users == self.brief.users
+        assert copy.copied_from_brief_id == self.brief.id
         assert not copy.clarification_questions
 
     def test_brief_title_under_96_chars_adds_copy_string(self):
