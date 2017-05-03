@@ -1,0 +1,10 @@
+.git
+*
+
+!app/
+!application.py
+!config.py
+!data/
+!json_schemas/
+!migrations/
+!requirements.txt
