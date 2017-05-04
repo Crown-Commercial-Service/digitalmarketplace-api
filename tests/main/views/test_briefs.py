@@ -1070,9 +1070,6 @@ class TestCopyBrief(FrameworkSetupAndTeardown):
 
         assert res.status_code == 201
         assert data["briefs"]["id"] > 1
-        assert data["briefs"]["lot"] == 'digital-specialists'
-        assert data["briefs"]["frameworkSlug"] == 'digital-outcomes-and-specialists'
-        assert data["briefs"]["status"] == 'draft'
 
     def test_make_a_draft_copy_of_a_brief_makes_audit_event(self):
         self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
