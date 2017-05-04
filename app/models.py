@@ -1340,6 +1340,7 @@ class Brief(db.Model):
             'clarificationQuestions': [
                 question.serialize() for question in self.clarification_questions
             ],
+            'copiedFromBriefId': self.copied_from_brief_id
         })
 
         if self.published_at:
