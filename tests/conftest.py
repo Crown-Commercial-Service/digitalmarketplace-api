@@ -394,13 +394,13 @@ def live_dos_framework(request, app):
 def expired_dos_framework(request, app):
     return _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="expired"))
 
+
 @pytest.fixture()
 def live_dos2_framework(request, app):
     return _framework_fixture_inner(request, app, **dict(_dos2_framework_defaults, status="live"))
 
 
 # Suppliers
-
 
 @pytest.fixture()
 def supplier_basic(request, app):

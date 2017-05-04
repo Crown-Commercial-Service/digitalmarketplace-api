@@ -483,6 +483,7 @@ class TestCopyBrief(BaseApplicationTest, FixtureMixin):
 
         assert copy.framework == live_framework
 
+
 class TestBriefResponses(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestBriefResponses, self).setup()

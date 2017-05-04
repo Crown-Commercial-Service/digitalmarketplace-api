@@ -1340,7 +1340,6 @@ class Brief(db.Model):
             'clarificationQuestions': [
                 question.serialize() for question in self.clarification_questions
             ],
-            'copiedFromBriefId': self.copied_from_brief_id
         })
 
         if self.published_at:
@@ -1357,6 +1356,9 @@ class Brief(db.Model):
             data.update({
                 'withdrawnAt': self.withdrawn_at.strftime(DATETIME_FORMAT)
             })
+
+        if self.copied_from_brief_id:
+            data.update({'copiedFromBriefId': self.copied_from_brief_id})
 
         data['links'] = {
             'self': url_for('.get_brief', brief_id=self.id),
