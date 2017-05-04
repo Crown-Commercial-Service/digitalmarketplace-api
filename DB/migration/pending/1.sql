@@ -1,19 +1,16 @@
-CREATE TYPE "public"."project_status_enum" AS ENUM ('draft', 'published');
-CREATE SEQUENCE project_id_seq START 4;
-CREATE TABLE project
-(
-  id         INTEGER DEFAULT nextval('project_id_seq' :: REGCLASS) NOT NULL
-    CONSTRAINT project_pkey
-    PRIMARY KEY,
+create type "public"."project_status_enum" as enum ('draft', 'published');
 
-  data       JSON                                                  NOT NULL,
-  status     project_status_enum                                   NOT NULL,
-  created_at TIMESTAMP                                             NOT NULL
+create sequence "public"."project_id_seq";
+
+create table "public"."project" (
+  "id" integer not null default nextval('project_id_seq'::regclass),
+  "data" json not null,
+  "status" project_status_enum not null,
+  "created_at" timestamp without time zone not null
 );
 
-CREATE INDEX ix_project_created_at
-  ON project (created_at);
+CREATE INDEX ix_project_created_at ON project USING btree (created_at);
 
-CREATE INDEX ix_project_status
-  ON project USING BTREE (status);
+CREATE UNIQUE INDEX project_pkey ON project USING btree (id);
 
+alter table "public"."project" add constraint "project_pkey" PRIMARY KEY using index "project_pkey";
