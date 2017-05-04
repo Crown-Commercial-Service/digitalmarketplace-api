@@ -161,7 +161,11 @@ class Framework(db.Model):
 
     @validates('framework')
     def validates_framework(self, key, framework):
-        if framework not in self.FRAMEWORKS:
+        return Framework.validate_framework(framework)
+
+    @staticmethod
+    def validate_framework(framework):
+        if framework not in Framework.FRAMEWORKS:
             raise ValidationError("Invalid framework value '{}'".format(framework))
         return framework
 
