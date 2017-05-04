@@ -2354,6 +2354,56 @@ class Assessment(db.Model):
         return data
 
 
+class Project(db.Model):
+    __tablename__ = 'project'
+
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
+    status = db.Column(
+        db.Enum(
+            *[
+                'draft',
+                'published'
+            ],
+            name='project_status_enum'
+        ),
+        default='draft',
+        index=False,
+        unique=False,
+        nullable=False
+    )
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+
+    @validates('data')
+    def validates_data(self, key, data):
+        data = strip_whitespace_from_data(data)
+        data = purge_nulls_from_data(data)
+
+        return data
+
+    def serialize(self):
+        data = self.data.copy()
+        data.update({
+            'id': self.id,
+            'status': self.status,
+            'createdAt': self.created_at.to_iso8601_string(extended=True),
+            'links': {
+                'self': url_for('.get_project', project_id=self.id),
+            }
+        })
+
+        return data
+
+    @staticmethod
+    def from_json(data):
+        def y():
+            for k, v in data.items():
+                c = Project()
+                c.update_from_json(v)
+                yield c
+        return list(y())
+
+
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
 # which takes a long time for old events
