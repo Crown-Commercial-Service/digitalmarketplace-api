@@ -1300,10 +1300,15 @@ class Brief(db.Model):
         do_not_copy = ["startDate", "questionAndAnswerSessionDetails", "researchDates"]
         data = {key: value for key, value in data.items() if key not in do_not_copy}
 
+        framework = Framework.query.filter(
+            Framework.framework == self.framework.framework,
+            Framework.status == 'live'
+        ).one()
+
         return Brief(
             data=data,
             copied_from_brief_id=self.id,
-            framework=self.framework,
+            framework=framework,
             lot=self.lot,
             users=self.users
         )
