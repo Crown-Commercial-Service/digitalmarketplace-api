@@ -410,7 +410,9 @@ class TestCopyBrief(BaseApplicationTest, FixtureMixin):
         super(TestCopyBrief, self).setup(*args, **kwargs)
         self.app.app_context().push()
         self.setup_dummy_user(role='buyer')
-        self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+        self.framework = Framework.query.filter(
+            Framework.slug == 'digital-outcomes-and-specialists',
+        ).one()
         self.lot = self.framework.get_lot('digital-outcomes')
 
         self.brief = Brief(
@@ -429,31 +431,39 @@ class TestCopyBrief(BaseApplicationTest, FixtureMixin):
         db.session.add(question)
         db.session.commit()
 
-    def test_copy_brief(self):
-
+    def test_copy_brief(self, live_dos_framework):
         copy = self.brief.copy()
 
         assert copy.framework == self.brief.framework
         assert copy.lot == self.brief.lot
         assert copy.users == self.brief.users
         assert copy.copied_from_brief_id == self.brief.id
+
+    def test_clarification_questions_not_copied(self, live_dos_framework):
+        copy = self.brief.copy()
+
         assert not copy.clarification_questions
 
-    def test_brief_title_under_96_chars_adds_copy_string(self):
+    def test_copied_brief_status_is_draft(self, live_dos_framework):
+        copy = self.brief.copy()
+
+        assert copy.status == 'draft'
+
+    def test_brief_title_under_96_chars_adds_copy_string(self, live_dos_framework):
         title = 't' * 95
         self.brief.data['title'] = title
         copy = self.brief.copy()
 
         assert copy.data['title'] == title + ' copy'
 
-    def test_brief_title_over_95_chars_does_not_add_copy_string(self):
+    def test_brief_title_over_95_chars_does_not_add_copy_string(self, live_dos_framework):
         title = 't' * 96
         self.brief.data['title'] = title
         copy = self.brief.copy()
 
         assert copy.data['title'] == title
 
-    def test_fields_to_remove_are_removed_on_copy(self):
+    def test_fields_to_remove_are_removed_on_copy(self, live_dos_framework):
         self.brief.data = {
             "other key": "to be kept",
             "startDate": "21-4-2016",
@@ -463,10 +473,15 @@ class TestCopyBrief(BaseApplicationTest, FixtureMixin):
         copy = self.brief.copy()
         assert copy.data == {"other key": "to be kept"}
 
-    def test_clarification_questions_are_removed(self):
-        assert self.brief.clarification_questions
-        assert not self.brief.copy().clarification_questions
+    def test_copy_is_put_on_live_framework(self, expired_dos_framework, live_dos2_framework):
+        """If brief is on framework which is not live its copy chould be moved to the live framework."""
+        expired_framework = Framework.query.filter(Framework.id == expired_dos_framework['id']).first()
+        live_framework = Framework.query.filter(Framework.id == live_dos2_framework['id']).first()
+        self.brief.framework = expired_framework
 
+        copy = self.brief.copy()
+
+        assert copy.framework == live_framework
 
 class TestBriefResponses(BaseApplicationTest, FixtureMixin):
     def setup(self):
