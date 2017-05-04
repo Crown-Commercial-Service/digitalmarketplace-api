@@ -823,7 +823,7 @@ def create_application_from_supplier(code, application_type=None):
     data = json.loads(supplier.json)
 
     data['status'] = 'saved'
-    data = {key: data[key] for key in data if key not in ['id', 'contacts', 'domains', 'prices', 'frameworks']}
+    data = {key: data[key] for key in data if key not in ['id', 'contacts', 'domains', 'prices', 'frameworks', 'steps']}
 
     application = Application()
     application.update_from_json(data)

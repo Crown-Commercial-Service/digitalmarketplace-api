@@ -702,7 +702,7 @@ class Supplier(db.Model):
         }
 
         j['services'] = {
-            d: True for d in self.assessed_domains
+            d: True for d in self.all_domains
         }
 
         def without_id(dictionary):
@@ -2130,7 +2130,7 @@ class Application(db.Model):
             ],
             name='application_type_enum'
         ),
-        default='upgrade',
+        default='new',
         index=True,
         unique=False,
         nullable=True

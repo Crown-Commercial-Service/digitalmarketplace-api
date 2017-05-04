@@ -153,7 +153,7 @@ class Development(Config):
     JIRA_APPLICATION_FIELD_CODE = 'customfield_11000'
     JIRA_SUPPLIER_FIELD_CODE = 'customfield_11100'
 
-    JIRA_FEATURES = True
+    JIRA_FEATURES = False
 
     JUST_IN_TIME_ASSESSMENTS = False
 

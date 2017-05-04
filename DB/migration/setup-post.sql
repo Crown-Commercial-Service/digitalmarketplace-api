@@ -36,6 +36,3 @@ create view vuser_users_with_briefs as (
   order by
     1, 2
 );
-
-update application set type ='upgrade' where supplier_code is not null and type is null;
-update application set type ='new' where supplier_code is null and type is null;
