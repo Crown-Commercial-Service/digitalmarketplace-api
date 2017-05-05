@@ -161,7 +161,11 @@ class Framework(db.Model):
 
     @validates('framework')
     def validates_framework(self, key, framework):
-        if framework not in self.FRAMEWORKS:
+        return Framework.validate_framework(framework)
+
+    @staticmethod
+    def validate_framework(framework):
+        if framework not in Framework.FRAMEWORKS:
             raise ValidationError("Invalid framework value '{}'".format(framework))
         return framework
 
@@ -1143,6 +1147,7 @@ class Brief(db.Model):
 
     framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), nullable=False)
     _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lots.id'), nullable=False)
+    copied_from_brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), nullable=True)
 
     data = db.Column(JSON, nullable=False)
     created_at = db.Column(db.DateTime, index=True, nullable=False,
@@ -1287,12 +1292,23 @@ class Brief(db.Model):
         self.data = current_data
 
     def copy(self):
-        if self.framework.status != 'live':
-            raise ValidationError("Framework is not live")
+        data = self.data.copy()
+        title = data.get('title', '')
+        if 0 < len(title) <= 95:
+            data['title'] = u"{} copy".format(title)
+
+        do_not_copy = ["startDate", "questionAndAnswerSessionDetails", "researchDates"]
+        data = {key: value for key, value in data.items() if key not in do_not_copy}
+
+        framework = Framework.query.filter(
+            Framework.framework == self.framework.framework,
+            Framework.status == 'live'
+        ).one()
 
         return Brief(
-            data=self.data,
-            framework=self.framework,
+            data=data,
+            copied_from_brief_id=self.id,
+            framework=framework,
             lot=self.lot,
             users=self.users
         )
@@ -1340,6 +1356,9 @@ class Brief(db.Model):
             data.update({
                 'withdrawnAt': self.withdrawn_at.strftime(DATETIME_FORMAT)
             })
+
+        if self.copied_from_brief_id:
+            data.update({'copiedFromBriefId': self.copied_from_brief_id})
 
         data['links'] = {
             'self': url_for('.get_brief', brief_id=self.id),

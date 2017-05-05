@@ -214,6 +214,11 @@ _dos_framework_defaults = {
     "framework": "digital-outcomes-and-specialists",
     "framework_agreement_details": None,
 }
+_dos2_framework_defaults = {
+    "slug": "digital-outcomes-and-specialists-2",
+    "framework": "digital-outcomes-and-specialists",
+    "framework_agreement_details": None,
+}
 _example_framework_details = {
     "slug": "example-framework",
     "framework": "g-cloud",
@@ -390,8 +395,12 @@ def expired_dos_framework(request, app):
     return _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="expired"))
 
 
-# Suppliers
+@pytest.fixture()
+def live_dos2_framework(request, app):
+    return _framework_fixture_inner(request, app, **dict(_dos2_framework_defaults, status="live"))
 
+
+# Suppliers
 
 @pytest.fixture()
 def supplier_basic(request, app):
