@@ -8,7 +8,7 @@ psycopg2==2.5.4
 SQLAlchemy==1.1.4
 SQLAlchemy-Utils==0.30.5
 
-git+https://github.com/alphagov/digitalmarketplace-utils.git@21.4.0#egg=digitalmarketplace-utils==21.4.0
+git+https://github.com/alphagov/digitalmarketplace-utils.git@25.2.0#egg=digitalmarketplace-utils==25.2.0
 git+https://github.com/alphagov/digitalmarketplace-apiclient.git@7.6.0#egg=digitalmarketplace-apiclient==7.6.0
 
 # For schema validation
