@@ -89,12 +89,9 @@ def get_teammembers(domain):
             del briefs[None]
         del row['brief_ids']
         del row['brief_titles']
-        row['briefs'] = briefs
         return row
 
     teammembers = [process_row(_) for _ in query]
-
-    # print(teammembers)
 
     return jsonify(teammembers=teammembers, teamname=name)
 

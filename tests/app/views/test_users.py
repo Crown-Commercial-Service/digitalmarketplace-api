@@ -1249,7 +1249,6 @@ class TestTeamsGet(BaseUserTest):
         jdata = json.loads(data)
 
         assert jdata['teammembers'][0] == {
-            'briefs': [{'id': 1, 'title': 'brieftitle'}, {'id': 2, 'title': 'brieftitle'}],
             'email_address': 'j@begavalley.nsw.gov.au',
             'email_domain': 'begavalley.nsw.gov.au',
             'id': self.u_id,

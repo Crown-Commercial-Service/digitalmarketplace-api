@@ -106,8 +106,26 @@ def get_brief(brief_id):
     brief = Brief.query.filter(
         Brief.id == brief_id
     ).first_or_404()
-
     return jsonify(briefs=brief.serialize(with_users=True))
+
+
+@main.route('/briefs/teammembers/<string:email_domain>', methods=['GET'])
+def get_team_briefs(email_domain):
+    query = db.session.execute("""
+            select brief_ids from vuser_users_with_briefs
+            where email_domain = :domain
+        """, {'domain': email_domain})
+
+    user_brief_lists = list()
+    for i in [_ for _ in query if _[0][0] is not None]:
+        user_brief_lists += i
+
+    brief_id_list = [item for sublist in user_brief_lists for item in sublist]
+
+    briefs = Brief.query.filter(
+        Brief.id.in_(brief_id_list)).all()
+
+    return jsonify([brief.serialize() for brief in briefs])
 
 
 @main.route('/briefs', methods=['GET'])
