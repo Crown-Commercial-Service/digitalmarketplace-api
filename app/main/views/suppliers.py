@@ -798,6 +798,14 @@ def get_domains_list():
     return jsonify(domains=result)
 
 
+@main.route('/suppliers/<int:code>/applications', methods=['GET'])
+def get_supplier_applications(code):
+    result = [a.serializable for a in Application.query.filter(
+        Application.supplier_code == code).all()]
+
+    return jsonify(applications=result)
+
+
 @main.route('/suppliers/<int:code>/application', methods=['POST'])
 @main.route('/suppliers/<int:code>/application/<application_type>', methods=['POST'])
 def create_application_from_supplier(code, application_type=None):
