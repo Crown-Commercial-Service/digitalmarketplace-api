@@ -6,7 +6,7 @@ from app.models import db, Application, Agreement, SignedAgreement, User, AuditE
 from app.utils import (
     get_json_from_request, json_has_required_keys,
     pagination_links, get_valid_page_or_1,
-    get_positive_int_or_400
+    get_positive_int_or_400, validate_and_return_updater_request
 )
 import pendulum
 from sqlalchemy.sql.expression import true
@@ -91,6 +91,7 @@ def reject_application(application_id):
 
 @main.route('/applications/<int:application_id>/revert', methods=['POST'])
 def revert_application(application_id):
+    updater_json = validate_and_return_updater_request()
     application = Application.query.get(application_id)
 
     if application is None:
@@ -101,7 +102,7 @@ def revert_application(application_id):
 
     db.session.add(AuditEvent(
         audit_type=AuditTypes.revert_application,
-        user='',
+        user=updater_json['updated_by'],
         data={},
         db_object=application
     ))
@@ -112,6 +113,8 @@ def revert_application(application_id):
 
 
 def application_approval(application_id, result):
+    updater_json = validate_and_return_updater_request()
+
     application = Application.query.get(application_id)
 
     if application is None:
@@ -119,7 +122,7 @@ def application_approval(application_id, result):
 
     db.session.add(AuditEvent(
         audit_type=(AuditTypes.approve_application if result else AuditTypes.reject_application),
-        user='',
+        user=updater_json['updated_by'],
         data={},
         db_object=application
     ))
@@ -145,14 +148,14 @@ def delete_application(application_id):
     :param application_id:
     :return:
     """
-
+    updater_json = validate_and_return_updater_request()
     application = Application.query.filter(
         Application.id == application_id
     ).first_or_404()
 
     db.session.add(AuditEvent(
         audit_type=AuditTypes.delete_application,
-        user='',
+        user=updater_json['updated_by'],
         data={},
         db_object=application
     ))

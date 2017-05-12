@@ -10,6 +10,7 @@ def test_create_assessment(client, suppliers, domains, supplier_domains, briefs)
     res = client.post(
         '/assessments',
         data=json.dumps({
+            'update_details': {'updated_by': 'test@example.com'},
             'assessment': {
                 'supplier_code': supplier.code,
                 'domain_name': domain.name,
@@ -35,6 +36,7 @@ def test_create_assessment_with_invalid_supplier_domain(client, suppliers, domai
     res = client.post(
         '/assessments',
         data=json.dumps({
+            'update_details': {'updated_by': 'test@example.com'},
             'assessment': {
                 'supplier_code': supplier.code,
                 'domain_name': domain.name,
@@ -55,6 +57,7 @@ def test_create_assessment_with_existing_assessment(client, assessments):
     res = client.post(
         '/assessments',
         data=json.dumps({
+            'update_details': {'updated_by': 'test@example.com'},
             'assessment': {
                 'supplier_code': supplier.code,
                 'domain_name': domain.name,
