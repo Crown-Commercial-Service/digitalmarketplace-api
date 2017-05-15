@@ -1,4 +1,6 @@
-alter table "public"."assessment" add column "active" boolean not null;
+alter table "public"."assessment" add column "active" boolean;
+update "assessment" set "active" = true;
+alter table "public"."assessment" alter column "active" set not null;
 
 alter table "public"."supplier_domain" drop constraint "supplier_domain_pkey";
 drop index if exists "public"."supplier_domain_pkey";
