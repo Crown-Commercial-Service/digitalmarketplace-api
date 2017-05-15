@@ -773,7 +773,9 @@ class TestDomains(BaseApplicationTest):
                 Domain.get_by_name_or_id('data science').id
             )
 
-            response = self.client.post(assessment_url)
+            response = self.client.post(assessment_url,
+                                        data=json.dumps({'update_details': {'updated_by': 'test@example.com'}}),
+                                        content_type='application/json')
             assert_equal(response.status_code, 200)
 
             supplier = json.loads(response.get_data(as_text=True))['supplier']
