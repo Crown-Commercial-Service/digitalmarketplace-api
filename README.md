@@ -89,7 +89,7 @@ By default the API runs on port 5000. Calls to the API require a valid bearer
 token. Tokens to be accepted can be set using the DM_AUTH_TOKENS environment
 variable (a colon-separated list), e.g.:
 
-```export DM_API_AUTH_TOKENS=myToken1:myToken2```
+```export DM_API_AUTH_TOKENS=myToken```
 
 If ``DM_API_AUTH_TOKENS`` is not explicitly set then the run_api.sh script sets
 it to ``myToken``. You should include a valid token in your request headers, 
