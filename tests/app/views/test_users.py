@@ -1250,7 +1250,6 @@ class TestTeamsGet(BaseUserTest):
 
         assert jdata['teammembers'][0] == {
             'email_address': 'j@begavalley.nsw.gov.au',
-            'email_domain': 'begavalley.nsw.gov.au',
             'id': self.u_id,
             'name': 'John Buyer'
         }

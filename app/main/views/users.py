@@ -55,11 +55,14 @@ def get_user_by_id(user_id):
 
 @main.route('/teammembers/<string:domain>', methods=['GET'])
 def get_teammembers(domain):
-    userlist = User.query.filter_by(role='buyer')
-    teammembers = [_ for _ in userlist if _.viewrow().email_domain == domain]
+    userlist = User.query.filter_by(role='buyer', active='true')
+    teammembers = [{attr: getattr(_, attr) for attr in ["email_address", "id", "name"]}
+                   for _ in userlist if all(
+        [_.viewrow().email_domain == domain, _.active, '+' not in _.email_address]
+    )]
 
     query = db.session.execute("""
-        select * from govdomains
+        select name from govdomains
         where domain = :domain
     """, {'domain': domain})
 
@@ -69,29 +72,6 @@ def get_teammembers(domain):
         name = results[0].name
     except IndexError:
         name = 'Unknown'
-
-    query = db.session.execute("""
-        select * from vuser_users_with_briefs
-        where email_domain = :domain
-    """, {'domain': domain})
-
-    def process_row(r):
-        row = dict(r)
-
-        briefs = [
-            {'id': b_id, 'title': b_title}
-            for b_id, b_title in
-            zip(r.brief_ids, r.brief_titles)
-            if b_id
-        ]
-
-        if None in briefs:
-            del briefs[None]
-        del row['brief_ids']
-        del row['brief_titles']
-        return row
-
-    teammembers = [process_row(_) for _ in query]
 
     return jsonify(teammembers=teammembers, teamname=name)
 

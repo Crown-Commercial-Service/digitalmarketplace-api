@@ -113,8 +113,9 @@ def get_brief(brief_id):
 def get_team_briefs(email_domain):
     query = db.session.execute("""
             select brief_ids from vuser_users_with_briefs
-            where email_domain = :domain
-        """, {'domain': email_domain})
+            inner join vuser on vuser.id = vuser_users_with_briefs.id
+            where vuser.active = :active AND vuser_users_with_briefs.email_domain = :domain
+        """, {'active': 'true', 'domain': email_domain})
 
     user_brief_lists = list()
     for i in [_ for _ in query if _[0][0] is not None]:
