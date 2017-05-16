@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import io
 import re
+import StringIO
 
 from jira import JIRA
 from flask import current_app
@@ -87,6 +88,50 @@ class MarketplaceJIRA(object):
                 'Supplier Assessment Step',
                 parent={'key': str(new_issue)})
 
+    def create_domain_approval_task(self, assessment):
+        supplier = assessment.supplier_domain.supplier
+        brief = assessment.briefs[0]
+        domain_name = assessment.supplier_domain.domain.name
+        summary = 'Domain Assessment: {}(#{})'.format(supplier.name, supplier.code)
+        relevant_case_studies = []
+        for case_study in supplier.case_studies:
+            if case_study.data.get('service', '').lower() == domain_name.lower():
+                simple_case_study = {key: case_study.serializable[key]
+                                     for key in case_study.serializable
+                                     if key not in ['links', 'supplier', 'createdAt', 'created_at']}
+                relevant_case_studies.append(simple_case_study)
+        description_values = {"supplier_name": supplier.name,
+                              "supplier_url": current_app.config['ADMIN_ADDRESS'] + "/admin/assessments/supplier/" +
+                              str(supplier.code),
+                              "domain": domain_name,
+                              "brief_name": brief.data.get('title'),
+                              "brief_close_date":  brief.applications_closed_at.format('%A %-d %B %Y')
+                              }
+        description = '[{supplier_name}|{supplier_url}] has applied for assessment ' \
+                      'under the "{domain}" domain in order to apply for the "{brief_name}" brief ' \
+                      'which closes for applications on {brief_close_date} at 6PM.' \
+                      '\n\n' \
+                      'Please assess their suitability to be approved for ' \
+                      'this domain based on the ' \
+                      '[assessment criteria|https://marketplace.service.gov.au/assessment-criteria] and ' \
+                      'clearly indicate an approve/reject recommendation in your comments.'.format(**description_values)
+        details = dict(
+            project=self.marketplace_project_code,
+            summary=summary,
+            description=description,
+            issuetype_name='Domain Assessment',
+            duedate=str(brief.applications_closing_date),
+            labels=[domain_name.title().replace(" ", "_")]
+        )
+
+        new_issue = self.generic_jira.create_issue(**details)
+        new_issue.update({self.application_field_code: str(assessment.id),
+                          self.supplier_field_code: str(supplier.code)})
+
+        attachment = StringIO.StringIO()
+        attachment.write(json.dumps(relevant_case_studies))
+        self.generic_jira.jira.add_attachment(new_issue.id, attachment, 'casestudies.json')
+
     def create_application_approval_task(self, application):
         summary = 'Application assessment: {}'.format(application.data.get('name'))
         description = TICKET_DESCRIPTION.format(application.json)
@@ -100,14 +145,6 @@ class MarketplaceJIRA(object):
 
         new_issue = self.generic_jira.create_issue(**details)
         new_issue.update({self.application_field_code: str(application.id)})
-
-        for label in ['Check Profile', 'Check Documents']:
-            child_issue = self.generic_jira.create_issue(
-                self.marketplace_project_code,
-                label,
-                label,
-                'Supplier Assessment Step',
-                parent={'key': str(new_issue)})
 
     def get_assessment_tasks(self):
         return self.generic_jira.issues_with_subtasks(

@@ -104,6 +104,7 @@ class Config:
     GENERIC_EMAIL_DOMAINS = ['gmail.com', 'bigpond.com', 'outlook.com', 'hotmail.com', 'yahoo.com']
 
     FRONTEND_ADDRESS = 'https://dm-dev.apps.staging.digital.gov.au'
+    ADMIN_ADDRESS = 'https://dm-dev-admin.apps.staging.digital.gov.au'
 
     SEND_EMAILS = True
 
@@ -150,10 +151,10 @@ class Development(Config):
     }
 
     JIRA_MARKETPLACE_PROJECT_CODE = 'MARADMIN'
-    JIRA_APPLICATION_FIELD_CODE = 'customfield_11000'
-    JIRA_SUPPLIER_FIELD_CODE = 'customfield_11100'
+    JIRA_APPLICATION_FIELD_CODE = 'customfield_11100'
+    JIRA_SUPPLIER_FIELD_CODE = 'customfield_11000'
 
-    JIRA_FEATURES = False
+    JIRA_FEATURES = True
 
     JUST_IN_TIME_ASSESSMENTS = False
 
@@ -170,6 +171,7 @@ class Live(Config):
     }
 
     FRONTEND_ADDRESS = 'https://marketplace.service.gov.au'
+    ADMIN_ADDRESS = 'https://dm-admin.apps.platform.digital.gov.au/'
 
     SEND_EMAILS = True
 

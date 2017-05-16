@@ -1,9 +1,10 @@
-from flask import jsonify, abort
+from flask import jsonify, abort, current_app
 from app.main import main
 from app.models import db, Assessment, AuditEvent, SupplierDomain, Supplier, Domain
 from dmapiclient.audit import AuditTypes
 from app.utils import (get_json_from_request, json_has_required_keys, validate_and_return_updater_request)
 from sqlalchemy.exc import IntegrityError
+from app.jiraapi import get_marketplace_jira
 
 
 @main.route('/assessments', methods=['POST'])
@@ -43,6 +44,10 @@ def create_assessment():
         db.session.commit()
     except IntegrityError:
         abort(400)
+
+    if current_app.config['JIRA_FEATURES']:
+        mj = get_marketplace_jira()
+        mj.create_domain_approval_task(assessment)
 
     return jsonify(assessment=assessment.serializable), 201
 
