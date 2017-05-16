@@ -877,16 +877,14 @@ def create_application_from_supplier(code, application_type=None):
 
 @main.route('/suppliers/<int:supplier_id>/domains/<int:domain_id>/<string:status>', methods=['POST'])
 def assess_supplier_for_domain(supplier_id, domain_id, status):
-    return update_domain_status(supplier_id, domain_id, status)
+    updater_json = validate_and_return_updater_request()
 
-
-def update_domain_status(supplier_id, domain_id, status):
     supplier = Supplier.query.get(supplier_id)
 
     if supplier is None:
         abort(404, "Supplier '{}' does not exist".format(supplier_id))
 
-    supplier.update_domain_assessment_status(domain_id, status)
+    supplier.update_domain_assessment_status(domain_id, status, updater_json['updated_by'])
     db.session.commit()
 
     if status == 'assessed':

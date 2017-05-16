@@ -1,16 +1,11 @@
-create type "public"."project_status_enum" as enum ('draft', 'published');
+alter table "public"."assessment" add column "active" boolean;
+update "assessment" set "active" = true;
+alter table "public"."assessment" alter column "active" set not null;
 
-create sequence "public"."project_id_seq";
-
-create table "public"."project" (
-  "id" integer not null default nextval('project_id_seq'::regclass),
-  "data" json not null,
-  "status" project_status_enum not null,
-  "created_at" timestamp without time zone not null
-);
-
-CREATE INDEX ix_project_created_at ON project USING btree (created_at);
-
-CREATE UNIQUE INDEX project_pkey ON project USING btree (id);
-
-alter table "public"."project" add constraint "project_pkey" PRIMARY KEY using index "project_pkey";
+alter table "public"."supplier_domain" drop constraint "supplier_domain_pkey";
+drop index if exists "public"."supplier_domain_pkey";
+alter table "public"."supplier_domain" alter column "domain_id" drop not null;
+alter table "public"."supplier_domain" alter column "id" set not null;
+alter table "public"."supplier_domain" alter column "supplier_id" drop not null;
+CREATE UNIQUE INDEX supplier_domain_pkey ON supplier_domain USING btree (id);
+alter table "public"."supplier_domain" add constraint "supplier_domain_pkey" PRIMARY KEY using index "supplier_domain_pkey";

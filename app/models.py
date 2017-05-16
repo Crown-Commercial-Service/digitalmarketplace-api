@@ -493,9 +493,9 @@ class SupplierDomain(db.Model):
         supplier_domain_id_seq,
         server_default=supplier_domain_id_seq.next_value(),
         index=True,
-        unique=True)
-    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), primary_key=True)
-    domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), primary_key=True)
+        unique=True, primary_key=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
+    domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'))
     recruiter_info_id = db.Column(db.Integer, db.ForeignKey('recruiter_info.id'))
 
     domain = relationship("Domain", back_populates="suppliers")
@@ -609,7 +609,7 @@ class Supplier(db.Model):
         ))
         db.session.flush()
 
-    def update_domain_assessment_status(self, name_or_id, status):
+    def update_domain_assessment_status(self, name_or_id, status, user=''):
         d = Domain.get_by_name_or_id(name_or_id)
 
         sd = SupplierDomain.query.filter_by(supplier_id=self.id, domain_id=d.id).first()
@@ -621,7 +621,7 @@ class Supplier(db.Model):
         if status == 'assessed':
             db.session.add(AuditEvent(
                 audit_type=AuditTypes.assessed_domain,
-                user='',
+                user=user,
                 data={},
                 db_object=sd
             ))
@@ -2327,6 +2327,7 @@ class Assessment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+    active = db.Column(db.Boolean, nullable=False, default=True)
     supplier_domain_id = db.Column(db.Integer, db.ForeignKey('supplier_domain.id'), nullable=False)
     supplier_domain = db.relationship(SupplierDomain, lazy='joined', innerjoin=False)
 

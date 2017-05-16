@@ -85,7 +85,7 @@ class BaseApplicationsTest(BaseApplicationTest):
         return self.client.post(
             '/applications',
             data=json.dumps({
-                'updated_by': 'test@example.com',
+                'update_details': {'updated_by': 'test@example.com'},
                 'application': data,
             }),
             content_type='application/json'
@@ -95,7 +95,7 @@ class BaseApplicationsTest(BaseApplicationTest):
         return self.client.patch(
             '/applications/{}'.format(application_id),
             data=json.dumps({
-                'updated_by': 'test@example.com',
+                'update_details': {'updated_by': 'test@example.com'},
                 'application': data,
             }),
             content_type='application/json'
@@ -119,16 +119,22 @@ class BaseApplicationsTest(BaseApplicationTest):
     def approve_application(self, application_id):
         return self.client.post(
             '/applications/{}/approve'.format(application_id),
+            data=json.dumps({
+                'update_details': {'updated_by': 'test@example.com'}}),
             content_type='application/json')
 
     def reject_application(self, application_id):
         return self.client.post(
             '/applications/{}/reject'.format(application_id),
+            data=json.dumps({
+                'update_details': {'updated_by': 'test@example.com'}}),
             content_type='application/json')
 
     def revert_application(self, application_id):
         return self.client.post(
             '/applications/{}/revert'.format(application_id),
+            data=json.dumps({
+                'update_details': {'updated_by': 'test@example.com'}}),
             content_type='application/json')
 
     def get_user(self, user_id):
@@ -153,7 +159,7 @@ class TestCreateApplication(BaseApplicationsTest):
         res = self.client.post(
             '/applications',
             data=json.dumps({
-                'updated_by': 'test@example.com',
+                'update_details': {'updated_by': 'test@example.com'},
             }),
             content_type='application/json'
         )
@@ -292,6 +298,9 @@ class TestUpdateApplication(BaseApplicationsTest):
     def test_can_delete_a_application(self):
         delete = self.client.delete(
             '/applications/{}'.format(self.application_id),
+            data=json.dumps({
+                'update_details': {'updated_by': 'test@example.com'}
+            }),
             content_type='application/json')
         assert delete.status_code == 200
 
@@ -489,14 +498,22 @@ class TestRevertApplication(BaseApplicationsTest):
     def test_invalid_application_id(self):
         self.patch_application(self.application_id, data={'status': 'submitted'})
 
-        response = self.client.post('/applications/{}/revert'.format(999))
+        response = self.client.post('/applications/{}/revert'.format(999),
+                                    data=json.dumps({
+                                        'update_details': {'updated_by': 'test@example.com'}
+                                    }),
+                                    content_type='application/json')
 
         assert response.status_code == 404
 
     def test_application_already_reverted(self):
         self.patch_application(self.application_id, data={'status': 'saved'})
 
-        response = self.client.post('/applications/{}/revert'.format(self.application_id))
+        response = self.client.post('/applications/{}/revert'.format(self.application_id),
+                                    data=json.dumps({
+                                        'update_details': {'updated_by': 'test@example.com'}
+                                    }),
+                                    content_type='application/json')
 
         assert response.status_code == 400
         assert 'not in submitted state for reverting' in response.get_data(as_text=True)
@@ -506,6 +523,9 @@ class TestRevertApplication(BaseApplicationsTest):
 
         response = self.client.post(
             '/applications/{}/revert'.format(self.application_id),
+            data=json.dumps({
+                'update_details': {'updated_by': 'test@example.com'}
+            }),
             content_type='application/json')
 
         assert response.status_code == 200
