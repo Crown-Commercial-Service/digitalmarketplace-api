@@ -107,7 +107,7 @@ class TestJira(BaseApplicationTest):
 
             issue_object.raw = {
                 'fields': {
-                    'customfield_99999': 9,
+                    'customfield_11100': 9,
                     'subtasks': [{
                         'id': 99,
                         'key': 'T-99',
