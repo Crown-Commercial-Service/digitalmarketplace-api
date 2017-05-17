@@ -1,7 +1,10 @@
 import json
+import mock
 
 
-def test_create_assessment(client, suppliers, domains, supplier_domains, briefs):
+@mock.patch('app.jiraapi.JIRA')
+@mock.patch('app.main.views.assessments.get_marketplace_jira')
+def test_create_assessment(get_marketplace_jira, jira, client, suppliers, domains, supplier_domains, briefs):
     supplier_domain = supplier_domains[0]
     supplier = [s for s in suppliers if s.id == supplier_domain.supplier_id][0]
     domain = [d for d in domains if d.id == supplier_domain.domain_id][0]
