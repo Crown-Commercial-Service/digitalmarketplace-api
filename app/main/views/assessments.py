@@ -33,17 +33,17 @@ def create_assessment():
     assessment.update_from_json(json_payload['assessment'])
     db.session.add(assessment)
 
+    try:
+        db.session.commit()
+    except IntegrityError:
+        abort(400)
+
     db.session.add(AuditEvent(
         audit_type=AuditTypes.create_assessment,
         user=updater_json['updated_by'],
         data={},
         db_object=assessment
     ))
-
-    try:
-        db.session.commit()
-    except IntegrityError:
-        abort(400)
 
     if current_app.config['JIRA_FEATURES']:
         mj = get_marketplace_jira()

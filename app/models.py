@@ -1965,35 +1965,6 @@ class BriefResponse(db.Model):
 
         return data
 
-    def create_just_in_time_assessment_tasks(self):
-        supplier = self.supplier
-        assessed_domains = supplier.assessed_domains
-
-        if assessed_domains:
-            return
-
-        if current_app.config['JIRA_FEATURES'] and \
-                current_app.config['JUST_IN_TIME_ASSESSMENTS']:
-
-            mj = get_marketplace_jira()
-
-            domain = self.brief.domain
-
-            if domain:
-                # brief has an associated domain, assess this one
-                domains = [domain]
-            else:
-                # create assessment task for each domain
-                domains = [
-                    Domain.get_by_name_or_id(name)
-                    for name
-                    in supplier.unassessed_domains
-                ]
-
-            mj.create_supplier_domain_assessment_task(
-                supplier,
-                domains)
-
 
 class BriefClarificationQuestion(db.Model):
     __tablename__ = 'brief_clarification_question'
@@ -2255,7 +2226,7 @@ class Application(db.Model):
 
     def create_approval_task(self):
         if current_app.config['JIRA_FEATURES']:
-            mj = get_marketplace_jira()
+            mj = get_marketplace_jira(False)
             mj.create_application_approval_task(self)
 
     def signed_agreements(self):

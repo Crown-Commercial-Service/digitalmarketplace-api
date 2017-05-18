@@ -244,7 +244,7 @@ def submit_application(application_id):
 
     db.session.add(AuditEvent(
         audit_type=AuditTypes.submit_application,
-        user='',
+        user=user_id,
         data={},
         db_object=application
     ))
