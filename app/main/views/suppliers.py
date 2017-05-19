@@ -831,8 +831,12 @@ def create_application_from_supplier(code, application_type=None):
     data = json.loads(supplier.json)
 
     data['status'] = 'saved'
-    data = {key: data[key] for key in data if key not in ['id', 'contacts', 'domains', 'prices', 'frameworks', 'steps']}
-
+    data = {key: data[key] for key in data if key not in ['id', 'contacts', 'domains', 'links',
+                                                          'prices', 'frameworks', 'steps']}
+    if data.get('products'):
+        for product in data['products']:
+            if product.get('links'):
+                del product['links']
     application = Application()
     application.update_from_json(data)
     application.type = application_type
