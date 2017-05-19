@@ -59,8 +59,6 @@ class Config:
 
     JIRA_FEATURES = False
 
-    JUST_IN_TIME_ASSESSMENTS = False
-
     ROLLBAR_TOKEN = None
     DM_TEAM_SLACK_WEBHOOK = None
 
@@ -133,7 +131,6 @@ class Test(Config):
 
     JIRA_FEATURES = True
 
-    JUST_IN_TIME_ASSESSMENTS = False
     DM_SEND_EMAIL_TO_STDERR = True
 
 
@@ -151,8 +148,6 @@ class Development(Config):
     }
 
     JIRA_FEATURES = True
-
-    JUST_IN_TIME_ASSESSMENTS = False
 
     SEND_EMAILS = False
 

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import io
 import re
 import StringIO
+import pendulum
 
 from jira import JIRA
 from flask import current_app
@@ -13,15 +14,53 @@ from functools import partial
 import logging
 
 
-ASSESSMENT_ISSUE_TYPE = 'Supplier Assessment'
+ASSESSMENT_ISSUE_TYPE = 'Initial Assessment'
 
-TICKET_DESCRIPTION = """Please review this potential supplier to determine if they meet the requirements.
-
-The application comprises the following information:
-
-{}
-
-"""
+TICKET_DESCRIPTION = ("\n"
+                      "Please review this potential supplier to determine if they meet the requirements. "
+                      "[Click here for further information|"
+                      "https://govausites.atlassian.net/wiki/display/DM/Initial+Assessment+Checklist] "
+                      "on how to evaluate each item in the checklist.\n"
+                      "\n\n"
+                      "Applicant profile link: [%s]\n\n"
+                      "----\n\n"
+                      "{panel:title=Supplier Assessment Checklist|titleBGColor=#18788D|titleColor=#FFFFFF}\n\n"
+                      "\n\n"
+                      "# Business Name:\n"
+                      "# ABN:\n"
+                      "# Business Description:\n"
+                      "# Badges - RECRUITER:\n"
+                      "# Badges - Indigenous:\n"
+                      "# Badges - Disability:\n"
+                      "# Website:\n"
+                      "# LinkedIn:\n"
+                      "# Business Contact:\n"
+                      "# Case Study 1:\n"
+                      "# Case Study 2:\n"
+                      "# Case Study 3:\n"
+                      "# Case Study 4:\n"
+                      "# Product 1:\n"
+                      "# Product 2:\n"
+                      "# Product 3:\n"
+                      "# Product 4:\n"
+                      "# How we work:\n"
+                      "# Company details:\n"
+                      "# Location(s):\n"
+                      "# Recognition:\n"
+                      "# Case Study Referees:\n"
+                      "# Disclosures:\n"
+                      "# Documents:\n"
+                      "## Financial:\n"
+                      "## Public Liability:\n"
+                      "## Workers Compensation:\n"
+                      "# Recruiter Info:\n"
+                      "\n\n"
+                      "*RECOMMENDATION:* \n\n"
+                      "{panel}\n"
+                      "\n"
+                      "----\n"
+                      "\n"
+                      "A snapshot of the application is attached.\n")
 
 
 log = logging.getLogger('jiraapi')
@@ -66,27 +105,6 @@ class MarketplaceJIRA(object):
 
     def make_link(self, key):
         return self.server_url + '/browse/' + key
-
-    def create_supplier_domain_assessment_task(self, supplier, domains):
-        if not domains:
-            return
-        task_details = dict(
-            project=self.marketplace_project_code,
-            summary='Assess "{}" for domain(s)'.format(supplier.name),
-            description=TICKET_DESCRIPTION.format(supplier.json),
-            issuetype={'name': ASSESSMENT_ISSUE_TYPE}
-        )
-        new_issue = self.generic_jira.jira.create_issue(**task_details)
-        new_issue.update({self.supplier_field_code: str(supplier.id)})
-
-        for domain in domains:
-            name = domain.name
-            child_issue = self.generic_jira.create_issue(
-                self.marketplace_project_code,
-                name,
-                name,
-                'Supplier Assessment Step',
-                parent={'key': str(new_issue)})
 
     def create_domain_approval_task(self, assessment):
         supplier = assessment.supplier_domain.supplier
@@ -134,17 +152,25 @@ class MarketplaceJIRA(object):
 
     def create_application_approval_task(self, application):
         summary = 'Application assessment: {}'.format(application.data.get('name'))
-        description = TICKET_DESCRIPTION.format(application.json)
+        description = TICKET_DESCRIPTION % (current_app.config['ADMIN_ADDRESS'] +
+                                            "/sellers/application/{}/review".format(application.id))
 
         details = dict(
             project=self.marketplace_project_code,
             summary=summary,
             description=description,
-            issuetype_name=ASSESSMENT_ISSUE_TYPE
+            duedate=pendulum.now().add(weeks=2).to_date_string(),
+            issuetype_name=ASSESSMENT_ISSUE_TYPE if application.type != 'edit' else 'Seller Assessment',
+            labels=[application.type] if application.type else []
         )
 
         new_issue = self.generic_jira.create_issue(**details)
+
         new_issue.update({self.application_field_code: str(application.id)})
+        attachment = StringIO.StringIO()
+        attachment.write(json.dumps(application.json))
+        self.generic_jira.jira.add_attachment(new_issue.id, attachment,
+                                              'snapshot_{}.json'.format(pendulum.now().to_date_string()))
 
     def get_assessment_tasks(self):
         return self.generic_jira.issues_with_subtasks(
