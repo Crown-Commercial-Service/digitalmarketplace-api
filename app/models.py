@@ -2226,7 +2226,7 @@ class Application(db.Model):
 
     def create_approval_task(self):
         if current_app.config['JIRA_FEATURES']:
-            mj = get_marketplace_jira(False)
+            mj = get_marketplace_jira()
             mj.create_application_approval_task(self)
 
     def signed_agreements(self):
