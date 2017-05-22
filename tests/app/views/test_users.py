@@ -57,6 +57,18 @@ class BaseUserTest(BaseApplicationTest):
         assert response.status_code == status_code
         return response
 
+    def _post_application(self):
+        response = self.client.post(
+            '/applications',
+            data=json.dumps({
+                'update_details': {'updated_by': 'test@example.com'},
+                'application': {"name": "my company"},
+            }),
+            content_type='application/json'
+        )
+        self.application_id = json.loads(response.get_data())['application']['id']
+        assert response.status_code == 201
+
 
 class TestUsersAuth(BaseUserTest):
     def create_user(self):
@@ -1711,3 +1723,95 @@ class TestCounts(BaseApplicationTest):
     def test_get_buyers(self):
         response = self.client.get('/users/count?account_type=buyer')
         assert response.status_code == 200
+
+
+class TestDuplicates(BaseUserTest):
+    def setup(self):
+        super(TestDuplicates, self).setup()
+        with self.app.app_context():
+            self._post_application()
+            self._post_supplier()
+            self._post_users()
+
+    def _post_users(self):
+        users = [
+            {
+                "emailAddress": "j@begavalley.nsw.gov.au",
+                "name": "John Buyer",
+                "password": "minimum10characterpassword",
+                "role": "buyer"
+            },
+            {
+                "emailAddress": "j@examplecompany.biz",
+                "name": "John Example",
+                "password": "minimum10characterpassword",
+                "role": "supplier",
+                "supplierCode": self.supplier_code
+            },
+            {
+                "emailAddress": "don@don.com",
+                "name": "Don",
+                "password": "minimum10characterpassword",
+                "role": "applicant",
+                "application_id": self.application_id
+            }
+        ]
+
+        for user in users:
+            self._post_user(user)
+
+    def test_duplicate_supplier_with_same_domain(self):
+        response = self.client.post(
+            '/users/checkduplicates',
+            data=json.dumps({
+                'email_address': 'm@examplecompany.biz',
+            }),
+            content_type='application/json')
+        assert response.status_code == 200
+
+        data = response.get_data(as_text=True)
+        jdata = json.loads(data)
+
+        assert jdata['duplicate']['supplier_code'] == self.supplier_code
+
+    def test_duplicate_application_with_same_domain(self):
+        response = self.client.post(
+            '/users/checkduplicates',
+            data=json.dumps({
+                'email_address': 'm@don.com',
+            }),
+            content_type='application/json')
+        assert response.status_code == 200
+
+        data = response.get_data(as_text=True)
+        jdata = json.loads(data)
+
+        assert jdata['duplicate']['application_id'] == self.application_id
+
+    def test_unqiue_domain(self):
+        response = self.client.post(
+            '/users/checkduplicates',
+            data=json.dumps({
+                'email_address': 'm@something.com',
+            }),
+            content_type='application/json')
+        assert response.status_code == 200
+
+        data = response.get_data(as_text=True)
+        jdata = json.loads(data)
+
+        assert not jdata['duplicate']
+
+    def test_generic_domain(self):
+        response = self.client.post(
+            '/users/checkduplicates',
+            data=json.dumps({
+                'email_address': 'm@gmail.com',
+            }),
+            content_type='application/json')
+        assert response.status_code == 200
+
+        data = response.get_data(as_text=True)
+        jdata = json.loads(data)
+
+        assert not jdata['duplicate']

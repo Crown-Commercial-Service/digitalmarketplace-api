@@ -17,6 +17,7 @@ from app.utils import (
 from app.validation import validate_user_json_or_400, validate_user_auth_json_or_400
 
 from collections import defaultdict
+from app.emails import send_existing_seller_notification, send_existing_application_notification
 
 
 @main.route('/users/auth', methods=['POST'])
@@ -406,6 +407,37 @@ def get_buyers_stats():
     }
 
     return jsonify(buyers=buyers)
+
+
+@main.route('/users/checkduplicates', methods=['POST'])
+def get_duplicate_users():
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ["email_address"])
+    email_address = json_payload["email_address"]
+    domain = email_address.split('@')[-1]
+
+    if domain in current_app.config['GENERIC_EMAIL_DOMAINS']:
+        return jsonify(duplicate=None)
+
+    supplier_code = db.session.execute("""
+        select distinct(supplier_code) from vuser
+        where email_domain = :domain
+    """, {'domain': domain}).fetchone()
+
+    if (supplier_code and supplier_code[0]):
+        send_existing_seller_notification(email_address, supplier_code[0])
+        return jsonify(duplicate={"supplier_code": supplier_code[0]})
+
+    application_id = db.session.execute("""
+        select distinct(application_id) from vuser
+        where email_domain = :domain
+    """, {'domain': domain}).fetchone()
+
+    if (application_id and application_id[0]):
+        send_existing_application_notification(email_address, application_id[0])
+        return jsonify(duplicate={"application_id": application_id[0]})
+
+    return jsonify(duplicate=None)
 
 
 def check_supplier_role(role, supplier_code):

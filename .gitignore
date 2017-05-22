@@ -65,3 +65,5 @@ DB/dumps
 searchtests
 dumps
 dump.py
+*.sublime-project
+*.sublime-workspace
