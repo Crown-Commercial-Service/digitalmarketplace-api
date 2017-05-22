@@ -29,4 +29,4 @@ do_startup()
 
 if __name__ == '__main__':
     from waitress import serve
-    serve(application, port=port)
+    serve(application, port=port, expose_tracebacks=application.config['DEBUG'])
