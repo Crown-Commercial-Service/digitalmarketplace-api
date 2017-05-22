@@ -1,5 +1,6 @@
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
+import flask_featureflags as feature
 from app.jiraapi import get_marketplace_jira
 from app.main import main
 from app.models import db, Application, Agreement, SignedAgreement, User, AuditEvent
@@ -12,7 +13,8 @@ import pendulum
 from sqlalchemy.sql.expression import true
 from dmapiclient.audit import AuditTypes
 from app.emails import send_approval_notification, send_rejection_notification, \
-    send_submitted_existing_seller_notification, send_submitted_new_seller_notification
+    send_submitted_existing_seller_notification, send_submitted_new_seller_notification, \
+    send_revert_notification
 
 
 def get_application_json():
@@ -90,13 +92,16 @@ def reject_application(application_id):
 
 
 @main.route('/applications/<int:application_id>/revert', methods=['POST'])
+@feature.is_active_feature('REVERT_EMAIL')
 def revert_application(application_id):
     updater_json = validate_and_return_updater_request()
+    json_payload = request.get_json()
+    message = json_payload.get('message', '')
+
     application = Application.query.get(application_id)
 
     if application is None:
         abort(404, "Application '{}' does not exist".format(application_id))
-
     if application.status != 'submitted':
         abort(400, "Application '{}' is not in submitted state for reverting ".format(application_id))
 
@@ -109,6 +114,8 @@ def revert_application(application_id):
 
     application.status = 'saved'
     db.session.commit()
+    if feature.is_active('REVERT_EMAIL'):
+        send_revert_notification(application_id, message)
     return jsonify(application=application.serializable), 200
 
 

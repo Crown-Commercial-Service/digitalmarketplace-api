@@ -26,7 +26,8 @@ class Config:
 
     # List all your feature flags below
     FEATURE_FLAGS = {
-        'TRANSACTION_ISOLATION': False
+        'TRANSACTION_ISOLATION': False,
+        'REVERT_EMAIL': False
     }
 
     DM_API_SERVICES_PAGE_SIZE = 100
@@ -122,7 +123,8 @@ class Test(Config):
     DM_API_PAGE_SIZE = 5
     # List all your feature flags below
     FEATURE_FLAGS = {
-        'TRANSACTION_ISOLATION': True
+        'TRANSACTION_ISOLATION': True,
+        'REVERT_EMAIL': True,
     }
     DM_API_ADMIN_USERNAME = None
     JIRA_URL = 'http://jira.example.com'
@@ -144,12 +146,13 @@ class Development(Config):
     DM_LOG_LEVEL = 'INFO'
 
     FEATURE_FLAGS = {
-        'TRANSACTION_ISOLATION': False
+        'TRANSACTION_ISOLATION': False,
+        'REVERT_EMAIL': True
     }
 
     JIRA_FEATURES = True
 
-    SEND_EMAILS = False
+    SEND_EMAILS = True
 
 
 class Live(Config):
@@ -159,6 +162,7 @@ class Live(Config):
 
     FEATURE_FLAGS = {
         'TRANSACTION_ISOLATION': False,
+        'REVERT_EMAIL': False
     }
 
     FRONTEND_ADDRESS = 'https://marketplace.service.gov.au'
@@ -170,7 +174,8 @@ class Live(Config):
 class Preview(Live):
     # List all your feature flags below
     FEATURE_FLAGS = {
-        'TRANSACTION_ISOLATION': True
+        'TRANSACTION_ISOLATION': True,
+        'REVERT_EMAIL': True
     }
 
 

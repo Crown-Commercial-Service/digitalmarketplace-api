@@ -169,3 +169,26 @@ def send_assessment_approval_notification(supplier_id, domain_id):
         current_app.config['DM_GENERIC_SUPPORT_NAME'],
         event_description_for_errors='assessment approved'
     )
+
+
+def send_revert_notification(application_id, message):
+    TEMPLATE_FILENAME = 'application_reverted.md'
+
+    application = Application.query.get(application_id)
+    to_address = application.data['email']
+
+    email_body = render_email_template(
+        TEMPLATE_FILENAME,
+        reversion_message=message
+    )
+
+    subject = "Digital Marketplace application changes requested"
+
+    send_or_handle_error(
+        to_address,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='Application reversion notification email'
+    )

@@ -85,6 +85,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
     endpoint = '/brief-responses'
     method = 'post'
 
+    @pytest.mark.skip()
     @given(example_listings.brief_response_data())
     def test_create_new_brief_response(self, live_framework, brief_response_data):
 
