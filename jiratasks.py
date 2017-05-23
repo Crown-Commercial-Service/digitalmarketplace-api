@@ -22,12 +22,6 @@ def create_approval_task(application_id):
         a.create_approval_task()
 
 
-def create_domain_assessments(brief_response_id):
-    with jira_with_app_context() as j:
-        a = BriefResponse.query.filter_by(id=brief_response_id).first()
-        a.create_just_in_time_assessment_tasks()
-
-
 def list_tasks():
     with jira_with_app_context() as j:
         assessment_tasks = j.get_assessment_tasks()

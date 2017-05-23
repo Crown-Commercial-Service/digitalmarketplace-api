@@ -75,8 +75,6 @@ def create_brief_response():
     db.session.add(audit)
     db.session.commit()
 
-    brief_response.create_just_in_time_assessment_tasks()
-
     return jsonify(briefResponses=brief_response.serialize()), 201
 
 
