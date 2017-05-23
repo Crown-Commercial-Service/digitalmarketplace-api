@@ -426,6 +426,7 @@ def get_duplicate_users():
 
     if (supplier_code and supplier_code[0]):
         send_existing_seller_notification(email_address, supplier_code[0])
+        duplicate_audit_event(email_address, {'supplier_code': supplier_code[0]})
         return jsonify(duplicate={"supplier_code": supplier_code[0]})
 
     application_id = db.session.execute("""
@@ -435,9 +436,22 @@ def get_duplicate_users():
 
     if (application_id and application_id[0]):
         send_existing_application_notification(email_address, application_id[0])
+        duplicate_audit_event(email_address, {'application_id': application_id[0]})
         return jsonify(duplicate={"application_id": application_id[0]})
 
     return jsonify(duplicate=None)
+
+
+def duplicate_audit_event(email_address, data):
+    audit = AuditEvent(
+        audit_type=AuditTypes.duplicate_supplier,
+        user=email_address,
+        data=data,
+        db_object=None
+    )
+
+    db.session.add(audit)
+    db.session.commit()
 
 
 def check_supplier_role(role, supplier_code):
