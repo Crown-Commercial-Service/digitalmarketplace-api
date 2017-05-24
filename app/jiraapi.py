@@ -160,7 +160,7 @@ class MarketplaceJIRA(object):
             summary=summary,
             description=description,
             duedate=pendulum.now().add(weeks=2).to_date_string(),
-            issuetype_name=ASSESSMENT_ISSUE_TYPE if application.type != 'edit' else 'Seller Assessment',
+            issuetype_name=ASSESSMENT_ISSUE_TYPE if application.type != 'edit' else 'Supplier Assessment',
             labels=[application.type] if application.type else []
         )
 
