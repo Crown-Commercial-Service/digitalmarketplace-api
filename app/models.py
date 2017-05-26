@@ -481,6 +481,7 @@ class SupplierFramework(db.Model):
             "supplierId": self.supplier_id,
             "supplierName": self.supplier.name,
             "frameworkSlug": self.framework.slug,
+            'frameworkFramework': self.framework.framework,
             "onFramework": self.on_framework,
             "agreedVariations": agreed_variations,
             "prefillDeclarationFromFrameworkSlug": (
