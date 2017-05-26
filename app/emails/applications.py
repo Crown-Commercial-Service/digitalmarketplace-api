@@ -176,6 +176,9 @@ def send_revert_notification(application_id, message):
 
     application = Application.query.get(application_id)
     to_address = application.data['email']
+    email_addresses = [to_address, current_app.config['GENERIC_CONTACT_EMAIL']]
+
+    reply_to = current_app.config['GENERIC_CONTACT_EMAIL']
 
     email_body = render_email_template(
         TEMPLATE_FILENAME,
@@ -185,10 +188,11 @@ def send_revert_notification(application_id, message):
     subject = "Digital Marketplace application changes requested"
 
     send_or_handle_error(
-        to_address,
+        email_addresses,
         email_body,
         subject,
-        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['GENERIC_CONTACT_EMAIL'],
         current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        reply_to,
         event_description_for_errors='Application reversion notification email'
     )

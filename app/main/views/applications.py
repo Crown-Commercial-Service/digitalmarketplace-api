@@ -114,7 +114,9 @@ def revert_application(application_id):
 
     application.status = 'saved'
     db.session.commit()
-    if feature.is_active('REVERT_EMAIL'):
+    # post request from react RevertNotification form sends message as empty string
+    # to indicate we should run the revert logic but not send an email
+    if feature.is_active('REVERT_EMAIL') and message is not None:
         send_revert_notification(application_id, message)
     return jsonify(application=application.serializable), 200
 

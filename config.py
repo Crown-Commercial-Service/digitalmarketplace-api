@@ -162,7 +162,7 @@ class Live(Config):
 
     FEATURE_FLAGS = {
         'TRANSACTION_ISOLATION': False,
-        'REVERT_EMAIL': False
+        'REVERT_EMAIL': True
     }
 
     FRONTEND_ADDRESS = 'https://marketplace.service.gov.au'
