@@ -172,12 +172,14 @@
       "type": "string"
     },
     "sellerEmail": {
+      "format": "email",
       "maxLength": 300,
       "minLength": 0,
       "type": "string"
     },
     "sellerEmailList": {
       "items": {
+        "format": "email",
         "maxLength": 100,
         "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
         "type": "string"
@@ -241,7 +243,6 @@
     }
   },
   "required": [
-    "areaOfExpertise",
     "backgroundInformation",
     "culturalFitCriteria",
     "culturalWeighting",
