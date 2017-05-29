@@ -2,13 +2,6 @@
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
   "properties": {
-    "attachedDocumentURL": {
-      "items": {
-        "minLength": 0,
-        "type": "string"
-      },
-      "type": "array"
-    },
     "availability": {
       "maxLength": 100,
       "minLength": 1,
