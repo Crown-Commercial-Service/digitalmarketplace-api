@@ -95,7 +95,7 @@ def reject_application(application_id):
 @feature.is_active_feature('REVERT_EMAIL')
 def revert_application(application_id):
     updater_json = validate_and_return_updater_request()
-    json_payload = request.get_json()
+    json_payload = request.get_json(force=True)
     message = json_payload.get('message', '')
 
     application = Application.query.get(application_id)
