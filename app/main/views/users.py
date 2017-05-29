@@ -18,6 +18,7 @@ from app.validation import validate_user_json_or_400, validate_user_auth_json_or
 
 from collections import defaultdict
 from app.emails import send_existing_seller_notification, send_existing_application_notification
+from dmutils.logging import notify_team
 
 
 @main.route('/users/auth', methods=['POST'])
@@ -189,6 +190,15 @@ def create_user():
 
         db.session.add(audit)
         db.session.commit()
+
+        if user.role == 'buyer':
+            notification_message = 'Domain: {}'.format(
+                json_payload['emailAddress'].split('@')[-1]
+            )
+
+            notification_text = 'A new buyer has signed up'
+            notify_team(notification_text, notification_message)
+
     except IntegrityError:
         db.session.rollback()
         abort(400, "Invalid supplier code or application id")

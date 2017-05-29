@@ -853,17 +853,17 @@ def create_application_from_supplier(code, application_type=None):
     ))
     db.session.flush()
 
-    notification_message = '{}\nApplication Id:{}\nBy: {} ({})'.format(
-        data['name'],
-        application.id,
-        current_user['name'],
-        current_user['email_address']
-    )
+    if application_type != 'edit':
+        notification_message = '{}\nApplication Id:{}\nBy: {} ({})'.format(
+            data['name'],
+            application.id,
+            current_user['name'],
+            current_user['email_address']
+        )
 
-    notification_text = application_type == 'edit' and 'An existing seller is editing their profile' or \
-        'An existing seller has started a new application'
+        notification_text = 'An existing seller has started a new application'
 
-    notify_team(notification_text, notification_message)
+        notify_team(notification_text, notification_message)
 
     # TODO stop using application_id on user
     supplier.update_from_json({'application_id': application.id})
