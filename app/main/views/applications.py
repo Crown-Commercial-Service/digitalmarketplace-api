@@ -1,6 +1,5 @@
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
-import flask_featureflags as feature
 from app.jiraapi import get_marketplace_jira
 from app.main import main
 from app.models import db, Application, Agreement, SignedAgreement, User, AuditEvent
@@ -92,11 +91,10 @@ def reject_application(application_id):
 
 
 @main.route('/applications/<int:application_id>/revert', methods=['POST'])
-@feature.is_active_feature('REVERT_EMAIL')
 def revert_application(application_id):
     updater_json = validate_and_return_updater_request()
     json_payload = request.get_json(force=True)
-    message = json_payload.get('message', '')
+    message = json_payload.get('message', None)
 
     application = Application.query.get(application_id)
 
@@ -116,7 +114,7 @@ def revert_application(application_id):
     db.session.commit()
     # post request from react RevertNotification form sends message as empty string
     # to indicate we should run the revert logic but not send an email
-    if feature.is_active('REVERT_EMAIL') and message is not None:
+    if message is not None:
         send_revert_notification(application_id, message)
     return jsonify(application=application.serializable), 200
 
