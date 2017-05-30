@@ -14,7 +14,8 @@ from functools import partial
 import logging
 
 
-ASSESSMENT_ISSUE_TYPE = 'Initial Assessment'
+INITIAL_ASSESSMENT_ISSUE_TYPE = 'Initial Assessment'
+SUBSEQUENT_ASSESSMENT_ISSUE_TYPE = 'Supplier Assessment'
 
 TICKET_DESCRIPTION = ("\n"
                       "Please review this potential supplier to determine if they meet the requirements. "
@@ -112,18 +113,22 @@ class MarketplaceJIRA(object):
         domain_name = assessment.supplier_domain.domain.name
         summary = 'Domain Assessment: {}(#{})'.format(supplier.name, supplier.code)
         relevant_case_studies = []
+        case_study_links = ""
         for case_study in supplier.case_studies:
             if case_study.data.get('service', '').lower() == domain_name.lower():
                 simple_case_study = {key: case_study.serializable[key]
                                      for key in case_study.serializable
                                      if key not in ['links', 'supplier', 'createdAt', 'created_at']}
+                case_study_links += "Case study: [{}|{}/case-study/{}]\n"\
+                    .format(simple_case_study['title'], current_app.config['FRONTEND_ADDRESS'], simple_case_study['id'])
                 relevant_case_studies.append(simple_case_study)
         description_values = {"supplier_name": supplier.name,
                               "supplier_url": current_app.config['ADMIN_ADDRESS'] + "/admin/assessments/supplier/" +
                               str(supplier.code),
                               "domain": domain_name,
                               "brief_name": brief.data.get('title'),
-                              "brief_close_date":  brief.applications_closed_at.format('%A %-d %B %Y')
+                              "brief_close_date":  brief.applications_closed_at.format('%A %-d %B %Y'),
+                              "case_study_links": case_study_links
                               }
         description = '[{supplier_name}|{supplier_url}] has applied for assessment ' \
                       'under the "{domain}" domain in order to apply for the "{brief_name}" brief ' \
@@ -132,7 +137,8 @@ class MarketplaceJIRA(object):
                       'Please assess their suitability to be approved for ' \
                       'this domain based on the ' \
                       '[assessment criteria|https://marketplace.service.gov.au/assessment-criteria] and ' \
-                      'clearly indicate an approve/reject recommendation in your comments.'.format(**description_values)
+                      'clearly indicate an approve/reject recommendation in your comments.'\
+                      '\n\n{case_study_links}'.format(**description_values)
         details = dict(
             project=self.marketplace_project_code,
             summary=summary,
@@ -141,10 +147,11 @@ class MarketplaceJIRA(object):
             duedate=str(brief.applications_closing_date),
             labels=[domain_name.title().replace(" ", "_")]
         )
-
+        existing_issues = self.get_supplier_tasks(str(supplier.code))
         new_issue = self.generic_jira.create_issue(**details)
-        new_issue.update({self.application_field_code: str(assessment.id),
-                          self.supplier_field_code: str(supplier.code)})
+        for issue in existing_issues:
+            self.generic_jira.jira.create_issue_link('Relates', new_issue, issue)
+        new_issue.update({self.supplier_field_code: str(supplier.code)})
 
         attachment = StringIO.StringIO()
         attachment.write(json.dumps(relevant_case_studies))
@@ -153,35 +160,51 @@ class MarketplaceJIRA(object):
     def create_application_approval_task(self, application):
         summary = 'Application assessment: {}'.format(application.data.get('name'))
         description = TICKET_DESCRIPTION % (current_app.config['ADMIN_ADDRESS'] +
-                                            "/sellers/application/{}/review".format(application.id))
+                                            "/sellers/application/{}".format(application.id))
 
         details = dict(
             project=self.marketplace_project_code,
             summary=summary,
             description=description,
             duedate=pendulum.now().add(weeks=2).to_date_string(),
-            issuetype_name=ASSESSMENT_ISSUE_TYPE if application.type != 'edit' else 'Supplier Assessment',
+            issuetype_name=INITIAL_ASSESSMENT_ISSUE_TYPE if application.type != 'edit'
+            else SUBSEQUENT_ASSESSMENT_ISSUE_TYPE,
             labels=[application.type] if application.type else []
         )
-
-        new_issue = self.generic_jira.create_issue(**details)
-
-        new_issue.update({self.application_field_code: str(application.id)})
+        existing_issues = self.generic_jira.jira.search_issues('"Marketplace Application ID" ~ "{}"'
+                                                               .format(str(application.id)))
+        if len(existing_issues) > 0:
+            new_issue = existing_issues[0]
+            new_issue.update({'duedate': pendulum.now().add(weeks=2).to_date_string(),
+                              self.supplier_field_code: str(application.supplier_code)
+                              if application.supplier_code else 0
+                              })
+            if new_issue.fields.status.name == 'Closed':
+                self.generic_jira.jira.transition_issue(new_issue, 'Reopen')
+        else:
+            new_issue = self.generic_jira.create_issue(**details)
+            new_issue.update({self.application_field_code: str(application.id),
+                              self.supplier_field_code: str(application.supplier_code)
+                              if application.supplier_code else 0
+                              })
         attachment = StringIO.StringIO()
         attachment.write(json.dumps(application.json))
         self.generic_jira.jira.add_attachment(new_issue.id, attachment,
                                               'snapshot_{}.json'.format(pendulum.now().to_date_string()))
 
+    def get_supplier_tasks(self, supplier_code):
+        return self.generic_jira.jira.search_issues('"Marketplace Supplier ID" ~ "{}"'.format(supplier_code))
+
     def get_assessment_tasks(self):
         return self.generic_jira.issues_with_subtasks(
             self.marketplace_project_code,
-            ASSESSMENT_ISSUE_TYPE
+            INITIAL_ASSESSMENT_ISSUE_TYPE
         )
 
     def assessment_tasks_by_application_id(self):
         assessment_issues = self.generic_jira.issues_with_subtasks(
             self.marketplace_project_code,
-            ASSESSMENT_ISSUE_TYPE
+            INITIAL_ASSESSMENT_ISSUE_TYPE
         )
 
         def task_info(t):
@@ -212,7 +235,8 @@ class MarketplaceJIRA(object):
         }
 
     def assessment_issue_type_attached(self):
-        return self.generic_jira.issue_type_is_attached_to_project(ASSESSMENT_ISSUE_TYPE, self.marketplace_project_code)
+        return self.generic_jira.issue_type_is_attached_to_project(INITIAL_ASSESSMENT_ISSUE_TYPE,
+                                                                   self.marketplace_project_code)
 
 
 class GenericJIRA(object):

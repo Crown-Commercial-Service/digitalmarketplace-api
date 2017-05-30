@@ -1,4 +1,5 @@
 import sys
+import re
 from contextlib import contextmanager
 from app.jiraapi import get_marketplace_jira
 from app import create_app
@@ -11,8 +12,26 @@ app = create_app('development')
 @contextmanager
 def jira_with_app_context():
     with app.app_context():
-        j = get_marketplace_jira()
+        j = get_marketplace_jira(False)
         yield j
+
+
+def fix_custom_fields():
+    with jira_with_app_context() as j:
+        bad_issues = j.generic_jira.jira.search_issues('project = MARADMIN AND issuetype = "Supplier Assessment" '
+                                                       'AND created >= 2012-05-31 AND created <= 2017-05-23')
+        for bad_issue in bad_issues:
+            if bad_issue.raw['fields'][j.supplier_field_code] != 0:
+                bad_issue.update({j.application_field_code: str(bad_issue.raw['fields'][j.supplier_field_code]),
+                                 j.supplier_field_code: str(0)})
+
+        bad_issues = j.generic_jira.jira.search_issues('project = MARADMIN AND issuetype = "Domain Assessment" '
+                                                       'AND created >= 2012-05-31 AND created <= 2017-05-23')
+        for bad_issue in bad_issues:
+            if bad_issue.raw['fields'][j.application_field_code] != 0:
+                bad_issue.update({j.supplier_field_code:
+                                 str(re.search(r"\(#(.*)\)$", bad_issue.fields.summary).group(1)),
+                                 j.application_field_code: str(0)})
 
 
 def create_approval_task(application_id):
