@@ -724,6 +724,9 @@ class Supplier(db.Model):
         if self.addresses:
             j['address'] = self.serialize_address(self.addresses[0])
 
+        if self.case_studies:
+            j['case_studies'] = [normalize_key_case(c) for c in j['case_studies']]
+
         return j
 
     def update_from_json_before(self, data):
@@ -2262,7 +2265,8 @@ class CaseStudy(db.Model):
         return data
 
     def serialize(self):
-        data = self.data.copy()
+        data = normalize_key_case(self.data)
+
         data.update({
             'id': self.id,
             'supplierCode': self.supplier_code,
