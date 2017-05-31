@@ -1396,7 +1396,7 @@ class BriefResponse(db.Model):
     created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
     submitted_at = db.Column(db.DateTime, nullable=True)
 
-    brief = db.relationship('Brief')
+    brief = db.relationship('Brief', lazy='joined')
     supplier = db.relationship('Supplier', lazy='joined')
 
     @validates('data')
@@ -1481,6 +1481,7 @@ class BriefResponse(db.Model):
                 'supplier': url_for(".get_supplier", supplier_id=self.supplier_id),
             }
         })
+
         return purge_nulls_from_data(data)
 
 

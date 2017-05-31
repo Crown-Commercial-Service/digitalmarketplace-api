@@ -615,6 +615,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     }
                 }
 
+
 class TestBriefClarificationQuestion(BaseApplicationTest):
     def setup(self):
         super(TestBriefClarificationQuestion, self).setup()
