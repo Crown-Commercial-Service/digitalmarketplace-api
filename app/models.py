@@ -1467,6 +1467,7 @@ class BriefResponse(db.Model):
         data.update({
             'id': self.id,
             'briefId': self.brief_id,
+            'briefTitle': self.brief.data.get('title', ''),
             'supplierId': self.supplier_id,
             'supplierName': self.supplier.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
@@ -1480,7 +1481,6 @@ class BriefResponse(db.Model):
                 'supplier': url_for(".get_supplier", supplier_id=self.supplier_id),
             }
         })
-
         return purge_nulls_from_data(data)
 
 
