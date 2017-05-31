@@ -724,7 +724,7 @@ class Supplier(db.Model):
         if self.addresses:
             j['address'] = self.serialize_address(self.addresses[0])
 
-        if self.case_studies:
+        if 'case_studies' in j:
             j['case_studies'] = [normalize_key_case(c) for c in j['case_studies']]
 
         return j
