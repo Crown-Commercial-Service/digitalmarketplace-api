@@ -52,6 +52,7 @@ def get_domain_metrics():
                               application, json_each(application.data->'services') badge
                             WHERE "value"::TEXT = 'true'
                             AND (application.status = 'saved' OR application.status = 'submitted')
+                            AND (application.type = 'new' OR application.type = 'upgrade')
                             GROUP BY key, status
                             '''
     for (domain, count, status) in db.session.execute(query).fetchall():
@@ -70,9 +71,12 @@ def get_seller_type_metrics():
     metrics = {}
 
     query = "SELECT key, count(*) FROM application, json_each(application.data->'seller_type') badge " \
-            "where key != 'recruiter' GROUP BY key " \
-            "union select 'recruiter', count(*) from application where application.data->>'recruiter' = 'yes'" \
-            "UNION select 'product', count(*) FROM application WHERE application.data->'products'->'0' IS NOT null"
+            "where key != 'recruiter' " \
+            "AND (application.type = 'new' OR application.type = 'upgrade') GROUP BY key " \
+            "union select 'recruiter', count(*) from application where application.data->>'recruiter' = 'yes' " \
+            "AND (application.type = 'new' OR application.type = 'upgrade')" \
+            "UNION select 'product', count(*) FROM application WHERE application.data->'products'->'0' IS NOT null " \
+            "AND (application.type = 'new' OR application.type = 'upgrade')"
     for (seller_type, count) in db.session.execute(query).fetchall():
         metrics[seller_type] = {}
         metrics[seller_type]['seller_type'] = seller_type
@@ -87,7 +91,9 @@ def get_seller_type_metrics():
 def get_step_metrics():
     metrics = {}
 
-    query = "SELECT key, count(*) FROM application, json_each(application.data->'steps') steps GROUP BY key"
+    query = "SELECT key, count(*) FROM application, json_each(application.data->'steps') steps WHERE " \
+            "(application.status = 'saved' OR application.status = 'submitted')" \
+            "AND (application.type = 'new' OR application.type = 'upgrade')GROUP BY key"
     for (step, count) in db.session.execute(query).fetchall():
         metrics[step] = {}
         metrics[step]['step'] = step
