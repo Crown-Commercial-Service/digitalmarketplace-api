@@ -162,7 +162,7 @@ class Live(Config):
     }
 
     FRONTEND_ADDRESS = 'https://marketplace.service.gov.au'
-    ADMIN_ADDRESS = 'https://dm-admin.apps.platform.digital.gov.au/'
+    ADMIN_ADDRESS = 'https://dm-admin.apps.platform.digital.gov.au'
 
     SEND_EMAILS = True
 
