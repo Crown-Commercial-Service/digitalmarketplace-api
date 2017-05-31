@@ -490,7 +490,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             lot = framework.get_lot('digital-outcomes')
-            self.brief_title = 'My Test Brief.'
+            self.brief_title = 'My Test Brief Title'
             self.brief = Brief(data={'title': self.brief_title}, framework=framework, lot=lot)
             db.session.add(self.brief)
             db.session.commit()

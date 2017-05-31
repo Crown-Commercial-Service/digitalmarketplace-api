@@ -1467,7 +1467,7 @@ class BriefResponse(db.Model):
         data.update({
             'id': self.id,
             'briefId': self.brief_id,
-            'briefTitle': self.brief.data.get('title', ''),
+            'briefTitle': self.brief.data['title'],
             'supplierId': self.supplier_id,
             'supplierName': self.supplier.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),

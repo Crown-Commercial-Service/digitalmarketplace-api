@@ -82,6 +82,7 @@ def specialists_brief_response_data(min_day_rate=1, max_day_rate=1000):
 
 def brief_data(essential_count=5, nice_to_have_count=5):
     return fixed_dictionaries({
+        'title': just('My Test Brief Title'),
         'specialistRole': just('developer'),
         'location': text(min_size=1, average_size=10, alphabet='abcdefghijkl'),
         'essentialRequirements': requirements_list(essential_count),
