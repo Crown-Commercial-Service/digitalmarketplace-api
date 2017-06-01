@@ -86,6 +86,7 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             assert isinstance(brief.updated_at, datetime)
             assert brief.id is not None
             assert brief.data == dict()
+            assert brief.is_a_copy is False
 
     def test_updating_a_brief_updates_dates(self):
         with self.app.app_context():
@@ -437,7 +438,7 @@ class TestCopyBrief(BaseApplicationTest, FixtureMixin):
         assert copy.framework == self.brief.framework
         assert copy.lot == self.brief.lot
         assert copy.users == self.brief.users
-        assert copy.copied_from_brief_id == self.brief.id
+        assert copy.is_a_copy is True
 
     def test_clarification_questions_not_copied(self, live_dos_framework):
         copy = self.brief.copy()
