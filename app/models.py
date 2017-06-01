@@ -1396,7 +1396,7 @@ class BriefResponse(db.Model):
     created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
     submitted_at = db.Column(db.DateTime, nullable=True)
 
-    brief = db.relationship('Brief')
+    brief = db.relationship('Brief', lazy='joined')
     supplier = db.relationship('Supplier', lazy='joined')
 
     @validates('data')
@@ -1467,6 +1467,7 @@ class BriefResponse(db.Model):
         data.update({
             'id': self.id,
             'briefId': self.brief_id,
+            'briefTitle': self.brief.data['title'],
             'supplierId': self.supplier_id,
             'supplierName': self.supplier.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
