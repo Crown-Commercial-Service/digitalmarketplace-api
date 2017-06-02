@@ -427,6 +427,7 @@ class TestGetBrief(FrameworkSetupAndTeardown):
                 'frameworkFramework': framework.framework,
                 'frameworkName': framework.name,
                 'frameworkStatus': framework.status,
+                'isACopy': False,
                 'lot': 'digital-specialists',
                 'lotSlug': 'digital-specialists',
                 'lotName': 'Digital specialists',
