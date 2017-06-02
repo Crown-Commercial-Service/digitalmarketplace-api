@@ -35,7 +35,7 @@ test_unit: virtualenv
 docker-build:
 	$(if ${RELEASE_NAME},,$(eval export RELEASE_NAME=$(shell git describe)))
 	@echo "Building a docker image for ${RELEASE_NAME}..."
-	docker build --pull -t digitalmarketplace/api --build-arg release_name=${RELEASE_NAME} .
+	docker build -t digitalmarketplace/api --build-arg release_name=${RELEASE_NAME} .
 	docker tag digitalmarketplace/api digitalmarketplace/api:${RELEASE_NAME}
 
 docker-push:
