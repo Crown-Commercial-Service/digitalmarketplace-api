@@ -14,7 +14,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates, backref, mapper
 from sqlalchemy.orm.session import Session
-from sqlalchemy.sql.expression import case as sql_case, cast as sql_cast, select as sql_select
+from sqlalchemy.sql.expression import case as sql_case, cast as sql_cast, select as sql_select, false as sql_false
 from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
@@ -1148,7 +1148,7 @@ class Brief(db.Model):
 
     framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), nullable=False)
     _lot_id = db.Column("lot_id", db.Integer, db.ForeignKey('lots.id'), nullable=False)
-    copied_from_brief_id = db.Column(db.Integer, db.ForeignKey('briefs.id'), nullable=True)
+    is_a_copy = db.Column(db.Boolean, nullable=False, server_default=sql_false())
 
     data = db.Column(JSON, nullable=False)
     created_at = db.Column(db.DateTime, index=True, nullable=False,
@@ -1308,7 +1308,7 @@ class Brief(db.Model):
 
         return Brief(
             data=data,
-            copied_from_brief_id=self.id,
+            is_a_copy=True,
             framework=framework,
             lot=self.lot,
             users=self.users
@@ -1333,6 +1333,7 @@ class Brief(db.Model):
             'frameworkFramework': self.framework.framework,
             'frameworkName': self.framework.name,
             'frameworkStatus': self.framework.status,
+            'isACopy': self.is_a_copy,
             'lot': self.lot.slug,  # deprecated, use lotSlug instead
             'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
@@ -1357,9 +1358,6 @@ class Brief(db.Model):
             data.update({
                 'withdrawnAt': self.withdrawn_at.strftime(DATETIME_FORMAT)
             })
-
-        if self.copied_from_brief_id:
-            data.update({'copiedFromBriefId': self.copied_from_brief_id})
 
         data['links'] = {
             'self': url_for('.get_brief', brief_id=self.id),
