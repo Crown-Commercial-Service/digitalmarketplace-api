@@ -10,15 +10,16 @@ def validatation_error(e):
 
 
 def generic_error_handler(e):
-    # TODO: log the error
     headers = []
-    error = e.description
-    if e.code == 401:
+    code = getattr(e, 'code', 500)
+    error = getattr(e, 'description', 'Internal error')
+
+    if code == 401:
         headers = [('WWW-Authenticate', 'Bearer')]
-    elif e.code == 500:
+    elif code == 500:
         error = "Internal error"
 
-    return jsonify(error=error),  e.code, headers
+    return jsonify(error=error), code, headers
 
 
 for code in range(400, 599):
