@@ -148,6 +148,19 @@ def get_application_by_id(application_id):
     return jsonify(application=application.serializable)
 
 
+@main.route('/prioritise/<int:application_id>', methods=['POST'])
+def prioritise_application(application_id):
+    brief_closing_date = request.get_json()
+    if type(brief_closing_date) is not unicode:
+        abort(400, 'Invalid  %s type argument received. Expected unicode') % (type(brief_closing_date))
+
+    application = Application.query.filter(
+        Application.id == application_id
+    ).first_or_404()
+    application.create_approval_task(closing_date=brief_closing_date)
+    return jsonify(application=application.serializable)
+
+
 @main.route('/applications/<int:application_id>', methods=['DELETE'])
 def delete_application(application_id):
     """

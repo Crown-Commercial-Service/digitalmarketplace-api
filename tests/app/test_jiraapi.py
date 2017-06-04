@@ -50,7 +50,7 @@ class TestJira(BaseApplicationTest):
                 data={'name': 'Umbrella Corporation'},
             )
             application.submit_for_approval()
-            mj.create_application_approval_task.assert_called_with(application)
+            mj.create_application_approval_task.assert_called_with(application, None)
 
     @mock.patch('app.jiraapi.get_api_oauth')
     @mock.patch('app.jiraapi.JIRA')

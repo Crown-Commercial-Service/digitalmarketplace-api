@@ -157,7 +157,7 @@ class MarketplaceJIRA(object):
         attachment.write(json.dumps(relevant_case_studies))
         self.generic_jira.jira.add_attachment(new_issue.id, attachment, 'casestudies.json')
 
-    def create_application_approval_task(self, application):
+    def create_application_approval_task(self, application, closing_date=None):
         summary = 'Application assessment: {}'.format(application.data.get('name'))
         description = TICKET_DESCRIPTION % (current_app.config['ADMIN_ADDRESS'] +
                                             "/sellers/application/{}".format(application.id))
@@ -173,7 +173,7 @@ class MarketplaceJIRA(object):
         )
         existing_issues = self.generic_jira.jira.search_issues('"Marketplace Application ID" ~ "{}"'
                                                                .format(str(application.id)))
-        if len(existing_issues) > 0:
+        if len(existing_issues) > 0 and closing_date is None:
             new_issue = existing_issues[0]
             new_issue.update({'duedate': pendulum.now().add(weeks=2).to_date_string(),
                               self.supplier_field_code: str(application.supplier_code)
@@ -181,6 +181,13 @@ class MarketplaceJIRA(object):
                               })
             if new_issue.fields.status.name == 'Closed':
                 self.generic_jira.jira.transition_issue(new_issue, 'Reopen')
+        elif len(existing_issues) > 0 and closing_date is not None:
+            new_issue = existing_issues[0]
+            new_issue.update({
+                'duedate': pendulum.from_format(closing_date, '%Y-%m-%d').subtract(days=3).to_date_string(),
+                self.supplier_field_code: str(application.supplier_code)
+                if application.supplier_code else 0
+            })
         else:
             new_issue = self.generic_jira.create_issue(**details)
             new_issue.update({self.application_field_code: str(application.id),

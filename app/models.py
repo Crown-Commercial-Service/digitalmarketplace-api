@@ -2227,10 +2227,10 @@ class Application(db.Model):
 
         self.status = 'submitted'
 
-    def create_approval_task(self):
+    def create_approval_task(self, closing_date=None):
         if current_app.config['JIRA_FEATURES']:
             mj = get_marketplace_jira()
-            mj.create_application_approval_task(self)
+            mj.create_application_approval_task(self, closing_date)
 
     def signed_agreements(self):
         agreements = db.session.query(
