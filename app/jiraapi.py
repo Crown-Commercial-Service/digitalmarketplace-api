@@ -160,7 +160,7 @@ class MarketplaceJIRA(object):
     def create_application_approval_task(self, application, closing_date=None):
         summary = 'Application assessment: {}'.format(application.data.get('name'))
         description = TICKET_DESCRIPTION % (current_app.config['ADMIN_ADDRESS'] +
-                                            "/sellers/application/{}".format(application.id))
+                                            "/admin/applications/preview/{}".format(application.id))
 
         details = dict(
             project=self.marketplace_project_code,
