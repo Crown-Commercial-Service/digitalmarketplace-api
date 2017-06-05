@@ -177,7 +177,7 @@ class MarketplaceJIRA(object):
             new_issue = existing_issues[0]
             new_issue.update({'duedate': pendulum.now().add(weeks=2).to_date_string(),
                               self.supplier_field_code: str(application.supplier_code)
-                              if application.supplier_code else 0
+                              if application.supplier_code else str(0)
                               })
             if new_issue.fields.status.name == 'Closed':
                 self.generic_jira.jira.transition_issue(new_issue, 'Reopen')
@@ -186,13 +186,13 @@ class MarketplaceJIRA(object):
             new_issue.update({
                 'duedate': pendulum.from_format(closing_date, '%Y-%m-%d').subtract(days=3).to_date_string(),
                 self.supplier_field_code: str(application.supplier_code)
-                if application.supplier_code else 0
+                if application.supplier_code else str(0)
             })
         else:
             new_issue = self.generic_jira.create_issue(**details)
             new_issue.update({self.application_field_code: str(application.id),
                               self.supplier_field_code: str(application.supplier_code)
-                              if application.supplier_code else 0
+                              if application.supplier_code else str(0)
                               })
         attachment = StringIO.StringIO()
         attachment.write(json.dumps(application.json))
