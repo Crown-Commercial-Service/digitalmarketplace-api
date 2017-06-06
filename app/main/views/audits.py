@@ -178,3 +178,12 @@ def acknowledge_audit(audit_id):
         abort(400, e.orig)
 
     return jsonify(auditEvents=audit_event.serialize()), 200
+
+
+@main.route('/audit-events/<int:audit_id>', methods=['GET'])
+def get_audit_event(audit_id):
+    audit_event = AuditEvent.query.get(audit_id)
+    if audit_event is None:
+        abort(404, "No audit event with this id")
+
+    return jsonify(auditEvents=audit_event.serialize()), 200
