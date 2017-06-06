@@ -13,7 +13,7 @@ from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
 
 
-class TestAuditEvents(BaseApplicationTest, FixtureMixin):
+class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
     @staticmethod
     def audit_event(user=0, type=AuditTypes.supplier_update, db_object=None):
         return AuditEvent(
@@ -40,13 +40,18 @@ class TestAuditEvents(BaseApplicationTest, FixtureMixin):
 
     def add_audit_events_with_db_object(self):
         self.setup_dummy_suppliers(3)
+        events = []
         with self.app.app_context():
             suppliers = Supplier.query.all()
             for supplier in suppliers:
                 event = AuditEvent(AuditTypes.contact_update, "rob", {}, supplier)
+                events.append(event)
                 db.session.add(event)
             db.session.commit()
+            return tuple(event.id for event in events)
 
+
+class TestAuditEvents(BaseTestAuditEvents):
     def test_only_one_audit_event_created(self):
         with self.app.app_context():
             count = AuditEvent.query.count()
@@ -524,3 +529,24 @@ class TestCreateAuditEvent(BaseApplicationTest, FixtureMixin):
 
         assert_equal(res.status_code, 400)
         assert_equal(data['error'], "referenced object does not exist")
+
+
+class TestGetAuditEvent(BaseTestAuditEvents):
+    def test_get_existing_audit_event(self):
+        event_ids = self.add_audit_events_with_db_object()
+
+        response = self.client.get('/audit-events/{}'.format(event_ids[0]))
+
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+
+        assert data["auditEvents"]["id"] == event_ids[0]
+        assert data["auditEvents"]["type"] == "contact_update"
+        assert data["auditEvents"]["user"] == "rob"
+
+    def test_get_nonexisting_audit_event(self):
+        event_ids = self.add_audit_events_with_db_object()
+
+        response = self.client.get('/audit-events/314159')
+
+        assert response.status_code == 404
