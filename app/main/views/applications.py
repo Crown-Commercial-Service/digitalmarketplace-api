@@ -282,10 +282,11 @@ def submit_application(application_id):
     db.session.add(signed_agreement)
     db.session.commit()
 
-    if application.supplier_code:
-        send_submitted_existing_seller_notification(application.id)
-    else:
-        send_submitted_new_seller_notification(application.id)
+    if application.type != 'edit':
+        if application.supplier_code:
+            send_submitted_existing_seller_notification(application.id)
+        else:
+            send_submitted_new_seller_notification(application.id)
 
     return jsonify(application=application.serializable,
                    signed_agreement=signed_agreement)

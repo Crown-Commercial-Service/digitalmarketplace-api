@@ -76,7 +76,7 @@ def send_approval_notification(application_id):
 
     application = Application.query.get(application_id)
 
-    if len(application.supplier.legacy_domains) > 0:
+    if len(application.supplier.legacy_domains) > 0 or application.type == 'edit':
         TEMPLATE_FILENAME = 'application_approved_existing_seller.md'
         subject = "Your updated profile is live"
     else:

@@ -1,4 +1,4 @@
-The [updated seller profile]({{url_seller_page}}) for {{business_name}} has now been added to the Digital Marketplace [seller catalogue]({{url_seller_page}}). 
+The [updated seller profile]({{url_seller_page}}) for {{business_name}} has now been updated on the Digital Marketplace [seller catalogue]({{url_seller_page}}). 
 
 This means:
 
