@@ -99,7 +99,9 @@ class Config:
     RESET_PASSWORD_SALT = 'ResetPasswordSalt'
     SUPPLIER_INVITE_TOKEN_SALT = 'SupplierInviteEmail'
 
-    GENERIC_EMAIL_DOMAINS = ['gmail.com', 'bigpond.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'optusnet.com.au', 'msn.com']
+    GENERIC_EMAIL_DOMAINS = ['gmail.com', 'bigpond.com', 'outlook.com', 'outlook.com.au', 'hotmail.com', 'yahoo.com',
+                             'optusnet.com.au', 'msn.com', 'internode.on.net', 'iinet.net.au', 'ozemail.com.au',
+                             'live.com.au', 'digital.gov.au']
 
     FRONTEND_ADDRESS = 'https://dm-dev.apps.staging.digital.gov.au'
     ADMIN_ADDRESS = 'https://dm-dev-admin.apps.staging.digital.gov.au'
