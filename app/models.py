@@ -1794,7 +1794,6 @@ class Brief(db.Model):
 
     def serialize(self, with_users=False):
         data = dict(self.data.items())
-
         data.update({
             'id': self.id,
             'status': self.status,
@@ -1810,6 +1809,7 @@ class Brief(db.Model):
             'clarificationQuestions': [
                 question.serialize() for question in self.clarification_questions
             ],
+            'author': self.users[0].name
         })
 
         if self.work_order:
@@ -2187,7 +2187,6 @@ class Application(db.Model):
                 supplier = self.supplier
             else:
                 supplier = Supplier()
-
             supplier.update_from_json(self.data)
 
             if not existing:
@@ -2282,12 +2281,17 @@ class CaseStudy(db.Model):
 
     @staticmethod
     def from_json(data):
-        def y():
-            for k, v in data.items():
-                c = CaseStudy()
-                c.update_from_json(v)
-                yield c
-        return list(y())
+        if len(data.items()) == 1:
+            def y():
+                for k, v in data.items():
+                    c = CaseStudy()
+                    c.update_from_json(v)
+                    yield c
+            return list(y())
+
+        c = CaseStudy()
+        c.update_from_json(data)
+        return c
 
 
 class BriefAssessment(db.Model):

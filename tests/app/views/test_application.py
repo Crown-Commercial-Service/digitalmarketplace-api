@@ -285,7 +285,7 @@ class TestUpdateApplication(BaseApplicationsTest):
 
     def test_patch_missing_order(self):
         res = self.patch_application(
-            application_id=9,
+            application_id=10,
             data={}
         )
 

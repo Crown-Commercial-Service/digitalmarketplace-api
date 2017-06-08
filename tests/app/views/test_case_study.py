@@ -144,7 +144,7 @@ class TestUpdateCaseStudy(BaseCaseStudyTest):
 
     def test_patch_missing_order(self):
         res = self.patch_case_study(
-            case_study_id=9,
+            case_study_id=10,
             data={}
         )
 

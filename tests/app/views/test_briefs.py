@@ -453,7 +453,8 @@ class TestBriefs(BaseApplicationTest):
                             'published_date': '2015-01-01',
                             'questions_close': '2015-01-08T07:00:00+00:00'
                         }
-                    }
+                    },
+                    "author": "my name"
                 }
             )
 
