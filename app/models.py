@@ -1167,7 +1167,9 @@ class Brief(db.Model):
     lot = db.relationship('Lot', lazy='joined')
     clarification_questions = db.relationship(
         "BriefClarificationQuestion",
-        order_by="BriefClarificationQuestion.published_at")
+        order_by="BriefClarificationQuestion.published_at",
+        lazy='joined'
+    )
 
     @validates('users')
     def validates_users(self, key, user):
@@ -1462,10 +1464,12 @@ class BriefResponse(db.Model):
 
     def serialize(self):
         data = self.data.copy()
+        parent_brief = self.brief.serialize()
+        parent_brief_fields = ['id', 'title', 'status', 'applicationsClosedAt']
         data.update({
             'id': self.id,
+            'brief': {key: parent_brief[key] for key in parent_brief_fields if key in parent_brief},
             'briefId': self.brief_id,
-            'briefTitle': self.brief.data['title'],
             'supplierId': self.supplier_id,
             'supplierName': self.supplier.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
