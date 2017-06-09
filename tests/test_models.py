@@ -575,8 +575,8 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                 url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
                 assert brief_response.serialize() == {
                     'id': brief_response.id,
+                    'brief': {'id': self.brief.id, 'status': self.brief.status, 'title': self.brief_title},
                     'briefId': self.brief.id,
-                    'briefTitle': self.brief_title,
                     'supplierId': 0,
                     'supplierName': 'Supplier 0',
                     'createdAt': mock.ANY,
@@ -603,7 +603,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                 assert brief_response.serialize() == {
                     'id': brief_response.id,
                     'briefId': self.brief.id,
-                    'briefTitle': self.brief_title,
+                    'brief': {'id': self.brief.id, 'status': self.brief.status, 'title': self.brief_title},
                     'supplierId': 0,
                     'supplierName': 'Supplier 0',
                     'createdAt': mock.ANY,
