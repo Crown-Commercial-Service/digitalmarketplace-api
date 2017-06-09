@@ -1809,8 +1809,13 @@ class Brief(db.Model):
             'clarificationQuestions': [
                 question.serialize() for question in self.clarification_questions
             ],
-            'author': self.users[0].name
+            'author': ''
         })
+
+        if len(self.users) > 0:
+            data.update({
+                'author': self.users[0].name
+            })
 
         if self.work_order:
             data.update({
