@@ -492,7 +492,12 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             lot = framework.get_lot('digital-outcomes')
             self.brief_title = 'My Test Brief Title'
-            self.brief = Brief(data={'title': self.brief_title}, framework=framework, lot=lot)
+            self.brief = Brief(
+                data={'title': self.brief_title, 'requirementsLength': '1 week'},
+                framework=framework,
+                lot=lot,
+                published_at=datetime(2016, 3, 3, 12, 30, 1, 2)
+            )
             db.session.add(self.brief)
             db.session.commit()
             self.brief_id = self.brief.id
@@ -575,8 +580,13 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                 url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
                 assert brief_response.serialize() == {
                     'id': brief_response.id,
+                    'brief': {
+                        'applicationsClosedAt': '2016-03-10T23:59:59.000000Z',
+                        'id': self.brief.id,
+                        'status': self.brief.status,
+                        'title': self.brief_title
+                    },
                     'briefId': self.brief.id,
-                    'briefTitle': self.brief_title,
                     'supplierId': 0,
                     'supplierName': 'Supplier 0',
                     'createdAt': mock.ANY,
@@ -603,7 +613,12 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                 assert brief_response.serialize() == {
                     'id': brief_response.id,
                     'briefId': self.brief.id,
-                    'briefTitle': self.brief_title,
+                    'brief': {
+                        'applicationsClosedAt': '2016-03-10T23:59:59.000000Z',
+                        'id': self.brief.id,
+                        'status': self.brief.status,
+                        'title': self.brief_title
+                    },
                     'supplierId': 0,
                     'supplierName': 'Supplier 0',
                     'createdAt': mock.ANY,
