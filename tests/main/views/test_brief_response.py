@@ -1,15 +1,17 @@
+"""Tests for brief response views in app/views/brief_responses.py."""
+from datetime import datetime, timedelta
+from freezegun import freeze_time
 import json
 import mock
-from datetime import datetime, timedelta
-
-from freezegun import freeze_time
-
-from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
-from tests.helpers import FixtureMixin
-from ... import example_listings
+import pytest
 
 from dmapiclient.audit import AuditTypes
+
 from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service, Framework
+from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
+from tests.helpers import FixtureMixin
+
+from ... import example_listings
 
 
 class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
@@ -550,32 +552,39 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
         data = json.loads(repeat_res.get_data(as_text=True))
         assert data == {'error': 'Brief response must be a draft'}
 
-    def test_can_not_submit_a_brief_response_for_a_framework_that_is_not_live_or_expired(self, live_dos_framework):
-            with self.app.app_context():
-                for framework_status in [status for status in Framework.STATUSES if status not in ('live', 'expired')]:
+    @pytest.mark.parametrize('framework_status', [i for i in Framework.STATUSES if i not in ['live', 'expired']])
+    def test_can_not_submit_a_brief_response_for_a_framework_that_is_not_live_or_expired(
+            self,
+            live_dos_framework,
+            framework_status
+    ):
+        with self.app.app_context():
+            # If a brief response already exists delete the last one. Suppliers can only have one response.
+            existing_brief_response = db.session.query(BriefResponse).all()
+            if existing_brief_response:
+                db.session.delete(existing_brief_response[-1])
+                db.session.commit()
 
-                    # If a brief response already exists delete the last one. Suppliers can only have one response.
-                    existing_brief_response = db.session.query(BriefResponse).all()
-                    if existing_brief_response:
-                        db.session.delete(existing_brief_response[-1])
-                        db.session.commit()
+            # Get dos framework.
+            dos_framework = db.session.query(Framework).filter_by(slug='digital-outcomes-and-specialists').first()
 
-                    # Make framework live so a brief response can be created.
-                    db.session.execute(
-                        "UPDATE frameworks SET status='live' WHERE slug='digital-outcomes-and-specialists'"
-                    )
-                    self._setup_existing_brief_response()
+            # Make framework live so a brief response can be created.
+            dos_framework.status = 'live'
+            db.session.commit()
 
-                    # Set framework status to the invalid status currently under test.
-                    db.session.execute(
-                        "UPDATE frameworks SET status=:status WHERE slug='digital-outcomes-and-specialists'",
-                        {'status': framework_status},
-                    )
+            # Create a brief response while the framework is live.
+            self._setup_existing_brief_response()
 
-                    res = self._submit_brief_response(self.brief_response_id)
-                    data = json.loads(res.get_data(as_text=True))
-                    assert res.status_code == 400
-                    assert data == {'error': 'Brief framework must be live or expired'}
+            # Set framework status to the invalid status currently under test.
+            dos_framework.status = framework_status
+            db.session.commit()
+
+            # Ensure error code on save attempt.
+            res = self._submit_brief_response(self.brief_response_id)
+            data = json.loads(res.get_data(as_text=True))
+
+            assert res.status_code == 400
+            assert data == {'error': 'Brief framework must be live or expired'}
 
     def test_can_not_submit_response_if_supplier_is_ineligble_for_brief(self, live_dos_framework):
         self._setup_existing_brief_response()
