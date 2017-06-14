@@ -96,6 +96,11 @@ def revert_application(application_id):
     json_payload = request.get_json(force=True)
     message = json_payload.get('message', None)
 
+    if not message:
+        message = None
+    if message is not None and message.isspace():
+        message = None
+
     application = Application.query.get(application_id)
 
     if application is None:

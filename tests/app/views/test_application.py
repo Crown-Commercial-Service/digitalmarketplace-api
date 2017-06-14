@@ -518,13 +518,14 @@ class TestRevertApplication(BaseApplicationsTest):
         assert response.status_code == 400
         assert 'not in submitted state for reverting' in response.get_data(as_text=True)
 
-    def test_application_submitted(self):
+    def test_application_reverted(self):
         self.patch_application(self.application_id, data={'status': 'submitted'})
 
         response = self.client.post(
             '/applications/{}/revert'.format(self.application_id),
             data=json.dumps({
-                'update_details': {'updated_by': 'test@example.com'}
+                'update_details': {'updated_by': 'test@example.com'},
+                'message': 'revert message'
             }),
             content_type='application/json')
 
