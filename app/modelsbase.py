@@ -23,6 +23,7 @@ from sqlalchemy.orm.relationships import RelationshipProperty
 from collections import Mapping
 
 import decimal
+import uuid
 
 from six import string_types
 from collections import Iterable

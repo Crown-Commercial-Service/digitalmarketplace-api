@@ -1,4 +1,5 @@
 import random
+import uuid
 from datetime import datetime
 from decimal import InvalidOperation
 from workdays import workday
@@ -2286,13 +2287,17 @@ class CaseStudy(db.Model):
 
     @staticmethod
     def from_json(data):
-        if len(data.items()) == 1:
-            def y():
-                for k, v in data.items():
-                    c = CaseStudy()
-                    c.update_from_json(v)
-                    yield c
-            return list(y())
+        def y(items):
+            for k, v in items:
+                c = CaseStudy()
+                c.update_from_json(v)
+                yield c
+
+        try:
+            if all(isinstance(uuid.UUID(_), uuid.UUID) for _ in data.keys()):
+                return list(y(data.items()))
+        except ValueError:
+            pass
 
         c = CaseStudy()
         c.update_from_json(data)
