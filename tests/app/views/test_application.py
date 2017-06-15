@@ -116,6 +116,9 @@ class BaseApplicationsTest(BaseApplicationTest):
     def list_task_status(self, **parameters):
         return self.client.get('/tasks', query_string=parameters)
 
+    def search_applications(self, keyword):
+        return self.client.get('/applications/search/{}'.format(keyword))
+
     def approve_application(self, application_id):
         return self.client.post(
             '/applications/{}/approve'.format(application_id),
@@ -419,6 +422,20 @@ class TestListApplications(BaseApplicationsTest):
         created_ats = [_['createdAt'] for _ in data['applications']]
         created_ats.reverse()
         assert is_sorted(created_ats)
+
+    def test_search_applications(self):
+        for i in range(8):
+            self.setup_dummy_application()
+
+        res = self.search_applications('bus')
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))
+        assert len(data['applications']) == 8
+
+        res = self.search_applications('invalid')
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))
+        assert len(data['applications']) == 0
 
 
 class TestSubmitApplication(BaseApplicationsTest):

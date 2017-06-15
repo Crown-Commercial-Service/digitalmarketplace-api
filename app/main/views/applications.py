@@ -195,18 +195,21 @@ def delete_application(application_id):
 
 
 def applications_list_response(with_task_status=False, status=None):
-    page = get_valid_page_or_1()
-
     if status:
         applications = Application.query.filter(Application.status == status)
     else:
         applications = Application.query.filter(Application.status != 'deleted')
 
+    return format_applications(applications, with_task_status)
+
+
+def format_applications(applications, with_task_status):
     ordering = request.args.get('order_by', 'application.created_at desc')
     order_by = ordering.split(',')
 
     applications = applications.order_by(*order_by)
 
+    page = get_valid_page_or_1()
     results_per_page = get_positive_int_or_400(
         request.args,
         'per_page',
@@ -310,6 +313,17 @@ def list_applications_by_status(status):
 @main.route('/applications/tasks', methods=['GET'])
 def list_applications_taskstatus():
     return applications_list_response(with_task_status=True)
+
+
+@main.route('/applications/search/<string:keyword>', methods=['GET'])
+def search_applications(keyword):
+    if not keyword:
+        return applications_list_response(with_task_status=False)
+
+    applications = Application.query.filter(
+        Application.data["name"].astext.ilike('%{}%'.format(keyword)))
+
+    return format_applications(applications, False)
 
 
 @main.route('/tasks', methods=['GET'])
