@@ -57,7 +57,7 @@ def get_user_by_id(user_id):
 
 @main.route('/teammembers/<string:domain>', methods=['GET'])
 def get_teammembers(domain):
-    userlist = User.query.filter_by(role='buyer', active='true')
+    userlist = User.query.filter_by(active='true')
     teammembers = [{attr: getattr(_, attr) for attr in ["email_address", "id", "name"]}
                    for _ in userlist if all(
         [_.viewrow().email_domain == domain, _.active, '+' not in _.email_address]
