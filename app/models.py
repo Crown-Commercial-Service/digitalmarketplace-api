@@ -875,6 +875,7 @@ class Product(db.Model):
 
     @staticmethod
     def from_json(data):
+        data.pop('links', None)
         return Product(**data)
 
 
@@ -2249,6 +2250,16 @@ class Application(db.Model):
         return [a._asdict() for a in agreements]
 
 
+def check_for_uuid(data):
+    uuid_result = [False]
+    if not data:
+        return uuid_result
+    for item in data:
+        uuid_result.append(item.count('-') == 4 and len(item) == 36)
+
+    return uuid_result
+
+
 class CaseStudy(db.Model):
     __tablename__ = 'case_study'
 
@@ -2287,17 +2298,13 @@ class CaseStudy(db.Model):
 
     @staticmethod
     def from_json(data):
-        def y(items):
-            for k, v in items:
-                c = CaseStudy()
-                c.update_from_json(v)
-                yield c
-
-        try:
-            if all(isinstance(uuid.UUID(_), uuid.UUID) for _ in data.keys()):
-                return list(y(data.items()))
-        except ValueError:
-            pass
+        if any(check_for_uuid(data)):
+            def y():
+                for k, v in data.items():
+                    c = CaseStudy()
+                    c.update_from_json(v)
+                    yield c
+            return list(y())
 
         c = CaseStudy()
         c.update_from_json(data)
