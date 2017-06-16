@@ -424,8 +424,10 @@ class TestListApplications(BaseApplicationsTest):
         assert is_sorted(created_ats)
 
     def test_search_applications(self):
+        applications_ids = []
         for i in range(8):
-            self.setup_dummy_application()
+            id = self.setup_dummy_application()
+            applications_ids.append(id)
 
         res = self.search_applications('bus')
         assert res.status_code == 200
@@ -436,6 +438,11 @@ class TestListApplications(BaseApplicationsTest):
         assert res.status_code == 200
         data = json.loads(res.get_data(as_text=True))
         assert len(data['applications']) == 0
+
+        res = self.search_applications(applications_ids[0])
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))
+        assert len(data['applications']) == 1
 
 
 class TestSubmitApplication(BaseApplicationsTest):

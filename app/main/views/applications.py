@@ -320,8 +320,11 @@ def search_applications(keyword):
     if not keyword:
         return applications_list_response(with_task_status=False)
 
-    applications = Application.query.filter(
-        Application.data["name"].astext.ilike('%{}%'.format(keyword)))
+    if keyword.isdigit():
+        applications = Application.query.filter(Application.id == keyword)
+    else:
+        applications = Application.query.filter(
+            Application.data["name"].astext.ilike('%{}%'.format(keyword)))
 
     return format_applications(applications, False)
 
