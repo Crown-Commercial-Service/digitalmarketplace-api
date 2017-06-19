@@ -1,6 +1,5 @@
 from functools import wraps
 from flask import Flask
-from flask.ext.bootstrap import Bootstrap
 from flask.ext.sqlalchemy import SQLAlchemy
 import json
 from sqlalchemy import MetaData
@@ -10,7 +9,6 @@ from dmutils import init_app, flask_featureflags
 
 from config import configs
 
-bootstrap = Bootstrap()
 db = SQLAlchemy(metadata=MetaData(naming_convention={
     "ix": 'ix_%(column_0_label)s',
     "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -29,7 +27,6 @@ def create_app(config_name):
     init_app(
         application,
         configs[config_name],
-        bootstrap=bootstrap,
         db=db,
         feature_flags=feature_flags,
         search_api_client=search_api_client
