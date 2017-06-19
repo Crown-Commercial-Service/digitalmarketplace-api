@@ -227,6 +227,11 @@ def get_framework_suppliers(framework_slug):
 
     supplier_frameworks = supplier_frameworks.filter(
         SupplierFramework.framework_id == framework.id
+    ).options(
+        db.defaultload(SupplierFramework.framework).lazyload("*"),
+        db.defaultload(SupplierFramework.supplier).lazyload("*"),
+        db.defaultload(SupplierFramework.prefill_declaration_from_framework).lazyload("*"),
+        db.lazyload(SupplierFramework.framework_agreements),
     ).order_by(
         # Listing agreements is something done for Admin only (suppliers only retrieve their individual agreements)
         # and CCS always want to work from the oldest returned date to newest, so order by ascending date
