@@ -11,7 +11,6 @@ class Config:
     DM_SEARCH_API_AUTH_TOKEN = None
     DM_API_AUTH_TOKENS = None
     ES_ENABLED = True
-    ALLOW_EXPLORER = True
     AUTH_REQUIRED = True
     DM_HTTP_PROTO = 'http'
     # Logging
@@ -67,7 +66,6 @@ class Development(Config):
 class Live(Config):
     """Base config for deployed environments"""
     DEBUG = False
-    ALLOW_EXPLORER = False
     DM_HTTP_PROTO = 'https'
     DM_LOG_PATH = '/var/log/digitalmarketplace/application.log'
 
