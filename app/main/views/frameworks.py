@@ -276,6 +276,11 @@ def get_framework_interest(framework_slug):
 
     supplier_frameworks = SupplierFramework.query.filter(
         SupplierFramework.framework_id == framework.id
+    ).options(
+        db.defaultload(SupplierFramework.framework).lazyload("*"),
+        db.defaultload(SupplierFramework.supplier).lazyload("*"),
+        db.defaultload(SupplierFramework.prefill_declaration_from_framework).lazyload("*"),
+        db.lazyload(SupplierFramework.framework_agreements),
     ).order_by(SupplierFramework.supplier_id).all()
 
     supplier_ids = [supplier_framework.supplier_id for supplier_framework in supplier_frameworks]
