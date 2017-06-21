@@ -86,21 +86,28 @@ def list_audits():
         if object_type not in AUDIT_OBJECT_TYPES:
             abort(400, 'invalid object-type supplied')
 
-        model = AUDIT_OBJECT_TYPES[object_type]
-        id_field = AUDIT_OBJECT_ID_FIELDS[object_type]
+        ref_model = AUDIT_OBJECT_TYPES[object_type]
+        ext_id_field = AUDIT_OBJECT_ID_FIELDS[object_type]
 
-        audits = audits.filter(AuditEvent.object.is_type(model))
+        audits = audits.filter(AuditEvent.object.is_type(ref_model))
 
+        # "object_id" here is the *external* object_id
         if object_id:
-            ref_object = model.query.filter(
-                id_field == object_id
+            ref_object = ref_model.query.filter(
+                ext_id_field == object_id
             ).first()
 
             if ref_object is None:
                 abort(404, "Object with given object-type and object-id doesn't exist")
 
+            # this `.identity_key_from_instance(...)[1][0]` is exactly the method used by sqlalchemy_utils' generic
+            # relationship code to extract an object's pk value, so *should* be relatively stable, API-wise.
+            # the `[1]` is to select the pk's *value* rather than the `Column` object and the `[0]` simply fetches
+            # the first of any pk values - generic relationships are already assuming that compound pks aren't in
+            # use by the target.
+            ref_object_pk = class_mapper(ref_model).identity_key_from_instance(ref_object)[1][0]
             audits = audits.filter(
-                AuditEvent.object_id == class_mapper(model).identity_key_from_instance(ref_object)[1][0]
+                AuditEvent.object_id == ref_object_pk
             )
     elif object_id:
         abort(400, 'object-id cannot be provided without object-type')
