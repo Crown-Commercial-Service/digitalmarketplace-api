@@ -1,14 +1,18 @@
 # -*- coding: UTF-8 -*-
 from datetime import datetime
+from itertools import chain, repeat
 import mock
+import pytest
 from nose.tools import assert_equal, assert_in, assert_true, assert_false
 from flask import json
+from six.moves import zip as izip
+from six.moves.urllib.parse import urlencode
 
 from dmapiclient.audit import AuditTypes
 
 from app import db
 from app.models import AuditEvent
-from app.models import Supplier
+from app.models import Supplier, Service
 from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
 
@@ -50,8 +54,218 @@ class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
             db.session.commit()
             return tuple(event.id for event in events)
 
+    def add_audit_events_by_param_tuples(self, service_audit_event_params, supplier_audit_event_params):
+        with self.app.app_context():
+            # some migrations create audit events, but we want to start with a clean slate
+            AuditEvent.query.delete()
+            service_ids = db.session.query(Service.id).order_by(Service.id).all()
+            supplier_ids = db.session.query(Supplier.id).order_by(Supplier.id).all()
+
+            audit_events = []
+
+            for (ref_model, ref_model_ids), (obj_id, audit_type, created_at, acknowledged_at) in chain(
+                    izip(repeat((Service, service_ids,)), service_audit_event_params),
+                    izip(repeat((Supplier, supplier_ids,)), supplier_audit_event_params),
+                    ):
+                ae = AuditEvent(audit_type, "henry.flower@example.com", {}, ref_model(id=ref_model_ids[obj_id]))
+                ae.created_at = created_at
+                ae.acknowledged_at = acknowledged_at
+                ae.acknowledged = bool(acknowledged_at)
+                db.session.add(ae)
+                audit_events.append(ae)
+
+            db.session.commit()
+            # make a note of the ids that were given to these events, or rather the order they were generated
+            audit_event_id_lookup = {ae.id: i for i, ae in enumerate(audit_events)}
+            assert AuditEvent.query.count() == len(service_audit_event_params)+len(supplier_audit_event_params)
+
+            return audit_event_id_lookup
+
 
 class TestAuditEvents(BaseTestAuditEvents):
+    @pytest.mark.parametrize(
+        "service_audit_event_params,supplier_audit_event_params,req_params,expected_resp_events",
+        # where we refer to "id"s in the expected_response_params, because we can't be too sure about the *actual* ids
+        # given to objects, we're using 0-based notional "ids" based on the order the audit events were inserted into
+        # the db. service_audit_event_params events are inserted in the order given, followed by the
+        # supplier_audit_event_params events. so if we had 5 service_audit_event_params and 2
+        # supplier_audit_event_params, "5" would refer to the audit event created by the first-listed
+        # supplier_audit_event_params.
+        # similarly, where supplier and service "id"s are referred to, the "id"s we're referring to are normalized
+        # pseudo-ids from 0-4 inclusive
+        chain.from_iterable(
+            ((serv_aeps, supp_aeps, req_params, expected_resp_events) for req_params, expected_resp_events in req_cases)
+            for serv_aeps, supp_aeps, req_cases in (
+                (
+                    (   # service_audit_event_params, as consumed by add_audit_events_by_param_tuples
+                        # service pseudo-id, audit type, created_at, acknowledged_at
+                        (0, AuditTypes.update_service, datetime(2010, 6, 6), None,),
+                        (0, AuditTypes.update_service, datetime(2010, 6, 7), None,),
+                        (4, AuditTypes.update_service, datetime(2010, 6, 2), None,),
+                    ),
+                    (   # supplier_audit_event_params, as consumed by add_audit_events_by_param_tuples
+                        # supplier pseudo-id, audit type, created_at, acknowledged_at
+                        (0, AuditTypes.supplier_update, datetime(2010, 6, 6), None,),
+                    ),
+                    (  # and now a series of req_cases - pairs of (req_params, expected_resp_events) to test against
+                       # the above db scenario. these get flattened out into concrete test scenarios by
+                       # chain.from_iterable above before they reach pytest's parametrization
+                        (
+                            {"earliest_for_each_object": "true", "latest_first": "true"},
+                            (3, 0, 2,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "latest_first": "false"},
+                            (2, 0, 3,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "audit-type": "supplier_update"},
+                            (3,),
+                        ),
+                    ),
+                ),
+                (
+                    (   # service_audit_event_params
+                        (0, AuditTypes.update_service, datetime(2011, 6, 6), None,),
+                        (0, AuditTypes.update_service_status, datetime(2011, 8, 2), None,),
+                        (1, AuditTypes.update_service, datetime(2011, 8, 6, 12), datetime(2011, 9, 2),),
+                        (1, AuditTypes.update_service, datetime(2011, 8, 6, 9), datetime(2011, 9, 1),),
+                        (0, AuditTypes.update_service, datetime(2010, 8, 4), datetime(2011, 9, 2),),
+                        (3, AuditTypes.update_service, datetime(2014, 6, 6), None,),
+                    ),
+                    (   # supplier_audit_event_params
+                        (1, AuditTypes.supplier_update, datetime(2010, 2, 6), None,),
+                        (0, AuditTypes.supplier_update, datetime(2010, 6, 6), None,),
+                        (1, AuditTypes.supplier_update, datetime(2010, 2, 6), None,),
+                    ),
+                    (   # series of req_cases for the above db scenario
+                        (
+                            {"earliest_for_each_object": "true"},
+                            (6, 7, 4, 3, 5,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "acknowledged": "false"},
+                            (6, 7, 0, 5,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "acknowledged": "true"},
+                            (4, 3,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "object-type": "suppliers"},
+                            (6, 7,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "audit-date": "2011-08-06"},
+                            (3,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "false", "per_page": "100"},
+                            (6, 8, 7, 4, 0, 1, 3, 2, 5,),
+                        ),
+                        (
+                            {"per_page": "100"},
+                            (6, 8, 7, 4, 0, 1, 3, 2, 5,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "audit-date": "2010-08-06"},
+                            (),
+                        ),
+                    ),
+                ),
+                (
+                    (   # service_audit_event_params
+                        (0, AuditTypes.update_service, datetime(2010, 8, 5), datetime(2011, 8, 2),),
+                        (0, AuditTypes.update_service, datetime(2010, 8, 4), datetime(2011, 8, 2),),
+                    ),
+                    (   # supplier_audit_event_params
+                        (0, AuditTypes.supplier_update, datetime(2010, 6, 6), None,),
+                        (1, AuditTypes.supplier_update, datetime(2010, 2, 1), None,),
+                        (1, AuditTypes.supplier_update, datetime(2010, 2, 6), None,),
+                        (0, AuditTypes.supplier_update, datetime(2010, 2, 7), None,),
+                        (3, AuditTypes.supplier_update, datetime(2009, 1, 1), None,),
+                        (0, AuditTypes.supplier_update, datetime(2010, 2, 3), None,),
+                        (1, AuditTypes.supplier_update, datetime(2010, 4, 9), None,),
+                        (2, AuditTypes.supplier_update, datetime(2010, 1, 1), None,),
+                        (1, AuditTypes.supplier_update, datetime(2010, 8, 8), None,),
+                    ),
+                    (   # series of req_cases for the above db scenario
+                        (
+                            {"earliest_for_each_object": "true", "latest_first": "true", "per_page": "4"},
+                            (1, 7, 3, 9,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "object-type": "suppliers", "latest_first": "false"},
+                            (6, 9, 3, 7,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "per_page": "3", "page": "2"},
+                            (7, 1,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "object-type": "suppliers", "acknowledged": "true"},
+                            (),
+                        ),
+                    ),
+                ),
+                (
+                    (   # service_audit_event_params
+                    ),
+                    (   # supplier_audit_event_params
+                        (0, AuditTypes.supplier_update, datetime(2015, 3, 2), None,),
+                        (3, AuditTypes.supplier_update, datetime(2015, 8, 8), None,),
+                        (4, AuditTypes.supplier_update, datetime(2015, 4, 6), None,),
+                        (2, AuditTypes.supplier_update, datetime(2015, 3, 3), None,),
+                        (1, AuditTypes.supplier_update, datetime(2005, 8, 9), None,),
+                        (1, AuditTypes.supplier_update, datetime(2015, 2, 4), None,),
+                        (2, AuditTypes.supplier_update, datetime(2015, 1, 1), None,),
+                        (4, AuditTypes.supplier_update, datetime(2015, 9, 3), None,),
+                        (1, AuditTypes.supplier_update, datetime(2015, 4, 6), None,),
+                        (1, AuditTypes.supplier_update, datetime(2015, 4, 6), None,),
+                    ),
+                    (   # series of req_cases for the above db scenario
+                        (
+                            {"earliest_for_each_object": "true", "acknowledged": "false"},
+                            (4, 6, 0, 2, 1,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "audit-date": "2015-04-06"},
+                            (2, 8,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "latest_first": "true", "per_page": "100"},
+                            (1, 2, 0, 6, 4,),
+                        ),
+                        (
+                            {"earliest_for_each_object": "true", "acknowledged": "true"},
+                            (),
+                        ),
+                    ),
+                ),
+            )
+        ),
+    )
+    def test_earliest_for_each_object(
+            self,
+            service_audit_event_params,
+            supplier_audit_event_params,
+            req_params,
+            expected_resp_events,
+            ):
+        self.setup_dummy_suppliers(5)
+        self.setup_dummy_services(5, supplier_id=1)
+        audit_event_id_lookup = self.add_audit_events_by_param_tuples(
+            service_audit_event_params,
+            supplier_audit_event_params,
+        )
+
+        response = self.client.get('/audit-events?{}'.format(urlencode(req_params)))
+
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+
+        assert tuple(audit_event_id_lookup[ae["id"]] for ae in data["auditEvents"]) == expected_resp_events
+
     def test_only_one_audit_event_created(self):
         with self.app.app_context():
             count = AuditEvent.query.count()
