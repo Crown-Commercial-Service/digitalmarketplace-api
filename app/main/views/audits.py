@@ -43,6 +43,9 @@ def list_audits():
     earliest_for_each_object = convert_to_boolean(request.args.get('earliest_for_each_object'))
 
     if earliest_for_each_object:
+        # the rest of the filters we add will be added against a subquery which we will join back onto the main table
+        # to retrieve the rest of the row. this allows the potentially expensive DISTINCT ON pass to be performed
+        # against an absolutely minimal subset of rows which can probably be pulled straight from an index
         audits = db.session.query(AuditEvent.id)
     else:
         audits = AuditEvent.query
@@ -113,6 +116,7 @@ def list_audits():
         abort(400, 'object-id cannot be provided without object-type')
 
     if earliest_for_each_object:
+        # we need to join the built-up subquery back onto the AuditEvent table to retrieve the rest of the row
         audits_subquery = audits.order_by(
             AuditEvent.object_type,
             AuditEvent.object_id,
