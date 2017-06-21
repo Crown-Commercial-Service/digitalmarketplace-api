@@ -144,6 +144,15 @@ class TestAuditEvents(BaseTestAuditEvents):
         assert_equal(len(data['auditEvents']), 1)
         assert_equal(data['auditEvents'][0]['user'], 'rob')
 
+    def test_should_get_audit_events_by_object_type(self):
+        self.add_audit_events_with_db_object()
+
+        response = self.client.get('/audit-events?object-type=suppliers')
+        data = json.loads(response.get_data())
+
+        assert_equal(response.status_code, 200)
+        assert_equal(len(data["auditEvents"]), 3)
+
     def test_get_audit_event_for_missing_object_returns_404(self):
         self.add_audit_events_with_db_object()
 
@@ -182,13 +191,6 @@ class TestAuditEvents(BaseTestAuditEvents):
         self.add_audit_events_with_db_object()
 
         response = self.client.get('/audit-events?object-type=invalid&object-id=1')
-
-        assert_equal(response.status_code, 400)
-
-    def test_should_reject_object_type_if_no_object_id_is_given(self):
-        self.add_audit_events_with_db_object()
-
-        response = self.client.get('/audit-events?object-type=suppliers')
 
         assert_equal(response.status_code, 400)
 

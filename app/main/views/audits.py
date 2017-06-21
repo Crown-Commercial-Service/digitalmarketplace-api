@@ -4,6 +4,7 @@ from ...models import AuditEvent
 from sqlalchemy import asc, desc, Date, cast
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import true, false
+from sqlalchemy.orm import class_mapper
 from ...utils import pagination_links, get_valid_page_or_1
 from .. import main
 from ... import db, models
@@ -84,20 +85,23 @@ def list_audits():
     if object_type:
         if object_type not in AUDIT_OBJECT_TYPES:
             abort(400, 'invalid object-type supplied')
-        if not object_id:
-            abort(400, 'object-type cannot be provided without object-id')
+
         model = AUDIT_OBJECT_TYPES[object_type]
         id_field = AUDIT_OBJECT_ID_FIELDS[object_type]
 
-        ref_object = model.query.filter(
-            id_field == object_id
-        ).first()
+        audits = audits.filter(AuditEvent.object.is_type(model))
 
-        if ref_object is None:
-            abort(404, "Object with given object-type and object-id doesn't exist")
+        if object_id:
+            ref_object = model.query.filter(
+                id_field == object_id
+            ).first()
 
-        audits = audits.filter(AuditEvent.object == ref_object)
+            if ref_object is None:
+                abort(404, "Object with given object-type and object-id doesn't exist")
 
+            audits = audits.filter(
+                AuditEvent.object_id == class_mapper(model).identity_key_from_instance(ref_object)[1][0]
+            )
     elif object_id:
         abort(400, 'object-id cannot be provided without object-type')
 
