@@ -118,11 +118,8 @@ def list_audits():
 
         audits = AuditEvent.query.join(audits_subquery, audits_subquery.c.id == AuditEvent.id)
 
-    audits = audits.order_by(
-        desc(AuditEvent.created_at)
-        if convert_to_boolean(request.args.get('latest_first'))
-        else asc(AuditEvent.created_at)
-    )
+    sort_order = db.desc if convert_to_boolean(request.args.get('latest_first')) else db.asc
+    audits = audits.order_by(sort_order(AuditEvent.created_at), sort_order(AuditEvent.id))
 
     audits = audits.paginate(
         page=page,
