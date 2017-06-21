@@ -185,6 +185,14 @@ def delete_application(application_id):
         db_object=application
     ))
     application.status = 'deleted'
+
+    users = User.query.filter(
+        User.application_id == application_id
+    ).all()
+
+    for user in users:
+        user.application = None
+
     try:
         db.session.commit()
     except IntegrityError as e:
