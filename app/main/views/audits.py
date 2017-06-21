@@ -39,11 +39,12 @@ def list_audits():
     except ValueError:
         abort(400, 'invalid page size supplied')
 
-    audits = AuditEvent.query.order_by(
-        desc(AuditEvent.created_at)
-        if convert_to_boolean(request.args.get('latest_first'))
-        else asc(AuditEvent.created_at)
-    )
+    earliest_for_each_object = convert_to_boolean(request.args.get('earliest_for_each_object'))
+
+    if earliest_for_each_object:
+        audits = db.session.query(AuditEvent.id)
+    else:
+        audits = AuditEvent.query
 
     audit_date = request.args.get('audit-date', None)
     if audit_date:
@@ -99,6 +100,25 @@ def list_audits():
 
     elif object_id:
         abort(400, 'object-id cannot be provided without object-type')
+
+    if earliest_for_each_object:
+        audits_subquery = audits.order_by(
+            AuditEvent.object_type,
+            AuditEvent.object_id,
+            AuditEvent.created_at,
+            AuditEvent.id,
+        ).distinct(
+            AuditEvent.object_type,
+            AuditEvent.object_id,
+        ).subquery()
+
+        audits = AuditEvent.query.join(audits_subquery, audits_subquery.c.id == AuditEvent.id)
+
+    audits = audits.order_by(
+        desc(AuditEvent.created_at)
+        if convert_to_boolean(request.args.get('latest_first'))
+        else asc(AuditEvent.created_at)
+    )
 
     audits = audits.paginate(
         page=page,
