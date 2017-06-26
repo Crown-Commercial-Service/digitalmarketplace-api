@@ -1113,6 +1113,7 @@ class TestUsersGet(BaseUserTest):
         super(TestUsersGet, self).setup()
         with self.app.app_context():
             self._post_supplier()
+            self._post_application()
             self._post_users()
 
     def _post_users(self):
@@ -1122,14 +1123,15 @@ class TestUsersGet(BaseUserTest):
                 "name": "John Example",
                 "password": "minimum10characterpassword",
                 "role": "supplier",
-                "supplierCode": self.supplier_code
+                "supplierCode": self.supplier_code,
             },
             {
                 "emailAddress": "don@don.com",
                 "name": "Don",
                 "password": "minimum10characterpassword",
                 "role": "supplier",
-                "supplierCode": self.supplier_code
+                "supplierCode": self.supplier_code,
+                "application_id": self.application_id
             }
         ]
 
@@ -1187,6 +1189,13 @@ class TestUsersGet(BaseUserTest):
             data = json.loads(response.get_data())["users"]
             for index, user in enumerate(data):
                 self._assert_things_about_users(user, self.users[index])
+
+    def test_can_list_users_by_application_id(self):
+        with self.app.app_context():
+            response = self.client.get("/users?application_id={}".format(self.application_id))
+            assert_equal(response.status_code, 200)
+            data = json.loads(response.get_data())["users"]
+            assert len(data) == 1
 
     def test_returns_404_for_non_int_id(self):
         response = self.client.get("/users/bogus")

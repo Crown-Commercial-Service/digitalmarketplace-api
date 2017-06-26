@@ -114,6 +114,19 @@ def list_users():
 
         user_query = user_query.filter(User.supplier_code == supplier_code)
 
+    application_id = request.args.get('application_id')
+    if application_id is not None:
+        try:
+            application_id = int(application_id)
+        except ValueError:
+            abort(400, "Invalid application_id: {}".format(application_id))
+
+        application = Application.query.filter(Application.id == application_id).all()
+        if not application:
+            abort(404, "application_id '{}' not found".format(application_id))
+
+        user_query = user_query.filter(User.application_id == application_id)
+
     users = user_query.paginate(
         page=page,
         per_page=results_per_page,
