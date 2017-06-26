@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError, DataError
 from dmapiclient.audit import AuditTypes
 
 from .. import main
-from ...models import db, Brief, BriefResponse, AuditEvent
+from ...models import db, Brief, BriefResponse, AuditEvent, Framework
 from ...utils import (
     get_json_from_request, json_has_required_keys, get_int_or_400,
     pagination_links, get_valid_page_or_1, url_for,
@@ -219,6 +219,13 @@ def list_brief_responses():
         db.defaultload(BriefResponse.brief).defaultload(Brief.lot).lazyload("*"),
         db.defaultload(BriefResponse.supplier).lazyload("*"),
     )
+
+    if request.args.get('framework'):
+        brief_responses = brief_responses.join(BriefResponse.brief).join(Brief.framework).filter(
+            Brief.framework.has(Framework.slug.in_(
+                framework_slug.strip() for framework_slug in request.args["framework"].split(",")
+            ))
+        )
 
     if brief_id or supplier_id:
         return jsonify(
