@@ -2,7 +2,7 @@ command: ./scripts/cf_run_app.sh
 buildpack: https://github.com/cloudfoundry/buildpack-python.git
 health-check-type: port
 instances: 2
-memory: 512M
+memory: 1G
 disk_quota: 512M
 env:
     DM_ENVIRONMENT: production

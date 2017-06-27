@@ -15,7 +15,7 @@ import logging
 
 
 INITIAL_ASSESSMENT_ISSUE_TYPE = 'Initial Assessment'
-SUBSEQUENT_ASSESSMENT_ISSUE_TYPE = 'Supplier Assessment'
+SUBSEQUENT_ASSESSMENT_ISSUE_TYPE = 'Profile Edit'
 
 TICKET_DESCRIPTION = ("\n"
                       "Please review this potential supplier to determine if they meet the requirements. "
@@ -27,34 +27,36 @@ TICKET_DESCRIPTION = ("\n"
                       "----\n\n"
                       "{panel:title=Supplier Assessment Checklist|titleBGColor=#18788D|titleColor=#FFFFFF}\n\n"
                       "\n\n"
-                      "# Business Name:\n"
-                      "# ABN:\n"
-                      "# Business Description:\n"
-                      "# Badges - RECRUITER:\n"
-                      "# Badges - Indigenous:\n"
-                      "# Badges - Disability:\n"
-                      "# Website:\n"
-                      "# LinkedIn:\n"
-                      "# Business Contact:\n"
-                      "# Case Study 1:\n"
-                      "# Case Study 2:\n"
-                      "# Case Study 3:\n"
-                      "# Case Study 4:\n"
-                      "# Product 1:\n"
-                      "# Product 2:\n"
-                      "# Product 3:\n"
-                      "# Product 4:\n"
-                      "# How we work:\n"
-                      "# Company details:\n"
-                      "# Location(s):\n"
-                      "# Recognition:\n"
-                      "# Case Study Referees:\n"
-                      "# Disclosures:\n"
-                      "# Documents:\n"
-                      "## Financial:\n"
-                      "## Public Liability:\n"
-                      "## Workers Compensation:\n"
-                      "# Recruiter Info:\n"
+                      "# Business Name: \n"
+                      "# Badges - Recruiter: \n"
+                      "# Badges - Indigenous: \n"
+                      "# Badges - Disability: \n"
+                      "# Badges - SME: \n"
+                      "# Badges - Start-up: \n"
+                      "# Business Description: \n"
+                      "# Website: \n"
+                      "# LinkedIn: \n"
+                      "# Business Contact: \n"
+                      "# Case Study 1: \n"
+                      "# Case Study 2: \n"
+                      "# Case Study 3: \n"
+                      "# Case Study 4: \n"
+                      "# Product 1: \n"
+                      "# Product 2: \n"
+                      "# Product 3: \n"
+                      "# Product 4: \n"
+                      "# How we work: \n"
+                      "# Company details: \n"
+                      "# ABN: \n"
+                      "# Location(s): \n"
+                      "# Recognition: \n"
+                      "# Case Study Referees: \n"
+                      "# Disclosures: \n"
+                      "# Documents: \n"
+                      "## Financial: \n"
+                      "## Public Liability: \n"
+                      "## Workers Compensation: \n"
+                      "# Recruiter Info: \n"
                       "\n\n"
                       "*RECOMMENDATION:* \n\n"
                       "{panel}\n"
@@ -158,21 +160,35 @@ class MarketplaceJIRA(object):
         self.generic_jira.jira.add_attachment(new_issue.id, attachment, 'casestudies.json')
 
     def create_application_approval_task(self, application, closing_date=None):
-        summary = 'Application assessment: {}'.format(application.data.get('name'))
-        description = TICKET_DESCRIPTION % (current_app.config['ADMIN_ADDRESS'] +
-                                            "/admin/applications/preview/{}".format(application.id))
-
+        if application.type != 'edit':
+            summary = 'Application assessment: {}'.format(application.data.get('name'))
+            description = TICKET_DESCRIPTION % (current_app.config['ADMIN_ADDRESS'] +
+                                                "/admin/applications/preview/{}".format(application.id))
+            issuetype_name = INITIAL_ASSESSMENT_ISSUE_TYPE
+        else:
+            summary = 'Profile edit: {} (#{})'.format(application.data.get('name'), application.supplier_code)
+            description = "+*This is a profile edit*+\n\n" \
+                          "Please evaluate the changes made by the seller and ensure they meet the " \
+                          "[assessment guidelines|" \
+                          "https://govausites.atlassian.net/wiki/display/DM/Initial+Assessment+Checklist]. \n" \
+                          "Changes will be summarised at the top of the seller profile.\n\n" \
+                          "Seller profile link: [%s]\n\n" \
+                          "---\n\n" \
+                          "A snapshot of the application is attached." \
+                          "" % (current_app.config['ADMIN_ADDRESS'] +
+                                "/admin/applications/preview/{}".format(application.id))
+            issuetype_name = SUBSEQUENT_ASSESSMENT_ISSUE_TYPE
         details = dict(
             project=self.marketplace_project_code,
             summary=summary,
             description=description,
             duedate=pendulum.now().add(weeks=2).to_date_string(),
-            issuetype_name=INITIAL_ASSESSMENT_ISSUE_TYPE if application.type != 'edit'
-            else SUBSEQUENT_ASSESSMENT_ISSUE_TYPE,
+            issuetype_name=issuetype_name,
             labels=[application.type] if application.type else []
         )
-        existing_issues = self.generic_jira.jira.search_issues('"Marketplace Application ID" ~ "{}"'
-                                                               .format(str(application.id)))
+        existing_issues = self.generic_jira.jira.search_issues('"Marketplace Application ID" ~ "{}" '
+                                                               'AND issuetype = "{}"'
+                                                               .format(str(application.id), issuetype_name))
         if len(existing_issues) > 0 and closing_date is None:
             new_issue = existing_issues[0]
             new_issue.update({'duedate': pendulum.now().add(weeks=2).to_date_string(),

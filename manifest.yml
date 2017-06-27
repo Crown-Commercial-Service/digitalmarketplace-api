@@ -2,7 +2,7 @@ command: ./scripts/cf_run_app.sh
 buildpack: https://github.com/cloudfoundry/buildpack-python.git
 health-check-type: port
 instances: 1
-memory: 128M
+memory: 1G
 disk_quota: 512M
 env:
     NEW_RELIC_ENVIRONMENT: staging
