@@ -431,34 +431,67 @@ class Agreement(db.Model):
     url = db.Column(db.String, nullable=False)
     is_current = db.Column(db.Boolean, nullable=True)
 
+    def serialize(self):
+        serialized = {
+            'id': self.id,
+            'version': str(self.version),
+            'url': self.url,
+            'is_current': self.is_current,
+        }
+        return serialized
+
 
 class SignedAgreement(db.Model):
     __tablename__ = 'signed_agreement'
 
     agreement_id = db.Column(
         db.Integer,
-        db.ForeignKey('agreement.id', ondelete='cascade'),
+        db.ForeignKey('agreement.id'),
         primary_key=True,
         nullable=False
     )
     user_id = db.Column(
         db.Integer,
-        db.ForeignKey('user.id', ondelete='cascade'),
+        db.ForeignKey('user.id'),
         primary_key=True,
         nullable=False
     )
     application_id = db.Column(
         db.Integer,
-        db.ForeignKey('application.id', ondelete='cascade'),
-        primary_key=True,
-        nullable=False
+        db.ForeignKey('application.id'),
+        primary_key=False,
+        nullable=True
+    )
+    supplier_code = db.Column(
+        db.Integer,
+        db.ForeignKey('supplier.code'),
+        primary_key=False,
+        nullable=True
     )
     signed_at = db.Column(
         DateTime,
         primary_key=True,
         index=False,
         unique=False,
-        nullable=False)
+        nullable=False,
+        default=utcnow())
+
+    @staticmethod
+    def from_json(as_dict):
+        if 'links' in as_dict:
+            del as_dict['links']
+
+        return SignedAgreement(**as_dict)
+
+    def serialize(self):
+        serialized = {
+            'agreement_id': str(self.agreement_id),
+            'user_id': str(self.user_id),
+            'application_id': str(self.application_id),
+            'supplier_code': str(self.supplier_code),
+            'signed_at': self.signed_at.to_iso8601_string(extended=True),
+        }
+        return serialized
 
 
 class SupplierExtraLinks(db.Model):

@@ -206,7 +206,7 @@ class BaseApplicationTest(object):
     def do_not_provide_access_token(self):
         self.app.wsgi_app = self.app.wsgi_app.app
 
-    def setup_dummy_user(self, id=123, role='buyer'):
+    def setup_dummy_user(self, id=123, role='buyer', supplier_code=None):
         with self.app.app_context():
             if User.query.get(id):
                 return id
@@ -217,6 +217,7 @@ class BaseApplicationTest(object):
                 password="fake password",
                 active=True,
                 role=role,
+                supplier_code=supplier_code,
                 password_changed_at=utcnow()
             )
             db.session.add(user)
