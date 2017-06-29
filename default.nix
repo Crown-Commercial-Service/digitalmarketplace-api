@@ -10,6 +10,8 @@
       pythonPackages.virtualenv
       pkgs.libffi
       pkgs.libyaml
+      # pip requires git to fetch some of its dependencies
+      pkgs.git
       # for `cryptography`
       pkgs.openssl
       # we *would* just depend on the pkgs.postgresql.lib output but pip wants to use the `pg_config` binary during the
