@@ -11,7 +11,7 @@
       pkgs.libffi
       pkgs.libyaml
       # for `cryptography`
-      pkgs.openssl_1_1_0
+      pkgs.openssl
       # we *would* just depend on the pkgs.postgresql.lib output but pip wants to use the `pg_config` binary during the
       # install process
       pkgs.postgresql
