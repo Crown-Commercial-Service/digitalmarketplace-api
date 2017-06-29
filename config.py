@@ -101,7 +101,7 @@ class Config:
 
     GENERIC_EMAIL_DOMAINS = ['gmail.com', 'bigpond.com', 'outlook.com', 'outlook.com.au', 'hotmail.com', 'yahoo.com',
                              'optusnet.com.au', 'msn.com', 'internode.on.net', 'iinet.net.au', 'ozemail.com.au',
-                             'live.com.au', 'digital.gov.au']
+                             'live.com.au', 'digital.gov.au', 'icloud.com']
 
     FRONTEND_ADDRESS = 'https://dm-dev.apps.staging.digital.gov.au'
     ADMIN_ADDRESS = 'https://dm-dev-admin.apps.staging.digital.gov.au'
