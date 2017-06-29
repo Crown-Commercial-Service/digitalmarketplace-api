@@ -17,10 +17,9 @@
       # we *would* just depend on the pkgs.postgresql.lib output but pip wants to use the `pg_config` binary during the
       # install process
       pkgs.postgresql
-    ] ++ pkgs.stdenv.lib.optionals forDev ([
-        # exotic things possibly go here
-      ]
-    );
+    ] ++ pkgs.stdenv.lib.optionals forDev [
+      # exotic things possibly go here
+    ];
 
     hardeningDisable = pkgs.stdenv.lib.optionals pkgs.stdenv.isDarwin [ "format" ];
 
