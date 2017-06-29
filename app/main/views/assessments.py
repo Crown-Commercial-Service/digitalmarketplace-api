@@ -5,6 +5,7 @@ from dmapiclient.audit import AuditTypes
 from app.utils import (get_json_from_request, json_has_required_keys, validate_and_return_updater_request)
 from sqlalchemy.exc import IntegrityError
 from app.jiraapi import get_marketplace_jira
+import json
 
 
 @main.route('/assessments', methods=['POST'])
@@ -92,3 +93,27 @@ def reject_assessment(id):
     except IntegrityError:
         abort(400)
     return jsonify(assessment.serializable), 200
+
+
+@main.route('/assessments/supplier/<int:supplier_code>', methods=['GET'])
+def get_supplier_assessments(supplier_code):
+    existing_assessment = db.session.query(
+        Assessment.id,
+        Assessment.active,
+        SupplierDomain.status,
+        Domain.name
+    ).join(
+        SupplierDomain, Supplier, Domain
+    ).filter(
+        Supplier.code == supplier_code,
+    ).all()
+
+    assessments = {'assessed': [], 'unassessed': []}
+
+    for row in existing_assessment:
+        if row[2] == 'assessed':
+            assessments['assessed'].append(row[3])
+        if row[2] == 'unassessed':
+            assessments['unassessed'].append(row[3])
+
+    return jsonify(assessments), 200
