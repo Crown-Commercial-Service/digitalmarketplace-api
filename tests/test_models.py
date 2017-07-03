@@ -1093,9 +1093,9 @@ class TestFrameworkSupplierIdsMany(BaseApplicationTest, FixtureMixin):
             count = 0
             for supplier_id, service_statuses in zip(supplier_ids, service_status_choices):
                 for service_status in service_statuses:
-                    service_id = str(count)*10
+                    service_id = str(count) * 10
                     count += 1
-                    service = self.setup_dummy_service(service_id, supplier_id=supplier_id, **self.fl_query)
+                    self.setup_dummy_service(service_id, supplier_id=supplier_id, **self.fl_query)
 
                     db.session.commit()
                     with mock.patch('app.models.url_for', autospec=lambda i, **values: 'test.url/test'):

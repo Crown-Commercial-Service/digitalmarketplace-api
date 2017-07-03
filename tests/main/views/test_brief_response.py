@@ -1,5 +1,5 @@
 """Tests for brief response views in app/views/brief_responses.py."""
-from datetime import datetime, timedelta
+from datetime import datetime
 from freezegun import freeze_time
 import json
 import mock
@@ -342,7 +342,6 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
             }
         )
 
-        data = json.loads(res.get_data(as_text=True))
         assert res.status_code == 201
 
     def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_or_nice_to_have_reqs(self, live_dos_framework):
@@ -529,7 +528,7 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
 
     def test_submit_brief_response_creates_an_audit_event(self, live_dos_framework):
         self._setup_existing_brief_response()
-        res = self._submit_brief_response(self.brief_response_id)
+        self._submit_brief_response(self.brief_response_id)
 
         with self.app.app_context():
             audit_events = AuditEvent.query.filter(

@@ -19,14 +19,11 @@ from sqlalchemy.sql.expression import (
     cast as sql_cast,
     select as sql_select,
     false as sql_false,
-    true as sql_true,
     and_ as sql_and,
 )
 from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
-
-import flask_featureflags as feature
 
 from dmutils.formats import DATETIME_FORMAT
 from dmutils.dates import get_publishing_dates
@@ -148,7 +145,6 @@ class Framework(db.Model):
 
     def get_supplier_ids_for_completed_service(self):
         """Only suppliers whose service has a status of submitted or failed."""
-        unpack_list_of_lists = lambda l: set(item for sublist in l for item in sublist)
         results = db.session.query(
             DraftService
         ).filter(
@@ -157,7 +153,8 @@ class Framework(db.Model):
         ).with_entities(
             DraftService.supplier_id
         ).distinct()
-        return unpack_list_of_lists(results)
+        # Unpack list of lists and set
+        return set(item for sublist in results for item in sublist)
 
     @validates('status')
     def validates_status(self, key, value):
@@ -394,9 +391,12 @@ class SupplierFramework(db.Model):
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=True)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True, foreign_keys=(framework_id,))
 
-    prefill_declaration_from_framework = db.relationship(Framework, lazy='joined', innerjoin=False,  foreign_keys=(
-        prefill_declaration_from_framework_id,
-    ))
+    prefill_declaration_from_framework = db.relationship(
+        Framework,
+        lazy='joined',
+        innerjoin=False,
+        foreign_keys=[prefill_declaration_from_framework_id]
+    )
 
     prefill_declaration_from_supplier_framework = db.relationship(
         "SupplierFramework",
@@ -1230,11 +1230,16 @@ class Brief(db.Model):
 
     @applications_closed_at.expression
     def applications_closed_at(cls):
-        return sql_case([
-            (cls.data['requirementsLength'].astext == '1 week', func.date_trunc('day', cls.published_at) + sql_cast(
-                '1 week 23:59:59', INTERVAL)),
-            ], else_=func.date_trunc('day', cls.published_at) + sql_cast(
-                '2 weeks 23:59:59', INTERVAL))
+        """
+        Set the applications_closed_at based on whether a brief has 'requirementsLength' one week or two weeks.
+        """
+        is_one_week = cls.data['requirementsLength'].astext == '1 week'
+        one_week_addition_function = func.date_trunc('day', cls.published_at) + sql_cast('1 week 23:59:59', INTERVAL)
+        two_week_addition_function = func.date_trunc('day', cls.published_at) + sql_cast('2 weeks 23:59:59', INTERVAL)
+        return sql_case(
+            [(is_one_week, one_week_addition_function)],
+            else_=two_week_addition_function
+        )
 
     @hybrid_property
     def clarification_questions_closed_at(self_or_cls):

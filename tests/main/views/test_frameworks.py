@@ -669,7 +669,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
 
             # (Almost) everyone is on G-Cloud 8
             for supplier_id in range(11):
-                with freeze_time(datetime.datetime(2016, 10, supplier_id+2)):
+                with freeze_time(datetime.datetime(2016, 10, supplier_id + 2)):
                     response = self.client.put(
                         '/suppliers/{}/frameworks/g-cloud-8'.format(supplier_id),
                         data=json.dumps({
@@ -678,7 +678,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
                         content_type='application/json')
                     assert response.status_code == 201, response.get_data(as_text=True)
 
-                with freeze_time(datetime.datetime(2016, 10, supplier_id+2, 10)):
+                with freeze_time(datetime.datetime(2016, 10, supplier_id + 2, 10)):
                     response = self.client.put(
                         '/suppliers/{}/frameworks/g-cloud-8/declaration'.format(supplier_id),
                         data=json.dumps({
@@ -691,7 +691,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
                         content_type='application/json')
                     assert response.status_code == 201, response.get_data(as_text=True)
 
-                with freeze_time(datetime.datetime(2016, 10, supplier_id+3)):
+                with freeze_time(datetime.datetime(2016, 10, supplier_id + 3)):
                     response = self.client.post(
                         '/suppliers/{}/frameworks/g-cloud-8'.format(supplier_id),
                         data=json.dumps({
@@ -706,7 +706,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
             # Suppliers 1-10 have started to return a G-Cloud 8 agreement (created a draft)
             agreement_ids = {}
             for supplier_id in range(1, 11):
-                with freeze_time(datetime.datetime(2016, 11, (supplier_id+1)*2)):
+                with freeze_time(datetime.datetime(2016, 11, (supplier_id + 1) * 2)):
                     response = self.client.post(
                         '/agreements',
                         data=json.dumps({
@@ -732,7 +732,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
                 assert response.status_code == 201, response.get_data(as_text=True)
 
             for supplier_id in range(1, 11):
-                with freeze_time(datetime.datetime(2016, 11, (supplier_id+1)*2, 10)):
+                with freeze_time(datetime.datetime(2016, 11, (supplier_id + 1) * 2, 10)):
                     response = self.client.post(
                         '/agreements/{}'.format(agreement_ids[supplier_id]),
                         data=json.dumps({
@@ -751,7 +751,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
 
             # Suppliers 3-10 have returned their G-Cloud 8 agreement
             for supplier_id in range(3, 11):
-                with freeze_time(datetime.datetime(2016, 11, 30, 11-supplier_id)):
+                with freeze_time(datetime.datetime(2016, 11, 30, 11 - supplier_id)):
                     response = self.client.post(
                         '/agreements/{}/sign'.format(agreement_ids[supplier_id]),
                         data=json.dumps({
@@ -768,7 +768,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
 
             # Supplier 4 and 9's agreements were put on hold (only 4 subsequently remained on hold)
             for supplier_id in (4, 9,):
-                with freeze_time(datetime.datetime(2016, 11, 30, 12-(supplier_id//3))):
+                with freeze_time(datetime.datetime(2016, 11, 30, 12 - (supplier_id // 3))):
                     response = self.client.post(
                         '/agreements/{}/on-hold'.format(agreement_ids[supplier_id]),
                         data=json.dumps({'updated_by': 'example'}),
@@ -778,7 +778,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
 
             # Suppliers 6-10 have been approved for countersignature
             for supplier_id in range(6, 11):
-                with freeze_time(datetime.datetime(2016, 11, 30, 15-supplier_id)):
+                with freeze_time(datetime.datetime(2016, 11, 30, 15 - supplier_id)):
                     response = self.client.post(
                         '/agreements/{}/approve'.format(agreement_ids[supplier_id]),
                         data=json.dumps({
@@ -791,7 +791,7 @@ class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
 
             # Suppliers 7-10 have countersigned agreements
             for supplier_id in range(7, 11):
-                with freeze_time(datetime.datetime(2016, 12, 25, 5+supplier_id)):
+                with freeze_time(datetime.datetime(2016, 12, 25, 5 + supplier_id)):
                     response = self.client.post(
                         '/agreements/{}'.format(agreement_ids[supplier_id]),
                         data=json.dumps({

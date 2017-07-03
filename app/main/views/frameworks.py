@@ -1,15 +1,12 @@
 from flask import jsonify, abort, request
-from sqlalchemy.types import String
 from sqlalchemy.exc import IntegrityError, DataError
-from sqlalchemy import func, orm, case, cast
+from sqlalchemy import func, orm, case
 import datetime
 
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
 from .. import main
-from ...models import (
-    db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent, Lot, FrameworkAgreement
-)
+from ...models import db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent, Lot
 from ...utils import (
     get_json_from_request, json_has_required_keys, json_only_has_required_keys,
     validate_and_return_updater_request,
@@ -59,10 +56,10 @@ def create_framework():
                 data={'update': json_payload['frameworks']})
         )
         db.session.commit()
-    except DataError as e:
+    except DataError:
         db.session.rollback()
         abort(400, "Invalid framework")
-    except IntegrityError as e:
+    except IntegrityError:
         db.session.rollback()
         abort(400, "Slug '{}' already in use".format(json_payload["frameworks"]["slug"]))
 

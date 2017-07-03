@@ -1,7 +1,6 @@
 from flask import jsonify, abort, request, current_app
 from datetime import datetime, timedelta
 from ...models import AuditEvent
-from sqlalchemy import asc, desc, Date, cast
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import true, false
 from sqlalchemy.orm import class_mapper
@@ -117,11 +116,11 @@ def list_audits():
 
     if earliest_for_each_object:
         if not (
-                acknowledged and
-                convert_to_boolean(acknowledged) is False and
-                audit_type == "update_service" and
-                object_type == "services"
-                ):
+            acknowledged and
+            convert_to_boolean(acknowledged) is False and
+            audit_type == "update_service" and
+            object_type == "services"
+        ):
             current_app.logger.warning(
                 "earliest_for_each_object option currently intended for use on acknowledged update_service events. "
                 "If use with any other events is to be regular, the scope of the corresponding partial index "
@@ -226,11 +225,11 @@ def acknowledge_audit(audit_id):
 # this is a "view without a route" for at the moment - it is used as an "inner" view implementation for the service
 # updates acknowledgement view
 def acknowledge_including_previous(
-        audit_id,
-        restrict_object_id=None,
-        restrict_object_type=None,
-        restrict_audit_type=None,
-        ):
+    audit_id,
+    restrict_object_id=None,
+    restrict_object_type=None,
+    restrict_audit_type=None,
+):
     updater_json = validate_and_return_updater_request()
 
     audit_event_query = db.session.query(AuditEvent)

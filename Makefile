@@ -40,7 +40,7 @@ freeze-requirements:
 	rm -rf venv-freeze
 
 .PHONY: test
-test: test-requirements test-pep8 test-migrations test-unit
+test: test-requirements test-flake8 test-migrations test-unit
 
 .PHONY: test-requirements
 test-requirements:
@@ -49,9 +49,8 @@ test-requirements:
 	         echo "Run 'make freeze-requirements' to update."; exit 1; } \
 	    || { echo "requirements.txt is up to date"; exit 0; }
 
-.PHONY: test-pep8
-test-pep8: virtualenv
-	${VIRTUALENV_ROOT}/bin/pep8 .
+.PHONY test-flake8: virtualenv
+	${VIRTUALENV_ROOT}/bin/flake8 .
 
 .PHONY: test-migrations
 test-migrations: virtualenv

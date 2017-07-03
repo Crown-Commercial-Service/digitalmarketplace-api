@@ -1562,9 +1562,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
 
     def test_setting_unsetting_prefill_declaration_from_framework_happy_path(
-            self,
-            open_g8_framework_live_dos_framework_suppliers_on_framework,
-            ):
+        self,
+        open_g8_framework_live_dos_framework_suppliers_on_framework,
+    ):
         with self.app.app_context():
             supplier_framework = SupplierFramework.query.filter(
                 SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
@@ -1601,9 +1601,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] is None
 
     def test_setting_prefill_declaration_from_framework_invalid_framework_slug(
-            self,
-            open_g8_framework_live_dos_framework_suppliers_on_framework,
-            ):
+        self,
+        open_g8_framework_live_dos_framework_suppliers_on_framework,
+    ):
         with self.app.app_context():
             supplier_framework = SupplierFramework.query.filter(
                 SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
@@ -1621,9 +1621,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
 
     def test_multiple_simultaneous_property_updates(
-            self,
-            open_g8_framework_live_dos_framework_suppliers_on_framework,
-            ):
+        self,
+        open_g8_framework_live_dos_framework_suppliers_on_framework,
+    ):
         with self.app.app_context():
             supplier_framework = SupplierFramework.query.filter(
                 SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
@@ -1664,9 +1664,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             assert self._latest_supplier_update_audit_event(supplier_framework2["supplierId"]).id == audit.id
 
     def test_setting_prefill_declaration_from_framework_supplier_not_on_other_framework(
-            self,
-            open_g8_framework_live_dos_framework_suppliers_dos_sf,
-            ):
+        self,
+        open_g8_framework_live_dos_framework_suppliers_dos_sf,
+    ):
         with self.app.app_context():
             supplier_framework = SupplierFramework.query.filter(
                 SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
@@ -1705,9 +1705,8 @@ class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
         assert response2.status_code == 404
 
     def test_agree_variation_fails_with_supplier_not_on_framework(
-            self,
-            live_g8_framework_2_variations_suppliers_not_on_framework,
-            ):
+        self, live_g8_framework_2_variations_suppliers_not_on_framework
+    ):
         response = self.client.put("/suppliers/1/frameworks/g-cloud-8/variation/banana", data=json.dumps({
             "updated_by": "test123",
             "agreedVariations": {
@@ -1722,9 +1721,9 @@ class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
         assert not json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"]
 
     def test_agree_variation_fails_with_invalid_variation(
-            self,
-            live_g8_framework_2_variations_suppliers_on_framework,
-            ):
+        self,
+        live_g8_framework_2_variations_suppliers_on_framework,
+    ):
         response = self.client.put("/suppliers/1/frameworks/g-cloud-8/variation/mango", data=json.dumps({
             "updated_by": "test123",
             "agreedVariations": {
@@ -1739,9 +1738,9 @@ class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
         assert not json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"]
 
     def test_agree_variation_fails_with_no_framework_variations(
-            self,
-            live_g8_framework_suppliers_on_framework,
-            ):
+        self,
+        live_g8_framework_suppliers_on_framework,
+    ):
         response = self.client.put("/suppliers/1/frameworks/g-cloud-8/variation/banana", data=json.dumps({
             "updated_by": "test123",
             "agreedVariations": {
@@ -1756,9 +1755,9 @@ class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
         assert not json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"]
 
     def test_agree_variation_fails_with_unrelated_user_id(
-            self,
-            live_g8_framework_2_variations_suppliers_on_framework_with_alt,
-            ):
+        self,
+        live_g8_framework_2_variations_suppliers_on_framework_with_alt,
+    ):
         response = self.client.put("/suppliers/1/frameworks/g-cloud-8/variation/banana", data=json.dumps({
             "updated_by": "test123",
             "agreedVariations": {
@@ -1779,9 +1778,9 @@ class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
         assert not json.loads(response3.get_data())["frameworkInterest"]["agreedVariations"]
 
     def test_agree_variation_fails_with_invalid_user_id(
-            self,
-            live_g8_framework_2_variations_suppliers_on_framework,
-            ):
+        self,
+        live_g8_framework_2_variations_suppliers_on_framework,
+    ):
         response = self.client.put("/suppliers/1/frameworks/g-cloud-8/variation/banana", data=json.dumps({
             "updated_by": "test123",
             "agreedVariations": {
@@ -1796,10 +1795,10 @@ class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
         assert not json.loads(response2.get_data())["frameworkInterest"]["agreedVariations"]
 
     def test_agree_variation_succeeds(
-            self,
-            app,
-            live_g8_framework_2_variations_suppliers_on_framework_with_alt,
-            ):
+        self,
+        app,
+        live_g8_framework_2_variations_suppliers_on_framework_with_alt,
+    ):
         with freeze_time('2016-06-06'):
             response = self.client.put("/suppliers/1/frameworks/g-cloud-8/variation/banana", data=json.dumps({
                 "updated_by": "test123",
@@ -1844,10 +1843,10 @@ class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
             }
 
     def test_agree_variation_various(
-            self,
-            app,
-            live_g8_framework_2_variations_suppliers_on_framework_with_alt,
-            ):
+        self,
+        app,
+        live_g8_framework_2_variations_suppliers_on_framework_with_alt,
+    ):
         # this test tests quite a few things in one. in an ideal world all these things would be tested separately,
         # but some of these features require me to build up a bit of prior state for them to come in to play and my
         # reasoning is that i may as well be testing those bits i'm using to set things up as i set them up. this way

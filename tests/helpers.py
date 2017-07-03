@@ -66,7 +66,6 @@ class FixtureMixin(object):
         user_id = self.setup_dummy_user(id=user_id)
 
         with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             lot = Lot.query.filter(Lot.slug == lot).first()
             data = data or COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
             data['title'] = title

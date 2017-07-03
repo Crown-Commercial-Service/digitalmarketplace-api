@@ -9,7 +9,7 @@ from tests.bases import BaseApplicationTest
 
 from dmapiclient.audit import AuditTypes
 from app import db
-from app.models import Brief, Framework
+from app.models import Framework
 
 
 class FrameworkSetupAndTeardown(BaseApplicationTest, FixtureMixin):
@@ -622,7 +622,7 @@ class TestListBrief(FrameworkSetupAndTeardown):
                                 published_at=(today + timedelta(days=-9)), brief_start=2)
         self.setup_dummy_briefs(1, data={'requirementsLength': '1 week'}, status=None, title='Third',
                                 published_at=(today + timedelta(days=-8)), brief_start=3)
-        self.setup_dummy_briefs(1, data={'requirementsLength': '1 week'}, status=None,  title='Fourth',
+        self.setup_dummy_briefs(1, data={'requirementsLength': '1 week'}, status=None, title='Fourth',
                                 published_at=(today + timedelta(days=-2)), brief_start=4)
 
         res = self.client.get('/briefs?human=True')
@@ -753,7 +753,6 @@ class TestPublishAndWithdrawBrief(FrameworkSetupAndTeardown):
                 'update_details': {'updated_by': 'example'}
             }),
             content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
 
@@ -802,7 +801,6 @@ class TestPublishAndWithdrawBrief(FrameworkSetupAndTeardown):
                 'update_details': {'updated_by': 'example'}
             }),
             content_type='application/json')
-        data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
 

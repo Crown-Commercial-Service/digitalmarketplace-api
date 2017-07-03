@@ -65,9 +65,9 @@ class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
             audit_events = []
 
             for (ref_model, ref_model_ids), (obj_id, audit_type, created_at, acknowledged_at) in chain(
-                    izip(repeat((Service, service_ids,)), service_audit_event_params),
-                    izip(repeat((Supplier, supplier_ids,)), supplier_audit_event_params),
-                    ):
+                izip(repeat((Service, service_ids,)), service_audit_event_params),
+                izip(repeat((Supplier, supplier_ids,)), supplier_audit_event_params),
+            ):
                 ae = AuditEvent(audit_type, "henry.flower@example.com", {}, ref_model(id=ref_model_ids[obj_id]))
                 ae.created_at = created_at
                 ae.acknowledged_at = acknowledged_at
@@ -79,7 +79,7 @@ class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
             db.session.commit()
             # make a note of the ids that were given to these events, or rather the order they were generated
             audit_event_id_lookup = {ae.id: i for i, ae in enumerate(audit_events)}
-            assert AuditEvent.query.count() == len(service_audit_event_params)+len(supplier_audit_event_params)
+            assert AuditEvent.query.count() == len(service_audit_event_params) + len(supplier_audit_event_params)
 
             return audit_event_id_lookup
 
@@ -257,12 +257,12 @@ class TestSupplierUpdateAcknowledgement(BaseTestAuditEvents):
         ),
     )
     def test_acknowledge_including_previous_happy_path(
-            self,
-            service_audit_event_params,
-            supplier_audit_event_params,
-            target_audit_event_id,
-            expected_resp_events,
-            ):
+        self,
+        service_audit_event_params,
+        supplier_audit_event_params,
+        target_audit_event_id,
+        expected_resp_events,
+    ):
         self.setup_dummy_suppliers(5)
         self.setup_dummy_services(5, supplier_id=1)
         audit_event_id_lookup = self.add_audit_events_by_param_tuples(
@@ -606,12 +606,12 @@ class TestAuditEvents(BaseTestAuditEvents):
         ),
     )
     def test_earliest_for_each_object(
-            self,
-            service_audit_event_params,
-            supplier_audit_event_params,
-            req_params,
-            expected_resp_events,
-            ):
+        self,
+        service_audit_event_params,
+        supplier_audit_event_params,
+        req_params,
+        expected_resp_events,
+    ):
         self.setup_dummy_suppliers(5)
         self.setup_dummy_services(5, supplier_id=1)
         audit_event_id_lookup = self.add_audit_events_by_param_tuples(
@@ -731,7 +731,6 @@ class TestAuditEvents(BaseTestAuditEvents):
         self.add_audit_events_with_db_object()
 
         response = self.client.get('/audit-events?object-type=suppliers&object-id=100000')
-        data = json.loads(response.get_data())
 
         assert_equal(response.status_code, 404)
 
@@ -1121,7 +1120,7 @@ class TestGetAuditEvent(BaseTestAuditEvents):
         assert data["auditEvents"]["user"] == "rob"
 
     def test_get_nonexisting_audit_event(self):
-        event_ids = self.add_audit_events_with_db_object()
+        self.add_audit_events_with_db_object()
 
         response = self.client.get('/audit-events/314159')
 

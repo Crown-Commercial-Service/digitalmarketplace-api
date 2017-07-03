@@ -20,7 +20,7 @@ function display_result {
   fi
 }
 
-pep8 .
+flake8 .
 display_result $? 1 "Code style check"
 
 ./scripts/list_migrations.py 1>/dev/null

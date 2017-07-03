@@ -1120,7 +1120,7 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
                 created_at=datetime.now(),
                 password_changed_at=datetime.now(),
                 role='admin-ccs-sourcing'
-                )
+            )
             db.session.add(user)
             db.session.commit()
 

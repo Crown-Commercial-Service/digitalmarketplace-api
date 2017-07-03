@@ -3,7 +3,7 @@ from hypothesis import settings
 from hypothesis.strategies import (
     fixed_dictionaries, lists,
     booleans, integers, text, none,
-    composite, sampled_from, one_of,
+    composite, one_of,
     just)
 
 from functools import partial

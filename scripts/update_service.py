@@ -41,7 +41,7 @@ def update(base_url, access_token, filename, service_id):
             headers={
                 "content-type": "application/json",
                 "authorization": "Bearer {}".format(access_token),
-                }
+            }
         )
         print(response.status_code)
         print(response.text)

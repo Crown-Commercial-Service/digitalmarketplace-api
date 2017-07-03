@@ -203,7 +203,7 @@ def headers(questions):
     csv_headers.append('Digital Marketplace Duns number')
     csv_headers.append('State of Declaration')
     for index, value in enumerate(questions):
-        csv_headers.append("{}:{}".format(index+1, value))
+        csv_headers.append("{}:{}".format(index + 1, value))
     return csv_headers
 
 

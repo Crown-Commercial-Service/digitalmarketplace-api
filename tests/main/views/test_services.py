@@ -255,7 +255,6 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
         self.setup_dummy_services_including_unpublished(1)
         response = self.client.get('/services')
         data = json.loads(response.get_data())
-        service = data['services'][0]
 
         framework_info = {
             key: value for key, value in data['services'][0].items()
@@ -995,7 +994,6 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, FixtureMixin):
 class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestShouldCallSearchApiOnPostStatusUpdate, self).setup()
-        now = datetime.utcnow()
         self.services = {}
 
         valid_statuses = ServiceTableMixin.STATUSES

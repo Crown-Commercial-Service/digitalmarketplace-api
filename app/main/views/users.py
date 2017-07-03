@@ -1,6 +1,5 @@
 from datetime import datetime
 from dmapiclient.audit import AuditTypes
-from sqlalchemy import func
 from sqlalchemy.orm import lazyload
 from sqlalchemy.exc import IntegrityError, DataError
 from flask import jsonify, abort, request, current_app
@@ -55,12 +54,12 @@ def list_users():
     # email_address is a primary key
     email_address = request.args.get('email_address')
     if email_address:
-        user = user_query.filter(
+        single_user = user_query.filter(
             User.email_address == email_address.lower()
         ).first_or_404()
 
         return jsonify(
-            users=[user.serialize()],
+            users=[single_user.serialize()],
             links={}
         )
 
@@ -93,11 +92,7 @@ def list_users():
 
     return jsonify(
         users=[user.serialize() for user in users.items],
-        links=pagination_links(
-            users,
-            '.list_users',
-            request.args
-        )
+        links=pagination_links(users, '.list_users', request.args)
     )
 
 
