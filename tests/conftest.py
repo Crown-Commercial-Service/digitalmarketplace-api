@@ -176,7 +176,7 @@ def _add_framework(request, app, slug, **kwargs):
     def teardown():
         with app.app_context():
             FrameworkLot.query.filter(FrameworkLot.framework_id == framework.id).delete()
-            Framework.query.filter(Framework.slug == slug).delete()
+            Framework.query.filter(Framework.id == framework.id).delete()
             db.session.commit()
 
     request.addfinalizer(teardown)
@@ -192,8 +192,10 @@ def _add_lot_for_framework(request, app, framework_slug, lot_slug):
     with app.app_context():
         framework = Framework.query.filter(Framework.slug == framework_slug).first()
         lot = Lot.query.filter(Lot.slug == lot_slug).first()
-        if not FrameworkLot.query.filter(FrameworkLot.framework_id == framework.id). \
-                filter(FrameworkLot.lot_id == lot.id).first():
+        existing_framework_lot = FrameworkLot.query.filter(
+            FrameworkLot.framework_id == framework.id, FrameworkLot.lot_id == lot.id
+        ).first()
+        if not existing_framework_lot:
             framework_lot = FrameworkLot(framework_id=framework.id, lot_id=lot.id)
             db.session.add(framework_lot)
             db.session.commit()
