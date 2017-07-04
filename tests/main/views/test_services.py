@@ -1404,6 +1404,31 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             assert response.status_code == 200
             assert data['services']['supplierName'] == u'Supplier 1'
 
+    @mock.patch('app.search_api_client')
+    def test_cannot_update_existing_service_by_put(self, search_api_client):
+        with self.app.app_context():
+            search_api_client.return_value = "bar"
+            response = self.client.put(
+                '/services/{}'.format(self.service_id),
+                data=json.dumps({
+                    'updated_by': 'joeblogs',
+                    'services': self.service
+                }),
+                content_type='application/json')
+
+            response = self.client.get("/services/{}".format(self.service_id))
+            new_service_id = json.loads(response.get_data())["services"]["id"]
+
+            response = self.client.put(
+                '/services/{}'.format(new_service_id),
+                data=json.dumps({
+                    'updated_by': 'joeblogs',
+                    'services': self.service
+                }),
+                content_type='application/json')
+            assert response.status_code == 400
+            assert json.loads(response.get_data())["error"] == "Cannot update service by PUT"
+
 
 class TestGetService(BaseApplicationTest):
     def setup(self):
