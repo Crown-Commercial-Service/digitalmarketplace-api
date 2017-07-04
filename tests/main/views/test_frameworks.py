@@ -3,6 +3,8 @@ import datetime
 from flask import json
 from nose.tools import assert_equal, assert_in
 from freezegun import freeze_time
+import mock
+from sqlalchemy.exc import IntegrityError
 
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from app.models import db, Framework, SupplierFramework, DraftService, User, FrameworkLot
@@ -377,6 +379,22 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
                 response = self.post_framework_update({
                     'frameworkAgreementDetails': invalid_value
                 })
+                assert response.status_code == 400
+
+    @mock.patch('app.db.session.commit')
+    def test_update_framework_catches_db_errors(self, db_commit, open_example_framework):
+        db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
+        valid_attributes_and_values = {
+            key: value for key, value in self.framework_attributes_and_values_for_update.items()
+            if key in self.attribute_whitelist
+        }
+
+        with self.app.app_context():
+            for key, value in valid_attributes_and_values.items():
+                response = self.post_framework_update({
+                    key: value
+                })
+
                 assert response.status_code == 400
 
 
