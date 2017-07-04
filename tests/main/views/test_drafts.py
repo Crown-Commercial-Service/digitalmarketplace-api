@@ -4,7 +4,7 @@ from flask import json
 import mock
 from app.models import Supplier, ContactInformation, Service, Framework, DraftService
 from app import db
-
+from sqlalchemy.exc import IntegrityError
 from tests.helpers import FixtureMixin, load_example_listing
 
 
@@ -199,6 +199,17 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
             content_type='application/json')
         assert res.status_code == 404
 
+    @mock.patch('app.db.session.commit')
+    def test_copy_from_existing_service_catches_db_integrity_error(self, db_commit):
+        db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        assert res.status_code == 400
+        assert "Could not commit" in json.loads(res.get_data())['error']
+
     def test_reject_invalid_service_id_on_get(self):
         res = self.client.get('/draft-services?service_id=invalid-id!')
         assert res.status_code == 400
@@ -266,6 +277,17 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         assert data['auditEvents'][0]['type'] == 'create_draft_service'
         assert data['auditEvents'][0]['data']['draftId'] == draft_id
         assert data['auditEvents'][0]['data']['draftJson'] == self.create_draft_json['services']
+
+    @mock.patch('app.db.session.commit')
+    def test_create_draft_catches_db_integrity_error(self, db_commit):
+        db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
+        res = self.client.post(
+            '/draft-services',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+
+        assert res.status_code == 400
+        assert "Could not commit" in json.loads(res.get_data())['error']
 
     def test_should_not_create_draft_with_invalid_data(self):
         invalid_create_json = self.create_draft_json.copy()
@@ -445,6 +467,23 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         assert 'serviceName' not in updated_draft
         assert 'serviceBenefits' not in updated_draft
 
+    def test_update_draft_catches_db_integrity_error(self):
+        draft_id = self.create_draft_service()['id']
+        draft_update_json = self.updater_json.copy()
+        draft_update_json['services'] = {
+            'serviceTypes': ['Implementation'],
+            'serviceBenefits': ['Tests pass']
+        }
+        with mock.patch('app.db.session.commit') as db_commit:
+            db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
+            res = self.client.post(
+                '/draft-services/{}'.format(draft_id),
+                data=json.dumps(draft_update_json),
+                content_type='application/json')
+
+            assert res.status_code == 400
+            assert "Could not commit" in json.loads(res.get_data())['error']
+
     def test_validation_errors_returned_for_invalid_update_of_new_draft(self):
         res = self.client.post(
             '/draft-services',
@@ -612,6 +651,22 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
 
         fetch_again = self.client.get('/draft-services/{}'.format(draft_id))
         assert fetch_again.status_code == 404
+
+    def test_delete_catches_db_integrity_error(self):
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        draft_id = json.loads(res.get_data())['services']['id']
+        with mock.patch('app.db.session.commit') as db_commit:
+            db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
+            res = self.client.delete(
+                '/draft-services/{}'.format(draft_id),
+                data=json.dumps(self.updater_json),
+                content_type='application/json')
+
+            assert res.status_code == 400
+            assert "Could not commit" in json.loads(res.get_data())['error']
 
     def test_should_be_able_to_update_a_draft(self):
         res = self.client.put(
@@ -1085,6 +1140,17 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
         assert "serviceDefinitionDocumentURL" not in data['services']
         assert "sfiaRateDocumentURL" not in data['services']
 
+    @mock.patch('app.db.session.commit')
+    def test_copy_draft_service_should_catch_db_integrity_error(self, db_commit):
+        db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
+        res = self.client.post(
+            '/draft-services/%s/copy' % self.draft_id,
+            data=json.dumps({'updated_by': 'joeblogs'}),
+            content_type='application/json')
+
+        assert res.status_code == 400
+        assert "Could not commit" in json.loads(res.get_data())['error']
+
 
 class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = '/draft-services/{self.draft_id}/complete'
@@ -1183,6 +1249,17 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
         assert res.status_code == 400
         errors = json.loads(res.get_data())['error']
         assert 'serviceSummary' in errors
+
+    @mock.patch('app.db.session.commit')
+    def test_complete_draft_catches_db_integrity_errors(self, db_commit):
+        db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
+        res = self.client.post(
+            '/draft-services/%s/complete' % self.draft_id,
+            data=json.dumps({'updated_by': 'joeblogs'}),
+            content_type='application/json')
+
+        assert res.status_code == 400
+        assert "Could not commit" in json.loads(res.get_data())['error']
 
 
 class TestDOSServices(BaseApplicationTest, FixtureMixin):
@@ -1513,3 +1590,14 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert res.status_code == 400
         assert json.loads(res.get_data()) == {"error": "'INVALID-STATUS' is not a valid status"}
+
+    @mock.patch('app.db.session.commit')
+    def test_update_draft_catches_db_integrity_errors(self, db_commit):
+        db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
+        res = self.client.post(
+            '/draft-services/%s/update-status' % self.draft_id,
+            data=json.dumps({'services': {'status': 'failed'}, 'updated_by': 'joeblogs'}),
+            content_type='application/json')
+
+        assert res.status_code == 400
+        assert "Could not commit" in json.loads(res.get_data())['error']
