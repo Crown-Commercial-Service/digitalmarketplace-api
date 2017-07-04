@@ -7,7 +7,7 @@
 # W503: line break before binary operator
 exclude = venv,venv3,__pycache__,node_modules,bower_components
 ignore = D203,W503
-max-complexity = 7
+max-complexity = 24
 max-line-length = 120
 putty-ignore =
     **/__init__.py : +F401
