@@ -361,7 +361,6 @@ class TestFetchAndListDraftServices(DraftServicesTestBase):
         assert res.status_code == 201
 
         data = json.loads(res.get_data())
-
         res = self.client.get('/draft-services/{}'.format(data['services']['id']))
         assert res.status_code == 200
         data = json.loads(res.get_data())
