@@ -522,6 +522,22 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
         assert response.status_code == 400
         assert "Unable to commit" in json.loads(response.get_data())["error"]
 
+    @mock.patch('app.db.session.commit')
+    def test_create_user_catches_db_errors(self, db_commit):
+        db_commit.side_effect = DataError("Unable to commit", orig=None, params={})
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@email.gov.uk',
+                    'phoneNumber': '01234 567890',
+                    'password': '1234567890',
+                    'role': 'buyer',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+        assert response.status_code == 400
+        assert json.loads(response.get_data())["error"] == "Invalid user role"
+
 
 class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
     method = "post"
