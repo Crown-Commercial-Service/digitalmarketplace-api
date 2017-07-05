@@ -214,6 +214,12 @@ def list_brief_responses():
     if brief_id is not None:
         brief_responses = brief_responses.filter(BriefResponse.brief_id == brief_id)
 
+    brief_responses = brief_responses.options(
+        db.defaultload(BriefResponse.brief).defaultload(Brief.framework).lazyload("*"),
+        db.defaultload(BriefResponse.brief).defaultload(Brief.lot).lazyload("*"),
+        db.defaultload(BriefResponse.supplier).lazyload("*"),
+    )
+
     if brief_id or supplier_id:
         return jsonify(
             briefResponses=[brief_response.serialize() for brief_response in brief_responses.all()],
