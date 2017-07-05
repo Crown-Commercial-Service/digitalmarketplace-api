@@ -30,7 +30,7 @@ def auth_user():
 
     user = User.get_by_email_address(json_payload['emailAddress'].lower())
 
-    if user is None:
+    if user is None or (user.supplier and user.supplier.status == 'deleted'):
         return jsonify(authorization=False), 404
     elif encryption.authenticate_user(json_payload['password'], user) and user.active:
         user.logged_in_at = datetime.utcnow()

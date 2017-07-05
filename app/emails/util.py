@@ -1,6 +1,6 @@
 from jinja2 import Environment, PackageLoader, select_autoescape
 from .markdown_styler import markdown_with_inline_styles
-from flask import current_app, url_for
+from flask import current_app, url_for, abort
 from dmutils.email import send_email, EmailError
 import six
 import rollbar

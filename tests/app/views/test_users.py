@@ -127,6 +127,39 @@ class TestUsersAuth(BaseUserTest):
             data = json.loads(response.get_data())
             assert_equal(data['authorization'], False)
 
+    def test_should_return_404_for_deleted_supplier_user(self):
+        with self.app.app_context():
+            db.session.add(
+                Supplier(code=1,
+                         name=u"Supplier 1",
+                         status="deleted",
+                         addresses=[Address(address_line="{} Dummy Street",
+                                            suburb="Dummy",
+                                            state="ZZZ",
+                                            postal_code="0000",
+                                            country='Australia')])
+            )
+            db.session.commit()
+            user = {
+                'emailAddress': 'joeblogs@email.com',
+                'password': '1234567890',
+                'role': 'supplier',
+                'supplierCode': 1,
+                'name': 'joe bloggs'
+            }
+            self._post_user(user)
+            response = self.client.post(
+                '/users/auth',
+                data=json.dumps({
+                    'authUsers': {
+                        'emailAddress': 'joeblogs@email.com',
+                        'password': '1234567890'}}),
+                content_type='application/json')
+
+            assert_equal(response.status_code, 404)
+            data = json.loads(response.get_data())
+            assert_equal(data['authorization'], False)
+
     def test_should_return_403_for_bad_password(self):
         self.create_user()
         with self.app.app_context():

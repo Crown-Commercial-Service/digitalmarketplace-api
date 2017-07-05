@@ -50,6 +50,8 @@ def list_suppliers():
     else:
         suppliers = Supplier.query.filter((Supplier.name == name) | (Supplier.long_name == name))
 
+    suppliers = suppliers.filter(Supplier.status != 'deleted')
+
     if prefix:
         if prefix == 'other':
             suppliers = suppliers.filter(
@@ -87,7 +89,8 @@ def list_suppliers():
 @main.route('/suppliers/<int:code>', methods=['GET'])
 def get_supplier(code):
     supplier = Supplier.query.filter(
-        Supplier.code == code
+        Supplier.code == code,
+        Supplier.status != 'deleted'
     ).first_or_404()
 
     supplier.get_service_counts()
@@ -99,9 +102,8 @@ def delete_supplier(code):
     supplier = Supplier.query.filter(
         Supplier.code == code
     ).first_or_404()
-
+    supplier.status = 'deleted'
     try:
-        db.session.delete(supplier)
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
@@ -113,7 +115,7 @@ def delete_supplier(code):
 @main.route('/suppliers/count', methods=['GET'])
 def get_suppliers_stats():
     suppliers = {
-        "total": Supplier.query.filter(Supplier.abn != Supplier.DUMMY_ABN).count()
+        "total": Supplier.query.filter(Supplier.abn != Supplier.DUMMY_ABN, Supplier.status != 'deleted').count()
     }
 
     return jsonify(suppliers=suppliers)
@@ -198,7 +200,9 @@ def product_search():
     for x in range(len(results)):
         if results[x][1] is not None:
             results[x][0].summary = results[x][1]
-    results = [results[x][0] for x in range(len(results)) if results[x][0].supplier.abn != Supplier.DUMMY_ABN]
+    results = [results[x][0] for x in range(len(results)) if
+               (results[x][0].supplier.abn != Supplier.DUMMY_ABN and
+                results[x][0].supplier.status != 'deleted')]
 
     total_results = len(results)
 
@@ -302,7 +306,9 @@ def casestudies_search():
     for x in range(len(results)):
         if results[x][1] is not None:
             results[x][0].data['approach'] = results[x][1]
-    results = [results[x][0] for x in range(len(results)) if results[x][0].supplier.abn != Supplier.DUMMY_ABN]
+    results = [results[x][0] for x in range(len(results)) if
+               (results[x][0].supplier.abn != Supplier.DUMMY_ABN and
+                results[x][0].supplier.status != 'deleted')]
 
     total_results = len(results)
 
@@ -380,6 +386,8 @@ def do_search(search_query, offset, result_count, new_domains):
         q = db.session.query(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
     else:
         q = db.session.query(Supplier).outerjoin(PriceSchedule).outerjoin(ServiceRole)
+
+    q = q.filter(Supplier.status != 'deleted')
 
     q = q.add_column(func.ts_headline(
         'english',

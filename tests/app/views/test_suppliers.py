@@ -45,6 +45,11 @@ class TestGetSupplier(BaseApplicationTest):
         response = self.client.get('/suppliers/abc123')
         assert_equal(404, response.status_code)
 
+    def test_deleted_supplier_code(self):
+        self.client.delete('/suppliers/{}'.format(self.supplier_code))
+        response = self.client.get('/suppliers/{}'.format(self.supplier_code))
+        assert_equal(404, response.status_code)
+
     def test_get_supplier(self):
         response = self.client.get('/suppliers/{}'.format(self.supplier_code))
 
@@ -94,6 +99,14 @@ class TestListSuppliers(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert 'suppliers' in data
         assert len(data['suppliers']) == 2
+
+    def test_results_after_delete(self):
+        self.client.delete('/suppliers/{}'.format(1))
+        response = self.client.get('/suppliers')
+        assert_equal(200, response.status_code)
+        data = json.loads(response.get_data())
+        assert 'suppliers' in data
+        assert len(data['suppliers']) == 5
 
     def test_invalid_results_per_page(self):
         response = self.client.get('/suppliers?per_page=bork')
@@ -805,7 +818,7 @@ class TestDeleteSupplier(BaseApplicationTest):
             assert_is_not_none(Supplier.query.filter_by(code=self.supplier_code).first())
             response = self.client.delete('/suppliers/{}'.format(self.supplier_code))
             assert_equal(200, response.status_code)
-            assert_is_none(Supplier.query.filter_by(code=self.supplier_code).first())
+            assert_is_not_none(Supplier.query.filter_by(code=self.supplier_code, status='deleted').first())
 
     def test_nonexistant_delete(self):
         with self.app.app_context():
