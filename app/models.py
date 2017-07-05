@@ -1168,7 +1168,7 @@ class Brief(db.Model):
     clarification_questions = db.relationship(
         "BriefClarificationQuestion",
         order_by="BriefClarificationQuestion.published_at",
-        lazy='joined'
+        lazy='select',
     )
 
     @validates('users')
@@ -1325,7 +1325,7 @@ class Brief(db.Model):
             'requirementsLength': requirements_length
         }
 
-    def serialize(self, with_users=False):
+    def serialize(self, with_users=False, with_clarification_questions=False):
         data = dict(self.data.items())
 
         data.update({
@@ -1341,10 +1341,12 @@ class Brief(db.Model):
             'lotName': self.lot.name,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
-            'clarificationQuestions': [
-                question.serialize() for question in self.clarification_questions
-            ],
         })
+
+        if with_clarification_questions:
+            data['clarificationQuestions'] = [
+                question.serialize() for question in self.clarification_questions
+            ]
 
         if self.published_at:
             data.update({
