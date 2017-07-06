@@ -536,7 +536,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
                     'name': 'joe bloggs'}}),
             content_type='application/json')
         assert response.status_code == 400
-        assert json.loads(response.get_data())["error"] == "Invalid user role"
+        assert "Unable to commit" in json.loads(response.get_data())["error"]
 
 
 class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
