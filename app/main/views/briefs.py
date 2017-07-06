@@ -104,7 +104,7 @@ def get_brief(brief_id):
         Brief.id == brief_id
     ).first_or_404()
 
-    return jsonify(briefs=brief.serialize(with_users=True))
+    return jsonify(briefs=brief.serialize(with_users=True, with_clarification_questions=True))
 
 
 @main.route('/briefs', methods=['GET'])
@@ -305,7 +305,7 @@ def add_clarification_question(brief_id):
     db.session.add(audit)
     db.session.commit()
 
-    return jsonify(briefs=brief.serialize()), 200
+    return jsonify(briefs=brief.serialize(with_clarification_questions=True)), 200
 
 
 @main.route("/briefs/<brief_id>/services", methods=["GET"])
