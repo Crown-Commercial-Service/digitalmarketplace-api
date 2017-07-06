@@ -97,23 +97,22 @@ def reject_assessment(id):
 
 @main.route('/assessments/supplier/<int:supplier_code>', methods=['GET'])
 def get_supplier_assessments(supplier_code):
-    existing_assessment = db.session.query(
-        Assessment.id,
-        Assessment.active,
-        SupplierDomain.status,
-        Domain.name
-    ).join(
-        SupplierDomain, Supplier, Domain
-    ).filter(
+    supplier = Supplier.query.filter(
         Supplier.code == supplier_code,
-    ).all()
+        Supplier.status != 'deleted'
+    ).first_or_404()
+    existing_assessment = SupplierDomain.query.filter(SupplierDomain.supplier_id == supplier.id).all()
 
-    assessments = {'assessed': [], 'unassessed': []}
+    assessments = {'assessed': [], 'unassessed': [], 'briefs': []}
 
     for row in existing_assessment:
-        if row[2] == 'assessed':
-            assessments['assessed'].append(row[3])
-        if row[2] == 'unassessed':
-            assessments['unassessed'].append(row[3])
+        for assessment in row.assessments:
+            if assessment.active:
+                if assessment.briefs:
+                    assessments['briefs'] = list(set(assessments['briefs'] + ([x.id for x in assessment.briefs])))
+                if row.status == 'assessed':
+                    assessments['assessed'].append(row.domain.name)
+                if row.status == 'unassessed':
+                    assessments['unassessed'].append(row.domain.name)
 
     return jsonify(assessments), 200
