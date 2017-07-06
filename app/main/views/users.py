@@ -157,9 +157,9 @@ def create_user():
     except IntegrityError:
         db.session.rollback()
         abort(400, "Invalid supplier id")
-    except DataError:
+    except DataError as e:
         db.session.rollback()
-        abort(400, "Invalid user role")
+        abort(400, "Data Error: {}".format(e))
 
     return jsonify(users=user.serialize()), 201
 
