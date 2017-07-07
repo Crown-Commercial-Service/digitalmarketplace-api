@@ -1,1 +1,1 @@
-FROM digitalmarketplace/base-api:1.0.3
+FROM digitalmarketplace/base-api:2.0.0
