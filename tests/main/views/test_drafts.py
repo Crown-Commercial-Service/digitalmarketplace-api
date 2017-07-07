@@ -1336,7 +1336,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_complete_draft(self):
         res = self.client.post(
-            '/draft-services/%s/complete' % self.draft_id,
+            '/draft-services/{}/complete'.format(self.draft_id),
             data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
@@ -1346,7 +1346,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_complete_draft_should_create_audit_event(self):
         res = self.client.post(
-            '/draft-services/%s/complete' % self.draft_id,
+            '/draft-services/{}/complete'.format(self.draft_id),
             data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
@@ -1364,7 +1364,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_should_not_complete_draft_without_updated_by(self):
         res = self.client.post(
-            '/draft-services/%s/complete' % self.draft_id,
+            '/draft-services/{}/complete'.format(self.draft_id),
             data=json.dumps({}),
             content_type='application/json')
 
@@ -1390,7 +1390,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
         draft = json.loads(draft.get_data())['services']
 
         res = self.client.post(
-            '/draft-services/%s/complete' % draft['id'],
+            '/draft-services/{}/complete'.format(draft['id']),
             data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
@@ -1402,7 +1402,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
     def test_complete_draft_catches_db_integrity_errors(self, db_commit):
         db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
         res = self.client.post(
-            '/draft-services/%s/complete' % self.draft_id,
+            '/draft-services/{}/complete'.format(self.draft_id),
             data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
@@ -1446,7 +1446,7 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_update_draft_status(self):
         res = self.client.post(
-            '/draft-services/%s/update-status' % self.draft_id,
+            '/draft-services/{}/update-status'.format(self.draft_id),
             data=json.dumps({'services': {'status': 'failed'}, 'updated_by': 'joeblogs'}),
             content_type='application/json')
 
@@ -1456,7 +1456,7 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_update_draft_status_should_create_audit_event(self):
         res = self.client.post(
-            '/draft-services/%s/update-status' % self.draft_id,
+            '/draft-services/{}/update-status'.format(self.draft_id),
             data=json.dumps({'services': {'status': 'failed'}, 'updated_by': 'joeblogs'}),
             content_type='application/json')
 
@@ -1474,7 +1474,7 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_should_not_update_draft_status_to_invalid_status(self):
         res = self.client.post(
-            '/draft-services/%s/update-status' % self.draft_id,
+            '/draft-services/{}/update-status'.format(self.draft_id),
             data=json.dumps({'services': {'status': 'INVALID-STATUS'}, 'updated_by': 'joeblogs'}),
             content_type='application/json')
 
@@ -1482,10 +1482,10 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
         assert json.loads(res.get_data()) == {"error": "'INVALID-STATUS' is not a valid status"}
 
     @mock.patch('app.db.session.commit')
-    def test_update_draft_catches_db_integrity_errors(self, db_commit):
+    def test_update_draft_status_catches_db_integrity_errors(self, db_commit):
         db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
         res = self.client.post(
-            '/draft-services/%s/update-status' % self.draft_id,
+            '/draft-services/{}/update-status'.format(self.draft_id),
             data=json.dumps({'services': {'status': 'failed'}, 'updated_by': 'joeblogs'}),
             content_type='application/json')
 
@@ -1559,7 +1559,7 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_copy_draft_should_create_audit_event(self):
         res = self.client.post(
-            '/draft-services/%s/copy' % self.draft_id,
+            '/draft-services/{}/copy'.format(self.draft_id),
             data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
@@ -1613,7 +1613,7 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
     def test_copy_draft_service_should_catch_db_integrity_error(self, db_commit):
         db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
         res = self.client.post(
-            '/draft-services/%s/copy' % self.draft_id,
+            '/draft-services/{}/copy'.format(self.draft_id),
             data=json.dumps({'updated_by': 'joeblogs'}),
             content_type='application/json')
 
