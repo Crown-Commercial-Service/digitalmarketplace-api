@@ -503,7 +503,8 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
 
         assert response.status_code == 400
         data = json.loads(response.get_data())["error"]
-        assert data == "JSON was not a valid format. u'' is too short"
+        assert "JSON was not a valid format." in data
+        assert "'' is too short" in data
 
     @mock.patch('app.db.session.commit')
     def test_create_user_catches_db_errors(self, db_commit):
