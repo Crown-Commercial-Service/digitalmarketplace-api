@@ -710,11 +710,12 @@ class TestDeleteDraftService(DraftServicesTestBase):
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
 
-        assert len(data['auditEvents']) == 2
-        assert data['auditEvents'][0]['type'] == 'create_draft_service'
-        assert data['auditEvents'][1]['user'] == 'joeblogs'
-        assert data['auditEvents'][1]['type'] == 'delete_draft_service'
-        assert data['auditEvents'][1]['data']['serviceId'] == self.service_id
+        # A migration is adding an extra audit event on setup, so assert
+        # the last two events only.
+        assert data['auditEvents'][-2]['type'] == 'create_draft_service'
+        assert data['auditEvents'][-1]['user'] == 'joeblogs'
+        assert data['auditEvents'][-1]['type'] == 'delete_draft_service'
+        assert data['auditEvents'][-1]['data']['serviceId'] == self.service_id
 
         fetch_again = self.client.get('/draft-services/{}'.format(draft_id))
         assert fetch_again.status_code == 404
@@ -767,7 +768,7 @@ class TestPublishDraftService(DraftServicesTestBase):
         assert first_draft.status_code == 200
         assert json.loads(first_draft.get_data())['services']['serviceName'] == 'A SaaS with lots of options'
 
-        delete = self.client.post(
+        self.client.post(
             '/draft-services/{}'.format(draft_id),
             data=json.dumps({
                 'updated_by': 'joeblogs',
@@ -776,20 +777,42 @@ class TestPublishDraftService(DraftServicesTestBase):
                 }
             }),
             content_type='application/json')
-        assert delete.status_code == 200
+
+        updated_draft = self.client.get(
+            '/draft-services/{}'.format(draft_id))
+        assert updated_draft.status_code == 200
+        assert json.loads(updated_draft.get_data())['services']['serviceName'] == 'chickens'
+
+        res = self.client.post(
+            '/draft-services/{}/publish'.format(draft_id),
+            data=json.dumps({'updated_by': 'joeblogs'}),
+            content_type='application/json')
+        assert res.status_code == 200
 
         audit_response = self.client.get('/audit-events')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
 
-        assert len(data['auditEvents']) == 2
+        assert len(data['auditEvents']) == 3
         assert data['auditEvents'][0]['type'] == 'create_draft_service'
-        assert data['auditEvents'][1]['user'] == 'joeblogs'
-        assert data['auditEvents'][1]['type'] == 'delete_draft_service'
-        assert data['auditEvents'][1]['data']['serviceId'] == self.service_id
+        assert data['auditEvents'][1]['type'] == 'update_draft_service'
+        assert data['auditEvents'][2]['type'] == 'publish_draft_service'
 
-        fetch_again = self.client.get('/draft-services/{}'.format(draft_id))
-        assert fetch_again.status_code == 404
+        # draft should no longer exist
+        fetch = self.client.get('/draft-services/{}'.format(self.service_id))
+        assert fetch.status_code == 404
+
+        # published should be updated
+        updated_draft = self.client.get('/services/{}'.format(self.service_id))
+        assert updated_draft.status_code == 200
+        assert json.loads(updated_draft.get_data())['services']['serviceName'] == 'chickens'
+
+        # archive should be updated
+        archives = self.client.get(
+            '/archived-services?service-id={}'.format(self.service_id))
+        assert archives.status_code == 200
+        assert json.loads(archives.get_data())['services'][0]['serviceName'] == 'chickens'
+        assert search_api_client.index.called
 
     def test_should_not_be_able_to_publish_submission_if_not_submitted(self):
         draft = self.create_draft_service()
