@@ -223,6 +223,42 @@ def acknowledge_audit(audit_id):
     return jsonify(auditEvents=audit_event.serialize()), 200
 
 
+@main.route('/audit-events/<int:audit_id>/acknowledge-including-previous', methods=['POST'])
+def acknowledge_including_previous(audit_id):
+    updater_json = validate_and_return_updater_request()
+
+    audit_event = AuditEvent.query.get(audit_id)
+    if audit_event is None:
+        abort(404, "No audit event with this id")
+
+    result = db.session.execute(AuditEvent.__table__.update().returning(
+        AuditEvent.__table__.c.id
+    ).where(db.and_(
+        AuditEvent.__table__.c.created_at <= audit_event.created_at,
+        AuditEvent.__table__.c.object_id == audit_event.object_id,
+        AuditEvent.__table__.c.object_type == audit_event.object_type,
+        AuditEvent.__table__.c.type == audit_event.type,
+        AuditEvent.__table__.c.acknowledged == db.false(),
+    )).values(
+        acknowledged=db.true(),
+        acknowledged_at=datetime.utcnow(),
+        acknowledged_by=updater_json['updated_by'],
+    )).fetchall()
+    db.session.expire_all()
+
+    try:
+        db.session.commit()
+
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, e.orig)
+
+    # returning the list of affected ids, each one in its own dict seems the most rest-ful way (but least memory
+    # efficient - well spotted) of returning this information. you would think of these as the most abbreviated
+    # serializations of audit events possible.
+    return jsonify(auditEvents=[{"id": audit_event_id} for (audit_event_id,) in result]), 200
+
+
 @main.route('/audit-events/<int:audit_id>', methods=['GET'])
 def get_audit_event(audit_id):
     audit_event = AuditEvent.query.get(audit_id)

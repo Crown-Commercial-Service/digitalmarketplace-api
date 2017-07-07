@@ -7,6 +7,7 @@ from nose.tools import assert_equal, assert_in, assert_true, assert_false
 from flask import json
 from six.moves import zip as izip
 from six.moves.urllib.parse import urlencode
+from freezegun import freeze_time
 
 from dmapiclient.audit import AuditTypes
 
@@ -71,6 +72,7 @@ class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
                 ae.created_at = created_at
                 ae.acknowledged_at = acknowledged_at
                 ae.acknowledged = bool(acknowledged_at)
+                ae.acknowledged_by = acknowledged_at and "c.p.mccoy@example.com"
                 db.session.add(ae)
                 audit_events.append(ae)
 
@@ -265,6 +267,156 @@ class TestAuditEvents(BaseTestAuditEvents):
         data = json.loads(response.get_data())
 
         assert tuple(audit_event_id_lookup[ae["id"]] for ae in data["auditEvents"]) == expected_resp_events
+
+    @pytest.mark.parametrize(
+        "service_audit_event_params,supplier_audit_event_params,target_audit_event_id,expected_resp_events",
+        # where we refer to "id"s in the expected_response_params, because we can't be too sure about the *actual* ids
+        # given to objects, we're using 0-based notional "ids" mased on the order the audit events were inserted into
+        # the db. service_audit_event_params events are inserted in the order given, followed by the
+        # supplier_audit_event_params events. so if we had 5 service_audit_event_params and 2
+        # supplier_audit_event_params, "5" would refer to the audit event created by the first-listed
+        # supplier_audit_event_params.
+        # similarly, where supplier and service "id"s are referred to, the "id"s we're referring to are normalized
+        # pseudo-ids from 0-4 inclusive
+        chain.from_iterable(
+            ((serv_aeps, supp_aeps, tgt_ae_id, expected_resp_events) for tgt_ae_id, expected_resp_events in req_cases)
+            for serv_aeps, supp_aeps, req_cases in (
+                (
+                    (   # service_audit_event_params, as consumed by add_audit_events_by_param_tuples
+                        # service pseudo-id, audit type, created_at, acknowledged_at
+                        (0, AuditTypes.update_service, datetime(2010, 6, 6), None,),
+                        (0, AuditTypes.update_service, datetime(2010, 6, 7), None,),
+                        (4, AuditTypes.update_service, datetime(2010, 6, 2), None,),
+                    ),
+                    (   # supplier_audit_event_params, as consumed by add_audit_events_by_param_tuples
+                        # supplier pseudo-id, audit type, created_at, acknowledged_at
+                        (0, AuditTypes.supplier_update, datetime(2010, 6, 6), None,),
+                    ),
+                    (   # and now a series of req_cases - pairs of (tgt_ae_id, expected_resp_events) to test against
+                        # the above db scenario. these get flattened out into concrete test scenarios by
+                        # chain.from_iterable above before they reach pytest's parametrization
+                        (
+                            1,
+                            frozenset((0, 1,)),
+                        ),
+                        (
+                            2,
+                            frozenset((2,)),
+                        ),
+                        (
+                            3,
+                            frozenset((3,)),
+                        ),
+                    ),
+                ),
+                (
+                    (
+                        (2, AuditTypes.update_service, datetime(2010, 6, 9), None,),
+                        (3, AuditTypes.update_service, datetime(2010, 6, 2), None,),
+                        (2, AuditTypes.update_service, datetime(2010, 6, 7), None,),
+                        (2, AuditTypes.update_service, datetime(2010, 6, 1), datetime(2010, 6, 1, 1),),
+                        (4, AuditTypes.update_service, datetime(2010, 6, 5), None,),
+                        (2, AuditTypes.update_service_status, datetime(2010, 6, 2), None,),
+                    ),
+                    (
+                        (0, AuditTypes.supplier_update, datetime(2010, 7, 1), None,),
+                        (1, AuditTypes.supplier_update, datetime(2010, 7, 9), None,),
+                        (1, AuditTypes.supplier_update, datetime(2010, 7, 8), None,),
+                        (1, AuditTypes.supplier_update, datetime(2010, 7, 5), datetime(2010, 8, 1),),
+                        (0, AuditTypes.supplier_update, datetime(2010, 7, 9), None,),
+                        (1, AuditTypes.supplier_update, datetime(2010, 7, 1), datetime(2010, 8, 1),),
+                        (1, AuditTypes.supplier_update, datetime(2010, 7, 2), datetime(2010, 8, 1),),
+                        (0, AuditTypes.supplier_update, datetime(2010, 7, 6), None,),
+                        (0, AuditTypes.supplier_update, datetime(2010, 7, 5), None,),
+                    ),
+                    (
+                        (
+                            0,
+                            frozenset((0, 2,)),
+                        ),
+                        (
+                            2,
+                            frozenset((2,)),
+                        ),
+                        (
+                            4,
+                            frozenset((4,)),
+                        ),
+                        (
+                            6,
+                            frozenset((6,)),
+                        ),
+                        (
+                            7,
+                            frozenset((7, 8,)),
+                        ),
+                        (
+                            10,
+                            frozenset((6, 10, 13, 14,)),
+                        ),
+                    ),
+                ),
+                    ),
+                ),
+            )
+        ),
+    )
+    def test_acknowledge_including_previous_happy_path(
+            self,
+            service_audit_event_params,
+            supplier_audit_event_params,
+            target_audit_event_id,
+            expected_resp_events,
+            ):
+        self.setup_dummy_suppliers(5)
+        self.setup_dummy_services(5, supplier_id=1)
+        audit_event_id_lookup = self.add_audit_events_by_param_tuples(
+            service_audit_event_params,
+            supplier_audit_event_params,
+        )
+        audit_event_id_rlookup = {v: k for k, v in audit_event_id_lookup.items()}
+
+        frozen_time = datetime(2016, 6, 6, 15, 32, 44, 1234)
+        with freeze_time(frozen_time):
+            response = self.client.post(
+                "/audit-events/{}/acknowledge-including-previous".format(audit_event_id_rlookup[target_audit_event_id]),
+                data=json.dumps({'updated_by': "martha.clifford@example.com"}),
+                content_type='application/json',
+            )
+
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+
+        assert frozenset(audit_event_id_lookup[ae["id"]] for ae in data["auditEvents"]) == expected_resp_events
+
+        with self.app.app_context():
+            assert sorted((
+                audit_event_id_lookup[id_],
+                acknowledged,
+                acknowledged_at,
+                acknowledged_by,
+            ) for id_, acknowledged, acknowledged_at, acknowledged_by in db.session.query(
+                AuditEvent.id,
+                AuditEvent.acknowledged,
+                AuditEvent.acknowledged_at,
+                AuditEvent.acknowledged_by,
+            ).all()) == [
+                (
+                    id_,
+                    (id_ in expected_resp_events) or bool(acknowledged_at),
+                    (frozen_time if id_ in expected_resp_events else acknowledged_at),
+                    (
+                        "martha.clifford@example.com"
+                        if id_ in expected_resp_events else
+                        (acknowledged_at and "c.p.mccoy@example.com")
+                    )
+                ) for id_, (
+                    obj_id,
+                    audit_type,
+                    created_at,
+                    acknowledged_at,
+                ) in enumerate(chain(service_audit_event_params, supplier_audit_event_params))
+            ]
 
     def test_only_one_audit_event_created(self):
         with self.app.app_context():
