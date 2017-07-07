@@ -13,11 +13,13 @@ bbc.co.uk
 bfi.org.uk
 biglotteryfund.org.uk
 blackwoodgroup.org.uk
+bridgend.gov.uk
 britishcouncil.org
 britishmuseum.org
 caa.co.uk
 calmac.co.uk
 careerswales.com
+careinspectorate.com
 ccea.org.uk
 cceservices.org.uk
 ccwales.org.uk
@@ -125,6 +127,7 @@ npl.co.uk
 ofcom.org.uk
 originhousing.org.uk
 os.uk
+oscr.org.uk
 paradigmhousing.co.uk
 parliament.uk
 pbat.co.uk
@@ -157,6 +160,7 @@ tate.org.uk
 tetrust.org
 tfgm.com
 theipsa.org.uk
+thls.org
 tourismireland.com
 traffordhousingtrust.co.uk
 translink.co.uk
