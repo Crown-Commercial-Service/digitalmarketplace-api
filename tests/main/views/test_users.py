@@ -506,6 +506,21 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
         assert "JSON was not a valid format." in data
         assert "'' is too short" in data
 
+    def test_return_400_for_invalid_user_role(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@email.com',
+                    'password': '0000000000',
+                    'role': 'invalid',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert response.status_code == 400
+        data = json.loads(response.get_data())["error"]
+        assert "JSON was not a valid format" in data
+
     @mock.patch('app.db.session.commit')
     def test_create_user_catches_db_errors(self, db_commit):
         db_commit.side_effect = DataError("Unable to commit", orig=None, params={})
