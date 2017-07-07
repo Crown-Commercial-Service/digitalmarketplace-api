@@ -251,7 +251,7 @@ def update_contact_information(supplier_id, contact_id):
     return jsonify(contactInformation=contact.serialize())
 
 
-@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>/declaration', methods=['PUT'])
+@main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>/declaration', methods=['PUT'])
 def set_a_declaration(supplier_id, framework_slug):
     framework = Framework.query.filter(
         Framework.slug == framework_slug
@@ -297,7 +297,7 @@ def set_a_declaration(supplier_id, framework_slug):
     return jsonify(declaration=supplier_framework.declaration), status_code
 
 
-@main.route('/suppliers/<supplier_id>/frameworks/interest', methods=['GET'])
+@main.route('/suppliers/<int:supplier_id>/frameworks/interest', methods=['GET'])
 def get_registered_frameworks(supplier_id):
     supplier_frameworks = SupplierFramework.query.filter(
         SupplierFramework.supplier_id == supplier_id
@@ -312,7 +312,7 @@ def get_registered_frameworks(supplier_id):
     return jsonify(frameworks=slugs)
 
 
-@main.route('/suppliers/<supplier_id>/frameworks', methods=['GET'])
+@main.route('/suppliers/<int:supplier_id>/frameworks', methods=['GET'])
 def get_supplier_frameworks_info(supplier_id):
     supplier = Supplier.query.filter(
         Supplier.supplier_id == supplier_id
@@ -334,7 +334,7 @@ def get_supplier_frameworks_info(supplier_id):
     )
 
 
-@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['GET'])
+@main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>', methods=['GET'])
 def get_supplier_framework_info(supplier_id, framework_slug):
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         supplier_id, framework_slug
@@ -345,7 +345,7 @@ def get_supplier_framework_info(supplier_id, framework_slug):
     return jsonify(frameworkInterest=supplier_framework.serialize(with_users=True))
 
 
-@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['PUT'])
+@main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>', methods=['PUT'])
 def register_framework_interest(supplier_id, framework_slug):
 
     framework = Framework.query.filter(
@@ -395,7 +395,7 @@ def register_framework_interest(supplier_id, framework_slug):
     return jsonify(frameworkInterest=interest_record.serialize()), 201
 
 
-@main.route('/suppliers/<supplier_id>/frameworks/<framework_slug>', methods=['POST'])
+@main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>', methods=['POST'])
 def update_supplier_framework(supplier_id, framework_slug):
     framework = Framework.query.filter(
         Framework.slug == framework_slug

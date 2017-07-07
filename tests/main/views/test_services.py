@@ -1314,7 +1314,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert response.status_code == 400
         assert b'Invalid service ID supplied' in response.get_data()
 
-    @pytest.mark.parametrize("invalid_service_id", [('tooshort', 'this_one_is_way_too_long')])
+    @pytest.mark.parametrize("invalid_service_id", ['tooshort', 'this_one_is_way_too_long'])
     def test_invalid_service_ids(self, invalid_service_id):
         response = self.client.put(
             '/services/{}'.format(invalid_service_id),

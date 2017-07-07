@@ -308,7 +308,7 @@ def add_clarification_question(brief_id):
     return jsonify(briefs=brief.serialize(with_clarification_questions=True)), 200
 
 
-@main.route("/briefs/<brief_id>/services", methods=["GET"])
+@main.route("/briefs/<int:brief_id>/services", methods=["GET"])
 def list_brief_services(brief_id):
     brief = Brief.query.filter(
         Brief.id == brief_id

@@ -78,7 +78,7 @@ def get_framework(framework_slug):
     return jsonify(frameworks=framework.serialize())
 
 
-@main.route('/frameworks/<framework_slug>', methods=['POST'])
+@main.route('/frameworks/<string:framework_slug>', methods=['POST'])
 def update_framework(framework_slug):
     attribute_whitelist = {
         'status': 'status',
