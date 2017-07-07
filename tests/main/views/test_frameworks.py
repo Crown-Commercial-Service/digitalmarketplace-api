@@ -396,6 +396,7 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
                 })
 
                 assert response.status_code == 400
+                assert "Could not commit" in json.loads(response.get_data())["error"]
 
 
 class TestFrameworkStats(BaseApplicationTest, FixtureMixin):

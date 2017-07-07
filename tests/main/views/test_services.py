@@ -362,7 +362,7 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
         self.setup_dummy_services_including_unpublished(15)
 
         response = self.client.get(
-            '/services?supplier_id=%d' % TEST_SUPPLIERS_COUNT
+            '/services?supplier_id={}'.format(TEST_SUPPLIERS_COUNT)
         )
         data = json.loads(response.get_data())
 
@@ -492,7 +492,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     def test_no_content_type_causes_failure(self):
         with self.app.app_context():
             response = self.client.post(
-                '/services/%s' % self.service_id,
+                '/services/{}'.format(self.service_id),
                 data=json.dumps(
                     {'updated_by': 'joeblogs',
                      'services': {
@@ -504,7 +504,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     def test_invalid_content_type_causes_failure(self):
         with self.app.app_context():
             response = self.client.post(
-                '/services/%s' % self.service_id,
+                '/services/{}'.format(self.service_id),
                 data=json.dumps(
                     {'updated_by': 'joeblogs',
                      'services': {
@@ -517,7 +517,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     def test_invalid_json_causes_failure(self):
         with self.app.app_context():
             response = self.client.post(
-                '/services/%s' % self.service_id,
+                '/services/{}'.format(self.service_id),
                 data="ouiehdfiouerhfuehr",
                 content_type='application/json')
 
@@ -581,7 +581,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             )
             assert response.status_code == 200
 
-            response = self.client.get('/services/%s' % self.service_id)
+            response = self.client.get('/services/{}'.format(self.service_id))
             data = json.loads(response.get_data())
             assert data['services']['serviceName'] == 'new service name'
             assert data['services']['incidentEscalation'] is False
@@ -594,7 +594,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             response = self._post_service_update({'supportTypes': support_types})
             assert response.status_code == 200
 
-            response = self.client.get('/services/%s' % self.service_id)
+            response = self.client.get('/services/{}'.format(self.service_id))
             data = json.loads(response.get_data())
 
             assert all(i in support_types for i in data['services']['supportTypes']) is True
@@ -609,7 +609,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             response = self._post_service_update({'identityAuthenticationControls': identity_authentication_controls})
             assert response.status_code == 200
 
-            response = self.client.get('/services/%s' % self.service_id)
+            response = self.client.get('/services/{}'.format(self.service_id))
             data = json.loads(response.get_data())
 
             updated_auth_controls = \
@@ -673,7 +673,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
     def test_writing_full_service_back(self):
         with self.app.app_context():
-            response = self.client.get('/services/%s' % self.service_id)
+            response = self.client.get('/services/{}'.format(self.service_id))
             data = json.loads(response.get_data())
             response = self._post_service_update(data['services'])
 
@@ -705,7 +705,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
     def test_should_400_if_mismatched_service_id(self):
         response = self.client.post(
-            '/services/%s' % self.service_id,
+            '/services/{}'.format(self.service_id),
             data=json.dumps(
                 {'updated_by': 'joeblogs',
                  'services': {
@@ -719,7 +719,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         response = self._post_service_update({'status': 'enabled'})
         assert response.status_code == 200
 
-        response = self.client.get('/services/%s' % self.service_id)
+        response = self.client.get('/services/{}'.format(self.service_id))
         data = json.loads(response.get_data())
 
         assert data['services']['status'] == 'published'
@@ -1408,7 +1408,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     def test_cannot_update_existing_service_by_put(self, search_api_client):
         with self.app.app_context():
             search_api_client.return_value = "bar"
-            response = self.client.put(
+            self.client.put(
                 '/services/{}'.format(self.service_id),
                 data=json.dumps({
                     'updated_by': 'joeblogs',
