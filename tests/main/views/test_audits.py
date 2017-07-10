@@ -483,6 +483,31 @@ class TestAuditEvents(BaseTestAuditEvents):
                 ) in enumerate(chain(service_audit_event_params, supplier_audit_event_params))
             ]
 
+    def test_acknowledge_including_previous_nonexistent_event(self):
+        # would be unfair to not give them any events to start with
+        self.setup_dummy_suppliers(3)
+        self.setup_dummy_services(3, supplier_id=1)
+        audit_event_id_lookup = self.add_audit_events_by_param_tuples(
+            ((0, AuditTypes.update_service, datetime(2010, 6, 7), None,),),
+            ((2, AuditTypes.supplier_update, datetime(2011, 6, 9), None,),),
+        )
+
+        response = self.client.post(
+            "/audit-events/314159/acknowledge-including-previous",
+            data=json.dumps({'updated_by': "martha.clifford@example.com"}),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 404
+
+        with self.app.app_context():
+            # check nothing happened to the data
+            assert not db.session.query(AuditEvent).filter(db.or_(
+                AuditEvent.acknowledged_by.isnot(None),
+                AuditEvent.acknowledged_at.isnot(None),
+                AuditEvent.acknowledged == db.true(),
+            )).all()
+
     def test_only_one_audit_event_created(self):
         with self.app.app_context():
             count = AuditEvent.query.count()
