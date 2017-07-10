@@ -354,6 +354,10 @@ class TestAuditEvents(BaseTestAuditEvents):
                             10,
                             frozenset((6, 10, 13, 14,)),
                         ),
+                        (
+                            12,
+                            frozenset(),  # already acknowledged - should have no effect
+                        ),
                     ),
                 ),
                 (
@@ -390,9 +394,18 @@ class TestAuditEvents(BaseTestAuditEvents):
                             frozenset((1, 3, 5,)),
                         ),
                         (
+                            4,
+                            frozenset(),  # already acknowledged - should have no effect
+                        ),
+                        (
                             5,
                             frozenset((5,)),
                         ),
+                        (
+                            6,
+                            frozenset(),  # already acknowledged - should have no effect
+                        ),
+                        (
                             8,
                             frozenset((8, 12,)),
                         ),
