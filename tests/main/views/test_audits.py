@@ -356,6 +356,58 @@ class TestAuditEvents(BaseTestAuditEvents):
                         ),
                     ),
                 ),
+                (
+                    (
+                        (3, AuditTypes.update_service, datetime(2011, 6, 5), None,),
+                        (4, AuditTypes.update_service, datetime(2011, 6, 8), None,),
+                        (2, AuditTypes.update_service, datetime(2011, 6, 1), None,),
+                        # note here deliberate collision of created_at and object_id to verify the secondary-ordering
+                        (4, AuditTypes.update_service, datetime(2011, 6, 8), None,),
+                        (4, AuditTypes.update_service_status, datetime(2011, 6, 7), datetime(2011, 6, 7, 1),),
+                        (4, AuditTypes.update_service, datetime(2011, 6, 6), None,),
+                        (4, AuditTypes.update_service, datetime(2011, 6, 2), datetime(2011, 8, 1),),
+                    ),
+                    (
+                        (4, AuditTypes.supplier_update, datetime(2011, 6, 1), None,),
+                        (1, AuditTypes.supplier_update, datetime(2011, 6, 9), None,),
+                        (1, AuditTypes.supplier_update, datetime(2011, 6, 6), datetime(2011, 8, 1),),
+                        # again here
+                        (1, AuditTypes.supplier_update, datetime(2011, 6, 9), None,),
+                        (3, AuditTypes.supplier_update, datetime(2011, 6, 5), None,),
+                        (1, AuditTypes.supplier_update, datetime(2011, 6, 8), None,),
+                    ),
+                    (
+                        (
+                            0,
+                            frozenset((0,)),
+                        ),
+                        (
+                            1,
+                            frozenset((1, 5,)),
+                        ),
+                        (
+                            3,
+                            frozenset((1, 3, 5,)),
+                        ),
+                        (
+                            5,
+                            frozenset((5,)),
+                        ),
+                            8,
+                            frozenset((8, 12,)),
+                        ),
+                        (
+                            10,
+                            frozenset((8, 10, 12,)),
+                        ),
+                        (
+                            11,
+                            frozenset((11,)),
+                        ),
+                        (
+                            12,
+                            frozenset((12,)),
+                        ),
                     ),
                 ),
             )

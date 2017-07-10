@@ -234,11 +234,21 @@ def acknowledge_including_previous(audit_id):
     result = db.session.execute(AuditEvent.__table__.update().returning(
         AuditEvent.__table__.c.id
     ).where(db.and_(
-        AuditEvent.__table__.c.created_at <= audit_event.created_at,
         AuditEvent.__table__.c.object_id == audit_event.object_id,
         AuditEvent.__table__.c.object_type == audit_event.object_type,
         AuditEvent.__table__.c.type == audit_event.type,
         AuditEvent.__table__.c.acknowledged == db.false(),
+        # ugly, but this just implements the same "id tie breaker" behaviour for created_at-equal events as the
+        # ordering we use in list_audits. this way there is some consistency between the two views as to what events
+        # are considered "previous" in such cases. we could use postgres composite types to express this far more
+        # neatly, but i can't get sqlalchemy to work with anonymous composite types.
+        db.or_(
+            AuditEvent.__table__.c.created_at < audit_event.created_at,
+            db.and_(
+                AuditEvent.__table__.c.created_at == audit_event.created_at,
+                AuditEvent.__table__.c.id <= audit_event.id,
+            ),
+        ),
     )).values(
         acknowledged=db.true(),
         acknowledged_at=datetime.utcnow(),
