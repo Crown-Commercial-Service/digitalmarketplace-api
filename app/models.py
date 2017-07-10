@@ -21,7 +21,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import validates, relationship
+from sqlalchemy.orm import validates, relationship, column_property
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.expression import cast as sql_cast
@@ -631,6 +631,12 @@ class Supplier(db.Model):
 
     domains = relationship("SupplierDomain", back_populates="supplier")
     frameworks = relationship("SupplierFramework")
+    text_vector = column_property(func.setweight(func.to_tsvector(func.coalesce(name, '')), 'A').op('||')(
+        func.setweight(func.to_tsvector(func.coalesce(summary, '')), 'B')).op('||')(
+        func.setweight(func.to_tsvector(func.concat(summary, data['tools'].astext,
+                                                    data['methodologies'].astext,
+                                                    data['technologies'].astext, '')), 'C'))
+    )
 
     def add_unassessed_domain(self, name_or_id):
         d = Domain.get_by_name_or_id(name_or_id)

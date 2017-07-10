@@ -663,8 +663,7 @@ class TestSupplierSearch(BaseApplicationTest):
         assert len(results) == 1
 
         results = self.do_search(KEYWORD_NAME_SEARCH)
-        assert len(results) == 4  # eliminates non-matching example supplier
-        assert results[0]['name'] == 'Supplier 2'
+        assert len(results) == 0  # eliminates non-matching example supplier
 
         results = self.do_search(LEGACY_DOMAIN_SEARCH)
         assert len(results) == 1

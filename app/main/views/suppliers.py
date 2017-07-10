@@ -168,33 +168,13 @@ def product_search():
         ob = [asc(Product.name)]
 
     if search_term:
-        ob = [
-            desc(
-                func.similarity(
-                    search_term,
-                    Product.name)
-            ),
-            desc(
-                func.similarity(
-                    search_term,
-                    Product.summary)
-            )
-        ] + ob
+        query = func.plainto_tsquery(search_term)
+        ob = [desc(func.ts_rank_cd(func.to_tsvector(func.concat(Product.name, Product.summary)), query))] + ob
 
-    q = q.order_by(*ob)
-
-    if search_term:
-        NAME_MINIMUM = \
-            current_app.config['SEARCH_MINIMUM_MATCH_SCORE_NAME']
-        SUMMARY_MINIMUM = \
-            current_app.config['SEARCH_MINIMUM_MATCH_SCORE_SUMMARY']
-
-        condition = or_(
-            func.similarity(search_term, Product.name) > NAME_MINIMUM,
-            func.similarity(search_term, Product.summary) >= SUMMARY_MINIMUM
-        )
+        condition = func.to_tsvector(func.concat(Product.name, Product.summary)) \
+            .op('@@')(query)
         q = q.filter(condition)
-
+    q = q.order_by(*ob)
     results = list(q)
 
     for x in range(len(results)):
@@ -275,32 +255,15 @@ def casestudies_search():
         ob = [asc(CaseStudy.data['title'].astext)]
 
     if search_term:
-        ob = [
-            desc(
-                func.similarity(
-                    search_term,
-                    CaseStudy.data['title'].astext)
-            ),
-            desc(
-                func.similarity(
-                    search_term,
-                    CaseStudy.data['approach'].astext)
-            )
-        ] + ob
+        query = func.plainto_tsquery(search_term)
+        ob = [desc(func.ts_rank_cd(func.to_tsvector(
+            func.concat(CaseStudy.data['title'].astext, CaseStudy.data['approach'].astext)), query))] + ob
 
-    q = q.order_by(*ob)
+        condition = func.to_tsvector(func.concat(CaseStudy.data['title'].astext, CaseStudy.data['approach'].astext)) \
+            .op('@@')(query)
 
-    if search_term:
-        NAME_MINIMUM = \
-            current_app.config['SEARCH_MINIMUM_MATCH_SCORE_NAME']
-        SUMMARY_MINIMUM = \
-            current_app.config['SEARCH_MINIMUM_MATCH_SCORE_SUMMARY']
-
-        condition = or_(
-            func.similarity(search_term, CaseStudy.data['title'].astext) > NAME_MINIMUM,
-            func.similarity(search_term, CaseStudy.data['approach'].astext) >= SUMMARY_MINIMUM
-        )
         q = q.filter(condition)
+    q = q.order_by(*ob)
     results = list(q)
 
     for x in range(len(results)):
@@ -390,10 +353,12 @@ def do_search(search_query, offset, result_count, new_domains):
     q = q.filter(Supplier.status != 'deleted')
 
     q = q.add_column(func.ts_headline(
-        'english',
-        Supplier.summary,
-        func.plainto_tsquery(search_term),
-        'MaxWords=400, MinWords=100, ShortWord=3, HighlightAll=FALSE, MaxFragments=3, FragmentDelimiter=" ... " '
+         'english',
+         func.concat(Supplier.summary,
+                     Supplier.data['tools'].astext, Supplier.data['methodologies'].astext,
+                     Supplier.data['technologies'].astext, ''),
+         func.plainto_tsquery(search_term),
+         'MaxWords=400, MinWords=100, ShortWord=3, HighlightAll=FALSE, MaxFragments=3, FragmentDelimiter=" ... " '
     ))
     q = q.group_by(Supplier.id)
 
@@ -439,32 +404,11 @@ def do_search(search_query, offset, result_count, new_domains):
             ob = [asc(Supplier.name)]
 
     if search_term:
-        ob = [
-            desc(
-                func.similarity(
-                    search_term,
-                    Supplier.name)
-            ),
-            desc(
-                func.similarity(
-                    search_term,
-                    Supplier.summary)
-            )
-        ] + ob
+        query = func.plainto_tsquery(search_term)
+        ob = [desc(func.ts_rank_cd(Supplier.text_vector, query))] + ob
 
+        q = q.filter(Supplier.text_vector.op('@@')(query))
     q = q.order_by(*ob)
-
-    if search_term:
-        NAME_MINIMUM = \
-            current_app.config['SEARCH_MINIMUM_MATCH_SCORE_NAME']
-        SUMMARY_MINIMUM = \
-            current_app.config['SEARCH_MINIMUM_MATCH_SCORE_SUMMARY']
-        condition = or_(
-            func.similarity(search_term, Supplier.name) > NAME_MINIMUM,
-            func.similarity(search_term, Supplier.summary) >= SUMMARY_MINIMUM
-        )
-
-        q = q.filter(condition)
 
     results = list(q)
 
