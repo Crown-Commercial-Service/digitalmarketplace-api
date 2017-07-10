@@ -632,19 +632,11 @@ class TestListBrief(FrameworkSetupAndTeardown):
         assert res.status_code == 200
         assert titles == ['Fourth', 'Second', 'Third', 'First']
 
-    def test_list_briefs_with_user_data_set_true(self):
+    @pytest.mark.parametrize("with_users", ["true", "True"])
+    def test_list_briefs_with_user_data_set_true(self, with_users):
         self.setup_dummy_briefs(1, title="Test Brief", user_id=123)
 
-        response = self.client.get('/briefs?with_users=true')
-        data = json.loads(response.get_data(as_text=True))
-
-        assert response.status_code == 200
-        assert data['briefs'][0]['users'][0]['name'] == 'my name'
-
-    def test_list_briefs_with_user_data_set_True(self):
-        self.setup_dummy_briefs(1, title="Test Brief", user_id=123)
-
-        response = self.client.get('/briefs?with_users=True')
+        response = self.client.get('/briefs?with_users=' + with_users)
         data = json.loads(response.get_data(as_text=True))
 
         assert response.status_code == 200
@@ -659,6 +651,31 @@ class TestListBrief(FrameworkSetupAndTeardown):
         assert response.status_code == 200
         with pytest.raises(KeyError):
             data['briefs'][0]['users']
+
+    @pytest.mark.parametrize("user_id", ["&user_id=123", ""])
+    @pytest.mark.parametrize("with_clarification_questions", ["true", "True"])
+    def test_list_briefs_with_clarification_questions_data_set_true(self, with_clarification_questions, user_id):
+        # We test with both filtering by user_id and not because this will trigger both paginated and unpaginated
+        # responses
+        self.setup_dummy_briefs(1, title="Test Brief", user_id=123, add_clarification_question=True, status='live')
+
+        response = self.client.get('/briefs?with_clarification_questions=' + with_clarification_questions + user_id)
+        data = json.loads(response.get_data(as_text=True))
+
+        assert response.status_code == 200
+        assert data['briefs'][0]['clarificationQuestions'][0]['answer'] == '42'
+
+    @pytest.mark.parametrize("user_id", ["?user_id=123", ""])
+    def test_list_briefs_does_not_include_clarification_questions_by_default(self, user_id):
+        # We test with both filtering by user_id and not because this will trigger both paginated and unpaginated
+        # responses
+        self.setup_dummy_briefs(1, title="Test Brief", user_id=123, add_clarification_question=True, status='live')
+
+        response = self.client.get('/briefs' + user_id)
+        data = json.loads(response.get_data(as_text=True))
+
+        assert response.status_code == 200
+        assert "clarificationQuestions" not in data['briefs'][0]
 
     def test_list_briefs_pagination_page_one(self):
         self.setup_dummy_briefs(7)
