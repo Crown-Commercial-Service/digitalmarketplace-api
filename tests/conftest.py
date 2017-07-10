@@ -175,11 +175,31 @@ def _add_framework(request, app, slug, **kwargs):
 
     def teardown():
         with app.app_context():
-            Framework.query.filter(Framework.slug == slug).delete()
+            FrameworkLot.query.filter(FrameworkLot.framework_id == framework.id).delete()
+            Framework.query.filter(Framework.id == framework.id).delete()
             db.session.commit()
 
     request.addfinalizer(teardown)
     return framework.serialize()
+
+
+def _add_lots_for_framework(request, app, framework_slug, lot_slugs):
+    for lot_slug in lot_slugs:
+        _add_lot_for_framework(request, app, framework_slug, lot_slug)
+
+
+def _add_lot_for_framework(request, app, framework_slug, lot_slug):
+    with app.app_context():
+        framework = Framework.query.filter(Framework.slug == framework_slug).first()
+        lot = Lot.query.filter(Lot.slug == lot_slug).first()
+        existing_framework_lot = FrameworkLot.query.filter(
+            FrameworkLot.framework_id == framework.id, FrameworkLot.lot_id == lot.id
+        ).first()
+        if not existing_framework_lot:
+            framework_lot = FrameworkLot(framework_id=framework.id, lot_id=lot.id)
+            db.session.add(framework_lot)
+            db.session.commit()
+            return framework_lot
 
 
 def _framework_fixture_inner(request, app, slug, **kwargs):
@@ -224,6 +244,7 @@ _example_framework_details = {
     "framework": "g-cloud",
     "framework_agreement_details": None
 }
+_dos_framework_lots = ["digital-specialists", "digital-outcomes", "user-research-participants", "user-research-studios"]
 
 
 def _supplierframework_fixture_inner(request, app, sf_kwargs=None):
@@ -382,22 +403,30 @@ def expired_g6_framework(request, app):
 
 @pytest.fixture()
 def open_dos_framework(request, app):
-    return _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="open"))
+    fw = _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="open"))
+    _add_lots_for_framework(request, app, _dos_framework_defaults["slug"], _dos_framework_lots)
+    return fw
 
 
 @pytest.fixture()
 def live_dos_framework(request, app):
-    return _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="live"))
+    fw = _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="live"))
+    _add_lots_for_framework(request, app, _dos_framework_defaults["slug"], _dos_framework_lots)
+    return fw
 
 
 @pytest.fixture()
 def expired_dos_framework(request, app):
-    return _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="expired"))
+    fw = _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="expired"))
+    _add_lots_for_framework(request, app, _dos_framework_defaults["slug"], _dos_framework_lots)
+    return fw
 
 
 @pytest.fixture()
 def live_dos2_framework(request, app):
-    return _framework_fixture_inner(request, app, **dict(_dos2_framework_defaults, status="live"))
+    fw = _framework_fixture_inner(request, app, **dict(_dos2_framework_defaults, status="live"))
+    _add_lots_for_framework(request, app, _dos2_framework_defaults["slug"], _dos_framework_lots)
+    return fw
 
 
 # Suppliers

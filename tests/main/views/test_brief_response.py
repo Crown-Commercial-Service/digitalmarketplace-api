@@ -7,7 +7,7 @@ import pytest
 
 from dmapiclient.audit import AuditTypes
 
-from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service, Framework
+from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service, Framework, FrameworkLot
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from tests.helpers import FixtureMixin
 
@@ -728,6 +728,61 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert len(data['briefResponses']) == 8
         assert all(br['briefId'] == another_brief_id for br in data['briefResponses'])
         assert 'self' in data['links']
+
+    def test_list_brief_responses_by_one_framework_slug(self, live_dos2_framework):
+        with self.app.app_context():
+            dos2_brief = Brief(
+                data=example_listings.brief_data().example(),
+                status='live', framework_id=live_dos2_framework["id"], lot=Lot.query.get(6)
+            )
+            db.session.add(dos2_brief)
+            db.session.commit()
+
+            dos2_brief_id = dos2_brief.id
+
+        for i in range(3):
+            self.setup_dummy_brief_response(brief_id=self.brief_id, supplier_id=0)
+            self.setup_dummy_brief_response(brief_id=dos2_brief_id, supplier_id=0)
+
+        res = self.list_brief_responses(framework='digital-outcomes-and-specialists-2')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 3
+        assert all(
+            br['brief']['frameworkSlug'] == "digital-outcomes-and-specialists-2" for br in data['briefResponses']
+        )
+        assert 'self' in data['links']
+
+    def test_list_brief_responses_by_multiple_framework_slugs(self, live_dos2_framework):
+        with self.app.app_context():
+            dos2_brief = Brief(
+                data=example_listings.brief_data().example(),
+                status='live', framework_id=live_dos2_framework["id"], lot=Lot.query.get(6)
+            )
+            db.session.add(dos2_brief)
+            db.session.commit()
+
+            dos2_brief_id = dos2_brief.id
+
+        for i in range(2):
+            self.setup_dummy_brief_response(brief_id=self.brief_id, supplier_id=0)
+            self.setup_dummy_brief_response(brief_id=dos2_brief_id, supplier_id=0)
+
+        res = self.list_brief_responses(
+            framework='digital-outcomes-and-specialists, digital-outcomes-and-specialists-2'
+        )
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 4
+        dos1_br = [
+            br for br in data['briefResponses'] if br['brief']['frameworkSlug'] == "digital-outcomes-and-specialists"
+        ]
+        dos2_br = [
+            br for br in data['briefResponses'] if br['brief']['frameworkSlug'] == "digital-outcomes-and-specialists"
+        ]
+        assert len(dos1_br) == len(dos2_br) == 2
 
     def test_cannot_list_brief_responses_for_non_integer_brief_id(self):
         res = self.list_brief_responses(brief_id="not-valid")
