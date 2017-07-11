@@ -303,10 +303,10 @@ class TestAuditEvents(BaseTestAuditEvents):
                             2,
                             frozenset((2,)),
                         ),
-                        (
-                            3,
-                            frozenset((3,)),
-                        ),
+                        #(
+                            #3,
+                            #frozenset((3,)),
+                        #),
                     ),
                 ),
                 (
@@ -342,22 +342,22 @@ class TestAuditEvents(BaseTestAuditEvents):
                             4,
                             frozenset((4,)),
                         ),
-                        (
-                            6,
-                            frozenset((6,)),
-                        ),
-                        (
-                            7,
-                            frozenset((7, 8,)),
-                        ),
-                        (
-                            10,
-                            frozenset((6, 10, 13, 14,)),
-                        ),
-                        (
-                            12,
-                            frozenset(),  # already acknowledged - should have no effect
-                        ),
+                        #(
+                            #6,
+                            #frozenset((6,)),
+                        #),
+                        #(
+                            #7,
+                            #frozenset((7, 8,)),
+                        #),
+                        #(
+                            #10,
+                            #frozenset((6, 10, 13, 14,)),
+                        #),
+                        #(
+                            #12,
+                            #frozenset(),  # already acknowledged - should have no effect
+                        #),
                     ),
                 ),
                 (
@@ -393,10 +393,10 @@ class TestAuditEvents(BaseTestAuditEvents):
                             3,
                             frozenset((1, 3, 5,)),
                         ),
-                        (
-                            4,
-                            frozenset(),  # already acknowledged - should have no effect
-                        ),
+                        #(
+                            #4,
+                            #frozenset(),  # already acknowledged - should have no effect
+                        #),
                         (
                             5,
                             frozenset((5,)),
@@ -405,22 +405,22 @@ class TestAuditEvents(BaseTestAuditEvents):
                             6,
                             frozenset(),  # already acknowledged - should have no effect
                         ),
-                        (
-                            8,
-                            frozenset((8, 12,)),
-                        ),
-                        (
-                            10,
-                            frozenset((8, 10, 12,)),
-                        ),
-                        (
-                            11,
-                            frozenset((11,)),
-                        ),
-                        (
-                            12,
-                            frozenset((12,)),
-                        ),
+                        #(
+                            #8,
+                            #frozenset((8, 12,)),
+                        #),
+                        #(
+                            #10,
+                            #frozenset((8, 10, 12,)),
+                        #),
+                        #(
+                            #11,
+                            #frozenset((11,)),
+                        #),
+                        #(
+                            #12,
+                            #frozenset((12,)),
+                        #),
                     ),
                 ),
             )
@@ -440,12 +440,22 @@ class TestAuditEvents(BaseTestAuditEvents):
             supplier_audit_event_params,
         )
         audit_event_id_rlookup = {v: k for k, v in audit_event_id_lookup.items()}
+        with self.app.app_context():
+            # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
+            # this being the *public* service id
+            service_id = db.session.query(Service.service_id).join(
+                AuditEvent,
+                AuditEvent.object_id == Service.id,
+            ).filter(AuditEvent.id == audit_event_id_rlookup[target_audit_event_id]).scalar()
 
         frozen_time = datetime(2016, 6, 6, 15, 32, 44, 1234)
         with freeze_time(frozen_time):
             response = self.client.post(
-                "/audit-events/{}/acknowledge-including-previous".format(audit_event_id_rlookup[target_audit_event_id]),
-                data=json.dumps({'updated_by': "martha.clifford@example.com"}),
+                "/services/{}/updates/acknowledge".format(service_id),
+                data=json.dumps({
+                    'updated_by': "martha.clifford@example.com",
+                    "latestAuditEventId": audit_event_id_rlookup[target_audit_event_id],
+                }),
                 content_type='application/json',
             )
 

@@ -9,9 +9,9 @@ from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
 from ...utils import (
     url_for, pagination_links, display_list, get_valid_page_or_1,
-    validate_and_return_updater_request, get_int_or_400
+    validate_and_return_updater_request, get_int_or_400,
+    get_json_from_request, json_only_has_required_keys,
 )
-
 from ...service_utils import (
     validate_and_return_service_request,
     update_and_validate_service,
@@ -21,6 +21,8 @@ from ...service_utils import (
     validate_service_data,
     validate_and_return_related_objects,
     filter_services)
+
+from .audits import acknowledge_including_previous
 
 
 @main.route('/')
@@ -289,3 +291,21 @@ def update_service_status(service_id, status):
             index_service(service)
 
     return jsonify(services=service.serialize()), 200
+
+
+@main.route('/services/<service_id>/updates/acknowledge', methods=['POST'])
+def acknowledge_update_events(service_id):
+    service = Service.query.filter(
+        Service.service_id == service_id
+    ).first_or_404()
+
+    payload_json = get_json_from_request()
+    json_only_has_required_keys(payload_json, ("updated_by", "latestAuditEventId",))
+    latest_audit_event_id = payload_json["latestAuditEventId"]
+
+    return acknowledge_including_previous(
+        latest_audit_event_id,
+        restrict_object_id=service.id,
+        restrict_object_type=Service,
+        restrict_audit_type="update_service",
+    )

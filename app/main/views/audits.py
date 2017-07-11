@@ -223,30 +223,44 @@ def acknowledge_audit(audit_id):
     return jsonify(auditEvents=audit_event.serialize()), 200
 
 
-@main.route('/audit-events/<int:audit_id>/acknowledge-including-previous', methods=['POST'])
-def acknowledge_including_previous(audit_id):
+# this is a "view without a route" for at the moment - it is used as an "inner" view implementation for the service
+# updates acknowledgement view
+def acknowledge_including_previous(
+        audit_id,
+        restrict_object_id=None,
+        restrict_object_type=None,
+        restrict_audit_type=None,
+        ):
     updater_json = validate_and_return_updater_request()
 
-    audit_event = AuditEvent.query.get(audit_id)
+    audit_event_query = db.session.query(AuditEvent)
+    if restrict_object_id is not None:
+        audit_event_query = audit_event_query.filter(AuditEvent.object_id == restrict_object_id)
+    if restrict_object_type is not None:
+        audit_event_query = audit_event_query.filter(AuditEvent.object.is_type(restrict_object_type))
+    if restrict_audit_type is not None:
+        audit_event_query = audit_event_query.filter(AuditEvent.type == restrict_audit_type)
+
+    audit_event = audit_event_query.filter(AuditEvent.id == audit_id).one_or_none()
     if audit_event is None:
-        abort(404, "No audit event with this id")
+        abort(404, "No suitable audit event with this id")
 
     result = db.session.execute(AuditEvent.__table__.update().returning(
-        AuditEvent.__table__.c.id
+        AuditEvent.id
     ).where(db.and_(
-        AuditEvent.__table__.c.object_id == audit_event.object_id,
-        AuditEvent.__table__.c.object_type == audit_event.object_type,
-        AuditEvent.__table__.c.type == audit_event.type,
-        AuditEvent.__table__.c.acknowledged == db.false(),
+        AuditEvent.object_id == audit_event.object_id,
+        AuditEvent.object.is_type(type(audit_event.object)),
+        AuditEvent.type == audit_event.type,
+        AuditEvent.acknowledged == db.false(),
         # ugly, but this just implements the same "id tie breaker" behaviour for created_at-equal events as the
         # ordering we use in list_audits. this way there is some consistency between the two views as to what events
         # are considered "previous" in such cases. we could use postgres composite types to express this far more
         # neatly, but i can't get sqlalchemy to work with anonymous composite types.
         db.or_(
-            AuditEvent.__table__.c.created_at < audit_event.created_at,
+            AuditEvent.created_at < audit_event.created_at,
             db.and_(
-                AuditEvent.__table__.c.created_at == audit_event.created_at,
-                AuditEvent.__table__.c.id <= audit_event.id,
+                AuditEvent.created_at == audit_event.created_at,
+                AuditEvent.id <= audit_event.id,
             ),
         ),
     )).values(
