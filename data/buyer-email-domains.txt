@@ -66,6 +66,7 @@ gov.uk
 gov.wales
 guidedogs.org.uk
 guinness.org.uk
+hanover.org.uk
 hcpc-uk.org
 hdhs.school
 health.org.uk
