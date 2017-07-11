@@ -87,6 +87,15 @@ class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
 # these actually test a view whose @route is declared in services.py, but the bulk of the implementation is in audits.py
 # and it heavily uses BaseTestAuditEvents above
 class TestSupplierUpdateAcknowledgement(BaseTestAuditEvents):
+    def _assert_nothing_acknowledged(self):
+        with self.app.app_context():
+            # check nothing happened to the data
+            assert not db.session.query(AuditEvent).filter(db.or_(
+                AuditEvent.acknowledged_by.isnot(None),
+                AuditEvent.acknowledged_at.isnot(None),
+                AuditEvent.acknowledged == db.true(),
+            )).all()
+
     @pytest.mark.parametrize(
         "service_audit_event_params,supplier_audit_event_params,target_audit_event_id,expected_resp_events",
         # where we refer to "id"s in the expected_response_params, because we can't be too sure about the *actual* ids
@@ -122,6 +131,8 @@ class TestSupplierUpdateAcknowledgement(BaseTestAuditEvents):
                             2,
                             frozenset((2,)),
                         ),
+                        # currently the only exposed route for this view restricts the operation to supplier updates
+                        # so we're leaving some cases disabled for now
                         # (
                         #     3,
                         #     frozenset((3,)),
@@ -320,22 +331,115 @@ class TestSupplierUpdateAcknowledgement(BaseTestAuditEvents):
             ((0, AuditTypes.update_service, datetime(2010, 6, 7), None,),),
             ((2, AuditTypes.supplier_update, datetime(2011, 6, 9), None,),),
         )
+        audit_event_id_rlookup = {v: k for k, v in audit_event_id_lookup.items()}
+        with self.app.app_context():
+            # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
+            # this being the *public* service id
+            service_id = db.session.query(Service.service_id).join(
+                AuditEvent,
+                AuditEvent.object_id == Service.id,
+            ).filter(AuditEvent.id == audit_event_id_rlookup[0]).scalar()
 
         response = self.client.post(
-            "/audit-events/314159/acknowledge-including-previous",
-            data=json.dumps({'updated_by': "martha.clifford@example.com"}),
+            "/services/{}/updates/acknowledge".format(service_id),
+            data=json.dumps({
+                'updated_by': "martha.clifford@example.com",
+                "latestAuditEventId": 314159,
+            }),
             content_type='application/json',
         )
 
         assert response.status_code == 404
+        self._assert_nothing_acknowledged()
 
+    def test_acknowledge_including_previous_obj_mismatch(self):
+        self.setup_dummy_suppliers(3)
+        self.setup_dummy_services(3, supplier_id=1)
+        audit_event_id_lookup = self.add_audit_events_by_param_tuples(
+            ((0, AuditTypes.update_service, datetime(2010, 6, 7), None,),),
+            # note here how i'm applying an update_service audit type to a supplier-bound event so that we can be sure
+            # we're testing the object mismatch and not the audit_type mismatch
+            ((2, AuditTypes.update_service, datetime(2011, 6, 9), None,),),
+        )
+        audit_event_id_rlookup = {v: k for k, v in audit_event_id_lookup.items()}
         with self.app.app_context():
-            # check nothing happened to the data
-            assert not db.session.query(AuditEvent).filter(db.or_(
-                AuditEvent.acknowledged_by.isnot(None),
-                AuditEvent.acknowledged_at.isnot(None),
-                AuditEvent.acknowledged == db.true(),
-            )).all()
+            # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
+            # this being the *public* service id
+            service_id = db.session.query(Service.service_id).join(
+                AuditEvent,
+                AuditEvent.object_id == Service.id,
+            ).filter(AuditEvent.id == audit_event_id_rlookup[0]).scalar()
+
+        response = self.client.post(
+            "/services/{}/updates/acknowledge".format(service_id),
+            data=json.dumps({
+                'updated_by': "martha.clifford@example.com",
+                # now specify the id for the event bound to the *supplier*
+                "latestAuditEventId": audit_event_id_rlookup[1],
+            }),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 404
+        self._assert_nothing_acknowledged()
+
+    def test_acknowledge_including_previous_obj_type_mismatch(self):
+        self.setup_dummy_suppliers(3)
+        self.setup_dummy_services(3, supplier_id=1)
+        audit_event_id_lookup = self.add_audit_events_by_param_tuples(
+            ((0, AuditTypes.update_service, datetime(2010, 6, 7), None,),),
+            # as before, note here how i'm applying an update_service audit type to a supplier-bound event so that we
+            # can be sure we're testing the object mismatch and not the audit_type mismatch
+            ((2, AuditTypes.update_service, datetime(2011, 6, 9), None,),),
+        )
+        audit_event_id_rlookup = {v: k for k, v in audit_event_id_lookup.items()}
+        with self.app.app_context():
+            # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
+            # this being the *public* service id
+            supplier_id = db.session.query(AuditEvent.object_id).filter(
+                AuditEvent.id == audit_event_id_rlookup[1]
+            ).scalar()
+
+        response = self.client.post(
+            "/services/{}/updates/acknowledge".format(supplier_id),
+            data=json.dumps({
+                'updated_by': "martha.clifford@example.com",
+                # now specify the id for the event bound to the *supplier*
+                "latestAuditEventId": audit_event_id_rlookup[1],
+            }),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 404
+        self._assert_nothing_acknowledged()
+
+    def test_acknowledge_including_previous_audit_type_mismatch(self):
+        self.setup_dummy_suppliers(3)
+        self.setup_dummy_services(3, supplier_id=1)
+        audit_event_id_lookup = self.add_audit_events_by_param_tuples(
+            ((0, AuditTypes.update_service_status, datetime(2010, 6, 7), None,),),
+            ((2, AuditTypes.supplier_update, datetime(2011, 6, 9), None,),),
+        )
+        audit_event_id_rlookup = {v: k for k, v in audit_event_id_lookup.items()}
+        with self.app.app_context():
+            # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
+            # this being the *public* service id
+            service_id = db.session.query(Service.service_id).join(
+                AuditEvent,
+                AuditEvent.object_id == Service.id,
+            ).filter(AuditEvent.id == audit_event_id_rlookup[0]).scalar()
+
+        response = self.client.post(
+            "/services/{}/updates/acknowledge".format(service_id),
+            data=json.dumps({
+                'updated_by': "martha.clifford@example.com",
+                "latestAuditEventId": audit_event_id_rlookup[0],
+            }),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 404
+        self._assert_nothing_acknowledged()
 
 
 class TestAuditEvents(BaseTestAuditEvents):
