@@ -63,7 +63,7 @@ up to date by running upgrade.
 
 Install new Python dependencies with pip
 
-```make requirements_for_test```
+```make requirements-dev```
 
 ### Run the tests
 
@@ -98,6 +98,19 @@ e.g.:
 ```
 curl -i -H "Authorization: Bearer myToken" 127.0.0.1:5000/services
 ```
+
+## Updating application dependencies
+
+`requirements.txt` file is generated from the `requirements-app.txt` in order to pin
+versions of all nested dependecies. If `requirements-app.txt` has been changed (or
+we want to update the unpinned nested dependencies) `requirements.txt` should be
+regenerated with
+
+```
+make compile-requirements
+```
+
+`requirements.txt` should be commited alongside `requirements-app.txt` changes.
 
 ## Using FeatureFlags
 

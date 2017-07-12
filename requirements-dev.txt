@@ -1,4 +1,6 @@
 -r requirements.txt
+
+# For tests
 pytest==2.8.2
 pep8==1.5.7
 requests-mock==0.6.0
