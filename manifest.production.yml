@@ -10,6 +10,7 @@ env:
     DM_SEARCH_API_URL: https://dm-dev-search-api.apps.staging.digital.gov.au/
 routes:
 - route: dm-api.apps.platform.digital.gov.au
+- route: marketplace.service.gov.au/api
 applications:
 - name: dm-api-blue
 - name: dm-api

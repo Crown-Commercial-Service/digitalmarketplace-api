@@ -6,6 +6,7 @@ class Config:
     VERSION = get_version_label(
         os.path.abspath(os.path.dirname(__file__))
     )
+    URL_PREFIX = '/api'
     DM_SEARCH_API_URL = None
     DM_SEARCH_API_AUTH_TOKEN = None
     DM_API_AUTH_TOKENS = None
@@ -110,6 +111,7 @@ class Config:
 
 
 class Test(Config):
+    URL_PREFIX = ''
     DM_SEARCH_API_AUTH_TOKEN = 'test'
     DM_SEARCH_API_URL = 'http://localhost'
     DM_LOG_LEVEL = 'WARN'

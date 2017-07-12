@@ -10,6 +10,7 @@ env:
     DM_ELASTICSEARCH_URL: search-digital-marketplace-dev-dlc2jevc4vmtqaptuf3pecnirq.ap-southeast-2.es.amazonaws.com:80
 routes:
 - route: dm-dev-api.apps.staging.digital.gov.au
+- route: dm-dev.apps.staging.digital.gov.au/api
 applications:
 - name: dm-dev-api-blue
 - name: dm-dev-api

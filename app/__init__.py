@@ -38,10 +38,11 @@ def create_app(config_name):
     if 'DATABASE_URL' in os.environ:
         application.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL'].replace('reconnect=true', '')
 
+    url_prefix = application.config['URL_PREFIX']
     from .main import main as main_blueprint
-    application.register_blueprint(main_blueprint)
+    application.register_blueprint(main_blueprint, url_prefix=url_prefix)
     from .status import status as status_blueprint
-    application.register_blueprint(status_blueprint)
+    application.register_blueprint(status_blueprint, url_prefix=url_prefix)
     from .admin import blueprint as admin_blueprint
     application.register_blueprint(admin_blueprint.admin)
 
