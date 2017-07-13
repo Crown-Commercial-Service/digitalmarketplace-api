@@ -125,7 +125,7 @@ def _is_seller_type(typecode):
     return cast(Supplier.data[('seller_type', typecode)].astext, Boolean) == True  # noqa
 
 
-@main.route('/products/search', methods=['GET'])
+@main.route('/products/search', methods=['GET', 'POST'])
 def product_search():
 
     search_query = get_json_from_request()
@@ -140,13 +140,19 @@ def product_search():
     search_term = search_query.get('search_term', None)
 
     q = db.session.query(Product).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
-    q = q.add_column(func.ts_headline(
-            'english',
-            Product.summary,
-            func.plainto_tsquery(search_term),
-            'MaxWords=400, MinWords=100, ShortWord=3, HighlightAll=FALSE, MaxFragments=3, FragmentDelimiter=" ... " '
+    q = q.filter(Supplier.status != 'deleted')
+    if search_term:
+        q = q.add_column(func.ts_headline(
+                'english',
+                Product.summary,
+                func.plainto_tsquery(search_term),
+                'MaxWords=150, MinWords=75, ShortWord=3, HighlightAll=FALSE, MaxFragments=1, FragmentDelimiter=" ... " '
+            )
         )
-    )
+    else:
+        q = q.add_column("''")
+    q = q.add_column(Supplier.name)
+    q = q.add_column(Supplier.data)
     q = q.group_by(Product.id, Supplier.id)
 
     if domains:
@@ -169,32 +175,29 @@ def product_search():
 
     if search_term:
         query = func.plainto_tsquery(search_term)
-        ob = [desc(func.ts_rank_cd(func.to_tsvector(func.concat(Product.name, Product.summary)), query))] + ob
+        ob = [desc(func.ts_rank_cd(func.to_tsvector(func.concat(Product.name,
+                                                                Product.summary, Supplier.name)), query))] + ob
 
-        condition = func.to_tsvector(func.concat(Product.name, Product.summary)) \
+        condition = func.to_tsvector(func.concat(Product.name, Product.summary, Supplier.name)) \
             .op('@@')(query)
         q = q.filter(condition)
     q = q.order_by(*ob)
-    results = list(q)
 
-    for x in range(len(results)):
-        if results[x][1] is not None:
-            results[x][0].summary = results[x][1]
-    results = [results[x][0] for x in range(len(results)) if
-               (results[x][0].supplier.abn != Supplier.DUMMY_ABN and
-                results[x][0].supplier.status != 'deleted')]
+    raw_results = list(q)
+    results = []
+
+    for x in range(len(raw_results)):
+        result = raw_results[x][0].__dict__
+        result.pop('_sa_instance_state', None)
+        if raw_results[x][1] is not None and raw_results[x][1] != '':
+            result['summary'] = raw_results[x][1]
+        if raw_results[x][2] is not None:
+            result['supplierName'] = raw_results[x][2]
+        if raw_results[x][3] is not None:
+            result['seller_type'] = raw_results[x][3].get('seller_type')
+        results.append(result)
 
     total_results = len(results)
-
-    if domains:
-        # this code includes legacy domains in results but is slower.
-        # can be removed once fully migrated to new domains.
-        results = [
-            _ for _ in results
-            if (
-                (set(_.supplier.assessed_domains) | set(_.supplier.unassessed_domains)) >= set(domains)
-            )
-        ]
 
     sliced_results = results[offset:(offset + result_count)]
 
@@ -211,7 +214,7 @@ def product_search():
         return jsonify(message=str(e)), 500
 
 
-@main.route('/casestudies/search', methods=['GET'])
+@main.route('/casestudies/search', methods=['GET', 'POST'])
 def casestudies_search():
     search_query = get_json_from_request()
 
@@ -225,16 +228,22 @@ def casestudies_search():
     search_term = search_query.get('search_term', None)
 
     q = db.session.query(CaseStudy).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
-    q = q.add_column(func.ts_headline(
-        'english',
-        func.concat(
-            CaseStudy.data['approach'].astext,
-            CaseStudy.data['role'].astext),
-        func.plainto_tsquery(search_term),
-        'MaxWords=400, MinWords=100, ShortWord=3, HighlightAll=FALSE, FragmentDelimiter=" ... " '
-    ))
-
-    q = q.group_by(CaseStudy.id)
+    q = q.filter(Supplier.status != 'deleted')
+    if search_term:
+        q = q.add_column(func.ts_headline(
+            'english',
+            func.concat(
+                CaseStudy.data['approach'].astext,
+                ' ',
+                CaseStudy.data['role'].astext),
+            func.plainto_tsquery(search_term),
+            'MaxWords=150, MinWords=75, ShortWord=3, HighlightAll=FALSE, FragmentDelimiter=" ... " '
+        ))
+    else:
+        q = q.add_column("''")
+    q = q.add_column(Supplier.name)
+    q = q.add_column(postgres.array_agg(Supplier.data))
+    q = q.group_by(CaseStudy.id, Supplier.name)
 
     if domains:
         d_agg = postgres.array_agg(cast(Domain.name, TEXT))
@@ -257,33 +266,30 @@ def casestudies_search():
     if search_term:
         query = func.plainto_tsquery(search_term)
         ob = [desc(func.ts_rank_cd(func.to_tsvector(
-            func.concat(CaseStudy.data['title'].astext, CaseStudy.data['approach'].astext)), query))] + ob
+            func.concat(Supplier.name, CaseStudy.data['title'].astext,
+                        CaseStudy.data['approach'].astext)), query))] + ob
 
-        condition = func.to_tsvector(func.concat(CaseStudy.data['title'].astext, CaseStudy.data['approach'].astext)) \
-            .op('@@')(query)
+        condition = func.to_tsvector(func.concat(Supplier.name,
+                                                 CaseStudy.data['title'].astext,
+                                                 CaseStudy.data['approach'].astext)).op('@@')(query)
 
         q = q.filter(condition)
     q = q.order_by(*ob)
-    results = list(q)
 
-    for x in range(len(results)):
-        if results[x][1] is not None:
-            results[x][0].data['approach'] = results[x][1]
-    results = [results[x][0] for x in range(len(results)) if
-               (results[x][0].supplier.abn != Supplier.DUMMY_ABN and
-                results[x][0].supplier.status != 'deleted')]
+    raw_results = list(q)
+    results = []
+
+    for x in range(len(raw_results)):
+        result = raw_results[x][0].serialize()
+        if raw_results[x][1] is not None and raw_results[x][1] != '':
+            result['approach'] = raw_results[x][1]
+        if raw_results[x][2] is not None:
+            result['supplierName'] = raw_results[x][2]
+        if raw_results[x][3] is not None and raw_results[x][3][0] is not None:
+            result['seller_type'] = raw_results[x][3][0].get('seller_type')
+        results.append(result)
 
     total_results = len(results)
-
-    if domains:
-        # this code includes lecacy domains in results but is slower.
-        # can be removed once fully migrated to new domains.
-        results = [
-            _ for _ in results
-            if (
-                (set(_.supplier.assessed_domains) | set(_.supplier.unassessed_domains)) >= set(domains)
-            )
-        ]
 
     sliced_results = results[offset:(offset + result_count)]
 
@@ -350,16 +356,22 @@ def do_search(search_query, offset, result_count, new_domains):
     else:
         q = db.session.query(Supplier).outerjoin(PriceSchedule).outerjoin(ServiceRole)
 
-    q = q.filter(Supplier.status != 'deleted')
+    q = q.filter(Supplier.status != 'deleted', Supplier.abn != Supplier.DUMMY_ABN)
 
-    q = q.add_column(func.ts_headline(
-         'english',
-         func.concat(Supplier.summary,
-                     Supplier.data['tools'].astext, Supplier.data['methodologies'].astext,
-                     Supplier.data['technologies'].astext, ''),
-         func.plainto_tsquery(search_term),
-         'MaxWords=400, MinWords=100, ShortWord=3, HighlightAll=FALSE, MaxFragments=3, FragmentDelimiter=" ... " '
-    ))
+    if search_term:
+        q = q.add_column(func.ts_headline(
+             'english',
+             func.concat(Supplier.summary,
+                         ' ',
+                         Supplier.data['tools'].astext,
+                         ' ',
+                         Supplier.data['methodologies'].astext,
+                         ' ',
+                         Supplier.data['technologies'].astext, ''),
+             func.plainto_tsquery(search_term),
+             'MaxWords=150, MinWords=75, ShortWord=3, HighlightAll=FALSE, MaxFragments=1, FragmentDelimiter=" ... " '
+        ))
+
     q = q.group_by(Supplier.id)
 
     try:
@@ -410,13 +422,17 @@ def do_search(search_query, offset, result_count, new_domains):
         q = q.filter(Supplier.text_vector.op('@@')(query))
     q = q.order_by(*ob)
 
-    results = list(q)
+    raw_results = list(q)
+    results = []
 
-    # remove 'hidden' example listing from result
-    for x in range(len(results)):
-        if results[x][1] is not None:
-            results[x][0].summary = results[x][1]
-    results = [results[x][0] for x in range(len(results)) if results[x][0].abn != Supplier.DUMMY_ABN]
+    for x in range(len(raw_results)):
+        if type(raw_results[x]) is Supplier:
+            result = raw_results[x]
+        else:
+            result = raw_results[x][0]
+            if raw_results[x][1] is not None and raw_results[x][1] != '':
+                result.summary = raw_results[x][1]
+        results.append(result)
 
     if roles_list and new_domains and not EXCLUDE_LEGACY_ROLES:
         # this code includes lecacy domains in results but is slower.

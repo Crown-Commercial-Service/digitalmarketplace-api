@@ -323,6 +323,7 @@ class BaseApplicationTest(object):
                 s = Supplier(
                     code=i,
                     name=name,
+                    abn='1',
                     description="",
                     summary=summary,
                     data={

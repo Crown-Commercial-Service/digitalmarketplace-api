@@ -71,7 +71,7 @@ class TestCreateCaseStudy(BaseCaseStudyTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 201, data
-        assert data['caseStudy']['supplierName'] == 'Supplier 0'
+        assert data['caseStudy']['supplierCode'] == 0
 
     def test_cannot_create_case_study_with_empty_json(self):
         res = self.client.post(
@@ -127,7 +127,7 @@ class TestUpdateCaseStudy(BaseCaseStudyTest):
         assert res.status_code == 200
 
         data = json.loads(res.get_data(as_text=True))
-        assert data['caseStudy']['supplierName'] == 'Supplier 0'
+        assert data['caseStudy']['supplierCode'] == 0
         assert data['caseStudy']['foo'] == 'baz'
 
     def test_empty_patch(self):
@@ -139,7 +139,7 @@ class TestUpdateCaseStudy(BaseCaseStudyTest):
         assert res.status_code == 200
 
         data = json.loads(res.get_data(as_text=True))
-        assert data['caseStudy']['supplierName'] == 'Supplier 0'
+        assert data['caseStudy']['supplierCode'] == 0
         assert data['caseStudy']['foo'] == self.case_study_data['foo']
 
     def test_patch_missing_order(self):

@@ -898,8 +898,6 @@ class Product(db.Model):
 
     supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
 
-    supplier = db.relationship('Supplier', lazy='select', innerjoin=True)
-
     @staticmethod
     def get_by_name_or_id(name_or_id):
         if isinstance(name_or_id, six.string_types):
@@ -2308,8 +2306,6 @@ class CaseStudy(db.Model):
     supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
 
-    supplier = db.relationship('Supplier', lazy='select', innerjoin=True)
-
     @validates('data')
     def validates_data(self, key, data):
         data = drop_foreign_fields(data, [
@@ -2326,7 +2322,6 @@ class CaseStudy(db.Model):
         data.update({
             'id': self.id,
             'supplierCode': self.supplier_code,
-            'supplierName': self.supplier.name,
             'createdAt': self.created_at.to_iso8601_string(extended=True),
             'links': {
                 'self': url_for('.get_work_order', work_order_id=self.id),

@@ -39,7 +39,7 @@ def create_case_study():
 
     case_study = CaseStudy(
         data=case_study_json,
-        supplier=supplier
+        supplier_code=supplier.code
     )
     save_case_study(case_study)
 

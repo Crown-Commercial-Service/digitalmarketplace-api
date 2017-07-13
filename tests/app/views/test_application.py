@@ -24,8 +24,7 @@ def test_approval(sample_submitted_application):
     product_from_submitted['id'] = products[0].id
     product_from_submitted['supplier_code'] = a.supplier.code
     product_from_submitted['links'] = {
-        'self': '/products/{}'.format(products[0].id),
-        'supplier': '/suppliers/{}'.format(a.supplier.code)
+        'self': '/products/{}'.format(products[0].id)
     }
 
     assert a.supplier.serializable['products'] == [product_from_submitted]
