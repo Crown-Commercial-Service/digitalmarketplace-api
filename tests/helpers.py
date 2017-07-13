@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import pytest
 
 from app import db
-from app.models import Framework, User, Lot, Brief, Supplier, ContactInformation, Service
+from app.models import Framework, User, Lot, Brief, Supplier, ContactInformation, Service, BriefClarificationQuestion
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -59,8 +59,10 @@ class FixtureMixin(object):
 
             return user.id
 
-    def setup_dummy_briefs(self, n, title=None, status='draft', user_id=1, data=None,
-                           brief_start=1, lot='digital-specialists', published_at=None):
+    def setup_dummy_briefs(
+        self, n, title=None, status='draft', user_id=1, data=None, brief_start=1, lot='digital-specialists',
+        published_at=None, add_clarification_question=False
+    ):
         user_id = self.setup_dummy_user(id=user_id)
 
         with self.app.app_context():
@@ -77,11 +79,13 @@ class FixtureMixin(object):
                     lot_slug=lot.slug,
                     status=status,
                     published_at=published_at,
+                    add_clarification_question=add_clarification_question
                 )
 
     def setup_dummy_brief(
-            self, id=None, user_id=1, status=None, data=None, published_at=None, withdrawn_at=None,
-            framework_slug='digital-outcomes-and-specialists', lot_slug='digital-specialists'
+        self, id=None, user_id=1, status=None, data=None, published_at=None, withdrawn_at=None,
+        framework_slug='digital-outcomes-and-specialists', lot_slug='digital-specialists',
+        add_clarification_question=False
     ):
         if published_at is not None and status is not None:
             raise ValueError('Cannot provide both status and published_at')
@@ -98,7 +102,7 @@ class FixtureMixin(object):
         framework = Framework.query.filter(Framework.slug == framework_slug).first()
         lot = Lot.query.filter(Lot.slug == lot_slug).first()
 
-        db.session.add(Brief(
+        brief = Brief(
             id=id,
             data=data,
             framework=framework,
@@ -106,7 +110,16 @@ class FixtureMixin(object):
             users=[User.query.get(user_id)],
             published_at=published_at,
             withdrawn_at=withdrawn_at,
-        ))
+        )
+
+        db.session.add(brief)
+        if add_clarification_question:
+            db.session.add(BriefClarificationQuestion(
+                brief=brief,
+                question="What is the answer to the meaning of life, the Universe and everything?",
+                answer="42"
+            ))
+
         db.session.commit()
 
     def setup_dummy_suppliers(self, n):
