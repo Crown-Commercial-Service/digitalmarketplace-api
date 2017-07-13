@@ -116,6 +116,17 @@ def list_audits():
         abort(400, 'object-id cannot be provided without object-type')
 
     if earliest_for_each_object:
+        if not (
+                acknowledged and
+                acknowledged != 'all' and
+                audit_type == "update_service" and
+                object_type == "services"
+                ):
+            current_app.logger.warning(
+                "earliest_for_each_object option currently intended for use on acknowledged update_service events. "
+                "If use with any other events is to be regular, the scope of the corresponding partial index "
+                "should be expanded to cover it."
+            )
         # we need to join the built-up subquery back onto the AuditEvent table to retrieve the rest of the row
         audits_subquery = audits.order_by(
             AuditEvent.object_type,
