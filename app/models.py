@@ -14,7 +14,14 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates, backref, mapper
 from sqlalchemy.orm.session import Session
-from sqlalchemy.sql.expression import case as sql_case, cast as sql_cast, select as sql_select, false as sql_false
+from sqlalchemy.sql.expression import (
+    case as sql_case,
+    cast as sql_cast,
+    select as sql_select,
+    false as sql_false,
+    true as sql_true,
+    and_ as sql_and,
+)
 from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
@@ -1553,15 +1560,24 @@ db.Index(
     AuditEvent.created_at,
 )
 
-# Index for type + acknowledged audit event query count - for admin
-# app "Service updates" requests: while the page of audit events
-# will rely on the created_at index scan and is relatively quick,
-# count(*) query executed by `.paginate` is very slow without a
-# dedicated index for objects with multiple events
+
+# DEPRECATED - remove in a migration once service update admin app feature has been updated
 db.Index(
     'idx_audit_events_type_acknowledged',
     AuditEvent.type,
     AuditEvent.acknowledged,
+)
+
+# partial index for supplier_update-monitoring admin views. specifically this
+# ordering should allow the index to be used for earliest_for_each_object's
+# ordering-followed-by-DISTINCT ON
+db.Index(
+    'idx_audit_events_created_at_per_obj_partial',
+    AuditEvent.object_type,
+    AuditEvent.object_id,
+    AuditEvent.created_at,
+    AuditEvent.id,
+    postgresql_where=sql_and(AuditEvent.acknowledged == sql_false(), AuditEvent.type == "update_service"),
 )
 
 

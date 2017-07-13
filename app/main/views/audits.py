@@ -4,6 +4,7 @@ from ...models import AuditEvent
 from sqlalchemy import asc, desc, Date, cast
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import true, false
+from sqlalchemy.orm import class_mapper
 from ...utils import pagination_links, get_valid_page_or_1
 from .. import main
 from ... import db, models
@@ -39,11 +40,15 @@ def list_audits():
     except ValueError:
         abort(400, 'invalid page size supplied')
 
-    audits = AuditEvent.query.order_by(
-        desc(AuditEvent.created_at)
-        if convert_to_boolean(request.args.get('latest_first'))
-        else asc(AuditEvent.created_at)
-    )
+    earliest_for_each_object = convert_to_boolean(request.args.get('earliest_for_each_object'))
+
+    if earliest_for_each_object:
+        # the rest of the filters we add will be added against a subquery which we will join back onto the main table
+        # to retrieve the rest of the row. this allows the potentially expensive DISTINCT ON pass to be performed
+        # against an absolutely minimal subset of rows which can probably be pulled straight from an index
+        audits = db.session.query(AuditEvent.id)
+    else:
+        audits = AuditEvent.query
 
     audit_date = request.args.get('audit-date', None)
     if audit_date:
@@ -83,22 +88,60 @@ def list_audits():
     if object_type:
         if object_type not in AUDIT_OBJECT_TYPES:
             abort(400, 'invalid object-type supplied')
-        if not object_id:
-            abort(400, 'object-type cannot be provided without object-id')
-        model = AUDIT_OBJECT_TYPES[object_type]
-        id_field = AUDIT_OBJECT_ID_FIELDS[object_type]
 
-        ref_object = model.query.filter(
-            id_field == object_id
-        ).first()
+        ref_model = AUDIT_OBJECT_TYPES[object_type]
+        ext_id_field = AUDIT_OBJECT_ID_FIELDS[object_type]
 
-        if ref_object is None:
-            abort(404, "Object with given object-type and object-id doesn't exist")
+        audits = audits.filter(AuditEvent.object.is_type(ref_model))
 
-        audits = audits.filter(AuditEvent.object == ref_object)
+        # "object_id" here is the *external* object_id
+        if object_id:
+            ref_object = ref_model.query.filter(
+                ext_id_field == object_id
+            ).first()
 
+            if ref_object is None:
+                abort(404, "Object with given object-type and object-id doesn't exist")
+
+            # this `.identity_key_from_instance(...)[1][0]` is exactly the method used by sqlalchemy_utils' generic
+            # relationship code to extract an object's pk value, so *should* be relatively stable, API-wise.
+            # the `[1]` is to select the pk's *value* rather than the `Column` object and the `[0]` simply fetches
+            # the first of any pk values - generic relationships are already assuming that compound pks aren't in
+            # use by the target.
+            ref_object_pk = class_mapper(ref_model).identity_key_from_instance(ref_object)[1][0]
+            audits = audits.filter(
+                AuditEvent.object_id == ref_object_pk
+            )
     elif object_id:
         abort(400, 'object-id cannot be provided without object-type')
+
+    if earliest_for_each_object:
+        if not (
+                acknowledged and
+                acknowledged != 'all' and
+                audit_type == "update_service" and
+                object_type == "services"
+                ):
+            current_app.logger.warning(
+                "earliest_for_each_object option currently intended for use on acknowledged update_service events. "
+                "If use with any other events is to be regular, the scope of the corresponding partial index "
+                "should be expanded to cover it."
+            )
+        # we need to join the built-up subquery back onto the AuditEvent table to retrieve the rest of the row
+        audits_subquery = audits.order_by(
+            AuditEvent.object_type,
+            AuditEvent.object_id,
+            AuditEvent.created_at,
+            AuditEvent.id,
+        ).distinct(
+            AuditEvent.object_type,
+            AuditEvent.object_id,
+        ).subquery()
+
+        audits = AuditEvent.query.join(audits_subquery, audits_subquery.c.id == AuditEvent.id)
+
+    sort_order = db.desc if convert_to_boolean(request.args.get('latest_first')) else db.asc
+    audits = audits.order_by(sort_order(AuditEvent.created_at), sort_order(AuditEvent.id))
 
     audits = audits.paginate(
         page=page,
