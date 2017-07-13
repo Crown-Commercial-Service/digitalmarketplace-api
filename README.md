@@ -107,7 +107,7 @@ we want to update the unpinned nested dependencies) `requirements.txt` should be
 regenerated with
 
 ```
-make compile-requirements
+make freeze-requirements
 ```
 
 `requirements.txt` should be commited alongside `requirements-app.txt` changes.
