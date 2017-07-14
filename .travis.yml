@@ -8,7 +8,7 @@ dist: "trusty"
 env:
   - SQLALCHEMY_DATABASE_URI=postgresql://postgres:@localhost:5432/digitalmarketplace_test
 install:
-  - make requirements_for_test
+  - make requirements-dev
 before_script:
   - psql -c 'create database digitalmarketplace_test;' -U postgres
 script:

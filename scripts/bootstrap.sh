@@ -22,4 +22,4 @@ createdb digitalmarketplace_test
 
 # Install Python development dependencies
 # Upgrade databases
-make requirements_for_test run_migrations
+make requirements-dev run-migrations
