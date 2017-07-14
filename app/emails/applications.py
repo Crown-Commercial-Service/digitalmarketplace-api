@@ -171,6 +171,42 @@ def send_assessment_approval_notification(supplier_id, domain_id):
     )
 
 
+def send_assessment_rejected_notification(supplier_id, domain_id):
+    TEMPLATE_FILENAME = 'assessment_rejected.md'
+
+    FRONTEND_ADDRESS = current_app.config['FRONTEND_ADDRESS']
+
+    supplier = Supplier.query.get(supplier_id)
+    domain = Domain.query.get(domain_id)
+
+    users = User.query.filter(User.supplier_code == supplier.code).all()
+
+    email_addresses = [u.email_address for u in users]
+    email_addresses.append(current_app.config['GENERIC_CONTACT_EMAIL'])
+    url_assessment_criteria = FRONTEND_ADDRESS + '/assessment-criteria'
+    url_seller_page = FRONTEND_ADDRESS + '/sellers'
+
+    # prepare copy
+    email_body = render_email_template(
+        TEMPLATE_FILENAME,
+        business_name=supplier.name,
+        domain_name=domain.name,
+        url_assessment_criteria=url_assessment_criteria,
+        url_seller_page=url_seller_page
+    )
+
+    subject = "Notification: Outcome of area of expertise assessment"
+
+    send_or_handle_error(
+        email_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='assessment rejected'
+    )
+
+
 def send_revert_notification(application_id, message):
     TEMPLATE_FILENAME = 'application_reverted.md'
 

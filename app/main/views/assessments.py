@@ -5,6 +5,7 @@ from dmapiclient.audit import AuditTypes
 from app.utils import (get_json_from_request, json_has_required_keys, validate_and_return_updater_request)
 from sqlalchemy.exc import IntegrityError
 from app.jiraapi import get_marketplace_jira
+from app.emails import send_assessment_rejected_notification
 import json
 
 
@@ -90,6 +91,8 @@ def reject_assessment(id):
 
     try:
         db.session.commit()
+        send_assessment_rejected_notification(assessment.supplier_domain.supplier_id,
+                                              assessment.supplier_domain.domain_id)
     except IntegrityError:
         abort(400)
     return jsonify(assessment.serializable), 200
