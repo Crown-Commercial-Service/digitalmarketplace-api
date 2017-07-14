@@ -1,12 +1,12 @@
 SHELL := /bin/bash
 VIRTUALENV_ROOT := $(shell [ -z $$VIRTUAL_ENV ] && echo $$(pwd)/venv || echo $$VIRTUAL_ENV)
 
-run_all: requirements run_migrations run_app
+run-all: requirements run-migrations run-app
 
-run_app: virtualenv
+run-app: virtualenv
 	${VIRTUALENV_ROOT}/bin/python application.py runserver
 
-run_migrations: virtualenv
+run-migrations: virtualenv
 	${VIRTUALENV_ROOT}/bin/python application.py db upgrade
 
 virtualenv:
@@ -59,4 +59,4 @@ docker-push:
 	docker push digitalmarketplace/api:${RELEASE_NAME}
 
 
-.PHONY: virtualenv requirements requirements-dev freeze-requirements test-requirements test-pep8 test-migrations test-unit test run_migrations run_app run_all docker-build docker-push
+.PHONY: virtualenv requirements requirements-dev freeze-requirements test-requirements test-pep8 test-migrations test-unit test run-migrations run-app run-all docker-build docker-push

@@ -22,7 +22,7 @@ make bootstrap
 
 Install dependencies, run migrations and run the app
 ```
-make run_all
+make run-all
 ```
 
 ## Full setup
@@ -57,7 +57,7 @@ source ./venv/bin/activate
 When new database migrations are added you can bring your local database schema
 up to date by running upgrade.
 
-```make run_migrations```
+```make run-migrations```
 
 ### Upgrade dependencies
 
@@ -71,17 +71,17 @@ This will run the linter, validate the migrations and run the unit tests.
 
 ```make test```
 
-To test individual parts of the test stack use the `test_pep8`, `test_migrations`
-or `test_unit` targets.
+To test individual parts of the test stack use the `test-pep8`, `test-migrations`
+or `test-unit` targets.
 
 ### Run the development server
 
 Run the API with environment variables required for local development set.
 This will install requirements, run database migrations and run the app.
 
-```make run_all```
+```make run-all```
 
-To just run the application use the `run_app` target.
+To just run the application use the `run-app` target.
 
 ## Using the API locally
 
@@ -91,7 +91,7 @@ variable (a colon-separated list), e.g.:
 
 ```export DM_API_AUTH_TOKENS=myToken1:myToken2```
 
-If ``DM_API_AUTH_TOKENS`` is not explicitly set then the run_api.sh script sets
+If ``DM_API_AUTH_TOKENS`` is not explicitly set then the run script sets
 it to ``myToken``. You should include a valid token in your request headers, 
 e.g.:
 
