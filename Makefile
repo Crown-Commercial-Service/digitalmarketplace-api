@@ -15,10 +15,10 @@ virtualenv:
 bootstrap: virtualenv
 	./scripts/bootstrap.sh
 
-requirements: virtualenv requirements.txt
+requirements: virtualenv test-requirements requirements.txt
 	${VIRTUALENV_ROOT}/bin/pip install -r requirements.txt
 
-requirements-dev: virtualenv requirements-dev.txt
+requirements-dev: virtualenv test-requirements requirements-dev.txt
 	${VIRTUALENV_ROOT}/bin/pip install -r requirements-dev.txt
 
 freeze-requirements:
@@ -31,15 +31,21 @@ freeze-requirements:
 	$$(pwd)/venv-freeze/bin/pip freeze -r requirements-app.txt | sed -n '/The following requirements were added by pip freeze/,$$p' >> requirements.txt
 	rm -rf venv-freeze
 
-test: test_pep8 test_migrations test_unit
+test: test-requirements test-pep8 test-migrations test-unit
 
-test_pep8: virtualenv
+test-requirements:
+	@diff requirements-app.txt requirements.txt | grep '<' \
+	    && { echo "requirements.txt doesn't match requirements-app.txt."; \
+	         echo "Run 'make freeze-requirements' to update."; exit 1; } \
+	    || { echo "requirements.txt is up to date"; exit 0; }
+
+test-pep8: virtualenv
 	${VIRTUALENV_ROOT}/bin/pep8 .
 
-test_migrations: virtualenv
+test-migrations: virtualenv
 	${VIRTUALENV_ROOT}/bin/python ./scripts/list_migrations.py 1>/dev/null
 
-test_unit: virtualenv
+test-unit: virtualenv
 	${VIRTUALENV_ROOT}/bin/py.test ${PYTEST_ARGS}
 
 docker-build:
@@ -53,4 +59,4 @@ docker-push:
 	docker push digitalmarketplace/api:${RELEASE_NAME}
 
 
-.PHONY: virtualenv requirements requirements-dev freeze-requirements test_pep8 test_migrations test_unit test test_all run_migrations run_app run_all docker-build docker-push
+.PHONY: virtualenv requirements requirements-dev freeze-requirements test-requirements test-pep8 test-migrations test-unit test run_migrations run_app run_all docker-build docker-push
