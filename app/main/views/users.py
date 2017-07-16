@@ -2,7 +2,8 @@ from datetime import datetime
 from dmapiclient.audit import AuditTypes
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, DataError
-from flask import jsonify, abort, request, current_app
+from flask import jsonify, abort, request, current_app, Response, redirect, render_template
+import json
 
 from app import db, encryption
 from app.main import main
@@ -17,8 +18,14 @@ from app.utils import (
 from app.validation import validate_user_json_or_400, validate_user_auth_json_or_400
 
 from collections import defaultdict
-from app.emails import send_existing_seller_notification, send_existing_application_notification
+from app.emails.users import (
+    send_existing_seller_notification, send_existing_application_notification,
+    send_account_activation_email
+)
+
 from dmutils.logging import notify_team
+from dmutils.email import InvalidToken, EmailError
+from react.render import render_component
 
 
 @main.route('/users/auth', methods=['POST'])
@@ -432,15 +439,19 @@ def get_buyers_stats():
     return jsonify(buyers=buyers)
 
 
-@main.route('/users/checkduplicates', methods=['POST'])
-def get_duplicate_users():
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ["email_address"])
-    email_address = json_payload["email_address"]
+def get_duplicate_users(email_address=None):
+    duplicate = {"duplicate": None}
+    if email_address is not None:
+        email_address = email_address
+    else:
+        json_payload = get_json_from_request()
+        json_has_required_keys(json_payload, ["email_address"])
+        email_address = json_payload["email_address"]
+
     domain = email_address.split('@')[-1]
 
     if domain in current_app.config['GENERIC_EMAIL_DOMAINS']:
-        return jsonify(duplicate=None)
+        return duplicate
 
     supplier_code = db.session.execute("""
         select distinct(supplier_code) from vuser
@@ -450,7 +461,8 @@ def get_duplicate_users():
     if (supplier_code and supplier_code[0]):
         send_existing_seller_notification(email_address, supplier_code[0])
         duplicate_audit_event(email_address, {'supplier_code': supplier_code[0]})
-        return jsonify(duplicate={"supplier_code": supplier_code[0]})
+        duplicate['duplicate'] = {"supplier_code": supplier_code[0]}
+        return duplicate
 
     application_id = db.session.execute("""
         select distinct(application_id) from vuser
@@ -460,9 +472,11 @@ def get_duplicate_users():
     if (application_id and application_id[0]):
         send_existing_application_notification(email_address, application_id[0])
         duplicate_audit_event(email_address, {'application_id': application_id[0]})
-        return jsonify(duplicate={"application_id": application_id[0]})
+        duplicate['duplicate'] = {"application_id": application_id[0]}
+        return duplicate
 
-    return jsonify(duplicate=None)
+    else:
+        return duplicate
 
 
 def duplicate_audit_event(email_address, data):
@@ -490,3 +504,53 @@ def check_applicant_role(role, application_id):
     elif role != 'applicant' and role != 'supplier' and application_id is not None:
         abort(400, "'application_id' is only valid for users with 'applicant' or 'supplier' role, not '{}'"
               .format(role))
+
+
+@main.route('/signup', methods=['POST'])
+def send_signup_email():
+    try:
+        json_payload = get_json_from_request()
+        json_has_required_keys(json_payload, ['name', 'email_address', ])
+
+        name = json_payload.get('name', None)
+        email_address = json_payload.get('email_address', None)
+        employee_type = json_payload.get('employee_type', None)
+        if employee_type is None:
+            user_type = "seller"
+        else:
+            user_type = "buyer"
+
+    except ValueError as e:
+        return Response(
+            status=400,
+            headers=None
+        )
+
+    duplicate = get_duplicate_users(email_address=email_address)
+
+    if duplicate and duplicate.values()[0] is not None:
+        return Response(
+            status=200,
+            headers=None,
+            response={
+                "An account with this email domain already exists"
+                }
+        )
+
+    try:
+        send_account_activation_email(
+            name=name,
+            email_address=email_address,
+            user_type=user_type
+        )
+        return Response(
+            status=201,
+            headers=None,
+            response={"Email invite sent successfully"}
+        )
+
+    except EmailError as e:
+        return Response(
+            status=400,
+            headers=None
+        )
