@@ -16,7 +16,7 @@ def ping():
 
     return jsonify(
         isAuthenticated=current_user.is_authenticated,
-        user_type=user_type
+        userType=user_type
     )
 
 
@@ -34,8 +34,8 @@ def send_signup_email():
 
         name = json_payload.get('name', None)
         email_address = json_payload.get('email_address', None)
-        employee_type = json_payload.get('employee_type', None)
-        if employee_type is None:
+        employment_type = json_payload.get('employment_type', None)
+        if employment_type is None:
             user_type = "seller"
         else:
             user_type = "buyer"
@@ -50,7 +50,7 @@ def send_signup_email():
 
     if duplicate and duplicate.values()[0] is not None:
         return Response(
-            status=200,
+            status=409,
             headers=None,
             response={
                 "An account with this email domain already exists"
@@ -64,7 +64,7 @@ def send_signup_email():
             user_type=user_type
         )
         return Response(
-            status=201,
+            status=200,
             headers=None,
             response={"Email invite sent successfully"}
         )

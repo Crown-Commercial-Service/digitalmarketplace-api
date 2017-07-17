@@ -17,7 +17,7 @@ class TestSignupAPI(BaseApplicationTest):
     test_buyer = {
         'name': 'matt',
         'email_address': 'email+b@company.com',
-        'employee_type': 'employee'
+        'employment_type': 'employee'
     }
 
     def setup(self):
@@ -31,7 +31,7 @@ class TestSignupAPI(BaseApplicationTest):
                 'name': 'Jeff Labowski'
             }),
             content_type='application/json')
-        assert response.status_code == 201
+        assert response.status_code == 200
 
     @mock.patch('app.auth.views.send_account_activation_email')
     def test_send_seller_type_signup_invite_email(self, send_email):
@@ -39,7 +39,7 @@ class TestSignupAPI(BaseApplicationTest):
             '/signup',
             data=json.dumps(self.test_seller),
             content_type='application/json')
-        assert response.status_code == 201
+        assert response.status_code == 200
 
         send_email.assert_called_once_with(
             email_address=self.test_seller['email_address'],
@@ -53,7 +53,7 @@ class TestSignupAPI(BaseApplicationTest):
             '/signup',
             data=json.dumps(self.test_buyer),
             content_type='application/json')
-        assert response.status_code == 201
+        assert response.status_code == 200
 
         send_email.assert_called_once_with(
             email_address=self.test_buyer['email_address'],

@@ -1810,7 +1810,7 @@ class TestDuplicates(BaseUserTest):
                 'name': 'Jeff Labowski'
             }),
             content_type='application/json')
-        assert response.status_code == 200
+        assert response.status_code == 409
         data = response.get_data(as_text=True)
 
         assert_equal(data, 'An account with this email domain already exists')
@@ -1823,7 +1823,7 @@ class TestDuplicates(BaseUserTest):
                 'name': 'Jeff Labowski'
             }),
             content_type='application/json')
-        assert response.status_code == 200
+        assert response.status_code == 409
 
         data = response.get_data(as_text=True)
         assert data == 'An account with this email domain already exists'
@@ -1836,7 +1836,7 @@ class TestDuplicates(BaseUserTest):
                 'name': 'Jeff Labowski'
             }),
             content_type='application/json')
-        assert response.status_code == 201
+        assert response.status_code == 200
 
         data = response.get_data(as_text=True)
         assert data == 'Email invite sent successfully'
@@ -1849,7 +1849,7 @@ class TestDuplicates(BaseUserTest):
                 'name': 'Jeff Labowski'
             }),
             content_type='application/json')
-        assert response._status_code == 201
+        assert response._status_code == 200
 
         data = response.get_data(as_text=True)
         assert data == 'Email invite sent successfully'
