@@ -33,7 +33,7 @@ class TestSignupAPI(BaseApplicationTest):
             content_type='application/json')
         assert response.status_code == 201
 
-    @mock.patch('app.main.views.users.send_account_activation_email')
+    @mock.patch('app.auth.views.send_account_activation_email')
     def test_send_seller_type_signup_invite_email(self, send_email):
         response = self.client.post(
             '/signup',
@@ -47,7 +47,7 @@ class TestSignupAPI(BaseApplicationTest):
             user_type='seller'
         )
 
-    @mock.patch('app.main.views.users.send_account_activation_email')
+    @mock.patch('app.auth.views.send_account_activation_email')
     def test_send_buyer_type_signup_invite_email(self, send_email):
         response = self.client.post(
             '/signup',
