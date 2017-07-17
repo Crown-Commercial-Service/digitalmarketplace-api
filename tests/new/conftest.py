@@ -13,6 +13,9 @@ from faker import Faker
 from migrations import \
     load_from_app_model, load_test_fixtures
 
+from flask_login import login_user
+from dmutils.user import User as LoginUser
+
 fake = Faker()
 
 
@@ -139,3 +142,22 @@ def assessments(app, request, supplier_domains, briefs):
 
         db.session.commit()
         yield Assessment.query.all()
+
+
+@pytest.fixture()
+def login(app, users):
+    @app.route('/auto-login')
+    def auto_login():
+        u = users[0]
+        user = LoginUser(user_id=u.id,
+                         email_address=u.email_address,
+                         name=u.name,
+                         role=u.role,
+                         supplier_code=u.supplier_code,
+                         supplier_name=None,
+                         locked=u.locked,
+                         active=u.active,
+                         terms_accepted_at=None)
+
+        login_user(user)
+        return 'ok'

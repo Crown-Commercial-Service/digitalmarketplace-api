@@ -1,5 +1,5 @@
 import os
-from dmutils.status import enabled_since, get_version_label
+from dmutils.status import get_version_label
 
 
 class Config:
@@ -7,6 +7,10 @@ class Config:
         os.path.abspath(os.path.dirname(__file__))
     )
     URL_PREFIX = '/api'
+    SESSION_COOKIE_NAME = 'dm_session'
+    SESSION_COOKIE_PATH = '/'
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SECURE = True
     DM_SEARCH_API_URL = None
     DM_SEARCH_API_AUTH_TOKEN = None
     DM_API_AUTH_TOKENS = None
