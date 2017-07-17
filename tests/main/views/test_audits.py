@@ -626,6 +626,181 @@ class TestAuditEvents(BaseTestAuditEvents):
 
         assert tuple(audit_event_id_lookup[ae["id"]] for ae in data["auditEvents"]) == expected_resp_events
 
+    @pytest.mark.parametrize(
+        "service_audit_event_params,supplier_audit_event_params,req_params,expected_resp_events",
+        # where we refer to "id"s in the expected_response_params, because we can't be too sure about the *actual* ids
+        # given to objects, we're using 0-based notional "ids" based on the order the audit events were inserted into
+        # the db. service_audit_event_params events are inserted in the order given, followed by the
+        # supplier_audit_event_params events. so if we had 5 service_audit_event_params and 2
+        # supplier_audit_event_params, "5" would refer to the audit event created by the first-listed
+        # supplier_audit_event_params.
+        # similarly, where supplier and service "id"s are referred to, the "id"s we're referring to are normalized
+        # pseudo-ids from 0-4 inclusive
+        # NOTE that any after-event-id param in the req_params will have its target id value transformed to its *actual*
+        # id by the test so that these can be specified by "notional" ids here as well
+        chain.from_iterable(
+            ((serv_aeps, supp_aeps, req_params, expected_resp_events) for req_params, expected_resp_events in req_cases)
+            for serv_aeps, supp_aeps, req_cases in (
+                (
+                    (   # service_audit_event_params, as consumed by add_audit_events_by_param_tuples
+                        # service pseudo-id, audit type, created_at, acknowledged_at
+                        (0, AuditTypes.update_service, datetime(2010, 6, 6), datetime(2011, 1, 1),),
+                        (0, AuditTypes.update_service, datetime(2010, 6, 9), None,),
+                        (0, AuditTypes.update_service, datetime(2010, 6, 7), None,),
+                        (4, AuditTypes.update_service, datetime(2010, 6, 2), None,),
+                        (0, AuditTypes.update_service, datetime(2010, 6, 3), None,),
+                        (4, AuditTypes.update_service, datetime(2010, 6, 3), None,),
+                        (3, AuditTypes.update_service_status, datetime(2010, 6, 11), datetime(2010, 11, 11),),
+                    ),
+                    (   # supplier_audit_event_params, as consumed by add_audit_events_by_param_tuples
+                        # supplier pseudo-id, audit type, created_at, acknowledged_at
+                        (2, AuditTypes.supplier_update, datetime(2010, 6, 9), None,),
+                        (0, AuditTypes.supplier_update, datetime(2010, 6, 8), None,),
+                    ),
+                    (  # and now a series of req_cases - pairs of (req_params, expected_resp_events) to test against
+                       # the above db scenario. these get flattened out into concrete test scenarios by
+                       # chain.from_iterable above before they reach pytest's parametrization
+                        (
+                            # NOTE that any after-event-id param in the req_params will have its target id value
+                            # transformed to its *actual* id by the test
+                            {"after-event-id": 2},
+                            (8, 1, 7, 6,),
+                        ),
+                        (
+                            {"after-event-id": 2, "acknowledged": "false", "latest_first": "true"},
+                            (7, 1, 8,),
+                        ),
+                        (
+                            {"after-event-id": 3, "audit-type": "update_service"},
+                            (4, 5, 0, 2, 1,),
+                        ),
+                        (
+                            # speficying an event id which itself is filtered out
+                            {"after-event-id": 0, "acknowledged": "false", "object-type": "services"},
+                            (2, 1,),
+                        ),
+                        (
+                            # earliest_for_each_object should be applied after *all* filtering, including after-event-id
+                            {"after-event-id": 5, "earliest_for_each_object": "true", "latest_first": "true"},
+                            (6, 7, 8, 0,),
+                        ),
+                    ),
+                ),
+                (
+                    (
+                        (1, AuditTypes.update_service, datetime(2010, 6,  2), None,),
+                        (0, AuditTypes.update_service, datetime(2010, 6,  7), None,),
+                        (0, AuditTypes.update_service, datetime(2010, 6, 21), None,),
+                        (0, AuditTypes.update_service, datetime(2010, 6, 12), None,),
+                        (1, AuditTypes.update_service, datetime(2010, 6, 27), None,),
+                        (3, AuditTypes.update_service_status, datetime(2010, 6, 28), None,),
+                        (3, AuditTypes.update_service_status, datetime(2010, 6,  5), None,),
+                        (2, AuditTypes.update_service, datetime(2010, 6, 19), datetime(2010, 6, 20, 1),),
+                        (0, AuditTypes.update_service, datetime(2010, 6,  4), datetime(2010, 6,  5, 1),),
+                        (0, AuditTypes.update_service, datetime(2010, 6,  5), datetime(2010, 6,  5, 1),),
+                        (0, AuditTypes.update_service, datetime(2010, 6,  8), None,),
+                        (0, AuditTypes.update_service, datetime(2010, 6, 12), None,),
+                        (0, AuditTypes.update_service, datetime(2010, 6,  7), None,),
+                        (1, AuditTypes.update_service, datetime(2010, 6, 12), None,),
+                        (1, AuditTypes.update_service, datetime(2010, 6,  7), None,),
+                        (0, AuditTypes.update_service, datetime(2010, 6, 28), None,),
+                        (1, AuditTypes.update_service, datetime(2010, 6,  2), None,),
+                        (2, AuditTypes.update_service, datetime(2010, 6, 24), None,),
+                    ),
+                    (
+                        (2, AuditTypes.supplier_update, datetime(2010, 6, 18), None,),
+                        (0, AuditTypes.supplier_update, datetime(2010, 6,  8), None,),
+                        (1, AuditTypes.supplier_update, datetime(2010, 6,  3), datetime(2010, 6,  5, 1),),
+                        (1, AuditTypes.supplier_update, datetime(2010, 6,  4), datetime(2010, 6,  5, 1),),
+                        (1, AuditTypes.supplier_update, datetime(2010, 6, 26), datetime(2010, 6, 30, 1),),
+                        (1, AuditTypes.supplier_update, datetime(2010, 6, 16), datetime(2010, 6, 29, 1),),
+                    ),
+                    (
+                        (
+                            {"after-event-id": 6, "page": "2"},
+                            (19, 3, 11, 13, 23,),
+                        ),
+                        (
+                            {
+                                "after-event-id": 11,
+                                "earliest_for_each_object": "true",
+                                "acknowledged": "false",
+                                "per_page": "100",
+                            },
+                            # important that 3 is missing from these results
+                            (13, 18, 2, 17, 5,),
+                        ),
+                        (
+                            {
+                                "after-event-id": 15,
+                                "earliest_for_each_object": "true",
+                                "object_type": "services",
+                                "per_page": "100",
+                            },
+                            (),
+                        ),
+                        (
+                            {
+                                "after-event-id": 20,
+                                "acknowledged": "true",
+                            },
+                            (8, 21, 9, 23, 7,),
+                        ),
+                        (
+                            {
+                                "after-event-id": 12,
+                                # audit event 12 is not a supplier_update
+                                "audit-type": "supplier_update",
+                                "latest_first": "true",
+                            },
+                            (22, 18, 23, 19,),
+                        ),
+                    ),
+                ),
+            )
+        ),
+    )
+    def test_after_event_id(
+            self,
+            service_audit_event_params,
+            supplier_audit_event_params,
+            req_params,
+            expected_resp_events,
+            ):
+        self.setup_dummy_suppliers(5)
+        self.setup_dummy_services(5, supplier_id=1)
+        audit_event_id_lookup = self.add_audit_events_by_param_tuples(
+            service_audit_event_params,
+            supplier_audit_event_params,
+        )
+        audit_event_id_rlookup = {v: k for k, v in audit_event_id_lookup.items()}
+
+        transformed_req_params = req_params
+        if req_params.get("after-event-id") is not None:
+            transformed_req_params = req_params.copy()
+            transformed_req_params["after-event-id"] = audit_event_id_rlookup[int(
+                transformed_req_params["after-event-id"]
+            )]
+
+        response = self.client.get('/audit-events?{}'.format(urlencode(transformed_req_params)))
+
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+
+        assert tuple(audit_event_id_lookup[ae["id"]] for ae in data["auditEvents"]) == expected_resp_events
+
+    def test_nonexistent_after_event_id(self):
+        self.setup_dummy_suppliers(3)
+        self.setup_dummy_services(3, supplier_id=1)
+        audit_event_id_lookup = self.add_audit_events_by_param_tuples(
+            ((0, AuditTypes.update_service_status, datetime(2010, 6, 7), None,),),
+            ((2, AuditTypes.supplier_update, datetime(2011, 6, 9), None,),),
+        )
+
+        response = self.client.get('/audit-events?after-event-id=314159')
+
+        assert response.status_code == 400
+
     def test_only_one_audit_event_created(self):
         with self.app.app_context():
             count = AuditEvent.query.count()
