@@ -118,7 +118,7 @@ def list_audits():
     if earliest_for_each_object:
         if not (
                 acknowledged and
-                acknowledged != 'all' and
+                convert_to_boolean(acknowledged) is False and
                 audit_type == "update_service" and
                 object_type == "services"
                 ):
