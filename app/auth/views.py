@@ -4,6 +4,7 @@ from app.auth import auth
 from app.utils import get_json_from_request, json_has_required_keys
 from app.emails.users import send_account_activation_email
 from dmutils.email import EmailError
+from dmutils.csrf import get_csrf_token
 from helpers import get_duplicate_users
 
 
@@ -16,14 +17,20 @@ def ping():
 
     return jsonify(
         isAuthenticated=current_user.is_authenticated,
-        userType=user_type
+        userType=user_type,
+        csrfToken=get_csrf_token()
     )
 
 
-@auth.route('/protected', methods=["GET"])
+@auth.route('/_protected', methods=["GET"])
 @login_required
 def protected():
     return jsonify(data='protected')
+
+
+@auth.route('/_post', methods=["POST"])
+def post():
+    return jsonify(data='post')
 
 
 @auth.route('/signup', methods=['POST'])
@@ -40,7 +47,7 @@ def send_signup_email():
         else:
             user_type = "buyer"
 
-    except ValueError as e:
+    except ValueError:
         return Response(
             status=400,
             headers=None
@@ -54,7 +61,7 @@ def send_signup_email():
             headers=None,
             response={
                 "An account with this email domain already exists"
-                }
+            }
         )
 
     try:
@@ -69,7 +76,7 @@ def send_signup_email():
             response={"Email invite sent successfully"}
         )
 
-    except EmailError as e:
+    except EmailError:
         return Response(
             status=400,
             headers=None

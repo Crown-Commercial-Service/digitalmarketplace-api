@@ -112,6 +112,7 @@ class Config:
     ADMIN_ADDRESS = 'https://dm-dev-admin.apps.staging.digital.gov.au'
 
     SEND_EMAILS = True
+    CSRF_ENABLED = False
 
 
 class Test(Config):
@@ -141,6 +142,7 @@ class Test(Config):
 
     DM_SEND_EMAIL_TO_STDERR = True
     SECRET_KEY = 'TestKeyTestKeyTestKeyTestKeyTestKeyTestKeyX='
+    CSRF_FAKED = False
 
 
 class Development(Config):

@@ -4,7 +4,7 @@ import pytest
 
 from app import create_app
 from app.models import db, utcnow, Supplier, SupplierDomain, User, Brief, \
-    Framework, Lot, Domain, Assessment
+    Framework, Lot, Domain, Assessment, Application
 from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, WSGIApplicationWithEnvironment
 
 from sqlbag import temporary_database
@@ -45,6 +45,7 @@ def setup_authorization(app):
 def app(request):
     app = create_app('test')
     app.config['SERVER_NAME'] = 'localhost'
+    app.config['CSRF_ENABLED'] = False
     setup_authorization(app)
     yield app
 
@@ -86,6 +87,20 @@ def supplier_domains(app, request, suppliers):
 
 
 @pytest.fixture()
+def applications(app, request):
+    with app.app_context():
+        for i in range(1, 6):
+            db.session.add(Application(
+                id=(i),
+            ))
+
+            db.session.flush()
+
+        db.session.commit()
+        yield Application.query.all()
+
+
+@pytest.fixture()
 def users(app, request):
     with app.app_context():
         for i in range(1, 6):
@@ -102,6 +117,40 @@ def users(app, request):
 
         db.session.commit()
         yield User.query.all()
+
+
+@pytest.fixture()
+def supplier_user(app, request, suppliers):
+    with app.app_context():
+        db.session.add(User(
+            id=1,
+            email_address='j@examplecompany.biz',
+            name=fake.name(),
+            password=fake.password(),
+            active=True,
+            role='supplier',
+            supplier_code=suppliers[0].code,
+            password_changed_at=utcnow()
+        ))
+        db.session.commit()
+        yield User.query.first()
+
+
+@pytest.fixture()
+def application_user(app, request, applications):
+    with app.app_context():
+        db.session.add(User(
+            id=1,
+            email_address='don@don.com',
+            name=fake.name(),
+            password=fake.password(),
+            active=True,
+            role='applicant',
+            application_id=applications[0].id,
+            password_changed_at=utcnow()
+        ))
+        db.session.commit()
+        yield User.query.first()
 
 
 @pytest.fixture()

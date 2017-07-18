@@ -1,7 +1,9 @@
-from flask import Blueprint
+from flask import Blueprint, request, abort
 from flask_login import LoginManager
 from app.models import User
 from dmutils.user import User as LoginUser
+from dmutils.csrf import check_valid_csrf
+import rollbar
 
 auth = Blueprint('auth', __name__)
 login_manager = LoginManager()
@@ -20,6 +22,16 @@ def load_user(userid):
         user = LoginUser(user.id, user.email_address, user.supplier_code, None, user.locked,
                          user.active, user.name, user.role, user.terms_accepted_at, user.application_id)
     return user
+
+
+@auth.before_request
+def check_csrf_token():
+    if request.method in ('POST', 'PATCH', 'PUT', 'DELETE'):
+        new_csrf_valid = check_valid_csrf()
+
+        if not (new_csrf_valid):
+            rollbar.report_message('csrf.invalid_token: Aborting request check_csrf_token()', 'error', request)
+            abort(400, 'Invalid CSRF token. Please try again.')
 
 
 from . import views  # noqa
