@@ -20,3 +20,27 @@ def test_authenticated(client, login):
 
     res = client.get('/protected')
     assert res.status_code == 200
+
+
+def test_logout(client, login):
+    client.get('/auto-login')
+    res = client.get('/ping')
+    data = json.loads(res.get_data(as_text=True))
+
+    assert data['isAuthenticated']
+
+    res = client.get('/protected')
+    assert res.status_code == 200
+
+    res = client.get('/logout')
+    assert res.status_code == 200
+
+    res = client.get('/protected')
+    assert res.status_code == 401
+
+    res = client.get('/ping')
+    data = json.loads(res.get_data(as_text=True))
+    assert not data['isAuthenticated']
+
+    res = client.get('/logout')
+    assert res.status_code == 401

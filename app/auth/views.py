@@ -1,5 +1,5 @@
 from flask import jsonify, Response
-from flask_login import current_user, login_required
+from flask_login import current_user, login_required, logout_user
 from app.auth import auth
 from app.utils import get_json_from_request, json_has_required_keys
 from app.emails.users import send_account_activation_email
@@ -74,3 +74,13 @@ def send_signup_email():
             status=400,
             headers=None
         )
+
+
+@auth.route('/logout', methods=['GET'])
+@login_required
+def logout():
+    logout_user()
+    return Response(
+        status=200,
+        headers=None
+    )
