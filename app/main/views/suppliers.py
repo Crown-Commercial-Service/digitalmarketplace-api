@@ -141,11 +141,16 @@ def product_search():
 
     q = db.session.query(Product).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
     q = q.filter(Supplier.status != 'deleted')
+    tsquery = None
     if search_term:
+        if ' ' in search_term:
+            tsquery = func.plainto_tsquery(search_term)
+        else:
+            tsquery = func.to_tsquery(search_term+":*")
         q = q.add_column(func.ts_headline(
                 'english',
                 Product.summary,
-                func.plainto_tsquery(search_term),
+                tsquery,
                 'MaxWords=150, MinWords=75, ShortWord=3, HighlightAll=FALSE, MaxFragments=1, FragmentDelimiter=" ... " '
             )
         )
@@ -174,12 +179,11 @@ def product_search():
         ob = [asc(Product.name)]
 
     if search_term:
-        query = func.plainto_tsquery(search_term)
         ob = [desc(func.ts_rank_cd(func.to_tsvector(func.concat(Product.name,
-                                                                Product.summary, Supplier.name)), query))] + ob
+                                                                Product.summary, Supplier.name)), tsquery))] + ob
 
         condition = func.to_tsvector(func.concat(Product.name, Product.summary, Supplier.name)) \
-            .op('@@')(query)
+            .op('@@')(tsquery)
         q = q.filter(condition)
     q = q.order_by(*ob)
 
@@ -229,14 +233,19 @@ def casestudies_search():
 
     q = db.session.query(CaseStudy).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
     q = q.filter(Supplier.status != 'deleted')
+    tsquery = None
     if search_term:
+        if ' ' in search_term:
+            tsquery = func.plainto_tsquery(search_term)
+        else:
+            tsquery = func.to_tsquery(search_term+":*")
         q = q.add_column(func.ts_headline(
             'english',
             func.concat(
                 CaseStudy.data['approach'].astext,
                 ' ',
                 CaseStudy.data['role'].astext),
-            func.plainto_tsquery(search_term),
+            tsquery,
             'MaxWords=150, MinWords=75, ShortWord=3, HighlightAll=FALSE, FragmentDelimiter=" ... " '
         ))
     else:
@@ -264,14 +273,13 @@ def casestudies_search():
         ob = [asc(CaseStudy.data['title'].astext)]
 
     if search_term:
-        query = func.plainto_tsquery(search_term)
         ob = [desc(func.ts_rank_cd(func.to_tsvector(
             func.concat(Supplier.name, CaseStudy.data['title'].astext,
-                        CaseStudy.data['approach'].astext)), query))] + ob
+                        CaseStudy.data['approach'].astext)), tsquery))] + ob
 
         condition = func.to_tsvector(func.concat(Supplier.name,
                                                  CaseStudy.data['title'].astext,
-                                                 CaseStudy.data['approach'].astext)).op('@@')(query)
+                                                 CaseStudy.data['approach'].astext)).op('@@')(tsquery)
 
         q = q.filter(condition)
     q = q.order_by(*ob)
@@ -358,7 +366,12 @@ def do_search(search_query, offset, result_count, new_domains):
 
     q = q.filter(Supplier.status != 'deleted', Supplier.abn != Supplier.DUMMY_ABN)
 
+    tsquery = None
     if search_term:
+        if ' ' in search_term:
+            tsquery = func.plainto_tsquery(search_term)
+        else:
+            tsquery = func.to_tsquery(search_term+":*")
         q = q.add_column(func.ts_headline(
              'english',
              func.concat(Supplier.summary,
@@ -368,7 +381,7 @@ def do_search(search_query, offset, result_count, new_domains):
                          Supplier.data['methodologies'].astext,
                          ' ',
                          Supplier.data['technologies'].astext, ''),
-             func.plainto_tsquery(search_term),
+             tsquery,
              'MaxWords=150, MinWords=75, ShortWord=3, HighlightAll=FALSE, MaxFragments=1, FragmentDelimiter=" ... " '
         ))
 
@@ -416,10 +429,9 @@ def do_search(search_query, offset, result_count, new_domains):
             ob = [asc(Supplier.name)]
 
     if search_term:
-        query = func.plainto_tsquery(search_term)
-        ob = [desc(func.ts_rank_cd(Supplier.text_vector, query))] + ob
+        ob = [desc(func.ts_rank_cd(Supplier.text_vector, tsquery))] + ob
 
-        q = q.filter(Supplier.text_vector.op('@@')(query))
+        q = q.filter(Supplier.text_vector.op('@@')(tsquery))
     q = q.order_by(*ob)
 
     raw_results = list(q)
