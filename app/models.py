@@ -2242,8 +2242,11 @@ class Application(db.Model):
 
             db.session.flush()
 
+            # update signed agreement supplier code
+            signed_agreement = SignedAgreement.query.filter(SignedAgreement.application_id == self.id).first()
+            if signed_agreement:
+                signed_agreement.supplier_code = self.supplier.code
             # associate supplier with digital marketplace framework
-
             framework = Framework.query.filter(
                 Framework.slug == 'digital-marketplace'
             ).first()
@@ -2256,6 +2259,7 @@ class Application(db.Model):
                 )
                 db.session.add(sf)
 
+            # convert users to supplier users
             users = User.query.filter(User.application_id == self.id)
             for user in users:
                 user.role = 'supplier'
