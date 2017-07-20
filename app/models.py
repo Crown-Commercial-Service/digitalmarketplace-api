@@ -443,7 +443,7 @@ class Agreement(db.Model):
 
 class SignedAgreement(db.Model):
     __tablename__ = 'signed_agreement'
-
+    agreement = db.relationship('Agreement', single_parent=True)
     agreement_id = db.Column(
         db.Integer,
         db.ForeignKey('agreement.id'),
@@ -561,7 +561,8 @@ class Supplier(db.Model):
     EXCLUDE_FOR_SERIALIZATION = [
         'work_orders',
         'applications',
-        'brief_responses']
+        'brief_responses',
+        'text_vector']
 
     DUMMY_ABN = '50 110 219 460'
 
@@ -630,6 +631,7 @@ class Supplier(db.Model):
                                  default=localnow)
 
     domains = relationship("SupplierDomain", back_populates="supplier")
+    signed_agreements = db.relationship('SignedAgreement', single_parent=True)
     frameworks = relationship("SupplierFramework")
     text_vector = column_property(func.setweight(func.to_tsvector(func.coalesce(name, '')), 'A').op('||')(
         func.setweight(func.to_tsvector(func.coalesce(summary, '')), 'B')).op('||')(
@@ -767,7 +769,8 @@ class Supplier(db.Model):
 
         if 'case_studies' in j:
             j['case_studies'] = [normalize_key_case(c) for c in j['case_studies']]
-
+        for v in j['signed_agreements']:
+            v['agreement'] = Agreement.query.get(v['agreement_id'])
         return j
 
     def update_from_json_before(self, data):

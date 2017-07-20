@@ -812,7 +812,7 @@ def create_application_from_supplier(code, application_type=None):
 
     data['status'] = 'saved'
     data = {key: data[key] for key in data if key not in ['id', 'contacts', 'domains', 'links',
-                                                          'prices', 'frameworks', 'steps']}
+                                                          'prices', 'frameworks', 'steps', 'signed_agreements']}
     if data.get('products'):
         for product in data['products']:
             if product.get('links'):
