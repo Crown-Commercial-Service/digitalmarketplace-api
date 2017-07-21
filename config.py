@@ -102,7 +102,8 @@ class Config:
     SECRET_KEY = None
     SHARED_EMAIL_KEY = None
     RESET_PASSWORD_SALT = 'ResetPasswordSalt'
-    USER_INVITE_TOKEN_SALT = 'UserInviteEmail'
+    BUYER_CREATION_TOKEN_SALT = 'BuyerCreation'
+    SUPPLIER_INVITE_TOKEN_SALT = 'SupplierInviteEmail'
 
     GENERIC_EMAIL_DOMAINS = ['gmail.com', 'bigpond.com', 'outlook.com', 'outlook.com.au', 'hotmail.com', 'yahoo.com',
                              'optusnet.com.au', 'msn.com', 'internode.on.net', 'iinet.net.au', 'ozemail.com.au',

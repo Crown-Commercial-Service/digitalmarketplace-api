@@ -72,17 +72,22 @@ def send_existing_application_notification(email_address, application_id):
     )
 
 
-def generate_user_creation_token(name, email_address, **unused):
+def generate_user_creation_token(name, email_address, user_type, **unused):
     data = {
         'name': name,
         'email_address': email_address,
     }
-    token = generate_token(data, current_app.config['SECRET_KEY'], current_app.config['USER_INVITE_TOKEN_SALT'])
+
+    buyer_token = current_app.config['BUYER_CREATION_TOKEN_SALT']
+    seller_token = current_app.config['SUPPLIER_INVITE_TOKEN_SALT']
+
+    token_salt = buyer_token if user_type == 'buyer' else seller_token
+    token = generate_token(data, current_app.config['SECRET_KEY'], token_salt)
     return token
 
 
 def send_account_activation_email(name, email_address, user_type):
-    token = generate_user_creation_token(name=name, email_address=email_address)
+    token = generate_user_creation_token(name=name, email_address=email_address, user_type=user_type)
     if user_type == 'seller':
         url = '{}/sellers/signup/create-user/{}'.format(
             current_app.config['FRONTEND_ADDRESS'],

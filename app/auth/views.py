@@ -41,7 +41,8 @@ def send_signup_email():
 
         name = json_payload.get('name', None)
         email_address = json_payload.get('email_address', None)
-        employment_type = json_payload.get('employment_type', None)
+        employment_type = json_payload.get('employment_status', None)
+
         if employment_type is None:
             user_type = "seller"
         else:

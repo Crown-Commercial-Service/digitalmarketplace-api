@@ -34,8 +34,12 @@ def auth_user():
     json_has_required_keys(json_payload, ["authUsers"])
     json_payload = json_payload["authUsers"]
     validate_user_auth_json_or_400(json_payload)
+    email_address = json_payload.get('email_address', None)
+    if email_address is None:
+        # will remove camel case email address with future api
+        email_address = json_payload.get('emailAddress', None)
 
-    user = User.get_by_email_address(json_payload['emailAddress'].lower())
+    user = User.get_by_email_address(email_address.lower())
 
     if user is None or (user.supplier and user.supplier.status == 'deleted'):
         return jsonify(authorization=False), 404
@@ -156,9 +160,12 @@ def create_user():
     json_has_required_keys(json_payload, ["users"])
     json_payload = json_payload["users"]
     validate_user_json_or_400(json_payload)
+    email_address = json_payload.get('email_address', None)
+    if email_address is None:
+        email_address = json_payload.get('emailAddress', None)
 
     user = User.query.filter(
-        User.email_address == json_payload['emailAddress'].lower()).first()
+        User.email_address == email_address.lower()).first()
 
     if user:
         abort(409, "User already exists")
@@ -170,7 +177,7 @@ def create_user():
 
     now = datetime.utcnow()
     user = User(
-        email_address=json_payload['emailAddress'].lower(),
+        email_address=email_address.lower(),
         phone_number=json_payload.get('phoneNumber') or None,
         name=json_payload['name'],
         role=json_payload['role'],
@@ -203,7 +210,7 @@ def create_user():
 
         audit = AuditEvent(
             audit_type=AuditTypes.create_user,
-            user=json_payload['emailAddress'].lower(),
+            user=email_address.lower(),
             data=audit_data,
             db_object=user
         )
@@ -213,7 +220,7 @@ def create_user():
 
         if user.role == 'buyer':
             notification_message = 'Domain: {}'.format(
-                json_payload['emailAddress'].split('@')[-1]
+                email_address.split('@')[-1]
             )
 
             notification_text = 'A new buyer has signed up'

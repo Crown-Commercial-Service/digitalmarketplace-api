@@ -7,7 +7,7 @@ test_seller = {
 test_buyer = {
     'name': 'matt',
     'email_address': 'email+b@company.com',
-    'employment_type': 'employee'
+    'employment_status': 'employee'
 }
 
 
