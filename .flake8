@@ -5,7 +5,7 @@
 # E402: module level import not at top of file
 # C901: too complex
 # W503: line break before binary operator
-exclude = venv,venv3,__pycache__,node_modules,bower_components
+exclude = venv,venv3,__pycache__,node_modules,bower_components,migrations
 ignore = D203,W503
 max-complexity = 24
 max-line-length = 120

@@ -7,7 +7,7 @@ import pytest
 
 from dmapiclient.audit import AuditTypes
 
-from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service, Framework, FrameworkLot, SupplierFramework
+from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service, Framework, SupplierFramework
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from tests.helpers import FixtureMixin
 
