@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from dmapiclient.audit import AuditTypes
 from .. import main
 from ... import db
-from ...models import User, Brief, AuditEvent, Framework, Lot, Supplier, Service
+from ...models import User, Brief, BriefResponse, AuditEvent, Framework, Lot, Supplier, Service
 from ...utils import (
     get_json_from_request, get_int_or_400, json_has_required_keys, pagination_links,
     get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request
@@ -200,6 +200,45 @@ def update_brief_status(brief_id, action):
         db.session.add(brief)
         db.session.add(audit)
         db.session.commit()
+
+    return jsonify(briefs=brief.serialize()), 200
+
+
+@main.route('/briefs/<int:brief_id>/award', methods=['POST'])
+def award_brief(brief_id):
+    json_payload = get_json_from_request()
+    # updater_json = validate_and_return_updater_request()
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    if not brief.status == 'closed':
+        abort(400, "Brief is not closed")
+
+    brief_responses = BriefResponse.query.filter(
+        BriefResponse.brief_id == brief.id,
+        BriefResponse.status != 'draft'
+    )
+    # Check that BriefResponse in POST data is associated with this brief
+    if not json_payload['brief_response_id'] in [b.id for b in brief_responses]:
+        abort(400, "BriefResponse cannot be awarded for this Brief")
+
+    # Find any existing awarded BriefResponse
+    previously_awarded = brief.awarded_brief_response
+    if previously_awarded:
+        # Reset any existing awarded BriefResponses
+        previously_awarded.awarded_at = None
+        db.session.add(previously_awarded)
+        # do AuditEvent
+
+    # Set new awarded BriefResponse
+    brief_response = list(filter(lambda x: x.id == json_payload['brief_response_id'], brief_responses))[0]
+    brief_response.award_details = {'pending': True}
+    db.session.add(brief_response)
+    # do AuditEvent
+
+    db.session.commit()
 
     return jsonify(briefs=brief.serialize()), 200
 
