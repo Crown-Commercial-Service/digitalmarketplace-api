@@ -856,6 +856,41 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
 
             assert 'Brief response can not be awarded if response has not been submitted' in str(e.message)
 
+    def test_can_remove_award_details_from_brief_response_if_brief_not_awarded(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(
+                data={}, brief=self.brief, supplier=self.supplier, submitted_at=datetime.utcnow()
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+            # Pending award to this brief response
+            brief_response.award_details = {'pending': True}
+            db.session.add(brief_response)
+            db.session.commit()
+            # There's still time to change our minds...
+            brief_response.award_details = {}
+            db.session.add(brief_response)
+            db.session.commit()
+
+    def test_cannot_remove_award_from_brief_response_if_brief_awarded(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            brief_response = BriefResponse(
+                data={}, brief=self.brief, supplier=self.supplier, submitted_at=datetime.utcnow()
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+            # Confirm award to this brief response
+            brief_response.award_details = {'confirmed': 'details'}
+            brief_response.awarded_at = datetime.utcnow()
+            db.session.add(brief_response)
+            db.session.commit()
+            # We've changed our minds again but it's too late...
+            brief_response.awarded_at = None
+            db.session.add(brief_response)
+            db.session.commit()
+
+            assert 'Brief response award cannot be removed as the brief has already been awarded.' in str(e.message)
+
 
 class TestBriefClarificationQuestion(BaseApplicationTest):
     def setup(self):

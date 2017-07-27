@@ -228,7 +228,7 @@ def award_brief(brief_id):
     previously_awarded = brief.awarded_brief_response
     if previously_awarded:
         # Reset any existing awarded BriefResponses
-        previously_awarded.awarded_at = None
+        previously_awarded.award_details = {}
         db.session.add(previously_awarded)
         # do AuditEvent
 

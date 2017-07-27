@@ -1266,10 +1266,23 @@ class TestAwardBrief(FrameworkSetupAndTeardown):
             res = self._post_to_award_endpoint({'brief_response_id': brief_response.id})
             assert res.status_code == 200
 
-    def test_brief_with_previous_awarded_response_can_edit_award(self):
-        pass  # happy path for partially pre-populated form
+    def test_can_change_awarded_brief_response_for_closed_brief_without_awarded_datestamp(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, title="The Title", status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response1 = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            brief_response2 = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add_all([brief_response1, brief_response2])
+            db.session.commit()
+            # Now award to brief_response1
+            brief_response1.award_details = {'pending': True}
+            db.session.add(brief_response1)
+            db.session.commit()
 
-    def test_400_if_awarding_a_brief_response_to_an_awarded_brief(self):
+            res = self._post_to_award_endpoint({'brief_response_id': brief_response2.id})
+            assert res.status_code == 200
+
+    def test_400_if_awarding_a_brief_response_to_a_brief_with_award_details(self):
         self.setup_dummy_briefs(1, status="awarded")
         res = self._post_to_award_endpoint({'brief_response_id': 1})
         data = json.loads(res.get_data(as_text=True))
@@ -1297,12 +1310,22 @@ class TestAwardBrief(FrameworkSetupAndTeardown):
         assert res.status_code == 400
         assert data['error'] == "Brief is not closed"
 
-    def test_brief_cannot_award_to_a_draft_brief_response(self):
-        pass
+    def test_400_if_awarding_a_draft_brief_response_to_a_closed_brief(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, data={})
+            db.session.add(brief_response)
+            db.session.commit()
+
+            res = self._post_to_award_endpoint({'brief_response_id': brief_response.id})
+            data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 400
+            assert data['error'] == "BriefResponse cannot be awarded for this Brief"
 
     def test_400_if_awarding_a_brief_response_that_does_not_relate_to_that_brief(self):
-        with self.app.app_context() as context:
-            brief = self.setup_dummy_briefs(2, status="closed")
+        with self.app.app_context():
+            self.setup_dummy_briefs(2, status="closed")
             self.setup_dummy_suppliers(1)
             brief_response = BriefResponse(brief_id=2, supplier_id=0, submitted_at=datetime.utcnow(), data={})
             db.session.add(brief_response)

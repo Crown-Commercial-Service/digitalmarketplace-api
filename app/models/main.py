@@ -1489,12 +1489,15 @@ class BriefResponse(db.Model):
         return data
 
     @validates('awarded_at')
-    def validates_awarded(self, key, awarded_at):
-        if self.brief.status != "closed":
-            raise ValidationError('Brief response can not be awarded if the brief is not closed')
-        if self.status != 'submitted':
-            raise ValidationError('Brief response can not be awarded if response has not been submitted')
-        return awarded_at
+    def validates_awarded_at(self, key, awarded_at):
+        if awarded_at:
+            if self.brief.status != "closed":
+                raise ValidationError('Brief response can not be awarded if the brief is not closed')
+            if self.status != 'submitted':
+                raise ValidationError('Brief response can not be awarded if response has not been submitted')
+            elif self.status == "awarded":
+                raise ValidationError('Brief response award cannot be removed as the brief has already been awarded.')
+            return awarded_at
 
     def update_from_json(self, data):
         current_data = dict(self.data.items())
