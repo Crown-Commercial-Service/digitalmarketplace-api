@@ -21,7 +21,8 @@ def test_duplicate_application_with_same_domain(client, application_user):
         '/signup',
         data=json.dumps({
             'email_address': 'm@don.com',
-            'name': 'Jeff Labowski'
+            'name': 'Jeff Labowski',
+            'employment_status': 'employee'
         }),
         content_type='application/json')
     assert response.status_code == 409
@@ -35,7 +36,8 @@ def test_unqiue_domain(client):
         '/signup',
         data=json.dumps({
             'email_address': 'm@something.com',
-            'name': 'Jeff Labowski'
+            'name': 'Jeff Labowski',
+            'employment_status': 'employee'
         }),
         content_type='application/json')
     assert response.status_code == 200
@@ -49,7 +51,8 @@ def test_generic_domain(client):
         '/signup',
         data=json.dumps({
             'email_address': 'm@gmail.com',
-            'name': 'Jeff Labowski'
+            'name': 'Jeff Labowski',
+            'employment_status': 'employee'
         }),
         content_type='application/json')
     assert response._status_code == 200

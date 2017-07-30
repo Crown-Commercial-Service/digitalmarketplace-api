@@ -2,7 +2,7 @@ from flask import jsonify, Response
 from flask_login import current_user, login_required, logout_user
 from app.auth import auth
 from app.utils import get_json_from_request, json_has_required_keys
-from app.emails.users import send_account_activation_email
+from app.emails.users import send_account_activation_email, send_account_activation_manager_email
 from dmutils.email import EmailError
 from dmutils.csrf import get_csrf_token
 from helpers import get_duplicate_users
@@ -41,12 +41,10 @@ def send_signup_email():
 
         name = json_payload.get('name', None)
         email_address = json_payload.get('email_address', None)
-        employment_type = json_payload.get('employment_status', None)
-
-        if employment_type is None:
-            user_type = "seller"
-        else:
-            user_type = "buyer"
+        user_type = json_payload.get('user_type', None)
+        employment_status = json_payload.get('employment_status', None)
+        line_manager_name = json_payload.get('line_manager_name', None)
+        line_manager_email = json_payload.get('line_manager_email', None)
 
     except ValueError:
         return Response(
@@ -65,23 +63,50 @@ def send_signup_email():
             }
         )
 
-    try:
-        send_account_activation_email(
-            name=name,
-            email_address=email_address,
-            user_type=user_type
-        )
-        return Response(
-            status=200,
-            headers=None,
-            response={"Email invite sent successfully"}
-        )
+    if employment_status == 'contractor':
+        try:
+            send_account_activation_manager_email(
+                manager_name=line_manager_name,
+                manager_email=line_manager_email,
+                applicant_name=name,
+                applicant_email=email_address
+            )
+            return Response(
+                status=200,
+                headers=None,
+                response={"Email invite sent successfully"}
+            )
 
-    except EmailError:
+        except EmailError:
+            return Response(
+                status=400,
+                headers=None
+            )
+
+    if employment_status == 'employee' or user_type == 'seller':
+        try:
+            send_account_activation_email(
+                name=name,
+                email_address=email_address,
+                user_type=user_type
+            )
+            return Response(
+                status=200,
+                headers=None,
+                response={"Email invite sent successfully"}
+            )
+
+        except EmailError:
+            return Response(
+                status=400,
+                headers=None
+            )
+
+    else:
         return Response(
-            status=400,
-            headers=None
-        )
+                status=400,
+                headers=None
+            )
 
 
 @auth.route('/logout', methods=['GET'])
