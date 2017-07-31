@@ -71,7 +71,7 @@ This will run the linter, validate the migrations and run the unit tests.
 
 ```make test```
 
-To test individual parts of the test stack use the `test-pep8`, `test-migrations`
+To test individual parts of the test stack use the `test-flake8`, `test-migrations`
 or `test-unit` targets.
 
 ### Run the development server

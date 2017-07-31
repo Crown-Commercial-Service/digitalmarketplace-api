@@ -64,7 +64,7 @@ def get_json_from_request():
         abort(400, "Unexpected Content-Type, expecting 'application/json'")
     try:
         data = request.get_json()
-    except BadRequest as e:
+    except BadRequest:
         data = None
     if data is None:
         abort(400, "Invalid JSON; must be a valid JSON object")

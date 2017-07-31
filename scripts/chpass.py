@@ -13,13 +13,12 @@ Example:
 import sys
 import getpass
 import logging
-
-logger = logging.getLogger('chpass')
-logging.basicConfig(level=logging.INFO)
-
 from docopt import docopt
 
 import dmapiclient
+
+logger = logging.getLogger('chpass')
+logging.basicConfig(level=logging.INFO)
 
 
 def get_api_endpoint_from_stage(stage):

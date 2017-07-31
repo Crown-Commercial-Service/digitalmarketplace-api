@@ -2,7 +2,8 @@
 
 # For tests
 pytest==2.8.2
-pep8==1.5.7
+flake8==2.6.2
+flake8-putty==0.4.0
 requests-mock==0.6.0
 mock==2.0.0
 freezegun==0.3.8

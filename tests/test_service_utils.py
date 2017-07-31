@@ -1,4 +1,3 @@
-import pytest
 import mock
 
 from tests.bases import BaseApplicationTest
@@ -15,7 +14,7 @@ class TestIndexServices(BaseApplicationTest):
         with self.app.app_context():
             g8 = Framework.query.filter(Framework.slug == 'g-cloud-8').first()
 
-            with mock.patch.object(Service, "serialize") as serialize_mock:
+            with mock.patch.object(Service, "serialize"):
                 service = Service(status='published', framework=g8)
                 index_service(service)
 
@@ -27,7 +26,7 @@ class TestIndexServices(BaseApplicationTest):
         with self.app.app_context():
             g8 = Framework.query.filter(Framework.slug == 'g-cloud-8').first()
 
-            with mock.patch.object(Service, "serialize") as serialize_mock:
+            with mock.patch.object(Service, "serialize"):
                 service = Service(status='enabled', framework=g8)
                 index_service(service)
 
@@ -37,7 +36,7 @@ class TestIndexServices(BaseApplicationTest):
         with self.app.app_context():
             dos = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
 
-            with mock.patch.object(Service, "serialize") as serialize_mock:
+            with mock.patch.object(Service, "serialize"):
                 service = Service(status='published', framework=dos)
                 index_service(service)
 
@@ -47,7 +46,7 @@ class TestIndexServices(BaseApplicationTest):
         with self.app.app_context():
             g6 = Framework.query.filter(Framework.slug == 'g-cloud-6').first()
 
-            with mock.patch.object(Service, "serialize") as serialize_mock:
+            with mock.patch.object(Service, "serialize"):
                 service = Service(status='published', framework=g6)
                 index_service(service)
 

@@ -1,13 +1,13 @@
 from datetime import datetime
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
+
+from dmapiclient.audit import AuditTypes
+from dmutils.formats import DATETIME_FORMAT
+
 from .. import main
 from ... import db
-from ...models import (
-    Supplier, ContactInformation, AuditEvent,
-    Service, SupplierFramework, Framework, User,
-    FrameworkAgreement
-)
+from ...models import Supplier, ContactInformation, AuditEvent, Service, SupplierFramework, Framework, User
 from ...validation import (
     validate_supplier_json_or_400,
     validate_contact_information_json_or_400,
@@ -24,9 +24,7 @@ from ...utils import (
     get_valid_page_or_1,
     validate_and_return_updater_request,
 )
-from ...supplier_utils import validate_and_return_supplier_request, validate_agreement_details_data
-from dmapiclient.audit import AuditTypes
-from dmutils.formats import DATETIME_FORMAT
+from ...supplier_utils import validate_and_return_supplier_request
 
 
 @main.route('/suppliers', methods=['GET'])
