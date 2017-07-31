@@ -7,7 +7,7 @@ import pytest
 
 from dmapiclient.audit import AuditTypes
 
-from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service, Framework, FrameworkLot
+from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service, Framework, FrameworkLot, SupplierFramework
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from tests.helpers import FixtureMixin
 
@@ -19,7 +19,11 @@ class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
         super(BaseBriefResponseTest, self).setup()
 
         with self.app.app_context():
-            self.setup_dummy_suppliers(2)
+            self.supplier_ids = self.setup_dummy_suppliers(2)
+            supplier_frameworks = [
+                SupplierFramework(supplier_id=supplier_id, framework_id=5)
+                for supplier_id in self.supplier_ids
+            ]
             brief = Brief(
                 data=example_listings.brief_data().example(),
                 status='live', framework_id=5, lot=Lot.query.get(5)
@@ -50,14 +54,14 @@ class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
                 supplier_id=0,
             )
 
-            db.session.add_all([service, specialist_service, brief, specialist_brief])
+            db.session.add_all([service, specialist_service, brief, specialist_brief] + supplier_frameworks)
             db.session.commit()
-
             self.brief_id = brief.id
             self.specialist_brief_id = specialist_brief.id
 
     def setup_dummy_brief_response(self, brief_id=None, supplier_id=0, submitted_at=datetime(2016, 1, 2)):
         with self.app.app_context():
+
             brief_response = BriefResponse(
                 data=example_listings.brief_response_data().example(),
                 supplier_id=supplier_id, brief_id=brief_id or self.brief_id,
@@ -731,11 +735,13 @@ class TestListBriefResponses(BaseBriefResponseTest):
 
     def test_list_brief_responses_by_one_framework_slug(self, live_dos2_framework):
         with self.app.app_context():
+            supplier_framework = SupplierFramework(supplier_id=0, framework_id=live_dos2_framework["id"])
             dos2_brief = Brief(
                 data=example_listings.brief_data().example(),
                 status='live', framework_id=live_dos2_framework["id"], lot=Lot.query.get(6)
             )
-            db.session.add(dos2_brief)
+
+            db.session.add_all([dos2_brief, supplier_framework])
             db.session.commit()
 
             dos2_brief_id = dos2_brief.id
@@ -756,11 +762,12 @@ class TestListBriefResponses(BaseBriefResponseTest):
 
     def test_list_brief_responses_by_multiple_framework_slugs(self, live_dos2_framework):
         with self.app.app_context():
+            supplier_framework = SupplierFramework(supplier_id=0, framework_id=live_dos2_framework["id"])
             dos2_brief = Brief(
                 data=example_listings.brief_data().example(),
                 status='live', framework_id=live_dos2_framework["id"], lot=Lot.query.get(6)
             )
-            db.session.add(dos2_brief)
+            db.session.add_all([dos2_brief, supplier_framework])
             db.session.commit()
 
             dos2_brief_id = dos2_brief.id

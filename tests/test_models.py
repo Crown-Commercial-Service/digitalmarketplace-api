@@ -504,6 +504,13 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
 
             self.setup_dummy_suppliers(1)
             self.supplier = Supplier.query.filter(Supplier.supplier_id == 0).first()
+            supplier_framework = SupplierFramework(
+                supplier=self.supplier,
+                framework=framework,
+                declaration={'organisationSize': 'small'}
+            )
+            db.session.add(supplier_framework)
+            db.session.commit()
 
     def test_create_a_new_brief_response(self):
         with self.app.app_context():
@@ -590,6 +597,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     'briefId': self.brief.id,
                     'supplierId': 0,
                     'supplierName': 'Supplier 0',
+                    'supplierOrganisationSize': 'small',
                     'createdAt': mock.ANY,
                     'submittedAt': '2016-09-28T00:00:00.000000Z',
                     'status': 'submitted',
@@ -623,6 +631,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     },
                     'supplierId': 0,
                     'supplierName': 'Supplier 0',
+                    'supplierOrganisationSize': 'small',
                     'createdAt': mock.ANY,
                     'status': 'draft',
                     'foo': 'bar',
