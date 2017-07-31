@@ -102,7 +102,7 @@ curl -i -H "Authorization: Bearer myToken" 127.0.0.1:5000/services
 ## Updating application dependencies
 
 `requirements.txt` file is generated from the `requirements-app.txt` in order to pin
-versions of all nested dependecies. If `requirements-app.txt` has been changed (or
+versions of all nested dependencies. If `requirements-app.txt` has been changed (or
 we want to update the unpinned nested dependencies) `requirements.txt` should be
 regenerated with
 
