@@ -1371,3 +1371,66 @@ class TestAwardBrief(FrameworkSetupAndTeardown):
             data = json.loads(res.get_data(as_text=True))
             assert res.status_code == 400
             assert data['error'] == "BriefResponse cannot be awarded for this Brief"
+
+
+class TestBriefAwardDetails(FrameworkSetupAndTeardown):
+
+    award_url = "/briefs/1/award/{}/contract-details"
+    valid_payload = {
+        "award_details": {
+            "awardedContractStartDate": "2020-12-31",
+            "awardedContractValue": "99.95",
+        },
+        "updated_by": "user@email.com"
+    }
+
+    def _post_to_award_details_endpoint(self, payload, brief_response_id):
+        payload['update_details'] = {"updated_by": "example"}
+        return self.client.post(
+            self.award_url.format(brief_response_id),
+            data=json.dumps(payload),
+            content_type="application/json"
+        )
+
+    def test_can_supply_award_details_for_closed_brief_with_awarded_brief_response(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add(brief_response)
+            db.session.commit()
+            brief_response.award_details = {'pending': True}
+            db.session.add(brief_response)
+            db.session.commit()
+            assert brief_response.status == 'pending-awarded'
+
+            res = self._post_to_award_details_endpoint(self.valid_payload, brief_response.id)
+            assert res.status_code == 200
+            data = json.loads(res.get_data(as_text=True))
+            assert data['briefs']['awardedBriefResponseId'] == brief_response.id
+
+            saved_brief_response = BriefResponse.query.get(brief_response.id)
+            assert saved_brief_response.award_details == {
+                "awardedContractStartDate": "2020-12-31",
+                "awardedContractValue": "99.95",
+            }
+
+    def test_400_if_supplying_details_for_closed_brief_without_awarded_brief_response(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add(brief_response)
+            db.session.commit()
+            assert brief_response.status == 'submitted'
+
+            res = self._post_to_award_details_endpoint(self.valid_payload, brief_response.id)
+            assert res.status_code == 400
+            data = json.loads(res.get_data(as_text=True))
+            assert data['error'] == "Cannot save details for this brief"
+
+    def test_400_if_award_details_payload_invalid(self):
+        pass
+
+    def test_400_if_no_updated_by_in_payload(self):
+        pass

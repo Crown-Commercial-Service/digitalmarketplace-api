@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import jsonify, abort, current_app, request
 from sqlalchemy.exc import IntegrityError
 
@@ -262,6 +263,34 @@ def award_brief(brief_id):
     )
 
     db.session.add_all([brief_response] + audit_events)
+    db.session.commit()
+
+    return jsonify(briefs=brief.serialize()), 200
+
+
+@main.route('/briefs/<int:brief_id>/award/<int:brief_response_id>/contract-details', methods=['POST'])
+def award_brief_details(brief_id, brief_response_id):
+    json_payload = get_json_from_request()
+    updater_json = validate_and_return_updater_request()
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    brief_response = BriefResponse.query.filter(
+        BriefResponse.id == brief_response_id
+    ).first_or_404()
+    if not (brief_response.award_details and brief_response.award_details.get('pending')):
+        abort(400, "Cannot save details for this brief")
+
+    # TODO: validation via JSON schema
+
+    brief_response.award_details = json_payload['award_details']
+    brief_response.awarded_at = datetime.utcnow()
+
+    # TODO: Audit event
+
+    db.session.add(brief_response)
     db.session.commit()
 
     return jsonify(briefs=brief.serialize()), 200
