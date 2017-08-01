@@ -1442,7 +1442,34 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
             assert data['error'] == "Cannot save details for this brief"
 
     def test_400_if_award_details_payload_invalid(self):
-        pass
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add(brief_response)
+            db.session.commit()
+            brief_response.award_details = {'pending': True}
+            db.session.add(brief_response)
+            db.session.commit()
+
+            res = self._post_to_award_details_endpoint(
+                {
+                    "award_details": {
+                        "awardedContractValue": "I am not a number",
+                        "awardedContractStartDate-day": None,
+                        "awardedContractStartDate-month": None,
+                        "awardedContractStartDate-year": None,
+                    },
+                    "updated_by": "user@email.com"
+                }, brief_response.id
+            )
+
+            data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 400
+            assert data['error'] == {
+                'awardedContractStartDate': 'answer_required',
+                'awardedContractValue': 'not_money_format'
+            }
 
     def test_400_if_no_updated_by_in_payload(self):
         res = self._post_to_award_details_endpoint({

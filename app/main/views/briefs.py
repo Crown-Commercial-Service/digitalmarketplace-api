@@ -12,6 +12,7 @@ from ...utils import (
 )
 from ...service_utils import validate_and_return_lot, filter_services
 from ...brief_utils import validate_brief_data
+from ...validation import get_validation_errors
 
 
 @main.route('/briefs', methods=['POST'])
@@ -283,9 +284,16 @@ def award_brief_details(brief_id, brief_response_id):
     if not (brief_response.award_details and brief_response.award_details.get('pending')):
         abort(400, "Cannot save details for this brief")
 
-    # TODO: validation via JSON schema
+    # Drop any null values to ensure correct validation messages
+    award_details = {k: v for k, v in json_payload['award_details'].items() if v is not None}
+    errors = get_validation_errors(
+        'brief-awards-{}-{}'.format(brief.framework.slug, brief.lot.slug),
+        award_details
+    )
+    if errors:
+        abort(400, errors)
 
-    brief_response.award_details = json_payload['award_details']
+    brief_response.award_details = award_details
     brief_response.awarded_at = datetime.utcnow()
 
     audit_event = AuditEvent(
@@ -294,7 +302,7 @@ def award_brief_details(brief_id, brief_response_id):
         data={
             'briefId': brief.id,
             'briefResponseId': brief_response_id,
-            'briefResponseAwardDetails': json_payload['award_details']
+            'briefResponseAwardDetails': award_details
         },
         db_object=brief_response
     )
