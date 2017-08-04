@@ -382,7 +382,7 @@ def do_search(search_query, offset, result_count, new_domains):
                          ' ',
                          Supplier.data['technologies'].astext, ''),
              tsquery,
-             'MaxWords=150, MinWords=75, ShortWord=3, HighlightAll=FALSE, MaxFragments=1, FragmentDelimiter=" ... " '
+             'MaxWords=25, MinWords=20, ShortWord=3, HighlightAll=FALSE, MaxFragments=1'
         ))
 
     q = q.group_by(Supplier.id)
