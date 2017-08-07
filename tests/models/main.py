@@ -641,6 +641,111 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     }
                 }
 
+    def test_brief_response_awarded_at_index_raises_integrity_error_on_more_than_one_award_per_brief(self):
+        timestamp = datetime(2016, 12, 31, 12, 1, 2, 3)
+        with self.app.app_context():
+            brief = Brief.query.get(self.brief_id)
+            brief_response1 = BriefResponse(
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=timestamp
+            )
+            brief_response2 = BriefResponse(
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=timestamp
+            )
+            db.session.add_all([brief_response1, brief_response2])
+            with pytest.raises(IntegrityError) as exc:
+                db.session.commit()
+            assert 'duplicate key value violates unique constraint' in str(exc.value)
+
+    def test_brief_response_awarded_index_can_save_awards_for_unique_briefs(self):
+        timestamp = datetime(2016, 12, 31, 12, 1, 2, 3)
+        with self.app.app_context():
+            brief = Brief.query.get(self.brief_id)
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            lot = framework.get_lot('digital-outcomes')
+            brief2 = Brief(
+                data={'title': "Completely Different", 'requirementsLength': '1 week'},
+                framework=framework,
+                lot=lot,
+                published_at=datetime(2016, 3, 3, 12, 30, 1, 3)
+            )
+            db.session.add(brief2)
+            brief_response1 = BriefResponse(
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=timestamp
+            )
+            brief_response2 = BriefResponse(
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=None
+            )
+            brief_response3 = BriefResponse(
+                data={}, brief=brief2, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=None
+            )
+            brief_response4 = BriefResponse(
+                data={}, brief=brief2, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=timestamp
+            )
+
+            db.session.add_all([brief_response1, brief_response2, brief_response3, brief_response4])
+            db.session.commit()
+
+            for b in [brief_response1, brief_response2, brief_response3, brief_response4]:
+                assert b.id
+
+    def test_brief_response_awarded_index_can_save_multiple_non_awarded_responses(self):
+        with self.app.app_context():
+            brief = Brief.query.get(self.brief_id)
+            brief_response1 = BriefResponse(
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=None
+            )
+            brief_response2 = BriefResponse(
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=None
+            )
+            db.session.add_all([brief_response1, brief_response2])
+            db.session.commit()
+
+            for b in [brief_response1, brief_response2]:
+                assert b.id
+
+    def test_brief_response_awarded_index_sets_default_value(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(data={}, brief=self.brief, supplier=self.supplier)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            assert brief_response.id
+            assert brief_response.awarded_at is None
+
+    def test_brief_response_can_not_be_awarded_if_brief_is_not_closed(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            lot = framework.get_lot('digital-outcomes')
+            brief = Brief(
+                data={'title': "Completely Different", 'requirementsLength': '1 week'},
+                framework=framework,
+                lot=lot,
+                published_at=datetime.utcnow()
+            )
+            brief_response = BriefResponse(data={}, brief=brief, supplier=self.supplier)
+            db.session.add_all([brief, brief_response])
+            db.session.commit()
+
+            existing_brief_response = BriefResponse.query.get(brief_response.id)
+            existing_brief_response.awarded_at = datetime(2016, 12, 31, 12, 1, 1)
+            db.session.add(existing_brief_response)
+            db.session.commit()
+
+            assert 'Brief response can not be awarded if the brief is not closed' in str(e.message)
+
+    def test_brief_response_can_not_be_awarded_if_brief_response_has_not_been_submitted(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            brief_response = BriefResponse(data={}, brief=self.brief, supplier=self.supplier)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            existing_brief_response = BriefResponse.query.get(brief_response.id)
+            existing_brief_response.awarded_at = datetime(2016, 12, 31, 12, 1, 1)
+            db.session.add(existing_brief_response)
+            db.session.commit()
+
+            assert 'Brief response can not be awarded if response has not been submitted' in str(e.message)
+
 
 class TestBriefClarificationQuestion(BaseApplicationTest):
     def setup(self):

@@ -21,6 +21,7 @@ from sqlalchemy.sql.expression import (
     cast as sql_cast,
     select as sql_select,
     false as sql_false,
+    null as sql_null,
     and_ as sql_and,
 )
 from sqlalchemy.types import String
@@ -1220,6 +1221,14 @@ class Brief(db.Model):
         lazy='select',
     )
 
+    awarded_brief_response = db.relationship(
+        'BriefResponse',
+        primaryjoin="and_(Brief.id==BriefResponse.brief_id, BriefResponse.awarded_at != None)",
+        uselist=False,
+        lazy='joined',
+        viewonly=True
+    )
+
     @validates('users')
     def validates_users(self, key, user):
         if user.role != 'buyer':
@@ -1451,6 +1460,9 @@ class BriefResponse(db.Model):
 
     created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
     submitted_at = db.Column(db.DateTime, nullable=True)
+    awarded_at = db.Column(db.DateTime, nullable=True)
+
+    award_details = db.Column(JSON, nullable=True)
 
     brief = db.relationship('Brief', lazy='joined')
     supplier = db.relationship('Supplier', lazy='joined')
@@ -1465,6 +1477,14 @@ class BriefResponse(db.Model):
 
         return data
 
+    @validates('awarded_at')
+    def validates_awarded(self, key, awarded_at):
+        if self.brief.status != "closed":
+            raise ValidationError('Brief response can not be awarded if the brief is not closed')
+        if self.status != 'submitted':
+            raise ValidationError('Brief response can not be awarded if response has not been submitted')
+        return awarded_at
+
     def update_from_json(self, data):
         current_data = dict(self.data.items())
         current_data.update(data)
@@ -1473,6 +1493,10 @@ class BriefResponse(db.Model):
 
     @hybrid_property
     def status(self):
+        if self.awarded_at:
+            return 'awarded'
+        elif self.award_details:
+            return 'pending-awarded'
         if self.submitted_at:
             return 'submitted'
         else:
@@ -1482,6 +1506,8 @@ class BriefResponse(db.Model):
     def status(cls):
         return sql_case([
             (cls.submitted_at.isnot(None), 'submitted'),
+            (cls.awarded_at.isnot(None), 'awarded'),
+            (cls.award_details.isnot(None), 'pending-awarded'),
         ], else_='draft')
 
     def validate(self, enforce_required=True, required_fields=None, max_day_rate=None):
@@ -1678,6 +1704,13 @@ db.Index(
     AuditEvent.created_at,
     AuditEvent.id,
     postgresql_where=sql_and(AuditEvent.acknowledged == sql_false(), AuditEvent.type == "update_service"),
+)
+
+db.Index(
+    'idx_brief_responses_unique_awarded_at_per_brief_id',
+    BriefResponse.brief_id,
+    postgresql_where=BriefResponse.awarded_at != sql_null(),
+    unique=True
 )
 
 
