@@ -403,6 +403,42 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             assert brief.clarification_questions[0].question == "How?"
             assert brief.clarification_questions[1].question == "When"
 
+    def test_awarded_brief_response_when_there_is_an_award(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            brief_response1 = BriefResponse(brief=brief, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            brief_response2 = BriefResponse(brief=brief, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add_all([brief, brief_response1, brief_response2])
+            db.session.commit()
+            brief_response2.awarded_at = datetime(2016, 12, 12, 1, 1, 1)
+            db.session.add(brief_response2)
+            db.session.commit()
+
+            brief = Brief.query.get(brief.id)
+            assert brief.awarded_brief_response.id == brief_response2.id
+
+    def test_no_awarded_brief_response_if_brief_responses_but_no_award(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            brief_response1 = BriefResponse(brief=brief, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            brief_response2 = BriefResponse(brief=brief, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add_all([brief, brief_response1, brief_response2])
+            db.session.commit()
+
+            brief = Brief.query.get(brief.id)
+            assert brief.awarded_brief_response is None
+
+    def test_no_awarded_brief_response_if_no_brief_responses(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            db.session.add(brief)
+            db.session.commit()
+
+            brief = Brief.query.get(brief.id)
+            assert brief.awarded_brief_response is None
+
 
 class TestCopyBrief(BaseApplicationTest, FixtureMixin):
 
@@ -489,14 +525,8 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
         super(TestBriefResponses, self).setup()
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            lot = framework.get_lot('digital-outcomes')
             self.brief_title = 'My Test Brief Title'
-            self.brief = Brief(
-                data={'title': self.brief_title, 'requirementsLength': '1 week'},
-                framework=framework,
-                lot=lot,
-                published_at=datetime(2016, 3, 3, 12, 30, 1, 2)
-            )
+            self.brief = self._create_brief()
             db.session.add(self.brief)
             db.session.commit()
             self.brief_id = self.brief.id
@@ -510,6 +540,16 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             )
             db.session.add(supplier_framework)
             db.session.commit()
+
+    def _create_brief(self, published_at=datetime(2016, 3, 3, 12, 30, 1, 3)):
+        framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+        lot = framework.get_lot('digital-outcomes')
+        return Brief(
+            data={'title': self.brief_title, 'requirementsLength': '1 week'},
+            framework=framework,
+            lot=lot,
+            published_at=published_at
+        )
 
     def test_create_a_new_brief_response(self):
         with self.app.app_context():
@@ -548,6 +588,15 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
     def test_draft_status_for_brief_response_with_no_submitted_at(self):
         brief_response = BriefResponse(created_at=datetime.utcnow())
         assert brief_response.status == 'draft'
+
+    def test_awarded_status_for_brief_response_has_been_awarded(self):
+        with self.app.app_context():
+            brief = Brief.query.get(self.brief_id)
+            brief_response = BriefResponse(
+                brief=brief, submitted_at=datetime.utcnow(), awarded_at=datetime(2016, 1, 1)
+            )
+
+        assert brief_response.status == 'awarded'
 
     def test_query_draft_brief_response(self):
         with self.app.app_context():
@@ -660,14 +709,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
         timestamp = datetime(2016, 12, 31, 12, 1, 2, 3)
         with self.app.app_context():
             brief = Brief.query.get(self.brief_id)
-            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            lot = framework.get_lot('digital-outcomes')
-            brief2 = Brief(
-                data={'title': "Completely Different", 'requirementsLength': '1 week'},
-                framework=framework,
-                lot=lot,
-                published_at=datetime(2016, 3, 3, 12, 30, 1, 3)
-            )
+            brief2 = self._create_brief()
             db.session.add(brief2)
             brief_response1 = BriefResponse(
                 data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=timestamp
@@ -714,14 +756,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
 
     def test_brief_response_can_not_be_awarded_if_brief_is_not_closed(self):
         with self.app.app_context(), pytest.raises(ValidationError) as e:
-            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            lot = framework.get_lot('digital-outcomes')
-            brief = Brief(
-                data={'title': "Completely Different", 'requirementsLength': '1 week'},
-                framework=framework,
-                lot=lot,
-                published_at=datetime.utcnow()
-            )
+            brief = self._create_brief(published_at=datetime.utcnow())
             brief_response = BriefResponse(data={}, brief=brief, supplier=self.supplier)
             db.session.add_all([brief, brief_response])
             db.session.commit()
