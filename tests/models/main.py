@@ -157,6 +157,7 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             assert Brief.query.filter(Brief.status == 'live').count() == 0
             assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
             assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'draft'
@@ -170,6 +171,7 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             assert Brief.query.filter(Brief.status == 'live').count() == 1
             assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
             assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'live'
@@ -186,6 +188,7 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             assert Brief.query.filter(Brief.status == 'live').count() == 0
             assert Brief.query.filter(Brief.status == 'withdrawn').count() == 1
             assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'withdrawn'
@@ -199,9 +202,26 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             assert Brief.query.filter(Brief.status == 'live').count() == 0
             assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
             assert Brief.query.filter(Brief.status == 'closed').count() == 1
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'closed'
+
+    def test_query_awarded_brief(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief=brief, data={}, supplier_id=0, submitted_at=datetime(2000, 2, 1))
+            db.session.add_all([brief, brief_response])
+            db.session.commit()
+            # award the BriefResponse
+            brief_response.awarded_at = datetime(2001, 1, 1)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 1
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'awarded'
 
     def test_live_status_for_briefs_with_published_at(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
@@ -320,6 +340,11 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         with pytest.raises(ValidationError):
             brief.status = 'closed'
 
+    def test_cannot_set_brief_to_awarded(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        with pytest.raises(ValidationError):
+            brief.status = 'awarded'
+
     def test_cannot_set_draft_brief_to_withdrawn(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
@@ -332,7 +357,7 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
         )
 
-        for status in ['draft', 'live', 'closed']:
+        for status in ['draft', 'live', 'closed', 'awarded']:
             with pytest.raises(ValidationError):
                 brief.status = status
 

@@ -9,7 +9,7 @@ from flask import current_app
 from flask_sqlalchemy import BaseQuery
 from six import string_types, iteritems
 from sqlalchemy import Sequence
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, exists
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import INTERVAL
 from sqlalchemy.ext.declarative import declared_attr
@@ -1312,6 +1312,8 @@ class Brief(db.Model):
             return 'draft'
         elif self.applications_closed_at > datetime.utcnow():
             return 'live'
+        elif self.awarded_brief_response:
+            return 'awarded'
         else:
             return 'closed'
 
@@ -1329,10 +1331,13 @@ class Brief(db.Model):
 
     @status.expression
     def status(cls):
+        # To filter by 'awarded' status, we need an explicit EXISTS query on BriefResponse.
+        # The subquery sql_and(...) represents the awarded_brief_response relationship above.
         return sql_case([
             (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.published_at.is_(None), 'draft'),
-            (cls.applications_closed_at > datetime.utcnow(), 'live')
+            (exists([BriefResponse.id]), 'awarded'),
+            (cls.applications_closed_at > datetime.utcnow(), 'live'),
         ], else_='closed')
 
     class query_class(BaseQuery):
