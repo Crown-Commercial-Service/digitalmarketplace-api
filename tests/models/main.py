@@ -668,7 +668,10 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
         with self.app.app_context():
             brief = Brief.query.get(self.brief_id)
             brief_response = BriefResponse(
-                brief=brief, submitted_at=datetime.utcnow(), awarded_at=datetime(2016, 1, 1)
+                brief=brief,
+                submitted_at=datetime.utcnow(),
+                award_details={'confirmed': 'details'},
+                awarded_at=datetime(2016, 1, 1)
             )
 
         assert brief_response.status == 'awarded'
@@ -770,10 +773,14 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
         with self.app.app_context():
             brief = Brief.query.get(self.brief_id)
             brief_response1 = BriefResponse(
-                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=timestamp
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(),
+                award_details={'confirmed': 'details'},
+                awarded_at=timestamp
             )
             brief_response2 = BriefResponse(
-                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=timestamp
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(),
+                award_details={'confirmed': 'details'},
+                awarded_at=timestamp
             )
             db.session.add_all([brief_response1, brief_response2])
             with pytest.raises(IntegrityError) as exc:
@@ -787,16 +794,20 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             brief2 = self._create_brief()
             db.session.add(brief2)
             brief_response1 = BriefResponse(
-                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=timestamp
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(),
+                award_details={'pending': True}, awarded_at=timestamp
             )
             brief_response2 = BriefResponse(
-                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=None
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(),
+                award_details={'pending': True}, awarded_at=None
             )
             brief_response3 = BriefResponse(
-                data={}, brief=brief2, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=None
+                data={}, brief=brief2, supplier=self.supplier, submitted_at=datetime.utcnow(),
+                award_details={'pending': True}, awarded_at=None
             )
             brief_response4 = BriefResponse(
-                data={}, brief=brief2, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=timestamp
+                data={}, brief=brief2, supplier=self.supplier, submitted_at=datetime.utcnow(),
+                award_details={'pending': True}, awarded_at=timestamp
             )
 
             db.session.add_all([brief_response1, brief_response2, brief_response3, brief_response4])
@@ -889,7 +900,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             db.session.add(brief_response)
             db.session.commit()
 
-            assert 'Brief response award cannot be removed as the brief has already been awarded.' in str(e.message)
+            assert 'Brief response award cannot be changed as the brief has already been awarded.' in str(e.message)
 
 
 class TestBriefClarificationQuestion(BaseApplicationTest):

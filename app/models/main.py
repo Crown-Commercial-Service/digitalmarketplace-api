@@ -1490,11 +1490,11 @@ class BriefResponse(db.Model):
 
     @validates('awarded_at')
     def validates_awarded_at(self, key, awarded_at):
+        if self.status == "awarded":
+            raise ValidationError('Brief response award cannot be changed as the brief has already been awarded.')
         if awarded_at:
             if self.brief.status != "closed":
                 raise ValidationError('Brief response can not be awarded if the brief is not closed')
-            elif self.status == "awarded":
-                raise ValidationError('Brief response award cannot be removed as the brief has already been awarded.')
             elif self.status != 'pending-awarded':
                 raise ValidationError('Brief response can not be awarded if response has not been submitted')
             return awarded_at
