@@ -207,7 +207,7 @@ def update_brief_status(brief_id, action):
 @main.route('/briefs/<int:brief_id>/award', methods=['POST'])
 def award_brief(brief_id):
     json_payload = get_json_from_request()
-    # updater_json = validate_and_return_updater_request()
+    updater_json = validate_and_return_updater_request()
 
     brief = Brief.query.filter(
         Brief.id == brief_id
@@ -224,20 +224,44 @@ def award_brief(brief_id):
     if not json_payload['brief_response_id'] in [b.id for b in brief_responses]:
         abort(400, "BriefResponse cannot be awarded for this Brief")
 
-    # Find any existing awarded BriefResponse
-    previously_awarded = brief.awarded_brief_response
-    if previously_awarded:
-        # Reset any existing awarded BriefResponses
-        previously_awarded.award_details = {}
-        db.session.add(previously_awarded)
-        # do AuditEvent
+    # Find any existing pending awarded BriefResponse
+    audit_events = []
+    pending_awarded_responses = list(filter(lambda x: x.status == 'pending-awarded', brief_responses))
+    if pending_awarded_responses:
+        # Reset the existing awarded BriefResponse (should only be one)
+        pending_award = pending_awarded_responses[0]
+        pending_award.award_details = {}
+        db.session.add(pending_award)
+        audit_events.append(
+            AuditEvent(
+                audit_type=AuditTypes.update_brief_response,
+                user=updater_json['updated_by'],
+                data={
+                    'briefId': brief.id,
+                    'briefResponseId': pending_award.id,
+                    'briefResponseAwardedValue': False
+                },
+                db_object=pending_award
+            )
+        )
 
     # Set new awarded BriefResponse
     brief_response = list(filter(lambda x: x.id == json_payload['brief_response_id'], brief_responses))[0]
     brief_response.award_details = {'pending': True}
-    db.session.add(brief_response)
-    # do AuditEvent
+    audit_events.append(
+        AuditEvent(
+            audit_type=AuditTypes.update_brief_response,
+            user=updater_json['updated_by'],
+            data={
+                'briefId': brief.id,
+                'briefResponseId': brief_response.id,
+                'briefResponseAwardedValue': True
+            },
+            db_object=brief_response
+        )
+    )
 
+    db.session.add_all([brief_response] + audit_events)
     db.session.commit()
 
     return jsonify(briefs=brief.serialize()), 200

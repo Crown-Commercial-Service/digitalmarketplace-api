@@ -1249,15 +1249,24 @@ class TestAwardBrief(FrameworkSetupAndTeardown):
     award_url = "/briefs/1/award"
 
     def _post_to_award_endpoint(self, payload):
+        payload['update_details'] = {"updated_by": "example"}
         return self.client.post(
             self.award_url,
             data=json.dumps(payload),
             content_type="application/json"
         )
 
+    def _get_brief_response_audit_events(self):
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+        return [
+            event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief_response.value
+        ]
+
     def test_can_award_brief_response_to_closed_brief_without_award_details(self):
         with self.app.app_context():
-            self.setup_dummy_briefs(1, title="The Title", status="closed")
+            self.setup_dummy_briefs(1, status="closed")
             self.setup_dummy_suppliers(1)
             brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
             db.session.add(brief_response)
@@ -1266,21 +1275,66 @@ class TestAwardBrief(FrameworkSetupAndTeardown):
             res = self._post_to_award_endpoint({'brief_response_id': brief_response.id})
             assert res.status_code == 200
 
+            brief_response_audits = self._get_brief_response_audit_events()
+            assert len(brief_response_audits) == 1
+            assert brief_response_audits[0]['data'] == {
+                'briefId': 1,
+                'briefResponseId': brief_response.id,
+                'briefResponseAwardedValue': True
+            }
+
     def test_can_change_awarded_brief_response_for_closed_brief_without_awarded_datestamp(self):
         with self.app.app_context():
-            self.setup_dummy_briefs(1, title="The Title", status="closed")
+            self.setup_dummy_briefs(1, status="closed")
             self.setup_dummy_suppliers(1)
             brief_response1 = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
             brief_response2 = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
             db.session.add_all([brief_response1, brief_response2])
             db.session.commit()
-            # Now award to brief_response1
             brief_response1.award_details = {'pending': True}
             db.session.add(brief_response1)
             db.session.commit()
 
+            # Update to be awarded to brief response 2 rather than brief response 1
             res = self._post_to_award_endpoint({'brief_response_id': brief_response2.id})
             assert res.status_code == 200
+
+            brief_response_audits = self._get_brief_response_audit_events()
+            assert len(brief_response_audits) == 2
+            assert brief_response_audits[0]['data'] == {
+                'briefId': 1,
+                'briefResponseId': brief_response1.id,
+                'briefResponseAwardedValue': False
+            }
+            assert brief_response_audits[1]['data'] == {
+                'briefId': 1,
+                'briefResponseId': brief_response2.id,
+                'briefResponseAwardedValue': True
+            }
+
+    def test_200_if_trying_to_award_a_brief_response_again_even_though_it_has_already_been_awarded(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add(brief_response)
+            db.session.commit()
+            brief_response.award_details = {'pending': True}
+            db.session.add(brief_response)
+            db.session.commit()
+
+            res = self._post_to_award_endpoint({'brief_response_id': brief_response.id})
+            assert res.status_code == 200
+
+    def test_400_if_no_updated_by_in_payload(self):
+        res = self.client.post(
+            self.award_url,
+            data=json.dumps({"brief_response_id": 1}),
+            content_type="application/json"
+        )
+        assert res.status_code == 400
+        error = json.loads(res.get_data(as_text=True))['error']
+        assert "'updated_by' is a required property" in error
 
     def test_400_if_awarding_a_brief_response_to_a_brief_with_award_details(self):
         self.setup_dummy_briefs(1, status="awarded")
