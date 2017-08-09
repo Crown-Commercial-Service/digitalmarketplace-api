@@ -1332,7 +1332,8 @@ class Brief(db.Model):
     @status.expression
     def status(cls):
         # To filter by 'awarded' status, we need an explicit EXISTS query on BriefResponse.
-        # The subquery sql_and(...) represents the awarded_brief_response relationship above.
+        # Thanks to the join on the awarded_brief_response relationship above, the BriefResponses
+        # have already been filtered by the correct brief_id and awarded_at values.
         return sql_case([
             (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.published_at.is_(None), 'draft'),
@@ -1429,6 +1430,11 @@ class Brief(db.Model):
         if self.withdrawn_at:
             data.update({
                 'withdrawnAt': self.withdrawn_at.strftime(DATETIME_FORMAT)
+            })
+
+        if self.status == 'awarded':
+            data.update({
+                'awardedBriefResponseId': self.awarded_brief_response.id
             })
 
         data['links'] = {
