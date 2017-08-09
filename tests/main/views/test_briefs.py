@@ -1336,29 +1336,9 @@ class TestAwardBrief(FrameworkSetupAndTeardown):
         error = json.loads(res.get_data(as_text=True))['error']
         assert "'updated_by' is a required property" in error
 
-    def test_400_if_awarding_a_brief_response_to_a_brief_with_award_details(self):
-        self.setup_dummy_briefs(1, status="awarded")
-        res = self._post_to_award_endpoint({'brief_response_id': 1})
-        data = json.loads(res.get_data(as_text=True))
-        assert res.status_code == 400
-        assert data['error'] == "Brief is not closed"
-
-    def test_400_if_awarding_a_brief_response_to_a_live_brief(self):
-        self.setup_dummy_briefs(1, status="live")
-        res = self._post_to_award_endpoint({'brief_response_id': 1})
-        data = json.loads(res.get_data(as_text=True))
-        assert res.status_code == 400
-        assert data['error'] == "Brief is not closed"
-
-    def test_400_if_awarding_a_brief_response_to_a_withdrawn_brief(self):
-        self.setup_dummy_briefs(1, status="withdrawn")
-        res = self._post_to_award_endpoint({'brief_response_id': 1})
-        data = json.loads(res.get_data(as_text=True))
-        assert res.status_code == 400
-        assert data['error'] == "Brief is not closed"
-
-    def test_400_if_awarding_a_brief_response_to_a_draft_brief(self):
-        self.setup_dummy_briefs(1, status="draft")
+    @pytest.mark.parametrize('status', ['draft', 'live', 'withdrawn', 'awarded'])
+    def test_400_if_awarding_a_brief_response_to_a_non_closed_brief(self, status):
+        self.setup_dummy_briefs(1, status=status)
         res = self._post_to_award_endpoint({'brief_response_id': 1})
         data = json.loads(res.get_data(as_text=True))
         assert res.status_code == 400
