@@ -211,7 +211,10 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         with self.app.app_context():
             brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
             self.setup_dummy_suppliers(1)
-            brief_response = BriefResponse(brief=brief, data={}, supplier_id=0, submitted_at=datetime(2000, 2, 1))
+            brief_response = BriefResponse(
+                brief=brief, data={}, supplier_id=0, submitted_at=datetime(2000, 2, 1),
+                award_details={'pending': True}
+            )
             db.session.add_all([brief, brief_response])
             db.session.commit()
             # award the BriefResponse
@@ -436,6 +439,7 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             brief_response2 = BriefResponse(brief=brief, supplier_id=0, submitted_at=datetime.utcnow(), data={})
             db.session.add_all([brief, brief_response1, brief_response2])
             db.session.commit()
+            brief_response2.award_details = {"confirmed": "details"}
             brief_response2.awarded_at = datetime(2016, 12, 12, 1, 1, 1)
             db.session.add(brief_response2)
             db.session.commit()
@@ -477,10 +481,9 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             )
             db.session.add_all([brief, brief_response])
             db.session.commit()
+            brief_response.award_details = {'pending': True} if pending else {'confirmed': 'details'}
             if awarded_at:
                 brief_response.awarded_at = datetime(2016, 1, 1)
-            if pending:
-                brief_response.award_details = {'pending': True}
             db.session.add(brief_response)
             db.session.commit()
             return brief.id, brief_response.id
@@ -767,6 +770,43 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                         'supplier': (('main.get_supplier',), {'supplier_id': 0}),
                     }
                 }
+
+    def test_brief_response_serialization_includes_award_details_if_status_awarded(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(
+                data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier, submitted_at=datetime(2016, 9, 28)
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+            brief_response.award_details = {
+                "awardedContractStartDate": "2020-12-31",
+                "awardedContractValue": "99.95"
+            }
+            brief_response.awarded_at = datetime(2016, 1, 1)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            with mock.patch('app.models.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert brief_response.serialize()['awardDetails'] == {
+                    "awardedContractStartDate": "2020-12-31",
+                    "awardedContractValue": "99.95"
+                }
+
+    def test_brief_response_serialization_includes_pending_flag_if_status_pending_awarded(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(
+                data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier, submitted_at=datetime(2016, 9, 28)
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+            brief_response.award_details = {"pending": True}
+            db.session.add(brief_response)
+            db.session.commit()
+
+            with mock.patch('app.models.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert brief_response.serialize()['awardDetails'] == {"pending": True}
 
     def test_brief_response_awarded_at_index_raises_integrity_error_on_more_than_one_award_per_brief(self):
         timestamp = datetime(2016, 12, 31, 12, 1, 2, 3)

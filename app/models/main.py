@@ -1581,6 +1581,15 @@ class BriefResponse(db.Model):
             }
         })
 
+        if self.status == "awarded":
+            data.update({
+                'awardDetails': self.award_details
+            })
+        elif self.status == 'pending-awarded':
+            data.update({
+                'awardDetails': {'pending': True}
+            })
+
         return purge_nulls_from_data(data)
 
 
