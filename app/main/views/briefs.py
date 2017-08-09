@@ -288,9 +288,18 @@ def award_brief_details(brief_id, brief_response_id):
     brief_response.award_details = json_payload['award_details']
     brief_response.awarded_at = datetime.utcnow()
 
-    # TODO: Audit event
+    audit_event = AuditEvent(
+        audit_type=AuditTypes.update_brief_response,
+        user=updater_json['updated_by'],
+        data={
+            'briefId': brief.id,
+            'briefResponseId': brief_response_id,
+            'briefResponseAwardDetails': json_payload['award_details']
+        },
+        db_object=brief_response
+    )
 
-    db.session.add(brief_response)
+    db.session.add_all([brief_response, audit_event])
     db.session.commit()
 
     return jsonify(briefs=brief.serialize()), 200

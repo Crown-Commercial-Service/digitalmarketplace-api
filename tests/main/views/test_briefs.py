@@ -1385,12 +1385,19 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
     }
 
     def _post_to_award_details_endpoint(self, payload, brief_response_id):
-        payload['update_details'] = {"updated_by": "example"}
         return self.client.post(
             self.award_url.format(brief_response_id),
             data=json.dumps(payload),
             content_type="application/json"
         )
+
+    def _get_brief_response_audit_events(self):
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+        return [
+            event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief_response.value
+        ]
 
     def test_can_supply_award_details_for_closed_brief_with_awarded_brief_response(self):
         with self.app.app_context():
@@ -1409,10 +1416,15 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
             data = json.loads(res.get_data(as_text=True))
             assert data['briefs']['awardedBriefResponseId'] == brief_response.id
 
-            saved_brief_response = BriefResponse.query.get(brief_response.id)
-            assert saved_brief_response.award_details == {
-                "awardedContractStartDate": "2020-12-31",
-                "awardedContractValue": "99.95",
+            brief_response_audits = self._get_brief_response_audit_events()
+            assert len(brief_response_audits) == 1
+            assert brief_response_audits[0]['data'] == {
+                'briefId': 1,
+                'briefResponseId': brief_response.id,
+                'briefResponseAwardDetails': {
+                    "awardedContractStartDate": "2020-12-31",
+                    "awardedContractValue": "99.95"
+                }
             }
 
     def test_400_if_supplying_details_for_closed_brief_without_awarded_brief_response(self):
@@ -1433,4 +1445,13 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
         pass
 
     def test_400_if_no_updated_by_in_payload(self):
-        pass
+        res = self._post_to_award_details_endpoint({
+            "award_details": {
+                "awardedContractStartDate": "2020-12-31",
+                "awardedContractValue": "99.95"
+            }
+        }, 1)
+
+        assert res.status_code == 400
+        error = json.loads(res.get_data(as_text=True))['error']
+        assert "'updated_by' is a required property" in error
