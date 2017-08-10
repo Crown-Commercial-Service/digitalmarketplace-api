@@ -437,11 +437,9 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
             brief_response1 = BriefResponse(brief=brief, supplier_id=0, submitted_at=datetime.utcnow(), data={})
             brief_response2 = BriefResponse(brief=brief, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-            db.session.add_all([brief, brief_response1, brief_response2])
-            db.session.commit()
             brief_response2.award_details = {"confirmed": "details"}
             brief_response2.awarded_at = datetime(2016, 12, 12, 1, 1, 1)
-            db.session.add(brief_response2)
+            db.session.add_all([brief, brief_response1, brief_response2])
             db.session.commit()
 
             brief = Brief.query.get(brief.id)

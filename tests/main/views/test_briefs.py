@@ -9,7 +9,7 @@ from tests.bases import BaseApplicationTest
 
 from dmapiclient.audit import AuditTypes
 from app import db
-from app.models import Brief, Framework, BriefResponse
+from app.models import Framework, BriefResponse
 
 
 class FrameworkSetupAndTeardown(BaseApplicationTest, FixtureMixin):
@@ -1289,10 +1289,8 @@ class TestAwardBrief(FrameworkSetupAndTeardown):
             self.setup_dummy_suppliers(1)
             brief_response1 = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
             brief_response2 = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-            db.session.add_all([brief_response1, brief_response2])
-            db.session.commit()
             brief_response1.award_details = {'pending': True}
-            db.session.add(brief_response1)
+            db.session.add_all([brief_response1, brief_response2])
             db.session.commit()
 
             # Update to be awarded to brief response 2 rather than brief response 1
@@ -1317,8 +1315,6 @@ class TestAwardBrief(FrameworkSetupAndTeardown):
             self.setup_dummy_briefs(1, status="closed")
             self.setup_dummy_suppliers(1)
             brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-            db.session.add(brief_response)
-            db.session.commit()
             brief_response.award_details = {'pending': True}
             db.session.add(brief_response)
             db.session.commit()
