@@ -207,7 +207,7 @@ def update_brief_status(brief_id, action):
 
 
 @main.route('/briefs/<int:brief_id>/award', methods=['POST'])
-def award_brief(brief_id):
+def award_pending_brief_response(brief_id):
     json_payload = get_json_from_request()
     updater_json = validate_and_return_updater_request()
 

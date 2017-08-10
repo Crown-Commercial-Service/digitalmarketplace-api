@@ -1244,7 +1244,7 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest, FixtureMixin):
         assert data["services"]
 
 
-class TestAwardBrief(FrameworkSetupAndTeardown):
+class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
 
     award_url = "/briefs/1/award"
 
