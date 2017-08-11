@@ -283,7 +283,7 @@ def award_brief_details(brief_id, brief_response_id):
         BriefResponse.id == brief_response_id
     ).first_or_404()
     if not brief_response.award_details.get('pending'):
-        abort(400, "Cannot save details for this brief")
+        abort(400, "Cannot update award details for a Brief without a winning supplier")
 
     # Drop any null values to ensure correct validation messages
     award_details = purge_nulls_from_data(json_payload['award_details'])

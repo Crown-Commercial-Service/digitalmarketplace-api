@@ -321,14 +321,16 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
     def test_status_must_be_valid(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError) as e:
             brief.status = 'invalid'
+        assert e.value.message == "Cannot change brief status from 'draft' to 'invalid'"
 
     def test_cannot_set_live_brief_to_draft(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError) as e:
             brief.status = 'draft'
+        assert e.value.message == "Cannot change brief status from 'live' to 'draft'"
 
     def test_can_set_live_brief_to_withdrawn(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
@@ -340,19 +342,22 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
     def test_cannot_set_brief_to_closed(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError) as e:
             brief.status = 'closed'
+        assert e.value.message == "Cannot change brief status from 'draft' to 'closed'"
 
     def test_cannot_set_brief_to_awarded(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError) as e:
             brief.status = 'awarded'
+        assert e.value.message == "Cannot change brief status from 'draft' to 'awarded'"
 
     def test_cannot_set_draft_brief_to_withdrawn(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError) as e:
             brief.status = 'withdrawn'
+        assert e.value.message == "Cannot change brief status from 'draft' to 'withdrawn'"
 
     def test_cannot_change_status_of_withdrawn_brief(self):
         brief = Brief(
@@ -361,8 +366,9 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         )
 
         for status in ['draft', 'live', 'closed', 'awarded']:
-            with pytest.raises(ValidationError):
+            with pytest.raises(ValidationError) as e:
                 brief.status = status
+            assert e.value.message == "Cannot change brief status from 'withdrawn' to '{}'".format(status)
 
     def test_buyer_users_can_be_added_to_a_brief(self):
         with self.app.app_context():
@@ -909,7 +915,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             db.session.add(existing_brief_response)
             db.session.commit()
 
-            assert 'Brief response can not be awarded if the brief is not closed' in str(e.message)
+        assert 'Brief response can not be awarded if the brief is not closed' in e.value.message
 
     def test_brief_response_can_not_be_awarded_if_brief_response_has_not_been_submitted(self):
         with self.app.app_context(), pytest.raises(ValidationError) as e:
@@ -922,7 +928,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             db.session.add(existing_brief_response)
             db.session.commit()
 
-            assert 'Brief response can not be awarded if response has not been submitted' in str(e.message)
+        assert 'Brief response can not be awarded if response has not been submitted' in e.value.message
 
     def test_can_remove_award_details_from_brief_response_if_brief_not_awarded(self):
         with self.app.app_context():
@@ -954,10 +960,8 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             db.session.commit()
             # We've changed our minds again but it's too late...
             brief_response.awarded_at = None
-            db.session.add(brief_response)
-            db.session.commit()
 
-            assert 'Brief response award cannot be changed as the brief has already been awarded.' in str(e.message)
+        assert 'Cannot remove or change award datestamp on previously awarded Brief Response' in e.value.message
 
 
 class TestBriefClarificationQuestion(BaseApplicationTest):

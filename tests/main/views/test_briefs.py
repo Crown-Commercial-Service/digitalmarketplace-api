@@ -1419,7 +1419,7 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
             res = self._post_to_award_details_endpoint(self.valid_payload, brief_response.id)
             assert res.status_code == 400
             data = json.loads(res.get_data(as_text=True))
-            assert data['error'] == "Cannot save details for this brief"
+            assert data['error'] == "Cannot update award details for a Brief without a winning supplier"
 
     def test_400_if_award_details_payload_invalid(self):
         with self.app.app_context():

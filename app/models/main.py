@@ -1493,14 +1493,15 @@ class BriefResponse(db.Model):
 
     @validates('awarded_at')
     def validates_awarded_at(self, key, awarded_at):
-        if self.status == "awarded":
-            raise ValidationError('Brief response award cannot be changed as the brief has already been awarded.')
-        if awarded_at:
-            if self.brief.status != "closed":
-                raise ValidationError('Brief response can not be awarded if the brief is not closed')
-            elif self.status != 'pending-awarded':
-                raise ValidationError('Brief response can not be awarded if response has not been submitted')
-            return awarded_at
+        if self.awarded_at is not None:
+            raise ValidationError('Cannot remove or change award datestamp on previously awarded Brief Response')
+        if not awarded_at:
+            return None
+        if self.brief.status != "closed":
+            raise ValidationError('Brief response can not be awarded if the brief is not closed')
+        if self.status != 'pending-awarded':
+            raise ValidationError('Brief response can not be awarded if response has not been submitted')
+        return awarded_at
 
     def update_from_json(self, data):
         current_data = dict(self.data.items())
