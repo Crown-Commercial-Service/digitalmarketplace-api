@@ -8,7 +8,8 @@ from ... import db
 from ...models import User, Brief, BriefResponse, AuditEvent, Framework, Lot, Supplier, Service
 from ...utils import (
     get_json_from_request, get_int_or_400, json_has_required_keys, pagination_links,
-    get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request
+    get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request,
+    purge_nulls_from_data
 )
 from ...service_utils import validate_and_return_lot, filter_services
 from ...brief_utils import validate_brief_data
@@ -281,11 +282,11 @@ def award_brief_details(brief_id, brief_response_id):
     brief_response = BriefResponse.query.filter(
         BriefResponse.id == brief_response_id
     ).first_or_404()
-    if not (brief_response.award_details and brief_response.award_details.get('pending')):
+    if not brief_response.award_details.get('pending'):
         abort(400, "Cannot save details for this brief")
 
     # Drop any null values to ensure correct validation messages
-    award_details = {k: v for k, v in json_payload['award_details'].items() if v is not None}
+    award_details = purge_nulls_from_data(json_payload['award_details'])
     errors = get_validation_errors(
         'brief-awards-{}-{}'.format(brief.framework.slug, brief.lot.slug),
         award_details

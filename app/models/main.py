@@ -1473,7 +1473,7 @@ class BriefResponse(db.Model):
     submitted_at = db.Column(db.DateTime, nullable=True)
     awarded_at = db.Column(db.DateTime, nullable=True)
 
-    award_details = db.Column(JSON, nullable=True)
+    award_details = db.Column(JSON, nullable=True, default={})
 
     brief = db.relationship('Brief', lazy='joined')
     supplier = db.relationship('Supplier', lazy='joined')
@@ -1521,7 +1521,7 @@ class BriefResponse(db.Model):
         return sql_case([
             (cls.submitted_at.isnot(None), 'submitted'),
             (cls.awarded_at.isnot(None), 'awarded'),
-            (cls.award_details.isnot(None), 'pending-awarded'),
+            (cls.award_details.cast(String) != '{}', 'pending-awarded'),
         ], else_='draft')
 
     def validate(self, enforce_required=True, required_fields=None, max_day_rate=None):
