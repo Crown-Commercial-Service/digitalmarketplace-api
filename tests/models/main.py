@@ -665,17 +665,36 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
         brief_response = BriefResponse(created_at=datetime.utcnow())
         assert brief_response.status == 'draft'
 
-    def test_awarded_status_for_brief_response_has_been_awarded(self):
+    def test_awarded_status_for_brief_response_with_awarded_at_datestamp(self):
         with self.app.app_context():
             brief = Brief.query.get(self.brief_id)
             brief_response = BriefResponse(
                 brief=brief,
+                data={},
+                supplier_id=0,
                 submitted_at=datetime.utcnow(),
                 award_details={'confirmed': 'details'},
                 awarded_at=datetime(2016, 1, 1)
             )
+            db.session.add(brief_response)
+            db.session.commit()
 
-        assert brief_response.status == 'awarded'
+            assert BriefResponse.query.filter(BriefResponse.status == 'awarded').count() == 1
+
+    def test_awarded_status_for_pending_awarded_brief_response(self):
+        with self.app.app_context():
+            brief = Brief.query.get(self.brief_id)
+            brief_response = BriefResponse(
+                brief=brief,
+                data={},
+                supplier_id=0,
+                submitted_at=datetime.utcnow(),
+                award_details={'pending': True}
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+
+            assert BriefResponse.query.filter(BriefResponse.status == 'pending-awarded').count() == 1
 
     def test_query_draft_brief_response(self):
         with self.app.app_context():

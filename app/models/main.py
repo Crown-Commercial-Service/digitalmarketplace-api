@@ -1332,12 +1332,15 @@ class Brief(db.Model):
     @status.expression
     def status(cls):
         # To filter by 'awarded' status, we need an explicit EXISTS query on BriefResponse.
-        # Thanks to the join on the awarded_brief_response relationship above, the BriefResponses
-        # have already been filtered by the correct brief_id and awarded_at values.
+        # This mirrors the awarded_brief_response relationship query above.
         return sql_case([
             (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.published_at.is_(None), 'draft'),
-            (exists([BriefResponse.id]), 'awarded'),
+            (
+                exists([BriefResponse.id]).where(
+                    sql_and(cls.id == BriefResponse.brief_id, BriefResponse.awarded_at != None)  # noqa
+                ).label('awarded_brief_response_id'), 'awarded'
+            ),
             (cls.applications_closed_at > datetime.utcnow(), 'live'),
         ], else_='closed')
 
@@ -1519,9 +1522,9 @@ class BriefResponse(db.Model):
     @status.expression
     def status(cls):
         return sql_case([
-            (cls.submitted_at.isnot(None), 'submitted'),
             (cls.awarded_at.isnot(None), 'awarded'),
             (cls.award_details.cast(String) != '{}', 'pending-awarded'),
+            (cls.submitted_at.isnot(None), 'submitted'),
         ], else_='draft')
 
     def validate(self, enforce_required=True, required_fields=None, max_day_rate=None):
