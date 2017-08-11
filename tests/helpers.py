@@ -304,3 +304,12 @@ def load_example_listing(name):
     file_path = os.path.join('example_listings', '{}.json'.format(name))
     with open(file_path) as f:
         return json.load(f)
+
+
+def get_audit_events(client, audit_type):
+    audit_response = client.get('/audit-events')
+    assert audit_response.status_code == 200
+    data = json.loads(audit_response.get_data(as_text=True))
+    return [
+        event for event in data['auditEvents'] if event['type'] == audit_type.value
+    ]

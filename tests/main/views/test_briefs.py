@@ -4,7 +4,7 @@ from datetime import timedelta
 
 import pytest
 import mock
-from tests.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, FixtureMixin
+from tests.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, FixtureMixin, get_audit_events
 from tests.bases import BaseApplicationTest
 
 from dmapiclient.audit import AuditTypes
@@ -1256,14 +1256,6 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             content_type="application/json"
         )
 
-    def _get_brief_response_audit_events(self):
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data(as_text=True))
-        return [
-            event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief_response.value
-        ]
-
     def test_can_award_brief_response_to_closed_brief_without_award_details(self):
         with self.app.app_context():
             self.setup_dummy_briefs(1, status="closed")
@@ -1275,7 +1267,7 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             res = self._post_to_award_endpoint({'brief_response_id': brief_response.id})
             assert res.status_code == 200
 
-            brief_response_audits = self._get_brief_response_audit_events()
+            brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
             assert len(brief_response_audits) == 1
             assert brief_response_audits[0]['data'] == {
                 'briefId': 1,
@@ -1297,7 +1289,7 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             res = self._post_to_award_endpoint({'brief_response_id': brief_response2.id})
             assert res.status_code == 200
 
-            brief_response_audits = self._get_brief_response_audit_events()
+            brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
             assert len(brief_response_audits) == 2
             assert brief_response_audits[0]['data'] == {
                 'briefId': 1,
@@ -1387,14 +1379,6 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
             content_type="application/json"
         )
 
-    def _get_brief_response_audit_events(self):
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data(as_text=True))
-        return [
-            event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief_response.value
-        ]
-
     def test_can_supply_award_details_for_closed_brief_with_awarded_brief_response(self):
         with self.app.app_context():
             self.setup_dummy_briefs(1, status="closed")
@@ -1412,7 +1396,7 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
             data = json.loads(res.get_data(as_text=True))
             assert data['briefs']['awardedBriefResponseId'] == brief_response.id
 
-            brief_response_audits = self._get_brief_response_audit_events()
+            brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
             assert len(brief_response_audits) == 1
             assert brief_response_audits[0]['data'] == {
                 'briefId': 1,
