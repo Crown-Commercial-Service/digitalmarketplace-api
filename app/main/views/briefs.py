@@ -210,6 +210,7 @@ def update_brief_status(brief_id, action):
 @main.route('/briefs/<int:brief_id>/award', methods=['POST'])
 def award_pending_brief_response(brief_id):
     json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['briefResponseId'])
     updater_json = validate_and_return_updater_request()
 
     brief = Brief.query.filter(
@@ -224,7 +225,7 @@ def award_pending_brief_response(brief_id):
         BriefResponse.status != 'draft'
     )
     # Check that BriefResponse in POST data is associated with this brief
-    if not json_payload['brief_response_id'] in [b.id for b in brief_responses]:
+    if not json_payload['briefResponseId'] in [b.id for b in brief_responses]:
         abort(400, "BriefResponse cannot be awarded for this Brief")
 
     # Find any existing pending awarded BriefResponse
@@ -249,7 +250,7 @@ def award_pending_brief_response(brief_id):
         )
 
     # Set new awarded BriefResponse
-    brief_response = list(filter(lambda x: x.id == json_payload['brief_response_id'], brief_responses))[0]
+    brief_response = list(filter(lambda x: x.id == json_payload['briefResponseId'], brief_responses))[0]
     brief_response.award_details = {'pending': True}
     audit_events.append(
         AuditEvent(
@@ -273,6 +274,7 @@ def award_pending_brief_response(brief_id):
 @main.route('/briefs/<int:brief_id>/award/<int:brief_response_id>/contract-details', methods=['POST'])
 def award_brief_details(brief_id, brief_response_id):
     json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['awardDetails'])
     updater_json = validate_and_return_updater_request()
 
     brief = Brief.query.filter(
@@ -286,7 +288,7 @@ def award_brief_details(brief_id, brief_response_id):
         abort(400, "Cannot update award details for a Brief without a winning supplier")
 
     # Drop any null values to ensure correct validation messages
-    award_details = purge_nulls_from_data(json_payload['award_details'])
+    award_details = purge_nulls_from_data(json_payload['awardDetails'])
     errors = get_validation_errors(
         'brief-awards-{}-{}'.format(brief.framework.slug, brief.lot.slug),
         award_details

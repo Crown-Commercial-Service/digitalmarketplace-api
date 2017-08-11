@@ -1264,7 +1264,7 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             db.session.add(brief_response)
             db.session.commit()
 
-            res = self._post_to_award_endpoint({'brief_response_id': brief_response.id})
+            res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
             assert res.status_code == 200
 
             brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
@@ -1286,7 +1286,7 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             db.session.commit()
 
             # Update to be awarded to brief response 2 rather than brief response 1
-            res = self._post_to_award_endpoint({'brief_response_id': brief_response2.id})
+            res = self._post_to_award_endpoint({'briefResponseId': brief_response2.id})
             assert res.status_code == 200
 
             brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
@@ -1311,13 +1311,13 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             db.session.add(brief_response)
             db.session.commit()
 
-            res = self._post_to_award_endpoint({'brief_response_id': brief_response.id})
+            res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
             assert res.status_code == 200
 
     def test_400_if_no_updated_by_in_payload(self):
         res = self.client.post(
             self.award_url,
-            data=json.dumps({"brief_response_id": 1}),
+            data=json.dumps({"briefResponseId": 1}),
             content_type="application/json"
         )
         assert res.status_code == 400
@@ -1327,7 +1327,7 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
     @pytest.mark.parametrize('status', ['draft', 'live', 'withdrawn', 'awarded'])
     def test_400_if_awarding_a_brief_response_to_a_non_closed_brief(self, status):
         self.setup_dummy_briefs(1, status=status)
-        res = self._post_to_award_endpoint({'brief_response_id': 1})
+        res = self._post_to_award_endpoint({'briefResponseId': 1})
         data = json.loads(res.get_data(as_text=True))
         assert res.status_code == 400
         assert data['error'] == "Brief is not closed"
@@ -1340,7 +1340,7 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             db.session.add(brief_response)
             db.session.commit()
 
-            res = self._post_to_award_endpoint({'brief_response_id': brief_response.id})
+            res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
             data = json.loads(res.get_data(as_text=True))
             assert res.status_code == 400
             assert data['error'] == "BriefResponse cannot be awarded for this Brief"
@@ -1354,7 +1354,7 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             db.session.commit()
 
             # We've set up brief response for brief ID 2 but attempt to award it for brief 1
-            res = self._post_to_award_endpoint({'brief_response_id': brief_response.id})
+            res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
 
             data = json.loads(res.get_data(as_text=True))
             assert res.status_code == 400
@@ -1365,7 +1365,7 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
 
     award_url = "/briefs/1/award/{}/contract-details"
     valid_payload = {
-        "award_details": {
+        "awardDetails": {
             "awardedContractStartDate": "2020-12-31",
             "awardedContractValue": "99.95",
         },
@@ -1434,7 +1434,7 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
 
             res = self._post_to_award_details_endpoint(
                 {
-                    "award_details": {
+                    "awardDetails": {
                         "awardedContractValue": "I am not a number",
                         "awardedContractStartDate-day": None,
                         "awardedContractStartDate-month": None,
@@ -1453,7 +1453,7 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
 
     def test_400_if_no_updated_by_in_payload(self):
         res = self._post_to_award_details_endpoint({
-            "award_details": {
+            "awardDetails": {
                 "awardedContractStartDate": "2020-12-31",
                 "awardedContractValue": "99.95"
             }
