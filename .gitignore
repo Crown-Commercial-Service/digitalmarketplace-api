@@ -55,6 +55,7 @@ coverage.xml
 
 # IDE
 .idea/
+*.iml
 
 version_label
 
