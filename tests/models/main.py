@@ -148,84 +148,6 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
         assert brief.status == 'draft'
 
-    def test_query_draft_brief(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot))
-            db.session.commit()
-
-            assert Brief.query.filter(Brief.status == 'draft').count() == 1
-            assert Brief.query.filter(Brief.status == 'live').count() == 0
-            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
-            assert Brief.query.filter(Brief.status == 'closed').count() == 0
-            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
-
-            # Check python implementation gives same result as the sql implementation
-            assert Brief.query.all()[0].status == 'draft'
-
-    def test_query_live_brief(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow()))
-            db.session.commit()
-
-            assert Brief.query.filter(Brief.status == 'draft').count() == 0
-            assert Brief.query.filter(Brief.status == 'live').count() == 1
-            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
-            assert Brief.query.filter(Brief.status == 'closed').count() == 0
-            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
-
-            # Check python implementation gives same result as the sql implementation
-            assert Brief.query.all()[0].status == 'live'
-
-    def test_query_withdrawn_brief(self):
-        with self.app.app_context():
-            db.session.add(Brief(
-                data={}, framework=self.framework, lot=self.lot,
-                published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
-            ))
-            db.session.commit()
-
-            assert Brief.query.filter(Brief.status == 'draft').count() == 0
-            assert Brief.query.filter(Brief.status == 'live').count() == 0
-            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 1
-            assert Brief.query.filter(Brief.status == 'closed').count() == 0
-            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
-
-            # Check python implementation gives same result as the sql implementation
-            assert Brief.query.all()[0].status == 'withdrawn'
-
-    def test_query_closed_brief(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1)))
-            db.session.commit()
-
-            assert Brief.query.filter(Brief.status == 'draft').count() == 0
-            assert Brief.query.filter(Brief.status == 'live').count() == 0
-            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
-            assert Brief.query.filter(Brief.status == 'closed').count() == 1
-            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
-
-            # Check python implementation gives same result as the sql implementation
-            assert Brief.query.all()[0].status == 'closed'
-
-    def test_query_awarded_brief(self):
-        with self.app.app_context():
-            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
-            self.setup_dummy_suppliers(1)
-            brief_response = BriefResponse(
-                brief=brief, data={}, supplier_id=0, submitted_at=datetime(2000, 2, 1),
-                award_details={'pending': True}
-            )
-            db.session.add_all([brief, brief_response])
-            db.session.commit()
-            # award the BriefResponse
-            brief_response.awarded_at = datetime(2001, 1, 1)
-            db.session.add(brief_response)
-            db.session.commit()
-
-            assert Brief.query.filter(Brief.status == 'awarded').count() == 1
-            # Check python implementation gives same result as the sql implementation
-            assert Brief.query.all()[0].status == 'awarded'
-
     def test_live_status_for_briefs_with_published_at(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
         assert brief.status == 'live'
@@ -258,38 +180,6 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         assert brief.applications_closed_at == datetime(2016, 3, 10, 23, 59, 59)
         assert brief.clarification_questions_closed_at == datetime(2016, 3, 7, 23, 59, 59)
         assert brief.clarification_questions_published_by == datetime(2016, 3, 9, 23, 59, 59)
-
-    def test_query_brief_applications_closed_at_date_for_brief_with_no_requirements_length(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
-            db.session.commit()
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
-
-    def test_query_brief_applications_closed_at_date_for_one_week_brief(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
-            db.session.commit()
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 10, 23, 59, 59)).count() == 1
-
-    def test_query_brief_applications_closed_at_date_for_two_week_brief(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
-            db.session.commit()
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
-
-    def test_query_brief_applications_closed_at_date_for_mix_of_brief_lengths(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 10, 12, 30, 1, 2)))
-            db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
-            db.session.commit()
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 3
 
     def test_expired_status_for_a_brief_with_passed_close_date(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot,
@@ -437,6 +327,152 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             assert brief.clarification_questions[0].question == "How?"
             assert brief.clarification_questions[1].question == "When"
 
+
+class TestBriefQueries(BaseApplicationTest, FixtureMixin):
+    def setup(self):
+        super(TestBriefQueries, self).setup()
+        with self.app.app_context():
+            self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self.lot = self.framework.get_lot('digital-outcomes')
+
+    def test_query_draft_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot))
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 1
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'draft'
+
+    def test_query_live_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow()))
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 1
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'live'
+
+    def test_query_withdrawn_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(
+                data={}, framework=self.framework, lot=self.lot,
+                published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
+            ))
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 1
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'withdrawn'
+
+    def test_query_closed_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1)))
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
+            assert Brief.query.filter(Brief.status == 'closed').count() == 1
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'closed'
+
+    def test_query_awarded_brief(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(
+                brief=brief, data={}, supplier_id=0, submitted_at=datetime(2000, 2, 1),
+                award_details={'pending': True}
+            )
+            db.session.add_all([brief, brief_response])
+            db.session.commit()
+            # award the BriefResponse
+            brief_response.awarded_at = datetime(2001, 1, 1)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 1
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'awarded'
+
+    def test_query_brief_applications_closed_at_date_for_brief_with_no_requirements_length(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.commit()
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
+
+    def test_query_brief_applications_closed_at_date_for_one_week_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.commit()
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 10, 23, 59, 59)).count() == 1
+
+    def test_query_brief_applications_closed_at_date_for_two_week_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.commit()
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
+
+    def test_query_brief_applications_closed_at_date_for_mix_of_brief_lengths(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 10, 12, 30, 1, 2)))
+            db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.commit()
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 3
+
+
+class TestAwardedBriefs(BaseApplicationTest, FixtureMixin):
+    def setup(self):
+        super(TestAwardedBriefs, self).setup()
+        with self.app.app_context():
+            self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self.lot = self.framework.get_lot('digital-outcomes')
+
+    def _setup_brief_and_awarded_brief_response(self, context, awarded_at=True, pending=True):
+        with context:
+            self.setup_dummy_suppliers(1)
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            brief_response = BriefResponse(
+                brief=brief,
+                supplier_id=0,
+                data={'boo': 'far'},
+                created_at=datetime.utcnow(),
+                submitted_at=datetime.utcnow()
+            )
+            db.session.add_all([brief, brief_response])
+            db.session.commit()
+            brief_response.award_details = {'pending': True} if pending else {'confirmed': 'details'}
+            if awarded_at:
+                brief_response.awarded_at = datetime(2016, 1, 1)
+            db.session.add(brief_response)
+            db.session.commit()
+            return brief.id, brief_response.id
+
     def test_awarded_brief_response_when_there_is_an_award(self):
         with self.app.app_context():
             self.setup_dummy_suppliers(1)
@@ -471,26 +507,6 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
 
             brief = Brief.query.get(brief.id)
             assert brief.awarded_brief_response is None
-
-    def _setup_brief_and_awarded_brief_response(self, context, awarded_at=True, pending=True):
-        with context:
-            self.setup_dummy_suppliers(1)
-            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
-            brief_response = BriefResponse(
-                brief=brief,
-                supplier_id=0,
-                data={'boo': 'far'},
-                created_at=datetime.utcnow(),
-                submitted_at=datetime.utcnow()
-            )
-            db.session.add_all([brief, brief_response])
-            db.session.commit()
-            brief_response.award_details = {'pending': True} if pending else {'confirmed': 'details'}
-            if awarded_at:
-                brief_response.awarded_at = datetime(2016, 1, 1)
-            db.session.add(brief_response)
-            db.session.commit()
-            return brief.id, brief_response.id
 
     def test_brief_serialize_includes_awarded_brief_response_id_if_overall_status_awarded(self):
         with self.app.app_context() as context:
