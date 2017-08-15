@@ -1223,7 +1223,7 @@ class Brief(db.Model):
 
     awarded_brief_response = db.relationship(
         'BriefResponse',
-        primaryjoin="and_(Brief.id==BriefResponse.brief_id, BriefResponse.awarded_at != None)",
+        primaryjoin="and_(Brief.id==BriefResponse.brief_id, BriefResponse.awarded_at.isnot(None))",
         uselist=False,
         lazy='joined',
         viewonly=True

@@ -228,29 +228,27 @@ def award_pending_brief_response(brief_id):
     if not json_payload['briefResponseId'] in [b.id for b in brief_responses]:
         abort(400, "BriefResponse cannot be awarded for this Brief")
 
-    # Find any existing pending awarded BriefResponse
+    # Find any existing pending awarded BriefResponse and reset the details
     audit_events = []
-    pending_awarded_responses = list(filter(lambda x: x.status == 'pending-awarded', brief_responses))
-    if pending_awarded_responses:
-        # Reset the existing awarded BriefResponse (should only be one)
-        pending_award = pending_awarded_responses[0]
-        pending_award.award_details = {}
-        db.session.add(pending_award)
+    pending_awarded_responses = brief_responses.filter(BriefResponse.status == 'pending-awarded')
+    for pending_awarded_response in pending_awarded_responses:
+        pending_awarded_response.award_details = {}
+        db.session.add(pending_awarded_response)
         audit_events.append(
             AuditEvent(
                 audit_type=AuditTypes.update_brief_response,
                 user=updater_json['updated_by'],
                 data={
                     'briefId': brief.id,
-                    'briefResponseId': pending_award.id,
+                    'briefResponseId': pending_awarded_response.id,
                     'briefResponseAwardedValue': False
                 },
-                db_object=pending_award
+                db_object=pending_awarded_response
             )
         )
 
     # Set new awarded BriefResponse
-    brief_response = list(filter(lambda x: x.id == json_payload['briefResponseId'], brief_responses))[0]
+    brief_response = brief_responses.filter(BriefResponse.id == json_payload['briefResponseId']).first()
     brief_response.award_details = {'pending': True}
     audit_events.append(
         AuditEvent(
