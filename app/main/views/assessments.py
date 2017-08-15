@@ -56,7 +56,13 @@ def create_assessment():
 
 @main.route('/assessments', methods=['GET'])
 def list_assessments():
-    assessments = Assessment.query
+    assessments = db.session.query(
+        Assessment
+    ).join(
+        SupplierDomain
+    ).filter(
+        SupplierDomain.status == 'unassessed'
+    )
     result = [_.serializable for _ in assessments]
 
     return jsonify(assessments=result), 200
