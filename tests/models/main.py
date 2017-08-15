@@ -327,6 +327,38 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             assert brief.clarification_questions[0].question == "How?"
             assert brief.clarification_questions[1].question == "When"
 
+    def test_status_order_sorts_briefs_by_search_result_status_ordering(self):
+        with self.app.app_context():
+            draft_brief = Brief(data={}, framework=self.framework, lot=self.lot)
+            live_brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
+            withdrawn_brief = Brief(
+                data={}, framework=self.framework, lot=self.lot,
+                published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
+            )
+            closed_brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+
+            awarded_brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(
+                brief=awarded_brief, data={}, supplier_id=0, submitted_at=datetime(2000, 2, 1),
+                award_details={'pending': True}
+            )
+            db.session.add_all([draft_brief, live_brief, withdrawn_brief, closed_brief, awarded_brief, brief_response])
+            db.session.commit()
+            # award the BriefResponse
+            brief_response.awarded_at = datetime(2001, 1, 1)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            expected_result = [
+                live_brief.status, closed_brief.status, awarded_brief.status, draft_brief.status, withdrawn_brief.status
+            ]
+            query_result = [
+                q.status for q in Brief.query.order_by(Brief.status_order, Brief.published_at.desc(), Brief.id)
+            ]
+
+            assert query_result == expected_result
+
 
 class TestBriefQueries(BaseApplicationTest, FixtureMixin):
     def setup(self):

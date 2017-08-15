@@ -113,7 +113,7 @@ def get_brief(brief_id):
 @main.route('/briefs', methods=['GET'])
 def list_briefs():
     if request.args.get('human'):
-        briefs = Brief.query.order_by(Brief.status.desc(), Brief.published_at.desc(), Brief.id)
+        briefs = Brief.query.order_by(Brief.status_order, Brief.published_at.desc(), Brief.id)
     else:
         briefs = Brief.query.order_by(Brief.id)
 

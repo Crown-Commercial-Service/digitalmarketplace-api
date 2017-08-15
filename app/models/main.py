@@ -1344,6 +1344,31 @@ class Brief(db.Model):
             (cls.applications_closed_at > datetime.utcnow(), 'live'),
         ], else_='closed')
 
+    search_result_status_ordering = {
+        "live": 0,
+        "closed": 1,
+        "awarded": 1,
+        "draft": 2,
+        "withdrawn": 2
+    }
+
+    @hybrid_property
+    def status_order(self):
+        return self.search_result_sort_ordering[self.status]
+
+    @status_order.expression
+    def status_order(cls):
+        return sql_case([
+            (cls.withdrawn_at.isnot(None), cls.search_result_status_ordering['withdrawn']),
+            (cls.published_at.is_(None), cls.search_result_status_ordering['draft']),
+            (
+                exists([BriefResponse.id]).where(
+                    sql_and(cls.id == BriefResponse.brief_id, BriefResponse.awarded_at != None)  # noqa
+                ).label('awarded_brief_response_id'), cls.search_result_status_ordering['awarded']
+            ),
+            (cls.applications_closed_at > datetime.utcnow(), cls.search_result_status_ordering['live']),
+        ], else_=cls.search_result_status_ordering['closed'])
+
     class query_class(BaseQuery):
         def has_statuses(self, *statuses):
             return self.filter(Brief.status.in_(statuses))
