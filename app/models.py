@@ -1156,6 +1156,34 @@ class User(db.Model):
         """, {'id': self.id})
         return list(select)[0]
 
+    @property
+    def is_authenticated(self):
+        return self.is_active
+
+    @property
+    def is_active(self):
+        return self.active and not self.locked
+
+    @property
+    def is_locked(self):
+        return self.locked
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    def has_role(self, role):
+        return self.role == role
+
+    def has_any_role(self, *roles):
+        return any(self.has_role(role) for role in roles)
+
+    def get_id(self):
+        try:
+            return unicode(self.id)  # python 2
+        except NameError:
+            return str(self.id)  # python 3
+
 
 class SupplierUserInviteLog(db.Model):
     __tablename__ = 'supplier_user_invite_log'

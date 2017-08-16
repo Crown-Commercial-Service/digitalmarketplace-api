@@ -11,8 +11,6 @@ from .util import render_email_template, send_or_handle_error
 def send_submitted_existing_seller_notification(application_id):
     TEMPLATE_FILENAME = 'application_submitted_existing_seller.md'
 
-    FRONTEND_ADDRESS = current_app.config['FRONTEND_ADDRESS']
-
     application = Application.query.get(application_id)
 
     to_address = application.data['email']

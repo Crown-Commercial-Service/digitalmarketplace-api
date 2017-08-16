@@ -6,7 +6,7 @@ To activate your account and set a password, please click the link below:
 
 {{ url }}
 
-This link expires in 7 days.
+This link expires in 14 days.
 
 Please do not reply to this email. If you need any help, email [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).
 

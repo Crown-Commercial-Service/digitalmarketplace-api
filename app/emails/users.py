@@ -3,11 +3,12 @@
 from __future__ import unicode_literals
 import six
 
-from flask import current_app, url_for, render_template, session, Response
+from flask import current_app, session, jsonify
 from app.models import Supplier, Application, User
 from dmutils.email import (
-    generate_token, EmailError, hash_email, send_email, decode_token
+    generate_token, EmailError, hash_email, send_email
 )
+import rollbar
 
 from .util import render_email_template, send_or_handle_error
 
@@ -76,28 +77,23 @@ def generate_user_creation_token(name, email_address, user_type, **unused):
     data = {
         'name': name,
         'email_address': email_address,
+        'user_type': user_type
     }
 
-    buyer_token = current_app.config['BUYER_CREATION_TOKEN_SALT']
-    seller_token = current_app.config['SUPPLIER_INVITE_TOKEN_SALT']
-
-    token_salt = buyer_token if user_type == 'buyer' else seller_token
-    token = generate_token(data, current_app.config['SECRET_KEY'], token_salt)
+    token = generate_token(
+        data,
+        current_app.config['SECRET_KEY'],
+        current_app.config['SIGNUP_INVITATION_TOKEN_SALT']
+    )
     return token
 
 
 def send_account_activation_email(name, email_address, user_type):
     token = generate_user_creation_token(name=name, email_address=email_address, user_type=user_type)
-    if user_type == 'seller':
-        url = '{}/sellers/signup/create-user/{}'.format(
-            current_app.config['FRONTEND_ADDRESS'],
-            token
-        )
-    else:
-        url = '{}/buyers/signup/create/{}'.format(
-            current_app.config['FRONTEND_ADDRESS'],
-            token
-        )
+    url = '{}/signup/createuser/{}'.format(
+        current_app.config['FRONTEND_ADDRESS'],
+        token
+    )
 
     email_body = render_email_template('create_user_email.md', url=url)
 
@@ -152,7 +148,7 @@ def send_account_activation_manager_email(manager_name, manager_email, applicant
             'error {error} email_hash {email_hash}',
             extra={
                 'error': six.text_type(e),
-                'email_hash': hash_email(email_address)})
+                'email_hash': hash_email(manager_email)})
 
 
 def _send_account_activation_admin_email(manager_name, manager_email, applicant_name, applicant_email):
@@ -188,4 +184,35 @@ def _send_account_activation_admin_email(manager_name, manager_email, applicant_
             'error {error} email_hash {email_hash}',
             extra={
                 'error': six.text_type(e),
+                'email_hash': hash_email(manager_email)})
+
+
+def send_new_user_onboarding_email(name, email_address, user_type):
+    if user_type != 'buyer':
+        return False
+
+    assert user_type == 'buyer'
+
+    email_body = render_email_template(
+        'buyer_onboarding.md',
+        name=name
+    )
+
+    try:
+        send_email(
+            email_address,
+            email_body,
+            'Welcome to the Digital Marketplace',
+            current_app.config['RESET_PASSWORD_EMAIL_FROM'],
+            current_app.config['RESET_PASSWORD_EMAIL_NAME'],
+        )
+        session['email_sent_to'] = email_address
+    except EmailError as error:
+        rollbar.report_exc_info()
+        current_app.logger.error(
+            'buyeronboarding.fail: Buyer onboarding email failed to send. '
+            'error {error} email_hash {email_hash}',
+            extra={
+                'error': six.text_type(error),
                 'email_hash': hash_email(email_address)})
+        return jsonify(message='Failed to send buyer onboarding email.'), 503

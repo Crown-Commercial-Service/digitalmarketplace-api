@@ -65,6 +65,7 @@ class Config:
     JIRA_FEATURES = False
 
     ROLLBAR_TOKEN = None
+    DM_TEAM_EMAIL = None
     DM_TEAM_SLACK_WEBHOOK = None
 
     LEGACY_ROLE_MAPPING = True
@@ -104,6 +105,7 @@ class Config:
     SECRET_KEY = None
     SHARED_EMAIL_KEY = None
     RESET_PASSWORD_SALT = 'ResetPasswordSalt'
+    SIGNUP_INVITATION_TOKEN_SALT = 'NewUserInviteEmail'
     BUYER_CREATION_TOKEN_SALT = 'BuyerCreation'
     SUPPLIER_INVITE_TOKEN_SALT = 'SupplierInviteEmail'
 

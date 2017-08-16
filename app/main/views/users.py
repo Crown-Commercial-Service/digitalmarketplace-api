@@ -2,14 +2,13 @@ from datetime import datetime
 from dmapiclient.audit import AuditTypes
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, DataError
-from flask import jsonify, abort, request, current_app, Response, redirect, render_template
-import json
+from flask import jsonify, abort, request, current_app
 
 from app import db, encryption
 from app.main import main
 from app.models import (
     AuditEvent, Contact, DraftService, Framework, Supplier, SupplierContact, SupplierFramework, SupplierUserInviteLog,
-    User, Application, Brief
+    User, Application
 )
 from app.utils import (
     get_json_from_request, get_positive_int_or_400, get_valid_page_or_1, json_has_required_keys, json_has_matching_id,
@@ -17,15 +16,11 @@ from app.utils import (
 )
 from app.validation import validate_user_json_or_400, validate_user_auth_json_or_400
 
-from collections import defaultdict
 from app.emails.users import (
     send_existing_seller_notification, send_existing_application_notification,
-    send_account_activation_email
 )
 
 from dmutils.logging import notify_team
-from dmutils.email import InvalidToken, EmailError
-from react.render import render_component
 
 
 @main.route('/users/auth', methods=['POST'])
