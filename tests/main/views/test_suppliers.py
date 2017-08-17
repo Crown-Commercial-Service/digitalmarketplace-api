@@ -463,7 +463,6 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
                 '/suppliers',
                 data=json.dumps({'suppliers': self.supplier}),
                 content_type='application/json')
-
             assert response.status_code == 201
             self.supplier_id = json.loads(response.get_data())['suppliers']['id']
 
@@ -527,12 +526,19 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
     def test_update_all_fields(self):
         response = self.update_request({
-            'name': "New Name",
-            'description': "New Description",
-            'companiesHouseNumber': "AA123456",
-            'dunsNumber': "010101",
-            'eSourcingId': "010101",
-            'clients': ["Client1", "Client2"]
+            "name": "New Name",
+            "description": "New Description",
+            "companiesHouseNumber": "AA123456",
+            "dunsNumber": "010101",
+            "eSourcingId": "010101",
+            "clients": ["Client1", "Client2"],
+            "otherCompanyRegistrationNumber": "A11",
+            "registeredName": "New Name Inc.",
+            "registrationCountry": "Guatamala",
+            "registrationDate": "1969-07-20",
+            "vatNumber": "12312312",
+            "organisationSize": "micro",
+            "tradingStatus": "Sole trader",
         })
 
         assert response.status_code == 200
@@ -548,6 +554,13 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert supplier.companies_house_number == "AA123456"
         assert supplier.esourcing_id == "010101"
         assert supplier.clients == ["Client1", "Client2"]
+        assert supplier.other_company_registration_number == "A11"
+        assert supplier.registered_name == "New Name Inc."
+        assert supplier.registration_country == "Guatamala"
+        assert supplier.registration_date == datetime(1969, 7, 20, 0, 0)
+        assert supplier.vat_number == "12312312"
+        assert supplier.organisation_size == "micro"
+        assert supplier.trading_status == "Sole trader"
 
     def test_supplier_json_id_does_not_match_original_id(self):
         response = self.update_request({
@@ -595,6 +608,16 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         })
 
         assert response.status_code == 400
+
+    def test_update_with_bad_company_number(self):
+        response = self.update_request({"companiesHouseNumber": "ABCDEFGH"})
+        assert response.status_code == 400
+        assert "Invalid companies house number" in response.get_data(as_text=True)
+
+    def test_update_with_bad_company_size(self):
+        response = self.update_request({"organisationSize": "tiny"})
+        assert response.status_code == 400
+        assert "Invalid organisation size" in response.get_data(as_text=True)
 
 
 class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
