@@ -286,27 +286,25 @@ class Supplier(db.Model):
 
     # NOTE other tables tend to make foreign key references to `supplier_id` instead of this
     id = db.Column(db.Integer, primary_key=True)
-
     supplier_id = db.Column(db.BigInteger, Sequence('suppliers_supplier_id_seq'), index=True, unique=True,
                             nullable=False)
-
     name = db.Column(db.String(255), nullable=False)
-
-    description = db.Column(db.String, index=False,
-                            unique=False, nullable=True)
-
+    description = db.Column(db.String, index=False, unique=False, nullable=True)
     contact_information = db.relationship(ContactInformation,
                                           backref='supplier',
                                           lazy='joined',
                                           innerjoin=False)
-
     duns_number = db.Column(db.String, index=True, unique=True, nullable=True)
-
     esourcing_id = db.Column(db.String, index=False, unique=False, nullable=True)
-
     companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
-
     clients = db.Column(JSON, default=list, nullable=False)
+    registered_name = db.Column(db.String, index=False, unique=False, nullable=True)
+    registration_country = db.Column(db.String, index=False, unique=False, nullable=True)
+    other_company_registration_number = db.Column(db.String, index=False, unique=False, nullable=True)
+    registration_date = db.Column(db.DateTime, index=False, unique=False, nullable=True)
+    vat_number = db.Column(db.String, index=False, unique=False, nullable=True)
+    organisation_size = db.Column(db.String, index=False, unique=False, nullable=True)
+    trading_status = db.Column(db.String, index=False, unique=False, nullable=True)
 
     # Drop this method once the supplier front end is using SupplierFramework counts
     def get_service_counts(self):
