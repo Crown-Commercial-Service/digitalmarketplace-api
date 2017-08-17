@@ -38,12 +38,33 @@
     },
     "name": {
       "type": "string"
+    },
+    "organisationSize": {
+      "type": "string"
+    },
+    "otherCompanyRegistrationNumber": {
+      "type": "string"
+    },
+    "registeredName": {
+      "type": "string"
+    },
+    "registrationCountry": {
+      "type": "string"
+    },
+    "registrationDate": {
+      "type": "string"
+    },
+    "tradingStatus": {
+      "type": "string"
+    },
+    "vatNumber": {
+      "type": "string"
     }
   },
   "required": [
     "id",
     "name"
   ],
-  "title": "G6 Supplier Schema",
+  "title": "Schema to validate updates to supplier data",
   "type": "object"
 }

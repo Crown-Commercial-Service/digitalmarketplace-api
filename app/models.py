@@ -25,7 +25,7 @@ from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
 
-from dmutils.formats import DATETIME_FORMAT
+from dmutils.formats import DATETIME_FORMAT, DATE_FORMAT
 from dmutils.dates import get_publishing_dates
 
 from . import db
@@ -284,6 +284,11 @@ class ContactInformation(db.Model):
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
 
+    ORGANISATION_SIZES = (None, 'micro', 'small', 'medium', 'large')
+
+    # Companies House numbers consist of 8 numbers, or 2 letters followed by 6 numbers
+    COMPANIES_HOUSE_NUMBER_REGEX = re.compile('^([0-9]{2}|[A-Za-z]{2})[0-9]{6}$')
+
     # NOTE other tables tend to make foreign key references to `supplier_id` instead of this
     id = db.Column(db.Integer, primary_key=True)
     supplier_id = db.Column(db.BigInteger, Sequence('suppliers_supplier_id_seq'), index=True, unique=True,
@@ -305,6 +310,20 @@ class Supplier(db.Model):
     vat_number = db.Column(db.String, index=False, unique=False, nullable=True)
     organisation_size = db.Column(db.String, index=False, unique=False, nullable=True)
     trading_status = db.Column(db.String, index=False, unique=False, nullable=True)
+
+    @validates('organisation_size')
+    def validates_org_size(self, key, value):
+        if value not in self.ORGANISATION_SIZES:
+            raise ValidationError("Invalid organisation size '{}'".format(value))
+
+        return value
+
+    @validates('companies_house_number')
+    def validates_companies_house_number(self, key, value):
+        if not self.COMPANIES_HOUSE_NUMBER_REGEX.match(value):
+            raise ValidationError("Invalid companies house number '{}'".format(value))
+
+        return value
 
     # Drop this method once the supplier front end is using SupplierFramework counts
     def get_service_counts(self):
@@ -341,7 +360,14 @@ class Supplier(db.Model):
             'companiesHouseNumber': self.companies_house_number,
             'contactInformation': contact_information_list,
             'links': links,
-            'clients': self.clients
+            'clients': self.clients,
+            'registeredName': self.registered_name,
+            'registrationCountry': self.registration_country,
+            'otherCompanyRegistrationNumber': self.other_company_registration_number,
+            'registrationDate': self.registration_date.strftime(DATE_FORMAT) if self.registration_date else None,
+            'vatNumber': self.vat_number,
+            'organisationSize': self.organisation_size,
+            'tradingStatus': self.trading_status,
         }
 
         serialized.update(data or {})
@@ -355,6 +381,16 @@ class Supplier(db.Model):
         self.esourcing_id = data.get('eSourcingId')
         self.clients = data.get('clients')
         self.companies_house_number = data.get('companiesHouseNumber')
+        self.registered_name = data.get('registeredName')
+        self.registration_country = data.get('registrationCountry')
+        self.other_company_registration_number = data.get('otherCompanyRegistrationNumber')
+        self.vat_number = data.get('vatNumber')
+        self.organisation_size = data.get('organisationSize')
+        self.trading_status = data.get('tradingStatus')
+
+        if 'registrationDate' in data:
+            self.registration_date = datetime.strptime(data.get('registrationDate'), DATE_FORMAT)
+
         return self
 
 
