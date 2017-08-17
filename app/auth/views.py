@@ -203,17 +203,8 @@ def submit_create_account():
 
         return jsonify(user)
 
-    except ValueError as error:
-        return jsonify(message=error.message), 400
-
-    except DataError as error:
-        return jsonify(message=error.message), 400
-
-    except InvalidRequestError as error:
-        return jsonify(message=error.message), 400
-
     except IntegrityError as error:
         return jsonify(message=error.message), 409
 
-    except HTTPError as error:
+    except Exception as error:
         return jsonify(message=error.message), 400
