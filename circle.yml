@@ -39,10 +39,12 @@ deployment:
   development:
     branch: master
     commands:
-      - python ./db_tasks.py do_migration $DB_CONNECTION_INFO_STAGING
-      - cf login -a https://api.system.staging.digital.gov.au -o dto -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
-      - cf target -o dto -s digital-marketplace
+      - python ./db_tasks.py test_migration $CIRCLE_BUILD_NUM $CF_URL_STAGING $CF_EXPORT_URL_STAGING $CF_USER_STAGING $CF_PASSWORD_STAGING $CF_SERVICE_BINDING_STAGING
+      - cf login -a https://api.system.z.cld.gov.au -o dto -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
+      - cf target -o dta -s marketplace
       - cf push -f manifest.yml
+      - cf install-plugin -f https://github.com/govau/cf-run-and-wait/releases/download/0.1/run-and-wait.linux64
+      - cf run-and-wait dm-dev-api-blue "python ./db_tasks.py do_migration $CIRCLE_BUILD_NUM"
 
   production:
     tag: /release-.*/
