@@ -603,9 +603,9 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     'status': 'submitted',
                     'foo': 'bar',
                     'links': {
-                        'self': (('.get_brief_response',), {'brief_response_id': brief_response.id}),
-                        'brief': (('.get_brief',), {'brief_id': self.brief.id}),
-                        'supplier': (('.get_supplier',), {'supplier_id': 0}),
+                        'self': (('main.get_brief_response',), {'brief_response_id': brief_response.id}),
+                        'brief': (('main.get_brief',), {'brief_id': self.brief.id}),
+                        'supplier': (('main.get_supplier',), {'supplier_id': 0}),
                     }
                 }
 
@@ -636,9 +636,9 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     'status': 'draft',
                     'foo': 'bar',
                     'links': {
-                        'self': (('.get_brief_response',), {'brief_response_id': brief_response.id}),
-                        'brief': (('.get_brief',), {'brief_id': self.brief.id}),
-                        'supplier': (('.get_supplier',), {'supplier_id': 0}),
+                        'self': (('main.get_brief_response',), {'brief_response_id': brief_response.id}),
+                        'brief': (('main.get_brief',), {'brief_id': self.brief.id}),
+                        'supplier': (('main.get_supplier',), {'supplier_id': 0}),
                     }
                 }
 

@@ -255,7 +255,7 @@ class ContactInformation(db.Model):
         return c
 
     def get_link(self):
-        return url_for(".update_contact_information",
+        return url_for("main.update_contact_information",
                        supplier_id=self.supplier_id,
                        contact_id=self.id)
 
@@ -338,7 +338,7 @@ class Supplier(db.Model):
         return dict(services)
 
     def get_link(self):
-        return url_for(".get_supplier", supplier_id=self.supplier_id)
+        return url_for("main.get_supplier", supplier_id=self.supplier_id)
 
     def serialize(self, data=None):
         links = link(
@@ -803,7 +803,7 @@ class User(db.Model):
         ).first()
 
     def get_link(self):
-        return url_for('.get_user_by_id', user_id=self.id)
+        return url_for('main.get_user_by_id', user_id=self.id)
 
     def serialize(self):
         user = {
@@ -1003,7 +1003,7 @@ class Service(db.Model, ServiceTableMixin):
             return self.filter(Service.data[k].astext.contains(u'"{}"'.format(v)))  # Postgres 9.3: use string matching
 
     def get_link(self):
-        return url_for(".get_service", service_id=self.service_id)
+        return url_for("main.get_service", service_id=self.service_id)
 
 
 class ArchivedService(db.Model, ServiceTableMixin):
@@ -1032,7 +1032,7 @@ class ArchivedService(db.Model, ServiceTableMixin):
     def link_object(service_id):
         if service_id is None:
             return None
-        return url_for(".get_archived_service",
+        return url_for("main.get_archived_service",
                        archived_service_id=service_id)
 
     def get_link(self):
@@ -1092,14 +1092,14 @@ class DraftService(db.Model, ServiceTableMixin):
         if self.service_id:
             data['serviceId'] = self.service_id
 
-        data['links']['publish'] = url_for('.publish_draft_service', draft_id=self.id)
-        data['links']['complete'] = url_for('.complete_draft_service', draft_id=self.id)
-        data['links']['copy'] = url_for('.copy_draft_service', draft_id=self.id)
+        data['links']['publish'] = url_for('main.publish_draft_service', draft_id=self.id)
+        data['links']['complete'] = url_for('main.complete_draft_service', draft_id=self.id)
+        data['links']['copy'] = url_for('main.copy_draft_service', draft_id=self.id)
 
         return data
 
     def get_link(self):
-        return url_for(".fetch_draft_service", draft_id=self.id)
+        return url_for("main.fetch_draft_service", draft_id=self.id)
 
 
 class AuditEvent(db.Model):
@@ -1157,7 +1157,7 @@ class AuditEvent(db.Model):
             'data': self.data,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'links': filter_null_value_fields({
-                "self": url_for(".list_audits"),
+                "self": url_for("main.list_audits"),
                 "oldArchivedService": ArchivedService.link_object(
                     self.data.get('oldArchivedServiceId')
                 ),
@@ -1418,8 +1418,8 @@ class Brief(db.Model):
             })
 
         data['links'] = {
-            'self': url_for('.get_brief', brief_id=self.id),
-            'framework': url_for('.get_framework', framework_slug=self.framework.slug),
+            'self': url_for('main.get_brief', brief_id=self.id),
+            'framework': url_for('main.get_framework', framework_slug=self.framework.slug),
         }
 
         if with_users:
@@ -1535,9 +1535,9 @@ class BriefResponse(db.Model):
             ),
             'status': self.status,
             'links': {
-                'self': url_for('.get_brief_response', brief_response_id=self.id),
-                'brief': url_for('.get_brief', brief_id=self.brief_id),
-                'supplier': url_for(".get_supplier", supplier_id=self.supplier_id),
+                'self': url_for('main.get_brief_response', brief_response_id=self.id),
+                'brief': url_for('main.get_brief', brief_id=self.brief_id),
+                'supplier': url_for("main.get_supplier", supplier_id=self.supplier_id),
             }
         })
 
