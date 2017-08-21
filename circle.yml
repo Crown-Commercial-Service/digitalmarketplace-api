@@ -49,7 +49,7 @@ deployment:
   production:
     tag: /release-.*/
     commands:
-      - python ./db_tasks.py do_migration $DB_CONNECTION_INFO_PROD
+      - python ./db_tasks_production.py do_migration $DB_CONNECTION_INFO_PROD
       - cf login -a https://api.system.platform.digital.gov.au -o dto -u $CF_USER_PROD -p $CF_PASSWORD_PROD
       - cf target -o dto -s digital-marketplace
       - cf push -f manifest.production.yml
