@@ -826,9 +826,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
             assert self.supplier.organisation_size == "medium"
             assert self.supplier.trading_status == "Sticky"
 
-    def test_serialization_of_supplier_with_all_details_added(self):
-        with self.app.app_context():
-            self._update_supplier_from_json_with_all_details()
+            # Check that serialization of a supplier with all details added looks as it should
             assert self.supplier.serialize() == {
                 'clients': ['Parcel Wrappers Ltd'],
                 'companiesHouseNumber': '98765432',
@@ -836,8 +834,8 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                     {
                         'contactName': u'Contact for Supplier 0',
                         'email': u'0@contact.com',
-                        'id': 13,
-                        'links': {'self': 'http://127.0.0.1:5000/suppliers/0/contact-information/13'},
+                        'id': 12,
+                        'links': {'self': 'http://127.0.0.1:5000/suppliers/0/contact-information/12'},
                         'postcode': u'SW1A 1AA',
                     }
                 ],
