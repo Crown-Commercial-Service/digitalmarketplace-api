@@ -851,8 +851,9 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 content_type='application/json')
 
             search_api_client.index.assert_called_with(
-                "1234567890123456",
-                json.loads(response.get_data())['services']
+                index='g-cloud-6',
+                service_id="1234567890123456",
+                service=json.loads(response.get_data())['services']
             )
 
     def test_should_not_index_on_service_on_expired_frameworks(
@@ -931,8 +932,9 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, FixtureMixin):
                 content_type='application/json')
 
             search_api_client.index.assert_called_with(
-                self.payload['id'],
-                mock.ANY
+                index='g-cloud-6',
+                service_id=self.payload['id'],
+                service=mock.ANY
             )
 
     @mock.patch('app.service_utils.db.session.commit')
@@ -1061,14 +1063,16 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, FixtureMixi
             # Check that search_api_client is doing the right thing
             if service_is_indexed:
                 search_api_client.index.assert_called_with(
-                    service.service_id,
-                    json.loads(response.get_data())['services']
+                    index=service.framework.slug,
+                    service_id=service.service_id,
+                    service=json.loads(response.get_data())['services']
                 )
             else:
                 assert not search_api_client.index.called
 
             if service_is_deleted:
-                search_api_client.delete.assert_called_with(service.service_id)
+                search_api_client.delete.assert_called_with(index=service.framework.slug,
+                                                            service_id=service.service_id)
             else:
                 assert not search_api_client.delete.called
 
