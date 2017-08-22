@@ -5,7 +5,8 @@ from sqlalchemy import desc
 from dmapiclient.audit import AuditTypes
 from .. import main
 from ... import db
-from ...models import User, DirectAwardProject, AuditEvent, DirectAwardSearch
+from ...models import User, AuditEvent
+from app.models.direct_award import Project, Search
 from ...utils import (
     get_json_from_request, get_int_or_400, json_has_required_keys, pagination_links,
     get_valid_page_or_1, validate_and_return_updater_request, validate_user_can_access_direct_award_project_or_403)
@@ -19,8 +20,8 @@ def list_projects():
 
     page = get_valid_page_or_1()
 
-    projects = DirectAwardProject.query.filter(DirectAwardProject.users.any(id=user_id))
-    projects = projects.order_by(desc(DirectAwardProject.created_at), desc(DirectAwardProject.id))
+    projects = Project.query.filter(Project.users.any(id=user_id))
+    projects = projects.order_by(desc(Project.created_at), desc(Project.id))
 
     projects = projects.paginate(
         page=page,
@@ -55,7 +56,7 @@ def create_project():
     if user is None:
         abort(400, "User ID not supplied")
 
-    project = DirectAwardProject(name=project_json['name'], users=[user])
+    project = Project(name=project_json['name'], users=[user])
     db.session.add(project)
 
     try:
@@ -88,7 +89,7 @@ def get_project(project_id):
 
     validate_user_can_access_direct_award_project_or_403(user_id, project_id)
 
-    return jsonify(project=DirectAwardProject.query.get(project_id).serialize())
+    return jsonify(project=Project.query.get(project_id).serialize())
 
 
 @main.route('/direct-award/projects/<int:project_id>/searches', methods=['GET'])
@@ -101,8 +102,8 @@ def list_project_searches(project_id):
 
     page = get_valid_page_or_1()
 
-    searches = DirectAwardSearch.query.filter(DirectAwardSearch.project_id == project_id)\
-        .order_by(desc(DirectAwardSearch.created_at), desc(DirectAwardSearch.id))
+    searches = Search.query.filter(Search.project_id == project_id)\
+        .order_by(desc(Search.created_at), desc(Search.id))
 
     searches = searches.paginate(
         page=page,
@@ -142,10 +143,10 @@ def create_project_search(project_id):
 
     validate_user_can_access_direct_award_project_or_403(user.id, project_id)
 
-    db.session.query(DirectAwardSearch).filter(DirectAwardSearch.project_id == project_id).\
-        update({DirectAwardSearch.active: False})
-    search = DirectAwardSearch(created_by=user.id, project_id=project_id,
-                               search_url=search_json['search_url'], active=True)
+    db.session.query(Search).filter(Search.project_id == project_id).\
+        update({Search.active: False})
+    search = Search(created_by=user.id, project_id=project_id,
+                    search_url=search_json['search_url'], active=True)
 
     db.session.add(search)
 
@@ -178,9 +179,9 @@ def get_project_search(project_id, search_id):
     if user_id is None:
         abort(400, "User ID not supplied")
 
-    search = DirectAwardSearch.query.filter(
-        DirectAwardSearch.id == search_id,
-        DirectAwardSearch.project_id == project_id
+    search = Search.query.filter(
+        Search.id == search_id,
+        Search.project_id == project_id
     ).first_or_404()
 
     validate_user_can_access_direct_award_project_or_403(user_id, project_id)

@@ -157,10 +157,10 @@ def get_request_page_questions():
 
 
 def validate_user_can_access_direct_award_project_or_403(user_id, project_id):
-    from .models import DirectAwardProject
+    from app.models.direct_award import Project
 
-    project = DirectAwardProject.query.filter(
-        DirectAwardProject.id == project_id
+    project = Project.query.filter(
+        Project.id == project_id
     ).first_or_404()
 
     if user_id not in [user.id for user in project.users]:
