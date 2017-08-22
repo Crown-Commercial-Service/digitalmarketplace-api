@@ -144,7 +144,7 @@ def validate_invite_token(token):
         ), 400
 
 
-@auth.route('/signup/createuser', methods=['POST'])
+@auth.route('/createuser', methods=['POST'])
 def submit_create_account():
     json_payload = get_json_from_request()
     required_keys = ['name', 'email_address', 'password', 'user_type']

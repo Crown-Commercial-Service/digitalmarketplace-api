@@ -115,6 +115,7 @@ class Config:
 
     FRONTEND_ADDRESS = 'https://dm-dev.apps.staging.digital.gov.au'
     ADMIN_ADDRESS = 'https://dm-dev-admin.apps.staging.digital.gov.au'
+    REACT_APP_ROOT = '/2'
 
     SEND_EMAILS = True
     CSRF_ENABLED = False

@@ -91,8 +91,9 @@ def generate_user_creation_token(name, email_address, user_type, **unused):
 
 def send_account_activation_email(name, email_address, user_type):
     token = generate_user_creation_token(name=name, email_address=email_address, user_type=user_type)
-    url = '{}/signup/createuser/{}'.format(
+    url = '{}{}/createuser/{}'.format(
         current_app.config['FRONTEND_ADDRESS'],
+        current_app.config['REACT_APP_ROOT'],
         quote(token)
     )
 
