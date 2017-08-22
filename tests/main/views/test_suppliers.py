@@ -668,6 +668,23 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
 
             assert contact.city == "New City"
 
+    def test_simple_field_update_for_supplier_with_no_companies_house_number(self):
+        with self.app.app_context():
+            supplier_db = Supplier.query.first()  # Only one supplier is set up for these tests
+            supplier_db.companies_house_number = None
+
+        response = self.update_request({
+            'city': "New City"
+        })
+        assert response.status_code == 200
+
+        with self.app.app_context():
+            contact = ContactInformation.query.filter(
+                ContactInformation.id == self.contact_id
+            ).first()
+
+            assert contact.city == "New City"
+
     def test_update_creates_audit_event(self):
         self.update_request({
             'city': "New City"

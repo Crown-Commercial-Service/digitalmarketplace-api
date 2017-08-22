@@ -320,7 +320,7 @@ class Supplier(db.Model):
 
     @validates('companies_house_number')
     def validates_companies_house_number(self, key, value):
-        if not self.COMPANIES_HOUSE_NUMBER_REGEX.match(value):
+        if value and not self.COMPANIES_HOUSE_NUMBER_REGEX.match(value):
             raise ValidationError("Invalid companies house number '{}'".format(value))
 
         return value
