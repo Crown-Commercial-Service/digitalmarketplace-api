@@ -434,8 +434,8 @@ class TestGetBrief(FrameworkSetupAndTeardown):
                 'createdAt': mock.ANY,
                 'updatedAt': mock.ANY,
                 'links': {
-                    'framework': 'http://localhost/frameworks/digital-outcomes-and-specialists',
-                    'self': 'http://localhost/briefs/1',
+                    'framework': 'http://127.0.0.1:5000/frameworks/digital-outcomes-and-specialists',
+                    'self': 'http://127.0.0.1:5000/briefs/1',
                 },
                 'users': [
                     {
@@ -687,8 +687,8 @@ class TestListBrief(FrameworkSetupAndTeardown):
 
         assert len(data['briefs']) == 5
         assert data['meta']['total'] == 7
-        assert data['links']['next'] == 'http://localhost/briefs?page=2'
-        assert data['links']['last'] == 'http://localhost/briefs?page=2'
+        assert data['links']['next'] == 'http://127.0.0.1:5000/briefs?page=2'
+        assert data['links']['last'] == 'http://127.0.0.1:5000/briefs?page=2'
 
     def test_list_briefs_pagination_page_two(self):
         self.setup_dummy_briefs(7)
@@ -700,7 +700,7 @@ class TestListBrief(FrameworkSetupAndTeardown):
 
         assert len(data['briefs']) == 2
         assert data['meta']['total'] == 7
-        assert data['links']['prev'] == 'http://localhost/briefs?page=1'
+        assert data['links']['prev'] == 'http://127.0.0.1:5000/briefs?page=1'
 
     def test_list_briefs_no_pagination_if_user_id_supplied(self):
         self.setup_dummy_briefs(7)

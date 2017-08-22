@@ -40,6 +40,7 @@ class Config:
 
 
 class Test(Config):
+    SERVER_NAME = '127.0.0.1:5000'
     DM_SEARCH_API_AUTH_TOKEN = 'test'
     DM_SEARCH_API_URL = 'http://localhost'
     DEBUG = True

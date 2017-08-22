@@ -42,6 +42,6 @@
     "dunsNumber",
     "name"
   ],
-  "title": "Supplier Schema",
+  "title": "Schema to validate new supplier sign-up",
   "type": "object"
 }

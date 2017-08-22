@@ -25,7 +25,7 @@ from sqlalchemy.types import String
 from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
 
-from dmutils.formats import DATETIME_FORMAT
+from dmutils.formats import DATETIME_FORMAT, DATE_FORMAT
 from dmutils.dates import get_publishing_dates
 
 from . import db
@@ -255,7 +255,7 @@ class ContactInformation(db.Model):
         return c
 
     def get_link(self):
-        return url_for(".update_contact_information",
+        return url_for("main.update_contact_information",
                        supplier_id=self.supplier_id,
                        contact_id=self.id)
 
@@ -284,29 +284,46 @@ class ContactInformation(db.Model):
 class Supplier(db.Model):
     __tablename__ = 'suppliers'
 
+    ORGANISATION_SIZES = (None, 'micro', 'small', 'medium', 'large')
+
+    # Companies House numbers consist of 8 numbers, or 2 letters followed by 6 numbers
+    COMPANIES_HOUSE_NUMBER_REGEX = re.compile('^([0-9]{2}|[A-Za-z]{2})[0-9]{6}$')
+
     # NOTE other tables tend to make foreign key references to `supplier_id` instead of this
     id = db.Column(db.Integer, primary_key=True)
-
     supplier_id = db.Column(db.BigInteger, Sequence('suppliers_supplier_id_seq'), index=True, unique=True,
                             nullable=False)
-
     name = db.Column(db.String(255), nullable=False)
-
-    description = db.Column(db.String, index=False,
-                            unique=False, nullable=True)
-
+    description = db.Column(db.String, index=False, unique=False, nullable=True)
     contact_information = db.relationship(ContactInformation,
                                           backref='supplier',
                                           lazy='joined',
                                           innerjoin=False)
-
     duns_number = db.Column(db.String, index=True, unique=True, nullable=True)
-
     esourcing_id = db.Column(db.String, index=False, unique=False, nullable=True)
-
     companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
-
     clients = db.Column(JSON, default=list, nullable=False)
+    registered_name = db.Column(db.String, index=False, unique=False, nullable=True)
+    registration_country = db.Column(db.String, index=False, unique=False, nullable=True)
+    other_company_registration_number = db.Column(db.String, index=False, unique=False, nullable=True)
+    registration_date = db.Column(db.DateTime, index=False, unique=False, nullable=True)
+    vat_number = db.Column(db.String, index=False, unique=False, nullable=True)
+    organisation_size = db.Column(db.String, index=False, unique=False, nullable=True)
+    trading_status = db.Column(db.String, index=False, unique=False, nullable=True)
+
+    @validates('organisation_size')
+    def validates_org_size(self, key, value):
+        if value not in self.ORGANISATION_SIZES:
+            raise ValidationError("Invalid organisation size '{}'".format(value))
+
+        return value
+
+    @validates('companies_house_number')
+    def validates_companies_house_number(self, key, value):
+        if value and not self.COMPANIES_HOUSE_NUMBER_REGEX.match(value):
+            raise ValidationError("Invalid companies house number '{}'".format(value))
+
+        return value
 
     # Drop this method once the supplier front end is using SupplierFramework counts
     def get_service_counts(self):
@@ -321,7 +338,7 @@ class Supplier(db.Model):
         return dict(services)
 
     def get_link(self):
-        return url_for(".get_supplier", supplier_id=self.supplier_id)
+        return url_for("main.get_supplier", supplier_id=self.supplier_id)
 
     def serialize(self, data=None):
         links = link(
@@ -343,7 +360,14 @@ class Supplier(db.Model):
             'companiesHouseNumber': self.companies_house_number,
             'contactInformation': contact_information_list,
             'links': links,
-            'clients': self.clients
+            'clients': self.clients,
+            'registeredName': self.registered_name,
+            'registrationCountry': self.registration_country,
+            'otherCompanyRegistrationNumber': self.other_company_registration_number,
+            'registrationDate': self.registration_date.strftime(DATE_FORMAT) if self.registration_date else None,
+            'vatNumber': self.vat_number,
+            'organisationSize': self.organisation_size,
+            'tradingStatus': self.trading_status,
         }
 
         serialized.update(data or {})
@@ -357,6 +381,16 @@ class Supplier(db.Model):
         self.esourcing_id = data.get('eSourcingId')
         self.clients = data.get('clients')
         self.companies_house_number = data.get('companiesHouseNumber')
+        self.registered_name = data.get('registeredName')
+        self.registration_country = data.get('registrationCountry')
+        self.other_company_registration_number = data.get('otherCompanyRegistrationNumber')
+        self.vat_number = data.get('vatNumber')
+        self.organisation_size = data.get('organisationSize')
+        self.trading_status = data.get('tradingStatus')
+
+        if 'registrationDate' in data:
+            self.registration_date = datetime.strptime(data.get('registrationDate'), DATE_FORMAT)
+
         return self
 
 
@@ -769,7 +803,7 @@ class User(db.Model):
         ).first()
 
     def get_link(self):
-        return url_for('.get_user_by_id', user_id=self.id)
+        return url_for('main.get_user_by_id', user_id=self.id)
 
     def serialize(self):
         user = {
@@ -969,7 +1003,7 @@ class Service(db.Model, ServiceTableMixin):
             return self.filter(Service.data[k].astext.contains(u'"{}"'.format(v)))  # Postgres 9.3: use string matching
 
     def get_link(self):
-        return url_for(".get_service", service_id=self.service_id)
+        return url_for("main.get_service", service_id=self.service_id)
 
 
 class ArchivedService(db.Model, ServiceTableMixin):
@@ -998,7 +1032,7 @@ class ArchivedService(db.Model, ServiceTableMixin):
     def link_object(service_id):
         if service_id is None:
             return None
-        return url_for(".get_archived_service",
+        return url_for("main.get_archived_service",
                        archived_service_id=service_id)
 
     def get_link(self):
@@ -1058,14 +1092,14 @@ class DraftService(db.Model, ServiceTableMixin):
         if self.service_id:
             data['serviceId'] = self.service_id
 
-        data['links']['publish'] = url_for('.publish_draft_service', draft_id=self.id)
-        data['links']['complete'] = url_for('.complete_draft_service', draft_id=self.id)
-        data['links']['copy'] = url_for('.copy_draft_service', draft_id=self.id)
+        data['links']['publish'] = url_for('main.publish_draft_service', draft_id=self.id)
+        data['links']['complete'] = url_for('main.complete_draft_service', draft_id=self.id)
+        data['links']['copy'] = url_for('main.copy_draft_service', draft_id=self.id)
 
         return data
 
     def get_link(self):
-        return url_for(".fetch_draft_service", draft_id=self.id)
+        return url_for("main.fetch_draft_service", draft_id=self.id)
 
 
 class AuditEvent(db.Model):
@@ -1123,7 +1157,7 @@ class AuditEvent(db.Model):
             'data': self.data,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'links': filter_null_value_fields({
-                "self": url_for(".list_audits"),
+                "self": url_for("main.list_audits"),
                 "oldArchivedService": ArchivedService.link_object(
                     self.data.get('oldArchivedServiceId')
                 ),
@@ -1384,8 +1418,8 @@ class Brief(db.Model):
             })
 
         data['links'] = {
-            'self': url_for('.get_brief', brief_id=self.id),
-            'framework': url_for('.get_framework', framework_slug=self.framework.slug),
+            'self': url_for('main.get_brief', brief_id=self.id),
+            'framework': url_for('main.get_framework', framework_slug=self.framework.slug),
         }
 
         if with_users:
@@ -1501,9 +1535,9 @@ class BriefResponse(db.Model):
             ),
             'status': self.status,
             'links': {
-                'self': url_for('.get_brief_response', brief_response_id=self.id),
-                'brief': url_for('.get_brief', brief_id=self.brief_id),
-                'supplier': url_for(".get_supplier", supplier_id=self.supplier_id),
+                'self': url_for('main.get_brief_response', brief_response_id=self.id),
+                'brief': url_for('main.get_brief', brief_id=self.brief_id),
+                'supplier': url_for("main.get_supplier", supplier_id=self.supplier_id),
             }
         })
 

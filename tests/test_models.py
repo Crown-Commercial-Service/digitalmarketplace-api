@@ -603,9 +603,9 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     'status': 'submitted',
                     'foo': 'bar',
                     'links': {
-                        'self': (('.get_brief_response',), {'brief_response_id': brief_response.id}),
-                        'brief': (('.get_brief',), {'brief_id': self.brief.id}),
-                        'supplier': (('.get_supplier',), {'supplier_id': 0}),
+                        'self': (('main.get_brief_response',), {'brief_response_id': brief_response.id}),
+                        'brief': (('main.get_brief',), {'brief_id': self.brief.id}),
+                        'supplier': (('main.get_supplier',), {'supplier_id': 0}),
                     }
                 }
 
@@ -636,9 +636,9 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     'status': 'draft',
                     'foo': 'bar',
                     'links': {
-                        'self': (('.get_brief_response',), {'brief_response_id': brief_response.id}),
-                        'brief': (('.get_brief',), {'brief_id': self.brief.id}),
-                        'supplier': (('.get_supplier',), {'supplier_id': 0}),
+                        'self': (('main.get_brief_response',), {'brief_response_id': brief_response.id}),
+                        'brief': (('main.get_brief',), {'brief_id': self.brief.id}),
+                        'supplier': (('main.get_supplier',), {'supplier_id': 0}),
                     }
                 }
 
@@ -753,6 +753,106 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
         with self.app.app_context():
             question = BriefClarificationQuestion(brief=self.brief, question="Why?", answer=answer)
             question.validate()
+
+
+class TestSuppliers(BaseApplicationTest, FixtureMixin):
+    def setup(self):
+        super(TestSuppliers, self).setup()
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            self.supplier = Supplier.query.filter(Supplier.supplier_id == 0).first()
+
+    def _update_supplier_from_json_with_all_details(self):
+        update_data = {
+            "id": 90006000,
+            "supplierId": "DO_NOT_UPDATE_ME",
+            "name": "String and Sticky Tape Inc.",
+            "clients": ["Parcel Wrappers Ltd"],
+            "dunsNumber": "01010101",
+            "eSourcingId": "020202",
+            "description": "All your parcel wrapping needs catered for",
+            "companiesHouseNumber": "98765432",
+            "registeredName": "Tape and String Inc.",
+            "registrationCountry": "Wales",
+            "otherCompanyRegistrationNumber": "",
+            "registrationDate": "1973-08-10",
+            "vatNumber": "321321321",
+            "organisationSize": "medium",
+            "tradingStatus": "Sticky",
+        }
+        self.supplier.update_from_json(update_data)
+
+    def test_serialization_of_new_supplier(self):
+        assert self.supplier.serialize() == {
+            'clients': [],
+            'contactInformation': [
+                {
+                    'contactName': u'Contact for Supplier 0',
+                    'email': u'0@contact.com',
+                    'id': 11,
+                    'links': {'self': 'http://127.0.0.1:5000/suppliers/0/contact-information/11'},
+                    'postcode': u'SW1A 1AA',
+                }
+            ],
+            'description': u'',
+            'id': 0,
+            'links': {'self': 'http://127.0.0.1:5000/suppliers/0'},
+            'name': u'Supplier 0',
+        }
+
+    def test_update_from_json(self):
+        with self.app.app_context():
+            initial_id = self.supplier.id
+            initial_sid = self.supplier.supplier_id
+
+            self._update_supplier_from_json_with_all_details()
+
+            # Check IDs can't be updated
+            assert self.supplier.id == initial_id
+            assert self.supplier.supplier_id == initial_sid
+
+            # Check everything else has been updated to the correct value
+            assert self.supplier.name == "String and Sticky Tape Inc."
+            assert self.supplier.clients == ["Parcel Wrappers Ltd"]
+            assert self.supplier.duns_number == "01010101"
+            assert self.supplier.esourcing_id == "020202"
+            assert self.supplier.description == "All your parcel wrapping needs catered for"
+            assert self.supplier.companies_house_number == "98765432"
+            assert self.supplier.registered_name == "Tape and String Inc."
+            assert self.supplier.registration_country == "Wales"
+            assert self.supplier.other_company_registration_number == ""
+            assert self.supplier.registration_date == datetime(1973, 8, 10, 0, 0)
+            assert self.supplier.vat_number == "321321321"
+            assert self.supplier.organisation_size == "medium"
+            assert self.supplier.trading_status == "Sticky"
+
+            # Check that serialization of a supplier with all details added looks as it should
+            assert self.supplier.serialize() == {
+                'clients': ['Parcel Wrappers Ltd'],
+                'companiesHouseNumber': '98765432',
+                'contactInformation': [
+                    {
+                        'contactName': u'Contact for Supplier 0',
+                        'email': u'0@contact.com',
+                        'id': 12,
+                        'links': {'self': 'http://127.0.0.1:5000/suppliers/0/contact-information/12'},
+                        'postcode': u'SW1A 1AA',
+                    }
+                ],
+                'description': 'All your parcel wrapping needs catered for',
+                'dunsNumber': '01010101',
+                'eSourcingId': '020202',
+                'id': 0,
+                'links': {'self': 'http://127.0.0.1:5000/suppliers/0'},
+                'name': 'String and Sticky Tape Inc.',
+                'organisationSize': 'medium',
+                'otherCompanyRegistrationNumber': '',
+                'registeredName': 'Tape and String Inc.',
+                'registrationCountry': 'Wales',
+                'registrationDate': '1973-08-10',
+                'tradingStatus': 'Sticky',
+                'vatNumber': '321321321',
+            }
 
 
 class TestServices(BaseApplicationTest, FixtureMixin):
