@@ -135,7 +135,9 @@ def index_service(service):
         service.status == 'published'
     ):
         try:
-            search_api_client.index(service.service_id, service.serialize())
+            search_api_client.index(index=service.framework.slug,
+                                    service_id=service.service_id,
+                                    service=service.serialize())
         except dmapiclient.HTTPError as e:
             current_app.logger.warning(
                 'Failed to add {} to search index: {}'.format(
@@ -144,7 +146,8 @@ def index_service(service):
 
 def delete_service_from_index(service):
     try:
-        search_api_client.delete(service.service_id)
+        search_api_client.delete(index=service.framework.slug,
+                                 service_id=service.service_id)
     except dmapiclient.HTTPError as e:
         current_app.logger.warning(
             'Failed to remove {} to search index: {}'.format(
