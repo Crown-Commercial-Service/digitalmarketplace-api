@@ -767,8 +767,8 @@ def update_supplier_framework_details(code, framework_slug):
 def get_domain(domain_id):
     if domain_id.isdigit():
         domain_id = int(domain_id)
-    result = Domain.get_by_name_or_id(domain_id).serializable
-    return jsonify(domain=result)
+    result = Domain.get_by_name_or_id(domain_id)
+    return jsonify(domain={'id': result.id, 'name': result.name})
 
 
 @main.route('/domains', methods=['GET'])

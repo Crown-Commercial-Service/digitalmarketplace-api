@@ -731,7 +731,6 @@ class TestDomains(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert 'domain' in data
         assert 'name' in data['domain']
-        assert 'links' in data['domain']
 
     def test_get_domain_by_name(self):
         response = self.client.get('/domain/Emerging Technology')
@@ -739,7 +738,6 @@ class TestDomains(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert 'domain' in data
         assert 'name' in data['domain']
-        assert 'links' in data['domain']
 
     def test_get_domains(self):
         response = self.client.get('/domains')
