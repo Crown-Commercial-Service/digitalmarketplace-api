@@ -22,8 +22,8 @@ class Project(db.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "created_at": self.created_at.strftime(DATETIME_FORMAT),
-            "locked_at": self.locked_at.strftime(DATETIME_FORMAT) if self.locked_at is not None else None,
+            "createdAt": self.created_at.strftime(DATETIME_FORMAT),
+            "lockedAt": self.locked_at.strftime(DATETIME_FORMAT) if self.locked_at is not None else None,
             "active": self.active
         }
 
@@ -75,11 +75,11 @@ class Search(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "created_by": self.created_by,
-            "project_id": self.project_id,
-            "created_at": self.created_at.strftime(DATETIME_FORMAT),
-            "searched_at": self.searched_at.strftime(DATETIME_FORMAT) if self.searched_at is not None else None,
-            "search_url": self.search_url,
+            "createdBy": self.created_by,
+            "projectId": self.project_id,
+            "createdAt": self.created_at.strftime(DATETIME_FORMAT),
+            "searchedAt": self.searched_at.strftime(DATETIME_FORMAT) if self.searched_at is not None else None,
+            "searchUrl": self.search_url,
             "active": self.active
         }
 

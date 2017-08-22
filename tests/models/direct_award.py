@@ -34,7 +34,7 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
             db.session.commit()
 
             project_keys_set = set(project.serialize().keys())
-            assert {'id', 'name', 'created_at', 'locked_at', 'active'} <= project_keys_set
+            assert {'id', 'name', 'createdAt', 'lockedAt', 'active'} <= project_keys_set
 
     def test_create_new_project_creates_project_users(self):
         with self.app.app_context():
@@ -112,7 +112,7 @@ class TestSearches(BaseApplicationTest, FixtureMixin):
             search = Search.query.get(search_id)
 
         search_keys_set = set(search.serialize().keys())
-        assert {'id', 'created_at', 'searched_at', 'project_id', 'search_url', 'active'} <= search_keys_set
+        assert {'id', 'createdAt', 'searchedAt', 'projectId', 'searchUrl', 'active'} <= search_keys_set
 
     @pytest.mark.parametrize('update_kwargs',
                              (

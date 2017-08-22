@@ -154,14 +154,3 @@ def purge_nulls_from_data(data):
 def get_request_page_questions():
     json_payload = get_json_from_request()
     return json_payload.get('page_questions', [])
-
-
-def validate_user_can_access_direct_award_project_or_403(user_id, project_id):
-    from app.models.direct_award import Project
-
-    project = Project.query.filter(
-        Project.id == project_id
-    ).first_or_404()
-
-    if user_id not in [user.id for user in project.users]:
-        abort(403, 'User cannot access this project')
