@@ -8,6 +8,7 @@ import pytest
 
 from app import db
 from app.models import Framework, User, Lot, Brief, Supplier, ContactInformation, Service, BriefClarificationQuestion
+from app.models.direct_award import DirectAwardProject, DirectAwardProjectUser, DirectAwardSearch
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -34,6 +35,10 @@ COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
     'workplaceAddress': 'Aviation House',
     'requirementsLength': '2 weeks'
 }
+
+DIRECT_AWARD_PROJECT_NAME = 'My Direct Award Project'
+DIRECT_AWARD_FROZEN_TIME = '2017-01-01T00:00:00.000000Z'
+DIRECT_AWARD_SEARCH_URL = 'https://search-api.digitalmarketplace.service.gov.uk/g-cloud/services/search?q=hosting'
 
 
 def fixture_params(fixture_name, params):
@@ -259,6 +264,40 @@ class FixtureMixin(object):
             }
         })
         db.session.commit()
+
+    def create_direct_award_project(self, user_id, project_id=1, project_name=DIRECT_AWARD_PROJECT_NAME,
+                                    created_at=DIRECT_AWARD_FROZEN_TIME):
+        with self.app.app_context():
+            if DirectAwardProject.query.get(project_id):
+                return project_id
+
+            db.session.add(DirectAwardProject(
+                id=project_id,
+                name=project_name,
+                created_at=created_at
+            ))
+            db.session.flush()
+
+            db.session.add(DirectAwardProjectUser(
+                user_id=user_id,
+                project_id=project_id
+            ))
+            db.session.commit()
+
+            return project_id
+
+    def create_direct_award_project_search(self, created_by, project_id, search_url=DIRECT_AWARD_SEARCH_URL,
+                                           active=True, created_at=DIRECT_AWARD_FROZEN_TIME):
+        with self.app.app_context():
+            search = DirectAwardSearch(created_by=created_by,
+                                       project_id=project_id,
+                                       created_at=created_at,
+                                       search_url=search_url,
+                                       active=active)
+            db.session.add(search)
+            db.session.commit()
+
+            return search.id
 
 
 def load_example_listing(name):

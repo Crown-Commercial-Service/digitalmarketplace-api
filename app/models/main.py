@@ -1,15 +1,17 @@
+# TODO split this file into per-functional-area modules
+
 import random
 from datetime import datetime
-import re
 
+import re
+import sqlalchemy.dialects.postgresql
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
 from six import string_types, iteritems
-
+from sqlalchemy import Sequence
 from sqlalchemy import asc, desc
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import INTERVAL
-import sqlalchemy.dialects.postgresql
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates, backref, mapper
@@ -22,15 +24,13 @@ from sqlalchemy.sql.expression import (
     and_ as sql_and,
 )
 from sqlalchemy.types import String
-from sqlalchemy import Sequence
 from sqlalchemy_utils import generic_relationship
 
-from dmutils.formats import DATETIME_FORMAT, DATE_FORMAT
 from dmutils.dates import get_publishing_dates
-
-from . import db
-from .utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
-from .validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
+from dmutils.formats import DATETIME_FORMAT, DATE_FORMAT
+from .. import db
+from ..utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
+from ..validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
 
 
 class JSON(sqlalchemy.dialects.postgresql.JSON):

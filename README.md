@@ -112,6 +112,14 @@ make freeze-requirements
 
 `requirements.txt` should be commited alongside `requirements-app.txt` changes.
 
+## Creating a new database migration
+
+After editing `models.py` to add/edit/remove models for the database, you'll need to generate a new migration script.
+The easiest way to do this is to run `python application.py db migrate --rev-id <revision_id> -m '<description'>`. Our
+revision IDs increment by 10 each time; check the output of `python application.py db show` to find the current
+revision. Until you run the migration to update the database state, you can delete the generated revision and
+re-generate it as you need to.
+
 ## Using FeatureFlags
 
 To use feature flags, check out the documentation in (the README of)

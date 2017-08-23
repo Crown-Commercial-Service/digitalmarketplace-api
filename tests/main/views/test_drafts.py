@@ -981,7 +981,7 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         assert self.service_count() == 1
         assert self.draft_service_count() == 0
 
-    @mock.patch('app.models.generate_new_service_id')
+    @mock.patch('app.models.main.generate_new_service_id')
     def test_service_id_collisions_should_be_handled(self, generate_new_service_id):
         # Return the same ID a few times (cause collisions) and then return a different one.
         generate_new_service_id.side_effect = (

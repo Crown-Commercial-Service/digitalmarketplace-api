@@ -15,7 +15,6 @@ from app.models import (
     DraftService,
     FrameworkLot
 )
-
 from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
 
