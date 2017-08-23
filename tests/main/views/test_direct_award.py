@@ -9,7 +9,7 @@ from tests.bases import BaseApplicationTest
 
 from dmapiclient.audit import AuditTypes
 from app.models import DATETIME_FORMAT, AuditEvent, User
-from app.models.direct_award import ProjectUser, Search, Project
+from app.models.direct_award import DirectAwardProjectUser, DirectAwardSearch, DirectAwardProject
 from ...helpers import DIRECT_AWARD_SEARCH_URL, DIRECT_AWARD_PROJECT_NAME
 
 
@@ -48,11 +48,11 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         assert len(data['projects']) == 2
 
         with self.app.app_context():
-            projects = Project.query.filter(Project.users.any(User.id == self.user_id))
+            projects = DirectAwardProject.query.filter(DirectAwardProject.users.any(User.id == self.user_id))
 
             assert all([project.serialize() in data['projects'] for project in projects.all()])
             assert data['meta']['total'] == len(projects.all())
-            assert data['meta']['total'] < len(Project.query.all())
+            assert data['meta']['total'] < len(DirectAwardProject.query.all())
 
     @pytest.mark.parametrize('page_size, extra_projects',
                              ((1, 0),  # Page size == number of projects, shouldn't paginate
@@ -150,7 +150,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         assert len(data['projects']) == 1
 
         with self.app.app_context():
-            assert data['projects'][0] == Project.query.get(self.project_id).serialize()
+            assert data['projects'][0] == DirectAwardProject.query.get(self.project_id).serialize()
 
 
 class TestDirectAwardCreateProject(DirectAwardSetupAndTeardown):
@@ -199,14 +199,14 @@ class TestDirectAwardCreateProject(DirectAwardSetupAndTeardown):
         project_data = self._create_project_data()
 
         with self.app.app_context():
-            assert len(ProjectUser.query.all()) == 0
+            assert len(DirectAwardProjectUser.query.all()) == 0
 
         res = self.client.post('/direct-award/projects', data=json.dumps(project_data), content_type='application/json')
 
         assert res.status_code == 201
 
         with self.app.app_context():
-            assert len(ProjectUser.query.all()) == 1
+            assert len(DirectAwardProjectUser.query.all()) == 1
 
     def test_create_project_400s_with_invalid_user(self):
         project_data = self._create_project_data()
@@ -239,7 +239,7 @@ class TestDirectAwardGetProject(DirectAwardSetupAndTeardown):
         data = json.loads(res.get_data(as_text=True))
 
         with self.app.app_context():
-            assert data['project'] == Project.query.get(self.project_id).serialize()
+            assert data['project'] == DirectAwardProject.query.get(self.project_id).serialize()
 
 
 class TestDirectAwardListProjectSearches(DirectAwardSetupAndTeardown):
@@ -265,7 +265,7 @@ class TestDirectAwardListProjectSearches(DirectAwardSetupAndTeardown):
 
         with self.app.app_context():
             assert all([search['projectId'] == self.project_id for search in data['searches']])
-            assert data['meta']['total'] < len(Search.query.all())
+            assert data['meta']['total'] < len(DirectAwardSearch.query.all())
 
     def test_list_searches_returns_all_searches_for_project(self):
         self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id,
@@ -278,7 +278,7 @@ class TestDirectAwardListProjectSearches(DirectAwardSetupAndTeardown):
         assert len(data['searches']) == 2
 
         with self.app.app_context():
-            searches = Search.query.filter(Search.project_id == self.project_id)
+            searches = DirectAwardSearch.query.filter(DirectAwardSearch.project_id == self.project_id)
 
             assert all([search.serialize() in data['searches'] for search in searches.all()])
             assert data['meta']['total'] == len(searches.all())
@@ -383,7 +383,7 @@ class TestDirectAwardListProjectSearches(DirectAwardSetupAndTeardown):
         assert len(data['searches']) == 1
 
         with self.app.app_context():
-            assert data['searches'][0] == Search.query.get(self.search_id).serialize()
+            assert data['searches'][0] == DirectAwardSearch.query.get(self.search_id).serialize()
 
 
 class TestDirectAwardCreateProjectSearch(DirectAwardSetupAndTeardown):
@@ -494,4 +494,4 @@ class TestDirectAwardGetProjectSearch(DirectAwardSetupAndTeardown):
         data = json.loads(res.get_data(as_text=True))
 
         with self.app.app_context():
-            assert data['search'] == Search.query.get(self.search_id).serialize()
+            assert data['search'] == DirectAwardSearch.query.get(self.search_id).serialize()

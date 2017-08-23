@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.models import User, ValidationError
-from app.models.direct_award import Project, ProjectUser, Search
+from app.models.direct_award import DirectAwardProject, DirectAwardProjectUser, DirectAwardSearch
 from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin, DIRECT_AWARD_PROJECT_NAME, DIRECT_AWARD_SEARCH_URL
 
@@ -15,7 +15,7 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
         with self.app.app_context():
             self.setup_dummy_user(role='buyer')
 
-            project = Project(name=DIRECT_AWARD_PROJECT_NAME, users=User.query.all())
+            project = DirectAwardProject(name=DIRECT_AWARD_PROJECT_NAME, users=User.query.all())
             db.session.add(project)
             db.session.commit()
 
@@ -29,7 +29,7 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
         with self.app.app_context():
             self.setup_dummy_user(role='buyer')
 
-            project = Project(name=DIRECT_AWARD_PROJECT_NAME, users=User.query.all())
+            project = DirectAwardProject(name=DIRECT_AWARD_PROJECT_NAME, users=User.query.all())
             db.session.add(project)
             db.session.commit()
 
@@ -40,13 +40,13 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
         with self.app.app_context():
             self.setup_dummy_user(role='buyer')
 
-            assert len(ProjectUser.query.all()) == 0
+            assert len(DirectAwardProjectUser.query.all()) == 0
 
-            project = Project(name=DIRECT_AWARD_PROJECT_NAME, users=User.query.all())
+            project = DirectAwardProject(name=DIRECT_AWARD_PROJECT_NAME, users=User.query.all())
             db.session.add(project)
             db.session.commit()
 
-            assert len(ProjectUser.query.all()) == len(User.query.all())
+            assert len(DirectAwardProjectUser.query.all()) == len(User.query.all())
 
 
 class TestProjectUsers(BaseApplicationTest, FixtureMixin):
@@ -60,14 +60,14 @@ class TestProjectUsers(BaseApplicationTest, FixtureMixin):
     def test_project_user_fk_constraints(self, create_project, create_user, expect_error):
         with self.app.app_context():
             if create_project:
-                project = Project(id=1, name=DIRECT_AWARD_PROJECT_NAME, users=[])
+                project = DirectAwardProject(id=1, name=DIRECT_AWARD_PROJECT_NAME, users=[])
                 db.session.add(project)
                 db.session.commit()
 
             if create_user:
                 self.setup_dummy_user(role='buyer', id=2)
 
-            project_user = ProjectUser(project_id=1, user_id=2)
+            project_user = DirectAwardProjectUser(project_id=1, user_id=2)
             db.session.add(project_user)
 
             if expect_error:
@@ -87,7 +87,7 @@ class TestSearches(BaseApplicationTest, FixtureMixin):
         search_id = self.create_direct_award_project_search(created_by=user_id, project_id=project_id)
 
         with self.app.app_context():
-            search = Search.query.get(search_id)
+            search = DirectAwardSearch.query.get(search_id)
             assert search.id == search_id
             assert search.project_id == project_id
             assert isinstance(search.created_at, datetime)
@@ -109,7 +109,7 @@ class TestSearches(BaseApplicationTest, FixtureMixin):
         search_id = self.create_direct_award_project_search(created_by=user_id, project_id=project_id)
 
         with self.app.app_context():
-            search = Search.query.get(search_id)
+            search = DirectAwardSearch.query.get(search_id)
 
         search_keys_set = set(search.serialize().keys())
         assert {'id', 'createdAt', 'searchedAt', 'projectId', 'searchUrl', 'active'} <= search_keys_set
@@ -135,8 +135,8 @@ class TestSearches(BaseApplicationTest, FixtureMixin):
         search_id = self.create_direct_award_project_search(created_by=user_id, project_id=project_id)
 
         with self.app.app_context():
-            search = Search.query.get(search_id)
-            project = Project.query.get(project_id)
+            search = DirectAwardSearch.query.get(search_id)
+            project = DirectAwardProject.query.get(project_id)
             project.locked_at = datetime.utcnow()
             db.session.add(project)
             db.session.commit()
@@ -160,11 +160,11 @@ class TestProjectSearchResultEntries(BaseApplicationTest, FixtureMixin):
                 self.setup_dummy_user(role='buyer', id=1)
 
             if create_project:
-                project = Project(id=1, name=DIRECT_AWARD_PROJECT_NAME, users=[])
+                project = DirectAwardProject(id=1, name=DIRECT_AWARD_PROJECT_NAME, users=[])
                 db.session.add(project)
                 db.session.commit()
 
-            project_user = ProjectUser(project_id=1, user_id=1)
+            project_user = DirectAwardProjectUser(project_id=1, user_id=1)
             db.session.add(project_user)
 
             if expect_error:

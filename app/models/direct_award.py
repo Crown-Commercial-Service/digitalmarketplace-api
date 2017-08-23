@@ -7,7 +7,7 @@ from app.models import User, ValidationError, ArchivedService
 from dmutils.formats import DATETIME_FORMAT
 
 
-class Project(db.Model):
+class DirectAwardProject(db.Model):
     __tablename__ = 'direct_award_projects'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -16,7 +16,7 @@ class Project(db.Model):
     locked_at = db.Column(db.DateTime, nullable=True)  # When the project's active search/es are final and cannot change
     active = db.Column(db.Boolean, default=True, nullable=False)
 
-    users = db.relationship(User, secondary='direct_award_project_users', order_by=lambda: ProjectUser.id)
+    users = db.relationship(User, secondary='direct_award_project_users', order_by=lambda: DirectAwardProjectUser.id)
 
     def serialize(self):
         return {
@@ -35,7 +35,7 @@ class Project(db.Model):
         return value
 
 
-class ProjectUser(db.Model):
+class DirectAwardProjectUser(db.Model):
     __tablename__ = 'direct_award_project_users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -43,7 +43,7 @@ class ProjectUser(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), index=True, nullable=False)
 
 
-class Search(db.Model):
+class DirectAwardSearch(db.Model):
     __tablename__ = 'direct_award_searches'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -63,9 +63,9 @@ class Search(db.Model):
     # Service, but by storing this we have the flexibility to show either the live state or the state at the time
     # the user ran the search.
     archived_services = db.relationship(ArchivedService, secondary='direct_award_search_result_entries',
-                                        order_by=lambda: SearchResultEntry.id)
+                                        order_by=lambda: DirectAwardSearchResultEntry.id)
 
-    project = db.relationship(Project)
+    project = db.relationship(DirectAwardProject)
     user = db.relationship(User)
 
     # Partial index on project_id,active==1. Enforces only one active search per project at a time.
@@ -92,7 +92,7 @@ class Search(db.Model):
         return value
 
 
-class SearchResultEntry(db.Model):
+class DirectAwardSearchResultEntry(db.Model):
     __tablename__ = 'direct_award_search_result_entries'
 
     id = db.Column(db.Integer, primary_key=True)

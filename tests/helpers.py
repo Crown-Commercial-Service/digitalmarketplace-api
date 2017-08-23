@@ -8,7 +8,7 @@ import pytest
 
 from app import db
 from app.models import Framework, User, Lot, Brief, Supplier, ContactInformation, Service, BriefClarificationQuestion
-from app.models.direct_award import Project, ProjectUser, Search
+from app.models.direct_award import DirectAwardProject, DirectAwardProjectUser, DirectAwardSearch
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -268,17 +268,17 @@ class FixtureMixin(object):
     def create_direct_award_project(self, user_id, project_id=1, project_name=DIRECT_AWARD_PROJECT_NAME,
                                     created_at=DIRECT_AWARD_FROZEN_TIME):
         with self.app.app_context():
-            if Project.query.get(project_id):
+            if DirectAwardProject.query.get(project_id):
                 return project_id
 
-            db.session.add(Project(
+            db.session.add(DirectAwardProject(
                 id=project_id,
                 name=project_name,
                 created_at=created_at
             ))
             db.session.flush()
 
-            db.session.add(ProjectUser(
+            db.session.add(DirectAwardProjectUser(
                 user_id=user_id,
                 project_id=project_id
             ))
@@ -289,11 +289,11 @@ class FixtureMixin(object):
     def create_direct_award_project_search(self, created_by, project_id, search_url=DIRECT_AWARD_SEARCH_URL,
                                            active=True, created_at=DIRECT_AWARD_FROZEN_TIME):
         with self.app.app_context():
-            search = Search(created_by=created_by,
-                            project_id=project_id,
-                            created_at=created_at,
-                            search_url=search_url,
-                            active=active)
+            search = DirectAwardSearch(created_by=created_by,
+                                       project_id=project_id,
+                                       created_at=created_at,
+                                       search_url=search_url,
+                                       active=active)
             db.session.add(search)
             db.session.commit()
 

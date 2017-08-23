@@ -7,7 +7,7 @@ from dmutils.config import convert_to_boolean
 from .. import main
 from ... import db
 from ...models import User, AuditEvent
-from ...models.direct_award import Project, Search
+from ...models.direct_award import DirectAwardProject, DirectAwardSearch
 from ...utils import (
     get_json_from_request, get_int_or_400, json_has_required_keys, pagination_links,
     get_valid_page_or_1, validate_and_return_updater_request)
@@ -17,18 +17,18 @@ from ...utils import (
 def list_projects():
     page = get_valid_page_or_1()
 
-    projects = Project.query
+    projects = DirectAwardProject.query
     user_id = get_int_or_400(request.args, 'user-id')
     if user_id:
-        projects = projects.filter(Project.users.any(id=user_id))
+        projects = projects.filter(DirectAwardProject.users.any(id=user_id))
 
     if 'latest-first' in request.args:
         if convert_to_boolean(request.args.get('latest-first')):
-            projects = projects.order_by(desc(Project.created_at), desc(Project.id))
+            projects = projects.order_by(desc(DirectAwardProject.created_at), desc(DirectAwardProject.id))
         else:
-            projects = projects.order_by(asc(Project.created_at), asc(Project.id))
+            projects = projects.order_by(asc(DirectAwardProject.created_at), asc(DirectAwardProject.id))
     else:
-        projects = projects.order_by(asc(Project.id))
+        projects = projects.order_by(asc(DirectAwardProject.id))
 
     projects = projects.paginate(
         page=page,
@@ -62,7 +62,7 @@ def create_project():
     if user is None:
         abort(400, "User ID not supplied")
 
-    project = Project(name=project_json['name'], users=[user])
+    project = DirectAwardProject(name=project_json['name'], users=[user])
     db.session.add(project)
 
     try:
@@ -89,7 +89,7 @@ def create_project():
 
 @main.route('/direct-award/projects/<int:project_id>', methods=['GET'])
 def get_project(project_id):
-    project = Project.query.filter(Project.id == project_id).first_or_404()
+    project = DirectAwardProject.query.filter(DirectAwardProject.id == project_id).first_or_404()
 
     return jsonify(project=project.serialize())
 
@@ -98,15 +98,15 @@ def get_project(project_id):
 def list_project_searches(project_id):
     page = get_valid_page_or_1()
 
-    searches = Search.query.filter(Search.project_id == project_id)
+    searches = DirectAwardSearch.query.filter(DirectAwardSearch.project_id == project_id)
 
     if 'latest-first' in request.args:
         if convert_to_boolean(request.args.get('latest-first')):
-            searches = searches.order_by(desc(Search.created_at), desc(Search.id))
+            searches = searches.order_by(desc(DirectAwardSearch.created_at), desc(DirectAwardSearch.id))
         else:
-            searches = searches.order_by(asc(Search.created_at), asc(Search.id))
+            searches = searches.order_by(asc(DirectAwardSearch.created_at), asc(DirectAwardSearch.id))
     else:
-        searches = searches.order_by(asc(Search.id))
+        searches = searches.order_by(asc(DirectAwardSearch.id))
 
     searches = searches.paginate(
         page=page,
@@ -145,10 +145,10 @@ def create_project_search(project_id):
 
     # TODO: Validate user has authorisation to access resource.
 
-    db.session.query(Search).filter(Search.project_id == project_id).\
-        update({Search.active: False})
-    search = Search(created_by=user.id, project_id=project_id,
-                    search_url=search_json['searchUrl'], active=True)
+    db.session.query(DirectAwardSearch).filter(DirectAwardSearch.project_id == project_id).\
+        update({DirectAwardSearch.active: False})
+    search = DirectAwardSearch(created_by=user.id, project_id=project_id,
+                               search_url=search_json['searchUrl'], active=True)
 
     db.session.add(search)
 
@@ -177,9 +177,9 @@ def create_project_search(project_id):
 
 @main.route('/direct-award/projects/<int:project_id>/searches/<int:search_id>', methods=['GET'])
 def get_project_search(project_id, search_id):
-    search = Search.query.filter(
-        Search.id == search_id,
-        Search.project_id == project_id
+    search = DirectAwardSearch.query.filter(
+        DirectAwardSearch.id == search_id,
+        DirectAwardSearch.project_id == project_id
     ).first_or_404()
 
     return jsonify(search=search.serialize())
