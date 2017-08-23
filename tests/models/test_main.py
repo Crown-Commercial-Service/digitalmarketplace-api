@@ -13,7 +13,8 @@ from app.models import (
     ValidationError,
     BriefClarificationQuestion,
     DraftService,
-    FrameworkLot
+    FrameworkLot,
+    ContactInformation
 )
 from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
@@ -148,61 +149,6 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
         assert brief.status == 'draft'
 
-    def test_query_draft_brief(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot))
-            db.session.commit()
-
-            assert Brief.query.filter(Brief.status == 'draft').count() == 1
-            assert Brief.query.filter(Brief.status == 'live').count() == 0
-            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
-            assert Brief.query.filter(Brief.status == 'closed').count() == 0
-
-            # Check python implementation gives same result as the sql implementation
-            assert Brief.query.all()[0].status == 'draft'
-
-    def test_query_live_brief(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow()))
-            db.session.commit()
-
-            assert Brief.query.filter(Brief.status == 'draft').count() == 0
-            assert Brief.query.filter(Brief.status == 'live').count() == 1
-            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
-            assert Brief.query.filter(Brief.status == 'closed').count() == 0
-
-            # Check python implementation gives same result as the sql implementation
-            assert Brief.query.all()[0].status == 'live'
-
-    def test_query_withdrawn_brief(self):
-        with self.app.app_context():
-            db.session.add(Brief(
-                data={}, framework=self.framework, lot=self.lot,
-                published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
-            ))
-            db.session.commit()
-
-            assert Brief.query.filter(Brief.status == 'draft').count() == 0
-            assert Brief.query.filter(Brief.status == 'live').count() == 0
-            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 1
-            assert Brief.query.filter(Brief.status == 'closed').count() == 0
-
-            # Check python implementation gives same result as the sql implementation
-            assert Brief.query.all()[0].status == 'withdrawn'
-
-    def test_query_closed_brief(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1)))
-            db.session.commit()
-
-            assert Brief.query.filter(Brief.status == 'draft').count() == 0
-            assert Brief.query.filter(Brief.status == 'live').count() == 0
-            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
-            assert Brief.query.filter(Brief.status == 'closed').count() == 1
-
-            # Check python implementation gives same result as the sql implementation
-            assert Brief.query.all()[0].status == 'closed'
-
     def test_live_status_for_briefs_with_published_at(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
         assert brief.status == 'live'
@@ -236,38 +182,6 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         assert brief.clarification_questions_closed_at == datetime(2016, 3, 7, 23, 59, 59)
         assert brief.clarification_questions_published_by == datetime(2016, 3, 9, 23, 59, 59)
 
-    def test_query_brief_applications_closed_at_date_for_brief_with_no_requirements_length(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
-            db.session.commit()
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
-
-    def test_query_brief_applications_closed_at_date_for_one_week_brief(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
-            db.session.commit()
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 10, 23, 59, 59)).count() == 1
-
-    def test_query_brief_applications_closed_at_date_for_two_week_brief(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
-            db.session.commit()
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
-
-    def test_query_brief_applications_closed_at_date_for_mix_of_brief_lengths(self):
-        with self.app.app_context():
-            db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 10, 12, 30, 1, 2)))
-            db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
-            db.session.commit()
-            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 3
-
     def test_expired_status_for_a_brief_with_passed_close_date(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot,
                       published_at=datetime.utcnow() - timedelta(days=1000))
@@ -298,14 +212,16 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
     def test_status_must_be_valid(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError) as e:
             brief.status = 'invalid'
+        assert e.value.message == "Cannot change brief status from 'draft' to 'invalid'"
 
     def test_cannot_set_live_brief_to_draft(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError) as e:
             brief.status = 'draft'
+        assert e.value.message == "Cannot change brief status from 'live' to 'draft'"
 
     def test_can_set_live_brief_to_withdrawn(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
@@ -317,14 +233,22 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
     def test_cannot_set_brief_to_closed(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError) as e:
             brief.status = 'closed'
+        assert e.value.message == "Cannot change brief status from 'draft' to 'closed'"
+
+    def test_cannot_set_brief_to_awarded(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        with pytest.raises(ValidationError) as e:
+            brief.status = 'awarded'
+        assert e.value.message == "Cannot change brief status from 'draft' to 'awarded'"
 
     def test_cannot_set_draft_brief_to_withdrawn(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError) as e:
             brief.status = 'withdrawn'
+        assert e.value.message == "Cannot change brief status from 'draft' to 'withdrawn'"
 
     def test_cannot_change_status_of_withdrawn_brief(self):
         brief = Brief(
@@ -332,9 +256,10 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
         )
 
-        for status in ['draft', 'live', 'closed']:
-            with pytest.raises(ValidationError):
+        for status in ['draft', 'live', 'closed', 'awarded']:
+            with pytest.raises(ValidationError) as e:
                 brief.status = status
+            assert e.value.message == "Cannot change brief status from 'withdrawn' to '{}'".format(status)
 
     def test_buyer_users_can_be_added_to_a_brief(self):
         with self.app.app_context():
@@ -402,6 +327,248 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
 
             assert brief.clarification_questions[0].question == "How?"
             assert brief.clarification_questions[1].question == "When"
+
+    def test_status_order_sorts_briefs_by_search_result_status_ordering(self):
+        with self.app.app_context():
+            draft_brief = Brief(data={}, framework=self.framework, lot=self.lot)
+            live_brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
+            withdrawn_brief = Brief(
+                data={}, framework=self.framework, lot=self.lot,
+                published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
+            )
+            closed_brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+
+            awarded_brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(
+                brief=awarded_brief, data={}, supplier_id=0, submitted_at=datetime(2000, 2, 1),
+                award_details={'pending': True}
+            )
+            db.session.add_all([draft_brief, live_brief, withdrawn_brief, closed_brief, awarded_brief, brief_response])
+            db.session.commit()
+            # award the BriefResponse
+            brief_response.awarded_at = datetime(2001, 1, 1)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            expected_result = [
+                live_brief.status, closed_brief.status, awarded_brief.status, draft_brief.status, withdrawn_brief.status
+            ]
+            query_result = [
+                q.status for q in Brief.query.order_by(Brief.status_order, Brief.published_at.desc(), Brief.id)
+            ]
+
+            assert query_result == expected_result
+
+
+class TestBriefQueries(BaseApplicationTest, FixtureMixin):
+    def setup(self):
+        super(TestBriefQueries, self).setup()
+        with self.app.app_context():
+            self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self.lot = self.framework.get_lot('digital-outcomes')
+
+    def test_query_draft_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot))
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 1
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'draft'
+
+    def test_query_live_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow()))
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 1
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'live'
+
+    def test_query_withdrawn_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(
+                data={}, framework=self.framework, lot=self.lot,
+                published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
+            ))
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 1
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'withdrawn'
+
+    def test_query_closed_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1)))
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
+            assert Brief.query.filter(Brief.status == 'closed').count() == 1
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'closed'
+
+    def test_query_awarded_brief(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(
+                brief=brief, data={}, supplier_id=0, submitted_at=datetime(2000, 2, 1),
+                award_details={'pending': True}
+            )
+            db.session.add_all([brief, brief_response])
+            db.session.commit()
+            # award the BriefResponse
+            brief_response.awarded_at = datetime(2001, 1, 1)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 1
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'awarded'
+
+    def test_query_brief_applications_closed_at_date_for_brief_with_no_requirements_length(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.commit()
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
+
+    def test_query_brief_applications_closed_at_date_for_one_week_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.commit()
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 10, 23, 59, 59)).count() == 1
+
+    def test_query_brief_applications_closed_at_date_for_two_week_brief(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.commit()
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 1
+
+    def test_query_brief_applications_closed_at_date_for_mix_of_brief_lengths(self):
+        with self.app.app_context():
+            db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 10, 12, 30, 1, 2)))
+            db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
+                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            db.session.commit()
+            assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 3
+
+
+class TestAwardedBriefs(BaseApplicationTest, FixtureMixin):
+    def setup(self):
+        super(TestAwardedBriefs, self).setup()
+        with self.app.app_context():
+            self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self.lot = self.framework.get_lot('digital-outcomes')
+
+    def _setup_brief_and_awarded_brief_response(self, context, awarded_at=True, pending=True):
+        with context:
+            self.setup_dummy_suppliers(1)
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            brief_response = BriefResponse(
+                brief=brief,
+                supplier_id=0,
+                data={'boo': 'far'},
+                created_at=datetime.utcnow(),
+                submitted_at=datetime.utcnow()
+            )
+            db.session.add_all([brief, brief_response])
+            db.session.commit()
+            brief_response.award_details = {'pending': True} if pending else {'confirmed': 'details'}
+            if awarded_at:
+                brief_response.awarded_at = datetime(2016, 1, 1)
+            db.session.add(brief_response)
+            db.session.commit()
+            return brief.id, brief_response.id
+
+    def test_awarded_brief_response_when_there_is_an_award(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            brief_response1 = BriefResponse(brief=brief, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            brief_response2 = BriefResponse(brief=brief, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            brief_response2.award_details = {"confirmed": "details"}
+            brief_response2.awarded_at = datetime(2016, 12, 12, 1, 1, 1)
+            db.session.add_all([brief, brief_response1, brief_response2])
+            db.session.commit()
+
+            brief = Brief.query.get(brief.id)
+            assert brief.awarded_brief_response.id == brief_response2.id
+
+    def test_no_awarded_brief_response_if_brief_responses_but_no_award(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            brief_response1 = BriefResponse(brief=brief, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            brief_response2 = BriefResponse(brief=brief, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add_all([brief, brief_response1, brief_response2])
+            db.session.commit()
+
+            brief = Brief.query.get(brief.id)
+            assert brief.awarded_brief_response is None
+
+    def test_no_awarded_brief_response_if_no_brief_responses(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            db.session.add(brief)
+            db.session.commit()
+
+            brief = Brief.query.get(brief.id)
+            assert brief.awarded_brief_response is None
+
+    def test_brief_serialize_includes_awarded_brief_response_id_if_overall_status_awarded(self):
+        with self.app.app_context() as context:
+            brief_id, brief_response_id = self._setup_brief_and_awarded_brief_response(context, pending=False)
+            brief = Brief.query.get(brief_id)
+            assert brief.status == 'awarded'
+            with mock.patch('app.models.main.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert brief.serialize().get('awardedBriefResponseId') == brief_response_id
+
+    def test_brief_serialize_does_not_include_awarded_brief_response_if_award_is_pending(self):
+        with self.app.app_context() as context:
+            brief_id, brief_response_id = self._setup_brief_and_awarded_brief_response(context, awarded_at=False)
+            brief = Brief.query.get(brief_id)
+            assert brief.status == 'closed'
+            with mock.patch('app.models.main.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert brief.serialize().get('awardedBriefResponseId') is None
+
+    def test_brief_serialize_does_not_include_awarded_brief_response_if_no_awarded_brief_response(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            db.session.add(brief)
+            db.session.commit()
+            brief = Brief.query.get(brief.id)
+            assert brief.status == 'closed'
+            with mock.patch('app.models.main.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert brief.serialize().get('awardedBriefResponseId') is None
 
 
 class TestCopyBrief(BaseApplicationTest, FixtureMixin):
@@ -489,14 +656,8 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
         super(TestBriefResponses, self).setup()
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            lot = framework.get_lot('digital-outcomes')
             self.brief_title = 'My Test Brief Title'
-            self.brief = Brief(
-                data={'title': self.brief_title, 'requirementsLength': '1 week'},
-                framework=framework,
-                lot=lot,
-                published_at=datetime(2016, 3, 3, 12, 30, 1, 2)
-            )
+            self.brief = self._create_brief()
             db.session.add(self.brief)
             db.session.commit()
             self.brief_id = self.brief.id
@@ -510,6 +671,16 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             )
             db.session.add(supplier_framework)
             db.session.commit()
+
+    def _create_brief(self, published_at=datetime(2016, 3, 3, 12, 30, 1, 3)):
+        framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+        lot = framework.get_lot('digital-outcomes')
+        return Brief(
+            data={'title': self.brief_title, 'requirementsLength': '1 week'},
+            framework=framework,
+            lot=lot,
+            published_at=published_at
+        )
 
     def test_create_a_new_brief_response(self):
         with self.app.app_context():
@@ -549,6 +720,37 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
         brief_response = BriefResponse(created_at=datetime.utcnow())
         assert brief_response.status == 'draft'
 
+    def test_awarded_status_for_brief_response_with_awarded_at_datestamp(self):
+        with self.app.app_context():
+            brief = Brief.query.get(self.brief_id)
+            brief_response = BriefResponse(
+                brief=brief,
+                data={},
+                supplier_id=0,
+                submitted_at=datetime.utcnow(),
+                award_details={'confirmed': 'details'},
+                awarded_at=datetime(2016, 1, 1)
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+
+            assert BriefResponse.query.filter(BriefResponse.status == 'awarded').count() == 1
+
+    def test_awarded_status_for_pending_awarded_brief_response(self):
+        with self.app.app_context():
+            brief = Brief.query.get(self.brief_id)
+            brief_response = BriefResponse(
+                brief=brief,
+                data={},
+                supplier_id=0,
+                submitted_at=datetime.utcnow(),
+                award_details={'pending': True}
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+
+            assert BriefResponse.query.filter(BriefResponse.status == 'pending-awarded').count() == 1
+
     def test_query_draft_brief_response(self):
         with self.app.app_context():
             db.session.add(BriefResponse(brief_id=self.brief_id, supplier_id=0, data={}))
@@ -582,7 +784,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             db.session.add(brief_response)
             db.session.commit()
 
-            with mock.patch('app.models.url_for') as url_for:
+            with mock.patch('app.models.main.url_for') as url_for:
                 url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
                 assert brief_response.serialize() == {
                     'id': brief_response.id,
@@ -616,7 +818,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             db.session.add(brief_response)
             db.session.commit()
 
-            with mock.patch('app.models.url_for') as url_for:
+            with mock.patch('app.models.main.url_for') as url_for:
                 url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
                 assert brief_response.serialize() == {
                     'id': brief_response.id,
@@ -640,6 +842,175 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                         'supplier': (('main.get_supplier',), {'supplier_id': 0}),
                     }
                 }
+
+    def test_brief_response_serialization_includes_award_details_if_status_awarded(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(
+                data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier, submitted_at=datetime(2016, 9, 28)
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+            brief_response.award_details = {
+                "awardedContractStartDate": "2020-12-31",
+                "awardedContractValue": "99.95"
+            }
+            brief_response.awarded_at = datetime(2016, 1, 1)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            with mock.patch('app.models.main.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert brief_response.serialize()['awardDetails'] == {
+                    "awardedContractStartDate": "2020-12-31",
+                    "awardedContractValue": "99.95"
+                }
+
+    def test_brief_response_serialization_includes_pending_flag_if_status_pending_awarded(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(
+                data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier, submitted_at=datetime(2016, 9, 28)
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+            brief_response.award_details = {"pending": True}
+            db.session.add(brief_response)
+            db.session.commit()
+
+            with mock.patch('app.models.main.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert brief_response.serialize()['awardDetails'] == {"pending": True}
+
+    def test_brief_response_awarded_at_index_raises_integrity_error_on_more_than_one_award_per_brief(self):
+        timestamp = datetime(2016, 12, 31, 12, 1, 2, 3)
+        with self.app.app_context():
+            brief = Brief.query.get(self.brief_id)
+            brief_response1 = BriefResponse(
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(),
+                award_details={'confirmed': 'details'},
+                awarded_at=timestamp
+            )
+            brief_response2 = BriefResponse(
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(),
+                award_details={'confirmed': 'details'},
+                awarded_at=timestamp
+            )
+            db.session.add_all([brief_response1, brief_response2])
+            with pytest.raises(IntegrityError) as exc:
+                db.session.commit()
+            assert 'duplicate key value violates unique constraint' in str(exc.value)
+
+    def test_brief_response_awarded_index_can_save_awards_for_unique_briefs(self):
+        timestamp = datetime(2016, 12, 31, 12, 1, 2, 3)
+        with self.app.app_context():
+            brief = Brief.query.get(self.brief_id)
+            brief2 = self._create_brief()
+            db.session.add(brief2)
+            brief_response1 = BriefResponse(
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(),
+                award_details={'pending': True}, awarded_at=timestamp
+            )
+            brief_response2 = BriefResponse(
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(),
+                award_details={'pending': True}, awarded_at=None
+            )
+            brief_response3 = BriefResponse(
+                data={}, brief=brief2, supplier=self.supplier, submitted_at=datetime.utcnow(),
+                award_details={'pending': True}, awarded_at=None
+            )
+            brief_response4 = BriefResponse(
+                data={}, brief=brief2, supplier=self.supplier, submitted_at=datetime.utcnow(),
+                award_details={'pending': True}, awarded_at=timestamp
+            )
+
+            db.session.add_all([brief_response1, brief_response2, brief_response3, brief_response4])
+            db.session.commit()
+
+            for b in [brief_response1, brief_response2, brief_response3, brief_response4]:
+                assert b.id
+
+    def test_brief_response_awarded_index_can_save_multiple_non_awarded_responses(self):
+        with self.app.app_context():
+            brief = Brief.query.get(self.brief_id)
+            brief_response1 = BriefResponse(
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=None
+            )
+            brief_response2 = BriefResponse(
+                data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(), awarded_at=None
+            )
+            db.session.add_all([brief_response1, brief_response2])
+            db.session.commit()
+
+            for b in [brief_response1, brief_response2]:
+                assert b.id
+
+    def test_brief_response_awarded_index_sets_default_value(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(data={}, brief=self.brief, supplier=self.supplier)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            assert brief_response.id
+            assert brief_response.awarded_at is None
+
+    def test_brief_response_can_not_be_awarded_if_brief_is_not_closed(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            brief = self._create_brief(published_at=datetime.utcnow())
+            brief_response = BriefResponse(data={}, brief=brief, supplier=self.supplier)
+            db.session.add_all([brief, brief_response])
+            db.session.commit()
+
+            existing_brief_response = BriefResponse.query.get(brief_response.id)
+            existing_brief_response.awarded_at = datetime(2016, 12, 31, 12, 1, 1)
+            db.session.add(existing_brief_response)
+            db.session.commit()
+
+        assert 'Brief response can not be awarded if the brief is not closed' in e.value.message
+
+    def test_brief_response_can_not_be_awarded_if_brief_response_has_not_been_submitted(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            brief_response = BriefResponse(data={}, brief=self.brief, supplier=self.supplier)
+            db.session.add(brief_response)
+            db.session.commit()
+
+            existing_brief_response = BriefResponse.query.get(brief_response.id)
+            existing_brief_response.awarded_at = datetime(2016, 12, 31, 12, 1, 1)
+            db.session.add(existing_brief_response)
+            db.session.commit()
+
+        assert 'Brief response can not be awarded if response has not been submitted' in e.value.message
+
+    def test_can_remove_award_details_from_brief_response_if_brief_not_awarded(self):
+        with self.app.app_context():
+            brief_response = BriefResponse(
+                data={}, brief=self.brief, supplier=self.supplier, submitted_at=datetime.utcnow()
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+            # Pending award to this brief response
+            brief_response.award_details = {'pending': True}
+            db.session.add(brief_response)
+            db.session.commit()
+            # There's still time to change our minds...
+            brief_response.award_details = {}
+            db.session.add(brief_response)
+            db.session.commit()
+
+    def test_cannot_remove_award_from_brief_response_if_brief_awarded(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as e:
+            brief_response = BriefResponse(
+                data={}, brief=self.brief, supplier=self.supplier, submitted_at=datetime.utcnow()
+            )
+            db.session.add(brief_response)
+            db.session.commit()
+            # Confirm award to this brief response
+            brief_response.award_details = {'confirmed': 'details'}
+            brief_response.awarded_at = datetime.utcnow()
+            db.session.add(brief_response)
+            db.session.commit()
+            # We've changed our minds again but it's too late...
+            brief_response.awarded_at = None
+
+        assert 'Cannot remove or change award datestamp on previously awarded Brief Response' in e.value.message
 
 
 class TestBriefClarificationQuestion(BaseApplicationTest):
@@ -760,6 +1131,9 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
         with self.app.app_context():
             self.setup_dummy_suppliers(1)
             self.supplier = Supplier.query.filter(Supplier.supplier_id == 0).first()
+            self.contact_id = ContactInformation.query.filter(
+                ContactInformation.supplier_id == self.supplier.supplier_id
+            ).first().id
 
     def _update_supplier_from_json_with_all_details(self):
         update_data = {
@@ -782,22 +1156,31 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
         self.supplier.update_from_json(update_data)
 
     def test_serialization_of_new_supplier(self):
-        assert self.supplier.serialize() == {
-            'clients': [],
-            'contactInformation': [
-                {
-                    'contactName': u'Contact for Supplier 0',
-                    'email': u'0@contact.com',
-                    'id': 11,
-                    'links': {'self': 'http://127.0.0.1:5000/suppliers/0/contact-information/11'},
-                    'postcode': u'SW1A 1AA',
-                }
-            ],
-            'description': u'',
-            'id': 0,
-            'links': {'self': 'http://127.0.0.1:5000/suppliers/0'},
-            'name': u'Supplier 0',
-        }
+        with mock.patch('app.models.main.url_for') as url_for:
+            url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+            assert self.supplier.serialize() == {
+                'clients': [],
+                'contactInformation': [
+                    {
+                        'contactName': u'Contact for Supplier 0',
+                        'email': u'0@contact.com',
+                        'id': self.contact_id,
+                        'links': {
+                            'self': (
+                                ('main.update_contact_information',),
+                                {'contact_id': self.contact_id, 'supplier_id': 0}
+                            )
+                        },
+                        'postcode': u'SW1A 1AA',
+                    }
+                ],
+                'description': u'',
+                'id': 0,
+                'links': {
+                    'self': (('main.get_supplier',), {'supplier_id': 0})
+                },
+                'name': u'Supplier 0',
+            }
 
     def test_update_from_json(self):
         with self.app.app_context():
@@ -826,32 +1209,39 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
             assert self.supplier.trading_status == "Sticky"
 
             # Check that serialization of a supplier with all details added looks as it should
-            assert self.supplier.serialize() == {
-                'clients': ['Parcel Wrappers Ltd'],
-                'companiesHouseNumber': '98765432',
-                'contactInformation': [
-                    {
-                        'contactName': u'Contact for Supplier 0',
-                        'email': u'0@contact.com',
-                        'id': 12,
-                        'links': {'self': 'http://127.0.0.1:5000/suppliers/0/contact-information/12'},
-                        'postcode': u'SW1A 1AA',
-                    }
-                ],
-                'description': 'All your parcel wrapping needs catered for',
-                'dunsNumber': '01010101',
-                'eSourcingId': '020202',
-                'id': 0,
-                'links': {'self': 'http://127.0.0.1:5000/suppliers/0'},
-                'name': 'String and Sticky Tape Inc.',
-                'organisationSize': 'medium',
-                'otherCompanyRegistrationNumber': '',
-                'registeredName': 'Tape and String Inc.',
-                'registrationCountry': 'Wales',
-                'registrationDate': '1973-08-10',
-                'tradingStatus': 'Sticky',
-                'vatNumber': '321321321',
-            }
+            with mock.patch('app.models.main.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert self.supplier.serialize() == {
+                    'clients': ['Parcel Wrappers Ltd'],
+                    'companiesHouseNumber': '98765432',
+                    'contactInformation': [
+                        {
+                            'contactName': u'Contact for Supplier 0',
+                            'email': u'0@contact.com',
+                            'id': self.contact_id,
+                            'links': {
+                                'self': (
+                                    ('main.update_contact_information',),
+                                    {'contact_id': self.contact_id, 'supplier_id': 0}
+                                )
+                            },
+                            'postcode': u'SW1A 1AA',
+                        }
+                    ],
+                    'description': 'All your parcel wrapping needs catered for',
+                    'dunsNumber': '01010101',
+                    'eSourcingId': '020202',
+                    'id': 0,
+                    'links': {'self': (('main.get_supplier',), {'supplier_id': 0})},
+                    'name': 'String and Sticky Tape Inc.',
+                    'organisationSize': 'medium',
+                    'otherCompanyRegistrationNumber': '',
+                    'registeredName': 'Tape and String Inc.',
+                    'registrationCountry': 'Wales',
+                    'registrationDate': '1973-08-10',
+                    'tradingStatus': 'Sticky',
+                    'vatNumber': '321321321',
+                }
 
 
 class TestServices(BaseApplicationTest, FixtureMixin):
@@ -1197,7 +1587,7 @@ class TestFrameworkSupplierIdsMany(BaseApplicationTest, FixtureMixin):
                     self.setup_dummy_service(service_id, supplier_id=supplier_id, **self.fl_query)
 
                     db.session.commit()
-                    with mock.patch('app.models.url_for', autospec=lambda i, **values: 'test.url/test'):
+                    with mock.patch('app.models.main.url_for', autospec=lambda i, **values: 'test.url/test'):
                         ds = DraftService.from_service(Service.query.filter(Service.service_id == service_id).first())
                         ds.status = service_status
                     db.session.add(ds)

@@ -4,12 +4,12 @@ from datetime import timedelta
 
 import pytest
 import mock
-from tests.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, FixtureMixin
+from tests.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, FixtureMixin, get_audit_events
 from tests.bases import BaseApplicationTest
 
 from dmapiclient.audit import AuditTypes
 from app import db
-from app.models import Framework
+from app.models import Framework, BriefResponse
 
 
 class FrameworkSetupAndTeardown(BaseApplicationTest, FixtureMixin):
@@ -1242,3 +1242,223 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest, FixtureMixin):
 
         assert response.status_code == 200
         assert data["services"]
+
+
+class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
+
+    award_url = "/briefs/1/award"
+
+    def _post_to_award_endpoint(self, payload):
+        payload['update_details'] = {"updated_by": "example"}
+        return self.client.post(
+            self.award_url,
+            data=json.dumps(payload),
+            content_type="application/json"
+        )
+
+    def test_can_award_brief_response_to_closed_brief_without_award_details(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add(brief_response)
+            db.session.commit()
+
+            res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
+            assert res.status_code == 200
+
+            brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
+            assert len(brief_response_audits) == 1
+            assert brief_response_audits[0]['data'] == {
+                'briefId': 1,
+                'briefResponseId': brief_response.id,
+                'briefResponseAwardedValue': True
+            }
+
+    def test_can_change_awarded_brief_response_for_closed_brief_without_awarded_datestamp(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response1 = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            brief_response2 = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            brief_response1.award_details = {'pending': True}
+            db.session.add_all([brief_response1, brief_response2])
+            db.session.commit()
+
+            # Update to be awarded to brief response 2 rather than brief response 1
+            res = self._post_to_award_endpoint({'briefResponseId': brief_response2.id})
+            assert res.status_code == 200
+
+            brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
+            assert len(brief_response_audits) == 2
+            assert brief_response_audits[0]['data'] == {
+                'briefId': 1,
+                'briefResponseId': brief_response1.id,
+                'briefResponseAwardedValue': False
+            }
+            assert brief_response_audits[1]['data'] == {
+                'briefId': 1,
+                'briefResponseId': brief_response2.id,
+                'briefResponseAwardedValue': True
+            }
+
+    def test_200_if_trying_to_award_a_brief_response_again_even_though_it_has_already_been_awarded(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            brief_response.award_details = {'pending': True}
+            db.session.add(brief_response)
+            db.session.commit()
+
+            res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
+            assert res.status_code == 200
+
+    def test_400_if_no_updated_by_in_payload(self):
+        res = self.client.post(
+            self.award_url,
+            data=json.dumps({"briefResponseId": 1}),
+            content_type="application/json"
+        )
+        assert res.status_code == 400
+        error = json.loads(res.get_data(as_text=True))['error']
+        assert "'updated_by' is a required property" in error
+
+    @pytest.mark.parametrize('status', ['draft', 'live', 'withdrawn', 'awarded'])
+    def test_400_if_awarding_a_brief_response_to_a_non_closed_brief(self, status):
+        self.setup_dummy_briefs(1, status=status)
+        res = self._post_to_award_endpoint({'briefResponseId': 1})
+        data = json.loads(res.get_data(as_text=True))
+        assert res.status_code == 400
+        assert data['error'] == "Brief is not closed"
+
+    def test_400_if_awarding_a_draft_brief_response_to_a_closed_brief(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, data={})
+            db.session.add(brief_response)
+            db.session.commit()
+
+            res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
+            data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 400
+            assert data['error'] == "BriefResponse cannot be awarded for this Brief"
+
+    def test_400_if_awarding_a_brief_response_that_does_not_relate_to_that_brief(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(2, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=2, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add(brief_response)
+            db.session.commit()
+
+            # We've set up brief response for brief ID 2 but attempt to award it for brief 1
+            res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
+
+            data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 400
+            assert data['error'] == "BriefResponse cannot be awarded for this Brief"
+
+
+class TestBriefAwardDetails(FrameworkSetupAndTeardown):
+
+    award_url = "/briefs/1/award/{}/contract-details"
+    valid_payload = {
+        "awardDetails": {
+            "awardedContractStartDate": "2020-12-31",
+            "awardedContractValue": "99.95",
+        },
+        "updated_by": "user@email.com"
+    }
+
+    def _post_to_award_details_endpoint(self, payload, brief_response_id):
+        return self.client.post(
+            self.award_url.format(brief_response_id),
+            data=json.dumps(payload),
+            content_type="application/json"
+        )
+
+    def test_can_supply_award_details_for_closed_brief_with_awarded_brief_response(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add(brief_response)
+            db.session.commit()
+            brief_response.award_details = {'pending': True}
+            db.session.add(brief_response)
+            db.session.commit()
+            assert brief_response.status == 'pending-awarded'
+
+            res = self._post_to_award_details_endpoint(self.valid_payload, brief_response.id)
+            assert res.status_code == 200
+            data = json.loads(res.get_data(as_text=True))
+            assert data['briefs']['awardedBriefResponseId'] == brief_response.id
+
+            brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
+            assert len(brief_response_audits) == 1
+            assert brief_response_audits[0]['data'] == {
+                'briefId': 1,
+                'briefResponseId': brief_response.id,
+                'briefResponseAwardDetails': {
+                    "awardedContractStartDate": "2020-12-31",
+                    "awardedContractValue": "99.95"
+                }
+            }
+
+    def test_400_if_supplying_details_for_closed_brief_without_awarded_brief_response(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add(brief_response)
+            db.session.commit()
+            assert brief_response.status == 'submitted'
+
+            res = self._post_to_award_details_endpoint(self.valid_payload, brief_response.id)
+            assert res.status_code == 400
+            data = json.loads(res.get_data(as_text=True))
+            assert data['error'] == "Cannot update award details for a Brief without a winning supplier"
+
+    def test_400_if_award_details_payload_invalid(self):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add(brief_response)
+            db.session.commit()
+            brief_response.award_details = {'pending': True}
+            db.session.add(brief_response)
+            db.session.commit()
+
+            res = self._post_to_award_details_endpoint(
+                {
+                    "awardDetails": {
+                        "awardedContractValue": "I am not a number",
+                        "awardedContractStartDate-day": None,
+                        "awardedContractStartDate-month": None,
+                        "awardedContractStartDate-year": None,
+                    },
+                    "updated_by": "user@email.com"
+                }, brief_response.id
+            )
+
+            data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 400
+            assert data['error'] == {
+                'awardedContractStartDate': 'answer_required',
+                'awardedContractValue': 'not_money_format'
+            }
+
+    def test_400_if_no_updated_by_in_payload(self):
+        res = self._post_to_award_details_endpoint({
+            "awardDetails": {
+                "awardedContractStartDate": "2020-12-31",
+                "awardedContractValue": "99.95"
+            }
+        }, 1)
+
+        assert res.status_code == 400
+        error = json.loads(res.get_data(as_text=True))['error']
+        assert "'updated_by' is a required property" in error

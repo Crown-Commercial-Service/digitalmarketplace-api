@@ -7,6 +7,7 @@ import pytest
 
 from dmapiclient.audit import AuditTypes
 
+from app.main.views.brief_responses import COMPLETED_BRIEF_RESPONSE_STATUSES
 from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service, Framework, SupplierFramework
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from tests.helpers import FixtureMixin
@@ -59,19 +60,35 @@ class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
             self.brief_id = brief.id
             self.specialist_brief_id = specialist_brief.id
 
-    def setup_dummy_brief_response(self, brief_id=None, supplier_id=0, submitted_at=datetime(2016, 1, 2)):
-        with self.app.app_context():
+    def setup_dummy_brief_response(
+            self, brief_id=None, supplier_id=0, submitted_at=datetime(2016, 1, 2), award_details=None
+    ):
 
+        with self.app.app_context():
             brief_response = BriefResponse(
                 data=example_listings.brief_response_data().example(),
                 supplier_id=supplier_id, brief_id=brief_id or self.brief_id,
-                submitted_at=submitted_at
+                submitted_at=submitted_at,
+                award_details=award_details if award_details else {}
             )
 
             db.session.add(brief_response)
             db.session.commit()
 
             return brief_response.id
+
+    def setup_dummy_awarded_brief_response(self, brief_id=None):
+        with self.app.app_context():
+            self.setup_dummy_briefs(1, status="closed", brief_start=brief_id or self.brief_id)
+            awarded_brief_response_id = self.setup_dummy_brief_response(
+                brief_id=brief_id or self.brief_id, award_details={'pending': True}
+            )
+            awarded_brief_response = BriefResponse.query.get(awarded_brief_response_id)
+            awarded_brief_response.awarded_at = datetime.utcnow()
+            db.session.add(awarded_brief_response)
+            db.session.commit()
+
+            return awarded_brief_response.id
 
     def create_brief_response(self, supplier_id=0, brief_id=None, data=None):
         brief_responses_data = {
@@ -434,9 +451,17 @@ class TestUpdateBriefResponse(BaseBriefResponseTest):
 
     def test_can_not_update_brief_response_that_has_already_been_submitted(self, live_dos_framework):
         # Create dummy brief_response which has been submitted
-        brief_response_id = self.setup_dummy_brief_response(
-            brief_id=self.brief_id,
-        )
+        brief_response_id = self.setup_dummy_brief_response(brief_id=self.brief_id)
+
+        # Update brief response
+        res = self._update_brief_response(brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
+        assert res.status_code == 400
+        data = json.loads(res.get_data(as_text=True))
+        assert data == {'error': 'Brief response must be a draft'}
+
+    def test_can_not_update_brief_response_that_has_already_been_awarded(self, live_dos_framework):
+        # Create dummy brief_response which has been submitted and awarded
+        brief_response_id = self.setup_dummy_awarded_brief_response(brief_id=111)
 
         # Update brief response
         res = self._update_brief_response(brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
@@ -550,6 +575,15 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
         assert res.status_code == 200
 
         repeat_res = self._submit_brief_response(self.brief_response_id)
+        assert repeat_res.status_code == 400
+
+        data = json.loads(repeat_res.get_data(as_text=True))
+        assert data == {'error': 'Brief response must be a draft'}
+
+    def test_can_not_submit_a_brief_response_that_already_been_awarded(self, live_dos_framework):
+        awarded_brief_response_id = self.setup_dummy_awarded_brief_response(brief_id=111)
+
+        repeat_res = self._submit_brief_response(awarded_brief_response_id)
         assert repeat_res.status_code == 400
 
         data = json.loads(repeat_res.get_data(as_text=True))
@@ -804,16 +838,19 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert res.status_code == 400
         assert data['error'] == 'Invalid supplier_id: not-valid'
 
-    def test_do_not_include_drafts_in_brief_response_list_by_default(self):
-        expected_brief_id = self.setup_dummy_brief_response()
-        self.setup_dummy_brief_response(submitted_at=None)
+    def test_filter_brief_response_only_includes_submitted_pending_awarded_and_awarded_by_default(self):
+        self.setup_dummy_brief_response(submitted_at=None)  # draft response not to be included in result
+        self.setup_dummy_brief_response()
+        self.setup_dummy_brief_response(award_details={"pending": True})
+        self.setup_dummy_awarded_brief_response(brief_id=111)
 
         res = self.list_brief_responses()
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefResponses']) == 1
-        assert data['briefResponses'][0]['id'] == expected_brief_id
+        assert len(data['briefResponses']) == 3
+        for response in data['briefResponses']:
+            assert response["status"] in COMPLETED_BRIEF_RESPONSE_STATUSES
 
     def test_filter_brief_response_list_by_draft_status(self):
         self.setup_dummy_brief_response()
@@ -837,12 +874,14 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert len(data['briefResponses']) == 1
         assert data['briefResponses'][0]['id'] == expected_brief_id
 
-    def test_filter_brief_response_list_by_both_draft_and_submitted_status(self):
-        self.setup_dummy_brief_response()
+    def test_filter_brief_response_list_for_all_statuses(self):
         self.setup_dummy_brief_response(submitted_at=None)
+        self.setup_dummy_brief_response()
+        self.setup_dummy_brief_response(award_details={"pending": True})
+        self.setup_dummy_awarded_brief_response(brief_id=111)
 
-        res = self.list_brief_responses(status='draft,submitted')
+        res = self.list_brief_responses(status='draft,submitted,awarded,pending-awarded')
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['briefResponses']) == 2
+        assert len(data['briefResponses']) == 4

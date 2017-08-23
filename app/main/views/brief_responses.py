@@ -16,6 +16,8 @@ from ...utils import (
 from ...brief_utils import get_supplier_service_eligible_for_brief
 from ...service_utils import validate_and_return_supplier
 
+COMPLETED_BRIEF_RESPONSE_STATUSES = ['submitted', 'pending-awarded', 'awarded']
+
 
 @main.route('/brief-responses', methods=['POST'])
 def create_brief_response():
@@ -205,7 +207,7 @@ def list_brief_responses():
     if request.args.get('status'):
         statuses = request.args['status'].split(',')
     else:
-        statuses = ['submitted']
+        statuses = COMPLETED_BRIEF_RESPONSE_STATUSES
     brief_responses = BriefResponse.query.filter(BriefResponse.status.in_(statuses))
 
     if supplier_id is not None:

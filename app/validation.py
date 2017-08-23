@@ -24,12 +24,18 @@ SCHEMA_NAMES = [
     'brief-responses-digital-outcomes-and-specialists-digital-outcomes',
     'brief-responses-digital-outcomes-and-specialists-digital-specialists',
     'brief-responses-digital-outcomes-and-specialists-user-research-participants',
+    'brief-awards-digital-outcomes-and-specialists-digital-outcomes',
+    'brief-awards-digital-outcomes-and-specialists-digital-specialists',
+    'brief-awards-digital-outcomes-and-specialists-user-research-participants',
     'briefs-digital-outcomes-and-specialists-2-digital-outcomes',
     'briefs-digital-outcomes-and-specialists-2-digital-specialists',
     'briefs-digital-outcomes-and-specialists-2-user-research-participants',
     'brief-responses-digital-outcomes-and-specialists-2-digital-outcomes',
     'brief-responses-digital-outcomes-and-specialists-2-digital-specialists',
     'brief-responses-digital-outcomes-and-specialists-2-user-research-participants',
+    'brief-awards-digital-outcomes-and-specialists-2-digital-outcomes',
+    'brief-awards-digital-outcomes-and-specialists-2-digital-specialists',
+    'brief-awards-digital-outcomes-and-specialists-2-user-research-participants',
     'services-g-cloud-4',
     'services-g-cloud-5',
     'services-g-cloud-6-iaas',
@@ -346,7 +352,7 @@ def _translate_json_schema_error(key, validator, validator_value, message):
     elif validator == 'pattern':
         # Since error messages are now specified in the manifests, we can (in the future) generalise the returned
         # string and just show the correct message
-        if key.endswith(('dayRate', 'priceMin', 'priceMax', 'PriceMin', 'PriceMax')):
+        if key.endswith(('dayRate', 'priceMin', 'priceMax', 'PriceMin', 'PriceMax', 'awardedContractValue')):
             return 'not_money_format'
 
         return 'under_{}_words'.format(_get_word_count(validator_value))

@@ -9,7 +9,7 @@ from flask import current_app
 from flask_sqlalchemy import BaseQuery
 from six import string_types, iteritems
 from sqlalchemy import Sequence
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, exists
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import INTERVAL
 from sqlalchemy.ext.declarative import declared_attr
@@ -21,6 +21,7 @@ from sqlalchemy.sql.expression import (
     cast as sql_cast,
     select as sql_select,
     false as sql_false,
+    null as sql_null,
     and_ as sql_and,
 )
 from sqlalchemy.types import String
@@ -1220,6 +1221,14 @@ class Brief(db.Model):
         lazy='select',
     )
 
+    awarded_brief_response = db.relationship(
+        'BriefResponse',
+        primaryjoin="and_(Brief.id==BriefResponse.brief_id, BriefResponse.awarded_at.isnot(None))",
+        uselist=False,
+        lazy='joined',
+        viewonly=True
+    )
+
     @validates('users')
     def validates_users(self, key, user):
         if user.role != 'buyer':
@@ -1303,6 +1312,8 @@ class Brief(db.Model):
             return 'draft'
         elif self.applications_closed_at > datetime.utcnow():
             return 'live'
+        elif self.awarded_brief_response:
+            return 'awarded'
         else:
             return 'closed'
 
@@ -1320,11 +1331,43 @@ class Brief(db.Model):
 
     @status.expression
     def status(cls):
+        # To filter by 'awarded' status, we need an explicit EXISTS query on BriefResponse.
+        # This mirrors the awarded_brief_response relationship query above.
         return sql_case([
             (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.published_at.is_(None), 'draft'),
-            (cls.applications_closed_at > datetime.utcnow(), 'live')
+            (
+                exists([BriefResponse.id]).where(
+                    sql_and(cls.id == BriefResponse.brief_id, BriefResponse.awarded_at != None)  # noqa
+                ).label('awarded_brief_response_id'), 'awarded'
+            ),
+            (cls.applications_closed_at > datetime.utcnow(), 'live'),
         ], else_='closed')
+
+    search_result_status_ordering = {
+        "live": 0,
+        "closed": 1,
+        "awarded": 1,
+        "draft": 2,
+        "withdrawn": 2
+    }
+
+    @hybrid_property
+    def status_order(self):
+        return self.search_result_sort_ordering[self.status]
+
+    @status_order.expression
+    def status_order(cls):
+        return sql_case([
+            (cls.withdrawn_at.isnot(None), cls.search_result_status_ordering['withdrawn']),
+            (cls.published_at.is_(None), cls.search_result_status_ordering['draft']),
+            (
+                exists([BriefResponse.id]).where(
+                    sql_and(cls.id == BriefResponse.brief_id, BriefResponse.awarded_at != None)  # noqa
+                ).label('awarded_brief_response_id'), cls.search_result_status_ordering['awarded']
+            ),
+            (cls.applications_closed_at > datetime.utcnow(), cls.search_result_status_ordering['live']),
+        ], else_=cls.search_result_status_ordering['closed'])
 
     class query_class(BaseQuery):
         def has_statuses(self, *statuses):
@@ -1417,6 +1460,11 @@ class Brief(db.Model):
                 'withdrawnAt': self.withdrawn_at.strftime(DATETIME_FORMAT)
             })
 
+        if self.status == 'awarded':
+            data.update({
+                'awardedBriefResponseId': self.awarded_brief_response.id
+            })
+
         data['links'] = {
             'self': url_for('main.get_brief', brief_id=self.id),
             'framework': url_for('main.get_framework', framework_slug=self.framework.slug),
@@ -1451,6 +1499,9 @@ class BriefResponse(db.Model):
 
     created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
     submitted_at = db.Column(db.DateTime, nullable=True)
+    awarded_at = db.Column(db.DateTime, nullable=True)
+
+    award_details = db.Column(JSON, nullable=True, default={})
 
     brief = db.relationship('Brief', lazy='joined')
     supplier = db.relationship('Supplier', lazy='joined')
@@ -1465,6 +1516,18 @@ class BriefResponse(db.Model):
 
         return data
 
+    @validates('awarded_at')
+    def validates_awarded_at(self, key, awarded_at):
+        if self.awarded_at is not None:
+            raise ValidationError('Cannot remove or change award datestamp on previously awarded Brief Response')
+        if not awarded_at:
+            return None
+        if self.brief.status != "closed":
+            raise ValidationError('Brief response can not be awarded if the brief is not closed')
+        if self.status != 'pending-awarded':
+            raise ValidationError('Brief response can not be awarded if response has not been submitted')
+        return awarded_at
+
     def update_from_json(self, data):
         current_data = dict(self.data.items())
         current_data.update(data)
@@ -1473,6 +1536,10 @@ class BriefResponse(db.Model):
 
     @hybrid_property
     def status(self):
+        if self.awarded_at:
+            return 'awarded'
+        elif self.award_details:
+            return 'pending-awarded'
         if self.submitted_at:
             return 'submitted'
         else:
@@ -1481,6 +1548,8 @@ class BriefResponse(db.Model):
     @status.expression
     def status(cls):
         return sql_case([
+            (cls.awarded_at.isnot(None), 'awarded'),
+            (cls.award_details.cast(String) != '{}', 'pending-awarded'),
             (cls.submitted_at.isnot(None), 'submitted'),
         ], else_='draft')
 
@@ -1540,6 +1609,15 @@ class BriefResponse(db.Model):
                 'supplier': url_for("main.get_supplier", supplier_id=self.supplier_id),
             }
         })
+
+        if self.status == "awarded":
+            data.update({
+                'awardDetails': self.award_details
+            })
+        elif self.status == 'pending-awarded':
+            data.update({
+                'awardDetails': {'pending': True}
+            })
 
         return purge_nulls_from_data(data)
 
@@ -1678,6 +1756,13 @@ db.Index(
     AuditEvent.created_at,
     AuditEvent.id,
     postgresql_where=sql_and(AuditEvent.acknowledged == sql_false(), AuditEvent.type == "update_service"),
+)
+
+db.Index(
+    'idx_brief_responses_unique_awarded_at_per_brief_id',
+    BriefResponse.brief_id,
+    postgresql_where=BriefResponse.awarded_at != sql_null(),
+    unique=True
 )
 
 

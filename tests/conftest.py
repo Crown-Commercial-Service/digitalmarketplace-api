@@ -92,7 +92,7 @@ def draft_service(request, app, supplier_framework):
 
         request.addfinalizer(teardown)
 
-        with mock.patch('app.models.url_for', autospec=lambda i, **values: 'test.url/test'):
+        with mock.patch('app.models.main.url_for', autospec=lambda i, **values: 'test.url/test'):
             Service.create_from_draft(ds, 'enabled')
             return ds.serialize()
 

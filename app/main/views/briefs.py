@@ -1,16 +1,19 @@
+from datetime import datetime
 from flask import jsonify, abort, current_app, request
 from sqlalchemy.exc import IntegrityError
 
 from dmapiclient.audit import AuditTypes
 from .. import main
 from ... import db
-from ...models import User, Brief, AuditEvent, Framework, Lot, Supplier, Service
+from ...models import User, Brief, BriefResponse, AuditEvent, Framework, Lot, Supplier, Service
 from ...utils import (
     get_json_from_request, get_int_or_400, json_has_required_keys, pagination_links,
-    get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request
+    get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request,
+    purge_nulls_from_data
 )
 from ...service_utils import validate_and_return_lot, filter_services
 from ...brief_utils import validate_brief_data
+from ...validation import get_validation_errors
 
 
 @main.route('/briefs', methods=['POST'])
@@ -110,7 +113,7 @@ def get_brief(brief_id):
 @main.route('/briefs', methods=['GET'])
 def list_briefs():
     if request.args.get('human'):
-        briefs = Brief.query.order_by(Brief.status.desc(), Brief.published_at.desc(), Brief.id)
+        briefs = Brief.query.order_by(Brief.status_order, Brief.published_at.desc(), Brief.id)
     else:
         briefs = Brief.query.order_by(Brief.id)
 
@@ -200,6 +203,113 @@ def update_brief_status(brief_id, action):
         db.session.add(brief)
         db.session.add(audit)
         db.session.commit()
+
+    return jsonify(briefs=brief.serialize()), 200
+
+
+@main.route('/briefs/<int:brief_id>/award', methods=['POST'])
+def award_pending_brief_response(brief_id):
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['briefResponseId'])
+    updater_json = validate_and_return_updater_request()
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    if not brief.status == 'closed':
+        abort(400, "Brief is not closed")
+
+    brief_responses = BriefResponse.query.filter(
+        BriefResponse.brief_id == brief.id,
+        BriefResponse.status != 'draft'
+    )
+    # Check that BriefResponse in POST data is associated with this brief
+    if not json_payload['briefResponseId'] in [b.id for b in brief_responses]:
+        abort(400, "BriefResponse cannot be awarded for this Brief")
+
+    # Find any existing pending awarded BriefResponse and reset the details
+    audit_events = []
+    pending_awarded_responses = brief_responses.filter(BriefResponse.status == 'pending-awarded')
+    for pending_awarded_response in pending_awarded_responses:
+        pending_awarded_response.award_details = {}
+        db.session.add(pending_awarded_response)
+        audit_events.append(
+            AuditEvent(
+                audit_type=AuditTypes.update_brief_response,
+                user=updater_json['updated_by'],
+                data={
+                    'briefId': brief.id,
+                    'briefResponseId': pending_awarded_response.id,
+                    'briefResponseAwardedValue': False
+                },
+                db_object=pending_awarded_response
+            )
+        )
+
+    # Set new awarded BriefResponse
+    brief_response = brief_responses.filter(BriefResponse.id == json_payload['briefResponseId']).first()
+    brief_response.award_details = {'pending': True}
+    audit_events.append(
+        AuditEvent(
+            audit_type=AuditTypes.update_brief_response,
+            user=updater_json['updated_by'],
+            data={
+                'briefId': brief.id,
+                'briefResponseId': brief_response.id,
+                'briefResponseAwardedValue': True
+            },
+            db_object=brief_response
+        )
+    )
+
+    db.session.add_all([brief_response] + audit_events)
+    db.session.commit()
+
+    return jsonify(briefs=brief.serialize()), 200
+
+
+@main.route('/briefs/<int:brief_id>/award/<int:brief_response_id>/contract-details', methods=['POST'])
+def award_brief_details(brief_id, brief_response_id):
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['awardDetails'])
+    updater_json = validate_and_return_updater_request()
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    brief_response = BriefResponse.query.filter(
+        BriefResponse.id == brief_response_id
+    ).first_or_404()
+    if not brief_response.award_details.get('pending'):
+        abort(400, "Cannot update award details for a Brief without a winning supplier")
+
+    # Drop any null values to ensure correct validation messages
+    award_details = purge_nulls_from_data(json_payload['awardDetails'])
+    errors = get_validation_errors(
+        'brief-awards-{}-{}'.format(brief.framework.slug, brief.lot.slug),
+        award_details
+    )
+    if errors:
+        abort(400, errors)
+
+    brief_response.award_details = award_details
+    brief_response.awarded_at = datetime.utcnow()
+
+    audit_event = AuditEvent(
+        audit_type=AuditTypes.update_brief_response,
+        user=updater_json['updated_by'],
+        data={
+            'briefId': brief.id,
+            'briefResponseId': brief_response_id,
+            'briefResponseAwardDetails': award_details
+        },
+        db_object=brief_response
+    )
+
+    db.session.add_all([brief_response, audit_event])
+    db.session.commit()
 
     return jsonify(briefs=brief.serialize()), 200
 
