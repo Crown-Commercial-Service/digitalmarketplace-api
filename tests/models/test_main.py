@@ -1166,7 +1166,10 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                         'email': u'0@contact.com',
                         'id': self.contact_id,
                         'links': {
-                            'self': (('main.update_contact_information',), {'contact_id': self.contact_id, 'supplier_id': 0})
+                            'self': (
+                                ('main.update_contact_information',),
+                                {'contact_id': self.contact_id, 'supplier_id': 0}
+                            )
                         },
                         'postcode': u'SW1A 1AA',
                     }
@@ -1217,7 +1220,10 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                             'email': u'0@contact.com',
                             'id': self.contact_id,
                             'links': {
-                                'self': (('main.update_contact_information',), {'contact_id': self.contact_id, 'supplier_id': 0})
+                                'self': (
+                                    ('main.update_contact_information',),
+                                    {'contact_id': self.contact_id, 'supplier_id': 0}
+                                )
                             },
                             'postcode': u'SW1A 1AA',
                         }
