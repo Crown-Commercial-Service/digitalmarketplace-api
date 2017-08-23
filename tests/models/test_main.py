@@ -13,7 +13,8 @@ from app.models import (
     ValidationError,
     BriefClarificationQuestion,
     DraftService,
-    FrameworkLot
+    FrameworkLot,
+    ContactInformation
 )
 from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
@@ -545,7 +546,7 @@ class TestAwardedBriefs(BaseApplicationTest, FixtureMixin):
             brief_id, brief_response_id = self._setup_brief_and_awarded_brief_response(context, pending=False)
             brief = Brief.query.get(brief_id)
             assert brief.status == 'awarded'
-            with mock.patch('app.models.url_for') as url_for:
+            with mock.patch('app.models.main.url_for') as url_for:
                 url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
                 assert brief.serialize().get('awardedBriefResponseId') == brief_response_id
 
@@ -554,7 +555,7 @@ class TestAwardedBriefs(BaseApplicationTest, FixtureMixin):
             brief_id, brief_response_id = self._setup_brief_and_awarded_brief_response(context, awarded_at=False)
             brief = Brief.query.get(brief_id)
             assert brief.status == 'closed'
-            with mock.patch('app.models.url_for') as url_for:
+            with mock.patch('app.models.main.url_for') as url_for:
                 url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
                 assert brief.serialize().get('awardedBriefResponseId') is None
 
@@ -565,7 +566,7 @@ class TestAwardedBriefs(BaseApplicationTest, FixtureMixin):
             db.session.commit()
             brief = Brief.query.get(brief.id)
             assert brief.status == 'closed'
-            with mock.patch('app.models.url_for') as url_for:
+            with mock.patch('app.models.main.url_for') as url_for:
                 url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
                 assert brief.serialize().get('awardedBriefResponseId') is None
 
@@ -783,7 +784,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             db.session.add(brief_response)
             db.session.commit()
 
-            with mock.patch('app.models.url_for') as url_for:
+            with mock.patch('app.models.main.url_for') as url_for:
                 url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
                 assert brief_response.serialize() == {
                     'id': brief_response.id,
@@ -817,7 +818,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             db.session.add(brief_response)
             db.session.commit()
 
-            with mock.patch('app.models.url_for') as url_for:
+            with mock.patch('app.models.main.url_for') as url_for:
                 url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
                 assert brief_response.serialize() == {
                     'id': brief_response.id,
@@ -857,7 +858,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             db.session.add(brief_response)
             db.session.commit()
 
-            with mock.patch('app.models.url_for') as url_for:
+            with mock.patch('app.models.main.url_for') as url_for:
                 url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
                 assert brief_response.serialize()['awardDetails'] == {
                     "awardedContractStartDate": "2020-12-31",
@@ -875,7 +876,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             db.session.add(brief_response)
             db.session.commit()
 
-            with mock.patch('app.models.url_for') as url_for:
+            with mock.patch('app.models.main.url_for') as url_for:
                 url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
                 assert brief_response.serialize()['awardDetails'] == {"pending": True}
 
@@ -1130,6 +1131,9 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
         with self.app.app_context():
             self.setup_dummy_suppliers(1)
             self.supplier = Supplier.query.filter(Supplier.supplier_id == 0).first()
+            self.contact_id = ContactInformation.query.filter(
+                ContactInformation.supplier_id == self.supplier.supplier_id
+            ).first().id
 
     def _update_supplier_from_json_with_all_details(self):
         update_data = {
@@ -1152,22 +1156,28 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
         self.supplier.update_from_json(update_data)
 
     def test_serialization_of_new_supplier(self):
-        assert self.supplier.serialize() == {
-            'clients': [],
-            'contactInformation': [
-                {
-                    'contactName': u'Contact for Supplier 0',
-                    'email': u'0@contact.com',
-                    'id': 11,
-                    'links': {'self': 'http://127.0.0.1:5000/suppliers/0/contact-information/11'},
-                    'postcode': u'SW1A 1AA',
-                }
-            ],
-            'description': u'',
-            'id': 0,
-            'links': {'self': 'http://127.0.0.1:5000/suppliers/0'},
-            'name': u'Supplier 0',
-        }
+        with mock.patch('app.models.main.url_for') as url_for:
+            url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+            assert self.supplier.serialize() == {
+                'clients': [],
+                'contactInformation': [
+                    {
+                        'contactName': u'Contact for Supplier 0',
+                        'email': u'0@contact.com',
+                        'id': self.contact_id,
+                        'links': {
+                            'self': (('main.update_contact_information',), {'contact_id': self.contact_id, 'supplier_id': 0})
+                        },
+                        'postcode': u'SW1A 1AA',
+                    }
+                ],
+                'description': u'',
+                'id': 0,
+                'links': {
+                    'self': (('main.get_supplier',), {'supplier_id': 0})
+                },
+                'name': u'Supplier 0',
+            }
 
     def test_update_from_json(self):
         with self.app.app_context():
@@ -1196,32 +1206,36 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
             assert self.supplier.trading_status == "Sticky"
 
             # Check that serialization of a supplier with all details added looks as it should
-            assert self.supplier.serialize() == {
-                'clients': ['Parcel Wrappers Ltd'],
-                'companiesHouseNumber': '98765432',
-                'contactInformation': [
-                    {
-                        'contactName': u'Contact for Supplier 0',
-                        'email': u'0@contact.com',
-                        'id': 12,
-                        'links': {'self': 'http://127.0.0.1:5000/suppliers/0/contact-information/12'},
-                        'postcode': u'SW1A 1AA',
-                    }
-                ],
-                'description': 'All your parcel wrapping needs catered for',
-                'dunsNumber': '01010101',
-                'eSourcingId': '020202',
-                'id': 0,
-                'links': {'self': 'http://127.0.0.1:5000/suppliers/0'},
-                'name': 'String and Sticky Tape Inc.',
-                'organisationSize': 'medium',
-                'otherCompanyRegistrationNumber': '',
-                'registeredName': 'Tape and String Inc.',
-                'registrationCountry': 'Wales',
-                'registrationDate': '1973-08-10',
-                'tradingStatus': 'Sticky',
-                'vatNumber': '321321321',
-            }
+            with mock.patch('app.models.main.url_for') as url_for:
+                url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+                assert self.supplier.serialize() == {
+                    'clients': ['Parcel Wrappers Ltd'],
+                    'companiesHouseNumber': '98765432',
+                    'contactInformation': [
+                        {
+                            'contactName': u'Contact for Supplier 0',
+                            'email': u'0@contact.com',
+                            'id': self.contact_id,
+                            'links': {
+                                'self': (('main.update_contact_information',), {'contact_id': self.contact_id, 'supplier_id': 0})
+                            },
+                            'postcode': u'SW1A 1AA',
+                        }
+                    ],
+                    'description': 'All your parcel wrapping needs catered for',
+                    'dunsNumber': '01010101',
+                    'eSourcingId': '020202',
+                    'id': 0,
+                    'links': {'self': (('main.get_supplier',), {'supplier_id': 0})},
+                    'name': 'String and Sticky Tape Inc.',
+                    'organisationSize': 'medium',
+                    'otherCompanyRegistrationNumber': '',
+                    'registeredName': 'Tape and String Inc.',
+                    'registrationCountry': 'Wales',
+                    'registrationDate': '1973-08-10',
+                    'tradingStatus': 'Sticky',
+                    'vatNumber': '321321321',
+                }
 
 
 class TestServices(BaseApplicationTest, FixtureMixin):
@@ -1567,7 +1581,7 @@ class TestFrameworkSupplierIdsMany(BaseApplicationTest, FixtureMixin):
                     self.setup_dummy_service(service_id, supplier_id=supplier_id, **self.fl_query)
 
                     db.session.commit()
-                    with mock.patch('app.models.url_for', autospec=lambda i, **values: 'test.url/test'):
+                    with mock.patch('app.models.main.url_for', autospec=lambda i, **values: 'test.url/test'):
                         ds = DraftService.from_service(Service.query.filter(Service.service_id == service_id).first())
                         ds.status = service_status
                     db.session.add(ds)
