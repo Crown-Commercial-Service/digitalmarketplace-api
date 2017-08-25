@@ -278,10 +278,11 @@ def award_brief_details(brief_id, brief_response_id):
     brief = Brief.query.filter(
         Brief.id == brief_id
     ).first_or_404()
-
     brief_response = BriefResponse.query.filter(
+        BriefResponse.brief_id == brief_id,
         BriefResponse.id == brief_response_id
     ).first_or_404()
+
     if not brief_response.award_details.get('pending'):
         abort(400, "Cannot update award details for a Brief without a winning supplier")
 

@@ -1462,3 +1462,17 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
         assert res.status_code == 400
         error = json.loads(res.get_data(as_text=True))['error']
         assert "'updated_by' is a required property" in error
+
+    def test_404_if_brief_response_not_related_to_brief(self):
+        with self.app.app_context():
+
+            self.setup_dummy_briefs(2, status="closed")
+            self.setup_dummy_suppliers(1)
+            brief_response = BriefResponse(brief_id=2, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            db.session.add(brief_response)
+            db.session.commit()
+            brief_response_id = brief_response.id
+
+        res = self._post_to_award_details_endpoint(self.valid_payload, brief_response_id)
+
+        assert res.status_code == 404
