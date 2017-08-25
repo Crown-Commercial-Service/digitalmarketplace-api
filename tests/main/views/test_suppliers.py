@@ -609,6 +609,17 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert response.status_code == 400
 
+    def test_update_chid_with_none(self):
+        response = self.update_request({"companiesHouseNumber": None})
+        assert response.status_code == 200
+
+        with self.app.app_context():
+            supplier = Supplier.query.filter(
+                Supplier.supplier_id == self.supplier_id
+            ).first()
+
+            assert supplier.companies_house_number is None
+
     def test_update_with_bad_company_number(self):
         response = self.update_request({"companiesHouseNumber": "ABCDEFGH"})
         assert response.status_code == 400
