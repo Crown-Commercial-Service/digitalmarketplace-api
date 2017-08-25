@@ -390,7 +390,10 @@ class Supplier(db.Model):
         self.trading_status = data.get('tradingStatus')
 
         if 'registrationDate' in data:
-            self.registration_date = datetime.strptime(data.get('registrationDate'), DATE_FORMAT)
+            try:
+                self.registration_date = datetime.strptime(data.get('registrationDate'), DATE_FORMAT)
+            except ValueError:
+                raise ValidationError("Registration date format must be %Y-%m-%d; try something like 2017-08-25")
 
         return self
 
