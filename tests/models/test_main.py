@@ -1243,6 +1243,12 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                     'vatNumber': '321321321',
                 }
 
+    def test_update_from_json_error_for_badly_formatted_date(self):
+        with self.app.app_context():
+            with pytest.raises(ValidationError) as exception_info:
+                self.supplier.update_from_json({"registrationDate": "July 4, 1776"})
+            assert "Registration date format must be %Y-%m-%d" in "{}".format(exception_info.value)
+
 
 class TestServices(BaseApplicationTest, FixtureMixin):
     def test_framework_is_live_only_returns_live_frameworks(self):
