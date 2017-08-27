@@ -1,19 +1,18 @@
-from user import create_user
+from app.auth.user import create_user
 from flask import jsonify
 from flask_login import current_user, login_required, logout_user
-from sqlalchemy.exc import DataError, InvalidRequestError, IntegrityError
+from sqlalchemy.exc import InvalidRequestError, IntegrityError
 from app.auth import auth
 from app.models import User, Application
 from app.utils import get_json_from_request
 from app.emails.users import (
     send_account_activation_email, send_account_activation_manager_email, send_new_user_onboarding_email
 )
-from dmapiclient import HTTPError
 from dmutils.csrf import get_csrf_token
 from dmutils.email import EmailError, InvalidToken
-from helpers import decode_creation_token, is_government_email
-from applications import create_application
-from user import is_duplicate_user
+from app.auth.helpers import decode_creation_token, is_government_email
+from app.auth.applications import create_application
+from app.auth.user import is_duplicate_user
 
 
 @auth.route('/ping', methods=["GET"])

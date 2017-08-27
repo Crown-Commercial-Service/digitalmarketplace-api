@@ -9,7 +9,7 @@ test_seller = {
 
 
 def test_send_seller_type_signup_invite_email(client, mocker):
-    send_email = mocker.patch('app.auth.views.send_account_activation_email')
+    send_email = mocker.patch('app.auth.views.users.send_account_activation_email')
     response = client.post(
         '/signup',
         data=json.dumps(test_seller),
@@ -24,7 +24,7 @@ def test_send_seller_type_signup_invite_email(client, mocker):
 
 
 def test_send_buyer_type_signup_invite_email(client, mocker):
-    send_email = mocker.patch('app.auth.views.send_account_activation_email')
+    send_email = mocker.patch('app.auth.views.users.send_account_activation_email')
     response = client.post(
         '/signup',
         data=json.dumps({
@@ -47,7 +47,7 @@ def test_send_buyer_type_signup_invite_email(client, mocker):
 
 
 def test_send_contractor_buyer_type_signup_invite_email(client, mocker):
-    send_email = mocker.patch('app.auth.views.send_account_activation_manager_email')
+    send_email = mocker.patch('app.auth.views.users.send_account_activation_manager_email')
     response = client.post(
         '/signup',
         data=json.dumps({

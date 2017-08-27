@@ -1982,7 +1982,10 @@ class BriefResponse(db.Model):
                     return text_type(x)
 
             def clean(answers):
-                return [to_text(x) for x in answers]
+                if type(answers) is list:
+                    return [to_text(x) for x in answers]
+                if type(answers) is dict:
+                    return [to_text(answers[x]) for x in sorted(answers.iterkeys())]
 
             try:
                 self.data['essentialRequirements'] = \
