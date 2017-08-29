@@ -32,6 +32,7 @@ childcomwales.org.uk
 circle.org.uk
 citb.co.uk
 citizensadvice.org.uk
+clanmil.org.uk
 clarionhg.com
 commercialservices.org.uk
 communitygateway.co.uk
@@ -173,6 +174,7 @@ thls.org
 tourismireland.com
 traffordhousingtrust.co.uk
 translink.co.uk
+tvha.co.uk
 ukces.org.uk
 uksbs.co.uk
 ukti-invest.com
