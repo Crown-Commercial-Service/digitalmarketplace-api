@@ -239,7 +239,7 @@ class TestDirectAwardGetProject(DirectAwardSetupAndTeardown):
         data = json.loads(res.get_data(as_text=True))
 
         with self.app.app_context():
-            assert data['project'] == DirectAwardProject.query.get(self.project_id).serialize()
+            assert data['project'] == DirectAwardProject.query.get(self.project_id).serialize(with_users=True)
 
 
 class TestDirectAwardListProjectSearches(DirectAwardSetupAndTeardown):
