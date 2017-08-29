@@ -18,14 +18,22 @@ class DirectAwardProject(db.Model):
 
     users = db.relationship(User, secondary='direct_award_project_users', order_by=lambda: DirectAwardProjectUser.id)
 
-    def serialize(self):
-        return {
+    def serialize(self, with_users=False):
+        data = {
             "id": self.id,
             "name": self.name,
             "createdAt": self.created_at.strftime(DATETIME_FORMAT),
             "lockedAt": self.locked_at.strftime(DATETIME_FORMAT) if self.locked_at is not None else None,
             "active": self.active
         }
+
+        if with_users:
+            data['users'] = [
+                {k: v for k, v in user.serialize().items() if k in {'active', 'emailAddress', 'id', 'name', 'role'}}
+                for user in self.users
+            ]
+
+        return data
 
     @validates('name')
     def _assert_active_project(self, key, value):

@@ -91,7 +91,7 @@ def create_project():
 def get_project(project_id):
     project = DirectAwardProject.query.filter(DirectAwardProject.id == project_id).first_or_404()
 
-    return jsonify(project=project.serialize())
+    return jsonify(project=project.serialize(with_users=True))
 
 
 @main.route('/direct-award/projects/<int:project_id>/searches', methods=['GET'])

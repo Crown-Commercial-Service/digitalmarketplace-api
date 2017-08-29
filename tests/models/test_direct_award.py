@@ -36,6 +36,26 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
             project_keys_set = set(project.serialize().keys())
             assert {'id', 'name', 'createdAt', 'lockedAt', 'active'} <= project_keys_set
 
+            # We aren't serializing with_users=True, so we better not get them.
+            assert 'users' not in project_keys_set
+
+    def test_serialize_project_includes_users_if_requested(self):
+        with self.app.app_context():
+            self.setup_dummy_user(role='buyer')
+
+            project = DirectAwardProject(name=DIRECT_AWARD_PROJECT_NAME, users=User.query.all())
+            db.session.add(project)
+            db.session.commit()
+
+            serialized_project = project.serialize(with_users=True)
+            project_keys_set = set(serialized_project.keys())
+            # Must send at least these keys.
+            assert {'id', 'name', 'createdAt', 'lockedAt', 'active', 'users'} <= project_keys_set
+
+            # Must send these keys exactly - don't want to unknowingly expose more info.
+            for user in serialized_project['users']:
+                assert {'active', 'emailAddress', 'id', 'name', 'role'} == set(user.keys())
+
     def test_create_new_project_creates_project_users(self):
         with self.app.app_context():
             self.setup_dummy_user(role='buyer')
