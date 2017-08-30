@@ -209,6 +209,20 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         brief.status = 'withdrawn'
         assert isinstance(brief.withdrawn_at, datetime)
 
+    def test_cancelling_a_brief_sets_cancelled_at(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+        assert brief.cancelled_at is None
+
+        brief.status = 'cancelled'
+        assert isinstance(brief.cancelled_at, datetime)
+
+    def test_updating_a_brief_status_to_unsuccessful_sets_unsuccessful_at(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+        assert brief.unsuccessful_at is None
+
+        brief.status = 'unsuccessful'
+        assert isinstance(brief.unsuccessful_at, datetime)
+
     def test_status_must_be_valid(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
@@ -216,12 +230,13 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             brief.status = 'invalid'
         assert e.value.message == "Cannot change brief status from 'draft' to 'invalid'"
 
-    def test_cannot_set_live_brief_to_draft(self):
+    @pytest.mark.parametrize('status', ['draft', 'cancelled', 'unsuccessful'])
+    def test_cannot_set_live_brief_to_draft_cancelled_or_unsuccessful(self, status):
         brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
 
         with pytest.raises(ValidationError) as e:
-            brief.status = 'draft'
-        assert e.value.message == "Cannot change brief status from 'live' to 'draft'"
+            brief.status = status
+        assert e.value.message == "Cannot change brief status from 'live' to '{}'".format(status)
 
     def test_can_set_live_brief_to_withdrawn(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
@@ -230,25 +245,13 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         assert brief.published_at is not None
         assert brief.withdrawn_at is not None
 
-    def test_cannot_set_brief_to_closed(self):
+    @pytest.mark.parametrize('status', ['withdrawn', 'closed', 'awarded', 'cancelled', 'unsuccessful'])
+    def test_cannot_set_draft_brief_to_withdrawn_closed_awarded_cancelled_or_unsuccessful(self, status):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
         with pytest.raises(ValidationError) as e:
-            brief.status = 'closed'
-        assert e.value.message == "Cannot change brief status from 'draft' to 'closed'"
-
-    def test_cannot_set_brief_to_awarded(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot)
-        with pytest.raises(ValidationError) as e:
-            brief.status = 'awarded'
-        assert e.value.message == "Cannot change brief status from 'draft' to 'awarded'"
-
-    def test_cannot_set_draft_brief_to_withdrawn(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot)
-
-        with pytest.raises(ValidationError) as e:
-            brief.status = 'withdrawn'
-        assert e.value.message == "Cannot change brief status from 'draft' to 'withdrawn'"
+            brief.status = status
+        assert e.value.message == "Cannot change brief status from 'draft' to '{}'".format(status)
 
     def test_cannot_change_status_of_withdrawn_brief(self):
         brief = Brief(
@@ -256,7 +259,7 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
         )
 
-        for status in ['draft', 'live', 'closed', 'awarded']:
+        for status in ['draft', 'live', 'closed', 'awarded', 'cancelled', 'unsuccessful']:
             with pytest.raises(ValidationError) as e:
                 brief.status = status
             assert e.value.message == "Cannot change brief status from 'withdrawn' to '{}'".format(status)

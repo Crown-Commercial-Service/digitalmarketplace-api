@@ -1210,6 +1210,8 @@ class Brief(db.Model):
                            default=datetime.utcnow, onupdate=datetime.utcnow)
     published_at = db.Column(db.DateTime, index=True, nullable=True)
     withdrawn_at = db.Column(db.DateTime, index=True, nullable=True)
+    cancelled_at = db.Column(db.DateTime, index=True, nullable=True)
+    unsuccessful_at = db.Column(db.DateTime, index=True, nullable=True)
 
     __table_args__ = (db.ForeignKeyConstraint([framework_id, _lot_id],
                                               ['framework_lots.framework_id', 'framework_lots.lot_id']),
@@ -1315,6 +1317,10 @@ class Brief(db.Model):
             return 'draft'
         elif self.applications_closed_at > datetime.utcnow():
             return 'live'
+        elif self.cancelled_at:
+            return 'cancelled'
+        elif self.unsuccessful_at:
+            return 'unsuccessful'
         elif self.awarded_brief_response:
             return 'awarded'
         else:
@@ -1329,6 +1335,10 @@ class Brief(db.Model):
             self.published_at = datetime.utcnow()
         elif value == 'withdrawn' and self.status == 'live':
             self.withdrawn_at = datetime.utcnow()
+        elif value == 'cancelled' and self.status == 'closed':
+            self.cancelled_at = datetime.utcnow()
+        elif value == 'unsuccessful' and self.status == 'closed':
+            self.unsuccessful_at = datetime.utcnow()
         else:
             raise ValidationError("Cannot change brief status from '{}' to '{}'".format(self.status, value))
 
