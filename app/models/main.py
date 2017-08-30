@@ -1349,6 +1349,8 @@ class Brief(db.Model):
         return sql_case([
             (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.published_at.is_(None), 'draft'),
+            (cls.cancelled_at.isnot(None), 'cancelled'),
+            (cls.unsuccessful_at.isnot(None), 'unsuccessful'),
             (
                 exists([BriefResponse.id]).where(
                     sql_and(cls.id == BriefResponse.brief_id, BriefResponse.awarded_at != None)  # noqa
@@ -1361,6 +1363,8 @@ class Brief(db.Model):
         "live": 0,
         "closed": 1,
         "awarded": 1,
+        "cancelled": 1,
+        "unsuccessful": 1,
         "draft": 2,
         "withdrawn": 2
     }
@@ -1374,6 +1378,8 @@ class Brief(db.Model):
         return sql_case([
             (cls.withdrawn_at.isnot(None), cls.search_result_status_ordering['withdrawn']),
             (cls.published_at.is_(None), cls.search_result_status_ordering['draft']),
+            (cls.cancelled_at.isnot(None), cls.search_result_status_ordering['cancelled']),
+            (cls.unsuccessful_at.isnot(None), cls.search_result_status_ordering['unsuccessful']),
             (
                 exists([BriefResponse.id]).where(
                     sql_and(cls.id == BriefResponse.brief_id, BriefResponse.awarded_at != None)  # noqa

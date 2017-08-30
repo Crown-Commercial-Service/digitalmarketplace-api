@@ -361,6 +361,14 @@ class TestBriefStatuses(BaseApplicationTest, FixtureMixin):
                 published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
             )
             closed_brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            cancelled_brief = Brief(
+                data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1),
+                cancelled_at=datetime(2000, 2, 2)
+            )
+            unsuccessful_brief = Brief(
+                data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1),
+                unsuccessful_at=datetime(2000, 2, 2)
+            )
 
             awarded_brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
             self.setup_dummy_suppliers(1)
@@ -368,7 +376,10 @@ class TestBriefStatuses(BaseApplicationTest, FixtureMixin):
                 brief=awarded_brief, data={}, supplier_id=0, submitted_at=datetime(2000, 2, 1),
                 award_details={'pending': True}
             )
-            db.session.add_all([draft_brief, live_brief, withdrawn_brief, closed_brief, awarded_brief, brief_response])
+            db.session.add_all([
+                draft_brief, live_brief, withdrawn_brief, closed_brief, awarded_brief, brief_response,
+                cancelled_brief, unsuccessful_brief
+            ])
             db.session.commit()
             # award the BriefResponse
             brief_response.awarded_at = datetime(2001, 1, 1)
@@ -376,7 +387,9 @@ class TestBriefStatuses(BaseApplicationTest, FixtureMixin):
             db.session.commit()
 
             expected_result = [
-                live_brief.status, closed_brief.status, awarded_brief.status, draft_brief.status, withdrawn_brief.status
+                live_brief.status, closed_brief.status, awarded_brief.status,
+                cancelled_brief.status, unsuccessful_brief.status,
+                draft_brief.status, withdrawn_brief.status
             ]
             query_result = [
                 q.status for q in Brief.query.order_by(Brief.status_order, Brief.published_at.desc(), Brief.id)
@@ -402,6 +415,8 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
             assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
             assert Brief.query.filter(Brief.status == 'closed').count() == 0
             assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+            assert Brief.query.filter(Brief.status == 'cancelled').count() == 0
+            assert Brief.query.filter(Brief.status == 'unsuccessful').count() == 0
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'draft'
@@ -416,6 +431,8 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
             assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
             assert Brief.query.filter(Brief.status == 'closed').count() == 0
             assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+            assert Brief.query.filter(Brief.status == 'cancelled').count() == 0
+            assert Brief.query.filter(Brief.status == 'unsuccessful').count() == 0
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'live'
@@ -433,6 +450,8 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
             assert Brief.query.filter(Brief.status == 'withdrawn').count() == 1
             assert Brief.query.filter(Brief.status == 'closed').count() == 0
             assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+            assert Brief.query.filter(Brief.status == 'cancelled').count() == 0
+            assert Brief.query.filter(Brief.status == 'unsuccessful').count() == 0
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'withdrawn'
@@ -447,9 +466,53 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
             assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
             assert Brief.query.filter(Brief.status == 'closed').count() == 1
             assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+            assert Brief.query.filter(Brief.status == 'cancelled').count() == 0
+            assert Brief.query.filter(Brief.status == 'unsuccessful').count() == 0
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'closed'
+
+    def test_query_cancelled_brief(self):
+        with self.app.app_context():
+            db.session.add(
+                Brief(
+                    data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1),
+                    cancelled_at=datetime(2000, 2, 2)
+                )
+            )
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+            assert Brief.query.filter(Brief.status == 'cancelled').count() == 1
+            assert Brief.query.filter(Brief.status == 'unsuccessful').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'cancelled'
+
+    def test_query_unsuccessful_brief(self):
+        with self.app.app_context():
+            db.session.add(
+                Brief(
+                    data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1),
+                    unsuccessful_at=datetime(2000, 2, 2)
+                )
+            )
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+            assert Brief.query.filter(Brief.status == 'cancelled').count() == 0
+            assert Brief.query.filter(Brief.status == 'unsuccessful').count() == 1
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'unsuccessful'
 
     def test_query_awarded_brief(self):
         with self.app.app_context():
