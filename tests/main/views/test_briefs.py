@@ -714,7 +714,7 @@ class TestListBrief(FrameworkSetupAndTeardown):
         assert data['links'] == {}
 
 
-class TestPublishAndWithdrawBrief(FrameworkSetupAndTeardown):
+class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
     def test_publish_a_brief(self):
         self.setup_dummy_briefs(1, title='The Title')
 
@@ -743,6 +743,34 @@ class TestPublishAndWithdrawBrief(FrameworkSetupAndTeardown):
         assert res.status_code == 200
         assert data['briefs']['status'] == 'withdrawn'
         assert data['briefs']['withdrawnAt'] is not None
+
+    def test_cancel_a_brief(self):
+        self.setup_dummy_briefs(1, title='The Title', status='closed')
+
+        res = self.client.post(
+            '/briefs/1/cancel',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['briefs']['status'] == 'cancelled'
+
+    def test_update_a_brief_as_unsuccessful(self):
+        self.setup_dummy_briefs(1, title='The Title', status='closed')
+
+        res = self.client.post(
+            '/briefs/1/unsuccessful',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['briefs']['status'] == 'unsuccessful'
 
     def test_cannot_publish_withdrawn_brief(self):
         self.setup_dummy_briefs(1, title='The Title', status='withdrawn')
@@ -873,6 +901,52 @@ class TestPublishAndWithdrawBrief(FrameworkSetupAndTeardown):
             'briefId': mock.ANY,
             'briefPreviousStatus': 'live',
             'briefStatus': 'withdrawn',
+        }
+
+    def test_cancel_brief_makes_audit_event(self):
+        self.setup_dummy_briefs(1, title='The Title', status='closed')
+
+        res = self.client.post(
+            '/briefs/1/cancel',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        assert res.status_code == 200
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief_status.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data'] == {
+            'briefId': mock.ANY,
+            'briefPreviousStatus': 'closed',
+            'briefStatus': 'cancelled',
+        }
+
+    def test_unsuccessful_brief_makes_audit_event(self):
+        self.setup_dummy_briefs(1, title='The Title', status='closed')
+
+        res = self.client.post(
+            '/briefs/1/unsuccessful',
+            data=json.dumps({
+                'update_details': {'updated_by': 'example'}
+            }),
+            content_type='application/json')
+        assert res.status_code == 200
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        brief_audits = [event for event in data['auditEvents'] if event['type'] == AuditTypes.update_brief_status.value]
+        assert len(brief_audits) == 1
+        assert brief_audits[0]['data'] == {
+            'briefId': mock.ANY,
+            'briefPreviousStatus': 'closed',
+            'briefStatus': 'unsuccessful',
         }
 
 
