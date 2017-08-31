@@ -1398,7 +1398,7 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
         error = json.loads(res.get_data(as_text=True))['error']
         assert "'updated_by' is a required property" in error
 
-    @pytest.mark.parametrize('status', ['draft', 'live', 'withdrawn', 'awarded'])
+    @pytest.mark.parametrize('status', ['draft', 'live', 'withdrawn', 'awarded', 'cancelled', 'unsuccessful'])
     def test_400_if_awarding_a_brief_response_to_a_non_closed_brief(self, status):
         self.setup_dummy_briefs(1, status=status)
         res = self._post_to_award_endpoint({'briefResponseId': 1})
