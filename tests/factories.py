@@ -56,6 +56,14 @@ class DMBaseFactoryMeta(object):
 
 
 
+
+class FrameworkLotFactory(DMBaseFactory):
+    framework = factory.SubFactory(GcloudFrameworkFactory)
+    lot = factory.SubFactory(LotFactory)
+
+    class Meta(DMBaseFactoryMeta):
+        model = models.Lot
+
 class LotFactory(DMBaseFactory):
 
     slug = 'digital-outcomes'
