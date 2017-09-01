@@ -54,25 +54,6 @@ class DMBaseFactoryMeta(object):
     sqlalchemy_session_persistence = 'commit'
 
 
-class BuyerUserFactory(DMBaseFactory):
-        class Meta(DMBaseFactoryMeta):
-            model = models.User
-            sqlalchemy_session = db.session
-            sqlalchemy_session_persistence = 'commit'
-
-        name = factory.Faker('name')
-        email_address = factory.Faker('buyer_email')
-        password = 'Password1234'
-        role = 'buyer'
-        active = True
-        password_changed_at = factory.Faker('date_time_this_year', before_now=True)
-
-
-class SupplierUserFactory(DMBaseFactory):
-    class Meta(DMBaseFactoryMeta):
-        model = models.User
-    role = 'supplier'
-    email = factory.Faker('email')
 
 
 class LotFactory(DMBaseFactory):
@@ -84,15 +65,6 @@ class LotFactory(DMBaseFactory):
 
     class Meta(DMBaseFactoryMeta):
         model = models.Lot
-
-
-class SupplierFactory(DMBaseFactory):
-    class Meta(DMBaseFactoryMeta):
-        model = models.Supplier
-
-    supplier_id = factory.lazy_attribute(lambda i: random.randint(700000, 800000))
-    name = factory.Faker('company')
-    clients = factory.Faker('client_list')
 
 
 class FrameworkFactoryMixin():
@@ -121,6 +93,18 @@ class GcloudFrameworkFactory(DMBaseFactory, FrameworkFactoryMixin):
 
     class Meta(DMBaseFactoryMeta):
         model = models.Framework
+
+
+class SupplierFactory(DMBaseFactory):
+    class Meta(DMBaseFactoryMeta):
+        model = models.Supplier
+
+    supplier_id = factory.lazy_attribute(lambda i: random.randint(700000, 800000))
+    name = factory.Faker('company')
+    clients = factory.Faker('client_list')
+
+
+
 
 class SupplierFrameworkFactory(DMBaseFactory):
     supplier = factory.SubFactory(SupplierFactory)
@@ -151,3 +135,23 @@ class FrameworkAgreementFactory(DMBaseFactory):
     framework = factory.SubFactory(GcloudFrameworkFactory)
 
 
+
+class BuyerUserFactory(DMBaseFactory):
+        class Meta(DMBaseFactoryMeta):
+            model = models.User
+            sqlalchemy_session = db.session
+            sqlalchemy_session_persistence = 'commit'
+
+        name = factory.Faker('name')
+        email_address = factory.Faker('buyer_email')
+        password = 'Password1234'
+        role = 'buyer'
+        active = True
+        password_changed_at = factory.Faker('date_time_this_year', before_now=True)
+
+
+class SupplierUserFactory(DMBaseFactory):
+    class Meta(DMBaseFactoryMeta):
+        model = models.User
+    role = 'supplier'
+    email = factory.Faker('email')
