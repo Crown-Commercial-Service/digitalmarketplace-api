@@ -327,15 +327,3 @@ class DirectAwardSearchResultEntryFactory(db.Model):
 
     class Meta(DMBaseFactoryMeta):
         model = models.DirectAwardSearchResultEntry
-
-
-
-
-
-
-
-
-
-
-
-
