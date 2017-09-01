@@ -1019,9 +1019,9 @@ class ArchivedService(db.Model, ServiceTableMixin):
     # Overwrites service_id column to remove uniqueness constraint
     service_id = db.Column(db.String, index=True, unique=False, nullable=False)
 
-    @staticmethod
-    def from_service(service):
-        return ArchivedService(
+    @classmethod
+    def from_service(cls, service):
+        return cls(
             framework=service.framework,
             lot=service.lot,
             service_id=service.service_id,
@@ -1213,9 +1213,9 @@ class Brief(db.Model):
     cancelled_at = db.Column(db.DateTime, index=True, nullable=True)
     unsuccessful_at = db.Column(db.DateTime, index=True, nullable=True)
 
-    __table_args__ = (db.ForeignKeyConstraint([framework_id, _lot_id],
-                                              ['framework_lots.framework_id', 'framework_lots.lot_id']),
-                      {})
+    __table_args__ = (
+        db.ForeignKeyConstraint([framework_id, _lot_id], ['framework_lots.framework_id', 'framework_lots.lot_id']), {}
+    )
 
     users = db.relationship('User', secondary='brief_users')
     framework = db.relationship('Framework', lazy='joined')
