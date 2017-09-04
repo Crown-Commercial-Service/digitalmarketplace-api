@@ -34,7 +34,7 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
             db.session.commit()
 
             project_keys_set = set(project.serialize().keys())
-            assert {'id', 'name', 'createdAt', 'lockedAt', 'active'} <= project_keys_set
+            assert {'id', 'name', 'createdAt', 'downloadedAt', 'lockedAt', 'active'} <= project_keys_set
 
             # We aren't serializing with_users=True, so we better not get them.
             assert 'users' not in project_keys_set
@@ -50,7 +50,7 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
             serialized_project = project.serialize(with_users=True)
             project_keys_set = set(serialized_project.keys())
             # Must send at least these keys.
-            assert {'id', 'name', 'createdAt', 'lockedAt', 'active', 'users'} <= project_keys_set
+            assert {'id', 'name', 'createdAt', 'downloadedAt', 'lockedAt', 'active', 'users'} <= project_keys_set
 
             # Must send these keys exactly - don't want to unknowingly expose more info.
             for user in serialized_project['users']:

@@ -14,6 +14,7 @@ class DirectAwardProject(db.Model):
     name = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     locked_at = db.Column(db.DateTime, nullable=True)  # When the project's active search/es are final and cannot change
+    downloaded_at = db.Column(db.DateTime, nullable=True)  # When the project's result set was first downloaded
     active = db.Column(db.Boolean, default=True, nullable=False)
 
     users = db.relationship(User, secondary='direct_award_project_users', order_by=lambda: DirectAwardProjectUser.id)
@@ -23,6 +24,7 @@ class DirectAwardProject(db.Model):
             "id": self.id,
             "name": self.name,
             "createdAt": self.created_at.strftime(DATETIME_FORMAT),
+            "downloadedAt": self.downloaded_at.strftime(DATETIME_FORMAT) if self.downloaded_at is not None else None,
             "lockedAt": self.locked_at.strftime(DATETIME_FORMAT) if self.locked_at is not None else None,
             "active": self.active
         }
