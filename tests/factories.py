@@ -1,16 +1,15 @@
-from app import models
-import factory
-from app import db
-from sqlalchemy import orm
-import random
-from faker import Faker
-from faker.providers import BaseProvider
-import string
-fake = Faker()
 from datetime import datetime
+import random
+
+import factory
+from app import db, models
+
 
 # Our custom provider inherits from the BaseProvider
-class DMProvider(BaseProvider):
+class DMProvider(object):
+
+    def __init__(self, generator):
+        self.generator = generator
 
     @property
     def supplier_organisation_size(self):
@@ -42,7 +41,7 @@ class DMProvider(BaseProvider):
         return data
 
     def supplier_framework_declaration(self, **kwargs):
-        declaration = {"status": "complete", "organisationSize": DMProvider.supplier_organisation_size}
+        declaration = {'status': 'complete', 'organisationSize': DMProvider.supplier_organisation_size}
         declaration.update(**kwargs)
         return declaration
 
@@ -61,11 +60,16 @@ class DMProvider(BaseProvider):
         award_details.update(**kwargs)
         return award_details
 
+
 factory.Faker.add_provider(DMProvider)
+
+
+# TODO override _build
 
 
 class DMBaseFactory(factory.alchemy.SQLAlchemyModelFactory):
     """Base class for Digital Marketplace factories"""
+
     @classmethod
     def _create(cls, *args, **kwargs):
         """
@@ -94,8 +98,8 @@ class DMBaseFactoryMeta(object):
 
 
 class FrameworkLotFactory(DMBaseFactory):
-    framework = factory.SubFactory(GcloudFrameworkFactory)
-    lot = factory.SubFactory(LotFactory)
+    framework = factory.SubFactory('.GcloudFrameworkFactory')
+    lot = factory.SubFactory('.LotFactory')
 
     class Meta(DMBaseFactoryMeta):
         model = models.Lot
@@ -103,10 +107,12 @@ class FrameworkLotFactory(DMBaseFactory):
 
 class LotFactory(DMBaseFactory):
 
+    _no_recreate_fields = ('slug', 'name')
+
     slug = 'digital-outcomes'
     name = 'Digital Outcomes'
     one_service_limit = True
-    data = {"unitSingular": "service", "unitPlural": "services"}
+    data = {'unitSingular': 'service', 'unitPlural': 'services'}
 
     class Meta(DMBaseFactoryMeta):
         model = models.Lot
@@ -142,7 +148,7 @@ class GcloudFrameworkFactory(DMBaseFactory, FrameworkFactoryMixin):
 
 
 class ContactInformationFactory(DMBaseFactory):
-    supplier = factory.SubFactory(SupplierFactory)
+    supplier = factory.SubFactory('.SupplierFactory')
     contact_name = factory.Faker('name')
     email = factory.Faker('email')
 
@@ -190,16 +196,15 @@ class UserFactory(DMBaseFactoryCreateUpdate):
 
     class Meta(DMBaseFactoryMeta):
         model = models.User
-        sqlalchemy_session = db.session
-        sqlalchemy_session_persistence = 'commit'
 
 
 class BuyerUserFactory(UserFactory):
     """Shortcut class for creating a buyer user."""
     role = 'buyer'
     logged_in_at = factory.LazyFunction(datetime.now)
-    class Meta(UserFactory.Meta):
-        pass
+
+    class Meta(DMBaseFactoryMeta):
+        model = models.User
 
 
 class SupplierUserFactory(UserFactory):
@@ -207,8 +212,8 @@ class SupplierUserFactory(UserFactory):
     supplier = factory.SubFactory(SupplierFactory)
     role = 'supplier'
 
-    class Meta(UserFactory.Meta):
-        pass
+    class Meta(DMBaseFactoryMeta):
+        model = models.User
 
 
 class ServiceFactory(DMBaseFactoryCreateUpdate):
@@ -225,16 +230,16 @@ class ServiceFactory(DMBaseFactoryCreateUpdate):
         model = models.Service
 
 
-class ArchiveServiceFactory(ServiceFactory):
+class ArchivedServiceFactory(ServiceFactory):
 
     class Meta(DMBaseFactoryMeta):
-        model = models.ArchiveService
+        model = models.ArchivedService
 
 
 class DraftServiceFactory(ServiceFactory):
 
     class Meta(DMBaseFactoryMeta):
-        model = models.ArchiveService
+        model = models.DraftService
 
 
 class BriefFactory(DMBaseFactoryCreateUpdate):
@@ -244,8 +249,8 @@ class BriefFactory(DMBaseFactoryCreateUpdate):
     _lot_id = factory.LazyAttribute(lambda i: i.lot.id)
     is_a_copy = False
     data = factory.Faker('brief_data')
-    users_1 = factory.RelatedFactory(BriefUserFactory, 'brief')
-    users_2 = factory.RelatedFactory(BriefUserFactory, 'brief')
+    users_1 = factory.RelatedFactory('.BriefUserFactory', 'brief')
+    users_2 = factory.RelatedFactory('.BriefUserFactory', 'brief')
 
     class Meta(DMBaseFactoryMeta):
         model = models.Brief
@@ -271,7 +276,7 @@ class BriefClarificationQuestion(DMBaseFactory):
         model = models.BriefClarificationQuestion
 
 
-class BriefResponse(db.Model):
+class BriefResponseFactory(DMBaseFactory):
 
     data = factory.Faker('brief_response_data')
     award_details = factory.Faker('brief_response_award_details')
@@ -290,8 +295,8 @@ class DirectAwardProjectFactory(DMBaseFactory):
     name = 'Test project'
     created_at = factory.LazyFunction(datetime.now)
     active = True
-    users_1 = factory.RelatedFactory(DirectAwardProjectUserFactory, 'direct_award_project')
-    users_2 = factory.RelatedFactory(DirectAwardProjectUserFactory, 'direct_award_project')
+    users_1 = factory.RelatedFactory('.DirectAwardProjectUserFactory', 'direct_award_project')
+    users_2 = factory.RelatedFactory('.DirectAwardProjectUserFactory', 'direct_award_project')
 
     class Meta(DMBaseFactoryMeta):
         model = models.DirectAwardProject
@@ -314,16 +319,18 @@ class DirectAwardSearchFactory(DMBaseFactory):
     search_url = '' # TODO @samwilliams
     active = True
 
-    archived_service_1 = factory.RelatedFactory(DirectAwardSearchResultEntryFactory, 'search')
-    archived_service_2 = factory.RelatedFactory(DirectAwardSearchResultEntryFactory, 'search')
+    archived_service_1 = factory.RelatedFactory('.DirectAwardSearchResultEntryFactory', 'search')
+    archived_service_2 = factory.RelatedFactory('.DirectAwardSearchResultEntryFactory', 'search')
 
     class Meta(DMBaseFactoryMeta):
         model = models.DirectAwardSearch
 
 
-class DirectAwardSearchResultEntryFactory(db.Model):
+class DirectAwardSearchResultEntryFactory(DMBaseFactory):
     search = factory.SubFactory(DirectAwardSearchFactory)
-    archived_service = factory.SubFactory(ArchiveServiceFactory)
+    archived_service = factory.SubFactory(ArchivedServiceFactory)
 
     class Meta(DMBaseFactoryMeta):
         model = models.DirectAwardSearchResultEntry
+
+
