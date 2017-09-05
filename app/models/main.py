@@ -1210,6 +1210,8 @@ class Brief(db.Model):
                            default=datetime.utcnow, onupdate=datetime.utcnow)
     published_at = db.Column(db.DateTime, index=True, nullable=True)
     withdrawn_at = db.Column(db.DateTime, index=True, nullable=True)
+    cancelled_at = db.Column(db.DateTime, index=True, nullable=True)
+    unsuccessful_at = db.Column(db.DateTime, index=True, nullable=True)
 
     __table_args__ = (db.ForeignKeyConstraint([framework_id, _lot_id],
                                               ['framework_lots.framework_id', 'framework_lots.lot_id']),
@@ -1315,6 +1317,10 @@ class Brief(db.Model):
             return 'draft'
         elif self.applications_closed_at > datetime.utcnow():
             return 'live'
+        elif self.cancelled_at:
+            return 'cancelled'
+        elif self.unsuccessful_at:
+            return 'unsuccessful'
         elif self.awarded_brief_response:
             return 'awarded'
         else:
@@ -1329,6 +1335,10 @@ class Brief(db.Model):
             self.published_at = datetime.utcnow()
         elif value == 'withdrawn' and self.status == 'live':
             self.withdrawn_at = datetime.utcnow()
+        elif value == 'cancelled' and self.status == 'closed':
+            self.cancelled_at = datetime.utcnow()
+        elif value == 'unsuccessful' and self.status == 'closed':
+            self.unsuccessful_at = datetime.utcnow()
         else:
             raise ValidationError("Cannot change brief status from '{}' to '{}'".format(self.status, value))
 
@@ -1339,6 +1349,8 @@ class Brief(db.Model):
         return sql_case([
             (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.published_at.is_(None), 'draft'),
+            (cls.cancelled_at.isnot(None), 'cancelled'),
+            (cls.unsuccessful_at.isnot(None), 'unsuccessful'),
             (
                 exists([BriefResponse.id]).where(
                     sql_and(cls.id == BriefResponse.brief_id, BriefResponse.awarded_at != None)  # noqa
@@ -1351,6 +1363,8 @@ class Brief(db.Model):
         "live": 0,
         "closed": 1,
         "awarded": 1,
+        "cancelled": 1,
+        "unsuccessful": 1,
         "draft": 2,
         "withdrawn": 2
     }
@@ -1364,6 +1378,8 @@ class Brief(db.Model):
         return sql_case([
             (cls.withdrawn_at.isnot(None), cls.search_result_status_ordering['withdrawn']),
             (cls.published_at.is_(None), cls.search_result_status_ordering['draft']),
+            (cls.cancelled_at.isnot(None), cls.search_result_status_ordering['cancelled']),
+            (cls.unsuccessful_at.isnot(None), cls.search_result_status_ordering['unsuccessful']),
             (
                 exists([BriefResponse.id]).where(
                     sql_and(cls.id == BriefResponse.brief_id, BriefResponse.awarded_at != None)  # noqa

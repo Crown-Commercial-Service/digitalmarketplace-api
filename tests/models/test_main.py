@@ -145,14 +145,6 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
 
         assert brief.data == {'foo': 'bar', 'bar': '', 'other': ''}
 
-    def test_status_defaults_to_draft(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot)
-        assert brief.status == 'draft'
-
-    def test_live_status_for_briefs_with_published_at(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
-        assert brief.status == 'live'
-
     def test_applications_closed_at_is_none_for_drafts(self):
         brief = Brief(data={}, framework=self.framework, lot=self.lot)
 
@@ -181,85 +173,6 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         assert brief.applications_closed_at == datetime(2016, 3, 10, 23, 59, 59)
         assert brief.clarification_questions_closed_at == datetime(2016, 3, 7, 23, 59, 59)
         assert brief.clarification_questions_published_by == datetime(2016, 3, 9, 23, 59, 59)
-
-    def test_expired_status_for_a_brief_with_passed_close_date(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot,
-                      published_at=datetime.utcnow() - timedelta(days=1000))
-
-        assert brief.status == 'closed'
-        assert brief.clarification_questions_are_closed
-        assert brief.applications_closed_at < datetime.utcnow()
-
-    def test_can_set_draft_brief_to_the_same_status(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot)
-        brief.status = 'draft'
-
-    def test_publishing_a_brief_sets_published_at(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot)
-        assert brief.published_at is None
-
-        brief.status = 'live'
-        assert not brief.clarification_questions_are_closed
-        assert isinstance(brief.published_at, datetime)
-
-    def test_withdrawing_a_brief_sets_withdrawn_at(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
-        assert brief.withdrawn_at is None
-
-        brief.status = 'withdrawn'
-        assert isinstance(brief.withdrawn_at, datetime)
-
-    def test_status_must_be_valid(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot)
-
-        with pytest.raises(ValidationError) as e:
-            brief.status = 'invalid'
-        assert e.value.message == "Cannot change brief status from 'draft' to 'invalid'"
-
-    def test_cannot_set_live_brief_to_draft(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
-
-        with pytest.raises(ValidationError) as e:
-            brief.status = 'draft'
-        assert e.value.message == "Cannot change brief status from 'live' to 'draft'"
-
-    def test_can_set_live_brief_to_withdrawn(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
-        brief.status = 'withdrawn'
-
-        assert brief.published_at is not None
-        assert brief.withdrawn_at is not None
-
-    def test_cannot_set_brief_to_closed(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot)
-
-        with pytest.raises(ValidationError) as e:
-            brief.status = 'closed'
-        assert e.value.message == "Cannot change brief status from 'draft' to 'closed'"
-
-    def test_cannot_set_brief_to_awarded(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot)
-        with pytest.raises(ValidationError) as e:
-            brief.status = 'awarded'
-        assert e.value.message == "Cannot change brief status from 'draft' to 'awarded'"
-
-    def test_cannot_set_draft_brief_to_withdrawn(self):
-        brief = Brief(data={}, framework=self.framework, lot=self.lot)
-
-        with pytest.raises(ValidationError) as e:
-            brief.status = 'withdrawn'
-        assert e.value.message == "Cannot change brief status from 'draft' to 'withdrawn'"
-
-    def test_cannot_change_status_of_withdrawn_brief(self):
-        brief = Brief(
-            data={}, framework=self.framework, lot=self.lot,
-            published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
-        )
-
-        for status in ['draft', 'live', 'closed', 'awarded']:
-            with pytest.raises(ValidationError) as e:
-                brief.status = status
-            assert e.value.message == "Cannot change brief status from 'withdrawn' to '{}'".format(status)
 
     def test_buyer_users_can_be_added_to_a_brief(self):
         with self.app.app_context():
@@ -328,6 +241,117 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             assert brief.clarification_questions[0].question == "How?"
             assert brief.clarification_questions[1].question == "When"
 
+
+class TestBriefStatuses(BaseApplicationTest, FixtureMixin):
+    def setup(self):
+        super(TestBriefStatuses, self).setup()
+        with self.app.app_context():
+            self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self.lot = self.framework.get_lot('digital-outcomes')
+
+    def test_status_defaults_to_draft(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        assert brief.status == 'draft'
+
+    def test_live_status_for_briefs_with_published_at(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
+        assert brief.status == 'live'
+
+    def test_closed_status_for_a_brief_with_passed_close_date(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot,
+                      published_at=datetime.utcnow() - timedelta(days=1000))
+
+        assert brief.status == 'closed'
+        assert brief.clarification_questions_are_closed
+        assert brief.applications_closed_at < datetime.utcnow()
+
+    def test_awarded_status_for_a_brief_with_an_awarded_brief_response(self):
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            brief_response = BriefResponse(brief=brief, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+            brief_response.award_details = {"confirmed": "details"}
+            brief_response.awarded_at = datetime(2016, 12, 12, 1, 1, 1)
+            db.session.add_all([brief, brief_response])
+            db.session.commit()
+
+            brief = Brief.query.get(brief.id)
+            assert brief.status == 'awarded'
+
+    def test_publishing_a_brief_sets_published_at(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        assert brief.published_at is None
+
+        brief.status = 'live'
+        assert not brief.clarification_questions_are_closed
+        assert isinstance(brief.published_at, datetime)
+
+    def test_withdrawing_a_brief_sets_withdrawn_at(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
+        assert brief.withdrawn_at is None
+
+        brief.status = 'withdrawn'
+        assert isinstance(brief.withdrawn_at, datetime)
+
+    def test_cancelling_a_brief_sets_cancelled_at(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+        assert brief.cancelled_at is None
+
+        brief.status = 'cancelled'
+        assert isinstance(brief.cancelled_at, datetime)
+
+    def test_unsuccessfulling_a_brief_sets_unsuccessful_at(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+        assert brief.unsuccessful_at is None
+
+        brief.status = 'unsuccessful'
+        assert isinstance(brief.unsuccessful_at, datetime)
+
+    def test_can_set_draft_brief_to_the_same_status(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+        brief.status = 'draft'
+
+    def test_can_set_live_brief_to_withdrawn(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
+        brief.status = 'withdrawn'
+
+        assert brief.published_at is not None
+        assert brief.withdrawn_at is not None
+
+    def test_cannot_set_any_brief_to_an_invalid_status(self):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+
+        with pytest.raises(ValidationError) as e:
+            brief.status = 'invalid'
+        assert e.value.message == "Cannot change brief status from 'draft' to 'invalid'"
+
+    @pytest.mark.parametrize('status', ['draft', 'closed', 'awarded', 'cancelled', 'unsuccessful'])
+    def test_cannot_set_live_brief_to_non_withdrawn_status(self, status):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime.utcnow())
+
+        with pytest.raises(ValidationError) as e:
+            brief.status = status
+        assert e.value.message == "Cannot change brief status from 'live' to '{}'".format(status)
+
+    @pytest.mark.parametrize('status', ['withdrawn', 'closed', 'awarded', 'cancelled', 'unsuccessful'])
+    def test_cannot_set_draft_brief_to_withdrawn_closed_awarded_cancelled_or_unsuccessful(self, status):
+        brief = Brief(data={}, framework=self.framework, lot=self.lot)
+
+        with pytest.raises(ValidationError) as e:
+            brief.status = status
+        assert e.value.message == "Cannot change brief status from 'draft' to '{}'".format(status)
+
+    def test_cannot_change_status_of_withdrawn_brief(self):
+        brief = Brief(
+            data={}, framework=self.framework, lot=self.lot,
+            published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
+        )
+
+        for status in ['draft', 'live', 'closed', 'awarded', 'cancelled', 'unsuccessful']:
+            with pytest.raises(ValidationError) as e:
+                brief.status = status
+            assert e.value.message == "Cannot change brief status from 'withdrawn' to '{}'".format(status)
+
     def test_status_order_sorts_briefs_by_search_result_status_ordering(self):
         with self.app.app_context():
             draft_brief = Brief(data={}, framework=self.framework, lot=self.lot)
@@ -337,6 +361,14 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
                 published_at=datetime.utcnow() - timedelta(days=1), withdrawn_at=datetime.utcnow()
             )
             closed_brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+            cancelled_brief = Brief(
+                data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1),
+                cancelled_at=datetime(2000, 2, 2)
+            )
+            unsuccessful_brief = Brief(
+                data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1),
+                unsuccessful_at=datetime(2000, 2, 2)
+            )
 
             awarded_brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
             self.setup_dummy_suppliers(1)
@@ -344,7 +376,10 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
                 brief=awarded_brief, data={}, supplier_id=0, submitted_at=datetime(2000, 2, 1),
                 award_details={'pending': True}
             )
-            db.session.add_all([draft_brief, live_brief, withdrawn_brief, closed_brief, awarded_brief, brief_response])
+            db.session.add_all([
+                draft_brief, live_brief, withdrawn_brief, closed_brief, awarded_brief, brief_response,
+                cancelled_brief, unsuccessful_brief
+            ])
             db.session.commit()
             # award the BriefResponse
             brief_response.awarded_at = datetime(2001, 1, 1)
@@ -352,7 +387,9 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             db.session.commit()
 
             expected_result = [
-                live_brief.status, closed_brief.status, awarded_brief.status, draft_brief.status, withdrawn_brief.status
+                live_brief.status, closed_brief.status, awarded_brief.status,
+                cancelled_brief.status, unsuccessful_brief.status,
+                draft_brief.status, withdrawn_brief.status
             ]
             query_result = [
                 q.status for q in Brief.query.order_by(Brief.status_order, Brief.published_at.desc(), Brief.id)
@@ -378,6 +415,8 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
             assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
             assert Brief.query.filter(Brief.status == 'closed').count() == 0
             assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+            assert Brief.query.filter(Brief.status == 'cancelled').count() == 0
+            assert Brief.query.filter(Brief.status == 'unsuccessful').count() == 0
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'draft'
@@ -392,6 +431,8 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
             assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
             assert Brief.query.filter(Brief.status == 'closed').count() == 0
             assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+            assert Brief.query.filter(Brief.status == 'cancelled').count() == 0
+            assert Brief.query.filter(Brief.status == 'unsuccessful').count() == 0
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'live'
@@ -409,6 +450,8 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
             assert Brief.query.filter(Brief.status == 'withdrawn').count() == 1
             assert Brief.query.filter(Brief.status == 'closed').count() == 0
             assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+            assert Brief.query.filter(Brief.status == 'cancelled').count() == 0
+            assert Brief.query.filter(Brief.status == 'unsuccessful').count() == 0
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'withdrawn'
@@ -423,9 +466,53 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
             assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
             assert Brief.query.filter(Brief.status == 'closed').count() == 1
             assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+            assert Brief.query.filter(Brief.status == 'cancelled').count() == 0
+            assert Brief.query.filter(Brief.status == 'unsuccessful').count() == 0
 
             # Check python implementation gives same result as the sql implementation
             assert Brief.query.all()[0].status == 'closed'
+
+    def test_query_cancelled_brief(self):
+        with self.app.app_context():
+            db.session.add(
+                Brief(
+                    data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1),
+                    cancelled_at=datetime(2000, 2, 2)
+                )
+            )
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+            assert Brief.query.filter(Brief.status == 'cancelled').count() == 1
+            assert Brief.query.filter(Brief.status == 'unsuccessful').count() == 0
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'cancelled'
+
+    def test_query_unsuccessful_brief(self):
+        with self.app.app_context():
+            db.session.add(
+                Brief(
+                    data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1),
+                    unsuccessful_at=datetime(2000, 2, 2)
+                )
+            )
+            db.session.commit()
+
+            assert Brief.query.filter(Brief.status == 'draft').count() == 0
+            assert Brief.query.filter(Brief.status == 'live').count() == 0
+            assert Brief.query.filter(Brief.status == 'withdrawn').count() == 0
+            assert Brief.query.filter(Brief.status == 'closed').count() == 0
+            assert Brief.query.filter(Brief.status == 'awarded').count() == 0
+            assert Brief.query.filter(Brief.status == 'cancelled').count() == 0
+            assert Brief.query.filter(Brief.status == 'unsuccessful').count() == 1
+
+            # Check python implementation gives same result as the sql implementation
+            assert Brief.query.all()[0].status == 'unsuccessful'
 
     def test_query_awarded_brief(self):
         with self.app.app_context():

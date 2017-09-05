@@ -167,7 +167,7 @@ def list_briefs():
         )
 
 
-@main.route('/briefs/<int:brief_id>/<any(publish, withdraw):action>', methods=['POST'])
+@main.route('/briefs/<int:brief_id>/<any(publish, withdraw, cancel, unsuccessful):action>', methods=['POST'])
 def update_brief_status(brief_id, action):
     updater_json = validate_and_return_updater_request()
 
@@ -180,7 +180,9 @@ def update_brief_status(brief_id, action):
 
     action_to_status = {
         'publish': 'live',
-        'withdraw': 'withdrawn'
+        'withdraw': 'withdrawn',
+        'cancel': 'cancelled',
+        'unsuccessful': 'unsuccessful'
     }
     if brief.status != action_to_status[action]:
         previousStatus = brief.status
