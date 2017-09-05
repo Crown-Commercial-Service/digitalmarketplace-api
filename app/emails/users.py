@@ -91,7 +91,7 @@ def generate_user_creation_token(name, email_address, user_type, **unused):
 
 def send_account_activation_email(name, email_address, user_type):
     token = generate_user_creation_token(name=name, email_address=email_address, user_type=user_type)
-    url = '{}{}/createuser/{}'.format(
+    url = '{}{}/create-user/{}'.format(
         current_app.config['FRONTEND_ADDRESS'],
         current_app.config['REACT_APP_ROOT'],
         quote(token)
@@ -157,7 +157,7 @@ def _send_account_activation_admin_email(manager_name, manager_email, applicant_
     token = generate_user_creation_token(name=applicant_name, email_address=applicant_email, user_type="buyer")
     url = '{}/buyers/signup/send-invite/{}'.format(
         current_app.config['FRONTEND_ADDRESS'],
-        token
+        quote(token)
     )
 
     email_body = render_email_template(
@@ -218,3 +218,34 @@ def send_new_user_onboarding_email(name, email_address, user_type):
                 'error': six.text_type(error),
                 'email_hash': hash_email(email_address)})
         return jsonify(message='Failed to send buyer onboarding email.'), 503
+
+
+def send_reset_password_confirm_email(email_address, url, locked):
+    if locked:
+        email_template = 'reset_password_email_locked_account.md'
+    else:
+        email_template = 'reset_password_email.md'
+
+    email_body = render_email_template(
+        email_template,
+        url=url
+    )
+
+    try:
+        send_email(
+            email_address,
+            email_body,
+            current_app.config['RESET_PASSWORD_EMAIL_SUBJECT'],
+            current_app.config['RESET_PASSWORD_EMAIL_FROM'],
+            current_app.config['RESET_PASSWORD_EMAIL_NAME'],
+        )
+        session['email_sent_to'] = email_address
+
+    except EmailError as e:
+        rollbar.report_exc_info()
+        current_app.logger.error(
+            'Password reset email failed to send. '
+            'error {error} email_hash {email_hash}',
+            extra={
+                'error': six.text_type(e),
+                'email_hash': hash_email(email_address)})

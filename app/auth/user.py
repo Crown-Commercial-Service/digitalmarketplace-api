@@ -117,3 +117,65 @@ def duplicate_audit_event(email_address, data):
 
     db.session.add(audit)
     db.session.commit()
+
+
+def update_user_details(**kwargs):
+    """
+        Update a user. Looks user up in DB, and updates where necessary.
+    """
+
+    user_id = kwargs.get('user_id', None)
+
+    user = User.query.filter(User.id == user_id).first()
+
+    if user is None:
+        raise ValueError("Unable to modify user. User with id {} does not exist".format(user_id))
+
+    if kwargs.get('password', None) is not None:
+        user.password = encryption.hashpw(kwargs['password'])
+        user.password_changed_at = datetime.utcnow()
+    if kwargs.get('active', None) is not None:
+        user.active = kwargs['active']
+    if kwargs.get('name', None) is not None:
+        user.name = kwargs['name']
+    if kwargs.get('email_address', None) is not None:
+        user.email_address = kwargs['email_address']
+    if kwargs.get('role', None) is not None:
+        if user.role == 'supplier' and kwargs['role'] != user.role:
+            user.supplier_code = None
+            kwargs.pop('supplierCode', None)
+        user.role = kwargs['role']
+    if kwargs.get('supplierCode', None) is not None:
+        user.supplier_code = kwargs['supplierCode']
+    if kwargs.get('application_id', None) is not None:
+        user.application_id = kwargs['application_id']
+    if kwargs.get('locked', None) and not kwargs['locked']:
+        user.failed_login_count = 0
+    if kwargs.get('termsAcceptedAt', None) is not None:
+        user.terms_accepted_at = kwargs['termsAcceptedAt']
+
+    check_supplier_role(user.role, user.supplier_code)
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.update_user,
+        user=kwargs.get('updated_by', 'no user data'),
+        data={
+            'user': user.email_address,
+            'update': kwargs
+        },
+        db_object=user
+    )
+
+    db.session.add(user)
+    db.session.add(audit)
+
+    db.session.commit()
+
+    return user
+
+
+def check_supplier_role(role, supplier_code):
+    if role == 'supplier' and supplier_code is None:
+        raise ValueError("'supplier_code' is required for users with 'supplier' role")
+    elif role != 'supplier' and supplier_code is not None:
+        raise("'supplier_code' is only valid for users with 'supplier' role, not '{}'".format(role))

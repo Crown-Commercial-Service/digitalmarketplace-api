@@ -1,18 +1,23 @@
 from app.auth.user import create_user
-from flask import jsonify
+from flask import jsonify, current_app
 from flask_login import current_user, login_required, logout_user
 from sqlalchemy.exc import InvalidRequestError, IntegrityError
+from urllib import quote
 from app.auth import auth
-from app.models import User, Application
+from app.auth.helpers import (
+    generate_reset_password_token, decode_reset_password_token
+)
+from app.models import Application, User
 from app.utils import get_json_from_request
 from app.emails.users import (
-    send_account_activation_email, send_account_activation_manager_email, send_new_user_onboarding_email
+    send_account_activation_email, send_account_activation_manager_email, send_new_user_onboarding_email,
+    send_reset_password_confirm_email
 )
 from dmutils.csrf import get_csrf_token
 from dmutils.email import EmailError, InvalidToken
 from app.auth.helpers import decode_creation_token, is_government_email
 from app.auth.applications import create_application
-from app.auth.user import is_duplicate_user
+from app.auth.user import is_duplicate_user, update_user_details
 
 
 @auth.route('/ping', methods=["GET"])
@@ -143,7 +148,7 @@ def validate_invite_token(token):
         ), 400
 
 
-@auth.route('/createuser', methods=['POST'])
+@auth.route('/create-user', methods=['POST'])
 def submit_create_account():
     json_payload = get_json_from_request()
     required_keys = ['name', 'email_address', 'password', 'user_type']
@@ -204,6 +209,91 @@ def submit_create_account():
 
     except IntegrityError as error:
         return jsonify(message=error.message), 409
+
+    except Exception as error:
+        return jsonify(message=error.message), 400
+
+
+@auth.route('/reset-password/', methods=['POST'])
+def send_reset_password_email():
+    json_payload = get_json_from_request()
+    email_address = json_payload.get('email_address', None)
+    if email_address is None:
+        return jsonify(message='One or more required args were missing from the request'), 400
+
+    user = User.query.filter(
+        User.email_address == email_address).first()
+
+    try:
+        reset_password_token = generate_reset_password_token(
+            email_address,
+            user.id,
+        )
+
+        reset_password_url = '{}{}/reset-password/{}'.format(
+            current_app.config['FRONTEND_ADDRESS'],
+            current_app.config['REACT_APP_ROOT'],
+            quote(reset_password_token)
+        )
+
+        send_reset_password_confirm_email(
+            email_address=email_address,
+            url=reset_password_url,
+            locked=user.locked
+        )
+
+    except Exception as error:
+        return jsonify(message=error.message), 400
+
+    return jsonify(
+        email_address=email_address,
+        token=reset_password_token
+    ), 200
+
+
+@auth.route('/reset-password/<string:token>', methods=['GET'])
+def get_reset_user(token):
+    try:
+        data = decode_reset_password_token(token.encode())
+
+    except InvalidToken as error:
+        return jsonify(message=error.message), 400
+
+    return jsonify(
+        token=token,
+        email_address=data.get('email_address', None),
+        user_id=data.get('user_id', None)
+    ), 200
+
+
+@auth.route('/reset-password/<string:token>', methods=['POST'])
+def reset_password(token):
+    json_payload = get_json_from_request()
+
+    required_keys = ['password', 'confirmPassword', 'email_address', 'user_id']
+
+    if not set(required_keys).issubset(json_payload):
+        return jsonify(message='One or more required args were missing from the request'), 400
+
+    if json_payload['password'] != json_payload['confirmPassword']:
+        return jsonify(message="Passwords do not match"), 400
+
+    data = decode_reset_password_token(token.encode())
+
+    if data.get('error', None) is not None:
+        return jsonify(message="An error occured decoding the reset password token"), 400
+
+    try:
+        update_user_details(
+            password=json_payload['password'],
+            email_address=json_payload['email_address'],
+            user_id=json_payload['user_id']
+        )
+
+        return jsonify(
+            message="User with email {}, successfully updated their password".format(json_payload['email_address']),
+            email_address=json_payload['email_address']
+        ), 200
 
     except Exception as error:
         return jsonify(message=error.message), 400

@@ -40,7 +40,7 @@ def test_create_user(client, app, applications):
         user_name = 'new buyer with supplier code'
 
         response = client.post(
-            '/createuser',
+            '/create-user',
             data=json.dumps({
                 'name': user_name,
                 'email_address': user_email,
@@ -58,7 +58,7 @@ def test_create_user(client, app, applications):
 
 def test_should_require_minimum_args(client):
     response = client.post(
-        '/createuser',
+        '/create-user',
         data=json.dumps({
             'name': 'Jeff Labowski',
             'email_address': 'm@examplecompany.biz',
@@ -71,10 +71,10 @@ def test_should_require_minimum_args(client):
     assert data['message'] == 'One or more required args were missing from the request'
 
 
-def test_createuser_wont_create_duplicate_user(client, users):
+def test_create_user_wont_create_duplicate_user(client, users):
     user = users[0]
     response = client.post(
-        '/createuser',
+        '/create-user',
         data=json.dumps({
             'name': user.name,
             'email_address': user.email_address,
@@ -86,9 +86,9 @@ def test_createuser_wont_create_duplicate_user(client, users):
     assert response.status_code == 409
 
 
-def test_createuser_without_data_paylaod(client):
+def test_create_user_without_data_paylaod(client):
     response = client.post(
-        '/createuser',
+        '/create-user',
         content_type='application/json')
 
     assert response.status_code == 400
@@ -96,7 +96,7 @@ def test_createuser_without_data_paylaod(client):
 
 def test_supplier_role_should_have_supplier_code(client, supplier_user):
     response = client.post(
-        '/createuser',
+        '/create-user',
         data=json.dumps({
             'name': 'new supplier',
             'email_address': 'supplier_user email_address',
@@ -117,7 +117,7 @@ def test_non_supplier_role_should_not_have_supplier_code(client):
     user_name = 'new buyer with supplier code'
 
     response = client.post(
-        '/createuser',
+        '/create-user',
         data=json.dumps({
             'name': user_name,
             'email_address': user_email,
@@ -139,7 +139,7 @@ def test_applicant_requires_app_id_property(client, applications):
     user_name = 'new buyer with supplier code'
 
     response = client.post(
-        '/createuser',
+        '/create-user',
         data=json.dumps({
             'name': user_name,
             'email_address': user_email,
@@ -164,7 +164,7 @@ def test_create_user_with_invalid_app_id_property(client, app, applications):
         user_name = 'new seller'
 
         response = client.post(
-            '/createuser',
+            '/create-user',
             data=json.dumps({
                 'name': user_name,
                 'email_address': user_email,
@@ -185,7 +185,7 @@ def test_buyer_cant_set_application_id_property(client, applications):
     user_name = 'new buyer with supplier code'
 
     response = client.post(
-        '/createuser',
+        '/create-user',
         data=json.dumps({
             'name': user_name,
             'email_address': user_email,
@@ -213,7 +213,7 @@ def test_existing_application_same_organisation_as_applicant(client, mocker, app
     user_name = 'new applicant creating duplicate appication'
 
     response = client.post(
-        '/createuser',
+        '/create-user',
         data=json.dumps({
             'name': user_name,
             'email_address': user_email,
