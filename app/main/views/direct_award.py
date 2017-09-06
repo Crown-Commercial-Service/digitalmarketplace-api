@@ -1,12 +1,14 @@
+import datetime
 from flask import jsonify, abort, current_app, request
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import asc, desc
 
+from app import search_api_client
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
 from .. import main
 from ... import db
-from ...models import User, AuditEvent
+from ...models import User, AuditEvent, ArchivedService
 from ...models.direct_award import DirectAwardProject, DirectAwardSearch
 from ...utils import (
     get_json_from_request, get_int_or_400, json_has_required_keys, pagination_links,
@@ -163,7 +165,7 @@ def create_project_search(project_id):
         audit_type=AuditTypes.create_project_search,
         user=updater_json['updated_by'],
         data={
-            'projectId': search.id,
+            'projectId': project_id,
             'searchJson': search_json,
         },
         db_object=search,
@@ -188,3 +190,52 @@ def get_project_search(project_id, search_id):
 @main.route('/direct-award/projects/<int:project_id>/services', methods=['GET'])
 def list_project_services(project_id):
     raise NotImplementedError()
+
+
+@main.route('/direct-award/projects/<int:project_id>/lock', methods=['POST'])
+def lock_project(project_id):
+    updater_json = validate_and_return_updater_request()
+
+    project = DirectAwardProject.query.filter(
+        DirectAwardProject.id == project_id
+    ).first_or_404()
+
+    if project.locked_at:
+        abort(400, 'Project has already been locked: {}'.format(project_id))
+
+    search = DirectAwardSearch.query.filter(
+        DirectAwardSearch.project_id == project_id
+    ).first_or_404()
+
+    now = datetime.datetime.utcnow()
+    service_ids = [search['id'] for search in search_api_client.search_services_from_url_iter(search.search_url)]
+
+    # We want the most recent ArchivedService for each service_id
+    archived_services = ArchivedService.query.\
+        filter(ArchivedService.service_id.in_(service_ids)).\
+        group_by(ArchivedService.id).\
+        order_by(ArchivedService.service_id, desc(ArchivedService.id)).\
+        distinct(ArchivedService.service_id).all()
+
+    search.searched_at = now
+    search.archived_services = archived_services
+    db.session.add(search)
+
+    project.locked_at = now
+    db.session.add(project)
+
+    db.session.commit()
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.lock_project,
+        user=updater_json['updated_by'],
+        data={
+            'projectId': project.id
+        },
+        db_object=search,
+    )
+
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify(project=project.serialize())

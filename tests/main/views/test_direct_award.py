@@ -495,3 +495,37 @@ class TestDirectAwardGetProjectSearch(DirectAwardSetupAndTeardown):
 
         with self.app.app_context():
             assert data['search'] == DirectAwardSearch.query.get(self.search_id).serialize()
+
+
+class TestDirectAwardLockProject(DirectAwardSetupAndTeardown):
+    def setup(self):
+        super(TestDirectAwardLockProject, self).setup()
+        self.project_id = self.create_direct_award_project(user_id=self.user_id,
+                                                           project_name=self.direct_award_project_name)
+        self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id)
+
+        res = self.client.get('/direct-award/projects/{}/searches/{}?user-id={}'.format(self.project_id,
+                                                                                        self.search_id,
+                                                                                        self.user_id))
+        assert res.status_code == 200
+
+    def _lock_project_data(self):
+        return {
+            'updated_by': str(self.user_id)
+        }.copy()
+
+    @pytest.mark.skip
+    def test_400s_if_project_already_locked(self):
+        pass
+
+    @pytest.mark.skip
+    def test_search_and_project_datetimes_are_updated(self):
+        pass
+
+    @pytest.mark.skip
+    def test_search_result_entries_populated_with_latest_archived_service_for_searched_services(self):
+        pass
+
+    @pytest.mark.skip
+    def test_locking_project_creates_audit_event(self):
+        pass
