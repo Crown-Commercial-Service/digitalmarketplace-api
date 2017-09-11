@@ -744,8 +744,14 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
         assert data['briefs']['status'] == 'withdrawn'
         assert data['briefs']['withdrawnAt'] is not None
 
-    def test_cancel_a_brief(self):
+    @pytest.mark.parametrize('framework_status', ('pending', 'expired'))
+    def test_cancel_a_brief(self, framework_status):
         self.setup_dummy_briefs(1, title='The Title', status='closed')
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            framework.status = framework_status
+            db.session.add(framework)
+            db.session.commit()
 
         res = self.client.post(
             '/briefs/1/cancel',
