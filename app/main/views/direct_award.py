@@ -208,7 +208,9 @@ def lock_project(project_id):
     ).first_or_404()
 
     now = datetime.datetime.utcnow()
-    service_ids = [search['id'] for search in search_api_client.search_services_from_url_iter(search.search_url)]
+
+    service_ids = [service['id'] for service in search_api_client.search_services_from_url_iter(search.search_url,
+                                                                                                id_only=True)]
 
     # We want the most recent ArchivedService for each service_id
     archived_services = ArchivedService.query.\
