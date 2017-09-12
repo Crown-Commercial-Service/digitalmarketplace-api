@@ -15,6 +15,7 @@ from migrations import \
 
 from flask_login import login_user
 from dmutils.user import User as LoginUser
+from app import encryption
 
 fake = Faker()
 
@@ -114,6 +115,17 @@ def users(app, request):
                 password_changed_at=utcnow()
             ))
             db.session.flush()
+
+        db.session.add(User(
+            id=7,
+            email_address='test@digital.gov.au',
+            name=fake.name(),
+            password=encryption.hashpw('testpassword'),
+            active=True,
+            role='buyer',
+            password_changed_at=utcnow()
+        ))
+        db.session.flush()
 
         db.session.commit()
         yield User.query.all()

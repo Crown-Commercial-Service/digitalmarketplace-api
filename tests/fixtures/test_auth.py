@@ -58,3 +58,18 @@ def test_logout(client, login):
 
     res = client.get('/logout')
     assert res.status_code == 401
+
+
+def test_login(client, users):
+    res = client.post('/login')
+    assert res.status_code == 400
+
+    res = client.post('/login', data=json.dumps({
+        'emailAddress': 'test@digital.gov.au', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post('/login', data=json.dumps({
+        'emailAddress': 'test@digital.gov.au', 'password': 'testpasswor'
+    }), content_type='application/json')
+    assert res.status_code == 403

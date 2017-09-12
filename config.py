@@ -153,6 +153,7 @@ class Test(Config):
 
 class Development(Config):
     DEBUG = True
+    SESSION_COOKIE_SECURE = False
 
     DM_API_AUTH_TOKENS = 'myToken'
     DM_SEARCH_API_AUTH_TOKEN = 'myToken'

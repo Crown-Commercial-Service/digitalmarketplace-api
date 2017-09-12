@@ -1,14 +1,15 @@
 from app.auth.user import create_user
 from flask import jsonify, current_app
-from flask_login import current_user, login_required, logout_user
+from flask_login import current_user, login_required, logout_user, login_user
 from sqlalchemy.exc import InvalidRequestError, IntegrityError
 from urllib import quote
+from app import db, encryption
 from app.auth import auth
 from app.auth.helpers import (
     generate_reset_password_token, decode_reset_password_token
 )
 from app.models import Application, User
-from app.utils import get_json_from_request
+from app.utils import get_json_from_request, json_has_required_keys
 from app.emails.users import (
     send_account_activation_email, send_account_activation_manager_email, send_new_user_onboarding_email,
     send_reset_password_confirm_email
@@ -18,6 +19,7 @@ from dmutils.email import EmailError, InvalidToken
 from app.auth.helpers import decode_creation_token, is_government_email
 from app.auth.applications import create_application
 from app.auth.user import is_duplicate_user, update_user_details
+from datetime import datetime
 
 
 @auth.route('/ping', methods=["GET"])
@@ -43,6 +45,43 @@ def protected():
 @auth.route('/_post', methods=["POST"])
 def post():
     return jsonify(data='post')
+
+
+@auth.route('/login', methods=['POST'])
+def login():
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ["emailAddress", "password"])
+    email_address = json_payload.get('emailAddress', None)
+    user = User.get_by_email_address(email_address.lower())
+
+    if user is None or (user.supplier and user.supplier.status == 'deleted'):
+        return jsonify(message='User does not exist'), 403
+    elif encryption.authenticate_user(json_payload.get('password', None), user) and user.active:
+        user.logged_in_at = datetime.utcnow()
+        user.failed_login_count = 0
+        db.session.add(user)
+        db.session.commit()
+
+        login_user(user)
+
+        return jsonify(
+            isAuthenticated=user.is_authenticated,
+            userType=user.role,
+            csrfToken=get_csrf_token()
+        )
+    else:
+        user.failed_login_count += 1
+        db.session.add(user)
+        db.session.commit()
+
+        return jsonify(message="Could not authorize user"), 403
+
+
+@auth.route('/logout', methods=['GET'])
+@login_required
+def logout():
+    logout_user()
+    return jsonify(message='The user was logged out successfully'), 200
 
 
 @auth.route('/signup', methods=['POST'])
@@ -124,13 +163,6 @@ def send_signup_email():
             email_address=email_address,
             message='An error occured when trying to send an email'
         ), 400
-
-
-@auth.route('/logout', methods=['GET'])
-@login_required
-def logout():
-    logout_user()
-    return jsonify(message='The user was logged out successfully'), 200
 
 
 @auth.route('/signup/validate-invite/<string:token>', methods=['GET'])
