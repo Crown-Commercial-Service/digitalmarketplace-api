@@ -174,9 +174,7 @@ def update_brief_status(brief_id, action):
     brief = Brief.query.filter(
         Brief.id == brief_id
     ).first_or_404()
-
-    if brief.framework.status != 'live':
-        abort(400, "Framework is not live")
+    framework_status = brief.framework.status
 
     action_to_status = {
         'publish': 'live',
@@ -184,9 +182,14 @@ def update_brief_status(brief_id, action):
         'cancel': 'cancelled',
         'unsuccessful': 'unsuccessful'
     }
-    if brief.status != action_to_status[action]:
-        previousStatus = brief.status
-        brief.status = action_to_status[action]
+    new_brief_status = action_to_status[action]
+
+    if new_brief_status in ['live', 'withdrawn'] and framework_status != 'live':
+        abort(400, "Framework is not live")
+
+    if brief.status != new_brief_status:
+        old_brief_status = brief.status
+        brief.status = new_brief_status
 
         if action == 'publish':
             validate_brief_data(brief, enforce_required=True)
@@ -196,7 +199,7 @@ def update_brief_status(brief_id, action):
             user=updater_json['updated_by'],
             data={
                 'briefId': brief.id,
-                'briefPreviousStatus': previousStatus,
+                'briefPreviousStatus': old_brief_status,
                 'briefStatus': brief.status,
             },
             db_object=brief,
