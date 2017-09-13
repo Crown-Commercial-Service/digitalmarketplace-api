@@ -602,6 +602,50 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
             data = json.loads(response.get_data())['users']
             assert data['emailAddress'] == 'test@digital.gov.uk'
 
+    def test_updating_password_unlocks_user(self):
+        self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
+
+        with self.app.app_context():
+            # lock the user using failed auth
+            self.client.post(
+                '/users/auth',
+                data=json.dumps({
+                    'authUsers': {
+                        'emailAddress': 'test@digital.gov.uk',
+                        'password': 'invalid'}
+                }),
+                content_type='application/json'
+            )
+
+            response = self.client.get(
+                '/users/123',
+                content_type='application/json')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())['users']
+            assert data['locked'] is True
+            assert data['failedLoginCount'] == 1
+
+            response = self.client.post(
+                '/users/123',
+                data=json.dumps({
+                    "updated_by": "a.user",
+                    'users': {
+                        'password': 'newpassword'
+                    }}),
+                content_type='application/json')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())['users']
+            assert data['locked'] is False
+
+            response = self.client.get('/users/123', content_type='application/json')
+
+            assert response.status_code == 200
+            data = json.loads(response.get_data())['users']
+            assert data['locked'] is False
+            assert data['failedLoginCount'] == 0
+
     def test_new_password_is_not_audited(self):
         with self.app.app_context():
             response = self.client.post(
