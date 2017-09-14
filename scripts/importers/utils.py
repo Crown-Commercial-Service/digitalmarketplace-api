@@ -45,6 +45,9 @@ class Client(object):
     def patch(self, path, **kwargs):
         return self.open(method='PATCH', path=path, **kwargs)
 
+    def put(self, path, **kwargs):
+        return self.open(method='PUT', path=path, **kwargs)
+
     def open(self, method, path, data='', content_type=None):
         api_url = urlparse.urljoin(self.api_host, path)
 
@@ -58,6 +61,8 @@ class Client(object):
             handleRequest = requests.post
         elif method == 'PATCH':
             handleRequest = requests.patch
+        elif method == 'PUT':
+            handleRequest = requests.put
         else:
             raise NotImplementedError(method)
 
@@ -69,7 +74,7 @@ def makeClient():
     import os
     import sys
 
-    api_token = os.environ.get('DM_DATA_API_AUTH_TOKEN')
+    api_token = os.environ.get('DM_DATA_API_AUTH_TOKEN') or 'myToken'
     if len(sys.argv) > 1:
         api_host = sys.argv[1]
     else:
