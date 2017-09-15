@@ -110,6 +110,9 @@ def list_project_searches(project_id):
     else:
         searches = searches.order_by(asc(DirectAwardSearch.id))
 
+    if convert_to_boolean(request.args.get('only-active', False)):
+        searches = searches.filter(DirectAwardSearch.active == True)  # noqa
+
     searches = searches.paginate(
         page=page,
         per_page=current_app.config['DM_API_PROJECTS_PAGE_SIZE'],

@@ -347,6 +347,24 @@ class TestDirectAwardListProjectSearches(DirectAwardSetupAndTeardown):
             for search in data['searches']:
                 assert last_seen < search['id']
 
+    @pytest.mark.parametrize('only_active, expected_count, expected_states',
+                             (
+                                 (False, 2, [True, False]),
+                                 (True, 1, [True])
+                             ))
+    def test_list_searches_respects_only_active_parameter_when_returning_searches(self, only_active, expected_count,
+                                                                                  expected_states):
+        # Create an extra search so that, unadultered, the endpoint will return two searches (one active, one not).
+        self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id, active=False,
+                                                created_at=datetime(2017, 1, 1, 0, 0, 0))
+
+        res = self.client.get('/direct-award/projects/{}/searches?user-id={}&only-active={}'.format(self.project_id,
+                                                                                                    self.user_id,
+                                                                                                    only_active))
+        data = json.loads(res.get_data(as_text=True))
+        assert len(data['searches']) == expected_count
+        assert list(map(lambda search: search['active'], data['searches'])) == expected_states
+
     def test_list_searches_orders_by_created_at_descending(self):
         self.app.config['DM_API_PROJECTS_PAGE_SIZE'] = 2
 
