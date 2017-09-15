@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 import math
 import random
+import sys
 
 import pytest
 from tests.helpers import FixtureMixin
@@ -254,6 +255,11 @@ class TestDirectAwardListProjectSearches(DirectAwardSetupAndTeardown):
                                                                                      self.user_id))
         assert res.status_code == 200
 
+    def test_list_searches_404s_with_invalid_project_id(self):
+        res = self.client.get('/direct-award/projects/{}/searches?user-id={}'.format(sys.maxsize,
+                                                                                     self.user_id))
+        assert res.status_code == 404
+
     def test_list_searches_returns_only_for_project_requested(self):
         # Create a project for another user with a search, i.e. one that shouldn't be returned
         self.setup_dummy_user(id=self.user_id + 1, role='buyer')
@@ -459,6 +465,13 @@ class TestDirectAwardCreateProjectSearch(DirectAwardSetupAndTeardown):
                                data=json.dumps(search_data), content_type='application/json')
         assert res.status_code == 400
 
+    def test_create_search_404s_with_invalid_project(self):
+        search_data = self._create_project_search_data()
+
+        res = self.client.post('/direct-award/projects/{}/searches'.format(sys.maxsize),
+                               data=json.dumps(search_data), content_type='application/json')
+        assert res.status_code == 404
+
     def test_create_search_makes_other_searches_inactive(self):
         search_data = self._create_project_search_data()
 
@@ -505,6 +518,12 @@ class TestDirectAwardGetProjectSearch(DirectAwardSetupAndTeardown):
                                                                                         self.user_id))
         assert res.status_code == 200
 
+    def test_get_search_404s_with_invalid_project(self):
+        res = self.client.get('/direct-award/projects/{}/searches/{}?user-id={}'.format(sys.maxsize,
+                                                                                        self.search_id,
+                                                                                        self.user_id))
+        assert res.status_code == 404
+
     def test_get_search_returns_serialized_search(self):
         res = self.client.get('/direct-award/projects/{}/searches/{}?user-id={}'.format(self.project_id,
                                                                                         self.search_id,
@@ -533,17 +552,21 @@ class TestDirectAwardLockProject(DirectAwardSetupAndTeardown):
         }.copy()
 
     @pytest.mark.skip
-    def test_400s_if_project_already_locked(self):
+    def test_lock_project_400s_if_project_already_locked(self):
         pass
 
     @pytest.mark.skip
-    def test_search_and_project_datetimes_are_updated(self):
+    def test_lock_project_404s_if_invalid_project(self):
         pass
 
     @pytest.mark.skip
-    def test_search_result_entries_populated_with_latest_archived_service_for_searched_services(self):
+    def test_lock_project_search_and_project_datetimes_are_updated(self):
         pass
 
     @pytest.mark.skip
-    def test_locking_project_creates_audit_event(self):
+    def test_lock_project_search_result_entries_populated_with_latest_archived_service_for_searched_services(self):
+        pass
+
+    @pytest.mark.skip
+    def test_lock_project_creates_audit_event(self):
         pass
