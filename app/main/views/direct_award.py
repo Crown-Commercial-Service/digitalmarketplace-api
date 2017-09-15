@@ -98,6 +98,9 @@ def get_project(project_id):
 
 @main.route('/direct-award/projects/<int:project_id>/searches', methods=['GET'])
 def list_project_searches(project_id):
+    # If the project doesn't exist, we should 404 early.
+    DirectAwardProject.query.filter(DirectAwardProject.id == project_id).first_or_404()
+
     page = get_valid_page_or_1()
 
     searches = DirectAwardSearch.query.filter(DirectAwardSearch.project_id == project_id)
@@ -109,6 +112,9 @@ def list_project_searches(project_id):
             searches = searches.order_by(asc(DirectAwardSearch.created_at), asc(DirectAwardSearch.id))
     else:
         searches = searches.order_by(asc(DirectAwardSearch.id))
+
+    if convert_to_boolean(request.args.get('only-active', False)):
+        searches = searches.filter(DirectAwardSearch.active == True)  # noqa
 
     searches = searches.paginate(
         page=page,
@@ -134,6 +140,9 @@ def list_project_searches(project_id):
 @main.route('/direct-award/projects/<int:project_id>/searches', methods=['POST'])
 def create_project_search(project_id):
     updater_json = validate_and_return_updater_request()
+
+    # If the project doesn't exist, we should 404 early.
+    DirectAwardProject.query.filter(DirectAwardProject.id == project_id).first_or_404()
 
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['search'])
@@ -179,6 +188,9 @@ def create_project_search(project_id):
 
 @main.route('/direct-award/projects/<int:project_id>/searches/<int:search_id>', methods=['GET'])
 def get_project_search(project_id, search_id):
+    # If the project doesn't exist, we should 404 early.
+    DirectAwardProject.query.filter(DirectAwardProject.id == project_id).first_or_404()
+
     search = DirectAwardSearch.query.filter(
         DirectAwardSearch.id == search_id,
         DirectAwardSearch.project_id == project_id
@@ -196,9 +208,7 @@ def list_project_services(project_id):
 def lock_project(project_id):
     updater_json = validate_and_return_updater_request()
 
-    project = DirectAwardProject.query.filter(
-        DirectAwardProject.id == project_id
-    ).first_or_404()
+    project = DirectAwardProject.query.filter(DirectAwardProject.id == project_id).first_or_404()
 
     if project.locked_at:
         abort(400, 'Project has already been locked: {}'.format(project_id))
