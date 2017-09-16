@@ -1,9 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 
 import factory
 from app import db, models
 
+
+# TODO make services work
+# TODO Add framework-lot before inserting service
+# TODO Add gcloud lot
 
 # Our custom provider inherits from the BaseProvider
 class DMProvider(object):
@@ -27,7 +31,7 @@ class DMProvider(object):
         return [factory.Faker('company').generate({}) for i in range(length)]
 
     def service_id(self):
-        return random.randint(1000000000000000, 9999999999999999)
+        return str(random.randint(1000000000000000, 9999999999999999))
 
     def supplier_id(self):
         return random.randint(700000, 800000)
@@ -71,7 +75,7 @@ class DMBaseFactory(factory.alchemy.SQLAlchemyModelFactory):
     """Base class for Digital Marketplace factories"""
 
     @classmethod
-    def _create(cls, *args, **kwargs):
+    def _create(cls, model_class, *args, **kwargs):
         """
         We don't want to recreate certain objects. For example frameworks and lots should not be recreated.
         Super this method to check first if we have defined _no_recreate_fields on the factory.
@@ -81,10 +85,10 @@ class DMBaseFactory(factory.alchemy.SQLAlchemyModelFactory):
         """
         if hasattr(cls, '_no_recreate_fields'):
             for attr in getattr(cls, '_no_recreate_fields'):
-                obj = cls.Meta.model.query.filter(getattr(cls.Meta.model, attr) ==  kwargs[attr]).first()
+                obj = model_class.query.filter(getattr(model_class, attr) ==  kwargs[attr]).first()
                 if obj:
                     return obj
-        return super(DMBaseFactory, cls)._create(*args, **kwargs)
+        return super(DMBaseFactory, cls)._create(model_class, *args, **kwargs)
 
 
 class DMBaseFactoryCreateUpdate(DMBaseFactory):
@@ -98,8 +102,8 @@ class DMBaseFactoryMeta(object):
 
 
 class FrameworkLotFactory(DMBaseFactory):
-    framework = factory.SubFactory('.GcloudFrameworkFactory')
-    lot = factory.SubFactory('.LotFactory')
+    framework = factory.SubFactory('tests.factories.GcloudFrameworkFactory')
+    lot = factory.SubFactory('tests.factories.LotFactory')
 
     class Meta(DMBaseFactoryMeta):
         model = models.Lot
@@ -148,7 +152,7 @@ class GcloudFrameworkFactory(DMBaseFactory, FrameworkFactoryMixin):
 
 
 class ContactInformationFactory(DMBaseFactory):
-    supplier = factory.SubFactory('.SupplierFactory')
+    supplier = factory.SubFactory('tests.factories.SupplierFactory')
     contact_name = factory.Faker('name')
     email = factory.Faker('email')
 
@@ -225,6 +229,8 @@ class ServiceFactory(DMBaseFactoryCreateUpdate):
     supplier = factory.SubFactory(SupplierFactory)
     framework = factory.SubFactory(GcloudFrameworkFactory)
     lot = factory.SubFactory(LotFactory)
+    framework_id = factory.LazyAttribute(lambda i: i.framework.id)
+
 
     class Meta(DMBaseFactoryMeta):
         model = models.Service
@@ -249,21 +255,64 @@ class BriefFactory(DMBaseFactoryCreateUpdate):
     _lot_id = factory.LazyAttribute(lambda i: i.lot.id)
     is_a_copy = False
     data = factory.Faker('brief_data')
-    users_1 = factory.RelatedFactory('.BriefUserFactory', 'brief')
-    users_2 = factory.RelatedFactory('.BriefUserFactory', 'brief')
+
+    users = factory.PostGeneration(lambda br, *args, **kwargs: BriefUserFactory(brief_id=br.id))
+
+    class Meta(DMBaseFactoryMeta):
+        model = models.Brief
+
+class LiveBriefFactory(BriefFactory):
+    created_at = datetime.now() - timedelta(days=1)
+    published_at = datetime.now() - timedelta(weeks=2, days=1)
+
+    class Meta(DMBaseFactoryMeta):
+        model = models.Brief
+
+class ClosedBriefFactory(BriefFactory):
+    created_at = datetime.now() - timedelta(weeks=3)
+    published_at = datetime.now() - timedelta(weeks=2, days=1)
+
+    class Meta(DMBaseFactoryMeta):
+        model = models.Brief
+
+class WithdrawnBriefFactory(BriefFactory):
+    created_at = datetime.now() - timedelta(days=2)
+    published_at = datetime.now() - timedelta(days=1)
+    withrawn_at = datetime.now()
+
+    class Meta(DMBaseFactoryMeta):
+        model = models.Brief
+
+
+class CancelledBriefFactory(BriefFactory):
+    created_at = datetime.now() - timedelta(weeks=3)
+    published_at = datetime.now() - timedelta(weeks=2, days=1)
+    cancelled_at = datetime.now()
+
+    class Meta(DMBaseFactoryMeta):
+        model = models.Brief
+
+
+class UnsuccessfuldBriefFactory(BriefFactory):
+    created_at = datetime.now() - timedelta(weeks=3)
+    published_at = datetime.now() - timedelta(weeks=2, days=1)
+    unsuccessful_at = datetime.now()
 
     class Meta(DMBaseFactoryMeta):
         model = models.Brief
 
 
 class BriefUserFactory(DMBaseFactory):
-    user = factory.SubFactory(BuyerUserFactory)
-    brief = factory.SubFactory(BriefFactory)
+    # user = factory.SubFactory('tests.factories.BuyerUserFactory')
+    # brief = factory.SubFactory('tests.factories.BriefFactory')
+    user_id = factory.LazyAttribute(lambda a: BuyerUserFactory().id)
+    brief_id = factory.LazyAttribute(lambda a: BriefFactory().id)
+
     class Meta(DMBaseFactoryMeta):
         model = models.BriefUser
 
 
-class BriefClarificationQuestion(DMBaseFactory):
+class BriefClarificationQuestionFactory(DMBaseFactory):
 
     _brief_id = factory.LazyAttribute(lambda i: i.brief.id)
 
@@ -271,7 +320,7 @@ class BriefClarificationQuestion(DMBaseFactory):
     answer = 'Test answer'
 
     published_at = factory.LazyFunction(datetime.now)
-    brief = factory.SubFactory(BriefFactory)
+    brief = factory.SubFactory(LiveBriefFactory)
     class Meta(DMBaseFactoryMeta):
         model = models.BriefClarificationQuestion
 
@@ -281,12 +330,33 @@ class BriefResponseFactory(DMBaseFactory):
     data = factory.Faker('brief_response_data')
     award_details = factory.Faker('brief_response_award_details')
 
-    brief = factory.SubFactory(BriefFactory)
+    brief = factory.SubFactory(LiveBriefFactory)
     supplier = factory.SubFactory(SupplierFactory)
 
     class Meta(DMBaseFactoryMeta):
         model = models.BriefResponse
 
+
+class PendingAwardBriefResponseFactory(BriefResponseFactory):
+
+    award_details = {'pending': True}
+
+    class Meta(DMBaseFactoryMeta):
+        model = models.BriefResponse
+
+
+class AwardedBriefResponseFactory(PendingAwardBriefResponseFactory):
+
+    @factory.post_generation
+    def post_generation_tasks(self, *args, **kwargs):
+        self.awarded_at = datetime.now()
+        self.award_details = {
+            "awardedContractStartDate": (self.awarded_at + timedelta(weeks=8)).strftime("%Y-%-m-%-d"),
+            "awardedContractValue": "100"
+        }
+
+    class Meta(DMBaseFactoryMeta):
+        model = models.BriefResponse
 
 ### DIRECT AWARD ###
 
@@ -295,8 +365,8 @@ class DirectAwardProjectFactory(DMBaseFactory):
     name = 'Test project'
     created_at = factory.LazyFunction(datetime.now)
     active = True
-    users_1 = factory.RelatedFactory('.DirectAwardProjectUserFactory', 'direct_award_project')
-    users_2 = factory.RelatedFactory('.DirectAwardProjectUserFactory', 'direct_award_project')
+    users_1 = factory.RelatedFactory('tests.factories.DirectAwardProjectUserFactory', 'direct_award_project')
+    users_2 = factory.RelatedFactory('tests.factories.DirectAwardProjectUserFactory', 'direct_award_project')
 
     class Meta(DMBaseFactoryMeta):
         model = models.DirectAwardProject
@@ -319,8 +389,8 @@ class DirectAwardSearchFactory(DMBaseFactory):
     search_url = '' # TODO @samwilliams
     active = True
 
-    archived_service_1 = factory.RelatedFactory('.DirectAwardSearchResultEntryFactory', 'search')
-    archived_service_2 = factory.RelatedFactory('.DirectAwardSearchResultEntryFactory', 'search')
+    archived_service_1 = factory.RelatedFactory('tests.factories.DirectAwardSearchResultEntryFactory', 'search')
+    archived_service_2 = factory.RelatedFactory('tests.factories.DirectAwardSearchResultEntryFactory', 'search')
 
     class Meta(DMBaseFactoryMeta):
         model = models.DirectAwardSearch
