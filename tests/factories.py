@@ -84,9 +84,20 @@ class DMBaseFactory(factory.alchemy.SQLAlchemyModelFactory):
         http://factoryboy.readthedocs.io/en/latest/orms.html#factory.django.DjangoOptions.django_get_or_create
         """
         if hasattr(cls, '_no_recreate_fields'):
-            for attr in getattr(cls, '_no_recreate_fields'):
-                obj = model_class.query.filter(getattr(model_class, attr) ==  kwargs[attr]).first()
+            no_recreate_fields = getattr(cls, '_no_recreate_fields')
+            for attr in no_recreate_fields:
+                if type(attr) == str:
+                    obj = model_class.query.filter(getattr(model_class, attr) ==  kwargs[attr]).first()
+                else:
+                    attr_iter = attr
+                    obj = model_class.query.filter(
+                        *[getattr(model_class, attr) == kwargs[attr] for attr in attr_iter]
+                    ).first()
                 if obj:
+                    values = {k: v for k, v in kwargs.items() if k not in [item for sublist in no_recreate_fields for item in sublist]}
+                    print(values)
+                    if values:
+                        obj.query.update(values=values)
                     return obj
         return super(DMBaseFactory, cls)._create(model_class, *args, **kwargs)
 
@@ -102,19 +113,21 @@ class DMBaseFactoryMeta(object):
 
 
 class FrameworkLotFactory(DMBaseFactory):
-    framework = factory.SubFactory('tests.factories.GcloudFrameworkFactory')
-    lot = factory.SubFactory('tests.factories.LotFactory')
+    _no_recreate_fields = (('framework_id', 'lot_id'),)
+
+    framework_id = 0
+    lot_id = 0
 
     class Meta(DMBaseFactoryMeta):
-        model = models.Lot
+        model = models.FrameworkLot
 
 
 class LotFactory(DMBaseFactory):
 
-    _no_recreate_fields = ('slug', 'name')
+    _no_recreate_fields = (('slug',), ('name',))
 
-    slug = 'digital-outcomes'
-    name = 'Digital Outcomes'
+    slug = 'some-lot'
+    name = 'Some Lot'
     one_service_limit = True
     data = {'unitSingular': 'service', 'unitPlural': 'services'}
 
@@ -122,30 +135,54 @@ class LotFactory(DMBaseFactory):
         model = models.Lot
 
 
-class FrameworkFactoryMixin():
-    _no_recreate_fields = ('slug', 'name')
-    clarification_questions_open = False
+class FrameworkFactoryMixin(DMBaseFactory):
+    _no_recreate_fields = (('slug',), ('name',))
+    clarification_questions_open = True
     status = 'live'
     class Meta(DMBaseFactoryMeta):
         model = models.Framework
         abstract = True
 
 
-class DOS2FrameworkFactory(DMBaseFactory, FrameworkFactoryMixin):
+class DOS2FrameworkFactory(FrameworkFactoryMixin):
     slug = 'digital-outcomes-and-specialists-2'
     name = 'Digital Outcomes and Specialists 2'
     framework = 'digital-outcomes-and-specialists'
     allow_declaration_reuse = True
+    @factory.post_generation
+    def post_generation_tasks(self, *args, **kwargs):
+        lots = (
+            LotFactory(slug='digital-outcomes', name='Digital outcomes'),
+            LotFactory(slug='digital-specialists', name='Digital specialists'),
+            LotFactory(slug='user-research-participants', name='User research participants'),
+            LotFactory(
+                slug='user-research-studios',
+                name='User research studios',
+                one_service_limit=False,
+                data={"unitSingular": "lab", "unitPlural": "labs"}
+            )
+        )
+        for lot in lots:
+            FrameworkLotFactory(lot_id=lot.id, framework_id=self.id)
 
     class Meta(DMBaseFactoryMeta):
         model = models.Framework
 
 
-class GcloudFrameworkFactory(DMBaseFactory, FrameworkFactoryMixin):
+class GcloudFrameworkFactory(FrameworkFactoryMixin):
     slug = 'g-cloud-9'
     name = 'G-Cloud 9'
     framework = 'g-cloud'
     allow_declaration_reuse = False
+    @factory.post_generation
+    def post_generation_tasks(self, *args, **kwargs):
+        lots = (
+            LotFactory(slug='cloud-support', name='Cloud support', one_service_limit=False),
+            LotFactory(slug='cloud-hosting', name='Cloud hosting', one_service_limit=False),
+            LotFactory(slug='cloud-software', name='Cloud software', one_service_limit=False)
+        )
+        for lot in lots:
+            FrameworkLotFactory(lot_id=lot.id, framework_id=self.id)
 
     class Meta(DMBaseFactoryMeta):
         model = models.Framework
@@ -226,9 +263,9 @@ class ServiceFactory(DMBaseFactoryCreateUpdate):
     data = factory.Faker('service_data')
     status = 'enabled'
 
-    supplier = factory.SubFactory(SupplierFactory)
-    framework = factory.SubFactory(GcloudFrameworkFactory)
-    lot = factory.SubFactory(LotFactory)
+    supplier = factory.LazyAttribute(lambda i: SupplierUserFactory().supplier)
+    framework = factory.SubFactory(GcloudFrameworkFactory, status='open')
+    lot_id = factory.LazyAttribute(lambda i: random.choice(i.framework.lots).id)
     framework_id = factory.LazyAttribute(lambda i: i.framework.id)
 
 
@@ -250,7 +287,7 @@ class DraftServiceFactory(ServiceFactory):
 
 class BriefFactory(DMBaseFactoryCreateUpdate):
 
-    framework = factory.SubFactory(DOS2FrameworkFactory)
+    framework = factory.SubFactory(DOS2FrameworkFactory, status='open')
     lot = factory.SubFactory(LotFactory)
     _lot_id = factory.LazyAttribute(lambda i: i.lot.id)
     is_a_copy = False

@@ -35,7 +35,7 @@ class Config:
 
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     SQLALCHEMY_RECORD_QUERIES = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace_1'
 
     DM_FAILED_LOGIN_LIMIT = 5
 
