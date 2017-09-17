@@ -8,7 +8,7 @@ import mock
 import pytest
 from app import db, create_app
 from tests.helpers import TEST_SUPPLIERS_COUNT, FixtureMixin, load_example_listing
-from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
+from tests.bases import BaseApplicationTest, JSONUpdateTestMixin, WSGIApplicationWithEnvironment
 from sqlalchemy.exc import IntegrityError
 from dmapiclient import HTTPError
 from dmutils.formats import DATETIME_FORMAT
@@ -314,13 +314,19 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
         assert response.status_code == 404
 
     def test_x_forwarded_proto(self):
+        """Test https by updating DM_HTTP_PROTO env var and re instantiating app and client."""
         prev_environ = os.environ.get('DM_HTTP_PROTO')
         os.environ['DM_HTTP_PROTO'] = 'https'
         app = create_app('test')
 
         with app.app_context():
             client = app.test_client()
-            self.setup_authorization(app)
+
+            app.wsgi_app = WSGIApplicationWithEnvironment(
+                app.wsgi_app,
+                HTTP_AUTHORIZATION='Bearer {}'.format(self.app.config['DM_API_AUTH_TOKENS'])
+            )
+
             response = client.get('/')
             data = json.loads(response.get_data())
 
