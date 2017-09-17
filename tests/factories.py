@@ -5,8 +5,9 @@ import factory
 from app import db, models
 
 
-# Our custom provider inherits from the BaseProvider
+
 class DMProvider(object):
+    """Custom Faker provider to supply Digial Marketplace specific test data."""
 
     def __init__(self, generator):
         self.generator = generator
@@ -99,16 +100,19 @@ class DMBaseFactory(factory.alchemy.SQLAlchemyModelFactory):
 
 
 class DMBaseFactoryCreateUpdate(DMBaseFactory):
+
     created_at = factory.LazyFunction(datetime.now)
     updated_at = factory.LazyFunction(datetime.now)
 
 
 class DMBaseFactoryMeta(object):
+
     sqlalchemy_session = db.session
     sqlalchemy_session_persistence = 'commit'
 
 
 class FrameworkLotFactory(DMBaseFactory):
+
     _no_recreate_fields = (('framework_id', 'lot_id'),)
 
     framework_id = 0
@@ -124,17 +128,19 @@ class LotFactory(DMBaseFactory):
 
     slug = 'some-lot'
     name = 'Some Lot'
-    one_service_limit = True
     data = {'unitSingular': 'service', 'unitPlural': 'services'}
+    one_service_limit = True
 
     class Meta(DMBaseFactoryMeta):
         model = models.Lot
 
 
 class FrameworkFactoryMixin(DMBaseFactory):
+
     _no_recreate_fields = (('slug',), ('name',))
-    clarification_questions_open = True
+
     status = 'live'
+    clarification_questions_open = True
 
     class Meta(DMBaseFactoryMeta):
         model = models.Framework
@@ -142,6 +148,7 @@ class FrameworkFactoryMixin(DMBaseFactory):
 
 
 class DOS2FrameworkFactory(FrameworkFactoryMixin):
+
     slug = 'digital-outcomes-and-specialists-2'
     name = 'Digital Outcomes and Specialists 2'
     framework = 'digital-outcomes-and-specialists'
@@ -168,6 +175,7 @@ class DOS2FrameworkFactory(FrameworkFactoryMixin):
 
 
 class GcloudFrameworkFactory(FrameworkFactoryMixin):
+
     slug = 'g-cloud-9'
     name = 'G-Cloud 9'
     framework = 'g-cloud'
@@ -188,6 +196,7 @@ class GcloudFrameworkFactory(FrameworkFactoryMixin):
 
 
 class ContactInformationFactory(DMBaseFactory):
+
     supplier = factory.SubFactory('tests.factories.SupplierFactory')
     contact_name = factory.Faker('name')
     email = factory.Faker('email')
@@ -207,6 +216,7 @@ class SupplierFactory(DMBaseFactory):
 
 
 class SupplierFrameworkFactory(DMBaseFactory):
+
     supplier = factory.SubFactory(SupplierFactory)
     framework = factory.SubFactory(GcloudFrameworkFactory)
     declaration = factory.Faker('supplier_framework_declaration')
@@ -217,6 +227,7 @@ class SupplierFrameworkFactory(DMBaseFactory):
 
 
 class FrameworkAgreementFactory(DMBaseFactory):
+
     supplier = factory.SubFactory(SupplierFactory)
     framework = factory.SubFactory(GcloudFrameworkFactory)
 
@@ -227,11 +238,11 @@ class FrameworkAgreementFactory(DMBaseFactory):
 class UserFactory(DMBaseFactoryCreateUpdate):
 
     name = factory.Faker('name')
+    role = factory.Faker('user_role')
     email_address = factory.Faker('buyer_email')
+    password_changed_at = factory.Faker('date_time_this_year', before_now=True)
     password = 'Password1234'
     active = True
-    password_changed_at = factory.Faker('date_time_this_year', before_now=True)
-    role = factory.Faker('user_role')
 
     class Meta(DMBaseFactoryMeta):
         model = models.User
@@ -239,7 +250,9 @@ class UserFactory(DMBaseFactoryCreateUpdate):
 
 class BuyerUserFactory(UserFactory):
     """Shortcut class for creating a buyer user."""
+
     role = 'buyer'
+
     logged_in_at = factory.LazyFunction(datetime.now)
 
     class Meta(DMBaseFactoryMeta):
@@ -248,8 +261,10 @@ class BuyerUserFactory(UserFactory):
 
 class SupplierUserFactory(UserFactory):
     """Shortcut class for creating a supplier user."""
-    supplier = factory.SubFactory(SupplierFactory)
+
     role = 'supplier'
+
+    supplier = factory.SubFactory(SupplierFactory)
 
     class Meta(DMBaseFactoryMeta):
         model = models.User
@@ -261,8 +276,8 @@ class ServiceFactory(DMBaseFactoryCreateUpdate):
     data = factory.Faker('service_data')
     status = 'enabled'
 
-    supplier = factory.LazyAttribute(lambda i: SupplierUserFactory().supplier)
     framework = factory.SubFactory(GcloudFrameworkFactory, status='open')
+    supplier = factory.LazyAttribute(lambda i: SupplierUserFactory().supplier)
     lot_id = factory.LazyAttribute(lambda i: random.choice(i.framework.lots).id)
     framework_id = factory.LazyAttribute(lambda i: i.framework.id)
 
@@ -284,12 +299,13 @@ class DraftServiceFactory(ServiceFactory):
 
 class BriefFactory(DMBaseFactoryCreateUpdate):
 
-    framework = factory.SubFactory(DOS2FrameworkFactory, status='open')
-    lot = factory.SubFactory(LotFactory)
-    _lot_id = factory.LazyAttribute(lambda i: i.lot.id)
     is_a_copy = False
     data = factory.Faker('brief_data')
 
+    lot = factory.SubFactory(LotFactory)
+    framework = factory.SubFactory(DOS2FrameworkFactory, status='open')
+
+    _lot_id = factory.LazyAttribute(lambda i: i.lot.id)
     users = factory.PostGeneration(lambda br, *args, **kwargs: BriefUserFactory(brief_id=br.id))
 
     class Meta(DMBaseFactoryMeta):
@@ -344,8 +360,7 @@ class UnsuccessfuldBriefFactory(BriefFactory):
 
 
 class BriefUserFactory(DMBaseFactory):
-    # user = factory.SubFactory('tests.factories.BuyerUserFactory')
-    # brief = factory.SubFactory('tests.factories.BriefFactory')
+
     user_id = factory.LazyAttribute(lambda a: BuyerUserFactory().id)
     brief_id = factory.LazyAttribute(lambda a: BriefFactory().id)
 
@@ -357,9 +372,10 @@ class BriefClarificationQuestionFactory(DMBaseFactory):
 
     question = 'Test question'
     answer = 'Test answer'
-    published_at = factory.LazyFunction(datetime.now)
+
     brief = factory.SubFactory(LiveBriefFactory)
     _brief_id = factory.LazyAttribute(lambda i: i.brief.id)
+    published_at = factory.LazyFunction(datetime.now)
 
     class Meta(DMBaseFactoryMeta):
         model = models.BriefClarificationQuestion
@@ -402,16 +418,18 @@ class AwardedBriefResponseFactory(PendingAwardBriefResponseFactory):
 class DirectAwardProjectFactory(DMBaseFactory):
 
     name = 'Test project'
-    created_at = factory.LazyFunction(datetime.now)
     active = True
+
     users_1 = factory.RelatedFactory('tests.factories.DirectAwardProjectUserFactory', 'direct_award_project')
     users_2 = factory.RelatedFactory('tests.factories.DirectAwardProjectUserFactory', 'direct_award_project')
+    created_at = factory.LazyFunction(datetime.now)
 
     class Meta(DMBaseFactoryMeta):
         model = models.DirectAwardProject
 
 
 class DirectAwardProjectUserFactory(DMBaseFactory):
+
     project = factory.SubFactory(DirectAwardProjectFactory)
     user = factory.SubFactory(BuyerUserFactory)
 
@@ -421,21 +439,23 @@ class DirectAwardProjectUserFactory(DMBaseFactory):
 
 class DirectAwardSearchFactory(DMBaseFactory):
 
-    created_by = factory.SubFactory(UserFactory)
-    project = factory.SubFactory(DirectAwardProjectFactory)
-    created_at = factory.LazyFunction(datetime.now)
-    searched_at = factory.LazyFunction(datetime.now)
     search_url = ''  # TODO @samwilliams
     active = True
 
+    created_by = factory.SubFactory(UserFactory)
+    project = factory.SubFactory(DirectAwardProjectFactory)
     archived_service_1 = factory.RelatedFactory('tests.factories.DirectAwardSearchResultEntryFactory', 'search')
     archived_service_2 = factory.RelatedFactory('tests.factories.DirectAwardSearchResultEntryFactory', 'search')
+    created_at = factory.LazyFunction(datetime.now)
+    searched_at = factory.LazyFunction(datetime.now)
+
 
     class Meta(DMBaseFactoryMeta):
         model = models.DirectAwardSearch
 
 
 class DirectAwardSearchResultEntryFactory(DMBaseFactory):
+
     search = factory.SubFactory(DirectAwardSearchFactory)
     archived_service = factory.SubFactory(ArchivedServiceFactory)
 
