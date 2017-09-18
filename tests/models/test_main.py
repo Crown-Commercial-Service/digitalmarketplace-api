@@ -815,9 +815,10 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                 data={},
                 supplier_id=0,
                 submitted_at=datetime.utcnow(),
-                award_details={'confirmed': 'details'},
-                awarded_at=datetime(2016, 1, 1)
+                award_details={'pending': True},
             )
+            brief_response.award_details = {'confirmed': 'details'},
+            brief_response.awarded_at = datetime(2016, 1, 1)
             db.session.add(brief_response)
             db.session.commit()
 
@@ -973,14 +974,16 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             brief = Brief.query.get(self.brief_id)
             brief_response1 = BriefResponse(
                 data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(),
-                award_details={'confirmed': 'details'},
-                awarded_at=timestamp
+                award_details={'pending': True},
             )
+            brief_response1.award_details = {'confirmed': 'details'},
+            brief_response1.awarded_at = timestamp
             brief_response2 = BriefResponse(
                 data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(),
-                award_details={'confirmed': 'details'},
-                awarded_at=timestamp
+                award_details={'pending': True},
             )
+            brief_response2.award_details = {'confirmed': 'details'},
+            brief_response2.awarded_at = timestamp
             db.session.add_all([brief_response1, brief_response2])
             with pytest.raises(IntegrityError) as exc:
                 db.session.commit()
@@ -994,8 +997,10 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             db.session.add(brief2)
             brief_response1 = BriefResponse(
                 data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(),
-                award_details={'pending': True}, awarded_at=timestamp
+                award_details={'pending': True}
             )
+            brief_response1.awarded_at = timestamp
+            brief_response1.award_details = {'confirmed': 'details'}
             brief_response2 = BriefResponse(
                 data={}, brief=brief, supplier=self.supplier, submitted_at=datetime.utcnow(),
                 award_details={'pending': True}, awarded_at=None
@@ -1006,8 +1011,10 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             )
             brief_response4 = BriefResponse(
                 data={}, brief=brief2, supplier=self.supplier, submitted_at=datetime.utcnow(),
-                award_details={'pending': True}, awarded_at=timestamp
+                award_details={'pending': True}
             )
+            brief_response4.awarded_at = timestamp
+            brief_response4.award_details = {'confirmed': 'details'}
 
             db.session.add_all([brief_response1, brief_response2, brief_response3, brief_response4])
             db.session.commit()
