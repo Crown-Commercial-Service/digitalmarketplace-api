@@ -1,4 +1,4 @@
-from flask import jsonify, abort, current_app
+from flask import jsonify, abort, current_app, request
 from app.main import main
 from app.models import db, Assessment, AuditEvent, SupplierDomain, Supplier, Domain
 from dmapiclient.audit import AuditTypes
@@ -6,7 +6,6 @@ from app.utils import (get_json_from_request, json_has_required_keys, validate_a
 from sqlalchemy.exc import IntegrityError
 from app.jiraapi import get_marketplace_jira
 from app.emails import send_assessment_rejected_notification
-import json
 
 
 @main.route('/assessments', methods=['POST'])
@@ -80,6 +79,13 @@ def get_assessment(id):
 @main.route('/assessments/<int:id>/reject', methods=['POST'])
 def reject_assessment(id):
     updater_json = validate_and_return_updater_request()
+    json_payload = request.get_json(force=True)
+    message = json_payload.get('message', None)
+
+    if not message:
+        message = None
+    if message is not None and message.isspace():
+        message = None
 
     assessment = Assessment.query.get(id)
     if assessment is None:
@@ -97,8 +103,9 @@ def reject_assessment(id):
 
     try:
         db.session.commit()
-        send_assessment_rejected_notification(assessment.supplier_domain.supplier_id,
-                                              assessment.supplier_domain.domain_id)
+        if message is not None:
+            send_assessment_rejected_notification(assessment.supplier_domain.supplier_id,
+                                                  assessment.supplier_domain.domain.name, message)
     except IntegrityError:
         abort(400)
     return jsonify(assessment.serializable), 200
