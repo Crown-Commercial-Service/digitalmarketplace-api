@@ -2474,6 +2474,32 @@ class Project(db.Model):
         return list(y())
 
 
+class ServiceType(db.Model):
+    __tablename__ = 'service_type'
+
+    id = db.Column(db.Integer, primary_key=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('service_category.id'), nullable=False)
+    category = db.relationship('ServiceCategory')
+    name = db.Column(db.String, nullable=False)
+    framework_id = db.Column(db.BigInteger, db.ForeignKey('framework.id'), index=True, unique=False, nullable=False)
+    lot_id = db.Column(db.BigInteger, db.ForeignKey('lot.id'), index=True, unique=False, nullable=False)
+    framework = db.relationship(Framework, lazy='joined', innerjoin=True)
+    lot = db.relationship(Lot, lazy='joined', innerjoin=True)
+    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
+    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
+
+    def update_from_json_before(self, data):
+        if 'category_name' in data:
+            category = ServiceCategory.query.filter(
+                ServiceCategory.name == data['category_name']
+            ).first()
+
+            self.category_id = category.id
+            del data['category_name']
+
+        return data
+
+
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
 # which takes a long time for old events

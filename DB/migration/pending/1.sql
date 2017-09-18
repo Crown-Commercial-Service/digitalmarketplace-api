@@ -1,25 +1,26 @@
-alter table "public"."signed_agreement" drop constraint "signed_agreement_agreement_id_fkey";
+create sequence "public"."service_type_id_seq";
 
-alter table "public"."signed_agreement" drop constraint "signed_agreement_application_id_fkey";
+create table "public"."service_type" (
+    "id" integer not null default nextval('service_type_id_seq'::regclass),
+    "category_id" integer not null,
+    "name" character varying not null,
+    "framework_id" bigint not null,
+    "lot_id" bigint not null,
+    "created_at" timestamp without time zone not null,
+    "updated_at" timestamp without time zone not null
+);
 
-alter table "public"."signed_agreement" drop constraint "signed_agreement_user_id_fkey";
 
-alter table "public"."signed_agreement" drop constraint "signed_agreement_pkey";
+CREATE INDEX ix_service_type_framework_id ON service_type USING btree (framework_id);
 
-drop index if exists "public"."signed_agreement_pkey";
+CREATE INDEX ix_service_type_lot_id ON service_type USING btree (lot_id);
 
-alter table "public"."signed_agreement" add column "supplier_code" integer;
+CREATE UNIQUE INDEX service_type_pkey ON service_type USING btree (id);
 
-alter table "public"."signed_agreement" alter column "application_id" drop not null;
+alter table "public"."service_type" add constraint "service_type_pkey" PRIMARY KEY using index "service_type_pkey";
 
-CREATE UNIQUE INDEX signed_agreement_pkey ON signed_agreement USING btree (agreement_id, user_id, signed_at);
+alter table "public"."service_type" add constraint "service_type_category_id_fkey" FOREIGN KEY (category_id) REFERENCES service_category(id);
 
-alter table "public"."signed_agreement" add constraint "signed_agreement_pkey" PRIMARY KEY using index "signed_agreement_pkey";
+alter table "public"."service_type" add constraint "service_type_framework_id_fkey" FOREIGN KEY (framework_id) REFERENCES framework(id);
 
-alter table "public"."signed_agreement" add constraint "signed_agreement_supplier_code_fkey" FOREIGN KEY (supplier_code) REFERENCES supplier(code);
-
-alter table "public"."signed_agreement" add constraint "signed_agreement_agreement_id_fkey" FOREIGN KEY (agreement_id) REFERENCES agreement(id);
-
-alter table "public"."signed_agreement" add constraint "signed_agreement_application_id_fkey" FOREIGN KEY (application_id) REFERENCES application(id);
-
-alter table "public"."signed_agreement" add constraint "signed_agreement_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id);
+alter table "public"."service_type" add constraint "service_type_lot_id_fkey" FOREIGN KEY (lot_id) REFERENCES lot(id);

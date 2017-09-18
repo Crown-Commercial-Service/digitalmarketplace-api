@@ -1,5 +1,8 @@
 from six.moves.urllib import parse as urlparse
 import requests
+import logging
+import sys
+import json
 
 
 def nonEmptyOrNone(s):
@@ -12,6 +15,18 @@ def nonEmptyOrNone(s):
     if s:
         return s
     return None
+
+
+def check_response(response):
+    if response.status_code >= 400:
+        msg = 'Error: server returned code {} {}'.format(
+            response.status_code,
+            response.get_data()
+        )
+        logging.error(msg)
+        sys.exit(1)
+    else:
+        return json.loads(response.get_data())
 
 
 class Response(object):

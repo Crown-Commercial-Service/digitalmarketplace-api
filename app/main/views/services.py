@@ -6,7 +6,7 @@ from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ...models import ArchivedService, Service, ServiceRole, Supplier, AuditEvent, Framework, ValidationError,\
-    PriceSchedule
+    PriceSchedule, ServiceType, db
 
 from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
@@ -24,6 +24,8 @@ from ...service_utils import (
     validate_service_data,
     validate_and_return_related_objects,
     filter_services)
+
+from app.utils import (get_json_from_request, json_has_required_keys)
 
 
 @main.route('/')
@@ -335,3 +337,28 @@ def update_service_status(service_id, status):
             index_service(service)
 
     return jsonify(services=service.serialize()), 200
+
+
+@main.route('/service-types/<string:service_type_id>', methods=['GET'])
+def get_service_type(service_type_id):
+    service_type = ServiceType.query.filter(
+        ServiceType.id == service_type_id
+    ).first_or_404()
+
+    return jsonify(
+        service_type=service_type.serializable
+    )
+
+
+@main.route('/service-types', methods=['POST'])
+def add_service_type():
+    service_type_json = get_json_from_request()
+    json_has_required_keys(service_type_json, ['service_type'])
+
+    service_type = ServiceType()
+    service_type.update_from_json(service_type_json['service_type'])
+
+    db.session.add(service_type)
+    db.session.commit()
+
+    return jsonify(service_type=service_type.serializable), 201

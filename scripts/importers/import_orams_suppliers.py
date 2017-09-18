@@ -1,22 +1,8 @@
 #!/usr/bin/env python2
 import csv
 import json
-import logging
 
-from utils import makeClient
-
-
-def check_response(response, supplier):
-    if response.status_code >= 400:
-        msg = 'Error adding supplier {}: server returned code {} {}'.format(
-            supplier['name'],
-            response.status_code,
-            response.get_data()
-        )
-        logging.error(msg)
-        sys.exit(1)
-    else:
-        return json.loads(response.get_data())
+from utils import makeClient, check_response
 
 
 def run_import(input_file, client):
@@ -45,14 +31,23 @@ def run_import(input_file, client):
             }],
         }
 
-        json_data = check_response(client.post('/api/suppliers', data=json.dumps({'supplier': supplier}),
-                                   content_type='application/json'), supplier)
+        json_data = check_response(
+            client.post('/api/suppliers',
+                        data=json.dumps({'supplier': supplier}),
+                        content_type='application/json'))
+
         supplier_code = json_data['supplier']['code']
-        check_response(client.put('/api/suppliers/{}/frameworks/orams'.format(supplier_code),
-                       data=json.dumps({'updated_by': ''}), content_type='application/json'), supplier)
+
+        check_response(
+            client.put(
+                '/api/suppliers/{}/frameworks/orams'.format(supplier_code),
+                data=json.dumps({'updated_by': ''}),
+                content_type='application/json'))
 
         print '{}: {}'.format(supplier_code, supplier['name'])
         num_successes += 1
+
+    print 'Total:{}'.format(num_successes)
 
 
 if __name__ == '__main__':
