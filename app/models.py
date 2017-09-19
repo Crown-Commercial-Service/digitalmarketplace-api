@@ -799,7 +799,10 @@ class Supplier(db.Model):
             ]
 
         if 'addresses' in data and isinstance(data['addresses'], list):
-            data['addresses'] = [a for a in data['addresses'] if a is not None]
+            data['addresses'] = [a for a in data['addresses'] if a]
+
+        if 'products' in data and isinstance(data['products'], list):
+            data['products'] = [a for a in data['products'] if a]
 
         overridden = [
             'longName',
