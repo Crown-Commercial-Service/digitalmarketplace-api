@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from freezegun import freeze_time
 import math
 import random
 import sys
@@ -9,9 +10,13 @@ from tests.helpers import FixtureMixin
 from tests.bases import BaseApplicationTest
 
 from dmapiclient.audit import AuditTypes
-from app.models import DATETIME_FORMAT, AuditEvent, User
-from app.models.direct_award import DirectAwardProjectUser, DirectAwardSearch, DirectAwardProject
-from ...helpers import DIRECT_AWARD_SEARCH_URL, DIRECT_AWARD_PROJECT_NAME
+
+from app import db
+from app.models import DATETIME_FORMAT, AuditEvent, User, ArchivedService
+from app.models.direct_award import (
+    DirectAwardProjectUser, DirectAwardSearch, DirectAwardProject, DirectAwardSearchResultEntry
+)
+from ...helpers import DIRECT_AWARD_SEARCH_URL, DIRECT_AWARD_PROJECT_NAME, DIRECT_AWARD_FROZEN_TIME
 
 
 class DirectAwardSetupAndTeardown(BaseApplicationTest, FixtureMixin):
@@ -23,6 +28,18 @@ class DirectAwardSetupAndTeardown(BaseApplicationTest, FixtureMixin):
 
     def teardown(self):
         super(DirectAwardSetupAndTeardown, self).teardown()
+
+    def _create_project_data(self):
+        return {
+            'project': {
+                'userId': self.user_id,
+                'name': self.direct_award_project_name,
+            },
+            'updated_by': str(self.user_id)
+        }.copy()
+
+    def _updated_by_data(self):
+        return {'updated_by': str(self.user_id)}
 
 
 class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
@@ -155,15 +172,6 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
 
 
 class TestDirectAwardCreateProject(DirectAwardSetupAndTeardown):
-    def _create_project_data(self):
-        return {
-            'project': {
-                'userId': self.user_id,
-                'name': self.direct_award_project_name,
-            },
-            'updated_by': str(self.user_id)
-        }.copy()
-
     @pytest.mark.parametrize('drop_project_keys, expected_status',
                              (
                                  ([], 201),  # All required keys
@@ -534,6 +542,106 @@ class TestDirectAwardGetProjectSearch(DirectAwardSetupAndTeardown):
             assert data['search'] == DirectAwardSearch.query.get(self.search_id).serialize()
 
 
+class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
+    def setup(self):
+        super(TestDirectAwardListProjectServices, self).setup()
+
+        self.project_id = self.create_direct_award_project(user_id=self.user_id,
+                                                           project_name=self.direct_award_project_name)
+        self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id)
+
+        with self.app.app_context():
+            # Lock the project.
+            project = DirectAwardProject.query.get(self.project_id)
+            project.locked_at = datetime.utcnow()
+            db.session.add(project)
+            db.session.commit()
+
+    def test_list_project_services_404s_on_invalid_project(self):
+        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(sys.maxsize,
+                                                                                     self.search_id,
+                                                                                     self.user_id))
+        assert res.status_code == 404
+
+    def test_list_project_services_400s_on_unlocked_project(self):
+        with self.app.app_context():
+            # Unlock the project.
+            project = DirectAwardProject.query.get(self.project_id)
+            project.locked_at = None
+            db.session.add(project)
+            db.session.commit()
+
+        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(self.project_id,
+                                                                                     self.search_id,
+                                                                                     self.user_id))
+        assert res.status_code == 400
+
+    def test_list_project_services_400s_if_no_saved_search(self):
+        with self.app.app_context():
+            # Delete the saved search so that none is assigned to the project.
+            search = DirectAwardSearch.query.get(self.search_id)
+            db.session.delete(search)
+            db.session.commit()
+
+        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(self.project_id,
+                                                                                     self.search_id,
+                                                                                     self.user_id))
+        assert res.status_code == 400
+
+    def test_list_project_services_returns_required_keys(self):
+        with self.app.app_context():
+            # Create some 'saved' services, which requires suppliers+archivedservice entries.
+            self.setup_dummy_suppliers(3)
+            self.setup_dummy_services(5, model=ArchivedService)
+
+            archived_services = ArchivedService.query.all()
+            for archived_service in archived_services:
+                db.session.add(DirectAwardSearchResultEntry(archived_service_id=archived_service.id,
+                                                            search_id=self.search_id))
+            db.session.commit()
+
+        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(self.project_id,
+                                                                                     self.search_id,
+                                                                                     self.user_id))
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))
+
+        assert set(data.keys()) == {'meta', 'links', 'services'}
+        assert set(data['services'][0].keys()) == {'id', 'supplier', 'data'}
+
+    def test_list_project_services_accepts_page_offset(self):
+        project_services_count = 100
+
+        with self.app.app_context():
+            # Create some 'saved' services, which requires suppliers+archivedservice entries.
+            self.setup_dummy_suppliers(3)
+            self.setup_dummy_services(project_services_count, model=ArchivedService)
+
+            archived_services = ArchivedService.query.all()
+            for archived_service in archived_services:
+                db.session.add(DirectAwardSearchResultEntry(archived_service_id=archived_service.id,
+                                                            search_id=self.search_id))
+            db.session.commit()
+
+        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(self.project_id,
+                                                                                     self.user_id))
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        assert len(data['services']) == self.app.config['DM_API_PROJECTS_PAGE_SIZE']
+        assert data['meta']['total'] == project_services_count
+
+        next_url = 'http://127.0.0.1:5000/direct-award/projects/{}/services?user-id={}&page=2'.format(
+            self.project_id, self.user_id
+        )
+        last_url = 'http://127.0.0.1:5000/direct-award/projects/{}/services?user-id={}&page=20'.format(
+            self.project_id, self.user_id
+        )
+        assert data['links']['next'] == next_url
+        assert data['links']['last'] == last_url
+
+
 class TestDirectAwardLockProject(DirectAwardSetupAndTeardown):
     def setup(self):
         super(TestDirectAwardLockProject, self).setup()
@@ -568,5 +676,77 @@ class TestDirectAwardLockProject(DirectAwardSetupAndTeardown):
         pass
 
     @pytest.mark.skip
+    def test_lock_project_saved_result_entries_are_for_the_active_search_in_the_project(self):
+        pass
+
+    @pytest.mark.skip
     def test_lock_project_creates_audit_event(self):
         pass
+
+
+class TestDirectAwardRecordProjectDownload(DirectAwardSetupAndTeardown):
+    def setup(self):
+        super(TestDirectAwardRecordProjectDownload, self).setup()
+        self.project_id = self.create_direct_award_project(user_id=self.user_id,
+                                                           project_name=self.direct_award_project_name)
+        self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id)
+
+    @pytest.mark.parametrize('drop_project_keys, expected_status',
+                             (
+                                 ([], 200),  # All required keys
+                                 (['updated_by'], 400))  # Don't send updated_by
+                             )
+    def test_record_project_download_requires_updated_by(self, drop_project_keys, expected_status):
+        project_data = self._create_project_data()
+        for key in drop_project_keys:
+            del project_data[key]
+
+        res = self.client.post('/direct-award/projects/{}/record-download'.format(self.project_id),
+                               data=json.dumps(project_data),
+                               content_type='application/json')
+        assert res.status_code == expected_status
+
+    @pytest.mark.parametrize('override_project_id, expected_status',
+                             (
+                                 (None, 200),
+                                 (sys.maxsize, 404)
+                             ))
+    def test_record_project_download_404s_if_invalid_project(self, override_project_id, expected_status):
+        if override_project_id:
+            self.project_id = override_project_id
+
+        res = self.client.post('/direct-award/projects/{}/record-download'.format(self.project_id),
+                               data=json.dumps(self._updated_by_data()),
+                               content_type='application/json')
+        assert res.status_code == expected_status
+
+    @freeze_time(DIRECT_AWARD_FROZEN_TIME)
+    @pytest.mark.parametrize('downloaded_at, expected_timestamp',
+                             (
+                                 (None, DIRECT_AWARD_FROZEN_TIME),
+                                 ('1990-01-01T00:00:00.000000Z', DIRECT_AWARD_FROZEN_TIME),
+                             ))
+    def test_record_project_download_timestamp_overrides_previous(self, downloaded_at, expected_timestamp):
+        with self.app.app_context():
+            project = DirectAwardProject.query.get(self.project_id)
+            project.downloaded_at = downloaded_at
+            db.session.add(project)
+            db.session.commit()
+
+        self.client.post('/direct-award/projects/{}/record-download'.format(self.project_id),
+                         data=json.dumps(self._updated_by_data()),
+                         content_type='application/json')
+
+        with self.app.app_context():
+            project = DirectAwardProject.query.get(self.project_id)
+            assert project.downloaded_at == datetime.strptime(expected_timestamp, DATETIME_FORMAT)
+
+    def test_record_project_download_creates_audit_event(self):
+        res = self.client.post('/direct-award/projects/{}/record-download'.format(self.project_id),
+                               data=json.dumps(self._updated_by_data()),
+                               content_type='application/json')
+        assert res.status_code == 200
+
+        with self.app.app_context():
+            assert len(AuditEvent.query.all()) == 1
+            assert AuditEvent.query.all()[0].type == AuditTypes.downloaded_project.value

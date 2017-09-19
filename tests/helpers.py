@@ -174,7 +174,7 @@ class FixtureMixin(object):
             db.session.commit()
 
     def setup_dummy_service(self, service_id, supplier_id=1, data=None,
-                            status='published', framework_id=1, lot_id=1, **kwargs):
+                            status='published', framework_id=1, lot_id=1, model=Service, **kwargs):
         now = datetime.utcnow()
 
         # lot and framework ids aren't in json responses, so we'll look for them first
@@ -192,18 +192,19 @@ class FixtureMixin(object):
             'data': data or kwargs or {'serviceName': 'Service {}'.format(service_id)}
         }
 
-        db.session.add(Service(**service_kwargs))
+        db.session.add(model(**service_kwargs))
         db.session.commit()
 
     def setup_dummy_services(self, n, supplier_id=None, framework_id=1,
-                             start_id=0, lot_id=1):
+                             start_id=0, lot_id=1, model=Service):
         with self.app.app_context():
             for i in range(start_id, start_id + n):
                 self.setup_dummy_service(
                     service_id=str(2000000000 + start_id + i),
                     supplier_id=supplier_id or (i % TEST_SUPPLIERS_COUNT),
                     framework_id=framework_id,
-                    lot_id=lot_id
+                    lot_id=lot_id,
+                    model=model,
                 )
 
     def setup_dummy_services_including_unpublished(self, n):

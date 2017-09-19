@@ -93,7 +93,14 @@ def json_only_has_required_keys(data, keys):
 
 
 def drop_foreign_fields(json_object, list_of_keys, recurse=False):
+    """Filter a JSON object down by _removing_ all keys in list_of_keys"""
     json_object = keyfilter_json(json_object, lambda k: k not in list_of_keys, recurse)
+    return json_object
+
+
+def drop_all_other_fields(json_object, list_of_keys, recurse=False):
+    """Filter a JSON object down by _keeping_ only keys in list_of_keys"""
+    json_object = keyfilter_json(json_object, lambda k: k in list_of_keys, recurse)
     return json_object
 
 
