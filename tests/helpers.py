@@ -38,7 +38,9 @@ COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
 
 DIRECT_AWARD_PROJECT_NAME = 'My Direct Award Project'
 DIRECT_AWARD_FROZEN_TIME = '2017-01-01T00:00:00.000000Z'
-DIRECT_AWARD_SEARCH_URL = 'https://search-api.digitalmarketplace.service.gov.uk/g-cloud/services/search?q=hosting'
+DIRECT_AWARD_SEARCH_BASE = 'https://search-api.digitalmarketplace.service.gov.uk/'
+DIRECT_AWARD_SEARCH_RELATIVE_URL = 'g-cloud/services/search?q=hosting'
+DIRECT_AWARD_SEARCH_URL = DIRECT_AWARD_SEARCH_BASE + DIRECT_AWARD_SEARCH_RELATIVE_URL
 
 
 def fixture_params(fixture_name, params):

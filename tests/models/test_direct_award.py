@@ -7,7 +7,8 @@ from app import db
 from app.models import User, ValidationError
 from app.models.direct_award import DirectAwardProject, DirectAwardProjectUser, DirectAwardSearch
 from tests.bases import BaseApplicationTest
-from tests.helpers import FixtureMixin, DIRECT_AWARD_PROJECT_NAME, DIRECT_AWARD_SEARCH_URL
+from tests.helpers import (FixtureMixin, DIRECT_AWARD_PROJECT_NAME, DIRECT_AWARD_SEARCH_RELATIVE_URL,
+                           DIRECT_AWARD_SEARCH_URL,)
 
 
 class TestProjects(BaseApplicationTest, FixtureMixin):
@@ -112,7 +113,7 @@ class TestSearches(BaseApplicationTest, FixtureMixin):
             assert search.project_id == project_id
             assert isinstance(search.created_at, datetime)
             assert search.searched_at is None
-            assert search.search_url == DIRECT_AWARD_SEARCH_URL
+            assert search.search_url == DIRECT_AWARD_SEARCH_RELATIVE_URL
             assert search.active is True
 
     def test_only_one_search_active_per_project_is_enforced(self):
@@ -130,8 +131,8 @@ class TestSearches(BaseApplicationTest, FixtureMixin):
 
         with self.app.app_context():
             search = DirectAwardSearch.query.get(search_id)
+            search_keys_set = set(search.serialize().keys())
 
-        search_keys_set = set(search.serialize().keys())
         assert {'id', 'createdAt', 'searchedAt', 'projectId', 'searchUrl', 'active'} <= search_keys_set
 
     @pytest.mark.parametrize('update_kwargs',

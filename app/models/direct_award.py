@@ -1,8 +1,11 @@
 from datetime import datetime
+from urllib.parse import urljoin
 
 from sqlalchemy.orm import validates
+from flask import current_app
 
 from app import db
+from app.url_utils import force_relative_url
 from app.models import User, ValidationError, ArchivedService
 from dmutils.formats import DATETIME_FORMAT
 
@@ -81,13 +84,14 @@ class DirectAwardSearch(db.Model):
                                postgresql_where=db.Column('active')),)
 
     def serialize(self):
+        resolved_search_url = urljoin(current_app.config['DM_SEARCH_API_URL'], self.search_url)
         return {
             "id": self.id,
             "createdBy": self.created_by,
             "projectId": self.project_id,
             "createdAt": self.created_at.strftime(DATETIME_FORMAT),
             "searchedAt": self.searched_at.strftime(DATETIME_FORMAT) if self.searched_at is not None else None,
-            "searchUrl": self.search_url,
+            "searchUrl": resolved_search_url,
             "active": self.active
         }
 
@@ -96,8 +100,12 @@ class DirectAwardSearch(db.Model):
         if self.project and self.project.locked_at:
             raise ValidationError('Cannot change attributes of a search under a project ({}) that '
                                   'has been locked.'.format(self.project_id))
+        if key == 'search_url' and value:
+            # remove hostname etc so that stored URI is always relative to the base Search API URI in our config
+            return force_relative_url(current_app.config['DM_SEARCH_API_URL'], value)
 
-        return value
+        else:
+            return value
 
 
 class DirectAwardSearchResultEntry(db.Model):
