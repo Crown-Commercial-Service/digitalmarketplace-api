@@ -8,7 +8,7 @@ from app.auth import auth
 from app.auth.helpers import (
     generate_reset_password_token, decode_reset_password_token
 )
-from app.models import Application, User
+from app.models import Application, User, Supplier
 from app.utils import get_json_from_request, json_has_required_keys
 from app.emails.users import (
     send_account_activation_email, send_account_activation_manager_email, send_new_user_onboarding_email,
@@ -19,6 +19,7 @@ from dmutils.email import EmailError, InvalidToken
 from app.auth.helpers import decode_creation_token, is_government_email
 from app.auth.applications import create_application
 from app.auth.user import is_duplicate_user, update_user_details
+from app.auth.suppliers import get_supplier
 from datetime import datetime
 
 
@@ -329,3 +330,14 @@ def reset_password(token):
 
     except Exception as error:
         return jsonify(message=error.message), 400
+
+
+@auth.route('/profile', methods=['GET'])
+@login_required
+def get_user_profile():
+    user = {'email': current_user.email_address, 'role': current_user.role}
+    if current_user.supplier_code is not None:
+        supplier = get_supplier(current_user.supplier_code)
+        user['supplier'] = supplier
+
+    return jsonify(user=user), 200

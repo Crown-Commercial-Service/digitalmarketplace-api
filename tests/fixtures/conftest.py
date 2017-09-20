@@ -138,7 +138,7 @@ def supplier_user(app, request, suppliers):
             id=1,
             email_address='j@examplecompany.biz',
             name=fake.name(),
-            password=fake.password(),
+            password=encryption.hashpw('testpassword'),
             active=True,
             role='supplier',
             supplier_code=suppliers[0].code,
