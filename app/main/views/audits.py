@@ -114,6 +114,27 @@ def list_audits():
     elif object_id:
         abort(400, 'object-id cannot be provided without object-type')
 
+    after_event_id = request.args.get('after-event-id')
+    if after_event_id:
+        ref_audit_event = db.session.query(AuditEvent).get(int(after_event_id))
+        if ref_audit_event is None:
+            abort(400, "No audit event with id {}".format(after_event_id))
+
+        audits = audits.filter(
+            # much like in acknowledge_including_previous, this clause implements the same "id tie breaker" behaviour
+            # ordering we use. this way the filter appears to behave exactly like a regular request truncated. the only
+            # situation where it will behave at all differently is cases where earliest_for_each_object is also used.
+            # again, we could use postgres composite types to express this far more neatly, but i can't get sqlalchemy
+            # to work with anonymous composite types.
+            db.or_(
+                AuditEvent.created_at > ref_audit_event.created_at,
+                db.and_(
+                    AuditEvent.created_at == ref_audit_event.created_at,
+                    AuditEvent.id > ref_audit_event.id,
+                ),
+            ),
+        )
+
     if earliest_for_each_object:
         if not (
             acknowledged and
