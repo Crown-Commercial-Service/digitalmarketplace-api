@@ -6,7 +6,7 @@ from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ...models import ArchivedService, Service, ServiceRole, Supplier, AuditEvent, Framework, ValidationError,\
-    PriceSchedule, ServiceType, db
+    PriceSchedule, ServiceType, db, Region, Location
 
 from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
@@ -362,3 +362,38 @@ def add_service_type():
     db.session.commit()
 
     return jsonify(service_type=service_type.serializable), 201
+
+
+@main.route('/regions', methods=['POST'])
+def add_region():
+    region_json = get_json_from_request()
+    json_has_required_keys(region_json, ['region'])
+
+    region = Region.query.filter(
+        Region.name == region_json['region']['name']
+    ).first()
+
+    if region is not None:
+        return jsonify(region=region.serializable), 200
+
+    region = Region()
+    region.update_from_json(region_json['region'])
+
+    db.session.add(region)
+    db.session.commit()
+
+    return jsonify(region=region.serializable), 201
+
+
+@main.route('/locations', methods=['POST'])
+def add_location():
+    location_json = get_json_from_request()
+    json_has_required_keys(location_json, ['location'])
+
+    location = Location()
+    location.update_from_json(location_json['location'])
+
+    db.session.add(location)
+    db.session.commit()
+
+    return jsonify(location=location.serializable), 201

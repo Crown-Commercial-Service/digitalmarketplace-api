@@ -2503,6 +2503,28 @@ class ServiceType(db.Model):
         return data
 
 
+class Region(db.Model):
+    __tablename__ = 'region'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
+    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
+
+
+class Location(db.Model):
+    __tablename__ = 'location'
+
+    id = db.Column(db.Integer, primary_key=True)
+    region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
+    region = db.relationship('Region')
+    name = db.Column(db.String, nullable=False)
+    state = db.Column(db.String, nullable=False)
+    postal_code = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
+    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
+
+
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
 # which takes a long time for old events
