@@ -30,9 +30,15 @@ def ping():
     except AttributeError:
         user_type = 'anonymous'
 
+    try:
+        supplier_code = current_user.supplier_code
+    except AttributeError:
+        supplier_code = None
+
     return jsonify(
         isAuthenticated=current_user.is_authenticated,
         userType=user_type,
+        supplierCode=supplier_code,
         csrfToken=get_csrf_token()
     )
 

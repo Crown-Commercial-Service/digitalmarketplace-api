@@ -120,6 +120,12 @@ class Config:
     SEND_EMAILS = True
     CSRF_ENABLED = False
 
+    ALLOWED_EXTENSIONS = ['pdf', 'odt', 'doc', 'docx']
+
+    S3_BUCKET_NAME = ''
+    S3_ENDPOINT_URL = 's3-ap-southeast-2.amazonaws.com'
+    AWS_DEFAULT_REGION = ''
+
 
 class Test(Config):
     URL_PREFIX = ''

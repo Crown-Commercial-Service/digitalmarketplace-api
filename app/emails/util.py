@@ -14,6 +14,10 @@ DEFAULT_STYLES = {
         color: #17657a;
         text-decoration: underline;
         font-weight: bold;
+    ''',
+    'blockquote':
+    '''
+    padding: 2rem; background: #def4f9;
     '''
 }
 
@@ -25,13 +29,14 @@ template_env = Environment(
 
 
 def render_email_template(filename, **kwargs):
+    header = kwargs.pop('header', '')
     styles = kwargs.pop('styles', DEFAULT_STYLES)
 
     template = template_env.get_template(filename)
     md = template.render(**kwargs)
     rendered = markdown_with_inline_styles(md, styles)
     template = template_env.get_template('master.html')
-    rendered = template.render(body=rendered)
+    rendered = template.render(header=header, body=rendered)
     return rendered
 
 

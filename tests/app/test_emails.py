@@ -12,6 +12,7 @@ EXPECTED = """<!DOCTYPE html>
     <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
 </head>
 <body style="font-family: Open Sans, sans-serif; font-size: 17px;">
+
 <div>
 <h1 style=" font-weight: bold">Sample email</h1>
 <p>Must handle ünicode in the template.</p>

@@ -2002,6 +2002,12 @@ class BriefResponse(db.Model):
             except KeyError:
                 pass
 
+            try:
+                self.data['attachedDocumentURL'] = \
+                    clean(self.data['attachedDocumentURL'])
+            except KeyError:
+                pass
+
         try:
             clean_non_strings()
         except TypeError:
