@@ -23,24 +23,34 @@ from app.auth.suppliers import get_supplier
 from datetime import datetime
 
 
-@auth.route('/ping', methods=["GET"])
-def ping():
+def _user_info(user):
     try:
         user_type = current_user.role
     except AttributeError:
         user_type = 'anonymous'
 
     try:
+        email_address = current_user.email_address
+    except AttributeError:
+        email_address = None
+
+    try:
         supplier_code = current_user.supplier_code
     except AttributeError:
         supplier_code = None
 
-    return jsonify(
-        isAuthenticated=current_user.is_authenticated,
-        userType=user_type,
-        supplierCode=supplier_code,
-        csrfToken=get_csrf_token()
-    )
+    return {
+        "isAuthenticated": current_user.is_authenticated,
+        "userType": user_type,
+        "supplierCode": supplier_code,
+        "emailAddress": email_address,
+        "csrfToken": get_csrf_token()
+    }
+
+
+@auth.route('/ping', methods=["GET"])
+def ping():
+    return jsonify(_user_info(current_user))
 
 
 @auth.route('/_protected', methods=["GET"])
@@ -71,11 +81,7 @@ def login():
 
         login_user(user)
 
-        return jsonify(
-            isAuthenticated=user.is_authenticated,
-            userType=user.role,
-            csrfToken=get_csrf_token()
-        )
+        return jsonify(_user_info(user))
     else:
         user.failed_login_count += 1
         db.session.add(user)
