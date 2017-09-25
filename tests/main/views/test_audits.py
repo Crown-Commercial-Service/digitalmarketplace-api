@@ -503,6 +503,14 @@ class TestAuditEvents(BaseTestAuditEvents):
                             {"earliest_for_each_object": "true"},
                             (6, 7, 4, 3, 5,),
                         ),
+                        (  # (all of them have this value for user)
+                            {"earliest_for_each_object": "true", "user": "henry.flower@example.com"},
+                            (6, 7, 4, 3, 5,),
+                        ),
+                        (  # (none of them have this value for user)
+                            {"earliest_for_each_object": "true", "user": "flower"},
+                            (),
+                        ),
                         (
                             {"earliest_for_each_object": "true", "acknowledged": "false"},
                             (6, 7, 0, 5,),
@@ -759,6 +767,35 @@ class TestAuditEvents(BaseTestAuditEvents):
         assert_equal(response.status_code, 200)
         assert_equal(len(data['auditEvents']), 1)
         assert_equal(data['auditEvents'][0]['user'], 'rob')
+
+    @pytest.mark.parametrize("qstr,n_expected_results", (
+        ("user=rod", 1),
+        ("user=rob", 3),
+        ("user=", 4),
+        ("user=ro", 0),  # asserting that this isn't a substring search
+    ))
+    def test_should_only_get_audit_event_with_correct_user(self, qstr, n_expected_results):
+        self.add_audit_events_with_db_object()
+
+        with self.app.app_context():
+            # create AuditEvent with different user value
+            supplier = Supplier.query.filter(Supplier.supplier_id == 1).first()
+            event = AuditEvent(
+                audit_type=AuditTypes.supplier_update,
+                db_object=supplier,
+                user='rod',
+                data={'request': "data"}
+            )
+            event.object_type = 'Supplier'
+
+            db.session.add(event)
+            db.session.commit()
+
+        response = self.client.get('/audit-events?{}'.format(qstr))
+        data = json.loads(response.get_data())
+
+        assert response.status_code == 200
+        assert len(data['auditEvents']) == n_expected_results
 
     def test_should_reject_invalid_object_type(self):
         self.add_audit_events_with_db_object()
