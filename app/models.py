@@ -2500,7 +2500,7 @@ class ServiceType(db.Model):
     def update_from_json_before(self, data):
         if 'category_name' in data:
             category = ServiceCategory.query.filter(
-                ServiceCategory.name == data['category_name']
+                func.lower(ServiceCategory.name) == func.lower(data['category_name'])
             ).first()
 
             self.category_id = category.id
@@ -2529,6 +2529,66 @@ class Location(db.Model):
     postal_code = db.Column(db.Integer, nullable=False)
     created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
     updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
+
+
+def update_price_json(self, data):
+    if 'supplier_name' in data:
+        supplier = Supplier.query.filter(
+            func.lower(Supplier.name) == func.lower(data['supplier_name'])
+        ).first()
+
+        self.supplier_code = supplier.code
+        del data['supplier_name']
+
+    if 'service_name' in data:
+        service_type = ServiceType.query.filter(
+            func.lower(ServiceType.name) == func.lower(data['service_name'])
+        ).first()
+
+        self.service_type_id = service_type.id
+        del data['service_name']
+
+    if 'region_name' in data:
+        region = Region.query.filter(
+            func.lower(Region.name) == func.lower(data['region_name'])
+        ).first()
+
+        self.region_id = region.id
+        del data['region_name']
+
+    return data
+
+
+class ServiceTypePrice(db.Model):
+    __tablename__ = 'service_type_price'
+
+    id = db.Column(db.Integer, primary_key=True)
+    supplier_code = db.Column(db.Integer, db.ForeignKey('supplier.code'), nullable=False)
+    service_type_id = db.Column(db.Integer, db.ForeignKey('service_type.id'), nullable=False)
+    region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
+    date_from = db.Column(DateTime, index=False, nullable=False, default=utcnow)
+    date_to = db.Column(DateTime, index=False, nullable=True)
+    price = db.Column(db.Numeric, nullable=False)
+    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
+    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
+
+    def update_from_json_before(self, data):
+        return update_price_json(self, data)
+
+
+class ServiceTypePriceCeiling(db.Model):
+    __tablename__ = 'service_type_price_ceiling'
+
+    id = db.Column(db.Integer, primary_key=True)
+    supplier_code = db.Column(db.Integer, db.ForeignKey('supplier.code'), nullable=False)
+    service_type_id = db.Column(db.Integer, db.ForeignKey('service_type.id'), nullable=False)
+    region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
+    price = db.Column(db.Numeric, nullable=False)
+    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
+    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
+
+    def update_from_json_before(self, data):
+        return update_price_json(self, data)
 
 
 # Index for .last_for_object queries. Without a composite index the
