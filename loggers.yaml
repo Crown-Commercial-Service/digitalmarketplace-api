@@ -4,6 +4,10 @@ disable_existing_loggers: no
 level: DEBUG
 
 loggers:
+  waitress:
+    level: DEBUG
+    handlers: [stdHandler]
+    
   sqlalchemy:
     level: WARN
     handlers: [stdHandler]
