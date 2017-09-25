@@ -5,20 +5,24 @@ from ...models import db, AuditEvent, Brief
 from ...utils import (
     get_json_from_request
 )
+from dmapiclient.audit import AuditTypes
 
 
-@login_required
 @auth.route('/feedback', methods=["POST"])
+@login_required
 def post_feedback():
     feedback_data = get_json_from_request()
 
-    feedback = AuditEvent(
-        audit_type='feedback',
-        user=current_user.email_address,
-        data=feedback_data,
-        db_object=Brief.query.filter(
+    if feedback_data['object_type'] == 'Brief':
+        db_object = Brief.query.filter(
             Brief.id == feedback_data['object_id']
         ).first_or_404()
+
+    feedback = AuditEvent(
+        audit_type=AuditTypes.feedback,
+        user=current_user.email_address,
+        data=feedback_data,
+        db_object=db_object
     )
 
     db.session.add(feedback)
