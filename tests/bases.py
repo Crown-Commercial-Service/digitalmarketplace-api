@@ -16,43 +16,18 @@ class WSGIApplicationWithEnvironment(object):
 
 
 class BaseApplicationTest(object):
-    lots = {
-        "iaas": "G6-IaaS.json",
-        "saas": "G6-SaaS.json",
-        "paas": "G6-PaaS.json",
-        "scs": "G6-SCS.json"
-    }
 
     config = None
 
     def setup(self):
         self.app = create_app('test')
+        self.app.wsgi_app = WSGIApplicationWithEnvironment(
+            self.app.wsgi_app,
+            HTTP_AUTHORIZATION='Bearer {}'.format(self.app.config['DM_API_AUTH_TOKENS'])
+        )
         self.client = self.app.test_client()
-        self.setup_authorization(self.app)
-
-    def setup_authorization(self, app):
-        """Set up bearer token and pass on all requests"""
-        valid_token = 'valid-token'
-        app.wsgi_app = WSGIApplicationWithEnvironment(
-            app.wsgi_app,
-            HTTP_AUTHORIZATION='Bearer {}'.format(valid_token))
-        self._auth_tokens = app.config['DM_API_AUTH_TOKENS']
-        app.config['DM_API_AUTH_TOKENS'] = valid_token
-
-    def do_not_provide_access_token(self):
-        self.app.wsgi_app = self.app.wsgi_app.app
 
     def teardown(self):
-        self.teardown_authorization()
-        self.teardown_database()
-
-    def teardown_authorization(self):
-        if self._auth_tokens is None:
-            del self.app.config['DM_API_AUTH_TOKENS']
-        else:
-            self.app.config['DM_API_AUTH_TOKENS'] = self._auth_tokens
-
-    def teardown_database(self):
         with self.app.app_context():
             db.session.remove()
             for table in reversed(db.metadata.sorted_tables):

@@ -18,16 +18,18 @@ class TestApplication(BaseApplicationTest):
         assert response.status_code == 404
 
     def test_bearer_token_is_required(self):
-        self.do_not_provide_access_token()
+        """Stop the client from sending an auth header and assert response is 401 Unauthorised."""
+        self.app.wsgi_app.kwargs.pop('HTTP_AUTHORIZATION')
         response = self.client.get('/')
         assert response.status_code == 401
         assert 'WWW-Authenticate' in response.headers
 
-    def test_invalid_bearer_token_is_required(self):
-        self.do_not_provide_access_token()
+    def test_invalid_bearer_token_is_not_allowed(self):
+        """Force the client to send an invalid auth header and assert response is 403 Forbidden."""
+        self.app.wsgi_app.kwargs['HTTP_AUTHORIZATION'] = 'Bearer invalid-token'
         response = self.client.get(
             '/',
-            headers={'Authorization': 'Bearer invalid-token'})
+        )
         assert response.status_code == 403
 
     def test_max_age_is_one_day(self):
