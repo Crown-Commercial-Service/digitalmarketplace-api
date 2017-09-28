@@ -161,3 +161,7 @@ def decode_reset_password_token(token):
         raise InvalidToken("Token generated earlier than password was last changed")
 
     return data
+
+
+def get_root_url(framework_slug):
+    return current_app.config['APP_ROOT'].get(framework_slug)

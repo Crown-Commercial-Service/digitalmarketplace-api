@@ -6,7 +6,7 @@ from urllib import quote
 from app import db, encryption
 from app.auth import auth
 from app.auth.helpers import (
-    generate_reset_password_token, decode_reset_password_token
+    generate_reset_password_token, decode_reset_password_token, get_root_url
 )
 from app.models import Application, User, Supplier
 from app.utils import get_json_from_request, json_has_required_keys
@@ -110,6 +110,7 @@ def send_signup_email():
         employment_status = json_payload.get('employment_status', None)
         line_manager_name = json_payload.get('line_manager_name', None)
         line_manager_email = json_payload.get('line_manager_email', None)
+        framework = json_payload.get('framework', 'digital-marketplace')
 
     except KeyError:
         return jsonify(message='One or more required args were missing from the request'), 400
@@ -157,7 +158,8 @@ def send_signup_email():
             send_account_activation_email(
                 name=name,
                 email_address=email_address,
-                user_type=user_type
+                user_type=user_type,
+                url=get_root_url(framework)
             )
             return jsonify(
                 email_address=email_address,
@@ -258,8 +260,8 @@ def submit_create_account():
         return jsonify(message=error.message), 400
 
 
-@auth.route('/reset-password/', methods=['POST'])
-def send_reset_password_email():
+@auth.route('/reset-password/framework/<string:framework_slug>', methods=['POST'])
+def send_reset_password_email(framework_slug):
     json_payload = get_json_from_request()
     email_address = json_payload.get('email_address', None)
     if email_address is None:
@@ -268,22 +270,25 @@ def send_reset_password_email():
     user = User.query.filter(
         User.email_address == email_address).first()
 
+    app_root_url = get_root_url(framework_slug)
+
     try:
         reset_password_token = generate_reset_password_token(
             email_address,
-            user.id,
+            user.id
         )
 
         reset_password_url = '{}{}/reset-password/{}'.format(
             current_app.config['FRONTEND_ADDRESS'],
-            current_app.config['REACT_APP_ROOT'],
+            app_root_url,
             quote(reset_password_token)
         )
 
         send_reset_password_confirm_email(
             email_address=email_address,
             url=reset_password_url,
-            locked=user.locked
+            locked=user.locked,
+            framework=framework_slug
         )
 
     except Exception as error:

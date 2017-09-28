@@ -89,11 +89,11 @@ def generate_user_creation_token(name, email_address, user_type, **unused):
     return token
 
 
-def send_account_activation_email(name, email_address, user_type):
+def send_account_activation_email(name, email_address, user_type, url):
     token = generate_user_creation_token(name=name, email_address=email_address, user_type=user_type)
     url = '{}{}/create-user/{}'.format(
         current_app.config['FRONTEND_ADDRESS'],
-        current_app.config['REACT_APP_ROOT'],
+        url,
         quote(token)
     )
 
@@ -220,11 +220,17 @@ def send_new_user_onboarding_email(name, email_address, user_type):
         return jsonify(message='Failed to send buyer onboarding email.'), 503
 
 
-def send_reset_password_confirm_email(email_address, url, locked):
-    if locked:
-        email_template = 'reset_password_email_locked_account.md'
+def send_reset_password_confirm_email(email_address, url, locked, framework):
+    if framework == "orams":
+        if locked:
+            email_template = 'reset_password_email_locked_account_orams.md'
+        else:
+            email_template = 'reset_password_email_orams.md'
     else:
-        email_template = 'reset_password_email.md'
+        if locked:
+            email_template = 'reset_password_email_locked_account_marketplace.md'
+        else:
+            email_template = 'reset_password_email_marketplace.md'
 
     email_body = render_email_template(
         email_template,

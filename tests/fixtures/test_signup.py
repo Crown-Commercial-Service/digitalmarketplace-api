@@ -19,7 +19,8 @@ def test_send_seller_type_signup_invite_email(client, mocker):
     send_email.assert_called_once_with(
         email_address=test_seller['email_address'],
         name=test_seller['name'],
-        user_type='seller'
+        user_type='seller',
+        url='/2'
     )
 
 
@@ -42,7 +43,8 @@ def test_send_buyer_type_signup_invite_email(client, mocker):
     send_email.assert_called_once_with(
         email_address='m@digital.gov.au',
         name='Jeff Labowski',
-        user_type='buyer'
+        user_type='buyer',
+        url='/2'
     )
 
 
@@ -145,7 +147,8 @@ def test_generic_domain(client):
         data=json.dumps({
             'email_address': 'm@gmail.com',
             'name': 'Jeff Labowski',
-            'user_type': 'seller'
+            'user_type': 'seller',
+            'url': '/2'
         }),
         content_type='application/json')
     assert response._status_code == 200
