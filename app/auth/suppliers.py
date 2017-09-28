@@ -27,6 +27,7 @@ def update_supplier_details(supplier_code, **kwargs):
         raise ValueError("Unable to modify supplier. supplier with code {} does not exist".format(supplier_code))
 
     kwargs.pop('domains', None)
+    kwargs.pop('signed_agreements', None)
 
     kwargs = revert_flattened_supplier_json(kwargs)
 
