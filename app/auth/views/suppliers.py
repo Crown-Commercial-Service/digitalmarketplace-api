@@ -25,6 +25,7 @@ def update_supplier_profile():
     try:
         json_payload = get_json_from_request()
         supplier = update_supplier_details(current_user.supplier_code, **json_payload)
+        supplier = flatten_supplier(supplier.serializable)
 
         return jsonify(user=supplier), 200
 

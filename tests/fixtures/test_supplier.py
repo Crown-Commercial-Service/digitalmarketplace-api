@@ -39,7 +39,25 @@ form_data = {
     "email": "brianne@example.com",
     "extraLinks": [],
     "extra_links": [],
-    "frameworks": [],
+    "frameworks": [
+        {
+            "agreement": {
+                "id": 1,
+                "is_current": False,
+                "links": {
+                    "self": "http://localhost:8000/agreements/1"
+                },
+                "url": "https://marketplace.service.gov.au/static/media/documents/digital.pdf",
+                "version": "Marketplace Agreement 2.0"
+            },
+            "agreement_id": 1,
+            "application_id": 2,
+            "links": {},
+            "signed_at": "2017-01-20T01:11:04.848011+00:00",
+            "supplier_code": 0,
+            "user_id": 365
+        }
+    ],
     "is_recruiter": "false",
     "lastUpdateTime": "2017-09-27T10:11:56.429856+00:00",
     "last_update_time": "2017-09-27T10:11:56.429856+00:00",
@@ -60,7 +78,25 @@ form_data = {
         "recruitment": "false"
     },
     "services": {},
-    "signed_agreements": [],
+    "signed_agreements": [
+        {
+            "agreement": {
+                "id": 1,
+                "is_current": False,
+                "links": {
+                    "self": "http://localhost:8000/agreements/1"
+                },
+                "url": "https://marketplace.service.gov.au/static/media/documents/digital.pdf",
+                "version": "Marketplace Agreement 2.0"
+            },
+            "agreement_id": 1,
+            "application_id": 2,
+            "links": {},
+            "signed_at": "2017-01-20T01:11:04.848011+00:00",
+            "supplier_code": 0,
+            "user_id": 365
+        }
+    ],
     "status": "complete",
     "summary": "An example apple company. zs",
     "text_vector": "'appl':1A,7B,12C 'compani':8B,13C 'exampl':6B,11C 'inc':2A 'ltd':4A 'pti':3A 'zs':9B,14C",
@@ -97,12 +133,6 @@ def test_update_supplier_profile(app, supplier_user, client, mocker):
     assert response.status_code == 200
 
     supplier_data = json.loads(response.data)
-
-    assert supplier_data['user']['addresses'] is not None
-    assert type(supplier_data['user']['addresses']) == list
-
-    assert supplier_data['user']['contacts'] is not None
-    assert type(supplier_data['user']['contacts']) == list
 
     updated_supplier_instance = Supplier.query.filter(
         Supplier.code == supplier_data['user'].get('code')).first()

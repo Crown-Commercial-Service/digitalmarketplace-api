@@ -26,8 +26,12 @@ def update_supplier_details(supplier_code, **kwargs):
     if supplier is None:
         raise ValueError("Unable to modify supplier. supplier with code {} does not exist".format(supplier_code))
 
-    kwargs.pop('domains', None)
-    kwargs.pop('signed_agreements', None)
+    ignore_fields_for_supplier_update = ['case_studies', 'case_study_ids', 'domains', 'extraLinks',
+                                         'extra_links', 'frameworks', 'prices', 'products', 'signed_agreements']
+
+    for key, value in kwargs.items():
+        if key in ignore_fields_for_supplier_update:
+            kwargs.pop(key)
 
     kwargs = revert_flattened_supplier_json(kwargs)
 
