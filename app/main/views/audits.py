@@ -68,6 +68,12 @@ def list_audits():
         else:
             abort(400, "Invalid audit type")
 
+    user = request.args.get('user')
+    if user:
+        audits = audits.filter(
+            AuditEvent.user == user
+        )
+
     acknowledged = request.args.get('acknowledged', None)
     if acknowledged and acknowledged != 'all':
         if is_valid_acknowledged_state(acknowledged):
