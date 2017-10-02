@@ -17,6 +17,7 @@ class DirectAwardProject(db.Model):
     name = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     locked_at = db.Column(db.DateTime, nullable=True)  # When the project's active search/es are final and cannot change
+    downloaded_at = db.Column(db.DateTime, nullable=True)  # When the project's shortlist was last downloaded
     active = db.Column(db.Boolean, default=True, nullable=False)
 
     users = db.relationship(User, secondary='direct_award_project_users', order_by=lambda: DirectAwardProjectUser.id)
@@ -27,6 +28,7 @@ class DirectAwardProject(db.Model):
             "name": self.name,
             "createdAt": self.created_at.strftime(DATETIME_FORMAT),
             "lockedAt": self.locked_at.strftime(DATETIME_FORMAT) if self.locked_at is not None else None,
+            "downloadedAt": self.downloaded_at.strftime(DATETIME_FORMAT) if self.downloaded_at is not None else None,
             "active": self.active
         }
 
@@ -74,7 +76,7 @@ class DirectAwardSearch(db.Model):
     # Service, but by storing this we have the flexibility to show either the live state or the state at the time
     # the user ran the search.
     archived_services = db.relationship(ArchivedService, secondary='direct_award_search_result_entries',
-                                        order_by=lambda: DirectAwardSearchResultEntry.id)
+                                        order_by=lambda: DirectAwardSearchResultEntry.id, lazy='dynamic')
 
     project = db.relationship(DirectAwardProject)
     user = db.relationship(User)
