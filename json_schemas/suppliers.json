@@ -2,14 +2,6 @@
   "$schema": "http://json-schema.org/schema#",
   "additionalProperties": false,
   "properties": {
-    "clients": {
-      "items": {
-        "type": "string"
-      },
-      "maxItems": 10,
-      "minItems": 0,
-      "type": "array"
-    },
     "companiesHouseNumber": {
       "oneOf": [
         {
@@ -33,10 +25,6 @@
       "type": "string"
     },
     "dunsNumber": {
-      "pattern": "^[0-9]+$",
-      "type": "string"
-    },
-    "eSourcingId": {
       "pattern": "^[0-9]+$",
       "type": "string"
     },
