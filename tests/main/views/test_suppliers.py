@@ -1,5 +1,4 @@
 from datetime import datetime
-from random import randint
 
 from flask import json
 from freezegun import freeze_time
@@ -45,37 +44,6 @@ class TestGetSupplier(BaseApplicationTest, FixtureMixin):
         assert response.status_code == 200
         assert self.supplier_id == data['suppliers']['id']
         assert self.supplier['name'] == data['suppliers']['name']
-
-    def test_supplier_clients_exist(self):
-        response = self.client.get('/suppliers/{}'.format(self.supplier_id))
-
-        data = json.loads(response.get_data())
-        assert response.status_code == 200
-        assert 'clients' in data['suppliers'].keys()
-        assert len(data['suppliers']['clients']) == 3
-
-    def test_supplier_client_key_still_exists_even_without_clients(self):
-        # Insert a new supplier with a different id and no clients
-        with self.app.app_context():
-            new_payload = load_example_listing("supplier_creation")
-            new_payload['clients'] = []
-            new_payload['dunsNumber'] = str(randint(111111111, 9999999999))
-
-            response = self.client.post(
-                '/suppliers',
-                data=json.dumps({
-                    'suppliers': new_payload
-                }),
-                content_type='application/json')
-            assert response.status_code == 201
-            new_payload['id'] = json.loads(response.get_data())['suppliers']['id']
-
-        response = self.client.get('/suppliers/{}'.format(new_payload['id']))
-
-        data = json.loads(response.get_data())
-        assert response.status_code == 200
-        assert 'clients' in data['suppliers'].keys()
-        assert len(data['suppliers']['clients']) == 0
 
     def test_get_supplier_returns_service_counts(self):
         self.setup_dummy_services(
@@ -305,19 +273,6 @@ class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
             ).first()
             assert supplier.name == self.supplier['name']
 
-    def test_null_clients_list(self):
-        with self.app.app_context():
-            del self.supplier['clients']
-
-            response = self.put_import_supplier(self.supplier)
-            assert response.status_code == 201
-
-            supplier = Supplier.query.filter(
-                Supplier.supplier_id == self.supplier_id
-            ).first()
-
-            assert supplier.clients == []
-
     def test_reinserting_the_same_supplier(self):
         with self.app.app_context():
             example_listing_contact_information = self.supplier['contactInformation']
@@ -430,14 +385,6 @@ class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
         for item in ['only-digits-permitted', 'does not match']:
             assert item in json.loads(response.get_data())['error']
 
-    def test_supplier_esourcing_id_invalid(self):
-        self.supplier.update({'eSourcingId': "only-digits-permitted"})
-
-        response = self.put_import_supplier(self.supplier)
-        assert response.status_code == 400
-        for item in ['only-digits-permitted', 'does not match']:
-            assert item in json.loads(response.get_data())['error']
-
     def test_when_supplier_contact_information_email_invalid(self):
         self.supplier['contactInformation'][0].update({'email': "bad-email-99"})
 
@@ -530,8 +477,6 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             "description": "New Description",
             "companiesHouseNumber": "AA123456",
             "dunsNumber": "010101",
-            "eSourcingId": "010101",
-            "clients": ["Client1", "Client2"],
             "otherCompanyRegistrationNumber": "A11",
             "registeredName": "New Name Inc.",
             "registrationCountry": "Guatamala",
@@ -552,8 +497,6 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert supplier.description == "New Description"
         assert supplier.duns_number == "010101"
         assert supplier.companies_house_number == "AA123456"
-        assert supplier.esourcing_id == "010101"
-        assert supplier.clients == ["Client1", "Client2"]
         assert supplier.other_company_registration_number == "A11"
         assert supplier.registered_name == "New Name Inc."
         assert supplier.registration_country == "Guatamala"
@@ -737,11 +680,8 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
             "contactName": "New contact",
             "phoneNumber": "New phone",
             "email": "new-value@example.com",
-            "website": "example.com",
             "address1": "New address1",
-            "address2": "New address2",
             "city": "New city",
-            "country": "New country",
             "postcode": "New postcode",
         })
 
@@ -755,11 +695,8 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
         assert contact.contact_name == "New contact"
         assert contact.phone_number == "New phone"
         assert contact.email == "new-value@example.com"
-        assert contact.website == "example.com"
         assert contact.address1 == "New address1"
-        assert contact.address2 == "New address2"
         assert contact.city == "New city"
-        assert contact.country == "New country"
         assert contact.postcode == "New postcode"
 
     def test_supplier_json_id_does_not_match_oiginal_id(self):
@@ -928,20 +865,6 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
                 Supplier.name == payload['name']
             ).first() is not None
 
-    def test_null_clients_list(self):
-        with self.app.app_context():
-            payload = load_example_listing("new-supplier")
-            del payload['clients']
-
-            response = self.post_supplier(payload)
-            assert response.status_code == 201
-
-            supplier = Supplier.query.filter(
-                Supplier.name == payload['name']
-            ).first()
-
-            assert supplier.clients == []
-
     def test_when_supplier_has_missing_contact_information(self):
         payload = load_example_listing("new-supplier")
         payload.pop('contactInformation')
@@ -1005,16 +928,6 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         payload = load_example_listing("new-supplier")
 
         payload.update({'dunsNumber': "only-digits-permitted"})
-
-        response = self.post_supplier(payload)
-        assert response.status_code == 400
-        for item in ['only-digits-permitted', 'does not match']:
-            assert item in json.loads(response.get_data())['error']
-
-    def test_supplier_esourcing_id_invalid(self):
-        payload = load_example_listing("new-supplier")
-
-        payload.update({'eSourcingId': "only-digits-permitted"})
 
         response = self.post_supplier(payload)
         assert response.status_code == 400

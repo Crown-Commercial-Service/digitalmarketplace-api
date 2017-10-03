@@ -218,20 +218,11 @@ class ContactInformation(db.Model):
     email = db.Column(db.String, index=False,
                       unique=False, nullable=False)
 
-    website = db.Column(db.String, index=False,
-                        unique=False, nullable=True)
-
     address1 = db.Column(db.String, index=False,
-                         unique=False, nullable=True)
-
-    address2 = db.Column(db.String, index=False,
                          unique=False, nullable=True)
 
     city = db.Column(db.String, index=False,
                      unique=False, nullable=True)
-
-    country = db.Column(db.String, index=False,
-                        unique=False, nullable=True)
 
     postcode = db.Column(db.String, index=False,
                          unique=False, nullable=True)
@@ -240,11 +231,8 @@ class ContactInformation(db.Model):
         self.contact_name = data.get("contactName")
         self.phone_number = data.get("phoneNumber")
         self.email = data.get("email")
-        self.website = data.get("website")
         self.address1 = data.get("address1")
-        self.address2 = data.get("address2")
         self.city = data.get("city")
-        self.country = data.get("country")
         self.postcode = data.get("postcode")
 
         return self
@@ -270,11 +258,8 @@ class ContactInformation(db.Model):
             'contactName': self.contact_name,
             'phoneNumber': self.phone_number,
             'email': self.email,
-            'website': self.website,
             'address1': self.address1,
-            'address2': self.address2,
             'city': self.city,
-            'country': self.country,
             'postcode': self.postcode,
             'links': links,
         }
@@ -301,9 +286,7 @@ class Supplier(db.Model):
                                           lazy='joined',
                                           innerjoin=False)
     duns_number = db.Column(db.String, index=True, unique=True, nullable=True)
-    esourcing_id = db.Column(db.String, index=False, unique=False, nullable=True)
     companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
-    clients = db.Column(JSON, default=list, nullable=False)
     registered_name = db.Column(db.String, index=False, unique=False, nullable=True)
     registration_country = db.Column(db.String, index=False, unique=False, nullable=True)
     other_company_registration_number = db.Column(db.String, index=False, unique=False, nullable=True)
@@ -357,11 +340,9 @@ class Supplier(db.Model):
             'name': self.name,
             'description': self.description,
             'dunsNumber': self.duns_number,
-            'eSourcingId': self.esourcing_id,
             'companiesHouseNumber': self.companies_house_number,
             'contactInformation': contact_information_list,
             'links': links,
-            'clients': self.clients,
             'registeredName': self.registered_name,
             'registrationCountry': self.registration_country,
             'otherCompanyRegistrationNumber': self.other_company_registration_number,
@@ -379,8 +360,6 @@ class Supplier(db.Model):
         self.name = data.get('name')
         self.description = data.get('description')
         self.duns_number = data.get('dunsNumber')
-        self.esourcing_id = data.get('eSourcingId')
-        self.clients = data.get('clients')
         self.companies_house_number = data.get('companiesHouseNumber')
         self.registered_name = data.get('registeredName')
         self.registration_country = data.get('registrationCountry')
