@@ -1234,9 +1234,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
             "id": 90006000,
             "supplierId": "DO_NOT_UPDATE_ME",
             "name": "String and Sticky Tape Inc.",
-            "clients": ["Parcel Wrappers Ltd"],
             "dunsNumber": "01010101",
-            "eSourcingId": "020202",
             "description": "All your parcel wrapping needs catered for",
             "companiesHouseNumber": "98765432",
             "registeredName": "Tape and String Inc.",
@@ -1253,7 +1251,6 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
         with mock.patch('app.models.main.url_for') as url_for:
             url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
             assert self.supplier.serialize() == {
-                'clients': [],
                 'contactInformation': [
                     {
                         'contactName': u'Contact for Supplier 0',
@@ -1289,9 +1286,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
 
             # Check everything else has been updated to the correct value
             assert self.supplier.name == "String and Sticky Tape Inc."
-            assert self.supplier.clients == ["Parcel Wrappers Ltd"]
             assert self.supplier.duns_number == "01010101"
-            assert self.supplier.esourcing_id == "020202"
             assert self.supplier.description == "All your parcel wrapping needs catered for"
             assert self.supplier.companies_house_number == "98765432"
             assert self.supplier.registered_name == "Tape and String Inc."
@@ -1306,7 +1301,6 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
             with mock.patch('app.models.main.url_for') as url_for:
                 url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
                 assert self.supplier.serialize() == {
-                    'clients': ['Parcel Wrappers Ltd'],
                     'companiesHouseNumber': '98765432',
                     'contactInformation': [
                         {
@@ -1324,7 +1318,6 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                     ],
                     'description': 'All your parcel wrapping needs catered for',
                     'dunsNumber': '01010101',
-                    'eSourcingId': '020202',
                     'id': 0,
                     'links': {'self': (('main.get_supplier',), {'supplier_id': 0})},
                     'name': 'String and Sticky Tape Inc.',
