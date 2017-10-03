@@ -266,9 +266,11 @@ def send_reset_password_email(framework_slug):
     email_address = json_payload.get('email_address', None)
     if email_address is None:
         return jsonify(message='One or more required args were missing from the request'), 400
-
     user = User.query.filter(
         User.email_address == email_address).first()
+
+    if user is None:
+        return jsonify(email_address=email_address), 200
 
     app_root_url = get_root_url(framework_slug)
 
