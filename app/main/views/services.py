@@ -151,6 +151,49 @@ def update_service(service_id):
     return jsonify(message="done"), 200
 
 
+@main.route('/services/<string:service_id>/revert', methods=['POST'])
+def revert_service(service_id):
+    """
+        Revert a service's `data` to that of a previous, supplied archivedServiceId
+    """
+
+    is_valid_service_id_or_400(service_id)
+
+    service = Service.query.filter(
+        Service.service_id == service_id
+    ).first_or_404()
+
+    update_details = validate_and_return_updater_request()
+    payload_json = get_json_from_request()
+    json_only_has_required_keys(payload_json, ("updated_by", "archivedServiceId",))
+
+    try:
+        archived_service = ArchivedService.query.filter(
+            ArchivedService.id == int(payload_json["archivedServiceId"])
+        ).first()
+    except ValueError:
+        archived_service = None
+    if not archived_service:
+        abort(400, "No such ArchivedService")
+    if archived_service.service_id != service_id:
+        abort(400, "ArchivedService does not correspond to this service id")
+
+    service.data = archived_service.data.copy()
+    validate_service_data(service)
+
+    commit_and_archive_service(
+        service,
+        update_details,
+        AuditTypes.update_service,
+        audit_data={
+            "fromArchivedServiceId": int(payload_json["archivedServiceId"]),
+        },
+    )
+    index_service(service)
+
+    return jsonify(message="done"), 200
+
+
 @main.route('/services/<string:service_id>', methods=['PUT'])
 def import_service(service_id):
     """Import services from legacy digital marketplace
