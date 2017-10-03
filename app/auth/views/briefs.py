@@ -11,6 +11,7 @@ from ...utils import (
     get_json_from_request
 )
 from dmutils.file import s3_upload_file_from_request, s3_download_file
+from dmutils.email import hash_email
 import mimetypes
 
 
@@ -155,25 +156,37 @@ def post_brief_response(brief_id):
         brief=brief,
     )
 
-    brief_response.validate()
+    try:
+        brief_response.validate()
 
-    db.session.add(brief_response)
-    db.session.flush()
+        db.session.add(brief_response)
+        db.session.flush()
 
-    audit = AuditEvent(
-        audit_type=AuditTypes.create_brief_response,
-        user=current_user.email_address,
-        data={
-            'briefResponseId': brief_response.id,
-            'briefResponseJson': brief_response_json,
-        },
-        db_object=brief_response,
-    )
+        audit = AuditEvent(
+            audit_type=AuditTypes.create_brief_response,
+            user=current_user.email_address,
+            data={
+                'briefResponseId': brief_response.id,
+                'briefResponseJson': brief_response_json,
+            },
+            db_object=brief_response,
+        )
 
-    db.session.add(audit)
-    db.session.commit()
+        db.session.add(audit)
+        db.session.commit()
+    except Exception as e:
+        return jsonify(message=e), 400
 
-    send_brief_response_received_email(supplier, brief, brief_response)
+    try:
+        send_brief_response_received_email(supplier, brief, brief_response)
+    except Exception as e:
+        rollbar.report_exc_info()
+        current_app.logger.error(
+            'Send brief response received email failed to send. '
+            'error {error} email_hash {email_hash}',
+            extra={
+                'error': six.text_type(e),
+                'email_hash': hash_email(brief_response.data['respondToEmailAddress'])})
 
     return jsonify(briefResponses=brief_response.serialize()), 201
 
