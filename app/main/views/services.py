@@ -170,6 +170,7 @@ def revert_service(service_id):
             ArchivedService.id == int(payload_json["archivedServiceId"])
         ).first()
     except ValueError:
+        # presumably failed to interpret `archivedServiceId` as an integer
         archived_service = None
     if not archived_service:
         abort(400, "No such ArchivedService")
