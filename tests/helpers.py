@@ -191,9 +191,11 @@ class FixtureMixin(object):
             'updated_at': kwargs.pop('updatedAt', now),
             'data': data or kwargs or {'serviceName': 'Service {}'.format(service_id)}
         }
+        service = model(**service_kwargs)
 
-        db.session.add(model(**service_kwargs))
+        db.session.add(service)
         db.session.commit()
+        return service.id
 
     def setup_dummy_services(self, n, supplier_id=None, framework_id=1,
                              start_id=0, lot_id=1, model=Service):

@@ -3,7 +3,7 @@ import os
 
 from flask import json
 from app.models import Service, Supplier, ContactInformation, Framework, \
-    AuditEvent, FrameworkLot, ServiceTableMixin
+    AuditEvent, FrameworkLot, ServiceTableMixin, ArchivedService, Lot
 import mock
 import pytest
 from app import db, create_app
@@ -1674,3 +1674,132 @@ class TestGetService(BaseApplicationTest):
         assert data['serviceMadeUnavailableAuditEvent']['user'] == 'joeblogs'
         assert 'createdAt' in data['serviceMadeUnavailableAuditEvent']
         assert data['serviceMadeUnavailableAuditEvent']['data']['update']['status'] == 'expired'
+
+
+@mock.patch('app.service_utils.search_api_client', autospec=True)
+class TestRevertService(BaseApplicationTest, FixtureMixin):
+    def setup_method(self, method):
+        super(TestRevertService, self).setup()
+        with self.app.app_context():
+            self.set_framework_status("g-cloud-7", "live")
+            self.supplier_ids = self.setup_dummy_suppliers(2)
+            g7_scs = load_example_listing("G7-SCS")
+            g7_scs.update({
+                "framework_id": db.session.query(Framework.id).filter(Framework.slug == "g-cloud-7").scalar(),
+                "lot_id": db.session.query(Lot.id).filter(Lot.slug == "scs").scalar(),
+            })
+            self.raw_service_ids = (
+                self.setup_dummy_service("1234123412340001", **dict(g7_scs, serviceName=g7_scs["serviceName"] + " 1")),
+                self.setup_dummy_service("1234123412340002", **dict(g7_scs, serviceName=g7_scs["serviceName"] + " 2")),
+                self.setup_dummy_service("1234123412340003", **dict(g7_scs, serviceName=g7_scs["serviceName"] + " 3")),
+            )
+
+            self.archived_service_ids = (
+                self.setup_dummy_service("1234123412340001", model=ArchivedService, **dict(
+                    g7_scs,
+                    serviceSummary="Definitely the best",
+                )),
+                self.setup_dummy_service("1234123412340001", model=ArchivedService, **dict(
+                    g7_scs,
+                    serviceSummary="Assuredly the best",
+                )),
+                self.setup_dummy_service("1234123412340001", model=ArchivedService, **dict(
+                    g7_scs,
+                    serviceSummary=None,
+                )),
+                self.setup_dummy_service("1234123412340002", model=ArchivedService, **dict(
+                    g7_scs,
+                    serviceSummary="Not the best",
+                )),
+            )
+
+    def test_non_existent_service(self, search_api_client):
+        response = self.client.post(
+            '/services/9876987698760000/revert',
+            content_type='application/json',
+            data=json.dumps({"updated_by": "papli@example.com", "archivedServiceId": self.archived_service_ids[0]}),
+        )
+        assert response.status_code == 404
+
+        with self.app.app_context():
+            assert not AuditEvent.query.filter(AuditEvent.type == AuditTypes.update_service.name).all()
+            assert ArchivedService.query.count() == 4
+            assert search_api_client.index.called is False
+
+    def test_archived_service_mismatch(self, search_api_client):
+        response = self.client.post(
+            '/services/1234123412340001/revert',
+            content_type='application/json',
+            data=json.dumps({"updated_by": "papli@example.com", "archivedServiceId": self.archived_service_ids[3]}),
+        )
+        assert response.status_code == 400
+        assert "correspond" in json.loads(response.get_data())['error']
+
+        with self.app.app_context():
+            assert not AuditEvent.query.filter(AuditEvent.type == AuditTypes.update_service.name).all()
+            assert Service.query.filter(
+                Service.service_id == "1234123412340001"
+            ).one().data["serviceSummary"] == "Probably the best cloud service in the world"
+            assert ArchivedService.query.count() == 4
+            assert search_api_client.index.called is False
+
+    def test_non_existent_archived_service(self, search_api_client):
+        response = self.client.post(
+            '/services/1234123412340001/revert',
+            content_type='application/json',
+            data=json.dumps({"updated_by": "papli@example.com", "archivedServiceId": 321321}),
+        )
+        assert response.status_code == 400
+        assert "ArchivedService" in json.loads(response.get_data())['error']
+
+        with self.app.app_context():
+            assert not AuditEvent.query.filter(AuditEvent.type == AuditTypes.update_service.name).all()
+            assert Service.query.filter(
+                Service.service_id == "1234123412340001"
+            ).one().data["serviceSummary"] == "Probably the best cloud service in the world"
+            assert ArchivedService.query.count() == 4
+            assert search_api_client.index.called is False
+
+    def test_archived_service_doesnt_validate(self, search_api_client):
+        response = self.client.post(
+            '/services/1234123412340001/revert',
+            content_type='application/json',
+            data=json.dumps({"updated_by": "papli@example.com", "archivedServiceId": self.archived_service_ids[2]}),
+        )
+        assert response.status_code == 400
+        assert json.loads(response.get_data())['error'] == {'serviceSummary': 'answer_required'}
+
+        with self.app.app_context():
+            assert not AuditEvent.query.filter(AuditEvent.type == AuditTypes.update_service.name).all()
+            assert Service.query.filter(
+                Service.service_id == "1234123412340001"
+            ).one().data["serviceSummary"] == "Probably the best cloud service in the world"
+            assert ArchivedService.query.count() == 4
+            assert search_api_client.index.called is False
+
+    def test_happy_path(self, search_api_client):
+        response = self.client.post(
+            '/services/1234123412340001/revert',
+            content_type='application/json',
+            data=json.dumps({"updated_by": "papli@example.com", "archivedServiceId": self.archived_service_ids[1]}),
+        )
+        assert response.status_code == 200
+
+        with self.app.app_context():
+            assert Service.query.filter(
+                Service.service_id == "1234123412340001"
+            ).one().data["serviceSummary"] == "Assuredly the best"
+            assert tuple(
+                (event.user, event.data["fromArchivedServiceId"],)
+                for event in AuditEvent.query.filter(AuditEvent.type == AuditTypes.update_service.name).all()
+            ) == (
+                ("papli@example.com", self.archived_service_ids[1],),
+            )
+            assert ArchivedService.query.count() == 5
+            assert search_api_client.index.call_args_list == [
+                ((), {
+                    "index": "g-cloud-7",
+                    "service_id": "1234123412340001",
+                    "service": mock.ANY,
+                })
+            ]
