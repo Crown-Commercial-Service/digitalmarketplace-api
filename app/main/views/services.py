@@ -157,8 +157,6 @@ def revert_service(service_id):
         Revert a service's `data` to that of a previous, supplied archivedServiceId
     """
 
-    is_valid_service_id_or_400(service_id)
-
     service = Service.query.filter(
         Service.service_id == service_id
     ).first_or_404()
