@@ -1349,6 +1349,7 @@ class Brief(db.Model):
         return sql_case([
             (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.published_at.is_(None), 'draft'),
+            (cls.applications_closed_at > datetime.utcnow(), 'live'),
             (cls.cancelled_at.isnot(None), 'cancelled'),
             (cls.unsuccessful_at.isnot(None), 'unsuccessful'),
             (
@@ -1356,7 +1357,6 @@ class Brief(db.Model):
                     sql_and(cls.id == BriefResponse.brief_id, BriefResponse.awarded_at != None)  # noqa
                 ).label('awarded_brief_response_id'), 'awarded'
             ),
-            (cls.applications_closed_at > datetime.utcnow(), 'live'),
         ], else_='closed')
 
     search_result_status_ordering = {
@@ -1477,6 +1477,16 @@ class Brief(db.Model):
         if self.withdrawn_at:
             data.update({
                 'withdrawnAt': self.withdrawn_at.strftime(DATETIME_FORMAT)
+            })
+
+        if self.unsuccessful_at:
+            data.update({
+                'unsuccessfulAt': self.unsuccessful_at.strftime(DATETIME_FORMAT)
+            })
+
+        if self.cancelled_at:
+            data.update({
+                'cancelledAt': self.cancelled_at.strftime(DATETIME_FORMAT)
             })
 
         if self.status == 'awarded':
