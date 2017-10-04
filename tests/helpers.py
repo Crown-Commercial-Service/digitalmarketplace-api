@@ -136,8 +136,7 @@ class FixtureMixin(object):
                     Supplier(
                         supplier_id=i,
                         name=u'Supplier {}'.format(i),
-                        description='',
-                        clients=[]
+                        description=''
                     )
                 )
                 db.session.add(
@@ -159,8 +158,7 @@ class FixtureMixin(object):
                     Supplier(
                         supplier_id=i,
                         name=u'{} suppliers Ltd {}'.format(initial, i),
-                        description='',
-                        clients=[]
+                        description=''
                     )
                 )
                 db.session.add(
