@@ -5,14 +5,15 @@ from flask_login import current_user, login_required
 from app.auth import auth
 from app.emails import send_brief_response_received_email
 from dmapiclient.audit import AuditTypes
-from ...models import db, AuditEvent, Brief, BriefResponse, Supplier, Framework
+from ...models import db, AuditEvent, Brief, BriefResponse, Supplier, Framework, ValidationError
 from sqlalchemy.exc import DataError
 from ...utils import (
     get_json_from_request
 )
 from dmutils.file import s3_upload_file_from_request, s3_download_file
-from dmutils.email import hash_email
 import mimetypes
+import rollbar
+import json
 
 
 def _can_do_brief_response(brief_id):
@@ -174,19 +175,24 @@ def post_brief_response(brief_id):
 
         db.session.add(audit)
         db.session.commit()
+    except ValidationError as e:
+        rollbar.report_exc_info()
+        message = ""
+        if 'essentialRequirements' in e.message and e.message['essentialRequirements'] == 'answer_required':
+            message = "Essential requirements must be completed"
+            del e.message['essentialRequirements']
+        if len(e.message) > 0:
+            message += json.dumps(e.message)
+        return jsonify(errorMessage=message), 400
     except Exception as e:
-        return jsonify(message=e), 400
+        rollbar.report_exc_info()
+        return jsonify(errorMessage=e), 400
 
     try:
         send_brief_response_received_email(supplier, brief, brief_response)
     except Exception as e:
         rollbar.report_exc_info()
-        current_app.logger.error(
-            'Send brief response received email failed to send. '
-            'error {error} email_hash {email_hash}',
-            extra={
-                'error': six.text_type(e),
-                'email_hash': hash_email(brief_response.data['respondToEmailAddress'])})
+        pass
 
     return jsonify(briefResponses=brief_response.serialize()), 201
 

@@ -1988,7 +1988,15 @@ class BriefResponse(db.Model):
                 if type(answers) is list:
                     return [to_text(x) for x in answers]
                 if type(answers) is dict:
-                    return [to_text(answers[x]) for x in sorted(answers.iterkeys())]
+                    result = []
+                    keys = sorted([int(x) for x in answers.iterkeys()])
+                    max_key = max(keys)
+                    for i in range(0, max_key+1):
+                        if i in keys:
+                            result.append(to_text(answers[str(i)]))
+                        else:
+                            result.append('')
+                    return result
 
             try:
                 self.data['essentialRequirements'] = \
@@ -2004,7 +2012,7 @@ class BriefResponse(db.Model):
 
             try:
                 self.data['attachedDocumentURL'] = \
-                    clean(self.data['attachedDocumentURL'])
+                    filter(None, clean(self.data['attachedDocumentURL']))
             except KeyError:
                 pass
 
@@ -2022,13 +2030,15 @@ class BriefResponse(db.Model):
 
         if (
             'essentialRequirements' not in errs and
-            len(self.data.get('essentialRequirements', [])) != len(self.brief.data['essentialRequirements'])
+            len(filter(None, self.data.get('essentialRequirements', []))) !=
+            len(self.brief.data['essentialRequirements'])
         ):
             errs['essentialRequirements'] = 'answer_required'
 
         if (
             'niceToHaveRequirements' not in errs and
-            len(self.data.get('niceToHaveRequirements', [])) != len(self.brief.data.get('niceToHaveRequirements', []))
+            len(self.data.get('niceToHaveRequirements', [])) !=
+            len(self.brief.data.get('niceToHaveRequirements', []))
         ):
             errs['niceToHaveRequirements'] = 'answer_required'
 

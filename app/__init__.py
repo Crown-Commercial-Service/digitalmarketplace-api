@@ -50,6 +50,9 @@ def create_app(config_name):
 
     application.json_encoder = CustomEncoder
 
+    # maximum POST request length http://flask.pocoo.org/docs/0.12/patterns/fileuploads/#improving-uploads
+    application.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32 megabytes
+
     return application
 
 
