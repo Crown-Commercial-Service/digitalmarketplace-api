@@ -39,12 +39,13 @@ def create_app(config_name):
         application.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL'].replace('reconnect=true', '')
 
     url_prefix = application.config['URL_PREFIX']
+    url_prefix_v2 = application.config['URL_PREFIX_V2']
     from .main import main as main_blueprint
     application.register_blueprint(main_blueprint, url_prefix=url_prefix)
     from .status import status as status_blueprint
     application.register_blueprint(status_blueprint, url_prefix=url_prefix)
     from .auth import auth as auth_blueprint
-    application.register_blueprint(auth_blueprint, url_prefix=url_prefix)
+    application.register_blueprint(auth_blueprint, url_prefix=url_prefix_v2)
     from .admin import blueprint as admin_blueprint
     application.register_blueprint(admin_blueprint.admin)
 

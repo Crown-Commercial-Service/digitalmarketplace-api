@@ -7,6 +7,7 @@ class Config:
         os.path.abspath(os.path.dirname(__file__))
     )
     URL_PREFIX = '/api'
+    URL_PREFIX_V2 = '/api/2'
     SESSION_COOKIE_NAME = 'dm_session'
     SESSION_COOKIE_PATH = '/'
     SESSION_COOKIE_HTTPONLY = True
@@ -129,6 +130,7 @@ class Config:
 
 class Test(Config):
     URL_PREFIX = ''
+    URL_PREFIX_V2 = ''
     DM_SEARCH_API_AUTH_TOKEN = 'test'
     DM_SEARCH_API_URL = 'http://localhost'
     DM_LOG_LEVEL = 'WARN'
