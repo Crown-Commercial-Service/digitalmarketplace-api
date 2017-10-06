@@ -103,8 +103,7 @@ def supplier(request, app):
         s = Supplier(
             supplier_id=request.param['supplier_id'],
             name=u"Supplier name",
-            description="",
-            clients=[]
+            description=""
         )
         db.session.add(s)
         db.session.commit()
