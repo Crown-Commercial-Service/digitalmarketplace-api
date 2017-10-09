@@ -540,9 +540,9 @@ class TestSupplierSearch(BaseApplicationTest):
     def do_search(self, search_json, products=False):
         with self.app.app_context():
             if products:
-                response = self.search_products(search_json)
+                response = self.search_products(search_json, framework='digital-outcomes-and-specialists')
             else:
-                response = self.search(search_json)
+                response = self.search(search_json, framework='digital-outcomes-and-specialists')
 
             assert_equal(response.status_code, 200)
             result = json.loads(response.get_data())
@@ -553,9 +553,17 @@ class TestSupplierSearch(BaseApplicationTest):
     def test_basic_search_hit(self):
         payload = self.load_example_listing("Supplier")
         response = self.post_supplier(payload)
+        json_result = json.loads(response.get_data())
 
         with self.app.app_context():
-            response = self.search({'query': {'term': {'code': 1}}})
+            self.set_framework_status('digital-outcomes-and-specialists', 'open')
+            self.client.put(
+                '/suppliers/{}/frameworks/{}'.format(
+                    json_result['supplier']['code'], 'digital-outcomes-and-specialists'),
+                data=json.dumps({'updated_by': 'interested@example.com'}),
+                content_type='application/json')
+
+            response = self.search({'query': {'term': {'code': 1}}}, framework='digital-outcomes-and-specialists')
             assert_equal(response.status_code, 200)
             result = json.loads(response.get_data())
             assert_equal(result['hits']['total'], 1)

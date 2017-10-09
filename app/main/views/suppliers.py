@@ -114,8 +114,11 @@ def delete_supplier(code):
 
 @main.route('/suppliers/count', methods=['GET'])
 def get_suppliers_stats():
+    q = db.session.query(Supplier).outerjoin(SupplierFramework).outerjoin(Framework)
+
     suppliers = {
-        "total": Supplier.query.filter(Supplier.abn != Supplier.DUMMY_ABN, Supplier.status != 'deleted').count()
+        "total": q.filter(Supplier.abn != Supplier.DUMMY_ABN, Supplier.status != 'deleted',
+                          or_(Framework.slug == 'digital-marketplace', ~Supplier.frameworks.any())).count()
     }
 
     return jsonify(suppliers=suppliers)
@@ -138,9 +141,11 @@ def product_search():
     domains = search_query.get('domains', None)
     seller_types = search_query.get('seller_types', None)
     search_term = search_query.get('search_term', None)
+    framework_slug = request.args.get('framework', 'digital-marketplace')
 
-    q = db.session.query(Product).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
-    q = q.filter(Supplier.status != 'deleted')
+    q = db.session.query(Product).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain) \
+        .outerjoin(SupplierFramework).outerjoin(Framework)
+    q = q.filter(Supplier.status != 'deleted', or_(Framework.slug == framework_slug, ~Supplier.frameworks.any()))
     tsquery = None
     if search_term:
         if ' ' in search_term:
@@ -230,9 +235,11 @@ def casestudies_search():
     domains = search_query.get('domains', None)
     seller_types = search_query.get('seller_types', None)
     search_term = search_query.get('search_term', None)
+    framework_slug = request.args.get('framework', 'digital-marketplace')
 
-    q = db.session.query(CaseStudy).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
-    q = q.filter(Supplier.status != 'deleted')
+    q = db.session.query(CaseStudy).join(Supplier).outerjoin(SupplierDomain).outerjoin(Domain) \
+        .outerjoin(SupplierFramework).outerjoin(Framework)
+    q = q.filter(Supplier.status != 'deleted', or_(Framework.slug == framework_slug, ~Supplier.frameworks.any()))
     tsquery = None
     if search_term:
         if ' ' in search_term:
@@ -316,7 +323,7 @@ def casestudies_search():
     return response
 
 
-def do_search(search_query, offset, result_count, new_domains):
+def do_search(search_query, offset, result_count, new_domains, framework_slug):
     try:
         sort_dir = list(search_query['sort'][0].values())[0]['order']
     except (KeyError, IndexError):
@@ -360,11 +367,14 @@ def do_search(search_query, offset, result_count, new_domains):
     EXCLUDE_LEGACY_ROLES = not current_app.config['LEGACY_ROLE_MAPPING']
 
     if new_domains:
-        q = db.session.query(Supplier).outerjoin(SupplierDomain).outerjoin(Domain)
+        q = db.session.query(Supplier).outerjoin(SupplierDomain).outerjoin(Domain) \
+            .outerjoin(SupplierFramework).outerjoin(Framework)
     else:
-        q = db.session.query(Supplier).outerjoin(PriceSchedule).outerjoin(ServiceRole)
+        q = db.session.query(Supplier).outerjoin(PriceSchedule).outerjoin(ServiceRole) \
+            .outerjoin(SupplierFramework).outerjoin(Framework)
 
-    q = q.filter(Supplier.status != 'deleted', Supplier.abn != Supplier.DUMMY_ABN)
+    q = q.filter(Supplier.status != 'deleted', Supplier.abn != Supplier.DUMMY_ABN,
+                 or_(Framework.slug == framework_slug, ~Supplier.frameworks.any()))
 
     tsquery = None
     if search_term:
@@ -467,8 +477,8 @@ def supplier_search():
 
     offset = get_nonnegative_int_or_400(request.args, 'from', 0)
     result_count = get_positive_int_or_400(request.args, 'size', current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'])
-
-    sliced_results, count = do_search(search_query, offset, result_count, new_domains=new_domains)
+    framework_slug = request.args.get('framework', 'digital-marketplace')
+    sliced_results, count = do_search(search_query, offset, result_count, new_domains, framework_slug)
 
     result = {
         'hits': {

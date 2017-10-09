@@ -11,7 +11,7 @@ from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
 from app.models import Address, Service, Supplier, Framework, Lot, User, FrameworkLot, \
-    Brief, utcnow, Application, PriceSchedule, Product
+    Brief, utcnow, Application, PriceSchedule, Product, SupplierFramework
 
 from collections import Mapping, Iterable
 from six import string_types
@@ -298,6 +298,9 @@ class BaseApplicationTest(object):
 
     def setup_dummy_suppliers_with_old_and_new_domains(self, n):
         with self.app.app_context():
+            framework = Framework.query.filter_by(slug='digital-outcomes-and-specialists').first()
+            self.set_framework_status(framework.slug, 'open')
+
             for i in range(1, n+1):
                 if i == 2:
                     ps = PriceSchedule.from_json({
@@ -360,7 +363,14 @@ class BaseApplicationTest(object):
 
                 s.products = [p1, p2]
 
+                sf = SupplierFramework(
+                    supplier_code=s.code,
+                    framework_id=framework.id,
+                    declaration={}
+                )
+
                 db.session.add(s)
+                db.session.add(sf)
 
             ds = Supplier(
                 name=u"Dummy Supplier",
@@ -383,6 +393,13 @@ class BaseApplicationTest(object):
 
             db.session.add(ds)
 
+            sf = SupplierFramework(
+                supplier_code=ds.code,
+                framework_id=framework.id,
+                declaration={}
+            )
+
+            db.session.add(sf)
             db.session.commit()
 
     def setup_additional_dummy_suppliers(self, n, initial):
