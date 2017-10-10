@@ -2500,6 +2500,7 @@ class ServiceType(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('service_category.id'), nullable=False)
     category = db.relationship('ServiceCategory')
     name = db.Column(db.String, nullable=False)
+    fee_type = db.Column(db.String, nullable=True)
     framework_id = db.Column(db.BigInteger, db.ForeignKey('framework.id'), index=True, unique=False, nullable=False)
     lot_id = db.Column(db.BigInteger, db.ForeignKey('lot.id'), index=True, unique=False, nullable=False)
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
@@ -2517,6 +2518,15 @@ class ServiceType(db.Model):
             del data['category_name']
 
         return data
+
+
+class ServiceSubType(db.Model):
+    __tablename__ = 'service_sub_type'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
+    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
 
 
 class Region(db.Model):
@@ -2551,9 +2561,20 @@ def update_price_json(self, data):
         del data['supplier_name']
 
     if 'service_name' in data:
-        service_type = ServiceType.query.filter(
-            func.lower(ServiceType.name) == func.lower(data['service_name'])
-        ).first()
+        if 'sub_service' in data and len(data['sub_service']) > 0:
+            sub_service = ServiceSubType.query.filter(
+                func.lower(ServiceSubType.name) == func.lower(data['sub_service'])
+            ).first()
+
+            service_type = ServiceType.query.filter(
+                func.lower(ServiceType.name) == func.lower(data['service_name']),
+                ServiceType.sub_service_id == sub_service.id
+            ).first()
+            del data['sub_service']
+        else:
+            service_type = ServiceType.query.filter(
+                func.lower(ServiceType.name) == func.lower(data['service_name'])
+            ).first()
 
         self.service_type_id = service_type.id
         del data['service_name']
@@ -2575,14 +2596,25 @@ class ServiceTypePrice(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     supplier_code = db.Column(db.Integer, db.ForeignKey('supplier.code'), nullable=False)
     service_type_id = db.Column(db.Integer, db.ForeignKey('service_type.id'), nullable=False)
+    sub_service_id = db.Column(db.Integer, db.ForeignKey('service_sub_type.id'), nullable=True)
     region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
     date_from = db.Column(DateTime, index=False, nullable=False, default=utcnow)
-    date_to = db.Column(DateTime, index=False, nullable=True)
+    date_to = db.Column(DateTime, index=False, default=datetime(year=2050, month=1, day=1))
     price = db.Column(db.Numeric, nullable=False)
     created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
     updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
 
     def update_from_json_before(self, data):
+        if 'sub_service' in data:
+            sub_service = ServiceSubType.query.filter(
+                func.lower(ServiceSubType.name) == func.lower(data['sub_service'])
+            ).first()
+
+            del data['sub_service']
+
+        if sub_service is not None:
+            self.sub_service_id = sub_service.id
+
         return update_price_json(self, data)
 
 
@@ -2592,12 +2624,23 @@ class ServiceTypePriceCeiling(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     supplier_code = db.Column(db.Integer, db.ForeignKey('supplier.code'), nullable=False)
     service_type_id = db.Column(db.Integer, db.ForeignKey('service_type.id'), nullable=False)
+    sub_service_id = db.Column(db.Integer, db.ForeignKey('service_sub_type.id'), nullable=True)
     region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
     price = db.Column(db.Numeric, nullable=False)
     created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
     updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
 
     def update_from_json_before(self, data):
+        if 'sub_service' in data:
+            sub_service = ServiceSubType.query.filter(
+                func.lower(ServiceSubType.name) == func.lower(data['sub_service'])
+            ).first()
+
+            del data['sub_service']
+
+        if sub_service is not None:
+            self.sub_service_id = sub_service.id
+
         return update_price_json(self, data)
 
 

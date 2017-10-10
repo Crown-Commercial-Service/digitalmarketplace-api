@@ -10,20 +10,16 @@ def run_import(input_file, client):
 
     for record in csv.DictReader(input_file):
 
-        service_type = {
-            'category_name': record['Type'],
-            'name': record['Service'],
-            'fee_type': record['Fee_Type'],
-            'framework_id': 8,
-            'lot_id': 11
+        service_sub_type = {
+            'name': record['Name']
         }
 
         json_data = check_response(
-            client.post('/api/service-types',
-                        data=json.dumps({'service_type': service_type}),
+            client.post('/api/service-sub-types',
+                        data=json.dumps({'service_sub_type': service_sub_type}),
                         content_type='application/json'))
 
-        print '{},{}'.format(json_data['service_type']['category']['name'], json_data['service_type']['name'])
+        print '{}'.format(json_data['service_sub_type']['name'])
         num_successes += 1
 
     print 'Total:{}'.format(num_successes)

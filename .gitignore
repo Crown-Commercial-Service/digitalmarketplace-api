@@ -69,3 +69,4 @@ dump.py
 *.sublime-project
 *.sublime-workspace
 *.csv
+/*.sh

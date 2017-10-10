@@ -84,11 +84,8 @@ def sync():
                 print('THE FOLLOWING CHANGES ARE PENDING:', end='\n\n')
                 print(m.sql)
 
-                if prompt('Apply these changes?'):
-                    print('Applying...')
-                    m.apply()
-                else:
-                    print('Not applying.')
+                print('Applying...')
+                m.apply()
             else:
                 print('Already synced.')
 

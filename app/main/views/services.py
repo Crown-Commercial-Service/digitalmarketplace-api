@@ -6,7 +6,7 @@ from flask import jsonify, abort, request, current_app
 
 from .. import main
 from ...models import ArchivedService, Service, ServiceRole, Supplier, AuditEvent, Framework, ValidationError,\
-    PriceSchedule, ServiceType, db, Region, Location, ServiceTypePrice, ServiceTypePriceCeiling
+    PriceSchedule, ServiceType, db, Region, Location, ServiceTypePrice, ServiceTypePriceCeiling, ServiceSubType
 
 from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
@@ -425,3 +425,17 @@ def add_service_type_price_ceilings():
     db.session.commit()
 
     return jsonify(price_ceiling=price.serializable), 201
+
+
+@main.route('/service-sub-types', methods=['POST'])
+def add_service_sub_type():
+    service_sub_type_json = get_json_from_request()
+    json_has_required_keys(service_sub_type_json, ['service_sub_type'])
+
+    service_sub_type = ServiceSubType()
+    service_sub_type.update_from_json(service_sub_type_json['service_sub_type'])
+
+    db.session.add(service_sub_type)
+    db.session.commit()
+
+    return jsonify(service_sub_type=service_sub_type.serializable), 201

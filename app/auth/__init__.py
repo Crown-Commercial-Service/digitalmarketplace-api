@@ -35,4 +35,4 @@ def check_csrf_token():
             abort(400, 'Invalid CSRF token. Please try again.')
 
 
-from app.auth.views import briefs, users, feedback, suppliers  # noqa
+from app.auth.views import briefs, users, feedback, suppliers, services  # noqa

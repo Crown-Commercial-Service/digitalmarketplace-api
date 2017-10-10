@@ -13,6 +13,7 @@ def run_import(input_file, client):
         price = {
             'supplier_name': record['supplier'],
             'service_name': record['service'],
+            'sub_service': record['sub_service'],
             'region_name': record['region'],
             'price': float(record['price'])
         }
