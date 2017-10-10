@@ -25,4 +25,3 @@ def downgrade():
     op.alter_column('suppliers', 'clients',
                existing_type=postgresql.JSON(astext_type=sa.Text()),
                nullable=False)
-
