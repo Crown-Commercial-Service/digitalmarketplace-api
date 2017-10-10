@@ -18,4 +18,4 @@ class TestBuyerEmailDomains(BaseApplicationTest):
     def test_buyer_email_domain_serialization(self):
         buyer_domain = BuyerEmailDomain(domain_name="superkalifrajilisticexpialidocious.org.uk")
 
-        assert buyer_domain.serialize().keys() == {'id', 'domain_name'}
+        assert buyer_domain.serialize().keys() == {'id', 'domainName'}

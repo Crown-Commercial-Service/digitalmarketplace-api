@@ -10,5 +10,5 @@ class BuyerEmailDomain(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "domain_name": self.domain_name,
+            "domainName": self.domain_name,
         }
