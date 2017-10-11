@@ -176,7 +176,8 @@ def post_brief_response(brief_id):
         db.session.add(audit)
         db.session.commit()
     except ValidationError as e:
-        rollbar.report_exc_info()
+        brief_response_json['brief_id'] = brief_id
+        rollbar.report_exc_info(extra_data=brief_response_json)
         message = ""
         if 'essentialRequirements' in e.message and e.message['essentialRequirements'] == 'answer_required':
             message = "Essential requirements must be completed"
@@ -185,13 +186,15 @@ def post_brief_response(brief_id):
             message += json.dumps(e.message)
         return jsonify(errorMessage=message), 400
     except Exception as e:
-        rollbar.report_exc_info()
+        brief_response_json['brief_id'] = brief_id
+        rollbar.report_exc_info(extra_data=brief_response_json)
         return jsonify(errorMessage=e), 400
 
     try:
         send_brief_response_received_email(supplier, brief, brief_response)
     except Exception as e:
-        rollbar.report_exc_info()
+        brief_response_json['brief_id'] = brief_id
+        rollbar.report_exc_info(extra_data=brief_response_json)
         pass
 
     return jsonify(briefResponses=brief_response.serialize()), 201

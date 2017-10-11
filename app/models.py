@@ -2035,13 +2035,6 @@ class BriefResponse(db.Model):
         ):
             errs['essentialRequirements'] = 'answer_required'
 
-        if (
-            'niceToHaveRequirements' not in errs and
-            len(self.data.get('niceToHaveRequirements', [])) !=
-            len(self.brief.data.get('niceToHaveRequirements', []))
-        ):
-            errs['niceToHaveRequirements'] = 'answer_required'
-
         if max_day_rate and 'dayRate' not in errs:
             if float(self.data['dayRate']) > float(max_day_rate):
                 errs['dayRate'] = 'max_less_than_min'
