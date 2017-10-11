@@ -67,6 +67,7 @@ SCHEMA_NAMES = [
     'suppliers',
     'new-supplier',
     'contact-information',
+    'buyer-email-domains',
 ]
 FORMAT_CHECKER = FormatChecker()
 
@@ -389,3 +390,14 @@ _BUYER_EMAIL_DOMAINS = load_buyer_email_domains('./data/buyer-email-domains.txt'
 def is_valid_buyer_email(email):
     domain = email.split('@')[-1]
     return any(domain == d or domain.endswith('.' + d) for d in _BUYER_EMAIL_DOMAINS)
+
+
+def validate_buyer_email_domain_json_or_400(submitted_json):
+    try:
+        get_validator('buyer-email-domains').validate(submitted_json)
+    except ValidationError as e1:
+        abort(400, "JSON was not a valid format: {}".format(e1.message))
+
+
+def buyer_email_already_approved(existing_buyer_domains, new_domain):
+    return any(new_domain == d.domain_name or new_domain.endswith('.' + d.domain_name) for d in existing_buyer_domains)
