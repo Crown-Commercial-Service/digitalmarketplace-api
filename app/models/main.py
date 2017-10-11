@@ -218,20 +218,11 @@ class ContactInformation(db.Model):
     email = db.Column(db.String, index=False,
                       unique=False, nullable=False)
 
-    website = db.Column(db.String, index=False,
-                        unique=False, nullable=True)
-
     address1 = db.Column(db.String, index=False,
-                         unique=False, nullable=True)
-
-    address2 = db.Column(db.String, index=False,
                          unique=False, nullable=True)
 
     city = db.Column(db.String, index=False,
                      unique=False, nullable=True)
-
-    country = db.Column(db.String, index=False,
-                        unique=False, nullable=True)
 
     postcode = db.Column(db.String, index=False,
                          unique=False, nullable=True)
@@ -295,9 +286,7 @@ class Supplier(db.Model):
                                           lazy='joined',
                                           innerjoin=False)
     duns_number = db.Column(db.String, index=True, unique=True, nullable=True)
-    esourcing_id = db.Column(db.String, index=False, unique=False, nullable=True)
     companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
-    clients = db.Column(JSON, default=list, nullable=True)
     registered_name = db.Column(db.String, index=False, unique=False, nullable=True)
     registration_country = db.Column(db.String, index=False, unique=False, nullable=True)
     other_company_registration_number = db.Column(db.String, index=False, unique=False, nullable=True)
