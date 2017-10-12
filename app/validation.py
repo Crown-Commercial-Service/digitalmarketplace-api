@@ -399,5 +399,5 @@ def validate_buyer_email_domain_json_or_400(submitted_json):
         abort(400, "JSON was not a valid format: {}".format(e1.message))
 
 
-def buyer_email_already_approved(existing_buyer_domains, new_domain):
+def buyer_email_domain_approved(existing_buyer_domains, new_domain):
     return any(new_domain == d.domain_name or new_domain.endswith('.' + d.domain_name) for d in existing_buyer_domains)

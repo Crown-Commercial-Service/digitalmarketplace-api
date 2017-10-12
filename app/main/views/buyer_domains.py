@@ -5,7 +5,7 @@ from flask import jsonify, abort
 from .. import main
 from ... import db
 from ...models import BuyerEmailDomain, AuditEvent
-from ...validation import validate_buyer_email_domain_json_or_400, buyer_email_already_approved
+from ...validation import validate_buyer_email_domain_json_or_400, buyer_email_domain_approved
 from ...utils import get_json_from_request, json_has_required_keys, validate_and_return_updater_request
 
 
@@ -19,7 +19,7 @@ def create_buyer_email_domain():
 
     new_domain = json_payload["buyerEmailDomains"]['domainName'].lower()
 
-    if buyer_email_already_approved(BuyerEmailDomain.query.all(), new_domain):
+    if buyer_email_domain_approved(BuyerEmailDomain.query.all(), new_domain):
         abort(409, "Domain name {} has already been approved".format(new_domain))
 
     buyer_email_domain = BuyerEmailDomain(domain_name=new_domain)
