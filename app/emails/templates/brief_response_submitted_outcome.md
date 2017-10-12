@@ -16,12 +16,6 @@
 ###Earliest start date
 {{ brief_response.availability }}
 
-###Day rate
-{{ brief_response.dayRate }}
-
-###Attachments
-{{attachments}}
-
 ###Essential requirements
 {{essential_requirements}}
 

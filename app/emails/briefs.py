@@ -8,11 +8,14 @@ from .util import render_email_template, send_or_handle_error
 
 
 def send_brief_response_received_email(supplier, brief, brief_response):
-    TEMPLATE_FILENAME = 'brief_response_submitted.md'
+    TEMPLATE_FILENAME = 'brief_response_submitted_outcome.md' if brief.lot.slug == 'digital-outcome' \
+        else 'brief_response_submitted.md'
 
     to_address = brief_response.data['respondToEmailAddress']
 
     brief_url = current_app.config['FRONTEND_ADDRESS'] + '/' + brief.framework.slug + '/opportunities/' + str(brief.id)
+    attachment_url = current_app.config['FRONTEND_ADDRESS'] +\
+        '/api/2/brief/' + str(brief.id) + '/respond/documents/' + str(supplier.code) + '/'
 
     ess = ""
     i = 0
@@ -22,9 +25,13 @@ def send_brief_response_received_email(supplier, brief, brief_response):
     nth = ""
     i = 0
     for req in brief.data['niceToHaveRequirements']:
-        nth += "####• {}\n{}\n\n".format(req, brief_response.data['niceToHaveRequirements'][i])
+        nth += "####• {}\n{}\n\n".format(req, brief_response.data.get('niceToHaveRequirements', [])[i]
+                                           if i < len(brief_response.data.get('niceToHaveRequirements', [])) else '')
         i += 1
 
+    attachments = ""
+    for attch in brief_response.data.get('attachedDocumentURL'):
+        attachments += "####• [{}]({}{})\n\n".format(attch, attachment_url, attch)
     # prepare copy
     email_body = render_email_template(
         TEMPLATE_FILENAME,
@@ -32,6 +39,7 @@ def send_brief_response_received_email(supplier, brief, brief_response):
         brief_name=brief.data['title'],
         essential_requirements=ess,
         nice_to_have_requirements=nth,
+        attachments=attachments,
         brief_response=brief_response.data,
         header='<div style="padding: 0rem; border: 2px solid #007554; font-size: 2rem;">'
                '<p style="background: white; margin: 0;"><span style="background: #007554; padding: 1rem; '
