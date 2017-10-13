@@ -1,4 +1,5 @@
 import json
+import mock
 import pytest
 
 from tests.bases import BaseApplicationTest
@@ -141,3 +142,45 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
 
         assert res.status_code == 409
         assert data['error'] == "Domain name {} has already been approved".format(new_domain)
+
+
+class TestListBuyerEmailDomains(BaseApplicationTest):
+    def test_list_buyer_email_domain_200s_with_empty_list_when_no_domains(self):
+        res = self.client.get('/buyer-email-domain')
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['buyerEmailDomains'] == []
+
+    def test_list_buyer_email_domain_lists_serialized_domains_in_alphabetical_order(self):
+        with self.app.app_context():
+            for existing_domain in ['abc.gov', 'bcd.gov', 'aaa-bcd.gov']:
+                db.session.add(BuyerEmailDomain(domain_name=existing_domain))
+                db.session.commit()
+
+        res = self.client.get('/buyer-email-domain')
+
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data['buyerEmailDomains'] == [
+            {'domainName': 'aaa-bcd.gov', 'id': mock.ANY},
+            {'domainName': 'abc.gov', 'id': mock.ANY},
+            {'domainName': 'bcd.gov', 'id': mock.ANY},
+        ]
+
+    def test_list_buyer_email_domain_paginates(self):
+        with self.app.app_context():
+            for existing_domain in ['{}.gov'.format(i) for i in range(101)]:
+                db.session.add(BuyerEmailDomain(domain_name=existing_domain))
+                db.session.commit()
+
+        page1 = self.client.get('/buyer-email-domain')
+        page2 = self.client.get('/buyer-email-domain?page=2')
+
+        page_1_data = json.loads(page1.get_data(as_text=True))
+        page_2_data = json.loads(page2.get_data(as_text=True))
+
+        assert len(page_1_data['buyerEmailDomains']) == 100
+        assert len(page_2_data['buyerEmailDomains']) == 1
