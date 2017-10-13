@@ -5,18 +5,25 @@ import math
 import random
 import sys
 
+import mock
+from app import db
+
 import pytest
-from tests.helpers import FixtureMixin
 from tests.bases import BaseApplicationTest
 
+from sqlalchemy import desc
 from dmapiclient.audit import AuditTypes
 
-from app import db
 from app.models import DATETIME_FORMAT, AuditEvent, User, ArchivedService
 from app.models.direct_award import (
-    DirectAwardProjectUser, DirectAwardSearch, DirectAwardProject, DirectAwardSearchResultEntry
+    DirectAwardProjectUser,
+    DirectAwardSearch,
+    DirectAwardProject,
+    DirectAwardSearchResultEntry
 )
-from ...helpers import DIRECT_AWARD_SEARCH_URL, DIRECT_AWARD_PROJECT_NAME, DIRECT_AWARD_FROZEN_TIME
+from ...helpers import (
+    DIRECT_AWARD_SEARCH_URL, DIRECT_AWARD_PROJECT_NAME, DIRECT_AWARD_FROZEN_TIME, load_example_listing, FixtureMixin
+)
 
 
 class DirectAwardSetupAndTeardown(BaseApplicationTest, FixtureMixin):
@@ -642,7 +649,7 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
         assert data['links']['last'] == last_url
 
 
-class TestDirectAwardLockProject(DirectAwardSetupAndTeardown):
+class TestDirectAwardLockProject(DirectAwardSetupAndTeardown, FixtureMixin):
     def setup(self):
         super(TestDirectAwardLockProject, self).setup()
         self.project_id = self.create_direct_award_project(user_id=self.user_id,
@@ -659,29 +666,95 @@ class TestDirectAwardLockProject(DirectAwardSetupAndTeardown):
             'updated_by': str(self.user_id)
         }.copy()
 
-    @pytest.mark.skip
     def test_lock_project_400s_if_project_already_locked(self):
-        pass
+        with self.app.app_context():
+            project = DirectAwardProject.query.get(self.project_id)
+            project.locked_at = datetime.utcnow()
 
-    @pytest.mark.skip
+            db.session.add(project)
+            db.session.commit()
+
+        res = self.client.post(
+            '/direct-award/projects/{}/lock'.format(self.project_id),
+            data=json.dumps({
+                'updated_by': 'example',
+            }),
+            content_type='application/json')
+
+        assert res.status_code == 400
+
     def test_lock_project_404s_if_invalid_project(self):
-        pass
+        res = self.client.post(
+            '/direct-award/projects/{}/lock'.format("not_a_valid_id"),
+            data=json.dumps({
+                'updated_by': 'example',
+            }),
+            content_type='application/json')
 
-    @pytest.mark.skip
-    def test_lock_project_search_and_project_datetimes_are_updated(self):
-        pass
+        assert res.status_code == 404
 
-    @pytest.mark.skip
-    def test_lock_project_search_result_entries_populated_with_latest_archived_service_for_searched_services(self):
-        pass
+    @mock.patch('app.main.views.direct_award.search_api_client')
+    def test_lock_project_success(self, search_api_client):
+        self._create_service_and_update()
+        service_id = "1234567890123458"
+        search_api_client.search_services_from_url_iter.return_value = [{"id": service_id}]
 
-    @pytest.mark.skip
-    def test_lock_project_saved_result_entries_are_for_the_active_search_in_the_project(self):
-        pass
+        res = self.client.post(
+            '/direct-award/projects/{}/lock'.format(self.project_id),
+            data=json.dumps({
+                'updated_by': 'example',
+            }),
+            content_type='application/json')
+        data = json.loads(res.get_data(as_text=True))
 
-    @pytest.mark.skip
-    def test_lock_project_creates_audit_event(self):
-        pass
+        assert res.status_code == 200
+        assert data['project']['id'] == self.project_id
+        assert data['project']['lockedAt'] is not None
+
+        with self.app.app_context():
+            assert AuditEvent.query.order_by(AuditEvent.id.desc()).first().type == AuditTypes.lock_project.value
+            search_result_entry = DirectAwardSearchResultEntry.query.filter(
+                DirectAwardSearchResultEntry.search_id == self.search_id
+            )
+            archived_services = ArchivedService.query.\
+                filter(ArchivedService.service_id.in_([service_id])).\
+                group_by(ArchivedService.id).\
+                order_by(ArchivedService.service_id, desc(ArchivedService.id)).\
+                distinct(ArchivedService.service_id).all()
+
+            assert len(archived_services) > 0
+            assert search_result_entry.count() == 1
+            assert search_result_entry.all()[0].archived_service_id == archived_services[0].id
+
+    def _create_service_and_update(self):
+        service = load_example_listing("G6-SaaS")
+        self.setup_dummy_suppliers(2)
+        res1 = self.client.put(
+            '/services/{}'.format(service['id']),
+            data=json.dumps(
+                {
+                    'updated_by': 'joeblogs',
+                    'services': service
+                }
+            ),
+            content_type='application/json')
+
+        assert res1.status_code == 201
+
+        service['title'] = "New Service Title"
+        service['createdAt'] = "2017-12-23T14:51:19Z"
+
+        res2 = self.client.post(
+            '/services/{}'.format(service['id']),
+            data=json.dumps(
+                {
+                    'updated_by': 'example',
+                    'services': service
+                }
+            ),
+            content_type='application/json')
+
+        assert res2.status_code == 200
 
 
 class TestDirectAwardRecordProjectDownload(DirectAwardSetupAndTeardown):
