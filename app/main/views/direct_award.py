@@ -20,6 +20,11 @@ def list_projects():
     page = get_valid_page_or_1()
 
     projects = DirectAwardProject.query
+
+    with_users = convert_to_boolean(request.args.get('with-users', False))
+    if not isinstance(with_users, bool):
+        abort(400, "with-users param must be True of False")
+
     user_id = get_int_or_400(request.args, 'user-id')
     if user_id:
         projects = projects.filter(DirectAwardProject.users.any(id=user_id))
@@ -38,7 +43,7 @@ def list_projects():
     )
 
     return jsonify(
-        projects=[project.serialize() for project in projects.items],
+        projects=[project.serialize(with_users=with_users) for project in projects.items],
         meta={
             "total": projects.total,
         },
