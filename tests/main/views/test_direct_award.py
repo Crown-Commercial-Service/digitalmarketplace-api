@@ -595,9 +595,8 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
             db.session.commit()
 
     def test_list_project_services_404s_on_invalid_project(self):
-        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(sys.maxsize,
-                                                                                     self.search_id,
-                                                                                     self.user_id))
+        res = self.client.get('/direct-award/projects/{}/services'.format(sys.maxsize))
+
         assert res.status_code == 404
 
     def test_list_project_services_400s_on_unlocked_project(self):
@@ -608,9 +607,7 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
             db.session.add(project)
             db.session.commit()
 
-        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(self.project_id,
-                                                                                     self.search_id,
-                                                                                     self.user_id))
+        res = self.client.get('/direct-award/projects/{}/services'.format(self.project_id))
         assert res.status_code == 400
 
     def test_list_project_services_400s_if_no_saved_search(self):
