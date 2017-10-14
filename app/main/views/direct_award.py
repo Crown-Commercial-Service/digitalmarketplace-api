@@ -234,6 +234,7 @@ def list_project_services(project_id):
 
     project_archived_services = list(map(lambda service: {
         'id': service.service_id,
+        'projectId': project_id,
         'supplier': {
             'name': service.supplier.name,
             'contact': {

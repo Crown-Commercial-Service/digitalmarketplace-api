@@ -620,12 +620,11 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
             db.session.delete(search)
             db.session.commit()
 
-        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(self.project_id,
-                                                                                     self.search_id,
-                                                                                     self.user_id))
+        res = self.client.get('/direct-award/projects/{}/services'.format(self.project_id))
+
         assert res.status_code == 400
 
-    def test_list_project_services_returns_required_keys(self):
+    def test_list_project_services_returns_correct_response(self):
         with self.app.app_context():
             # Create some 'saved' services, which requires suppliers+archivedservice entries.
             self.setup_dummy_suppliers(3)
@@ -637,11 +636,28 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
                                                             search_id=self.search_id))
             db.session.commit()
 
-        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(self.project_id,
-                                                                                     self.search_id,
-                                                                                     self.user_id))
-        assert res.status_code == 200
-        data = json.loads(res.get_data(as_text=True))
+            res = self.client.get('/direct-award/projects/{}/services'.format(self.project_id))
+            assert res.status_code == 200
+
+            data = json.loads(res.get_data(as_text=True))
+
+            assert set(data.keys()) == {'meta', 'links', 'services'}
+            assert data['meta'] == {'total': 5}
+            assert data['links'] == {'self': 'http://127.0.0.1:5000/direct-award/projects/1/services'}
+            for service in data['services']:
+                assert service in [{
+                    'id': service.service_id,
+                    'projectId': self.project_id,
+                    'supplier': {
+                        'name': service.supplier.name,
+                        'contact': {
+                            'name': service.supplier.contact_information[0].contact_name,
+                            'phone': service.supplier.contact_information[0].phone_number,
+                            'email': service.supplier.contact_information[0].email,
+                        },
+                    },
+                    'data': {},
+                } for service in archived_services]
 
         assert set(data.keys()) == {'meta', 'links', 'services'}
         assert set(data['services'][0].keys()) == {'id', 'supplier', 'data'}
