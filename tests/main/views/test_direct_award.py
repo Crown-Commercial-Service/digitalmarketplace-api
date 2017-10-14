@@ -659,8 +659,25 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
                     'data': {},
                 } for service in archived_services]
 
-        assert set(data.keys()) == {'meta', 'links', 'services'}
-        assert set(data['services'][0].keys()) == {'id', 'supplier', 'data'}
+    def test_list_project_services_returns_requested_fields_in_service_data(self):
+        with self.app.app_context():
+            # Create some 'saved' services, which requires suppliers+archivedservice entries.
+            self.setup_dummy_suppliers(1)
+            self.setup_dummy_services(1, model=ArchivedService)
+
+            archived_services = ArchivedService.query.all()
+            for archived_service in archived_services:
+                db.session.add(DirectAwardSearchResultEntry(archived_service_id=archived_service.id,
+                                                            search_id=self.search_id))
+            db.session.commit()
+
+            res = self.client.get('/direct-award/projects/{}/services?fields=serviceName'.format(self.project_id))
+            assert res.status_code == 200
+
+            data = json.loads(res.get_data(as_text=True))
+            assert data['services'][0]['data'] == {'serviceName': archived_services[0].data['serviceName']}
+            assert data['links'] == \
+                {'self': 'http://127.0.0.1:5000/direct-award/projects/1/services?fields=serviceName'}
 
     def test_list_project_services_accepts_page_offset(self):
         project_services_count = 100
