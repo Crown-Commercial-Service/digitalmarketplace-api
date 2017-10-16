@@ -30,7 +30,7 @@ def send_brief_response_received_email(supplier, brief, brief_response):
         i += 1
 
     attachments = ""
-    for attch in brief_response.data.get('attachedDocumentURL'):
+    for attch in brief_response.data.get('attachedDocumentURL', []):
         attachments += "####• [{}]({}{})\n\n".format(attch, attachment_url, attch)
     # prepare copy
     email_body = render_email_template(
