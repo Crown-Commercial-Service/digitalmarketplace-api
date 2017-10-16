@@ -16,8 +16,8 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
 
         assert res.status_code == 400
 
-    @pytest.mark.parametrize('new_domain', ["fine.org", "also-fine.org", "also.fine.org"])
-    @pytest.mark.parametrize('existing_domain', ["ine.org", ".org", "o-fine.org"])
+    @pytest.mark.parametrize('new_domain', ["fine.org", "also-fine.org", "also.fine.org", "f.org"])
+    @pytest.mark.parametrize('existing_domain', ["ine.org", "o-fine.org"])
     def test_create_buyer_email_domain(self, existing_domain, new_domain):
         with self.app.app_context():
             # Create a domain that shouldn't result in 'already been approved'
@@ -108,7 +108,20 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
             }
 
     @pytest.mark.parametrize(
-        'new_domain', ['no-dots', 'at@symbol.org', 'contains space.org', 'bad!char.org', 'tld-too-short.x']
+        'new_domain',
+        [
+            'no-dots',
+            'at@symbol.org',
+            'contains space.org',
+            'bad!char.org',
+            'ampers&nd.org',
+            'tld-too-short.x',
+            '.tldonly',
+            '.dots.at.start',
+            'http://contains.colon'
+            'contains.forward/slash',
+            'contains.rogue?query=param'
+        ]
     )
     def test_create_buyer_email_domain_fails_if_domain_invalid(self, new_domain):
         res = self.client.post(
