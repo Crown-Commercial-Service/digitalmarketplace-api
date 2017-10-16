@@ -170,7 +170,7 @@ def fetch_draft_service(draft_id):
 
     return jsonify(
         services=draft.serialize(),
-        auditEvents=last_audit_event.serialize(include_user=True),
+        auditEvents=(last_audit_event.serialize(include_user=True) if last_audit_event else None),
         validationErrors=get_service_validation_errors(draft)
     )
 
