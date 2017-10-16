@@ -12,6 +12,7 @@ def run_import(input_file, client):
 
         region = {
             'name': record['Region'],
+            'state': record['State'].upper(),
         }
 
         json_data = check_response(
@@ -24,7 +25,6 @@ def run_import(input_file, client):
         location = {
             'name': record['Location'],
             'region_id': region_id,
-            'state': record['State'],
             'postal_code': record['Postcode']
         }
 
@@ -34,7 +34,7 @@ def run_import(input_file, client):
                 data=json.dumps({'location': location}),
                 content_type='application/json'))
 
-        print '{},{}'.format(region['name'], location['name'])
+        print '{},{},{}'.format(region['name'], region['state'], location['name'])
         num_successes += 1
 
     print 'Total:{}'.format(num_successes)

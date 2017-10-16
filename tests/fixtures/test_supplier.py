@@ -106,7 +106,7 @@ form_data = {
 
 def test_require_supplier_role_for_profile(app, supplier_user, client, mocker):
     response = client.post(
-        '/supplier',
+        '/2/supplier',
         data=json.dumps(form_data),
         content_type='application/json')
 
@@ -114,7 +114,7 @@ def test_require_supplier_role_for_profile(app, supplier_user, client, mocker):
 
 
 def test_update_supplier_profile(app, supplier_user, client, mocker):
-    res = client.post('/login', data=json.dumps({
+    res = client.post('/2/login', data=json.dumps({
         'emailAddress': supplier_user.email_address, 'password': 'testpassword'
     }), content_type='application/json')
     assert res.status_code == 200
@@ -126,7 +126,7 @@ def test_update_supplier_profile(app, supplier_user, client, mocker):
     form_data['id'] = supplier_user.id
 
     response = client.post(
-        '/supplier',
+        '/2/supplier',
         data=json.dumps(form_data),
         content_type='application/json')
 

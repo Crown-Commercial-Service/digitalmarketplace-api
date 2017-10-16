@@ -4,7 +4,7 @@ import pytest
 
 from app import create_app
 from app.models import db, utcnow, Supplier, SupplierDomain, User, Brief, \
-    Framework, Lot, Domain, Assessment, Application
+    Framework, Lot, Domain, Assessment, Application, Region, ServiceType, ServiceTypePrice, Service, ServiceSubType
 from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, WSGIApplicationWithEnvironment
 
 from sqlbag import temporary_database
@@ -222,3 +222,71 @@ def login(app, users):
 
         login_user(user)
         return 'ok'
+
+
+@pytest.fixture()
+def regions(app, request):
+    with app.app_context():
+        db.session.add(Region(
+            name='Metro',
+            state='NSW'
+        ))
+        db.session.add(Region(
+            name='Remote',
+            state='NSW'
+        ))
+        db.session.add(Region(
+            name='Metro',
+            state='QLD'
+        ))
+
+        db.session.commit()
+        yield Region.query.all()
+
+
+@pytest.fixture()
+def services(app, request):
+    with app.app_context():
+        db.session.add(ServiceType(
+            name='Service1',
+            fee_type='Hourly',
+            category_id=10,
+            framework_id=8,
+            lot_id=11
+        ))
+        db.session.add(ServiceType(
+            name='Service2',
+            fee_type='Fixed',
+            category_id=11,
+            framework_id=8,
+            lot_id=11
+        ))
+
+        db.session.commit()
+        yield ServiceType.query.all()
+
+
+@pytest.fixture()
+def service_type_prices(app, request, regions, services, suppliers):
+    with app.app_context():
+        db.session.add(ServiceSubType(
+            name='SubType1'
+        ))
+        db.session.flush()
+
+        db.session.add(ServiceTypePrice(
+            service_type_id=1,
+            region_id=1,
+            supplier_code=1,
+            price=100.50
+        ))
+        db.session.add(ServiceTypePrice(
+            service_type_id=2,
+            region_id=2,
+            sub_service_id=1,
+            supplier_code=1,
+            price=200.90
+        ))
+
+        db.session.commit()
+        yield ServiceTypePrice.query.all()

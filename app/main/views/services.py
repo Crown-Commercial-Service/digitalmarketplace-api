@@ -370,7 +370,8 @@ def add_region():
     json_has_required_keys(region_json, ['region'])
 
     region = Region.query.filter(
-        Region.name == region_json['region']['name']
+        Region.name == region_json['region']['name'],
+        Region.state == region_json['region']['state']
     ).first()
 
     if region is not None:

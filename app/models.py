@@ -2527,6 +2527,7 @@ class Region(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
+    state = db.Column(db.String, nullable=False)
     created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
     updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
 
@@ -2538,7 +2539,6 @@ class Location(db.Model):
     region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
     region = db.relationship('Region')
     name = db.Column(db.String, nullable=False)
-    state = db.Column(db.String, nullable=False)
     postal_code = db.Column(db.Integer, nullable=False)
     created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
     updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
@@ -2574,11 +2574,13 @@ def update_price_json(self, data):
 
     if 'region_name' in data:
         region = Region.query.filter(
-            func.lower(Region.name) == func.lower(data['region_name'])
+            func.lower(Region.name) == func.lower(data['region_name']),
+            func.lower(Region.state) == func.lower(data['state'])
         ).first()
 
         self.region_id = region.id
         del data['region_name']
+        del data['state']
 
     return data
 

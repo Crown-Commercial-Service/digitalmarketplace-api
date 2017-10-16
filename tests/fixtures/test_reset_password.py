@@ -7,7 +7,7 @@ from dmutils.email import InvalidToken
 
 def _create_token(client, email_address, framework='digital-marketplace'):
     token_response = client.post(
-        '/reset-password/framework/{}'.format(framework),
+        '/2/reset-password/framework/{}'.format(framework),
         data=json.dumps({
             'email_address': email_address
         }),
@@ -36,7 +36,7 @@ def test_return_user_data_from_reset_password_token(client, users):
     token = json.loads(response.data)['token']
 
     validate_token_response = client.get(
-        '/reset-password/{}'.format(token),
+        '/2/reset-password/{}'.format(token),
         content_type='application/json'
     )
 
@@ -54,7 +54,7 @@ def test_orams_return_user_data_from_reset_password_token(client, users):
     token = json.loads(response.data)['token']
 
     validate_token_response = client.get(
-        '/reset-password/{}'.format(token),
+        '/2/reset-password/{}'.format(token),
         content_type='application/json'
     )
 
@@ -78,7 +78,7 @@ def test_reset_password(client, users):
     assert old_password != new_password
 
     response = client.post(
-        '/reset-password/{}'.format(token),
+        '/2/reset-password/{}'.format(token),
         data=json.dumps({
             'email_address': user.email_address,
             'user_id': user.id,
@@ -110,7 +110,7 @@ def test_reset_password(client, users):
     assert old_password != new_password
 
     response = client.post(
-        '/reset-password/{}'.format(token),
+        '/2/reset-password/{}'.format(token),
         data=json.dumps({
             'email_address': user.email_address,
             'user_id': user.id,
@@ -135,7 +135,7 @@ def test_reset_password_fails_invalid_token(client, users):
     fake_token = 'ahsdfsadfnotavalidtokenstring984t9uthu99a03ihwe0ih'
     try:
         response = client.post(
-            '/reset-password/{}'.format(fake_token),
+            '/2/reset-password/{}'.format(fake_token),
             data=json.dumps({
                 'email_address': user.email_address,
                 'user_id': user.id,
@@ -152,7 +152,7 @@ def test_reset_password_passwords_dont_match(client, users):
     user = users[2]
     fake_token = 'ahsdfsadfnotavalidtokenstring984t9uthu99a03ihwe0ih'
     response = client.post(
-        '/reset-password/{}'.format(fake_token),
+        '/2/reset-password/{}'.format(fake_token),
         data=json.dumps({
             'email_address': user.email_address,
             'user_id': user.id,
@@ -172,7 +172,7 @@ def test_reset_password_requires_all_of_the_args(client, users):
     token = json.loads(token_response.data)['token']
 
     response = client.post(
-        '/reset-password/{}'.format(token),
+        '/2/reset-password/{}'.format(token),
         data=json.dumps({
             'email_address': user.email_address,
             'user_id': user.id

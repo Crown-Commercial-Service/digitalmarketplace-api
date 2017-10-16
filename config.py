@@ -130,7 +130,7 @@ class Config:
 
 class Test(Config):
     URL_PREFIX = ''
-    URL_PREFIX_V2 = ''
+    URL_PREFIX_V2 = '/2'
     DM_SEARCH_API_AUTH_TOKEN = 'test'
     DM_SEARCH_API_URL = 'http://localhost'
     DM_LOG_LEVEL = 'WARN'

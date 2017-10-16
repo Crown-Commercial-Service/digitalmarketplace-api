@@ -72,6 +72,7 @@ INSERT INTO framework (id, slug, name, framework, status, clarification_question
 INSERT INTO framework (id, slug, name, framework, status, clarification_questions_open, framework_agreement_details) VALUES (5, 'digital-outcomes-and-specialists', 'Digital Outcomes and Specialists', 'dos', 'coming', false, NULL);
 INSERT INTO framework (id, slug, name, framework, status, clarification_questions_open, framework_agreement_details) VALUES (6, 'digital-service-professionals', 'Digital Service Professionals', 'dsp', 'live', false, NULL);
 INSERT INTO framework (id, slug, name, framework, status, clarification_questions_open, framework_agreement_details) VALUES (7, 'digital-marketplace', 'Digital Marketplace', 'dm', 'pending', false, NULL);
+INSERT INTO framework (id, slug, name, framework, status, clarification_questions_open, framework_agreement_details) VALUES (8, 'orams', 'orams', 'orams', 'pending', false, NULL);
 
 
 --
@@ -88,6 +89,7 @@ INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (7, 'user-resea
 INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (8, 'user-research-studios', 'User research studios', false, '{"unitSingular": "lab", "unitPlural": "labs"}');
 INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (9, 'digital-professionals', 'Digital professionals', true, '{"unitSingular": "service", "unitPlural": "services"}');
 INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (10, 'digital-outcome', 'Digital outcome', true, '{"unitSingular": "service", "unitPlural": "services"}');
+INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (11, 'orams', 'orams', true, '{"unitSingular": "service", "unitPlural": "services"}');
 
 
 --
@@ -118,6 +120,7 @@ INSERT INTO framework_lot (framework_id, lot_id) VALUES (6, 9);
 INSERT INTO framework_lot (framework_id, lot_id) VALUES (6, 10);
 INSERT INTO framework_lot (framework_id, lot_id) VALUES (7, 9);
 INSERT INTO framework_lot (framework_id, lot_id) VALUES (7, 10);
+INSERT INTO framework_lot (framework_id, lot_id) VALUES (8, 11);
 
 
 --
@@ -266,14 +269,14 @@ SELECT pg_catalog.setval('draft_service_id_seq', 1, false);
 -- Name: framework_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('framework_id_seq', 7, true);
+SELECT pg_catalog.setval('framework_id_seq', 8, true);
 
 
 --
 -- Name: lot_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('lot_id_seq', 10, true);
+SELECT pg_catalog.setval('lot_id_seq', 11, true);
 
 
 --
@@ -289,6 +292,8 @@ INSERT INTO service_category (id, name, abbreviation) VALUES (6, 'Technical Arch
 INSERT INTO service_category (id, name, abbreviation) VALUES (7, 'Performance and Web Analytics', 'wa');
 INSERT INTO service_category (id, name, abbreviation) VALUES (8, 'Inclusive Design and Accessibility', 'acc');
 INSERT INTO service_category (id, name, abbreviation) VALUES (9, 'Digital Transformation Advisers', 'dta');
+INSERT INTO service_category (id, name, abbreviation) VALUES (10, 'Medical', 'Medical');
+INSERT INTO service_category (id, name, abbreviation) VALUES (11, 'Rehabilitation', 'Rehabilitation');
 
 
 --
