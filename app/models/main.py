@@ -1371,6 +1371,35 @@ class Brief(db.Model):
         def has_statuses(self, *statuses):
             return self.filter(Brief.status.in_(statuses))
 
+        def data_key_contains_value(self, k, v):
+            return self.filter(Brief.data[k].astext.contains(u'"{}"'.format(v)))  # Postgres 9.3: use string matching
+
+        def has_date_field_after(self, attr, start_date, inclusive=None):
+            """Date filter values can be either strings or datetime objects."""
+            if inclusive:
+                return self.filter(getattr(Brief, attr) >= str(start_date))
+            return self.filter(getattr(Brief, attr) > str(start_date))
+
+        def has_date_field_before(self, attr, start_date, inclusive=None):
+            """Date filter values can be either strings or datetime objects."""
+            if inclusive:
+                return self.filter(getattr(Brief, attr) <= str(start_date))
+            return self.filter(getattr(Brief, attr) < str(start_date))
+
+        def has_date_field_between(self, attr, start_date, end_date, inclusive=None):
+            """
+            Date filter values can be either strings or datetime objects.
+            e.g. Brief.query.has_date_field_between('published_at', '2017-01-01', datetime(2017, 1, 2), inclusive=True)
+            would return briefs published between 2017-01-01T00:00:00.000000Z and 2017-01-02T00:00:00.000000Z.
+            """
+            if inclusive:
+                return self.filter(
+                    sql_and(getattr(Brief, attr) >= str(start_date), getattr(Brief, attr) <= str(end_date))
+                )
+            return self.filter(
+                sql_and(getattr(Brief, attr) > str(start_date), getattr(Brief, attr) < str(end_date))
+            )
+
     def add_clarification_question(self, question, answer):
         clarification_question = BriefClarificationQuestion(
             brief=self,

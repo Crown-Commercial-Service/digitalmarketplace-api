@@ -565,6 +565,76 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
             db.session.commit()
             assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 3
 
+    def test_query_brief_by_data_key_contains_value(self):
+        with self.app.app_context():
+            db.session.add_all(
+                [
+                    Brief(data={'key1': ['foo1', 'foo2'], 'key2': ['bar1']}, framework=self.framework, lot=self.lot),
+                    Brief(data={'key1': ['foo1', 'foo3']}, framework=self.framework, lot=self.lot)
+                ]
+            )
+            db.session.commit()
+            briefs = Brief.query.data_key_contains_value('key1', 'foo1')
+            assert briefs.count() == 2
+
+            briefs = Brief.query.data_key_contains_value('key2', 'bar1')
+            assert briefs.count() == 1
+
+            briefs = Brief.query.data_key_contains_value('key1', 'bar1')
+            assert briefs.count() == 0
+
+            briefs = Brief.query.data_key_contains_value('missing_key', 'foo1')
+            assert briefs.count() == 0
+
+    # TODO: add cases for querying created_at/updated_at auto timestamps with freeze_time
+
+    @pytest.mark.parametrize('inclusive,expected_count', [(True, 2), (False, 1)])
+    @pytest.mark.parametrize('date_format', ["2017-01-01", datetime(2017, 1, 1, 0, 0, 0)])
+    @pytest.mark.parametrize('datestamp_attr', ['published_at', 'withdrawn_at', 'cancelled_at', 'unsuccessful_at'])
+    def test_query_brief_has_date_field_before_and_after(self, datestamp_attr, date_format, inclusive, expected_count):
+        with self.app.app_context():
+            new_briefs = [Brief(data={}, framework=self.framework, lot=self.lot) for i in range(3)]
+            setattr(new_briefs[0], datestamp_attr, datetime(2016, 12, 31, 23, 59, 59))  # < date
+            setattr(new_briefs[1], datestamp_attr, datetime(2017, 1, 1, 0, 0, 0))  # <= and >= date
+            setattr(new_briefs[2], datestamp_attr, datetime(2017, 1, 1, 0, 0, 1))  # > date
+
+            db.session.add_all(new_briefs)
+            db.session.commit()
+
+            briefs_before = Brief.query.has_date_field_before(
+                datestamp_attr, start_date=date_format, inclusive=inclusive
+            )
+            assert briefs_before.count() == expected_count
+
+            briefs_after = Brief.query.has_date_field_after(
+                datestamp_attr, start_date=date_format, inclusive=inclusive
+            )
+            assert briefs_after.count() == expected_count
+
+    @pytest.mark.parametrize('inclusive,expected_count', [(True, 2), (False, 0)])
+    @pytest.mark.parametrize(
+        'start_date,end_date', [
+            ("2017-01-01", "2017-01-03"),
+            (datetime(2017, 1, 1, 0, 0, 0), datetime(2017, 1, 3, 0, 0, 0)),
+        ]
+    )
+    @pytest.mark.parametrize('datestamp_attr', ['published_at', 'withdrawn_at', 'cancelled_at', 'unsuccessful_at'])
+    def test_query_brief_has_date_field_between(self, datestamp_attr, start_date, end_date, inclusive, expected_count):
+        with self.app.app_context():
+            new_briefs = [Brief(data={}, framework=self.framework, lot=self.lot) for i in range(4)]
+            setattr(new_briefs[0], datestamp_attr, datetime(2016, 12, 31, 23, 59, 59))  # < date range
+            setattr(new_briefs[1], datestamp_attr, datetime(2017, 1, 1, 0, 0, 0))  # <= date range
+            setattr(new_briefs[2], datestamp_attr, datetime(2017, 1, 3, 0, 0, 0))  # >= date range
+            setattr(new_briefs[3], datestamp_attr, datetime(2017, 1, 3, 0, 0, 1))  # > date range
+
+            db.session.add_all(new_briefs)
+            db.session.commit()
+
+            briefs = Brief.query.has_date_field_between(
+                datestamp_attr, start_date=start_date, end_date=end_date, inclusive=inclusive
+            )
+            assert briefs.count() == expected_count
+
 
 class TestAwardedBriefs(BaseApplicationTest, FixtureMixin):
     def setup(self):
