@@ -25,6 +25,9 @@ def list_projects():
     if not isinstance(with_users, bool):
         abort(400, "with-users param must be True of False")
 
+    if with_users:
+        projects = projects.options(db.joinedload('users').lazyload('supplier'))
+
     user_id = get_int_or_400(request.args, 'user-id')
     if user_id:
         projects = projects.filter(DirectAwardProject.users.any(id=user_id))
