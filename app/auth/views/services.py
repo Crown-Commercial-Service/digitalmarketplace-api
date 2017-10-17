@@ -1,13 +1,13 @@
 from flask import jsonify
 from flask_login import login_required
 from app.auth import auth
-from app.utils import get_json_from_request, json_has_required_keys
 from app.models import (
     db, Region, ServiceCategory, ServiceType, ServiceTypePrice,
     Supplier, ServiceSubType
 )
 from itertools import groupby
 from operator import itemgetter
+from app.auth.helpers import role_required
 
 ALERTS = {
     'fixed': {
@@ -27,19 +27,21 @@ ALERTS = {
 
 @auth.route('/regions', methods=['GET'])
 @login_required
+@role_required('supplier')
 def get_regions():
     regions_data = db.session.query(Region).order_by(Region.state).all()
     regions = [_.serializable for _ in regions_data]
 
     result = []
     for key, group in groupby(regions, key=itemgetter('state')):
-        result.append(dict(mainRegion=key, subRegions=list(dict(id=s['id'], name=s['name']) for s in group)))
+        result.append(dict(name=key, subRegions=list(dict(id=s['id'], name=s['name']) for s in group)))
 
     return jsonify(regions=result), 200
 
 
 @auth.route('/services', methods=['GET'])
 @login_required
+@role_required('supplier')
 def get_category_services():
     services_data = db.session.query(ServiceType, ServiceCategory)\
         .join(ServiceCategory, ServiceType.category_id == ServiceCategory.id)\
@@ -50,20 +52,18 @@ def get_category_services():
 
     result = []
     for key, group in groupby(services, key=itemgetter('category')):
-        result.append(dict(mainCategory=key['name'],
-                           subCategories=list(dict(serviceTypeId=s['id'], serviceTypeName=s['name']) for s in group)))
+        result.append(dict(name=key['name'],
+                           subCategories=list(dict(id=s['id'], name=s['name']) for s in group)))
 
     return jsonify(categories=result), 200
 
 
-@auth.route('/seller-catalogue', methods=['POST'])
+@auth.route('/services/<service_type_id>/regions/<region_id>/prices', methods=['GET'])
 @login_required
-def get_seller_catalogue_data():
-    catalogue_json = get_json_from_request()
-    json_has_required_keys(catalogue_json, ['serviceTypeId', 'regionId'])
-
-    service_type = db.session.query(ServiceType).get(catalogue_json['serviceTypeId'])
-    region = db.session.query(Region).get(catalogue_json['regionId'])
+@role_required('supplier')
+def get_seller_catalogue_data(service_type_id, region_id):
+    service_type = db.session.query(ServiceType).get(service_type_id)
+    region = db.session.query(Region).get(region_id)
 
     if service_type is None or region is None:
         return jsonify(alert=ALERTS['none'], categories=[]), 200
@@ -72,8 +72,8 @@ def get_seller_catalogue_data():
         .join(Supplier, ServiceTypePrice.supplier_code == Supplier.code)\
         .outerjoin(ServiceSubType, ServiceTypePrice.sub_service_id == ServiceSubType.id)\
         .filter(
-            ServiceTypePrice.service_type_id == catalogue_json['serviceTypeId'],
-            ServiceTypePrice.region_id == catalogue_json['regionId'])\
+            ServiceTypePrice.service_type_id == service_type_id,
+            ServiceTypePrice.region_id == region_id)\
         .order_by(ServiceSubType.name)\
         .all()
 
@@ -82,7 +82,7 @@ def get_seller_catalogue_data():
         supplier_prices.append((
             None if not sub_service else sub_service.name,
             {
-                'price': price.price,
+                'price': '{:1,.2f}'.format(price.price),
                 'name': supplier.name,
                 'phone': supplier.data.get('contact_phone'),
                 'email': supplier.data.get('contact_email')
@@ -91,7 +91,7 @@ def get_seller_catalogue_data():
 
     result = []
     for key, group in groupby(supplier_prices, key=lambda x: x[0]):
-        result.append(dict(category=key, suppliers=list(s[1] for s in group)))
+        result.append(dict(name=key, suppliers=list(s[1] for s in group)))
 
     alert = ALERTS['none'] if len(result) == 0 else ALERTS[service_type.fee_type.lower()]
 

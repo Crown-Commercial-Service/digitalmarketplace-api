@@ -1,4 +1,4 @@
-from flask import current_app, render_template_string
+from flask import current_app, render_template_string, jsonify
 import requests
 import rollbar
 from app.models import User
@@ -6,6 +6,21 @@ from dmutils.email import (
     decode_token, EmailError, generate_token, InvalidToken, ONE_DAY_IN_SECONDS, send_email,
     parse_fernet_timestamp
 )
+from functools import wraps
+from flask_login import current_user
+
+
+def role_required(*roles):
+    def role_decorator(func):
+        @wraps(func)
+        def decorated_view(*args, **kwargs):
+            if not any(current_user.has_role(role) for role in roles):
+                return jsonify(message="One of [{}] roles required".format(", ".join(roles))), 403
+            return func(*args, **kwargs)
+
+        return decorated_view
+
+    return role_decorator
 
 
 def generate_creation_token(name, email_address, user_type, **unused):
