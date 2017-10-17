@@ -178,7 +178,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
             assert data['projects'][0] == DirectAwardProject.query.get(self.project_id).serialize()
 
     def test_returns_serialized_project_with_users_if_requested(self):
-        res = self.client.get('/direct-award/projects?with-users=true')
+        res = self.client.get('/direct-award/projects?include=users')
         data = json.loads(res.get_data(as_text=True))
 
         assert 'projects' in data
@@ -190,8 +190,8 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
             assert data['projects'][0]['users'][0]['id'] == \
                 DirectAwardProject.query.get(self.project_id).users[0].serialize()['id']
 
-    @pytest.mark.parametrize('param', ('?with-users=false', ''))
-    def test_returns_serialized_project_without_users_if_not_requested(self, param):
+    @pytest.mark.parametrize('param', ('?include=no-users', ''))
+    def test_returns_serialized_project_without_users_if_not_requested_correctly(self, param):
         res = self.client.get('/direct-award/projects{}'.format(param))
         data = json.loads(res.get_data(as_text=True))
 
@@ -199,13 +199,6 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         assert data['meta']['total'] == 1
         assert len(data['projects']) == 1
         assert not data['projects'][0].get('users')
-
-    def test_returns_400_if_with_users_incorrectly_requested(self):
-        res = self.client.get('/direct-award/projects?with-users=some-rubbish')
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 400
-        assert data == {'error': 'with-users param must be True of False'}
 
 
 class TestDirectAwardCreateProject(DirectAwardSetupAndTeardown):

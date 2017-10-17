@@ -21,11 +21,8 @@ def list_projects():
 
     projects = DirectAwardProject.query
 
-    with_users = convert_to_boolean(request.args.get('with-users', False))
-    if not isinstance(with_users, bool):
-        abort(400, "with-users param must be True of False")
-
-    if with_users:
+    includes = request.args.get('include', '').split(',')
+    if 'users' in includes:
         projects = projects.options(db.joinedload('users').lazyload('supplier'))
 
     user_id = get_int_or_400(request.args, 'user-id')
@@ -46,7 +43,7 @@ def list_projects():
     )
 
     return jsonify(
-        projects=[project.serialize(with_users=with_users) for project in projects.items],
+        projects=[project.serialize(with_users='users' in includes) for project in projects.items],
         meta={
             "total": projects.total,
         },
