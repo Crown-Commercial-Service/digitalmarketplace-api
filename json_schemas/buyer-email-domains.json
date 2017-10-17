@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "domainName": {
+      "pattern": "^(?!\\.)[^:\/@!&=\\s]+\\.[a-zA-Z]{2,64}$",
+      "type": "string",
+      "description": "Must not start with a dot, must not contain :/@!&= or whitespace, must end in a dot followed by an alpha TLD between 2 and 64 chars."
+    }
+  },
+  "required": ["domainName"],
+  "title": "Buyer Email Domain Schema",
+  "type": "object"
+}

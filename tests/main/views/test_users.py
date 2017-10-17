@@ -1,7 +1,7 @@
 from flask import json
 from freezegun import freeze_time
 from app import db, encryption
-from app.models import User, Supplier
+from app.models import User, Supplier, BuyerEmailDomain
 from datetime import datetime
 import mock
 from sqlalchemy.exc import DataError
@@ -1475,7 +1475,17 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
 
 
 class TestUsersEmailCheck(BaseUserTest):
-    def test_valid_email_is_ok(self):
+    def test_valid_email_is_ok_if_domain_found_in_database(self):
+        with self.app.app_context():
+            # Create a domain that isn't in the buyer-email-domains.txt file
+            db.session.add(BuyerEmailDomain(domain_name="bananas.org"))
+            db.session.commit()
+
+        response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@bananas.org'})
+        assert response.status_code == 200
+        assert json.loads(response.get_data())['valid'] is True
+
+    def test_valid_email_is_ok_if_domain_found_in_text_file(self):
         response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@gov.uk'})
         assert response.status_code == 200
         assert json.loads(response.get_data())['valid'] is True
