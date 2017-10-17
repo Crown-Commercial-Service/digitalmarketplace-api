@@ -12,7 +12,7 @@ from ...utils import (
 )
 
 
-@main.route('/buyer-email-domain', methods=['POST'])
+@main.route('/buyer-email-domains', methods=['POST'])
 def create_buyer_email_domain():
     updater_json = validate_and_return_updater_request()
 
@@ -49,7 +49,7 @@ def create_buyer_email_domain():
     return jsonify(buyerEmailDomains=buyer_email_domain.serialize()), 201
 
 
-@main.route('/buyer-email-domain', methods=['GET'])
+@main.route('/buyer-email-domains', methods=['GET'])
 def list_buyer_email_domains():
     page = get_valid_page_or_1()
 

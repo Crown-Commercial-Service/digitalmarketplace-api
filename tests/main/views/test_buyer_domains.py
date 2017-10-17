@@ -10,7 +10,7 @@ from app.models import BuyerEmailDomain, AuditEvent
 class TestCreateBuyerEmailDomain(BaseApplicationTest):
     def test_create_buyer_email_domain_with_no_data(self):
         res = self.client.post(
-            '/buyer-email-domain',
+            '/buyer-email-domains',
             content_type='application/json'
         )
 
@@ -25,7 +25,7 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
             db.session.commit()
 
         res = self.client.post(
-            '/buyer-email-domain',
+            '/buyer-email-domains',
             data=json.dumps({
                 'buyerEmailDomains': {'domainName': new_domain},
                 'updated_by': 'example'
@@ -45,7 +45,7 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
             db.session.commit()
 
         res = self.client.post(
-            '/buyer-email-domain',
+            '/buyer-email-domains',
             data=json.dumps({
                 'buyerEmailDomains': {'domainName': 'gov.uk'},
                 'updated_by': 'example'
@@ -58,7 +58,7 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
 
     def test_create_buyer_email_domain_forces_to_lower_case(self):
         res = self.client.post(
-            '/buyer-email-domain',
+            '/buyer-email-domains',
             data=json.dumps({
                 'buyerEmailDomains': {'domainName': 'EXAMPLE.org'},
                 'updated_by': 'example'
@@ -71,7 +71,7 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
 
     def test_create_buyer_email_domain_fails_if_required_field_is_not_provided(self):
         res = self.client.post(
-            '/buyer-email-domain',
+            '/buyer-email-domains',
             data=json.dumps({
                 'updated_by': 'example'
             }),
@@ -83,7 +83,7 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
 
     def test_create_buyer_email_domain_creates_audit_event(self):
         self.client.post(
-            '/buyer-email-domain',
+            '/buyer-email-domains',
             data=json.dumps({
                 'buyerEmailDomains': {'domainName': "example.com"},
                 'updated_by': 'example user'
@@ -125,7 +125,7 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
     )
     def test_create_buyer_email_domain_fails_if_domain_invalid(self, new_domain):
         res = self.client.post(
-            '/buyer-email-domain',
+            '/buyer-email-domains',
             data=json.dumps({
                 'buyerEmailDomains': {'domainName': new_domain},
                 'updated_by': 'example'
@@ -145,7 +145,7 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
             db.session.commit()
 
         res = self.client.post(
-            '/buyer-email-domain',
+            '/buyer-email-domains',
             data=json.dumps({
                 'buyerEmailDomains': {'domainName': new_domain},
                 'updated_by': 'example'
@@ -159,7 +159,7 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
 
 class TestListBuyerEmailDomains(BaseApplicationTest):
     def test_list_buyer_email_domain_200s_with_empty_list_when_no_domains(self):
-        res = self.client.get('/buyer-email-domain')
+        res = self.client.get('/buyer-email-domains')
 
         data = json.loads(res.get_data(as_text=True))
 
@@ -172,7 +172,7 @@ class TestListBuyerEmailDomains(BaseApplicationTest):
                 db.session.add(BuyerEmailDomain(domain_name=existing_domain))
                 db.session.commit()
 
-        res = self.client.get('/buyer-email-domain')
+        res = self.client.get('/buyer-email-domains')
 
         data = json.loads(res.get_data(as_text=True))
 
@@ -189,8 +189,8 @@ class TestListBuyerEmailDomains(BaseApplicationTest):
                 db.session.add(BuyerEmailDomain(domain_name=existing_domain))
                 db.session.commit()
 
-        page1 = self.client.get('/buyer-email-domain')
-        page2 = self.client.get('/buyer-email-domain?page=2')
+        page1 = self.client.get('/buyer-email-domains')
+        page2 = self.client.get('/buyer-email-domains?page=2')
 
         page_1_data = json.loads(page1.get_data(as_text=True))
         page_2_data = json.loads(page2.get_data(as_text=True))
