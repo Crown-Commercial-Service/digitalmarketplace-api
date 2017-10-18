@@ -17,9 +17,9 @@ SERVICES = [
         'subCategories': [{'id': 2, 'name': 'Service2'}]}]
 
 
-def test_get_regions(client, supplier_user, regions):
+def test_get_regions(client, users, regions):
     res = client.post('/2/login', data=json.dumps({
-        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+        'emailAddress': 'test@digital.gov.au', 'password': 'testpassword'
     }), content_type='application/json')
     assert res.status_code == 200
 
@@ -31,9 +31,9 @@ def test_get_regions(client, supplier_user, regions):
     assert regions['regions'] == REGIONS
 
 
-def test_get_services(client, supplier_user, services):
+def test_get_services(client, users, services):
     res = client.post('/2/login', data=json.dumps({
-        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+        'emailAddress': 'test@digital.gov.au', 'password': 'testpassword'
     }), content_type='application/json')
     assert res.status_code == 200
 
@@ -45,9 +45,9 @@ def test_get_services(client, supplier_user, services):
     assert services['categories'] == SERVICES
 
 
-def test_search_catalogue(client, supplier_user, service_type_prices):
+def test_search_catalogue(client, users, service_type_prices):
     res = client.post('/2/login', data=json.dumps({
-        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+        'emailAddress': 'test@digital.gov.au', 'password': 'testpassword'
     }), content_type='application/json')
     assert res.status_code == 200
 

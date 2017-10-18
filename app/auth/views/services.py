@@ -27,7 +27,7 @@ ALERTS = {
 
 @auth.route('/regions', methods=['GET'])
 @login_required
-@role_required('supplier')
+@role_required('buyer')
 def regions():
     """Return a list of regions.
     ---
@@ -76,7 +76,7 @@ def regions():
 
 @auth.route('/services', methods=['GET'])
 @login_required
-@role_required('supplier')
+@role_required('buyer')
 def get_category_services():
     """Return a list of services.
     ---
@@ -130,7 +130,7 @@ def get_category_services():
 
 @auth.route('/services/<service_type_id>/regions/<region_id>/prices', methods=['GET'])
 @login_required
-@role_required('supplier')
+@role_required('buyer')
 def get_seller_catalogue_data(service_type_id, region_id):
     """Return a list of prices.
     ---
