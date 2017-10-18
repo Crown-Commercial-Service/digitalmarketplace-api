@@ -34,21 +34,21 @@ def db_initialization(request):
         yield
 
 
-def setup_authorization(app):
-    valid_token = 'valid-token'
-    app.wsgi_app = WSGIApplicationWithEnvironment(
-        app.wsgi_app,
-        HTTP_AUTHORIZATION='Bearer {}'.format(valid_token))
-    app.config['DM_API_AUTH_TOKENS'] = valid_token
-
-
 @pytest.fixture()
 def app(request):
     app = create_app('test')
     app.config['SERVER_NAME'] = 'localhost'
     app.config['CSRF_ENABLED'] = False
-    setup_authorization(app)
     yield app
+
+
+@pytest.fixture()
+def bearer(app):
+    valid_token = 'valid-token'
+    app.wsgi_app = WSGIApplicationWithEnvironment(
+        app.wsgi_app,
+        HTTP_AUTHORIZATION='Bearer {}'.format(valid_token))
+    app.config['DM_API_AUTH_TOKENS'] = valid_token
 
 
 @pytest.fixture()
@@ -203,25 +203,6 @@ def assessments(app, request, supplier_domains, briefs):
 
         db.session.commit()
         yield Assessment.query.all()
-
-
-@pytest.fixture()
-def login(app, users):
-    @app.route('/auto-login')
-    def auto_login():
-        u = users[0]
-        user = LoginUser(user_id=u.id,
-                         email_address=u.email_address,
-                         name=u.name,
-                         role=u.role,
-                         supplier_code=u.supplier_code,
-                         supplier_name=None,
-                         locked=u.locked,
-                         active=u.active,
-                         terms_accepted_at=None)
-
-        login_user(user)
-        return 'ok'
 
 
 @pytest.fixture()

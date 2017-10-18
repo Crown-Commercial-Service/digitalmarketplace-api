@@ -28,7 +28,42 @@ ALERTS = {
 @auth.route('/regions', methods=['GET'])
 @login_required
 @role_required('supplier')
-def get_regions():
+def regions():
+    """Return a list of regions.
+    ---
+    tags:
+      - services
+    security:
+      - basicAuth: []
+    definitions:
+      Regions:
+        properties:
+          regions:
+            type: array
+            items:
+              $ref: '#/definitions/Region'
+      Region:
+        type: object
+        properties:
+          name:
+            type: string
+          subRegions:
+            type: array
+            items:
+              $ref: '#/definitions/SubRegion'
+      SubRegion:
+        type: object
+        properties:
+          id:
+            type:integer
+          name:
+            type:string
+    responses:
+      200:
+        description: A list of regions
+        schema:
+          $ref: '#/definitions/Regions'
+    """
     regions_data = db.session.query(Region).order_by(Region.state).all()
     regions = [_.serializable for _ in regions_data]
 
@@ -43,6 +78,41 @@ def get_regions():
 @login_required
 @role_required('supplier')
 def get_category_services():
+    """Return a list of services for Medical and Rehabilitation.
+    ---
+    tags:
+      - services
+    security:
+      - basicAuth: []
+    definitions:
+      Categories:
+        properties:
+          categories:
+            type: array
+            items:
+              $ref: '#/definitions/Category'
+      Category:
+        type: object
+        properties:
+          name:
+            type: string
+          subCategories:
+            type: array
+            items:
+              $ref: '#/definitions/SubCategory'
+      SubCategory:
+        type: object
+        properties:
+          id:
+            type:integer
+          name:
+            type:string
+    responses:
+      200:
+        description: A list of services
+        schema:
+          $ref: '#/definitions/Categories'
+    """
     services_data = db.session.query(ServiceType, ServiceCategory)\
         .join(ServiceCategory, ServiceType.category_id == ServiceCategory.id)\
         .filter(ServiceCategory.name.in_(['Medical', 'Rehabilitation']))\
@@ -62,6 +132,67 @@ def get_category_services():
 @login_required
 @role_required('supplier')
 def get_seller_catalogue_data(service_type_id, region_id):
+    """Return a list of prices.
+    ---
+    tags:
+      - services
+    security:
+      - basicAuth: []
+    parameters:
+      - name: service_type_id
+        in: path
+        type: integer
+        required: true
+        default: all
+      - name: region_id
+        in: path
+        type: integer
+        required: true
+        default: all
+    definitions:
+      Prices:
+        type: object
+        properties:
+          alert:
+            schema:
+              $ref: '#/definitions/Alert'
+          categories:
+            type: array
+            items:
+              $ref: '#/definitions/Category'
+      Category:
+        type: object
+        properties:
+          name:
+            type: string
+          suppliers:
+            type: array
+            items:
+              $ref: '#/definitions/Supplier'
+      Supplier:
+        type: object
+        properties:
+          email:
+            type:string
+          name:
+            type:string
+          phone:
+            type:string
+          price:
+            type:string
+      Alert:
+        type: object
+        properties:
+          message:
+            type: string
+          type:
+            type: string
+    responses:
+      200:
+        description: A list of prices
+        schema:
+          $ref: '#/definitions/Prices'
+    """
     service_type = db.session.query(ServiceType).get(service_type_id)
     region = db.session.query(Region).get(region_id)
 

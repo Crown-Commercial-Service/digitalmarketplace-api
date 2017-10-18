@@ -10,6 +10,7 @@ from .modelsbase import enc, CustomEncoder
 from . import logs
 
 from .utils import log
+from flasgger import Swagger
 
 
 db = SQLAlchemy()
@@ -53,6 +54,15 @@ def create_app(config_name):
 
     # maximum POST request length http://flask.pocoo.org/docs/0.12/patterns/fileuploads/#improving-uploads
     application.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32 megabytes
+
+    swagger_template = {
+        "info": {
+            "title": "Digital Marketplace API"
+        },
+        'securityDefinitions': {'basicAuth': {'type': 'basic'}}
+    }
+
+    Swagger(application, template=swagger_template)
 
     return application
 

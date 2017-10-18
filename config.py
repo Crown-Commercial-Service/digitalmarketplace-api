@@ -120,6 +120,7 @@ class Config:
 
     SEND_EMAILS = True
     CSRF_ENABLED = False
+    BASIC_AUTH = False
 
     ALLOWED_EXTENSIONS = ['pdf', 'odt', 'doc', 'docx']
 
@@ -157,6 +158,7 @@ class Test(Config):
     DM_SEND_EMAIL_TO_STDERR = True
     SECRET_KEY = 'TestKeyTestKeyTestKeyTestKeyTestKeyTestKeyX='
     CSRF_FAKED = False
+    BASIC_AUTH = True
 
 
 class Development(Config):
@@ -178,6 +180,7 @@ class Development(Config):
     SEND_EMAILS = True
     SECRET_KEY = 'DevKeyDevKeyDevKeyDevKeyDevKeyDevKeyDevKeyX='
     FRONTEND_ADDRESS = 'http://localhost:8000'
+    BASIC_AUTH = True
 
 
 class Live(Config):
@@ -204,6 +207,7 @@ class Preview(Live):
 
 class Staging(Development):
     JIRA_FEATURES = True
+    BASIC_AUTH = True
 
 
 class Production(Live):
