@@ -565,27 +565,6 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
             db.session.commit()
             assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 3
 
-    def test_query_brief_by_data_key_contains_value(self):
-        with self.app.app_context():
-            db.session.add_all(
-                [
-                    Brief(data={'key1': ['foo1', 'foo2'], 'key2': ['bar1']}, framework=self.framework, lot=self.lot),
-                    Brief(data={'key1': ['foo1', 'foo3']}, framework=self.framework, lot=self.lot)
-                ]
-            )
-            db.session.commit()
-            briefs = Brief.query.data_key_contains_value('key1', 'foo1')
-            assert briefs.count() == 2
-
-            briefs = Brief.query.data_key_contains_value('key2', 'bar1')
-            assert briefs.count() == 1
-
-            briefs = Brief.query.data_key_contains_value('key1', 'bar1')
-            assert briefs.count() == 0
-
-            briefs = Brief.query.data_key_contains_value('missing_key', 'foo1')
-            assert briefs.count() == 0
-
     # TODO: add cases for querying created_at/updated_at auto timestamps with freeze_time
 
     @pytest.mark.parametrize('inclusive,expected_count', [(True, 2), (False, 1)])

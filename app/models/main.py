@@ -1371,9 +1371,6 @@ class Brief(db.Model):
         def has_statuses(self, *statuses):
             return self.filter(Brief.status.in_(statuses))
 
-        def data_key_contains_value(self, k, v):
-            return self.filter(Brief.data[k].astext.contains(u'"{}"'.format(v)))  # Postgres 9.3: use string matching
-
         def has_date_field_after(self, attr, start_date, inclusive=None):
             """Date filter values can be either strings or datetime objects."""
             if inclusive:
