@@ -22,7 +22,9 @@ def list_projects():
     projects = DirectAwardProject.query
 
     includes = request.args.get('include', '').split(',')
-    if 'users' in includes:
+
+    with_users = 'users' in includes
+    if with_users:
         projects = projects.options(db.joinedload('users').lazyload('supplier'))
 
     user_id = get_int_or_400(request.args, 'user-id')
@@ -43,7 +45,7 @@ def list_projects():
     )
 
     return jsonify(
-        projects=[project.serialize(with_users='users' in includes) for project in projects.items],
+        projects=[project.serialize(with_users=with_users) for project in projects.items],
         meta={
             "total": projects.total,
         },
