@@ -20,6 +20,13 @@ def list_projects():
     page = get_valid_page_or_1()
 
     projects = DirectAwardProject.query
+
+    includes = request.args.get('include', '').split(',')
+
+    with_users = 'users' in includes
+    if with_users:
+        projects = projects.options(db.joinedload('users').lazyload('supplier'))
+
     user_id = get_int_or_400(request.args, 'user-id')
     if user_id:
         projects = projects.filter(DirectAwardProject.users.any(id=user_id))
@@ -38,7 +45,7 @@ def list_projects():
     )
 
     return jsonify(
-        projects=[project.serialize() for project in projects.items],
+        projects=[project.serialize(with_users=with_users) for project in projects.items],
         meta={
             "total": projects.total,
         },
@@ -229,6 +236,7 @@ def list_project_services(project_id):
 
     project_archived_services = list(map(lambda service: {
         'id': service.service_id,
+        'projectId': project_id,
         'supplier': {
             'name': service.supplier.name,
             'contact': {

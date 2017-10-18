@@ -177,6 +177,29 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         with self.app.app_context():
             assert data['projects'][0] == DirectAwardProject.query.get(self.project_id).serialize()
 
+    def test_returns_serialized_project_with_users_if_requested(self):
+        res = self.client.get('/direct-award/projects?include=users')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert 'projects' in data
+        assert data['meta']['total'] == 1
+        assert len(data['projects']) == 1
+        assert len(data['projects'][0]['users']) == 1
+
+        with self.app.app_context():
+            assert data['projects'][0]['users'][0]['id'] == \
+                DirectAwardProject.query.get(self.project_id).users[0].serialize()['id']
+
+    @pytest.mark.parametrize('param', ('?include=no-users', ''))
+    def test_returns_serialized_project_without_users_if_not_requested_correctly(self, param):
+        res = self.client.get('/direct-award/projects{}'.format(param))
+        data = json.loads(res.get_data(as_text=True))
+
+        assert 'projects' in data
+        assert data['meta']['total'] == 1
+        assert len(data['projects']) == 1
+        assert not data['projects'][0].get('users')
+
 
 class TestDirectAwardCreateProject(DirectAwardSetupAndTeardown):
     @pytest.mark.parametrize('drop_project_keys, expected_status',
@@ -565,9 +588,8 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
             db.session.commit()
 
     def test_list_project_services_404s_on_invalid_project(self):
-        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(sys.maxsize,
-                                                                                     self.search_id,
-                                                                                     self.user_id))
+        res = self.client.get('/direct-award/projects/{}/services'.format(sys.maxsize))
+
         assert res.status_code == 404
 
     def test_list_project_services_400s_on_unlocked_project(self):
@@ -578,9 +600,7 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
             db.session.add(project)
             db.session.commit()
 
-        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(self.project_id,
-                                                                                     self.search_id,
-                                                                                     self.user_id))
+        res = self.client.get('/direct-award/projects/{}/services'.format(self.project_id))
         assert res.status_code == 400
 
     def test_list_project_services_400s_if_no_saved_search(self):
@@ -590,12 +610,11 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
             db.session.delete(search)
             db.session.commit()
 
-        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(self.project_id,
-                                                                                     self.search_id,
-                                                                                     self.user_id))
+        res = self.client.get('/direct-award/projects/{}/services'.format(self.project_id))
+
         assert res.status_code == 400
 
-    def test_list_project_services_returns_required_keys(self):
+    def test_list_project_services_returns_correct_response(self):
         with self.app.app_context():
             # Create some 'saved' services, which requires suppliers+archivedservice entries.
             self.setup_dummy_suppliers(3)
@@ -607,14 +626,48 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
                                                             search_id=self.search_id))
             db.session.commit()
 
-        res = self.client.get('/direct-award/projects/{}/services?user-id={}'.format(self.project_id,
-                                                                                     self.search_id,
-                                                                                     self.user_id))
-        assert res.status_code == 200
-        data = json.loads(res.get_data(as_text=True))
+            res = self.client.get('/direct-award/projects/{}/services'.format(self.project_id))
+            assert res.status_code == 200
 
-        assert set(data.keys()) == {'meta', 'links', 'services'}
-        assert set(data['services'][0].keys()) == {'id', 'supplier', 'data'}
+            data = json.loads(res.get_data(as_text=True))
+
+            assert set(data.keys()) == {'meta', 'links', 'services'}
+            assert data['meta'] == {'total': 5}
+            assert data['links'] == {'self': 'http://127.0.0.1:5000/direct-award/projects/1/services'}
+            for service in data['services']:
+                assert service in [{
+                    'id': service.service_id,
+                    'projectId': self.project_id,
+                    'supplier': {
+                        'name': service.supplier.name,
+                        'contact': {
+                            'name': service.supplier.contact_information[0].contact_name,
+                            'phone': service.supplier.contact_information[0].phone_number,
+                            'email': service.supplier.contact_information[0].email,
+                        },
+                    },
+                    'data': {},
+                } for service in archived_services]
+
+    def test_list_project_services_returns_requested_fields_in_service_data(self):
+        with self.app.app_context():
+            # Create some 'saved' services, which requires suppliers+archivedservice entries.
+            self.setup_dummy_suppliers(1)
+            self.setup_dummy_services(1, model=ArchivedService)
+
+            archived_services = ArchivedService.query.all()
+            for archived_service in archived_services:
+                db.session.add(DirectAwardSearchResultEntry(archived_service_id=archived_service.id,
+                                                            search_id=self.search_id))
+            db.session.commit()
+
+            res = self.client.get('/direct-award/projects/{}/services?fields=serviceName'.format(self.project_id))
+            assert res.status_code == 200
+
+            data = json.loads(res.get_data(as_text=True))
+            assert data['services'][0]['data'] == {'serviceName': archived_services[0].data['serviceName']}
+            assert data['links'] == \
+                {'self': 'http://127.0.0.1:5000/direct-award/projects/1/services?fields=serviceName'}
 
     def test_list_project_services_accepts_page_offset(self):
         project_services_count = 100
