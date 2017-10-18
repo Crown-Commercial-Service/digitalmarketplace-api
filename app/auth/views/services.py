@@ -78,7 +78,7 @@ def regions():
 @login_required
 @role_required('supplier')
 def get_category_services():
-    """Return a list of services for Medical and Rehabilitation.
+    """Return a list of services.
     ---
     tags:
       - services

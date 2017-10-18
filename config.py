@@ -127,6 +127,7 @@ class Config:
     S3_BUCKET_NAME = ''
     S3_ENDPOINT_URL = 's3-ap-southeast-2.amazonaws.com'
     AWS_DEFAULT_REGION = ''
+    SWAGGER = {'title': 'Digital Marketplace API', 'uiversion': 3}
 
 
 class Test(Config):

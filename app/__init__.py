@@ -56,13 +56,29 @@ def create_app(config_name):
     application.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32 megabytes
 
     swagger_template = {
-        "info": {
-            "title": "Digital Marketplace API"
+        'info': {
+            'title': 'Digital Marketplace API'
         },
         'securityDefinitions': {'basicAuth': {'type': 'basic'}}
     }
 
-    Swagger(application, template=swagger_template)
+    swagger_config = {
+        'headers': [
+        ],
+        'specs': [
+            {
+                'endpoint': 'apispec_1',
+                'route': '/apispec_1.json',
+                'rule_filter': lambda rule: True,  # all in
+                'model_filter': lambda tag: True,  # all in
+            }
+        ],
+        'static_url_path': '/api/flasgger_static',
+        'swagger_ui': True,
+        'specs_route': '/api/apidocs/'
+    }
+
+    Swagger(application, config=swagger_config, template=swagger_template)
 
     return application
 
