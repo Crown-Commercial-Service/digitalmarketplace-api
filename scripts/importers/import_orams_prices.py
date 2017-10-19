@@ -26,7 +26,7 @@ def run_import(input_file, client):
 
         num_successes += 1
         print '{}:{},{},{},{},{}'.format(num_successes, price['supplier_name'],
-                                      price['service_name'], price['region_name'], price['state'], price['price'])
+                                         price['service_name'], price['region_name'], price['state'], price['price'])
 
     print 'Total:{}'.format(num_successes)
 

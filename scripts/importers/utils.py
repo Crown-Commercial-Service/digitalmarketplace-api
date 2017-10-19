@@ -87,12 +87,8 @@ class Client(object):
 
 def makeClient():
     import os
-    import sys
 
     api_token = os.environ.get('DM_DATA_API_AUTH_TOKEN') or 'myToken'
-    if len(sys.argv) > 1:
-        api_host = sys.argv[1]
-    else:
-        api_host = 'http://localhost:5000/'
+    api_host = os.environ.get('DM_DATA_API_AUTH_URL') or 'http://localhost:5000/'
 
     return Client(api_host, api_token)

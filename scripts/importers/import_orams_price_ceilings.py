@@ -15,6 +15,7 @@ def run_import(input_file, client):
             'service_name': record['service'],
             'sub_service': record['sub_service'],
             'region_name': record['region'],
+            'state': record['state'],
             'price': float(record['price_ceiling'])
         }
 
@@ -24,8 +25,8 @@ def run_import(input_file, client):
                         content_type='application/json'))
 
         num_successes += 1
-        print '{}:{},{},{},{}'.format(num_successes, price['supplier_name'],
-                                      price['service_name'], price['region_name'], price['price'])
+        print '{}:{},{},{},{},{}'.format(num_successes, price['supplier_name'],
+                                         price['service_name'], price['region_name'], price['state'], price['price'])
 
     print 'Total:{}'.format(num_successes)
 
