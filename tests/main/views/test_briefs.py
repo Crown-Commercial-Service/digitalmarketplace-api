@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from datetime import timedelta
 
+from freezegun import freeze_time
 import pytest
 import mock
 from tests.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, FixtureMixin, get_audit_events
@@ -9,7 +10,7 @@ from tests.bases import BaseApplicationTest
 
 from dmapiclient.audit import AuditTypes
 from app import db
-from app.models import Framework, BriefResponse
+from app.models import Framework, BriefResponse, Brief, Lot
 
 
 class FrameworkSetupAndTeardown(BaseApplicationTest, FixtureMixin):
@@ -712,6 +713,88 @@ class TestListBrief(FrameworkSetupAndTeardown):
 
         assert len(data['briefs']) == 7
         assert data['links'] == {}
+
+    @pytest.mark.parametrize('date_arg', ['published_on', 'withdrawn_on', 'cancelled_on', 'unsuccessful_on'])
+    def test_list_briefs_filter_by_single_day(self, date_arg):
+        for i, brief_status in enumerate(["draft", "withdrawn", "published", "cancelled", "unsuccessful"]):
+            with freeze_time('2017-01-01 00:00:00'):
+                self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 1)
+            with freeze_time('2017-01-01 23:59:59.999999'):
+                self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 6)
+
+            # The following briefs should be outside the time span
+            with freeze_time('2016-12-31 23:59:59.999999'):
+                self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 11)
+            with freeze_time('2017-01-02 00:00:00'):
+                self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 16)
+
+        res = self.client.get('/briefs?{}=2017-01-01'.format(date_arg))
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 2
+
+    @pytest.mark.parametrize(
+        'date_arg,expected_count',
+        [('published_before', 5), ('withdrawn_before', 1), ('cancelled_before', 1), ('unsuccessful_before', 1)]
+    )
+    def test_list_briefs_filter_before_date(self, date_arg, expected_count):
+        for i, brief_status in enumerate(["draft", "withdrawn", "published", "cancelled", "unsuccessful"]):
+            with freeze_time('2016-12-31 23:59:59.999999'):
+                self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 1)
+            # The following briefs should be filtered out ('before' is not inclusive)
+            with freeze_time('2017-01-01 00:00:00'):
+                self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 6)
+
+        res = self.client.get('/briefs?{}=2017-01-01'.format(date_arg))
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        # When setting statuses on our dummy Briefs, we also set an 'old' published_at date,
+        #  so there will be more results for the `published_before` query than the others.
+        assert len(data['briefs']) == expected_count
+
+    @pytest.mark.parametrize(
+        'date_arg', ['published_after', 'withdrawn_after', 'cancelled_after', 'unsuccessful_after']
+    )
+    def test_list_briefs_filter_after_date(self, date_arg):
+        for i, brief_status in enumerate(["draft", "withdrawn", "published", "cancelled", "unsuccessful"]):
+            with freeze_time('2017-01-02 00:00:00'):
+                self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 1)
+            # The following briefs should be filtered out ('after' is not inclusive)
+            with freeze_time('2017-01-01 23:59:59.999999'):
+                self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 6)
+
+        res = self.client.get('/briefs?{}=2017-01-01'.format(date_arg))
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == 1
+
+    @pytest.mark.parametrize('temporal_arg, expected_count', [('before', 1), ('on', 2), ('after', 1)])
+    def test_list_briefs_filter_closed_briefs_by_date(self, temporal_arg, expected_count):
+        # Closed briefs need to be set up differently, so this test covers all 3 before/after/on cases
+        with self.app.app_context():
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            lot = Lot.query.filter(Lot.slug == 'digital-specialists').first()
+
+            with freeze_time('2017-01-01 23:59:59.999999'):
+                brief1 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
+            with freeze_time('2017-01-02 00:00:00'):
+                brief2 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
+            with freeze_time('2017-01-02 23:59:59.999999'):
+                brief3 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
+            with freeze_time('2017-01-03 00:00:00'):
+                brief4 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
+
+            db.session.add_all([brief1, brief2, brief3, brief4])
+            db.session.commit()
+
+        res = self.client.get('/briefs?closed_{}=2017-01-16'.format(temporal_arg))
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefs']) == expected_count
 
 
 class TestUpdateBriefStatus(FrameworkSetupAndTeardown):

@@ -565,6 +565,71 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
             db.session.commit()
             assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 3
 
+    # TODO: add cases for querying created_at/updated_at auto timestamps with freeze_time
+
+    @pytest.mark.parametrize('inclusive,expected_count', [(True, 2), (False, 1)])
+    @pytest.mark.parametrize('datestamp_attr', ['published_at', 'withdrawn_at', 'cancelled_at', 'unsuccessful_at'])
+    def test_query_brief_has_datetime_field_before_and_after(self, datestamp_attr, inclusive, expected_count):
+        with self.app.app_context():
+            new_briefs = [Brief(data={}, framework=self.framework, lot=self.lot) for i in range(3)]
+            setattr(new_briefs[0], datestamp_attr, datetime(2016, 12, 31, 23, 59, 59, 999999))  # < date
+            setattr(new_briefs[1], datestamp_attr, datetime(2017, 1, 1, 0, 0, 0))  # <= and >= date
+            setattr(new_briefs[2], datestamp_attr, datetime(2017, 1, 1, 0, 0, 1))  # > date
+
+            db.session.add_all(new_briefs)
+            db.session.commit()
+
+            briefs_before = Brief.query.has_datetime_field_before(
+                datestamp_attr, start_datetime=datetime(2017, 1, 1, 0, 0, 0), inclusive=inclusive
+            )
+            assert briefs_before.count() == expected_count
+
+            briefs_after = Brief.query.has_datetime_field_after(
+                datestamp_attr, start_datetime=datetime(2017, 1, 1, 0, 0, 0), inclusive=inclusive
+            )
+            assert briefs_after.count() == expected_count
+
+    def test_query_brief_has_datetime_field_before_requires_datetime(self):
+        with self.app.app_context(), pytest.raises(ValueError) as e:
+            Brief.query.has_datetime_field_before('published_on', start_datetime='2017-01-01')
+        assert str(e.value) == 'Datetime object required'
+
+    def test_query_brief_has_datetime_field_after_requires_datetime(self):
+        with self.app.app_context(), pytest.raises(ValueError) as e:
+            Brief.query.has_datetime_field_after('published_on', start_datetime='2017-01-01')
+        assert str(e.value) == 'Datetime object required'
+
+    @pytest.mark.parametrize('inclusive,expected_count', [(True, 2), (False, 0)])
+    @pytest.mark.parametrize('datestamp_attr', ['published_at', 'withdrawn_at', 'cancelled_at', 'unsuccessful_at'])
+    def test_query_brief_has_datetime_field_between(self, datestamp_attr, inclusive, expected_count):
+        with self.app.app_context():
+            new_briefs = [Brief(data={}, framework=self.framework, lot=self.lot) for i in range(4)]
+            setattr(new_briefs[0], datestamp_attr, datetime(2016, 12, 31, 23, 59, 59, 999999))  # < date range
+            setattr(new_briefs[1], datestamp_attr, datetime(2017, 1, 1, 0, 0, 0))  # <= date range
+            setattr(new_briefs[2], datestamp_attr, datetime(2017, 1, 3, 0, 0, 0))  # >= date range
+            setattr(new_briefs[3], datestamp_attr, datetime(2017, 1, 3, 0, 0, 1))  # > date range
+
+            db.session.add_all(new_briefs)
+            db.session.commit()
+
+            briefs = Brief.query.has_datetime_field_between(
+                datestamp_attr,
+                start_datetime=datetime(2017, 1, 1, 0, 0, 0),
+                end_datetime=datetime(2017, 1, 3, 0, 0, 0),
+                inclusive=inclusive
+            )
+            assert briefs.count() == expected_count
+
+    @pytest.mark.parametrize(
+        'start_date,end_date', [
+            ('2017-01-01', datetime(2017, 1, 2)), (datetime(2017, 1, 1), '2017-01-02'), ('2017-01-01', '2017-01-03'),
+        ]
+    )
+    def test_query_brief_has_datetime_field_between_requires_datetime(self, start_date, end_date):
+        with self.app.app_context(), pytest.raises(ValueError) as e:
+            Brief.query.has_datetime_field_between('published_at', start_datetime=start_date, end_datetime=end_date)
+        assert str(e.value) == 'Datetime object required'
+
 
 class TestAwardedBriefs(BaseApplicationTest, FixtureMixin):
     def setup(self):

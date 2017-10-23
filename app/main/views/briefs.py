@@ -143,6 +143,25 @@ def list_briefs():
             *(status.strip() for status in request.args['status'].split(','))
         )
 
+    status_filters = ['created', 'published', 'withdrawn', 'cancelled', 'unsuccessful', 'closed']
+    temporal_filters = ['on', 'before', 'after']
+    status_date_filters = [
+        '{}_{}'.format(status, temporal) for status in status_filters for temporal in temporal_filters
+    ]
+
+    for status_date_key in [arg for arg in request.args.keys() if arg in status_date_filters]:
+        status, temporal_filter = status_date_key.split('_')
+        status = "applications_closed" if status == "closed" else status  # Hack for 'closed' status
+        day_value = datetime.strptime(request.args.get(status_date_key), "%Y-%m-%d")
+        if temporal_filter == 'on':
+            day_end = datetime(day_value.year, day_value.month, day_value.day, 23, 59, 59, 999999)
+            briefs = briefs.has_datetime_field_between("{}_at".format(status), day_value, day_end, inclusive=True)
+        if temporal_filter == 'before':
+            briefs = briefs.has_datetime_field_before("{}_at".format(status), day_value)
+        if temporal_filter == 'after':
+            day_end = datetime(day_value.year, day_value.month, day_value.day, 23, 59, 59, 999999)
+            briefs = briefs.has_datetime_field_after("{}_at".format(status), day_end)
+
     if user_id:
         return jsonify(
             briefs=[brief.serialize(with_users, with_clarification_questions) for brief in briefs.all()],

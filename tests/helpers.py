@@ -90,6 +90,7 @@ class FixtureMixin(object):
 
     def setup_dummy_brief(
         self, id=None, user_id=1, status=None, data=None, published_at=None, withdrawn_at=None,
+        cancelled_at=None, unsuccessful_at=None,
         framework_slug='digital-outcomes-and-specialists', lot_slug='digital-specialists',
         add_clarification_question=False
     ):
@@ -103,6 +104,12 @@ class FixtureMixin(object):
             elif status == 'withdrawn':
                 published_at = datetime.utcnow() - timedelta(days=1000)
                 withdrawn_at = datetime.utcnow()
+            elif status == 'cancelled':
+                published_at = datetime.utcnow() - timedelta(days=1000)
+                cancelled_at = datetime.utcnow()
+            elif status == 'unsuccessful':
+                published_at = datetime.utcnow() - timedelta(days=1000)
+                unsuccessful_at = datetime.utcnow()
             else:
                 published_at = None if status == 'draft' else datetime.utcnow()
         framework = Framework.query.filter(Framework.slug == framework_slug).first()
@@ -116,6 +123,8 @@ class FixtureMixin(object):
             users=[User.query.get(user_id)],
             published_at=published_at,
             withdrawn_at=withdrawn_at,
+            cancelled_at=cancelled_at,
+            unsuccessful_at=unsuccessful_at
         )
 
         db.session.add(brief)

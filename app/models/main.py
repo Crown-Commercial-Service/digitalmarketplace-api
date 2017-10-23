@@ -1371,6 +1371,40 @@ class Brief(db.Model):
         def has_statuses(self, *statuses):
             return self.filter(Brief.status.in_(statuses))
 
+        def has_datetime_field_after(self, attr, start_datetime, inclusive=None):
+            """Date filter values should be datetime objects."""
+            if not isinstance(start_datetime, datetime):
+                raise ValueError('Datetime object required')
+            if inclusive:
+                return self.filter(getattr(Brief, attr) >= str(start_datetime))
+            return self.filter(getattr(Brief, attr) > str(start_datetime))
+
+        def has_datetime_field_before(self, attr, start_datetime, inclusive=None):
+            """Date filter values should be datetime objects."""
+            if not isinstance(start_datetime, datetime):
+                raise ValueError('Datetime object required')
+            if inclusive:
+                return self.filter(getattr(Brief, attr) <= str(start_datetime))
+            return self.filter(getattr(Brief, attr) < str(start_datetime))
+
+        def has_datetime_field_between(self, attr, start_datetime, end_datetime, inclusive=None):
+            """
+            Date filter values should be datetime objects. e.g.
+                Brief.query.has_date_field_between(
+                    'published_at', datetime(2017, 1, 1), datetime(2017, 1, 2, 23, 59, 59, 999999), inclusive=True
+                )
+            would return briefs published between 2017-01-01T00:00:00.000000Z and 2017-01-02T23:59:59.999999Z.
+            """
+            if not (isinstance(start_datetime, datetime) and isinstance(end_datetime, datetime)):
+                raise ValueError('Datetime object required')
+            if inclusive:
+                return self.filter(
+                    sql_and(getattr(Brief, attr) >= str(start_datetime), getattr(Brief, attr) <= str(end_datetime))
+                )
+            return self.filter(
+                sql_and(getattr(Brief, attr) > str(start_datetime), getattr(Brief, attr) < str(end_datetime))
+            )
+
     def add_clarification_question(self, question, answer):
         clarification_question = BriefClarificationQuestion(
             brief=self,
