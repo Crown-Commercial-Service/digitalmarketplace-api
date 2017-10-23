@@ -719,11 +719,11 @@ class TestListBrief(FrameworkSetupAndTeardown):
         for i, brief_status in enumerate(["draft", "withdrawn", "published", "cancelled", "unsuccessful"]):
             with freeze_time('2017-01-01 00:00:00'):
                 self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 1)
-            with freeze_time('2017-01-01 23:59:59'):
+            with freeze_time('2017-01-01 23:59:59.999999'):
                 self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 6)
 
             # The following briefs should be outside the time span
-            with freeze_time('2016-12-31 23:59:59'):
+            with freeze_time('2016-12-31 23:59:59.999999'):
                 self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 11)
             with freeze_time('2017-01-02 00:00:00'):
                 self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 16)
@@ -740,7 +740,7 @@ class TestListBrief(FrameworkSetupAndTeardown):
     )
     def test_list_briefs_filter_before_date(self, date_arg, expected_count):
         for i, brief_status in enumerate(["draft", "withdrawn", "published", "cancelled", "unsuccessful"]):
-            with freeze_time('2016-12-31 23:59:59'):
+            with freeze_time('2016-12-31 23:59:59.999999'):
                 self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 1)
             # The following briefs should be filtered out ('before' is not inclusive)
             with freeze_time('2017-01-01 00:00:00'):
@@ -759,10 +759,10 @@ class TestListBrief(FrameworkSetupAndTeardown):
     )
     def test_list_briefs_filter_after_date(self, date_arg):
         for i, brief_status in enumerate(["draft", "withdrawn", "published", "cancelled", "unsuccessful"]):
-            with freeze_time('2017-01-01 00:00:01'):
+            with freeze_time('2017-01-02 00:00:00'):
                 self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 1)
             # The following briefs should be filtered out ('after' is not inclusive)
-            with freeze_time('2017-01-01 00:00:00'):
+            with freeze_time('2017-01-01 23:59:59.999999'):
                 self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 6)
 
         res = self.client.get('/briefs?{}=2017-01-01'.format(date_arg))
@@ -771,18 +771,18 @@ class TestListBrief(FrameworkSetupAndTeardown):
         assert res.status_code == 200
         assert len(data['briefs']) == 1
 
-    @pytest.mark.parametrize('temporal_arg, expected_count', [('before', 1), ('on', 2), ('after', 3)])
+    @pytest.mark.parametrize('temporal_arg, expected_count', [('before', 1), ('on', 2), ('after', 1)])
     def test_list_briefs_filter_closed_briefs_by_date(self, temporal_arg, expected_count):
         # Closed briefs need to be set up differently, so this test covers all 3 before/after/on cases
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             lot = Lot.query.filter(Lot.slug == 'digital-specialists').first()
 
-            with freeze_time('2017-01-01 23:59:59'):
+            with freeze_time('2017-01-01 23:59:59.999999'):
                 brief1 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
             with freeze_time('2017-01-02 00:00:00'):
                 brief2 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
-            with freeze_time('2017-01-02 23:59:59'):
+            with freeze_time('2017-01-02 23:59:59.999999'):
                 brief3 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
             with freeze_time('2017-01-03 00:00:00'):
                 brief4 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())

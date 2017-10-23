@@ -154,12 +154,13 @@ def list_briefs():
         status = "applications_closed" if status == "closed" else status  # Hack for 'closed' status
         day_value = datetime.strptime(request.args.get(status_date_key), "%Y-%m-%d")
         if temporal_filter == 'on':
-            day_end = datetime(day_value.year, day_value.month, day_value.day, 23, 59, 59)
-            briefs = briefs.has_date_field_between("{}_at".format(status), day_value, day_end, inclusive=True)
+            day_end = datetime(day_value.year, day_value.month, day_value.day, 23, 59, 59, 999999)
+            briefs = briefs.has_datetime_field_between("{}_at".format(status), day_value, day_end, inclusive=True)
         if temporal_filter == 'before':
-            briefs = briefs.has_date_field_before("{}_at".format(status), day_value)
+            briefs = briefs.has_datetime_field_before("{}_at".format(status), day_value)
         if temporal_filter == 'after':
-            briefs = briefs.has_date_field_after("{}_at".format(status), day_value)
+            day_end = datetime(day_value.year, day_value.month, day_value.day, 23, 59, 59, 999999)
+            briefs = briefs.has_datetime_field_after("{}_at".format(status), day_end)
 
     if user_id:
         return jsonify(
