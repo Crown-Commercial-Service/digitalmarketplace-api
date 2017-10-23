@@ -8,6 +8,7 @@ from dmutils.email import (
 )
 from functools import wraps
 from flask_login import current_user
+import pendulum
 
 
 def role_required(*roles):
@@ -180,3 +181,12 @@ def decode_reset_password_token(token):
 
 def get_root_url(framework_slug):
     return current_app.config['APP_ROOT'].get(framework_slug)
+
+
+def format_date(date):
+    dt = pendulum.parse(str(date))
+    return dt.format('DD/MM/YYYY', formatter='alternative')
+
+
+def format_price(price):
+    return '{:1,.2f}'.format(price)

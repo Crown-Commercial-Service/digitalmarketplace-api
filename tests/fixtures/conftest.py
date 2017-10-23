@@ -265,7 +265,7 @@ def service_type_prices(app, request, regions, services, suppliers):
             service_type_id=2,
             region_id=2,
             sub_service_id=1,
-            supplier_code=1,
+            supplier_code=2,
             price=200.90
         ))
 

@@ -139,3 +139,33 @@ def test_update_supplier_profile(app, supplier_user, client, mocker):
 
     assert hasattr(updated_supplier_instance, 'addresses')
     assert hasattr(updated_supplier_instance, 'contacts')
+
+
+def test_supplier_services(client, supplier_user, service_type_prices):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    response = client.get('/2/supplier/services')
+    assert response.status_code == 200
+
+    services = json.loads(response.data)
+    assert services == {'services': [{'id': 1, 'name': 'Service1', 'subCategories': []}]}
+
+
+def test_supplier_service_prices(client, supplier_user, service_type_prices):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    response = client.get('/2/supplier/services/1/prices')
+    assert response.status_code == 200
+
+    prices = json.loads(response.data)
+    assert prices == {'prices': [{
+                      'endDate': '01/01/2050',
+                      'id': 1, 'price': '100.50',
+                      'region': {'name': 'Metro', 'state': 'NSW'},
+                      'startDate': '23/10/2017'}]}

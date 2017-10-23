@@ -55,9 +55,9 @@ def regions():
         type: object
         properties:
           id:
-            type:integer
+            type: integer
           name:
-            type:string
+            type: string
     responses:
       200:
         description: A list of regions
@@ -99,14 +99,14 @@ def get_category_services():
           subCategories:
             type: array
             items:
-              $ref: '#/definitions/SubCategory'
-      SubCategory:
+              $ref: '#/definitions/Service'
+      Service:
         type: object
         properties:
           id:
-            type:integer
+            type: integer
           name:
-            type:string
+            type: string
     responses:
       200:
         description: A list of services
@@ -118,7 +118,7 @@ def get_category_services():
         .filter(ServiceCategory.name.in_(['Medical', 'Rehabilitation']))\
         .all()
 
-    services = [s[0].serializable for s in services_data]
+    services = [s.ServiceType.serializable for s in services_data]
 
     result = []
     for key, group in groupby(services, key=itemgetter('category')):
@@ -159,8 +159,8 @@ def get_seller_catalogue_data(service_type_id, region_id):
           categories:
             type: array
             items:
-              $ref: '#/definitions/Category'
-      Category:
+              $ref: '#/definitions/SubService'
+      SubService:
         type: object
         properties:
           name:
@@ -173,13 +173,13 @@ def get_seller_catalogue_data(service_type_id, region_id):
         type: object
         properties:
           email:
-            type:string
+            type: string
           name:
-            type:string
+            type: string
           phone:
-            type:string
+            type: string
           price:
-            type:string
+            type: string
       Alert:
         type: object
         properties:
