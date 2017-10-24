@@ -3,8 +3,8 @@ from __future__ import absolute_import
 import pytest
 
 from app import create_app
-from app.models import db, utcnow, Supplier, SupplierDomain, User, Brief, \
-    Framework, Lot, Domain, Assessment, Application, Region, ServiceType, ServiceTypePrice, Service, ServiceSubType
+from app.models import db, utcnow, Supplier, SupplierDomain, User, Brief, ServiceTypePriceCeiling,\
+    Framework, Lot, Domain, Assessment, Application, Region, ServiceType, ServiceTypePrice, ServiceSubType
 from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, WSGIApplicationWithEnvironment
 
 from sqlbag import temporary_database
@@ -13,8 +13,6 @@ from faker import Faker
 from migrations import \
     load_from_app_model, load_test_fixtures
 
-from flask_login import login_user
-from dmutils.user import User as LoginUser
 from app import encryption
 
 fake = Faker()
@@ -255,10 +253,19 @@ def service_type_prices(app, request, regions, services, suppliers):
         ))
         db.session.flush()
 
+        db.session.add(ServiceTypePriceCeiling(
+            service_type_id=1,
+            region_id=1,
+            supplier_code=1,
+            price=321.56
+        ))
+        db.session.flush()
+
         db.session.add(ServiceTypePrice(
             service_type_id=1,
             region_id=1,
             supplier_code=1,
+            service_type_price_ceiling_id=1,
             price=100.50
         ))
         db.session.add(ServiceTypePrice(

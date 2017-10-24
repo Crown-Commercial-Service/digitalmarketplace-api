@@ -189,4 +189,7 @@ def format_date(date):
 
 
 def format_price(price):
+    if price is None:
+        return None
+
     return '{:1,.2f}'.format(price)

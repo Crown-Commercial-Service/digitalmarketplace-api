@@ -163,9 +163,6 @@ def test_supplier_service_prices(client, supplier_user, service_type_prices):
     response = client.get('/2/supplier/services/1/prices')
     assert response.status_code == 200
 
-    prices = json.loads(response.data)
-    assert prices == {'prices': [{
-                      'endDate': '01/01/2050',
-                      'id': 1, 'price': '100.50',
-                      'region': {'name': 'Metro', 'state': 'NSW'},
-                      'startDate': '23/10/2017'}]}
+    price = json.loads(response.data)['prices'][0]
+    assert price['capPrice'] == '321.56'
+    assert price['price'] == '100.50'

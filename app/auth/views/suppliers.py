@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 from app.auth import auth
 from app.utils import get_json_from_request
 from app.auth.suppliers import get_supplier, update_supplier_details, valid_supplier, flatten_supplier
-from app.models import db, ServiceType, ServiceSubType, ServiceTypePrice, Region
+from app.models import db, ServiceType, ServiceSubType, ServiceTypePrice
 from app.auth.helpers import role_required, format_date, format_price
 from itertools import groupby
 
@@ -151,16 +151,16 @@ def supplier_service_prices(service_type_id, category_id=None):
         schema:
           $ref: '#/definitions/SupplierPrices'
     """
-    prices = db.session.query(ServiceTypePrice, Region)\
-        .join(Region, Region.id == ServiceTypePrice.region_id)\
+    prices = db.session.query(ServiceTypePrice)\
         .filter(ServiceTypePrice.supplier_code == current_user.supplier_code,
                 ServiceTypePrice.service_type_id == service_type_id,
                 ServiceTypePrice.sub_service_id == category_id)\
         .all()
 
     return jsonify(prices=[dict(
-        id=p.ServiceTypePrice.id,
-        region=dict(state=p.Region.state, name=p.Region.name),
-        price=format_price(p.ServiceTypePrice.price),
-        startDate=format_date(p.ServiceTypePrice.date_from),
-        endDate=format_date(p.ServiceTypePrice.date_to)) for p in prices]), 200
+        id=p.id,
+        region=dict(state=p.region.state, name=p.region.name),
+        price=format_price(p.price),
+        capPrice=format_price(None if p.service_type_price_ceiling is None else p.service_type_price_ceiling.price),
+        startDate=format_date(p.date_from),
+        endDate=format_date(p.date_to)) for p in prices]), 200
