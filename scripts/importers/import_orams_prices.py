@@ -16,7 +16,9 @@ def run_import(input_file, client):
             'sub_service': record['sub_service'],
             'region_name': record['region'],
             'state': record['state'],
-            'price': float(record['price'])
+            'price': float(record['price']),
+            'date_from': record['date_from'],
+            'date_to': record['date_to']
         }
 
         check_response(
