@@ -1,7 +1,7 @@
 from nose.tools import assert_equal, assert_in
 
 from app import create_app, db
-from app.models import Framework, FrameworkLot
+from app.models import Framework, FrameworkLot, BuyerEmailDomain
 
 
 class WSGIApplicationWithEnvironment(object):
@@ -26,6 +26,11 @@ class BaseApplicationTest(object):
             HTTP_AUTHORIZATION='Bearer {}'.format(self.app.config['DM_API_AUTH_TOKENS'])
         )
         self.client = self.app.test_client()
+        with self.app.app_context():
+            # Ensure there is at least one pre-approved buyer domain
+            if BuyerEmailDomain.query.filter(BuyerEmailDomain.domain_name == 'digital.gov.uk').count() == 0:
+                db.session.add(BuyerEmailDomain(domain_name='digital.gov.uk'))
+                db.session.commit()
 
     def teardown(self):
         with self.app.app_context():

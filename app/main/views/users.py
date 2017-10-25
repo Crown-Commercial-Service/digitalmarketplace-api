@@ -9,8 +9,7 @@ from ... import db, encryption
 from ...models import User, AuditEvent, Supplier, Framework, SupplierFramework, BuyerEmailDomain
 from ...utils import get_json_from_request, json_has_required_keys, \
     json_has_matching_id, pagination_links, get_valid_page_or_1, validate_and_return_updater_request
-from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400, is_valid_buyer_email, \
-    buyer_email_domain_approved
+from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400, buyer_email_domain_approved
 
 
 @main.route('/users/auth', methods=['POST'])
@@ -295,10 +294,6 @@ def email_has_valid_buyer_domain():
         abort(400, "'email_address' is a required parameter")
 
     domain_ok = buyer_email_domain_approved(BuyerEmailDomain.query.all(), email_address.split('@')[-1])
-    if not domain_ok:
-        # If the data migration hasn't happened yet, check the .txt file
-        domain_ok = is_valid_buyer_email(email_address)
-
     return jsonify(valid=domain_ok)
 
 

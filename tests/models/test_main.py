@@ -20,26 +20,26 @@ from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
 
 
-def test_should_not_return_password_on_user():
-    app = create_app('test')
-    now = datetime.utcnow()
-    user = User(
-        email_address='email@digital.gov.uk',
-        name='name',
-        role='buyer',
-        password='password',
-        active=True,
-        failed_login_count=0,
-        created_at=now,
-        updated_at=now,
-        password_changed_at=now
-    )
+class TestUser(BaseApplicationTest, FixtureMixin):
+    def test_should_not_return_password_on_user(self):
+        with self.app.app_context():
+            now = datetime.utcnow()
+            user = User(
+                email_address='email@digital.gov.uk',
+                name='name',
+                role='buyer',
+                password='password',
+                active=True,
+                failed_login_count=0,
+                created_at=now,
+                updated_at=now,
+                password_changed_at=now
+            )
 
-    with app.app_context():
-        assert_equal(user.serialize()['emailAddress'], "email@digital.gov.uk")
-        assert_equal(user.serialize()['name'], "name")
-        assert_equal(user.serialize()['role'], "buyer")
-        assert_equal('password' in user.serialize(), False)
+            assert_equal(user.serialize()['emailAddress'], "email@digital.gov.uk")
+            assert_equal(user.serialize()['name'], "name")
+            assert_equal(user.serialize()['role'], "buyer")
+            assert_equal('password' in user.serialize(), False)
 
 
 def test_framework_should_not_accept_invalid_status():

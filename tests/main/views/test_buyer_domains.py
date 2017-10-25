@@ -158,6 +158,13 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
 
 
 class TestListBuyerEmailDomains(BaseApplicationTest):
+    def setup(self):
+        super(TestListBuyerEmailDomains, self).setup()
+        with self.app.app_context():
+            # Remove default fixture so we can test pagination
+            BuyerEmailDomain.query.filter(BuyerEmailDomain.domain_name == 'digital.gov.uk').delete()
+            db.session.commit()
+
     def test_list_buyer_email_domain_200s_with_empty_list_when_no_domains(self):
         res = self.client.get('/buyer-email-domains')
 
