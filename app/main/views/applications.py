@@ -289,16 +289,17 @@ def submit_application(application_id):
 
     application.update_from_json({'submitted_at': current_time})
 
-    signed_agreement = SignedAgreement()
-    signed_agreement.user_id = user_id
-    signed_agreement.agreement_id = current_agreement.id
-    signed_agreement.signed_at = current_time
-    signed_agreement.application_id = application_id
-
-    db.session.add(signed_agreement)
-    db.session.commit()
-
     if application.type != 'edit':
+        # only create signed agreements on initial applications
+        signed_agreement = SignedAgreement()
+        signed_agreement.user_id = user_id
+        signed_agreement.agreement_id = current_agreement.id
+        signed_agreement.signed_at = current_time
+        signed_agreement.application_id = application_id
+
+        db.session.add(signed_agreement)
+        db.session.commit()
+
         if application.supplier_code:
             send_submitted_existing_seller_notification(application.id)
         else:
