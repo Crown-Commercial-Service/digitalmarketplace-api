@@ -91,8 +91,7 @@ def supplier_services():
 
     result = []
     for key, group in groupby(services, key=lambda x: dict(id=x.service_type_id, name=x.name)):
-        subcategories = [dict(id=s.sub_service_id, name=s.sub_service_name)
-                         for s in group if s.sub_service_id is not None]
+        subcategories = [dict(id=s.sub_service_id, name=s.sub_service_name) for s in group]
         result.append(dict(key, subCategories=subcategories))
 
     return jsonify(services=result)
