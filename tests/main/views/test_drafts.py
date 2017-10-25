@@ -2,7 +2,7 @@ from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from datetime import datetime
 from flask import json
 import mock
-from app.models import Supplier, ContactInformation, Service, Framework, DraftService
+from app.models import AuditEvent, Supplier, ContactInformation, Service, Framework, DraftService
 from app import db
 from sqlalchemy.exc import IntegrityError
 from tests.helpers import FixtureMixin, load_example_listing
@@ -612,6 +612,19 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         assert res.status_code == 200
         data = json.loads(res.get_data())
         assert not data['validationErrors']
+        assert data['auditEvents'] is not None
+
+    def test_get_draft_with_no_audit_history(self):
+        draft = self.create_draft_service()
+
+        with self.app.app_context():
+            AuditEvent.query.delete()
+            db.session.commit()
+
+        res = self.client.get('/draft-services/{}'.format(draft['id']))
+        assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert data['auditEvents'] is None
 
     def test_should_404_on_fetch_a_draft_that_doesnt_exist(self):
         fetch = self.client.get('/draft-services/0000000000')
