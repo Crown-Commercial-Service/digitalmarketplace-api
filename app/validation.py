@@ -379,19 +379,6 @@ def _get_word_count(message):
     return count_minus_one + 1
 
 
-def load_buyer_email_domains(path):
-    with open(path) as f:
-        return [line.strip() for line in f]
-
-
-_BUYER_EMAIL_DOMAINS = load_buyer_email_domains('./data/buyer-email-domains.txt')
-
-
-def is_valid_buyer_email(email):
-    domain = email.split('@')[-1]
-    return any(domain == d or domain.endswith('.' + d) for d in _BUYER_EMAIL_DOMAINS)
-
-
 def validate_buyer_email_domain_json_or_400(submitted_json):
     try:
         get_validator('buyer-email-domains').validate(submitted_json)
@@ -400,4 +387,10 @@ def validate_buyer_email_domain_json_or_400(submitted_json):
 
 
 def buyer_email_domain_approved(existing_buyer_domains, new_domain):
+    """
+    Check the buyer's email address is from an approved domain
+    :param existing_buyer_domains: BuyerEmailDomain queryset
+    :param new_domain: domain name string (NOT email address)
+    :return: boolean
+    """
     return any(new_domain == d.domain_name or new_domain.endswith('.' + d.domain_name) for d in existing_buyer_domains)

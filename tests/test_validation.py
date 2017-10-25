@@ -3,14 +3,13 @@ from __future__ import absolute_import
 import os
 import json
 
-import pytest
 from nose.tools import assert_equal, assert_in, assert_not_in
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.utils import drop_foreign_fields
 from app.validation import validates_against_schema, is_valid_service_id, is_valid_date, \
     is_valid_acknowledged_state, get_validation_errors, is_valid_string, min_price_less_than_max_price, \
-    is_valid_buyer_email, translate_json_schema_errors
+    translate_json_schema_errors
 from tests.helpers import load_example_listing
 
 
@@ -740,18 +739,6 @@ def check_schema(schema):
         return True
     else:
         return True
-
-
-@pytest.mark.parametrize('email,expected', [
-    ('test@example.com', False),
-    ('test@gov.uk', True),
-    ('test@something.gov.uk', True),
-    ('test@somegov.uk', False),
-    ('test@gov.ok', False),
-    ('test@test@gov.uk', True)
-])
-def test_is_valid_buyer_email(email, expected):
-    assert is_valid_buyer_email(email) == expected
 
 
 def api_error(errors):
