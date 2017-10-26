@@ -171,9 +171,13 @@ class TestUsersAuth(BaseUserTest):
             self._return_post_login(status_code=403)
 
 
-class TestUsersPost(BaseApplicationTest, JSONTestMixin):
+class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
     method = "post"
     endpoint = "/users"
+
+    def setup(self):
+        super(TestUsersPost, self).setup()
+        self.setup_default_buyer_domain()
 
     def test_can_post_a_buyer_user(self):
         response = self.client.post(
@@ -537,7 +541,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
         assert "Unable to commit" in json.loads(response.get_data())["error"]
 
 
-class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
+class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     method = "post"
     endpoint = "/users/123"
 
@@ -545,6 +549,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
         now = datetime.utcnow()
         super(TestUsersUpdate, self).setup()
         with self.app.app_context():
+            self.setup_default_buyer_domain()
             user = User(
                 id=123,
                 email_address="test@digital.gov.uk",
@@ -1011,6 +1016,7 @@ class TestUsersGet(BaseUserTest, FixtureMixin):
         # it turns out we have some logic that doesn't recognise "0" as a supplier_id for users
         self.supplier_id = self.setup_dummy_suppliers(2)[-1]
         with self.app.app_context():
+            self.setup_default_buyer_domain()
             self._post_users()
 
     def _post_users(self):
@@ -1140,6 +1146,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
     def setup(self):
         super(TestUsersExport, self).setup()
         with self.app.app_context():
+            self.setup_default_buyer_domain()
             self.framework_slug = 'digital-outcomes-and-specialists'
             self.set_framework_status(self.framework_slug, 'open')
             self.updater_json = {'updated_by': 'Paul'}

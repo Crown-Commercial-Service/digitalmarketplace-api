@@ -22,6 +22,8 @@ from tests.helpers import FixtureMixin
 class TestUser(BaseApplicationTest, FixtureMixin):
     def test_should_not_return_password_on_user(self):
         with self.app.app_context():
+            self.setup_default_buyer_domain()
+
             now = datetime.utcnow()
             user = User(
                 email_address='email@digital.gov.uk',
