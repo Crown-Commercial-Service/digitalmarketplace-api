@@ -1,5 +1,5 @@
-import io
 import six
+import bleach
 
 from markdown import markdown as original_markdown
 from markdown.treeprocessors import Treeprocessor
@@ -11,6 +11,7 @@ class InlineStylesTreeprocessor(Treeprocessor):
     A treeprocessor that recursively applies inline styles
     to all elements of a given tree.
     """
+
     def __init__(self, styles):
         self.styles = styles
 
@@ -38,6 +39,7 @@ class InlineStylesExtension(Extension):
     A Markdown extension for adding inline styles to
     elements, by tag name.
     """
+
     def __init__(self, **styles):
         self.styles = styles or {}
 
@@ -52,12 +54,18 @@ def markdown_with_inline_styles(object, styles_dictionary=None):
     """
 
     styles_dictionary = styles_dictionary or {}
-
-    return original_markdown(
+    tags = bleach.sanitizer.ALLOWED_TAGS + ['p', 'span', 'h1', 'div']
+    attributes = bleach.sanitizer.ALLOWED_ATTRIBUTES.copy()
+    attributes.update({'div': ['style'], 'p': ['style'], 'h1': ['style']})
+    styles = ['display', 'color', 'font-weight', 'font-size', 'border-radius', 'background', 'width', 'line-height',
+              'padding', 'border', 'margin-right', 'margin']
+    return bleach.clean(original_markdown(
         six.text_type(object),
         output_format="html5",
-        safe_mode="remove",
         extensions=[
             InlineStylesExtension(**styles_dictionary),
-        ]
+        ]),
+        tags=tags,
+        attributes=attributes,
+        styles=styles
     )

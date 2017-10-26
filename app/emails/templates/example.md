@@ -1,5 +1,5 @@
 # Sample email
 
-Must handle ünicode in the template.
+Must handle ünicode & ascii in the template.
 
-And from a template {{variable}}.
+And from a variable {{variable}}.
