@@ -781,7 +781,11 @@ def test_translate_unknown_oneoff_eerror():
     }]) == {'example': [{'error': 'failed', 'index': 0}]}
 
 
-@pytest.mark.parametrize('email, expected_result', [('hurray@cool.gov', True), ('hurray@notcool.gov', False)])
+@pytest.mark.parametrize(
+    'email, expected_result', [
+        ('hurray@cool.gov', True), ('hurray@very.cool.gov', True), ('hurray@notcool.gov', False)
+    ]
+)
 def test_buyer_email_address_has_approved_domain(email, expected_result):
     existing_domains = [
         mock.Mock(domain_name='cool.gov')
@@ -790,7 +794,11 @@ def test_buyer_email_address_has_approved_domain(email, expected_result):
     assert buyer_email_address_has_approved_domain(existing_domains, email) == expected_result
 
 
-@pytest.mark.parametrize('domain, expected_result', [('cool.gov', True), ('notcool.gov', False)])
+@pytest.mark.parametrize(
+    'domain, expected_result', [
+        ('cool.gov', True), ('very.cool.gov', True), ('notcool.gov', False)
+    ]
+)
 def test_is_approved_buyer_domain(domain, expected_result):
     existing_domains = [
         mock.Mock(domain_name='cool.gov')

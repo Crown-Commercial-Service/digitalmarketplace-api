@@ -161,7 +161,7 @@ class TestListBuyerEmailDomains(BaseApplicationTest):
     def setup(self):
         super(TestListBuyerEmailDomains, self).setup()
         with self.app.app_context():
-            # Remove any default fixtures so we can test pagination
+            # Remove any default fixtures
             BuyerEmailDomain.query.delete()
             db.session.commit()
 
