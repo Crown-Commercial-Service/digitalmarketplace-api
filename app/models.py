@@ -15,7 +15,7 @@ import flask_featureflags as feature
 from six import string_types, text_type, binary_type
 
 from sqlalchemy import text
-from sqlalchemy import asc, desc, func, PrimaryKeyConstraint
+from sqlalchemy import asc, desc, func, and_
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -41,7 +41,7 @@ from .validation import is_valid_service_id, get_validation_errors, get_validato
 from dmutils.forms import is_government_email
 
 from .datetime_utils import DateTime, utcnow, parse_interval, is_textual, \
-    parse_time_of_day, combine_date_and_time, localnow, utcnow
+    parse_time_of_day, combine_date_and_time, localnow
 
 import pendulum
 
@@ -2612,6 +2612,14 @@ class ServiceTypePrice(db.Model):
     price = db.Column(db.Numeric, nullable=False)
     created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
     updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
+
+    @hybrid_property
+    def is_current_price(self):
+        return self.date_from <= pendulum.now() and self.date_to >= pendulum.now()
+
+    @is_current_price.expression
+    def is_current_price(cls):
+        return and_(cls.date_from <= func.now(), cls.date_to >= func.now())
 
     def update_from_json_before(self, data):
         data = update_price_json(self, data)

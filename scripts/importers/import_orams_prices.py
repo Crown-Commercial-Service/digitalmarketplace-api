@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 import csv
 import json
-
+import pendulum
 from utils import makeClient, check_response
 
 
@@ -9,6 +9,8 @@ def run_import(input_file, client):
     num_successes = 0
 
     for record in csv.DictReader(input_file):
+
+        dt = pendulum.parse(record['date_to']).add(days=1).subtract(microseconds=1)
 
         price = {
             'supplier_name': record['supplier'],
@@ -18,7 +20,7 @@ def run_import(input_file, client):
             'state': record['state'],
             'price': float(record['price']),
             'date_from': record['date_from'],
-            'date_to': record['date_to']
+            'date_to': str(dt)
         }
 
         check_response(

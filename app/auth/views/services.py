@@ -204,7 +204,8 @@ def get_seller_catalogue_data(service_type_id, region_id):
         .outerjoin(ServiceSubType, ServiceTypePrice.sub_service_id == ServiceSubType.id)\
         .filter(
             ServiceTypePrice.service_type_id == service_type_id,
-            ServiceTypePrice.region_id == region_id)\
+            ServiceTypePrice.region_id == region_id,
+            ServiceTypePrice.is_current_price)\
         .order_by(ServiceSubType.name)\
         .all()
 

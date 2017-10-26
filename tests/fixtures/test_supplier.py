@@ -165,4 +165,4 @@ def test_supplier_service_prices(client, supplier_user, service_type_prices):
 
     price = json.loads(response.data)['prices'][0]
     assert price['capPrice'] == '321.56'
-    assert price['price'] == '100.50'
+    assert price['price'] == '200.50'

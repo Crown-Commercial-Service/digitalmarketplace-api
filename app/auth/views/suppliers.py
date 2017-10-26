@@ -153,7 +153,8 @@ def supplier_service_prices(service_type_id, category_id=None):
     prices = db.session.query(ServiceTypePrice)\
         .filter(ServiceTypePrice.supplier_code == current_user.supplier_code,
                 ServiceTypePrice.service_type_id == service_type_id,
-                ServiceTypePrice.sub_service_id == category_id)\
+                ServiceTypePrice.sub_service_id == category_id,
+                ServiceTypePrice.is_current_price)\
         .all()
 
     return jsonify(prices=[dict(

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import pytest
+import pendulum
 
 from app import create_app
 from app.models import db, utcnow, Supplier, SupplierDomain, User, Brief, ServiceTypePriceCeiling,\
@@ -261,12 +262,25 @@ def service_type_prices(app, request, regions, services, suppliers):
         ))
         db.session.flush()
 
+        tomorrow = pendulum.now().add(days=1)
+
         db.session.add(ServiceTypePrice(
             service_type_id=1,
             region_id=1,
             supplier_code=1,
             service_type_price_ceiling_id=1,
-            price=100.50
+            price=200.50,
+            date_from='1/1/2016',
+            date_to=tomorrow.subtract(microseconds=1)
+        ))
+        db.session.add(ServiceTypePrice(
+            service_type_id=1,
+            region_id=1,
+            supplier_code=1,
+            service_type_price_ceiling_id=1,
+            price=100.50,
+            date_from=tomorrow,
+            date_to='1/1/2050'
         ))
         db.session.add(ServiceTypePrice(
             service_type_id=2,

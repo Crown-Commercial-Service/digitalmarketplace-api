@@ -65,7 +65,7 @@ def test_search_catalogue(client, users, service_type_prices):
     no_sub_type = json.loads(response.data)
     category = no_sub_type['categories'][0]
     assert category['name'] is None
-    assert category['suppliers'][0]['price'] == '100.50'
+    assert category['suppliers'][0]['price'] == '200.50'
 
     response = client.get('/2/services/2/regions/2/prices')
 
