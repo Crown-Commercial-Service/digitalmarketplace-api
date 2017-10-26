@@ -3,13 +3,15 @@ from __future__ import absolute_import
 import os
 import json
 
+import pytest
+import mock
 from nose.tools import assert_equal, assert_in, assert_not_in
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.utils import drop_foreign_fields
 from app.validation import validates_against_schema, is_valid_service_id, is_valid_date, \
     is_valid_acknowledged_state, get_validation_errors, is_valid_string, min_price_less_than_max_price, \
-    translate_json_schema_errors
+    translate_json_schema_errors, buyer_email_address_has_approved_domain, is_approved_buyer_domain
 from tests.helpers import load_example_listing
 
 
@@ -777,3 +779,21 @@ def test_translate_unknown_oneoff_eerror():
             {'message': "Unknown type", 'validator': 'type'}
         ],
     }]) == {'example': [{'error': 'failed', 'index': 0}]}
+
+
+@pytest.mark.parametrize('email, expected_result', [('hurray@cool.gov', True), ('hurray@notcool.gov', False)])
+def test_buyer_email_address_has_approved_domain(email, expected_result):
+    existing_domains = [
+        mock.Mock(domain_name='cool.gov')
+    ]
+
+    assert buyer_email_address_has_approved_domain(existing_domains, email) == expected_result
+
+
+@pytest.mark.parametrize('domain, expected_result', [('cool.gov', True), ('notcool.gov', False)])
+def test_is_approved_buyer_domain(domain, expected_result):
+    existing_domains = [
+        mock.Mock(domain_name='cool.gov')
+    ]
+
+    assert is_approved_buyer_domain(existing_domains, domain) == expected_result

@@ -32,7 +32,7 @@ from dmutils.formats import DATETIME_FORMAT, DATE_FORMAT
 from .. import db
 from ..models.buyer_domains import BuyerEmailDomain
 from ..utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
-from ..validation import is_valid_service_id, get_validation_errors, buyer_email_domain_approved
+from ..validation import is_valid_service_id, get_validation_errors, buyer_email_address_has_approved_domain
 
 
 class JSON(sqlalchemy.dialects.postgresql.JSON):
@@ -764,7 +764,7 @@ class User(db.Model):
     def validate_email_address(self, key, value):
         existing_buyer_domains = BuyerEmailDomain.query.all()
         if value and self.role == 'buyer' and \
-                not buyer_email_domain_approved(existing_buyer_domains, value.split('@')[-1]):
+                not buyer_email_address_has_approved_domain(existing_buyer_domains, value):
             raise ValidationError("invalid_buyer_domain")
         return value
 
@@ -772,7 +772,7 @@ class User(db.Model):
     def validate_role(self, key, value):
         existing_buyer_domains = BuyerEmailDomain.query.all()
         if self.email_address and value == 'buyer' and \
-                not buyer_email_domain_approved(existing_buyer_domains, self.email_address.split('@')[-1]):
+                not buyer_email_address_has_approved_domain(existing_buyer_domains, self.email_address):
             raise ValidationError("invalid_buyer_domain")
         return value
 

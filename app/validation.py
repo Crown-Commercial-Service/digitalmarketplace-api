@@ -386,11 +386,22 @@ def validate_buyer_email_domain_json_or_400(submitted_json):
         abort(400, "JSON was not a valid format: {}".format(e1.message))
 
 
-def buyer_email_domain_approved(existing_buyer_domains, new_domain):
+def buyer_email_address_has_approved_domain(existing_buyer_domains, email_address):
     """
     Check the buyer's email address is from an approved domain
     :param existing_buyer_domains: BuyerEmailDomain queryset
-    :param new_domain: domain name string (NOT email address)
+    :param email_address: string
+    :return: boolean
+    """
+    new_domain = email_address.split('@')[-1]
+    return is_approved_buyer_domain(existing_buyer_domains, new_domain)
+
+
+def is_approved_buyer_domain(existing_buyer_domains, new_domain):
+    """
+    Validate if a domain is approved before an admin adds a new one.
+    :param existing_buyer_domains: BuyerEmailDomain queryset
+    :param new_domain: string
     :return: boolean
     """
     return any(new_domain == d.domain_name or new_domain.endswith('.' + d.domain_name) for d in existing_buyer_domains)
