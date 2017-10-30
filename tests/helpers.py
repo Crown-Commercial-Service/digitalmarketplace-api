@@ -9,6 +9,7 @@ import pytest
 from app import db
 from app.models import Framework, User, Lot, Brief, Supplier, ContactInformation, Service, BriefClarificationQuestion
 from app.models.direct_award import DirectAwardProject, DirectAwardProjectUser, DirectAwardSearch
+from app.models.buyer_domains import BuyerEmailDomain
 
 TEST_SUPPLIERS_COUNT = 3
 
@@ -48,8 +49,18 @@ def fixture_params(fixture_name, params):
 
 
 class FixtureMixin(object):
+
+    def setup_default_buyer_domain(self):
+        with self.app.app_context():
+            if BuyerEmailDomain.query.filter(BuyerEmailDomain.domain_name == 'digital.gov.uk').count() == 0:
+                db.session.add(BuyerEmailDomain(domain_name='digital.gov.uk'))
+                db.session.commit()
+
     def setup_dummy_user(self, id=123, role='buyer'):
         with self.app.app_context():
+            # The user should have a valid email domain
+            self.setup_default_buyer_domain()
+
             if User.query.get(id):
                 return id
             user = User(

@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 import mock
 import pytest
-from nose.tools import assert_equal, assert_raises
 from sqlalchemy.exc import IntegrityError
 
 from app import db, create_app
@@ -20,31 +19,33 @@ from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
 
 
-def test_should_not_return_password_on_user():
-    app = create_app('test')
-    now = datetime.utcnow()
-    user = User(
-        email_address='email@digital.gov.uk',
-        name='name',
-        role='buyer',
-        password='password',
-        active=True,
-        failed_login_count=0,
-        created_at=now,
-        updated_at=now,
-        password_changed_at=now
-    )
+class TestUser(BaseApplicationTest, FixtureMixin):
+    def test_should_not_return_password_on_user(self):
+        with self.app.app_context():
+            self.setup_default_buyer_domain()
 
-    with app.app_context():
-        assert_equal(user.serialize()['emailAddress'], "email@digital.gov.uk")
-        assert_equal(user.serialize()['name'], "name")
-        assert_equal(user.serialize()['role'], "buyer")
-        assert_equal('password' in user.serialize(), False)
+            now = datetime.utcnow()
+            user = User(
+                email_address='email@digital.gov.uk',
+                name='name',
+                role='buyer',
+                password='password',
+                active=True,
+                failed_login_count=0,
+                created_at=now,
+                updated_at=now,
+                password_changed_at=now
+            )
+
+            assert user.serialize()['emailAddress'] == "email@digital.gov.uk"
+            assert user.serialize()['name'] == "name"
+            assert user.serialize()['role'] == "buyer"
+            assert 'password' not in user.serialize()
 
 
 def test_framework_should_not_accept_invalid_status():
     app = create_app('test')
-    with app.app_context(), assert_raises(ValidationError):
+    with app.app_context(), pytest.raises(ValidationError):
         f = Framework(
             name='foo',
             slug='foo',
@@ -1415,8 +1416,8 @@ class TestServices(BaseApplicationTest, FixtureMixin):
 
             services = Service.query.framework_is_live()
 
-            assert_equal(Service.query.count(), 4)
-            assert_equal(services.count(), 3)
+            assert Service.query.count() == 4
+            assert services.count() == 3
             assert(all(s.framework.status == 'live' for s in services))
 
     def test_lot_must_be_associated_to_the_framework(self):
@@ -1450,9 +1451,7 @@ class TestServices(BaseApplicationTest, FixtureMixin):
 
             services = Service.query.default_order()
 
-            assert_equal(
-                [s.service_id for s in services],
-                ['1000000993', '1000000992', '1000000991', '1000000990'])
+            assert [s.service_id for s in services] == ['1000000993', '1000000992', '1000000991', '1000000990']
 
     def test_has_statuses(self):
         with self.app.app_context():
@@ -1460,7 +1459,7 @@ class TestServices(BaseApplicationTest, FixtureMixin):
 
             services = Service.query.has_statuses('published')
 
-            assert_equal(services.count(), 1)
+            assert services.count() == 1
 
     def test_in_lot(self):
         with self.app.app_context():
@@ -1538,11 +1537,11 @@ class TestServices(BaseApplicationTest, FixtureMixin):
     def test_service_status(self):
         service = Service(status='enabled')
 
-        assert_equal(service.status, 'enabled')
+        assert service.status == 'enabled'
 
     def test_invalid_service_status(self):
         service = Service()
-        with assert_raises(ValidationError):
+        with pytest.raises(ValidationError):
             service.status = 'invalid'
 
     def test_has_statuses_should_accept_multiple_statuses(self):
@@ -1551,7 +1550,7 @@ class TestServices(BaseApplicationTest, FixtureMixin):
 
             services = Service.query.has_statuses('published', 'disabled')
 
-            assert_equal(services.count(), 2)
+            assert services.count() == 2
 
     def test_update_from_json(self):
         with self.app.app_context():

@@ -30,8 +30,9 @@ from sqlalchemy_utils import generic_relationship
 from dmutils.dates import get_publishing_dates
 from dmutils.formats import DATETIME_FORMAT, DATE_FORMAT
 from .. import db
+from ..models.buyer_domains import BuyerEmailDomain
 from ..utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
-from ..validation import is_valid_service_id, is_valid_buyer_email, get_validation_errors
+from ..validation import is_valid_service_id, get_validation_errors, buyer_email_address_has_approved_domain
 
 
 class JSON(sqlalchemy.dialects.postgresql.JSON):
@@ -761,13 +762,17 @@ class User(db.Model):
 
     @validates('email_address')
     def validate_email_address(self, key, value):
-        if value and self.role == 'buyer' and not is_valid_buyer_email(value):
+        existing_buyer_domains = BuyerEmailDomain.query.all()
+        if value and self.role == 'buyer' and \
+                not buyer_email_address_has_approved_domain(existing_buyer_domains, value):
             raise ValidationError("invalid_buyer_domain")
         return value
 
     @validates('role')
     def validate_role(self, key, value):
-        if self.email_address and value == 'buyer' and not is_valid_buyer_email(self.email_address):
+        existing_buyer_domains = BuyerEmailDomain.query.all()
+        if self.email_address and value == 'buyer' and \
+                not buyer_email_address_has_approved_domain(existing_buyer_domains, self.email_address):
             raise ValidationError("invalid_buyer_domain")
         return value
 

@@ -171,16 +171,20 @@ class TestUsersAuth(BaseUserTest):
             self._return_post_login(status_code=403)
 
 
-class TestUsersPost(BaseApplicationTest, JSONTestMixin):
+class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
     method = "post"
     endpoint = "/users"
+
+    def setup(self):
+        super(TestUsersPost, self).setup()
+        self.setup_default_buyer_domain()
 
     def test_can_post_a_buyer_user(self):
         response = self.client.post(
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@email.gov.uk',
+                    'emailAddress': 'joeblogs@digital.gov.uk',
                     'phoneNumber': '01234 567890',
                     'password': '1234567890',
                     'role': 'buyer',
@@ -189,7 +193,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
 
         assert response.status_code == 201
         data = json.loads(response.get_data())["users"]
-        assert data["emailAddress"] == "joeblogs@email.gov.uk"
+        assert data["emailAddress"] == "joeblogs@digital.gov.uk"
         assert data["phoneNumber"] == "01234 567890"
 
     def test_creating_buyer_user_with_bad_email_domain_fails(self):
@@ -211,7 +215,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'emailAddress': 'joeblogs@digital.gov.uk',
                     'password': '1234567890',
                     'role': 'buyer',
                     'name': 'joe bloggs'}}),
@@ -226,7 +230,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'emailAddress': 'joeblogs@digital.gov.uk',
                     'phoneNumber': '',
                     'password': '1234567890',
                     'role': 'buyer',
@@ -242,7 +246,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'emailAddress': 'joeblogs@digital.gov.uk',
                     'phoneNumber': '123456',
                     'password': '1234567890',
                     'role': 'buyer',
@@ -256,7 +260,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'emailAddress': 'joeblogs@digital.gov.uk',
                     'phoneNumber': '',
                     'password': '1234567890',
                     'role': 'buyer',
@@ -527,7 +531,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@email.gov.uk',
+                    'emailAddress': 'joeblogs@digital.gov.uk',
                     'phoneNumber': '01234 567890',
                     'password': '1234567890',
                     'role': 'buyer',
@@ -537,7 +541,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
         assert "Unable to commit" in json.loads(response.get_data())["error"]
 
 
-class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
+class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     method = "post"
     endpoint = "/users/123"
 
@@ -545,6 +549,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
         now = datetime.utcnow()
         super(TestUsersUpdate, self).setup()
         with self.app.app_context():
+            self.setup_default_buyer_domain()
             user = User(
                 id=123,
                 email_address="test@digital.gov.uk",
@@ -1011,6 +1016,7 @@ class TestUsersGet(BaseUserTest, FixtureMixin):
         # it turns out we have some logic that doesn't recognise "0" as a supplier_id for users
         self.supplier_id = self.setup_dummy_suppliers(2)[-1]
         with self.app.app_context():
+            self.setup_default_buyer_domain()
             self._post_users()
 
     def _post_users(self):
@@ -1096,7 +1102,7 @@ class TestUsersGet(BaseUserTest, FixtureMixin):
 
     def test_only_buyers_returned_with_role_param_set_to_buyer(self):
         self._post_user({
-            "emailAddress": "Chris@gov.uk",
+            "emailAddress": "Chris@digital.gov.uk",
             "name": "Chris",
             "role": "buyer",
             "password": "minimum10characterpassword"
@@ -1112,7 +1118,7 @@ class TestUsersGet(BaseUserTest, FixtureMixin):
 
     def test_list_users_by_admin_role(self):
         self._post_user({
-            "emailAddress": "admin@gov.uk",
+            "emailAddress": "admin@digital.gov.uk",
             "name": "Admin",
             "role": "admin",
             "password": "minimum10characterpassword"
@@ -1140,6 +1146,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
     def setup(self):
         super(TestUsersExport, self).setup()
         with self.app.app_context():
+            self.setup_default_buyer_domain()
             self.framework_slug = 'digital-outcomes-and-specialists'
             self.set_framework_status(self.framework_slug, 'open')
             self.updater_json = {'updated_by': 'Paul'}
@@ -1482,11 +1489,6 @@ class TestUsersEmailCheck(BaseUserTest):
             db.session.commit()
 
         response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@bananas.org'})
-        assert response.status_code == 200
-        assert json.loads(response.get_data())['valid'] is True
-
-    def test_valid_email_is_ok_if_domain_found_in_text_file(self):
-        response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@gov.uk'})
         assert response.status_code == 200
         assert json.loads(response.get_data())['valid'] is True
 
