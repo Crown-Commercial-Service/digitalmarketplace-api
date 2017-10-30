@@ -54,7 +54,7 @@ def markdown_with_inline_styles(object, styles_dictionary=None):
     """
 
     styles_dictionary = styles_dictionary or {}
-    tags = bleach.sanitizer.ALLOWED_TAGS + ['p', 'span', 'h1', 'div']
+    tags = bleach.sanitizer.ALLOWED_TAGS + ['p', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'hr', 'div']
     attributes = bleach.sanitizer.ALLOWED_ATTRIBUTES.copy()
     attributes.update({'div': ['style'], 'p': ['style'], 'h1': ['style']})
     styles = ['display', 'color', 'font-weight', 'font-size', 'border-radius', 'background', 'width', 'line-height',
