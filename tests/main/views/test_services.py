@@ -1678,7 +1678,7 @@ class TestGetService(BaseApplicationTest):
 
 @mock.patch('app.service_utils.search_api_client', autospec=True)
 class TestRevertService(BaseApplicationTest, FixtureMixin):
-    def setup_method(self, method):
+    def setup(self):
         super(TestRevertService, self).setup()
         with self.app.app_context():
             self.set_framework_status("g-cloud-7", "live")
