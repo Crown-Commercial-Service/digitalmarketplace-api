@@ -177,8 +177,8 @@ def revert_service(service_id):
     if archived_service.service_id != service_id:
         abort(400, "ArchivedService does not correspond to this service id")
 
+    validate_service_data(archived_service)
     service.data = archived_service.data.copy()
-    validate_service_data(service)
 
     commit_and_archive_service(
         service,
