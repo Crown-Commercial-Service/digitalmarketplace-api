@@ -97,7 +97,6 @@ def supplier_services():
     return jsonify(services=result)
 
 
-@auth.route('/supplier/services/<service_type_id>/prices', methods=['GET'])
 @auth.route('/supplier/services/<service_type_id>/categories/<category_id>/prices', methods=['GET'])
 @login_required
 @role_required('supplier')
@@ -117,7 +116,7 @@ def supplier_service_prices(service_type_id, category_id=None):
       - name: category_id
         in: path
         type: integer
-        required: false
+        required: true
         default: all
     definitions:
       SupplierPrices:

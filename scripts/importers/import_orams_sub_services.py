@@ -8,6 +8,11 @@ from utils import makeClient, check_response
 def run_import(input_file, client):
     num_successes = 0
 
+    json_data = check_response(
+        client.post('/api/service-sub-types',
+                    data=json.dumps({'service_sub_type': {'name': ''}}),
+                    content_type='application/json'))
+
     for record in csv.DictReader(input_file):
 
         service_sub_type = {

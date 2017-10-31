@@ -2601,7 +2601,7 @@ class ServiceTypePrice(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     supplier_code = db.Column(db.Integer, db.ForeignKey('supplier.code'), nullable=False)
     service_type_id = db.Column(db.Integer, db.ForeignKey('service_type.id'), nullable=False)
-    sub_service_id = db.Column(db.Integer, db.ForeignKey('service_sub_type.id'), nullable=True)
+    sub_service_id = db.Column(db.Integer, db.ForeignKey('service_sub_type.id'), nullable=False)
     region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
     region = db.relationship('Region')
     service_type_price_ceiling_id = db.Column(db.Integer,
@@ -2642,7 +2642,7 @@ class ServiceTypePriceCeiling(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     supplier_code = db.Column(db.Integer, db.ForeignKey('supplier.code'), nullable=False)
     service_type_id = db.Column(db.Integer, db.ForeignKey('service_type.id'), nullable=False)
-    sub_service_id = db.Column(db.Integer, db.ForeignKey('service_sub_type.id'), nullable=True)
+    sub_service_id = db.Column(db.Integer, db.ForeignKey('service_sub_type.id'), nullable=False)
     region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
     price = db.Column(db.Numeric, nullable=False)
     created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)

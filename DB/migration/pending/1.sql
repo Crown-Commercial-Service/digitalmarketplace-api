@@ -1,3 +1,3 @@
-alter table "public"."location" drop column "state";
+alter table "public"."service_type_price" alter column "sub_service_id" set not null;
 
-alter table "public"."region" add column "state" character varying not null;
+alter table "public"."service_type_price_ceiling" alter column "sub_service_id" set not null;

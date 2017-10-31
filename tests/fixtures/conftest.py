@@ -250,12 +250,18 @@ def services(app, request):
 def service_type_prices(app, request, regions, services, suppliers):
     with app.app_context():
         db.session.add(ServiceSubType(
+            id=1,
+            name=''
+        ))
+        db.session.add(ServiceSubType(
+            id=2,
             name='SubType1'
         ))
         db.session.flush()
 
         db.session.add(ServiceTypePriceCeiling(
             service_type_id=1,
+            sub_service_id=1,
             region_id=1,
             supplier_code=1,
             price=321.56
@@ -266,6 +272,7 @@ def service_type_prices(app, request, regions, services, suppliers):
 
         db.session.add(ServiceTypePrice(
             service_type_id=1,
+            sub_service_id=1,
             region_id=1,
             supplier_code=1,
             service_type_price_ceiling_id=1,
@@ -275,6 +282,7 @@ def service_type_prices(app, request, regions, services, suppliers):
         ))
         db.session.add(ServiceTypePrice(
             service_type_id=1,
+            sub_service_id=1,
             region_id=1,
             supplier_code=1,
             service_type_price_ceiling_id=1,
@@ -284,8 +292,8 @@ def service_type_prices(app, request, regions, services, suppliers):
         ))
         db.session.add(ServiceTypePrice(
             service_type_id=2,
+            sub_service_id=2,
             region_id=2,
-            sub_service_id=1,
             supplier_code=2,
             price=200.90
         ))

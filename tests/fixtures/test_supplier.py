@@ -151,7 +151,7 @@ def test_supplier_services(client, supplier_user, service_type_prices):
     assert response.status_code == 200
 
     services = json.loads(response.data)
-    assert services == {'services': [{'id': 1, 'name': 'Service1', 'subCategories': [{'id': None, 'name': None}]}]}
+    assert services == {'services': [{'id': 1, 'name': 'Service1', 'subCategories': [{'id': 1, 'name': ''}]}]}
 
 
 def test_supplier_service_prices(client, supplier_user, service_type_prices):
@@ -160,7 +160,7 @@ def test_supplier_service_prices(client, supplier_user, service_type_prices):
     }), content_type='application/json')
     assert res.status_code == 200
 
-    response = client.get('/2/supplier/services/1/prices')
+    response = client.get('/2/supplier/services/1/categories/1/prices')
     assert response.status_code == 200
 
     price = json.loads(response.data)['prices'][0]
