@@ -1,4 +1,4 @@
-from flask import current_app, render_template_string, jsonify
+from flask import current_app, render_template_string, jsonify, make_response, abort as flask_abort
 import requests
 import rollbar
 from app.models import User
@@ -183,13 +183,5 @@ def get_root_url(framework_slug):
     return current_app.config['APP_ROOT'].get(framework_slug)
 
 
-def format_date(date):
-    dt = pendulum.parse(str(date))
-    return dt.format('DD/MM/YYYY', formatter='alternative')
-
-
-def format_price(price):
-    if price is None:
-        return None
-
-    return '{:1,.2f}'.format(price)
+def abort(message):
+    return flask_abort(make_response(jsonify(message=message), 400))

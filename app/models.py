@@ -34,7 +34,8 @@ from dmapiclient.audit import AuditTypes
 from . import db
 
 from app.utils import (
-    link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data, filter_fields
+    link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data, filter_fields,
+    format_price, format_date
 )
 from .validation import is_valid_service_id, get_validation_errors, get_validator
 
@@ -2607,19 +2608,19 @@ class ServiceTypePrice(db.Model):
     service_type_price_ceiling_id = db.Column(db.Integer,
                                               db.ForeignKey('service_type_price_ceiling.id'), nullable=True)
     service_type_price_ceiling = db.relationship('ServiceTypePriceCeiling')
-    date_from = db.Column(DateTime, index=False, nullable=False, default=utcnow)
-    date_to = db.Column(DateTime, index=False, default=datetime(year=2050, month=1, day=1))
+    date_from = db.Column(Date, index=False, nullable=False)
+    date_to = db.Column(Date, index=False, nullable=False)
     price = db.Column(db.Numeric, nullable=False)
     created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
     updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
 
     @hybrid_property
     def is_current_price(self):
-        return self.date_from <= pendulum.now() and self.date_to >= pendulum.now()
+        return self.date_from <= pendulum.Date.today() and self.date_to >= pendulum.Date.today()
 
     @is_current_price.expression
     def is_current_price(cls):
-        return and_(cls.date_from <= func.now(), cls.date_to >= func.now())
+        return and_(cls.date_from <= func.current_date(), cls.date_to >= func.current_date())
 
     def update_from_json_before(self, data):
         data = update_price_json(self, data)
@@ -2633,6 +2634,16 @@ class ServiceTypePrice(db.Model):
         if service_type_price_ceiling is not None:
             self.service_type_price_ceiling_id = service_type_price_ceiling.id
 
+        return data
+
+    def serializable_after(self, data):
+        data = dict(
+            id=self.id,
+            region=dict(state=self.region.state, name=self.region.name),
+            price=format_price(self.price),
+            capPrice=format_price(self.service_type_price_ceiling.price),
+            startDate=format_date(self.date_from),
+            endDate=format_date(self.date_to))
         return data
 
 

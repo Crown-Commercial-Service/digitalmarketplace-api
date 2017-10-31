@@ -1,11 +1,13 @@
-from flask import jsonify
+import pendulum
+from flask import jsonify, request
 from flask_login import current_user, login_required
 from app.auth import auth
 from app.utils import get_json_from_request
 from app.auth.suppliers import get_supplier, update_supplier_details, valid_supplier, flatten_supplier
-from app.models import db, ServiceType, ServiceSubType, ServiceTypePrice
-from app.auth.helpers import role_required, format_date, format_price
+from app.models import db, ServiceType, ServiceSubType, ServiceTypePrice, Supplier
+from app.auth.helpers import role_required, abort
 from itertools import groupby
+from app.swagger import swag
 
 
 @auth.route('/supplier', methods=['GET'])
@@ -75,9 +77,27 @@ def supplier_services():
     responses:
       200:
         description: A list of services with sub categories
-        schema:
-          $ref: '#/definitions/SupplierServices'
+        type: object
+        properties:
+          supplier:
+            type:
+              object
+            properties:
+              name:
+                type: string
+              abn:
+                type: string
+              email:
+                type: string
+              contact:
+                type: string
+          services:
+            type: array
+            items:
+              $ref: '#/definitions/SupplierService'
     """
+    supplier = db.session.query(Supplier).filter(Supplier.code == current_user.supplier_code).first()
+
     services = db.session\
         .query(ServiceTypePrice.service_type_id,
                ServiceType.name, ServiceTypePrice.sub_service_id, ServiceSubType.name.label('sub_service_name'))\
@@ -94,7 +114,12 @@ def supplier_services():
         subcategories = [dict(id=s.sub_service_id, name=s.sub_service_name) for s in group]
         result.append(dict(key, subCategories=subcategories))
 
-    return jsonify(services=result)
+    supplier_json = supplier.serializable
+    return jsonify(services=result,
+                   supplier=dict(name=supplier_json['name'], abn=supplier_json['abn'],
+                                 email=None if 'contact_email' not in supplier_json else supplier_json['contact_email'],
+                                 contact=None if 'contact_name' not in supplier_json
+                                 else supplier_json['contact_name']))
 
 
 @auth.route('/supplier/services/<service_type_id>/categories/<category_id>/prices', methods=['GET'])
@@ -156,10 +181,106 @@ def supplier_service_prices(service_type_id, category_id=None):
                 ServiceTypePrice.is_current_price)\
         .all()
 
-    return jsonify(prices=[dict(
-        id=p.id,
-        region=dict(state=p.region.state, name=p.region.name),
-        price=format_price(p.price),
-        capPrice=format_price(None if p.service_type_price_ceiling is None else p.service_type_price_ceiling.price),
-        startDate=format_date(p.date_from),
-        endDate=format_date(p.date_to)) for p in prices]), 200
+    return jsonify(prices=[p.serializable for p in prices]), 200
+
+
+@auth.route('/supplier/prices', methods=['POST'])
+@login_required
+@role_required('supplier')
+@swag.validate('PriceUpdates')
+def update_supplier_price():
+    """Update a price (role=supplier)
+    ---
+    tags:
+      - supplier
+    security:
+      - basicAuth: []
+    consumes:
+      - application/json
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          id: PriceUpdates
+          required:
+            - prices
+          properties:
+            prices:
+              type: array
+              items:
+                type: object
+                required:
+                  - id
+                  - price
+                  - startDate
+                additionalProperties: false
+                properties:
+                  id:
+                    type: integer
+                  price:
+                    type: number
+                  startDate:
+                    type: string
+                  endDate:
+                    type: string
+    responses:
+      200:
+        description: An updated price
+        schema:
+          properties:
+            prices:
+              type: array
+              items:
+                $ref: '#/definitions/SupplierPrice'
+    """
+    json_data = request.get_json()
+    prices = json_data.get('prices')
+    results = []
+
+    for p in prices:
+        existing_price = db.session.query(ServiceTypePrice).get(p['id'])
+
+        if existing_price is None:
+            abort('Invalid price id: {}'.format(p['id']))
+
+        start_date = p.get('startDate')
+        end_date = p.get('endDate', None)
+
+        date_from = pendulum.parse(start_date)
+
+        if end_date is not None:
+            date_to = pendulum.parse(end_date)
+        else:
+            date_to = pendulum.create(2050, 1, 1)
+
+        existing_price.date_to = date_from.subtract(days=1)
+        price = add_price(existing_price, date_from, date_to, p['price'])
+        results.append(existing_price)
+        results.append(price)
+
+        if end_date is not None:
+            trailing_price = add_price(price, date_to.add(days=1), pendulum.create(2050, 1, 1), existing_price.price)
+            results.append(trailing_price)
+
+        db.session.commit()
+
+    return jsonify(prices=results)
+
+
+def add_price(existing_price, date_from, date_to, price):
+    new_price = ServiceTypePrice(
+        supplier_code=existing_price.supplier_code,
+        service_type_id=existing_price.service_type_id,
+        sub_service_id=existing_price.sub_service_id,
+        region_id=existing_price.region.id,
+        service_type_price_ceiling_id=existing_price.service_type_price_ceiling.id,
+        date_from=date_from,
+        date_to=date_to,
+        price=price
+    )
+
+    db.session.add(new_price)
+    db.session.flush()
+
+    return new_price

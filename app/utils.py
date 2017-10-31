@@ -1,3 +1,4 @@
+import pendulum
 from flask import url_for as base_url_for
 from flask import abort, request
 from six import iteritems, string_types
@@ -6,7 +7,7 @@ from werkzeug.exceptions import BadRequest
 from .validation import validate_updater_json_or_400
 
 
-from .logs import get_logger, add_std_handler, load_config
+from .logs import get_logger, load_config
 
 log = get_logger('api')
 load_config()
@@ -162,3 +163,15 @@ def purge_nulls_from_data(data):
 def get_request_page_questions():
     json_payload = get_json_from_request()
     return json_payload.get('page_questions', [])
+
+
+def format_date(date):
+    dt = pendulum.parse(str(date))
+    return dt.format('DD/MM/YYYY', formatter='alternative')
+
+
+def format_price(price):
+    if price is None:
+        return None
+
+    return '{:1,.2f}'.format(price)

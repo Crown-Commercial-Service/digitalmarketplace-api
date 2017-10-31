@@ -60,8 +60,9 @@ def suppliers(app, request):
     with app.app_context():
         for i in range(1, 6):
             db.session.add(Supplier(
+                abn=i,
                 code=(i),
-                name=fake.name()
+                name='Test Supplier{}'.format(i)
             ))
 
             db.session.flush()
@@ -268,8 +269,6 @@ def service_type_prices(app, request, regions, services, suppliers):
         ))
         db.session.flush()
 
-        tomorrow = pendulum.now().add(days=1)
-
         db.session.add(ServiceTypePrice(
             service_type_id=1,
             sub_service_id=1,
@@ -278,7 +277,7 @@ def service_type_prices(app, request, regions, services, suppliers):
             service_type_price_ceiling_id=1,
             price=200.50,
             date_from='1/1/2016',
-            date_to=tomorrow.subtract(microseconds=1)
+            date_to=pendulum.Date.today()
         ))
         db.session.add(ServiceTypePrice(
             service_type_id=1,
@@ -287,7 +286,7 @@ def service_type_prices(app, request, regions, services, suppliers):
             supplier_code=1,
             service_type_price_ceiling_id=1,
             price=100.50,
-            date_from=tomorrow,
+            date_from=pendulum.Date.tomorrow(),
             date_to='1/1/2050'
         ))
         db.session.add(ServiceTypePrice(
@@ -295,7 +294,9 @@ def service_type_prices(app, request, regions, services, suppliers):
             sub_service_id=2,
             region_id=2,
             supplier_code=2,
-            price=200.90
+            price=200.90,
+            date_from=pendulum.Date.today(),
+            date_to='1/1/2050'
         ))
 
         db.session.commit()

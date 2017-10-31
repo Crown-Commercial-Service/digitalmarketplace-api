@@ -10,7 +10,7 @@ def run_import(input_file, client):
 
     for record in csv.DictReader(input_file):
 
-        dt = pendulum.parse(record['date_to']).add(days=1).subtract(microseconds=1)
+        dt = pendulum.parse(record['date_to'])
 
         price = {
             'supplier_name': record['supplier'],
