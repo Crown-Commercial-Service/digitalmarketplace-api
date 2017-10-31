@@ -3,7 +3,7 @@ from app.models import Application, AuditEvent, AuditTypes, User
 from datetime import datetime
 from flask import current_app
 from sqlalchemy.exc import DataError
-from app.emails.users import send_existing_application_notification
+from app.emails.users import send_existing_application_notification, send_existing_seller_notification
 
 
 def create_user(data):
@@ -89,6 +89,7 @@ def is_duplicate_user(email_address):
     """, {'domain': domain}).fetchone()
 
     if (supplier_code and supplier_code[0]):
+        send_existing_seller_notification(email_address, supplier_code[0])
         duplicate_audit_event(email_address, {'supplier_code': supplier_code[0]})
         return True
 
