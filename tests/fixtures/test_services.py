@@ -1,4 +1,5 @@
 import json
+import time
 
 REGIONS = [
     {
@@ -46,6 +47,8 @@ def test_get_services(client, users, services):
 
 
 def test_search_catalogue(client, users, service_type_prices):
+    print time.strftime('%X %x %Z')
+
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'test@digital.gov.au', 'password': 'testpassword'
     }), content_type='application/json')
