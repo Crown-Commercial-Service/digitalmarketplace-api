@@ -4,7 +4,7 @@ from flask_login import current_user, login_required
 from app.auth import auth
 from app.utils import get_json_from_request
 from app.auth.suppliers import get_supplier, update_supplier_details, valid_supplier, flatten_supplier
-from app.models import db, ServiceType, ServiceSubType, ServiceTypePrice, Supplier
+from app.models import db, ServiceType, ServiceSubType, ServiceTypePrice, Supplier, Region
 from app.auth.helpers import role_required, abort
 from itertools import groupby
 from app.swagger import swag
@@ -175,10 +175,12 @@ def supplier_service_prices(service_type_id, category_id=None):
           $ref: '#/definitions/SupplierPrices'
     """
     prices = db.session.query(ServiceTypePrice)\
+        .join(ServiceTypePrice.region)\
         .filter(ServiceTypePrice.supplier_code == current_user.supplier_code,
                 ServiceTypePrice.service_type_id == service_type_id,
                 ServiceTypePrice.sub_service_id == category_id,
                 ServiceTypePrice.is_current_price)\
+        .order_by(Region.state, Region.name)\
         .all()
 
     return jsonify(prices=[p.serializable for p in prices]), 200
