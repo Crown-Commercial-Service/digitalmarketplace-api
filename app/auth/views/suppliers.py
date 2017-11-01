@@ -214,7 +214,6 @@ def update_supplier_price():
                   - id
                   - price
                   - startDate
-                additionalProperties: false
                 properties:
                   id:
                     type: integer
