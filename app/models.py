@@ -2620,7 +2620,10 @@ class ServiceTypePrice(db.Model):
 
     @is_current_price.expression
     def is_current_price(cls):
-        return and_(cls.date_from <= func.current_date(), cls.date_to >= func.current_date())
+        TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
+
+        return and_(cls.date_from <= func.date_trunc('day', func.current_timestamp().op('AT TIME ZONE')(TZ_NAME)),
+                    cls.date_to >= func.date_trunc('day', func.current_timestamp().op('AT TIME ZONE')(TZ_NAME)))
 
     def update_from_json_before(self, data):
         data = update_price_json(self, data)

@@ -160,6 +160,7 @@ class Test(Config):
     SECRET_KEY = 'TestKeyTestKeyTestKeyTestKeyTestKeyTestKeyX='
     CSRF_FAKED = False
     BASIC_AUTH = True
+    DEADLINES_TZ_NAME = 'Australia/Sydney'
 
 
 class Development(Config):

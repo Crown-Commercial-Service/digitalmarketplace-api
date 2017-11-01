@@ -248,12 +248,12 @@ def update_supplier_price():
         start_date = p.get('startDate')
         end_date = p.get('endDate', '')
 
-        date_from = pendulum.parse(start_date)
+        date_from = pendulum.parse(start_date).date()
 
         if end_date:
-            date_to = pendulum.parse(end_date)
+            date_to = pendulum.parse(end_date).date()
         else:
-            date_to = pendulum.create(2050, 1, 1)
+            date_to = pendulum.Date.create(2050, 1, 1)
 
         existing_price.date_to = date_from.subtract(days=1)
         price = add_price(existing_price, date_from, date_to, p['price'])
@@ -261,11 +261,11 @@ def update_supplier_price():
         results.append(price)
 
         if end_date:
-            trailing_price = add_price(price, date_to.add(days=1), pendulum.create(2050, 1, 1), existing_price.price)
+            trailing_price = add_price(price, date_to.add(days=1),
+                                       pendulum.Date.create(2050, 1, 1), existing_price.price)
             results.append(trailing_price)
 
-        db.session.commit()
-
+    db.session.commit()
     return jsonify(prices=results)
 
 

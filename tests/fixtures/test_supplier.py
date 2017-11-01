@@ -177,7 +177,6 @@ def test_supplier_price_update(client, supplier_user, service_type_prices):
     existing_price = '{:1,.2f}'.format(service_type_prices[0].price)
     start_date = pendulum.Date.tomorrow()
     end_date = pendulum.Date.tomorrow().add(months=1)
-    print start_date, end_date
     new_price = 246.96
 
     res = client.post('/2/login', data=json.dumps({
