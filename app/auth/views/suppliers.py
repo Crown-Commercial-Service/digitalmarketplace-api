@@ -244,11 +244,11 @@ def update_supplier_price():
             abort('Invalid price id: {}'.format(p['id']))
 
         start_date = p.get('startDate')
-        end_date = p.get('endDate', None)
+        end_date = p.get('endDate', '')
 
         date_from = pendulum.parse(start_date)
 
-        if end_date is not None:
+        if end_date:
             date_to = pendulum.parse(end_date)
         else:
             date_to = pendulum.create(2050, 1, 1)
@@ -258,7 +258,7 @@ def update_supplier_price():
         results.append(existing_price)
         results.append(price)
 
-        if end_date is not None:
+        if end_date:
             trailing_price = add_price(price, date_to.add(days=1), pendulum.create(2050, 1, 1), existing_price.price)
             results.append(trailing_price)
 
