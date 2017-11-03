@@ -180,7 +180,11 @@ def supplier_service_prices(service_type_id, category_id=None):
                 ServiceTypePrice.service_type_id == service_type_id,
                 ServiceTypePrice.sub_service_id == category_id,
                 ServiceTypePrice.is_current_price)\
-        .order_by(Region.state, Region.name)\
+        .distinct(Region.state, Region.name, ServiceTypePrice.supplier_code, ServiceTypePrice.service_type_id,
+                  ServiceTypePrice.sub_service_id, ServiceTypePrice.region_id)\
+        .order_by(Region.state, Region.name, ServiceTypePrice.supplier_code.desc(),
+                  ServiceTypePrice.service_type_id.desc(), ServiceTypePrice.sub_service_id.desc(),
+                  ServiceTypePrice.region_id.desc(), ServiceTypePrice.updated_at.desc())\
         .all()
 
     return jsonify(prices=[p.serializable for p in prices]), 200

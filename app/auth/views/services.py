@@ -206,7 +206,11 @@ def get_seller_catalogue_data(service_type_id, region_id):
             ServiceTypePrice.service_type_id == service_type_id,
             ServiceTypePrice.region_id == region_id,
             ServiceTypePrice.is_current_price)\
-        .order_by(ServiceSubType.name)\
+        .distinct(ServiceSubType.name, ServiceTypePrice.supplier_code, ServiceTypePrice.service_type_id,
+                  ServiceTypePrice.sub_service_id, ServiceTypePrice.region_id)\
+        .order_by(ServiceSubType.name, ServiceTypePrice.supplier_code.desc(),
+                  ServiceTypePrice.service_type_id.desc(), ServiceTypePrice.sub_service_id.desc(),
+                  ServiceTypePrice.region_id.desc(), ServiceTypePrice.updated_at.desc())\
         .all()
 
     supplier_prices = []

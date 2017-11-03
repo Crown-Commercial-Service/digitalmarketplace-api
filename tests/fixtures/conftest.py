@@ -275,6 +275,16 @@ def service_type_prices(app, request, regions, services, suppliers):
             region_id=1,
             supplier_code=1,
             service_type_price_ceiling_id=1,
+            price=210.60,
+            date_from='1/1/2016',
+            date_to=pendulum.Date.today()
+        ))
+        db.session.add(ServiceTypePrice(
+            service_type_id=1,
+            sub_service_id=1,
+            region_id=1,
+            supplier_code=1,
+            service_type_price_ceiling_id=1,
             price=200.50,
             date_from='1/1/2016',
             date_to=pendulum.Date.today()
