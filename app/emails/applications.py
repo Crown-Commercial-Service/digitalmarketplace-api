@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from flask import current_app
 from app.models import Application, User, Supplier, Domain
 
+from dmutils.formats import DateFormatter
 from .util import render_email_template, send_or_handle_error
 
 
@@ -87,7 +88,7 @@ def send_approval_notification(application_id):
 
     url_sellers_guide = FRONTEND_ADDRESS + '/sellers-guide'
     url_assessments = FRONTEND_ADDRESS + '/sellers-guide#assessments'
-    url_latest_opportunities = FRONTEND_ADDRESS + '/digital-service-professionals/opportunities'
+    url_latest_opportunities = FRONTEND_ADDRESS + '/digital-marketplace/opportunities'
     url_seller_page = FRONTEND_ADDRESS + '/supplier/' + str(application.supplier.code)
 
     # prepare copy
@@ -147,7 +148,7 @@ def send_assessment_approval_notification(supplier_id, domain_id):
     users = User.query.filter(User.supplier_code == supplier.code).all()
 
     email_addresses = [u.email_address for u in users]
-    url_latest_opportunities = FRONTEND_ADDRESS + '/digital-service-professionals/opportunities'
+    url_latest_opportunities = FRONTEND_ADDRESS + '/digital-marketplace/opportunities'
     url_seller_page = FRONTEND_ADDRESS + '/supplier/' + str(supplier.code)
 
     # prepare copy
@@ -168,6 +169,39 @@ def send_assessment_approval_notification(supplier_id, domain_id):
         current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
         current_app.config['DM_GENERIC_SUPPORT_NAME'],
         event_description_for_errors='assessment approved'
+    )
+
+
+def send_assessment_requested_notification(assessment, requested_by):
+    TEMPLATE_FILENAME = 'assessment_requested.md'
+    df = DateFormatter(current_app.config['DEADLINES_TZ_NAME'])
+    FRONTEND_ADDRESS = current_app.config['FRONTEND_ADDRESS']
+    supplier = Supplier.query.get(assessment.supplier_domain.supplier_id)
+    brief = assessment.briefs[0]
+    brief_url = '{}/digital-marketplace/opportunities/{}'.format(FRONTEND_ADDRESS, brief.id)
+    brief_xls_url = '{}/digital-marketplace/opportunities/{}/response'.format(FRONTEND_ADDRESS, brief.id)
+    brief_deadline = df.datetimeformat(brief.applications_closed_at)
+    email_addresses = list(set([supplier.contacts[0].email, requested_by]))
+
+    subject = "Notification: Outcome of area of expertise assessment"
+
+    # prepare copy
+    email_body = render_email_template(
+        TEMPLATE_FILENAME,
+        domain_name=assessment.supplier_domain.domain.name,
+        brief_name=brief.data['title'],
+        brief_url=brief_url,
+        brief_xls_url=brief_xls_url,
+        brief_deadline=brief_deadline
+    )
+
+    send_or_handle_error(
+        email_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='assessment rejected'
     )
 
 

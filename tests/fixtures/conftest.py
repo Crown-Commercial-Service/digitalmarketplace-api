@@ -4,7 +4,7 @@ import pytest
 import pendulum
 
 from app import create_app
-from app.models import db, utcnow, Supplier, SupplierDomain, User, Brief, ServiceTypePriceCeiling,\
+from app.models import db, utcnow, Contact, Supplier, SupplierDomain, User, Brief, ServiceTypePriceCeiling,\
     Framework, Lot, Domain, Assessment, Application, Region, ServiceType, ServiceTypePrice, ServiceSubType
 from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, WSGIApplicationWithEnvironment
 
@@ -62,7 +62,8 @@ def suppliers(app, request):
             db.session.add(Supplier(
                 abn=i,
                 code=(i),
-                name='Test Supplier{}'.format(i)
+                name='Test Supplier{}'.format(i),
+                contacts=[Contact(name='auth rep', email='auth@rep.com')]
             ))
 
             db.session.flush()

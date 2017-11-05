@@ -6,7 +6,7 @@ from app.utils import (get_json_from_request, json_has_required_keys, validate_a
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 from app.jiraapi import get_marketplace_jira
-from app.emails import send_assessment_rejected_notification
+from app.emails import send_assessment_requested_notification, send_assessment_rejected_notification
 
 
 @main.route('/assessments', methods=['POST'])
@@ -29,6 +29,7 @@ def create_assessment():
     ).first()
 
     if existing_assessment:
+        send_assessment_requested_notification(existing_assessment, updater_json['updated_by'])
         return jsonify(assessment=existing_assessment.serializable), 201
 
     assessment = Assessment()
@@ -50,6 +51,8 @@ def create_assessment():
     if current_app.config['JIRA_FEATURES']:
         mj = get_marketplace_jira()
         mj.create_domain_approval_task(assessment)
+
+    send_assessment_requested_notification(assessment, updater_json['updated_by'])
 
     return jsonify(assessment=assessment.serializable), 201
 
