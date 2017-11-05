@@ -1,6 +1,7 @@
 from datetime import datetime
 from dmapiclient.audit import AuditTypes
 from sqlalchemy import func
+from sqlalchemy.orm import lazyload
 from sqlalchemy.exc import IntegrityError, DataError
 from flask import jsonify, abort, request, current_app
 
@@ -55,7 +56,7 @@ def auth_user():
 
 @main.route('/users/<int:user_id>', methods=['GET'])
 def get_user_by_id(user_id):
-    user = User.query.filter(
+    user = User.query.options(lazyload('application')).options(lazyload('supplier')).filter(
         User.id == user_id
     ).first_or_404()
     return jsonify(users=user.serialize())
@@ -63,7 +64,7 @@ def get_user_by_id(user_id):
 
 @main.route('/teammembers/<string:domain>', methods=['GET'])
 def get_teammembers(domain):
-    userlist = User.query.filter_by(active='true')
+    userlist = User.query.options(lazyload('application')).options(lazyload('supplier')).filter_by(active='true')
     teammembers = [{attr: getattr(_, attr) for attr in ["email_address", "id", "name"]}
                    for _ in userlist if all(
         [_.viewrow().email_domain == domain, _.active, '+' not in _.email_address]

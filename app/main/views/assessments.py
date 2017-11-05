@@ -4,6 +4,7 @@ from app.models import db, Assessment, AuditEvent, SupplierDomain, Supplier, Dom
 from dmapiclient.audit import AuditTypes
 from app.utils import (get_json_from_request, json_has_required_keys, validate_and_return_updater_request)
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload
 from app.jiraapi import get_marketplace_jira
 from app.emails import send_assessment_rejected_notification
 
@@ -57,12 +58,26 @@ def create_assessment():
 def list_assessments():
     assessments = db.session.query(
         Assessment
+    ).options(
+        joinedload(Assessment.briefs)
     ).join(
         SupplierDomain
     ).filter(
         SupplierDomain.status == 'unassessed'
     )
-    result = [_.serializable for _ in assessments]
+    result = []
+    for assessment in assessments:
+        row = {"id": assessment.id, "active": assessment.active,
+               "created_at": assessment.created_at,
+               "supplier_domain": {"status": assessment.supplier_domain.status,
+                                   "domain": assessment.supplier_domain.domain.serializable,
+                                   "supplier": {"name": assessment.supplier_domain.supplier.name,
+                                                "code": assessment.supplier_domain.supplier.code}},
+               "briefs": [{"title": brief.data['title'],
+                           "dates": {"closing_date": str(brief.applications_closing_date)}}
+                          for brief in assessment.briefs]
+               }
+        result.append(row)
 
     return jsonify(assessments=result), 200
 

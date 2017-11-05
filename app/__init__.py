@@ -1,5 +1,6 @@
 from functools import wraps
 from flask import Flask
+import logging
 import dmapiclient
 from dmutils import init_app, flask_featureflags
 
@@ -11,6 +12,8 @@ from . import logs
 
 from .utils import log
 from app.swagger import swag
+from nplusone.ext.flask_sqlalchemy import NPlusOne
+from sqltap.wsgi import SQLTapMiddleware
 
 
 db = SQLAlchemy()
@@ -56,6 +59,14 @@ def create_app(config_name):
     application.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32 megabytes
 
     swag.init_app(application)
+
+    if application.config['DEBUG']:
+        # enable raise to raise exception on ORM misconfigured queries
+        # application.config['NPLUSONE_RAISE'] = True
+        application.config['NPLUSONE_LOGGER'] = logging.getLogger('app.nplusone')
+        application.config['NPLUSONE_LOG_LEVEL'] = logging.ERROR
+        NPlusOne(application)
+        application.wsgi_app = SQLTapMiddleware(application.wsgi_app)
 
     return application
 

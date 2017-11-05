@@ -1,6 +1,7 @@
 from dmutils.filters import timesince
 from flask import jsonify, abort, current_app, request
 from sqlalchemy import desc
+from sqlalchemy.orm import joinedload, lazyload
 from sqlalchemy.exc import IntegrityError
 
 from dmapiclient.audit import AuditTypes
@@ -112,18 +113,16 @@ def get_brief(brief_id):
 @main.route('/briefs/teammembers/<string:email_domain>', methods=['GET'])
 def get_team_briefs(email_domain):
     query = db.session.execute("""
-            select brief_ids from vuser_users_with_briefs
-            inner join vuser on vuser.id = vuser_users_with_briefs.id
-            where vuser.active = :active AND vuser_users_with_briefs.email_domain = :domain
-        """, {'active': 'true', 'domain': email_domain})
+            SELECT array_agg(c)
+            FROM (SELECT unnest(brief_ids) c FROM vuser_users_with_briefs
+                        INNER JOIN vuser ON vuser.id = vuser_users_with_briefs.id
+                        where vuser.active = :active AND vuser_users_with_briefs.email_domain = :domain) dt(c)
+        """, {'active': 'true', 'domain': email_domain}).fetchone()
 
-    user_brief_lists = list()
-    for i in [_ for _ in query if _[0][0] is not None]:
-        user_brief_lists += i
+    brief_id_list = query[0]
 
-    brief_id_list = [item for sublist in user_brief_lists for item in sublist]
-
-    briefs = Brief.query.filter(
+    briefs = Brief.query.options(joinedload(Brief.clarification_questions))\
+        .options(joinedload(Brief.users)).options(joinedload(Brief.work_order)).filter(
         Brief.id.in_(brief_id_list)).all()
 
     return jsonify([brief.serialize() for brief in briefs])
@@ -132,9 +131,13 @@ def get_team_briefs(email_domain):
 @main.route('/briefs', methods=['GET'])
 def list_briefs():
     if request.args.get('human'):
-        briefs = Brief.query.order_by(Brief.status.desc(), Brief.published_at.desc())
+        briefs = Brief.query.options(joinedload(Brief.clarification_questions)) \
+            .options(joinedload(Brief.users)).options(joinedload(Brief.work_order))\
+            .order_by(Brief.status.desc(), Brief.published_at.desc())
     else:
-        briefs = Brief.query.order_by(Brief.published_at.desc())
+        briefs = Brief.query.options(joinedload(Brief.clarification_questions)) \
+            .options(joinedload(Brief.users)).options(joinedload(Brief.work_order))\
+            .order_by(Brief.published_at.desc())
 
     page = get_valid_page_or_1()
 
@@ -192,7 +195,8 @@ def list_briefs():
 @main.route('/briefs/count', methods=['GET'])
 def get_briefs_stats():
     # workaround as 'Brief.withdrawn_at == None' gives pep8 error
-    brief_query = Brief.query.filter(Brief.withdrawn_at.is_(None), Brief.published_at.isnot(None))
+    brief_query = Brief.query.options(lazyload('framework')).options(lazyload('lot'))\
+        .filter(Brief.withdrawn_at.is_(None), Brief.published_at.isnot(None))
     all_briefs = brief_query.order_by(desc(Brief.published_at)).all()
 
     briefs = {

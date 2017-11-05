@@ -52,6 +52,7 @@ migra==1.0.1494928440
 mock==2.0.0
 monotonic==1.3
 newrelic==2.86.1.66
+nplusone==0.8.1
 nose==1.3.7
 oauthlib==2.0.2
 ordereddict==1.1
@@ -93,6 +94,7 @@ six==1.10.0
 SQLAlchemy==1.1.10
 SQLAlchemy-Utils==0.32.14
 sqlbag==0.1.1487916199
+sqltap==0.3.10
 sshtunnel==0.1.2
 streql==3.0.2
 strict-rfc3339==0.7
