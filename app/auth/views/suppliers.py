@@ -5,7 +5,7 @@ from app.auth import auth
 from app.utils import get_json_from_request
 from app.auth.suppliers import get_supplier, update_supplier_details, valid_supplier, flatten_supplier
 from app.models import db, ServiceType, ServiceSubType, ServiceTypePrice, Supplier, Region
-from app.auth.helpers import role_required, abort
+from app.auth.helpers import role_required, abort, parse_date
 from itertools import groupby
 from app.swagger import swag
 
@@ -225,6 +225,7 @@ def update_supplier_price():
                     type: integer
                   price:
                     type: number
+                    minimum: 1
                   startDate:
                     type: string
                   endDate:
@@ -251,16 +252,26 @@ def update_supplier_price():
 
         start_date = p.get('startDate')
         end_date = p.get('endDate', '')
+        price = p.get('price')
 
-        date_from = pendulum.parse(start_date).date()
+        date_from = parse_date(start_date)
 
         if end_date:
-            date_to = pendulum.parse(end_date).date()
+            date_to = parse_date(end_date)
         else:
             date_to = pendulum.Date.create(2050, 1, 1)
 
+        if not date_from.is_future():
+            abort('startDate must be in the future: {}'.format(date_from))
+
+        if date_to < date_from:
+            abort('endDate must be after startDate: {}'.format(date_to))
+
+        if price > existing_price.service_type_price_ceiling.price:
+            abort('price must be less than capPrice: {}'.format(price))
+
         existing_price.date_to = date_from.subtract(days=1)
-        price = add_price(existing_price, date_from, date_to, p['price'])
+        price = add_price(existing_price, date_from, date_to, price)
         results.append(existing_price)
         results.append(price)
 

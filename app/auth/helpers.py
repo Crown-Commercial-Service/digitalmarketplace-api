@@ -185,3 +185,10 @@ def get_root_url(framework_slug):
 
 def abort(message):
     return flask_abort(make_response(jsonify(message=message), 400))
+
+
+def parse_date(dt):
+    try:
+        return pendulum.parse(dt).date()
+    except ValueError, e:
+        abort(message=str(e))

@@ -194,6 +194,42 @@ def test_supplier_price_update(client, supplier_user, service_type_prices):
     response = client.post(
         '/2/supplier/prices',
         data=json.dumps({'prices': [{'id': id, 'price': new_price,
+                                     'startDate': 'invalid start',
+                                     'endDate': str(end_date)}]}),
+        content_type='application/json')
+    assert response.status_code == 400
+    assert json.loads(response.data)['message'] == 'Invalid date string: invalid start'
+
+    response = client.post(
+        '/2/supplier/prices',
+        data=json.dumps({'prices': [{'id': id, 'price': new_price,
+                                     'startDate': str(pendulum.Date.today()),
+                                     'endDate': str(end_date)}]}),
+        content_type='application/json')
+    assert response.status_code == 400
+    assert json.loads(response.data)['message'] == 'startDate must be in the future: {}'.format(pendulum.Date.today())
+
+    response = client.post(
+        '/2/supplier/prices',
+        data=json.dumps({'prices': [{'id': id, 'price': new_price,
+                                     'startDate': str(start_date),
+                                     'endDate': str(pendulum.Date.today())}]}),
+        content_type='application/json')
+    assert response.status_code == 400
+    assert json.loads(response.data)['message'] == 'endDate must be after startDate: {}'.format(pendulum.Date.today())
+
+    response = client.post(
+        '/2/supplier/prices',
+        data=json.dumps({'prices': [{'id': id, 'price': 1000,
+                                     'startDate': str(start_date),
+                                     'endDate': str(end_date)}]}),
+        content_type='application/json')
+    assert response.status_code == 400
+    assert json.loads(response.data)['message'] == 'price must be less than capPrice: 1000'
+
+    response = client.post(
+        '/2/supplier/prices',
+        data=json.dumps({'prices': [{'id': id, 'price': new_price,
                                      'startDate': str(start_date),
                                      'endDate': str(end_date)}]}),
         content_type='application/json')
