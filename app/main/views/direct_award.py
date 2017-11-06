@@ -96,14 +96,14 @@ def create_project():
     return jsonify(project=project.serialize()), 201
 
 
-@main.route('/direct-award/projects/<int:project_id>', methods=['GET'])
+@main.route('/direct-award/projects/<obscured(DirectAwardProject):project_id>', methods=['GET'])
 def get_project(project_id):
     project = DirectAwardProject.query.filter(DirectAwardProject.id == project_id).first_or_404()
 
     return jsonify(project=project.serialize(with_users=True))
 
 
-@main.route('/direct-award/projects/<int:project_id>/searches', methods=['GET'])
+@main.route('/direct-award/projects/<obscured(DirectAwardProject):project_id>/searches', methods=['GET'])
 def list_project_searches(project_id):
     # If the project doesn't exist, we should 404 early.
     DirectAwardProject.query.filter(DirectAwardProject.id == project_id).first_or_404()
@@ -144,7 +144,7 @@ def list_project_searches(project_id):
     )
 
 
-@main.route('/direct-award/projects/<int:project_id>/searches', methods=['POST'])
+@main.route('/direct-award/projects/<obscured(DirectAwardProject):project_id>/searches', methods=['POST'])
 def create_project_search(project_id):
     updater_json = validate_and_return_updater_request()
 
@@ -193,7 +193,8 @@ def create_project_search(project_id):
     return jsonify(search=search.serialize()), 201
 
 
-@main.route('/direct-award/projects/<int:project_id>/searches/<int:search_id>', methods=['GET'])
+@main.route('/direct-award/projects/<obscured(DirectAwardProject):project_id>/searches/<int:search_id>',
+            methods=['GET'])
 def get_project_search(project_id, search_id):
     # If the project doesn't exist, we should 404 early.
     DirectAwardProject.query.filter(DirectAwardProject.id == project_id).first_or_404()
@@ -206,7 +207,7 @@ def get_project_search(project_id, search_id):
     return jsonify(search=search.serialize())
 
 
-@main.route('/direct-award/projects/<int:project_id>/services', methods=['GET'])
+@main.route('/direct-award/projects/<obscured(DirectAwardProject):project_id>/services', methods=['GET'])
 def list_project_services(project_id):
     """This endpoint returns all the services associated with a particular (locked) Direct Award Project. It returns
     some fairly arbitrary data which is obviously not ideal, but as we don't have a task runner that we can utilise to
@@ -264,7 +265,7 @@ def list_project_services(project_id):
     )
 
 
-@main.route('/direct-award/projects/<int:project_id>/lock', methods=['POST'])
+@main.route('/direct-award/projects/<obscured(DirectAwardProject):project_id>/lock', methods=['POST'])
 def lock_project(project_id):
     updater_json = validate_and_return_updater_request()
 
@@ -314,7 +315,7 @@ def lock_project(project_id):
     return jsonify(project=project.serialize())
 
 
-@main.route('/direct-award/projects/<int:project_id>/record-download', methods=['POST'])
+@main.route('/direct-award/projects/<obscured(DirectAwardProject):project_id>/record-download', methods=['POST'])
 def record_project_download(project_id):
     updater_json = validate_and_return_updater_request()
 

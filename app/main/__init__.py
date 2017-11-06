@@ -3,6 +3,7 @@ from flask import Blueprint
 from ..authentication import requires_authentication
 
 main = Blueprint('main', __name__)
+direct_award = Blueprint('direct_award', 'direct_award')
 
 main.before_request(requires_authentication)
 
