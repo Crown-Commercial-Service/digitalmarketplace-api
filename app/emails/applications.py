@@ -180,11 +180,10 @@ def send_assessment_requested_notification(assessment, requested_by):
     brief = assessment.briefs[0]
     brief_url = '{}/digital-marketplace/opportunities/{}'.format(FRONTEND_ADDRESS, brief.id)
     brief_xls_url = '{}/digital-marketplace/opportunities/{}/response'.format(FRONTEND_ADDRESS, brief.id)
-    brief_deadline = df.datetimeformat(brief.applications_closed_at)
+    brief_deadline = df.datetimeformat(brief.applications_closed_at).replace('(', '').replace(')', '')
     email_addresses = list(set([supplier.contacts[0].email, requested_by]))
 
-    subject = "Notification: Outcome of area of expertise assessment"
-
+    subject = "Your request for assessment in {}".format(assessment.supplier_domain.domain.name)
     # prepare copy
     email_body = render_email_template(
         TEMPLATE_FILENAME,

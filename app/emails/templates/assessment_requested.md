@@ -22,7 +22,7 @@
 
 Read the [support guides and FAQs](https://marketplace1.zendesk.com/hc/en-gb/categories/115001540368-Seller-guide-and-FAQs) or [contact us](https://marketplace1.zendesk.com/hc/en-gb/requests/new)
 
-Thanks,  
+Thanks,
 The Digital Marketplace team.
 
 [Terms of Use](https://marketplace.service.gov.au/terms-of-use) | [Privacy](https://marketplace.service.gov.au/privacy-policy) | [Copyright](https://marketplace.service.gov.au/copyright)
