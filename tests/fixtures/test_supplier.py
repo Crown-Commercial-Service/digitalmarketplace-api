@@ -235,7 +235,7 @@ def test_supplier_price_update(client, supplier_user, service_type_prices):
         content_type='application/json')
     assert response.status_code == 200
 
-    prices = json.loads(response.data)['prices']
+    prices = json.loads(response.data)['prices'][0]
     assert prices[0]['startDate'] == pendulum.parse(str(date_from)).format('DD/MM/YYYY')
     assert prices[0]['endDate'] == start_date.subtract(days=1).format('DD/MM/YYYY')
     assert prices[0]['price'] == existing_price

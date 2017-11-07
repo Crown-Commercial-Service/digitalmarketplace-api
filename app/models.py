@@ -2602,7 +2602,9 @@ class ServiceTypePrice(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     supplier_code = db.Column(db.Integer, db.ForeignKey('supplier.code'), nullable=False)
     service_type_id = db.Column(db.Integer, db.ForeignKey('service_type.id'), nullable=False)
+    service_type = db.relationship('ServiceType', lazy='joined')
     sub_service_id = db.Column(db.Integer, db.ForeignKey('service_sub_type.id'), nullable=False)
+    service_sub_type = db.relationship('ServiceSubType', lazy='joined')
     region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
     region = db.relationship('Region', lazy='joined')
     service_type_price_ceiling_id = db.Column(db.Integer,

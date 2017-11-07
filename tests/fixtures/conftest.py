@@ -305,6 +305,7 @@ def service_type_prices(app, request, regions, services, suppliers):
             sub_service_id=2,
             region_id=2,
             supplier_code=2,
+            service_type_price_ceiling_id=1,
             price=200.90,
             date_from=pendulum.Date.today(),
             date_to='1/1/2050'

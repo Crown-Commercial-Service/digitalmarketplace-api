@@ -8,6 +8,7 @@ from app.models import db, ServiceType, ServiceSubType, ServiceTypePrice, Suppli
 from app.auth.helpers import role_required, abort, parse_date
 from itertools import groupby
 from app.swagger import swag
+from app.emails.prices import send_price_change_email
 
 
 @auth.route('/supplier', methods=['GET'])
@@ -253,7 +254,6 @@ def update_supplier_price():
         start_date = p.get('startDate')
         end_date = p.get('endDate', '')
         price = p.get('price')
-
         date_from = parse_date(start_date)
 
         if end_date:
@@ -271,16 +271,16 @@ def update_supplier_price():
             abort('price must be less than capPrice: {}'.format(price))
 
         existing_price.date_to = date_from.subtract(days=1)
-        price = add_price(existing_price, date_from, date_to, price)
-        results.append(existing_price)
-        results.append(price)
+        new_price = add_price(existing_price, date_from, date_to, price)
+        trailing_price = add_price(new_price, date_to.add(days=1),
+                                   pendulum.Date.create(2050, 1, 1), existing_price.price)\
+            if end_date else None
 
-        if end_date:
-            trailing_price = add_price(price, date_to.add(days=1),
-                                       pendulum.Date.create(2050, 1, 1), existing_price.price)
-            results.append(trailing_price)
+        results.append([x for x in [existing_price, new_price, trailing_price] if x is not None])
 
     db.session.commit()
+    send_price_change_email(results)
+
     return jsonify(prices=results)
 
 
