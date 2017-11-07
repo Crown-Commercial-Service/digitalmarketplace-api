@@ -463,9 +463,9 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
                 **payload
             )
 
-    def _post_service_update(self, service_data, service_id=None):
+    def _post_service_update(self, service_data, service_id=None, by_admin=False):
         return self.client.post(
-            '/services/{}'.format(service_id or self.service_id),
+            '/services/{}{}'.format(service_id or self.service_id, '?by_admin=True' if by_admin else ''),
             data=json.dumps({
                 'updated_by': 'joeblogs',
                 'services': service_data
@@ -552,6 +552,22 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
             update_event = data['auditEvents'][0]
             assert update_event['type'] == 'update_service'
+            assert update_event['user'] == 'joeblogs'
+            assert update_event['data']['serviceId'] == self.service_id
+
+    def test_valid_service_update_by_admin_creates_audit_event(self):
+        with self.app.app_context():
+            response = self._post_service_update({'serviceName': 'new service name'}, by_admin=True)
+            assert response.status_code == 200
+
+            audit_response = self.client.get('/audit-events')
+            assert audit_response.status_code == 200
+            data = json.loads(audit_response.get_data())
+
+            assert len(data['auditEvents']) == 1
+
+            update_event = data['auditEvents'][0]
+            assert update_event['type'] == 'update_service_admin'
             assert update_event['user'] == 'joeblogs'
             assert update_event['data']['serviceId'] == self.service_id
 

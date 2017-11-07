@@ -144,8 +144,8 @@ def update_service(service_id):
 
     updated_service = update_and_validate_service(service, update)
 
-    commit_and_archive_service(updated_service, update_details,
-                               AuditTypes.update_service)
+    audit_type = AuditTypes.update_service_admin if request.args.get('by_admin') else AuditTypes.update_service
+    commit_and_archive_service(updated_service, update_details, audit_type)
     index_service(updated_service)
 
     return jsonify(message="done"), 200
