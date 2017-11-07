@@ -183,7 +183,7 @@ def send_assessment_requested_notification(assessment, requested_by):
     brief_deadline = df.datetimeformat(brief.applications_closed_at).replace('(', '').replace(')', '')
     email_addresses = list(set([supplier.contacts[0].email, requested_by]))
 
-    subject = "Your request for assessment in {}".format(assessment.supplier_domain.domain.name)
+    subject = "{} assessment requested".format(assessment.supplier_domain.domain.name)
     # prepare copy
     email_body = render_email_template(
         TEMPLATE_FILENAME,
