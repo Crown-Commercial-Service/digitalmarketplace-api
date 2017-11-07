@@ -291,21 +291,15 @@ class FixtureMixin(object):
     def create_direct_award_project(self, user_id, project_id=1, project_name=DIRECT_AWARD_PROJECT_NAME,
                                     created_at=DIRECT_AWARD_FROZEN_TIME):
         with self.app.app_context():
-            if DirectAwardProject.query.get(project_id):
-                return project_id
+            project = DirectAwardProject.query.get(project_id)
+            if not project:
+                project = DirectAwardProject(id=project_id, name=project_name, created_at=created_at)
+                db.session.add(project)
+                db.session.flush()
 
-            db.session.add(DirectAwardProject(
-                id=project_id,
-                name=project_name,
-                created_at=created_at
-            ))
-            db.session.flush()
-
-            db.session.add(DirectAwardProjectUser(
-                user_id=user_id,
-                project_id=project_id
-            ))
-            db.session.commit()
+                project_user = DirectAwardProjectUser(user_id=user_id, project_id=project_id)
+                db.session.add(project_user)
+                db.session.commit()
 
             return project_id
 
