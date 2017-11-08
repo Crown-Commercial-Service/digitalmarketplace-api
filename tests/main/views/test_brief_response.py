@@ -449,25 +449,27 @@ class TestUpdateBriefResponse(BaseBriefResponseTest):
             assert res.status_code == 400
             assert data == {'error': 'Supplier is not eligible to apply to this brief'}
 
-    def test_can_not_update_brief_response_that_has_already_been_submitted(self, live_dos_framework):
-        # Create dummy brief_response which has been submitted
-        brief_response_id = self.setup_dummy_brief_response(brief_id=self.brief_id)
+    @pytest.mark.parametrize('brief_status', ['closed', 'cancelled', 'unsuccessful', 'withdrawn', 'draft'])
+    def test_cannot_update_brief_response_when_brief_is_not_live(self, live_dos_framework, brief_status):
+        # Create dummy brief and brief_response
+        self.setup_dummy_briefs(1, status=brief_status, brief_start=1234)
+        brief_response_id = self.setup_dummy_brief_response(brief_id=1234)
 
         # Update brief response
         res = self._update_brief_response(brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
         assert res.status_code == 400
         data = json.loads(res.get_data(as_text=True))
-        assert data == {'error': 'Brief response must be a draft'}
+        assert data == {'error': "Brief must have 'live' status for the brief response to be updated"}
 
-    def test_can_not_update_brief_response_that_has_already_been_awarded(self, live_dos_framework):
-        # Create dummy brief_response which has been submitted and awarded
-        brief_response_id = self.setup_dummy_awarded_brief_response(brief_id=111)
+    def test_can_not_submit_a_brief_response_that_already_been_awarded(self, live_dos_framework):
+        # As above, but for an awarded Brief
+        awarded_brief_response_id = self.setup_dummy_awarded_brief_response(brief_id=111)
 
-        # Update brief response
-        res = self._update_brief_response(brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
+        res = self._update_brief_response(awarded_brief_response_id, {'respondToEmailAddress': 'newemail@email.com'})
         assert res.status_code == 400
+
         data = json.loads(res.get_data(as_text=True))
-        assert data == {'error': 'Brief response must be a draft'}
+        assert data == {'error': "Brief must have 'live' status for the brief response to be updated"}
 
     def test_update_brief_response_with_missing_answer_to_page_question_will_error(self, live_dos_framework):
         res = self.client.post(
@@ -569,25 +571,26 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
         res = self._submit_brief_response(100)
         assert res.status_code == 404
 
-    def test_can_not_submit_a_brief_response_that_already_been_submitted(self, live_dos_framework):
-        self._setup_existing_brief_response()
-        res = self._submit_brief_response(self.brief_response_id)
-        assert res.status_code == 200
+    @pytest.mark.parametrize('brief_status', ['draft', 'closed', 'unsuccessful', 'cancelled', 'withdrawn'])
+    def test_can_not_submit_a_brief_response_for_a_non_live_brief(self, live_dos_framework, brief_status):
+        self.setup_dummy_briefs(1, status=brief_status, brief_start=1234)
+        # Create dummy brief_response which has been submitted
+        brief_response_id = self.setup_dummy_brief_response(brief_id=1234)
 
-        repeat_res = self._submit_brief_response(self.brief_response_id)
-        assert repeat_res.status_code == 400
-
-        data = json.loads(repeat_res.get_data(as_text=True))
-        assert data == {'error': 'Brief response must be a draft'}
+        res = self._submit_brief_response(brief_response_id)
+        assert res.status_code == 400
+        data = json.loads(res.get_data(as_text=True))
+        assert data == {'error': "Brief must have 'live' status for the brief response to be submitted"}
 
     def test_can_not_submit_a_brief_response_that_already_been_awarded(self, live_dos_framework):
+        # As above, but for an awarded Brief
         awarded_brief_response_id = self.setup_dummy_awarded_brief_response(brief_id=111)
 
         repeat_res = self._submit_brief_response(awarded_brief_response_id)
         assert repeat_res.status_code == 400
 
         data = json.loads(repeat_res.get_data(as_text=True))
-        assert data == {'error': 'Brief response must be a draft'}
+        assert data == {'error': "Brief must have 'live' status for the brief response to be submitted"}
 
     @pytest.mark.parametrize('framework_status', [i for i in Framework.STATUSES if i not in ['live', 'expired']])
     def test_can_not_submit_a_brief_response_for_a_framework_that_is_not_live_or_expired(
