@@ -38,6 +38,6 @@ def send_price_change_email(prices):
         email_body,
         subject,
         current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
-        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        current_app.config['ORAMS_GENERIC_SUPPORT_NAME'],
         event_description_for_errors='orams price change'
     )

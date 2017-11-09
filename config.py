@@ -84,6 +84,7 @@ class Config:
     DM_GENERIC_NOREPLY_EMAIL = 'no-reply@marketplace.digital.gov.au'
     DM_GENERIC_ADMIN_NAME = 'Digital Marketplace Admin'
     DM_GENERIC_SUPPORT_NAME = 'Digital Marketplace'
+    ORAMS_GENERIC_SUPPORT_NAME = 'ORAMS'
 
     RESET_PASSWORD_EMAIL_NAME = DM_GENERIC_ADMIN_NAME
     RESET_PASSWORD_EMAIL_FROM = 'no-reply@marketplace.digital.gov.au'
