@@ -106,8 +106,8 @@ def update_brief_response(brief_response_id):
     if not brief_service:
         abort(400, "Supplier is not eligible to apply to this brief")
 
-    if brief_response.status != 'draft':
-        abort(400, "Brief response must be a draft")
+    if brief.status is not 'live':
+        abort(400, "Brief must have 'live' status for the brief response to be updated")
 
     if brief.framework.status not in ['live', 'expired']:
         abort(400, "Brief framework must be live or expired")
@@ -155,8 +155,8 @@ def submit_brief_response(brief_response_id):
     if not brief_service:
         abort(400, "Supplier is not eligible to apply to this brief")
 
-    if brief_response.status != 'draft':
-        abort(400, "Brief response must be a draft")
+    if brief.status is not 'live':
+        abort(400, "Brief must have 'live' status for the brief response to be submitted")
 
     if brief.framework.status not in ['live', 'expired']:
         abort(400, "Brief framework must be live or expired")
