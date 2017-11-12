@@ -153,7 +153,8 @@ def test_supplier_services(client, supplier_user, service_type_prices):
 
     services = json.loads(response.data)
     assert services == {'services': [{'id': 1, 'name': 'Service1', 'subCategories': [{'id': 1, 'name': ''}]}],
-                        'supplier': {'abn': '1', 'email': None, 'contact': None, 'name': 'Test Supplier1'}}
+                        'supplier': {'abn': '1', 'email': 'auth@rep.com', 'contact': 'auth rep',
+                                     'name': 'Test Supplier1'}}
 
 
 def test_supplier_service_prices(client, supplier_user, service_type_prices):

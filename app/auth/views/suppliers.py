@@ -118,9 +118,9 @@ def supplier_services():
     supplier_json = supplier.serializable
     return jsonify(services=result,
                    supplier=dict(name=supplier_json['name'], abn=supplier_json['abn'],
-                                 email=None if 'contact_email' not in supplier_json else supplier_json['contact_email'],
-                                 contact=None if 'contact_name' not in supplier_json
-                                 else supplier_json['contact_name']))
+                                 email=None if not supplier_json['contacts'] else supplier_json['contacts'][0]['email'],
+                                 contact=None if not supplier_json['contacts']
+                                 else supplier_json['contacts'][0]['name']))
 
 
 @auth.route('/supplier/services/<service_type_id>/categories/<category_id>/prices', methods=['GET'])
