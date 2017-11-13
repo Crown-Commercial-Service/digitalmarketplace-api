@@ -62,25 +62,28 @@ def list_assessments():
     assessments = db.session.query(
         Assessment
     ).options(
-        joinedload(Assessment.briefs)
-    ).join(
-        SupplierDomain
+        joinedload(Assessment.briefs), joinedload(Assessment.supplier_domain)
+    ).filter(
+        Assessment.active
+    ).outerjoin(
+        SupplierDomain, Assessment.supplier_domain_id == SupplierDomain.id
     ).filter(
         SupplierDomain.status == 'unassessed'
     )
     result = []
     for assessment in assessments:
-        row = {"id": assessment.id, "active": assessment.active,
-               "created_at": assessment.created_at,
-               "supplier_domain": {"status": assessment.supplier_domain.status,
-                                   "domain": assessment.supplier_domain.domain.serializable,
-                                   "supplier": {"name": assessment.supplier_domain.supplier.name,
-                                                "code": assessment.supplier_domain.supplier.code}},
-               "briefs": [{"title": brief.data['title'],
+        row = {"id": assessment.id, "active": assessment.active, "created_at": assessment.created_at,
+               "briefs": [{"id": brief.id, "title": brief.data['title'],
                            "dates": {"closing_date": str(brief.applications_closing_date)}}
-                          for brief in assessment.briefs]
+                          for brief in assessment.briefs],
+               'supplier_domain': {"status": assessment.supplier_domain.status,
+                                   "domain": {"name": assessment.supplier_domain.domain.name},
+                                   'supplier': {"name": assessment.supplier_domain.supplier.name,
+                                                "code": assessment.supplier_domain.supplier.code}
+                                   }
                }
-        result.append(row)
+        if assessment.supplier_domain.status == 'unassessed':
+            result.append(row)
 
     return jsonify(assessments=result), 200
 

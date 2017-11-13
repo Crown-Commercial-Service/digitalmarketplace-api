@@ -864,7 +864,7 @@ class Domain(db.Model):
     name = db.Column(db.String, nullable=False)
     ordering = db.Column(db.Integer, nullable=False)
 
-    suppliers = relationship("SupplierDomain", back_populates="domain")
+    suppliers = relationship("SupplierDomain", back_populates="domain", lazy='joined')
     assoc_suppliers = association_proxy('suppliers', 'supplier')
 
     @staticmethod
