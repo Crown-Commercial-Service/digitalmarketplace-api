@@ -36,7 +36,7 @@ class Config:
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace'
 
-    DM_DATABASE_OBSCURING_KEY = '00'
+    DM_DATABASE_IDENTIFIER_OBSCURING_KEY = '00'
 
     DM_FAILED_LOGIN_LIMIT = 5
 

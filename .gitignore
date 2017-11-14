@@ -4,6 +4,8 @@ venv*
 __pycache__
 version_label
 .cache
+.idea/*
+.envrc
 
 # local environment customizations
 local.nix

@@ -5,13 +5,13 @@ from sqlalchemy.orm import validates
 from flask import current_app
 
 from app import db
-from app.models.mixins import DataObscuringMixin
+from app.models.mixins import IdentifierObscuringMixin
 from app.url_utils import force_relative_url
 from app.models import User, ValidationError, ArchivedService
 from dmutils.formats import DATETIME_FORMAT
 
 
-class DirectAwardProject(db.Model, DataObscuringMixin):
+class DirectAwardProject(db.Model, IdentifierObscuringMixin):
     __tablename__ = 'direct_award_projects'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -25,7 +25,7 @@ class DirectAwardProject(db.Model, DataObscuringMixin):
 
     def serialize(self, with_users=False):
         data = {
-            "id": self.obscure(self.id),
+            "id": self.obscured_id,
             "name": self.name,
             "createdAt": self.created_at.strftime(DATETIME_FORMAT),
             "lockedAt": self.locked_at.strftime(DATETIME_FORMAT) if self.locked_at is not None else None,

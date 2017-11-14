@@ -6,8 +6,13 @@ from flask import abort
 import hashlib
 import math
 
+from sqlalchemy import event
 
-class DataObscuringMixin:
+
+class IdentifierObscuringMixin:
+    from app import db
+    obscured_id = db.Column(db.Text)
+
     @staticmethod
     def __pad_as_bytes(val):
         """Converts an int to its equivalent in bytes and prepends with \x00 bytes until it's a multiple of 8 bytes
@@ -29,7 +34,7 @@ class DataObscuringMixin:
         'randomising' element."""
         from application import application
 
-        shared_obscuring_key = int(application.config['DM_DATABASE_OBSCURING_KEY'], 16)
+        shared_obscuring_key = int(application.config['DM_DATABASE_IDENTIFIER_OBSCURING_KEY'], 16)
         database_obscuring_key = int(hashlib.sha256(cls.__name__.encode('utf-8')).hexdigest(), 16)
 
         derived_key = (shared_obscuring_key ^ database_obscuring_key).to_bytes(32, 'big')
@@ -45,7 +50,7 @@ class DataObscuringMixin:
         not aim to provide strong cryptographic integrity."""
         encryptor = cls.__get_cipher().encryptor()
 
-        padded_val = DataObscuringMixin.__pad_as_bytes(original_id)
+        padded_val = IdentifierObscuringMixin.__pad_as_bytes(original_id)
         encrypted_id = encryptor.update(padded_val)
         obscured_id = base64.b32encode(encrypted_id)
         clean_obscured_id = obscured_id.decode('utf-8').strip('=').lower()
@@ -58,7 +63,7 @@ class DataObscuringMixin:
         fails at any point, we will 404, because it indicates an invalid resource."""
         decryptor = cls.__get_cipher().decryptor()
 
-        obscured_id = DataObscuringMixin.__append_equals(clean_obscured_id.upper()).encode('utf-8')
+        obscured_id = IdentifierObscuringMixin.__append_equals(clean_obscured_id.upper()).encode('utf-8')
 
         try:
             encrypted_id = base64.b32decode(obscured_id)
@@ -74,3 +79,18 @@ class DataObscuringMixin:
             return original_id
 
         abort(404)
+
+
+def save_obscured_identifiers():
+    from app import db
+
+    for subclass in IdentifierObscuringMixin.__subclasses__():
+        @event.listens_for(subclass, 'refresh')
+        @event.listens_for(subclass, 'load')
+        def save_obscured_id(target, context, *args, **kwargs):
+            if not target.obscured_id:
+                target.obscured_id = target.obscure(target.id)
+                db.session.add(target)
+                db.session.commit()
+
+                db.session.refresh(target)
