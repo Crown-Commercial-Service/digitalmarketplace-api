@@ -3,7 +3,7 @@ from flask import jsonify, request
 from flask_login import current_user, login_required
 from app.auth import auth
 from app.utils import get_json_from_request
-from app.auth.suppliers import get_supplier, update_supplier_details, valid_supplier, flatten_supplier
+from app.auth.suppliers import get_supplier, update_supplier_details
 from app.models import db, ServiceType, ServiceSubType, ServiceTypePrice, Supplier, Region
 from app.auth.helpers import role_required, abort, parse_date
 from itertools import groupby
@@ -13,27 +13,113 @@ from app.emails.prices import send_price_change_email
 
 @auth.route('/supplier', methods=['GET'])
 @login_required
+@role_required('supplier')
 def get_supplier_profile():
-    if not valid_supplier(current_user):
-        return jsonify(message="Only users with role supplier can access supplier details"), 401
-    else:
-        supplier = get_supplier(current_user.supplier_code)
-        supplier = flatten_supplier(supplier.serializable)
-        return jsonify(user=supplier), 200
+    """Return an authenticated supplier (role=supplier)
+    ---
+    tags:
+      - supplier
+    security:
+      - basicAuth: []
+    definitions:
+      Supplier:
+        type: object
+        properties:
+          abn:
+            type: string
+          address_address_line:
+            type: string
+          address_country:
+            type: string
+          address_postal_code:
+            type: string
+          address_state:
+            type: string
+          address_suburb:
+            type: string
+          category_name:
+            type: string
+          code:
+            type: string
+          contact_email:
+            type: string
+          contact_name:
+            type: string
+          contact_phone:
+            type: string
+          email:
+            type: string
+          id:
+            type: number
+          linkedin:
+            type: string
+          name:
+            type: string
+          phone:
+            type: string
+          regions:
+            type: array
+            items:
+                type: string
+          representative:
+            type: string
+          summary:
+            type: string
+          website:
+            type: string
+    responses:
+      200:
+        description: A supplier
+        type: object
+        properties:
+          user:
+              $ref: '#/definitions/Supplier'
+    """
+    supplier = get_supplier(current_user.supplier_code)
+
+    return jsonify(user=supplier.serializable), 200
+
+
+@auth.route('/supplier/<int:code>', methods=['GET'])
+@login_required
+@role_required('buyer', 'supplier')
+def get_supplier_by_code(code):
+    """Return a supplier (role=[buyer,supplier])
+    ---
+    tags:
+      - supplier
+    security:
+      - basicAuth: []
+    parameters:
+      - name: code
+        in: path
+        type: integer
+        required: true
+        default: all
+    responses:
+      200:
+        description: A supplier
+        type: object
+        schema:
+          $ref: '#/definitions/Supplier'
+    """
+    if current_user.role == 'supplier' and current_user.supplier_code != code:
+        return jsonify(message="Unauthorised to view supplier"), 403
+
+    supplier = get_supplier(code)
+
+    return jsonify(supplier.serializable), 200
 
 
 @auth.route('/supplier', methods=['POST', 'PATCH'])
 @login_required
+@role_required('supplier')
 def update_supplier_profile():
-    if not valid_supplier(current_user):
-        return jsonify(message="Only users with role supplier can update supplier details"), 401
-
     try:
         json_payload = get_json_from_request()
         supplier = update_supplier_details(current_user.supplier_code, **json_payload)
-        supplier = flatten_supplier(supplier.serializable)
 
-        return jsonify(user=supplier), 200
+        return jsonify(user=supplier.serializable), 200
 
     except Exception as error:
         return jsonify(message=error.message), 400
@@ -118,9 +204,8 @@ def supplier_services():
     supplier_json = supplier.serializable
     return jsonify(services=result,
                    supplier=dict(name=supplier_json['name'], abn=supplier_json['abn'],
-                                 email=None if not supplier_json['contacts'] else supplier_json['contacts'][0]['email'],
-                                 contact=None if not supplier_json['contacts']
-                                 else supplier_json['contacts'][0]['name']))
+                                 email=supplier_json.get('email', None),
+                                 contact=supplier_json.get('representative', None)))
 
 
 @auth.route('/supplier/services/<service_type_id>/categories/<category_id>/prices', methods=['GET'])

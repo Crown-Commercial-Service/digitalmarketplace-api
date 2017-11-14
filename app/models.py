@@ -711,6 +711,29 @@ class Supplier(db.Model):
 
         return sorted_uniques(legacy_domains)
 
+    @property
+    def framework_name(self):
+        if self.frameworks:
+            return self.frameworks[0].framework.framework
+
+    @property
+    def category_name(self):
+        price = ServiceTypePrice.query.filter(ServiceTypePrice.supplier_code == self.code).first()
+        if price:
+            return price.service_type.category.name
+
+    @property
+    def regions(self):
+        prices = ServiceTypePrice.query.\
+            join(ServiceTypePrice.region).\
+            filter(ServiceTypePrice.supplier_code == self.code).\
+            distinct(Region.state, Region.name).\
+            order_by(Region.state, Region.name).\
+            all()
+
+        if prices:
+            return ['{} {}'.format(p.region.state, p.region.name) for p in prices]
+
     def get_service_counts(self):
         # FIXME: To be removed from Australian version
         return {}
@@ -772,6 +795,25 @@ class Supplier(db.Model):
             j['case_studies'] = [normalize_key_case(c) for c in j['case_studies']]
         for v in j['signed_agreements']:
             v['agreement'] = Agreement.query.get(v['agreement_id'])
+
+        if self.framework_name == current_app.config['ORAMS_FRAMEWORK']:
+            j['category_name'] = self.category_name
+            j['regions'] = self.regions
+
+            if self.addresses:
+                for k, v in j['address'].items():
+                    if k != 'id':
+                        j['address_' + k] = v
+
+            keys = ['addresses', 'address', 'contacts', 'acn', 'address_links', 'case_studies', 'case_study_ids',
+                    'contact_links', 'domains', 'frameworks', 'extraLinks', 'extra_links', 'is_recruiter',
+                    'lastUpdateTime', 'last_update_time', 'links', 'longName', 'long_name', 'prices', 'products',
+                    'recruiter_info', 'references', 'seller_types', 'signed_agreements', 'supplierCode', 'status',
+                    'text_vector', 'creationTime', 'creation_time', 'description', 'services']
+
+            for k in keys:
+                j.pop(k, None)
+
         return j
 
     def update_from_json_before(self, data):
@@ -798,6 +840,21 @@ class Supplier(db.Model):
                     'phone': data.get('phone')
                 }]
             ]
+
+        if 'address_address_line' in data:
+            data['addresses'] = [
+                dict(country=data.get('address_country', None),
+                     address_line=data.get('address_address_line', None),
+                     postal_code=data.get('address_postal_code', None),
+                     state=data.get('address_state', None),
+                     suburb=data.get('address_suburb', None),
+                     supplier_code=data.get('supplier_code', None))]
+
+            keys = ['address_country', 'address_address_line', 'address_postal_code',
+                    'address_state', 'address_suburb']
+
+            for k in keys:
+                data.pop(k, None)
 
         if 'addresses' in data and isinstance(data['addresses'], list):
             data['addresses'] = [a for a in data['addresses'] if a]

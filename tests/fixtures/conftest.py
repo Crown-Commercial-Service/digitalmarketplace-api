@@ -5,7 +5,8 @@ import pendulum
 
 from app import create_app
 from app.models import db, utcnow, Contact, Supplier, SupplierDomain, User, Brief, ServiceTypePriceCeiling,\
-    Framework, Lot, Domain, Assessment, Application, Region, ServiceType, ServiceTypePrice, ServiceSubType
+    Framework, Lot, Domain, Assessment, Application, Region, ServiceType, ServiceTypePrice, ServiceSubType,\
+    SupplierFramework
 from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, WSGIApplicationWithEnvironment
 
 from sqlbag import temporary_database
@@ -67,6 +68,9 @@ def suppliers(app, request):
             ))
 
             db.session.flush()
+
+        framework = Framework.query.filter(Framework.slug == "orams").first()
+        db.session.add(SupplierFramework(supplier_code=1, framework_id=framework.id))
 
         db.session.commit()
         yield Supplier.query.all()

@@ -207,16 +207,3 @@ def get_framework(framework_slug):
     ).first_or_404()
 
     return jsonify(framework.serialize())
-
-
-@auth.route('/supplier/<int:code>', methods=["GET"])
-@login_required
-def get_supplier(code):
-    if hasattr(current_user, 'role') and (current_user.role == 'supplier' and current_user.supplier_code == code):
-        supplier = Supplier.query.filter(
-            Supplier.code == code
-        ).first_or_404()
-
-        return jsonify(supplier.serialize())
-    else:
-        return abort(make_response(jsonify(errorMessage="Unauthorised to view supplier"), 400))

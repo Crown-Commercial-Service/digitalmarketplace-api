@@ -106,14 +106,23 @@ def test_profile_supplier(client, supplier_user):
     assert res.status_code == 200
     data = json.loads(res.get_data(as_text=True))
     assert data['user']
-    assert data['user']
+
+    res = client.get('/2/supplier/1')
+    assert res.status_code == 200
+
+    res = client.get('/2/supplier/2')
+    data = json.loads(res.get_data(as_text=True))
+    assert res.status_code == 403
 
 
-def test_profile_buyer(client, users):
+def test_profile_buyer(client, users, suppliers):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'test@digital.gov.au', 'password': 'testpassword',
     }), content_type='application/json')
     assert res.status_code == 200
 
     res = client.get('/2/supplier')
-    assert res.status_code == 401
+    assert res.status_code == 403
+
+    res = client.get('/2/supplier/1')
+    assert res.status_code == 200

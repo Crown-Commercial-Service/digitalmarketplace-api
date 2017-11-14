@@ -168,8 +168,8 @@ def get_seller_catalogue_data(service_type_id, region_id):
           suppliers:
             type: array
             items:
-              $ref: '#/definitions/Supplier'
-      Supplier:
+              $ref: '#/definitions/SupplierPrice'
+      SupplierPrice:
         type: object
         properties:
           email:
@@ -220,8 +220,8 @@ def get_seller_catalogue_data(service_type_id, region_id):
             {
                 'price': '{:1,.2f}'.format(price.price),
                 'name': supplier.name,
-                'phone': supplier.data.get('contact_phone'),
-                'email': supplier.data.get('contact_email')
+                'phone': supplier.data.get('contact_phone', None),
+                'email': supplier.data.get('contact_email', None)
             }
         ))
 
