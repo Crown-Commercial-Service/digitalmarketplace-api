@@ -732,7 +732,7 @@ class Supplier(db.Model):
             all()
 
         if prices:
-            return ['{} {}'.format(p.region.state, p.region.name) for p in prices]
+            return [dict(state=p.region.state, name=p.region.name) for p in prices]
 
     def get_service_counts(self):
         # FIXME: To be removed from Australian version
@@ -861,6 +861,12 @@ class Supplier(db.Model):
 
         if 'products' in data and isinstance(data['products'], list):
             data['products'] = [a for a in data['products'] if a]
+
+        if 'regions' in data:
+            del data['regions']
+
+        if 'category_name' in data:
+            del data['category_name']
 
         overridden = [
             'longName',

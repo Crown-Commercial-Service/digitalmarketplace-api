@@ -60,7 +60,12 @@ def get_supplier_profile():
           regions:
             type: array
             items:
-                type: string
+                type: object
+                properties:
+                  name:
+                    type: string
+                  state:
+                    type: string
           representative:
             type: string
           summary:

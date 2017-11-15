@@ -180,6 +180,8 @@ def get_seller_catalogue_data(service_type_id, region_id):
             type: string
           price:
             type: string
+          code:
+            type: integer
       Alert:
         type: object
         properties:
@@ -221,7 +223,8 @@ def get_seller_catalogue_data(service_type_id, region_id):
                 'price': '{:1,.2f}'.format(price.price),
                 'name': supplier.name,
                 'phone': supplier.data.get('contact_phone', None),
-                'email': supplier.data.get('contact_email', None)
+                'email': supplier.data.get('contact_email', None),
+                'code': supplier.code
             }
         ))
 
