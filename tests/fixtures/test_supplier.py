@@ -164,3 +164,15 @@ def test_supplier_price_update(client, supplier_user, service_type_prices):
     assert prices[2]['startDate'] == end_date.add(days=1).format('DD/MM/YYYY')
     assert prices[2]['endDate'] == pendulum.create(2050, 1, 1).format('DD/MM/YYYY')
     assert prices[2]['price'] == existing_price
+
+
+def test_list_suppliers(client, users, service_type_prices):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'test@digital.gov.au', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    response = client.get('/2/suppliers')
+    assert response.status_code == 200
+    assert json.loads(response.data) == {'categories': [{'suppliers': [{'code': 1, 'name': 'Test Supplier1'}],
+                                                         'name': 'Medical'}]}

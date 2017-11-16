@@ -1,5 +1,4 @@
 import random
-import uuid
 from datetime import datetime
 from decimal import InvalidOperation
 from workdays import workday
@@ -10,7 +9,6 @@ import six
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
-import flask_featureflags as feature
 
 from six import string_types, text_type, binary_type
 
@@ -28,7 +26,7 @@ from sqlalchemy.sql.expression import cast as sql_cast
 from sqlalchemy.types import String, Date, Integer, Interval
 from sqlalchemy_utils import generic_relationship
 from sqlalchemy.schema import Sequence
-from dmutils.data_tools import ValidationError, normalise_abn, normalise_acn, parse_money
+from dmutils.data_tools import ValidationError, normalise_acn, parse_money
 from dmapiclient.audit import AuditTypes
 
 from . import db
@@ -46,11 +44,9 @@ from .datetime_utils import DateTime, utcnow, parse_interval, is_textual, \
 
 import pendulum
 
-from functools import partial
-
 from .jiraapi import get_marketplace_jira
 from .modelsbase import normalize_key_case
-from .utils import sorted_uniques, log
+from .utils import sorted_uniques
 
 
 with io.open('data/domain_mapping_old_to_new.yaml') as f:
@@ -712,9 +708,9 @@ class Supplier(db.Model):
         return sorted_uniques(legacy_domains)
 
     @property
-    def framework_name(self):
+    def framework_names(self):
         if self.frameworks:
-            return self.frameworks[0].framework.framework
+            return [f.framework.framework for f in self.frameworks]
 
     @property
     def category_name(self):
@@ -796,7 +792,7 @@ class Supplier(db.Model):
         for v in j['signed_agreements']:
             v['agreement'] = Agreement.query.get(v['agreement_id'])
 
-        if self.framework_name == current_app.config['ORAMS_FRAMEWORK']:
+        if self.framework_names and current_app.config['ORAMS_FRAMEWORK'] in self.framework_names:
             j['category_name'] = self.category_name
             j['regions'] = self.regions
 

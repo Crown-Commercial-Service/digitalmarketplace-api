@@ -4,11 +4,13 @@ from flask_login import current_user, login_required
 from app.auth import auth
 from app.utils import get_json_from_request
 from app.auth.suppliers import get_supplier, update_supplier_details
-from app.models import db, ServiceType, ServiceSubType, ServiceTypePrice, Supplier, Region
+from app.models import db, ServiceType, ServiceSubType, ServiceTypePrice, Supplier, Region, SupplierFramework,\
+    ServiceCategory, Framework
 from app.auth.helpers import role_required, abort, parse_date
 from itertools import groupby
 from app.swagger import swag
 from app.emails.prices import send_price_change_email
+from operator import itemgetter
 
 
 @auth.route('/supplier', methods=['GET'])
@@ -390,3 +392,61 @@ def add_price(existing_price, date_from, date_to, price):
     db.session.flush()
 
     return new_price
+
+
+@auth.route('/suppliers', methods=['GET'])
+@login_required
+@role_required('buyer')
+def get_all_suppliers():
+    """Return the suppliers by category (role=buyer)
+    ---
+    tags:
+      - supplier
+    security:
+      - basicAuth: []
+    responses:
+      200:
+        description: A supplier
+        type: object
+        properties:
+          categories:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                suppliers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      code:
+                        type: integer
+                      name:
+                        type: string
+    """
+    suppliers = db.session.query(ServiceCategory.name.label('category_name'), Supplier.code, Supplier.name)\
+        .select_from(Supplier)\
+        .join(SupplierFramework, Supplier.code == SupplierFramework.supplier_code)\
+        .join(Framework, SupplierFramework.framework_id == Framework.id)\
+        .join(ServiceTypePrice, ServiceTypePrice.supplier_code == Supplier.code)\
+        .join(ServiceType, ServiceType.id == ServiceTypePrice.service_type_id)\
+        .join(ServiceCategory, ServiceCategory.id == ServiceType.category_id)\
+        .group_by(ServiceCategory.name, Supplier.code, Supplier.name)\
+        .order_by(ServiceCategory.name, Supplier.name)\
+        .all()
+
+    suppliers_json = [dict(category_name=s.category_name, name=s.name, code=s.code) for s in suppliers]
+
+    result = []
+    for key, group in groupby(suppliers_json, key=itemgetter('category_name')):
+        result.append(dict(name=key, suppliers=list(remove('category_name', group))))
+
+    return jsonify(categories=result), 200
+
+
+def remove(key, group):
+    for item in group:
+        del item[key]
+        yield item
