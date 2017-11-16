@@ -12,7 +12,7 @@ from ...utils import (
     purge_nulls_from_data
 )
 from ...service_utils import validate_and_return_lot, filter_services
-from ...brief_utils import validate_brief_data
+from ...brief_utils import index_brief, validate_brief_data
 from ...validation import get_validation_errors
 
 
@@ -227,6 +227,7 @@ def update_brief_status(brief_id, action):
         db.session.add(brief)
         db.session.add(audit)
         db.session.commit()
+        index_brief(brief)
 
     return jsonify(briefs=brief.serialize()), 200
 
@@ -335,6 +336,7 @@ def award_brief_details(brief_id, brief_response_id):
 
     db.session.add_all([brief_response, audit_event])
     db.session.commit()
+    index_brief(brief)
 
     return jsonify(briefs=brief.serialize()), 200
 
