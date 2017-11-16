@@ -130,4 +130,4 @@ def test_json_has_keys():
         ({'key1': 'value1'}, [], [], False),
         ({'key1': 'value1'}, [], ['key2'], False),
     ]:
-        yield check, data, data_required_keys, data_optional_keys, result
+        check(data, data_required_keys, data_optional_keys, result)

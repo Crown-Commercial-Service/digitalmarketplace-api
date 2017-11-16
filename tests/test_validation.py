@@ -5,7 +5,7 @@ import json
 
 import pytest
 import mock
-from nose.tools import assert_equal, assert_in, assert_not_in
+from nose.tools import assert_equal
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.utils import drop_foreign_fields
@@ -49,7 +49,7 @@ def test_for_valid_date():
     ]
 
     for example, expected in cases:
-        yield assert_equal, is_valid_date(example), expected, example
+        assert is_valid_date(example) == expected
 
 
 def test_for_valid_acknowledged_state():
@@ -62,7 +62,7 @@ def test_for_valid_acknowledged_state():
     ]
 
     for example, expected in cases:
-        yield assert_equal, is_valid_acknowledged_state(example), expected
+        assert is_valid_acknowledged_state(example) == expected
 
 
 def test_for_valid_service_id():
@@ -81,7 +81,7 @@ def test_for_valid_service_id():
     ]
 
     for example, expected in cases:
-        yield assert_equal, is_valid_service_id(example), expected, example
+        assert is_valid_service_id(example) == expected
 
 
 def test_for_valid_string():
@@ -98,15 +98,14 @@ def test_for_valid_string():
     ]
 
     for example, min, max, expected in cases:
-        yield assert_equal, is_valid_string(
-            example, min, max), expected, example
+        assert is_valid_string(example, min, max) == expected
 
 
 def test_all_schemas_are_valid():
     for file_name in os.listdir('json_schemas'):
         file_path = 'json_schemas/%s' % file_name
         if os.path.isfile(file_path) and file_path.endswith(".json"):
-            yield check_schema_file, file_path
+            check_schema_file(file_path)
 
 
 def test_updater_json_validates_correctly():
@@ -215,7 +214,7 @@ def test_user_creation_validates():
 
     for example, expected, message in case:
         result = validates_against_schema('users', example)
-        yield assert_equal, result, expected, message
+        assert result == expected
 
 
 def test_auth_user_validates():
@@ -244,7 +243,7 @@ def test_auth_user_validates():
 
     for example, expected, message in case:
         result = validates_against_schema('users-auth', example)
-        yield assert_equal, result, expected, message
+        assert result == expected
 
 
 def test_valid_g4_service_has_no_validation_errors():
@@ -393,11 +392,11 @@ def test_price_not_money_format_validation_error():
         assert field in errs
         assert "not_money_format" in errs[field]
 
-    yield check_min_price_error, 'priceMin', ""
+    check_min_price_error('priceMin', "")
 
     for case in cases:
-        yield check_min_price_error, 'priceMin', case
-        yield check_min_price_error, 'priceMax', case
+        check_min_price_error('priceMin', case)
+        check_min_price_error('priceMax', case)
 
 
 def test_price_not_money_format_valid_cases():
@@ -416,11 +415,11 @@ def test_price_not_money_format_valid_cases():
         errs = get_validation_errors("services-g-cloud-7-scs", data)
         assert "not_money_format" not in errs.get(field, "")
 
-    yield check_min_price_valid, 'priceMax', ""
+    check_min_price_valid('priceMax', "")
 
     for case in cases:
-        yield check_min_price_valid, 'priceMin', case
-        yield check_min_price_valid, 'priceMax', case
+        check_min_price_valid('priceMin', case)
+        check_min_price_valid('priceMax', case)
 
 
 def test_min_price_larger_than_max_price_causes_validation_error():
@@ -431,7 +430,7 @@ def test_min_price_larger_than_max_price_causes_validation_error():
         data.update({"priceMax": price_max})
         errs = get_validation_errors("services-g-cloud-7-scs", data)
 
-        yield assert_in, 'max_less_than_min', errs['priceMax']
+        assert 'max_less_than_min' == errs['priceMax']
 
 
 def test_max_price_larger_than_min_price():
@@ -442,7 +441,7 @@ def test_max_price_larger_than_min_price():
         data.update({"priceMax": price_max})
         errs = get_validation_errors("services-g-cloud-7-scs", data)
 
-        yield assert_not_in, 'priceMax', errs
+        assert 'priceMax' not in errs
 
 
 def test_max_price_larger_than_min_price_with_multiple_price_fields():
@@ -606,37 +605,37 @@ def test_g9_followup_questions():
 
         # Valid responses for boolean question with followup
 
-        yield check, schema_name, ["freeVersionTrial"], {
+        check(schema_name, ["freeVersionTrial"], {
             "freeVersionTrialOption": False
-        }, {}
+        }, {})
 
-        yield check, schema_name, ["freeVersionTrialOption"], {
+        check(schema_name, ["freeVersionTrialOption"], {
             "freeVersionTrialOption": True,
             "freeVersionDescription": "description",
             "freeVersionLink": "https://gov.uk",
-        }, {}
+        }, {})
 
         # Missing followup answers
 
-        yield check, schema_name, ["freeVersionTrialOption"], {
+        check(schema_name, ["freeVersionTrialOption"], {
             "freeVersionTrialOption": True,
         }, {
             "freeVersionDescription": "answer_required",
-        }
+        })
 
-        yield check, schema_name, ["freeVersionTrialOption"], {
+        check(schema_name, ["freeVersionTrialOption"], {
             "freeVersionTrialOption": True,
             "freeVersionLink": "https://gov.uk",
         }, {
             "freeVersionDescription": "answer_required",
-        }
+        })
 
         # Missing followup question is not required if it's optional
 
-        yield check, schema_name, ["freeVersionTrialOption"], {
+        check(schema_name, ["freeVersionTrialOption"], {
             "freeVersionTrialOption": True,
             "freeVersionDescription": "description",
-        }, {}
+        }, {})
 
         # Followup answers when none should be present. These return the original
         # schema error since they shouldn't happen when request is coming from the
@@ -646,51 +645,51 @@ def test_g9_followup_questions():
             "freeVersionTrialOption": False,
             "freeVersionLink": "https://gov.uk",
         }
-        yield check, schema_name, ["freeVersionTrialOption"], data, {
+        check(schema_name, ["freeVersionTrialOption"], data, {
             '_form': [u'{} is not valid under any of the given schemas'.format(data)]
-        }
+        })
 
         data = {
             "freeVersionTrialOption": False,
             "freeVersionDescription": "description",
         }
-        yield check, schema_name, ["freeVersionTrialOption"], data, {
+        check(schema_name, ["freeVersionTrialOption"], data, {
             '_form': [u'{} is not valid under any of the given schemas'.format(data)]
-        }
+        })
 
         # Followup answers when the original question answer is missing
 
-        yield check, schema_name, ["freeVersionTrialOption"], {
+        check(schema_name, ["freeVersionTrialOption"], {
             "freeVersionDescription": "description",
             "freeVersionLink": "https://gov.uk",
-        }, {"freeVersionTrialOption": "answer_required"}
+        }, {"freeVersionTrialOption": "answer_required"})
 
         # Valid responses for checkbox question with followups
 
-        yield check, schema_name, ["securityGovernanceStandards"], {
+        check(schema_name, ["securityGovernanceStandards"], {
             "securityGovernanceAccreditation": True,
             "securityGovernanceStandards": ["csa_ccm"]
-        }, {}
+        }, {})
 
-        yield check, schema_name, ["securityGovernanceStandards"], {
+        check(schema_name, ["securityGovernanceStandards"], {
             "securityGovernanceAccreditation": False,
             "securityGovernanceApproach": "some other approach"
-        }, {}
+        }, {})
 
-        yield check, schema_name, ["securityGovernanceStandards"], {
+        check(schema_name, ["securityGovernanceStandards"], {
             "securityGovernanceAccreditation": True,
             "securityGovernanceStandards": ["csa_ccm", "other"],
             "securityGovernanceStandardsOther": "some other standards"
-        }, {}
+        }, {})
 
         # Missing followup answers for checkbox question
 
-        yield check, schema_name, ["securityGovernanceStandards"], {
+        check(schema_name, ["securityGovernanceStandards"], {
             "securityGovernanceAccreditation": True,
             "securityGovernanceStandards": ["csa_ccm", "other"]
         }, {
             "securityGovernanceStandardsOther": "answer_required"
-        }
+        })
 
         # Followup answers when none should be present
 
@@ -699,23 +698,23 @@ def test_g9_followup_questions():
             "securityGovernanceStandards": ["csa_ccm"],
             "securityGovernanceStandardsOther": "some other standards"
         }
-        yield check, schema_name, ["securityGovernanceStandards"], data, {
+        check(schema_name, ["securityGovernanceStandards"], data, {
             "_form": [u'{} is not valid under any of the given schemas'.format(data)]
-        }
+        })
 
         # Followup answers when the original question answer is missing
 
-        yield check, schema_name, ["securityGovernanceAccreditation"], {
+        check(schema_name, ["securityGovernanceAccreditation"], {
             "securityGovernanceStandards": ["csa_ccm"]
         }, {
             "securityGovernanceAccreditation": "answer_required"
-        }
+        })
 
-        yield check, schema_name, ["securityGovernanceStandards"], {
+        check(schema_name, ["securityGovernanceStandards"], {
             "securityGovernanceStandardsOther": "some other standards"
         }, {
             "securityGovernanceStandards": "answer_required"
-        }
+        })
 
 
 def test_api_type_is_optional():
