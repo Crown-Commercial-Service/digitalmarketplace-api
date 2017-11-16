@@ -464,15 +464,16 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             )
 
     def _post_service_update(self, service_data, service_id=None, user_role=None):
-        return self.client.post(
-            '/services/{}{}'.format(
-                service_id or self.service_id, '?user-role={}'.format(user_role) if user_role else ''
-            ),
-            data=json.dumps({
-                'updated_by': 'joeblogs',
-                'services': service_data
-            }),
-            content_type='application/json')
+        with mock.patch('app.main.views.services.index_service'):
+            return self.client.post(
+                '/services/{}{}'.format(
+                    service_id or self.service_id, '?user-role={}'.format(user_role) if user_role else ''
+                ),
+                data=json.dumps({
+                    'updated_by': 'joeblogs',
+                    'services': service_data
+                }),
+                content_type='application/json')
 
     def test_can_not_post_to_root_services_url(self):
         response = self.client.post(
@@ -747,7 +748,8 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
         assert data['services']['status'] == 'published'
 
-    def test_should_update_service_with_valid_statuses(self):
+    @mock.patch('app.main.views.services.index_service')
+    def test_should_update_service_with_valid_statuses(self, index_service):
         valid_statuses = ServiceTableMixin.STATUSES
 
         for status in valid_statuses:
@@ -848,11 +850,16 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
                 assert key not in service.data
 
 
-@mock.patch('app.service_utils.search_api_client')
+@mock.patch('app.utils.search_api_client')
 class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
     def setup(self):
         super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
         with self.app.app_context():
+            self.app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'] = {
+                'g-cloud-6': {
+                    'services': 'g-cloud-6'
+                }
+            }
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
@@ -875,9 +882,10 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
                 content_type='application/json')
 
             search_api_client.index.assert_called_with(
-                index='g-cloud-6',
-                service_id="1234567890123456",
-                service=json.loads(response.get_data())['services']
+                index_name='g-cloud-6',
+                object_type='services',
+                object_id="1234567890123456",
+                serialized_object=json.loads(response.get_data())['services']
             )
 
     def test_should_not_index_on_service_on_expired_frameworks(
@@ -918,7 +926,7 @@ class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
             assert response.status_code == 201
 
 
-@mock.patch('app.service_utils.search_api_client')
+@mock.patch('app.utils.search_api_client')
 class TestShouldCallSearchApiOnPost(BaseApplicationTest, FixtureMixin):
 
     payload = None
@@ -941,6 +949,11 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, FixtureMixin):
                 service_id=self.payload_g4['id'],
                 **self.payload_g4
             )
+            self.app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'] = {
+                'g-cloud-6': {
+                    'services': 'g-cloud-6'
+                }
+            }
 
     def test_should_index_on_service_post(self, search_api_client):
         with self.app.app_context():
@@ -956,9 +969,10 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest, FixtureMixin):
                 content_type='application/json')
 
             search_api_client.index.assert_called_with(
-                index='g-cloud-6',
-                service_id=self.payload['id'],
-                service=mock.ANY
+                index_name='g-cloud-6',
+                object_type='services',
+                object_id=self.payload['id'],
+                serialized_object=mock.ANY
             )
 
     @mock.patch('app.service_utils.db.session.commit')
@@ -1025,6 +1039,11 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, FixtureMixi
         valid_statuses = ServiceTableMixin.STATUSES
 
         with self.app.app_context():
+            self.app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'] = {
+                'g-cloud-6': {
+                    'services': 'g-cloud-6'
+                }
+            }
             db.session.add(
                 Supplier(supplier_id=1, name=u"Supplier 1")
             )
@@ -1055,50 +1074,50 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, FixtureMixi
                             service_is_indexed, service_is_deleted,
                             expected_status_code):
 
-        with mock.patch('app.service_utils.search_api_client') \
-                as search_api_client:
+        with mock.patch('app.utils.search_api_client') as utils_search_api_client:
+            with mock.patch('app.service_utils.search_api_client') as service_utils_search_api_client:
+                utils_search_api_client.index.return_value = True
+                service_utils_search_api_client.delete.return_value = True
 
-            search_api_client.index.return_value = True
-            search_api_client.delete.return_value = True
-
-            response = self.client.post(
-                '/services/{0}/status/{1}'.format(
-                    self.services[old_status]['id'],
-                    new_status
-                ),
-                data=json.dumps(
-                    {'updated_by': 'joeblogs'}),
-                content_type='application/json'
-            )
-
-            # Check response after posting an update
-            assert response.status_code == expected_status_code
-
-            # Exit function if update was not successful
-            if expected_status_code != 200:
-                return
-
-            service = self._get_service_from_database_by_service_id(
-                self.services[old_status]['id'])
-
-            # Check that service in database has been updated
-            assert new_status == service.status
-
-            # Check that search_api_client is doing the right thing
-            if service_is_indexed:
-                search_api_client.index.assert_called_with(
-                    index=service.framework.slug,
-                    service_id=service.service_id,
-                    service=json.loads(response.get_data())['services']
+                response = self.client.post(
+                    '/services/{0}/status/{1}'.format(
+                        self.services[old_status]['id'],
+                        new_status
+                    ),
+                    data=json.dumps(
+                        {'updated_by': 'joeblogs'}),
+                    content_type='application/json'
                 )
-            else:
-                assert not search_api_client.index.called
 
-            if service_is_deleted:
-                search_api_client.delete.assert_called_with(index=service.framework.slug,
-                                                            service_id=service.service_id)
-            else:
-                assert not search_api_client.delete.called
+                # Check response after posting an update
+                assert response.status_code == expected_status_code
+
+                # Exit function if update was not successful
+                if expected_status_code != 200:
+                    return
+
+                service = self._get_service_from_database_by_service_id(
+                    self.services[old_status]['id'])
+
+                # Check that service in database has been updated
+                assert new_status == service.status
+
+                # Check that search_api_client is doing the right thing
+                if service_is_indexed:
+                    utils_search_api_client.index.assert_called_with(
+                        index_name=service.framework.slug,
+                        object_type='services',
+                        object_id=service.service_id,
+                        serialized_object=json.loads(response.get_data())['services']
+                    )
+                else:
+                    assert not utils_search_api_client.index.called
+
+                if service_is_deleted:
+                    service_utils_search_api_client.delete.assert_called_with(index=service.framework.slug,
+                                                                              service_id=service.service_id)
+                else:
+                    assert not service_utils_search_api_client.delete.called
 
     def test_should_index_on_service_status_changed_to_published(self):
 
@@ -1186,6 +1205,11 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             # need a supplier_id of '1' because our service has it hardcoded
             self.setup_dummy_suppliers(2)
             db.session.commit()
+            self.app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'] = {
+                'g-cloud-6': {
+                    'services': 'g-cloud-6'
+                }
+            }
 
     def test_json_postgres_data_column_should_not_include_column_fields(self):
         non_json_fields = [
@@ -1694,11 +1718,16 @@ class TestGetService(BaseApplicationTest):
         assert data['serviceMadeUnavailableAuditEvent']['data']['update']['status'] == 'expired'
 
 
-@mock.patch('app.service_utils.search_api_client', autospec=True)
+@mock.patch('app.utils.search_api_client', autospec=True)
 class TestRevertService(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestRevertService, self).setup()
         with self.app.app_context():
+            self.app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'] = {
+                'g-cloud-7': {
+                    'services': 'g-cloud-7'
+                }
+            }
             self.set_framework_status("g-cloud-7", "live")
             self.supplier_ids = self.setup_dummy_suppliers(2)
             g7_scs = load_example_listing("G7-SCS")
@@ -1816,8 +1845,9 @@ class TestRevertService(BaseApplicationTest, FixtureMixin):
             assert ArchivedService.query.count() == 5
             assert search_api_client.index.call_args_list == [
                 ((), {
-                    "index": "g-cloud-7",
-                    "service_id": "1234123412340001",
-                    "service": mock.ANY,
+                    "index_name": "g-cloud-7",
+                    "object_type": "services",
+                    "object_id": "1234123412340001",
+                    "serialized_object": mock.ANY,
                 })
             ]

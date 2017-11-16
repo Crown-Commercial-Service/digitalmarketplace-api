@@ -780,34 +780,35 @@ class TestDirectAwardLockProject(DirectAwardSetupAndTeardown, FixtureMixin):
             assert search_result_entry.all()[0].archived_service_id == archived_services[0].id
 
     def _create_service_and_update(self):
-        service = load_example_listing("G6-SaaS")
-        self.setup_dummy_suppliers(2)
-        res1 = self.client.put(
-            '/services/{}'.format(service['id']),
-            data=json.dumps(
-                {
-                    'updated_by': 'joeblogs',
-                    'services': service
-                }
-            ),
-            content_type='application/json')
+        with mock.patch('app.main.views.services.index_service'):
+            service = load_example_listing("G6-SaaS")
+            self.setup_dummy_suppliers(2)
+            res1 = self.client.put(
+                '/services/{}'.format(service['id']),
+                data=json.dumps(
+                    {
+                        'updated_by': 'joeblogs',
+                        'services': service
+                    }
+                ),
+                content_type='application/json')
 
-        assert res1.status_code == 201
+            assert res1.status_code == 201
 
-        service['title'] = "New Service Title"
-        service['createdAt'] = "2017-12-23T14:51:19Z"
+            service['title'] = "New Service Title"
+            service['createdAt'] = "2017-12-23T14:51:19Z"
 
-        res2 = self.client.post(
-            '/services/{}'.format(service['id']),
-            data=json.dumps(
-                {
-                    'updated_by': 'example',
-                    'services': service
-                }
-            ),
-            content_type='application/json')
+            res2 = self.client.post(
+                '/services/{}'.format(service['id']),
+                data=json.dumps(
+                    {
+                        'updated_by': 'example',
+                        'services': service
+                    }
+                ),
+                content_type='application/json')
 
-        assert res2.status_code == 200
+            assert res2.status_code == 200
 
 
 class TestDirectAwardRecordProjectDownload(DirectAwardSetupAndTeardown):
