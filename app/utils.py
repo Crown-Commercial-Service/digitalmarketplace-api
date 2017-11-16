@@ -1,5 +1,5 @@
 from flask import url_for as base_url_for
-from flask import abort, request
+from flask import abort, request, jsonify
 from six import iteritems, string_types
 from werkzeug.exceptions import BadRequest
 
@@ -56,6 +56,25 @@ def pagination_links(pagination, endpoint, args):
         links['next'] = url_for(endpoint, **dict(list(args.items()) + [('page', pagination.next_num)]))
         links['last'] = url_for(endpoint, **dict(list(args.items()) + [('page', pagination.pages)]))
     return links
+
+
+def result_meta(total_count):
+    return {"total": total_count}
+
+
+def single_result_response(**kwargs):
+    return jsonify(**kwargs)
+
+
+def list_result_response(total_count, **kwargs):
+    meta = result_meta(total_count)
+    return jsonify(meta=meta, **kwargs)
+
+
+def paginated_result_response(total_count, pagination, endpoint, request_args, **kwargs):
+    meta = result_meta(total_count)
+    links = pagination_links(pagination, endpoint, request_args)
+    return jsonify(meta=meta, links=links, **kwargs)
 
 
 def get_json_from_request():
