@@ -70,7 +70,7 @@ class TestCreateFramework(BaseApplicationTest):
                                         data=json.dumps(self.framework()),
                                         content_type="application/json")
 
-            assert response.status_code == 200
+            assert response.status_code == 201
 
             framework = Framework.query.filter(Framework.slug == "example").first()
 
@@ -824,7 +824,6 @@ class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
         self._subtest_list_suppliers_by_multiple_statuses_2()
         self._subtest_list_suppliers_by_multiple_statuses_and_agreement_returned_true()
         self._subtest_list_suppliers_by_multiple_statuses_and_agreement_returned_false()
-        self._subtest_response_contains_links()
 
     def _subtest_list_suppliers_related_to_a_framework(self):
         # One G7 supplier
@@ -945,12 +944,6 @@ class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
         assert response.status_code == 200
         data = json.loads(response.get_data())
         assert len(data['supplierFrameworks']) == 0
-
-    def _subtest_response_contains_links(self):
-        response = self.client.get('/frameworks/g-cloud-8/suppliers')
-        assert response.status_code == 200
-        data = json.loads(response.get_data())
-        assert data['links'] == {}
 
 
 class TestGetFrameworkInterest(BaseApplicationTest, FixtureMixin):

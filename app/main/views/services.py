@@ -1,28 +1,36 @@
 from dmapiclient.audit import AuditTypes
-
 from flask import jsonify, abort, request, current_app
+from sqlalchemy import asc
 
 from .. import main
 from ...models import ArchivedService, Service, Supplier, AuditEvent, Framework, ValidationError
-
-from sqlalchemy import asc
 from ...validation import is_valid_service_id_or_400
 from ...utils import (
-    url_for, pagination_links, display_list, get_valid_page_or_1,
-    validate_and_return_updater_request, get_int_or_400,
-    get_json_from_request, json_only_has_required_keys,
+    display_list,
+    get_int_or_400,
+    get_json_from_request,
+    get_valid_page_or_1,
+    json_only_has_required_keys,
+    list_result_response,
+    paginated_result_response,
+    pagination_links,
+    single_result_response,
+    url_for,
+    validate_and_return_updater_request,
 )
 from ...service_utils import (
-    validate_and_return_service_request,
-    update_and_validate_service,
-    index_service,
-    delete_service_from_index,
     commit_and_archive_service,
-    validate_service_data,
+    delete_service_from_index,
+    filter_services,
+    index_service,
+    update_and_validate_service,
     validate_and_return_related_objects,
-    filter_services)
-
+    validate_and_return_service_request,
+    validate_service_data,
+)
 from .audits import acknowledge_including_previous
+
+RESOURCE_NAME = "services"
 
 
 @main.route('/')
@@ -69,27 +77,19 @@ def list_services():
         if not supplier:
             abort(404, "supplier_id '%d' not found" % supplier_id)
 
-        items = services.default_order().filter(Service.supplier_id == supplier_id).all()
-        return jsonify(
-            services=[service.serialize() for service in items],
-            links=dict()
-        )
+        services = services.default_order().filter(Service.supplier_id == supplier_id)
+        return list_result_response(RESOURCE_NAME, services), 200
     else:
         services = services.order_by(asc(Service.id))
 
-    services = services.paginate(
+    return paginated_result_response(
+        result_name=RESOURCE_NAME,
+        results_query=services,
         page=page,
         per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
-    )
-
-    return jsonify(
-        services=[service.serialize() for service in services.items],
-        links=pagination_links(
-            services,
-            '.list_services',
-            request.args
-        )
-    )
+        endpoint='.list_services',
+        request_args=request.args
+    ), 200
 
 
 @main.route('/archived-services', methods=['GET'])
@@ -124,7 +124,7 @@ def list_archived_services_by_service_id():
             '.list_services',
             request.args
         )
-    )
+    ), 200
 
 
 @main.route('/services/<string:service_id>', methods=['POST'])
@@ -233,7 +233,7 @@ def import_service(service_id):
     commit_and_archive_service(service, updater_json, AuditTypes.import_service)
     index_service(service)
 
-    return jsonify(services=service.serialize()), 201
+    return single_result_response(RESOURCE_NAME, service), 201
 
 
 @main.route('/services/<string:service_id>', methods=['GET'])
@@ -266,7 +266,7 @@ def get_service(service_id):
     return jsonify(
         services=service.serialize(),
         serviceMadeUnavailableAuditEvent=service_made_unavailable_audit_event
-    )
+    ), 200
 
 
 @main.route('/archived-services/<int:archived_service_id>', methods=['GET'])
@@ -281,7 +281,7 @@ def get_archived_service(archived_service_id):
         ArchivedService.id == archived_service_id
     ).first_or_404()
 
-    return jsonify(services=service.serialize())
+    return single_result_response(RESOURCE_NAME, service), 200
 
 
 @main.route(
@@ -335,7 +335,7 @@ def update_service_status(service_id, status):
             # If it's being published, index in the search api.
             index_service(service)
 
-    return jsonify(services=service.serialize()), 200
+    return single_result_response(RESOURCE_NAME, service), 200
 
 
 @main.route('/services/<service_id>/updates/acknowledge', methods=['POST'])

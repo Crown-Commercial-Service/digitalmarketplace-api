@@ -1,20 +1,23 @@
 from datetime import datetime
+
 from flask import jsonify, abort
-from .. import main
 from sqlalchemy.exc import IntegrityError
 from dmapiclient.audit import AuditTypes
+
+from .. import main
 from ...models import (
     AuditEvent, db, Framework, FrameworkAgreement, SupplierFramework, User
 )
-
 from ...utils import (
     get_json_from_request,
     json_has_required_keys,
     json_has_keys,
+    single_result_response,
     validate_and_return_updater_request,
 )
-
 from ...supplier_utils import validate_agreement_details_data
+
+RESOURCE_NAME = "agreement"
 
 
 @main.route('/agreements', methods=['POST'])
@@ -66,14 +69,13 @@ def create_framework_agreement():
     db.session.add(audit_event)
     db.session.commit()
 
-    return jsonify(agreement=framework_agreement.serialize()), 201
+    return single_result_response(RESOURCE_NAME, framework_agreement), 201
 
 
 @main.route('/agreements/<int:agreement_id>', methods=['GET'])
 def get_framework_agreement(agreement_id):
     framework_agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first_or_404()
-
-    return jsonify(agreement=framework_agreement.serialize())
+    return single_result_response(RESOURCE_NAME, framework_agreement), 200
 
 
 @main.route('/agreements/<int:agreement_id>', methods=['POST'])
@@ -137,7 +139,7 @@ def update_framework_agreement(agreement_id):
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
 
-    return jsonify(agreement=framework_agreement.serialize())
+    return single_result_response(RESOURCE_NAME, framework_agreement), 200
 
 
 @main.route('/agreements/<int:agreement_id>/sign', methods=['POST'])
@@ -187,7 +189,7 @@ def sign_framework_agreement(agreement_id):
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
 
-    return jsonify(agreement=framework_agreement.serialize())
+    return single_result_response(RESOURCE_NAME, framework_agreement), 200
 
 
 @main.route('/agreements/<int:agreement_id>/on-hold', methods=['POST'])
@@ -224,7 +226,7 @@ def put_signed_framework_agreement_on_hold(agreement_id):
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
 
-    return jsonify(agreement=framework_agreement.serialize())
+    return single_result_response(RESOURCE_NAME, framework_agreement), 200
 
 
 @main.route('/agreements/<int:agreement_id>/approve', methods=['POST'])
@@ -288,4 +290,4 @@ def approve_for_countersignature(agreement_id):
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
 
-    return jsonify(agreement=framework_agreement.serialize())
+    return single_result_response(RESOURCE_NAME, framework_agreement), 200

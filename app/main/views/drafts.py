@@ -1,28 +1,32 @@
 from dmapiclient.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
-
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import asc
 
 from .. import main
 from ... import db, isolation_level
-from ...utils import json_only_has_required_keys
 from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, Supplier, AuditEvent, Framework
 from ...utils import (
+    get_int_or_400,
+    get_request_page_questions,
+    json_only_has_required_keys,
+    list_result_response,
+    single_result_response,
     validate_and_return_updater_request,
-    get_request_page_questions, get_int_or_400,
 )
 from ...service_utils import (
-    update_and_validate_service, index_service,
-    commit_and_archive_service, create_service_from_draft,
-    validate_and_return_related_objects, validate_service_data,
-    get_service_validation_errors
+    commit_and_archive_service,
+    create_service_from_draft,
+    get_service_validation_errors,
+    index_service,
+    update_and_validate_service,
+    validate_and_return_related_objects,
+    validate_service_data,
 )
+from ...draft_utils import validate_and_return_draft_request
 
-from ...draft_utils import (
-    validate_and_return_draft_request
-)
+RESOURCE_NAME = "services"
 
 
 @main.route('/draft-services/copy-from/<string:service_id>', methods=['PUT'])
@@ -68,7 +72,7 @@ def copy_draft_service_from_existing_service(service_id):
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
-    return jsonify(services=draft.serialize()), 201
+    return single_result_response(RESOURCE_NAME, draft), 201
 
 
 @main.route('/draft-services/<int:draft_id>', methods=['POST'])
@@ -111,7 +115,7 @@ def edit_draft_service(draft_id):
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
-    return jsonify(services=draft.serialize()), 200
+    return single_result_response(RESOURCE_NAME, draft), 200
 
 
 @main.route('/draft-services', methods=['GET'])
@@ -143,11 +147,8 @@ def list_draft_services():
             abort(404, "framework '{}' not found".format(framework_slug))
         services = services.filter(DraftService.framework_id == framework.id)
 
-    items = services.filter(DraftService.supplier_id == supplier_id).all()
-    return jsonify(
-        services=[service.serialize() for service in items],
-        links=dict()
-    )
+    services = services.filter(DraftService.supplier_id == supplier_id)
+    return list_result_response(RESOURCE_NAME, services), 200
 
 
 @main.route('/draft-services/<int:draft_id>', methods=['GET'])
@@ -172,7 +173,7 @@ def fetch_draft_service(draft_id):
         services=draft.serialize(),
         auditEvents=(last_audit_event.serialize(include_user=True) if last_audit_event else None),
         validationErrors=get_service_validation_errors(draft)
-    )
+    ), 200
 
 
 @main.route('/draft-services/<int:draft_id>', methods=['DELETE'])
@@ -264,7 +265,7 @@ def publish_draft_service(draft_id):
 
     index_service(service_from_draft)
 
-    return jsonify(services=service_from_draft.serialize()), 200
+    return single_result_response(RESOURCE_NAME, service_from_draft), 200
 
 
 @main.route('/draft-services', methods=['POST'])
@@ -322,7 +323,7 @@ def create_new_draft_service():
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
-    return jsonify(services=draft.serialize()), 201
+    return single_result_response(RESOURCE_NAME, draft), 201
 
 
 @main.route('/draft-services/<int:draft_id>/complete', methods=['POST'])
@@ -355,7 +356,7 @@ def complete_draft_service(draft_id):
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
-    return jsonify(services=draft.serialize()), 200
+    return single_result_response(RESOURCE_NAME, draft), 200
 
 
 @main.route('/draft-services/<int:draft_id>/update-status', methods=['POST'])
@@ -393,7 +394,7 @@ def update_draft_service_status(draft_id):
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
-    return jsonify(services=draft.serialize()), 200
+    return single_result_response(RESOURCE_NAME, draft), 200
 
 
 @main.route('/draft-services/<int:draft_id>/copy', methods=['POST'])
@@ -426,4 +427,4 @@ def copy_draft_service(draft_id):
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
-    return jsonify(services=draft_copy.serialize()), 201
+    return single_result_response(RESOURCE_NAME, draft_copy), 201

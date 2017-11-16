@@ -1,11 +1,12 @@
 import datetime
+
 from flask import jsonify, abort, current_app, request
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import asc, desc
-
 from app import search_api_client
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
+
 from .. import main
 from ... import db
 from ...models import User, AuditEvent, ArchivedService
@@ -16,7 +17,9 @@ from ...utils import (
     get_json_from_request,
     get_valid_page_or_1,
     json_has_required_keys,
+    paginated_result_response,
     pagination_links,
+    single_result_response,
     validate_and_return_updater_request,
 )
 
@@ -54,22 +57,15 @@ def list_projects():
     else:
         projects = projects.order_by(asc(DirectAwardProject.id))
 
-    projects = projects.paginate(
+    return paginated_result_response(
+        result_name="projects",
+        results_query=projects,
         page=page,
         per_page=current_app.config['DM_API_PROJECTS_PAGE_SIZE'],
-    )
-
-    return jsonify(
-        projects=[project.serialize(with_users=with_users) for project in projects.items],
-        meta={
-            "total": projects.total,
-        },
-        links=pagination_links(
-            projects,
-            '.list_projects',
-            request.args
-        ),
-    )
+        endpoint='.list_projects',
+        request_args=request.args,
+        serialize_kwargs={"with_users": with_users}
+    ), 200
 
 
 @main.route('/direct-award/projects', methods=['POST'])
@@ -116,14 +112,14 @@ def create_project():
     db.session.add(audit)
     db.session.commit()
 
-    return jsonify(project=project.serialize()), 201
+    return single_result_response("project", project), 201
 
 
 @main.route('/direct-award/projects/<int:project_external_id>', methods=['GET'])
 def get_project(project_external_id):
     project = get_project_by_id_or_404(project_external_id)
 
-    return jsonify(project=project.serialize(with_users=True))
+    return single_result_response("project", project, serialize_kwargs={"with_users": True}), 200
 
 
 @main.route('/direct-award/projects/<int:project_external_id>/searches', methods=['GET'])
@@ -145,25 +141,17 @@ def list_project_searches(project_external_id):
     if convert_to_boolean(request.args.get('only-active', False)):
         searches = searches.filter(DirectAwardSearch.active == True)  # noqa
 
-    searches = searches.paginate(
-        page=page,
-        per_page=current_app.config['DM_API_PROJECTS_PAGE_SIZE'],
-    )
-
     pagination_params = request.args.to_dict()
     pagination_params['project_external_id'] = project.external_id
 
-    return jsonify(
-        searches=[search.serialize() for search in searches.items],
-        meta={
-            "total": searches.total,
-        },
-        links=pagination_links(
-            searches,
-            '.list_project_searches',
-            pagination_params
-        ),
-    )
+    return paginated_result_response(
+        result_name="searches",
+        results_query=searches,
+        page=page,
+        per_page=current_app.config['DM_API_PROJECTS_PAGE_SIZE'],
+        endpoint='.list_project_searches',
+        request_args=pagination_params,
+    ), 200
 
 
 @main.route('/direct-award/projects/<int:project_external_id>/searches', methods=['POST'])
@@ -212,7 +200,7 @@ def create_project_search(project_external_id):
     db.session.add(audit)
     db.session.commit()
 
-    return jsonify(search=search.serialize()), 201
+    return single_result_response("search", search), 201
 
 
 @main.route('/direct-award/projects/<int:project_external_id>/searches/<int:search_id>', methods=['GET'])
@@ -224,7 +212,7 @@ def get_project_search(project_external_id, search_id):
         DirectAwardSearch.project_id == project.id
     ).first_or_404()
 
-    return jsonify(search=search.serialize())
+    return single_result_response("search", search), 200
 
 
 @main.route('/direct-award/projects/<int:project_external_id>/services', methods=['GET'])
@@ -282,7 +270,7 @@ def list_project_services(project_external_id):
             '.list_project_services',
             pagination_params
         ),
-    )
+    ), 200
 
 
 @main.route('/direct-award/projects/<int:project_external_id>/lock', methods=['POST'])
@@ -333,7 +321,7 @@ def lock_project(project_external_id):
     db.session.add(audit)
     db.session.commit()
 
-    return jsonify(project=project.serialize())
+    return single_result_response("project", project), 200
 
 
 @main.route('/direct-award/projects/<int:project_external_id>/record-download', methods=['POST'])
@@ -359,4 +347,4 @@ def record_project_download(project_external_id):
     db.session.add(audit)
     db.session.commit()
 
-    return jsonify(project=project.serialize())
+    return single_result_response("project", project), 200

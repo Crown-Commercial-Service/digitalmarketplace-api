@@ -1,7 +1,8 @@
-from flask import url_for as base_url_for
-from flask import abort, current_app, request
-from six import iteritems, string_types
 import random
+
+from flask import url_for as base_url_for
+from flask import abort, current_app, request, jsonify
+from six import iteritems, string_types
 from werkzeug.exceptions import BadRequest
 
 from .validation import validate_updater_json_or_400
@@ -65,6 +66,44 @@ def pagination_links(pagination, endpoint, args):
         links['next'] = url_for(endpoint, **dict(list(args.items()) + [('page', pagination.next_num)]))
         links['last'] = url_for(endpoint, **dict(list(args.items()) + [('page', pagination.pages)]))
     return links
+
+
+def result_meta(total_count):
+    return {"total": total_count}
+
+
+def single_result_response(result_name, result, serialize_kwargs=None):
+    """Return a standardised JSON response for a single serialized SQLAlchemy result e.g. a single brief"""
+    return jsonify(**{result_name: result.serialize(**(serialize_kwargs if serialize_kwargs else {}))})
+
+
+def list_result_response(result_name, results_query, serialize_kwargs=None):
+    """
+    Return a standardised JSON response for a SQLAlchemy result query e.g. a query that will retrieve closed briefs.
+    The query should not be executed before being passed in as a argument. Results will be returned in a list and use
+    the results `serialize` method for presentation.
+    """
+    serialized_results = [
+        result.serialize(**(serialize_kwargs if serialize_kwargs else {})) for result in results_query
+    ]
+    meta = result_meta(len(serialized_results))
+    return jsonify(meta=meta, **{result_name: serialized_results})
+
+
+def paginated_result_response(result_name, results_query, page, per_page, endpoint, request_args, serialize_kwargs={}):
+    """
+    Return a standardised JSON response for a page of serialized results for a SQLAlchemy result query e.g. the third
+    page of results for a query that will retrieve closed briefs. The query should not be executed before being passed
+    in as a argument so we can manipulate the query object (i.e. to do the pagination). Results will be returned in a
+    list and use the results `serialize` method for presentation.
+    """
+    pagination = results_query.paginate(page=page, per_page=per_page)
+    meta = result_meta(pagination.total)
+    serialized_results = [
+        result.serialize(**(serialize_kwargs if serialize_kwargs else {})) for result in pagination.items
+    ]
+    links = pagination_links(pagination, endpoint, request_args)
+    return jsonify(meta=meta, links=links, **{result_name: serialized_results})
 
 
 def get_json_from_request():

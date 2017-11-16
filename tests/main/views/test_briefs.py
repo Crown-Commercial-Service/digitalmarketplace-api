@@ -712,7 +712,6 @@ class TestListBrief(FrameworkSetupAndTeardown):
         assert res.status_code == 200
 
         assert len(data['briefs']) == 7
-        assert data['links'] == {}
 
     @pytest.mark.parametrize('date_arg', ['published_on', 'withdrawn_on', 'cancelled_on', 'unsuccessful_on'])
     def test_list_briefs_filter_by_single_day(self, date_arg):

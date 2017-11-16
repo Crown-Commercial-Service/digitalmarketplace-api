@@ -163,16 +163,6 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
             drafts = json.loads(res.get_data())
             assert len(drafts['services']) == 10
 
-    def test_returns_drafts_for_supplier_has_no_links(self):
-        self.client.put(
-            '/draft-services/copy-from/{}'.format(self.service_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-        res = self.client.get('/draft-services?supplier_id=1')
-        assert res.status_code == 200
-        drafts = json.loads(res.get_data())
-        assert len(drafts['links']) == 0
-
     def test_reject_update_with_no_updater_details(self):
         res = self.client.post('/draft-services/0000000000')
         assert res.status_code == 400

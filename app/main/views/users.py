@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from dmapiclient.audit import AuditTypes
 from sqlalchemy.orm import lazyload
 from sqlalchemy.exc import IntegrityError, DataError
@@ -7,10 +8,23 @@ from flask import jsonify, abort, request, current_app
 from .. import main
 from ... import db, encryption
 from ...models import User, AuditEvent, Supplier, Framework, SupplierFramework, BuyerEmailDomain
-from ...utils import get_json_from_request, json_has_required_keys, \
-    json_has_matching_id, pagination_links, get_valid_page_or_1, validate_and_return_updater_request
-from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400, \
-    buyer_email_address_has_approved_domain, admin_email_address_has_approved_domain
+from ...utils import (
+    get_json_from_request,
+    get_valid_page_or_1,
+    json_has_required_keys,
+    json_has_matching_id,
+    paginated_result_response,
+    single_result_response,
+    validate_and_return_updater_request,
+)
+from ...validation import (
+    admin_email_address_has_approved_domain,
+    buyer_email_address_has_approved_domain,
+    validate_user_auth_json_or_400,
+    validate_user_json_or_400,
+)
+
+RESOURCE_NAME = "users"
 
 
 @main.route('/users/auth', methods=['POST'])
@@ -30,7 +44,7 @@ def auth_user():
         db.session.add(user)
         db.session.commit()
 
-        return jsonify(users=user.serialize()), 200
+        return single_result_response(RESOURCE_NAME, user), 200
     else:
         user.failed_login_count += 1
         db.session.add(user)
@@ -44,7 +58,7 @@ def get_user_by_id(user_id):
     user = User.query.filter(
         User.id == user_id
     ).first_or_404()
-    return jsonify(users=user.serialize())
+    return single_result_response(RESOURCE_NAME, user), 200
 
 
 @main.route('/users', methods=['GET'])
@@ -58,10 +72,8 @@ def list_users():
         single_user = user_query.filter(
             User.email_address == email_address.lower()
         ).first_or_404()
-
         return jsonify(
-            users=[single_user.serialize()],
-            links={}
+            users=[single_user.serialize()]
         )
 
     role = request.args.get('role')
@@ -86,15 +98,14 @@ def list_users():
 
         user_query = user_query.filter(User.supplier_id == supplier_id)
 
-    users = user_query.paginate(
+    return paginated_result_response(
+        result_name=RESOURCE_NAME,
+        results_query=user_query,
         page=page,
         per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
-    )
-
-    return jsonify(
-        users=[user.serialize() for user in users.items],
-        links=pagination_links(users, '.list_users', request.args)
-    )
+        endpoint='.list_users',
+        request_args=request.args
+    ), 200
 
 
 @main.route('/users', methods=['POST'])
@@ -157,7 +168,7 @@ def create_user():
         db.session.rollback()
         abort(400, "Data Error: {}".format(e))
 
-    return jsonify(users=user.serialize()), 201
+    return single_result_response(RESOURCE_NAME, user), 201
 
 
 @main.route('/users/<int:user_id>', methods=['POST'])
@@ -215,7 +226,7 @@ def update_user(user_id):
 
     try:
         db.session.commit()
-        return jsonify(users=user.serialize()), 200
+        return single_result_response(RESOURCE_NAME, user), 200
     except (IntegrityError, DataError):
         db.session.rollback()
         abort(400, "Could not update user with: {0}".format(user_update))
@@ -285,7 +296,7 @@ def export_users_for_framework(framework_slug):
             'variations_agreed': variations_agreed
         })
 
-    return jsonify(users=[user for user in user_rows])
+    return jsonify(users=[user for user in user_rows]), 200
 
 
 @main.route("/users/check-buyer-email", methods=["GET"])
@@ -295,7 +306,7 @@ def email_has_valid_buyer_domain():
         abort(400, "'email_address' is a required parameter")
 
     domain_ok = buyer_email_address_has_approved_domain(BuyerEmailDomain.query.all(), email_address)
-    return jsonify(valid=domain_ok)
+    return jsonify(valid=domain_ok), 200
 
 
 @main.route("/users/valid-admin-email", methods=["GET"])
@@ -305,7 +316,7 @@ def email_is_valid_for_admin_user():
         abort(400, "'email_address' is a required parameter")
 
     valid = admin_email_address_has_approved_domain(email_address)
-    return jsonify(valid=valid)
+    return jsonify(valid=valid), 200
 
 
 def check_supplier_role(role, supplier_id):

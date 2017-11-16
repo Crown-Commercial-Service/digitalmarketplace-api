@@ -7,13 +7,22 @@ from .. import main
 from ... import db
 from ...models import User, Brief, BriefResponse, AuditEvent, Framework, Lot, Supplier, Service
 from ...utils import (
-    get_json_from_request, get_int_or_400, json_has_required_keys, pagination_links,
-    get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request,
-    purge_nulls_from_data
+    get_int_or_400,
+    get_json_from_request,
+    get_request_page_questions,
+    get_valid_page_or_1,
+    json_has_required_keys,
+    list_result_response,
+    single_result_response,
+    paginated_result_response,
+    purge_nulls_from_data,
+    validate_and_return_updater_request,
 )
 from ...service_utils import validate_and_return_lot, filter_services
 from ...brief_utils import index_brief, validate_brief_data
 from ...validation import get_validation_errors
+
+RESOURCE_NAME = "briefs"
 
 
 @main.route('/briefs', methods=['POST'])
@@ -62,7 +71,7 @@ def create_brief():
     # We are intentionally not indexing briefs here. We don't need drafts in search results, and they are indexed each
     # night by the batch indexing job run by Jenkins. In future we may index all briefs with a lower level ORM hook.
 
-    return jsonify(briefs=brief.serialize()), 201
+    return single_result_response(RESOURCE_NAME, brief), 201
 
 
 @main.route('/briefs/<int:brief_id>', methods=['POST'])
@@ -101,7 +110,7 @@ def update_brief(brief_id):
     # We are intentionally not indexing briefs here. We don't need drafts in search results, and they are indexed each
     # night by the batch indexing job run by Jenkins. In future we may index all briefs with a lower level ORM hook.
 
-    return jsonify(briefs=brief.serialize()), 200
+    return single_result_response(RESOURCE_NAME, brief), 200
 
 
 @main.route('/briefs/<int:brief_id>', methods=['GET'])
@@ -110,7 +119,11 @@ def get_brief(brief_id):
         Brief.id == brief_id
     ).first_or_404()
 
-    return jsonify(briefs=brief.serialize(with_users=True, with_clarification_questions=True))
+    return single_result_response(
+        RESOURCE_NAME,
+        brief,
+        serialize_kwargs={"with_users": True, "with_clarification_questions": True}
+    ), 200
 
 
 @main.route('/briefs', methods=['GET'])
@@ -166,27 +179,21 @@ def list_briefs():
             briefs = briefs.has_datetime_field_after("{}_at".format(status), day_end)
 
     if user_id:
-        return jsonify(
-            briefs=[brief.serialize(with_users, with_clarification_questions) for brief in briefs.all()],
-            links={},
-        )
+        return list_result_response(
+            RESOURCE_NAME,
+            briefs,
+            serialize_kwargs={"with_users": with_users, "with_clarification_questions": with_clarification_questions}
+        ), 200
     else:
-        briefs = briefs.paginate(
+        return paginated_result_response(
+            result_name=RESOURCE_NAME,
+            results_query=briefs,
             page=page,
             per_page=current_app.config['DM_API_BRIEFS_PAGE_SIZE'],
-        )
-
-        return jsonify(
-            briefs=[brief.serialize(with_users, with_clarification_questions) for brief in briefs.items],
-            meta={
-                "total": briefs.total,
-            },
-            links=pagination_links(
-                briefs,
-                '.list_briefs',
-                request.args
-            ),
-        )
+            endpoint='.list_briefs',
+            request_args=request.args,
+            serialize_kwargs={"with_users": with_users, "with_clarification_questions": with_clarification_questions}
+        ), 200
 
 
 @main.route('/briefs/<int:brief_id>/<any(publish, withdraw, cancel, unsuccessful):action>', methods=['POST'])
@@ -232,7 +239,7 @@ def update_brief_status(brief_id, action):
         db.session.commit()
         index_brief(brief)
 
-    return jsonify(briefs=brief.serialize()), 200
+    return single_result_response(RESOURCE_NAME, brief), 200
 
 
 @main.route('/briefs/<int:brief_id>/award', methods=['POST'])
@@ -294,7 +301,7 @@ def award_pending_brief_response(brief_id):
     db.session.add_all([brief_response] + audit_events)
     db.session.commit()
 
-    return jsonify(briefs=brief.serialize()), 200
+    return single_result_response(RESOURCE_NAME, brief), 200
 
 
 @main.route('/briefs/<int:brief_id>/award/<int:brief_response_id>/contract-details', methods=['POST'])
@@ -341,7 +348,7 @@ def award_brief_details(brief_id, brief_response_id):
     db.session.commit()
     index_brief(brief)
 
-    return jsonify(briefs=brief.serialize()), 200
+    return single_result_response(RESOURCE_NAME, brief), 200
 
 
 @main.route('/briefs/<int:brief_id>/copy', methods=['POST'])
@@ -374,7 +381,7 @@ def copy_brief(brief_id):
     db.session.add(audit)
     db.session.commit()
 
-    return jsonify(briefs=new_brief.serialize()), 201
+    return single_result_response(RESOURCE_NAME, new_brief), 201
 
 
 @main.route('/briefs/<int:brief_id>', methods=['DELETE'])
@@ -447,7 +454,11 @@ def add_clarification_question(brief_id):
     db.session.add(audit)
     db.session.commit()
 
-    return jsonify(briefs=brief.serialize(with_clarification_questions=True)), 200
+    return single_result_response(
+        RESOURCE_NAME,
+        brief,
+        serialize_kwargs={"with_clarification_questions": True}
+    ), 200
 
 
 @main.route("/briefs/<int:brief_id>/services", methods=["GET"])
@@ -472,5 +483,4 @@ def list_brief_services(brief_id):
     )
 
     services = services.filter(Service.supplier_id == supplier.supplier_id)
-
-    return jsonify(services=[service.serialize() for service in services])
+    return list_result_response("services", services), 200
