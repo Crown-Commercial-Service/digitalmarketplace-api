@@ -1,9 +1,10 @@
 from flask import url_for as base_url_for
-from flask import abort, request
+from flask import abort, current_app, request
 from six import iteritems, string_types
 from werkzeug.exceptions import BadRequest
 
 from .validation import validate_updater_json_or_400
+from . import search_api_client, dmapiclient
 
 
 def validate_and_return_updater_request():
@@ -161,3 +162,17 @@ def purge_nulls_from_data(data):
 def get_request_page_questions():
     json_payload = get_json_from_request()
     return json_payload.get('page_questions', [])
+
+
+def index_object(framework, object_type, object_id, serialized_object):
+    index_name = current_app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'][framework][object_type]
+
+    try:
+        search_api_client.index(index_name=index_name,
+                                object_type=object_type,
+                                object_id=object_id,
+                                serialized_object=serialized_object)
+    except dmapiclient.HTTPError as e:
+        current_app.logger.warning(
+            'Failed to add {} object with id {} to {} index: {}'.format(
+                object_type, object_id, index_name, e.message))
