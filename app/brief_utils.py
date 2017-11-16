@@ -3,6 +3,7 @@ from flask import abort
 from .models import Service
 from .validation import get_validation_errors
 from .service_utils import filter_services
+from .utils import index_object
 
 
 def validate_brief_data(brief, enforce_required=True, required_fields=None):
@@ -36,3 +37,12 @@ def get_supplier_service_eligible_for_brief(supplier, brief):
     services = services.filter(Service.supplier_id == supplier.supplier_id)
 
     return services.first()
+
+
+def index_brief(brief):
+    index_object(
+        framework=brief.framework.slug,
+        object_type='briefs',
+        object_id=brief.id,
+        serialized_object=brief.serialize(),
+    )
