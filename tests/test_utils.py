@@ -1,5 +1,7 @@
 import pytest
+import mock
 
+from flask import current_app
 from nose.tools import assert_equal
 from werkzeug.exceptions import BadRequest, HTTPException
 
@@ -12,7 +14,10 @@ from app.utils import (display_list,
                        json_has_required_keys,
                        link,
                        purge_nulls_from_data,
-                       keyfilter_json)
+                       keyfilter_json,
+                       index_object)
+
+from dmapiclient import HTTPError
 
 
 def test_link():
@@ -65,6 +70,56 @@ class TestKeyFilterJSON(object):
                 }
             ],
         }
+
+
+@mock.patch('app.utils.search_api_client', autospec=True)
+class TestIndexObject(BaseApplicationTest):
+    def test_calls_the_search_api_index_method_correctly(self, search_api_client):
+        with self.app.app_context():
+            for framework, object_to_index_mapping in current_app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'].items():
+                for object_type, index_name in object_to_index_mapping.items():
+
+                    index_object(framework, object_type, 123, {'serialized': 'object'})
+
+                    search_api_client.index.assert_called_once_with(
+                        index_name=index_name,
+                        object_type=object_type,
+                        object_id=123,
+                        serialized_object={'serialized': 'object'})
+                    search_api_client.reset_mock()
+
+    @mock.patch('app.utils.current_app')
+    def test_logs_a_warning_message_if_no_mapping_found(self, current_app, search_api_client):
+        current_app.config = {
+            'DM_FRAMEWORK_TO_ES_INDEX_MAPPING': {
+                'not-a-framework': {
+                    'services': 'g-cloud-9'
+                }
+            }
+        }
+
+        index_object('g-cloud-9', 'services', 123, {'serialized': 'object'})
+
+        current_app.logger.warning.assert_called_once_with(
+            "Failed to find index name for framework 'g-cloud-9' with object type 'services'"
+        )
+
+    @mock.patch('app.utils.current_app')
+    def test_logs_a_warning_if_HTTPError_from_search_api(self, current_app, search_api_client):
+        search_api_client.index.side_effect = HTTPError()
+        current_app.config = {
+            'DM_FRAMEWORK_TO_ES_INDEX_MAPPING': {
+                'g-cloud-9': {
+                    'services': 'g-cloud-9'
+                }
+            }
+        }
+
+        index_object('g-cloud-9', 'services', 123, {'serialized': 'object'})
+
+        current_app.logger.warning.assert_called_once_with(
+            'Failed to add services object with id 123 to g-cloud-9 index: Request failed'
+        )
 
 
 def test_display_list_two_items():
