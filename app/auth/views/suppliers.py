@@ -3,9 +3,8 @@ from flask import jsonify, request
 from flask_login import current_user, login_required
 from app.auth import auth
 from app.utils import get_json_from_request
-from app.auth.suppliers import get_supplier, update_supplier_details
-from app.models import db, ServiceType, ServiceSubType, ServiceTypePrice, Supplier, Region, SupplierFramework,\
-    ServiceCategory, Framework
+from app.auth.suppliers import get_supplier, update_supplier_details, get_supplier_services
+from app.models import db, ServiceType, ServiceTypePrice, Supplier, Region, ServiceCategory
 from app.auth.helpers import role_required, abort, parse_date
 from itertools import groupby
 from app.swagger import swag
@@ -17,10 +16,10 @@ from operator import itemgetter
 @login_required
 @role_required('supplier')
 def get_supplier_profile():
-    """Return an authenticated supplier (role=supplier)
+    """Return the current supplier (role=supplier)
     ---
     tags:
-      - supplier
+      - user
     security:
       - basicAuth: []
     definitions:
@@ -82,9 +81,7 @@ def get_supplier_profile():
           user:
               $ref: '#/definitions/Supplier'
     """
-    supplier = get_supplier(current_user.supplier_code)
-
-    return jsonify(user=supplier.serializable), 200
+    return get_supplier(current_user.supplier_code)
 
 
 @auth.route('/supplier/<int:code>', methods=['GET'])
@@ -94,7 +91,7 @@ def get_supplier_by_code(code):
     """Return a supplier (role=[buyer,supplier])
     ---
     tags:
-      - supplier
+      - suppliers
     security:
       - basicAuth: []
     parameters:
@@ -113,9 +110,7 @@ def get_supplier_by_code(code):
     if current_user.role == 'supplier' and current_user.supplier_code != code:
         return jsonify(message="Unauthorised to view supplier"), 403
 
-    supplier = get_supplier(code)
-
-    return jsonify(supplier.serializable), 200
+    return get_supplier(code)
 
 
 @auth.route('/supplier', methods=['POST', 'PATCH'])
@@ -139,17 +134,10 @@ def supplier_services():
     """Return a list of services and sub categories for the current supplier (role=supplier)
     ---
     tags:
-      - supplier
+      - user
     security:
       - basicAuth: []
     definitions:
-      SupplierServices:
-        type: object
-        properties:
-          services:
-            type: array
-            items:
-              $ref: '#/definitions/SupplierService'
       SupplierService:
         type: object
         properties:
@@ -168,9 +156,7 @@ def supplier_services():
             type: integer
           name:
             type: string
-    responses:
-      200:
-        description: A list of services with sub categories
+      SupplierServices:
         type: object
         properties:
           supplier:
@@ -189,30 +175,39 @@ def supplier_services():
             type: array
             items:
               $ref: '#/definitions/SupplierService'
+    responses:
+      200:
+        description: A list of services with sub categories
+        schema:
+          $ref: '#/definitions/SupplierServices'
     """
-    supplier = db.session.query(Supplier).filter(Supplier.code == current_user.supplier_code).first()
+    return get_supplier_services(current_user.supplier_code)
 
-    services = db.session\
-        .query(ServiceTypePrice.service_type_id,
-               ServiceType.name, ServiceTypePrice.sub_service_id, ServiceSubType.name.label('sub_service_name'))\
-        .join(ServiceType, ServiceTypePrice.service_type_id == ServiceType.id)\
-        .outerjoin(ServiceSubType, ServiceTypePrice.sub_service_id == ServiceSubType.id)\
-        .filter(ServiceTypePrice.supplier_code == current_user.supplier_code)\
-        .group_by(ServiceTypePrice.service_type_id, ServiceType.name,
-                  ServiceTypePrice.sub_service_id, ServiceSubType.name)\
-        .order_by(ServiceType.name)\
-        .all()
 
-    result = []
-    for key, group in groupby(services, key=lambda x: dict(id=x.service_type_id, name=x.name)):
-        subcategories = [dict(id=s.sub_service_id, name=s.sub_service_name) for s in group]
-        result.append(dict(key, subCategories=subcategories))
-
-    supplier_json = supplier.serializable
-    return jsonify(services=result,
-                   supplier=dict(name=supplier_json['name'], abn=supplier_json['abn'],
-                                 email=supplier_json.get('email', None),
-                                 contact=supplier_json.get('representative', None)))
+@auth.route('/suppliers/<int:code>/services', methods=['GET'])
+@login_required
+@role_required('buyer')
+def supplier_services_by_code(code):
+    """Return a list of services and sub categories for a supplier (role=buyer)
+    ---
+    tags:
+      - suppliers
+    security:
+      - basicAuth: []
+        parameters:
+    parameters:
+      - name: code
+        in: path
+        type: integer
+        required: true
+        default: all
+    responses:
+      200:
+        description: A list of services with sub categories
+        schema:
+          $ref: '#/definitions/SupplierServices'
+    """
+    return get_supplier_services(code)
 
 
 @auth.route('/supplier/services/<service_type_id>/categories/<category_id>/prices', methods=['GET'])
@@ -222,7 +217,7 @@ def supplier_service_prices(service_type_id, category_id=None):
     """Return a list of prices for the current supplier (role=supplier)
     ---
     tags:
-      - supplier
+      - user
     security:
       - basicAuth: []
     parameters:
@@ -288,10 +283,10 @@ def supplier_service_prices(service_type_id, category_id=None):
 @role_required('supplier')
 @swag.validate('PriceUpdates')
 def update_supplier_price():
-    """Update a price (role=supplier)
+    """Update a price for the current supplier (role=supplier)
     ---
     tags:
-      - supplier
+      - user
     security:
       - basicAuth: []
     consumes:
@@ -401,7 +396,7 @@ def get_all_suppliers():
     """Return the suppliers by category (role=buyer)
     ---
     tags:
-      - supplier
+      - suppliers
     security:
       - basicAuth: []
     responses:
@@ -428,8 +423,6 @@ def get_all_suppliers():
     """
     suppliers = db.session.query(ServiceCategory.name.label('category_name'), Supplier.code, Supplier.name)\
         .select_from(Supplier)\
-        .join(SupplierFramework, Supplier.code == SupplierFramework.supplier_code)\
-        .join(Framework, SupplierFramework.framework_id == Framework.id)\
         .join(ServiceTypePrice, ServiceTypePrice.supplier_code == Supplier.code)\
         .join(ServiceType, ServiceType.id == ServiceTypePrice.service_type_id)\
         .join(ServiceCategory, ServiceCategory.id == ServiceType.category_id)\

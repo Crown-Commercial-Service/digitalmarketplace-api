@@ -175,4 +175,6 @@ def test_list_suppliers(client, users, service_type_prices):
     response = client.get('/2/suppliers')
     assert response.status_code == 200
     assert json.loads(response.data) == {'categories': [{'suppliers': [{'code': 1, 'name': 'Test Supplier1'}],
-                                                         'name': 'Medical'}]}
+                                                         'name': 'Medical'},
+                                                        {'name': 'Rehabilitation',
+                                                         'suppliers': [{'code': 2, 'name': 'Test Supplier2'}]}]}

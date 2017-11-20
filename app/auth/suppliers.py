@@ -1,12 +1,16 @@
 from app import db
-from app.models import AuditEvent, AuditTypes, Supplier
+from app.models import AuditEvent, AuditTypes, Supplier, ServiceTypePrice, ServiceSubType, ServiceType
+from flask import jsonify
+from itertools import groupby
 
 
 def get_supplier(code):
-    return Supplier.query.filter(
+    supplier = Supplier.query.filter(
         Supplier.code == code,
         Supplier.status != 'deleted'
     ).first_or_404()
+
+    return jsonify(user=supplier.serializable), 200
 
 
 def valid_supplier(user):
@@ -40,3 +44,29 @@ def update_supplier_details(supplier_code, **kwargs):
     db.session.commit()
 
     return supplier
+
+
+def get_supplier_services(code):
+    supplier = db.session.query(Supplier).filter(Supplier.code == code).first()
+
+    services = db.session\
+        .query(ServiceTypePrice.service_type_id,
+               ServiceType.name, ServiceTypePrice.sub_service_id, ServiceSubType.name.label('sub_service_name'))\
+        .join(ServiceType, ServiceTypePrice.service_type_id == ServiceType.id)\
+        .outerjoin(ServiceSubType, ServiceTypePrice.sub_service_id == ServiceSubType.id)\
+        .filter(ServiceTypePrice.supplier_code == code)\
+        .group_by(ServiceTypePrice.service_type_id, ServiceType.name,
+                  ServiceTypePrice.sub_service_id, ServiceSubType.name)\
+        .order_by(ServiceType.name)\
+        .all()
+
+    result = []
+    for key, group in groupby(services, key=lambda x: dict(id=x.service_type_id, name=x.name)):
+        subcategories = [dict(id=s.sub_service_id, name=s.sub_service_name) for s in group]
+        result.append(dict(key, subCategories=subcategories))
+
+    supplier_json = supplier.serializable
+    return jsonify(services=result,
+                   supplier=dict(name=supplier_json['name'], abn=supplier_json['abn'],
+                                 email=supplier_json.get('email', None),
+                                 contact=supplier_json.get('representative', None)))
