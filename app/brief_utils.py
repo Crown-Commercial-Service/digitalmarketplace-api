@@ -40,9 +40,14 @@ def get_supplier_service_eligible_for_brief(supplier, brief):
 
 
 def index_brief(brief):
-    index_object(
-        framework=brief.framework.slug,
-        object_type='briefs',
-        object_id=brief.id,
-        serialized_object=brief.serialize(),
-    )
+    if (
+        brief.framework.framework == 'digital-outcomes-and-specialists' and
+        brief.status != 'draft'
+    ):
+
+        index_object(
+            framework=brief.framework.slug,
+            object_type='briefs',
+            object_id=brief.id,
+            serialized_object=brief.serialize(),
+        )
