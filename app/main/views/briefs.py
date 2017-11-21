@@ -58,8 +58,9 @@ def create_brief():
     )
 
     db.session.add(audit)
-
     db.session.commit()
+    # We are intentionally not indexing briefs here. We don't need drafts in search results, and they are indexed each
+    # night by the batch indexing job run by Jenkins. In future we may index all briefs with a lower level ORM hook.
 
     return jsonify(briefs=brief.serialize()), 201
 
@@ -97,6 +98,8 @@ def update_brief(brief_id):
     db.session.add(brief)
     db.session.add(audit)
     db.session.commit()
+    # We are intentionally not indexing briefs here. We don't need drafts in search results, and they are indexed each
+    # night by the batch indexing job run by Jenkins. In future we may index all briefs with a lower level ORM hook.
 
     return jsonify(briefs=brief.serialize()), 200
 
