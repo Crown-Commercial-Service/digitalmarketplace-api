@@ -181,6 +181,6 @@ def index_object(framework, doc_type, object_id, serialized_object):
                     doc_type, object_id, index_name, e.message))
 
     except KeyError as e:
-        current_app.logger.warning(
+        current_app.logger.error(
             "Failed to find index name for framework '{}' with object type '{}'".format(framework, doc_type)
         )

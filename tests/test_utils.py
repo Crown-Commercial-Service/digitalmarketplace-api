@@ -90,7 +90,7 @@ class TestIndexObject(BaseApplicationTest):
                     search_api_client.reset_mock()
 
     @mock.patch('app.utils.current_app')
-    def test_logs_a_warning_message_if_no_mapping_found(self, current_app, search_api_client):
+    def test_logs_an_error_message_if_no_mapping_found(self, current_app, search_api_client):
         current_app.config = {
             'DM_FRAMEWORK_TO_ES_INDEX_MAPPING': {
                 'not-a-framework': {
@@ -101,7 +101,7 @@ class TestIndexObject(BaseApplicationTest):
 
         index_object('g-cloud-9', 'services', 123, {'serialized': 'object'})
 
-        current_app.logger.warning.assert_called_once_with(
+        current_app.logger.error.assert_called_once_with(
             "Failed to find index name for framework 'g-cloud-9' with object type 'services'"
         )
 
