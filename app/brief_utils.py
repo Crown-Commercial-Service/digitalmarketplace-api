@@ -40,11 +40,7 @@ def get_supplier_service_eligible_for_brief(supplier, brief):
 
 
 def index_brief(brief):
-    if (
-        brief.framework.framework == 'digital-outcomes-and-specialists' and
-        brief.status != 'draft'
-    ):
-
+    if brief.status != 'draft':
         index_object(
             framework=brief.framework.slug,
             doc_type='briefs',

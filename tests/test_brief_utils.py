@@ -30,13 +30,3 @@ class TestIndexBriefs(BaseApplicationTest):
                 index_brief(brief)
 
             assert index_object.called is False
-
-    def test_object_not_on_dos_not_indexed(self, index_object, live_g8_framework):
-        with self.app.app_context():
-            g8 = Framework.query.filter(Framework.slug == 'g-cloud-8').first()
-
-            with mock.patch.object(Brief, "serialize", return_value={'serialized': 'object'}):
-                brief = Brief(status='live', framework=g8, data={'requirementsLength': '1 week'})
-                index_brief(brief)
-
-            assert index_object.called is False
