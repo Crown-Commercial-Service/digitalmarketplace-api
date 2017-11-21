@@ -2,12 +2,13 @@ from datetime import datetime
 
 from dmapiclient.audit import AuditTypes
 from sqlalchemy.orm import lazyload
-from sqlalchemy.exc import IntegrityError, DataError
-from flask import jsonify, abort, request, current_app
+from sqlalchemy.exc import DataError, IntegrityError
+from flask import abort, current_app, jsonify, request
 
 from .. import main
 from ... import db, encryption
-from ...models import User, AuditEvent, Supplier, Framework, SupplierFramework, BuyerEmailDomain
+from ...models import AuditEvent, BuyerEmailDomain, Framework, Supplier, SupplierFramework, User
+from ...supplier_utils import check_supplier_role
 from ...utils import (
     get_json_from_request,
     get_valid_page_or_1,
@@ -319,10 +320,3 @@ def email_is_valid_for_admin_user():
 
     valid = admin_email_address_has_approved_domain(email_address)
     return jsonify(valid=valid), 200
-
-
-def check_supplier_role(role, supplier_id):
-    if role == 'supplier' and not supplier_id:
-        abort(400, "'supplierId' is required for users with 'supplier' role")
-    elif role != 'supplier' and supplier_id:
-        abort(400, "'supplierId' is only valid for users with 'supplier' role, not '{}'".format(role))
