@@ -76,16 +76,17 @@ class TestKeyFilterJSON(object):
 class TestIndexObject(BaseApplicationTest):
     def test_calls_the_search_api_index_method_correctly(self, search_api_client):
         with self.app.app_context():
-            for framework, object_to_index_mapping in current_app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'].items():
-                for object_type, index_name in object_to_index_mapping.items():
+            for framework, doc_type_to_index_mapping in current_app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'].items():
+                for doc_type, index_name in doc_type_to_index_mapping.items():
 
-                    index_object(framework, object_type, 123, {'serialized': 'object'})
+                    index_object(framework, doc_type, 123, {'serialized': 'object'})
 
                     search_api_client.index.assert_called_once_with(
                         index_name=index_name,
-                        object_type=object_type,
                         object_id=123,
-                        serialized_object={'serialized': 'object'})
+                        serialized_object={'serialized': 'object'},
+                        doc_type=doc_type,
+                    )
                     search_api_client.reset_mock()
 
     @mock.patch('app.utils.current_app')

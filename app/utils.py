@@ -164,21 +164,23 @@ def get_request_page_questions():
     return json_payload.get('page_questions', [])
 
 
-def index_object(framework, object_type, object_id, serialized_object):
+def index_object(framework, doc_type, object_id, serialized_object):
     try:
-        index_name = current_app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'][framework][object_type]
+        index_name = current_app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'][framework][doc_type]
 
         try:
-            search_api_client.index(index_name=index_name,
-                                    object_type=object_type,
-                                    object_id=object_id,
-                                    serialized_object=serialized_object)
+            search_api_client.index(
+                index_name=index_name,
+                object_id=object_id,
+                serialized_object=serialized_object,
+                doc_type=doc_type,
+            )
         except dmapiclient.HTTPError as e:
             current_app.logger.warning(
                 'Failed to add {} object with id {} to {} index: {}'.format(
-                    object_type, object_id, index_name, e.message))
+                    doc_type, object_id, index_name, e.message))
 
     except KeyError as e:
         current_app.logger.warning(
-            "Failed to find index name for framework '{}' with object type '{}'".format(framework, object_type)
+            "Failed to find index name for framework '{}' with object type '{}'".format(framework, doc_type)
         )

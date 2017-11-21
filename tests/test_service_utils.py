@@ -20,7 +20,7 @@ class TestIndexServices(BaseApplicationTest):
 
             index_object.assert_called_once_with(
                 framework='g-cloud-8',
-                object_type='services',
+                doc_type='services',
                 object_id=None,
                 serialized_object={'serialized': 'object'},
             )

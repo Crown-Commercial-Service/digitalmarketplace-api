@@ -16,7 +16,7 @@ class TestIndexBriefs(BaseApplicationTest):
 
             index_object.assert_called_once_with(
                 framework='digital-outcomes-and-specialists-2',
-                object_type='briefs',
+                doc_type='briefs',
                 object_id=None,
                 serialized_object={'serialized': 'object'},
             )

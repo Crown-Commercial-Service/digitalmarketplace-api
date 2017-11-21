@@ -47,7 +47,7 @@ def index_brief(brief):
 
         index_object(
             framework=brief.framework.slug,
-            object_type='briefs',
+            doc_type='briefs',
             object_id=brief.id,
             serialized_object=brief.serialize(),
         )

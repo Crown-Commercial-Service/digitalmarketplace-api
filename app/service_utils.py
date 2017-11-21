@@ -136,7 +136,7 @@ def index_service(service):
 
         index_object(
             framework=service.framework.slug,
-            object_type='services',
+            doc_type='services',
             object_id=service.service_id,
             serialized_object=service.serialize(),
         )
