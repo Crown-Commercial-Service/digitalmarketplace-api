@@ -1,6 +1,7 @@
 import mock
+from app import db
 from app.brief_utils import index_brief
-from app.models import Brief, Framework
+from app.models import Brief, Lot, Framework
 from tests.bases import BaseApplicationTest
 
 
@@ -11,13 +12,16 @@ class TestIndexBriefs(BaseApplicationTest):
             dos2 = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists-2').first()
 
             with mock.patch.object(Brief, "serialize", return_value={'serialized': 'object'}):
-                brief = Brief(status='live', framework=dos2, data={'requirementsLength': '1 week'})
+                lot = Lot.query.filter(Lot.slug == 'digital-outcomes').one()
+                brief = Brief(status='live', framework=dos2, data={'requirementsLength': '1 week'}, lot=lot)
+                db.session.add(brief)
+                db.session.commit()
                 index_brief(brief)
 
             index_object.assert_called_once_with(
                 framework='digital-outcomes-and-specialists-2',
                 doc_type='briefs',
-                object_id=None,
+                object_id=1,
                 serialized_object={'serialized': 'object'},
             )
 
