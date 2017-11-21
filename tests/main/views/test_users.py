@@ -316,6 +316,21 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         data = json.loads(response.get_data())["users"]
         assert data["emailAddress"] == "joeblogs+sourcing@email.com"
 
+    def test_can_post_an_admin_manager_user(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs+manager@email.com',
+                    'password': '1234567890',
+                    'role': 'admin-manager',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert response.status_code == 201
+        data = json.loads(response.get_data())["users"]
+        assert data["emailAddress"] == "joeblogs+manager@email.com"
+
     # The admin-ccs role is no longer in use
     def test_can_not_post_an_admin_ccs_user(self):
         response = self.client.post(
