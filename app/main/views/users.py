@@ -298,6 +298,16 @@ def email_has_valid_buyer_domain():
     return jsonify(valid=domain_ok)
 
 
+@main.route("/users/valid-admin-email", methods=["GET"])
+def email_is_valid_for_admin_user():
+    email_address = request.args.get('email_address')
+    if not email_address:
+        abort(400, "'email_address' is a required parameter")
+
+    valid = email_address.split('@')[-1] in current_app.config.get('DM_ALLOWED_ADMIN_DOMAINS', [])
+    return jsonify(valid=valid)
+
+
 def check_supplier_role(role, supplier_id):
     if role == 'supplier' and not supplier_id:
         abort(400, "'supplierId' is required for users with 'supplier' role")

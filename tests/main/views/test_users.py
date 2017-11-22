@@ -1500,3 +1500,34 @@ class TestUsersEmailCheck(BaseUserTest):
     def test_email_address_is_required(self):
         response = self.client.get('/users/check-buyer-email')
         assert response.status_code == 400
+
+
+class TestAdminEmailCheck(BaseUserTest):
+
+    def setup(self):
+        super(TestAdminEmailCheck, self).setup()
+        self.app.config['DM_ALLOWED_ADMIN_DOMAINS'] = ['bananas.org']
+
+    def test_email_address_is_required(self):
+        response = self.client.get('/users/valid-admin-email')
+        assert response.status_code == 400
+
+    def test_invalid_email_is_not_ok(self):
+        response = self.client.get(
+            '/users/valid-admin-email',
+            query_string={'email_address': 'buyer@i-dislike-bananas.org'}
+        )
+        assert response.status_code == 200
+        assert json.loads(response.get_data())['valid'] is False
+
+    def test_valid_email_is_ok_if_admin_domain_found_in_config(self):
+        response = self.client.get('/users/valid-admin-email', query_string={'email_address': 'buyer@bananas.org'})
+        assert response.status_code == 200
+        assert json.loads(response.get_data())['valid'] is True
+
+    def test_returns_invalid_if_no_config_value_set(self):
+        self.app.config.pop('DM_ALLOWED_ADMIN_DOMAINS')
+
+        response = self.client.get('/users/valid-admin-email', query_string={'email_address': 'buyer@bananas.org'})
+        assert response.status_code == 200
+        assert json.loads(response.get_data())['valid'] is False
