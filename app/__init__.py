@@ -8,6 +8,7 @@ import dmapiclient
 from dmutils import init_app, flask_featureflags
 
 from config import configs
+from .converters import DataUnobscuringConverter
 
 db = SQLAlchemy(metadata=MetaData(naming_convention={
     "ix": 'ix_%(column_0_label)s',
@@ -38,6 +39,8 @@ def create_app(config_name):
     if application.config['VCAP_SERVICES']:
         cf_services = json.loads(application.config['VCAP_SERVICES'])
         application.config['SQLALCHEMY_DATABASE_URI'] = cf_services['postgres'][0]['credentials']['uri']
+
+    application.url_map.converters.update({"obscured": DataUnobscuringConverter})
 
     from .main import main as main_blueprint
     application.register_blueprint(main_blueprint)

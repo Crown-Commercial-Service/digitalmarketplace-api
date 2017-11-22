@@ -134,9 +134,10 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
             res = self.client.get('/direct-award/projects?user-id={}&page={}'.format(self.user_id, i + 1))
             data = json.loads(res.get_data(as_text=True))
 
-            # Check that each project has a created_at date older than the last, i.e. reverse chronological order.
             for project in data['projects']:
-                assert last_seen < project['id']
+                internal_id = DirectAwardProject.unobscure(project['id'])
+                assert last_seen < internal_id
+                last_seen = internal_id
 
     def test_list_projects_orders_by_created_at_descending(self):
         self.app.config['DM_API_PROJECTS_PAGE_SIZE'] = 2
@@ -707,6 +708,7 @@ class TestDirectAwardLockProject(DirectAwardSetupAndTeardown, FixtureMixin):
         super(TestDirectAwardLockProject, self).setup()
         self.project_id = self.create_direct_award_project(user_id=self.user_id,
                                                            project_name=self.direct_award_project_name)
+        self.project_id_obfuscated = DirectAwardProject.obscure(self.project_id)
         self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id)
 
         res = self.client.get('/direct-award/projects/{}/searches/{}?user-id={}'.format(self.project_id,
@@ -761,7 +763,7 @@ class TestDirectAwardLockProject(DirectAwardSetupAndTeardown, FixtureMixin):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert data['project']['id'] == self.project_id
+        assert data['project']['id'] == self.project_id_obfuscated
         assert data['project']['lockedAt'] is not None
 
         with self.app.app_context():
