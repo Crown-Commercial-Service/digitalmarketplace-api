@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import jsonify, abort, request, current_app
+from flask import abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
 
 from dmapiclient.audit import AuditTypes
@@ -9,8 +9,9 @@ from .. import main
 from ...models import db, Brief, BriefResponse, AuditEvent, Framework
 from ...utils import (
     get_json_from_request, json_has_required_keys, get_int_or_400,
-    pagination_links, get_valid_page_or_1, url_for,
-    validate_and_return_updater_request, get_request_page_questions
+    get_valid_page_or_1, url_for, validate_and_return_updater_request,
+    get_request_page_questions, single_result_response, list_result_response,
+    paginated_result_response
 )
 
 from ...brief_utils import get_supplier_service_eligible_for_brief
@@ -84,7 +85,7 @@ def create_brief_response():
     db.session.add(audit)
     db.session.commit()
 
-    return jsonify(briefResponses=brief_response.serialize()), 201
+    return single_result_response(briefResponses=brief_response.serialize()), 201
 
 
 @main.route('/brief-responses/<int:brief_response_id>', methods=['POST'])
@@ -138,7 +139,7 @@ def update_brief_response(brief_response_id):
         db.session.rollback()
         abort(400, e.orig)
 
-    return jsonify(briefResponses=brief_response.serialize()), 200
+    return single_result_response(briefResponses=brief_response.serialize()), 200
 
 
 @main.route('/brief-responses/<int:brief_response_id>/submit', methods=['POST'])
@@ -186,7 +187,7 @@ def submit_brief_response(brief_response_id):
         db.session.rollback()
         abort(400, e.orig)
 
-    return jsonify(briefResponses=brief_response.serialize()), 200
+    return single_result_response(briefResponses=brief_response.serialize()), 200
 
 
 @main.route('/brief-responses/<int:brief_response_id>', methods=['GET'])
@@ -195,7 +196,7 @@ def get_brief_response(brief_response_id):
         BriefResponse.id == brief_response_id
     ).first_or_404()
 
-    return jsonify(briefResponses=brief_response.serialize())
+    return single_result_response(briefResponses=brief_response.serialize())
 
 
 @main.route('/brief-responses', methods=['GET'])
@@ -230,21 +231,22 @@ def list_brief_responses():
         )
 
     if brief_id or supplier_id:
-        return jsonify(
-            briefResponses=[brief_response.serialize() for brief_response in brief_responses.all()],
+        brief_responses = brief_responses.all()
+        return list_result_response(
+            total_count=len(brief_responses),
+            briefResponses=[brief_response.serialize() for brief_response in brief_responses],
             links={'self': url_for('.list_brief_responses', supplier_id=supplier_id, brief_id=brief_id)}
         )
 
-    brief_responses = brief_responses.paginate(
+    paginated_brief_responses = brief_responses.paginate(
         page=page,
         per_page=current_app.config['DM_API_BRIEF_RESPONSES_PAGE_SIZE']
     )
 
-    return jsonify(
-        briefResponses=[brief_response.serialize() for brief_response in brief_responses.items],
-        links=pagination_links(
-            brief_responses,
-            '.list_brief_responses',
-            request.args
-        )
+    return paginated_result_response(
+        total_count=brief_responses.count(),
+        pagination=paginated_brief_responses,
+        endpoint='.list_brief_responses',
+        request_args=request.args,
+        briefResponses=[brief_response.serialize() for brief_response in paginated_brief_responses.items]
     )
