@@ -100,9 +100,8 @@ def get(code):
       200:
         description: A supplier
         type: object
-        properties:
-          supplier:
-              $ref: '#/definitions/Supplier'
+        schema:
+          $ref: '#/definitions/Supplier'
     """
     return get_supplier(code)
 
@@ -128,15 +127,14 @@ def update(code):
       200:
         description: A supplier
         type: object
-        properties:
-          supplier:
-              $ref: '#/definitions/Supplier'
+        schema:
+          $ref: '#/definitions/Supplier'
     """
     try:
         json_payload = get_json_from_request()
         supplier = update_supplier(code, **json_payload)
 
-        return jsonify(supplier=supplier.serializable), 200
+        return jsonify(supplier.serializable), 200
 
     except Exception as error:
         return jsonify(message=error.message), 400

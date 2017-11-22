@@ -105,7 +105,7 @@ def test_profile_supplier(client, supplier_user):
     res = client.get('/2/suppliers/{}'.format(supplier_user.supplier_code))
     assert res.status_code == 200
     data = json.loads(res.get_data(as_text=True))
-    assert data['supplier']
+    assert data['code']
 
     res = client.get('/2/suppliers/2')
     data = json.loads(res.get_data(as_text=True))

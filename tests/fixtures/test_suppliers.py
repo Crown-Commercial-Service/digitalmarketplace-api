@@ -52,8 +52,9 @@ def test_update_supplier_profile(app, supplier_user, client, mocker):
 
     supplier_data = json.loads(response.data)
 
+    print supplier_data
     updated_supplier_instance = Supplier.query.filter(
-        Supplier.code == supplier_data['supplier'].get('code')).first()
+        Supplier.code == supplier_data.get('code')).first()
 
     assert hasattr(updated_supplier_instance, 'addresses')
     assert hasattr(updated_supplier_instance, 'contacts')
@@ -68,7 +69,7 @@ def test_supplier_services(client, supplier_user, service_type_prices):
     response = client.get('/2/suppliers/{}'.format(supplier_user.supplier_code))
     assert response.status_code == 200
 
-    supplier = json.loads(response.data)['supplier']
+    supplier = json.loads(response.data)
     assert supplier['services'] == [{'id': 1, 'name': 'Service1', 'subCategories': [{'id': 1, 'name': ''}]}]
 
 

@@ -14,7 +14,7 @@ def get_all():
     """All regions (role=buyer)
     ---
     tags:
-      - services
+      - regions
     security:
       - basicAuth: []
     definitions:

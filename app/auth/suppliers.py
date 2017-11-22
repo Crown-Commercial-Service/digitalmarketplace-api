@@ -11,7 +11,7 @@ def get_supplier(code):
         Supplier.status != 'deleted'
     ).first_or_404()
 
-    return jsonify(supplier=supplier.serializable), 200
+    return jsonify(supplier.serializable), 200
 
 
 def update_supplier(supplier_code, **kwargs):
