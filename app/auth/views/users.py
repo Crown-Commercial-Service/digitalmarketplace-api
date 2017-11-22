@@ -49,6 +49,14 @@ def _user_info(user):
 
 @auth.route('/ping', methods=["GET"])
 def ping():
+    """Current user
+    ---
+    tags:
+      - users
+    responses:
+      200:
+        description: Current user info
+    """
     return jsonify(_user_info(current_user))
 
 

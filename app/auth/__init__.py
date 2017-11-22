@@ -55,7 +55,7 @@ def load_user_from_request(request):
                              user.active, user.name, user.role, user.terms_accepted_at, user.application_id)
             return user
 
-from app.auth.views import briefs, users, feedback, suppliers, services  # noqa
+from app.auth.views import briefs, users, feedback, suppliers, services, prices, regions  # noqa
 
 
 def get_token_from_headers(headers):

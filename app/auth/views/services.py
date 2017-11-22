@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import jsonify, current_app
 from flask_login import login_required
 from app.auth import auth
 from app.models import (
@@ -8,6 +8,7 @@ from app.models import (
 from itertools import groupby
 from operator import itemgetter
 from app.auth.helpers import role_required
+import pendulum
 
 ALERTS = {
     'fixed': {
@@ -25,60 +26,11 @@ ALERTS = {
 }
 
 
-@auth.route('/regions', methods=['GET'])
+@auth.route('/services', methods=['GET'], endpoint='get_all_services')
 @login_required
 @role_required('buyer')
-def regions():
-    """Return a list of regions.
-    ---
-    tags:
-      - services
-    security:
-      - basicAuth: []
-    definitions:
-      Regions:
-        properties:
-          regions:
-            type: array
-            items:
-              $ref: '#/definitions/Region'
-      Region:
-        type: object
-        properties:
-          name:
-            type: string
-          subRegions:
-            type: array
-            items:
-              $ref: '#/definitions/SubRegion'
-      SubRegion:
-        type: object
-        properties:
-          id:
-            type: integer
-          name:
-            type: string
-    responses:
-      200:
-        description: A list of regions
-        schema:
-          $ref: '#/definitions/Regions'
-    """
-    regions_data = db.session.query(Region).order_by(Region.state).all()
-    regions = [_.serializable for _ in regions_data]
-
-    result = []
-    for key, group in groupby(regions, key=itemgetter('state')):
-        result.append(dict(name=key, subRegions=list(dict(id=s['id'], name=s['name']) for s in group)))
-
-    return jsonify(regions=result), 200
-
-
-@auth.route('/services', methods=['GET'])
-@login_required
-@role_required('buyer')
-def get_category_services():
-    """Return a list of services.
+def get_all():
+    """All services (role=buyer)
     ---
     tags:
       - services
@@ -128,11 +80,11 @@ def get_category_services():
     return jsonify(categories=result), 200
 
 
-@auth.route('/services/<service_type_id>/regions/<region_id>/prices', methods=['GET'])
+@auth.route('/services/<service_type_id>/regions/<region_id>/prices', methods=['GET'], endpoint='filter_services')
 @login_required
 @role_required('buyer')
-def get_seller_catalogue_data(service_type_id, region_id):
-    """Return a list of prices.
+def query(service_type_id, region_id):
+    """Filter suppliers and prices (role=buyer)
     ---
     tags:
       - services
@@ -201,13 +153,15 @@ def get_seller_catalogue_data(service_type_id, region_id):
     if service_type is None or region is None:
         return jsonify(alert=ALERTS['none'], categories=[]), 200
 
+    today = pendulum.today(current_app.config['DEADLINES_TZ_NAME']).date()
+
     prices = db.session.query(ServiceTypePrice, Supplier, ServiceSubType)\
         .join(Supplier, ServiceTypePrice.supplier_code == Supplier.code)\
         .outerjoin(ServiceSubType, ServiceTypePrice.sub_service_id == ServiceSubType.id)\
         .filter(
             ServiceTypePrice.service_type_id == service_type_id,
             ServiceTypePrice.region_id == region_id,
-            ServiceTypePrice.is_current_price)\
+            ServiceTypePrice.is_current_price(today))\
         .distinct(ServiceSubType.name, ServiceTypePrice.supplier_code, ServiceTypePrice.service_type_id,
                   ServiceTypePrice.sub_service_id, ServiceTypePrice.region_id)\
         .order_by(ServiceSubType.name, ServiceTypePrice.supplier_code.desc(),

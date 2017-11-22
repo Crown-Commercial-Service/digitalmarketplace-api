@@ -102,15 +102,12 @@ def test_profile_supplier(client, supplier_user):
     }), content_type='application/json')
     assert res.status_code == 200
 
-    res = client.get('/2/supplier')
+    res = client.get('/2/suppliers/{}'.format(supplier_user.supplier_code))
     assert res.status_code == 200
     data = json.loads(res.get_data(as_text=True))
-    assert data['user']
+    assert data['supplier']
 
-    res = client.get('/2/supplier/1')
-    assert res.status_code == 200
-
-    res = client.get('/2/supplier/2')
+    res = client.get('/2/suppliers/2')
     data = json.loads(res.get_data(as_text=True))
     assert res.status_code == 403
 
@@ -121,8 +118,8 @@ def test_profile_buyer(client, users, suppliers):
     }), content_type='application/json')
     assert res.status_code == 200
 
-    res = client.get('/2/supplier')
-    assert res.status_code == 403
+    res = client.get('/2/suppliers/1')
+    assert res.status_code == 200
 
-    res = client.get('/2/supplier/1')
+    res = client.get('/2/suppliers')
     assert res.status_code == 200

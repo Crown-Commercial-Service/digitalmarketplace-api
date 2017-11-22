@@ -16,7 +16,7 @@ from sqlalchemy import text
 from sqlalchemy import asc, desc, func, and_
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import validates, relationship, column_property
@@ -47,6 +47,7 @@ import pendulum
 from .jiraapi import get_marketplace_jira
 from .modelsbase import normalize_key_case
 from .utils import sorted_uniques
+from itertools import groupby
 
 
 with io.open('data/domain_mapping_old_to_new.yaml') as f:
@@ -730,6 +731,26 @@ class Supplier(db.Model):
         if prices:
             return [dict(state=p.region.state, name=p.region.name) for p in prices]
 
+    @property
+    def services(self):
+        service_types = db.session\
+            .query(ServiceTypePrice.service_type_id,
+                   ServiceType.name, ServiceTypePrice.sub_service_id, ServiceSubType.name.label('sub_service_name'))\
+            .join(ServiceType, ServiceTypePrice.service_type_id == ServiceType.id)\
+            .outerjoin(ServiceSubType, ServiceTypePrice.sub_service_id == ServiceSubType.id)\
+            .filter(ServiceTypePrice.supplier_code == self.code)\
+            .group_by(ServiceTypePrice.service_type_id, ServiceType.name,
+                      ServiceTypePrice.sub_service_id, ServiceSubType.name)\
+            .order_by(ServiceType.name)\
+            .all()
+
+        result = []
+        for key, group in groupby(service_types, key=lambda x: dict(id=x.service_type_id, name=x.name)):
+            subcategories = [dict(id=s.sub_service_id, name=s.sub_service_name) for s in group]
+            result.append(dict(key, subCategories=subcategories))
+
+        return result
+
     def get_service_counts(self):
         # FIXME: To be removed from Australian version
         return {}
@@ -795,6 +816,7 @@ class Supplier(db.Model):
         if self.framework_names and current_app.config['ORAMS_FRAMEWORK'] in self.framework_names:
             j['category_name'] = self.category_name
             j['regions'] = self.regions
+            j['services'] = self.services
 
             if self.addresses:
                 for k, v in j['address'].items():
@@ -805,7 +827,7 @@ class Supplier(db.Model):
                     'contact_links', 'domains', 'frameworks', 'extraLinks', 'extra_links', 'is_recruiter',
                     'lastUpdateTime', 'last_update_time', 'links', 'longName', 'long_name', 'prices', 'products',
                     'recruiter_info', 'references', 'seller_types', 'signed_agreements', 'supplierCode', 'status',
-                    'text_vector', 'creationTime', 'creation_time', 'description', 'services']
+                    'text_vector', 'creationTime', 'creation_time', 'description']
 
             for k in keys:
                 j.pop(k, None)
@@ -863,6 +885,10 @@ class Supplier(db.Model):
 
         if 'category_name' in data:
             del data['category_name']
+
+        if 'services' in data and self.framework_names \
+                and current_app.config['ORAMS_FRAMEWORK'] in self.framework_names:
+            del data['services']
 
         overridden = [
             'longName',
@@ -2675,16 +2701,14 @@ class ServiceTypePrice(db.Model):
     created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
     updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
 
-    @hybrid_property
-    def is_current_price(self):
-        return self.date_from <= pendulum.Date.today() and self.date_to >= pendulum.Date.today()
+    @hybrid_method
+    def is_current_price(self, date):
+        return self.date_from <= date and self.date_to >= date
 
     @is_current_price.expression
-    def is_current_price(cls):
-        TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
-
-        return and_(cls.date_from <= func.date_trunc('day', func.current_timestamp().op('AT TIME ZONE')(TZ_NAME)),
-                    cls.date_to >= func.date_trunc('day', func.current_timestamp().op('AT TIME ZONE')(TZ_NAME)))
+    def is_current_price(cls, date):
+        return and_(cls.date_from <= date,
+                    cls.date_to >= date)
 
     def update_from_json_before(self, data):
         data = update_price_json(self, data)

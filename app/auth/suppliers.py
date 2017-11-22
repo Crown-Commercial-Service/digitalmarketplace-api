@@ -1,7 +1,8 @@
 from app import db
-from app.models import AuditEvent, AuditTypes, Supplier, ServiceTypePrice, ServiceSubType, ServiceType
+from app.models import AuditEvent, AuditTypes, Supplier, ServiceTypePrice, ServiceSubType, ServiceType, ServiceCategory
 from flask import jsonify
 from itertools import groupby
+from operator import itemgetter
 
 
 def get_supplier(code):
@@ -10,14 +11,10 @@ def get_supplier(code):
         Supplier.status != 'deleted'
     ).first_or_404()
 
-    return jsonify(user=supplier.serializable), 200
+    return jsonify(supplier=supplier.serializable), 200
 
 
-def valid_supplier(user):
-    return False if user.role is not 'supplier' or user.supplier_code is None else True
-
-
-def update_supplier_details(supplier_code, **kwargs):
+def update_supplier(supplier_code, **kwargs):
     if supplier_code is None:
         raise ValueError("supplier_code was not provided in kwargs to update supplier function")
 
@@ -70,3 +67,28 @@ def get_supplier_services(code):
                    supplier=dict(name=supplier_json['name'], abn=supplier_json['abn'],
                                  email=supplier_json.get('email', None),
                                  contact=supplier_json.get('representative', None)))
+
+
+def get_all_suppliers():
+    suppliers = db.session.query(ServiceCategory.name.label('category_name'), Supplier.code, Supplier.name)\
+        .select_from(Supplier)\
+        .join(ServiceTypePrice, ServiceTypePrice.supplier_code == Supplier.code)\
+        .join(ServiceType, ServiceType.id == ServiceTypePrice.service_type_id)\
+        .join(ServiceCategory, ServiceCategory.id == ServiceType.category_id)\
+        .group_by(ServiceCategory.name, Supplier.code, Supplier.name)\
+        .order_by(ServiceCategory.name, Supplier.name)\
+        .all()
+
+    suppliers_json = [dict(category_name=s.category_name, name=s.name, code=s.code) for s in suppliers]
+
+    result = []
+    for key, group in groupby(suppliers_json, key=itemgetter('category_name')):
+        result.append(dict(name=key, suppliers=list(remove('category_name', group))))
+
+    return jsonify(categories=result), 200
+
+
+def remove(key, group):
+    for item in group:
+        del item[key]
+        yield item

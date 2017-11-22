@@ -24,6 +24,15 @@ def role_required(*roles):
     return role_decorator
 
 
+def is_current_supplier(func):
+    @wraps(func)
+    def decorated_view(code, *args, **kwargs):
+        if current_user.role == 'supplier' and current_user.supplier_code != code:
+            return jsonify(message="Unauthorised to view supplier"), 403
+        return func(code, *args, **kwargs)
+    return decorated_view
+
+
 def generate_creation_token(name, email_address, user_type, **unused):
     data = {
         'name': name,

@@ -1,28 +1,47 @@
-import pendulum
-from flask import jsonify, request
+from flask import jsonify
 from flask_login import current_user, login_required
 from app.auth import auth
 from app.utils import get_json_from_request
-from app.auth.suppliers import get_supplier, update_supplier_details, get_supplier_services
-from app.models import db, ServiceType, ServiceTypePrice, Supplier, Region, ServiceCategory
-from app.auth.helpers import role_required, abort, parse_date
-from itertools import groupby
-from app.swagger import swag
-from app.emails.prices import send_price_change_email
-from operator import itemgetter
+from app.auth.suppliers import get_supplier, update_supplier, get_supplier_services, get_all_suppliers
+from app.auth.helpers import role_required, is_current_supplier
 
 
-@auth.route('/supplier', methods=['GET'])
+@auth.route('/suppliers/<int:code>', methods=['GET'], endpoint='get_supplier')
 @login_required
-@role_required('supplier')
-def get_supplier_profile():
-    """Return the current supplier (role=supplier)
+@role_required('buyer', 'supplier')
+@is_current_supplier
+def get(code):
+    """A supplier (role=buyer,supplier)
     ---
     tags:
-      - user
+      - suppliers
     security:
       - basicAuth: []
+    parameters:
+      - name: code
+        in: path
+        type: integer
+        required: true
+        default: all
     definitions:
+      SupplierService:
+        type: object
+        properties:
+          id:
+            type: integer
+          name:
+            type: string
+          subCategories:
+            type: array
+            items:
+              $ref: '#/definitions/SupplierCategory'
+      SupplierCategory:
+        type: object
+        properties:
+          id:
+            type: integer
+          name:
+            type: string
       Supplier:
         type: object
         properties:
@@ -69,6 +88,10 @@ def get_supplier_profile():
                     type: string
           representative:
             type: string
+          services:
+            type: array
+            items:
+                $ref: '#/definitions/SupplierService'
           summary:
             type: string
           website:
@@ -78,17 +101,18 @@ def get_supplier_profile():
         description: A supplier
         type: object
         properties:
-          user:
+          supplier:
               $ref: '#/definitions/Supplier'
     """
-    return get_supplier(current_user.supplier_code)
+    return get_supplier(code)
 
 
-@auth.route('/supplier/<int:code>', methods=['GET'])
+@auth.route('/suppliers/<int:code>', methods=['POST'], endpoint='update_supplier')
 @login_required
 @role_required('buyer', 'supplier')
-def get_supplier_by_code(code):
-    """Return a supplier (role=[buyer,supplier])
+@is_current_supplier
+def update(code):
+    """Update a supplier (role=buyer,supplier)
     ---
     tags:
       - suppliers
@@ -104,296 +128,25 @@ def get_supplier_by_code(code):
       200:
         description: A supplier
         type: object
-        schema:
-          $ref: '#/definitions/Supplier'
+        properties:
+          supplier:
+              $ref: '#/definitions/Supplier'
     """
-    if current_user.role == 'supplier' and current_user.supplier_code != code:
-        return jsonify(message="Unauthorised to view supplier"), 403
-
-    return get_supplier(code)
-
-
-@auth.route('/supplier', methods=['POST', 'PATCH'])
-@login_required
-@role_required('supplier')
-def update_supplier_profile():
     try:
         json_payload = get_json_from_request()
-        supplier = update_supplier_details(current_user.supplier_code, **json_payload)
+        supplier = update_supplier(code, **json_payload)
 
-        return jsonify(user=supplier.serializable), 200
+        return jsonify(supplier=supplier.serializable), 200
 
     except Exception as error:
         return jsonify(message=error.message), 400
 
 
-@auth.route('/supplier/services', methods=['GET'])
-@login_required
-@role_required('supplier')
-def supplier_services():
-    """Return a list of services and sub categories for the current supplier (role=supplier)
-    ---
-    tags:
-      - user
-    security:
-      - basicAuth: []
-    definitions:
-      SupplierService:
-        type: object
-        properties:
-          id:
-            type: integer
-          name:
-            type: string
-          subCategories:
-            type: array
-            items:
-              $ref: '#/definitions/SupplierCategory'
-      SupplierCategory:
-        type: object
-        properties:
-          id:
-            type: integer
-          name:
-            type: string
-      SupplierServices:
-        type: object
-        properties:
-          supplier:
-            type:
-              object
-            properties:
-              name:
-                type: string
-              abn:
-                type: string
-              email:
-                type: string
-              contact:
-                type: string
-          services:
-            type: array
-            items:
-              $ref: '#/definitions/SupplierService'
-    responses:
-      200:
-        description: A list of services with sub categories
-        schema:
-          $ref: '#/definitions/SupplierServices'
-    """
-    return get_supplier_services(current_user.supplier_code)
-
-
-@auth.route('/suppliers/<int:code>/services', methods=['GET'])
+@auth.route('/suppliers', methods=['GET'], endpoint='get_all_suppliers')
 @login_required
 @role_required('buyer')
-def supplier_services_by_code(code):
-    """Return a list of services and sub categories for a supplier (role=buyer)
-    ---
-    tags:
-      - suppliers
-    security:
-      - basicAuth: []
-        parameters:
-    parameters:
-      - name: code
-        in: path
-        type: integer
-        required: true
-        default: all
-    responses:
-      200:
-        description: A list of services with sub categories
-        schema:
-          $ref: '#/definitions/SupplierServices'
-    """
-    return get_supplier_services(code)
-
-
-@auth.route('/supplier/services/<service_type_id>/categories/<category_id>/prices', methods=['GET'])
-@login_required
-@role_required('supplier')
-def supplier_service_prices(service_type_id, category_id=None):
-    """Return a list of prices for the current supplier (role=supplier)
-    ---
-    tags:
-      - user
-    security:
-      - basicAuth: []
-    parameters:
-      - name: service_type_id
-        in: path
-        type: integer
-        required: true
-        default: all
-      - name: category_id
-        in: path
-        type: integer
-        required: true
-        default: all
-    definitions:
-      SupplierPrices:
-        type: array
-        items:
-          $ref: '#/definitions/SupplierPrice'
-      SupplierPrice:
-        type: object
-        properties:
-          id:
-            type: integer
-          name:
-            type: string
-          region:
-            type: object
-            properties:
-              state:
-                type: string
-              name:
-                type: string
-          price:
-            type: string
-          startDate:
-            type: string
-          endDate:
-            type: string
-    responses:
-      200:
-        description: A list of prices
-        schema:
-          $ref: '#/definitions/SupplierPrices'
-    """
-    prices = db.session.query(ServiceTypePrice)\
-        .join(ServiceTypePrice.region)\
-        .filter(ServiceTypePrice.supplier_code == current_user.supplier_code,
-                ServiceTypePrice.service_type_id == service_type_id,
-                ServiceTypePrice.sub_service_id == category_id,
-                ServiceTypePrice.is_current_price)\
-        .distinct(Region.state, Region.name, ServiceTypePrice.supplier_code, ServiceTypePrice.service_type_id,
-                  ServiceTypePrice.sub_service_id, ServiceTypePrice.region_id)\
-        .order_by(Region.state, Region.name, ServiceTypePrice.supplier_code.desc(),
-                  ServiceTypePrice.service_type_id.desc(), ServiceTypePrice.sub_service_id.desc(),
-                  ServiceTypePrice.region_id.desc(), ServiceTypePrice.updated_at.desc())\
-        .all()
-
-    return jsonify(prices=[p.serializable for p in prices]), 200
-
-
-@auth.route('/supplier/prices', methods=['POST'])
-@login_required
-@role_required('supplier')
-@swag.validate('PriceUpdates')
-def update_supplier_price():
-    """Update a price for the current supplier (role=supplier)
-    ---
-    tags:
-      - user
-    security:
-      - basicAuth: []
-    consumes:
-      - application/json
-    parameters:
-      - name: body
-        in: body
-        required: true
-        schema:
-          id: PriceUpdates
-          required:
-            - prices
-          properties:
-            prices:
-              type: array
-              items:
-                type: object
-                required:
-                  - id
-                  - price
-                  - startDate
-                properties:
-                  id:
-                    type: integer
-                  price:
-                    type: number
-                    minimum: 1
-                  startDate:
-                    type: string
-                  endDate:
-                    type: string
-    responses:
-      200:
-        description: An updated price
-        schema:
-          properties:
-            prices:
-              type: array
-              items:
-                $ref: '#/definitions/SupplierPrice'
-    """
-    json_data = request.get_json()
-    prices = json_data.get('prices')
-    results = []
-
-    for p in prices:
-        existing_price = db.session.query(ServiceTypePrice).get(p['id'])
-
-        if existing_price is None:
-            abort('Invalid price id: {}'.format(p['id']))
-
-        start_date = p.get('startDate')
-        end_date = p.get('endDate', '')
-        price = p.get('price')
-        date_from = parse_date(start_date)
-
-        if end_date:
-            date_to = parse_date(end_date)
-        else:
-            date_to = pendulum.Date.create(2050, 1, 1)
-
-        if not date_from.is_future():
-            abort('startDate must be in the future: {}'.format(date_from))
-
-        if date_to < date_from:
-            abort('endDate must be after startDate: {}'.format(date_to))
-
-        if price > existing_price.service_type_price_ceiling.price:
-            abort('price must be less than capPrice: {}'.format(price))
-
-        existing_price.date_to = date_from.subtract(days=1)
-        new_price = add_price(existing_price, date_from, date_to, price)
-        trailing_price = add_price(new_price, date_to.add(days=1),
-                                   pendulum.Date.create(2050, 1, 1), existing_price.price)\
-            if end_date else None
-
-        results.append([x for x in [existing_price, new_price, trailing_price] if x is not None])
-
-    db.session.commit()
-    send_price_change_email(results)
-
-    return jsonify(prices=results)
-
-
-def add_price(existing_price, date_from, date_to, price):
-    new_price = ServiceTypePrice(
-        supplier_code=existing_price.supplier_code,
-        service_type_id=existing_price.service_type_id,
-        sub_service_id=existing_price.sub_service_id,
-        region_id=existing_price.region.id,
-        service_type_price_ceiling_id=existing_price.service_type_price_ceiling.id,
-        date_from=date_from,
-        date_to=date_to,
-        price=price
-    )
-
-    db.session.add(new_price)
-    db.session.flush()
-
-    return new_price
-
-
-@auth.route('/suppliers', methods=['GET'])
-@login_required
-@role_required('buyer')
-def get_all_suppliers():
-    """Return the suppliers by category (role=buyer)
+def get_all():
+    """All suppliers grouped by category (role=buyer)
     ---
     tags:
       - suppliers
@@ -421,25 +174,40 @@ def get_all_suppliers():
                       name:
                         type: string
     """
-    suppliers = db.session.query(ServiceCategory.name.label('category_name'), Supplier.code, Supplier.name)\
-        .select_from(Supplier)\
-        .join(ServiceTypePrice, ServiceTypePrice.supplier_code == Supplier.code)\
-        .join(ServiceType, ServiceType.id == ServiceTypePrice.service_type_id)\
-        .join(ServiceCategory, ServiceCategory.id == ServiceType.category_id)\
-        .group_by(ServiceCategory.name, Supplier.code, Supplier.name)\
-        .order_by(ServiceCategory.name, Supplier.name)\
-        .all()
-
-    suppliers_json = [dict(category_name=s.category_name, name=s.name, code=s.code) for s in suppliers]
-
-    result = []
-    for key, group in groupby(suppliers_json, key=itemgetter('category_name')):
-        result.append(dict(name=key, suppliers=list(remove('category_name', group))))
-
-    return jsonify(categories=result), 200
+    return get_all_suppliers()
 
 
-def remove(key, group):
-    for item in group:
-        del item[key]
-        yield item
+# deprecated routes
+@auth.route('/supplier', methods=['GET'])
+@login_required
+@role_required('supplier')
+def get_deprecated():
+    return get_supplier(current_user.supplier_code)
+
+
+@auth.route('/supplier/<int:code>', methods=['GET'])
+@login_required
+@role_required('buyer', 'supplier')
+def get_by_code_deprecated(code):
+    return get_supplier(code)
+
+
+@auth.route('/supplier/services', methods=['GET'])
+@login_required
+@role_required('supplier')
+def get_services_deprecated():
+    return get_supplier_services(current_user.supplier_code)
+
+
+@auth.route('/supplier', methods=['POST'])
+@login_required
+@role_required('supplier')
+def update_deprecated():
+    try:
+        json_payload = get_json_from_request()
+        supplier = update_supplier(current_user.supplier_code, **json_payload)
+
+        return jsonify(user=supplier.serializable), 200
+
+    except Exception as error:
+        return jsonify(message=error.message), 400
