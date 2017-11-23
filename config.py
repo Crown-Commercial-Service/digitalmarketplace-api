@@ -49,10 +49,10 @@ class Config:
             'services': 'g-cloud-9'
         },
         'digital-outcomes-and-specialists': {
-            'briefs': 'briefs-digital-outcomes-and-specialists-2'
+            'briefs': 'briefs-digital-outcomes-and-specialists'
         },
         'digital-outcomes-and-specialists-2': {
-            'briefs': 'briefs-digital-outcomes-and-specialists-2'
+            'briefs': 'briefs-digital-outcomes-and-specialists'
         },
     }
 
