@@ -145,7 +145,7 @@ def send_assessment_approval_notification(supplier_id, domain_id):
     supplier = Supplier.query.get(supplier_id)
     domain = Domain.query.get(domain_id)
 
-    users = User.query.filter(User.supplier_code == supplier.code).all()
+    users = User.query.filter(User.supplier_code == supplier.code, User.active).all()
 
     email_addresses = [u.email_address for u in users]
     url_latest_opportunities = FRONTEND_ADDRESS + '/digital-marketplace/opportunities'
@@ -208,7 +208,7 @@ def send_assessment_rejected_notification(supplier_id, domain_name, message):
     TEMPLATE_FILENAME = 'assessment_rejected.md'
     supplier = Supplier.query.get(supplier_id)
 
-    users = User.query.filter(User.supplier_code == supplier.code).all()
+    users = User.query.filter(User.supplier_code == supplier.code, User.active).all()
 
     email_addresses = [u.email_address for u in users]
     email_addresses.append(current_app.config['GENERIC_CONTACT_EMAIL'])
@@ -235,7 +235,7 @@ def send_assessment_rejected_notification(supplier_id, domain_name, message):
 def send_revert_notification(application_id, message):
     TEMPLATE_FILENAME = 'application_reverted.md'
 
-    users = User.query.filter(User.application_id == application_id).all()
+    users = User.query.filter(User.application_id == application_id, User.active).all()
     email_addresses = [u.email_address for u in users]
     email_addresses.append(current_app.config['GENERIC_CONTACT_EMAIL'])
 
