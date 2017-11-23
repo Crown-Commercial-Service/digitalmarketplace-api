@@ -25,6 +25,8 @@ dependencies:
   pre:
     - curl -v -L -o cf-cli_amd64.deb 'https://cli.run.pivotal.io/stable?release=debian64&source=github'
     - sudo dpkg -i cf-cli_amd64.deb
+    - cf install-plugin https://github.com/govau/autopilot/releases/download/0.0.5-venapp/autopilot-linux -f
+    - cf install-plugin https://github.com/govau/cf-run-and-wait/releases/download/0.1/run-and-wait.linux64 -f
     - cf -v
 
   override:
@@ -42,9 +44,8 @@ deployment:
       - python ./db_tasks.py test_migration $CIRCLE_BUILD_NUM $CF_URL_STAGING $CF_EXPORT_URL_STAGING $CF_USER_STAGING $CF_PASSWORD_STAGING $CF_SERVICE_BINDING_STAGING
       - cf login -a https://api.system.z.cld.gov.au -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
       - cf target -o dta -s marketplace
-      - cf push -f manifest.yml
-      - cf install-plugin -f https://github.com/govau/cf-run-and-wait/releases/download/0.1/run-and-wait.linux64
-      - cf run-and-wait dm-dev-api-blue "python ./db_tasks.py do_migration $CIRCLE_BUILD_NUM"
+      - cf zero-downtime-push dm-dev-api -f manifest.yml --show-app-log
+      - cf run-and-wait dm-dev-api "python ./db_tasks.py do_migration $CIRCLE_BUILD_NUM"
 
   production:
     tag: /release-.*/
