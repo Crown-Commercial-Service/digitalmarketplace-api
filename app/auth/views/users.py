@@ -8,7 +8,7 @@ from app.auth import auth
 from app.auth.helpers import (
     generate_reset_password_token, decode_reset_password_token, get_root_url
 )
-from app.models import Application, User, Supplier
+from app.models import Application, User
 from app.utils import get_json_from_request, json_has_required_keys
 from app.emails.users import (
     send_account_activation_email, send_account_activation_manager_email, send_new_user_onboarding_email,

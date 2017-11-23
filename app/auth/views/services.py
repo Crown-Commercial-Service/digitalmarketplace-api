@@ -1,10 +1,7 @@
 from flask import jsonify, current_app
 from flask_login import login_required
 from app.auth import auth
-from app.models import (
-    db, Region, ServiceCategory, ServiceType, ServiceTypePrice,
-    Supplier, ServiceSubType
-)
+from app.models import db, Region, ServiceCategory, ServiceType, ServiceTypePrice, Supplier, ServiceSubType
 from itertools import groupby
 from operator import itemgetter
 from app.auth.helpers import role_required
@@ -26,10 +23,10 @@ ALERTS = {
 }
 
 
-@auth.route('/services', methods=['GET'], endpoint='get_all_services')
+@auth.route('/services', methods=['GET'], endpoint='list_services')
 @login_required
 @role_required('buyer')
-def get_all():
+def get_list():
     """All services (role=buyer)
     ---
     tags:
@@ -83,7 +80,7 @@ def get_all():
 @auth.route('/services/<service_type_id>/regions/<region_id>/prices', methods=['GET'], endpoint='filter_services')
 @login_required
 @role_required('buyer')
-def query(service_type_id, region_id):
+def filter(service_type_id, region_id):
     """Filter suppliers and prices (role=buyer)
     ---
     tags:

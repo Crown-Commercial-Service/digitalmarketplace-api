@@ -1,8 +1,8 @@
 from flask import jsonify
-from flask_login import current_user, login_required
+from flask_login import login_required
 from app.auth import auth
 from app.utils import get_json_from_request
-from app.auth.suppliers import get_supplier, update_supplier, get_supplier_services, get_all_suppliers
+from app.auth.suppliers import get_supplier, update_supplier, list_suppliers
 from app.auth.helpers import role_required, is_current_supplier
 
 
@@ -140,10 +140,10 @@ def update(code):
         return jsonify(message=error.message), 400
 
 
-@auth.route('/suppliers', methods=['GET'], endpoint='get_all_suppliers')
+@auth.route('/suppliers', methods=['GET'], endpoint='list_suppliers')
 @login_required
 @role_required('buyer')
-def get_all():
+def get_list():
     """All suppliers grouped by category (role=buyer)
     ---
     tags:
@@ -172,40 +172,4 @@ def get_all():
                       name:
                         type: string
     """
-    return get_all_suppliers()
-
-
-# deprecated routes
-@auth.route('/supplier', methods=['GET'])
-@login_required
-@role_required('supplier')
-def get_deprecated():
-    return get_supplier(current_user.supplier_code)
-
-
-@auth.route('/supplier/<int:code>', methods=['GET'])
-@login_required
-@role_required('buyer', 'supplier')
-def get_by_code_deprecated(code):
-    return get_supplier(code)
-
-
-@auth.route('/supplier/services', methods=['GET'])
-@login_required
-@role_required('supplier')
-def get_services_deprecated():
-    return get_supplier_services(current_user.supplier_code)
-
-
-@auth.route('/supplier', methods=['POST'])
-@login_required
-@role_required('supplier')
-def update_deprecated():
-    try:
-        json_payload = get_json_from_request()
-        supplier = update_supplier(current_user.supplier_code, **json_payload)
-
-        return jsonify(user=supplier.serializable), 200
-
-    except Exception as error:
-        return jsonify(message=error.message), 400
+    return list_suppliers()

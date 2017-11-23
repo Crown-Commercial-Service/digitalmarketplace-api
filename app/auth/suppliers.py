@@ -69,7 +69,7 @@ def get_supplier_services(code):
                                  contact=supplier_json.get('representative', None)))
 
 
-def get_all_suppliers():
+def list_suppliers():
     suppliers = db.session.query(ServiceCategory.name.label('category_name'), Supplier.code, Supplier.name)\
         .select_from(Supplier)\
         .join(ServiceTypePrice, ServiceTypePrice.supplier_code == Supplier.code)\

@@ -7,10 +7,10 @@ from operator import itemgetter
 from app.auth.helpers import role_required
 
 
-@auth.route('/regions', methods=['GET'], endpoint='get_all_regions')
+@auth.route('/regions', methods=['GET'], endpoint='list_regions')
 @login_required
 @role_required('buyer')
-def get_all():
+def get_list():
     """All regions (role=buyer)
     ---
     tags:

@@ -94,7 +94,7 @@ def test_login(client, users):
 
 
 def test_profile_supplier(client, supplier_user):
-    res = client.get('/2/supplier')
+    res = client.get('/2/suppliers')
     assert res.status_code == 401
 
     res = client.post('/2/login', data=json.dumps({

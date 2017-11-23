@@ -1,6 +1,6 @@
 import pendulum
 from flask import current_app, request
-from flask_login import login_required, current_user
+from flask_login import login_required
 from app.auth import auth
 from app.auth.prices import get_prices, update_prices
 from app.auth.helpers import role_required, is_current_supplier, parse_date
@@ -12,7 +12,7 @@ from app.swagger import swag
 @login_required
 @role_required('buyer', 'supplier')
 @is_current_supplier
-def query(code, service_type_id, category_id):
+def filter(code, service_type_id, category_id):
     """Filter prices (role=buyer,supplier)
     ---
     tags:
@@ -129,22 +129,4 @@ def update():
               items:
                 $ref: '#/definitions/SupplierPrice'
     """
-    return update_prices()
-
-
-# deprecated routes
-@auth.route('/supplier/services/<service_type_id>/categories/<category_id>/prices', methods=['GET'])
-@login_required
-@role_required('supplier')
-def get_prices_deprecated(service_type_id, category_id):
-    TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
-
-    return get_prices(current_user.supplier_code, service_type_id, category_id, pendulum.today(TZ_NAME).date())
-
-
-@auth.route('/supplier/prices', methods=['POST'])
-@login_required
-@role_required('supplier')
-@swag.validate('PriceUpdates')
-def update_price_deprecated():
     return update_prices()
