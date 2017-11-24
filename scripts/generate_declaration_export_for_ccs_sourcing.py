@@ -263,6 +263,7 @@ def suppliers_on_framework(data_api_url, data_api_token, questions):
             # status = 'error-key-error'
             pass
 
+
 if __name__ == '__main__':
     arguments = docopt(__doc__)
 

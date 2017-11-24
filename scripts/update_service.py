@@ -47,6 +47,7 @@ def update(base_url, access_token, filename, service_id):
         print(response.text)
         return service_id, response
 
+
 if __name__ == "__main__":
     arguments = docopt(__doc__)
     update(

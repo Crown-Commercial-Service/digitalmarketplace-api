@@ -7,3 +7,5 @@ version_label
 
 # local environment customizations
 local.nix
+
+.envrc
