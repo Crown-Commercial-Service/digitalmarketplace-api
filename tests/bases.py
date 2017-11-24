@@ -25,18 +25,20 @@ class BaseApplicationTest(object):
             self.app.wsgi_app,
             HTTP_AUTHORIZATION='Bearer {}'.format(self.app.config['DM_API_AUTH_TOKENS'])
         )
+        self.ctx = self.app.app_context()
+        self.ctx.push()
         self.client = self.app.test_client()
 
     def teardown(self):
-        with self.app.app_context():
-            db.session.remove()
-            for table in reversed(db.metadata.sorted_tables):
-                if table.name not in ["lots", "frameworks", "framework_lots"]:
-                    db.engine.execute(table.delete())
-            FrameworkLot.query.filter(FrameworkLot.framework_id >= 100).delete()
-            Framework.query.filter(Framework.id >= 100).delete()
-            db.session.commit()
-            db.get_engine(self.app).dispose()
+        db.session.remove()
+        for table in reversed(db.metadata.sorted_tables):
+            if table.name not in ["lots", "frameworks", "framework_lots"]:
+                db.engine.execute(table.delete())
+        FrameworkLot.query.filter(FrameworkLot.framework_id >= 100).delete()
+        Framework.query.filter(Framework.id >= 100).delete()
+        db.session.commit()
+        db.get_engine(self.app).dispose()
+        self.ctx.pop()
 
 
 class JSONTestMixin(object):

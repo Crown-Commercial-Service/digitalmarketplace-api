@@ -429,6 +429,7 @@ class TestUpdateBriefResponse(BaseBriefResponseTest):
                     "UPDATE frameworks SET status=:status WHERE slug='digital-outcomes-and-specialists'",
                     {'status': framework_status},
                 )
+                db.session.commit()
 
                 res = self._update_brief_response(
                     self.brief_response_id,
