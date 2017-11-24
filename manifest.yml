@@ -6,7 +6,8 @@ memory: 1G
 disk_quota: 512M
 services:
 - marketplace-dev-shared
-- ups-dm-dev-shared
+- ups-dm-dev-common
+- ups-dm-dev-api
 routes:
 - route: dm-dev-api.apps.z.cld.gov.au
 - route: dm-dev.apps.z.cld.gov.au/api
