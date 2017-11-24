@@ -33,6 +33,8 @@ class Config:
 
     DM_API_PROJECTS_PAGE_SIZE = 100
 
+    DM_ALLOWED_ADMIN_DOMAINS = ['digital.cabinet-office.gov.uk', 'crowncommercial.gov.uk', 'user.marketplace.team']
+
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace'
     SQLALCHEMY_RECORD_QUERIES = True
@@ -87,7 +89,7 @@ class Staging(Live):
 
 
 class Production(Live):
-    pass
+    DM_ALLOWED_ADMIN_DOMAINS = ['digital.cabinet-office.gov.uk', 'crowncommercial.gov.uk']
 
 
 configs = {
