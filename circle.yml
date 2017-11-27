@@ -23,7 +23,8 @@ machine:
 
 dependencies:
   pre:
-    - curl -v -L -o cf-cli_amd64.deb 'https://cli.run.pivotal.io/stable?release=debian64&source=github'
+    # Remove version pin after v6.34.0 is released and https://github.com/cloudfoundry/cli/issues/1271 is fixed
+    - curl -v -L -o cf-cli_amd64.deb 'https://cli.run.pivotal.io/stable?release=debian64&source=github&version=6.32.0'
     - sudo dpkg -i cf-cli_amd64.deb
     - cf install-plugin https://github.com/govau/autopilot/releases/download/0.0.5-venapp/autopilot-linux -f
     - cf install-plugin https://github.com/govau/cf-run-and-wait/releases/download/0.1/run-and-wait.linux64 -f
