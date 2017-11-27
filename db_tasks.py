@@ -15,6 +15,7 @@ from contextlib import contextmanager
 import tempfile
 import shutil
 import pickle
+import subprocess
 
 from migrations import load_from_app_model
 
@@ -69,11 +70,13 @@ def databases_are_equal(dburl_a, dburl_b):
         return not m.statements
 
 
-def do_schema_dump(outfile, cld_url, export_url, username, password, service_binding):
+# cld_host: uaa.system.example.com
+# dbexport_host: db-export.system.example.com
+def do_schema_dump(outfile, cld_host, dbexport_host, username, password, service_binding):
     ctx = ssl.create_default_context()
 
     print('GETTING TOKEN')
-    conn = httplib.HTTPSConnection(cld_url, 443, context=ctx)
+    conn = httplib.HTTPSConnection(cld_host, 443, context=ctx)
     conn.request("POST", "/oauth/token", urllib.urlencode({
         "grant_type": "password",
         "scope": ",".join(["openid", "cloud_controller.read"]),
@@ -85,12 +88,12 @@ def do_schema_dump(outfile, cld_url, export_url, username, password, service_bin
     })
     resp = conn.getresponse()
     if resp.status != 200:
-        raise Exception('Could not get token from {}'.format(cld_url))
+        raise Exception('Could not get token from {}'.format(cld_host))
     token = json.loads(resp.read())["access_token"]
     conn.close()
 
     print('DOWNLOADING SCHEMA')
-    conn = httplib.HTTPSConnection(export_url, 443, context=ctx)
+    conn = httplib.HTTPSConnection(dbexport_host, 443, context=ctx)
     conn.request("GET", "/dbSchema?%s" % urllib.urlencode({
         "servicebinding": service_binding,
     }), None, {
@@ -99,7 +102,7 @@ def do_schema_dump(outfile, cld_url, export_url, username, password, service_bin
 
     resp = conn.getresponse()
     if resp.status != 200:
-        raise Exception('Could not get schema from {}'.format(export_url))
+        raise Exception('Could not get schema from {}'.format(dbexport_host))
     schema = resp.read()
     conn.close()
 
@@ -107,12 +110,28 @@ def do_schema_dump(outfile, cld_url, export_url, username, password, service_bin
         schema_file.write(schema)
 
 
-def test_migration(shelf_filename, cld_url, export_url, username, password, service_binding):
+# cfapi_host: api.system.example.com
+# service_name: database name (must be at least one app already deployed that is bound to it)
+def v2_test_migration(shelf_filename, cfapi_host, username, password, service_name):
+    cld_host = '.'.join(['uaa'] + cfapi_host.split('.')[1:])
+    dbexport_host = '.'.join(['db-export'] + cfapi_host.split('.')[1:])
+
+    service_guid = subprocess.check_output(['cf', 'service', service_name, '--guid']).strip()
+    if not len(service_guid):
+        raise ValueError("service_guid returned empty")
+
+    service_binding = json.loads(subprocess.check_output(['cf', 'curl', '/v2/service_instances/%s/service_bindings' % service_guid]))["resources"][0]["metadata"]["guid"]
+
+    return test_migration(shelf_filename, cld_host, dbexport_host, username, password, service_binding)
+
+# cld_host: uaa.system.example.com
+# dbexport_host: db-export.system.example.com
+def test_migration(shelf_filename, cld_host, dbexport_host, username, password, service_binding):
     PENDING = sql_from_folder(PENDING_FOLDER)
 
     with tempfolder() as tempf:
         outfile = os.path.join(tempf, 'schemadump.sql')
-        do_schema_dump(outfile, cld_url, export_url, username, password, service_binding)
+        do_schema_dump(outfile, cld_host, dbexport_host, username, password, service_binding)
 
         for i in range(len(PENDING) + 1):
             ATTEMPTING = list(reversed(PENDING))[:i]

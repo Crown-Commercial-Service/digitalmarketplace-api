@@ -41,9 +41,9 @@ deployment:
   development:
     branch: master
     commands:
-      - python ./db_tasks.py test_migration $CIRCLE_BUILD_NUM $CF_URL_STAGING $CF_EXPORT_URL_STAGING $CF_USER_STAGING $CF_PASSWORD_STAGING $CF_SERVICE_BINDING_STAGING
-      - cf login -a https://api.system.z.cld.gov.au -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
+      - cf login -a https://api.system.y.cld.gov.au -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
       - cf target -o dta -s marketplace
+      - python ./db_tasks.py v2_test_migration $CIRCLE_BUILD_NUM api.system.y.cld.gov.au $CF_USER_STAGING $CF_PASSWORD_STAGING marketplace-dev-shared
       - cf zero-downtime-push dm-dev-api -f manifest.yml --show-app-log
       - cf run-and-wait dm-dev-api "python ./db_tasks.py do_migration $CIRCLE_BUILD_NUM"
 

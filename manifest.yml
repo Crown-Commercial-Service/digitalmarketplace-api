@@ -9,7 +9,7 @@ services:
 - ups-dm-dev-common
 - ups-dm-dev-api
 routes:
-- route: dm-dev-api.apps.z.cld.gov.au
-- route: dm-dev.apps.z.cld.gov.au/api
+- route: dm-dev-api.apps.y.cld.gov.au
+- route: dm-dev.apps.y.cld.gov.au/api
 applications:
 - name: dm-dev-api
