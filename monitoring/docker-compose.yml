@@ -10,5 +10,5 @@ gov-au-marketplace-api:
   links:
     - sensu-server
   environment:
-    - URL=https://dm-api.apps.platform.digital.gov.au/
+    - URL=https://dm-api.apps.b.cld.gov.au/
     - API_TOKEN

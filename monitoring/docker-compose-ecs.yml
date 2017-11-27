@@ -8,5 +8,5 @@ DOCKER_CONTAINER_NAME:
     - RABBITMQ_USER
     - RABBITMQ_PASSWORD
     - RABBITMQ_VHOST
-    - URL=https://dm-api.apps.platform.digital.gov.au/
+    - URL=https://dm-api.apps.b.cld.gov.au/
     - API_TOKEN

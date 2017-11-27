@@ -1,16 +1,16 @@
 command: ./scripts/cf_run_app.sh
-buildpack: https://github.com/cloudfoundry/buildpack-python.git
+buildpack: python_buildpack
 health-check-type: port
 instances: 2
 memory: 2G
 disk_quota: 512M
-env:
-    DM_ENVIRONMENT: production
-    NEW_RELIC_ENVIRONMENT: production
-    DM_SEARCH_API_URL: https://dm-dev-search-api.apps.staging.digital.gov.au/
+services:
+- pgdb-96-prod
+- ups-dm-common
+- ups-dm-api
 routes:
-- route: dm-api.apps.platform.digital.gov.au
+- route: dm-api.apps.b.cld.gov.au
+- route: dm-api.apps.b.cld.gov.au/api
 - route: marketplace.service.gov.au/api
 applications:
-- name: dm-api-blue
 - name: dm-api

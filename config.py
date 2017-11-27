@@ -116,8 +116,8 @@ class Config:
                              'optusnet.com.au', 'msn.com', 'internode.on.net', 'iinet.net.au', 'ozemail.com.au',
                              'live.com.au', 'digital.gov.au', 'icloud.com']
 
-    FRONTEND_ADDRESS = 'https://dm-dev.apps.staging.digital.gov.au'
-    ADMIN_ADDRESS = 'https://dm-dev-admin.apps.staging.digital.gov.au'
+    FRONTEND_ADDRESS = 'https://dm-dev.apps.y.cld.gov.au'
+    ADMIN_ADDRESS = 'https://dm-dev-admin.apps.y.cld.gov.au'
     APP_ROOT = {'digital-marketplace': '/2', 'orams': '/orams'}
 
     SEND_EMAILS = True
@@ -198,7 +198,7 @@ class Live(Config):
     }
 
     FRONTEND_ADDRESS = 'https://marketplace.service.gov.au'
-    ADMIN_ADDRESS = 'https://dm-admin.apps.platform.digital.gov.au'
+    ADMIN_ADDRESS = 'https://dm-admin.apps.b.cld.gov.au'
 
     SEND_EMAILS = True
 

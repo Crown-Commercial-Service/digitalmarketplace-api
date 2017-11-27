@@ -133,8 +133,8 @@
             "support": "http://www.rtwtwtwt.com",
             "website": "http://www.rtwtwtwt.com",
             "links": {
-                "self": "https://dm-api.apps.platform.digital.gov.au/products/1",
-                "supplier": "https://dm-api.apps.platform.digital.gov.au/suppliers/4"
+                "self": "https://dm-api.apps.b.cld.gov.au/products/1",
+                "supplier": "https://dm-api.apps.b.cld.gov.au/suppliers/4"
             }
         }
     },
