@@ -117,6 +117,8 @@ def v2_test_migration(shelf_filename, cfapi_host, username, password, service_na
     dbexport_host = '.'.join(['db-export'] + cfapi_host.split('.')[1:])
 
     service_guid = subprocess.check_output(['cf', 'service', service_name, '--guid']).strip()
+    if '\n' in service_guid: # version 6.33 of cf erroneously writes status messages out that want to ignore
+        service_guid = service_guid.split('\n')[-1].strip()
     if not len(service_guid):
         raise ValueError("service_guid returned empty")
 
