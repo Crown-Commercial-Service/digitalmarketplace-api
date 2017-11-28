@@ -44,7 +44,7 @@ class Config:
 
     VCAP_SERVICES = None
 
-    DM_FRAMEWORK_TO_ES_INDEX_MAPPING = {
+    DM_FRAMEWORK_TO_ES_INDEX = {
         'g-cloud-9': {
             'services': 'g-cloud-9'
         },

@@ -76,7 +76,7 @@ class TestKeyFilterJSON(object):
 class TestIndexObject(BaseApplicationTest):
     def test_calls_the_search_api_index_method_correctly(self, search_api_client):
         with self.app.app_context():
-            for framework, doc_type_to_index_mapping in current_app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'].items():
+            for framework, doc_type_to_index_mapping in current_app.config['DM_FRAMEWORK_TO_ES_INDEX'].items():
                 for doc_type, index_name in doc_type_to_index_mapping.items():
 
                     index_object(framework, doc_type, 123, {'serialized': 'object'})
@@ -92,7 +92,7 @@ class TestIndexObject(BaseApplicationTest):
     @mock.patch('app.utils.current_app')
     def test_logs_an_error_message_if_no_mapping_found(self, current_app, search_api_client):
         current_app.config = {
-            'DM_FRAMEWORK_TO_ES_INDEX_MAPPING': {
+            'DM_FRAMEWORK_TO_ES_INDEX': {
                 'not-a-framework': {
                     'services': 'g-cloud-9'
                 }
@@ -109,7 +109,7 @@ class TestIndexObject(BaseApplicationTest):
     def test_logs_a_warning_if_HTTPError_from_search_api(self, current_app, search_api_client):
         search_api_client.index.side_effect = HTTPError()
         current_app.config = {
-            'DM_FRAMEWORK_TO_ES_INDEX_MAPPING': {
+            'DM_FRAMEWORK_TO_ES_INDEX': {
                 'g-cloud-9': {
                     'services': 'g-cloud-9'
                 }

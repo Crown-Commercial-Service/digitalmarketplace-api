@@ -166,7 +166,7 @@ def get_request_page_questions():
 
 def index_object(framework, doc_type, object_id, serialized_object):
     try:
-        index_name = current_app.config['DM_FRAMEWORK_TO_ES_INDEX_MAPPING'][framework][doc_type]
+        index_name = current_app.config['DM_FRAMEWORK_TO_ES_INDEX'][framework][doc_type]
 
         try:
             search_api_client.index(
