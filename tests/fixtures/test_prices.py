@@ -3,12 +3,13 @@ import pendulum
 
 
 def test_filter_prices(client, supplier_user, service_type_prices):
+    code = supplier_user.supplier_code
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
     }), content_type='application/json')
     assert res.status_code == 200
 
-    response = client.get('/2/prices/suppliers/{}/services/1/categories/1'.format(supplier_user.supplier_code))
+    response = client.get('/2/prices/suppliers/{}/services/1/categories/1'.format(code))
     assert response.status_code == 200
 
     price = json.loads(response.data)['prices'][0]

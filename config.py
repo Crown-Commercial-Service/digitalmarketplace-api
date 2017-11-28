@@ -95,6 +95,7 @@ class Config:
     INVITE_EMAIL_SUBJECT = 'Activate your new Marketplace account'
     BUYER_INVITE_MANAGER_CONFIRMATION_SUBJECT = 'Digital Marketplace buyer account request [SEC=UNCLASSIFIED]'
     BUYER_INVITE_REQUEST_ADMIN_EMAIL = 'marketplace+buyer-request@digital.gov.au'
+    ORAMS_BUYER_INVITE_REQUEST_ADMIN_EMAIL = 'nick.ball+bcc@digital.gov.au'
 
     NEW_SUPPLIER_INVITE_SUBJECT = 'Digital Marketplace - invitation to create seller account'
 

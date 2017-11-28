@@ -109,7 +109,7 @@ def test_signup_fails_without_required_fields(client, supplier_user):
         content_type='application/json')
     assert response.status_code == 400
     data = json.loads(response.data)
-    assert_equal(data['message'], 'One or more required args were missing from the request')
+    assert_equal(data['message'], "'user_type' is a required property")
 
 
 def test_duplicate_supplier_with_same_domain(client, supplier_user):

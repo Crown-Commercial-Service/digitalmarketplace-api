@@ -79,7 +79,9 @@ def test_logout(client, users):
 
 
 def test_login(client, users):
-    res = client.post('/2/login')
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'test@digital.gov.au'
+    }), content_type='application/json')
     assert res.status_code == 400
 
     res = client.post('/2/login', data=json.dumps({
@@ -94,6 +96,7 @@ def test_login(client, users):
 
 
 def test_profile_supplier(client, supplier_user):
+    code = supplier_user.supplier_code
     res = client.get('/2/suppliers')
     assert res.status_code == 401
 
@@ -102,7 +105,7 @@ def test_profile_supplier(client, supplier_user):
     }), content_type='application/json')
     assert res.status_code == 200
 
-    res = client.get('/2/suppliers/{}'.format(supplier_user.supplier_code))
+    res = client.get('/2/suppliers/{}'.format(code))
     assert res.status_code == 200
     data = json.loads(res.get_data(as_text=True))
     assert data['code']

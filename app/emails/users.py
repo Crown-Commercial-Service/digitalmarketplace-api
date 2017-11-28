@@ -189,6 +189,39 @@ def _send_account_activation_admin_email(manager_name, manager_email, applicant_
                 'email_hash': hash_email(manager_email)})
 
 
+def orams_send_account_activation_admin_email(applicant_name, applicant_email, url):
+    token = generate_user_creation_token(name=applicant_name, email_address=applicant_email, user_type="buyer")
+    url = '{}{}/buyers/signup/send-invite/{}'.format(
+        current_app.config['FRONTEND_ADDRESS'],
+        url,
+        quote(token)
+    )
+
+    email_body = render_email_template(
+        'orams_buyer_account_invite_request_email.md',
+        applicant_name=applicant_name,
+        applicant_email=applicant_email,
+        invite_url=url
+    )
+
+    try:
+        send_email(
+            current_app.config['ORAMS_BUYER_INVITE_REQUEST_ADMIN_EMAIL'],
+            email_body,
+            'ORAMS Portal - New RCM Request',
+            current_app.config['INVITE_EMAIL_FROM'],
+            current_app.config['INVITE_EMAIL_NAME'],
+        )
+        session['email_sent_to'] = current_app.config['ORAMS_BUYER_INVITE_REQUEST_ADMIN_EMAIL']
+
+    except EmailError as e:
+        rollbar.report_exc_info()
+        current_app.logger.error(
+            'Invitation email to orams failed to send. '
+            'error {error}',
+            extra={'error': six.text_type(e)})
+
+
 def send_new_user_onboarding_email(name, email_address, user_type):
     if user_type != 'buyer':
         return False

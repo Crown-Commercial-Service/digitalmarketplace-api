@@ -1,5 +1,5 @@
 from app.auth.user import create_user
-from flask import jsonify, current_app
+from flask import jsonify, current_app, request
 from flask_login import current_user, login_required, logout_user, login_user
 from sqlalchemy.exc import InvalidRequestError, IntegrityError
 from urllib import quote
@@ -9,10 +9,10 @@ from app.auth.helpers import (
     generate_reset_password_token, decode_reset_password_token, get_root_url
 )
 from app.models import Application, User
-from app.utils import get_json_from_request, json_has_required_keys
+from app.utils import get_json_from_request
 from app.emails.users import (
     send_account_activation_email, send_account_activation_manager_email, send_new_user_onboarding_email,
-    send_reset_password_confirm_email
+    send_reset_password_confirm_email, orams_send_account_activation_admin_email
 )
 from dmutils.csrf import get_csrf_token
 from dmutils.email import EmailError, InvalidToken
@@ -20,6 +20,7 @@ from app.auth.helpers import decode_creation_token, is_government_email
 from app.auth.applications import create_application
 from app.auth.user import is_duplicate_user, update_user_details
 from datetime import datetime
+from app.swagger import swag
 
 
 def _user_info(user):
@@ -53,9 +54,24 @@ def ping():
     ---
     tags:
       - users
+    definitions:
+      UserInfo:
+        type: object
+        properties:
+          isAuthenticated:
+            type: boolean
+          userType:
+            type: string
+          supplierCode:
+            type: integer
+          csrfToken:
+            type: string
     responses:
       200:
-        description: Current user info
+        description: User
+        schema:
+          $ref: '#/definitions/UserInfo'
+
     """
     return jsonify(_user_info(current_user))
 
@@ -72,9 +88,37 @@ def post():
 
 
 @auth.route('/login', methods=['POST'])
+@swag.validate('LoginUser')
 def login():
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ["emailAddress", "password"])
+    """Login user
+    ---
+    tags:
+      - users
+    security:
+      - basicAuth: []
+    consumes:
+      - application/json
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          id: LoginUser
+          required:
+            - emailAddress
+            - password
+          properties:
+            emailAddress:
+              type: string
+            password:
+              type: string
+    responses:
+      200:
+        description: User
+        schema:
+          $ref: '#/definitions/UserInfo'
+    """
+    json_payload = request.get_json()
     email_address = json_payload.get('emailAddress', None)
     user = User.get_by_email_address(email_address.lower())
 
@@ -100,28 +144,74 @@ def login():
 @auth.route('/logout', methods=['GET'])
 @login_required
 def logout():
+    """Logout user
+    ---
+    tags:
+      - users
+    security:
+      - basicAuth: []
+    responses:
+      200:
+        description: Message
+        type: object
+        properties:
+          message:
+            type: string
+    """
     logout_user()
     return jsonify(message='The user was logged out successfully'), 200
 
 
 @auth.route('/signup', methods=['POST'])
-def send_signup_email():
-    try:
-        json_payload = get_json_from_request()
-        json_payload['name'] and json_payload['email_address'] and json_payload['user_type']
-        if json_payload['user_type'] == 'buyer':
-            json_payload['employment_status']
-
-        name = json_payload.get('name', None)
-        email_address = json_payload.get('email_address', None)
-        user_type = json_payload.get('user_type', None)
-        employment_status = json_payload.get('employment_status', None)
-        line_manager_name = json_payload.get('line_manager_name', None)
-        line_manager_email = json_payload.get('line_manager_email', None)
-        framework = json_payload.get('framework', 'digital-marketplace')
-
-    except KeyError:
-        return jsonify(message='One or more required args were missing from the request'), 400
+@swag.validate('SignupUser')
+def signup():
+    """Signup user
+    ---
+    tags:
+      - users
+    security:
+      - basicAuth: []
+    consumes:
+      - application/json
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          id: SignupUser
+          required:
+            - name
+            - email_address
+            - user_type
+          properties:
+            name:
+              type: string
+            email_address:
+              type: string
+            user_type:
+              type: string
+            employment_status:
+              type: string
+            line_manager_name:
+              type: string
+            line_manager_email:
+              type: string
+            framework:
+              type: string
+    responses:
+      200:
+        description: User
+        schema:
+          $ref: '#/definitions/UserInfo'
+    """
+    json_payload = request.get_json()
+    name = json_payload.get('name', None)
+    email_address = json_payload.get('email_address', None)
+    user_type = json_payload.get('user_type', None)
+    employment_status = json_payload.get('employment_status', None)
+    line_manager_name = json_payload.get('line_manager_name', None)
+    line_manager_email = json_payload.get('line_manager_email', None)
+    framework = json_payload.get('framework', 'digital-marketplace')
 
     user = User.query.filter(
         User.email_address == email_address.lower()).first()
@@ -145,6 +235,19 @@ def send_signup_email():
             message="A buyer account must have a valid government entity email domain"
         ), 400
 
+    url = get_root_url(framework)
+
+    if framework == 'orams':
+        try:
+            orams_send_account_activation_admin_email(name, email_address, url)
+            return jsonify(
+                email_address=email_address,
+                message="Email invite sent successfully"
+            ), 200
+
+        except EmailError:
+            return jsonify(message='An error occured when trying to send an email'), 500
+
     if employment_status == 'contractor':
         try:
             send_account_activation_manager_email(
@@ -167,7 +270,7 @@ def send_signup_email():
                 name=name,
                 email_address=email_address,
                 user_type=user_type,
-                url=get_root_url(framework)
+                url=url
             )
             return jsonify(
                 email_address=email_address,

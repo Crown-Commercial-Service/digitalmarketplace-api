@@ -23,8 +23,9 @@ form_data = {
 
 
 def test_require_supplier_role_for_profile(app, supplier_user, client, mocker):
+    code = supplier_user.supplier_code
     response = client.post(
-        '/2/suppliers/{}'.format(supplier_user.supplier_code),
+        '/2/suppliers/{}'.format(code),
         data=json.dumps(form_data),
         content_type='application/json')
 
@@ -32,6 +33,7 @@ def test_require_supplier_role_for_profile(app, supplier_user, client, mocker):
 
 
 def test_update_supplier_profile(app, supplier_user, client, mocker):
+    code = supplier_user.supplier_code
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': supplier_user.email_address, 'password': 'testpassword'
     }), content_type='application/json')
@@ -40,11 +42,11 @@ def test_update_supplier_profile(app, supplier_user, client, mocker):
     assert not hasattr(supplier_user, 'addresses')
     assert not hasattr(supplier_user, 'contacts')
 
-    form_data['code'] = supplier_user.supplier_code
+    form_data['code'] = code
     form_data['id'] = supplier_user.id
 
     response = client.post(
-        '/2/suppliers/{}'.format(supplier_user.supplier_code),
+        '/2/suppliers/{}'.format(code),
         data=json.dumps(form_data),
         content_type='application/json')
 
@@ -61,12 +63,13 @@ def test_update_supplier_profile(app, supplier_user, client, mocker):
 
 
 def test_supplier_services(client, supplier_user, service_type_prices):
+    code = supplier_user.supplier_code
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
     }), content_type='application/json')
     assert res.status_code == 200
 
-    response = client.get('/2/suppliers/{}'.format(supplier_user.supplier_code))
+    response = client.get('/2/suppliers/{}'.format(code))
     assert response.status_code == 200
 
     supplier = json.loads(response.data)
