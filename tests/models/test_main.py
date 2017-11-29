@@ -42,6 +42,29 @@ class TestUser(BaseApplicationTest, FixtureMixin):
             assert user.serialize()['role'] == "buyer"
             assert 'password' not in user.serialize()
 
+    def test_buyer_user_requires_valid_email_domain(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as exc:
+            self.setup_default_buyer_domain()
+            User(
+                email_address='email@nope.org',
+                name='name',
+                role='buyer',
+                password='password',
+                active=True,
+            )
+        assert str(exc.value) == 'invalid_buyer_domain'
+
+    def test_admin_user_requires_whitelisted_email_domain(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as exc:
+            User(
+                email_address='email@nope.org',
+                name='name',
+                role='admin',
+                password='password',
+                active=True,
+            )
+        assert str(exc.value) == 'invalid_admin_domain'
+
 
 def test_framework_should_not_accept_invalid_status():
     app = create_app('test')

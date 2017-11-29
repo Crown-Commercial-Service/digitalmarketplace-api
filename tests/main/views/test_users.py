@@ -362,6 +362,20 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         error = json.loads(response.get_data())['error']
         assert "'admin-ccs' is not one of" in error
 
+    def test_creating_admin_user_with_bad_email_domain_fails(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@example.com',
+                    'password': '1234567890',
+                    'role': 'admin',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert response.status_code == 400
+        assert json.loads(response.get_data())['error'] == 'invalid_admin_domain'
+
     def test_can_post_a_supplier_user(self, supplier_basic):
         response = self.client.post(
             '/users',
