@@ -767,9 +767,11 @@ class User(db.Model):
     @validates('email_address')
     def validate_email_address(self, key, value):
         existing_buyer_domains = BuyerEmailDomain.query.all()
-        if value and self.role == 'buyer' and \
-                not buyer_email_address_has_approved_domain(existing_buyer_domains, value):
-            raise ValidationError("invalid_buyer_domain")
+        if value:
+            if self.role == 'buyer' and not buyer_email_address_has_approved_domain(existing_buyer_domains, value):
+                raise ValidationError("invalid_buyer_domain")
+            if self.role == 'admin' and not admin_email_address_has_approved_domain(value):
+                raise ValidationError("invalid_admin_domain")
         return value
 
     @validates('role')
