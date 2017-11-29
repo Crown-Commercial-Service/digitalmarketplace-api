@@ -31,7 +31,8 @@
         "admin",
         "admin-ccs-category",
         "admin-ccs-sourcing",
-        "admin-manager"
+        "admin-manager",
+        "admin-framework-manager"
       ]
     },
     "supplierId": {
