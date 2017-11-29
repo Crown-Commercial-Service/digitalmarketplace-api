@@ -789,8 +789,8 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
             content_type='application/json')
         assert res.status_code == 404
 
-    @mock.patch('app.service_utils.search_api_client')
-    def test_should_be_able_to_publish_valid_copied_draft_service(self, search_api_client):
+    @mock.patch('app.main.views.drafts.index_service')
+    def test_should_be_able_to_publish_valid_copied_draft_service(self, index_service):
         """
         this test creates a draft from a (live) service, updates the draft, and then publishes it.
         publishing the draft updates the original service -- it doesn't create a new one
@@ -855,7 +855,7 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
             '/archived-services?service-id={}'.format(self.service_id))
         assert archives.status_code == 200
         assert json.loads(archives.get_data())['services'][0]['serviceName'] == 'chickens'
-        assert search_api_client.index.called
+        assert index_service.called
 
     def test_should_not_be_able_to_publish_submission_if_not_submitted(self):
         draft = self.create_draft_service()
@@ -873,8 +873,8 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         res = self.publish_draft_service(draft['id'])
         assert res.status_code == 400
 
-    @mock.patch('app.service_utils.search_api_client')
-    def test_search_api_should_be_called_on_publish_if_framework_is_live(self, search_api_client):
+    @mock.patch('app.main.views.drafts.index_service')
+    def test_search_api_should_be_called_on_publish_if_framework_is_live(self, index_service):
         draft_id = self.create_draft_service()['id']
         self.complete_draft_service(draft_id)
 
@@ -885,7 +885,7 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         res = self.publish_draft_service(draft_id)
 
         assert res.status_code == 200
-        assert search_api_client.index.called
+        assert index_service.called
 
     @mock.patch('app.service_utils.search_api_client')
     def test_should_be_able_to_publish_valid_new_draft_service(self, search_api_client):
@@ -979,7 +979,8 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         assert self.publish_draft_service(draft['id']).status_code == 200
         assert self.draft_service_count() == 1
 
-    def test_drafts_made_from_services_are_deleted_when_published(self):
+    @mock.patch('app.main.views.drafts.index_service')
+    def test_drafts_made_from_services_are_deleted_when_published(self, index_service):
         res = self.client.put(
             '/draft-services/copy-from/{}'.format(self.service_id),
             data=json.dumps(self.updater_json),

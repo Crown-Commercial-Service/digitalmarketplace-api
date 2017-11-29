@@ -1,8 +1,7 @@
 from flask import current_app, abort
 from sqlalchemy.exc import IntegrityError, DataError
 
-from .utils import get_json_from_request, \
-    json_has_matching_id, json_has_required_keys
+from .utils import get_json_from_request, index_object, json_has_matching_id, json_has_required_keys
 from .validation import get_validation_errors
 from . import search_api_client, dmapiclient
 from . import db
@@ -134,14 +133,13 @@ def index_service(service):
         service.framework.framework == 'g-cloud' and
         service.status == 'published'
     ):
-        try:
-            search_api_client.index(index=service.framework.slug,
-                                    service_id=service.service_id,
-                                    service=service.serialize())
-        except dmapiclient.HTTPError as e:
-            current_app.logger.warning(
-                'Failed to add {} to search index: {}'.format(
-                    service.service_id, e.message))
+
+        index_object(
+            framework=service.framework.slug,
+            doc_type='services',
+            object_id=service.service_id,
+            serialized_object=service.serialize(),
+        )
 
 
 def delete_service_from_index(service):

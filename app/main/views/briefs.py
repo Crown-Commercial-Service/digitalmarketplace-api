@@ -12,7 +12,7 @@ from ...utils import (
     purge_nulls_from_data
 )
 from ...service_utils import validate_and_return_lot, filter_services
-from ...brief_utils import validate_brief_data
+from ...brief_utils import index_brief, validate_brief_data
 from ...validation import get_validation_errors
 
 
@@ -58,8 +58,9 @@ def create_brief():
     )
 
     db.session.add(audit)
-
     db.session.commit()
+    # We are intentionally not indexing briefs here. We don't need drafts in search results, and they are indexed each
+    # night by the batch indexing job run by Jenkins. In future we may index all briefs with a lower level ORM hook.
 
     return jsonify(briefs=brief.serialize()), 201
 
@@ -97,6 +98,8 @@ def update_brief(brief_id):
     db.session.add(brief)
     db.session.add(audit)
     db.session.commit()
+    # We are intentionally not indexing briefs here. We don't need drafts in search results, and they are indexed each
+    # night by the batch indexing job run by Jenkins. In future we may index all briefs with a lower level ORM hook.
 
     return jsonify(briefs=brief.serialize()), 200
 
@@ -227,6 +230,7 @@ def update_brief_status(brief_id, action):
         db.session.add(brief)
         db.session.add(audit)
         db.session.commit()
+        index_brief(brief)
 
     return jsonify(briefs=brief.serialize()), 200
 
@@ -335,6 +339,7 @@ def award_brief_details(brief_id, brief_response_id):
 
     db.session.add_all([brief_response, audit_event])
     db.session.commit()
+    index_brief(brief)
 
     return jsonify(briefs=brief.serialize()), 200
 

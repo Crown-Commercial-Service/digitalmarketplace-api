@@ -797,8 +797,9 @@ class TestListBrief(FrameworkSetupAndTeardown):
         assert len(data['briefs']) == expected_count
 
 
+@mock.patch('app.main.views.briefs.index_brief', autospec=True)
 class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
-    def test_publish_a_brief(self):
+    def test_publish_a_brief(self, index_brief):
         self.setup_dummy_briefs(1, title='The Title')
 
         res = self.client.post(
@@ -811,8 +812,9 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
 
         assert res.status_code == 200
         assert data['briefs']['status'] == 'live'
+        assert index_brief.called is True
 
-    def test_withdraw_a_brief(self):
+    def test_withdraw_a_brief(self, index_brief):
         self.setup_dummy_briefs(1, title='The Title', status='live')
 
         res = self.client.post(
@@ -826,9 +828,10 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
         assert res.status_code == 200
         assert data['briefs']['status'] == 'withdrawn'
         assert data['briefs']['withdrawnAt'] is not None
+        assert index_brief.called is True
 
     @pytest.mark.parametrize('framework_status', ('pending', 'expired'))
-    def test_cancel_a_brief(self, framework_status):
+    def test_cancel_a_brief(self, index_brief, framework_status):
         self.setup_dummy_briefs(1, title='The Title', status='closed')
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
@@ -846,8 +849,9 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
 
         assert res.status_code == 200
         assert data['briefs']['status'] == 'cancelled'
+        assert index_brief.called is True
 
-    def test_update_a_brief_as_unsuccessful(self):
+    def test_update_a_brief_as_unsuccessful(self, index_brief):
         self.setup_dummy_briefs(1, title='The Title', status='closed')
 
         res = self.client.post(
@@ -860,8 +864,9 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
 
         assert res.status_code == 200
         assert data['briefs']['status'] == 'unsuccessful'
+        assert index_brief.called is True
 
-    def test_cannot_publish_withdrawn_brief(self):
+    def test_cannot_publish_withdrawn_brief(self, index_brief):
         self.setup_dummy_briefs(1, title='The Title', status='withdrawn')
 
         res = self.client.post(
@@ -872,8 +877,9 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
             content_type='application/json')
 
         assert res.status_code == 400
+        assert index_brief.called is False
 
-    def test_cannot_publish_a_brief_if_is_not_complete(self):
+    def test_cannot_publish_a_brief_if_is_not_complete(self, index_brief):
         self.setup_dummy_briefs(1)
 
         res = self.client.post(
@@ -886,8 +892,9 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
 
         assert res.status_code == 400
         assert data['error'] == {'title': 'answer_required'}
+        assert index_brief.called is False
 
-    def test_published_at_is_not_updated_if_live_brief_is_published(self):
+    def test_published_at_is_not_updated_if_live_brief_is_published(self, index_brief):
         self.setup_dummy_briefs(1, status='live', title='The title')
 
         res = self.client.get('/briefs/1')
@@ -905,8 +912,9 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
         res = self.client.get('/briefs/1')
         published_at = json.loads(res.get_data(as_text=True))['briefs']['publishedAt']
         assert published_at == original_published_at
+        assert index_brief.called is False
 
-    def test_withdrawn_at_is_not_updated_if_withdrawn_brief_is_withdrawn(self):
+    def test_withdrawn_at_is_not_updated_if_withdrawn_brief_is_withdrawn(self, index_brief):
         self.setup_dummy_briefs(1, title='The title', status='withdrawn')
 
         res = self.client.get('/briefs/1')
@@ -924,8 +932,9 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
         res = self.client.get('/briefs/1')
         withdrawn_at = json.loads(res.get_data(as_text=True))['briefs']['withdrawnAt']
         assert withdrawn_at == original_withdrawn_at
+        assert index_brief.called is False
 
-    def test_cannot_publish_a_brief_if_the_framework_is_not_live(self):
+    def test_cannot_publish_a_brief_if_the_framework_is_not_live(self, index_brief):
         self.setup_dummy_briefs(1, title='The title')
 
         for framework_status in [status for status in Framework.STATUSES if status != 'live']:
@@ -945,6 +954,7 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
 
             assert res.status_code == 400
             assert data['error'] == "Framework is not live"
+            assert index_brief.called is False
 
     @pytest.mark.parametrize(
         ('old_status', 'url_arg', 'new_status'),
@@ -955,7 +965,7 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
             ('closed', 'unsuccessful', 'unsuccessful')
         )
     )
-    def test_brief_status_change_makes_audit_event(self, old_status, url_arg, new_status):
+    def test_brief_status_change_makes_audit_event(self, index_brief, old_status, url_arg, new_status):
         self.setup_dummy_briefs(1, title='The Title', status=old_status)
 
         res = self.client.post(
@@ -965,6 +975,7 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
             }),
             content_type='application/json')
         assert res.status_code == 200
+        assert index_brief.called is True
 
         audit_response = self.client.get('/audit-events')
         assert audit_response.status_code == 200
@@ -1464,6 +1475,7 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             assert data['error'] == "BriefResponse cannot be awarded for this Brief"
 
 
+@mock.patch('app.main.views.briefs.index_brief')
 class TestBriefAwardDetails(FrameworkSetupAndTeardown):
 
     award_url = "/briefs/1/award/{}/contract-details"
@@ -1482,7 +1494,7 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
             content_type="application/json"
         )
 
-    def test_can_supply_award_details_for_closed_brief_with_awarded_brief_response(self):
+    def test_can_supply_award_details_for_closed_brief_with_awarded_brief_response(self, index_brief):
         with self.app.app_context():
             self.setup_dummy_briefs(1, status="closed")
             self.setup_dummy_suppliers(1)
@@ -1498,6 +1510,7 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
             assert res.status_code == 200
             data = json.loads(res.get_data(as_text=True))
             assert data['briefs']['awardedBriefResponseId'] == brief_response.id
+            assert index_brief.called is True
 
             brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
             assert len(brief_response_audits) == 1
@@ -1510,7 +1523,7 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
                 }
             }
 
-    def test_400_if_supplying_details_for_closed_brief_without_awarded_brief_response(self):
+    def test_400_if_supplying_details_for_closed_brief_without_awarded_brief_response(self, index_brief):
         with self.app.app_context():
             self.setup_dummy_briefs(1, status="closed")
             self.setup_dummy_suppliers(1)
@@ -1523,8 +1536,9 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
             assert res.status_code == 400
             data = json.loads(res.get_data(as_text=True))
             assert data['error'] == "Cannot update award details for a Brief without a winning supplier"
+            assert index_brief.called is False
 
-    def test_400_if_award_details_payload_invalid(self):
+    def test_400_if_award_details_payload_invalid(self, index_brief):
         with self.app.app_context():
             self.setup_dummy_briefs(1, status="closed")
             self.setup_dummy_suppliers(1)
@@ -1553,8 +1567,9 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
                 'awardedContractStartDate': 'answer_required',
                 'awardedContractValue': 'not_money_format'
             }
+            assert index_brief.called is False
 
-    def test_400_if_no_updated_by_in_payload(self):
+    def test_400_if_no_updated_by_in_payload(self, index_brief):
         res = self._post_to_award_details_endpoint({
             "awardDetails": {
                 "awardedContractStartDate": "2020-12-31",
@@ -1565,8 +1580,9 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
         assert res.status_code == 400
         error = json.loads(res.get_data(as_text=True))['error']
         assert "'updated_by' is a required property" in error
+        assert index_brief.called is False
 
-    def test_404_if_brief_response_not_related_to_brief(self):
+    def test_404_if_brief_response_not_related_to_brief(self, index_brief):
         with self.app.app_context():
 
             self.setup_dummy_briefs(2, status="closed")
@@ -1579,3 +1595,4 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
         res = self._post_to_award_details_endpoint(self.valid_payload, brief_response_id)
 
         assert res.status_code == 404
+        assert index_brief.called is False

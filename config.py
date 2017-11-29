@@ -44,6 +44,18 @@ class Config:
 
     VCAP_SERVICES = None
 
+    DM_FRAMEWORK_TO_ES_INDEX = {
+        'g-cloud-9': {
+            'services': 'g-cloud-9'
+        },
+        'digital-outcomes-and-specialists': {
+            'briefs': 'briefs-digital-outcomes-and-specialists'
+        },
+        'digital-outcomes-and-specialists-2': {
+            'briefs': 'briefs-digital-outcomes-and-specialists'
+        },
+    }
+
 
 class Test(Config):
     SERVER_NAME = '127.0.0.1:5000'

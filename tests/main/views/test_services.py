@@ -445,6 +445,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     def setup(self):
         super(TestPostService, self).setup()
         payload = load_example_listing("G6-SaaS")
+        self.payload_g4 = load_example_listing("G4")
         self.service_id = str(payload['id'])
         with self.app.app_context():
             db.session.add(
@@ -462,6 +463,10 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
                 service_id=self.service_id,
                 **payload
             )
+            self.setup_dummy_service(
+                service_id=self.payload_g4['id'],
+                **self.payload_g4
+            )
 
     def _post_service_update(self, service_data, service_id=None, user_role=None):
         return self.client.post(
@@ -474,7 +479,8 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             }),
             content_type='application/json')
 
-    def test_can_not_post_to_root_services_url(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_can_not_post_to_root_services_url(self, index_service):
         response = self.client.post(
             "/services",
             data=json.dumps(
@@ -484,8 +490,10 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             content_type='application/json')
 
         assert response.status_code == 405
+        assert index_service.called is False
 
-    def test_post_returns_404_if_no_service_to_update(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_post_returns_404_if_no_service_to_update(self, index_service):
         response = self.client.post(
             "/services/9999999999",
             data=json.dumps(
@@ -495,8 +503,10 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             content_type='application/json')
 
         assert response.status_code == 404
+        assert index_service.called is False
 
-    def test_no_content_type_causes_failure(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_no_content_type_causes_failure(self, index_service):
         with self.app.app_context():
             response = self.client.post(
                 '/services/{}'.format(self.service_id),
@@ -507,8 +517,10 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
             assert response.status_code == 400
             assert b'Unexpected Content-Type' in response.get_data()
+            assert index_service.called is False
 
-    def test_invalid_content_type_causes_failure(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_invalid_content_type_causes_failure(self, index_service):
         with self.app.app_context():
             response = self.client.post(
                 '/services/{}'.format(self.service_id),
@@ -520,8 +532,10 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
             assert response.status_code == 400
             assert b'Unexpected Content-Type' in response.get_data()
+            assert index_service.called is False
 
-    def test_invalid_json_causes_failure(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_invalid_json_causes_failure(self, index_service):
         with self.app.app_context():
             response = self.client.post(
                 '/services/{}'.format(self.service_id),
@@ -530,21 +544,30 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
             assert response.status_code == 400
             assert b'Invalid JSON' in response.get_data()
+            assert index_service.called is False
 
-    def test_can_post_a_valid_service_update(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_can_post_a_valid_service_update(self, index_service):
         with self.app.app_context():
             response = self._post_service_update({'serviceName': 'new service name'})
             assert response.status_code == 200
+
+            service = Service.query.filter(
+                Service.service_id == self.service_id
+            ).one()
+            index_service.assert_called_once_with(service)
 
             response = self.client.get('/services/{}'.format(self.service_id))
             data = json.loads(response.get_data())
             assert data['services']['serviceName'] == 'new service name'
             assert response.status_code == 200
 
-    def test_valid_service_update_creates_audit_event(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_valid_service_update_creates_audit_event(self, index_service):
         with self.app.app_context():
             response = self._post_service_update({'serviceName': 'new service name'})
             assert response.status_code == 200
+            assert index_service.called is True
 
             audit_response = self.client.get('/audit-events')
             assert audit_response.status_code == 200
@@ -557,10 +580,12 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             assert update_event['user'] == 'joeblogs'
             assert update_event['data']['serviceId'] == self.service_id
 
-    def test_valid_service_update_by_admin_creates_audit_event_with_correct_audit_type(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_valid_service_update_by_admin_creates_audit_event_with_correct_audit_type(self, index_service):
         with self.app.app_context():
             response = self._post_service_update({'serviceName': 'new service name'}, user_role='admin')
             assert response.status_code == 200
+            assert index_service.called is True
 
             audit_response = self.client.get('/audit-events')
             assert audit_response.status_code == 200
@@ -573,11 +598,14 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             assert update_event['user'] == 'joeblogs'
             assert update_event['data']['serviceId'] == self.service_id
 
-    def test_service_update_audit_event_links_to_both_archived_services(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_service_update_audit_event_links_to_both_archived_services(self, index_service):
         with self.app.app_context():
             for name in ['new service name', 'new new service name']:
+                index_service.reset_mock()
                 response = self._post_service_update({'serviceName': name})
                 assert response.status_code == 200
+                assert index_service.called is True
 
             audit_response = self.client.get('/audit-events')
             assert audit_response.status_code == 200
@@ -595,7 +623,8 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             assert data['auditEvents'][0]['data']['supplierName'] == 'Supplier 1'
             assert data['auditEvents'][0]['data']['supplierId'] == 1
 
-    def test_can_post_a_valid_service_update_on_several_fields(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_can_post_a_valid_service_update_on_several_fields(self, index_service):
         with self.app.app_context():
             response = self._post_service_update({
                 'serviceName': 'new service name',
@@ -603,6 +632,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
                 'serviceTypes': ['Software development tools']}
             )
             assert response.status_code == 200
+            assert index_service.called is True
 
             response = self.client.get('/services/{}'.format(self.service_id))
             data = json.loads(response.get_data())
@@ -611,11 +641,13 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             assert data['services']['serviceTypes'][0] == 'Software development tools'
             assert response.status_code == 200
 
-    def test_can_post_a_valid_service_update_with_list(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_can_post_a_valid_service_update_with_list(self, index_service):
         with self.app.app_context():
             support_types = ['Service desk', 'Email', 'Phone', 'Live chat', 'Onsite']
             response = self._post_service_update({'supportTypes': support_types})
             assert response.status_code == 200
+            assert index_service.called is True
 
             response = self.client.get('/services/{}'.format(self.service_id))
             data = json.loads(response.get_data())
@@ -623,7 +655,8 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             assert all(i in support_types for i in data['services']['supportTypes']) is True
             assert response.status_code == 200
 
-    def test_can_post_a_valid_service_update_with_object(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_can_post_a_valid_service_update_with_object(self, index_service):
         with self.app.app_context():
             identity_authentication_controls = {
                 "value": ["Authentication federation"],
@@ -631,6 +664,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             }
             response = self._post_service_update({'identityAuthenticationControls': identity_authentication_controls})
             assert response.status_code == 200
+            assert index_service.called is True
 
             response = self.client.get('/services/{}'.format(self.service_id))
             data = json.loads(response.get_data())
@@ -642,7 +676,8 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             assert len(updated_auth_controls['value']) == 1
             assert ('Authentication federation' in updated_auth_controls['value']) is True
 
-    def test_invalid_field_not_accepted_on_update(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_invalid_field_not_accepted_on_update(self, index_service):
         with self.app.app_context():
             response = self._post_service_update({'thisIsInvalid': 'so I should never see this'})
 
@@ -650,18 +685,23 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             assert 'Additional properties are not allowed' in "{}".format(
                 json.loads(response.get_data())['error']['_form']
             )
+            assert index_service.called is False
 
-    def test_invalid_field_value_not_accepted_on_update(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_invalid_field_value_not_accepted_on_update(self, index_service):
         with self.app.app_context():
             response = self._post_service_update({'priceUnit': 'per Truth'})
 
             assert response.status_code == 400
             assert "no_unit_specified" in json.loads(response.get_data())['error']['priceUnit']
+            assert index_service.called is False
 
-    def test_updated_service_is_archived_right_away(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_updated_service_is_archived_right_away(self, index_service):
         with self.app.app_context():
             response = self._post_service_update({'serviceName': 'new service name'})
             assert response.status_code == 200
+            assert index_service.called is True
 
             archived_state = self.client.get(
                 '/archived-services?service-id=' + self.service_id).get_data()
@@ -669,11 +709,13 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
             assert archived_service_json['serviceName'] == 'new service name'
 
-    def test_updated_service_archive_is_listed_in_chronological_order(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_updated_service_archive_is_listed_in_chronological_order(self, index_service):
         with self.app.app_context():
             for name in ['new service name', 'new new service name']:
                 response = self._post_service_update({'serviceName': name})
                 assert response.status_code == 200
+                assert index_service.called is True
 
             archived_state = self.client.get(
                 '/archived-services?service-id=' +
@@ -684,34 +726,42 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             # only the two updates done at the beginning of this test will be archived
             assert [s['serviceName'] for s in archived_service_json] == ['new service name', 'new new service name']
 
-    def test_updated_service_should_be_archived_on_each_update(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_updated_service_should_be_archived_on_each_update(self, index_service):
         with self.app.app_context():
             for i in range(5):
+                index_service.reset_mock()
                 response = self._post_service_update({'serviceName': 'new service name' + str(i)})
                 assert response.status_code == 200
+                assert index_service.called is True
 
             archived_state = self.client.get(
                 '/archived-services?service-id=' + self.service_id).get_data()
             assert len(json.loads(archived_state)['services']) == 5
 
-    def test_writing_full_service_back(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_writing_full_service_back(self, index_service):
         with self.app.app_context():
             response = self.client.get('/services/{}'.format(self.service_id))
             data = json.loads(response.get_data())
             response = self._post_service_update(data['services'])
 
             assert response.status_code == 200
+            assert index_service.called is True
 
-    def test_should_404_if_no_archived_service_found_by_pk(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_should_404_if_no_archived_service_found_by_pk(self, index_service):
         response = self.client.get('/archived-services/5')
         assert response.status_code == 404
 
-    def test_return_404_if_no_archived_service_by_service_id(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_return_404_if_no_archived_service_by_service_id(self, index_service):
         response = self.client.get(
             '/archived-services?service-id=12345678901234')
         assert response.status_code == 404
 
-    def test_should_400_if_invalid_service_id(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_should_400_if_invalid_service_id(self, index_service):
         response = self.client.get('/archived-services?service-id=not-valid')
         assert response.status_code == 400
         assert b'Invalid service ID supplied' in response.get_data()
@@ -726,7 +776,8 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert response.status_code == 400
         assert b'Invalid service ID supplied' in response.get_data()
 
-    def test_should_400_if_mismatched_service_id(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_should_400_if_mismatched_service_id(self, index_service):
         response = self.client.post(
             '/services/{}'.format(self.service_id),
             data=json.dumps(
@@ -737,102 +788,21 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
         assert response.status_code == 400
         assert b'id parameter must match id in data' in response.get_data()
+        assert index_service.called is False
 
-    def test_should_not_update_status_through_service_post(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_should_not_update_status_through_service_post(self, index_service):
         response = self._post_service_update({'status': 'enabled'})
         assert response.status_code == 200
+        assert index_service.called is True
 
         response = self.client.get('/services/{}'.format(self.service_id))
         data = json.loads(response.get_data())
 
         assert data['services']['status'] == 'published'
 
-    def test_should_update_service_with_valid_statuses(self):
-        valid_statuses = ServiceTableMixin.STATUSES
-
-        for status in valid_statuses:
-            response = self.client.post(
-                '/services/{0}/status/{1}'.format(
-                    self.service_id,
-                    status
-                ),
-                data=json.dumps(
-                    {'updated_by': 'joeblogs'}),
-                content_type='application/json'
-            )
-
-            assert response.status_code == 200
-            data = json.loads(response.get_data())
-            assert status == data['services']['status']
-
-    def test_update_service_status_creates_audit_event(self):
-        response = self.client.post(
-            '/services/{0}/status/{1}'.format(
-                self.service_id,
-                "disabled"
-            ),
-            data=json.dumps(
-                {'updated_by': 'joeblogs'}),
-            content_type='application/json'
-        )
-
-        assert response.status_code == 200
-
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
-
-        assert len(data['auditEvents']) == 1
-        assert data['auditEvents'][0]['type'] == 'update_service_status'
-        assert data['auditEvents'][0]['user'] == 'joeblogs'
-        assert data['auditEvents'][0]['data']['serviceId'] == self.service_id
-        assert data['auditEvents'][0]['data']['new_status'] == 'disabled'
-        assert data['auditEvents'][0]['data']['old_status'] == 'published'
-
-        # initial service creation is done using `setup_dummy_service` in setup(), which skips the archiving process
-        # only the two updates done at the beginning of this test will be archived
-        assert data['auditEvents'][0]['data']['oldArchivedServiceId'] is None
-        assert 'oldArchivedService' not in data['auditEvents'][0]['links']
-
-        assert data['auditEvents'][0]['data']['newArchivedServiceId'] is not None
-        assert '/archived-services/' in data['auditEvents'][0]['links']['newArchivedService']
-
-    def test_should_400_with_invalid_statuses(self):
-        invalid_statuses = [
-            "unpublished",  # not a permissible state
-            "enabeld",  # typo
-        ]
-
-        for status in invalid_statuses:
-            response = self.client.post(
-                '/services/{0}/status/{1}'.format(
-                    self.service_id,
-                    status
-                ),
-                data=json.dumps(
-                    {'updated_by': 'joeblogs'}),
-                content_type='application/json'
-            )
-
-            assert response.status_code == 400
-            assert 'is not a valid status' in json.loads(response.get_data())['error']
-            # assert that valid status names are returned in the response
-            for valid_status in ServiceTableMixin.STATUSES:
-                assert valid_status in json.loads(response.get_data())['error']
-
-    def test_should_404_without_status_parameter(self):
-        response = self.client.post(
-            '/services/{0}/status/'.format(
-                self.service_id,
-            ),
-            data=json.dumps(
-                {'updated_by': 'joeblogs'}),
-            content_type='application/json'
-        )
-
-        assert response.status_code == 404
-
-    def test_json_postgres_field_should_not_include_column_fields(self):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_json_postgres_field_should_not_include_column_fields(self, index_service):
         non_json_fields = [
             'supplierName', 'links', 'frameworkSlug', 'updatedAt', 'createdAt', 'frameworkName', 'status', 'id']
         with self.app.app_context():
@@ -841,185 +811,36 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
             response = self._post_service_update(data['services'])
             assert response.status_code == 200
+            assert index_service.called is True
 
             service = Service.query.filter(Service.service_id == self.service_id).first()
 
             for key in non_json_fields:
                 assert key not in service.data
 
-
-@mock.patch('app.service_utils.search_api_client')
-class TestShouldCallSearchApiOnPutToCreateService(BaseApplicationTest):
-    def setup(self):
-        super(TestShouldCallSearchApiOnPutToCreateService, self).setup()
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
-            )
-
-            db.session.commit()
-
-    def test_should_index_on_service_put(self, search_api_client):
-        with self.app.app_context():
-            search_api_client.index.return_value = True
-
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
-            response = self.client.put(
-                '/services/1234567890123456',
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            search_api_client.index.assert_called_with(
-                index='g-cloud-6',
-                service_id="1234567890123456",
-                service=json.loads(response.get_data())['services']
-            )
-
-    def test_should_not_index_on_service_on_expired_frameworks(
-            self, search_api_client
-    ):
-        with self.app.app_context():
-            search_api_client.index.return_value = True
-
-            payload = load_example_listing("G4")
-            res = self.client.put(
-                '/services/' + payload["id"],
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            assert res.status_code == 201
-            assert Service.query.filter(Service.service_id == payload["id"]).first() is not None
-            assert search_api_client.index.called is False
-
-    def test_should_ignore_index_error_on_service_put(self, search_api_client):
-        with self.app.app_context():
-            search_api_client.index.side_effect = HTTPError()
-
-            payload = load_example_listing("G6-IaaS")
-            payload['id'] = "1234567890123456"
-            response = self.client.put(
-                '/services/1234567890123456',
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            assert response.status_code == 201
-
-
-@mock.patch('app.service_utils.search_api_client')
-class TestShouldCallSearchApiOnPost(BaseApplicationTest, FixtureMixin):
-
-    payload = None
-    payload_g4 = None
-
-    def setup(self):
-        super(TestShouldCallSearchApiOnPost, self).setup()
-        self.payload = load_example_listing("G6-SaaS")
-        self.payload_g4 = load_example_listing("G4")
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
-            )
-            self.setup_dummy_service(
-                service_id=self.payload['id'],
-                **self.payload
-            )
-
-            self.setup_dummy_service(
-                service_id=self.payload_g4['id'],
-                **self.payload_g4
-            )
-
-    def test_should_index_on_service_post(self, search_api_client):
-        with self.app.app_context():
-            search_api_client.index.return_value = True
-
-            self.client.post(
-                '/services/{}'.format(self.payload['id']),
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': self.payload}
-                ),
-                content_type='application/json')
-
-            search_api_client.index.assert_called_with(
-                index='g-cloud-6',
-                service_id=self.payload['id'],
-                service=mock.ANY
-            )
-
     @mock.patch('app.service_utils.db.session.commit')
-    def test_should_not_index_on_service_post_if_db_exception(
-            self, search_api_client, db_session_commit
-    ):
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_should_not_index_on_service_post_if_db_exception(self, index_service, db_session_commit):
         with self.app.app_context():
-            search_api_client.index.return_value = True
             db_session_commit.side_effect = IntegrityError(
                 'message', 'statement', 'params', 'orig')
 
-            payload = load_example_listing("G6-SaaS")
-            self.client.post(
-                '/services/{}'.format(self.payload['id']),
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-            assert search_api_client.index.called is False
+            self.client.get('/services/{}'.format(self.service_id))
+            assert index_service.called is False
 
-    def test_should_not_index_on_service_on_expired_frameworks(
-            self, search_api_client
-    ):
-        with self.app.app_context():
-            search_api_client.index.return_value = True
-
-            payload = load_example_listing("G4")
-            res = self.client.post(
-                '/services/{}'.format(self.payload_g4['id']),
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
-
-            assert res.status_code == 200
-            assert not search_api_client.index.called
-
+    @mock.patch('app.utils.search_api_client')
     def test_should_ignore_index_error(self, search_api_client):
         with self.app.app_context():
             search_api_client.index.side_effect = HTTPError()
 
-            payload = load_example_listing("G6-SaaS")
-            response = self.client.post(
-                '/services/{}'.format(self.payload['id']),
-                data=json.dumps(
-                    {
-                        'updated_by': 'joeblogs',
-                        'services': payload}
-                ),
-                content_type='application/json')
+            response = self.client.get('/services/{}'.format(self.service_id))
 
             assert response.status_code == 200, response.get_data()
 
 
-class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, FixtureMixin):
+class TestUpdateServiceStatus(BaseApplicationTest, FixtureMixin):
     def setup(self):
-        super(TestShouldCallSearchApiOnPostStatusUpdate, self).setup()
+        super().setup()
         self.services = {}
 
         valid_statuses = ServiceTableMixin.STATUSES
@@ -1055,50 +876,42 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest, FixtureMixi
                             service_is_indexed, service_is_deleted,
                             expected_status_code):
 
-        with mock.patch('app.service_utils.search_api_client') \
-                as search_api_client:
+        with mock.patch('app.service_utils.index_object') as index_object:
+            with mock.patch('app.service_utils.search_api_client') as service_utils_search_api_client:
+                with self.app.app_context():
+                    response = self.client.post(
+                        '/services/{0}/status/{1}'.format(
+                            self.services[old_status]['id'],
+                            new_status
+                        ),
+                        data=json.dumps(
+                            {'updated_by': 'joeblogs'}),
+                        content_type='application/json'
+                    )
 
-            search_api_client.index.return_value = True
-            search_api_client.delete.return_value = True
+                    # Check response after posting an update
+                    assert response.status_code == expected_status_code
 
-            response = self.client.post(
-                '/services/{0}/status/{1}'.format(
-                    self.services[old_status]['id'],
-                    new_status
-                ),
-                data=json.dumps(
-                    {'updated_by': 'joeblogs'}),
-                content_type='application/json'
-            )
+                    # Exit function if update was not successful
+                    if expected_status_code != 200:
+                        return
 
-            # Check response after posting an update
-            assert response.status_code == expected_status_code
+                    service = self._get_service_from_database_by_service_id(
+                        self.services[old_status]['id'])
 
-            # Exit function if update was not successful
-            if expected_status_code != 200:
-                return
+                    # Check that service in database has been updated
+                    assert new_status == service.status
+                    # Check that search_api_client is doing the right thing
+                    if service_is_indexed:
+                        assert index_object.called is True
+                    else:
+                        assert index_object.called is False
 
-            service = self._get_service_from_database_by_service_id(
-                self.services[old_status]['id'])
-
-            # Check that service in database has been updated
-            assert new_status == service.status
-
-            # Check that search_api_client is doing the right thing
-            if service_is_indexed:
-                search_api_client.index.assert_called_with(
-                    index=service.framework.slug,
-                    service_id=service.service_id,
-                    service=json.loads(response.get_data())['services']
-                )
-            else:
-                assert not search_api_client.index.called
-
-            if service_is_deleted:
-                search_api_client.delete.assert_called_with(index=service.framework.slug,
-                                                            service_id=service.service_id)
-            else:
-                assert not search_api_client.delete.called
+                    if service_is_deleted:
+                        service_utils_search_api_client.delete.assert_called_with(index=service.framework.slug,
+                                                                                  service_id=service.service_id)
+                    else:
+                        assert not service_utils_search_api_client.delete.called
 
     def test_should_index_on_service_status_changed_to_published(self):
 
@@ -1186,6 +999,121 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             # need a supplier_id of '1' because our service has it hardcoded
             self.setup_dummy_suppliers(2)
             db.session.commit()
+
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_should_update_service_with_valid_statuses(self, index_service):
+        valid_statuses = ServiceTableMixin.STATUSES
+
+        with self.app.app_context():
+            self.setup_dummy_service(
+                service_id=self.service_id,
+                **self.service
+            )
+            service = Service.query.filter(
+                Service.service_id == self.service_id
+            ).one()
+            for status in valid_statuses:
+                index_service.reset_mock()
+                response = self.client.post(
+                    '/services/{0}/status/{1}'.format(
+                        self.service_id,
+                        status
+                    ),
+                    data=json.dumps(
+                        {'updated_by': 'joeblogs'}),
+                    content_type='application/json'
+                )
+
+                assert response.status_code == 200
+                data = json.loads(response.get_data())
+                assert status == data['services']['status']
+                if status == 'disabled':
+                    assert index_service.called is False
+                else:
+                    index_service.assert_called_once_with(service)
+
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_update_service_status_creates_audit_event(self, index_service):
+        with self.app.app_context():
+            self.setup_dummy_service(
+                service_id=self.service_id,
+                **self.service
+            )
+        response = self.client.post(
+            '/services/{0}/status/{1}'.format(
+                self.service_id,
+                "disabled"
+            ),
+            data=json.dumps(
+                {'updated_by': 'joeblogs'}),
+            content_type='application/json'
+        )
+
+        assert response.status_code == 200
+        assert index_service.called is False
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data())
+
+        assert len(data['auditEvents']) == 1
+        assert data['auditEvents'][0]['type'] == 'update_service_status'
+        assert data['auditEvents'][0]['user'] == 'joeblogs'
+        assert data['auditEvents'][0]['data']['serviceId'] == self.service_id
+        assert data['auditEvents'][0]['data']['new_status'] == 'disabled'
+        assert data['auditEvents'][0]['data']['old_status'] == 'published'
+
+        # initial service creation is done using `setup_dummy_service` in setup(), which skips the archiving process
+        # only the two updates done at the beginning of this test will be archived
+        assert data['auditEvents'][0]['data']['oldArchivedServiceId'] is None
+        assert 'oldArchivedService' not in data['auditEvents'][0]['links']
+
+        assert data['auditEvents'][0]['data']['newArchivedServiceId'] is not None
+        assert '/archived-services/' in data['auditEvents'][0]['links']['newArchivedService']
+
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_should_400_with_invalid_statuses(self, index_service):
+        with self.app.app_context():
+            self.setup_dummy_service(
+                service_id=self.service_id,
+                **self.service
+            )
+        invalid_statuses = [
+            "unpublished",  # not a permissible state
+            "enabeld",  # typo
+        ]
+
+        for status in invalid_statuses:
+            response = self.client.post(
+                '/services/{0}/status/{1}'.format(
+                    self.service_id,
+                    status
+                ),
+                data=json.dumps(
+                    {'updated_by': 'joeblogs'}),
+                content_type='application/json'
+            )
+
+            assert response.status_code == 400
+            assert index_service.called is False
+            assert 'is not a valid status' in json.loads(response.get_data())['error']
+            # assert that valid status names are returned in the response
+            for valid_status in ServiceTableMixin.STATUSES:
+                assert valid_status in json.loads(response.get_data())['error']
+
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_should_404_without_status_parameter(self, index_service):
+        response = self.client.post(
+            '/services/{0}/status/'.format(
+                self.service_id,
+            ),
+            data=json.dumps(
+                {'updated_by': 'joeblogs'}),
+            content_type='application/json'
+        )
+
+        assert response.status_code == 404
+        assert index_service.called is False
 
     def test_json_postgres_data_column_should_not_include_column_fields(self):
         non_json_fields = [
@@ -1455,6 +1383,44 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             assert response.status_code == 400
             assert json.loads(response.get_data())["error"] == "Cannot update service by PUT"
 
+    @mock.patch('app.main.views.services.index_service')
+    def test_should_index_on_service_put(self, index_service):
+        with self.app.app_context():
+            payload = load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+            self.client.put(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'updated_by': 'joeblogs',
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            service = Service.query.filter(
+                Service.service_id == '1234567890123456'
+            ).one()
+
+            index_service.assert_called_once_with(service)
+
+    @mock.patch('app.utils.search_api_client')
+    def test_should_ignore_index_error_on_service_put(self, search_api_client):
+        with self.app.app_context():
+            search_api_client.index.side_effect = HTTPError()
+
+            payload = load_example_listing("G6-IaaS")
+            payload['id'] = "1234567890123456"
+            response = self.client.put(
+                '/services/1234567890123456',
+                data=json.dumps(
+                    {
+                        'updated_by': 'joeblogs',
+                        'services': payload}
+                ),
+                content_type='application/json')
+
+            assert response.status_code == 201
+
 
 class TestGetService(BaseApplicationTest):
     def setup(self):
@@ -1694,7 +1660,7 @@ class TestGetService(BaseApplicationTest):
         assert data['serviceMadeUnavailableAuditEvent']['data']['update']['status'] == 'expired'
 
 
-@mock.patch('app.service_utils.search_api_client', autospec=True)
+@mock.patch('app.main.views.services.index_service', autospec=True)
 class TestRevertService(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestRevertService, self).setup()
@@ -1731,7 +1697,7 @@ class TestRevertService(BaseApplicationTest, FixtureMixin):
                 )),
             )
 
-    def test_non_existent_service(self, search_api_client):
+    def test_non_existent_service(self, index_service):
         response = self.client.post(
             '/services/9876987698760000/revert',
             content_type='application/json',
@@ -1742,9 +1708,9 @@ class TestRevertService(BaseApplicationTest, FixtureMixin):
         with self.app.app_context():
             assert not AuditEvent.query.filter(AuditEvent.type == AuditTypes.update_service.name).all()
             assert ArchivedService.query.count() == 4
-            assert search_api_client.index.called is False
+            assert index_service.called is False
 
-    def test_archived_service_mismatch(self, search_api_client):
+    def test_archived_service_mismatch(self, index_service):
         response = self.client.post(
             '/services/1234123412340001/revert',
             content_type='application/json',
@@ -1759,9 +1725,9 @@ class TestRevertService(BaseApplicationTest, FixtureMixin):
                 Service.service_id == "1234123412340001"
             ).one().data["serviceSummary"] == "Probably the best cloud service in the world"
             assert ArchivedService.query.count() == 4
-            assert search_api_client.index.called is False
+            assert index_service.called is False
 
-    def test_non_existent_archived_service(self, search_api_client):
+    def test_non_existent_archived_service(self, index_service):
         response = self.client.post(
             '/services/1234123412340001/revert',
             content_type='application/json',
@@ -1776,9 +1742,9 @@ class TestRevertService(BaseApplicationTest, FixtureMixin):
                 Service.service_id == "1234123412340001"
             ).one().data["serviceSummary"] == "Probably the best cloud service in the world"
             assert ArchivedService.query.count() == 4
-            assert search_api_client.index.called is False
+            assert index_service.called is False
 
-    def test_archived_service_doesnt_validate(self, search_api_client):
+    def test_archived_service_doesnt_validate(self, index_service):
         response = self.client.post(
             '/services/1234123412340001/revert',
             content_type='application/json',
@@ -1793,20 +1759,21 @@ class TestRevertService(BaseApplicationTest, FixtureMixin):
                 Service.service_id == "1234123412340001"
             ).one().data["serviceSummary"] == "Probably the best cloud service in the world"
             assert ArchivedService.query.count() == 4
-            assert search_api_client.index.called is False
+            assert index_service.called is False
 
-    def test_happy_path(self, search_api_client):
-        response = self.client.post(
-            '/services/1234123412340001/revert',
-            content_type='application/json',
-            data=json.dumps({"updated_by": "papli@example.com", "archivedServiceId": self.archived_service_ids[1]}),
-        )
-        assert response.status_code == 200
-
+    def test_happy_path(self, index_service):
         with self.app.app_context():
-            assert Service.query.filter(
+            response = self.client.post(
+                '/services/1234123412340001/revert',
+                content_type='application/json',
+                data=json.dumps({"updated_by": "papli@example.com", "archivedServiceId": self.archived_service_ids[1]}),
+            )
+            assert response.status_code == 200
+
+            service = Service.query.filter(
                 Service.service_id == "1234123412340001"
-            ).one().data["serviceSummary"] == "Assuredly the best"
+            ).one()
+            assert service.data["serviceSummary"] == "Assuredly the best"
             assert tuple(
                 (event.user, event.data["fromArchivedServiceId"],)
                 for event in AuditEvent.query.filter(AuditEvent.type == AuditTypes.update_service.name).all()
@@ -1814,10 +1781,4 @@ class TestRevertService(BaseApplicationTest, FixtureMixin):
                 ("papli@example.com", self.archived_service_ids[1],),
             )
             assert ArchivedService.query.count() == 5
-            assert search_api_client.index.call_args_list == [
-                ((), {
-                    "index": "g-cloud-7",
-                    "service_id": "1234123412340001",
-                    "service": mock.ANY,
-                })
-            ]
+            index_service.assert_called_once_with(service)
