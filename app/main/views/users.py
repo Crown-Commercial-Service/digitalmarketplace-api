@@ -10,7 +10,7 @@ from ...models import User, AuditEvent, Supplier, Framework, SupplierFramework, 
 from ...utils import get_json_from_request, json_has_required_keys, \
     json_has_matching_id, pagination_links, get_valid_page_or_1, validate_and_return_updater_request
 from ...validation import validate_user_json_or_400, validate_user_auth_json_or_400, \
-    buyer_email_address_has_approved_domain
+    buyer_email_address_has_approved_domain, admin_email_address_has_approved_domain
 
 
 @main.route('/users/auth', methods=['POST'])
@@ -304,7 +304,7 @@ def email_is_valid_for_admin_user():
     if not email_address:
         abort(400, "'email_address' is a required parameter")
 
-    valid = email_address.split('@')[-1] in current_app.config.get('DM_ALLOWED_ADMIN_DOMAINS', [])
+    valid = admin_email_address_has_approved_domain(email_address)
     return jsonify(valid=valid)
 
 

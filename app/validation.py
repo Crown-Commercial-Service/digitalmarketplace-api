@@ -4,7 +4,7 @@ import os
 import copy
 from decimal import Decimal
 
-from flask import abort
+from flask import abort, current_app
 from jsonschema import ValidationError, FormatChecker
 from jsonschema.validators import validator_for
 from datetime import datetime
@@ -405,3 +405,12 @@ def is_approved_buyer_domain(existing_buyer_domains, new_domain):
     :return: boolean
     """
     return any(new_domain == d.domain_name or new_domain.endswith('.' + d.domain_name) for d in existing_buyer_domains)
+
+
+def admin_email_address_has_approved_domain(email_address):
+    """
+    Check the admin's email address is from a whitelisted domain
+    :param email_address: string
+    :return: boolean
+    """
+    return email_address.split('@')[-1] in current_app.config.get('DM_ALLOWED_ADMIN_DOMAINS', [])
