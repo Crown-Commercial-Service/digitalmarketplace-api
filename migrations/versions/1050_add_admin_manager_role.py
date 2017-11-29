@@ -15,7 +15,7 @@ from alembic import op
 
 def upgrade():
     op.execute("COMMIT")  # See: http://stackoverflow.com/a/30910417/15720
-    op.execute("ALTER TYPE user_roles_enum ADD VALUE 'admin-manager' AFTER 'admin-ccs-sourcing';")
+    op.execute("ALTER TYPE user_roles_enum ADD VALUE IF NOT EXISTS 'admin-manager' AFTER 'admin-ccs-sourcing';")
 
 
 def downgrade():
