@@ -19,4 +19,5 @@ def upgrade():
 
 
 def downgrade():
-    raise NotImplemented("Cannot remove user role value")
+    # Cannot remove user role value
+    pass
