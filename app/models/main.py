@@ -722,6 +722,7 @@ class User(db.Model):
         'admin-ccs-category',  # generally restricted to read-only access to admin views.
         'admin-ccs-sourcing',  # can perform admin actions involving supplier acceptance.
         'admin-manager',       # can add, edit and disable other types of admin user
+        'admin-framework-manager',  # can perform admin actions involving framework applications
     ]
 
     id = db.Column(db.Integer, primary_key=True)
