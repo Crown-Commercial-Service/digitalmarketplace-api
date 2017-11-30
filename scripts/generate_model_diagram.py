@@ -14,6 +14,7 @@ def _build_desc():
         show_indexes=True,
     )
 
+
 if __name__ == "__main__":
     app = create_app("development")
     with app.app_context():

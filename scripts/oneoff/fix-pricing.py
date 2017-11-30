@@ -51,6 +51,7 @@ def main(api_url, api_access_token):
         if count % 1000 == 0:
             print("** {}".format(count))
 
+
 if __name__ == "__main__":
     arguments = docopt(__doc__)
     main(
