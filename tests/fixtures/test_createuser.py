@@ -257,3 +257,21 @@ def test_existing_application_same_organisation_as_applicant_at_signup(client, m
         application_id=existing_user.application_id,
         email_address='es@{}'.format(existing_user_domain)
     )
+
+
+def test_send_invite(client, users):
+    user = users[0]
+    token = generate_creation_token(
+        name=user.name,
+        email_address=user.email_address,
+        user_type=user.role,
+        frmaework='digital-marketplace'
+    )
+
+    response = client.post(
+        '/2/send-invite/{}'.format(token),
+        content_type='application/json')
+
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['email_address'] == user.email_address

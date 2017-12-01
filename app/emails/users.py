@@ -14,6 +14,10 @@ from .util import render_email_template, send_or_handle_error
 from urllib import quote
 
 
+def get_root_url(framework_slug):
+    return current_app.config['APP_ROOT'].get(framework_slug)
+
+
 def send_existing_seller_notification(email_address, supplier_code):
     TEMPLATE_FILENAME = 'user_existing_seller.md'
 
@@ -74,11 +78,12 @@ def send_existing_application_notification(email_address, application_id):
     )
 
 
-def generate_user_creation_token(name, email_address, user_type, **unused):
+def generate_user_creation_token(name, email_address, user_type, framework, **unused):
     data = {
         'name': name,
         'email_address': email_address,
-        'user_type': user_type
+        'user_type': user_type,
+        'framework': framework
     }
 
     token = generate_token(
@@ -89,21 +94,24 @@ def generate_user_creation_token(name, email_address, user_type, **unused):
     return token
 
 
-def send_account_activation_email(name, email_address, user_type, url):
-    token = generate_user_creation_token(name=name, email_address=email_address, user_type=user_type)
+def send_account_activation_email(name, email_address, user_type, framework):
+    template = 'orams_create_user_email.md' if framework == 'orams' else 'create_user_email.md'
+    subject = 'ORAMS_INVITE_EMAIL_SUBJECT' if framework == 'orams' else 'INVITE_EMAIL_SUBJECT'
+    token = generate_user_creation_token(name=name, email_address=email_address,
+                                         user_type=user_type, framework=framework)
     url = '{}{}/create-user/{}'.format(
         current_app.config['FRONTEND_ADDRESS'],
-        url,
+        get_root_url(framework),
         quote(token)
     )
 
-    email_body = render_email_template('create_user_email.md', url=url)
+    email_body = render_email_template(template, url=url)
 
     try:
         send_email(
             email_address,
             email_body,
-            current_app.config['INVITE_EMAIL_SUBJECT'],
+            current_app.config[subject],
             current_app.config['INVITE_EMAIL_FROM'],
             current_app.config['INVITE_EMAIL_NAME'],
         )
@@ -119,12 +127,13 @@ def send_account_activation_email(name, email_address, user_type, url):
                 'email_hash': hash_email(email_address)})
 
 
-def send_account_activation_manager_email(manager_name, manager_email, applicant_name, applicant_email):
+def send_account_activation_manager_email(manager_name, manager_email, applicant_name, applicant_email, framework):
     _send_account_activation_admin_email(
         manager_name=manager_name,
         manager_email=manager_email,
         applicant_name=applicant_name,
-        applicant_email=applicant_email
+        applicant_email=applicant_email,
+        framework=framework
     )
 
     email_body = render_email_template(
@@ -153,8 +162,9 @@ def send_account_activation_manager_email(manager_name, manager_email, applicant
                 'email_hash': hash_email(manager_email)})
 
 
-def _send_account_activation_admin_email(manager_name, manager_email, applicant_name, applicant_email):
-    token = generate_user_creation_token(name=applicant_name, email_address=applicant_email, user_type="buyer")
+def _send_account_activation_admin_email(manager_name, manager_email, applicant_name, applicant_email, framework):
+    token = generate_user_creation_token(name=applicant_name, email_address=applicant_email,
+                                         user_type="buyer", framework=framework)
     url = '{}/buyers/signup/send-invite/{}'.format(
         current_app.config['FRONTEND_ADDRESS'],
         quote(token)
@@ -189,11 +199,12 @@ def _send_account_activation_admin_email(manager_name, manager_email, applicant_
                 'email_hash': hash_email(manager_email)})
 
 
-def orams_send_account_activation_admin_email(applicant_name, applicant_email, url):
-    token = generate_user_creation_token(name=applicant_name, email_address=applicant_email, user_type="buyer")
-    url = '{}{}/buyers/signup/send-invite/{}'.format(
+def orams_send_account_activation_admin_email(applicant_name, applicant_email, framework):
+    token = generate_user_creation_token(name=applicant_name, email_address=applicant_email,
+                                         user_type="buyer", framework=framework)
+    url = '{}{}/send-invite/{}'.format(
         current_app.config['FRONTEND_ADDRESS'],
-        url,
+        get_root_url(framework),
         quote(token)
     )
 

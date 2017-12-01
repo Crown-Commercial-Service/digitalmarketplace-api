@@ -93,6 +93,7 @@ class Config:
     INVITE_EMAIL_NAME = DM_GENERIC_ADMIN_NAME
     INVITE_EMAIL_FROM = 'no-reply@marketplace.digital.gov.au'
     INVITE_EMAIL_SUBJECT = 'Activate your new Marketplace account'
+    ORAMS_INVITE_EMAIL_SUBJECT = 'Create your ORAMS Portal account'
     BUYER_INVITE_MANAGER_CONFIRMATION_SUBJECT = 'Digital Marketplace buyer account request [SEC=UNCLASSIFIED]'
     BUYER_INVITE_REQUEST_ADMIN_EMAIL = 'marketplace+buyer-request@digital.gov.au'
     ORAMS_BUYER_INVITE_REQUEST_ADMIN_EMAIL = 'nick.ball+bcc@digital.gov.au'

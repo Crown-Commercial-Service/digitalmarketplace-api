@@ -20,7 +20,7 @@ def test_send_seller_type_signup_invite_email(client, mocker):
         email_address=test_seller['email_address'],
         name=test_seller['name'],
         user_type='seller',
-        url='/2'
+        framework='digital-marketplace'
     )
 
 
@@ -44,7 +44,7 @@ def test_send_buyer_type_signup_invite_email(client, mocker):
         email_address='m@digital.gov.au',
         name='Jeff Labowski',
         user_type='buyer',
-        url='/2'
+        framework='digital-marketplace'
     )
 
 
@@ -70,6 +70,7 @@ def test_send_contractor_buyer_type_signup_invite_email(client, mocker):
         manager_name='Jeff Labowski',
         applicant_email='rtenenabaum@mouse.gov.au',
         applicant_name='Royal',
+        framework='digital-marketplace'
     )
 
 

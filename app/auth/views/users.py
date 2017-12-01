@@ -169,8 +169,6 @@ def signup():
     ---
     tags:
       - users
-    security:
-      - basicAuth: []
     consumes:
       - application/json
     parameters:
@@ -235,11 +233,9 @@ def signup():
             message="A buyer account must have a valid government entity email domain"
         ), 400
 
-    url = get_root_url(framework)
-
     if framework == 'orams':
         try:
-            orams_send_account_activation_admin_email(name, email_address, url)
+            orams_send_account_activation_admin_email(name, email_address, framework)
             return jsonify(
                 email_address=email_address,
                 message="Email invite sent successfully"
@@ -254,7 +250,8 @@ def signup():
                 manager_name=line_manager_name,
                 manager_email=line_manager_email,
                 applicant_name=name,
-                applicant_email=email_address
+                applicant_email=email_address,
+                framework=framework
             )
             return jsonify(
                 email_address=email_address,
@@ -270,7 +267,7 @@ def signup():
                 name=name,
                 email_address=email_address,
                 user_type=user_type,
-                url=url
+                framework=framework
             )
             return jsonify(
                 email_address=email_address,
@@ -288,6 +285,36 @@ def signup():
             email_address=email_address,
             message='An error occured when trying to send an email'
         ), 400
+
+
+@auth.route('/send-invite/<string:token>', methods=['POST'])
+def send_invite(token):
+    """Send invite
+    ---
+    tags:
+      - users
+    consumes:
+      - application/json
+    parameters:
+      - name: token
+        in: path
+        type: string
+        required: true
+        default: all
+    responses:
+      200:
+        description: Email address
+    """
+    try:
+        data = decode_creation_token(token.encode())
+        email_address = data.get('email_address', None)
+        name = data.get('name', None)
+        framework = data.get('framework', 'digital-marketplace')
+        user_type = data.get('user_type', None)
+        send_account_activation_email(name, email_address, user_type, framework)
+        return jsonify(email_address=email_address), 200
+    except InvalidToken:
+        return jsonify(message='An error occured when trying to send an email'), 400
 
 
 @auth.route('/signup/validate-invite/<string:token>', methods=['GET'])
