@@ -1666,7 +1666,9 @@ class Brief(db.Model):
                            default=utcnow)
     updated_at = db.Column(DateTime, index=True, nullable=False,
                            default=utcnow, onupdate=utcnow)
-    published_at = db.Column(DateTime, index=True, nullable=True)
+    _published_at = db.Column("published_at", DateTime, index=True, nullable=True)
+    closed_at = db.Column(DateTime, index=True, nullable=True)
+    questions_closed_at = db.Column(DateTime, index=True, nullable=True)
     withdrawn_at = db.Column(DateTime, index=True, nullable=True)
 
     __table_args__ = (db.ForeignKeyConstraint([framework_id, _lot_id],
@@ -1692,6 +1694,20 @@ class Brief(db.Model):
         name = DOMAIN_MAPPING_SPECIALISTS[specialist_role]
         return Domain.get_by_name_or_id(name)
 
+    def publish(self):
+        if not self.published_at:
+            self.published_at = pendulum.now('UTC')
+        DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
+        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
+        t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
+
+        self.closed_at = combine_date_and_time(
+            self.published_day + parse_interval(self.requirements_length),
+            t, DEADLINES_TZ_NAME).in_tz('UTC')
+        self.questions_closed_at = combine_date_and_time(
+            workday(self.published_day, self.questions_duration_workdays),
+            t, DEADLINES_TZ_NAME).in_tz('UTC')
+
     @property
     def dates_for_serialization(self):
         def as_s(x):
@@ -1704,19 +1720,20 @@ class Brief(db.Model):
         dates = {}
 
         dates['published_date'] = self.published_day
-        dates['closing_date'] = self.applications_closing_date
-        dates['questions_close'] = self.clarification_questions_closed_at
+        dates['closing_date'] = self.closed_at.date() if self.closed_at else None
+        dates['questions_close'] = self.questions_closed_at
         dates['answers_close'] = self.clarification_questions_published_by
         dates['application_open_weeks'] = self.requirements_length
-        dates['closing_time'] = self.applications_closed_at
+        dates['closing_time'] = self.closed_at
 
         dates = stringified(dates)
 
         if not self.published_at:
-            published_at = self.published_at
-            self.published_at = pendulum.now('UTC')
+            self.publish()
             dates['hypothetical'] = self.dates_for_serialization
-            self.published_at = published_at
+            self.published_at = None
+            self.closed_at = None
+            self.questions_closed_at = None
 
         return dates
 
@@ -1780,6 +1797,8 @@ class Brief(db.Model):
     @hybrid_property
     def requirements_length(self):
         DEFAULT_REQUIREMENTS_DURATION = current_app.config['DEFAULT_REQUIREMENTS_DURATION']
+        if not self.data:
+            return DEFAULT_REQUIREMENTS_DURATION
         return self.data.get(
             'requirementsLength',
             DEFAULT_REQUIREMENTS_DURATION)
@@ -1800,10 +1819,7 @@ class Brief(db.Model):
 
     @property
     def applications_closing_date(self):
-        if self.published_at is None:
-            return None
-        req_length = parse_interval(self.requirements_length)
-        return self.published_day + req_length
+        return self.closed_at
 
     @hybrid_property
     def hypothetical_applications_closed_at(self):
@@ -1820,32 +1836,38 @@ class Brief(db.Model):
 
     @hybrid_property
     def applications_closed_at(self):
-        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
-        DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
+        return self.closed_at
 
-        if self.published_at is None:
-            return None
-        d = self.applications_closing_date
-        t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
-        combined = combine_date_and_time(d, t, DEADLINES_TZ_NAME)
-        return combined.in_timezone('UTC')
+    @validates('closed_at')
+    def validates_closed_at(self, key, value):
+        if value:
+            if not self.published_at:
+                raise ValidationError("Dates cannot be set if the brief is not yet published")
+            if value < self.published_at:
+                raise ValidationError("Closing date cannot be set before the publishing date")
+            if value > self.published_at + parse_interval('365 days'):
+                raise ValidationError("Closing date cannot be > 1 year after the publishing date")
+            if self.questions_closed_at and value < self.questions_closed_at:
+                raise ValidationError("Closing date cannot be set before the questions closing date")
+        return value
+
+    @validates('questions_closed_at')
+    def validates_questions_closed_at(self, key, value):
+        if value:
+            if not self.published_at:
+                raise ValidationError("Dates cannot be set if the brief is not yet published")
+            if value < self.published_at:
+                raise ValidationError("Questions closing date cannot be before the publishing date")
+            if self.closed_at and value > self.closed_at:
+                raise ValidationError("Questions closing date cannot be after the closing date")
+
+        return value
 
     @applications_closed_at.expression
     def applications_closed_at(cls):
-        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
-        DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
-        t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
-
-        req_interval = sql_cast(cls.requirements_length, Interval)
-        day_count = sql_cast(func.extract('days', req_interval), Integer)
-        closing_day = cls.published_day + day_count
-        naive_deadline = func._(closing_day + t)
-        local_deadline = naive_deadline.op('at time zone')(DEADLINES_TZ_NAME)
-        utc_deadline = local_deadline.op('at time zone')('UTC')
-
         return sql_case(
             [(cls.published_at.is_(None), None)],
-            else_=utc_deadline
+            else_=cls.closed_at
         )
 
     @property
@@ -1864,13 +1886,13 @@ class Brief(db.Model):
 
     @property
     def clarification_questions_published_by(self):
-        if self.published_at is None:
+        if self.published_at is None or self.closed_at is None:
             return None
 
         DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
         DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
 
-        d = workday(self.applications_closing_date, -1)
+        d = workday(self.closed_at, -1)
 
         t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
         return combine_date_and_time(d, t, DEADLINES_TZ_NAME).in_tz('UTC')
@@ -1880,12 +1902,22 @@ class Brief(db.Model):
         return utcnow() > self.clarification_questions_closed_at
 
     @hybrid_property
+    def published_at(self):
+        return self._published_at
+
+    @published_at.setter
+    def published_at(self, published_at):
+        if published_at:
+            self._published_at = published_at
+            self.publish()
+
+    @hybrid_property
     def status(self):
         if self.withdrawn_at:
             return 'withdrawn'
         elif not self.published_at:
             return 'draft'
-        elif self.applications_closed_at > utcnow():
+        elif self.closed_at and self.closed_at > utcnow():
             return 'live'
         else:
             return 'closed'
@@ -1896,7 +1928,8 @@ class Brief(db.Model):
             return
 
         if value == 'live' and self.status == 'draft':
-            self.published_at = utcnow()
+            self.publish()
+
         elif value == 'withdrawn' and self.status == 'live':
             self.withdrawn_at = utcnow()
         else:
@@ -1907,7 +1940,7 @@ class Brief(db.Model):
         return sql_case([
             (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.published_at.is_(None), 'draft'),
-            (cls.applications_closed_at > utcnow(), 'live')
+            (cls.closed_at > utcnow(), 'live')
         ], else_='closed')
 
     class query_class(BaseQuery):
@@ -1985,11 +2018,12 @@ class Brief(db.Model):
         if self.published_at:
             data.update({
                 'publishedAt': self.published_at.to_iso8601_string(extended=True),
-                'applicationsClosedAt': self.applications_closed_at.to_iso8601_string(extended=True),
-                'clarificationQuestionsClosedAt':
-                    self.clarification_questions_closed_at.to_iso8601_string(extended=True),
+                'applicationsClosedAt': self.closed_at.to_iso8601_string(extended=True) if self.closed_at else None,
+                'clarificationQuestionsClosedAt': self.questions_closed_at.to_iso8601_string(extended=True)
+                if self.questions_closed_at else None,
                 'clarificationQuestionsPublishedBy':
-                    self.clarification_questions_published_by.to_iso8601_string(extended=True),
+                    self.clarification_questions_published_by.to_iso8601_string(extended=True)
+                    if self.clarification_questions_published_by else None,
                 'clarificationQuestionsAreClosed': self.clarification_questions_are_closed,
             })
 

@@ -633,7 +633,7 @@ class TestBriefs(BaseApplicationTest):
         assert len(data['briefs']) == data['meta']['total'] == 3, data['briefs']
 
     def test_list_briefs_by_human_readable(self):
-        today = datetime.utcnow()
+        today = pendulum.utcnow()
         self.setup_dummy_briefs(1, data={'requirementsLength': '2 weeks'}, status=None, title='First',
                                 published_at=(today + timedelta(days=-40)))
         self.setup_dummy_briefs(1, data={'requirementsLength': '2 weeks'}, status=None, title='Second',
@@ -648,7 +648,7 @@ class TestBriefs(BaseApplicationTest):
         titles = list(map(lambda brief: brief['title'], data['briefs']))
 
         assert res.status_code == 200
-        assert titles == ['Fourth', 'Second', 'Third', 'First']
+        assert titles == ['Fourth', 'Third', 'Second', 'First']
 
     def test_list_briefs_pagination_page_one(self):
         self.setup_dummy_briefs(7)

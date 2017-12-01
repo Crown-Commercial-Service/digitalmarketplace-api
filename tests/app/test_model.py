@@ -314,7 +314,9 @@ class TestBriefs(BaseApplicationTest):
 
     def test_query_live_brief(self):
         with self.app.app_context():
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=utcnow()))
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=utcnow())
+            brief.closed_at = utcnow().add(weeks=2)
+            db.session.add(brief)
             db.session.commit()
 
             assert Brief.query.filter(Brief.status == 'draft').count() == 0
@@ -385,9 +387,8 @@ class TestBriefs(BaseApplicationTest):
 
     def test_closing_dates_are_set_with_published_at_when_requirements_length_is_one_week(self):
         with self.app.app_context():
-            brief = Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
-                          published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
-
+            brief = Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot)
+            brief.published_at = datetime(2016, 3, 3, 12, 30, 1, 2)
             assert brief.applications_closed_at == datetime(2016, 3, 10, 7, 0, 0)
             assert brief.clarification_questions_closed_at == datetime(2016, 3, 7, 7, 0, 0)
             assert brief.clarification_questions_published_by == datetime(2016, 3, 9, 7, 0, 0)
@@ -413,26 +414,38 @@ class TestBriefs(BaseApplicationTest):
 
     def test_query_brief_applications_closed_at_date_for_one_week_brief(self):
         with self.app.app_context():
-            db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            new_brief = Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot)
+            db.session.add(new_brief)
             db.session.commit()
+            new_brief.published_at = datetime(2016, 3, 3, 12, 30, 1, 2)
+
             assert Brief.query.filter(Brief.applications_closed_at == naive_datetime(2016, 3, 10, 7, 0, 0)).count() == 1
 
     def test_query_brief_applications_closed_at_date_for_two_week_brief(self):
         with self.app.app_context():
-            db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            new_brief = Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot)
+            db.session.add(new_brief)
+            db.session.commit()
+            new_brief.published_at = datetime(2016, 3, 3, 12, 30, 1, 2)
+            db.session.add(new_brief)
             db.session.commit()
             assert Brief.query.filter(Brief.applications_closed_at == naive_datetime(2016, 3, 17, 7, 0, 0)).count() == 1
 
     def test_query_brief_applications_closed_at_date_for_mix_of_brief_lengths(self):
         with self.app.app_context():
-            db.session.add(Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 10, 12, 30, 1, 2)))
-            db.session.add(Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot,
-                                 published_at=datetime(2016, 3, 3, 12, 30, 1, 2)))
+            briefA = Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot)
+            briefB = Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot)
+            briefC = Brief(data={}, framework=self.framework, lot=self.lot)
+            db.session.add(briefA)
+            db.session.add(briefB)
+            db.session.add(briefC)
+            db.session.commit()
+            briefA.published_at = datetime(2016, 3, 10, 12, 30, 1, 2)
+            briefB.published_at = datetime(2016, 3, 3, 12, 30, 1, 2)
+            briefC.published_at = datetime(2016, 3, 3, 12, 30, 1, 2)
+            db.session.add(briefA)
+            db.session.add(briefB)
+            db.session.add(briefC)
             db.session.commit()
             assert Brief.query.filter(Brief.applications_closed_at == naive_datetime(2016, 3, 17, 7, 0, 0)).count() == 3
 
@@ -472,6 +485,24 @@ class TestBriefs(BaseApplicationTest):
         with pytest.raises(ValidationError):
             brief.status = 'invalid'
 
+    def test_cannot_set_live_brief_to_invalid_closings(self):
+        with self.app.app_context():
+            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=utcnow())
+
+            with pytest.raises(ValidationError):
+                brief.closed_at = utcnow() + pendulum.interval(days=999)
+
+            with pytest.raises(ValidationError):
+                brief.closed_at = utcnow() - pendulum.interval(days=10)
+
+            with pytest.raises(ValidationError):
+                brief.closed_at = utcnow() + pendulum.interval(days=5)
+
+            brief.closed_at = utcnow() + pendulum.interval(days=10)
+
+            with pytest.raises(ValidationError):
+                brief.questions_closed_at = utcnow() + pendulum.interval(days=20)
+
     def test_cannot_set_live_brief_to_draft(self):
         with self.app.app_context():
             brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=utcnow())
@@ -500,14 +531,15 @@ class TestBriefs(BaseApplicationTest):
             brief.status = 'withdrawn'
 
     def test_cannot_change_status_of_withdrawn_brief(self):
-        brief = Brief(
-            data={}, framework=self.framework, lot=self.lot,
-            published_at=utcnow() - interval(days=1), withdrawn_at=utcnow()
-        )
+        with self.app.app_context():
+            brief = Brief(
+                data={}, framework=self.framework, lot=self.lot,
+                published_at=utcnow() - interval(days=1), withdrawn_at=utcnow()
+            )
 
-        for status in ['draft', 'live', 'closed']:
-            with pytest.raises(ValidationError):
-                brief.status = status
+            for status in ['draft', 'live', 'closed']:
+                with pytest.raises(ValidationError):
+                    brief.status = status
 
     def test_buyer_users_can_be_added_to_a_brief(self):
         with self.app.app_context():
