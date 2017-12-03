@@ -233,8 +233,8 @@ def orams_send_account_activation_admin_email(applicant_name, applicant_email, f
             extra={'error': six.text_type(e)})
 
 
-def send_new_user_onboarding_email(name, email_address, user_type):
-    if user_type != 'buyer':
+def send_new_user_onboarding_email(name, email_address, user_type, framework):
+    if user_type != 'buyer' or framework == 'orams':
         return False
 
     assert user_type == 'buyer'

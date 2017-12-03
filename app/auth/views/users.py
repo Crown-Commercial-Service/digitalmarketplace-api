@@ -1,55 +1,27 @@
 from app.auth.user import create_user
 from flask import jsonify, current_app, request
 from flask_login import current_user, login_required, logout_user, login_user
-from sqlalchemy.exc import InvalidRequestError, IntegrityError
 from urllib import quote
 from app import db, encryption
 from app.auth import auth
 from app.auth.helpers import (
     generate_reset_password_token, decode_reset_password_token, get_root_url
 )
-from app.models import Application, User
+from app.models import User
 from app.utils import get_json_from_request
 from app.emails.users import (
-    send_account_activation_email, send_account_activation_manager_email, send_new_user_onboarding_email,
+    send_account_activation_email, send_account_activation_manager_email,
     send_reset_password_confirm_email, orams_send_account_activation_admin_email
 )
-from dmutils.csrf import get_csrf_token
 from dmutils.email import EmailError, InvalidToken
-from app.auth.helpers import decode_creation_token, is_government_email
-from app.auth.applications import create_application
+from app.auth.helpers import decode_creation_token, is_government_email, user_info
 from app.auth.user import is_duplicate_user, update_user_details
 from datetime import datetime
 from app.swagger import swag
 
 
-def _user_info(user):
-    try:
-        user_type = current_user.role
-    except AttributeError:
-        user_type = 'anonymous'
-
-    try:
-        email_address = current_user.email_address
-    except AttributeError:
-        email_address = None
-
-    try:
-        supplier_code = current_user.supplier_code
-    except AttributeError:
-        supplier_code = None
-
-    return {
-        "isAuthenticated": current_user.is_authenticated,
-        "userType": user_type,
-        "supplierCode": supplier_code,
-        "emailAddress": email_address,
-        "csrfToken": get_csrf_token()
-    }
-
-
-@auth.route('/ping', methods=["GET"])
-def ping():
+@auth.route('/users/me', methods=["GET"], endpoint='ping')
+def me():
     """Current user
     ---
     tags:
@@ -73,7 +45,13 @@ def ping():
           $ref: '#/definitions/UserInfo'
 
     """
-    return jsonify(_user_info(current_user))
+    return jsonify(user_info(current_user))
+
+
+# deprecated
+@auth.route('/ping', methods=["GET"])
+def me_deprecated():
+    return jsonify(user_info(current_user))
 
 
 @auth.route('/_protected', methods=["GET"])
@@ -93,7 +71,7 @@ def login():
     """Login user
     ---
     tags:
-      - users
+      - auth
     security:
       - basicAuth: []
     consumes:
@@ -132,7 +110,7 @@ def login():
 
         login_user(user)
 
-        return jsonify(_user_info(user))
+        return jsonify(user_info(user))
     else:
         user.failed_login_count += 1
         db.session.add(user)
@@ -147,7 +125,7 @@ def logout():
     """Logout user
     ---
     tags:
-      - users
+      - auth
     security:
       - basicAuth: []
     responses:
@@ -168,7 +146,7 @@ def signup():
     """Signup user
     ---
     tags:
-      - users
+      - auth
     consumes:
       - application/json
     parameters:
@@ -292,7 +270,7 @@ def send_invite(token):
     """Send invite
     ---
     tags:
-      - users
+      - auth
     consumes:
       - application/json
     parameters:
@@ -304,6 +282,12 @@ def send_invite(token):
     responses:
       200:
         description: Email address
+        type: object
+        properties:
+          email_address:
+            type: string
+          name:
+            type: string
     """
     try:
         data = decode_creation_token(token.encode())
@@ -312,90 +296,66 @@ def send_invite(token):
         framework = data.get('framework', 'digital-marketplace')
         user_type = data.get('user_type', None)
         send_account_activation_email(name, email_address, user_type, framework)
-        return jsonify(email_address=email_address), 200
+        return jsonify(email_address=email_address, name=name), 200
     except InvalidToken:
         return jsonify(message='An error occured when trying to send an email'), 400
 
 
-@auth.route('/signup/validate-invite/<string:token>', methods=['GET'])
-def validate_invite_token(token):
-    try:
-        data = decode_creation_token(token.encode())
-        return jsonify(data)
+@auth.route('/users', methods=['POST'], endpoint='create_user')
+@swag.validate('AddUser')
+def add():
+    """Add user
+    ---
+    tags:
+      - users
+    consumes:
+      - application/json
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          id: AddUser
+          required:
+            - name
+            - email_address
+            - user_type
+            - password
+          properties:
+            name:
+              type: string
+            email_address:
+              type: string
+            user_type:
+              type: string
+            framework:
+              type: string
+            shared_application_id:
+              type: string
+    responses:
+      200:
+        description: User
+        type: object
+        properties:
+          role:
+            type: string
+          email_address:
+            type: string
+          name:
+            type: string
+          supplier_code:
+            type: string
+          application_id:
+            type: string
+    """
+    return create_user()
 
-    except InvalidToken:
-        return jsonify(message='The token provided is invalid. It may have expired'), 400
 
-    except TypeError:
-        return jsonify(
-            message='The invite token passed to the server is not a recognizable token format'
-        ), 400
-
-
+# deprecated
 @auth.route('/create-user', methods=['POST'])
-def submit_create_account():
-    json_payload = get_json_from_request()
-    required_keys = ['name', 'email_address', 'password', 'user_type']
-    if not set(required_keys).issubset(json_payload):
-        return jsonify(message='One or more required args were missing from the request'), 400
-
-    user_type = json_payload.get('user_type')
-    name = json_payload.get('name')
-    email_address = json_payload.get('email_address')
-    shared_application_id = json_payload.get('application_id', None)
-
-    user = User.query.filter(
-        User.email_address == email_address.lower()).first()
-
-    if user is not None:
-        return jsonify(
-            application_id=user.application_id,
-            message="A user with the email address '{}' already exists".format(email_address)
-        ), 409
-
-    if user_type == "seller":
-        if shared_application_id is None:
-            try:
-                application = create_application(email_address=email_address, name=name)
-                json_payload['application_id'] = application.id
-
-            except InvalidRequestError:
-                return jsonify(message="An application with this email address already exists"), 409
-
-            except IntegrityError:
-                return jsonify(message="An application with this email address already exists"), 409
-
-        else:
-            application = Application.query.filter(
-                Application.id == shared_application_id).first()
-
-            if not application:
-                return jsonify(message='An invalid application id was passed to create new user api'), 400
-            else:
-                # TODO: associate new user with existing application
-                pass
-
-    try:
-        user = create_user(data=json_payload)
-
-        send_new_user_onboarding_email(
-            name=user.name,
-            email_address=user.email_address,
-            user_type=user_type
-        )
-
-        user = {
-            k: v for k, v in user._dict.items() if k in [
-                'name', 'email_address', 'application_id', 'role', 'supplier_code']
-        }
-
-        return jsonify(user)
-
-    except IntegrityError as error:
-        return jsonify(message=error.message), 409
-
-    except Exception as error:
-        return jsonify(message=error.message), 400
+@swag.validate('AddUser')
+def add_deprecated():
+    return create_user()
 
 
 @auth.route('/reset-password/framework/<string:framework_slug>', methods=['POST'])

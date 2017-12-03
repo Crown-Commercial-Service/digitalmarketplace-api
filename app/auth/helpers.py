@@ -9,6 +9,7 @@ from dmutils.email import (
 from functools import wraps
 from flask_login import current_user
 import pendulum
+from dmutils.csrf import get_csrf_token
 
 
 def role_required(*roles):
@@ -33,11 +34,12 @@ def is_current_supplier(func):
     return decorated_view
 
 
-def generate_creation_token(name, email_address, user_type, **unused):
+def generate_creation_token(name, email_address, user_type, framework, **unused):
     data = {
         'name': name,
         'email_address': email_address,
-        'user_type': user_type
+        'user_type': user_type,
+        'framework': framework
     }
     token = generate_token(data, current_app.config['SECRET_KEY'], current_app.config['SIGNUP_INVITATION_TOKEN_SALT'])
     return token
@@ -93,6 +95,31 @@ def slack_escape(text):
     text = text.replace('<', '&lt;')
     text = text.replace('>', '&gt;')
     return text
+
+
+def user_info(user):
+    try:
+        user_type = current_user.role
+    except AttributeError:
+        user_type = 'anonymous'
+
+    try:
+        email_address = current_user.email_address
+    except AttributeError:
+        email_address = None
+
+    try:
+        supplier_code = current_user.supplier_code
+    except AttributeError:
+        supplier_code = None
+
+    return {
+        "isAuthenticated": current_user.is_authenticated,
+        "userType": user_type,
+        "supplierCode": supplier_code,
+        "emailAddress": email_address,
+        "csrfToken": get_csrf_token()
+    }
 
 
 def notify_team(subject, body, more_info_url=None):

@@ -9,10 +9,11 @@ def test_signup_handles_valid_token(client, users):
         name=user.name,
         email_address=user.email_address,
         user_type=user.role,
+        framework='digital-marketplace'
     )
 
     response = client.get(
-        '/2/signup/validate-invite/{}'.format(token),
+        '/2/tokens/{}'.format(token),
         content_type='application/json')
 
     assert response.status_code == 200
@@ -20,12 +21,13 @@ def test_signup_handles_valid_token(client, users):
     assert data['name'] == user.name
     assert data['email_address'] == user.email_address
     assert data['user_type'] == user.role
+    assert data['framework'] == 'digital-marketplace'
 
 
 def test_send_buyer_invite_invalid_token(client):
     fake_token = 'ahsdfsadfnotavalidtokenstring984t9uthu99a03ihwe0ih'
     response = client.get(
-        '/2/signup/validate-invite/{}'.format(fake_token),
+        '/2/tokens/{}'.format(fake_token),
         content_type='application/json')
 
     assert response.status_code == 400
@@ -40,7 +42,7 @@ def test_create_user(client, app, applications):
         user_name = 'new buyer with supplier code'
 
         response = client.post(
-            '/2/create-user',
+            '/2/users',
             data=json.dumps({
                 'name': user_name,
                 'email_address': user_email,
@@ -58,23 +60,23 @@ def test_create_user(client, app, applications):
 
 def test_should_require_minimum_args(client):
     response = client.post(
-        '/2/create-user',
+        '/2/users',
         data=json.dumps({
             'name': 'Jeff Labowski',
             'email_address': 'm@examplecompany.biz',
-            'password': 'pa$$werd1',
+            'password': 'pa$$werd1'
             # 'user_type': 'seller'
         }),
         content_type='application/json')
     assert response.status_code == 400
     data = json.loads(response.data)
-    assert data['message'] == 'One or more required args were missing from the request'
+    assert data['message'] == "'user_type' is a required property"
 
 
 def test_create_user_wont_create_duplicate_user(client, users):
     user = users[0]
     response = client.post(
-        '/2/create-user',
+        '/2/users',
         data=json.dumps({
             'name': user.name,
             'email_address': user.email_address,
@@ -88,7 +90,7 @@ def test_create_user_wont_create_duplicate_user(client, users):
 
 def test_create_user_without_data_paylaod(client):
     response = client.post(
-        '/2/create-user',
+        '/2/users',
         content_type='application/json')
 
     assert response.status_code == 400
@@ -96,7 +98,7 @@ def test_create_user_without_data_paylaod(client):
 
 def test_supplier_role_should_have_supplier_code(client, supplier_user):
     response = client.post(
-        '/2/create-user',
+        '/2/users',
         data=json.dumps({
             'name': 'new supplier',
             'email_address': 'supplier_user email_address',
@@ -117,7 +119,7 @@ def test_non_supplier_role_should_not_have_supplier_code(client):
     user_name = 'new buyer with supplier code'
 
     response = client.post(
-        '/2/create-user',
+        '/2/users',
         data=json.dumps({
             'name': user_name,
             'email_address': user_email,
@@ -139,7 +141,7 @@ def test_applicant_requires_app_id_property(client, applications):
     user_name = 'new buyer with supplier code'
 
     response = client.post(
-        '/2/create-user',
+        '/2/users',
         data=json.dumps({
             'name': user_name,
             'email_address': user_email,
@@ -164,7 +166,7 @@ def test_create_user_with_invalid_app_id_property(client, app, applications):
         user_name = 'new seller'
 
         response = client.post(
-            '/2/create-user',
+            '/2/users',
             data=json.dumps({
                 'name': user_name,
                 'email_address': user_email,
@@ -185,7 +187,7 @@ def test_buyer_cant_set_application_id_property(client, applications):
     user_name = 'new buyer with supplier code'
 
     response = client.post(
-        '/2/create-user',
+        '/2/users',
         data=json.dumps({
             'name': user_name,
             'email_address': user_email,
@@ -213,7 +215,7 @@ def test_existing_application_same_organisation_as_applicant(client, mocker, app
     user_name = 'new applicant creating duplicate appication'
 
     response = client.post(
-        '/2/create-user',
+        '/2/users',
         data=json.dumps({
             'name': user_name,
             'email_address': user_email,
@@ -265,7 +267,7 @@ def test_send_invite(client, users):
         name=user.name,
         email_address=user.email_address,
         user_type=user.role,
-        frmaework='digital-marketplace'
+        framework='digital-marketplace'
     )
 
     response = client.post(
