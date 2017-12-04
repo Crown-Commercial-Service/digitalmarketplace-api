@@ -42,6 +42,63 @@ class TestUser(BaseApplicationTest, FixtureMixin):
             assert user.serialize()['role'] == "buyer"
             assert 'password' not in user.serialize()
 
+    def test_buyer_user_requires_valid_email_domain(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as exc:
+            self.setup_default_buyer_domain()
+            valid_buyer_user = User(
+                email_address='email@digital.gov.uk',
+                name='name',
+                role='buyer',
+                password='password',
+                active=True,
+            )
+            # Changing email to invalid domain raises an error
+            valid_buyer_user.email_address = 'email@nope.org'
+
+        assert str(exc.value) == 'invalid_buyer_domain'
+
+    def test_admin_user_requires_whitelisted_email_domain(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as exc:
+            valid_admin_user = User(
+                email_address='email@digital.cabinet-office.gov.uk',
+                name='name',
+                role='admin',
+                password='password',
+                active=True,
+            )
+            # Changing email to invalid domain raises an error
+            valid_admin_user.email_address = 'email@nope.org'
+        assert str(exc.value) == 'invalid_admin_domain'
+
+    def test_user_with_invalid_email_domain_cannot_be_changed_to_buyer_role(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as exc:
+            self.setup_default_buyer_domain()
+            valid_admin_user = User(
+                email_address='email@crowncommercial.gov.uk',
+                name='name',
+                role='admin',
+                password='password',
+                active=True,
+            )
+            # Changing role to buyer raises an error
+            valid_admin_user.role = 'buyer'
+
+        assert str(exc.value) == 'invalid_buyer_domain'
+
+    def test_user_with_invalid_email_domain_cannot_be_changed_to_admin_role(self):
+        with self.app.app_context(), pytest.raises(ValidationError) as exc:
+            self.setup_default_buyer_domain()
+            valid_buyer_user = User(
+                email_address='email@digital.gov.uk',
+                name='name',
+                role='buyer',
+                password='password',
+                active=True,
+            )
+            # Changing role to admin raises an error
+            valid_buyer_user.role = 'admin'
+        assert str(exc.value) == 'invalid_admin_domain'
+
 
 def test_framework_should_not_accept_invalid_status():
     app = create_app('test')

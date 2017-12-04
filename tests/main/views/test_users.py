@@ -27,7 +27,7 @@ class BaseUserTest(BaseApplicationTest):
 
     def _return_post_login(self, auth_users=None, status_code=200):
         _auth_users = {
-            'emailAddress': 'joeblogs@email.com',
+            'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
             'password': '1234567890'
         }
         if auth_users is not None and isinstance(auth_users, dict):
@@ -45,7 +45,7 @@ class TestUsersAuth(BaseUserTest):
     def create_user(self):
         with self.app.app_context():
             user = {
-                'emailAddress': 'joeblogs@email.com',
+                'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
                 'password': '1234567890',
                 'role': 'admin',
                 'name': 'joe bloggs'
@@ -67,7 +67,7 @@ class TestUsersAuth(BaseUserTest):
             response = self.valid_login()
 
             data = json.loads(response.get_data())['users']
-            assert data['emailAddress'] == 'joeblogs@email.com'
+            assert data['emailAddress'] == 'joeblogs@digital.cabinet-office.gov.uk'
 
     def test_should_validate_mixedcase_credentials(self):
         self.create_user()
@@ -76,13 +76,13 @@ class TestUsersAuth(BaseUserTest):
                 '/users/auth',
                 data=json.dumps({
                     'authUsers': {
-                        'emailAddress': 'JOEbloGS@email.com',
+                        'emailAddress': 'JOEbloGS@digital.cabinet-office.gov.uk',
                         'password': '1234567890'}}),
                 content_type='application/json')
 
             assert response.status_code == 200
             data = json.loads(response.get_data())['users']
-            assert data['emailAddress'] == 'joeblogs@email.com'
+            assert data['emailAddress'] == 'joeblogs@digital.cabinet-office.gov.uk'
 
     def test_should_return_404_for_no_user(self):
         with self.app.app_context():
@@ -90,7 +90,7 @@ class TestUsersAuth(BaseUserTest):
                 '/users/auth',
                 data=json.dumps({
                     'authUsers': {
-                        'emailAddress': 'joeblogs@email.com',
+                        'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
                         'password': '1234567890'}}),
                 content_type='application/json')
 
@@ -105,7 +105,7 @@ class TestUsersAuth(BaseUserTest):
                 '/users/auth',
                 data=json.dumps({
                     'authUsers': {
-                        'emailAddress': 'joeblogs@email.com',
+                        'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
                         'password': 'this is not right'}}),
                 content_type='application/json')
 
@@ -117,7 +117,7 @@ class TestUsersAuth(BaseUserTest):
         self.create_user()
         with self.app.app_context(), freeze_time('2015-06-06'):
             self.valid_login()
-            user = User.get_by_email_address('joeblogs@email.com')
+            user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
             assert user.logged_in_at == datetime(2015, 6, 6)
 
@@ -125,7 +125,7 @@ class TestUsersAuth(BaseUserTest):
         self.create_user()
         with self.app.app_context(), freeze_time('2015-06-06'):
             self.invalid_password()
-            user = User.get_by_email_address('joeblogs@email.com')
+            user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
             assert user.logged_in_at is None
 
@@ -133,7 +133,7 @@ class TestUsersAuth(BaseUserTest):
         self.create_user()
         with self.app.app_context():
             self.invalid_password()
-            user = User.get_by_email_address('joeblogs@email.com')
+            user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
             assert user.failed_login_count == 1
 
@@ -143,7 +143,7 @@ class TestUsersAuth(BaseUserTest):
             self.invalid_password()
             self.valid_login()
 
-            user = User.get_by_email_address('joeblogs@email.com')
+            user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
             assert user.failed_login_count == 0
 
     def test_user_is_locked_after_too_many_failed_login_attempts(self):
@@ -153,7 +153,7 @@ class TestUsersAuth(BaseUserTest):
 
         with self.app.app_context():
             self.invalid_password()
-            user = User.get_by_email_address('joeblogs@email.com')
+            user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
             assert user.locked is True
 
@@ -163,7 +163,7 @@ class TestUsersAuth(BaseUserTest):
         self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
 
         with self.app.app_context():
-            user = User.get_by_email_address('joeblogs@email.com')
+            user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
             user.failed_login_count = 1
             db.session.add(user)
@@ -276,7 +276,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
                     'password': '1234567890',
                     'role': 'admin',
                     'name': 'joe bloggs'}}),
@@ -284,14 +284,14 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
 
         assert response.status_code == 201
         data = json.loads(response.get_data())["users"]
-        assert data["emailAddress"] == "joeblogs@email.com"
+        assert data["emailAddress"] == "joeblogs@digital.cabinet-office.gov.uk"
 
     def test_can_post_an_admin_ccs_category_user(self):
         response = self.client.post(
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@crowncommercial.gov.uk',
                     'password': '1234567890',
                     'role': 'admin-ccs-category',
                     'name': 'joe bloggs'}}),
@@ -299,14 +299,14 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
 
         assert response.status_code == 201
         data = json.loads(response.get_data())["users"]
-        assert data["emailAddress"] == "joeblogs@email.com"
+        assert data["emailAddress"] == "joeblogs@crowncommercial.gov.uk"
 
     def test_can_post_an_admin_ccs_sourcing_user(self):
         response = self.client.post(
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs+sourcing@email.com',
+                    'emailAddress': 'joeblogs+sourcing@crowncommercial.gov.uk',
                     'password': '1234567890',
                     'role': 'admin-ccs-sourcing',
                     'name': 'joe bloggs'}}),
@@ -314,14 +314,14 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
 
         assert response.status_code == 201
         data = json.loads(response.get_data())["users"]
-        assert data["emailAddress"] == "joeblogs+sourcing@email.com"
+        assert data["emailAddress"] == "joeblogs+sourcing@crowncommercial.gov.uk"
 
     def test_can_post_an_admin_manager_user(self):
         response = self.client.post(
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs+manager@email.com',
+                    'emailAddress': 'joeblogs+manager@digital.cabinet-office.gov.uk',
                     'password': '1234567890',
                     'role': 'admin-manager',
                     'name': 'joe bloggs'}}),
@@ -329,7 +329,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
 
         assert response.status_code == 201
         data = json.loads(response.get_data())["users"]
-        assert data["emailAddress"] == "joeblogs+manager@email.com"
+        assert data["emailAddress"] == "joeblogs+manager@digital.cabinet-office.gov.uk"
 
     def test_can_post_an_admin_framework_manager_user(self):
         response = self.client.post(
@@ -352,7 +352,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs+admin@email.com',
+                    'emailAddress': 'joeblogs+admin@crowncommercial.gov.uk',
                     'password': '1234567890',
                     'role': 'admin-ccs',
                     'name': 'joe bloggs'}}),
@@ -361,6 +361,20 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         assert response.status_code == 400
         error = json.loads(response.get_data())['error']
         assert "'admin-ccs' is not one of" in error
+
+    def test_creating_admin_user_with_bad_email_domain_fails(self):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'emailAddress': 'joeblogs@example.com',
+                    'password': '1234567890',
+                    'role': 'admin',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
+
+        assert response.status_code == 400
+        assert json.loads(response.get_data())['error'] == 'invalid_admin_domain'
 
     def test_can_post_a_supplier_user(self, supplier_basic):
         response = self.client.post(
@@ -437,7 +451,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@email.com',
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
                     'password': '1234567890',
                     'role': 'admin',
                     'supplierId': 1,
@@ -468,7 +482,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
                 data=json.dumps({
                     'users': {
                         'hashpw': True,
-                        'emailAddress': 'joeblogs@email.com',
+                        'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
                         'password': '1234567890',
                         'role': 'admin',
                         'name': 'joe bloggs'}}),
@@ -476,7 +490,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
 
             assert response.status_code == 201
             user = User.query.filter(
-                User.email_address == 'joeblogs@email.com') \
+                User.email_address == 'joeblogs@digital.cabinet-office.gov.uk') \
                 .first()
             assert user.password != '1234567890'
 
@@ -487,7 +501,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
                 data=json.dumps({
                     'users': {
                         'hashpw': False,
-                        'emailAddress': 'joeblogs@email.com',
+                        'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
                         'password': '1234567890',
                         'role': 'admin',
                         'name': 'joe bloggs'}}),
@@ -495,7 +509,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
 
             assert response.status_code == 201
             user = User.query.filter(
-                User.email_address == 'joeblogs@email.com') \
+                User.email_address == 'joeblogs@digital.cabinet-office.gov.uk') \
                 .first()
             assert user.password == '1234567890'
 
@@ -504,7 +518,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@example.com',
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
                     'password': '1234567890',
                     'role': 'admin',
                     'name': 'joe bloggs'}}),
@@ -516,7 +530,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@example.com',
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
                     'password': '1234567890',
                     'role': 'admin',
                     'name': 'joe bloggs'}}),
@@ -1148,7 +1162,7 @@ class TestUsersGet(BaseUserTest, FixtureMixin):
 
     def test_list_users_by_admin_role(self):
         self._post_user({
-            "emailAddress": "admin@digital.gov.uk",
+            "emailAddress": "admin@digital.cabinet-office.gov.uk",
             "name": "Admin",
             "role": "admin",
             "password": "minimum10characterpassword"

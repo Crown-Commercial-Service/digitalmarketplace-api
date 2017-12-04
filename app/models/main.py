@@ -32,7 +32,10 @@ from dmutils.formats import DATETIME_FORMAT, DATE_FORMAT
 from .. import db
 from ..models.buyer_domains import BuyerEmailDomain
 from ..utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
-from ..validation import is_valid_service_id, get_validation_errors, buyer_email_address_has_approved_domain
+from ..validation import (
+    is_valid_service_id, get_validation_errors, buyer_email_address_has_approved_domain,
+    admin_email_address_has_approved_domain
+)
 
 
 class JSON(sqlalchemy.dialects.postgresql.JSON):
@@ -764,17 +767,23 @@ class User(db.Model):
     @validates('email_address')
     def validate_email_address(self, key, value):
         existing_buyer_domains = BuyerEmailDomain.query.all()
-        if value and self.role == 'buyer' and \
-                not buyer_email_address_has_approved_domain(existing_buyer_domains, value):
-            raise ValidationError("invalid_buyer_domain")
+        if value:
+            if self.role == 'buyer' and not buyer_email_address_has_approved_domain(existing_buyer_domains, value):
+                raise ValidationError("invalid_buyer_domain")
+            if self.role == 'admin' and not admin_email_address_has_approved_domain(value):
+                raise ValidationError("invalid_admin_domain")
         return value
 
     @validates('role')
     def validate_role(self, key, value):
         existing_buyer_domains = BuyerEmailDomain.query.all()
-        if self.email_address and value == 'buyer' and \
-                not buyer_email_address_has_approved_domain(existing_buyer_domains, self.email_address):
-            raise ValidationError("invalid_buyer_domain")
+        if self.email_address:
+            if value == 'buyer' and \
+                    not buyer_email_address_has_approved_domain(existing_buyer_domains, self.email_address):
+                raise ValidationError("invalid_buyer_domain")
+            if value == 'admin' and \
+                    not admin_email_address_has_approved_domain(self.email_address):
+                raise ValidationError("invalid_admin_domain")
         return value
 
     @property

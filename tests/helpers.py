@@ -61,11 +61,13 @@ class FixtureMixin(object):
             # The user should have a valid email domain
             self.setup_default_buyer_domain()
 
+            domain = 'digital.cabinet-office.gov.uk' if role == 'admin' else 'digital.gov.uk'
+
             if User.query.get(id):
                 return id
             user = User(
                 id=id,
-                email_address='test+{}@digital.gov.uk'.format(id),
+                email_address='test+{}@{}'.format(id, domain),
                 name='my name',
                 password='fake password',
                 active=True,
