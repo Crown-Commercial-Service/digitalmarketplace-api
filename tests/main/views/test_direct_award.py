@@ -11,7 +11,7 @@ from app import db
 import pytest
 from tests.bases import BaseApplicationTest
 
-from sqlalchemy import desc, Integer, BigInteger
+from sqlalchemy import desc
 from dmapiclient.audit import AuditTypes
 
 from app.models import DATETIME_FORMAT, AuditEvent, User, ArchivedService
@@ -48,24 +48,12 @@ class DirectAwardSetupAndTeardown(BaseApplicationTest, FixtureMixin):
     def _updated_by_data(self):
         return {'updated_by': str(self.user_id)}
 
-    @staticmethod
-    def _assert_one_audit_event_created_for_only_project(audit_type):
-        projects = DirectAwardProject.query.all()
-        assert len(projects) == 1
-
-        audit_events = AuditEvent.query.filter(AuditEvent.type == audit_type
-                                               and AuditEvent.data['projectId'].astext.cast(Integer) == projects[0].id
-                                               and AuditEvent.data['projectExternalId'].astext.cast(BigInteger)
-                                               == projects[0].external_id).all()
-        assert len(audit_events) == 1
-
 
 class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
     def setup(self):
         super(TestDirectAwardListProjects, self).setup()
-        self.project_id, self.project_external_id = self.create_direct_award_project(
-            user_id=self.user_id, project_name=self.direct_award_project_name
-        )
+        self.project_id = self.create_direct_award_project(user_id=self.user_id,
+                                                           project_name=self.direct_award_project_name)
 
     def test_list_projects_200s_with_user_id(self):
         res = self.client.get('/direct-award/projects?user-id={}'.format(self.user_id))
@@ -146,11 +134,9 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
             res = self.client.get('/direct-award/projects?user-id={}&page={}'.format(self.user_id, i + 1))
             data = json.loads(res.get_data(as_text=True))
 
-            with self.app.app_context():
-                for project in data['projects']:
-                    project = DirectAwardProject.query.filter(DirectAwardProject.external_id == project['id']).first()
-                    assert last_seen < project.id
-                    last_seen = project.id
+            # Check that each project has a created_at date older than the last, i.e. reverse chronological order.
+            for project in data['projects']:
+                assert last_seen < project['id']
 
     def test_list_projects_orders_by_created_at_descending(self):
         self.app.config['DM_API_PROJECTS_PAGE_SIZE'] = 2
@@ -261,53 +247,6 @@ class TestDirectAwardCreateProject(DirectAwardSetupAndTeardown):
         with self.app.app_context():
             assert len(DirectAwardProjectUser.query.all()) == 1
 
-    def test_create_project_retries_on_external_id_collision(self):
-        project_data = self._create_project_data()
-
-        with self.app.app_context():
-            assert len(DirectAwardProjectUser.query.all()) == 0
-
-        with mock.patch('app.models.direct_award.DirectAwardProject.external_id.default.arg') as external_id_default:
-            external_id_default.side_effect = (
-                123456789012345,
-                123456789012345,
-                123456789012345,
-                222222222222222,
-            )
-
-            res = self.client.post('/direct-award/projects', data=json.dumps(project_data),
-                                   content_type='application/json')
-            assert res.status_code == 201
-
-            with self.app.app_context():
-                assert len(DirectAwardProjectUser.query.all()) == 1
-
-    def test_create_project_fails_after_5_retries_on_external_id_collision(self):
-        project_data = self._create_project_data()
-
-        with self.app.app_context():
-            assert len(DirectAwardProjectUser.query.all()) == 0
-
-        with mock.patch('app.models.direct_award.DirectAwardProject.external_id.default.arg') as external_id_default:
-            external_id_default.side_effect = (
-                123456789012345,
-                123456789012345,
-                123456789012345,
-                123456789012345,
-                123456789012345,
-                123456789012345,
-                123456789012345,
-                222222222222222,
-            )
-
-            res = self.client.post('/direct-award/projects', data=json.dumps(project_data),
-                                   content_type='application/json')
-            assert res.status_code == 201
-
-            res = self.client.post('/direct-award/projects', data=json.dumps(project_data),
-                                   content_type='application/json')
-            assert res.status_code == 400
-
     def test_create_project_400s_with_invalid_user(self):
         project_data = self._create_project_data()
         project_data['project']['userId'] = 9999999
@@ -321,15 +260,15 @@ class TestDirectAwardCreateProject(DirectAwardSetupAndTeardown):
         assert res.status_code == 201
 
         with self.app.app_context():
-            self._assert_one_audit_event_created_for_only_project(AuditTypes.create_project.value)
+            assert len(AuditEvent.query.all()) == 1
+            assert AuditEvent.query.all()[0].type == AuditTypes.create_project.value
 
 
 class TestDirectAwardGetProject(DirectAwardSetupAndTeardown):
     def setup(self):
         super(TestDirectAwardGetProject, self).setup()
-        self.project_id, self.project_external_id = self.create_direct_award_project(
-            user_id=self.user_id, project_name=self.direct_award_project_name
-        )
+        self.project_id = self.create_direct_award_project(user_id=self.user_id,
+                                                           project_name=self.direct_award_project_name)
 
         res = self.client.get('/direct-award/projects/{}?user-id={}'.format(self.project_id, self.user_id))
         assert res.status_code == 200
@@ -345,9 +284,8 @@ class TestDirectAwardGetProject(DirectAwardSetupAndTeardown):
 class TestDirectAwardListProjectSearches(DirectAwardSetupAndTeardown):
     def setup(self):
         super(TestDirectAwardListProjectSearches, self).setup()
-        self.project_id, self.project_external_id = self.create_direct_award_project(
-            user_id=self.user_id, project_name=self.direct_award_project_name
-        )
+        self.project_id = self.create_direct_award_project(user_id=self.user_id,
+                                                           project_name=self.direct_award_project_name)
         self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id)
 
     def test_list_searches_200s_with_user_id(self):
@@ -359,15 +297,6 @@ class TestDirectAwardListProjectSearches(DirectAwardSetupAndTeardown):
         res = self.client.get('/direct-award/projects/{}/searches?user-id={}'.format(sys.maxsize,
                                                                                      self.user_id))
         assert res.status_code == 404
-
-    def test_list_searches_links_use_external_id(self):
-        res = self.client.get('/direct-award/projects/{}/searches'.format(self.project_id))
-        data = json.loads(res.get_data(as_text=True))
-
-        with self.app.app_context():
-            assert data['links']['self'] == 'http://127.0.0.1:5000/direct-award/projects/{}/searches'.format(
-                self.project_external_id
-            )
 
     def test_list_searches_returns_only_for_project_requested(self):
         # Create a project for another user with a search, i.e. one that shouldn't be returned
@@ -531,9 +460,8 @@ class TestDirectAwardCreateProjectSearch(DirectAwardSetupAndTeardown):
 
     def setup(self):
         super(TestDirectAwardCreateProjectSearch, self).setup()
-        self.project_id, self.project_external_id = self.create_direct_award_project(
-            user_id=self.user_id, project_name=self.direct_award_project_name
-        )
+        self.project_id = self.create_direct_award_project(user_id=self.user_id,
+                                                           project_name=self.direct_award_project_name)
 
     @pytest.mark.parametrize('drop_search_keys, expected_status',
                              (
@@ -605,22 +533,22 @@ class TestDirectAwardCreateProjectSearch(DirectAwardSetupAndTeardown):
 
         assert data['search']['active'] is False
 
-    def test_create_project_search_creates_audit_event(self):
+    def test_create_project_creates_audit_event(self):
         res = self.client.post('/direct-award/projects/{}/searches'.format(self.project_id),
                                data=json.dumps(self._create_project_search_data()),
                                content_type='application/json')
         assert res.status_code == 201
 
         with self.app.app_context():
-            self._assert_one_audit_event_created_for_only_project(AuditTypes.create_project_search.value)
+            assert len(AuditEvent.query.all()) == 1
+            assert AuditEvent.query.all()[0].type == AuditTypes.create_project_search.value
 
 
 class TestDirectAwardGetProjectSearch(DirectAwardSetupAndTeardown):
     def setup(self):
         super(TestDirectAwardGetProjectSearch, self).setup()
-        self.project_id, self.project_external_id = self.create_direct_award_project(
-            user_id=self.user_id, project_name=self.direct_award_project_name
-        )
+        self.project_id = self.create_direct_award_project(user_id=self.user_id,
+                                                           project_name=self.direct_award_project_name)
         self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id)
 
         res = self.client.get('/direct-award/projects/{}/searches/{}?user-id={}'.format(self.project_id,
@@ -648,9 +576,8 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
     def setup(self):
         super(TestDirectAwardListProjectServices, self).setup()
 
-        self.project_id, self.project_external_id = self.create_direct_award_project(
-            user_id=self.user_id, project_name=self.direct_award_project_name
-        )
+        self.project_id = self.create_direct_award_project(user_id=self.user_id,
+                                                           project_name=self.direct_award_project_name)
         self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id)
 
         with self.app.app_context():
@@ -706,13 +633,11 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
 
             assert set(data.keys()) == {'meta', 'links', 'services'}
             assert data['meta'] == {'total': 5}
-            assert data['links'] == {'self': 'http://127.0.0.1:5000/direct-award/projects/{}/services'.format(
-                self.project_external_id
-            )}
+            assert data['links'] == {'self': 'http://127.0.0.1:5000/direct-award/projects/1/services'}
             for service in data['services']:
                 assert service in [{
                     'id': service.service_id,
-                    'projectId': self.project_external_id,
+                    'projectId': self.project_id,
                     'supplier': {
                         'name': service.supplier.name,
                         'contact': {
@@ -741,11 +666,8 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
 
             data = json.loads(res.get_data(as_text=True))
             assert data['services'][0]['data'] == {'serviceName': archived_services[0].data['serviceName']}
-            assert data['links'] == {
-                'self': 'http://127.0.0.1:5000/direct-award/projects/{}/services?fields=serviceName'.format(
-                    self.project_external_id
-                )
-            }
+            assert data['links'] == \
+                {'self': 'http://127.0.0.1:5000/direct-award/projects/1/services?fields=serviceName'}
 
     def test_list_project_services_accepts_page_offset(self):
         project_services_count = 100
@@ -771,10 +693,10 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
         assert data['meta']['total'] == project_services_count
 
         next_url = 'http://127.0.0.1:5000/direct-award/projects/{}/services?user-id={}&page=2'.format(
-            self.project_external_id, self.user_id
+            self.project_id, self.user_id
         )
         last_url = 'http://127.0.0.1:5000/direct-award/projects/{}/services?user-id={}&page=20'.format(
-            self.project_external_id, self.user_id
+            self.project_id, self.user_id
         )
         assert data['links']['next'] == next_url
         assert data['links']['last'] == last_url
@@ -783,9 +705,8 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
 class TestDirectAwardLockProject(DirectAwardSetupAndTeardown, FixtureMixin):
     def setup(self):
         super(TestDirectAwardLockProject, self).setup()
-        self.project_id, self.project_external_id = self.create_direct_award_project(
-            user_id=self.user_id, project_name=self.direct_award_project_name
-        )
+        self.project_id = self.create_direct_award_project(user_id=self.user_id,
+                                                           project_name=self.direct_award_project_name)
         self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id)
 
         res = self.client.get('/direct-award/projects/{}/searches/{}?user-id={}'.format(self.project_id,
@@ -840,7 +761,7 @@ class TestDirectAwardLockProject(DirectAwardSetupAndTeardown, FixtureMixin):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert data['project']['id'] == self.project_external_id
+        assert data['project']['id'] == self.project_id
         assert data['project']['lockedAt'] is not None
 
         with self.app.app_context():
@@ -893,9 +814,8 @@ class TestDirectAwardLockProject(DirectAwardSetupAndTeardown, FixtureMixin):
 class TestDirectAwardRecordProjectDownload(DirectAwardSetupAndTeardown):
     def setup(self):
         super(TestDirectAwardRecordProjectDownload, self).setup()
-        self.project_id, self.project_external_id = self.create_direct_award_project(
-            user_id=self.user_id, project_name=self.direct_award_project_name
-        )
+        self.project_id = self.create_direct_award_project(user_id=self.user_id,
+                                                           project_name=self.direct_award_project_name)
         self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id)
 
     @pytest.mark.parametrize('drop_project_keys, expected_status',
@@ -955,4 +875,5 @@ class TestDirectAwardRecordProjectDownload(DirectAwardSetupAndTeardown):
         assert res.status_code == 200
 
         with self.app.app_context():
-            self._assert_one_audit_event_created_for_only_project(AuditTypes.downloaded_project.value)
+            assert len(AuditEvent.query.all()) == 1
+            assert AuditEvent.query.all()[0].type == AuditTypes.downloaded_project.value
