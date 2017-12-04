@@ -46,14 +46,19 @@ def upgrade():
     # to be given e.g. by support enquiries.
     audit_connection = op.get_bind()
     for audit_id, audit_data, project_id in audit_connection.execute(
-            text('SELECT id, data, object_id FROM audit_events WHERE type IN :audit_types'),
+            text("SELECT id, data, (data->>'projectId')::int FROM audit_events WHERE type IN :audit_types"),
             {'audit_types': DIRECT_AWARD_AUDIT_TYPES}
     ):
-        # If for some hellish reason we are re-running this after external IDs already exist, our audit events should
-        # keep the original external ID (ie not be overwritten).
-        new_audit_data = json.dumps({'projectExternalId': project_id_internal_to_external[project_id], **audit_data})
-        audit_connection.execute(text('UPDATE audit_events SET data = (:new_audit_data)::json WHERE id = :audit_id'),
-                                 {'new_audit_data': new_audit_data, 'audit_id': audit_id})
+        if project_id:
+            # If for some hellish reason we are re-running this after external IDs already exist, our audit events
+            # should keep the original external ID (ie not be overwritten).
+            new_audit_data = json.dumps(
+                    {'projectExternalId': project_id_internal_to_external[project_id], **audit_data}
+            )
+            audit_connection.execute(
+                    text('UPDATE audit_events SET data = (:new_audit_data)::json WHERE id = :audit_id'),
+                    {'new_audit_data': new_audit_data, 'audit_id': audit_id}
+            )
 
 
 def downgrade():
