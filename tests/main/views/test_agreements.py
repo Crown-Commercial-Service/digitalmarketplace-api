@@ -1114,7 +1114,7 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
             user = User(
                 id=1234,
                 name='Chris',
-                email_address='chris@example.com',
+                email_address='chris@crowncommercial.gov.uk',
                 password='password',
                 active=True,
                 created_at=datetime.now(),
@@ -1141,7 +1141,7 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
             supplier_framework = agreement.supplier_framework.serialize(with_users=True)
 
         assert supplier_framework['countersignedDetails']['approvedByUserName'] == 'Chris'
-        assert supplier_framework['countersignedDetails']['approvedByUserEmail'] == 'chris@example.com'
+        assert supplier_framework['countersignedDetails']['approvedByUserEmail'] == 'chris@crowncommercial.gov.uk'
 
     def test_can_unapprove_approved_agreement(self, supplier_framework):
         agreement_id = self.create_agreement(
