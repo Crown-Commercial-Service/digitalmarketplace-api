@@ -49,8 +49,7 @@ test-requirements:
 	         echo "Run 'make freeze-requirements' to update."; exit 1; } \
 	    || { echo "requirements.txt is up to date"; exit 0; }
 
-.PHONY: test-flake8
-test-flake8: virtualenv
+.PHONY test-flake8: virtualenv
 	${VIRTUALENV_ROOT}/bin/flake8 .
 
 .PHONY: test-migrations
