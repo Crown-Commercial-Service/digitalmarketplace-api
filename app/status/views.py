@@ -2,7 +2,6 @@ from flask import jsonify, current_app, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from . import status
-from . import utils
 from dmutils.status import get_flags
 
 
@@ -20,7 +19,6 @@ def status_no_db():
         return jsonify(
             status="ok",
             version=version,
-            db_version=utils.get_db_version(),
             flags=get_flags(current_app)
         )
 

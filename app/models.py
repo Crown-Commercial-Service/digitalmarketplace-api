@@ -1722,6 +1722,7 @@ class Brief(db.Model):
         dates['published_date'] = self.published_day
         dates['closing_date'] = self.closed_at.date() if self.closed_at else None
         dates['questions_close'] = self.questions_closed_at
+        dates['questions_closing_date'] = self.questions_closed_at.date() if self.questions_closed_at else None
         dates['answers_close'] = self.clarification_questions_published_by
         dates['application_open_weeks'] = self.requirements_length
         dates['closing_time'] = self.closed_at

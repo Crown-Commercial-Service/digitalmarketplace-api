@@ -445,13 +445,15 @@ class TestBriefs(BaseApplicationTest):
                         'closing_time': None,
                         'published_date': None,
                         'questions_close': None,
+                        'questions_closing_date': None,
                         'hypothetical': {
                             'answers_close': '2015-01-14T07:00:00+00:00',
                             'application_open_weeks': u'2 weeks',
                             'closing_date': '2015-01-15',
                             'closing_time': '2015-01-15T07:00:00+00:00',
                             'published_date': '2015-01-01',
-                            'questions_close': '2015-01-08T07:00:00+00:00'
+                            'questions_close': '2015-01-08T07:00:00+00:00',
+                            'questions_closing_date': '2015-01-08'
                         }
                     },
                     "author": "my name"
@@ -481,7 +483,8 @@ class TestBriefs(BaseApplicationTest):
                 'closing_date': '2015-01-15',
                 'closing_time': '2015-01-15T07:00:00+00:00',
                 'published_date': '2015-01-01',
-                'questions_close': '2015-01-08T07:00:00+00:00'
+                'questions_close': '2015-01-08T07:00:00+00:00',
+                'questions_closing_date': '2015-01-08'
             }
 
     def test_get_brief_returns_404_if_not_found(self):

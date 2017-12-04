@@ -3,6 +3,7 @@ from flask import jsonify, abort, current_app, request
 from sqlalchemy import desc
 from sqlalchemy.orm import joinedload, lazyload
 from sqlalchemy.exc import IntegrityError
+import pendulum
 
 from dmapiclient.audit import AuditTypes
 from .. import main
@@ -15,6 +16,7 @@ from ...utils import (
 )
 from ...service_utils import validate_and_return_lot, filter_services
 from ...brief_utils import validate_brief_data
+from ...datetime_utils import parse_time_of_day, combine_date_and_time
 
 
 @main.route('/briefs', methods=['POST'])
@@ -84,6 +86,47 @@ def update_brief(brief_id):
     brief.update_from_json(brief_json)
 
     validate_brief_data(brief, enforce_required=False, required_fields=page_questions)
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.update_brief,
+        user=updater_json['updated_by'],
+        data={
+            'briefId': brief.id,
+            'briefJson': brief_json,
+        },
+        db_object=brief,
+    )
+
+    db.session.add(brief)
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify(briefs=brief.serialize()), 200
+
+
+@main.route('/briefs/<int:brief_id>/admin', methods=['POST'])
+def update_brief_admin(brief_id):
+    updater_json = validate_and_return_updater_request()
+
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['briefs'])
+    brief_json = json_payload['briefs']
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
+    DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
+    t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
+
+    d = pendulum.parse(brief_json['clarification_questions_closed_at'])
+    combined = combine_date_and_time(d, t, DEADLINES_TZ_NAME)
+    brief.questions_closed_at = combined.in_timezone('UTC')
+
+    d = pendulum.parse(brief_json['applications_closed_at'])
+    combined = combine_date_and_time(d, t, DEADLINES_TZ_NAME)
+    brief.closed_at = combined.in_timezone('UTC')
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_brief,
