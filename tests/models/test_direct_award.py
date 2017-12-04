@@ -21,6 +21,7 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
             db.session.commit()
 
             assert project.id is not None
+            assert project.external_id is not None
             assert project.name == DIRECT_AWARD_PROJECT_NAME
             assert isinstance(project.created_at, datetime)
             assert project.locked_at is None
@@ -34,8 +35,10 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
             db.session.add(project)
             db.session.commit()
 
-            project_keys_set = set(project.serialize().keys())
+            serialized_project = project.serialize()
+            project_keys_set = set(serialized_project.keys())
             assert {'id', 'name', 'createdAt', 'lockedAt', 'active'} <= project_keys_set
+            assert serialized_project['id'] == project.external_id
 
             # We aren't serializing with_users=True, so we better not get them.
             assert 'users' not in project_keys_set
@@ -52,6 +55,7 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
             project_keys_set = set(serialized_project.keys())
             # Must send at least these keys.
             assert {'id', 'name', 'createdAt', 'lockedAt', 'active', 'users'} <= project_keys_set
+            assert serialized_project['id'] == project.external_id
 
             # Must send these keys exactly - don't want to unknowingly expose more info.
             for user in serialized_project['users']:
@@ -104,7 +108,7 @@ class TestProjectUsers(BaseApplicationTest, FixtureMixin):
 class TestSearches(BaseApplicationTest, FixtureMixin):
     def test_create_new_search(self):
         user_id = self.setup_dummy_user(role='buyer')
-        project_id = self.create_direct_award_project(user_id=user_id)
+        project_id, project_external_id = self.create_direct_award_project(user_id=user_id)
         search_id = self.create_direct_award_project_search(created_by=user_id, project_id=project_id)
 
         with self.app.app_context():
@@ -118,7 +122,7 @@ class TestSearches(BaseApplicationTest, FixtureMixin):
 
     def test_only_one_search_active_per_project_is_enforced(self):
         user_id = self.setup_dummy_user(role='buyer')
-        project_id = self.create_direct_award_project(user_id=user_id)
+        project_id, project_external_id = self.create_direct_award_project(user_id=user_id)
         self.create_direct_award_project_search(created_by=user_id, project_id=project_id)
 
         with pytest.raises(IntegrityError):
@@ -126,7 +130,7 @@ class TestSearches(BaseApplicationTest, FixtureMixin):
 
     def test_serialize_search_contains_required_keys(self):
         user_id = self.setup_dummy_user(role='buyer')
-        project_id = self.create_direct_award_project(user_id=user_id)
+        project_id, project_external_id = self.create_direct_award_project(user_id=user_id)
         search_id = self.create_direct_award_project_search(created_by=user_id, project_id=project_id)
 
         with self.app.app_context():
@@ -142,7 +146,7 @@ class TestSearches(BaseApplicationTest, FixtureMixin):
                              ))
     def test_required_fields_raise_if_missing(self, update_kwargs):
         user_id = self.setup_dummy_user(role='buyer')
-        project_id = self.create_direct_award_project(user_id=user_id)
+        project_id, project_external_id = self.create_direct_award_project(user_id=user_id)
 
         search_kwargs = {'created_by': user_id, 'project_id': project_id, 'search_url': DIRECT_AWARD_SEARCH_URL}
         search_kwargs.update(update_kwargs)
@@ -152,7 +156,7 @@ class TestSearches(BaseApplicationTest, FixtureMixin):
 
     def test_search_in_locked_project_cannot_be_edited(self):
         user_id = self.setup_dummy_user(role='buyer')
-        project_id = self.create_direct_award_project(user_id=user_id)
+        project_id, project_external_id = self.create_direct_award_project(user_id=user_id)
         search_id = self.create_direct_award_project_search(created_by=user_id, project_id=project_id)
 
         with self.app.app_context():

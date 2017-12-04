@@ -1,10 +1,18 @@
 from flask import url_for as base_url_for
 from flask import abort, current_app, request
 from six import iteritems, string_types
+import random
 from werkzeug.exceptions import BadRequest
 
 from .validation import validate_updater_json_or_400
 from . import search_api_client, dmapiclient
+
+
+def random_positive_external_id() -> int:
+    """
+    Generate a random integer ID that's 15-digits long.
+    """
+    return random.SystemRandom().randint(10 ** 14, (10 ** 15) - 1)
 
 
 def validate_and_return_updater_request():
