@@ -64,11 +64,13 @@ def get_user_by_id(user_id):
 
 @main.route('/teammembers/<string:domain>', methods=['GET'])
 def get_teammembers(domain):
-    userlist = User.query.options(lazyload('application')).options(lazyload('supplier')).filter_by(active='true')
-    teammembers = [{attr: getattr(_, attr) for attr in ["email_address", "id", "name"]}
-                   for _ in userlist if all(
-        [_.viewrow().email_domain == domain, _.active, '+' not in _.email_address]
-    )]
+    query = db.session.execute("""
+        select email_address, id, name from "vuser"
+        where email_domain = :domain and active = true and not email_address ~ '\+'
+    """, {'domain': domain})
+
+    teammembers = [{'email_address': email_address, 'id': id, 'name': name}
+                   for (email_address, id, name) in list(query)]
 
     query = db.session.execute("""
         select name from govdomains
