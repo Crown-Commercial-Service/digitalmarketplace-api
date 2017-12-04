@@ -228,3 +228,18 @@ def parse_date(dt):
         return pendulum.parse(dt).date()
     except ValueError, e:
         abort(message=str(e))
+
+
+class ServiceException(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+
+class Service(object):
+    __model__ = None
+
+    def all(self):
+        return self.__model__.query.all()
+
+    def get(self, id):
+        return self.__model__.query.get(id)

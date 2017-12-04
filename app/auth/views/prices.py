@@ -1,10 +1,11 @@
 import pendulum
-from flask import current_app, request
-from flask_login import login_required
+from flask import current_app, request, jsonify
+from flask_login import login_required, current_user
 from app.auth import auth
-from app.auth.prices import get_prices, update_prices
-from app.auth.helpers import role_required, is_current_supplier, parse_date
+from app.auth.services import prices
+from app.auth.helpers import role_required, is_current_supplier, parse_date, abort
 from app.swagger import swag
+from app.emails.prices import send_price_change_email
 
 
 @auth.route('/prices/suppliers/<int:code>/services/<service_type_id>/categories/<category_id>', methods=['GET'],
@@ -76,7 +77,9 @@ def filter(code, service_type_id, category_id):
         date = pendulum.today(current_app.config['DEADLINES_TZ_NAME']).date()
     else:
         date = parse_date(date)
-    return get_prices(code, service_type_id, category_id, date)
+
+    supplier_prices = prices.get_prices(code, service_type_id, category_id, date)
+    return jsonify(prices=supplier_prices), 200
 
 
 @auth.route('/prices', methods=['POST'], endpoint='update_prices')
@@ -129,4 +132,46 @@ def update():
               items:
                 $ref: '#/definitions/SupplierPrice'
     """
-    return update_prices()
+    json_data = request.get_json()
+    updated_prices = json_data.get('prices')
+    results = []
+
+    for p in updated_prices:
+        existing_price = prices.get(p['id'])
+
+        if existing_price is None:
+            abort('Invalid price id: {}'.format(p['id']))
+
+        if existing_price.supplier_code != current_user.supplier_code:
+            abort('Supplier {} unauthorized to update price {}'.format(current_user.supplier_code, existing_price.id))
+
+        start_date = p.get('startDate')
+        end_date = p.get('endDate', '')
+        price = p.get('price')
+        date_from = parse_date(start_date)
+
+        if end_date:
+            date_to = parse_date(end_date)
+        else:
+            date_to = pendulum.Date.create(2050, 1, 1)
+
+        if not date_from.is_future():
+            abort('startDate must be in the future: {}'.format(date_from))
+
+        if date_to < date_from:
+            abort('endDate must be after startDate: {}'.format(date_to))
+
+        if price > existing_price.service_type_price_ceiling.price:
+            abort('price must be less than capPrice: {}'.format(price))
+
+        existing_price.date_to = date_from.subtract(days=1)
+        new_price = prices.add_price(existing_price, date_from, date_to, price)
+        trailing_price = prices.add_price(new_price, date_to.add(days=1),
+                                          pendulum.Date.create(2050, 1, 1), existing_price.price)\
+            if end_date else None
+
+        results.append([x for x in [existing_price, new_price, trailing_price] if x is not None])
+
+    send_price_change_email(results)
+
+    return jsonify(prices=results)

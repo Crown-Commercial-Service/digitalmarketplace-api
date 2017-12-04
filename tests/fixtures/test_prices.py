@@ -19,9 +19,9 @@ def test_filter_prices(client, supplier_user, service_type_prices):
 
 def test_update_prices(client, supplier_user, service_type_prices):
     pendulum.set_formatter('alternative')
-    id = service_type_prices[0].id
-    date_from = service_type_prices[0].date_from
-    existing_price = '{:1,.2f}'.format(service_type_prices[0].price)
+    id = service_type_prices[1].id
+    date_from = service_type_prices[1].date_from
+    existing_price = '{:1,.2f}'.format(service_type_prices[1].price)
     start_date = pendulum.Date.tomorrow()
     end_date = pendulum.Date.tomorrow().add(months=1)
     new_price = 246.96
