@@ -995,14 +995,14 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         assert self.service_count() == 1
         assert self.draft_service_count() == 0
 
-    @mock.patch('app.models.main.random_positive_external_id')
-    def test_service_id_collisions_should_be_handled(self, random_positive_external_id):
+    @mock.patch('app.models.main.generate_new_service_id')
+    def test_service_id_collisions_should_be_handled(self, generate_new_service_id):
         # Return the same ID a few times (cause collisions) and then return a different one.
-        random_positive_external_id.side_effect = (
-            '123456789012345',
-            '123456789012345',
-            '123456789012345',
-            '222222222222222',
+        generate_new_service_id.side_effect = (
+            '1234567890123457',
+            '1234567890123457',
+            '1234567890123457',
+            '2222222222222222',
         )
 
         res = self.publish_new_draft_service()
@@ -1014,8 +1014,8 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         assert self.service_count() == 3
         res = self.client.get('/services?framework=g-cloud-7')
         services = json.loads(res.get_data())['services']
-        assert services[0]['id'] == '123456789012345'
-        assert services[1]['id'] == '222222222222222'
+        assert services[0]['id'] == '1234567890123457'
+        assert services[1]['id'] == '2222222222222222'
         assert self.draft_service_count() == 2
 
     def test_get_draft_returns_last_audit_event(self):
