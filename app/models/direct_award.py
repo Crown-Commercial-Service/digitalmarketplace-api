@@ -5,8 +5,10 @@ from sqlalchemy.orm import validates
 from flask import current_app
 
 from app import db
+from app.utils import random_positive_external_id
 from app.url_utils import force_relative_url
 from app.models import User, ValidationError, ArchivedService
+
 from dmutils.formats import DATETIME_FORMAT
 
 
@@ -14,6 +16,7 @@ class DirectAwardProject(db.Model):
     __tablename__ = 'direct_award_projects'
 
     id = db.Column(db.Integer, primary_key=True)
+    external_id = db.Column(db.BigInteger, default=random_positive_external_id, nullable=False, index=True, unique=True)
     name = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     locked_at = db.Column(db.DateTime, nullable=True)  # When the project's active search/es are final and cannot change

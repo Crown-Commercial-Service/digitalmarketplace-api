@@ -1,6 +1,5 @@
 # TODO split this file into per-functional-area modules
 
-import random
 from datetime import datetime
 
 import re
@@ -31,7 +30,14 @@ from dmutils.dates import get_publishing_dates
 from dmutils.formats import DATETIME_FORMAT, DATE_FORMAT
 from .. import db
 from ..models.buyer_domains import BuyerEmailDomain
-from ..utils import link, url_for, strip_whitespace_from_data, drop_foreign_fields, purge_nulls_from_data
+from app.utils import (
+    drop_foreign_fields,
+    link,
+    purge_nulls_from_data,
+    random_positive_external_id,
+    strip_whitespace_from_data,
+    url_for,
+)
 from ..validation import (
     is_valid_service_id, get_validation_errors, buyer_email_address_has_approved_domain,
     admin_email_address_has_approved_domain
@@ -842,7 +848,7 @@ class ServiceTableMixin(object):
     id = db.Column(db.Integer, primary_key=True)
 
     # used as externally-visible "pk" for Services and allows services identity to be tracked
-    # across a service's lifetime. assigned randomly (see generate_new_service_id) at DraftService ->
+    # across a service's lifetime. assigned randomly (see random_positive_external_id) at DraftService ->
     # Service publishing time.
     service_id = db.Column(db.String, index=True, unique=True, nullable=False)
 
@@ -966,7 +972,7 @@ class Service(db.Model, ServiceTableMixin):
         return Service(
             framework=draft.framework,
             lot=draft.lot,
-            service_id=generate_new_service_id(draft.framework.slug),
+            service_id=str(random_positive_external_id()),
             supplier=draft.supplier,
             data=draft.data,
             status=status
@@ -1830,8 +1836,3 @@ def filter_null_value_fields(obj):
     return dict(
         filter(lambda x: x[1] is not None, obj.items())
     )
-
-
-def generate_new_service_id(framework_slug):
-    # FIXME framework_slug parameter ignored??
-    return str(random.randint(10 ** 14, 10 ** 15 - 1))
