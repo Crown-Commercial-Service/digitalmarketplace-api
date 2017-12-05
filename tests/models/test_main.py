@@ -57,12 +57,13 @@ class TestUser(BaseApplicationTest, FixtureMixin):
 
         assert str(exc.value) == 'invalid_buyer_domain'
 
-    def test_admin_user_requires_whitelisted_email_domain(self):
+    @pytest.mark.parametrize('role', User.ADMIN_ROLES)
+    def test_admin_user_requires_whitelisted_email_domain(self, role):
         with self.app.app_context(), pytest.raises(ValidationError) as exc:
             valid_admin_user = User(
                 email_address='email@digital.cabinet-office.gov.uk',
                 name='name',
-                role='admin',
+                role=role,
                 password='password',
                 active=True,
             )
@@ -85,7 +86,8 @@ class TestUser(BaseApplicationTest, FixtureMixin):
 
         assert str(exc.value) == 'invalid_buyer_domain'
 
-    def test_user_with_invalid_email_domain_cannot_be_changed_to_admin_role(self):
+    @pytest.mark.parametrize('role', User.ADMIN_ROLES)
+    def test_user_with_invalid_email_domain_cannot_be_changed_to_admin_role(self, role):
         with self.app.app_context(), pytest.raises(ValidationError) as exc:
             self.setup_default_buyer_domain()
             valid_buyer_user = User(
@@ -96,7 +98,7 @@ class TestUser(BaseApplicationTest, FixtureMixin):
                 active=True,
             )
             # Changing role to admin raises an error
-            valid_buyer_user.role = 'admin'
+            valid_buyer_user.role = role
         assert str(exc.value) == 'invalid_admin_domain'
 
 

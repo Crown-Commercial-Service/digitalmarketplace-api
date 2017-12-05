@@ -724,14 +724,17 @@ SupplierFramework.current_framework_agreement = db.relationship(
 class User(db.Model):
     __tablename__ = 'users'
 
-    ROLES = [
-        'buyer',
-        'supplier',
-        'admin',               # a general admin user, with permission to do most (but not all) admin actions.
+    ADMIN_ROLES = [
+        'admin',  # a general admin user, with permission to do most (but not all) admin actions.
         'admin-ccs-category',  # generally restricted to read-only access to admin views.
         'admin-ccs-sourcing',  # can perform admin actions involving supplier acceptance.
-        'admin-manager',       # can add, edit and disable other types of admin user
+        'admin-manager',  # can add, edit and disable other types of admin user
         'admin-framework-manager',  # can perform admin actions involving framework applications
+    ]
+
+    ROLES = ADMIN_ROLES + [
+        'buyer',
+        'supplier',
     ]
 
     id = db.Column(db.Integer, primary_key=True)
@@ -776,7 +779,7 @@ class User(db.Model):
         if value:
             if self.role == 'buyer' and not buyer_email_address_has_approved_domain(existing_buyer_domains, value):
                 raise ValidationError("invalid_buyer_domain")
-            if self.role == 'admin' and not admin_email_address_has_approved_domain(value):
+            if self.role in self.ADMIN_ROLES and not admin_email_address_has_approved_domain(value):
                 raise ValidationError("invalid_admin_domain")
         return value
 
@@ -787,7 +790,7 @@ class User(db.Model):
             if value == 'buyer' and \
                     not buyer_email_address_has_approved_domain(existing_buyer_domains, self.email_address):
                 raise ValidationError("invalid_buyer_domain")
-            if value == 'admin' and \
+            if value in self.ADMIN_ROLES and \
                     not admin_email_address_has_approved_domain(self.email_address):
                 raise ValidationError("invalid_admin_domain")
         return value
