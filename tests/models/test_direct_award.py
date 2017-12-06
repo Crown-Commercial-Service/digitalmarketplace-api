@@ -38,7 +38,7 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
             serialized_project = project.serialize()
             project_keys_set = set(serialized_project.keys())
             assert {'id', 'name', 'createdAt', 'lockedAt', 'active'} <= project_keys_set
-            assert serialized_project['id'] == project.id
+            assert serialized_project['id'] == project.external_id
 
             # We aren't serializing with_users=True, so we better not get them.
             assert 'users' not in project_keys_set
@@ -55,7 +55,7 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
             project_keys_set = set(serialized_project.keys())
             # Must send at least these keys.
             assert {'id', 'name', 'createdAt', 'lockedAt', 'active', 'users'} <= project_keys_set
-            assert serialized_project['id'] == project.id
+            assert serialized_project['id'] == project.external_id
 
             # Must send these keys exactly - don't want to unknowingly expose more info.
             for user in serialized_project['users']:
