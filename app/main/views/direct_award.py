@@ -151,7 +151,7 @@ def list_project_searches(project_external_id):
     )
 
     pagination_params = request.args.to_dict()
-    pagination_params['project_external_id'] = project.id
+    pagination_params['project_external_id'] = project.external_id
 
     return jsonify(
         searches=[search.serialize() for search in searches.items],
@@ -257,7 +257,7 @@ def list_project_services(project_external_id):
 
     project_archived_services = list(map(lambda service: {
         'id': service.service_id,
-        'projectId': project.id,
+        'projectId': project.external_id,
         'supplier': {
             'name': service.supplier.name,
             'contact': {
@@ -270,7 +270,7 @@ def list_project_services(project_external_id):
     }, paginated_archived_services.items))
 
     pagination_params = request.args.to_dict()
-    pagination_params['project_external_id'] = project.id
+    pagination_params['project_external_id'] = project.external_id
 
     return jsonify(
         services=project_archived_services,
