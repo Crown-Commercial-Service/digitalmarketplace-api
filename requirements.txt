@@ -11,7 +11,7 @@ SQLAlchemy==1.1.4
 SQLAlchemy-Utils==0.30.5
 
 git+https://github.com/alphagov/digitalmarketplace-utils.git@29.0.0#egg=digitalmarketplace-utils==29.0.0
-git+https://github.com/alphagov/digitalmarketplace-apiclient.git@12.2.0#egg=digitalmarketplace-apiclient==12.2.0
+git+https://github.com/alphagov/digitalmarketplace-apiclient.git@13.1.0#egg=digitalmarketplace-apiclient==13.1.0
 
 # For schema validation
 jsonschema==2.5.1
@@ -25,7 +25,9 @@ backoff==1.0.7
 bcrypt==3.1.4
 boto3==1.4.4
 botocore==1.5.95
+certifi==2017.11.5
 cffi==1.11.2
+chardet==3.0.4
 contextlib2==0.4.0
 cryptography==1.9
 docopt==0.4.0
@@ -53,10 +55,11 @@ python-editor==1.0.3
 python-json-logger==0.1.4
 pytz==2015.4
 PyYAML==3.11
-requests==2.7.0
-s3transfer==0.1.11
+requests==2.18.4
+s3transfer==0.1.12
 six==1.11.0
 unicodecsv==0.14.1
+urllib3==1.22
 Werkzeug==0.12.2
 workdays==1.4
 WTForms==2.1
