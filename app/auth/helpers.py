@@ -113,12 +113,23 @@ def user_info(user):
     except AttributeError:
         supplier_code = None
 
+    try:
+        framework = current_user.frameworks[0].framework.slug if current_user.frameworks else 'digital-marketplace'
+    except Exception:
+        framework = None
+
+    try:
+        is_authenticated = current_user.is_authenticated
+    except Exception:
+        is_authenticated = False
+
     return {
-        "isAuthenticated": current_user.is_authenticated,
+        "isAuthenticated": is_authenticated,
         "userType": user_type,
         "supplierCode": supplier_code,
         "emailAddress": email_address,
-        "csrfToken": get_csrf_token()
+        "csrfToken": get_csrf_token(),
+        "framework": framework
     }
 
 

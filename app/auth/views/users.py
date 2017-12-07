@@ -326,6 +326,8 @@ def add():
               type: string
             email_address:
               type: string
+            password:
+              type: string
             user_type:
               type: string
             framework:

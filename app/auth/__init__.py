@@ -22,7 +22,8 @@ def load_user(userid):
 
     if user is not None:
         user = LoginUser(user.id, user.email_address, user.supplier_code, None, user.locked,
-                         user.active, user.name, user.role, user.terms_accepted_at, user.application_id)
+                         user.active, user.name, user.role, user.terms_accepted_at, user.application_id,
+                         user.frameworks)
     return user
 
 
@@ -52,7 +53,8 @@ def load_user_from_request(request):
     if user is not None:
         if encryption.authenticate_user(password, user):
             user = LoginUser(user.id, user.email_address, user.supplier_code, None, user.locked,
-                             user.active, user.name, user.role, user.terms_accepted_at, user.application_id)
+                             user.active, user.name, user.role, user.terms_accepted_at, user.application_id,
+                             user.frameworks)
             return user
 
 from app.auth.views import briefs, users, feedback, suppliers, services, prices, regions, tokens  # noqa

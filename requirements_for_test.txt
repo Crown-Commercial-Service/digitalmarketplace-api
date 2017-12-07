@@ -8,6 +8,7 @@ pep8
 flake8
 requests-mock
 mock
+flasgger
 freezegun
 nose
 coverage

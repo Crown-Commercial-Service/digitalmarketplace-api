@@ -1,5 +1,5 @@
 from app import db, encryption
-from app.models import Application, AuditEvent, AuditTypes, User
+from app.models import Application, AuditEvent, AuditTypes, User, Framework, UserFramework
 from datetime import datetime
 from flask import current_app, request, jsonify
 from sqlalchemy.exc import DataError, InvalidRequestError, IntegrityError
@@ -16,6 +16,8 @@ def add_user(data):
     password = data.get('password')
     role = data.get('user_type')
     email_address = data.get('email_address', None)
+    framework_slug = data.get('framework', 'digital-marketplace')
+
     if email_address is None:
         email_address = data.get('emailAddress', None)
 
@@ -66,6 +68,9 @@ def add_user(data):
 
     db.session.add(user)
     db.session.flush()
+
+    framework = Framework.query.filter(Framework.slug == framework_slug).first()
+    db.session.add(UserFramework(user_id=user.id, framework_id=framework.id))
 
     audit = AuditEvent(
         audit_type=AuditTypes.create_user,

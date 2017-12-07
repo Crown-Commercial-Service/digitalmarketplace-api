@@ -6,7 +6,7 @@ import pendulum
 from app import create_app
 from app.models import db, utcnow, Contact, Supplier, SupplierDomain, User, Brief, ServiceTypePriceCeiling,\
     Framework, Lot, Domain, Assessment, Application, Region, ServiceType, ServiceTypePrice, ServiceSubType,\
-    SupplierFramework
+    SupplierFramework, UserFramework
 from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, WSGIApplicationWithEnvironment
 
 from sqlbag import temporary_database
@@ -120,6 +120,8 @@ def users(app, request):
                 password_changed_at=utcnow()
             ))
             db.session.flush()
+            framework = Framework.query.filter(Framework.slug == "digital-marketplace").first()
+            db.session.add(UserFramework(user_id=i, framework_id=framework.id))
 
         db.session.add(User(
             id=7,
@@ -131,6 +133,7 @@ def users(app, request):
             password_changed_at=utcnow()
         ))
         db.session.flush()
+        db.session.add(UserFramework(user_id=7, framework_id=framework.id))
 
         db.session.commit()
         yield User.query.all()
@@ -149,6 +152,10 @@ def supplier_user(app, request, suppliers):
             supplier_code=suppliers[0].code,
             password_changed_at=utcnow()
         ))
+        db.session.commit()
+        db.session.flush()
+        framework = Framework.query.filter(Framework.slug == "digital-marketplace").first()
+        db.session.add(UserFramework(user_id=1, framework_id=framework.id))
         db.session.commit()
         yield User.query.first()
 

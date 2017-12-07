@@ -1173,6 +1173,7 @@ class User(db.Model):
                                index=True, unique=False, nullable=True)
 
     application = db.relationship('Application', lazy='joined', innerjoin=False)
+    frameworks = relationship("UserFramework")
 
     @validates('email_address')
     def validate_email_address(self, key, value):
@@ -2784,6 +2785,20 @@ class ServiceTypePriceCeiling(db.Model):
 
     def update_from_json_before(self, data):
         return update_price_json(self, data)
+
+
+class UserFramework(db.Model):
+    __tablename__ = 'user_framework'
+
+    user_id = db.Column(db.BigInteger,
+                        db.ForeignKey('user.id'),
+                        primary_key=True)
+    framework_id = db.Column(db.Integer,
+                             db.ForeignKey('framework.id'),
+                             primary_key=True)
+
+    user = db.relationship(User, lazy='joined', innerjoin=True)
+    framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
 
 # Index for .last_for_object queries. Without a composite index the

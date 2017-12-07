@@ -47,7 +47,8 @@ def test_create_user(client, app, applications):
                 'name': user_name,
                 'email_address': user_email,
                 'password': 'pa$$werd1',
-                'user_type': user_role
+                'user_type': user_role,
+                'framework': 'digital-marketplace'
             }),
             content_type='application/json')
         assert response.status_code == 200
@@ -147,7 +148,8 @@ def test_applicant_requires_app_id_property(client, applications):
             'email_address': user_email,
             'password': 'pa$$werd1',
             'user_type': user_role,
-            'application_id': application_id
+            'application_id': application_id,
+            'framework': 'digital-marketplace'
         }),
         content_type='application/json')
 
