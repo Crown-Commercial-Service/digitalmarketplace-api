@@ -115,12 +115,12 @@ def user_info(user):
 
     try:
         framework = current_user.frameworks[0].framework.slug if current_user.frameworks else 'digital-marketplace'
-    except Exception:
+    except AttributeError:
         framework = None
 
     try:
         is_authenticated = current_user.is_authenticated
-    except Exception:
+    except AttributeError:
         is_authenticated = False
 
     return {
