@@ -1,12 +1,7 @@
-create table "public"."user_framework" (
-    "user_id" bigint not null,
-    "framework_id" integer not null
-);
+alter table "public"."brief" add column "closed_at" timestamp without time zone;
 
-CREATE UNIQUE INDEX user_framework_pkey ON user_framework USING btree (user_id, framework_id);
+alter table "public"."brief" add column "questions_closed_at" timestamp without time zone;
 
-alter table "public"."user_framework" add constraint "user_framework_pkey" PRIMARY KEY using index "user_framework_pkey";
+CREATE INDEX ix_brief_closed_at ON brief USING btree (closed_at);
 
-alter table "public"."user_framework" add constraint "user_framework_framework_id_fkey" FOREIGN KEY (framework_id) REFERENCES framework(id);
-
-alter table "public"."user_framework" add constraint "user_framework_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id);
+CREATE INDEX ix_brief_questions_closed_at ON brief USING btree (questions_closed_at);
