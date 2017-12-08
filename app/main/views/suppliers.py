@@ -2,6 +2,7 @@ from datetime import datetime
 
 from flask import abort, current_app, jsonify, request, url_for
 from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.orm import subqueryload
 from sqlalchemy.sql.expression import true
 from sqlalchemy.sql import cast
 from sqlalchemy import Boolean, select, column, or_
@@ -442,6 +443,27 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
         ob = [desc(func.ts_rank_cd(Supplier.text_vector, tsquery))] + ob
 
         q = q.filter(Supplier.text_vector.op('@@')(tsquery))
+
+    # Make sure all the related tables we'll need info from are loaded at once,
+    # otherwise there will be 10 queries per row returned
+    q = q\
+        .options(subqueryload(Supplier.addresses))\
+        .options(subqueryload(Supplier.domains))\
+        .options(subqueryload(Supplier.extra_links))\
+        .options(subqueryload(Supplier.contacts))\
+        .options(subqueryload(Supplier.case_studies))\
+        .options(subqueryload(Supplier.products))\
+        .options(subqueryload(Supplier.references))\
+        .options(subqueryload(Supplier.prices))\
+        .options(subqueryload(Supplier.signed_agreements))\
+        .options(subqueryload(Supplier.frameworks))
+
+    # Ensure that ordering is always deterministic, else
+    # we may have issues with subqueryload, see:
+    # http://docs.sqlalchemy.org/en/latest/orm/loading_relationships.html#the-importance-of-ordering
+    # We can remove this by upgrading to sqlalchemy 1.2 and use: selectinload
+    ob = ob + [asc(Supplier.id)]
+
     q = q.order_by(*ob)
 
     raw_results = list(q)
