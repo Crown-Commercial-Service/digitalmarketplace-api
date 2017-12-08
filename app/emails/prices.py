@@ -26,7 +26,7 @@ def send_price_change_email(prices):
         TEMPLATE_FILENAME,
         supplier_name=supplier.name,
         price_changes=prices_markdown,
-        update_timestamp=pendulum.now().to_datetime_string(),
+        update_timestamp=pendulum.now(current_app.config['DEADLINES_TZ_NAME']).to_datetime_string(),
         user_name=current_user.name,
         login_url='{}/orams/login'.format(FRONTEND_ADDRESS)
     )
@@ -34,7 +34,7 @@ def send_price_change_email(prices):
     subject = "ORAMS Price Change"
 
     send_or_handle_error(
-        current_user.email_address,
+        [current_user.email_address, current_app.config['ORAMS_BUYER_INVITE_REQUEST_ADMIN_EMAIL']],
         email_body,
         subject,
         current_app.config['DM_GENERIC_NOREPLY_EMAIL'],

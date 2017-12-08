@@ -202,6 +202,7 @@ class Live(Config):
     ADMIN_ADDRESS = 'https://dm-admin.apps.b.cld.gov.au'
 
     SEND_EMAILS = True
+    ORAMS_BUYER_INVITE_REQUEST_ADMIN_EMAIL = 'orams@ato.gov.au'
 
 
 class Preview(Live):
