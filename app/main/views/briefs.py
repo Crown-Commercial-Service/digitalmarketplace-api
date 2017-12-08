@@ -1,9 +1,11 @@
+from dmutils.data_tools import ValidationError
 from dmutils.filters import timesince
 from flask import jsonify, abort, current_app, request
 from sqlalchemy import desc
 from sqlalchemy.orm import joinedload, lazyload
 from sqlalchemy.exc import IntegrityError
 import pendulum
+from pendulum.parsing.exceptions import ParserError
 
 from dmapiclient.audit import AuditTypes
 from .. import main
@@ -104,6 +106,70 @@ def update_brief(brief_id):
     return jsonify(briefs=brief.serialize()), 200
 
 
+@main.route('/briefs/<int:brief_id>/users/<string:user>', methods=['PUT'])
+def update_brief_add_user(brief_id, user):
+    updater_json = validate_and_return_updater_request()
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    if user.isdigit():
+        u = [db.session.query(User).get(int(user))]
+    else:
+        u = User.query.filter(User.email_address == user).all()
+    if len(u) < 1:
+        raise ValidationError("No user found: " + user)
+    else:
+        brief.users.append(u[0])
+    audit = AuditEvent(
+        audit_type=AuditTypes.update_brief,
+        user=updater_json['updated_by'],
+        data={
+            'briefId': brief.id,
+            'briefJson': {'add_user': user},
+        },
+        db_object=brief,
+    )
+
+    db.session.add(brief)
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify(briefs=brief.serialize(with_users=True)), 200
+
+
+@main.route('/briefs/<int:brief_id>/users/<string:user>', methods=['DELETE'])
+def update_brief_remove_user(brief_id, user):
+    updater_json = validate_and_return_updater_request()
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    if user.isdigit():
+        u = [db.session.query(User).get(int(user))]
+    else:
+        u = User.query.filter(User.email_address == user).all()
+    if len(u) < 1:
+        raise ValidationError("No user found: " + user)
+    else:
+        brief.users.remove(u[0])
+        audit = AuditEvent(
+            audit_type=AuditTypes.update_brief,
+            user=updater_json['updated_by'],
+            data={
+                'briefId': brief.id,
+                'briefJson': {'remove_user': user},
+            },
+            db_object=brief,
+        )
+
+    db.session.add(brief)
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify(briefs=brief.serialize(with_users=True)), 200
+
+
 @main.route('/briefs/<int:brief_id>/admin', methods=['POST'])
 def update_brief_admin(brief_id):
     updater_json = validate_and_return_updater_request()
@@ -120,13 +186,21 @@ def update_brief_admin(brief_id):
     DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
     t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
 
-    d = pendulum.parse(brief_json['clarification_questions_closed_at'])
-    combined = combine_date_and_time(d, t, DEADLINES_TZ_NAME)
-    brief.questions_closed_at = combined.in_timezone('UTC')
+    if brief_json.get('clarification_questions_closed_at'):
+        try:
+            d = pendulum.parse(brief_json['clarification_questions_closed_at'])
+            combined = combine_date_and_time(d, t, DEADLINES_TZ_NAME)
+            brief.questions_closed_at = combined.in_timezone('UTC')
+        except ParserError, e:
+            raise ValidationError(e.message)
 
-    d = pendulum.parse(brief_json['applications_closed_at'])
-    combined = combine_date_and_time(d, t, DEADLINES_TZ_NAME)
-    brief.closed_at = combined.in_timezone('UTC')
+    if brief_json.get('applications_closed_at'):
+        try:
+            d = pendulum.parse(brief_json['applications_closed_at'])
+            combined = combine_date_and_time(d, t, DEADLINES_TZ_NAME)
+            brief.closed_at = combined.in_timezone('UTC')
+        except ParserError, e:
+            raise ValidationError(e.message)
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_brief,
@@ -142,7 +216,7 @@ def update_brief_admin(brief_id):
     db.session.add(audit)
     db.session.commit()
 
-    return jsonify(briefs=brief.serialize()), 200
+    return jsonify(briefs=brief.serialize(with_users=True)), 200
 
 
 @main.route('/briefs/<int:brief_id>', methods=['GET'])
