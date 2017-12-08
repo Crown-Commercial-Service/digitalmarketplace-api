@@ -744,7 +744,6 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert res.status_code == 200
         assert len(data['briefResponses']) == 8
         assert all(br['supplierId'] == 1 for br in data['briefResponses'])
-        assert 'self' in data['links']
 
     def test_list_brief_responses_for_brief_id(self):
         with self.app.app_context():
@@ -767,7 +766,6 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert res.status_code == 200
         assert len(data['briefResponses']) == 8
         assert all(br['briefId'] == another_brief_id for br in data['briefResponses'])
-        assert 'self' in data['links']
 
     def test_list_brief_responses_by_one_framework_slug(self, live_dos2_framework):
         with self.app.app_context():

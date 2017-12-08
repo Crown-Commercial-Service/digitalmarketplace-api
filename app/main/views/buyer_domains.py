@@ -1,15 +1,21 @@
 from dmapiclient.audit import AuditTypes
 from sqlalchemy.exc import IntegrityError
-from flask import jsonify, abort, request
+from flask import abort, current_app, request
 
 from .. import main
 from ... import db
 from ...models import BuyerEmailDomain, AuditEvent
 from ...validation import validate_buyer_email_domain_json_or_400, is_approved_buyer_domain
 from ...utils import (
-    get_json_from_request, json_has_required_keys, validate_and_return_updater_request,
-    get_valid_page_or_1, pagination_links
+    get_json_from_request,
+    get_valid_page_or_1,
+    json_has_required_keys,
+    paginated_result_response,
+    single_result_response,
+    validate_and_return_updater_request,
 )
+
+RESOURCE_NAME = "buyerEmailDomains"
 
 
 @main.route('/buyer-email-domains', methods=['POST'])
@@ -46,26 +52,19 @@ def create_buyer_email_domain():
     db.session.add(audit)
     db.session.commit()
 
-    return jsonify(buyerEmailDomains=buyer_email_domain.serialize()), 201
+    return single_result_response(RESOURCE_NAME, buyer_email_domain), 201
 
 
 @main.route('/buyer-email-domains', methods=['GET'])
 def list_buyer_email_domains():
     page = get_valid_page_or_1()
 
-    buyer_email_domains = BuyerEmailDomain.query.order_by(BuyerEmailDomain.domain_name).paginate(
+    buyer_email_domains = BuyerEmailDomain.query.order_by(BuyerEmailDomain.domain_name)
+    return paginated_result_response(
+        result_name=RESOURCE_NAME,
+        results_query=buyer_email_domains,
         page=page,
-        per_page=100,
-    )
-
-    return jsonify(
-        buyerEmailDomains=[domain.serialize() for domain in buyer_email_domains.items],
-        meta={
-            "total": buyer_email_domains.total,
-        },
-        links=pagination_links(
-            buyer_email_domains,
-            '.list_buyer_email_domains',
-            request.args
-        ),
-    )
+        per_page=current_app.config['DM_API_BUYER_DOMAINS_PAGE_SIZE'],
+        endpoint='.list_buyer_email_domains',
+        request_args=request.args
+    ), 200

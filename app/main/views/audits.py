@@ -1,18 +1,27 @@
-from flask import jsonify, abort, request, current_app
 from datetime import datetime, timedelta
-from ...models import AuditEvent
+
+from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import true, false
 from sqlalchemy.orm import class_mapper
-from ...utils import pagination_links, get_valid_page_or_1
-from .. import main
-from ... import db, models
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
 from dmutils.formats import DATE_FORMAT
-from ...validation import is_valid_date, is_valid_acknowledged_state
-from ...utils import get_json_from_request, json_has_required_keys, validate_and_return_updater_request
 
+from .. import main
+from ... import db, models
+from ...models import AuditEvent
+from ...validation import is_valid_date, is_valid_acknowledged_state
+from ...utils import (
+    get_json_from_request,
+    get_valid_page_or_1,
+    json_has_required_keys,
+    paginated_result_response,
+    single_result_response,
+    validate_and_return_updater_request,
+)
+
+RESOURCE_NAME = "auditEvents"
 
 AUDIT_OBJECT_TYPES = {
     "suppliers": models.Supplier,
@@ -148,19 +157,14 @@ def list_audits():
     sort_order = db.desc if convert_to_boolean(request.args.get('latest_first')) else db.asc
     audits = audits.order_by(sort_order(AuditEvent.created_at), sort_order(AuditEvent.id))
 
-    audits = audits.paginate(
+    return paginated_result_response(
+        result_name=RESOURCE_NAME,
+        results_query=audits,
         page=page,
-        per_page=per_page
-    )
-
-    return jsonify(
-        auditEvents=[audit.serialize() for audit in audits.items],
-        links=pagination_links(
-            audits,
-            '.list_audits',
-            request.args
-        )
-    )
+        per_page=per_page,
+        endpoint='.list_audits',
+        request_args=request.args
+    ), 200
 
 
 @main.route('/audit-events', methods=['POST'])
@@ -201,7 +205,7 @@ def create_audit_event():
     db.session.add(audit_event)
     db.session.commit()
 
-    return jsonify(auditEvents=audit_event.serialize()), 201
+    return single_result_response(RESOURCE_NAME, audit_event), 201
 
 
 @main.route('/audit-events/<int:audit_id>/acknowledge', methods=['POST'])
@@ -225,7 +229,7 @@ def acknowledge_audit(audit_id):
         db.session.rollback()
         abort(400, e.orig)
 
-    return jsonify(auditEvents=audit_event.serialize()), 200
+    return single_result_response(RESOURCE_NAME, audit_event), 200
 
 
 # this is a "view without a route" for at the moment - it is used as an "inner" view implementation for the service
@@ -294,4 +298,4 @@ def get_audit_event(audit_id):
     if audit_event is None:
         abort(404, "No audit event with this id")
 
-    return jsonify(auditEvents=audit_event.serialize()), 200
+    return single_result_response(RESOURCE_NAME, audit_event), 200

@@ -379,7 +379,6 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
 
         response = self.client.get('/services?supplier_id=1')
         data = json.loads(response.get_data())
-        assert 'next' not in data['links']
         assert len(data['services']) == 7
 
     def test_unknown_supplier_id(self):

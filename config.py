@@ -30,7 +30,7 @@ class Config:
     DM_API_SUPPLIERS_PAGE_SIZE = 100
     DM_API_BRIEFS_PAGE_SIZE = 100
     DM_API_BRIEF_RESPONSES_PAGE_SIZE = 100
-
+    DM_API_BUYER_DOMAINS_PAGE_SIZE = 100
     DM_API_PROJECTS_PAGE_SIZE = 100
 
     DM_ALLOWED_ADMIN_DOMAINS = ['digital.cabinet-office.gov.uk', 'crowncommercial.gov.uk', 'user.marketplace.team']

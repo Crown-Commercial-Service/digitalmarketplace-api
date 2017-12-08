@@ -1,23 +1,27 @@
-import pytest
+import json
 import mock
+import pytest
 
+from dmapiclient import HTTPError
 from flask import current_app
 from nose.tools import assert_equal
 from werkzeug.exceptions import BadRequest, HTTPException
 
+from app.utils import (
+    display_list,
+    index_object,
+    json_has_keys,
+    json_has_matching_id,
+    json_has_required_keys,
+    keyfilter_json,
+    link,
+    list_result_response,
+    paginated_result_response,
+    purge_nulls_from_data,
+    single_result_response,
+    strip_whitespace_from_data,
+)
 from tests.bases import BaseApplicationTest
-
-from app.utils import (display_list,
-                       strip_whitespace_from_data,
-                       json_has_keys,
-                       json_has_matching_id,
-                       json_has_required_keys,
-                       link,
-                       purge_nulls_from_data,
-                       keyfilter_json,
-                       index_object)
-
-from dmapiclient import HTTPError
 
 
 def test_link():
@@ -121,6 +125,114 @@ class TestIndexObject(BaseApplicationTest):
         current_app.logger.warning.assert_called_once_with(
             'Failed to add services object with id 123 to g-cloud-9 index: Request failed'
         )
+
+
+class TestResultResponses(BaseApplicationTest):
+    def _get_single_result_mock(self):
+        result = mock.Mock()
+        result.serialize.return_value = {"serialized": "content"}
+        return result
+
+    def test_single_result_response(self):
+        with self.app.app_context() and self.app.test_request_context("/"):
+            result = self._get_single_result_mock()
+
+            response = single_result_response("name", result)
+
+            assert json.loads(response.get_data(as_text=True)) == {"name": {"serialized": "content"}}
+            result.serialize.assert_called_once()
+
+    def test_single_result_response_with_serialize_kwargs(self):
+        with self.app.app_context() and self.app.test_request_context("/"):
+            result = self._get_single_result_mock()
+
+            response = single_result_response("name", result, {"do": "this"})
+
+            assert json.loads(response.get_data(as_text=True)) == {"name": {"serialized": "content"}}
+            result.serialize.assert_called_once_with(do="this")
+
+    def _get_list_result_mocks(self):
+        results_query = mock.MagicMock()
+        results_query.count.return_value = 2
+        result = mock.Mock()
+        result.serialize.side_effect = [{"serialized1": "content1"}, {"serialized2": "content2"}]
+        results_query.__iter__.return_value = [result, result]
+        return result, results_query
+
+    def test_list_result_response(self):
+        with self.app.app_context() and self.app.test_request_context("/"):
+            result, results_query = self._get_list_result_mocks()
+
+            response = list_result_response("name", results_query)
+
+            assert json.loads(response.get_data(as_text=True)) == {
+                "name": [{"serialized1": "content1"}, {"serialized2": "content2"}],
+                "meta": {"total": 2}
+            }
+            assert result.serialize.call_count == 2
+
+    def test_list_result_response_with_serialize_kwargs(self):
+        with self.app.app_context() and self.app.test_request_context("/"):
+            result, results_query = self._get_list_result_mocks()
+
+            response = list_result_response("name", results_query, {"do": "this"})
+
+            assert json.loads(response.get_data(as_text=True)) == {
+                "name": [{"serialized1": "content1"}, {"serialized2": "content2"}],
+                "meta": {"total": 2}
+            }
+            calls = [mock.call(do="this"), mock.call(do="this")]
+            result.serialize.assert_has_calls(calls)
+
+    def _get_paginated_result_mocks(self):
+        result = mock.Mock()
+        result.serialize.side_effect = [{"serialized1": "content1"}, {"serialized2": "content2"}]
+
+        pagination = mock.MagicMock()
+        pagination.total = 10
+        pagination.items.__iter__.return_value = [result, result]
+
+        results_query = mock.Mock()
+        results_query.paginate.return_value = pagination
+
+        return result, results_query, pagination
+
+    @mock.patch('app.utils.pagination_links', autospec=True)
+    def test_paginated_result_response(self, pagination_links):
+        with self.app.app_context() and self.app.test_request_context("/"):
+            result, results_query, pagination = self._get_paginated_result_mocks()
+            pagination_links.return_value = {"paginated": "links"}
+
+            response = paginated_result_response("name", results_query, 3, 2, '.endpoint', {"arg": "value"})
+
+            assert json.loads(response.get_data(as_text=True)) == {
+                "name": [{"serialized1": "content1"}, {"serialized2": "content2"}],
+                "meta": {"total": 10},
+                "links": {"paginated": "links"}
+            }
+            results_query.paginate.assert_called_once_with(page=3, per_page=2)
+            pagination_links.assert_called_once_with(pagination, '.endpoint', {"arg": "value"})
+            assert result.serialize.call_count == 2
+
+    @mock.patch('app.utils.pagination_links', autospec=True)
+    def test_paginated_result_response_with_serialize_kwargs(self, pagination_links):
+        with self.app.app_context() and self.app.test_request_context("/"):
+            result, results_query, pagination = self._get_paginated_result_mocks()
+            pagination_links.return_value = {"paginated": "links"}
+
+            response = paginated_result_response(
+                "name", results_query, 3, 2, '.endpoint', {"arg": "value"}, {"do": "this"}
+            )
+
+            assert json.loads(response.get_data(as_text=True)) == {
+                "name": [{"serialized1": "content1"}, {"serialized2": "content2"}],
+                "meta": {"total": 10},
+                "links": {"paginated": "links"}
+            }
+            results_query.paginate.assert_called_once_with(page=3, per_page=2)
+            pagination_links.assert_called_once_with(pagination, '.endpoint', {"arg": "value"})
+            calls = [mock.call(do="this"), mock.call(do="this")]
+            result.serialize.assert_has_calls(calls)
 
 
 def test_display_list_two_items():

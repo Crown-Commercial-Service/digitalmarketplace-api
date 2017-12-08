@@ -1,26 +1,29 @@
+import datetime
+
 from flask import jsonify, abort, request
 from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy import func, orm, case
-import datetime
-
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
+
 from .. import main
 from ...models import db, Framework, DraftService, User, Supplier, SupplierFramework, AuditEvent, Lot
 from ...utils import (
-    get_json_from_request, json_has_required_keys, json_only_has_required_keys,
+    get_json_from_request,
+    json_has_required_keys,
+    json_only_has_required_keys,
+    list_result_response,
+    single_result_response,
     validate_and_return_updater_request,
 )
 from ...framework_utils import validate_framework_agreement_details_data
 
+RESOURCE_NAME = "frameworks"
+
 
 @main.route('/frameworks', methods=['GET'])
 def list_frameworks():
-    frameworks = Framework.query.all()
-
-    return jsonify(
-        frameworks=[f.serialize() for f in frameworks]
-    )
+    return list_result_response(RESOURCE_NAME, Framework.query), 200
 
 
 @main.route("/frameworks", methods=["POST"])
@@ -63,7 +66,7 @@ def create_framework():
         db.session.rollback()
         abort(400, "Slug '{}' already in use".format(json_payload["frameworks"]["slug"]))
 
-    return jsonify(frameworks=framework.serialize())
+    return single_result_response(RESOURCE_NAME, framework), 201
 
 
 @main.route('/frameworks/<string:framework_slug>', methods=['GET'])
@@ -72,7 +75,7 @@ def get_framework(framework_slug):
         Framework.slug == framework_slug
     ).first_or_404()
 
-    return jsonify(frameworks=framework.serialize())
+    return single_result_response(RESOURCE_NAME, framework), 200
 
 
 @main.route('/frameworks/<string:framework_slug>', methods=['POST'])
@@ -123,7 +126,7 @@ def update_framework(framework_slug):
         db.session.rollback()
         abort(400, "Database Error: {}".format(e))
 
-    return jsonify(frameworks=framework.serialize())
+    return single_result_response(RESOURCE_NAME, framework), 200
 
 
 @main.route('/frameworks/<string:framework_slug>/stats', methods=['GET'])
@@ -200,7 +203,7 @@ def get_framework_stats(framework_slug):
                 SupplierFramework.declaration['status'].astext, drafts_alias.supplier_id.isnot(None)
             ).all()
         )
-    })
+    }), 200
 
 
 @main.route('/frameworks/<string:framework_slug>/suppliers', methods=['GET'])
@@ -254,15 +257,11 @@ def get_framework_suppliers(framework_slug):
 
     with_declarations = convert_to_boolean(request.args.get("with_declarations", "true"))
 
-    return jsonify(
-        supplierFrameworks=[
-            supplier_framework.serialize(
-                with_users=False,
-                with_declaration=with_declarations,
-            ) for supplier_framework in supplier_frameworks
-        ],
-        links=dict()
-    )
+    return list_result_response(
+        "supplierFrameworks",
+        supplier_frameworks,
+        serialize_kwargs={"with_users": False, "with_declaration": with_declarations}
+    ), 200
 
 
 @main.route('/frameworks/<string:framework_slug>/interest', methods=['GET'])
@@ -282,4 +281,4 @@ def get_framework_interest(framework_slug):
 
     supplier_ids = [supplier_framework.supplier_id for supplier_framework in supplier_frameworks]
 
-    return jsonify(interestedSuppliers=supplier_ids)
+    return jsonify(interestedSuppliers=supplier_ids), 200

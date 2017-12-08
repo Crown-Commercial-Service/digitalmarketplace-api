@@ -1,7 +1,7 @@
 from datetime import datetime
+
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
-
 from dmapiclient.audit import AuditTypes
 from dmutils.formats import DATETIME_FORMAT
 
@@ -9,22 +9,25 @@ from .. import main
 from ... import db
 from ...models import Supplier, ContactInformation, AuditEvent, Service, SupplierFramework, Framework, User
 from ...validation import (
-    validate_supplier_json_or_400,
+    is_valid_string_or_400,
     validate_contact_information_json_or_400,
-    is_valid_string_or_400
+    validate_supplier_json_or_400,
 )
 from ...utils import (
-    pagination_links,
     drop_foreign_fields,
     get_json_from_request,
+    get_valid_page_or_1,
     json_has_keys,
+    json_has_matching_id,
     json_has_required_keys,
     json_only_has_required_keys,
-    json_has_matching_id,
-    get_valid_page_or_1,
+    paginated_result_response,
+    single_result_response,
     validate_and_return_updater_request,
 )
 from ...supplier_utils import validate_and_return_supplier_request
+
+RESOURCE_NAME = "suppliers"
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -72,18 +75,14 @@ def list_suppliers():
     suppliers = suppliers.distinct(Supplier.name, Supplier.supplier_id)
 
     try:
-        suppliers = suppliers.paginate(
+        return paginated_result_response(
+            result_name=RESOURCE_NAME,
+            results_query=suppliers,
             page=page,
             per_page=current_app.config['DM_API_SUPPLIERS_PAGE_SIZE'],
-        )
-
-        return jsonify(
-            suppliers=[supplier.serialize() for supplier in suppliers.items],
-            links=pagination_links(
-                suppliers,
-                '.list_suppliers',
-                request.args
-            ))
+            endpoint='.list_suppliers',
+            request_args=request.args
+        ), 200
     except DataError:
         abort(400, 'invalid framework')
 
@@ -96,9 +95,11 @@ def get_supplier(supplier_id):
 
     service_counts = supplier.get_service_counts()
 
-    return jsonify(suppliers=supplier.serialize({
-        'service_counts': service_counts
-    }))
+    return single_result_response(
+        RESOURCE_NAME,
+        supplier,
+        serialize_kwargs={"data": {"service_counts": service_counts}}
+    ), 200
 
 
 @main.route('/suppliers/<int:supplier_id>', methods=['PUT'])
@@ -137,7 +138,7 @@ def import_supplier(supplier_id):
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
-    return jsonify(suppliers=supplier.serialize()), 201
+    return single_result_response(RESOURCE_NAME, supplier), 201
 
 
 @main.route('/suppliers', methods=['POST'])
@@ -164,7 +165,7 @@ def create_supplier():
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
 
-    return jsonify(suppliers=supplier.serialize()), 201
+    return single_result_response(RESOURCE_NAME, supplier), 201
 
 
 @main.route('/suppliers/<int:supplier_id>', methods=['POST'])
@@ -205,7 +206,7 @@ def update_supplier(supplier_id):
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
-    return jsonify(suppliers=supplier.serialize())
+    return single_result_response(RESOURCE_NAME, supplier), 200
 
 
 @main.route('/suppliers/<int:supplier_id>/contact-information/<int:contact_id>', methods=['POST'])
@@ -246,7 +247,7 @@ def update_contact_information(supplier_id, contact_id):
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
 
-    return jsonify(contactInformation=contact.serialize())
+    return single_result_response("contactInformation", contact), 200
 
 
 @main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>/declaration', methods=['PUT'])
@@ -307,7 +308,7 @@ def get_registered_frameworks(supplier_id):
         ).first()
         slugs.append(framework.slug)
 
-    return jsonify(frameworks=slugs)
+    return jsonify(frameworks=slugs), 200
 
 
 @main.route('/suppliers/<int:supplier_id>/frameworks', methods=['GET'])
@@ -329,7 +330,7 @@ def get_supplier_frameworks_info(supplier_id):
             'services_count': service_counts.get((supplier_framework.framework_id, 'published'), 0)
         })
         for supplier_framework in supplier_frameworks]
-    )
+    ), 200
 
 
 @main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>', methods=['GET'])
@@ -340,7 +341,11 @@ def get_supplier_framework_info(supplier_id, framework_slug):
     if supplier_framework is None:
         abort(404)
 
-    return jsonify(frameworkInterest=supplier_framework.serialize(with_users=True))
+    return single_result_response(
+        "frameworkInterest",
+        supplier_framework,
+        serialize_kwargs={"with_users": True}
+    ), 200
 
 
 @main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>', methods=['PUT'])
@@ -365,7 +370,7 @@ def register_framework_interest(supplier_id, framework_slug):
         SupplierFramework.framework_id == framework.id
     ).first()
     if interest_record:
-        return jsonify(frameworkInterest=interest_record.serialize()), 200
+        return single_result_response("frameworkInterest", interest_record), 200
 
     if framework.status != 'open':
         abort(400, "'{}' framework is not open".format(framework_slug))
@@ -390,7 +395,7 @@ def register_framework_interest(supplier_id, framework_slug):
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
 
-    return jsonify(frameworkInterest=interest_record.serialize()), 201
+    return single_result_response("frameworkInterest", interest_record), 201
 
 
 @main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>', methods=['POST'])
@@ -448,7 +453,7 @@ def update_supplier_framework(supplier_id, framework_slug):
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
 
-    return jsonify(frameworkInterest=interest_record.serialize()), 200
+    return single_result_response("frameworkInterest", interest_record), 200
 
 
 @main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>/variation/<variation_slug>', methods=['PUT'])
