@@ -1893,6 +1893,8 @@ class Brief(db.Model):
 
     @property
     def clarification_questions_are_closed(self):
+        if not self.questions_closed_at:
+            return None
         return utcnow() > self.questions_closed_at
 
     @hybrid_property
