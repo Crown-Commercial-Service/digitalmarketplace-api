@@ -120,7 +120,7 @@ def users(app, request):
                 password_changed_at=utcnow()
             ))
             db.session.flush()
-            framework = Framework.query.filter(Framework.slug == "digital-marketplace").first()
+            framework = Framework.query.filter(Framework.slug == "orams").first()
             db.session.add(UserFramework(user_id=i, framework_id=framework.id))
 
         db.session.add(User(
@@ -154,7 +154,7 @@ def supplier_user(app, request, suppliers):
         ))
         db.session.commit()
         db.session.flush()
-        framework = Framework.query.filter(Framework.slug == "digital-marketplace").first()
+        framework = Framework.query.filter(Framework.slug == "orams").first()
         db.session.add(UserFramework(user_id=1, framework_id=framework.id))
         db.session.commit()
         yield User.query.first()

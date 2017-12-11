@@ -1,7 +1,7 @@
 from flask import current_app, render_template_string, jsonify, make_response, abort as flask_abort
 import requests
 import rollbar
-from app.models import User
+from app.models import User, ServiceType
 from dmutils.email import (
     decode_token, EmailError, generate_token, InvalidToken, ONE_DAY_IN_SECONDS, send_email,
     parse_fernet_timestamp
@@ -31,6 +31,24 @@ def is_current_supplier(func):
         if current_user.role == 'supplier' and current_user.supplier_code != code:
             return jsonify(message="Unauthorised to view supplier"), 403
         return func(code, *args, **kwargs)
+    return decorated_view
+
+
+def is_service_current_framework(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        if kwargs is not None:
+            service_type_id = kwargs.get('service_type_id', None)
+
+            if service_type_id is not None:
+                service_type = ServiceType.query.get(service_type_id)
+
+                if (service_type is None):
+                    return jsonify(), 404
+
+                if current_user.frameworks and current_user.frameworks[0] != service_type.framework.slug:
+                    return jsonify(message="Unauthorised to view service"), 403
+        return func(*args, **kwargs)
     return decorated_view
 
 
@@ -114,7 +132,7 @@ def user_info(user):
         supplier_code = None
 
     try:
-        framework = current_user.frameworks[0].framework.slug if current_user.frameworks else 'digital-marketplace'
+        framework = current_user.frameworks[0] if current_user.frameworks else 'digital-marketplace'
     except AttributeError:
         framework = None
 

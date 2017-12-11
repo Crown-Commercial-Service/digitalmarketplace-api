@@ -4,7 +4,7 @@ from app.auth import auth
 from app.models import db, Region, ServiceCategory, ServiceType, ServiceTypePrice, Supplier, ServiceSubType
 from itertools import groupby
 from operator import itemgetter
-from app.auth.helpers import role_required
+from app.auth.helpers import role_required, is_service_current_framework
 import pendulum
 
 ALERTS = {
@@ -15,10 +15,6 @@ ALERTS = {
     'hourly': {
         'type': 'warning',
         'message': 'The prices for this service are per hour. Travel can be charged.'
-    },
-    'none': {
-        'type': 'warning',
-        'message': 'There are no services provided for that region.'
     }
 }
 
@@ -80,6 +76,7 @@ def get_list():
 @auth.route('/services/<service_type_id>/regions/<region_id>/prices', methods=['GET'], endpoint='filter_services')
 @login_required
 @role_required('buyer')
+@is_service_current_framework
 def filter(service_type_id, region_id):
     """Filter suppliers and prices (role=buyer)
     ---
@@ -148,7 +145,7 @@ def filter(service_type_id, region_id):
     region = db.session.query(Region).get(region_id)
 
     if service_type is None or region is None:
-        return jsonify(alert=ALERTS['none'], categories=[]), 200
+        return jsonify(), 404
 
     today = pendulum.today(current_app.config['DEADLINES_TZ_NAME']).date()
 

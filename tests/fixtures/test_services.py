@@ -53,10 +53,7 @@ def test_search_catalogue(client, users, service_type_prices):
 
     response = client.get('/2/services/10/regions/12/prices')
 
-    assert response.status_code == 200
-
-    empty_prices = json.loads(response.data)
-    category = len(empty_prices['categories']) == 0
+    assert response.status_code == 404
 
     response = client.get('/2/services/1/regions/1/prices')
 

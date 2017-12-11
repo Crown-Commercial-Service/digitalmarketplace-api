@@ -3,7 +3,7 @@ from flask import current_app, request, jsonify
 from flask_login import login_required, current_user
 from app.auth import auth
 from app.auth.services import prices
-from app.auth.helpers import role_required, is_current_supplier, parse_date, abort
+from app.auth.helpers import role_required, is_current_supplier, parse_date, abort, is_service_current_framework
 from app.swagger import swag
 from app.emails.prices import send_price_change_email
 
@@ -13,6 +13,7 @@ from app.emails.prices import send_price_change_email
 @login_required
 @role_required('buyer', 'supplier')
 @is_current_supplier
+@is_service_current_framework
 def filter(code, service_type_id, category_id):
     """Filter prices (role=buyer,supplier)
     ---
