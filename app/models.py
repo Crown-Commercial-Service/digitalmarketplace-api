@@ -1876,15 +1876,7 @@ class Brief(db.Model):
     def clarification_questions_closed_at(self):
         if self.published_at is None:
             return None
-        DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
-        DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
-
-        if self.published_at is None:
-            return None
-        d = workday(self.published_day, self.questions_duration_workdays)
-
-        t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
-        return combine_date_and_time(d, t, DEADLINES_TZ_NAME).in_tz('UTC')
+        return self.questions_closed_at
 
     @property
     def clarification_questions_published_by(self):
@@ -1901,7 +1893,7 @@ class Brief(db.Model):
 
     @property
     def clarification_questions_are_closed(self):
-        return utcnow() > self.clarification_questions_closed_at
+        return utcnow() > self.questions_closed_at
 
     @hybrid_property
     def published_at(self):
