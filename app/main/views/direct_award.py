@@ -103,7 +103,7 @@ def create_project():
         audit_type=AuditTypes.create_project,
         user=updater_json['updated_by'],
         data={
-            'projectExternalId': project.id,
+            'projectExternalId': project.external_id,
             'projectJson': project_json,
         },
         db_object=project,

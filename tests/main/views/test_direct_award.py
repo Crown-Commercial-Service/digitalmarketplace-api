@@ -11,7 +11,7 @@ from app import db
 import pytest
 from tests.bases import BaseApplicationTest
 
-from sqlalchemy import desc, Integer, BigInteger
+from sqlalchemy import desc, BigInteger
 from dmapiclient.audit import AuditTypes
 
 from app.models import DATETIME_FORMAT, AuditEvent, User, ArchivedService
@@ -53,9 +53,8 @@ class DirectAwardSetupAndTeardown(BaseApplicationTest, FixtureMixin):
         projects = DirectAwardProject.query.all()
         assert len(projects) == 1
 
-        audit_events = AuditEvent.query.filter(AuditEvent.type == audit_type
-                                               and AuditEvent.data['projectId'].astext.cast(Integer) == projects[0].id
-                                               and AuditEvent.data['projectExternalId'].astext.cast(BigInteger)
+        audit_events = AuditEvent.query.filter(AuditEvent.type == audit_type,
+                                               AuditEvent.data['projectExternalId'].astext.cast(BigInteger)
                                                == projects[0].external_id).all()
         assert len(audit_events) == 1
 
