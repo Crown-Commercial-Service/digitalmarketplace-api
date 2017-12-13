@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import current_app, request, jsonify
 from sqlalchemy.exc import DataError, InvalidRequestError, IntegrityError
 from app.emails.users import send_existing_application_notification, send_existing_seller_notification
-from app.auth.applications import create_application
+from app.api.applications import create_application
 from app.emails.users import send_new_user_onboarding_email
 
 

@@ -1,10 +1,10 @@
 from flask import jsonify, current_app
 from flask_login import login_required
-from app.auth import auth
+from app.api import api
 from app.models import db, Region, ServiceCategory, ServiceType, ServiceTypePrice, Supplier, ServiceSubType
 from itertools import groupby
 from operator import itemgetter
-from app.auth.helpers import role_required, is_service_current_framework
+from app.api.helpers import role_required, is_service_current_framework
 import pendulum
 
 ALERTS = {
@@ -19,7 +19,7 @@ ALERTS = {
 }
 
 
-@auth.route('/services', methods=['GET'], endpoint='list_services')
+@api.route('/services', methods=['GET'], endpoint='list_services')
 @login_required
 @role_required('buyer')
 def get_list():
@@ -73,7 +73,7 @@ def get_list():
     return jsonify(categories=result), 200
 
 
-@auth.route('/services/<service_type_id>/regions/<region_id>/prices', methods=['GET'], endpoint='filter_services')
+@api.route('/services/<service_type_id>/regions/<region_id>/prices', methods=['GET'], endpoint='filter_services')
 @login_required
 @role_required('buyer')
 @is_service_current_framework

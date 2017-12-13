@@ -2,7 +2,7 @@ import os
 
 from flask import abort, jsonify, request, current_app, Response, make_response
 from flask_login import current_user, login_required
-from app.auth import auth
+from app.api import api
 from app.emails import send_brief_response_received_email
 from dmapiclient.audit import AuditTypes
 from ...models import db, AuditEvent, Brief, BriefResponse, Supplier, Framework, ValidationError
@@ -77,7 +77,7 @@ def _can_do_brief_response(brief_id):
     return supplier, brief
 
 
-@auth.route('/brief/<int:brief_id>', methods=["GET"])
+@api.route('/brief/<int:brief_id>', methods=["GET"])
 def get_brief(brief_id):
     brief = Brief.query.filter(
         Brief.id == brief_id
@@ -92,7 +92,7 @@ def get_brief(brief_id):
         return jsonify(brief.serialize(with_users=False))
 
 
-@auth.route('/brief-response/<int:brief_response_id>', methods=['GET'])
+@api.route('/brief-response/<int:brief_response_id>', methods=['GET'])
 @login_required
 def get_brief_response(brief_response_id):
     brief_response = BriefResponse.query.filter(
@@ -114,7 +114,7 @@ def get_brief_response(brief_response_id):
     return jsonify(briefResponses=brief_response.serialize())
 
 
-@auth.route('/brief/<int:brief_id>/respond/documents/<string:supplier_code>/<slug>', methods=['POST'])
+@api.route('/brief/<int:brief_id>/respond/documents/<string:supplier_code>/<slug>', methods=['POST'])
 @login_required
 def upload_brief_response_file(brief_id, supplier_code, slug):
     supplier, brief = _can_do_brief_response(brief_id)
@@ -125,7 +125,7 @@ def upload_brief_response_file(brief_id, supplier_code, slug):
                     })
 
 
-@auth.route('/brief/<int:brief_id>/respond/documents/<int:supplier_code>/<slug>', methods=['GET'])
+@api.route('/brief/<int:brief_id>/respond/documents/<int:supplier_code>/<slug>', methods=['GET'])
 @login_required
 def download_brief_response_file(brief_id, supplier_code, slug):
     brief = Brief.query.filter(
@@ -144,7 +144,7 @@ def download_brief_response_file(brief_id, supplier_code, slug):
         return abort(make_response(jsonify(errorMessage="Unauthorised to view brief or brief does not exist"), 403))
 
 
-@auth.route('/brief/<int:brief_id>/respond', methods=["POST"])
+@api.route('/brief/<int:brief_id>/respond', methods=["POST"])
 @login_required
 def post_brief_response(brief_id):
     brief_response_json = get_json_from_request()
@@ -200,7 +200,7 @@ def post_brief_response(brief_id):
     return jsonify(briefResponses=brief_response.serialize()), 201
 
 
-@auth.route('/framework/<string:framework_slug>', methods=["GET"])
+@api.route('/framework/<string:framework_slug>', methods=["GET"])
 def get_framework(framework_slug):
     framework = Framework.query.filter(
         Framework.slug == framework_slug

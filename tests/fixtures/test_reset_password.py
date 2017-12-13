@@ -188,7 +188,7 @@ def test_send_marketplace_reset_password_email(client, app, mocker, users):
     with app.app_context():
         user = users[3]
         framework = 'digital-marketplace'
-        send_email = mocker.patch('app.auth.views.users.send_reset_password_confirm_email')
+        send_email = mocker.patch('app.api.views.users.send_reset_password_confirm_email')
         response = _create_token(client, user.email_address)
         token = json.loads(response.data)['token']
         assert response.status_code == 200

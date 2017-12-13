@@ -48,8 +48,8 @@ def create_app(config_name):
     application.register_blueprint(main_blueprint, url_prefix=url_prefix)
     from .status import status as status_blueprint
     application.register_blueprint(status_blueprint, url_prefix=url_prefix)
-    from .auth import auth as auth_blueprint
-    application.register_blueprint(auth_blueprint, url_prefix=url_prefix_v2)
+    from .api import api as api_blueprint
+    application.register_blueprint(api_blueprint, url_prefix=url_prefix_v2)
     from .admin import blueprint as admin_blueprint
     application.register_blueprint(admin_blueprint.admin)
 

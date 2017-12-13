@@ -1,13 +1,13 @@
 from flask import jsonify
 from flask_login import login_required
-from app.auth import auth
+from app.api import api
 from app.models import db, Region
 from itertools import groupby
 from operator import itemgetter
-from app.auth.helpers import role_required
+from app.api.helpers import role_required
 
 
-@auth.route('/regions', methods=['GET'], endpoint='list_regions')
+@api.route('/regions', methods=['GET'], endpoint='list_regions')
 @login_required
 @role_required('buyer')
 def get_list():

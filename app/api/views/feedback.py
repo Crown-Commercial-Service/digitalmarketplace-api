@@ -1,6 +1,6 @@
 from flask import jsonify
 from flask_login import current_user, login_required
-from app.auth import auth
+from app.api import api
 from ...models import db, AuditEvent, Brief
 from ...utils import (
     get_json_from_request
@@ -8,7 +8,7 @@ from ...utils import (
 from dmapiclient.audit import AuditTypes
 
 
-@auth.route('/feedback', methods=["POST"])
+@api.route('/feedback', methods=["POST"])
 @login_required
 def post_feedback():
     feedback_data = get_json_from_request()

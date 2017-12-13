@@ -1,10 +1,10 @@
-from app.auth.user import create_user
+from app.api.user import create_user
 from flask import jsonify, current_app, request
 from flask_login import current_user, login_required, logout_user, login_user
 from urllib import quote
 from app import db, encryption
-from app.auth import auth
-from app.auth.helpers import (
+from app.api import api
+from app.api.helpers import (
     generate_reset_password_token, decode_reset_password_token, get_root_url
 )
 from app.models import User
@@ -14,13 +14,13 @@ from app.emails.users import (
     send_reset_password_confirm_email, orams_send_account_activation_admin_email
 )
 from dmutils.email import EmailError, InvalidToken
-from app.auth.helpers import decode_creation_token, is_government_email, user_info
-from app.auth.user import is_duplicate_user, update_user_details
+from app.api.helpers import decode_creation_token, is_government_email, user_info
+from app.api.user import is_duplicate_user, update_user_details
 from datetime import datetime
 from app.swagger import swag
 
 
-@auth.route('/users/me', methods=["GET"], endpoint='ping')
+@api.route('/users/me', methods=["GET"], endpoint='ping')
 def me():
     """Current user
     ---
@@ -49,23 +49,23 @@ def me():
 
 
 # deprecated
-@auth.route('/ping', methods=["GET"])
+@api.route('/ping', methods=["GET"])
 def me_deprecated():
     return jsonify(user_info(current_user))
 
 
-@auth.route('/_protected', methods=["GET"])
+@api.route('/_protected', methods=["GET"])
 @login_required
 def protected():
     return jsonify(data='protected')
 
 
-@auth.route('/_post', methods=["POST"])
+@api.route('/_post', methods=["POST"])
 def post():
     return jsonify(data='post')
 
 
-@auth.route('/login', methods=['POST'])
+@api.route('/login', methods=['POST'])
 @swag.validate('LoginUser')
 def login():
     """Login user
@@ -119,7 +119,7 @@ def login():
         return jsonify(message="Could not authorize user"), 403
 
 
-@auth.route('/logout', methods=['GET'])
+@api.route('/logout', methods=['GET'])
 @login_required
 def logout():
     """Logout user
@@ -140,7 +140,7 @@ def logout():
     return jsonify(message='The user was logged out successfully'), 200
 
 
-@auth.route('/signup', methods=['POST'])
+@api.route('/signup', methods=['POST'])
 @swag.validate('SignupUser')
 def signup():
     """Signup user
@@ -265,7 +265,7 @@ def signup():
         ), 400
 
 
-@auth.route('/send-invite/<string:token>', methods=['POST'])
+@api.route('/send-invite/<string:token>', methods=['POST'])
 def send_invite(token):
     """Send invite
     ---
@@ -301,7 +301,7 @@ def send_invite(token):
         return jsonify(message='An error occured when trying to send an email'), 400
 
 
-@auth.route('/users', methods=['POST'], endpoint='create_user')
+@api.route('/users', methods=['POST'], endpoint='create_user')
 @swag.validate('AddUser')
 def add():
     """Add user
@@ -354,13 +354,13 @@ def add():
 
 
 # deprecated
-@auth.route('/create-user', methods=['POST'])
+@api.route('/create-user', methods=['POST'])
 @swag.validate('AddUser')
 def add_deprecated():
     return create_user()
 
 
-@auth.route('/reset-password/framework/<string:framework_slug>', methods=['POST'])
+@api.route('/reset-password/framework/<string:framework_slug>', methods=['POST'])
 def send_reset_password_email(framework_slug):
     json_payload = get_json_from_request()
     email_address = json_payload.get('email_address', None)
@@ -402,7 +402,7 @@ def send_reset_password_email(framework_slug):
     ), 200
 
 
-@auth.route('/reset-password/<string:token>', methods=['GET'])
+@api.route('/reset-password/<string:token>', methods=['GET'])
 def get_reset_user(token):
     try:
         data = decode_reset_password_token(token.encode())
@@ -417,7 +417,7 @@ def get_reset_user(token):
     ), 200
 
 
-@auth.route('/reset-password/<string:token>', methods=['POST'])
+@api.route('/reset-password/<string:token>', methods=['POST'])
 def reset_password(token):
     json_payload = get_json_from_request()
 

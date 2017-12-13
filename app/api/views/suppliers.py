@@ -1,12 +1,12 @@
 from flask import jsonify
 from flask_login import login_required
-from app.auth import auth
+from app.api import api
 from app.utils import get_json_from_request
-from app.auth.suppliers import get_supplier, update_supplier, list_suppliers
-from app.auth.helpers import role_required, is_current_supplier
+from app.api.suppliers import get_supplier, update_supplier, list_suppliers
+from app.api.helpers import role_required, is_current_supplier
 
 
-@auth.route('/suppliers/<int:code>', methods=['GET'], endpoint='get_supplier')
+@api.route('/suppliers/<int:code>', methods=['GET'], endpoint='get_supplier')
 @login_required
 @role_required('buyer', 'supplier')
 @is_current_supplier
@@ -106,7 +106,7 @@ def get(code):
     return get_supplier(code)
 
 
-@auth.route('/suppliers/<int:code>', methods=['POST'], endpoint='update_supplier')
+@api.route('/suppliers/<int:code>', methods=['POST'], endpoint='update_supplier')
 @login_required
 @role_required('buyer', 'supplier')
 @is_current_supplier
@@ -140,7 +140,7 @@ def update(code):
         return jsonify(message=error.message), 400
 
 
-@auth.route('/suppliers', methods=['GET'], endpoint='list_suppliers')
+@api.route('/suppliers', methods=['GET'], endpoint='list_suppliers')
 @login_required
 @role_required('buyer')
 def get_list():

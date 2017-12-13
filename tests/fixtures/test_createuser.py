@@ -1,5 +1,5 @@
 import json
-from app.auth.helpers import generate_creation_token
+from app.api.helpers import generate_creation_token
 from app.models import User
 
 
@@ -233,7 +233,7 @@ def test_existing_application_same_organisation_as_applicant(client, mocker, app
 
 
 def test_existing_application_same_organisation_as_applicant_at_signup(client, mocker, application_user):
-    send_email = mocker.patch('app.auth.user.send_existing_application_notification')
+    send_email = mocker.patch('app.api.user.send_existing_application_notification')
     existing_user = application_user
 
     existing_user_domain = existing_user.email_address.split('@')[-1]

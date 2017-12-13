@@ -7,11 +7,11 @@ from app.models import User
 from base64 import b64decode
 from app import encryption
 
-auth = Blueprint('auth', __name__)
+api = Blueprint('api', __name__)
 login_manager = LoginManager()
 
 
-@auth.record_once
+@api.record_once
 def on_load(state):
     login_manager.init_app(state.app)
 
@@ -27,7 +27,7 @@ def load_user(userid):
     return user
 
 
-@auth.before_request
+@api.before_request
 def check_csrf_token():
     if request.method in ('POST', 'PATCH', 'PUT', 'DELETE'):
         new_csrf_valid = check_valid_csrf()
@@ -57,7 +57,7 @@ def load_user_from_request(request):
                              get_framework_slugs(user.frameworks))
             return user
 
-from app.auth.views import briefs, users, feedback, suppliers, services, prices, regions, tokens  # noqa
+from app.api.views import briefs, users, feedback, suppliers, services, prices, regions, tokens  # noqa
 
 
 def get_token_from_headers(headers):

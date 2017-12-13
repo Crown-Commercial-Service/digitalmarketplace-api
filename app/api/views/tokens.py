@@ -1,6 +1,6 @@
 from flask import jsonify
-from app.auth.helpers import decode_creation_token
-from app.auth import auth
+from app.api.helpers import decode_creation_token
+from app.api import api
 from dmutils.email import InvalidToken
 
 
@@ -18,7 +18,7 @@ def decode_token(token):
         ), 400
 
 
-@auth.route('/tokens/<string:token>', methods=['GET'], endpoint='get_token')
+@api.route('/tokens/<string:token>', methods=['GET'], endpoint='get_token')
 def get(token):
     """Decode token
     ---
@@ -50,6 +50,6 @@ def get(token):
 
 
 # deprecated
-@auth.route('/signup/validate-invite/<string:token>', methods=['GET'])
+@api.route('/signup/validate-invite/<string:token>', methods=['GET'])
 def get_deprecated(token):
     return decode_token(token)
