@@ -1,10 +1,16 @@
+from flask_login import current_user
 from app.api.helpers import Service
 from app import db
 from app.models import ServiceTypePrice, Region
+from .audit import AuditService, AuditTypes
 
 
 class PricesService(Service):
     __model__ = ServiceTypePrice
+
+    def __init__(self, *args, **kwargs):
+            super(PricesService, self).__init__(*args, **kwargs)
+            self.audit = AuditService()
 
     def get_prices(self, code, service_type_id, category_id, date):
         prices = db.session.query(ServiceTypePrice)\
@@ -37,4 +43,5 @@ class PricesService(Service):
         db.session.add(new_price)
         db.session.commit()
 
+        self.audit.create(audit_type=AuditTypes.update_price, user=current_user.id, data={}, db_object=new_price)
         return new_price
