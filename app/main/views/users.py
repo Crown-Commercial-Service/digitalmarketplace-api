@@ -203,6 +203,8 @@ def update_user(user_id):
         if user.role == 'supplier' and user_update['role'] != user.role:
             user.supplier_id = None
             user_update.pop('supplierId', None)
+        if user.role == 'buyer' and user_update['role'] != user.role:
+            abort(400, "Can not change a 'buyer' user to a different role.")
         user.role = user_update['role']
     if 'supplierId' in user_update:
         user.supplier_id = user_update['supplierId']
