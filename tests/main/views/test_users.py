@@ -621,9 +621,21 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
                 supplier_id=456,
                 password_changed_at=now
             )
+            admin_user = User(
+                id=789,
+                email_address="admin@digital.cabinet-office.gov.uk",
+                name="my admin name",
+                password=encryption.hashpw("my long password"),
+                active=True,
+                role='admin',
+                created_at=now,
+                updated_at=now,
+                password_changed_at=now
+            )
             db.session.add(supplier)
             db.session.add(user)
             db.session.add(supplier_user)
+            db.session.add(admin_user)
             db.session.commit()
 
     def test_can_update_password(self):
@@ -886,8 +898,9 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
     def test_can_update_role_and_suppler_id(self):
         with self.app.app_context():
+            # Converts admin user 789 to a supplier user (a bit of an odd scenario, but it's possible...)
             response = self.client.post(
-                '/users/123',
+                '/users/789',
                 data=json.dumps({
                     "updated_by": "a.user",
                     'users': {
@@ -904,7 +917,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
                 '/users/auth',
                 data=json.dumps({
                     'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
+                        'emailAddress': 'admin@digital.cabinet-office.gov.uk',
                         'password': 'my long password'}}),
                 content_type='application/json')
 
@@ -993,10 +1006,25 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             assert data['role'] == 'buyer'
             assert data.get('supplierId', None) is None
 
-    def test_can_not_update_role_to_invalid_value(self):
+    def test_can_not_update_role_from_buyer(self):
         with self.app.app_context():
             response = self.client.post(
                 '/users/123',
+                data=json.dumps({
+                    "updated_by": "a.user",
+                    'users': {
+                        'role': 'admin'
+                    }}),
+                content_type='application/json')
+
+            assert response.status_code == 400
+            error_message = json.loads(response.get_data())['error']
+            assert error_message == "Can not change a 'buyer' user to a different role."
+
+    def test_can_not_update_role_to_invalid_value(self):
+        with self.app.app_context():
+            response = self.client.post(
+                '/users/456',
                 data=json.dumps({
                     "updated_by": "a.user",
                     'users': {
@@ -1010,7 +1038,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
     def test_supplier_role_update_requires_supplier_id(self):
         response = self.client.post(
-            '/users/123',
+            '/users/789',
             data=json.dumps({
                 "updated_by": "a.user",
                 'users': {
