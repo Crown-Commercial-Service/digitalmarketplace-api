@@ -266,11 +266,15 @@ def send_new_user_onboarding_email(name, email_address, user_type, framework):
 
 def send_reset_password_confirm_email(email_address, url, locked, framework):
     if framework == "orams":
+        subject = current_app.config['ORAMS_RESET_PASSWORD_EMAIL_SUBJECT']
+        name = current_app.config['ORAMS_GENERIC_SUPPORT_NAME']
         if locked:
             email_template = 'reset_password_email_locked_account_orams.md'
         else:
             email_template = 'reset_password_email_orams.md'
     else:
+        subject = current_app.config['RESET_PASSWORD_EMAIL_SUBJECT']
+        name = current_app.config['RESET_PASSWORD_EMAIL_NAME']
         if locked:
             email_template = 'reset_password_email_locked_account_marketplace.md'
         else:
@@ -285,9 +289,9 @@ def send_reset_password_confirm_email(email_address, url, locked, framework):
         send_email(
             email_address,
             email_body,
-            current_app.config['RESET_PASSWORD_EMAIL_SUBJECT'],
+            subject,
             current_app.config['RESET_PASSWORD_EMAIL_FROM'],
-            current_app.config['RESET_PASSWORD_EMAIL_NAME'],
+            name
         )
         session['email_sent_to'] = email_address
 

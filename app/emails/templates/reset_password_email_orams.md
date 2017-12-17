@@ -4,7 +4,7 @@ Hello,
 
 You recently asked to reset your ORAMS password.
 
-You can create a new password now using the link below:
+You can create a new password now using the link:
 
 {{ url }}
 

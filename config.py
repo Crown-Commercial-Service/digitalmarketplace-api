@@ -89,6 +89,7 @@ class Config:
     RESET_PASSWORD_EMAIL_NAME = DM_GENERIC_ADMIN_NAME
     RESET_PASSWORD_EMAIL_FROM = 'no-reply@marketplace.digital.gov.au'
     RESET_PASSWORD_EMAIL_SUBJECT = 'Reset your Digital Marketplace password'
+    ORAMS_RESET_PASSWORD_EMAIL_SUBJECT = 'Reset your ORAMS password'
 
     INVITE_EMAIL_NAME = DM_GENERIC_ADMIN_NAME
     INVITE_EMAIL_FROM = 'no-reply@marketplace.digital.gov.au'
