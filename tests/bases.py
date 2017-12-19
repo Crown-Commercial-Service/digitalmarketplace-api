@@ -1,5 +1,3 @@
-from nose.tools import assert_equal, assert_in
-
 from app import create_app, db
 from app.models import Framework, FrameworkLot
 
@@ -59,16 +57,15 @@ class JSONTestMixin(object):
             data='this is not JSON',
             content_type='application/json')
 
-        assert_equal(response.status_code, 400)
-        assert_in(b'Invalid JSON',
-                  response.get_data())
+        assert response.status_code == 400
+        assert b'Invalid JSON' in response.get_data()
 
     def test_invalid_content_type_causes_failure(self):
         response = self.open(
             data='{"services": {"foo": "bar"}}')
 
-        assert_equal(response.status_code, 400)
-        assert_in(b'Unexpected Content-Type', response.get_data())
+        assert response.status_code == 400
+        assert b'Unexpected Content-Type' in response.get_data()
 
 
 class JSONUpdateTestMixin(JSONTestMixin):
@@ -77,5 +74,5 @@ class JSONUpdateTestMixin(JSONTestMixin):
             data='{}',
             content_type='application/json')
 
-        assert_equal(response.status_code, 400)
-        assert_in("'updated_by' is a required property", response.get_data(as_text=True))
+        assert response.status_code == 400
+        assert "'updated_by' is a required property" in response.get_data(as_text=True)
