@@ -23,7 +23,7 @@ def load_user(userid):
     if user is not None:
         user = LoginUser(user.id, user.email_address, user.supplier_code, None, user.locked,
                          user.active, user.name, user.role, user.terms_accepted_at, user.application_id,
-                         get_framework_slugs(user.frameworks))
+                         user.frameworks)
     return user
 
 
@@ -54,7 +54,7 @@ def load_user_from_request(request):
         if encryption.authenticate_user(password, user):
             user = LoginUser(user.id, user.email_address, user.supplier_code, None, user.locked,
                              user.active, user.name, user.role, user.terms_accepted_at, user.application_id,
-                             get_framework_slugs(user.frameworks))
+                             user.frameworks)
             return user
 
 from app.api.views import briefs, users, feedback, suppliers, services, prices, regions, tokens  # noqa
@@ -66,7 +66,3 @@ def get_token_from_headers(headers):
     if auth_header[:6] != 'Basic ':
         return None
     return auth_header[6:]
-
-
-def get_framework_slugs(frameworks):
-    return [f.framework.slug for f in frameworks] if frameworks else ['digital-marketplace']

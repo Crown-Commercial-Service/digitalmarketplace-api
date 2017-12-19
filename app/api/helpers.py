@@ -46,7 +46,7 @@ def is_service_current_framework(func):
                 if (service_type is None):
                     return jsonify(), 404
 
-                if current_user.frameworks and current_user.frameworks[0] != service_type.framework.slug:
+                if current_user.frameworks and current_user.frameworks[0].framework.slug != service_type.framework.slug:
                     return jsonify(message="Unauthorised to view service"), 403
         return func(*args, **kwargs)
     return decorated_view
@@ -132,7 +132,9 @@ def user_info(user):
         supplier_code = None
 
     try:
-        framework = current_user.frameworks[0] if current_user.frameworks else 'digital-marketplace'
+        user_framework = current_user.frameworks[0] if current_user.frameworks else 'digital-marketplace'
+        if hasattr(user_framework, 'framework'):
+            framework = user_framework.framework.slug
     except AttributeError:
         framework = None
 
