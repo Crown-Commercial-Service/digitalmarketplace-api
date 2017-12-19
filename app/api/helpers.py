@@ -132,9 +132,7 @@ def user_info(user):
         supplier_code = None
 
     try:
-        user_framework = current_user.frameworks[0] if current_user.frameworks else 'digital-marketplace'
-        if hasattr(user_framework, 'framework'):
-            framework = user_framework.framework.slug
+        framework = current_user.frameworks[0].framework.slug if current_user.frameworks else 'digital-marketplace'
     except AttributeError:
         framework = None
 
