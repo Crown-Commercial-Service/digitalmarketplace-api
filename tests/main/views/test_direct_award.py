@@ -699,6 +699,19 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
                 db.session.add(DirectAwardSearchResultEntry(archived_service_id=archived_service.id,
                                                             search_id=self.search_id))
             db.session.commit()
+            expected_service_response = [{
+                'id': service.service_id,
+                'projectId': self.project_external_id,
+                'supplier': {
+                    'name': service.supplier.name,
+                    'contact': {
+                        'name': service.supplier.contact_information[0].contact_name,
+                        'phone': service.supplier.contact_information[0].phone_number,
+                        'email': service.supplier.contact_information[0].email,
+                    },
+                },
+                'data': {},
+            } for service in archived_services]
 
             res = self.client.get('/direct-award/projects/{}/services'.format(self.project_external_id))
             assert res.status_code == 200
@@ -710,20 +723,7 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
             assert data['links'] == {'self': 'http://127.0.0.1:5000/direct-award/projects/{}/services'.format(
                 self.project_external_id
             )}
-            for service in data['services']:
-                assert service in [{
-                    'id': service.service_id,
-                    'projectId': self.project_external_id,
-                    'supplier': {
-                        'name': service.supplier.name,
-                        'contact': {
-                            'name': service.supplier.contact_information[0].contact_name,
-                            'phone': service.supplier.contact_information[0].phone_number,
-                            'email': service.supplier.contact_information[0].email,
-                        },
-                    },
-                    'data': {},
-                } for service in archived_services]
+            assert data['services'] == expected_service_response
 
     def test_list_project_services_returns_requested_fields_in_service_data(self):
         with self.app.app_context():
@@ -736,6 +736,7 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
                 db.session.add(DirectAwardSearchResultEntry(archived_service_id=archived_service.id,
                                                             search_id=self.search_id))
             db.session.commit()
+            service_name = archived_services[0].data['serviceName']
 
             res = self.client.get('/direct-award/projects/{}/services?fields=serviceName'.format(
                 self.project_external_id)
@@ -743,7 +744,7 @@ class TestDirectAwardListProjectServices(DirectAwardSetupAndTeardown):
             assert res.status_code == 200
 
             data = json.loads(res.get_data(as_text=True))
-            assert data['services'][0]['data'] == {'serviceName': archived_services[0].data['serviceName']}
+            assert data['services'][0]['data'] == {'serviceName': service_name}
             assert data['links'] == {
                 'self': 'http://127.0.0.1:5000/direct-award/projects/{}/services?fields=serviceName'.format(
                     self.project_external_id
