@@ -4,7 +4,6 @@ import pytest
 
 from dmapiclient import HTTPError
 from flask import current_app
-from nose.tools import assert_equal
 from werkzeug.exceptions import BadRequest, HTTPException
 
 from app.utils import (
@@ -277,7 +276,7 @@ def test_purge_nulls():
         'serviceName': 'Service with nulls',
         'price': 'Not a lot'
     }
-    assert_equal(purge_nulls_from_data(service_with_nulls), same_service_without_nulls)
+    assert purge_nulls_from_data(service_with_nulls) == same_service_without_nulls
 
 
 def test_json_has_keys():

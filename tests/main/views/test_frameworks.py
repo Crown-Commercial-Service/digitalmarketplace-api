@@ -1,7 +1,6 @@
 import datetime
 
 from flask import json
-from nose.tools import assert_equal, assert_in
 from freezegun import freeze_time
 import mock
 from sqlalchemy.exc import IntegrityError
@@ -17,26 +16,23 @@ class TestListFrameworks(BaseApplicationTest):
             response = self.client.get('/frameworks')
             data = json.loads(response.get_data())
 
-            assert_equal(response.status_code, 200)
-            assert_equal(len(data['frameworks']),
-                         len(Framework.query.all()))
-            assert_equal(
-                set(data['frameworks'][0].keys()),
-                set([
-                    'clarificationQuestionsOpen',
-                    'framework',
-                    'frameworkAgreementVersion',
-                    'frameworkAgreementDetails',
-                    'id',
-                    'lots',
-                    'name',
-                    'slug',
-                    'status',
-                    'variations',
-                    'countersignerName',
-                    'applicationCloseDate',
-                    'allowDeclarationReuse',
-                ]))
+            assert response.status_code == 200
+            assert len(data['frameworks']) == len(Framework.query.all())
+            assert set(data['frameworks'][0].keys()) == set([
+                'clarificationQuestionsOpen',
+                'framework',
+                'frameworkAgreementVersion',
+                'frameworkAgreementDetails',
+                'id',
+                'lots',
+                'name',
+                'slug',
+                'status',
+                'variations',
+                'countersignerName',
+                'applicationCloseDate',
+                'allowDeclarationReuse',
+            ])
 
 
 class TestCreateFramework(BaseApplicationTest):
@@ -146,9 +142,9 @@ class TestGetFramework(BaseApplicationTest):
             response = self.client.get('/frameworks/g-cloud-7')
             data = json.loads(response.get_data())
 
-            assert_equal(response.status_code, 200)
-            assert_equal(data['frameworks']['slug'], 'g-cloud-7')
-            assert_in('status', data['frameworks'])
+            assert response.status_code == 200
+            assert data['frameworks']['slug'] == 'g-cloud-7'
+            assert 'status' in data['frameworks']
 
     def test_framework_lots_are_returned(self):
         with self.app.app_context():
@@ -198,7 +194,7 @@ class TestGetFramework(BaseApplicationTest):
         with self.app.app_context():
             response = self.client.get('/frameworks/biscuits-for-gov')
 
-            assert_equal(response.status_code, 404)
+            assert response.status_code == 404
 
 
 class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
@@ -561,7 +557,7 @@ class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
     def test_stats_are_for_g_cloud_7_only(self):
         self.setup_data('g-cloud-6')
         response = self.client.get('/frameworks/g-cloud-7/stats')
-        assert_equal(json.loads(response.get_data()), {
+        assert json.loads(response.get_data()) == {
             u'interested_suppliers': [],
             u'services': [],
             u'supplier_users': [
@@ -569,7 +565,7 @@ class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
                 {u'count': 2, u'recent_login': None},
                 {u'count': 5, u'recent_login': True},
             ]
-        })
+        }
 
     def test_stats_handles_null_declarations(self):
         self.setup_data('g-cloud-7')
@@ -968,12 +964,12 @@ class TestGetFrameworkInterest(BaseApplicationTest, FixtureMixin):
         with self.app.app_context():
             response = self.client.get('/frameworks/g-cloud-7/interest')
 
-            assert_equal(response.status_code, 200)
+            assert response.status_code == 200
             data = json.loads(response.get_data())
-            assert_equal(data['interestedSuppliers'], [0, 1, 2, 3, 4])
+            assert data['interestedSuppliers'] == [0, 1, 2, 3, 4]
 
     def test_a_404_is_raised_if_it_does_not_exist(self):
         with self.app.app_context():
             response = self.client.get('/frameworks/biscuits-for-gov/interest')
 
-            assert_equal(response.status_code, 404)
+            assert response.status_code == 404

@@ -5,7 +5,6 @@ import json
 
 import pytest
 import mock
-from nose.tools import assert_equal
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.utils import drop_foreign_fields
@@ -120,14 +119,10 @@ def test_updater_json_validates_correctly():
     invalid_updater_only_invalid_fields = {'invalid': 'this'}
     valid_updater = {'updated_by': 'this'}
 
-    assert_equal(validates_against_schema(
-        'services-update', invalid_updater_no_fields), False)
-    assert_equal(validates_against_schema(
-        'services-update', invalid_updater_extra_fields), True)
-    assert_equal(validates_against_schema(
-        'services-update', invalid_updater_only_invalid_fields), False)
-    assert_equal(validates_against_schema(
-        'services-update', valid_updater), True)
+    assert validates_against_schema('services-update', invalid_updater_no_fields) is False
+    assert validates_against_schema('services-update', invalid_updater_extra_fields) is True
+    assert validates_against_schema('services-update', invalid_updater_only_invalid_fields) is False
+    assert validates_against_schema('services-update', valid_updater) is True
 
 
 def test_user_creation_validates():
@@ -454,7 +449,7 @@ def test_max_price_larger_than_min_price_with_multiple_price_fields():
         'windowCleanerPriceMax': '300',
     }
     errors = min_price_less_than_max_price({}, data)
-    assert_equal(errors, {'developerPriceMax': 'max_less_than_min'})
+    assert errors == {'developerPriceMax': 'max_less_than_min'}
 
 
 def test_max_price_larger_than_min_price_with_multiple_price_errors():
@@ -469,7 +464,7 @@ def test_max_price_larger_than_min_price_with_multiple_price_errors():
         'windowCleanerPriceMax': '300',
     }
     errors = min_price_less_than_max_price({}, data)
-    assert_equal(errors, {'developerPriceMax': 'max_less_than_min', 'designerPriceMax': 'max_less_than_min'})
+    assert errors == {'developerPriceMax': 'max_less_than_min', 'designerPriceMax': 'max_less_than_min'}
 
 
 def test_max_price_larger_than_min_does_not_overwrite_previous_errors():
@@ -485,7 +480,7 @@ def test_max_price_larger_than_min_does_not_overwrite_previous_errors():
     }
     previous_errors = {'designerPriceMax': 'non_curly_quotes'}
     errors = min_price_less_than_max_price(previous_errors, data)
-    assert_equal(errors, {'developerPriceMax': 'max_less_than_min'})
+    assert errors == {'developerPriceMax': 'max_less_than_min'}
 
 
 def test_brief_response_essential_requirements():
