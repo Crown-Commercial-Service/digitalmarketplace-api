@@ -2727,7 +2727,7 @@ class ServiceTypePrice(db.Model):
     service_type_price_ceiling = db.relationship('ServiceTypePriceCeiling', lazy='joined')
     date_from = db.Column(Date, index=False, nullable=False)
     date_to = db.Column(Date, index=False, nullable=False)
-    price = db.Column(db.Numeric, nullable=False)
+    price = db.Column(db.Numeric(asdecimal=False), nullable=False)
     created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
     updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
 
@@ -2773,7 +2773,7 @@ class ServiceTypePriceCeiling(db.Model):
     service_type_id = db.Column(db.Integer, db.ForeignKey('service_type.id'), nullable=False)
     sub_service_id = db.Column(db.Integer, db.ForeignKey('service_sub_type.id'), nullable=False)
     region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
-    price = db.Column(db.Numeric, nullable=False)
+    price = db.Column(db.Numeric(asdecimal=False), nullable=False)
     created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
     updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
 
