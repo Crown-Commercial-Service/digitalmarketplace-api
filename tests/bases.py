@@ -54,17 +54,19 @@ class BaseApplicationTest(object):
         )
         self.app.test_client_class = TestClient
         self.client = self.app.test_client()
+        self.app_context = self.app.app_context()
+        self.app_context.push()
 
     def teardown(self):
-        with self.app.app_context():
-            db.session.remove()
-            for table in reversed(db.metadata.sorted_tables):
-                if table.name not in ["lots", "frameworks", "framework_lots"]:
-                    db.engine.execute(table.delete())
-            FrameworkLot.query.filter(FrameworkLot.framework_id >= 100).delete()
-            Framework.query.filter(Framework.id >= 100).delete()
-            db.session.commit()
-            db.get_engine(self.app).dispose()
+        db.session.remove()
+        for table in reversed(db.metadata.sorted_tables):
+            if table.name not in ["lots", "frameworks", "framework_lots"]:
+                db.engine.execute(table.delete())
+        FrameworkLot.query.filter(FrameworkLot.framework_id >= 100).delete()
+        Framework.query.filter(Framework.id >= 100).delete()
+        db.session.commit()
+        db.get_engine(self.app).dispose()
+        self.app_context.pop()
 
 
 class JSONTestMixin(object):
