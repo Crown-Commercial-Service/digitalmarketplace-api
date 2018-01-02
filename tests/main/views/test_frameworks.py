@@ -36,7 +36,6 @@ class TestListFrameworks(BaseApplicationTest):
 
 
 class TestCreateFramework(BaseApplicationTest):
-
     def framework(self, **kwargs):
         return {
             "frameworks": {

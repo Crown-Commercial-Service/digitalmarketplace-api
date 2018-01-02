@@ -763,25 +763,16 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
 
     def setup(self):
         super(TestSetSupplierDeclarations, self).setup()
-        with self.app.app_context():
-            framework = Framework(
-                slug='test-open',
-                name='Test open',
-                framework='g-cloud',
-                status='open')
-            db.session.add(framework)
-            db.session.commit()
+        # This is automatically removed in BaseApplicationTest.teardown
+        framework = Framework(
+            id=100,
+            slug='test-open',
+            name='Test open',
+            framework='g-cloud',
+            status='open')
+        db.session.add(framework)
+        db.session.commit()
         self.setup_dummy_suppliers(1)
-
-    def teardown(self):
-        super(TestSetSupplierDeclarations, self).teardown()
-        with self.app.app_context():
-            frameworks = Framework.query.filter(
-                Framework.slug.like('test-%')
-            ).all()
-            for framework in frameworks:
-                db.session.delete(framework)
-            db.session.commit()
 
     def test_add_new_declaration(self):
         with self.app.app_context():
