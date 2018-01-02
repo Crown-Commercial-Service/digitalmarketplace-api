@@ -29,20 +29,18 @@ def test_link():
 
 class TestJSONHasRequiredKeys(BaseApplicationTest):
     def test_json_has_required_keys(self):
-        with self.app.app_context():
-            sample_json = {"name": "Linus",
-                           "favourite_kitten": "all of them"}
-            keys = ["name", "favourite_kitten", "gender"]
-            with pytest.raises(HTTPException):
-                json_has_required_keys(sample_json, keys)
+        sample_json = {"name": "Linus",
+                       "favourite_kitten": "all of them"}
+        keys = ["name", "favourite_kitten", "gender"]
+        with pytest.raises(HTTPException):
+            json_has_required_keys(sample_json, keys)
 
 
 class TestJSONHasMatchingId(BaseApplicationTest):
     def test_json_has_matching_id(self):
         self.data = {"id": 123456}
-        with self.app.app_context():
-            with pytest.raises(HTTPException):
-                json_has_matching_id(self.data, 78910)
+        with pytest.raises(HTTPException):
+            json_has_matching_id(self.data, 78910)
 
 
 class TestKeyFilterJSON(object):
@@ -78,19 +76,18 @@ class TestKeyFilterJSON(object):
 @mock.patch('app.utils.search_api_client', autospec=True)
 class TestIndexObject(BaseApplicationTest):
     def test_calls_the_search_api_index_method_correctly(self, search_api_client):
-        with self.app.app_context():
-            for framework, doc_type_to_index_mapping in current_app.config['DM_FRAMEWORK_TO_ES_INDEX'].items():
-                for doc_type, index_name in doc_type_to_index_mapping.items():
+        for framework, doc_type_to_index_mapping in current_app.config['DM_FRAMEWORK_TO_ES_INDEX'].items():
+            for doc_type, index_name in doc_type_to_index_mapping.items():
 
-                    index_object(framework, doc_type, 123, {'serialized': 'object'})
+                index_object(framework, doc_type, 123, {'serialized': 'object'})
 
-                    search_api_client.index.assert_called_once_with(
-                        index_name=index_name,
-                        object_id=123,
-                        serialized_object={'serialized': 'object'},
-                        doc_type=doc_type,
-                    )
-                    search_api_client.reset_mock()
+                search_api_client.index.assert_called_once_with(
+                    index_name=index_name,
+                    object_id=123,
+                    serialized_object={'serialized': 'object'},
+                    doc_type=doc_type,
+                )
+                search_api_client.reset_mock()
 
     @mock.patch('app.utils.current_app')
     def test_logs_an_error_message_if_no_mapping_found(self, current_app, search_api_client):
@@ -133,7 +130,7 @@ class TestResultResponses(BaseApplicationTest):
         return result
 
     def test_single_result_response(self):
-        with self.app.app_context() and self.app.test_request_context("/"):
+        with self.app.test_request_context("/"):
             result = self._get_single_result_mock()
 
             response = single_result_response("name", result)
@@ -142,7 +139,7 @@ class TestResultResponses(BaseApplicationTest):
             result.serialize.assert_called_once()
 
     def test_single_result_response_with_serialize_kwargs(self):
-        with self.app.app_context() and self.app.test_request_context("/"):
+        with self.app.test_request_context("/"):
             result = self._get_single_result_mock()
 
             response = single_result_response("name", result, {"do": "this"})
@@ -159,7 +156,7 @@ class TestResultResponses(BaseApplicationTest):
         return result, results_query
 
     def test_list_result_response(self):
-        with self.app.app_context() and self.app.test_request_context("/"):
+        with self.app.test_request_context("/"):
             result, results_query = self._get_list_result_mocks()
 
             response = list_result_response("name", results_query)
@@ -171,7 +168,7 @@ class TestResultResponses(BaseApplicationTest):
             assert result.serialize.call_count == 2
 
     def test_list_result_response_with_serialize_kwargs(self):
-        with self.app.app_context() and self.app.test_request_context("/"):
+        with self.app.test_request_context("/"):
             result, results_query = self._get_list_result_mocks()
 
             response = list_result_response("name", results_query, {"do": "this"})
@@ -198,7 +195,7 @@ class TestResultResponses(BaseApplicationTest):
 
     @mock.patch('app.utils.pagination_links', autospec=True)
     def test_paginated_result_response(self, pagination_links):
-        with self.app.app_context() and self.app.test_request_context("/"):
+        with self.app.test_request_context("/"):
             result, results_query, pagination = self._get_paginated_result_mocks()
             pagination_links.return_value = {"paginated": "links"}
 
@@ -215,7 +212,7 @@ class TestResultResponses(BaseApplicationTest):
 
     @mock.patch('app.utils.pagination_links', autospec=True)
     def test_paginated_result_response_with_serialize_kwargs(self, pagination_links):
-        with self.app.app_context() and self.app.test_request_context("/"):
+        with self.app.test_request_context("/"):
             result, results_query, pagination = self._get_paginated_result_mocks()
             pagination_links.return_value = {"paginated": "links"}
 

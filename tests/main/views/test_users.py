@@ -43,14 +43,13 @@ class BaseUserTest(BaseApplicationTest):
 
 class TestUsersAuth(BaseUserTest):
     def create_user(self):
-        with self.app.app_context():
-            user = {
-                'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
-                'password': '1234567890',
-                'role': 'admin',
-                'name': 'joe bloggs'
-            }
-            self._post_user(user)
+        user = {
+            'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+            'password': '1234567890',
+            'role': 'admin',
+            'name': 'joe bloggs'
+        }
+        self._post_user(user)
 
     def valid_login(self):
         return self._return_post_login()
@@ -63,59 +62,55 @@ class TestUsersAuth(BaseUserTest):
 
     def test_should_validate_credentials(self):
         self.create_user()
-        with self.app.app_context():
-            response = self.valid_login()
+        response = self.valid_login()
 
-            data = json.loads(response.get_data())['users']
-            assert data['emailAddress'] == 'joeblogs@digital.cabinet-office.gov.uk'
+        data = json.loads(response.get_data())['users']
+        assert data['emailAddress'] == 'joeblogs@digital.cabinet-office.gov.uk'
 
     def test_should_validate_mixedcase_credentials(self):
         self.create_user()
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'JOEbloGS@digital.cabinet-office.gov.uk',
-                        'password': '1234567890'}}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'JOEbloGS@digital.cabinet-office.gov.uk',
+                    'password': '1234567890'}}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['emailAddress'] == 'joeblogs@digital.cabinet-office.gov.uk'
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['emailAddress'] == 'joeblogs@digital.cabinet-office.gov.uk'
 
     def test_should_return_404_for_no_user(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
-                        'password': '1234567890'}}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'password': '1234567890'}}),
+            content_type='application/json')
 
-            assert response.status_code == 404
-            data = json.loads(response.get_data())
-            assert data['authorization'] is False
+        assert response.status_code == 404
+        data = json.loads(response.get_data())
+        assert data['authorization'] is False
 
     def test_should_return_403_for_bad_password(self):
         self.create_user()
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
-                        'password': 'this is not right'}}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'password': 'this is not right'}}),
+            content_type='application/json')
 
-            assert response.status_code == 403
-            data = json.loads(response.get_data())
-            assert data['authorization'] is False
+        assert response.status_code == 403
+        data = json.loads(response.get_data())
+        assert data['authorization'] is False
 
     def test_logged_in_at_is_updated_on_successful_login(self):
         self.create_user()
-        with self.app.app_context(), freeze_time('2015-06-06'):
+        with freeze_time('2015-06-06'):
             self.valid_login()
             user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
@@ -123,7 +118,7 @@ class TestUsersAuth(BaseUserTest):
 
     def test_logged_in_at_is_not_updated_on_failed_login(self):
         self.create_user()
-        with self.app.app_context(), freeze_time('2015-06-06'):
+        with freeze_time('2015-06-06'):
             self.invalid_password()
             user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
@@ -131,44 +126,40 @@ class TestUsersAuth(BaseUserTest):
 
     def test_failed_login_should_increment_failed_login_counter(self):
         self.create_user()
-        with self.app.app_context():
-            self.invalid_password()
-            user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
+        self.invalid_password()
+        user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
-            assert user.failed_login_count == 1
+        assert user.failed_login_count == 1
 
     def test_successful_login_resets_failed_login_counter(self):
         self.create_user()
-        with self.app.app_context():
-            self.invalid_password()
-            self.valid_login()
+        self.invalid_password()
+        self.valid_login()
 
-            user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
-            assert user.failed_login_count == 0
+        user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
+        assert user.failed_login_count == 0
 
     def test_user_is_locked_after_too_many_failed_login_attempts(self):
         self.create_user()
 
         self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
 
-        with self.app.app_context():
-            self.invalid_password()
-            user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
+        self.invalid_password()
+        user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
-            assert user.locked is True
+        assert user.locked is True
 
     def test_all_login_attempts_fail_for_locked_users(self):
         self.create_user()
 
         self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
 
-        with self.app.app_context():
-            user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
+        user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
-            user.failed_login_count = 1
-            db.session.add(user)
-            db.session.commit()
-            self._return_post_login(status_code=403)
+        user.failed_login_count = 1
+        db.session.add(user)
+        db.session.commit()
+        self._return_post_login(status_code=403)
 
 
 class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
@@ -476,42 +467,40 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         assert response.status_code == 400
 
     def test_can_post_a_user_with_hashed_password(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users',
-                data=json.dumps({
-                    'users': {
-                        'hashpw': True,
-                        'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
-                        'password': '1234567890',
-                        'role': 'admin',
-                        'name': 'joe bloggs'}}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'hashpw': True,
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'password': '1234567890',
+                    'role': 'admin',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
 
-            assert response.status_code == 201
-            user = User.query.filter(
-                User.email_address == 'joeblogs@digital.cabinet-office.gov.uk') \
-                .first()
-            assert user.password != '1234567890'
+        assert response.status_code == 201
+        user = User.query.filter(
+            User.email_address == 'joeblogs@digital.cabinet-office.gov.uk') \
+            .first()
+        assert user.password != '1234567890'
 
     def test_can_post_a_user_without_hashed_password(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users',
-                data=json.dumps({
-                    'users': {
-                        'hashpw': False,
-                        'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
-                        'password': '1234567890',
-                        'role': 'admin',
-                        'name': 'joe bloggs'}}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users',
+            data=json.dumps({
+                'users': {
+                    'hashpw': False,
+                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
+                    'password': '1234567890',
+                    'role': 'admin',
+                    'name': 'joe bloggs'}}),
+            content_type='application/json')
 
-            assert response.status_code == 201
-            user = User.query.filter(
-                User.email_address == 'joeblogs@digital.cabinet-office.gov.uk') \
-                .first()
-            assert user.password == '1234567890'
+        assert response.status_code == 201
+        user = User.query.filter(
+            User.email_address == 'joeblogs@digital.cabinet-office.gov.uk') \
+            .first()
+        assert user.password == '1234567890'
 
     def test_posting_same_email_twice_is_an_error(self):
         response = self.client.post(
@@ -592,366 +581,353 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     def setup(self):
         now = datetime.utcnow()
         super(TestUsersUpdate, self).setup()
-        with self.app.app_context():
-            self.setup_default_buyer_domain()
-            user = User(
-                id=123,
-                email_address="test@digital.gov.uk",
-                name="my name",
-                password=encryption.hashpw("my long password"),
-                active=True,
-                role='buyer',
-                created_at=now,
-                updated_at=now,
-                password_changed_at=now
-            )
-            supplier = Supplier(
-                supplier_id=456,
-                name="A test supplier"
-            )
-            supplier_user = User(
-                id=456,
-                email_address="supplier@digital.gov.uk",
-                name="my supplier name",
-                password=encryption.hashpw("my long password"),
-                active=True,
-                role='supplier',
-                created_at=now,
-                updated_at=now,
-                supplier_id=456,
-                password_changed_at=now
-            )
-            admin_user = User(
-                id=789,
-                email_address="admin@digital.cabinet-office.gov.uk",
-                name="my admin name",
-                password=encryption.hashpw("my long password"),
-                active=True,
-                role='admin',
-                created_at=now,
-                updated_at=now,
-                password_changed_at=now
-            )
-            db.session.add(supplier)
-            db.session.add(user)
-            db.session.add(supplier_user)
-            db.session.add(admin_user)
-            db.session.commit()
+        self.setup_default_buyer_domain()
+        user = User(
+            id=123,
+            email_address="test@digital.gov.uk",
+            name="my name",
+            password=encryption.hashpw("my long password"),
+            active=True,
+            role='buyer',
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now
+        )
+        supplier = Supplier(
+            supplier_id=456,
+            name="A test supplier"
+        )
+        supplier_user = User(
+            id=456,
+            email_address="supplier@digital.gov.uk",
+            name="my supplier name",
+            password=encryption.hashpw("my long password"),
+            active=True,
+            role='supplier',
+            created_at=now,
+            updated_at=now,
+            supplier_id=456,
+            password_changed_at=now
+        )
+        admin_user = User(
+            id=789,
+            email_address="admin@digital.cabinet-office.gov.uk",
+            name="my admin name",
+            password=encryption.hashpw("my long password"),
+            active=True,
+            role='admin',
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now
+        )
+        db.session.add(supplier)
+        db.session.add(user)
+        db.session.add(supplier_user)
+        db.session.add(admin_user)
+        db.session.commit()
 
     def test_can_update_password(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/123',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'password': '1234567890'
-                    }}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'password': '1234567890'
+                }}),
+            content_type='application/json')
 
-            assert response.status_code == 200
+        assert response.status_code == 200
 
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
-                        'password': '1234567890'}}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'test@digital.gov.uk',
+                    'password': '1234567890'}}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['emailAddress'] == 'test@digital.gov.uk'
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['emailAddress'] == 'test@digital.gov.uk'
 
     def test_updating_password_unlocks_user(self):
         self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
 
-        with self.app.app_context():
-            # lock the user using failed auth
-            self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
-                        'password': 'invalid'}
-                }),
-                content_type='application/json'
-            )
+        # lock the user using failed auth
+        self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'test@digital.gov.uk',
+                    'password': 'invalid'}
+            }),
+            content_type='application/json'
+        )
 
-            response = self.client.get(
-                '/users/123',
-                content_type='application/json')
+        response = self.client.get(
+            '/users/123',
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['locked'] is True
-            assert data['failedLoginCount'] == 1
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['locked'] is True
+        assert data['failedLoginCount'] == 1
 
-            response = self.client.post(
-                '/users/123',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'password': 'newpassword'
-                    }}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'password': 'newpassword'
+                }}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['locked'] is False
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['locked'] is False
 
-            response = self.client.get('/users/123', content_type='application/json')
+        response = self.client.get('/users/123', content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['locked'] is False
-            assert data['failedLoginCount'] == 0
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['locked'] is False
+        assert data['failedLoginCount'] == 0
 
     def test_new_password_is_not_audited(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/123',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'password': 'not-in-my-audit-event'
-                    }}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'password': 'not-in-my-audit-event'
+                }}),
+            content_type='application/json')
 
-            assert response.status_code == 200
+        assert response.status_code == 200
 
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
-                        'password': 'not-in-my-audit-event'}}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'test@digital.gov.uk',
+                    'password': 'not-in-my-audit-event'}}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['emailAddress'] == 'test@digital.gov.uk'
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['emailAddress'] == 'test@digital.gov.uk'
 
-            audit_response = self.client.get('/audit-events')
-            assert audit_response.status_code == 200
-            data = json.loads(audit_response.get_data())
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data())
 
-            assert len(data['auditEvents']) == 1
-            assert data['auditEvents'][0]['type'] == 'update_user'
-            assert data['auditEvents'][0]['data']['update']['password'] == 'updated'
-            assert "not-in-my-audit-event" not in "{}".format(data)
+        assert len(data['auditEvents']) == 1
+        assert data['auditEvents'][0]['type'] == 'update_user'
+        assert data['auditEvents'][0]['data']['update']['password'] == 'updated'
+        assert "not-in-my-audit-event" not in "{}".format(data)
 
     def test_can_update_active(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/123',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'active': False
-                    }}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'active': False
+                }}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['active'] is False
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['active'] is False
 
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
-                        'password': 'my long password'}}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'test@digital.gov.uk',
+                    'password': 'my long password'}}),
+            content_type='application/json')
 
-            assert response.status_code == 403
+        assert response.status_code == 403
 
     def test_can_unlock_user(self):
 
         self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
 
-        with self.app.app_context():
+        # lock the user using failed auth
+        self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'test@digital.gov.uk',
+                    'password': 'invalid'}
+            }),
+            content_type='application/json'
+        )
 
-            # lock the user using failed auth
-            self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
-                        'password': 'invalid'}
-                }),
-                content_type='application/json'
-            )
+        response = self.client.get(
+            '/users/123',
+            content_type='application/json')
 
-            response = self.client.get(
-                '/users/123',
-                content_type='application/json')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['locked'] is True
+        assert data['failedLoginCount'] == 1
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['locked'] is True
-            assert data['failedLoginCount'] == 1
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'locked': False
+                }}),
+            content_type='application/json')
 
-            response = self.client.post(
-                '/users/123',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'locked': False
-                    }}),
-                content_type='application/json')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['locked'] is False
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['locked'] is False
+        response = self.client.get(
+            '/users/123',
+            content_type='application/json')
 
-            response = self.client.get(
-                '/users/123',
-                content_type='application/json')
-
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['locked'] is False
-            assert data['failedLoginCount'] == 0
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['locked'] is False
+        assert data['failedLoginCount'] == 0
 
     def test_cant_lock_a_user(self):
-        with self.app.app_context():
+        response = self.client.get(
+            '/users/123',
+            content_type='application/json')
 
-            response = self.client.get(
-                '/users/123',
-                content_type='application/json')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['locked'] is False
+        assert data['failedLoginCount'] == 0
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['locked'] is False
-            assert data['failedLoginCount'] == 0
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'locked': True
+                }}),
+            content_type='application/json')
 
-            response = self.client.post(
-                '/users/123',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'locked': True
-                    }}),
-                content_type='application/json')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['locked'] is False
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['locked'] is False
+        response = self.client.get(
+            '/users/123',
+            content_type='application/json')
 
-            response = self.client.get(
-                '/users/123',
-                content_type='application/json')
-
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['locked'] is False
-            assert data['failedLoginCount'] == 0
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['locked'] is False
+        assert data['failedLoginCount'] == 0
 
     def test_can_update_name(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/123',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'name': 'I Just Got Married'
-                    }}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'name': 'I Just Got Married'
+                }}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['name'] == 'I Just Got Married'
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['name'] == 'I Just Got Married'
 
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
-                        'password': 'my long password'}}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'test@digital.gov.uk',
+                    'password': 'my long password'}}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['name'] == 'I Just Got Married'
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['name'] == 'I Just Got Married'
 
     def test_update_creates_audit_event(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/123',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'name': 'I Just Got Married'
-                    }}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'name': 'I Just Got Married'
+                }}),
+            content_type='application/json')
 
-            assert response.status_code == 200
+        assert response.status_code == 200
 
-            audit_response = self.client.get('/audit-events')
-            assert audit_response.status_code == 200
-            data = json.loads(audit_response.get_data())
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data())
 
-            assert len(data['auditEvents']) == 1
-            assert data['auditEvents'][0]['type'] == 'update_user'
-            assert data['auditEvents'][0]['data']['update']['name'] == 'I Just Got Married'
+        assert len(data['auditEvents']) == 1
+        assert data['auditEvents'][0]['type'] == 'update_user'
+        assert data['auditEvents'][0]['data']['update']['name'] == 'I Just Got Married'
 
     def test_can_update_role_and_suppler_id(self):
-        with self.app.app_context():
-            # Converts admin user 789 to a supplier user (a bit of an odd scenario, but it's possible...)
-            response = self.client.post(
-                '/users/789',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'role': 'supplier',
-                        'supplierId': 456
-                    }}),
-                content_type='application/json')
+        # Converts admin user 789 to a supplier user (a bit of an odd scenario, but it's possible...)
+        response = self.client.post(
+            '/users/789',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'role': 'supplier',
+                    'supplierId': 456
+                }}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['role'] == 'supplier'
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['role'] == 'supplier'
 
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'admin@digital.cabinet-office.gov.uk',
-                        'password': 'my long password'}}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'admin@digital.cabinet-office.gov.uk',
+                    'password': 'my long password'}}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['role'] == 'supplier'
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['role'] == 'supplier'
 
     def test_can_update_role_to_buyer_from_supplier(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/123',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'role': 'buyer'
-                    }}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'role': 'buyer'
+                }}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['role'] == 'buyer'
-            assert data.get('supplierId', None) is None
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['role'] == 'buyer'
+        assert data.get('supplierId', None) is None
 
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'test@digital.gov.uk',
-                        'password': 'my long password'}}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'test@digital.gov.uk',
+                    'password': 'my long password'}}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['role'] == 'buyer'
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['role'] == 'buyer'
 
     def test_cannot_update_supplier_user_with_invalid_email_address_to_buyer(self):
         response = self.client.post(
@@ -990,51 +966,48 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert json.loads(response.get_data())['error'] == 'invalid_buyer_domain'
 
     def test_can_update_role_to_buyer_from_supplier_ignoring_supplier_id(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/456',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'role': 'buyer',
-                        'supplierId': 456
-                    }}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/456',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'role': 'buyer',
+                    'supplierId': 456
+                }}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['role'] == 'buyer'
-            assert data.get('supplierId', None) is None
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['role'] == 'buyer'
+        assert data.get('supplierId', None) is None
 
     def test_can_not_update_role_from_buyer(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/123',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'role': 'admin'
-                    }}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'role': 'admin'
+                }}),
+            content_type='application/json')
 
-            assert response.status_code == 400
-            error_message = json.loads(response.get_data())['error']
-            assert error_message == "Can not change a 'buyer' user to a different role."
+        assert response.status_code == 400
+        error_message = json.loads(response.get_data())['error']
+        assert error_message == "Can not change a 'buyer' user to a different role."
 
     def test_can_not_update_role_to_invalid_value(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/456',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'role': 'shopkeeper'
-                    }}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/456',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'role': 'shopkeeper'
+                }}),
+            content_type='application/json')
 
-            data = json.loads(response.get_data())["error"]
-            assert response.status_code == 400
-            assert "Could not update user" in data
+        data = json.loads(response.get_data())["error"]
+        assert response.status_code == 400
+        assert "Could not update user" in data
 
     def test_supplier_role_update_requires_supplier_id(self):
         response = self.client.post(
@@ -1051,31 +1024,30 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert "'supplierId' is required for users with 'supplier' role" in data
 
     def test_can_update_email_address(self):
-        with self.app.app_context():
-            response = self.client.post(
-                '/users/123',
-                data=json.dumps({
-                    "updated_by": "a.user",
-                    'users': {
-                        'emailAddress': 'myshinynew@digital.gov.uk'
-                    }}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'emailAddress': 'myshinynew@digital.gov.uk'
+                }}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['emailAddress'] == 'myshinynew@digital.gov.uk'
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['emailAddress'] == 'myshinynew@digital.gov.uk'
 
-            response = self.client.post(
-                '/users/auth',
-                data=json.dumps({
-                    'authUsers': {
-                        'emailAddress': 'myshinynew@digital.gov.uk',
-                        'password': 'my long password'}}),
-                content_type='application/json')
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'myshinynew@digital.gov.uk',
+                    'password': 'my long password'}}),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())['users']
-            assert data['emailAddress'] == 'myshinynew@digital.gov.uk'
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['emailAddress'] == 'myshinynew@digital.gov.uk'
 
 
 class TestUsersGet(BaseUserTest, FixtureMixin):
@@ -1087,9 +1059,8 @@ class TestUsersGet(BaseUserTest, FixtureMixin):
         # get the last supplier_id returned
         # it turns out we have some logic that doesn't recognise "0" as a supplier_id for users
         self.supplier_id = self.setup_dummy_suppliers(2)[-1]
-        with self.app.app_context():
-            self.setup_default_buyer_domain()
-            self._post_users()
+        self.setup_default_buyer_domain()
+        self._post_users()
 
     def _post_users(self):
         users = [
@@ -1122,34 +1093,30 @@ class TestUsersGet(BaseUserTest, FixtureMixin):
         assert ('password' in user_from_api) is False
 
     def test_can_get_a_user_by_id(self):
-        with self.app.app_context():
-            response = self.client.get("/users/{}".format(self.users[0]["id"]))
-            assert response.status_code == 200
-            data = json.loads(response.get_data())["users"]
-            self._assert_things_about_users(data, self.users[0])
+        response = self.client.get("/users/{}".format(self.users[0]["id"]))
+        assert response.status_code == 200
+        data = json.loads(response.get_data())["users"]
+        self._assert_things_about_users(data, self.users[0])
 
     def test_can_get_a_user_by_email(self):
-        with self.app.app_context():
-            response = self.client.get("/users?email_address=j@examplecompany.biz")
-            assert response.status_code == 200
-            data = json.loads(response.get_data())["users"][0]
-            self._assert_things_about_users(data, self.users[0])
+        response = self.client.get("/users?email_address=j@examplecompany.biz")
+        assert response.status_code == 200
+        data = json.loads(response.get_data())["users"][0]
+        self._assert_things_about_users(data, self.users[0])
 
     def test_can_list_users(self):
-        with self.app.app_context():
-            response = self.client.get("/users")
-            assert response.status_code == 200
-            data = json.loads(response.get_data())["users"]
-            for index, user in enumerate(data):
-                self._assert_things_about_users(user, self.users[index])
+        response = self.client.get("/users")
+        assert response.status_code == 200
+        data = json.loads(response.get_data())["users"]
+        for index, user in enumerate(data):
+            self._assert_things_about_users(user, self.users[index])
 
     def test_can_list_users_by_supplier_id(self):
-        with self.app.app_context():
-            response = self.client.get("/users?supplier_id={}".format(self.supplier_id))
-            assert response.status_code == 200
-            data = json.loads(response.get_data())["users"]
-            for index, user in enumerate(data):
-                self._assert_things_about_users(user, self.users[index])
+        response = self.client.get("/users?supplier_id={}".format(self.supplier_id))
+        assert response.status_code == 200
+        data = json.loads(response.get_data())["users"]
+        for index, user in enumerate(data):
+            self._assert_things_about_users(user, self.users[index])
 
     def test_returns_404_for_non_int_id(self):
         response = self.client.get("/users/bogus")
@@ -1217,11 +1184,10 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
 
     def setup(self):
         super(TestUsersExport, self).setup()
-        with self.app.app_context():
-            self.setup_default_buyer_domain()
-            self.framework_slug = 'digital-outcomes-and-specialists'
-            self.set_framework_status(self.framework_slug, 'open')
-            self.updater_json = {'updated_by': 'Paul'}
+        self.setup_default_buyer_domain()
+        self.framework_slug = 'digital-outcomes-and-specialists'
+        self.set_framework_status(self.framework_slug, 'open')
+        self.updater_json = {'updated_by': 'Paul'}
 
     def _post_users(self):
         users = [
@@ -1341,12 +1307,10 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         assert response.status_code == 200
 
     def _set_framework_status(self, status='pending'):
-        with self.app.app_context():
-            self.set_framework_status(self.framework_slug, status)
+        self.set_framework_status(self.framework_slug, status)
 
     def _set_framework_variation(self):
-        with self.app.app_context():
-            self.set_framework_variation(self.framework_slug)
+        self.set_framework_variation(self.framework_slug)
 
     def _return_users_export(self):
         response = self.client.get('/users/export/{}'.format(self.framework_slug))
@@ -1555,10 +1519,9 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
 
 class TestUsersEmailCheck(BaseUserTest):
     def test_valid_email_is_ok_if_domain_found_in_database(self):
-        with self.app.app_context():
-            # Create a domain that isn't in the buyer-email-domains.txt file
-            db.session.add(BuyerEmailDomain(domain_name="bananas.org"))
-            db.session.commit()
+        # Create a domain that isn't in the buyer-email-domains.txt file
+        db.session.add(BuyerEmailDomain(domain_name="bananas.org"))
+        db.session.commit()
 
         response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@bananas.org'})
         assert response.status_code == 200

@@ -29,35 +29,32 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
             'supplierId': 1
         }
 
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
+        db.session.add(
+            Supplier(supplier_id=1, name=u"Supplier 1")
+        )
+        db.session.add(
+            ContactInformation(
+                supplier_id=1,
+                contact_name=u"Liz",
+                email=u"liz@royal.gov.uk",
+                postcode=u"SW1A 1AA"
             )
-            db.session.add(
-                ContactInformation(
-                    supplier_id=1,
-                    contact_name=u"Liz",
-                    email=u"liz@royal.gov.uk",
-                    postcode=u"SW1A 1AA"
-                )
-            )
-            Framework.query.filter_by(slug='g-cloud-5') \
-                .update(dict(status='live'))
-            Framework.query.filter_by(slug='g-cloud-7') \
-                .update(dict(status='open'))
+        )
+        Framework.query.filter_by(slug='g-cloud-5') \
+            .update(dict(status='live'))
+        Framework.query.filter_by(slug='g-cloud-7') \
+            .update(dict(status='open'))
 
-            self.setup_dummy_service(
-                service_id=self.service_id,
-                **payload
-            )
+        self.setup_dummy_service(
+            service_id=self.service_id,
+            **payload
+        )
 
     def service_count(self):
-        with self.app.app_context():
-            return Service.query.count()
+        return Service.query.count()
 
     def draft_service_count(self):
-        with self.app.app_context():
-            return DraftService.query.count()
+        return DraftService.query.count()
 
     def test_reject_list_drafts_no_supplier_id(self):
         res = self.client.get('/draft-services')
@@ -123,45 +120,44 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         assert json.loads(res.get_data(as_text=True))["error"] == "framework 'this-is-not-valid' not found"
 
     def test_returns_all_drafts_for_supplier_on_single_page(self):
-        with self.app.app_context():
 
-            now = datetime.utcnow()
-            service_ids = [
-                1234567890123411,
-                1234567890123412,
-                1234567890123413,
-                1234567890123414,
-                1234567890123415,
-                1234567890123416,
-                1234567890123417,
-                1234567890123418,
-                1234567890123419,
-                1234567890123410
-            ]
+        now = datetime.utcnow()
+        service_ids = [
+            1234567890123411,
+            1234567890123412,
+            1234567890123413,
+            1234567890123414,
+            1234567890123415,
+            1234567890123416,
+            1234567890123417,
+            1234567890123418,
+            1234567890123419,
+            1234567890123410
+        ]
 
-            for service_id in service_ids:
-                db.session.add(
-                    Service(
-                        service_id=str(service_id),
-                        supplier_id=1,
-                        updated_at=now,
-                        status='published',
-                        created_at=now,
-                        data={'foo': 'bar'},
-                        lot_id=1,
-                        framework_id=1)
-                )
+        for service_id in service_ids:
+            db.session.add(
+                Service(
+                    service_id=str(service_id),
+                    supplier_id=1,
+                    updated_at=now,
+                    status='published',
+                    created_at=now,
+                    data={'foo': 'bar'},
+                    lot_id=1,
+                    framework_id=1)
+            )
 
-            for service_id in service_ids:
-                self.client.put(
-                    '/draft-services/copy-from/{}'.format(service_id),
-                    data=json.dumps(self.updater_json),
-                    content_type='application/json')
+        for service_id in service_ids:
+            self.client.put(
+                '/draft-services/copy-from/{}'.format(service_id),
+                data=json.dumps(self.updater_json),
+                content_type='application/json')
 
-            res = self.client.get('/draft-services?supplier_id=1')
-            assert res.status_code == 200
-            drafts = json.loads(res.get_data())
-            assert len(drafts['services']) == 10
+        res = self.client.get('/draft-services?supplier_id=1')
+        assert res.status_code == 200
+        drafts = json.loads(res.get_data())
+        assert len(drafts['services']) == 10
 
     def test_reject_update_with_no_updater_details(self):
         res = self.client.post('/draft-services/0000000000')
@@ -607,9 +603,8 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
     def test_get_draft_with_no_audit_history(self):
         draft = self.create_draft_service()
 
-        with self.app.app_context():
-            AuditEvent.query.delete()
-            db.session.commit()
+        AuditEvent.query.delete()
+        db.session.commit()
 
         res = self.client.get('/draft-services/{}'.format(draft['id']))
         assert res.status_code == 200
@@ -868,9 +863,8 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         draft_id = self.create_draft_service()['id']
         self.complete_draft_service(draft_id)
 
-        with self.app.app_context():
-            Framework.query.filter_by(slug='g-cloud-7').update(dict(status='live'))
-            db.session.commit()
+        Framework.query.filter_by(slug='g-cloud-7').update(dict(status='live'))
+        db.session.commit()
 
         res = self.publish_draft_service(draft_id)
 
@@ -1035,23 +1029,22 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
     def setup(self):
         super(TestCopyDraft, self).setup()
 
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
+        db.session.add(
+            Supplier(supplier_id=1, name=u"Supplier 1")
+        )
+        db.session.add(
+            ContactInformation(
+                supplier_id=1,
+                contact_name=u"Liz",
+                email=u"liz@royal.gov.uk",
+                postcode=u"SW1A 1AA"
             )
-            db.session.add(
-                ContactInformation(
-                    supplier_id=1,
-                    contact_name=u"Liz",
-                    email=u"liz@royal.gov.uk",
-                    postcode=u"SW1A 1AA"
-                )
-            )
-            Framework.query.filter_by(slug='g-cloud-5') \
-                .update(dict(status='live'))
-            Framework.query.filter_by(slug='g-cloud-7') \
-                .update(dict(status='open'))
-            db.session.commit()
+        )
+        Framework.query.filter_by(slug='g-cloud-5') \
+            .update(dict(status='live'))
+        Framework.query.filter_by(slug='g-cloud-7') \
+            .update(dict(status='open'))
+        db.session.commit()
 
         create_draft_json = {
             'updated_by': 'joeblogs',
@@ -1163,18 +1156,17 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
     def setup(self):
         super(TestCompleteDraft, self).setup()
 
-        with self.app.app_context():
-            db.session.add(Supplier(supplier_id=1, name=u"Supplier 1"))
-            db.session.add(
-                ContactInformation(
-                    supplier_id=1,
-                    contact_name=u"Test",
-                    email=u"supplier@user.dmdev",
-                    postcode=u"SW1A 1AA"
-                )
+        db.session.add(Supplier(supplier_id=1, name=u"Supplier 1"))
+        db.session.add(
+            ContactInformation(
+                supplier_id=1,
+                contact_name=u"Test",
+                email=u"supplier@user.dmdev",
+                postcode=u"SW1A 1AA"
             )
-            Framework.query.filter_by(slug='g-cloud-7').update(dict(status='open'))
-            db.session.commit()
+        )
+        Framework.query.filter_by(slug='g-cloud-7').update(dict(status='open'))
+        db.session.commit()
         draft_json = load_example_listing("G7-SCS")
         draft_json['frameworkSlug'] = 'g-cloud-7'
         create_draft_json = {
@@ -1281,21 +1273,20 @@ class TestDOSServices(BaseApplicationTest, FixtureMixin):
         self.create_draft_json['services'] = payload
         self.create_draft_json['services']['frameworkSlug'] = 'digital-outcomes-and-specialists'
 
-        with self.app.app_context():
-            self.set_framework_status('digital-outcomes-and-specialists', 'open')
+        self.set_framework_status('digital-outcomes-and-specialists', 'open')
 
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
+        db.session.add(
+            Supplier(supplier_id=1, name=u"Supplier 1")
+        )
+        db.session.add(
+            ContactInformation(
+                supplier_id=1,
+                contact_name=u"Liz",
+                email=u"liz@royal.gov.uk",
+                postcode=u"SW1A 1AA"
             )
-            db.session.add(
-                ContactInformation(
-                    supplier_id=1,
-                    contact_name=u"Liz",
-                    email=u"liz@royal.gov.uk",
-                    postcode=u"SW1A 1AA"
-                )
-            )
-            db.session.commit()
+        )
+        db.session.commit()
 
     def _post_dos_draft(self, draft_json=None):
         res = self.client.post(
@@ -1531,18 +1522,17 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
     def setup(self):
         super(TestUpdateDraftStatus, self).setup()
 
-        with self.app.app_context():
-            db.session.add(Supplier(supplier_id=1, name=u"Supplier 1"))
-            db.session.add(
-                ContactInformation(
-                    supplier_id=1,
-                    contact_name=u"Test",
-                    email=u"supplier@user.dmdev",
-                    postcode=u"SW1A 1AA"
-                )
+        db.session.add(Supplier(supplier_id=1, name=u"Supplier 1"))
+        db.session.add(
+            ContactInformation(
+                supplier_id=1,
+                contact_name=u"Test",
+                email=u"supplier@user.dmdev",
+                postcode=u"SW1A 1AA"
             )
-            Framework.query.filter_by(slug='g-cloud-7').update(dict(status='open'))
-            db.session.commit()
+        )
+        Framework.query.filter_by(slug='g-cloud-7').update(dict(status='open'))
+        db.session.commit()
         draft_json = load_example_listing("G7-SCS")
         draft_json['frameworkSlug'] = 'g-cloud-7'
         create_draft_json = {

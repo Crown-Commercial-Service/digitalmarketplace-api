@@ -28,13 +28,12 @@ class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
         )
 
     def add_audit_event(self, user=0, type=AuditTypes.supplier_update, db_object=None):
-        with self.app.app_context():
-            ae = self.audit_event(user, type, db_object)
-            db.session.add(
-                ae
-            )
-            db.session.commit()
-            return ae.id
+        ae = self.audit_event(user, type, db_object)
+        db.session.add(
+            ae
+        )
+        db.session.commit()
+        return ae.id
 
     def add_audit_events(self, number, type=AuditTypes.supplier_update, db_object=None):
         ids = []
@@ -45,55 +44,52 @@ class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
     def add_audit_events_with_db_object(self):
         self.setup_dummy_suppliers(3)
         events = []
-        with self.app.app_context():
-            suppliers = Supplier.query.all()
-            for supplier in suppliers:
-                event = AuditEvent(AuditTypes.contact_update, "rob", {}, supplier)
-                events.append(event)
-                db.session.add(event)
-            db.session.commit()
-            return tuple(event.id for event in events)
+        suppliers = Supplier.query.all()
+        for supplier in suppliers:
+            event = AuditEvent(AuditTypes.contact_update, "rob", {}, supplier)
+            events.append(event)
+            db.session.add(event)
+        db.session.commit()
+        return tuple(event.id for event in events)
 
     def add_audit_events_by_param_tuples(self, service_audit_event_params, supplier_audit_event_params):
-        with self.app.app_context():
-            # some migrations create audit events, but we want to start with a clean slate
-            AuditEvent.query.delete()
-            service_ids = db.session.query(Service.id).order_by(Service.id).all()
-            supplier_ids = db.session.query(Supplier.id).order_by(Supplier.id).all()
+        # some migrations create audit events, but we want to start with a clean slate
+        AuditEvent.query.delete()
+        service_ids = db.session.query(Service.id).order_by(Service.id).all()
+        supplier_ids = db.session.query(Supplier.id).order_by(Supplier.id).all()
 
-            audit_events = []
+        audit_events = []
 
-            for (ref_model, ref_model_ids), (obj_id, audit_type, created_at, acknowledged_at) in chain(
-                izip(repeat((Service, service_ids,)), service_audit_event_params),
-                izip(repeat((Supplier, supplier_ids,)), supplier_audit_event_params),
-            ):
-                ae = AuditEvent(audit_type, "henry.flower@example.com", {}, ref_model(id=ref_model_ids[obj_id]))
-                ae.created_at = created_at
-                ae.acknowledged_at = acknowledged_at
-                ae.acknowledged = bool(acknowledged_at)
-                ae.acknowledged_by = acknowledged_at and "c.p.mccoy@example.com"
-                db.session.add(ae)
-                audit_events.append(ae)
+        for (ref_model, ref_model_ids), (obj_id, audit_type, created_at, acknowledged_at) in chain(
+            izip(repeat((Service, service_ids,)), service_audit_event_params),
+            izip(repeat((Supplier, supplier_ids,)), supplier_audit_event_params),
+        ):
+            ae = AuditEvent(audit_type, "henry.flower@example.com", {}, ref_model(id=ref_model_ids[obj_id]))
+            ae.created_at = created_at
+            ae.acknowledged_at = acknowledged_at
+            ae.acknowledged = bool(acknowledged_at)
+            ae.acknowledged_by = acknowledged_at and "c.p.mccoy@example.com"
+            db.session.add(ae)
+            audit_events.append(ae)
 
-            db.session.commit()
-            # make a note of the ids that were given to these events, or rather the order they were generated
-            audit_event_id_lookup = {ae.id: i for i, ae in enumerate(audit_events)}
-            assert AuditEvent.query.count() == len(service_audit_event_params) + len(supplier_audit_event_params)
+        db.session.commit()
+        # make a note of the ids that were given to these events, or rather the order they were generated
+        audit_event_id_lookup = {ae.id: i for i, ae in enumerate(audit_events)}
+        assert AuditEvent.query.count() == len(service_audit_event_params) + len(supplier_audit_event_params)
 
-            return audit_event_id_lookup
+        return audit_event_id_lookup
 
 
 # these actually test a view whose @route is declared in services.py, but the bulk of the implementation is in audits.py
 # and it heavily uses BaseTestAuditEvents above
 class TestSupplierUpdateAcknowledgement(BaseTestAuditEvents):
     def _assert_nothing_acknowledged(self):
-        with self.app.app_context():
-            # check nothing happened to the data
-            assert not db.session.query(AuditEvent).filter(db.or_(
-                AuditEvent.acknowledged_by.isnot(None),
-                AuditEvent.acknowledged_at.isnot(None),
-                AuditEvent.acknowledged == db.true(),
-            )).all()
+        # check nothing happened to the data
+        assert not db.session.query(AuditEvent).filter(db.or_(
+            AuditEvent.acknowledged_by.isnot(None),
+            AuditEvent.acknowledged_at.isnot(None),
+            AuditEvent.acknowledged == db.true(),
+        )).all()
 
     @pytest.mark.parametrize(
         "service_audit_event_params,supplier_audit_event_params,target_audit_event_id,expected_resp_events",
@@ -269,13 +265,12 @@ class TestSupplierUpdateAcknowledgement(BaseTestAuditEvents):
             supplier_audit_event_params,
         )
         audit_event_id_rlookup = {v: k for k, v in audit_event_id_lookup.items()}
-        with self.app.app_context():
-            # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
-            # this being the *public* service id
-            service_id = db.session.query(Service.service_id).join(
-                AuditEvent,
-                AuditEvent.object_id == Service.id,
-            ).filter(AuditEvent.id == audit_event_id_rlookup[target_audit_event_id]).scalar()
+        # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
+        # this being the *public* service id
+        service_id = db.session.query(Service.service_id).join(
+            AuditEvent,
+            AuditEvent.object_id == Service.id,
+        ).filter(AuditEvent.id == audit_event_id_rlookup[target_audit_event_id]).scalar()
 
         frozen_time = datetime(2016, 6, 6, 15, 32, 44, 1234)
         with freeze_time(frozen_time):
@@ -293,34 +288,33 @@ class TestSupplierUpdateAcknowledgement(BaseTestAuditEvents):
 
         assert frozenset(audit_event_id_lookup[ae["id"]] for ae in data["auditEvents"]) == expected_resp_events
 
-        with self.app.app_context():
-            assert sorted((
-                audit_event_id_lookup[id_],
-                acknowledged,
-                acknowledged_at,
-                acknowledged_by,
-            ) for id_, acknowledged, acknowledged_at, acknowledged_by in db.session.query(
-                AuditEvent.id,
-                AuditEvent.acknowledged,
-                AuditEvent.acknowledged_at,
-                AuditEvent.acknowledged_by,
-            ).all()) == [
+        assert sorted((
+            audit_event_id_lookup[id_],
+            acknowledged,
+            acknowledged_at,
+            acknowledged_by,
+        ) for id_, acknowledged, acknowledged_at, acknowledged_by in db.session.query(
+            AuditEvent.id,
+            AuditEvent.acknowledged,
+            AuditEvent.acknowledged_at,
+            AuditEvent.acknowledged_by,
+        ).all()) == [
+            (
+                id_,
+                (id_ in expected_resp_events) or bool(acknowledged_at),
+                (frozen_time if id_ in expected_resp_events else acknowledged_at),
                 (
-                    id_,
-                    (id_ in expected_resp_events) or bool(acknowledged_at),
-                    (frozen_time if id_ in expected_resp_events else acknowledged_at),
-                    (
-                        "martha.clifford@example.com"
-                        if id_ in expected_resp_events else
-                        (acknowledged_at and "c.p.mccoy@example.com")
-                    )
-                ) for id_, (
-                    obj_id,
-                    audit_type,
-                    created_at,
-                    acknowledged_at,
-                ) in enumerate(chain(service_audit_event_params, supplier_audit_event_params))
-            ]
+                    "martha.clifford@example.com"
+                    if id_ in expected_resp_events else
+                    (acknowledged_at and "c.p.mccoy@example.com")
+                )
+            ) for id_, (
+                obj_id,
+                audit_type,
+                created_at,
+                acknowledged_at,
+            ) in enumerate(chain(service_audit_event_params, supplier_audit_event_params))
+        ]
 
     def test_acknowledge_including_previous_nonexistent_event(self):
         # would be unfair to not give them any events to start with
@@ -331,13 +325,12 @@ class TestSupplierUpdateAcknowledgement(BaseTestAuditEvents):
             ((2, AuditTypes.supplier_update, datetime(2011, 6, 9), None,),),
         )
         audit_event_id_rlookup = {v: k for k, v in audit_event_id_lookup.items()}
-        with self.app.app_context():
-            # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
-            # this being the *public* service id
-            service_id = db.session.query(Service.service_id).join(
-                AuditEvent,
-                AuditEvent.object_id == Service.id,
-            ).filter(AuditEvent.id == audit_event_id_rlookup[0]).scalar()
+        # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
+        # this being the *public* service id
+        service_id = db.session.query(Service.service_id).join(
+            AuditEvent,
+            AuditEvent.object_id == Service.id,
+        ).filter(AuditEvent.id == audit_event_id_rlookup[0]).scalar()
 
         response = self.client.post(
             "/services/{}/updates/acknowledge".format(service_id),
@@ -361,13 +354,12 @@ class TestSupplierUpdateAcknowledgement(BaseTestAuditEvents):
             ((2, AuditTypes.update_service, datetime(2011, 6, 9), None,),),
         )
         audit_event_id_rlookup = {v: k for k, v in audit_event_id_lookup.items()}
-        with self.app.app_context():
-            # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
-            # this being the *public* service id
-            service_id = db.session.query(Service.service_id).join(
-                AuditEvent,
-                AuditEvent.object_id == Service.id,
-            ).filter(AuditEvent.id == audit_event_id_rlookup[0]).scalar()
+        # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
+        # this being the *public* service id
+        service_id = db.session.query(Service.service_id).join(
+            AuditEvent,
+            AuditEvent.object_id == Service.id,
+        ).filter(AuditEvent.id == audit_event_id_rlookup[0]).scalar()
 
         response = self.client.post(
             "/services/{}/updates/acknowledge".format(service_id),
@@ -392,12 +384,11 @@ class TestSupplierUpdateAcknowledgement(BaseTestAuditEvents):
             ((2, AuditTypes.update_service, datetime(2011, 6, 9), None,),),
         )
         audit_event_id_rlookup = {v: k for k, v in audit_event_id_lookup.items()}
-        with self.app.app_context():
-            # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
-            # this being the *public* service id
-            supplier_id = db.session.query(AuditEvent.object_id).filter(
-                AuditEvent.id == audit_event_id_rlookup[1]
-            ).scalar()
+        # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
+        # this being the *public* service id
+        supplier_id = db.session.query(AuditEvent.object_id).filter(
+            AuditEvent.id == audit_event_id_rlookup[1]
+        ).scalar()
 
         response = self.client.post(
             "/services/{}/updates/acknowledge".format(supplier_id),
@@ -420,13 +411,12 @@ class TestSupplierUpdateAcknowledgement(BaseTestAuditEvents):
             ((2, AuditTypes.supplier_update, datetime(2011, 6, 9), None,),),
         )
         audit_event_id_rlookup = {v: k for k, v in audit_event_id_lookup.items()}
-        with self.app.app_context():
-            # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
-            # this being the *public* service id
-            service_id = db.session.query(Service.service_id).join(
-                AuditEvent,
-                AuditEvent.object_id == Service.id,
-            ).filter(AuditEvent.id == audit_event_id_rlookup[0]).scalar()
+        # because we're doing a fun include-the-servide-id thing on the api endpoint we've got to look it up here,
+        # this being the *public* service id
+        service_id = db.session.query(Service.service_id).join(
+            AuditEvent,
+            AuditEvent.object_id == Service.id,
+        ).filter(AuditEvent.id == audit_event_id_rlookup[0]).scalar()
 
         response = self.client.post(
             "/services/{}/updates/acknowledge".format(service_id),
@@ -634,10 +624,9 @@ class TestAuditEvents(BaseTestAuditEvents):
         assert tuple(audit_event_id_lookup[ae["id"]] for ae in data["auditEvents"]) == expected_resp_events
 
     def test_only_one_audit_event_created(self):
-        with self.app.app_context():
-            count = AuditEvent.query.count()
-            self.add_audit_event()
-            assert AuditEvent.query.count() == count + 1
+        count = AuditEvent.query.count()
+        self.add_audit_event()
+        assert AuditEvent.query.count() == count + 1
 
     def test_should_get_audit_event(self):
         aid = self.add_audit_event(0)
@@ -744,21 +733,20 @@ class TestAuditEvents(BaseTestAuditEvents):
     def test_should_only_get_audit_event_with_correct_object_type(self):
         self.add_audit_events_with_db_object()
 
-        with self.app.app_context():
-            # Create a second AuditEvent with the same object_id but with a
-            # different object_type to check that we're not filtering based
-            # on object_id only
-            supplier = Supplier.query.filter(Supplier.supplier_id == 1).first()
-            event = AuditEvent(
-                audit_type=AuditTypes.supplier_update,
-                db_object=supplier,
-                user='not rob',
-                data={'request': "data"}
-            )
-            event.object_type = 'Service'
+        # Create a second AuditEvent with the same object_id but with a
+        # different object_type to check that we're not filtering based
+        # on object_id only
+        supplier = Supplier.query.filter(Supplier.supplier_id == 1).first()
+        event = AuditEvent(
+            audit_type=AuditTypes.supplier_update,
+            db_object=supplier,
+            user='not rob',
+            data={'request': "data"}
+        )
+        event.object_type = 'Service'
 
-            db.session.add(event)
-            db.session.commit()
+        db.session.add(event)
+        db.session.commit()
 
         response = self.client.get('/audit-events?object-type=suppliers&object-id=1')
         data = json.loads(response.get_data())
@@ -776,19 +764,18 @@ class TestAuditEvents(BaseTestAuditEvents):
     def test_should_only_get_audit_event_with_correct_user(self, qstr, n_expected_results):
         self.add_audit_events_with_db_object()
 
-        with self.app.app_context():
-            # create AuditEvent with different user value
-            supplier = Supplier.query.filter(Supplier.supplier_id == 1).first()
-            event = AuditEvent(
-                audit_type=AuditTypes.supplier_update,
-                db_object=supplier,
-                user='rod',
-                data={'request': "data"}
-            )
-            event.object_type = 'Supplier'
+        # create AuditEvent with different user value
+        supplier = Supplier.query.filter(Supplier.supplier_id == 1).first()
+        event = AuditEvent(
+            audit_type=AuditTypes.supplier_update,
+            db_object=supplier,
+            user='rod',
+            data={'request': "data"}
+        )
+        event.object_type = 'Supplier'
 
-            db.session.add(event)
-            db.session.commit()
+        db.session.add(event)
+        db.session.commit()
 
         response = self.client.get('/audit-events?{}'.format(qstr))
         data = json.loads(response.get_data())
