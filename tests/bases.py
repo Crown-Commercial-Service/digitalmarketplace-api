@@ -1,5 +1,34 @@
+from flask.testing import FlaskClient
+
 from app import create_app, db
 from app.models import Framework, FrameworkLot
+
+
+class TestClient(FlaskClient):
+    """This is a custom Test Client for handling the creation of a dedicated application context on a per request basis.
+
+    Flask-SQLAlchemy attaches its db operations to the top application context on the context stack.
+    Requests use the top application context on the context stack or create a new one if none exists.
+
+    Normally this isn't an issue. Each new request in production will use its own thread and
+    on finding that there is no existing application context will create a new one.
+
+    In tests however we require an application context to create/ update the database with the data required for the
+    test. We can then end up using this polluted application context in the view we're testing if we don't pop it. In
+    the open method of this class we create a fresh application context for the request/ view to use and remove it
+    after so it doesn't leak back to the test.
+    """
+
+    def open(self, *args, **kwargs):
+        app_context = self.application.app_context()
+        app_context.push()
+
+        res = super(TestClient, self).open(*args, **kwargs)
+
+        db.session.expire_all()
+        app_context.pop()
+
+        return res
 
 
 class WSGIApplicationWithEnvironment(object):
@@ -23,6 +52,7 @@ class BaseApplicationTest(object):
             self.app.wsgi_app,
             HTTP_AUTHORIZATION='Bearer {}'.format(self.app.config['DM_API_AUTH_TOKENS'])
         )
+        self.app.test_client_class = TestClient
         self.client = self.app.test_client()
 
     def teardown(self):

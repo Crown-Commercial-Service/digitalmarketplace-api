@@ -1376,6 +1376,7 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
             db.session.add(brief_response)
             db.session.commit()
+            brief_response_id = brief_response.id
 
             res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
             assert res.status_code == 200
@@ -1384,7 +1385,7 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             assert len(brief_response_audits) == 1
             assert brief_response_audits[0]['data'] == {
                 'briefId': 1,
-                'briefResponseId': brief_response.id,
+                'briefResponseId': brief_response_id,
                 'briefResponseAwardedValue': True
             }
 
@@ -1397,7 +1398,8 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             brief_response1.award_details = {'pending': True}
             db.session.add_all([brief_response1, brief_response2])
             db.session.commit()
-
+            brief_response1_id = brief_response1.id
+            brief_response2_id = brief_response2.id
             # Update to be awarded to brief response 2 rather than brief response 1
             res = self._post_to_award_endpoint({'briefResponseId': brief_response2.id})
             assert res.status_code == 200
@@ -1406,12 +1408,12 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
             assert len(brief_response_audits) == 2
             assert brief_response_audits[0]['data'] == {
                 'briefId': 1,
-                'briefResponseId': brief_response1.id,
+                'briefResponseId': brief_response1_id,
                 'briefResponseAwardedValue': False
             }
             assert brief_response_audits[1]['data'] == {
                 'briefId': 1,
-                'briefResponseId': brief_response2.id,
+                'briefResponseId': brief_response2_id,
                 'briefResponseAwardedValue': True
             }
 
@@ -1504,18 +1506,19 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
             db.session.add(brief_response)
             db.session.commit()
             assert brief_response.status == 'pending-awarded'
+            brief_response_id = brief_response.id
 
-            res = self._post_to_award_details_endpoint(self.valid_payload, brief_response.id)
+            res = self._post_to_award_details_endpoint(self.valid_payload, brief_response_id)
             assert res.status_code == 200
             data = json.loads(res.get_data(as_text=True))
-            assert data['briefs']['awardedBriefResponseId'] == brief_response.id
+            assert data['briefs']['awardedBriefResponseId'] == brief_response_id
             assert index_brief.called is True
 
             brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
             assert len(brief_response_audits) == 1
             assert brief_response_audits[0]['data'] == {
                 'briefId': 1,
-                'briefResponseId': brief_response.id,
+                'briefResponseId': brief_response_id,
                 'briefResponseAwardDetails': {
                     "awardedContractStartDate": "2020-12-31",
                     "awardedContractValue": "99.95"

@@ -1291,6 +1291,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             )
             db.session.add(framework_agreement)
             db.session.commit()
+            framework_agreement_id = framework_agreement.id
 
             # Get back the SupplierFramework record
             response = self.client.get(
@@ -1309,7 +1310,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                 'frameworkFramework': supplier_framework['frameworkFramework'],
                 'declaration': {'an_answer': 'Yes it is'},
                 'onFramework': True,
-                'agreementId': framework_agreement.id,
+                'agreementId': framework_agreement_id,
                 'agreementReturned': True,
                 'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
                 'agreementPath': '/agreement.pdf',
@@ -1350,6 +1351,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             )
             db.session.add(framework_agreement)
             db.session.commit()
+            framework_agreement_id = framework_agreement.id
 
             # Get back the SupplierFramework record
             response = self.client.get(
@@ -1368,7 +1370,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
                 'frameworkFramework': supplier_framework['frameworkFramework'],
                 'declaration': {'an_answer': 'Yes it is'},
                 'onFramework': True,
-                'agreementId': framework_agreement.id,
+                'agreementId': framework_agreement_id,
                 'agreementReturned': True,
                 'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
                 'agreementDetails': {

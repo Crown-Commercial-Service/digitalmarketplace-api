@@ -605,17 +605,11 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
                 db.session.delete(existing_brief_response[-1])
                 db.session.commit()
 
-            # Get dos framework.
-            dos_framework = db.session.query(Framework).filter_by(slug='digital-outcomes-and-specialists').first()
-
-            # Make framework live so a brief response can be created.
-            dos_framework.status = 'live'
-            db.session.commit()
-
             # Create a brief response while the framework is live.
             self._setup_existing_brief_response()
 
             # Set framework status to the invalid status currently under test.
+            dos_framework = db.session.query(Framework).filter_by(slug='digital-outcomes-and-specialists').first()
             dos_framework.status = framework_status
             db.session.commit()
 
