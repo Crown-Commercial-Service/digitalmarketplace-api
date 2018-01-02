@@ -787,7 +787,6 @@ class TestCopyBrief(BaseApplicationTest, FixtureMixin):
 
     def setup(self, *args, **kwargs):
         super(TestCopyBrief, self).setup(*args, **kwargs)
-        self.app.app_context().push()
         self.setup_dummy_user(role='buyer')
         self.framework = Framework.query.filter(
             Framework.slug == 'digital-outcomes-and-specialists',
