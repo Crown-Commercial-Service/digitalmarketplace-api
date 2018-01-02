@@ -36,6 +36,7 @@ class TestListFrameworks(BaseApplicationTest):
 
 
 class TestCreateFramework(BaseApplicationTest):
+
     def framework(self, **kwargs):
         return {
             "frameworks": {
@@ -52,13 +53,12 @@ class TestCreateFramework(BaseApplicationTest):
         }
 
     def teardown(self):
+        framework = Framework.query.filter(Framework.slug == "example").first()
+        if framework:
+            FrameworkLot.query.filter(FrameworkLot.framework_id == framework.id).delete()
+            Framework.query.filter(Framework.id == framework.id).delete()
+            db.session.commit()
         super(TestCreateFramework, self).teardown()
-        with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == "example").first()
-            if framework:
-                FrameworkLot.query.filter(FrameworkLot.framework_id == framework.id).delete()
-                Framework.query.filter(Framework.id == framework.id).delete()
-                db.session.commit()
 
     def test_create_a_framework(self):
         with self.app.app_context():
