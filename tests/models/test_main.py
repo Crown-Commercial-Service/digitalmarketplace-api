@@ -4,7 +4,7 @@ import mock
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app import db, create_app
+from app import db
 from app.models import (
     User, Lot, Framework, Service,
     Supplier, SupplierFramework, FrameworkAgreement,
@@ -102,22 +102,20 @@ class TestUser(BaseApplicationTest, FixtureMixin):
         assert str(exc.value) == 'invalid_admin_domain'
 
 
-def test_framework_should_not_accept_invalid_status():
-    app = create_app('test')
-    with app.app_context(), pytest.raises(ValidationError):
-        f = Framework(
-            name='foo',
-            slug='foo',
-            framework='g-cloud',
-            status='invalid',
-        )
-        db.session.add(f)
-        db.session.commit()
+class TestFrameworks(BaseApplicationTest):
 
+    def test_framework_should_not_accept_invalid_status(self):
+        with pytest.raises(ValidationError):
+            f = Framework(
+                name='foo',
+                slug='foo',
+                framework='g-cloud',
+                status='invalid',
+            )
+            db.session.add(f)
+            db.session.commit()
 
-def test_framework_should_accept_valid_statuses():
-    app = create_app('test')
-    with app.app_context():
+    def test_framework_should_accept_valid_statuses(self):
         for i, status in enumerate(Framework.STATUSES):
             f = Framework(
                 name='foo',

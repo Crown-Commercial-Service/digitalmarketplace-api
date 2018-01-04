@@ -763,25 +763,16 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
 
     def setup(self):
         super(TestSetSupplierDeclarations, self).setup()
-        with self.app.app_context():
-            framework = Framework(
-                slug='test-open',
-                name='Test open',
-                framework='g-cloud',
-                status='open')
-            db.session.add(framework)
-            db.session.commit()
+        # This is automatically removed in BaseApplicationTest.teardown
+        framework = Framework(
+            id=100,
+            slug='test-open',
+            name='Test open',
+            framework='g-cloud',
+            status='open')
+        db.session.add(framework)
+        db.session.commit()
         self.setup_dummy_suppliers(1)
-
-    def teardown(self):
-        super(TestSetSupplierDeclarations, self).teardown()
-        with self.app.app_context():
-            frameworks = Framework.query.filter(
-                Framework.slug.like('test-%')
-            ).all()
-            for framework in frameworks:
-                db.session.delete(framework)
-            db.session.commit()
 
     def test_add_new_declaration(self):
         with self.app.app_context():
@@ -1590,10 +1581,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         self,
         open_g8_framework_live_dos_framework_suppliers_on_framework,
     ):
-        with self.app.app_context():
-            supplier_framework = SupplierFramework.query.filter(
-                SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
-            ).order_by(Supplier.id.asc()).first().serialize()
+        supplier_framework = SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+        ).order_by(Supplier.id.asc()).first().serialize()
 
         response = self.supplier_framework_interest(
             supplier_framework,
@@ -1608,11 +1598,11 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
         assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
 
-        with self.app.app_context():
-            supplier_framework2 = self._refetch_serialized_sf(data['frameworkInterest'])
-            assert data['frameworkInterest'] == supplier_framework2
-            audit = self._assert_and_return_audit_event(supplier_framework)
-            assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+        supplier_framework2 = self._refetch_serialized_sf(data['frameworkInterest'])
+        assert data['frameworkInterest'] == supplier_framework2
+        audit = self._assert_and_return_audit_event(supplier_framework)
+        audit_id = audit.id
+        assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
 
         # now we make sure that a single property update failure prevents any db changes
         response2 = self.supplier_framework_interest(
@@ -1624,10 +1614,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         )
         assert response2.status_code == 400
 
-        with self.app.app_context():
-            # check nothing has changed on db
-            assert supplier_framework2 == self._refetch_serialized_sf(supplier_framework2)
-            assert self._latest_supplier_update_audit_event(supplier_framework2["supplierId"]).id == audit.id
+        # check nothing has changed on db
+        assert supplier_framework2 == self._refetch_serialized_sf(supplier_framework2)
+        assert self._latest_supplier_update_audit_event(supplier_framework2["supplierId"]).id == audit_id
 
     def test_setting_prefill_declaration_from_framework_supplier_not_on_other_framework(
         self,
