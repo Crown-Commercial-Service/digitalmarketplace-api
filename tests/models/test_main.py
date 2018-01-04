@@ -696,25 +696,24 @@ class TestAwardedBriefs(BaseApplicationTest, FixtureMixin):
             self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
             self.lot = self.framework.get_lot('digital-outcomes')
 
-    def _setup_brief_and_awarded_brief_response(self, context, awarded_at=True, pending=True):
-        with context:
-            self.setup_dummy_suppliers(1)
-            brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
-            brief_response = BriefResponse(
-                brief=brief,
-                supplier_id=0,
-                data={'boo': 'far'},
-                created_at=datetime.utcnow(),
-                submitted_at=datetime.utcnow()
-            )
-            db.session.add_all([brief, brief_response])
-            db.session.commit()
-            brief_response.award_details = {'pending': True} if pending else {'confirmed': 'details'}
-            if awarded_at:
-                brief_response.awarded_at = datetime(2016, 1, 1)
-            db.session.add(brief_response)
-            db.session.commit()
-            return brief.id, brief_response.id
+    def _setup_brief_and_awarded_brief_response(self, awarded_at=True, pending=True):
+        self.setup_dummy_suppliers(1)
+        brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1))
+        brief_response = BriefResponse(
+            brief=brief,
+            supplier_id=0,
+            data={'boo': 'far'},
+            created_at=datetime.utcnow(),
+            submitted_at=datetime.utcnow()
+        )
+        db.session.add_all([brief, brief_response])
+        db.session.commit()
+        brief_response.award_details = {'pending': True} if pending else {'confirmed': 'details'}
+        if awarded_at:
+            brief_response.awarded_at = datetime(2016, 1, 1)
+        db.session.add(brief_response)
+        db.session.commit()
+        return brief.id, brief_response.id
 
     def test_awarded_brief_response_when_there_is_an_award(self):
         with self.app.app_context():
@@ -752,8 +751,8 @@ class TestAwardedBriefs(BaseApplicationTest, FixtureMixin):
             assert brief.awarded_brief_response is None
 
     def test_brief_serialize_includes_awarded_brief_response_id_if_overall_status_awarded(self):
-        with self.app.app_context() as context:
-            brief_id, brief_response_id = self._setup_brief_and_awarded_brief_response(context, pending=False)
+        with self.app.app_context():
+            brief_id, brief_response_id = self._setup_brief_and_awarded_brief_response(pending=False)
             brief = Brief.query.get(brief_id)
             assert brief.status == 'awarded'
             with mock.patch('app.models.main.url_for') as url_for:
@@ -761,8 +760,8 @@ class TestAwardedBriefs(BaseApplicationTest, FixtureMixin):
                 assert brief.serialize().get('awardedBriefResponseId') == brief_response_id
 
     def test_brief_serialize_does_not_include_awarded_brief_response_if_award_is_pending(self):
-        with self.app.app_context() as context:
-            brief_id, brief_response_id = self._setup_brief_and_awarded_brief_response(context, awarded_at=False)
+        with self.app.app_context():
+            brief_id, brief_response_id = self._setup_brief_and_awarded_brief_response(awarded_at=False)
             brief = Brief.query.get(brief_id)
             assert brief.status == 'closed'
             with mock.patch('app.models.main.url_for') as url_for:
