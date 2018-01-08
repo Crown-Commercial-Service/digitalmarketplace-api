@@ -22,12 +22,14 @@ in (with args; {
       # we *would* just depend on the pkgs.postgresql.lib output but pip wants to use the `pg_config` binary during the
       # install process
       pkgs.postgresql
+      pkgs.cacert
     ] ++ pkgs.stdenv.lib.optionals forDev [
       # exotic things possibly go here
     ];
 
     hardeningDisable = pkgs.stdenv.lib.optionals pkgs.stdenv.isDarwin [ "format" ];
 
+    GIT_SSL_CAINFO="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
     VIRTUALENV_ROOT = "venv${pythonPackages.python.pythonVersion}";
     VIRTUAL_ENV_DISABLE_PROMPT = "1";
     SOURCE_DATE_EPOCH = "315532800";
