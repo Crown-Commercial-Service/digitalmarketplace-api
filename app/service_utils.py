@@ -124,7 +124,7 @@ def commit_and_archive_service(updated_service, update_details,
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
 
 def index_service(service):

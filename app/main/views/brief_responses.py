@@ -76,7 +76,7 @@ def create_brief_response():
         db.session.flush()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
     audit = AuditEvent(
         audit_type=AuditTypes.create_brief_response,
@@ -143,7 +143,7 @@ def update_brief_response(brief_response_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, brief_response), 200
 
@@ -191,7 +191,7 @@ def submit_brief_response(brief_response_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, brief_response), 200
 

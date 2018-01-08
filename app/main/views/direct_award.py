@@ -97,7 +97,7 @@ def create_project():
 
             retries += 1
             if retries >= 5:
-                abort(400, str(e.orig))
+                abort(400, format(e))
 
     audit = AuditEvent(
         audit_type=AuditTypes.create_project,
@@ -184,7 +184,7 @@ def create_project_search(project_external_id):
 
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
     audit = AuditEvent(
         audit_type=AuditTypes.create_project_search,

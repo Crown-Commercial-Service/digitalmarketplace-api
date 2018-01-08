@@ -54,7 +54,7 @@ def create_framework_agreement():
         db.session.flush()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.create_agreement,

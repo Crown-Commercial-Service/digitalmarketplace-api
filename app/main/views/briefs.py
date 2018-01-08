@@ -54,7 +54,7 @@ def create_brief():
         db.session.flush()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
     audit = AuditEvent(
         audit_type=AuditTypes.create_brief,
@@ -366,7 +366,7 @@ def copy_brief(brief_id):
         db.session.flush()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
     audit = AuditEvent(
         audit_type=AuditTypes.create_brief,
@@ -442,7 +442,7 @@ def add_clarification_question(brief_id):
         db.session.flush()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
     audit = AuditEvent(
         audit_type=AuditTypes.add_brief_clarification_question,

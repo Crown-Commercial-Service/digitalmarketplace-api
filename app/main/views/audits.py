@@ -227,7 +227,7 @@ def acknowledge_audit(audit_id):
 
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, audit_event), 200
 
@@ -284,7 +284,7 @@ def acknowledge_including_previous(
 
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
     # returning the list of affected ids, each one in its own dict seems the most rest-ful way (but least memory
     # efficient - well spotted) of returning this information. you would think of these as the most abbreviated
