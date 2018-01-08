@@ -12,27 +12,26 @@ from tests.helpers import FixtureMixin
 
 class TestListFrameworks(BaseApplicationTest):
     def test_all_frameworks_are_returned(self):
-        with self.app.app_context():
-            response = self.client.get('/frameworks')
-            data = json.loads(response.get_data())
+        response = self.client.get('/frameworks')
+        data = json.loads(response.get_data())
 
-            assert response.status_code == 200
-            assert len(data['frameworks']) == len(Framework.query.all())
-            assert set(data['frameworks'][0].keys()) == set([
-                'clarificationQuestionsOpen',
-                'framework',
-                'frameworkAgreementVersion',
-                'frameworkAgreementDetails',
-                'id',
-                'lots',
-                'name',
-                'slug',
-                'status',
-                'variations',
-                'countersignerName',
-                'applicationCloseDate',
-                'allowDeclarationReuse',
-            ])
+        assert response.status_code == 200
+        assert len(data['frameworks']) == len(Framework.query.all())
+        assert set(data['frameworks'][0].keys()) == set([
+            'clarificationQuestionsOpen',
+            'framework',
+            'frameworkAgreementVersion',
+            'frameworkAgreementDetails',
+            'id',
+            'lots',
+            'name',
+            'slug',
+            'status',
+            'variations',
+            'countersignerName',
+            'applicationCloseDate',
+            'allowDeclarationReuse',
+        ])
 
 
 class TestCreateFramework(BaseApplicationTest):
@@ -60,94 +59,85 @@ class TestCreateFramework(BaseApplicationTest):
         super(TestCreateFramework, self).teardown()
 
     def test_create_a_framework(self):
-        with self.app.app_context():
-            response = self.client.post("/frameworks",
-                                        data=json.dumps(self.framework()),
-                                        content_type="application/json")
+        response = self.client.post("/frameworks",
+                                    data=json.dumps(self.framework()),
+                                    content_type="application/json")
 
-            assert response.status_code == 201
+        assert response.status_code == 201
 
-            framework = Framework.query.filter(Framework.slug == "example").first()
+        framework = Framework.query.filter(Framework.slug == "example").first()
 
-            assert framework.name == "Example"
-            assert len(framework.lots) == 4
+        assert framework.name == "Example"
+        assert len(framework.lots) == 4
 
     def test_create_adds_audit_event(self):
-        with self.app.app_context():
-            self.client.post("/frameworks",
-                             data=json.dumps(self.framework()),
-                             content_type="application/json")
+        self.client.post("/frameworks",
+                         data=json.dumps(self.framework()),
+                         content_type="application/json")
 
-            response = self.client.get("/audit-events")
+        response = self.client.get("/audit-events")
 
-            data = json.loads(response.get_data(as_text=True))
+        data = json.loads(response.get_data(as_text=True))
 
-            assert len(data["auditEvents"]) == 1
-            assert data["auditEvents"][0]["type"] == "create_framework"
+        assert len(data["auditEvents"]) == 1
+        assert data["auditEvents"][0]["type"] == "create_framework"
 
     def test_create_fails_if_framework_already_exists(self):
-        with self.app.app_context():
-            self.client.post("/frameworks",
-                             data=json.dumps(self.framework()),
-                             content_type="application/json")
+        self.client.post("/frameworks",
+                         data=json.dumps(self.framework()),
+                         content_type="application/json")
 
-            response = self.client.post("/frameworks",
-                                        data=json.dumps(self.framework()),
-                                        content_type="application/json")
+        response = self.client.post("/frameworks",
+                                    data=json.dumps(self.framework()),
+                                    content_type="application/json")
 
-            assert response.status_code == 400
-            assert json.loads(response.get_data(as_text=True))["error"] == "Slug 'example' already in use"
+        assert response.status_code == 400
+        assert json.loads(response.get_data(as_text=True))["error"] == "Slug 'example' already in use"
 
     def test_create_fails_if_status_is_invalid(self):
-        with self.app.app_context():
-            response = self.client.post("/frameworks",
-                                        data=json.dumps(self.framework(status="invalid")),
-                                        content_type="application/json")
+        response = self.client.post("/frameworks",
+                                    data=json.dumps(self.framework(status="invalid")),
+                                    content_type="application/json")
 
-            assert response.status_code == 400
-            assert json.loads(response.get_data(as_text=True))["error"] == "Invalid status value 'invalid'"
+        assert response.status_code == 400
+        assert json.loads(response.get_data(as_text=True))["error"] == "Invalid status value 'invalid'"
 
     def test_create_fails_if_clarification_questions_open_is_invalid(self):
-        with self.app.app_context():
-            response = self.client.post("/frameworks",
-                                        data=json.dumps(self.framework(clarificationQuestionsOpen="invalid")),
-                                        content_type="application/json")
+        response = self.client.post("/frameworks",
+                                    data=json.dumps(self.framework(clarificationQuestionsOpen="invalid")),
+                                    content_type="application/json")
 
-            assert response.status_code == 400
-            assert json.loads(response.get_data(as_text=True))["error"] == "Invalid framework"
+        assert response.status_code == 400
+        assert json.loads(response.get_data(as_text=True))["error"] == "Invalid framework"
 
     def test_create_fails_if_lot_slug_is_invalid(self):
-        with self.app.app_context():
-            response = self.client.post("/frameworks",
-                                        data=json.dumps(self.framework(lots=["saas", "invalid", "bad"])),
-                                        content_type="application/json")
+        response = self.client.post("/frameworks",
+                                    data=json.dumps(self.framework(lots=["saas", "invalid", "bad"])),
+                                    content_type="application/json")
 
-            assert response.status_code == 400
-            assert json.loads(response.get_data(as_text=True))["error"] == "Invalid lot slugs: bad, invalid"
+        assert response.status_code == 400
+        assert json.loads(response.get_data(as_text=True))["error"] == "Invalid lot slugs: bad, invalid"
 
     def test_create_fails_if_slug_is_invalid(self):
-        with self.app.app_context():
-            response = self.client.post("/frameworks",
-                                        data=json.dumps(self.framework(slug="this is/invalid")),
-                                        content_type="application/json")
+        response = self.client.post("/frameworks",
+                                    data=json.dumps(self.framework(slug="this is/invalid")),
+                                    content_type="application/json")
 
-            assert response.status_code == 400
-            assert json.loads(response.get_data(as_text=True))["error"] == "Invalid slug value 'this is/invalid'"
+        assert response.status_code == 400
+        assert json.loads(response.get_data(as_text=True))["error"] == "Invalid slug value 'this is/invalid'"
 
 
 class TestGetFramework(BaseApplicationTest):
     def test_a_single_framework_is_returned(self):
-        with self.app.app_context():
-            response = self.client.get('/frameworks/g-cloud-7')
-            data = json.loads(response.get_data())
+        response = self.client.get('/frameworks/g-cloud-7')
+        data = json.loads(response.get_data())
 
-            assert response.status_code == 200
-            assert data['frameworks']['slug'] == 'g-cloud-7'
-            assert 'status' in data['frameworks']
+        assert response.status_code == 200
+        assert data['frameworks']['slug'] == 'g-cloud-7'
+        assert 'status' in data['frameworks']
 
     def test_framework_lots_are_returned(self):
-        with self.app.app_context():
-            response = self.client.get('/frameworks/g-cloud-7')
+        response = self.client.get('/frameworks/g-cloud-7')
 
         data = json.loads(response.get_data())
         assert data['frameworks']['lots'] == [
@@ -190,10 +180,9 @@ class TestGetFramework(BaseApplicationTest):
         ]
 
     def test_a_404_is_raised_if_it_does_not_exist(self):
-        with self.app.app_context():
-            response = self.client.get('/frameworks/biscuits-for-gov')
+        response = self.client.get('/frameworks/biscuits-for-gov')
 
-            assert response.status_code == 404
+        assert response.status_code == 404
 
 
 class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
@@ -243,16 +232,15 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
         )
 
     def test_returns_404_on_non_existent_framework(self, open_example_framework):
-        with self.app.app_context():
-            response = self.client.post(
-                '/frameworks/example-framework-2',
-                data=json.dumps({'frameworks': {
-                    'status': 'expired'
-                }, 'updated_by': 'example user'}),
-                content_type="application/json"
-            )
+        response = self.client.post(
+            '/frameworks/example-framework-2',
+            data=json.dumps({'frameworks': {
+                'status': 'expired'
+            }, 'updated_by': 'example user'}),
+            content_type="application/json"
+        )
 
-            assert response.status_code == 404
+        assert response.status_code == 404
 
     def test_can_update_whitelisted_fields(self, open_example_framework):
         valid_attributes_and_values = {
@@ -260,28 +248,27 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
             if key in self.attribute_whitelist
         }
 
-        with self.app.app_context():
-            for key, value in valid_attributes_and_values.items():
-                response = self.post_framework_update({
-                    key: value
-                })
+        for key, value in valid_attributes_and_values.items():
+            response = self.post_framework_update({
+                key: value
+            })
 
-                assert response.status_code == 200
-                post_data = json.loads(response.get_data())['frameworks']
+            assert response.status_code == 200
+            post_data = json.loads(response.get_data())['frameworks']
 
-                # certain keys of `frameworkAgreementDetails` are un-nested and returned with other top-level keys
-                if isinstance(value, dict):
-                    for nested_key, nested_value in value.items():
-                        if nested_key in ("countersignerName", "frameworkAgreementVersion", "variations",):
-                            assert post_data[nested_key] == nested_value
+            # certain keys of `frameworkAgreementDetails` are un-nested and returned with other top-level keys
+            if isinstance(value, dict):
+                for nested_key, nested_value in value.items():
+                    if nested_key in ("countersignerName", "frameworkAgreementVersion", "variations",):
+                        assert post_data[nested_key] == nested_value
 
-                assert post_data[key] == value
+            assert post_data[key] == value
 
-                # check the same data was actually persisted
-                get_data = json.loads(
-                    self.client.get('/frameworks/example-framework').get_data()
-                )['frameworks']
-                assert post_data == get_data
+            # check the same data was actually persisted
+            get_data = json.loads(
+                self.client.get('/frameworks/example-framework').get_data()
+            )['frameworks']
+            assert post_data == get_data
 
     def test_cannot_update_non_whitelisted_fields(self, open_example_framework):
         invalid_attributes_and_values = {
@@ -291,33 +278,30 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
         # add some random key
         invalid_attributes_and_values.update({'beverage': 'Clamato'})
 
-        with self.app.app_context():
-            for key, value in invalid_attributes_and_values.items():
-                response = self.post_framework_update({
-                    key: value
-                })
-
-                assert response.status_code == 400
-                data = json.loads(response.get_data())['error']
-                assert data == "Invalid keys for framework update: '{}'".format(key)
-
-    def test_cannot_update_framework_with_invalid_status(self, open_example_framework):
-        with self.app.app_context():
+        for key, value in invalid_attributes_and_values.items():
             response = self.post_framework_update({
-                'status': 'invalid'
+                key: value
             })
 
             assert response.status_code == 400
             data = json.loads(response.get_data())['error']
-            assert 'Invalid status value' in data
+            assert data == "Invalid keys for framework update: '{}'".format(key)
+
+    def test_cannot_update_framework_with_invalid_status(self, open_example_framework):
+        response = self.post_framework_update({
+            'status': 'invalid'
+        })
+
+        assert response.status_code == 400
+        data = json.loads(response.get_data())['error']
+        assert 'Invalid status value' in data
 
     def test_passing_in_an_empty_update_is_a_failure(self, open_example_framework):
-        with self.app.app_context():
-            response = self.post_framework_update({})
+        response = self.post_framework_update({})
 
-            assert response.status_code == 400
-            data = json.loads(response.get_data())['error']
-            assert data == "Framework update expects a payload"
+        assert response.status_code == 400
+        data = json.loads(response.get_data())['error']
+        assert data == "Framework update expects a payload"
 
     def test_schema_validation_for_framework_agreement_details(self, open_example_framework):
         invalid_framework_agreement_details = [
@@ -369,12 +353,11 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
             {}
         ]
 
-        with self.app.app_context():
-            for invalid_value in invalid_framework_agreement_details:
-                response = self.post_framework_update({
-                    'frameworkAgreementDetails': invalid_value
-                })
-                assert response.status_code == 400
+        for invalid_value in invalid_framework_agreement_details:
+            response = self.post_framework_update({
+                'frameworkAgreementDetails': invalid_value
+            })
+            assert response.status_code == 400
 
     @mock.patch('app.db.session.commit')
     def test_update_framework_catches_db_errors(self, db_commit, open_example_framework):
@@ -384,77 +367,72 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
             if key in self.attribute_whitelist
         }
 
-        with self.app.app_context():
-            for key, value in valid_attributes_and_values.items():
-                response = self.post_framework_update({
-                    key: value
-                })
+        for key, value in valid_attributes_and_values.items():
+            response = self.post_framework_update({
+                key: value
+            })
 
-                assert response.status_code == 400
-                assert "Could not commit" in json.loads(response.get_data())["error"]
+            assert response.status_code == 400
+            assert "Could not commit" in json.loads(response.get_data())["error"]
 
 
 class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
     def make_declaration(self, framework_id, supplier_ids, status=None):
-        with self.app.app_context():
-            db.session.query(
-                SupplierFramework
-            ).filter(
-                SupplierFramework.framework_id == framework_id,
-                SupplierFramework.supplier_id.in_(supplier_ids)
-            ).update({
-                SupplierFramework.declaration: {'status': status}
-            }, synchronize_session=False)
+        db.session.query(
+            SupplierFramework
+        ).filter(
+            SupplierFramework.framework_id == framework_id,
+            SupplierFramework.supplier_id.in_(supplier_ids)
+        ).update({
+            SupplierFramework.declaration: {'status': status}
+        }, synchronize_session=False)
 
-            db.session.commit()
+        db.session.commit()
 
     def register_framework_interest(self, framework_id, supplier_ids):
-        with self.app.app_context():
-            for supplier_id in supplier_ids:
-                db.session.add(
-                    SupplierFramework(
-                        framework_id=framework_id,
-                        supplier_id=supplier_id,
-                        declaration={}
-                    )
+        for supplier_id in supplier_ids:
+            db.session.add(
+                SupplierFramework(
+                    framework_id=framework_id,
+                    supplier_id=supplier_id,
+                    declaration={}
                 )
-            db.session.commit()
+            )
+        db.session.commit()
 
     def create_drafts(self, framework_id, supplier_id_count_pairs, status='not-submitted'):
-        with self.app.app_context():
-            framework = Framework.query.get(framework_id)
-            framework_lots = framework.lots
-            for supplier_id, count in supplier_id_count_pairs:
-                for ind in range(count):
-                    db.session.add(
-                        DraftService(
-                            lot=framework_lots[ind % 4],
-                            framework_id=framework_id,
-                            supplier_id=supplier_id,
-                            data={},
-                            status=status
-                        )
-                    )
-
-            db.session.commit()
-
-    def create_users(self, supplier_ids, logged_in_at):
-        with self.app.app_context():
-            for supplier_id in supplier_ids:
+        framework = Framework.query.get(framework_id)
+        framework_lots = framework.lots
+        for supplier_id, count in supplier_id_count_pairs:
+            for ind in range(count):
                 db.session.add(
-                    User(
-                        name='supplier user',
-                        email_address='supplier-{}@user.dmdev'.format(supplier_id),
-                        password='testpassword',
-                        active=True,
-                        password_changed_at=datetime.datetime.utcnow(),
-                        role='supplier',
+                    DraftService(
+                        lot=framework_lots[ind % 4],
+                        framework_id=framework_id,
                         supplier_id=supplier_id,
-                        logged_in_at=logged_in_at
+                        data={},
+                        status=status
                     )
                 )
 
-            db.session.commit()
+        db.session.commit()
+
+    def create_users(self, supplier_ids, logged_in_at):
+        for supplier_id in supplier_ids:
+            db.session.add(
+                User(
+                    name='supplier user',
+                    email_address='supplier-{}@user.dmdev'.format(supplier_id),
+                    password='testpassword',
+                    active=True,
+                    password_changed_at=datetime.datetime.utcnow(),
+                    role='supplier',
+                    supplier_id=supplier_id,
+                    logged_in_at=logged_in_at
+                )
+            )
+
+        db.session.commit()
 
     def setup_supplier_data(self):
         self.setup_dummy_suppliers(30)
@@ -474,8 +452,7 @@ class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
         )
 
     def setup_framework_data(self, framework_slug):
-        with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == framework_slug).first()
+        framework = Framework.query.filter(Framework.slug == framework_slug).first()
 
         self.register_framework_interest(framework.id, range(20))
         self.make_declaration(framework.id, [1, 3, 5, 7, 9, 11], status='started')
@@ -568,18 +545,17 @@ class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
 
     def test_stats_handles_null_declarations(self):
         self.setup_data('g-cloud-7')
-        with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == 'g-cloud-7').first()
-            db.session.query(
-                SupplierFramework
-            ).filter(
-                SupplierFramework.framework_id == framework.id,
-                SupplierFramework.supplier_id.in_([0, 1])
-            ).update({
-                SupplierFramework.declaration: None
-            }, synchronize_session=False)
+        framework = Framework.query.filter(Framework.slug == 'g-cloud-7').first()
+        db.session.query(
+            SupplierFramework
+        ).filter(
+            SupplierFramework.framework_id == framework.id,
+            SupplierFramework.supplier_id.in_([0, 1])
+        ).update({
+            SupplierFramework.declaration: None
+        }, synchronize_session=False)
 
-            db.session.commit()
+        db.session.commit()
 
         response = self.client.get('/frameworks/g-cloud-7/stats')
 
@@ -609,195 +585,194 @@ class TestGetFrameworkSuppliers(BaseApplicationTest, FixtureMixin):
             self.setup_dummy_user(id=123, role='supplier')
             self.setup_dummy_user(id=321, role='admin-ccs-sourcing')
 
-        with self.app.app_context():
-            db.session.execute("UPDATE frameworks SET status='open' WHERE slug='g-cloud-7'")
-            db.session.execute("UPDATE frameworks SET status='open' WHERE slug='g-cloud-8'")
-            db.session.commit()
+        db.session.execute("UPDATE frameworks SET status='open' WHERE slug='g-cloud-7'")
+        db.session.execute("UPDATE frameworks SET status='open' WHERE slug='g-cloud-8'")
+        db.session.commit()
 
-            with freeze_time("2016-10-10", tick=True):
-                # Supplier zero is on G-Cloud 7
+        with freeze_time("2016-10-10", tick=True):
+            # Supplier zero is on G-Cloud 7
+            response = self.client.put(
+                '/suppliers/0/frameworks/g-cloud-7',
+                data=json.dumps({
+                    'updated_by': 'example'
+                }),
+                content_type='application/json')
+            assert response.status_code == 201, response.get_data(as_text=True)
+
+            response = self.client.post(
+                '/suppliers/0/frameworks/g-cloud-7',
+                data=json.dumps({
+                    'updated_by': 'example',
+                    'frameworkInterest': {'onFramework': True}
+                }),
+                content_type='application/json')
+            assert response.status_code == 200, response.get_data(as_text=True)
+
+            response = self.client.post(
+                '/agreements',
+                data=json.dumps({
+                    'updated_by': 'example',
+                    'agreement': {'supplierId': 0, 'frameworkSlug': 'g-cloud-7'},
+                }),
+                content_type='application/json')
+            assert response.status_code == 201, response.get_data(as_text=True)
+            data = json.loads(response.get_data())
+            agreement_id = data['agreement']['id']
+
+            response = self.client.post(
+                '/agreements/{}'.format(agreement_id),
+                data=json.dumps({
+                    'updated_by': 'example',
+                    'agreement': {'signedAgreementPath': '/path-to-g-cloud-7.pdf'},
+                }),
+                content_type='application/json')
+            assert response.status_code == 200, response.get_data(as_text=True)
+
+            response = self.client.post(
+                '/agreements/{}/sign'.format(agreement_id),
+                data=json.dumps({
+                    'updated_by': 'example',
+                    'agreement': {},
+                }),
+                content_type='application/json')
+            assert response.status_code == 200, response.get_data(as_text=True)
+
+        # (Almost) everyone is on G-Cloud 8
+        for supplier_id in range(11):
+            with freeze_time(datetime.datetime(2016, 10, supplier_id + 2)):
                 response = self.client.put(
-                    '/suppliers/0/frameworks/g-cloud-7',
+                    '/suppliers/{}/frameworks/g-cloud-8'.format(supplier_id),
                     data=json.dumps({
                         'updated_by': 'example'
                     }),
                     content_type='application/json')
                 assert response.status_code == 201, response.get_data(as_text=True)
 
-                response = self.client.post(
-                    '/suppliers/0/frameworks/g-cloud-7',
+            with freeze_time(datetime.datetime(2016, 10, supplier_id + 2, 10)):
+                response = self.client.put(
+                    '/suppliers/{}/frameworks/g-cloud-8/declaration'.format(supplier_id),
                     data=json.dumps({
                         'updated_by': 'example',
-                        'frameworkInterest': {'onFramework': True}
-                    }),
-                    content_type='application/json')
-                assert response.status_code == 200, response.get_data(as_text=True)
-
-                response = self.client.post(
-                    '/agreements',
-                    data=json.dumps({
-                        'updated_by': 'example',
-                        'agreement': {'supplierId': 0, 'frameworkSlug': 'g-cloud-7'},
+                        'declaration': {
+                            "status": "complete",
+                            "firstRegistered": "16/06/1904",
+                        },
                     }),
                     content_type='application/json')
                 assert response.status_code == 201, response.get_data(as_text=True)
-                data = json.loads(response.get_data())
-                agreement_id = data['agreement']['id']
 
+            with freeze_time(datetime.datetime(2016, 10, supplier_id + 3)):
                 response = self.client.post(
-                    '/agreements/{}'.format(agreement_id),
+                    '/suppliers/{}/frameworks/g-cloud-8'.format(supplier_id),
                     data=json.dumps({
                         'updated_by': 'example',
-                        'agreement': {'signedAgreementPath': '/path-to-g-cloud-7.pdf'},
+                        'frameworkInterest': {
+                            'onFramework': True,
+                        },
                     }),
                     content_type='application/json')
                 assert response.status_code == 200, response.get_data(as_text=True)
 
-                response = self.client.post(
-                    '/agreements/{}/sign'.format(agreement_id),
-                    data=json.dumps({
-                        'updated_by': 'example',
-                        'agreement': {},
-                    }),
-                    content_type='application/json')
-                assert response.status_code == 200, response.get_data(as_text=True)
-
-            # (Almost) everyone is on G-Cloud 8
-            for supplier_id in range(11):
-                with freeze_time(datetime.datetime(2016, 10, supplier_id + 2)):
-                    response = self.client.put(
-                        '/suppliers/{}/frameworks/g-cloud-8'.format(supplier_id),
-                        data=json.dumps({
-                            'updated_by': 'example'
-                        }),
-                        content_type='application/json')
-                    assert response.status_code == 201, response.get_data(as_text=True)
-
-                with freeze_time(datetime.datetime(2016, 10, supplier_id + 2, 10)):
-                    response = self.client.put(
-                        '/suppliers/{}/frameworks/g-cloud-8/declaration'.format(supplier_id),
-                        data=json.dumps({
-                            'updated_by': 'example',
-                            'declaration': {
-                                "status": "complete",
-                                "firstRegistered": "16/06/1904",
-                            },
-                        }),
-                        content_type='application/json')
-                    assert response.status_code == 201, response.get_data(as_text=True)
-
-                with freeze_time(datetime.datetime(2016, 10, supplier_id + 3)):
-                    response = self.client.post(
-                        '/suppliers/{}/frameworks/g-cloud-8'.format(supplier_id),
-                        data=json.dumps({
-                            'updated_by': 'example',
-                            'frameworkInterest': {
-                                'onFramework': True,
-                            },
-                        }),
-                        content_type='application/json')
-                    assert response.status_code == 200, response.get_data(as_text=True)
-
-            # Suppliers 1-10 have started to return a G-Cloud 8 agreement (created a draft)
-            agreement_ids = {}
-            for supplier_id in range(1, 11):
-                with freeze_time(datetime.datetime(2016, 11, (supplier_id + 1) * 2)):
-                    response = self.client.post(
-                        '/agreements',
-                        data=json.dumps({
-                            'updated_by': 'example',
-                            'agreement': {'supplierId': supplier_id, 'frameworkSlug': 'g-cloud-8'},
-                        }),
-                        content_type='application/json'
-                    )
-                    assert response.status_code == 201, response.get_data(as_text=True)
-                    data = json.loads(response.get_data())
-                    agreement_ids[supplier_id] = data['agreement']['id']
-
-            # (supplier 10 created a superfluous agreement which they then didn't use
-            with freeze_time(datetime.datetime(2016, 11, 26)):
+        # Suppliers 1-10 have started to return a G-Cloud 8 agreement (created a draft)
+        agreement_ids = {}
+        for supplier_id in range(1, 11):
+            with freeze_time(datetime.datetime(2016, 11, (supplier_id + 1) * 2)):
                 response = self.client.post(
                     '/agreements',
                     data=json.dumps({
                         'updated_by': 'example',
-                        'agreement': {'supplierId': 10, 'frameworkSlug': 'g-cloud-8'},
+                        'agreement': {'supplierId': supplier_id, 'frameworkSlug': 'g-cloud-8'},
                     }),
                     content_type='application/json'
                 )
                 assert response.status_code == 201, response.get_data(as_text=True)
+                data = json.loads(response.get_data())
+                agreement_ids[supplier_id] = data['agreement']['id']
 
-            for supplier_id in range(1, 11):
-                with freeze_time(datetime.datetime(2016, 11, (supplier_id + 1) * 2, 10)):
-                    response = self.client.post(
-                        '/agreements/{}'.format(agreement_ids[supplier_id]),
-                        data=json.dumps({
-                            'updated_by': 'example',
-                            'agreement': {
-                                'signedAgreementPath': 'path/to/agreement/{}.pdf'.format(supplier_id),
-                                'signedAgreementDetails': {
-                                    'signerName': 'name_{}'.format(supplier_id),
-                                    'signerRole': 'job_{}'.format(supplier_id)
-                                },
-                            }
-                        }),
-                        content_type='application/json'
-                    )
-                    assert response.status_code == 200, response.get_data(as_text=True)
+        # (supplier 10 created a superfluous agreement which they then didn't use
+        with freeze_time(datetime.datetime(2016, 11, 26)):
+            response = self.client.post(
+                '/agreements',
+                data=json.dumps({
+                    'updated_by': 'example',
+                    'agreement': {'supplierId': 10, 'frameworkSlug': 'g-cloud-8'},
+                }),
+                content_type='application/json'
+            )
+            assert response.status_code == 201, response.get_data(as_text=True)
 
-            # Suppliers 3-10 have returned their G-Cloud 8 agreement
-            for supplier_id in range(3, 11):
-                with freeze_time(datetime.datetime(2016, 11, 30, 11 - supplier_id)):
-                    response = self.client.post(
-                        '/agreements/{}/sign'.format(agreement_ids[supplier_id]),
-                        data=json.dumps({
-                            'updated_by': 'example',
-                            'agreement': {
-                                'signedAgreementDetails': {
-                                    'uploaderUserId': 123,
-                                },
+        for supplier_id in range(1, 11):
+            with freeze_time(datetime.datetime(2016, 11, (supplier_id + 1) * 2, 10)):
+                response = self.client.post(
+                    '/agreements/{}'.format(agreement_ids[supplier_id]),
+                    data=json.dumps({
+                        'updated_by': 'example',
+                        'agreement': {
+                            'signedAgreementPath': 'path/to/agreement/{}.pdf'.format(supplier_id),
+                            'signedAgreementDetails': {
+                                'signerName': 'name_{}'.format(supplier_id),
+                                'signerRole': 'job_{}'.format(supplier_id)
                             },
-                        }),
-                        content_type='application/json'
-                    )
-                    assert response.status_code == 200, response.get_data(as_text=True)
+                        }
+                    }),
+                    content_type='application/json'
+                )
+                assert response.status_code == 200, response.get_data(as_text=True)
 
-            # Supplier 4 and 9's agreements were put on hold (only 4 subsequently remained on hold)
-            for supplier_id in (4, 9,):
-                with freeze_time(datetime.datetime(2016, 11, 30, 12 - (supplier_id // 3))):
-                    response = self.client.post(
-                        '/agreements/{}/on-hold'.format(agreement_ids[supplier_id]),
-                        data=json.dumps({'updated_by': 'example'}),
-                        content_type='application/json'
-                    )
-                    assert response.status_code == 200, response.get_data(as_text=True)
+        # Suppliers 3-10 have returned their G-Cloud 8 agreement
+        for supplier_id in range(3, 11):
+            with freeze_time(datetime.datetime(2016, 11, 30, 11 - supplier_id)):
+                response = self.client.post(
+                    '/agreements/{}/sign'.format(agreement_ids[supplier_id]),
+                    data=json.dumps({
+                        'updated_by': 'example',
+                        'agreement': {
+                            'signedAgreementDetails': {
+                                'uploaderUserId': 123,
+                            },
+                        },
+                    }),
+                    content_type='application/json'
+                )
+                assert response.status_code == 200, response.get_data(as_text=True)
 
-            # Suppliers 6-10 have been approved for countersignature
-            for supplier_id in range(6, 11):
-                with freeze_time(datetime.datetime(2016, 11, 30, 15 - supplier_id)):
-                    response = self.client.post(
-                        '/agreements/{}/approve'.format(agreement_ids[supplier_id]),
-                        data=json.dumps({
-                            'updated_by': 'example',
-                            "agreement": {'userId': 321},
-                        }),
-                        content_type='application/json'
-                    )
-                    assert response.status_code == 200, response.get_data(as_text=True)
+        # Supplier 4 and 9's agreements were put on hold (only 4 subsequently remained on hold)
+        for supplier_id in (4, 9,):
+            with freeze_time(datetime.datetime(2016, 11, 30, 12 - (supplier_id // 3))):
+                response = self.client.post(
+                    '/agreements/{}/on-hold'.format(agreement_ids[supplier_id]),
+                    data=json.dumps({'updated_by': 'example'}),
+                    content_type='application/json'
+                )
+                assert response.status_code == 200, response.get_data(as_text=True)
 
-            # Suppliers 7-10 have countersigned agreements
-            for supplier_id in range(7, 11):
-                with freeze_time(datetime.datetime(2016, 12, 25, 5 + supplier_id)):
-                    response = self.client.post(
-                        '/agreements/{}'.format(agreement_ids[supplier_id]),
-                        data=json.dumps({
-                            'updated_by': 'example',
-                            'agreement': {
-                                'countersignedAgreementPath': 'path/to/countersigned{}.pdf'.format(supplier_id)
-                            }
-                        }),
-                        content_type='application/json'
-                    )
-                    assert response.status_code == 200, response.get_data(as_text=True)
+        # Suppliers 6-10 have been approved for countersignature
+        for supplier_id in range(6, 11):
+            with freeze_time(datetime.datetime(2016, 11, 30, 15 - supplier_id)):
+                response = self.client.post(
+                    '/agreements/{}/approve'.format(agreement_ids[supplier_id]),
+                    data=json.dumps({
+                        'updated_by': 'example',
+                        "agreement": {'userId': 321},
+                    }),
+                    content_type='application/json'
+                )
+                assert response.status_code == 200, response.get_data(as_text=True)
+
+        # Suppliers 7-10 have countersigned agreements
+        for supplier_id in range(7, 11):
+            with freeze_time(datetime.datetime(2016, 12, 25, 5 + supplier_id)):
+                response = self.client.post(
+                    '/agreements/{}'.format(agreement_ids[supplier_id]),
+                    data=json.dumps({
+                        'updated_by': 'example',
+                        'agreement': {
+                            'countersignedAgreementPath': 'path/to/countersigned{}.pdf'.format(supplier_id)
+                        }
+                    }),
+                    content_type='application/json'
+                )
+                assert response.status_code == 200, response.get_data(as_text=True)
 
     def test_list_suppliers_combined(self, live_g8_framework):
         # it would be nice to implement the following as individual tests, but the setup method is too expensive and has
@@ -949,26 +924,23 @@ class TestGetFrameworkInterest(BaseApplicationTest, FixtureMixin):
 
     def register_g7_interest(self, num):
         self.setup_dummy_suppliers(num)
-        with self.app.app_context():
-            for supplier_id in range(num):
-                db.session.add(
-                    SupplierFramework(
-                        framework_id=4,
-                        supplier_id=supplier_id
-                    )
+        for supplier_id in range(num):
+            db.session.add(
+                SupplierFramework(
+                    framework_id=4,
+                    supplier_id=supplier_id
                 )
-            db.session.commit()
+            )
+        db.session.commit()
 
     def test_interested_suppliers_are_returned(self):
-        with self.app.app_context():
-            response = self.client.get('/frameworks/g-cloud-7/interest')
+        response = self.client.get('/frameworks/g-cloud-7/interest')
 
-            assert response.status_code == 200
-            data = json.loads(response.get_data())
-            assert data['interestedSuppliers'] == [0, 1, 2, 3, 4]
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['interestedSuppliers'] == [0, 1, 2, 3, 4]
 
     def test_a_404_is_raised_if_it_does_not_exist(self):
-        with self.app.app_context():
-            response = self.client.get('/frameworks/biscuits-for-gov/interest')
+        response = self.client.get('/frameworks/biscuits-for-gov/interest')
 
-            assert response.status_code == 404
+        assert response.status_code == 404

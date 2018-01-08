@@ -8,17 +8,16 @@ from tests.bases import BaseApplicationTest
 
 class BaseFrameworkAgreementTest(BaseApplicationTest):
     def create_agreement(self, supplier_framework, **framework_agreement_kwargs):
-        with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == supplier_framework['frameworkSlug']).first()
+        framework = Framework.query.filter(Framework.slug == supplier_framework['frameworkSlug']).first()
 
-            agreement = FrameworkAgreement(
-                supplier_id=supplier_framework['supplierId'],
-                framework_id=framework.id,
-                **framework_agreement_kwargs)
-            db.session.add(agreement)
-            db.session.commit()
+        agreement = FrameworkAgreement(
+            supplier_id=supplier_framework['supplierId'],
+            framework_id=framework.id,
+            **framework_agreement_kwargs)
+        db.session.add(agreement)
+        db.session.commit()
 
-            return agreement.id
+        return agreement.id
 
 
 class TestCreateFrameworkAgreement(BaseApplicationTest):
@@ -67,21 +66,20 @@ class TestCreateFrameworkAgreement(BaseApplicationTest):
 
         agreement_id = json.loads(res.get_data(as_text=True))['agreement']['id']
 
-        with self.app.app_context():
-            agreement = FrameworkAgreement.query.filter(
-                FrameworkAgreement.id == agreement_id
-            ).first()
+        agreement = FrameworkAgreement.query.filter(
+            FrameworkAgreement.id == agreement_id
+        ).first()
 
-            audit = AuditEvent.query.filter(
-                AuditEvent.object == agreement
-            ).first()
+        audit = AuditEvent.query.filter(
+            AuditEvent.object == agreement
+        ).first()
 
-            assert audit.type == "create_agreement"
-            assert audit.user == "interested@example.com"
-            assert audit.data == {
-                'supplierId': supplier_framework['supplierId'],
-                'frameworkSlug': supplier_framework['frameworkSlug']
-            }
+        assert audit.type == "create_agreement"
+        assert audit.user == "interested@example.com"
+        assert audit.data == {
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug']
+        }
 
     def test_404_if_creating_framework_agreement_with_no_supplier_framework(self, supplier_framework):
         res = self.post_create_agreement(
@@ -410,28 +408,27 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
 
         assert res.status_code == 200
 
-        with self.app.app_context():
-            agreement = FrameworkAgreement.query.filter(
-                FrameworkAgreement.id == agreement_id
-            ).first()
+        agreement = FrameworkAgreement.query.filter(
+            FrameworkAgreement.id == agreement_id
+        ).first()
 
-            audit = AuditEvent.query.filter(
-                AuditEvent.object == agreement
-            ).first()
+        audit = AuditEvent.query.filter(
+            AuditEvent.object == agreement
+        ).first()
 
-            assert audit.type == "update_agreement"
-            assert audit.user == "interested@example.com"
-            assert audit.data == {
-                'supplierId': supplier_framework['supplierId'],
-                'frameworkSlug': supplier_framework['frameworkSlug'],
-                'update': {
-                    'signedAgreementDetails': {
-                        'signerName': 'name',
-                        'signerRole': 'role',
-                    },
-                    'signedAgreementPath': '/example.pdf'
-                }
+        assert audit.type == "update_agreement"
+        assert audit.user == "interested@example.com"
+        assert audit.data == {
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'update': {
+                'signedAgreementDetails': {
+                    'signerName': 'name',
+                    'signerRole': 'role',
+                },
+                'signedAgreementPath': '/example.pdf'
             }
+        }
 
     @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
     def test_can_not_set_framework_agreement_version_directly(self, supplier_framework):
@@ -685,22 +682,21 @@ class TestSignFrameworkAgreementThatHasFrameworkAgreementVersion(BaseFrameworkAg
         res = self.sign_agreement(agreement_id, {'signedAgreementDetails': {'uploaderUserId': user_role_supplier}})
         assert res.status_code == 200
 
-        with self.app.app_context():
-            agreement = FrameworkAgreement.query.filter(
-                FrameworkAgreement.id == agreement_id
-            ).first()
+        agreement = FrameworkAgreement.query.filter(
+            FrameworkAgreement.id == agreement_id
+        ).first()
 
-            audit = AuditEvent.query.filter(
-                AuditEvent.object == agreement
-            ).first()
+        audit = AuditEvent.query.filter(
+            AuditEvent.object == agreement
+        ).first()
 
-            assert audit.type == "sign_agreement"
-            assert audit.user == "interested@example.com"
-            assert audit.data == {
-                'supplierId': supplier_framework['supplierId'],
-                'frameworkSlug': supplier_framework['frameworkSlug'],
-                'update': {'signedAgreementDetails': {'uploaderUserId': user_role_supplier}}
-            }
+        assert audit.type == "sign_agreement"
+        assert audit.user == "interested@example.com"
+        assert audit.data == {
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'update': {'signedAgreementDetails': {'uploaderUserId': user_role_supplier}}
+        }
 
     def test_can_re_sign_framework_agreement(self, user_role_supplier, supplier_framework):
         agreement_id = self.create_agreement(
@@ -803,21 +799,20 @@ class TestSignFrameworkAgreementThatHasNoFrameworkAgreementVersion(BaseFramework
         res = self.sign_agreement(agreement_id)
         assert res.status_code == 200
 
-        with self.app.app_context():
-            agreement = FrameworkAgreement.query.filter(
-                FrameworkAgreement.id == agreement_id
-            ).first()
+        agreement = FrameworkAgreement.query.filter(
+            FrameworkAgreement.id == agreement_id
+        ).first()
 
-            audit = AuditEvent.query.filter(
-                AuditEvent.object == agreement
-            ).first()
+        audit = AuditEvent.query.filter(
+            AuditEvent.object == agreement
+        ).first()
 
-            assert audit.type == "sign_agreement"
-            assert audit.user == "interested@example.com"
-            assert audit.data == {
-                'supplierId': supplier_framework['supplierId'],
-                'frameworkSlug': supplier_framework['frameworkSlug'],
-            }
+        assert audit.type == "sign_agreement"
+        assert audit.user == "interested@example.com"
+        assert audit.data == {
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+        }
 
     def test_can_re_sign_framework_agreement(self, supplier_framework):
         agreement_id = self.create_agreement(
@@ -871,22 +866,21 @@ class TestPutFrameworkAgreementOnHold(BaseFrameworkAgreementTest):
             'signedAgreementPutOnHoldAt': '2016-12-12T00:00:00.000000Z'
         }
 
-        with self.app.app_context():
-            agreement = FrameworkAgreement.query.filter(
-                FrameworkAgreement.id == agreement_id
-            ).first()
+        agreement = FrameworkAgreement.query.filter(
+            FrameworkAgreement.id == agreement_id
+        ).first()
 
-            audit = AuditEvent.query.filter(
-                AuditEvent.object == agreement
-            ).first()
+        audit = AuditEvent.query.filter(
+            AuditEvent.object == agreement
+        ).first()
 
-            assert audit.type == "update_agreement"
-            assert audit.user == "interested@example.com"
-            assert audit.data == {
-                'supplierId': supplier_framework['supplierId'],
-                'frameworkSlug': supplier_framework['frameworkSlug'],
-                'status': 'on-hold'
-            }
+        assert audit.type == "update_agreement"
+        assert audit.user == "interested@example.com"
+        assert audit.data == {
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'on-hold'
+        }
 
     @fixture_params('live_example_framework', {'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'}})
     def test_can_not_put_unsigned_framework_agreement_on_hold(self, supplier_framework):
@@ -979,22 +973,21 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
             }
         }
 
-        with self.app.app_context():
-            agreement = FrameworkAgreement.query.filter(
-                FrameworkAgreement.id == agreement_id
-            ).first()
+        agreement = FrameworkAgreement.query.filter(
+            FrameworkAgreement.id == agreement_id
+        ).first()
 
-            audit = AuditEvent.query.filter(
-                AuditEvent.object == agreement
-            ).first()
+        audit = AuditEvent.query.filter(
+            AuditEvent.object == agreement
+        ).first()
 
-            assert audit.type == "countersign_agreement"
-            assert audit.user == "chris@example.com"
-            assert audit.data == {
-                'supplierId': supplier_framework['supplierId'],
-                'frameworkSlug': supplier_framework['frameworkSlug'],
-                'status': 'approved'
-            }
+        assert audit.type == "countersign_agreement"
+        assert audit.user == "chris@example.com"
+        assert audit.data == {
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'approved'
+        }
 
     @fixture_params(
         'live_example_framework', {
@@ -1110,19 +1103,18 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
         }
     )
     def test_serialized_supplier_framework_contains_updater_details_after_approval(self, supplier_framework):
-        with self.app.app_context():
-            user = User(
-                id=1234,
-                name='Chris',
-                email_address='chris@crowncommercial.gov.uk',
-                password='password',
-                active=True,
-                created_at=datetime.now(),
-                password_changed_at=datetime.now(),
-                role='admin-ccs-sourcing'
-            )
-            db.session.add(user)
-            db.session.commit()
+        user = User(
+            id=1234,
+            name='Chris',
+            email_address='chris@crowncommercial.gov.uk',
+            password='password',
+            active=True,
+            created_at=datetime.now(),
+            password_changed_at=datetime.now(),
+            role='admin-ccs-sourcing'
+        )
+        db.session.add(user)
+        db.session.commit()
 
         agreement_id = self.create_agreement(
             supplier_framework,
@@ -1136,9 +1128,8 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
             countersigned_agreement_returned_at=datetime.now()
         )
 
-        with self.app.app_context():
-            agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first()
-            supplier_framework = agreement.supplier_framework.serialize(with_users=True)
+        agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first()
+        supplier_framework = agreement.supplier_framework.serialize(with_users=True)
 
         assert supplier_framework['countersignedDetails']['approvedByUserName'] == 'Chris'
         assert supplier_framework['countersignedDetails']['approvedByUserEmail'] == 'chris@crowncommercial.gov.uk'
@@ -1177,23 +1168,22 @@ class TestApproveFrameworkAgreement(BaseFrameworkAgreementTest):
             'signedAgreementReturnedAt': '2016-10-01T00:00:00.000000Z',
         }
 
-        with self.app.app_context():
-            agreement = FrameworkAgreement.query.filter(
-                FrameworkAgreement.id == agreement_id
-            ).first()
+        agreement = FrameworkAgreement.query.filter(
+            FrameworkAgreement.id == agreement_id
+        ).first()
 
-            # Get the most recent audit event and check it is the "unapprove" event
-            audit = AuditEvent.query.filter(
-                AuditEvent.object == agreement
-            ).order_by(AuditEvent.created_at.desc()).first()
+        # Get the most recent audit event and check it is the "unapprove" event
+        audit = AuditEvent.query.filter(
+            AuditEvent.object == agreement
+        ).order_by(AuditEvent.created_at.desc()).first()
 
-            assert audit.type == "countersign_agreement"
-            assert audit.user == "made-a-whoopsie@example.com"
-            assert audit.data == {
-                'supplierId': supplier_framework['supplierId'],
-                'frameworkSlug': supplier_framework['frameworkSlug'],
-                'status': 'unapproved'
-            }
+        assert audit.type == "countersign_agreement"
+        assert audit.user == "made-a-whoopsie@example.com"
+        assert audit.data == {
+            'supplierId': supplier_framework['supplierId'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'status': 'unapproved'
+        }
 
     def test_can_not_unapprove_countersigned_agreement(self, supplier_framework):
         agreement_id = self.create_agreement(

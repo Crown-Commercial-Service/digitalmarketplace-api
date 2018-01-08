@@ -19,76 +19,73 @@ class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(BaseBriefResponseTest, self).setup()
 
-        with self.app.app_context():
-            self.supplier_ids = self.setup_dummy_suppliers(2)
-            supplier_frameworks = [
-                SupplierFramework(supplier_id=supplier_id, framework_id=5)
-                for supplier_id in self.supplier_ids
-            ]
-            brief = Brief(
-                data=example_listings.brief_data().example(),
-                status='live', framework_id=5, lot=Lot.query.get(5)
-            )
+        self.supplier_ids = self.setup_dummy_suppliers(2)
+        supplier_frameworks = [
+            SupplierFramework(supplier_id=supplier_id, framework_id=5)
+            for supplier_id in self.supplier_ids
+        ]
+        brief = Brief(
+            data=example_listings.brief_data().example(),
+            status='live', framework_id=5, lot=Lot.query.get(5)
+        )
 
-            service = Service(
-                service_id='1234560987654321',
-                data={'locations': [brief.data['location']]},
-                status='published',
-                framework_id=5,
-                lot_id=5,
-                supplier_id=0,
-            )
+        service = Service(
+            service_id='1234560987654321',
+            data={'locations': [brief.data['location']]},
+            status='published',
+            framework_id=5,
+            lot_id=5,
+            supplier_id=0,
+        )
 
-            specialist_brief = Brief(
-                data=example_listings.brief_data().example(),
-                status='live', framework_id=5, lot=Lot.query.get(6)
-            )
+        specialist_brief = Brief(
+            data=example_listings.brief_data().example(),
+            status='live', framework_id=5, lot=Lot.query.get(6)
+        )
 
-            specialist_service = Service(
-                service_id='1234560987654322',
-                data={'developerLocations': [specialist_brief.data['location']],
-                      'developerPriceMin': "0",
-                      'developerPriceMax': "1000"},
-                status='published',
-                framework_id=5,
-                lot_id=6,
-                supplier_id=0,
-            )
+        specialist_service = Service(
+            service_id='1234560987654322',
+            data={'developerLocations': [specialist_brief.data['location']],
+                  'developerPriceMin': "0",
+                  'developerPriceMax': "1000"},
+            status='published',
+            framework_id=5,
+            lot_id=6,
+            supplier_id=0,
+        )
 
-            db.session.add_all([service, specialist_service, brief, specialist_brief] + supplier_frameworks)
-            db.session.commit()
-            self.brief_id = brief.id
-            self.specialist_brief_id = specialist_brief.id
+        db.session.add_all([service, specialist_service, brief, specialist_brief] + supplier_frameworks)
+        db.session.commit()
+        self.brief_id = brief.id
+        self.specialist_brief_id = specialist_brief.id
 
     def setup_dummy_brief_response(
             self, brief_id=None, supplier_id=0, submitted_at=datetime(2016, 1, 2), award_details=None
     ):
 
-        with self.app.app_context():
-            brief_response = BriefResponse(
-                data=example_listings.brief_response_data().example(),
-                supplier_id=supplier_id, brief_id=brief_id or self.brief_id,
-                submitted_at=submitted_at,
-                award_details=award_details if award_details else {}
-            )
+        brief_response = BriefResponse(
+            data=example_listings.brief_response_data().example(),
+            supplier_id=supplier_id, brief_id=brief_id or self.brief_id,
+            submitted_at=submitted_at,
+            award_details=award_details if award_details else {}
+        )
 
-            db.session.add(brief_response)
-            db.session.commit()
+        db.session.add(brief_response)
+        db.session.commit()
 
-            return brief_response.id
+        return brief_response.id
 
     def setup_dummy_awarded_brief_response(self, brief_id=None):
-        with self.app.app_context():
-            self.setup_dummy_briefs(1, status="closed", brief_start=brief_id or self.brief_id)
-            awarded_brief_response_id = self.setup_dummy_brief_response(
-                brief_id=brief_id or self.brief_id, award_details={'pending': True}
-            )
-            awarded_brief_response = BriefResponse.query.get(awarded_brief_response_id)
-            awarded_brief_response.awarded_at = datetime.utcnow()
-            db.session.add(awarded_brief_response)
-            db.session.commit()
+        self.setup_dummy_briefs(1, status="closed", brief_start=brief_id or self.brief_id)
+        awarded_brief_response_id = self.setup_dummy_brief_response(
+            brief_id=brief_id or self.brief_id, award_details={'pending': True}
+        )
+        awarded_brief_response = BriefResponse.query.get(awarded_brief_response_id)
+        awarded_brief_response.awarded_at = datetime.utcnow()
+        db.session.add(awarded_brief_response)
+        db.session.commit()
 
-            return awarded_brief_response.id
+        return awarded_brief_response.id
 
     def create_brief_response(self, supplier_id=0, brief_id=None, data=None):
         brief_responses_data = {
@@ -194,10 +191,9 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
         assert res.status_code == 201, res.get_data(as_text=True)
 
-        with self.app.app_context():
-            audit_events = AuditEvent.query.filter(
-                AuditEvent.type == AuditTypes.create_brief_response.value
-            ).all()
+        audit_events = AuditEvent.query.filter(
+            AuditEvent.type == AuditTypes.create_brief_response.value
+        ).all()
 
         assert len(audit_events) == 1
         assert audit_events[0].data == {
@@ -282,33 +278,31 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
     def test_cannot_create_a_brief_response_if_framework_status_is_not_live_or_expired(self, live_dos_framework):
         framework_id = live_dos_framework['id']
         for framework_status in [status for status in Framework.STATUSES if status not in ('live', 'expired')]:
-            with self.app.app_context():
-                db.session.execute(
-                    "UPDATE frameworks SET status=:status WHERE id = :framework_id",
-                    {
-                        'status': framework_status,
-                        'framework_id': framework_id,
-                    },
-                )
-
-                res = self.create_brief_response()
-                data = json.loads(res.get_data(as_text=True))
-
-                assert res.status_code == 400
-                assert data == {'error': 'Brief framework must be live or expired'}
-
-    def test_cannot_respond_to_a_brief_that_isnt_live(self, live_dos_framework):
-        with self.app.app_context():
-            brief = Brief(
-                data={}, status='draft', framework_id=5, lot=Lot.query.get(5)
+            db.session.execute(
+                "UPDATE frameworks SET status=:status WHERE id = :framework_id",
+                {
+                    'status': framework_status,
+                    'framework_id': framework_id,
+                },
             )
-            db.session.add(brief)
-            db.session.commit()
 
-            res = self.create_brief_response(brief_id=brief.id)
+            res = self.create_brief_response()
+            data = json.loads(res.get_data(as_text=True))
 
             assert res.status_code == 400
-            assert "Brief must be live" in res.get_data(as_text=True)
+            assert data == {'error': 'Brief framework must be live or expired'}
+
+    def test_cannot_respond_to_a_brief_that_isnt_live(self, live_dos_framework):
+        brief = Brief(
+            data={}, status='draft', framework_id=5, lot=Lot.query.get(5)
+        )
+        db.session.add(brief)
+        db.session.commit()
+
+        res = self.create_brief_response(brief_id=brief.id)
+
+        assert res.status_code == 400
+        assert "Brief must be live" in res.get_data(as_text=True)
 
     def test_cannot_respond_to_a_brief_more_than_once_from_the_same_supplier(self, live_dos_framework):
         self.create_brief_response()
@@ -403,10 +397,9 @@ class TestUpdateBriefResponse(BaseBriefResponseTest):
         assert data['supplierId'] == 0
         assert data['essentialRequirementsMet'] is True
 
-        with self.app.app_context():
-            audit_events = AuditEvent.query.filter(
-                AuditEvent.type == AuditTypes.update_brief_response.value
-            ).all()
+        audit_events = AuditEvent.query.filter(
+            AuditEvent.type == AuditTypes.update_brief_response.value
+        ).all()
 
         assert len(audit_events) == 1
         assert audit_events[0].data == {
@@ -424,20 +417,19 @@ class TestUpdateBriefResponse(BaseBriefResponseTest):
 
     def test_can_not_update_brief_response_for_framework_that_is_not_live_or_expired(self, live_dos_framework):
         for framework_status in [status for status in Framework.STATUSES if status not in ('live', 'expired')]:
-            with self.app.app_context():
-                db.session.execute(
-                    "UPDATE frameworks SET status=:status WHERE slug='digital-outcomes-and-specialists'",
-                    {'status': framework_status},
-                )
+            db.session.execute(
+                "UPDATE frameworks SET status=:status WHERE slug='digital-outcomes-and-specialists'",
+                {'status': framework_status},
+            )
 
-                res = self._update_brief_response(
-                    self.brief_response_id,
-                    {'respondToEmailAddress': 'newemail@email.com'}
-                )
+            res = self._update_brief_response(
+                self.brief_response_id,
+                {'respondToEmailAddress': 'newemail@email.com'}
+            )
 
-                data = json.loads(res.get_data(as_text=True))
-                assert res.status_code == 400
-                assert data == {'error': 'Brief framework must be live or expired'}
+            data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 400
+            assert data == {'error': 'Brief framework must be live or expired'}
 
     def test_can_not_update_brief_response_if_supplier_is_ineligible_for_brief(self, live_dos_framework):
         with mock.patch('app.main.views.brief_responses.get_supplier_service_eligible_for_brief') as mock_patch:
@@ -557,10 +549,9 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
         self._setup_existing_brief_response()
         self._submit_brief_response(self.brief_response_id)
 
-        with self.app.app_context():
-            audit_events = AuditEvent.query.filter(
-                AuditEvent.type == AuditTypes.submit_brief_response.value
-            ).all()
+        audit_events = AuditEvent.query.filter(
+            AuditEvent.type == AuditTypes.submit_brief_response.value
+        ).all()
 
         assert len(audit_events) == 1
         assert audit_events[0].data == {
@@ -598,27 +589,26 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
             live_dos_framework,
             framework_status
     ):
-        with self.app.app_context():
-            # If a brief response already exists delete the last one. Suppliers can only have one response.
-            existing_brief_response = db.session.query(BriefResponse).all()
-            if existing_brief_response:
-                db.session.delete(existing_brief_response[-1])
-                db.session.commit()
-
-            # Create a brief response while the framework is live.
-            self._setup_existing_brief_response()
-
-            # Set framework status to the invalid status currently under test.
-            dos_framework = db.session.query(Framework).filter_by(slug='digital-outcomes-and-specialists').first()
-            dos_framework.status = framework_status
+        # If a brief response already exists delete the last one. Suppliers can only have one response.
+        existing_brief_response = db.session.query(BriefResponse).all()
+        if existing_brief_response:
+            db.session.delete(existing_brief_response[-1])
             db.session.commit()
 
-            # Ensure error code on save attempt.
-            res = self._submit_brief_response(self.brief_response_id)
-            data = json.loads(res.get_data(as_text=True))
+        # Create a brief response while the framework is live.
+        self._setup_existing_brief_response()
 
-            assert res.status_code == 400
-            assert data == {'error': 'Brief framework must be live or expired'}
+        # Set framework status to the invalid status currently under test.
+        dos_framework = db.session.query(Framework).filter_by(slug='digital-outcomes-and-specialists').first()
+        dos_framework.status = framework_status
+        db.session.commit()
+
+        # Ensure error code on save attempt.
+        res = self._submit_brief_response(self.brief_response_id)
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data == {'error': 'Brief framework must be live or expired'}
 
     def test_can_not_submit_response_if_supplier_is_ineligble_for_brief(self, live_dos_framework):
         self._setup_existing_brief_response()
@@ -632,13 +622,12 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
             assert data == {'error': 'Supplier is not eligible to apply to this brief'}
 
     def test_can_submit_a_brief_response_with_no_nice_to_have_requirements(self, live_dos_framework):
-        with self.app.app_context():
-            brief = Brief.query.get(self.brief_id)
-            brief_data = brief.data.copy()
-            brief_data['niceToHaveRequirements'] = []
-            brief.data = brief_data
-            db.session.add(brief)
-            db.session.commit()
+        brief = Brief.query.get(self.brief_id)
+        brief_data = brief.data.copy()
+        brief_data['niceToHaveRequirements'] = []
+        brief.data = brief_data
+        db.session.add(brief)
+        db.session.commit()
 
         response_data = self.valid_brief_response_data
         response_data.pop('niceToHaveRequirements')
@@ -740,15 +729,14 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert all(br['supplierId'] == 1 for br in data['briefResponses'])
 
     def test_list_brief_responses_for_brief_id(self):
-        with self.app.app_context():
-            brief = Brief(
-                data=example_listings.brief_data().example(),
-                status='live', framework_id=5, lot=Lot.query.get(5)
-            )
-            db.session.add(brief)
-            db.session.commit()
+        brief = Brief(
+            data=example_listings.brief_data().example(),
+            status='live', framework_id=5, lot=Lot.query.get(5)
+        )
+        db.session.add(brief)
+        db.session.commit()
 
-            another_brief_id = brief.id
+        another_brief_id = brief.id
 
         for i in range(8):
             self.setup_dummy_brief_response(brief_id=self.brief_id, supplier_id=0)
@@ -762,17 +750,16 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert all(br['briefId'] == another_brief_id for br in data['briefResponses'])
 
     def test_list_brief_responses_by_one_framework_slug(self, live_dos2_framework):
-        with self.app.app_context():
-            supplier_framework = SupplierFramework(supplier_id=0, framework_id=live_dos2_framework["id"])
-            dos2_brief = Brief(
-                data=example_listings.brief_data().example(),
-                status='live', framework_id=live_dos2_framework["id"], lot=Lot.query.get(6)
-            )
+        supplier_framework = SupplierFramework(supplier_id=0, framework_id=live_dos2_framework["id"])
+        dos2_brief = Brief(
+            data=example_listings.brief_data().example(),
+            status='live', framework_id=live_dos2_framework["id"], lot=Lot.query.get(6)
+        )
 
-            db.session.add_all([dos2_brief, supplier_framework])
-            db.session.commit()
+        db.session.add_all([dos2_brief, supplier_framework])
+        db.session.commit()
 
-            dos2_brief_id = dos2_brief.id
+        dos2_brief_id = dos2_brief.id
 
         for i in range(3):
             self.setup_dummy_brief_response(brief_id=self.brief_id, supplier_id=0)
@@ -789,16 +776,15 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert 'self' in data['links']
 
     def test_list_brief_responses_by_multiple_framework_slugs(self, live_dos2_framework):
-        with self.app.app_context():
-            supplier_framework = SupplierFramework(supplier_id=0, framework_id=live_dos2_framework["id"])
-            dos2_brief = Brief(
-                data=example_listings.brief_data().example(),
-                status='live', framework_id=live_dos2_framework["id"], lot=Lot.query.get(6)
-            )
-            db.session.add_all([dos2_brief, supplier_framework])
-            db.session.commit()
+        supplier_framework = SupplierFramework(supplier_id=0, framework_id=live_dos2_framework["id"])
+        dos2_brief = Brief(
+            data=example_listings.brief_data().example(),
+            status='live', framework_id=live_dos2_framework["id"], lot=Lot.query.get(6)
+        )
+        db.session.add_all([dos2_brief, supplier_framework])
+        db.session.commit()
 
-            dos2_brief_id = dos2_brief.id
+        dos2_brief_id = dos2_brief.id
 
         for i in range(2):
             self.setup_dummy_brief_response(brief_id=self.brief_id, supplier_id=0)

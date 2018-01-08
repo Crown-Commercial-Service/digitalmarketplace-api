@@ -16,18 +16,17 @@ class TestGetSupplier(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestGetSupplier, self).setup()
 
-        with self.app.app_context():
-            payload = load_example_listing("supplier_creation")
-            self.supplier = payload
+        payload = load_example_listing("supplier_creation")
+        self.supplier = payload
 
-            response = self.client.post(
-                '/suppliers',
-                data=json.dumps({
-                    'suppliers': self.supplier
-                }),
-                content_type='application/json')
-            assert response.status_code == 201
-            self.supplier_id = json.loads(response.get_data())['suppliers']['id']
+        response = self.client.post(
+            '/suppliers',
+            data=json.dumps({
+                'suppliers': self.supplier
+            }),
+            content_type='application/json')
+        assert response.status_code == 201
+        self.supplier_id = json.loads(response.get_data())['suppliers']['id']
 
     def test_get_non_existent_supplier(self):
         response = self.client.get('/suppliers/100')
@@ -87,19 +86,18 @@ class TestListSuppliers(BaseApplicationTest, FixtureMixin):
         assert len(data['suppliers']) == 0
 
     def test_other_prefix_returns_non_alphanumeric_suppliers(self):
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=999, name=u"999 Supplier")
-            )
-            self.setup_dummy_service(service_id='1230000000', supplier_id=999)
+        db.session.add(
+            Supplier(supplier_id=999, name=u"999 Supplier")
+        )
+        self.setup_dummy_service(service_id='1230000000', supplier_id=999)
 
-            response = self.client.get('/suppliers?prefix=other')
+        response = self.client.get('/suppliers?prefix=other')
 
-            data = json.loads(response.get_data())
-            assert response.status_code == 200
-            assert len(data['suppliers']) == 1
-            assert data['suppliers'][0]['id'] == 999
-            assert u"999 Supplier" == data['suppliers'][0]['name']
+        data = json.loads(response.get_data())
+        assert response.status_code == 200
+        assert len(data['suppliers']) == 1
+        assert data['suppliers'][0]['id'] == 999
+        assert u"999 Supplier" == data['suppliers'][0]['name']
 
     def test_query_string_prefix_returns_paginated_page_one(self):
         response = self.client.get('/suppliers?prefix=s')
@@ -149,28 +147,27 @@ class TestListSuppliersOnFramework(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestListSuppliersOnFramework, self).setup()
 
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Active")
-            )
-            db.session.add(
-                Supplier(supplier_id=2, name=u"Inactive Framework")
-            )
-            db.session.add(
-                Supplier(supplier_id=3, name=u"Unpublished Service")
-            )
-            self.setup_dummy_service(
-                service_id='1000000001', supplier_id=1
-            )
-            self.setup_dummy_service(
-                service_id='1000000004', supplier_id=1, status='enabled'
-            )
-            self.setup_dummy_service(
-                service_id='1000000002', supplier_id=2, framework_id=2
-            )
-            self.setup_dummy_service(
-                service_id='1000000003', supplier_id=3, status='enabled'
-            )
+        db.session.add(
+            Supplier(supplier_id=1, name=u"Active")
+        )
+        db.session.add(
+            Supplier(supplier_id=2, name=u"Inactive Framework")
+        )
+        db.session.add(
+            Supplier(supplier_id=3, name=u"Unpublished Service")
+        )
+        self.setup_dummy_service(
+            service_id='1000000001', supplier_id=1
+        )
+        self.setup_dummy_service(
+            service_id='1000000004', supplier_id=1, status='enabled'
+        )
+        self.setup_dummy_service(
+            service_id='1000000002', supplier_id=2, framework_id=2
+        )
+        self.setup_dummy_service(
+            service_id='1000000003', supplier_id=3, status='enabled'
+        )
 
     def test_invalid_framework_returns_400(self):
         response = self.client.get('/suppliers?framework=invalid!')
@@ -210,14 +207,13 @@ class TestListSuppliersByDunsNumber(BaseApplicationTest):
     def setup(self):
         super(TestListSuppliersByDunsNumber, self).setup()
 
-        with self.app.app_context():
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Duns 123", duns_number="123")
-            )
-            db.session.add(
-                Supplier(supplier_id=2, name=u"Duns xyq", duns_number="xyz")
-            )
-            db.session.commit()
+        db.session.add(
+            Supplier(supplier_id=1, name=u"Duns 123", duns_number="123")
+        )
+        db.session.add(
+            Supplier(supplier_id=2, name=u"Duns xyq", duns_number="xyz")
+        )
+        db.session.commit()
 
     def test_invalid_duns_number_returns_400(self):
         response = self.client.get('/suppliers?duns_number=invalid!')
@@ -265,42 +261,40 @@ class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
             content_type='application/json')
 
     def test_add_a_new_supplier(self):
-        with self.app.app_context():
+        response = self.put_import_supplier(self.supplier)
+        assert response.status_code == 201
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == self.supplier_id
+        ).first()
+        assert supplier.name == self.supplier['name']
+
+    def test_reinserting_the_same_supplier(self):
+        example_listing_contact_information = self.supplier['contactInformation']
+
+        # Exact loop number is arbitrary
+        for i in range(3):
             response = self.put_import_supplier(self.supplier)
+
             assert response.status_code == 201
+
             supplier = Supplier.query.filter(
                 Supplier.supplier_id == self.supplier_id
             ).first()
             assert supplier.name == self.supplier['name']
 
-    def test_reinserting_the_same_supplier(self):
-        with self.app.app_context():
-            example_listing_contact_information = self.supplier['contactInformation']
+            contact_informations = ContactInformation.query.filter(
+                ContactInformation.supplier_id == supplier.supplier_id
+            ).all()
 
-            # Exact loop number is arbitrary
-            for i in range(3):
-                response = self.put_import_supplier(self.supplier)
+            assert len(example_listing_contact_information) == len(contact_informations)
 
-                assert response.status_code == 201
-
-                supplier = Supplier.query.filter(
-                    Supplier.supplier_id == self.supplier_id
-                ).first()
-                assert supplier.name == self.supplier['name']
-
-                contact_informations = ContactInformation.query.filter(
-                    ContactInformation.supplier_id == supplier.supplier_id
+            # Contact Information without a supplier_id should not exist
+            contact_informations_no_supplier_id = \
+                ContactInformation.query.filter(
+                    ContactInformation.supplier_id == None  # noqa
                 ).all()
 
-                assert len(example_listing_contact_information) == len(contact_informations)
-
-                # Contact Information without a supplier_id should not exist
-                contact_informations_no_supplier_id = \
-                    ContactInformation.query.filter(
-                        ContactInformation.supplier_id == None  # noqa
-                    ).all()
-
-                assert len(contact_informations_no_supplier_id) == 0
+            assert len(contact_informations_no_supplier_id) == 0
 
     def test_cannot_put_to_root_suppliers_url(self):
         response = self.put_import_supplier(self.supplier, "")
@@ -402,16 +396,15 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
     def setup(self):
         super(TestUpdateSupplier, self).setup()
 
-        with self.app.app_context():
-            payload = load_example_listing("supplier_creation")
-            self.supplier = payload
+        payload = load_example_listing("supplier_creation")
+        self.supplier = payload
 
-            response = self.client.post(
-                '/suppliers',
-                data=json.dumps({'suppliers': self.supplier}),
-                content_type='application/json')
-            assert response.status_code == 201
-            self.supplier_id = json.loads(response.get_data())['suppliers']['id']
+        response = self.client.post(
+            '/suppliers',
+            data=json.dumps({'suppliers': self.supplier}),
+            content_type='application/json')
+        assert response.status_code == 201
+        self.supplier_id = json.loads(response.get_data())['suppliers']['id']
 
     def update_request(self, data=None, user=None, full_data=None):
         return self.client.post(
@@ -431,30 +424,28 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.update_request({'name': "New Name"})
         assert response.status_code == 200
 
-        with self.app.app_context():
-            supplier = Supplier.query.filter(
-                Supplier.supplier_id == self.supplier_id
-            ).first()
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == self.supplier_id
+        ).first()
 
-            assert supplier.name == "New Name"
+        assert supplier.name == "New Name"
 
     def test_supplier_update_creates_audit_event(self):
         self.update_request({'name': "Name"})
 
-        with self.app.app_context():
-            supplier = Supplier.query.filter(
-                Supplier.supplier_id == self.supplier_id
-            ).first()
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == self.supplier_id
+        ).first()
 
-            audit = AuditEvent.query.filter(
-                AuditEvent.object == supplier
-            ).first()
+        audit = AuditEvent.query.filter(
+            AuditEvent.object == supplier
+        ).first()
 
-            assert audit.type == "supplier_update"
-            assert audit.user == "supplier@user.dmdev"
-            assert audit.data == {
-                'update': {'name': "Name"},
-            }
+        assert audit.type == "supplier_update"
+        assert audit.user == "supplier@user.dmdev"
+        assert audit.data == {
+            'update': {'name': "Name"},
+        }
 
     def test_update_response_matches_payload(self):
         payload = load_example_listing("supplier_creation")
@@ -488,10 +479,9 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert response.status_code == 200
 
-        with self.app.app_context():
-            supplier = Supplier.query.filter(
-                Supplier.supplier_id == self.supplier_id
-            ).first()
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == self.supplier_id
+        ).first()
 
         assert supplier.name == 'New Name'
         assert supplier.description == "New Description"
@@ -529,10 +519,9 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             'links': [],
         }, 'links': [], 'updated_by': 'supplier@user.dmdev'})
 
-        with self.app.app_context():
-            supplier = Supplier.query.filter(
-                Supplier.supplier_id == self.supplier_id
-            ).first()
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == self.supplier_id
+        ).first()
 
         assert response.status_code == 200
         assert len(supplier.contact_information) == 2
@@ -556,12 +545,11 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.update_request({"companiesHouseNumber": None})
         assert response.status_code == 200
 
-        with self.app.app_context():
-            supplier = Supplier.query.filter(
-                Supplier.supplier_id == self.supplier_id
-            ).first()
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == self.supplier_id
+        ).first()
 
-            assert supplier.companies_house_number is None
+        assert supplier.companies_house_number is None
 
     def test_update_with_bad_company_number(self):
         response = self.update_request({"companiesHouseNumber": "ABCDEFGH"})
@@ -582,18 +570,17 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
     def setup(self):
         super(TestUpdateContactInformation, self).setup()
 
-        with self.app.app_context():
-            payload = load_example_listing("supplier_creation")
-            self.supplier = payload
+        payload = load_example_listing("supplier_creation")
+        self.supplier = payload
 
-            response = self.client.post(
-                '/suppliers',
-                data=json.dumps({'suppliers': self.supplier}),
-                content_type='application/json')
-            assert response.status_code == 201
-            supplier = json.loads(response.get_data())['suppliers']
-            self.supplier_id = supplier['id']
-            self.contact_id = supplier['contactInformation'][0]['id']
+        response = self.client.post(
+            '/suppliers',
+            data=json.dumps({'suppliers': self.supplier}),
+            content_type='application/json')
+        assert response.status_code == 201
+        supplier = json.loads(response.get_data())['suppliers']
+        self.supplier_id = supplier['id']
+        self.contact_id = supplier['contactInformation'][0]['id']
 
     def update_request(self, data=None, user=None, full_data=None):
         return self.client.post(
@@ -615,49 +602,45 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
         })
         assert response.status_code == 200
 
-        with self.app.app_context():
-            contact = ContactInformation.query.filter(
-                ContactInformation.id == self.contact_id
-            ).first()
+        contact = ContactInformation.query.filter(
+            ContactInformation.id == self.contact_id
+        ).first()
 
-            assert contact.city == "New City"
+        assert contact.city == "New City"
 
     def test_simple_field_update_for_supplier_with_no_companies_house_number(self):
-        with self.app.app_context():
-            supplier_db = Supplier.query.first()  # Only one supplier is set up for these tests
-            supplier_db.companies_house_number = None
+        supplier_db = Supplier.query.first()  # Only one supplier is set up for these tests
+        supplier_db.companies_house_number = None
 
         response = self.update_request({
             'city': "New City"
         })
         assert response.status_code == 200
 
-        with self.app.app_context():
-            contact = ContactInformation.query.filter(
-                ContactInformation.id == self.contact_id
-            ).first()
+        contact = ContactInformation.query.filter(
+            ContactInformation.id == self.contact_id
+        ).first()
 
-            assert contact.city == "New City"
+        assert contact.city == "New City"
 
     def test_update_creates_audit_event(self):
         self.update_request({
             'city': "New City"
         })
 
-        with self.app.app_context():
-            contact = ContactInformation.query.filter(
-                ContactInformation.id == self.contact_id
-            ).first()
+        contact = ContactInformation.query.filter(
+            ContactInformation.id == self.contact_id
+        ).first()
 
-            audit = AuditEvent.query.filter(
-                AuditEvent.object == contact.supplier
-            ).first()
+        audit = AuditEvent.query.filter(
+            AuditEvent.object == contact.supplier
+        ).first()
 
-            assert audit.type == "contact_update"
-            assert audit.user == "supplier@user.dmdev"
-            assert audit.data == {
-                'update': {'city': "New City"},
-            }
+        assert audit.type == "contact_update"
+        assert audit.user == "supplier@user.dmdev"
+        assert audit.data == {
+            'update': {'city': "New City"},
+        }
 
     def test_update_response_matches_payload(self):
         payload = load_example_listing("Supplier")
@@ -687,10 +670,9 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert response.status_code == 200
 
-        with self.app.app_context():
-            contact = ContactInformation.query.filter(
-                ContactInformation.id == self.contact_id
-            ).first()
+        contact = ContactInformation.query.filter(
+            ContactInformation.id == self.contact_id
+        ).first()
 
         assert contact.contact_name == "New contact"
         assert contact.phone_number == "New phone"
@@ -775,7 +757,6 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
         self.setup_dummy_suppliers(1)
 
     def test_add_new_declaration(self):
-        with self.app.app_context():
             response = self.client.put(
                 '/suppliers/0/frameworks/test-open/declaration',
                 data=json.dumps({
@@ -792,45 +773,43 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
             assert answers.declaration['question'] == 'answer'
 
     def test_add_null_declaration_should_result_in_dict(self):
-        with self.app.app_context():
-            response = self.client.put(
-                '/suppliers/0/frameworks/test-open/declaration',
-                data=json.dumps({
-                    'updated_by': 'testing',
-                    'declaration': None
-                }),
-                content_type='application/json')
+        response = self.client.put(
+            '/suppliers/0/frameworks/test-open/declaration',
+            data=json.dumps({
+                'updated_by': 'testing',
+                'declaration': None
+            }),
+            content_type='application/json')
 
-            assert response.status_code == 201
-            answers = SupplierFramework \
-                .find_by_supplier_and_framework(0, 'test-open')
-            assert isinstance(answers.declaration, dict)
+        assert response.status_code == 201
+        answers = SupplierFramework \
+            .find_by_supplier_and_framework(0, 'test-open')
+        assert isinstance(answers.declaration, dict)
 
     def test_update_existing_declaration(self):
-        with self.app.app_context():
-            framework_id = Framework.query.filter(
-                Framework.slug == 'test-open').first().id
-            answers = SupplierFramework(
-                supplier_id=0,
-                framework_id=framework_id,
-                declaration={'question': 'answer'})
-            db.session.add(answers)
-            db.session.commit()
+        framework_id = Framework.query.filter(
+            Framework.slug == 'test-open').first().id
+        answers = SupplierFramework(
+            supplier_id=0,
+            framework_id=framework_id,
+            declaration={'question': 'answer'})
+        db.session.add(answers)
+        db.session.commit()
 
-            response = self.client.put(
-                '/suppliers/0/frameworks/test-open/declaration',
-                data=json.dumps({
-                    'updated_by': 'testing',
-                    'declaration': {
-                        'question': 'answer2',
-                    }
-                }),
-                content_type='application/json')
+        response = self.client.put(
+            '/suppliers/0/frameworks/test-open/declaration',
+            data=json.dumps({
+                'updated_by': 'testing',
+                'declaration': {
+                    'question': 'answer2',
+                }
+            }),
+            content_type='application/json')
 
-            assert response.status_code == 200
-            supplier_framework = SupplierFramework \
-                .find_by_supplier_and_framework(0, 'test-open')
-            assert supplier_framework.declaration['question'] == 'answer2'
+        assert response.status_code == 200
+        supplier_framework = SupplierFramework \
+            .find_by_supplier_and_framework(0, 'test-open')
+        assert supplier_framework.declaration['question'] == 'answer2'
 
 
 class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
@@ -848,13 +827,12 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
             content_type='application/json')
 
     def test_add_a_new_supplier(self):
-        with self.app.app_context():
-            payload = load_example_listing("new-supplier")
-            response = self.post_supplier(payload)
-            assert response.status_code == 201
-            assert Supplier.query.filter(
-                Supplier.name == payload['name']
-            ).first() is not None
+        payload = load_example_listing("new-supplier")
+        response = self.post_supplier(payload)
+        assert response.status_code == 201
+        assert Supplier.query.filter(
+            Supplier.name == payload['name']
+        ).first() is not None
 
     def test_when_supplier_has_missing_contact_information(self):
         payload = load_example_listing("new-supplier")
@@ -961,50 +939,48 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
     def setup(self):
         super(TestGetSupplierFrameworks, self).setup()
 
-        with self.app.app_context():
-
-            db.session.add_all([
-                Supplier(supplier_id=1, name=u"Supplier 1"),
-                Supplier(supplier_id=2, name=u"Supplier 2"),
-                Supplier(supplier_id=3, name=u"Supplier 2"),
-                SupplierFramework(
-                    supplier_id=1,
-                    framework_id=1,
-                    declaration={},
-                    on_framework=False
-                ),
-                SupplierFramework(
-                    supplier_id=2,
-                    framework_id=1,
-                    declaration={},
-                    on_framework=False
-                ),
-                DraftService(
-                    framework_id=1,
-                    lot_id=1,
-                    service_id="0987654321",
-                    supplier_id=1,
-                    data={},
-                    status='not-submitted'
-                ),
-                DraftService(
-                    framework_id=1,
-                    lot_id=2,
-                    service_id="1234567890",
-                    supplier_id=1,
-                    data={},
-                    status='submitted'
-                ),
-                Service(
-                    framework_id=1,
-                    lot_id=2,
-                    service_id="1234567890",
-                    supplier_id=2,
-                    data={},
-                    status='published'
-                )
-            ])
-            db.session.commit()
+        db.session.add_all([
+            Supplier(supplier_id=1, name=u"Supplier 1"),
+            Supplier(supplier_id=2, name=u"Supplier 2"),
+            Supplier(supplier_id=3, name=u"Supplier 2"),
+            SupplierFramework(
+                supplier_id=1,
+                framework_id=1,
+                declaration={},
+                on_framework=False
+            ),
+            SupplierFramework(
+                supplier_id=2,
+                framework_id=1,
+                declaration={},
+                on_framework=False
+            ),
+            DraftService(
+                framework_id=1,
+                lot_id=1,
+                service_id="0987654321",
+                supplier_id=1,
+                data={},
+                status='not-submitted'
+            ),
+            DraftService(
+                framework_id=1,
+                lot_id=2,
+                service_id="1234567890",
+                supplier_id=1,
+                data={},
+                status='submitted'
+            ),
+            Service(
+                framework_id=1,
+                lot_id=2,
+                service_id="1234567890",
+                supplier_id=2,
+                data={},
+                status='published'
+            )
+        ])
+        db.session.commit()
 
     def test_supplier_with_drafts(self):
         response = self.client.get('/suppliers/1/frameworks')
@@ -1092,21 +1068,20 @@ class TestRegisterFrameworkInterest(BaseApplicationTest, FixtureMixin, JSONUpdat
     def setup(self):
         super(TestRegisterFrameworkInterest, self).setup()
 
-        with self.app.app_context():
-            self.set_framework_status('digital-outcomes-and-specialists', 'open')
+        self.set_framework_status('digital-outcomes-and-specialists', 'open')
 
-            db.session.add(
-                Supplier(supplier_id=1, name=u"Supplier 1")
+        db.session.add(
+            Supplier(supplier_id=1, name=u"Supplier 1")
+        )
+        db.session.add(
+            ContactInformation(
+                supplier_id=1,
+                contact_name=u"Liz",
+                email=u"liz@royal.gov.uk",
+                postcode=u"SW1A 1AA"
             )
-            db.session.add(
-                ContactInformation(
-                    supplier_id=1,
-                    contact_name=u"Liz",
-                    email=u"liz@royal.gov.uk",
-                    postcode=u"SW1A 1AA"
-                )
-            )
-            db.session.commit()
+        )
+        db.session.commit()
 
     def register_interest(self, supplier_id, framework_slug, user='interested@example.com'):
         return self.client.put(
@@ -1115,82 +1090,76 @@ class TestRegisterFrameworkInterest(BaseApplicationTest, FixtureMixin, JSONUpdat
             content_type='application/json')
 
     def test_can_register_interest_in_open_framework(self):
-        with self.app.app_context():
-            response = self.register_interest(1, 'digital-outcomes-and-specialists')
+        response = self.register_interest(1, 'digital-outcomes-and-specialists')
 
-            assert response.status_code == 201
-            data = json.loads(response.get_data())
-            assert data['frameworkInterest']['supplierId'] == 1
-            assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
-            assert isinstance(data['frameworkInterest']['declaration'], dict)
+        assert response.status_code == 201
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['supplierId'] == 1
+        assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
+        assert isinstance(data['frameworkInterest']['declaration'], dict)
 
     def test_can_not_register_interest_in_not_open_framework_(self):
-        with self.app.app_context():
-            response = self.register_interest(1, 'g-cloud-5')
+        response = self.register_interest(1, 'g-cloud-5')
 
-            assert response.status_code == 400
-            data = json.loads(response.get_data())
-            assert data['error'] == "'g-cloud-5' framework is not open"
+        assert response.status_code == 400
+        data = json.loads(response.get_data())
+        assert data['error'] == "'g-cloud-5' framework is not open"
 
     def test_can_not_register_interest_more_than_once_in_open_framework(self):
-        with self.app.app_context():
-            response1 = self.register_interest(1, 'digital-outcomes-and-specialists')
-            assert response1.status_code == 201
-            data = json.loads(response1.get_data())
-            assert data['frameworkInterest']['supplierId'] == 1
-            assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
+        response1 = self.register_interest(1, 'digital-outcomes-and-specialists')
+        assert response1.status_code == 201
+        data = json.loads(response1.get_data())
+        assert data['frameworkInterest']['supplierId'] == 1
+        assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
 
-            response2 = self.register_interest(1, 'digital-outcomes-and-specialists', user='another@example.com')
-            assert response2.status_code == 200
-            data = json.loads(response2.get_data())
-            assert data['frameworkInterest']['supplierId'] == 1
-            assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
+        response2 = self.register_interest(1, 'digital-outcomes-and-specialists', user='another@example.com')
+        assert response2.status_code == 200
+        data = json.loads(response2.get_data())
+        assert data['frameworkInterest']['supplierId'] == 1
+        assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
 
     def test_can_not_send_payload_to_register_interest_endpoint(self):
-        with self.app.app_context():
-            response = self.client.put(
-                '/suppliers/1/frameworks/digital-outcomes-and-specialists',
-                data=json.dumps(
-                    {
-                        'updated_by': 'interested@example.com',
-                        'update': {'agreementReturned': True}
-                    }),
-                content_type='application/json')
+        response = self.client.put(
+            '/suppliers/1/frameworks/digital-outcomes-and-specialists',
+            data=json.dumps(
+                {
+                    'updated_by': 'interested@example.com',
+                    'update': {'agreementReturned': True}
+                }),
+            content_type='application/json')
 
-            assert response.status_code == 400
-            data = json.loads(response.get_data())
-            assert data['error'] == 'This PUT endpoint does not take a payload.'
+        assert response.status_code == 400
+        data = json.loads(response.get_data())
+        assert data['error'] == 'This PUT endpoint does not take a payload.'
 
     def test_register_interest_creates_audit_event(self):
         self.register_interest(1, 'digital-outcomes-and-specialists')
 
-        with self.app.app_context():
-            supplier = Supplier.query.filter(
-                Supplier.supplier_id == 1
-            ).first()
+        supplier = Supplier.query.filter(
+            Supplier.supplier_id == 1
+        ).first()
 
-            audit = AuditEvent.query.filter(
-                AuditEvent.object == supplier
-            ).first()
+        audit = AuditEvent.query.filter(
+            AuditEvent.object == supplier
+        ).first()
 
-            assert audit.type == "register_framework_interest"
-            assert audit.user == "interested@example.com"
-            assert audit.data['supplierId'] == 1
-            assert audit.data['frameworkSlug'] == 'digital-outcomes-and-specialists'
+        assert audit.type == "register_framework_interest"
+        assert audit.user == "interested@example.com"
+        assert audit.data['supplierId'] == 1
+        assert audit.data['frameworkSlug'] == 'digital-outcomes-and-specialists'
 
     def test_can_get_registered_frameworks_for_a_supplier(self):
-        with self.app.app_context():
-            response1 = self.client.get("/suppliers/1/frameworks/interest")
-            assert response1.status_code == 200
-            data = json.loads(response1.get_data())
-            assert data['frameworks'] == []
+        response1 = self.client.get("/suppliers/1/frameworks/interest")
+        assert response1.status_code == 200
+        data = json.loads(response1.get_data())
+        assert data['frameworks'] == []
 
-            self.register_interest(1, 'digital-outcomes-and-specialists')
+        self.register_interest(1, 'digital-outcomes-and-specialists')
 
-            response2 = self.client.get("/suppliers/1/frameworks/interest")
-            assert response2.status_code == 200
-            data = json.loads(response2.get_data())
-            assert data['frameworks'] == ['digital-outcomes-and-specialists']
+        response2 = self.client.get("/suppliers/1/frameworks/interest")
+        assert response2.status_code == 200
+        data = json.loads(response2.get_data())
+        assert data['frameworks'] == ['digital-outcomes-and-specialists']
 
 
 @fixture_params('supplier_framework', {
@@ -1217,167 +1186,164 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
         assert data['frameworkInterest']['agreementStatus'] is None
 
     def test_get_supplier_framework_does_not_return_draft_framework_agreement(self, supplier_framework):
-        with self.app.app_context():
-            supplier_framework_object = SupplierFramework.find_by_supplier_and_framework(
+        supplier_framework_object = SupplierFramework.find_by_supplier_and_framework(
+            supplier_framework['supplierId'], supplier_framework['frameworkSlug']
+        )
+
+        framework_agreement = FrameworkAgreement(
+            supplier_framework=supplier_framework_object,
+            signed_agreement_details={
+                u'signerName': u'thing 2',
+                u'signerRole': u'thing 2',
+                u'uploaderUserId': 30
+            },
+        )
+        db.session.add(framework_agreement)
+        db.session.commit()
+
+        # Get back the SupplierFramework record
+        response = self.client.get(
+            '/suppliers/{}/frameworks/{}'.format(
                 supplier_framework['supplierId'], supplier_framework['frameworkSlug']
             )
+        )
 
-            framework_agreement = FrameworkAgreement(
-                supplier_framework=supplier_framework_object,
-                signed_agreement_details={
-                    u'signerName': u'thing 2',
-                    u'signerRole': u'thing 2',
-                    u'uploaderUserId': 30
-                },
-            )
-            db.session.add(framework_agreement)
-            db.session.commit()
-
-            # Get back the SupplierFramework record
-            response = self.client.get(
-                '/suppliers/{}/frameworks/{}'.format(
-                    supplier_framework['supplierId'], supplier_framework['frameworkSlug']
-                )
-            )
-
-            data = json.loads(response.get_data())
-            assert response.status_code, 200
-            assert 'frameworkInterest' in data
-            assert data['frameworkInterest'] == {
-                'supplierId': supplier_framework['supplierId'],
-                'supplierName': 'Supplier name',
-                'frameworkSlug': supplier_framework['frameworkSlug'],
-                'frameworkFramework': supplier_framework['frameworkFramework'],
-                'declaration': {'an_answer': 'Yes it is'},
-                'onFramework': True,
-                'agreementId': None,
-                'agreementReturned': False,
-                'agreementReturnedAt': None,
-                'agreementDetails': None,
-                'agreementPath': None,
-                'countersigned': False,
-                'countersignedAt': None,
-                'countersignedDetails': None,
-                'countersignedPath': None,
-                'agreementStatus': None,
-                'agreedVariations': {},
-                'prefillDeclarationFromFrameworkSlug': None,
-            }
+        data = json.loads(response.get_data())
+        assert response.status_code, 200
+        assert 'frameworkInterest' in data
+        assert data['frameworkInterest'] == {
+            'supplierId': supplier_framework['supplierId'],
+            'supplierName': 'Supplier name',
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'frameworkFramework': supplier_framework['frameworkFramework'],
+            'declaration': {'an_answer': 'Yes it is'},
+            'onFramework': True,
+            'agreementId': None,
+            'agreementReturned': False,
+            'agreementReturnedAt': None,
+            'agreementDetails': None,
+            'agreementPath': None,
+            'countersigned': False,
+            'countersignedAt': None,
+            'countersignedDetails': None,
+            'countersignedPath': None,
+            'agreementStatus': None,
+            'agreedVariations': {},
+            'prefillDeclarationFromFrameworkSlug': None,
+        }
 
     def test_get_supplier_framework_returns_signed_framework_agreement(self, supplier_framework):
-        with self.app.app_context():
-            supplier_framework_object = SupplierFramework.find_by_supplier_and_framework(
+        supplier_framework_object = SupplierFramework.find_by_supplier_and_framework(
+            supplier_framework['supplierId'], supplier_framework['frameworkSlug']
+        )
+
+        framework_agreement = FrameworkAgreement(
+            supplier_framework=supplier_framework_object,
+            signed_agreement_details={
+                u'signerName': u'thing 2',
+                u'signerRole': u'thing 2',
+                u'uploaderUserId': 30
+            },
+            signed_agreement_path='/agreement.pdf',
+            signed_agreement_returned_at=datetime(2017, 1, 1, 1, 1, 1),
+        )
+        db.session.add(framework_agreement)
+        db.session.commit()
+        framework_agreement_id = framework_agreement.id
+
+        # Get back the SupplierFramework record
+        response = self.client.get(
+            '/suppliers/{}/frameworks/{}'.format(
                 supplier_framework['supplierId'], supplier_framework['frameworkSlug']
             )
+        )
 
-            framework_agreement = FrameworkAgreement(
-                supplier_framework=supplier_framework_object,
-                signed_agreement_details={
-                    u'signerName': u'thing 2',
-                    u'signerRole': u'thing 2',
-                    u'uploaderUserId': 30
-                },
-                signed_agreement_path='/agreement.pdf',
-                signed_agreement_returned_at=datetime(2017, 1, 1, 1, 1, 1),
-            )
-            db.session.add(framework_agreement)
-            db.session.commit()
-            framework_agreement_id = framework_agreement.id
-
-            # Get back the SupplierFramework record
-            response = self.client.get(
-                '/suppliers/{}/frameworks/{}'.format(
-                    supplier_framework['supplierId'], supplier_framework['frameworkSlug']
-                )
-            )
-
-            data = json.loads(response.get_data())
-            assert response.status_code, 200
-            assert 'frameworkInterest' in data, data
-            assert data['frameworkInterest'] == {
-                'supplierId': supplier_framework['supplierId'],
-                'supplierName': 'Supplier name',
-                'frameworkSlug': supplier_framework['frameworkSlug'],
-                'frameworkFramework': supplier_framework['frameworkFramework'],
-                'declaration': {'an_answer': 'Yes it is'},
-                'onFramework': True,
-                'agreementId': framework_agreement_id,
-                'agreementReturned': True,
-                'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
-                'agreementPath': '/agreement.pdf',
-                'countersigned': False,
-                'countersignedAt': None,
-                'countersignedDetails': None,
-                'countersignedPath': None,
-                'agreementDetails': {
-                    'signerName': 'thing 2',
-                    'signerRole': 'thing 2',
-                    'uploaderUserId': 30
-                },
-                'agreementStatus': 'signed',
-                'agreedVariations': {},
-                'prefillDeclarationFromFrameworkSlug': None,
-            }
+        data = json.loads(response.get_data())
+        assert response.status_code, 200
+        assert 'frameworkInterest' in data, data
+        assert data['frameworkInterest'] == {
+            'supplierId': supplier_framework['supplierId'],
+            'supplierName': 'Supplier name',
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'frameworkFramework': supplier_framework['frameworkFramework'],
+            'declaration': {'an_answer': 'Yes it is'},
+            'onFramework': True,
+            'agreementId': framework_agreement_id,
+            'agreementReturned': True,
+            'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
+            'agreementPath': '/agreement.pdf',
+            'countersigned': False,
+            'countersignedAt': None,
+            'countersignedDetails': None,
+            'countersignedPath': None,
+            'agreementDetails': {
+                'signerName': 'thing 2',
+                'signerRole': 'thing 2',
+                'uploaderUserId': 30
+            },
+            'agreementStatus': 'signed',
+            'agreedVariations': {},
+            'prefillDeclarationFromFrameworkSlug': None,
+        }
 
     def test_get_supplier_framework_returns_countersigned_framework_agreement(self, supplier_framework, supplier):
-        with self.app.app_context():
-            supplier_framework_object = SupplierFramework.find_by_supplier_and_framework(
+        supplier_framework_object = SupplierFramework.find_by_supplier_and_framework(
+            supplier_framework['supplierId'], supplier_framework['frameworkSlug']
+        )
+
+        framework_agreement = FrameworkAgreement(
+            supplier_framework=supplier_framework_object,
+            signed_agreement_details={
+                u'signerName': u'thing 2',
+                u'signerRole': u'thing 2',
+                u'uploaderUserId': 30
+            },
+            signed_agreement_path='/agreement.pdf',
+            signed_agreement_returned_at=datetime(2017, 1, 1, 1, 1, 1),
+            countersigned_agreement_details={
+                'some': 'data'
+            },
+            countersigned_agreement_returned_at=datetime(2017, 2, 1, 1, 1, 1),
+            countersigned_agreement_path='path'
+        )
+        db.session.add(framework_agreement)
+        db.session.commit()
+        framework_agreement_id = framework_agreement.id
+
+        # Get back the SupplierFramework record
+        response = self.client.get(
+            '/suppliers/{}/frameworks/{}'.format(
                 supplier_framework['supplierId'], supplier_framework['frameworkSlug']
             )
+        )
 
-            framework_agreement = FrameworkAgreement(
-                supplier_framework=supplier_framework_object,
-                signed_agreement_details={
-                    u'signerName': u'thing 2',
-                    u'signerRole': u'thing 2',
-                    u'uploaderUserId': 30
-                },
-                signed_agreement_path='/agreement.pdf',
-                signed_agreement_returned_at=datetime(2017, 1, 1, 1, 1, 1),
-                countersigned_agreement_details={
-                    'some': 'data'
-                },
-                countersigned_agreement_returned_at=datetime(2017, 2, 1, 1, 1, 1),
-                countersigned_agreement_path='path'
-            )
-            db.session.add(framework_agreement)
-            db.session.commit()
-            framework_agreement_id = framework_agreement.id
-
-            # Get back the SupplierFramework record
-            response = self.client.get(
-                '/suppliers/{}/frameworks/{}'.format(
-                    supplier_framework['supplierId'], supplier_framework['frameworkSlug']
-                )
-            )
-
-            data = json.loads(response.get_data())
-            assert response.status_code, 200
-            assert 'frameworkInterest' in data
-            assert data['frameworkInterest'] == {
-                'supplierId': supplier_framework['supplierId'],
-                'supplierName': 'Supplier name',
-                'frameworkSlug': supplier_framework['frameworkSlug'],
-                'frameworkFramework': supplier_framework['frameworkFramework'],
-                'declaration': {'an_answer': 'Yes it is'},
-                'onFramework': True,
-                'agreementId': framework_agreement_id,
-                'agreementReturned': True,
-                'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
-                'agreementDetails': {
-                    'signerName': 'thing 2',
-                    'signerRole': 'thing 2',
-                    'uploaderUserId': 30
-                },
-                'agreementPath': '/agreement.pdf',
-                'countersigned': True,
-                'countersignedAt': '2017-02-01T01:01:01.000000Z',
-                'countersignedDetails': {'some': 'data'},
-                'countersignedPath': 'path',
-                'agreementStatus': 'countersigned',
-                'agreedVariations': {},
-                'prefillDeclarationFromFrameworkSlug': None,
-            }
+        data = json.loads(response.get_data())
+        assert response.status_code, 200
+        assert 'frameworkInterest' in data
+        assert data['frameworkInterest'] == {
+            'supplierId': supplier_framework['supplierId'],
+            'supplierName': 'Supplier name',
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'frameworkFramework': supplier_framework['frameworkFramework'],
+            'declaration': {'an_answer': 'Yes it is'},
+            'onFramework': True,
+            'agreementId': framework_agreement_id,
+            'agreementReturned': True,
+            'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
+            'agreementDetails': {
+                'signerName': 'thing 2',
+                'signerRole': 'thing 2',
+                'uploaderUserId': 30
+            },
+            'agreementPath': '/agreement.pdf',
+            'countersigned': True,
+            'countersignedAt': '2017-02-01T01:01:01.000000Z',
+            'countersignedDetails': {'some': 'data'},
+            'countersignedPath': 'path',
+            'agreementStatus': 'countersigned',
+            'agreedVariations': {},
+            'prefillDeclarationFromFrameworkSlug': None,
+        }
 
     def test_get_supplier_framework_info_with_non_existent_framework(self, supplier_framework):
         response = self.client.get(
@@ -1450,10 +1416,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['onFramework'] is True
         assert data['frameworkInterest']['agreementReturned'] is False
 
-        with self.app.app_context():
-            assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
-            audit = self._assert_and_return_audit_event(supplier_framework)
-            assert audit.data['update']['onFramework'] is True
+        assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+        audit = self._assert_and_return_audit_event(supplier_framework)
+        assert audit.data['update']['onFramework'] is True
 
         response2 = self.supplier_framework_interest(
             supplier_framework,
@@ -1466,10 +1431,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['onFramework'] is False
         assert data['frameworkInterest']['agreementReturned'] is False
 
-        with self.app.app_context():
-            assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
-            audit = self._assert_and_return_audit_event(supplier_framework)
-            assert audit.data['update']['onFramework'] is False
+        assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+        audit = self._assert_and_return_audit_event(supplier_framework)
+        assert audit.data['update']['onFramework'] is False
 
     def test_adding_supplier_has_failed_then_passed(self, supplier_framework):
         response = self.supplier_framework_interest(
@@ -1483,10 +1447,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['onFramework'] is False
         assert data['frameworkInterest']['agreementReturned'] is False
 
-        with self.app.app_context():
-            assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
-            audit = self._assert_and_return_audit_event(supplier_framework)
-            assert audit.data['update']['onFramework'] is False
+        assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+        audit = self._assert_and_return_audit_event(supplier_framework)
+        assert audit.data['update']['onFramework'] is False
 
         response2 = self.supplier_framework_interest(
             supplier_framework,
@@ -1499,10 +1462,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['onFramework'] is True
         assert data['frameworkInterest']['agreementReturned'] is False
 
-        with self.app.app_context():
-            assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
-            audit = self._assert_and_return_audit_event(supplier_framework)
-            assert audit.data['update']['onFramework'] is True
+        assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+        audit = self._assert_and_return_audit_event(supplier_framework)
+        assert audit.data['update']['onFramework'] is True
 
     def test_can_only_update_whitelisted_properties_with_this_route(self, supplier_framework):
         response = self.supplier_framework_interest(
@@ -1513,19 +1475,17 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         error_message = json.loads(response.get_data(as_text=True))['error']
         assert error_message == "Invalid JSON should not have 'agreementReturned' keys"
 
-        with self.app.app_context():
-            # check nothing has changed on db
-            assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
-            assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
+        # check nothing has changed on db
+        assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
+        assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
 
     def test_setting_unsetting_prefill_declaration_from_framework_happy_path(
         self,
         open_g8_framework_live_dos_framework_suppliers_on_framework,
     ):
-        with self.app.app_context():
-            supplier_framework = SupplierFramework.query.filter(
-                SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
-            ).order_by(Supplier.id.asc()).first().serialize()
+        supplier_framework = SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+        ).order_by(Supplier.id.asc()).first().serialize()
 
         response = self.supplier_framework_interest(
             supplier_framework,
@@ -1537,10 +1497,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
         assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
 
-        with self.app.app_context():
-            assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
-            audit = self._assert_and_return_audit_event(supplier_framework)
-            assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+        assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+        audit = self._assert_and_return_audit_event(supplier_framework)
+        assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
 
         response = self.supplier_framework_interest(
             supplier_framework,
@@ -1552,19 +1511,17 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
         assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] is None
 
-        with self.app.app_context():
-            assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
-            audit = self._assert_and_return_audit_event(supplier_framework)
-            assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] is None
+        assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+        audit = self._assert_and_return_audit_event(supplier_framework)
+        assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] is None
 
     def test_setting_prefill_declaration_from_framework_invalid_framework_slug(
         self,
         open_g8_framework_live_dos_framework_suppliers_on_framework,
     ):
-        with self.app.app_context():
-            supplier_framework = SupplierFramework.query.filter(
-                SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
-            ).order_by(Supplier.id.asc()).first().serialize()
+        supplier_framework = SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+        ).order_by(Supplier.id.asc()).first().serialize()
 
         response = self.supplier_framework_interest(
             supplier_framework,
@@ -1572,10 +1529,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         )
         assert response.status_code == 400
 
-        with self.app.app_context():
-            # check nothing has changed on db
-            assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
-            assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
+        # check nothing has changed on db
+        assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
+        assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
 
     def test_multiple_simultaneous_property_updates(
         self,
@@ -1622,10 +1578,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         self,
         open_g8_framework_live_dos_framework_suppliers_dos_sf,
     ):
-        with self.app.app_context():
-            supplier_framework = SupplierFramework.query.filter(
-                SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
-            ).order_by(Supplier.id.asc()).first().serialize()
+        supplier_framework = SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+        ).order_by(Supplier.id.asc()).first().serialize()
 
         response = self.supplier_framework_interest(
             supplier_framework,
@@ -1633,10 +1588,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         )
         assert response.status_code == 400
 
-        with self.app.app_context():
-            # check nothing has changed on db
-            assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
-            assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
+        # check nothing has changed on db
+        assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
+        assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
 
 
 class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
@@ -1782,20 +1736,19 @@ class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
             "banana": expected_variation_with_user,
         }
 
-        with app.app_context():
-            audit_events = AuditEvent.query.filter(
-                AuditEvent.type == "agree_framework_variation"
-            ).order_by(AuditEvent.created_at, AuditEvent.id).all()
+        audit_events = AuditEvent.query.filter(
+            AuditEvent.type == "agree_framework_variation"
+        ).order_by(AuditEvent.created_at, AuditEvent.id).all()
 
-            assert len(audit_events) == 1
+        assert len(audit_events) == 1
 
-            assert audit_events[0].user == "test123"
-            assert audit_events[0].data["supplierId"] == 1
-            assert audit_events[0].data["frameworkSlug"] == "g-cloud-8"
-            assert audit_events[0].data["variationSlug"] == "banana"
-            assert audit_events[0].data["update"] == {
-                "agreedUserId": 1,
-            }
+        assert audit_events[0].user == "test123"
+        assert audit_events[0].data["supplierId"] == 1
+        assert audit_events[0].data["frameworkSlug"] == "g-cloud-8"
+        assert audit_events[0].data["variationSlug"] == "banana"
+        assert audit_events[0].data["update"] == {
+            "agreedUserId": 1,
+        }
 
     def test_agree_variation_various(
         self,
@@ -1886,25 +1839,24 @@ class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
             "toblerone": expected_variation_toblerone_with_user,
         }
 
-        with app.app_context():
-            audit_events = AuditEvent.query.filter(
-                AuditEvent.type == "agree_framework_variation"
-            ).order_by(AuditEvent.created_at, AuditEvent.id).all()
+        audit_events = AuditEvent.query.filter(
+            AuditEvent.type == "agree_framework_variation"
+        ).order_by(AuditEvent.created_at, AuditEvent.id).all()
 
-            assert len(audit_events) == 2
+        assert len(audit_events) == 2
 
-            assert audit_events[0].user == "test123"
-            assert audit_events[0].data["supplierId"] == 2
-            assert audit_events[0].data["frameworkSlug"] == "g-cloud-8"
-            assert audit_events[0].data["variationSlug"] == "toblerone"
-            assert audit_events[0].data["update"] == {
-                "agreedUserId": 2,
-            }
+        assert audit_events[0].user == "test123"
+        assert audit_events[0].data["supplierId"] == 2
+        assert audit_events[0].data["frameworkSlug"] == "g-cloud-8"
+        assert audit_events[0].data["variationSlug"] == "toblerone"
+        assert audit_events[0].data["update"] == {
+            "agreedUserId": 2,
+        }
 
-            assert audit_events[1].user == "test123"
-            assert audit_events[1].data["supplierId"] == 2
-            assert audit_events[1].data["frameworkSlug"] == "g-cloud-8"
-            assert audit_events[1].data["variationSlug"] == "banana"
-            assert audit_events[1].data["update"] == {
-                "agreedUserId": 2,
-            }
+        assert audit_events[1].user == "test123"
+        assert audit_events[1].data["supplierId"] == 2
+        assert audit_events[1].data["frameworkSlug"] == "g-cloud-8"
+        assert audit_events[1].data["variationSlug"] == "banana"
+        assert audit_events[1].data["update"] == {
+            "agreedUserId": 2,
+        }

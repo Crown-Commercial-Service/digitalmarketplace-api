@@ -18,21 +18,19 @@ class FrameworkSetupAndTeardown(BaseApplicationTest, FixtureMixin):
         super(FrameworkSetupAndTeardown, self).setup()
         self.user_id = self.setup_dummy_user(role='buyer')
 
-        with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            self._original_framework_status = framework.status
-            framework.status = 'live'
+        framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+        self._original_framework_status = framework.status
+        framework.status = 'live'
 
-            db.session.add(framework)
-            db.session.commit()
+        db.session.add(framework)
+        db.session.commit()
 
     def teardown(self):
-        with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            framework.status = self._original_framework_status
+        framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+        framework.status = self._original_framework_status
 
-            db.session.add(framework)
-            db.session.commit()
+        db.session.add(framework)
+        db.session.commit()
         super(FrameworkSetupAndTeardown, self).teardown()
 
 
@@ -182,13 +180,12 @@ class TestCreateBrief(FrameworkSetupAndTeardown):
 
     def test_create_brief_fails_if_framework_not_live(self):
         for framework_status in [status for status in Framework.STATUSES if status != 'live']:
-            with self.app.app_context():
-                framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-                self._original_framework_status = framework.status
-                framework.status = framework_status
+            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+            self._original_framework_status = framework.status
+            framework.status = framework_status
 
-                db.session.add(framework)
-                db.session.commit()
+            db.session.add(framework)
+            db.session.commit()
 
             res = self.client.post(
                 '/briefs',
@@ -417,8 +414,7 @@ class TestGetBrief(FrameworkSetupAndTeardown):
         assert res.status_code == 200
         expected_data = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
 
-        with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+        framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
 
         expected_data.update(
             {
@@ -773,21 +769,20 @@ class TestListBrief(FrameworkSetupAndTeardown):
     @pytest.mark.parametrize('temporal_arg, expected_count', [('before', 1), ('on', 2), ('after', 1)])
     def test_list_briefs_filter_closed_briefs_by_date(self, temporal_arg, expected_count):
         # Closed briefs need to be set up differently, so this test covers all 3 before/after/on cases
-        with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            lot = Lot.query.filter(Lot.slug == 'digital-specialists').first()
+        framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+        lot = Lot.query.filter(Lot.slug == 'digital-specialists').first()
 
-            with freeze_time('2017-01-01 23:59:59.999999'):
-                brief1 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
-            with freeze_time('2017-01-02 00:00:00'):
-                brief2 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
-            with freeze_time('2017-01-02 23:59:59.999999'):
-                brief3 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
-            with freeze_time('2017-01-03 00:00:00'):
-                brief4 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
+        with freeze_time('2017-01-01 23:59:59.999999'):
+            brief1 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
+        with freeze_time('2017-01-02 00:00:00'):
+            brief2 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
+        with freeze_time('2017-01-02 23:59:59.999999'):
+            brief3 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
+        with freeze_time('2017-01-03 00:00:00'):
+            brief4 = Brief(data={}, framework=framework, lot=lot, published_at=datetime.utcnow())
 
-            db.session.add_all([brief1, brief2, brief3, brief4])
-            db.session.commit()
+        db.session.add_all([brief1, brief2, brief3, brief4])
+        db.session.commit()
 
         res = self.client.get('/briefs?closed_{}=2017-01-16'.format(temporal_arg))
         data = json.loads(res.get_data(as_text=True))
@@ -832,11 +827,10 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
     @pytest.mark.parametrize('framework_status', ('pending', 'expired'))
     def test_cancel_a_brief(self, index_brief, framework_status):
         self.setup_dummy_briefs(1, title='The Title', status='closed')
-        with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            framework.status = framework_status
-            db.session.add(framework)
-            db.session.commit()
+        framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+        framework.status = framework_status
+        db.session.add(framework)
+        db.session.commit()
 
         res = self.client.post(
             '/briefs/1/cancel',
@@ -937,11 +931,10 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
         self.setup_dummy_briefs(1, title='The title')
 
         for framework_status in [status for status in Framework.STATUSES if status != 'live']:
-            with self.app.app_context():
-                framework = Framework.query.get(5)
-                framework.status = framework_status
-                db.session.add(framework)
-                db.session.commit()
+            framework = Framework.query.get(5)
+            framework.status = framework_status
+            db.session.add(framework)
+            db.session.commit()
 
             res = self.client.post(
                 '/briefs/1/publish',
@@ -1221,32 +1214,31 @@ class TestCopyBrief(FrameworkSetupAndTeardown):
 
 class TestSupplierIsEligibleForBrief(BaseApplicationTest, FixtureMixin):
     def setup_services(self):
-        with self.app.app_context():
-            self.setup_dummy_suppliers(2)
-            self.set_framework_status("digital-outcomes-and-specialists", "live")
-            self.setup_dummy_service(
-                service_id='10000000001',
-                supplier_id=0,
-                framework_id=5,  # Digital Outcomes and Specialists
-                lot_id=5,  # digital-outcomes
-                data={"locations": [
-                    "London", "Offsite", "Scotland", "Wales"
-                ]
-                })
-            self.setup_dummy_service(
-                service_id='10000000002',
-                supplier_id=0,
-                framework_id=5,  # Digital Outcomes and Specialists
-                lot_id=6,  # digital-specialists
-                data={"developerLocations": ["London", "Offsite", "Scotland", "Wales"]}
-            )
-            self.setup_dummy_service(
-                service_id='10000000003',
-                supplier_id=1,
-                framework_id=5,  # Digital Outcomes and Specialists
-                lot_id=6,  # digital-specialists
-                data={"developerLocations": ["Wales"]}
-            )
+        self.setup_dummy_suppliers(2)
+        self.set_framework_status("digital-outcomes-and-specialists", "live")
+        self.setup_dummy_service(
+            service_id='10000000001',
+            supplier_id=0,
+            framework_id=5,  # Digital Outcomes and Specialists
+            lot_id=5,  # digital-outcomes
+            data={"locations": [
+                "London", "Offsite", "Scotland", "Wales"
+            ]
+            })
+        self.setup_dummy_service(
+            service_id='10000000002',
+            supplier_id=0,
+            framework_id=5,  # Digital Outcomes and Specialists
+            lot_id=6,  # digital-specialists
+            data={"developerLocations": ["London", "Offsite", "Scotland", "Wales"]}
+        )
+        self.setup_dummy_service(
+            service_id='10000000003',
+            supplier_id=1,
+            framework_id=5,  # Digital Outcomes and Specialists
+            lot_id=6,  # digital-specialists
+            data={"developerLocations": ["Wales"]}
+        )
 
     def test_supplier_is_eligible_for_specialist(self):
         self.setup_services()
@@ -1260,15 +1252,14 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest, FixtureMixin):
 
     def test_supplier_is_eligible_for_live_outcome(self):
         self.setup_services()
-        with self.app.app_context():
-            self.setup_dummy_user(id=1)
-            self.setup_dummy_brief(
-                id=1,
-                status="live",
-                user_id=1,
-                data={"location": "London"},
-                lot_slug="digital-outcomes")
-            db.session.commit()
+        self.setup_dummy_user(id=1)
+        self.setup_dummy_brief(
+            id=1,
+            status="live",
+            user_id=1,
+            data={"location": "London"},
+            lot_slug="digital-outcomes")
+        db.session.commit()
 
         response = self.client.get("/briefs/1/services?supplier_id=0")
         data = json.loads(response.get_data(as_text=True))
@@ -1304,15 +1295,14 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest, FixtureMixin):
 
     def test_supplier_is_eligible_even_if_not_in_specialist_location(self):
         self.setup_services()
-        with self.app.app_context():
-            self.setup_dummy_user(id=1)
-            self.setup_dummy_brief(
-                id=1,
-                status="live",
-                user_id=1,
-                data={"location": "North East England",
-                      "specialistRole": "developer"})
-            db.session.commit()
+        self.setup_dummy_user(id=1)
+        self.setup_dummy_brief(
+            id=1,
+            status="live",
+            user_id=1,
+            data={"location": "North East England",
+                  "specialistRole": "developer"})
+        db.session.commit()
 
         response = self.client.get("/briefs/1/services?supplier_id=0")
         data = json.loads(response.get_data(as_text=True))
@@ -1322,15 +1312,14 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest, FixtureMixin):
 
     def test_supplier_is_ineligible_if_does_not_supply_the_role(self):
         self.setup_services()
-        with self.app.app_context():
-            self.setup_dummy_user(id=1)
-            self.setup_dummy_brief(
-                id=1,
-                status="live",
-                user_id=1,
-                data={"location": "London",
-                      "specialistRole": "agileCoach"})
-            db.session.commit()
+        self.setup_dummy_user(id=1)
+        self.setup_dummy_brief(
+            id=1,
+            status="live",
+            user_id=1,
+            data={"location": "London",
+                  "specialistRole": "agileCoach"})
+        db.session.commit()
 
         response = self.client.get("/briefs/1/services?supplier_id=0")
         data = json.loads(response.get_data(as_text=True))
@@ -1340,15 +1329,14 @@ class TestSupplierIsEligibleForBrief(BaseApplicationTest, FixtureMixin):
 
     def test_supplier_is_eligible_even_if_does_not_supply_in_outcome_location(self):
         self.setup_services()
-        with self.app.app_context():
-            self.setup_dummy_user(id=1)
-            self.setup_dummy_brief(
-                id=1,
-                status="live",
-                user_id=1,
-                data={"location": "North East England"},
-                lot_slug="digital-outcomes")
-            db.session.commit()
+        self.setup_dummy_user(id=1)
+        self.setup_dummy_brief(
+            id=1,
+            status="live",
+            user_id=1,
+            data={"location": "North East England"},
+            lot_slug="digital-outcomes")
+        db.session.commit()
 
         response = self.client.get("/briefs/1/services?supplier_id=0")
         data = json.loads(response.get_data(as_text=True))
@@ -1370,64 +1358,61 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
         )
 
     def test_can_award_brief_response_to_closed_brief_without_award_details(self):
-        with self.app.app_context():
-            self.setup_dummy_briefs(1, status="closed")
-            self.setup_dummy_suppliers(1)
-            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-            db.session.add(brief_response)
-            db.session.commit()
-            brief_response_id = brief_response.id
+        self.setup_dummy_briefs(1, status="closed")
+        self.setup_dummy_suppliers(1)
+        brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+        db.session.add(brief_response)
+        db.session.commit()
+        brief_response_id = brief_response.id
 
-            res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
-            assert res.status_code == 200
+        res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
+        assert res.status_code == 200
 
-            brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
-            assert len(brief_response_audits) == 1
-            assert brief_response_audits[0]['data'] == {
-                'briefId': 1,
-                'briefResponseId': brief_response_id,
-                'briefResponseAwardedValue': True
-            }
+        brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
+        assert len(brief_response_audits) == 1
+        assert brief_response_audits[0]['data'] == {
+            'briefId': 1,
+            'briefResponseId': brief_response_id,
+            'briefResponseAwardedValue': True
+        }
 
     def test_can_change_awarded_brief_response_for_closed_brief_without_awarded_datestamp(self):
-        with self.app.app_context():
-            self.setup_dummy_briefs(1, status="closed")
-            self.setup_dummy_suppliers(1)
-            brief_response1 = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-            brief_response2 = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-            brief_response1.award_details = {'pending': True}
-            db.session.add_all([brief_response1, brief_response2])
-            db.session.commit()
-            brief_response1_id = brief_response1.id
-            brief_response2_id = brief_response2.id
-            # Update to be awarded to brief response 2 rather than brief response 1
-            res = self._post_to_award_endpoint({'briefResponseId': brief_response2.id})
-            assert res.status_code == 200
+        self.setup_dummy_briefs(1, status="closed")
+        self.setup_dummy_suppliers(1)
+        brief_response1 = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+        brief_response2 = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+        brief_response1.award_details = {'pending': True}
+        db.session.add_all([brief_response1, brief_response2])
+        db.session.commit()
+        brief_response1_id = brief_response1.id
+        brief_response2_id = brief_response2.id
+        # Update to be awarded to brief response 2 rather than brief response 1
+        res = self._post_to_award_endpoint({'briefResponseId': brief_response2.id})
+        assert res.status_code == 200
 
-            brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
-            assert len(brief_response_audits) == 2
-            assert brief_response_audits[0]['data'] == {
-                'briefId': 1,
-                'briefResponseId': brief_response1_id,
-                'briefResponseAwardedValue': False
-            }
-            assert brief_response_audits[1]['data'] == {
-                'briefId': 1,
-                'briefResponseId': brief_response2_id,
-                'briefResponseAwardedValue': True
-            }
+        brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
+        assert len(brief_response_audits) == 2
+        assert brief_response_audits[0]['data'] == {
+            'briefId': 1,
+            'briefResponseId': brief_response1_id,
+            'briefResponseAwardedValue': False
+        }
+        assert brief_response_audits[1]['data'] == {
+            'briefId': 1,
+            'briefResponseId': brief_response2_id,
+            'briefResponseAwardedValue': True
+        }
 
     def test_200_if_trying_to_award_a_brief_response_again_even_though_it_has_already_been_awarded(self):
-        with self.app.app_context():
-            self.setup_dummy_briefs(1, status="closed")
-            self.setup_dummy_suppliers(1)
-            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-            brief_response.award_details = {'pending': True}
-            db.session.add(brief_response)
-            db.session.commit()
+        self.setup_dummy_briefs(1, status="closed")
+        self.setup_dummy_suppliers(1)
+        brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+        brief_response.award_details = {'pending': True}
+        db.session.add(brief_response)
+        db.session.commit()
 
-            res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
-            assert res.status_code == 200
+        res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
+        assert res.status_code == 200
 
     def test_400_if_no_updated_by_in_payload(self):
         res = self.client.post(
@@ -1448,32 +1433,30 @@ class TestAwardPendingBriefResponse(FrameworkSetupAndTeardown):
         assert data['error'] == "Brief is not closed"
 
     def test_400_if_awarding_a_draft_brief_response_to_a_closed_brief(self):
-        with self.app.app_context():
-            self.setup_dummy_briefs(1, status="closed")
-            self.setup_dummy_suppliers(1)
-            brief_response = BriefResponse(brief_id=1, supplier_id=0, data={})
-            db.session.add(brief_response)
-            db.session.commit()
+        self.setup_dummy_briefs(1, status="closed")
+        self.setup_dummy_suppliers(1)
+        brief_response = BriefResponse(brief_id=1, supplier_id=0, data={})
+        db.session.add(brief_response)
+        db.session.commit()
 
-            res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
-            data = json.loads(res.get_data(as_text=True))
-            assert res.status_code == 400
-            assert data['error'] == "BriefResponse cannot be awarded for this Brief"
+        res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
+        data = json.loads(res.get_data(as_text=True))
+        assert res.status_code == 400
+        assert data['error'] == "BriefResponse cannot be awarded for this Brief"
 
     def test_400_if_awarding_a_brief_response_that_does_not_relate_to_that_brief(self):
-        with self.app.app_context():
-            self.setup_dummy_briefs(2, status="closed")
-            self.setup_dummy_suppliers(1)
-            brief_response = BriefResponse(brief_id=2, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-            db.session.add(brief_response)
-            db.session.commit()
+        self.setup_dummy_briefs(2, status="closed")
+        self.setup_dummy_suppliers(1)
+        brief_response = BriefResponse(brief_id=2, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+        db.session.add(brief_response)
+        db.session.commit()
 
-            # We've set up brief response for brief ID 2 but attempt to award it for brief 1
-            res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
+        # We've set up brief response for brief ID 2 but attempt to award it for brief 1
+        res = self._post_to_award_endpoint({'briefResponseId': brief_response.id})
 
-            data = json.loads(res.get_data(as_text=True))
-            assert res.status_code == 400
-            assert data['error'] == "BriefResponse cannot be awarded for this Brief"
+        data = json.loads(res.get_data(as_text=True))
+        assert res.status_code == 400
+        assert data['error'] == "BriefResponse cannot be awarded for this Brief"
 
 
 @mock.patch('app.main.views.briefs.index_brief')
@@ -1496,80 +1479,77 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
         )
 
     def test_can_supply_award_details_for_closed_brief_with_awarded_brief_response(self, index_brief):
-        with self.app.app_context():
-            self.setup_dummy_briefs(1, status="closed")
-            self.setup_dummy_suppliers(1)
-            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-            db.session.add(brief_response)
-            db.session.commit()
-            brief_response.award_details = {'pending': True}
-            db.session.add(brief_response)
-            db.session.commit()
-            assert brief_response.status == 'pending-awarded'
-            brief_response_id = brief_response.id
+        self.setup_dummy_briefs(1, status="closed")
+        self.setup_dummy_suppliers(1)
+        brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+        db.session.add(brief_response)
+        db.session.commit()
+        brief_response.award_details = {'pending': True}
+        db.session.add(brief_response)
+        db.session.commit()
+        assert brief_response.status == 'pending-awarded'
+        brief_response_id = brief_response.id
 
-            res = self._post_to_award_details_endpoint(self.valid_payload, brief_response_id)
-            assert res.status_code == 200
-            data = json.loads(res.get_data(as_text=True))
-            assert data['briefs']['awardedBriefResponseId'] == brief_response_id
-            assert index_brief.called is True
+        res = self._post_to_award_details_endpoint(self.valid_payload, brief_response_id)
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))
+        assert data['briefs']['awardedBriefResponseId'] == brief_response_id
+        assert index_brief.called is True
 
-            brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
-            assert len(brief_response_audits) == 1
-            assert brief_response_audits[0]['data'] == {
-                'briefId': 1,
-                'briefResponseId': brief_response_id,
-                'briefResponseAwardDetails': {
-                    "awardedContractStartDate": "2020-12-31",
-                    "awardedContractValue": "99.95"
-                }
+        brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
+        assert len(brief_response_audits) == 1
+        assert brief_response_audits[0]['data'] == {
+            'briefId': 1,
+            'briefResponseId': brief_response_id,
+            'briefResponseAwardDetails': {
+                "awardedContractStartDate": "2020-12-31",
+                "awardedContractValue": "99.95"
             }
+        }
 
     def test_400_if_supplying_details_for_closed_brief_without_awarded_brief_response(self, index_brief):
-        with self.app.app_context():
-            self.setup_dummy_briefs(1, status="closed")
-            self.setup_dummy_suppliers(1)
-            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-            db.session.add(brief_response)
-            db.session.commit()
-            assert brief_response.status == 'submitted'
+        self.setup_dummy_briefs(1, status="closed")
+        self.setup_dummy_suppliers(1)
+        brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+        db.session.add(brief_response)
+        db.session.commit()
+        assert brief_response.status == 'submitted'
 
-            res = self._post_to_award_details_endpoint(self.valid_payload, brief_response.id)
-            assert res.status_code == 400
-            data = json.loads(res.get_data(as_text=True))
-            assert data['error'] == "Cannot update award details for a Brief without a winning supplier"
-            assert index_brief.called is False
+        res = self._post_to_award_details_endpoint(self.valid_payload, brief_response.id)
+        assert res.status_code == 400
+        data = json.loads(res.get_data(as_text=True))
+        assert data['error'] == "Cannot update award details for a Brief without a winning supplier"
+        assert index_brief.called is False
 
     def test_400_if_award_details_payload_invalid(self, index_brief):
-        with self.app.app_context():
-            self.setup_dummy_briefs(1, status="closed")
-            self.setup_dummy_suppliers(1)
-            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-            db.session.add(brief_response)
-            db.session.commit()
-            brief_response.award_details = {'pending': True}
-            db.session.add(brief_response)
-            db.session.commit()
+        self.setup_dummy_briefs(1, status="closed")
+        self.setup_dummy_suppliers(1)
+        brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+        db.session.add(brief_response)
+        db.session.commit()
+        brief_response.award_details = {'pending': True}
+        db.session.add(brief_response)
+        db.session.commit()
 
-            res = self._post_to_award_details_endpoint(
-                {
-                    "awardDetails": {
-                        "awardedContractValue": "I am not a number",
-                        "awardedContractStartDate-day": None,
-                        "awardedContractStartDate-month": None,
-                        "awardedContractStartDate-year": None,
-                    },
-                    "updated_by": "user@email.com"
-                }, brief_response.id
-            )
+        res = self._post_to_award_details_endpoint(
+            {
+                "awardDetails": {
+                    "awardedContractValue": "I am not a number",
+                    "awardedContractStartDate-day": None,
+                    "awardedContractStartDate-month": None,
+                    "awardedContractStartDate-year": None,
+                },
+                "updated_by": "user@email.com"
+            }, brief_response.id
+        )
 
-            data = json.loads(res.get_data(as_text=True))
-            assert res.status_code == 400
-            assert data['error'] == {
-                'awardedContractStartDate': 'answer_required',
-                'awardedContractValue': 'not_money_format'
-            }
-            assert index_brief.called is False
+        data = json.loads(res.get_data(as_text=True))
+        assert res.status_code == 400
+        assert data['error'] == {
+            'awardedContractStartDate': 'answer_required',
+            'awardedContractValue': 'not_money_format'
+        }
+        assert index_brief.called is False
 
     def test_400_if_no_updated_by_in_payload(self, index_brief):
         res = self._post_to_award_details_endpoint({
@@ -1585,14 +1565,12 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
         assert index_brief.called is False
 
     def test_404_if_brief_response_not_related_to_brief(self, index_brief):
-        with self.app.app_context():
-
-            self.setup_dummy_briefs(2, status="closed")
-            self.setup_dummy_suppliers(1)
-            brief_response = BriefResponse(brief_id=2, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-            db.session.add(brief_response)
-            db.session.commit()
-            brief_response_id = brief_response.id
+        self.setup_dummy_briefs(2, status="closed")
+        self.setup_dummy_suppliers(1)
+        brief_response = BriefResponse(brief_id=2, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+        db.session.add(brief_response)
+        db.session.commit()
+        brief_response_id = brief_response.id
 
         res = self._post_to_award_details_endpoint(self.valid_payload, brief_response_id)
 
