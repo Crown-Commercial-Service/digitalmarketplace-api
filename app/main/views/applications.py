@@ -289,6 +289,7 @@ def submit_application(application_id):
 
     application.update_from_json({'submitted_at': current_time})
 
+    signed_agreement = None
     if application.type != 'edit':
         # only create signed agreements on initial applications
         signed_agreement = SignedAgreement()
