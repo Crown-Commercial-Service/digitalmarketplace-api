@@ -1,7 +1,7 @@
 command: ./scripts/cf_run_app.sh
 buildpack: python_buildpack
 health-check-type: port
-instances: 2
+instances: 4
 memory: 2G
 disk_quota: 512M
 services:
