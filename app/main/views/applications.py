@@ -271,8 +271,12 @@ def submit_application(application_id):
 
     user = User.query.get(user_id)
 
-    if user.application_id != application.id:
-        abort(400, 'User is not authorized to submit application')
+    if application.type != 'edit':
+        if user.application_id != application.id:
+            abort(400, 'User is not authorized to submit application')
+    else:
+        if user.supplier_code != application.supplier_code:
+            abort(400, 'User supplier code does not match application supplier code')
 
     current_agreement = Agreement.query.filter(
         Agreement.is_current == true()
