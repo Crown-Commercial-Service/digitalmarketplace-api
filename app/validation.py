@@ -5,6 +5,7 @@ import copy
 from decimal import Decimal
 
 from flask import abort, current_app
+import glob
 from jsonschema import ValidationError, FormatChecker
 from jsonschema.validators import validator_for
 from datetime import datetime
@@ -13,69 +14,14 @@ from dmutils.formats import DATE_FORMAT
 MINIMUM_SERVICE_ID_LENGTH = 10
 MAXIMUM_SERVICE_ID_LENGTH = 20
 
-JSON_SCHEMAS_PATH = './json_schemas'
-SCHEMA_NAMES = [
-    'agreement-details',
-    'framework-agreement-details',
-    'brief-clarification-question',
-    'briefs-digital-outcomes-and-specialists-digital-outcomes',
-    'briefs-digital-outcomes-and-specialists-digital-specialists',
-    'briefs-digital-outcomes-and-specialists-user-research-participants',
-    'brief-responses-digital-outcomes-and-specialists-digital-outcomes',
-    'brief-responses-digital-outcomes-and-specialists-digital-specialists',
-    'brief-responses-digital-outcomes-and-specialists-user-research-participants',
-    'brief-awards-digital-outcomes-and-specialists-digital-outcomes',
-    'brief-awards-digital-outcomes-and-specialists-digital-specialists',
-    'brief-awards-digital-outcomes-and-specialists-user-research-participants',
-    'briefs-digital-outcomes-and-specialists-2-digital-outcomes',
-    'briefs-digital-outcomes-and-specialists-2-digital-specialists',
-    'briefs-digital-outcomes-and-specialists-2-user-research-participants',
-    'brief-responses-digital-outcomes-and-specialists-2-digital-outcomes',
-    'brief-responses-digital-outcomes-and-specialists-2-digital-specialists',
-    'brief-responses-digital-outcomes-and-specialists-2-user-research-participants',
-    'brief-awards-digital-outcomes-and-specialists-2-digital-outcomes',
-    'brief-awards-digital-outcomes-and-specialists-2-digital-specialists',
-    'brief-awards-digital-outcomes-and-specialists-2-user-research-participants',
-    'services-g-cloud-4',
-    'services-g-cloud-5',
-    'services-g-cloud-6-iaas',
-    'services-g-cloud-6-saas',
-    'services-g-cloud-6-paas',
-    'services-g-cloud-6-scs',
-    'services-g-cloud-7-iaas',
-    'services-g-cloud-7-saas',
-    'services-g-cloud-7-paas',
-    'services-g-cloud-7-scs',
-    'services-g-cloud-8-iaas',
-    'services-g-cloud-8-saas',
-    'services-g-cloud-8-paas',
-    'services-g-cloud-8-scs',
-    'services-digital-outcomes-and-specialists-digital-outcomes',
-    'services-digital-outcomes-and-specialists-digital-specialists',
-    'services-digital-outcomes-and-specialists-user-research-studios',
-    'services-digital-outcomes-and-specialists-user-research-participants',
-    'services-digital-outcomes-and-specialists-2-digital-outcomes',
-    'services-digital-outcomes-and-specialists-2-digital-specialists',
-    'services-digital-outcomes-and-specialists-2-user-research-studios',
-    'services-digital-outcomes-and-specialists-2-user-research-participants',
-    'services-g-cloud-9-cloud-hosting',
-    'services-g-cloud-9-cloud-software',
-    'services-g-cloud-9-cloud-support',
-    'services-update',
-    'users',
-    'users-auth',
-    'suppliers',
-    'new-supplier',
-    'contact-information',
-    'buyer-email-domains',
-]
+SCHEMA_PATHS = glob.glob('./json_schemas/*.json')
 FORMAT_CHECKER = FormatChecker()
 
 
-def load_schemas(schemas_path, schema_names):
+def load_schemas(schema_paths):
     loaded_schemas = {}
-    for schema_name in schema_names:
-        schema_path = os.path.join(schemas_path, '{}.json'.format(schema_name))
+    for schema_path in schema_paths:
+        schema_name = os.path.splitext(os.path.basename(schema_path))[0]
 
         with open(schema_path) as f:
             schema = json.load(f)
@@ -85,7 +31,7 @@ def load_schemas(schemas_path, schema_names):
     return loaded_schemas
 
 
-_SCHEMAS = load_schemas(JSON_SCHEMAS_PATH, SCHEMA_NAMES)
+_SCHEMAS = load_schemas(SCHEMA_PATHS)
 
 
 def get_validator(schema_name, enforce_required=True, required_fields=None):
