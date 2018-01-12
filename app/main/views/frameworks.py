@@ -124,7 +124,7 @@ def update_framework(framework_slug):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {}".format(e))
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, framework), 200
 

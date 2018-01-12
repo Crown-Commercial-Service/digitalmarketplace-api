@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import jsonify, abort
+from flask import abort
 from sqlalchemy.exc import IntegrityError
 from dmapiclient.audit import AuditTypes
 
@@ -54,7 +54,7 @@ def create_framework_agreement():
         db.session.flush()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.create_agreement,
@@ -137,7 +137,7 @@ def update_framework_agreement(agreement_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message="Database Error: {0}".format(e)), 400
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, framework_agreement), 200
 
@@ -187,7 +187,7 @@ def sign_framework_agreement(agreement_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message="Database Error: {0}".format(e)), 400
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, framework_agreement), 200
 
@@ -224,7 +224,7 @@ def put_signed_framework_agreement_on_hold(agreement_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message="Database Error: {0}".format(e)), 400
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, framework_agreement), 200
 
@@ -288,6 +288,6 @@ def approve_for_countersignature(agreement_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message="Database Error: {0}".format(e)), 400
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, framework_agreement), 200

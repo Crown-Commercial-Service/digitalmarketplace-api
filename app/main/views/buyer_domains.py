@@ -37,7 +37,7 @@ def create_buyer_email_domain():
         db.session.flush()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, e.orig)
+        abort(400, format(e))
 
     audit = AuditEvent(
         audit_type=AuditTypes.create_buyer_email_domain,
