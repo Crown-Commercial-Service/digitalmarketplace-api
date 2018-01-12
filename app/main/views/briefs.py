@@ -416,7 +416,7 @@ def delete_draft_brief(brief_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        abort(400, format(e))
 
     return jsonify(message="done"), 200
 

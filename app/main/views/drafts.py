@@ -70,7 +70,7 @@ def copy_draft_service_from_existing_service(service_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, draft), 201
 
@@ -113,7 +113,7 @@ def edit_draft_service(draft_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, draft), 200
 
@@ -206,7 +206,7 @@ def delete_draft_service(draft_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        abort(400, format(e))
 
     return jsonify(message="done"), 200
 
@@ -321,7 +321,7 @@ def create_new_draft_service():
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, draft), 201
 
@@ -354,7 +354,7 @@ def complete_draft_service(draft_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, draft), 200
 
@@ -392,7 +392,7 @@ def update_draft_service_status(draft_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, draft), 200
 
@@ -425,6 +425,6 @@ def copy_draft_service(draft_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, draft_copy), 201

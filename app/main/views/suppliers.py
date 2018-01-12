@@ -136,7 +136,7 @@ def import_supplier(supplier_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, supplier), 201
 
@@ -163,7 +163,7 @@ def create_supplier():
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message="Database Error: {0}".format(e)), 400
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, supplier), 201
 
@@ -204,7 +204,7 @@ def update_supplier(supplier_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, supplier), 200
 
@@ -245,7 +245,7 @@ def update_contact_information(supplier_id, contact_id):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {0}".format(e))
+        abort(400, format(e))
 
     return single_result_response("contactInformation", contact), 200
 
@@ -291,7 +291,7 @@ def set_a_declaration(supplier_id, framework_slug):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        abort(400, "Database Error: {}".format(e))
+        abort(400, format(e))
 
     return jsonify(declaration=supplier_framework.declaration), status_code
 
@@ -393,7 +393,7 @@ def register_framework_interest(supplier_id, framework_slug):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message="Database Error: {0}".format(e)), 400
+        abort(400, format(e))
 
     return single_result_response("frameworkInterest", interest_record), 201
 
@@ -451,7 +451,7 @@ def update_supplier_framework(supplier_id, framework_slug):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message="Database Error: {0}".format(e)), 400
+        abort(400, format(e))
 
     return single_result_response("frameworkInterest", interest_record), 200
 
@@ -526,7 +526,7 @@ def agree_framework_variation(supplier_id, framework_slug, variation_slug):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message="Database Error: {0}".format(e)), 400
+        abort(400, format(e))
 
     return jsonify(
         agreedVariations=SupplierFramework.serialize_agreed_variation(agreed_variations[variation_slug]),
