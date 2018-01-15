@@ -461,8 +461,8 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
 
     sliced_results = results[offset:(offset + result_count)]
 
-    q = db.session.query(Supplier.code, Supplier.name, Supplier.summary, Supplier.last_update_time,
-                         Supplier.is_recruiter, Supplier.data, Domain.name.label('domain_name'),
+    q = db.session.query(Supplier.code, Supplier.name, Supplier.summary, Supplier.is_recruiter,
+                         Supplier.data, Domain.name.label('domain_name'),
                          SupplierDomain.status.label('domain_status'))\
         .outerjoin(SupplierDomain, Domain)\
         .filter(Supplier.id.in_([sr.id for sr in sliced_results]))\
@@ -473,13 +473,17 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
     sliced_results = []
     for key, group in groupby(suppliers, key=itemgetter('code')):
         supplier = group.next()
+
         supplier['seller_type'] = supplier.get('data') and supplier['data'].get('seller_type')
 
-        assessed, unassessed = [], []
+        supplier['domains'] = {'assessed': [], 'unassessed': []}
         for s in chain([supplier], group):
-            assessed.append(s['domain_name']) if s['domain_status'] == 'assessed'\
-                else unassessed.append(s['domain_name'])
-        supplier['domains'] = dict(assessed=assessed, unassessed=unassessed)
+            domain, status = s['domain_name'], s['domain_status']
+            if domain:
+                if status == 'assessed':
+                    supplier['domains']['assessed'].append(domain)
+                else:
+                    supplier['domains']['unassessed'].append(domain)
 
         for e in ['domain_name', 'domain_status', 'data']:
             supplier.pop(e, None)
