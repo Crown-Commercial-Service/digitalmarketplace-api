@@ -473,7 +473,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
     sliced_results = []
     for key, group in groupby(suppliers, key=itemgetter('code')):
         supplier = group.next()
-        supplier['seller_type'] = supplier['data'].get('seller_type')
+        supplier['seller_type'] = supplier.get('data') and supplier['data'].get('seller_type')
 
         assessed, unassessed = [], []
         for s in chain([supplier], group):
@@ -482,7 +482,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
         supplier['domains'] = dict(assessed=assessed, unassessed=unassessed)
 
         for e in ['domain_name', 'domain_status', 'data']:
-            supplier.pop(e)
+            supplier.pop(e, None)
 
         sliced_results.append(supplier)
 
