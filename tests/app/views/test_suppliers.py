@@ -614,18 +614,6 @@ class TestSupplierSearch(BaseApplicationTest):
             },
         }
 
-        TRANSITION_DOMAIN_SEARCH = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "terms": {
-                            "domains.assessed": ['Data science', 'Cyber security']
-                        }
-                    }
-                }
-            },
-        }
-
         NEW_DOMAIN_SEARCH = {
             "query": {
                 "filtered": {
@@ -677,11 +665,6 @@ class TestSupplierSearch(BaseApplicationTest):
         assert len(results) == 1
         assert results[0]['name'] == 'Supplier 1'
 
-        results = self.do_search(TRANSITION_DOMAIN_SEARCH)
-        assert [_['name'] for _ in results] == [
-            'Supplier 1'
-        ]
-
         results = self.do_search(SELLER_TYPES_SEARCH)
         assert len(results) == 1
         assert [_['name'] for _ in results] == ['Supplier 1']
@@ -689,15 +672,9 @@ class TestSupplierSearch(BaseApplicationTest):
         results = self.do_search(SORT_BY_SEARCH)
         assert len(results) == 5
 
-        times = [_['last_update_time'] for _ in results]
-
-        assert is_sorted(reversed(times))
-
         with self.app.app_context():
-            current_app.config['LEGACY_ROLE_MAPPING'] = False
             results = self.do_search(NEW_DOMAIN_SEARCH)
             assert [_['name'] for _ in results] == ['Supplier 2']
-            current_app.config['LEGACY_ROLE_MAPPING'] = True
 
     def test_product_search_results(self):
         self.setup_dummy_suppliers_with_old_and_new_domains(5)

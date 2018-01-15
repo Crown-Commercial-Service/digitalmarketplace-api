@@ -2,7 +2,6 @@ from datetime import datetime
 
 from flask import abort, current_app, jsonify, request, url_for
 from sqlalchemy.exc import IntegrityError, DataError
-from sqlalchemy.orm import subqueryload
 from sqlalchemy.sql.expression import true
 from sqlalchemy.sql import cast
 from sqlalchemy import Boolean, select, column, or_
@@ -31,6 +30,8 @@ from dmapiclient.audit import AuditTypes
 from dmutils.logging import notify_team
 from app.emails import send_assessment_approval_notification
 import json
+from itertools import groupby, chain
+from operator import itemgetter
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -444,26 +445,6 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
 
         q = q.filter(Supplier.text_vector.op('@@')(tsquery))
 
-    # Make sure all the related tables we'll need info from are loaded at once,
-    # otherwise there will be 10 queries per row returned
-    q = q\
-        .options(subqueryload(Supplier.addresses))\
-        .options(subqueryload(Supplier.domains))\
-        .options(subqueryload(Supplier.extra_links))\
-        .options(subqueryload(Supplier.contacts))\
-        .options(subqueryload(Supplier.case_studies))\
-        .options(subqueryload(Supplier.products))\
-        .options(subqueryload(Supplier.references))\
-        .options(subqueryload(Supplier.prices))\
-        .options(subqueryload(Supplier.signed_agreements))\
-        .options(subqueryload(Supplier.frameworks))
-
-    # Ensure that ordering is always deterministic, else
-    # we may have issues with subqueryload, see:
-    # http://docs.sqlalchemy.org/en/latest/orm/loading_relationships.html#the-importance-of-ordering
-    # We can remove this by upgrading to sqlalchemy 1.2 and use: selectinload
-    ob = ob + [asc(Supplier.id)]
-
     q = q.order_by(*ob)
 
     raw_results = list(q)
@@ -478,17 +459,33 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
                 result.summary = raw_results[x][1]
         results.append(result)
 
-    if roles_list and new_domains and not EXCLUDE_LEGACY_ROLES:
-        # this code includes lecacy domains in results but is slower.
-        # can be removed once fully migrated to new domains.
-        results = [
-            _ for _ in results
-            if (
-                (set(_.assessed_domains) | set(_.unassessed_domains)) >= set(roles_list)
-            )
-        ]
-
     sliced_results = results[offset:(offset + result_count)]
+
+    q = db.session.query(Supplier.code, Supplier.name, Supplier.summary, Supplier.last_update_time,
+                         Supplier.is_recruiter, Supplier.data, Domain.name.label('domain_name'),
+                         SupplierDomain.status.label('domain_status'))\
+        .outerjoin(SupplierDomain, Domain)\
+        .filter(Supplier.id.in_([sr.id for sr in sliced_results]))\
+        .order_by(Supplier.name)
+
+    suppliers = [r._asdict() for r in q]
+
+    sliced_results = []
+    for key, group in groupby(suppliers, key=itemgetter('code')):
+        supplier = group.next()
+        supplier['seller_type'] = supplier['data'].get('seller_type')
+
+        assessed, unassessed = [], []
+        for s in chain([supplier], group):
+            assessed.append(s['domain_name']) if s['domain_status'] == 'assessed'\
+                else unassessed.append(s['domain_name'])
+        supplier['domains'] = dict(assessed=assessed, unassessed=unassessed)
+
+        for e in ['domain_name', 'domain_status', 'data']:
+            supplier.pop(e)
+
+        sliced_results.append(supplier)
+
     return sliced_results, len(results)
 
 
