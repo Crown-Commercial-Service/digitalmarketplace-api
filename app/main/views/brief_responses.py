@@ -226,6 +226,7 @@ def list_brief_responses():
     brief_responses = brief_responses.options(
         db.defaultload(BriefResponse.brief).defaultload(Brief.framework).lazyload("*"),
         db.defaultload(BriefResponse.brief).defaultload(Brief.lot).lazyload("*"),
+        db.defaultload(BriefResponse.brief).defaultload(Brief.awarded_brief_response).lazyload("*"),
         db.defaultload(BriefResponse.supplier).lazyload("*"),
     )
 
