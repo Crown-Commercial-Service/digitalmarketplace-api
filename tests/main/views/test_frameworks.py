@@ -213,12 +213,14 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin):
             'status': "standstill",
             'clarificationQuestionsOpen': False,
             'lots': ['saas', 'paas', 'iaas', 'scs'],
+            'allowDeclarationReuse': True,
         }
 
         self.attribute_whitelist = [
             'frameworkAgreementDetails',
             'status',
             'clarificationQuestionsOpen',
+            'allowDeclarationReuse',
         ]
 
     def post_framework_update(self, update):
