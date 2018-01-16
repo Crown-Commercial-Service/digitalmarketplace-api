@@ -4,7 +4,7 @@
 # F401: 'identifier' imported but unused
 # E402: module level import not at top of file
 # W503: line break before binary operator
-exclude = venv*,__pycache__,node_modules,bower_components,migrations,.git
+exclude = venv*,__pycache__,node_modules,migrations,.git
 ignore = D203,W503
 max-complexity = 24
 max-line-length = 120
