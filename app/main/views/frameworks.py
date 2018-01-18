@@ -83,7 +83,8 @@ def update_framework(framework_slug):
     attribute_whitelist = {
         'status': 'status',
         'clarificationQuestionsOpen': 'clarification_questions_open',
-        'frameworkAgreementDetails': 'framework_agreement_details'
+        'frameworkAgreementDetails': 'framework_agreement_details',
+        'allowDeclarationReuse': 'allow_declaration_reuse',
     }
 
     updater_json = validate_and_return_updater_request()
