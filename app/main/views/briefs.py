@@ -202,6 +202,9 @@ def update_brief_admin(brief_id):
         except ParserError, e:
             raise ValidationError(e.message)
 
+    if brief_json.get('sellerEmailList'):
+        brief.update_from_json({'sellerEmailList': brief_json.get('sellerEmailList')})
+
     audit = AuditEvent(
         audit_type=AuditTypes.update_brief,
         user=updater_json['updated_by'],
