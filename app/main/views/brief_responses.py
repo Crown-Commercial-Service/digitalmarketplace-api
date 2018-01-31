@@ -99,6 +99,16 @@ def list_brief_responses():
 
     if brief_id is not None:
         brief_responses = brief_responses.filter(BriefResponse.brief_id == brief_id)
+        audit = AuditEvent(
+            audit_type=AuditTypes.read_brief_responses,
+            user=None,
+            data={
+                'briefId': brief_id,
+            },
+            db_object=None,
+        )
+        db.session.add(audit)
+        db.session.commit()
 
     if brief_id or supplier_code:
         return jsonify(
