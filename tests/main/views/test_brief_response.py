@@ -1,5 +1,5 @@
 """Tests for brief response views in app/views/brief_responses.py."""
-from datetime import datetime
+from datetime import datetime, timedelta
 from freezegun import freeze_time
 import json
 import mock
@@ -771,7 +771,8 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert res.status_code == 200
         assert len(data['briefResponses']) == 3
         assert all(
-            br['brief']['frameworkSlug'] == "digital-outcomes-and-specialists-2" for br in data['briefResponses']
+            br['brief']['framework']['slug'] == "digital-outcomes-and-specialists-2"
+            for br in data['briefResponses']
         )
         assert 'self' in data['links']
 
@@ -798,10 +799,12 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert res.status_code == 200
         assert len(data['briefResponses']) == 4
         dos1_br = [
-            br for br in data['briefResponses'] if br['brief']['frameworkSlug'] == "digital-outcomes-and-specialists"
+            br for br in data['briefResponses']
+            if br['brief']['framework']['slug'] == "digital-outcomes-and-specialists"
         ]
         dos2_br = [
-            br for br in data['briefResponses'] if br['brief']['frameworkSlug'] == "digital-outcomes-and-specialists"
+            br for br in data['briefResponses']
+            if br['brief']['framework']['slug'] == "digital-outcomes-and-specialists"
         ]
         assert len(dos1_br) == len(dos2_br) == 2
 
