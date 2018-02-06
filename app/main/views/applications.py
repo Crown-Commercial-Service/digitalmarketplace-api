@@ -10,6 +10,7 @@ from app.utils import (
 )
 import pendulum
 from sqlalchemy.sql.expression import true
+from sqlalchemy import or_
 from dmapiclient.audit import AuditTypes
 from app.emails import send_approval_notification, send_rejection_notification, \
     send_submitted_existing_seller_notification, send_submitted_new_seller_notification, \
@@ -337,8 +338,12 @@ def search_applications(keyword):
     if keyword.isdigit():
         applications = Application.query.filter(Application.id == keyword)
     else:
-        applications = Application.query.filter(
-            Application.data["name"].astext.ilike('%{}%'.format(keyword)))
+        applications = Application.query.outerjoin(User)
+        applications = applications.filter(or_(
+            Application.data["name"].astext.ilike('%{}%'.format(keyword)),
+            Application.data['contact_email'].astext.ilike('%{}%'.format(keyword)),
+            User.email_address.ilike('%{}%'.format(keyword))
+            ))
 
     return format_applications(applications, False)
 

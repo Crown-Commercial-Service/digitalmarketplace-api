@@ -67,6 +67,7 @@ def get_teammembers(domain):
     query = db.session.execute("""
         select email_address, id, name from "vuser"
         where email_domain = :domain and active = true and not email_address ~ '\+'
+        order by name
     """, {'domain': domain})
 
     teammembers = [{'email_address': email_address, 'id': id, 'name': name}

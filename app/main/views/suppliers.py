@@ -14,7 +14,7 @@ from .. import main
 from ... import db
 from ...models import (
     Supplier, AuditEvent, SupplierFramework, Framework, PriceSchedule, User, Domain, Application,
-    ServiceRole, SupplierDomain, Product, CaseStudy
+    ServiceRole, SupplierDomain, Product, CaseStudy, Contact, SupplierContact
 )
 
 from sqlalchemy.sql import func, desc, or_, asc, and_
@@ -59,9 +59,13 @@ def list_suppliers():
             suppliers = suppliers.filter(
                 Supplier.name.op('~')('^[^A-Za-z]'))
         else:
-            # case insensitive LIKE comparison for matching supplier names
-            suppliers = suppliers.filter(
-                Supplier.name.ilike(prefix + '%'))
+            suppliers = suppliers.outerjoin(SupplierContact).outerjoin(Contact)
+            # case insensitive LIKE comparison for matching supplier names, supplier email and contact email
+            suppliers = suppliers.filter(or_(
+                Supplier.name.ilike(prefix + '%'),
+                Supplier.data['email'].astext.ilike('%{}%'.format(prefix)),
+                Contact.email.ilike('%{}%'.format(prefix))
+                ))
 
     suppliers = suppliers.distinct(Supplier.name, Supplier.code)
 
