@@ -959,7 +959,10 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     'id': self.brief.id,
                     'status': self.brief.status,
                     'title': self.brief_title,
-                    'frameworkSlug': self.brief.framework.slug
+                    'framework': {
+                        'frameworkFramework': self.brief.framework.framework,
+                        'frameworkSlug': self.brief.framework.slug
+                    }
                 },
                 'briefId': self.brief.id,
                 'supplierId': 0,
@@ -993,7 +996,10 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     'id': self.brief.id,
                     'status': self.brief.status,
                     'title': self.brief_title,
-                    'frameworkSlug': self.brief.framework.slug
+                    'framework': {
+                        'frameworkFramework': self.brief.framework.framework,
+                        'frameworkSlug': self.brief.framework.slug
+                    }
                 },
                 'supplierId': 0,
                 'supplierName': 'Supplier 0',
