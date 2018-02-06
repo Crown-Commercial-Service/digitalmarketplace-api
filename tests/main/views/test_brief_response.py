@@ -75,13 +75,13 @@ class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
 
         return brief_response.id
 
-    def setup_dummy_awarded_brief_response(self, brief_id=None):
+    def setup_dummy_awarded_brief_response(self, brief_id=None, notified_at=None, awarded_at=None):
         self.setup_dummy_briefs(1, status="closed", brief_start=brief_id or self.brief_id)
         awarded_brief_response_id = self.setup_dummy_brief_response(
             brief_id=brief_id or self.brief_id, award_details={'pending': True}
         )
         awarded_brief_response = BriefResponse.query.get(awarded_brief_response_id)
-        awarded_brief_response.awarded_at = datetime.utcnow()
+        awarded_brief_response.awarded_at = awarded_at or datetime.utcnow()
         db.session.add(awarded_brief_response)
         db.session.commit()
 
@@ -869,3 +869,16 @@ class TestListBriefResponses(BaseBriefResponseTest):
 
         assert res.status_code == 200
         assert len(data['briefResponses']) == 4
+
+    def test_filter_responses_awarded_yesterday(self):
+        yesterday = datetime.utcnow() - timedelta(1)
+        self.setup_dummy_brief_response(submitted_at=None)
+        self.setup_dummy_awarded_brief_response(brief_id=111, awarded_at=yesterday)
+        self.setup_dummy_awarded_brief_response(brief_id=222, awarded_at=yesterday - timedelta(5))
+        self.setup_dummy_brief_response(award_details={"pending": True})
+
+        res = self.list_brief_responses(awarded_at=yesterday.strftime("%Y-%m-%d"))
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 1

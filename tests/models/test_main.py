@@ -596,6 +596,9 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
         db.session.commit()
         assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 3
 
+    def test_query_brief_applications_awarded_at_date(self)
+        db.session.add(Brief)
+
     # TODO: add cases for querying created_at/updated_at auto timestamps with freeze_time
 
     @pytest.mark.parametrize('inclusive,expected_count', [(True, 2), (False, 1)])
