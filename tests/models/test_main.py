@@ -596,9 +596,6 @@ class TestBriefQueries(BaseApplicationTest, FixtureMixin):
         db.session.commit()
         assert Brief.query.filter(Brief.applications_closed_at == datetime(2016, 3, 17, 23, 59, 59)).count() == 3
 
-    def test_query_brief_applications_awarded_at_date(self)
-        db.session.add(Brief)
-
     # TODO: add cases for querying created_at/updated_at auto timestamps with freeze_time
 
     @pytest.mark.parametrize('inclusive,expected_count', [(True, 2), (False, 1)])
@@ -1184,6 +1181,30 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             brief_response.awarded_at = None
 
         assert 'Cannot remove or change award datestamp on previously awarded Brief Response' in e.value.message
+
+    @pytest.mark.parametrize('awarded_at, expected_result_count', [
+        (datetime(2016, 3, 16, 23, 59, 59), 0),
+        (datetime(2016, 3, 17, 0, 0, 0), 1),
+        (datetime(2016, 3, 17, 23, 59, 59), 1),
+        (datetime(2016, 3, 18, 0, 0, 0), 0),
+    ])
+    def test_query_brief_response_returns_awarded_at_between_two_datetimes(self, awarded_at, expected_result_count):
+        brief = Brief.query.get(self.brief_id)
+        brief_response = BriefResponse(
+            brief=brief,
+            data={},
+            supplier_id=0,
+            submitted_at=datetime.utcnow(),
+            award_details={'pending': True},
+        )
+        brief_response.award_details = {'confirmed': 'details'},
+        brief_response.awarded_at = awarded_at
+        db.session.add(brief_response)
+        db.session.commit()
+
+        assert BriefResponse.query.has_datetime_field_between(
+            'awarded_at', datetime(2016, 3, 17, 0, 0, 0), datetime(2016, 3, 17, 23, 59, 59), inclusive=True
+        ).count() == expected_result_count
 
 
 class TestBriefClarificationQuestion(BaseApplicationTest):
