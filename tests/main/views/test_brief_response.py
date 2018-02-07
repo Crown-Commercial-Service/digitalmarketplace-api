@@ -871,10 +871,10 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert len(data['briefResponses']) == 4
 
     def test_filter_responses_awarded_yesterday(self):
-        yesterday = datetime.utcnow() - timedelta(1)
+        yesterday = datetime.utcnow() - timedelta(days=1)
         self.setup_dummy_brief_response(submitted_at=None)
         self.setup_dummy_awarded_brief_response(brief_id=111, awarded_at=yesterday)
-        self.setup_dummy_awarded_brief_response(brief_id=222, awarded_at=yesterday - timedelta(5))
+        self.setup_dummy_awarded_brief_response(brief_id=222, awarded_at=yesterday - timedelta(days=5))
         self.setup_dummy_brief_response(award_details={"pending": True})
 
         res = self.list_brief_responses(awarded_at=yesterday.strftime("%Y-%m-%d"))

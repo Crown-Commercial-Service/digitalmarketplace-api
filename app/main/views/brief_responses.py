@@ -1,4 +1,5 @@
 from datetime import datetime
+from dmutils.formats import DATE_FORMAT
 
 from flask import abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
@@ -225,7 +226,7 @@ def list_brief_responses():
         brief_responses = brief_responses.filter(BriefResponse.brief_id == brief_id)
 
     if awarded_at is not None:
-        day_start = datetime.strptime(awarded_at, "%Y-%m-%d")
+        day_start = datetime.strptime(awarded_at, DATE_FORMAT)
         day_end = datetime(day_start.year, day_start.month, day_start.day, 23, 59, 59, 999999)
         brief_responses = brief_responses.has_datetime_field_between(
             'awarded_at', day_start, day_end, inclusive=True
