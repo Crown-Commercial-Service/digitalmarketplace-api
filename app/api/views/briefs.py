@@ -163,18 +163,6 @@ def post_brief_response(brief_id):
         db.session.add(brief_response)
         db.session.flush()
 
-        audit = AuditEvent(
-            audit_type=AuditTypes.create_brief_response,
-            user=current_user.email_address,
-            data={
-                'briefResponseId': brief_response.id,
-                'briefResponseJson': brief_response_json,
-            },
-            db_object=brief_response,
-        )
-
-        db.session.add(audit)
-        db.session.commit()
     except ValidationError as e:
         brief_response_json['brief_id'] = brief_id
         rollbar.report_exc_info(extra_data=brief_response_json)
@@ -188,14 +176,30 @@ def post_brief_response(brief_id):
     except Exception as e:
         brief_response_json['brief_id'] = brief_id
         rollbar.report_exc_info(extra_data=brief_response_json)
-        return jsonify(errorMessage=e), 400
+        return jsonify(errorMessage=e.message), 400
 
     try:
         send_brief_response_received_email(supplier, brief, brief_response)
     except Exception as e:
         brief_response_json['brief_id'] = brief_id
         rollbar.report_exc_info(extra_data=brief_response_json)
-        pass
+
+    try:
+        audit = AuditEvent(
+            audit_type=AuditTypes.create_brief_response,
+            user=current_user.email_address,
+            data={
+                'briefResponseId': brief_response.id,
+                'briefResponseJson': brief_response_json,
+            },
+            db_object=brief_response,
+        )
+
+        db.session.add(audit)
+        db.session.commit()
+    except Exception as e:
+        extra_data = {'audit_type': AuditTypes.create_brief_response, 'briefResponseId': brief_response.id}
+        rollbar.report_exc_info(extra_data=extra_data)
 
     return jsonify(briefResponses=brief_response.serialize()), 201
 

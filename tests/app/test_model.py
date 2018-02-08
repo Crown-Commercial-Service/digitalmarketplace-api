@@ -628,6 +628,7 @@ class TestBriefs(BaseApplicationTest):
         assert brief.users == copy.users
 
     def test_copy_brief_raises_error_if_framework_is_not_live(self):
+        self.framework.status = 'pending'
         brief = Brief(
             data={},
             framework=self.framework,

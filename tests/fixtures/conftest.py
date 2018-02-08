@@ -136,7 +136,7 @@ def users(app, request):
         db.session.add(UserFramework(user_id=7, framework_id=framework.id))
 
         db.session.commit()
-        yield User.query.all()
+        yield User.query.filter(User.role == "buyer").all()
 
 
 @pytest.fixture()
