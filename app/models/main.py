@@ -1292,7 +1292,7 @@ class Brief(db.Model):
             else_=two_week_addition_function
         )
 
-    @hybrid_property
+    @property
     def clarification_questions_closed_at(self_or_cls):
         if self_or_cls.published_at is None:
             return None
@@ -1300,7 +1300,7 @@ class Brief(db.Model):
 
         return get_publishing_dates(brief_publishing_date_and_length)['questions_close']
 
-    @hybrid_property
+    @property
     def clarification_questions_published_by(self_or_cls):
         if self_or_cls.published_at is None:
             return None
