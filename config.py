@@ -1,5 +1,5 @@
 import os
-from dmutils.status import enabled_since, get_version_label
+from dmutils.status import get_version_label
 
 
 class Config:
@@ -23,8 +23,6 @@ class Config:
 
     # Feature Flags
     RAISE_ERROR_ON_MISSING_FEATURES = True
-
-    FEATURE_FLAGS_TRANSACTION_ISOLATION = False
 
     DM_API_SERVICES_PAGE_SIZE = 100
     DM_API_SUPPLIERS_PAGE_SIZE = 100
@@ -73,8 +71,6 @@ class Test(Config):
 
     DM_API_PROJECTS_PAGE_SIZE = 5
 
-    FEATURE_FLAGS_TRANSACTION_ISOLATION = enabled_since('2015-08-27')
-
 
 class Development(Config):
     DEBUG = True
@@ -93,7 +89,7 @@ class Live(Config):
 
 
 class Preview(Live):
-    FEATURE_FLAGS_TRANSACTION_ISOLATION = enabled_since('2015-08-27')
+    pass
 
 
 class Staging(Live):
