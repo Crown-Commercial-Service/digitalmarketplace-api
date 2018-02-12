@@ -1,4 +1,5 @@
 from datetime import datetime
+from dmutils.formats import DATE_FORMAT
 
 from flask import abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
@@ -210,6 +211,7 @@ def list_brief_responses():
     page = get_valid_page_or_1()
     brief_id = get_int_or_400(request.args, 'brief_id')
     supplier_id = get_int_or_400(request.args, 'supplier_id')
+    awarded_at = request.args.get('awarded_at')
 
     if request.args.get('status'):
         statuses = request.args['status'].split(',')
@@ -222,6 +224,12 @@ def list_brief_responses():
 
     if brief_id is not None:
         brief_responses = brief_responses.filter(BriefResponse.brief_id == brief_id)
+
+    if awarded_at is not None:
+        day_start = datetime.strptime(awarded_at, DATE_FORMAT)
+        day_end = datetime(day_start.year, day_start.month, day_start.day, 23, 59, 59, 999999)
+        # Inclusive date range filtering
+        brief_responses = brief_responses.filter(BriefResponse.awarded_at.between(day_start, day_end))
 
     brief_responses = brief_responses.options(
         db.defaultload(BriefResponse.brief).defaultload(Brief.framework).lazyload("*"),

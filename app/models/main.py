@@ -1484,10 +1484,17 @@ class Brief(db.Model):
         data.update({
             'id': self.id,
             'status': self.status,
+            # TODO: remove top-level 'frameworkFoo' fields (use 'framework'git ad sub-dict instead)
             'frameworkSlug': self.framework.slug,
             'frameworkFramework': self.framework.framework,
             'frameworkName': self.framework.name,
             'frameworkStatus': self.framework.status,
+            'framework': {
+                'family': self.framework.framework,
+                'name': self.framework.name,
+                'slug': self.framework.slug,
+                'status': self.framework.status,
+            },
             'isACopy': self.is_a_copy,
             'lot': self.lot.slug,  # deprecated, use lotSlug instead
             'lotSlug': self.lot.slug,
@@ -1556,6 +1563,9 @@ class BriefUser(db.Model):
 
 class BriefResponse(db.Model):
     __tablename__ = 'brief_responses'
+
+    FRAMEWORK_FIELDS = ['frameworkFramework', 'frameworkSlug']
+    PARENT_BRIEF_FIELDS = ['id', 'title', 'status', 'applicationsClosedAt']
 
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(JSON, nullable=False)
@@ -1656,10 +1666,12 @@ class BriefResponse(db.Model):
     def serialize(self):
         data = self.data.copy()
         parent_brief = self.brief.serialize()
-        parent_brief_fields = ['id', 'title', 'status', 'applicationsClosedAt', 'frameworkSlug']
+        parent_brief_fields = ['id', 'title', 'status', 'applicationsClosedAt', 'framework']
         data.update({
             'id': self.id,
-            'brief': {key: parent_brief[key] for key in parent_brief_fields if key in parent_brief},
+            'brief': {
+                **{key: parent_brief[key] for key in parent_brief_fields if key in parent_brief},
+            },
             'briefId': self.brief_id,
             'supplierId': self.supplier_id,
             'supplierName': self.supplier.name,
@@ -1678,7 +1690,8 @@ class BriefResponse(db.Model):
 
         if self.status == "awarded":
             data.update({
-                'awardDetails': self.award_details
+                'awardDetails': self.award_details,
+                'awardedAt': self.awarded_at.strftime(DATETIME_FORMAT)
             })
         elif self.status == 'pending-awarded':
             data.update({
