@@ -1666,17 +1666,11 @@ class BriefResponse(db.Model):
     def serialize(self):
         data = self.data.copy()
         parent_brief = self.brief.serialize()
-        parent_brief_fields = ['id', 'title', 'status', 'applicationsClosedAt']
+        parent_brief_fields = ['id', 'title', 'status', 'applicationsClosedAt', 'framework']
         data.update({
             'id': self.id,
             'brief': {
                 **{key: parent_brief[key] for key in parent_brief_fields if key in parent_brief},
-                **{
-                    'framework': {
-                        'family': parent_brief['frameworkFramework'],
-                        'slug': parent_brief['frameworkSlug']
-                    }
-                }
             },
             'briefId': self.brief_id,
             'supplierId': self.supplier_id,
@@ -1705,16 +1699,6 @@ class BriefResponse(db.Model):
             })
 
         return purge_nulls_from_data(data)
-
-    def _parent_brief_fields(self, parent_brief):
-        return {
-            **self._unpack_fields(self.PARENT_BRIEF_FIELDS, parent_brief),
-            **{'framework': self._unpack_fields(self.FRAMEWORK_FIELDS, parent_brief)}
-        }
-
-    @staticmethod
-    def _unpack_fields(required_fields, collection):
-        return {key: collection[key] for key in required_fields if key in collection}
 
 
 # The following is the code to fetch the supplier_framework of a BriefResponse.
