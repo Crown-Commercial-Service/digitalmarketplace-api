@@ -960,8 +960,8 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     'status': self.brief.status,
                     'title': self.brief_title,
                     'framework': {
-                        'frameworkFramework': self.brief.framework.framework,
-                        'frameworkSlug': self.brief.framework.slug
+                        'family': self.brief.framework.framework,
+                        'slug': self.brief.framework.slug
                     }
                 },
                 'briefId': self.brief.id,
@@ -997,8 +997,8 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     'status': self.brief.status,
                     'title': self.brief_title,
                     'framework': {
-                        'frameworkFramework': self.brief.framework.framework,
-                        'frameworkSlug': self.brief.framework.slug
+                        'family': self.brief.framework.framework,
+                        'slug': self.brief.framework.slug
                     }
                 },
                 'supplierId': 0,
@@ -1188,7 +1188,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
         (datetime(2016, 3, 17, 23, 59, 59), 1),
         (datetime(2016, 3, 18, 0, 0, 0), 0),
     ])
-    def test_query_brief_response_returns_awarded_at_between_two_datetimes(self, awarded_at, expected_result_count):
+    def test_query_brief_responses_awarded_within_date_range(self, awarded_at, expected_result_count):
         brief = Brief.query.get(self.brief_id)
         brief_response = BriefResponse(
             brief=brief,
