@@ -959,7 +959,12 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     'id': self.brief.id,
                     'status': self.brief.status,
                     'title': self.brief_title,
-                    'frameworkSlug': self.brief.framework.slug
+                    'framework': {
+                        'family': 'digital-outcomes-and-specialists',
+                        'name': 'Digital Outcomes and Specialists',
+                        'slug': 'digital-outcomes-and-specialists',
+                        'status': self.brief.framework.status
+                    }
                 },
                 'briefId': self.brief.id,
                 'supplierId': 0,
@@ -993,7 +998,12 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                     'id': self.brief.id,
                     'status': self.brief.status,
                     'title': self.brief_title,
-                    'frameworkSlug': self.brief.framework.slug
+                    'framework': {
+                        'family': 'digital-outcomes-and-specialists',
+                        'name': 'Digital Outcomes and Specialists',
+                        'slug': 'digital-outcomes-and-specialists',
+                        'status': self.brief.framework.status
+                    }
                 },
                 'supplierId': 0,
                 'supplierName': 'Supplier 0',

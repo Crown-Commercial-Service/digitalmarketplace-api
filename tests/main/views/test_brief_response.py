@@ -1,5 +1,5 @@
 """Tests for brief response views in app/views/brief_responses.py."""
-from datetime import datetime
+from datetime import datetime, timedelta
 from freezegun import freeze_time
 import json
 import mock
@@ -9,6 +9,7 @@ from dmapiclient.audit import AuditTypes
 
 from app.main.views.brief_responses import COMPLETED_BRIEF_RESPONSE_STATUSES
 from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service, Framework, SupplierFramework
+from dmutils.formats import DATE_FORMAT, DATETIME_FORMAT
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from tests.helpers import FixtureMixin
 
@@ -75,13 +76,13 @@ class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
 
         return brief_response.id
 
-    def setup_dummy_awarded_brief_response(self, brief_id=None):
+    def setup_dummy_awarded_brief_response(self, brief_id=None, awarded_at=None):
         self.setup_dummy_briefs(1, status="closed", brief_start=brief_id or self.brief_id)
         awarded_brief_response_id = self.setup_dummy_brief_response(
             brief_id=brief_id or self.brief_id, award_details={'pending': True}
         )
         awarded_brief_response = BriefResponse.query.get(awarded_brief_response_id)
-        awarded_brief_response.awarded_at = datetime.utcnow()
+        awarded_brief_response.awarded_at = awarded_at or datetime.utcnow()
         db.session.add(awarded_brief_response)
         db.session.commit()
 
@@ -771,7 +772,8 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert res.status_code == 200
         assert len(data['briefResponses']) == 3
         assert all(
-            br['brief']['frameworkSlug'] == "digital-outcomes-and-specialists-2" for br in data['briefResponses']
+            br['brief']['framework']['slug'] == "digital-outcomes-and-specialists-2"
+            for br in data['briefResponses']
         )
         assert 'self' in data['links']
 
@@ -798,10 +800,12 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert res.status_code == 200
         assert len(data['briefResponses']) == 4
         dos1_br = [
-            br for br in data['briefResponses'] if br['brief']['frameworkSlug'] == "digital-outcomes-and-specialists"
+            br for br in data['briefResponses']
+            if br['brief']['framework']['slug'] == "digital-outcomes-and-specialists"
         ]
         dos2_br = [
-            br for br in data['briefResponses'] if br['brief']['frameworkSlug'] == "digital-outcomes-and-specialists"
+            br for br in data['briefResponses']
+            if br['brief']['framework']['slug'] == "digital-outcomes-and-specialists"
         ]
         assert len(dos1_br) == len(dos2_br) == 2
 
@@ -866,3 +870,17 @@ class TestListBriefResponses(BaseBriefResponseTest):
 
         assert res.status_code == 200
         assert len(data['briefResponses']) == 4
+
+    def test_filter_responses_awarded_yesterday(self):
+        yesterday = datetime.utcnow() - timedelta(days=1)
+        self.setup_dummy_brief_response(submitted_at=None)
+        self.setup_dummy_awarded_brief_response(brief_id=111, awarded_at=yesterday)
+        self.setup_dummy_awarded_brief_response(brief_id=222, awarded_at=yesterday - timedelta(days=5))
+        self.setup_dummy_brief_response(award_details={"pending": True})
+
+        res = self.list_brief_responses(awarded_at=yesterday.strftime(DATE_FORMAT))
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert len(data['briefResponses']) == 1
+        assert data['briefResponses'][0]['awardedAt'] == yesterday.strftime(DATETIME_FORMAT)
