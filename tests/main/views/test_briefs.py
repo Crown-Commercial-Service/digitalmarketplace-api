@@ -414,16 +414,20 @@ class TestGetBrief(FrameworkSetupAndTeardown):
         assert res.status_code == 200
         expected_data = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
 
-        framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-
         expected_data.update(
             {
                 'id': 1,
                 'status': 'draft',
-                'frameworkSlug': framework.slug,
-                'frameworkFramework': framework.framework,
-                'frameworkName': framework.name,
-                'frameworkStatus': framework.status,
+                'frameworkSlug': 'digital-outcomes-and-specialists',
+                'frameworkFramework': 'digital-outcomes-and-specialists',
+                'frameworkName': 'Digital Outcomes and Specialists',
+                'frameworkStatus': 'live',
+                'framework': {
+                    'family': 'digital-outcomes-and-specialists',
+                    'name': 'Digital Outcomes and Specialists',
+                    'slug': 'digital-outcomes-and-specialists',
+                    'status': 'live',
+                },
                 'isACopy': False,
                 'lot': 'digital-specialists',
                 'lotSlug': 'digital-specialists',
