@@ -471,7 +471,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             "dunsNumber": "010101",
             "otherCompanyRegistrationNumber": "A11",
             "registeredName": "New Name Inc.",
-            "registrationCountry": "Guatamala",
+            "registrationCountry": "country:GT",
             "registrationDate": "1969-07-20",
             "vatNumber": "12312312",
             "organisationSize": "micro",
@@ -490,7 +490,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert supplier.companies_house_number == "AA123456"
         assert supplier.other_company_registration_number == "A11"
         assert supplier.registered_name == "New Name Inc."
-        assert supplier.registration_country == "Guatamala"
+        assert supplier.registration_country == "country:GT"
         assert supplier.registration_date == datetime(1969, 7, 20, 0, 0)
         assert supplier.vat_number == "12312312"
         assert supplier.organisation_size == "micro"
@@ -571,6 +571,12 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
     def test_update_succeeds_with_valid_trading_status(self, trading_status):
         response = self.update_request({"tradingStatus": trading_status})
         assert response.status_code == 200
+
+    def test_update_with_bad_registration_country(self):
+        # Country picker data is in the format "country:gb"
+        response = self.update_request({"registrationCountry": "Wales"})
+        assert response.status_code == 400
+        assert "Invalid registration country" in response.get_data(as_text=True)
 
 
 class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
