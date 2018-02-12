@@ -9,6 +9,7 @@ from dmapiclient.audit import AuditTypes
 
 from app.main.views.brief_responses import COMPLETED_BRIEF_RESPONSE_STATUSES
 from app.models import db, Lot, Brief, BriefResponse, AuditEvent, Service, Framework, SupplierFramework
+from dmutils.formats import DATE_FORMAT, DATETIME_FORMAT
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from tests.helpers import FixtureMixin
 
@@ -882,3 +883,4 @@ class TestListBriefResponses(BaseBriefResponseTest):
 
         assert res.status_code == 200
         assert len(data['briefResponses']) == 1
+        assert data['briefResponses'][0]['awardedAt'] == yesterday.strftime(DATETIME_FORMAT)
