@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import mock
 import pytest
+from freezegun import freeze_time
 from sqlalchemy.exc import IntegrityError
 
 from app import db
@@ -36,10 +37,31 @@ class TestUser(BaseApplicationTest, FixtureMixin):
             password_changed_at=now
         )
 
-        assert user.serialize()['emailAddress'] == "email@digital.gov.uk"
-        assert user.serialize()['name'] == "name"
-        assert user.serialize()['role'] == "buyer"
-        assert 'password' not in user.serialize()
+        serialized_user = user.serialize()
+        assert serialized_user['emailAddress'] == "email@digital.gov.uk"
+        assert serialized_user['name'] == "name"
+        assert serialized_user['role'] == "buyer"
+        assert 'password' not in serialized_user
+
+    def test_should_fall_back_to_created_at_time_if_no_logged_in_at_timestamp(self):
+        self.setup_default_buyer_domain()
+        with freeze_time('2018-01-09'):
+            then = datetime.utcnow()
+            later = then + timedelta(weeks=3)
+            user = User(
+                email_address='email@digital.gov.uk',
+                name='name',
+                role='buyer',
+                password='password',
+                active=True,
+                failed_login_count=0,
+                created_at=then,
+                updated_at=later,
+                password_changed_at=later,
+                logged_in_at=None
+            )
+        assert user.logged_in_at is None
+        assert user.serialize()['loggedInAt'] == "2018-01-09T00:00:00.000000Z"
 
     def test_buyer_user_requires_valid_email_domain(self):
         with pytest.raises(ValidationError) as exc:
