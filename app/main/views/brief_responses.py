@@ -228,9 +228,8 @@ def list_brief_responses():
     if awarded_at is not None:
         day_start = datetime.strptime(awarded_at, DATE_FORMAT)
         day_end = datetime(day_start.year, day_start.month, day_start.day, 23, 59, 59, 999999)
-        brief_responses = brief_responses.has_datetime_field_between(
-            'awarded_at', day_start, day_end, inclusive=True
-        )
+        # Inclusive date range filtering
+        brief_responses = brief_responses.filter(BriefResponse.awarded_at.between(day_start, day_end))
 
     brief_responses = brief_responses.options(
         db.defaultload(BriefResponse.brief).defaultload(Brief.framework).lazyload("*"),

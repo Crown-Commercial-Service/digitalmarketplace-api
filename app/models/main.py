@@ -1656,32 +1656,6 @@ class BriefResponse(db.Model):
         if errs:
             raise ValidationError(errs)
 
-    class query_class(BaseQuery):
-
-        def has_datetime_field_between(self, attr, start_datetime, end_datetime, inclusive=False):
-            """
-            Date filter values should be datetime objects. e.g.
-                BriefResponse.query.has_datetime_field_between(
-                    'published_at', datetime(2017, 1, 1), datetime(2017, 1, 2, 23, 59, 59, 999999), inclusive=True
-                )
-            would return brief responses published between 2017-01-01T00:00:00.000000Z and 2017-01-02T23:59:59.999999Z.
-            """
-            if not (isinstance(start_datetime, datetime) and isinstance(end_datetime, datetime)):
-                raise ValueError('Datetime object required')
-            if inclusive:
-                return self.filter(
-                    sql_and(
-                        getattr(BriefResponse, attr) >= str(start_datetime),
-                        getattr(BriefResponse, attr) <= str(end_datetime)
-                    )
-                )
-            return self.filter(
-                sql_and(
-                    getattr(BriefResponse, attr) > str(start_datetime),
-                    getattr(BriefResponse, attr) < str(end_datetime)
-                )
-            )
-
     def serialize(self):
         data = self.data.copy()
         parent_brief = self.brief.serialize()
