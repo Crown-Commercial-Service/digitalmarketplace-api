@@ -1689,7 +1689,8 @@ class BriefResponse(db.Model):
 
         if self.status == "awarded":
             data.update({
-                'awardDetails': self.award_details
+                'awardDetails': self.award_details,
+                'awardedAt': self.awarded_at.strftime(DATETIME_FORMAT)
             })
         elif self.status == 'pending-awarded':
             data.update({
