@@ -2,7 +2,7 @@ import pendulum
 from flask import current_app, request, jsonify
 from flask_login import login_required, current_user
 from app.api import api
-from app.api.services import prices, audit
+from app.api.services import prices
 from app.api.helpers import role_required, is_current_supplier, parse_date, abort, is_service_current_framework
 from app.swagger import swag
 from app.emails.prices import send_price_change_email

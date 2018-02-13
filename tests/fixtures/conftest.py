@@ -6,7 +6,7 @@ import pendulum
 from app import create_app
 from app.models import db, utcnow, Contact, Supplier, SupplierDomain, User, Brief, ServiceTypePriceCeiling,\
     Framework, Lot, Domain, Assessment, Application, Region, ServiceType, ServiceTypePrice, ServiceSubType,\
-    SupplierFramework, UserFramework
+    SupplierFramework, UserFramework, BriefResponse
 from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, WSGIApplicationWithEnvironment
 
 from sqlbag import temporary_database
@@ -142,8 +142,10 @@ def users(app, request):
 @pytest.fixture()
 def supplier_user(app, request, suppliers):
     with app.app_context():
+        user = User.query.order_by(User.id.desc()).first()
+        id = user.id + 1 if user else 1
         db.session.add(User(
-            id=1,
+            id=id,
             email_address='j@examplecompany.biz',
             name=fake.name(),
             password=encryption.hashpw('testpassword'),
@@ -153,11 +155,10 @@ def supplier_user(app, request, suppliers):
             password_changed_at=utcnow()
         ))
         db.session.commit()
-        db.session.flush()
         framework = Framework.query.filter(Framework.slug == "orams").first()
-        db.session.add(UserFramework(user_id=1, framework_id=framework.id))
+        db.session.add(UserFramework(user_id=id, framework_id=framework.id))
         db.session.commit()
-        yield User.query.first()
+        yield User.query.get(id)
 
 
 @pytest.fixture()
@@ -194,6 +195,20 @@ def briefs(app, request, users):
 
         db.session.commit()
         yield Brief.query.all()
+
+
+@pytest.fixture()
+def brief_responses(app, request, briefs, supplier_user):
+    with app.app_context():
+        db.session.add(BriefResponse(
+            id=1,
+            brief_id=1,
+            supplier_code=supplier_user.supplier_code,
+            data={}
+        ))
+
+        db.session.commit()
+        yield BriefResponse.query.all()
 
 
 @pytest.fixture()

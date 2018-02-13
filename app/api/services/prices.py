@@ -9,8 +9,8 @@ class PricesService(Service):
     __model__ = ServiceTypePrice
 
     def __init__(self, *args, **kwargs):
-            super(PricesService, self).__init__(*args, **kwargs)
-            self.audit = AuditService()
+        super(PricesService, self).__init__(*args, **kwargs)
+        self.audit = AuditService()
 
     def get_prices(self, code, service_type_id, category_id, date):
         prices = db.session.query(ServiceTypePrice)\
