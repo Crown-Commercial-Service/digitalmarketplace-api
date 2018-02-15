@@ -825,8 +825,10 @@ class User(db.Model):
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
             'passwordChangedAt':
                 self.password_changed_at.strftime(DATETIME_FORMAT),
+            # When accounts are created users are logged in automatically, without creating a logged_in timestamp,
+            # so we fall back to created_at if there is no logged_in timestamp.
             'loggedInAt': self.logged_in_at.strftime(DATETIME_FORMAT)
-                if self.logged_in_at else None,
+                if self.logged_in_at else self.created_at.strftime(DATETIME_FORMAT),
             'failedLoginCount': self.failed_login_count,
         }
 
