@@ -376,6 +376,46 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert len(data['briefResponses']) == 3
         assert 'self' in data['links']
 
+    def test_list_brief_responses_creates_an_audit_event(self):
+        for i in range(3):
+            self.setup_dummy_brief_response()
+
+        res = self.client.get(
+            '/brief-responses',
+            environ_base={'HTTP_USER_AGENT': 'DM-API-Client/123'},
+            query_string={'brief_id': 1}
+        )
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        with self.app.app_context():
+            audit_events = AuditEvent.query.filter(
+                AuditEvent.type == AuditTypes.read_brief_responses.value
+            ).all()
+
+        assert len(audit_events) == 1
+
+    def test_list_brief_responses_does_not_create_an_audit_event_wrong_user_agent(self):
+        for i in range(3):
+            self.setup_dummy_brief_response()
+
+        res = self.client.get(
+            '/brief-responses',
+            environ_base={'HTTP_USER_AGENT': 'SomethingElse'},
+            query_string={'brief_id': 1}
+        )
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        with self.app.app_context():
+            audit_events = AuditEvent.query.filter(
+                AuditEvent.type == AuditTypes.read_brief_responses.value
+            ).all()
+
+        assert len(audit_events) == 0
+
     def test_list_brief_responses_pagination(self):
         for i in range(8):
             self.setup_dummy_brief_response()
