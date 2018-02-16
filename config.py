@@ -1,5 +1,6 @@
 import os
 from dmutils.status import get_version_label
+from celery.schedules import crontab
 
 
 class Config:
@@ -134,6 +135,11 @@ class Config:
     SWAGGER = {'title': 'Digital Marketplace API', 'uiversion': 3}
     ORAMS_FRAMEWORK = 'orams'
 
+    # CELERY
+    CELERY_ASYNC_TASKING_ENABLED = True
+    CELERY_TIMEZONE = 'UTC'
+    CELERYBEAT_SCHEDULE = {}
+
 
 class Test(Config):
     URL_PREFIX = ''
@@ -167,6 +173,8 @@ class Test(Config):
     BASIC_AUTH = True
     DEADLINES_TZ_NAME = 'Australia/Sydney'
 
+    CELERY_ASYNC_TASKING_ENABLED = False
+
 
 class Development(Config):
     DEBUG = True
@@ -188,6 +196,8 @@ class Development(Config):
     SECRET_KEY = 'DevKeyDevKeyDevKeyDevKeyDevKeyDevKeyDevKeyX='
     FRONTEND_ADDRESS = 'http://localhost:8000'
     BASIC_AUTH = True
+
+    CELERY_ASYNC_TASKING_ENABLED = False
 
 
 class Live(Config):
@@ -216,6 +226,20 @@ class Preview(Live):
 class Staging(Development):
     JIRA_FEATURES = True
     BASIC_AUTH = True
+    CELERY_ASYNC_TASKING_ENABLED = True
+    CELERYBEAT_SCHEDULE = {
+        'test-staging-email': {
+            'task': 'app.tasks.email.send_email',
+            'schedule': crontab(hour=7, minute=0),
+            'args': (
+                'matt.smith@digital.gov.au',
+                'This is a scheduled test email sent via celery beat scheduling from staging.',
+                'This is scheduled test email',
+                'no-reply@marketplace.digital.gov.au',
+                'Digital Marketplace',
+            )
+        }
+    }
 
 
 class Production(Live):

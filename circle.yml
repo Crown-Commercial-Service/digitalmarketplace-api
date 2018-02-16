@@ -45,6 +45,7 @@ deployment:
       - cf login -a https://api.system.y.cld.gov.au -o dta -s marketplace -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
       - python ./db_tasks.py v2_test_migration $CIRCLE_BUILD_NUM api.system.y.cld.gov.au $CF_USER_STAGING $CF_PASSWORD_STAGING marketplace-dev-shared
       - cf zero-downtime-push dm-dev-api -f manifest.yml --show-app-log
+      - cf zero-downtime-push dm-dev-celery -f manifest.celery.yml --show-app-log
       - cf run-and-wait dm-dev-api "python ./db_tasks.py do_migration $CIRCLE_BUILD_NUM"
 
   production:
@@ -53,6 +54,7 @@ deployment:
       - cf login -a https://api.system.b.cld.gov.au -o dta -s marketplace -u $CF_USER_PROD -p $CF_PASSWORD_PROD
       - python ./db_tasks.py v2_test_migration $CIRCLE_BUILD_NUM api.system.b.cld.gov.au $CF_USER_PROD $CF_PASSWORD_PROD pgdb-96-prod
       - cf zero-downtime-push dm-api -f manifest.production.yml --show-app-log
+      - cf zero-downtime-push dm-celery -f manifest.celery.production.yml --show-app-log
       - cf run-and-wait dm-api "python ./db_tasks.py do_migration $CIRCLE_BUILD_NUM"
       - ./scripts/ci-notify.sh
 

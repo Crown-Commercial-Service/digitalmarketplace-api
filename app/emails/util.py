@@ -1,7 +1,8 @@
 from jinja2 import Environment, PackageLoader, select_autoescape
 from .markdown_styler import markdown_with_inline_styles
 from flask import current_app, url_for, abort
-from dmutils.email import send_email, EmailError
+from dmutils.email import EmailError
+from app.tasks.email import send_email
 import six
 import rollbar
 
@@ -47,8 +48,11 @@ def send_or_handle_error(*args, **kwargs):
     error_desc = kwargs.pop('event_description_for_errors', 'unspecified')
 
     try:
-        result = send_email(*args, **kwargs)
-        return result
+        if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
+            send_email.delay(*args, **kwargs)
+        else:
+            send_email(*args, **kwargs)
+
     except EmailError as e:
         rollbar.report_exc_info()
         current_app.logger.error(

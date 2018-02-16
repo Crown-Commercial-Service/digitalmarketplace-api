@@ -3,6 +3,9 @@ SHELL := /bin/bash
 app_run:
 	FLASK_DEBUG=true FLASK_APP=wsgi.py flask run --host=0.0.0.0
 
+celery_run:
+	./scripts/run_celery_worker_and_beat.sh
+
 app_shell:
 	FLASK_DEBUG=true FLASK_APP=wsgi.py flask shell
 

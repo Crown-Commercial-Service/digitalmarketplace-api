@@ -27,6 +27,8 @@ setup(
         'SQLAlchemy-Utils',
         'streql',
         'newrelic',
+        'celery',
+        'pycurl',
 
         # For schema validation
         'jsonschema',

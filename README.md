@@ -107,6 +107,22 @@ This will install requirements, run database migrations and run the app.
 
 To just run the application use the `run_app` target.
 
+### Enable Celery tasking and run the Celery worker
+
+When the config item `CELERY_ASYNC_TASKING_ENABLED` is set to `True`, the API will use asynchronous Celery for certain tasks (such as emailing). Celery is configured to use Amazon SQS for its broker, and requires various environment variables to be present in the API's execution environment for this to work:
+
+```
+export AWS_SQS_REGION='us-west-1'
+export AWS_SQS_ACCOUNT_ID='1234567890'
+export AWS_SQS_QUEUE_NAME='my-queue'
+export AWS_SQS_ACCESS_KEY_ID='MYACCESSKEYID'
+export AWS_SQS_SECRET_ACCESS_KEY='MYSECRETKEY'
+```
+
+To add CRON like task scheduling, modify the config item `CELERYBEAT_SCHEDULE` to include your scheduled task. See [Celery Periodic Tasks - Entries](http://docs.celeryproject.org/en/latest/userguide/periodic-tasks.html) for more information on Celery beat tasks.
+
+To start a Celery worker and the beat schedule, run the script `scripts/run_celery_worker_and_beat.sh` - this is designed to run in the foreground, and requires the same environment variables as above, as well as an optional var `CELERY_BEAT_SCHEDULE_FILE` which should contain a filesystem location for the schedule DB file. Note, because this includes the Celery beat schedule, you should only run one instance of this script.
+
 ## Using the API locally
 
 By default the API runs on port 5000. Calls to the API require a valid bearer

@@ -6,7 +6,7 @@ import six
 from flask import current_app, session, jsonify
 from app.models import Supplier, Application, User
 from dmutils.email import (
-    generate_token, EmailError, hash_email, send_email
+    generate_token, EmailError, hash_email
 )
 import rollbar
 
@@ -108,7 +108,7 @@ def send_account_activation_email(name, email_address, user_type, framework):
     email_body = render_email_template(template, url=url)
 
     try:
-        send_email(
+        send_or_handle_error(
             email_address,
             email_body,
             current_app.config[subject],
@@ -143,7 +143,7 @@ def send_account_activation_manager_email(manager_name, manager_email, applicant
     )
 
     try:
-        send_email(
+        send_or_handle_error(
             manager_email,
             email_body,
             current_app.config['BUYER_INVITE_MANAGER_CONFIRMATION_SUBJECT'],
@@ -180,7 +180,7 @@ def _send_account_activation_admin_email(manager_name, manager_email, applicant_
     )
 
     try:
-        send_email(
+        send_or_handle_error(
             current_app.config['BUYER_INVITE_REQUEST_ADMIN_EMAIL'],
             email_body,
             current_app.config['BUYER_INVITE_MANAGER_CONFIRMATION_SUBJECT'],
@@ -216,7 +216,7 @@ def orams_send_account_activation_admin_email(applicant_name, applicant_email, f
     )
 
     try:
-        send_email(
+        send_or_handle_error(
             current_app.config['ORAMS_BUYER_INVITE_REQUEST_ADMIN_EMAIL'],
             email_body,
             'ORAMS Portal - New RCM Request',
@@ -245,7 +245,7 @@ def send_new_user_onboarding_email(name, email_address, user_type, framework):
     )
 
     try:
-        send_email(
+        send_or_handle_error(
             email_address,
             email_body,
             'Welcome to the Digital Marketplace',
@@ -286,7 +286,7 @@ def send_reset_password_confirm_email(email_address, url, locked, framework):
     )
 
     try:
-        send_email(
+        send_or_handle_error(
             email_address,
             email_body,
             subject,
