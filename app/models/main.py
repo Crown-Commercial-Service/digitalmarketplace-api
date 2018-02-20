@@ -281,6 +281,14 @@ class Supplier(db.Model):
     __tablename__ = 'suppliers'
 
     ORGANISATION_SIZES = (None, 'micro', 'small', 'medium', 'large')
+    TRADING_STATUSES = (None,
+                        "limited company (LTD)",
+                        "limited liability company (LLC)",
+                        "public limited company (PLC)",
+                        "limited liability partnership (LLP)",
+                        "sole trader",
+                        "public body",
+                        "other")
 
     # Companies House numbers consist of 8 numbers, or 2 letters followed by 6 numbers
     COMPANIES_HOUSE_NUMBER_REGEX = re.compile('^([0-9]{2}|[A-Za-z]{2})[0-9]{6}$')
@@ -304,6 +312,13 @@ class Supplier(db.Model):
     vat_number = db.Column(db.String, index=False, unique=False, nullable=True)
     organisation_size = db.Column(db.String, index=False, unique=False, nullable=True)
     trading_status = db.Column(db.String, index=False, unique=False, nullable=True)
+
+    @validates('trading_status')
+    def validates_trading_status(self, key, value):
+        if value not in self.TRADING_STATUSES:
+            raise ValidationError("Invalid trading status '{}'".format(value))
+
+        return value
 
     @validates('organisation_size')
     def validates_org_size(self, key, value):
