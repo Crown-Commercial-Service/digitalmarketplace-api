@@ -72,7 +72,7 @@ def decode_creation_token(token):
             14 * ONE_DAY_IN_SECONDS
         )
     except InvalidToken:
-        return InvalidToken
+        raise InvalidToken
 
     if not set(('name', 'email_address')).issubset(set(data.keys())):
         raise InvalidToken

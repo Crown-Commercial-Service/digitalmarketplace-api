@@ -32,7 +32,7 @@ def test_send_buyer_invite_invalid_token(client):
 
     assert response.status_code == 400
     data = json.loads(response.data)
-    assert data['message'] == 'The invite token passed to the server is not a recognizable token format'
+    assert data['message'] == 'The token provided is invalid. It may have expired'
 
 
 def test_create_user(client, app, applications):
