@@ -147,7 +147,7 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
                     lot_id=1,
                     framework_id=1)
             )
-
+        db.session.commit()
         for service_id in service_ids:
             self.client.put(
                 '/draft-services/copy-from/{}'.format(service_id),

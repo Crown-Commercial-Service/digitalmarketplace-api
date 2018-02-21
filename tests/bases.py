@@ -20,6 +20,7 @@ class TestClient(FlaskClient):
     """
 
     def open(self, *args, **kwargs):
+        db.session.close()
         app_context = self.application.app_context()
         app_context.push()
 

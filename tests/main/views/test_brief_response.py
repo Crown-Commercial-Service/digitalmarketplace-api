@@ -286,7 +286,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
                     'framework_id': framework_id,
                 },
             )
-
+            db.session.commit()
             res = self.create_brief_response()
             data = json.loads(res.get_data(as_text=True))
 
@@ -422,7 +422,7 @@ class TestUpdateBriefResponse(BaseBriefResponseTest):
                 "UPDATE frameworks SET status=:status WHERE slug='digital-outcomes-and-specialists'",
                 {'status': framework_status},
             )
-
+            db.session.commit()
             res = self._update_brief_response(
                 self.brief_response_id,
                 {'respondToEmailAddress': 'newemail@email.com'}
