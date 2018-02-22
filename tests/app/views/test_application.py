@@ -382,9 +382,10 @@ class TestListApplications(BaseApplicationsTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
-        assert len(data['applications']) == 8
-        return  # skip these checks while we disable pagination temporarily
+        assert len(data['applications']) == 5
         assert 'next' in data['links']
+        assert 'last' in data['links']
+        assert 'self' in data['links']
 
         res = self.list_applications(page=2)
         data = json.loads(res.get_data(as_text=True))
@@ -401,7 +402,7 @@ class TestListApplications(BaseApplicationsTest):
         assert response.status_code == 200
         data = json.loads(response.get_data())
         assert 'applications' in data
-        assert len(data['applications']) == 8
+        assert len(data['applications']) == 2
 
     def test_results_ordering(self):
         def pairwise(iterable):
@@ -431,7 +432,7 @@ class TestListApplications(BaseApplicationsTest):
         res = self.search_applications('bus')
         assert res.status_code == 200
         data = json.loads(res.get_data(as_text=True))
-        assert len(data['applications']) == 8
+        assert len(data['applications']) == 5
 
         res = self.search_applications('invalid')
         assert res.status_code == 200

@@ -222,12 +222,12 @@ def format_applications(applications, with_task_status):
     results_per_page = get_positive_int_or_400(
         request.args,
         'per_page',
-        current_app.config['DM_API_PAGE_SIZE']
+        current_app.config['DM_API_APPLICATIONS_PAGE_SIZE']
     )
 
     applications = applications.paginate(
         page=page,
-        per_page=1000
+        per_page=results_per_page
     )
 
     apps_results = [_.serializable for _ in applications.items]
@@ -251,7 +251,11 @@ def format_applications(applications, with_task_status):
             applications,
             '.list_applications',
             request.args
-        )
+        ),
+        meta={
+            "total": applications.total,
+            "per_page": results_per_page
+        }
     )
 
 
