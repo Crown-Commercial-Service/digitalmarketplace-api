@@ -50,7 +50,14 @@
       "type": "string"
     },
     "tradingStatus": {
-      "type": "string"
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "vatNumber": {
       "type": "string"
