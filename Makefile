@@ -37,6 +37,7 @@ freeze-requirements:
 	cat requirements-app.txt >> requirements.txt
 	echo '' >> requirements.txt
 	$$(pwd)/venv-freeze/bin/pip freeze -r <(sed '/^--/d' requirements-app.txt) | sed -n '/The following requirements were added by pip freeze/,$$p' >> requirements.txt
+	rm -rf venv-freeze
 
 .PHONY: test
 test: test-requirements test-flake8 test-migrations test-unit
