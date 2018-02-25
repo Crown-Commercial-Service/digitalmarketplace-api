@@ -2,7 +2,7 @@
 
 from __future__ import unicode_literals
 
-from app.emails import render_email_template
+from app.emails import render_email_template, escape_token_markdown
 
 EXPECTED = """<!DOCTYPE html>
 <html>
@@ -41,3 +41,10 @@ def test_render_email_template():
                '</span>We\'ve received your application.</div>'
     )
     assert rendered == EXPECTED
+
+
+def test_escape_token_markdown():
+    token = 'randomtoken-_withmarkdown_-inthemiddle'
+    expected = 'randomtoken\-\_withmarkdown\_\-inthemiddle'
+
+    assert escape_token_markdown(token) == expected

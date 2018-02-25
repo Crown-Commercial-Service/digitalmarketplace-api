@@ -10,7 +10,7 @@ from dmutils.email import (
 )
 import rollbar
 
-from .util import render_email_template, send_or_handle_error
+from .util import render_email_template, send_or_handle_error, escape_token_markdown
 from urllib import quote
 
 
@@ -102,7 +102,7 @@ def send_account_activation_email(name, email_address, user_type, framework):
     url = '{}{}/create-user/{}'.format(
         current_app.config['FRONTEND_ADDRESS'],
         get_root_url(framework),
-        quote(token)
+        escape_token_markdown(quote(token))
     )
 
     email_body = render_email_template(template, url=url)
@@ -167,7 +167,7 @@ def _send_account_activation_admin_email(manager_name, manager_email, applicant_
                                          user_type="buyer", framework=framework)
     url = '{}/buyers/signup/send-invite/{}'.format(
         current_app.config['FRONTEND_ADDRESS'],
-        quote(token)
+        escape_token_markdown(quote(token))
     )
 
     email_body = render_email_template(
@@ -205,7 +205,7 @@ def orams_send_account_activation_admin_email(applicant_name, applicant_email, f
     url = '{}{}/send-invite/{}'.format(
         current_app.config['FRONTEND_ADDRESS'],
         get_root_url(framework),
-        quote(token)
+        escape_token_markdown(quote(token))
     )
 
     email_body = render_email_template(

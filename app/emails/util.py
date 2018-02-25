@@ -5,6 +5,7 @@ from dmutils.email import EmailError
 from app.tasks.email import send_email
 import six
 import rollbar
+import re
 
 DEFAULT_STYLES = {
     'em': '''
@@ -63,3 +64,8 @@ def send_or_handle_error(*args, **kwargs):
             }
         )
         abort(503, response='Failed to send email for event: {}'.format(error_desc))
+
+
+def escape_token_markdown(token):
+    token = re.sub(r'([_-])', r'\\\1', token)
+    return token
