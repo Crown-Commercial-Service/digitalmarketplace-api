@@ -2137,6 +2137,12 @@ class BriefResponse(db.Model):
         except TypeError:
             pass
 
+        # if the UI is sending back the dayRate. remove it from data
+        if self.brief.lot.slug == 'digital-outcome':
+            self.data = drop_foreign_fields(self.data, [
+                'dayRate'
+            ])
+
         errs = get_validation_errors(
             'brief-responses-{}-{}'.format(self.brief.framework.slug, self.brief.lot.slug),
             self.data,
