@@ -1350,7 +1350,6 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         assert row['framework_agreement'] == _parameters['framework_agreement']
         assert row['published_service_count'] == _parameters['published_service_count']
 
-
     ############################################################################################
 
     # Test no suppliers
@@ -1399,7 +1398,6 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 'declaration_status': 'started',
                 'published_service_count': 0
             })
-
 
     # Test users for supplier with completed declaration no drafts
     def test_response_complete_declaration_no_drafts(self):
