@@ -578,6 +578,32 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert response.status_code == 400
         assert "Invalid registration country" in response.get_data(as_text=True)
 
+    @pytest.mark.parametrize('country_code, expected_response',
+                             (("country:GB", 200),
+                              ("country:gb", 400),
+                              ("country:GBA", 400),
+                              ("country:AB-12", 400),
+                              ("territory:AX", 200),
+                              ("territory:ax", 400),
+                              ("territory:GBA", 200),
+                              ("territory:gba", 400),
+                              ("territory:AB-12", 200),
+                              ("territory:ab-12", 400),
+                              ("territory:AB-CD", 200),
+                              ("territory:ab-cd", 400),
+                              ("territory:ABC-12", 200),
+                              ("territory:AB-123", 400),
+                              ("Wales", 400),
+                              ))
+    def test_update_with_registration_countries(self, country_code, expected_response):
+        response = self.update_request({"registrationCountry": country_code})
+        error_message_is_displayed = "Invalid registration country" in response.get_data(as_text=True)
+        assert response.status_code == expected_response
+        if expected_response == 200:
+            assert not error_message_is_displayed
+        else:
+            assert error_message_is_displayed
+
 
 class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
     method = "post"
