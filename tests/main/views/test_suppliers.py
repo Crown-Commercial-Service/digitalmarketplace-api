@@ -2,6 +2,7 @@ from datetime import datetime
 
 from flask import json
 from freezegun import freeze_time
+import pytest
 
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
@@ -474,7 +475,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             "registrationDate": "1969-07-20",
             "vatNumber": "12312312",
             "organisationSize": "micro",
-            "tradingStatus": "Sole trader",
+            "tradingStatus": "sole trader",
         })
 
         assert response.status_code == 200
@@ -493,7 +494,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert supplier.registration_date == datetime(1969, 7, 20, 0, 0)
         assert supplier.vat_number == "12312312"
         assert supplier.organisation_size == "micro"
-        assert supplier.trading_status == "Sole trader"
+        assert supplier.trading_status == "sole trader"
 
     def test_supplier_json_id_does_not_match_original_id(self):
         response = self.update_request({
@@ -560,6 +561,16 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         response = self.update_request({"organisationSize": "tiny"})
         assert response.status_code == 400
         assert "Invalid organisation size" in response.get_data(as_text=True)
+
+    def test_update_with_bad_trading_status(self):
+        response = self.update_request({"tradingStatus": "invalid"})
+        assert response.status_code == 400
+        assert "Invalid trading status" in response.get_data(as_text=True)
+
+    @pytest.mark.parametrize('trading_status', filter(lambda x: x, Supplier.TRADING_STATUSES))
+    def test_update_succeeds_with_valid_trading_status(self, trading_status):
+        response = self.update_request({"tradingStatus": trading_status})
+        assert response.status_code == 200
 
 
 class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):

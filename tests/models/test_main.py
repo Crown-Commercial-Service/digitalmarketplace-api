@@ -1339,7 +1339,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
             "registrationDate": "1973-08-10",
             "vatNumber": "321321321",
             "organisationSize": "medium",
-            "tradingStatus": "Sticky",
+            "tradingStatus": "sole trader",
         }
         self.supplier.update_from_json(update_data)
 
@@ -1390,7 +1390,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
         assert self.supplier.registration_date == datetime(1973, 8, 10, 0, 0)
         assert self.supplier.vat_number == "321321321"
         assert self.supplier.organisation_size == "medium"
-        assert self.supplier.trading_status == "Sticky"
+        assert self.supplier.trading_status == "sole trader"
 
         # Check that serialization of a supplier with all details added looks as it should
         with mock.patch('app.models.main.url_for') as url_for:
@@ -1421,7 +1421,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                 'registeredName': 'Tape and String Inc.',
                 'registrationCountry': 'Wales',
                 'registrationDate': '1973-08-10',
-                'tradingStatus': 'Sticky',
+                'tradingStatus': 'sole trader',
                 'vatNumber': '321321321',
             }
 

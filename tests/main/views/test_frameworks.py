@@ -387,7 +387,7 @@ class TestUpdateFrameworkPending(BaseApplicationTest):
         supplier_constants.KEY_VAT_NUMBER: "123456789",
         supplier_constants.KEY_DUNS_NUMBER: "987654321",
         supplier_constants.KEY_TRADING_NAME: "Sam's Sweaters",
-        supplier_constants.KEY_TRADING_STATUS: "limited company",
+        supplier_constants.KEY_TRADING_STATUS: "limited company (LTD)",
         supplier_constants.KEY_REGISTERED_NAME: "Sam's Sweaters",
         supplier_constants.KEY_ORGANISATION_SIZE: "small",
         supplier_constants.KEY_REGISTRATION_DATE: "2018-01-01T12:00:00",
