@@ -1334,7 +1334,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
             "description": "All your parcel wrapping needs catered for",
             "companiesHouseNumber": "98765432",
             "registeredName": "Tape and String Inc.",
-            "registrationCountry": "Wales",
+            "registrationCountry": "country:GB",
             "otherCompanyRegistrationNumber": "",
             "registrationDate": "1973-08-10",
             "vatNumber": "321321321",
@@ -1385,7 +1385,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
         assert self.supplier.description == "All your parcel wrapping needs catered for"
         assert self.supplier.companies_house_number == "98765432"
         assert self.supplier.registered_name == "Tape and String Inc."
-        assert self.supplier.registration_country == "Wales"
+        assert self.supplier.registration_country == "country:GB"
         assert self.supplier.other_company_registration_number == ""
         assert self.supplier.registration_date == datetime(1973, 8, 10, 0, 0)
         assert self.supplier.vat_number == "321321321"
@@ -1419,7 +1419,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                 'organisationSize': 'medium',
                 'otherCompanyRegistrationNumber': '',
                 'registeredName': 'Tape and String Inc.',
-                'registrationCountry': 'Wales',
+                'registrationCountry': 'country:GB',
                 'registrationDate': '1973-08-10',
                 'tradingStatus': 'sole trader',
                 'vatNumber': '321321321',

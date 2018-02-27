@@ -293,6 +293,14 @@ class Supplier(db.Model):
     # Companies House numbers consist of 8 numbers, or 2 letters followed by 6 numbers
     COMPANIES_HOUSE_NUMBER_REGEX = re.compile('^([0-9]{2}|[A-Za-z]{2})[0-9]{6}$')
 
+    # The registration country values that come from our country picker select are in the format
+    # "country" or "territory" followed by a colon and either a 2-letter country code OR three-letter/two-dash-two
+    # alphanumeric territory code, for example:
+    # country:GB, territory:XQZ, territory:UM-67, territory:AE-RK
+    REGISTRATION_COUNTRY_REGEX = re.compile(
+        '^(country:[A-Z]{2}|territory:[A-Z]{2,3}(-[A-Z0-9]{2})?)$'
+    )
+
     # NOTE other tables tend to make foreign key references to `supplier_id` instead of this
     id = db.Column(db.Integer, primary_key=True)
     supplier_id = db.Column(db.BigInteger, Sequence('suppliers_supplier_id_seq'), index=True, unique=True,
@@ -331,6 +339,13 @@ class Supplier(db.Model):
     def validates_companies_house_number(self, key, value):
         if value and not self.COMPANIES_HOUSE_NUMBER_REGEX.match(value):
             raise ValidationError("Invalid companies house number '{}'".format(value))
+
+        return value
+
+    @validates('registration_country')
+    def validates_registration_country(self, key, value):
+        if value and not self.REGISTRATION_COUNTRY_REGEX.match(value):
+            raise ValidationError("Invalid registration country '{}'".format(value))
 
         return value
 

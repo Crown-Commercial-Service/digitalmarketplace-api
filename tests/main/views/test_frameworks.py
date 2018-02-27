@@ -391,7 +391,7 @@ class TestUpdateFrameworkPending(BaseApplicationTest):
         supplier_constants.KEY_REGISTERED_NAME: "Sam's Sweaters",
         supplier_constants.KEY_ORGANISATION_SIZE: "small",
         supplier_constants.KEY_REGISTRATION_DATE: "2018-01-01T12:00:00",
-        supplier_constants.KEY_REGISTRATION_COUNTRY: "gb",
+        supplier_constants.KEY_REGISTRATION_COUNTRY: "country:GB",
         supplier_constants.KEY_REGISTRATION_BUILDING: "1 Sweater Lane",
         supplier_constants.KEY_REGISTRATION_TOWN: "Milton Keynes",
         supplier_constants.KEY_REGISTRATION_POSTCODE: "SW3 8T",
