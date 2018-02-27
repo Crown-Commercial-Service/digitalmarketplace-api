@@ -194,6 +194,7 @@ class Development(Config):
 
     JIRA_FEATURES = True
 
+    DM_SEND_EMAIL_TO_STDERR = True
     SEND_EMAILS = True
     SECRET_KEY = 'DevKeyDevKeyDevKeyDevKeyDevKeyDevKeyDevKeyX='
     FRONTEND_ADDRESS = 'http://localhost:8000'
