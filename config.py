@@ -230,23 +230,15 @@ class Staging(Development):
     JIRA_FEATURES = True
     BASIC_AUTH = True
     CELERY_ASYNC_TASKING_ENABLED = True
-    CELERYBEAT_SCHEDULE = {
-        'test-staging-email': {
-            'task': 'app.tasks.email.send_email',
-            'schedule': crontab(hour=7, minute=0),
-            'args': (
-                'matt.smith@digital.gov.au',
-                'This is a scheduled test email sent via celery beat scheduling from staging.',
-                'This is scheduled test email',
-                'no-reply@marketplace.digital.gov.au',
-                'Digital Marketplace',
-            )
-        }
-    }
 
 
 class Production(Live):
-    pass
+    CELERYBEAT_SCHEDULE = {
+        'maintain-seller-email-list': {
+            'task': 'app.tasks.mailchimp.sync_mailchimp_seller_list',
+            'schedule': crontab(hour='*/4')
+        }
+    }
 
 
 configs = {

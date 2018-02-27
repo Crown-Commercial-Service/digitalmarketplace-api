@@ -35,7 +35,7 @@ def make_celery(flask_app):
     celery = Celery(
         flask_app.import_name,
         broker=broker,
-        include=['app.tasks.email']
+        include=['app.tasks.email', 'app.tasks.mailchimp']
     )
     celery.conf.update(flask_app.config)
     celery.config_from_object(CELERY_OPTIONS)

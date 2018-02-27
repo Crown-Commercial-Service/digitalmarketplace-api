@@ -29,6 +29,7 @@ setup(
         'newrelic',
         'celery',
         'pycurl',
+        'mailchimp3',
 
         # For schema validation
         'jsonschema',

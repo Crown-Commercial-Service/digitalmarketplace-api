@@ -58,19 +58,22 @@ def client(app):
 
 @pytest.fixture()
 def suppliers(app, request):
+    params = request.param if hasattr(request, 'param') else {}
+    framework_slug = params['framework_slug'] if 'framework_slug' in params else 'orams'
     with app.app_context():
+        framework = Framework.query.filter(Framework.slug == framework_slug).first()
         for i in range(1, 6):
             db.session.add(Supplier(
                 abn=i,
                 code=(i),
                 name='Test Supplier{}'.format(i),
-                contacts=[Contact(name='auth rep', email='auth@rep.com')]
+                contacts=[Contact(name='auth rep', email='auth@rep.com')],
+                data={'contact_email': 'test{}@supplier.com'.format(i)}
             ))
 
             db.session.flush()
 
-        framework = Framework.query.filter(Framework.slug == "orams").first()
-        db.session.add(SupplierFramework(supplier_code=1, framework_id=framework.id))
+            db.session.add(SupplierFramework(supplier_code=i, framework_id=framework.id))
 
         db.session.commit()
         yield Supplier.query.all()
@@ -108,35 +111,43 @@ def applications(app, request):
 
 @pytest.fixture()
 def users(app, request):
+    params = request.param if hasattr(request, 'param') else {}
+    user_role = params['user_role'] if 'user_role' in params else 'buyer'
+    email_domain = params['email_domain'] if 'email_domain' in params else 'digital.gov.au'
+    framework_slug = params['framework_slug'] if 'framework_slug' in params else 'orams'
     with app.app_context():
         for i in range(1, 6):
-            db.session.add(User(
+            new_user = User(
                 id=i,
-                email_address='{}{}@digital.gov.au'.format(fake.first_name(), i),
+                email_address='{}{}@{}'.format(fake.first_name(), i, email_domain),
                 name=fake.name(),
                 password=fake.password(),
+                active=True,
+                role=user_role,
+                password_changed_at=utcnow()
+            )
+            if user_role == 'supplier':
+                new_user.supplier_code = i
+            db.session.add(new_user)
+            db.session.flush()
+            framework = Framework.query.filter(Framework.slug == framework_slug).first()
+            db.session.add(UserFramework(user_id=i, framework_id=framework.id))
+
+        if user_role == 'buyer':
+            db.session.add(User(
+                id=7,
+                email_address='test@digital.gov.au',
+                name=fake.name(),
+                password=encryption.hashpw('testpassword'),
                 active=True,
                 role='buyer',
                 password_changed_at=utcnow()
             ))
             db.session.flush()
-            framework = Framework.query.filter(Framework.slug == "orams").first()
-            db.session.add(UserFramework(user_id=i, framework_id=framework.id))
-
-        db.session.add(User(
-            id=7,
-            email_address='test@digital.gov.au',
-            name=fake.name(),
-            password=encryption.hashpw('testpassword'),
-            active=True,
-            role='buyer',
-            password_changed_at=utcnow()
-        ))
-        db.session.flush()
-        db.session.add(UserFramework(user_id=7, framework_id=framework.id))
+            db.session.add(UserFramework(user_id=7, framework_id=framework.id))
 
         db.session.commit()
-        yield User.query.filter(User.role == "buyer").all()
+        yield User.query.filter(User.role == user_role).all()
 
 
 @pytest.fixture()
