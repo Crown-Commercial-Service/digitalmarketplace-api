@@ -179,19 +179,6 @@ class Framework(db.Model):
             'variations': (self.framework_agreement_details or {}).get("variations", {}),
         }
 
-    def get_supplier_ids_for_completed_service(self):
-        """Only suppliers whose service has a status of submitted or failed."""
-        results = db.session.query(
-            DraftService
-        ).filter(
-            DraftService.status.in_(('submitted', 'failed')),
-            DraftService.framework_id == self.id
-        ).with_entities(
-            DraftService.supplier_id
-        ).distinct()
-        # Unpack list of lists and set
-        return set(item for sublist in results for item in sublist)
-
     @validates('status')
     def validates_status(self, key, value):
         if value not in self.STATUSES:
