@@ -1348,6 +1348,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         assert row['application_status'] == _parameters['application_status']
         assert row['declaration_status'] == _parameters['declaration_status']
         assert row['framework_agreement'] == _parameters['framework_agreement']
+        assert row['published_service_count'] == _parameters['published_service_count']
 
     ############################################################################################
 
@@ -1374,7 +1375,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_export_response(datum)
+            self._assert_things_about_export_response(datum, parameters={'published_service_count': 0})
 
     # Test users for supplier with unstarted declaration one draft
     def test_response_unstarted_declaration_one_draft(self):
@@ -1383,7 +1384,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_export_response(datum)
+            self._assert_things_about_export_response(datum, parameters={'published_service_count': 0})
 
     # Test users for supplier with started declaration one draft
     def test_response_started_declaration_one_draft(self):
@@ -1393,7 +1394,10 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_export_response(datum, parameters={'declaration_status': 'started'})
+            self._assert_things_about_export_response(datum, parameters={
+                'declaration_status': 'started',
+                'published_service_count': 0
+            })
 
     # Test users for supplier with completed declaration no drafts
     def test_response_complete_declaration_no_drafts(self):
@@ -1402,7 +1406,10 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_export_response(datum, parameters={'declaration_status': 'complete'})
+            self._assert_things_about_export_response(datum, parameters={
+                'declaration_status': 'complete',
+                'published_service_count': 0
+            })
 
     # Test users for supplier with completed declaration one draft
     def test_response_complete_declaration_one_draft(self):
@@ -1414,7 +1421,8 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
                 'declaration_status': 'complete',
-                'application_status': 'application'
+                'application_status': 'application',
+                'published_service_count': 0
             })
 
     # Test users for supplier with completed declaration one draft but framework still open
@@ -1429,7 +1437,8 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 'declaration_status': 'complete',
                 'application_status': 'application',
                 'application_result': '',
-                'framework_agreement': ''
+                'framework_agreement': '',
+                'published_service_count': 0
             })
 
     def test_response_awarded_on_framework_and_submitted_framework_agreement(self):
@@ -1445,7 +1454,8 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 'declaration_status': 'complete',
                 'application_status': 'application',
                 'framework_agreement': True,
-                'application_result': 'pass'
+                'application_result': 'pass',
+                'published_service_count': 0
             })
 
     def test_response_not_awarded_on_framework(self):
@@ -1460,7 +1470,8 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 'declaration_status': 'complete',
                 'application_status': 'application',
                 'framework_agreement': False,
-                'application_result': 'fail'
+                'application_result': 'fail',
+                'published_service_count': 0
             })
 
     def test_response_does_not_include_disabled_users(self):
@@ -1513,7 +1524,31 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 'application_status': 'application',
                 'application_result': 'pass',
                 'framework_agreement': True,
-                'agreed_variations': '1'
+                'agreed_variations': '1',
+                'published_service_count': 0
+            })
+
+    def test_published_service_count_with_different_statuses(self):
+        self._setup()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_result(True)
+        self.set_framework_status(self.framework_slug, 'open')
+
+        self.setup_dummy_service('10000000002', 1, frameworkSlug=self.framework_slug, lot_id=5)
+        self.setup_dummy_service('10000000003', 1, frameworkSlug=self.framework_slug, lot_id=5)
+        self.setup_dummy_service('10000000004', 1, frameworkSlug=self.framework_slug, lot_id=5)
+        self.setup_dummy_service('10000000005', 1, frameworkSlug=self.framework_slug, lot_id=5, status='enabled')
+        self.setup_dummy_service('10000000006', 1, frameworkSlug=self.framework_slug, lot_id=5, status='disabled')
+
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_export_response(datum, parameters={
+                'declaration_status': 'complete',
+                'application_status': 'application',
+                'application_result': 'pass',
+                'published_service_count': 3
             })
 
 

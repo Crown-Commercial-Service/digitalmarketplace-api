@@ -1,13 +1,14 @@
 from datetime import datetime
 
 from dmapiclient.audit import AuditTypes
+from sqlalchemy import func
 from sqlalchemy.orm import lazyload
 from sqlalchemy.exc import DataError, IntegrityError
 from flask import abort, current_app, jsonify, request
 
 from .. import main
 from ... import db, encryption
-from ...models import AuditEvent, BuyerEmailDomain, Framework, Supplier, SupplierFramework, User
+from ...models import AuditEvent, BuyerEmailDomain, Framework, Service, Supplier, SupplierFramework, User
 from ...supplier_utils import check_supplier_role
 from ...utils import (
     get_json_from_request,
@@ -247,6 +248,17 @@ def export_users_for_framework(framework_slug):
         abort(400, 'framework not yet open')
 
     suppliers_with_a_complete_service = frozenset(framework.get_supplier_ids_for_completed_service())
+
+    supplier_id_published_service_count = dict(db.session.query(
+        Service.supplier_id,
+        func.count(Service.id)
+    ).filter(
+        Service.status == 'published',
+        Service.framework_id == framework.id
+    ).group_by(
+        Service.supplier_id
+    ).all())
+
     supplier_frameworks_and_users = db.session.query(
         SupplierFramework, User
     ).filter(
@@ -296,7 +308,8 @@ def export_users_for_framework(framework_slug):
             'application_status': application_status,
             'framework_agreement': framework_agreement,
             'application_result': application_result,
-            'variations_agreed': variations_agreed
+            'variations_agreed': variations_agreed,
+            'published_service_count': supplier_id_published_service_count.get(sf.supplier_id, 0)
         })
 
     return jsonify(users=[user for user in user_rows]), 200
