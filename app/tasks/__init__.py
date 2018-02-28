@@ -1,7 +1,7 @@
 from flask import Flask
 from .celery import make_celery
 from config import configs
-from os import getenv
+from os import getenv, environ
 from app.modelsbase import MySQLAlchemy as SQLAlchemy
 
 
@@ -10,6 +10,11 @@ def get_flask_app():
     app = Flask(__name__)
     app.config['DM_ENVIRONMENT'] = config_name
     app.config.from_object(configs[config_name])
+    # FIXME: The service broker adds a 'reconnect' parameter that's rejected by Postgres and
+    # doesn't seem to be in the Postgres documentation anyway.  We need to patch the broker to fix
+    # the username stability issue anyway.
+    if 'DATABASE_URL' in environ:
+        app.config['SQLALCHEMY_DATABASE_URI'] = environ['DATABASE_URL'].replace('reconnect=true', '')
     return app
 
 db = SQLAlchemy()
