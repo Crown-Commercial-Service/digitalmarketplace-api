@@ -230,6 +230,7 @@ class Staging(Development):
     JIRA_FEATURES = True
     BASIC_AUTH = True
     CELERY_ASYNC_TASKING_ENABLED = True
+    DM_SEND_EMAIL_TO_STDERR = False
 
 
 class Production(Live):
