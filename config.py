@@ -31,7 +31,8 @@ class Config:
     DM_API_BUYER_DOMAINS_PAGE_SIZE = 100
     DM_API_PROJECTS_PAGE_SIZE = 100
 
-    DM_ALLOWED_ADMIN_DOMAINS = ['digital.cabinet-office.gov.uk', 'crowncommercial.gov.uk', 'user.marketplace.team', 'notifications.service.gov.uk']
+    DM_ALLOWED_ADMIN_DOMAINS = ['digital.cabinet-office.gov.uk', 'crowncommercial.gov.uk', 'user.marketplace.team',
+                                'notifications.service.gov.uk']
 
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace'
