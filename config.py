@@ -237,7 +237,7 @@ class Production(Live):
     CELERYBEAT_SCHEDULE = {
         'maintain-seller-email-list': {
             'task': 'app.tasks.mailchimp.sync_mailchimp_seller_list',
-            'schedule': crontab(hour='*/1', minute='*/15')
+            'schedule': crontab(hour='*/4', minute=0)
         }
     }
 
