@@ -390,7 +390,6 @@ class TestUpdateFrameworkPending(BaseApplicationTest):
         supplier_constants.KEY_TRADING_STATUS: "limited company (LTD)",
         supplier_constants.KEY_REGISTERED_NAME: "Sam's Sweaters",
         supplier_constants.KEY_ORGANISATION_SIZE: "small",
-        supplier_constants.KEY_REGISTRATION_DATE: "2018-01-01T12:00:00",
         supplier_constants.KEY_REGISTRATION_COUNTRY: "country:GB",
         supplier_constants.KEY_REGISTRATION_BUILDING: "1 Sweater Lane",
         supplier_constants.KEY_REGISTRATION_TOWN: "Milton Keynes",
@@ -414,7 +413,6 @@ class TestUpdateFrameworkPending(BaseApplicationTest):
                                  trading_status=expected_info['supplierTradingStatus'],
                                  vat_number=expected_info['supplierVatNumber'],
                                  duns_number=expected_info['supplierDunsNumber'],
-                                 registration_date=expected_info['supplierRegistrationDate'],
                                  other_company_registration_number=expected_info["supplierCompanyRegistrationNumber"],
                                  registration_country=expected_info["supplierRegisteredCountry"],
                                  registered_name=expected_info["supplierRegisteredName"],
@@ -507,7 +505,6 @@ class TestUpdateFrameworkPending(BaseApplicationTest):
         self._assert_declaration_matches(self.EXPECTED_FRAMEWORK_DECLARATION_SUPPLIER_INFO)
 
     def test_updating_framework_includes_keys_with_none_value_for_null_supplier_account_information(self):
-        self.supplier.registration_date = None
         self.supplier.vat_number = None
         self.supplier.registered_name = None
         self.contact_info.city = None
@@ -516,7 +513,6 @@ class TestUpdateFrameworkPending(BaseApplicationTest):
         self._update_framework_status()
 
         expected_declaration_data = self.EXPECTED_FRAMEWORK_DECLARATION_SUPPLIER_INFO.copy()
-        expected_declaration_data[supplier_constants.KEY_REGISTRATION_DATE] = None
         expected_declaration_data[supplier_constants.KEY_VAT_NUMBER] = None
         expected_declaration_data[supplier_constants.KEY_REGISTERED_NAME] = None
         expected_declaration_data[supplier_constants.KEY_REGISTRATION_TOWN] = None

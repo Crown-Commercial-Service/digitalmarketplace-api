@@ -472,7 +472,6 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             "otherCompanyRegistrationNumber": "A11",
             "registeredName": "New Name Inc.",
             "registrationCountry": "country:GT",
-            "registrationDate": "1969-07-20",
             "vatNumber": "12312312",
             "organisationSize": "micro",
             "tradingStatus": "sole trader",
@@ -491,7 +490,6 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert supplier.other_company_registration_number == "A11"
         assert supplier.registered_name == "New Name Inc."
         assert supplier.registration_country == "country:GT"
-        assert supplier.registration_date == datetime(1969, 7, 20, 0, 0)
         assert supplier.vat_number == "12312312"
         assert supplier.organisation_size == "micro"
         assert supplier.trading_status == "sole trader"
