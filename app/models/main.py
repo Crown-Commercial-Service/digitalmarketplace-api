@@ -316,7 +316,6 @@ class Supplier(db.Model):
     registered_name = db.Column(db.String, index=False, unique=False, nullable=True)
     registration_country = db.Column(db.String, index=False, unique=False, nullable=True)
     other_company_registration_number = db.Column(db.String, index=False, unique=False, nullable=True)
-    registration_date = db.Column(db.DateTime, index=False, unique=False, nullable=True)
     vat_number = db.Column(db.String, index=False, unique=False, nullable=True)
     organisation_size = db.Column(db.String, index=False, unique=False, nullable=True)
     trading_status = db.Column(db.String, index=False, unique=False, nullable=True)
