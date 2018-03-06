@@ -448,7 +448,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             'update': {'name': "Name"},
         }
 
-    def test_update_response_matches_payload(self):
+    def test_update_response_matches_payload_plus_defaults(self):
         payload = load_example_listing("supplier_creation")
         response = self.update_request({'name': "New Name"})
         assert response.status_code == 200
@@ -461,7 +461,9 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         supplier.pop('links')
         supplier.pop('id')
 
-        assert supplier == payload
+        payload_with_defaults = {**payload, 'companyDetailsConfirmed': False}
+
+        assert supplier == payload_with_defaults
 
     def test_update_all_fields(self):
         response = self.update_request({
@@ -475,6 +477,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             "vatNumber": "12312312",
             "organisationSize": "micro",
             "tradingStatus": "sole trader",
+            "companyDetailsConfirmed": True,
         })
 
         assert response.status_code == 200
@@ -493,6 +496,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert supplier.vat_number == "12312312"
         assert supplier.organisation_size == "micro"
         assert supplier.trading_status == "sole trader"
+        assert supplier.company_details_confirmed is True
 
     def test_supplier_json_id_does_not_match_original_id(self):
         response = self.update_request({
