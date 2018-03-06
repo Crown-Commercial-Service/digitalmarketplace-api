@@ -867,6 +867,8 @@ class User(db.Model):
                 "supplierId": self.supplier.supplier_id,
                 "name": self.supplier.name
             }
+            if self.supplier.organisation_size:
+                supplier['organisationSize'] = self.supplier.organisation_size
             user['supplier'] = supplier
 
         return user

@@ -63,6 +63,29 @@ class TestUser(BaseApplicationTest, FixtureMixin):
         assert user.logged_in_at is None
         assert user.serialize()['loggedInAt'] == "2018-01-09T00:00:00.000000Z"
 
+    def test_supplier_user_serializes_extra_supplier_fields(self):
+        now = datetime.utcnow()
+        supplier = Supplier(name="Joe Bananas", organisation_size="micro", supplier_id=1234)
+        db.session.add(supplier)
+        db.session.commit()
+        user = User(
+            email_address='supplier@example.com',
+            name='name',
+            role='supplier',
+            password='password',
+            active=True,
+            failed_login_count=0,
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now,
+        )
+        user.supplier = supplier
+
+        serialized_user = user.serialize()
+        assert serialized_user['supplier']['supplierId'] == 1234
+        assert serialized_user['supplier']['name'] == "Joe Bananas"
+        assert serialized_user['supplier']['organisationSize'] == "micro"
+
     def test_buyer_user_requires_valid_email_domain(self):
         with pytest.raises(ValidationError) as exc:
             self.setup_default_buyer_domain()
