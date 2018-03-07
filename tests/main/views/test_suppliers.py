@@ -439,10 +439,10 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         ).first()
 
         audit = AuditEvent.query.filter(
-            AuditEvent.object == supplier
+            AuditEvent.object == supplier,
+            AuditEvent.type == "supplier_update"
         ).first()
 
-        assert audit.type == "supplier_update"
         assert audit.user == "supplier@user.dmdev"
         assert audit.data == {
             'update': {'name': "Name"},
@@ -674,10 +674,10 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
         ).first()
 
         audit = AuditEvent.query.filter(
-            AuditEvent.object == contact.supplier
+            AuditEvent.object == contact.supplier,
+            AuditEvent.type == "contact_update"
         ).first()
 
-        assert audit.type == "contact_update"
         assert audit.user == "supplier@user.dmdev"
         assert audit.data == {
             'update': {'city': "New City"},
@@ -869,11 +869,22 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
 
     def test_add_a_new_supplier(self):
         payload = load_example_listing("new-supplier")
+
         response = self.post_supplier(payload)
+
         assert response.status_code == 201
-        assert Supplier.query.filter(
+
+        supplier = Supplier.query.filter(
             Supplier.name == payload['name']
-        ).first() is not None
+        ).first()
+        assert supplier is not None
+
+        audit = AuditEvent.query.filter(
+            AuditEvent.object == supplier
+        ).first()
+        assert audit.type == "create_supplier"
+        assert audit.user == "no logged-in user"
+        assert audit.data == {'update': payload}
 
     def test_when_supplier_has_missing_contact_information(self):
         payload = load_example_listing("new-supplier")

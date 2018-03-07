@@ -143,11 +143,11 @@ def import_supplier(supplier_id):
 
 @main.route('/suppliers', methods=['POST'])
 def create_supplier():
-    supplier_data = validate_and_return_supplier_request()
+    request_data = validate_and_return_supplier_request()
 
-    contact_informations_data = supplier_data['contactInformation']
+    contact_informations_data = request_data['contactInformation']
     supplier_data = drop_foreign_fields(
-        supplier_data,
+        request_data.copy(),
         ['contactInformation']
     )
 
@@ -160,6 +160,16 @@ def create_supplier():
 
     try:
         db.session.add(supplier)
+        db.session.flush()  # flush so the supplier object gets an ID and can be properly attached to the AuditEvent
+
+        db.session.add(
+            AuditEvent(
+                audit_type=AuditTypes.create_supplier,
+                db_object=supplier,
+                user="no logged-in user",
+                data={'update': request_data}
+            )
+        )
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
