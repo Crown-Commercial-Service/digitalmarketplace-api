@@ -1359,7 +1359,6 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
             "registeredName": "Tape and String Inc.",
             "registrationCountry": "country:GB",
             "otherCompanyRegistrationNumber": "",
-            "registrationDate": "1973-08-10",
             "vatNumber": "321321321",
             "organisationSize": "medium",
             "tradingStatus": "sole trader",
@@ -1410,7 +1409,6 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
         assert self.supplier.registered_name == "Tape and String Inc."
         assert self.supplier.registration_country == "country:GB"
         assert self.supplier.other_company_registration_number == ""
-        assert self.supplier.registration_date == datetime(1973, 8, 10, 0, 0)
         assert self.supplier.vat_number == "321321321"
         assert self.supplier.organisation_size == "medium"
         assert self.supplier.trading_status == "sole trader"
@@ -1443,15 +1441,9 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                 'otherCompanyRegistrationNumber': '',
                 'registeredName': 'Tape and String Inc.',
                 'registrationCountry': 'country:GB',
-                'registrationDate': '1973-08-10',
                 'tradingStatus': 'sole trader',
                 'vatNumber': '321321321',
             }
-
-    def test_update_from_json_error_for_badly_formatted_date(self):
-        with pytest.raises(ValidationError) as exception_info:
-            self.supplier.update_from_json({"registrationDate": "July 4, 1776"})
-        assert "Registration date format must be %Y-%m-%d" in "{}".format(exception_info.value)
 
 
 class TestServices(BaseApplicationTest, FixtureMixin):

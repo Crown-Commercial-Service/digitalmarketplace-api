@@ -144,7 +144,6 @@ SET
                 suppliers.registered_name AS "{supplier_constants.KEY_REGISTERED_NAME}",
                 COALESCE(suppliers.companies_house_number,
                          suppliers.other_company_registration_number) AS "{supplier_constants.KEY_REGISTRATION_NUMBER}",
-                suppliers.registration_date AS "{supplier_constants.KEY_REGISTRATION_DATE}",
                 suppliers.duns_number AS "{supplier_constants.KEY_DUNS_NUMBER}",
                 suppliers.vat_number AS "{supplier_constants.KEY_VAT_NUMBER}",
                 suppliers.trading_status AS "{supplier_constants.KEY_TRADING_STATUS}",

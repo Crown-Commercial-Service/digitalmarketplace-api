@@ -46,9 +46,6 @@
     "registrationCountry": {
       "type": "string"
     },
-    "registrationDate": {
-      "type": "string"
-    },
     "tradingStatus": {
       "type": "string"
     },

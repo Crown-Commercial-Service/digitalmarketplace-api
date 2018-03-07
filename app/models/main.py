@@ -27,7 +27,7 @@ from sqlalchemy.types import String
 from sqlalchemy_utils import generic_relationship
 
 from dmutils.dates import get_publishing_dates
-from dmutils.formats import DATETIME_FORMAT, DATE_FORMAT
+from dmutils.formats import DATETIME_FORMAT
 from .. import db
 from ..models.buyer_domains import BuyerEmailDomain
 from app.utils import (
@@ -386,7 +386,6 @@ class Supplier(db.Model):
             'registeredName': self.registered_name,
             'registrationCountry': self.registration_country,
             'otherCompanyRegistrationNumber': self.other_company_registration_number,
-            'registrationDate': self.registration_date.strftime(DATE_FORMAT) if self.registration_date else None,
             'vatNumber': self.vat_number,
             'organisationSize': self.organisation_size,
             'tradingStatus': self.trading_status,
@@ -407,12 +406,6 @@ class Supplier(db.Model):
         self.vat_number = data.get('vatNumber')
         self.organisation_size = data.get('organisationSize')
         self.trading_status = data.get('tradingStatus')
-
-        if 'registrationDate' in data:
-            try:
-                self.registration_date = datetime.strptime(data.get('registrationDate'), DATE_FORMAT)
-            except ValueError:
-                raise ValidationError("Registration date format must be %Y-%m-%d; try something like 2017-08-25")
 
         return self
 
