@@ -139,7 +139,8 @@ def create_user():
         active=True,
         created_at=now,
         updated_at=now,
-        password_changed_at=now
+        password_changed_at=now,
+        user_research_opted_in=False,
     )
 
     audit_data = {}
@@ -212,6 +213,8 @@ def update_user(user_id):
         user.supplier_id = user_update['supplierId']
     if 'locked' in user_update and not user_update['locked']:
         user.failed_login_count = 0
+    if 'userResearchOptedIn' in user_update:
+        user.user_research_opted_in = user_update['userResearchOptedIn']
 
     check_supplier_role(user.role, user.supplier_id)
 
@@ -303,6 +306,7 @@ def export_users_for_framework(framework_slug):
         user_rows.append({
             'email address': u.email_address,
             'user_name': u.name,
+            'user_research_opted_in': u.user_research_opted_in,
             'supplier_id': sf.supplier_id,
             'declaration_status': declaration_status,
             'application_status': application_status,
