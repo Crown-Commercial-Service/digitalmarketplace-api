@@ -1,7 +1,7 @@
 """add company details confirmed column
 
-Revision ID: 1110
-Revises: 1100
+Revision ID: 1120
+Revises: 1110
 Create Date: 2018-03-06 09:05:13.221057
 
 """
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '1110'
-down_revision = '1100'
+revision = '1120'
+down_revision = '1110'
 
 
 def upgrade():
