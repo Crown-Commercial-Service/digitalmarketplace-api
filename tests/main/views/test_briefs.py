@@ -446,6 +446,7 @@ class TestGetBrief(FrameworkSetupAndTeardown):
                         'name': 'my name',
                         'role': 'buyer',
                         'active': True,
+                        'userResearchOptedIn': False,
                     }
                 ],
                 "clarificationQuestions": [],
