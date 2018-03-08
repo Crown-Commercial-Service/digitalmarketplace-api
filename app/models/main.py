@@ -319,6 +319,7 @@ class Supplier(db.Model):
     vat_number = db.Column(db.String, index=False, unique=False, nullable=True)
     organisation_size = db.Column(db.String, index=False, unique=False, nullable=True)
     trading_status = db.Column(db.String, index=False, unique=False, nullable=True)
+    company_details_confirmed = db.Column(db.Boolean, index=False, default=False, nullable=False)
 
     @validates('trading_status')
     def validates_trading_status(self, key, value):
@@ -388,6 +389,7 @@ class Supplier(db.Model):
             'vatNumber': self.vat_number,
             'organisationSize': self.organisation_size,
             'tradingStatus': self.trading_status,
+            'companyDetailsConfirmed': self.company_details_confirmed,
         }
 
         serialized.update(data or {})
@@ -405,6 +407,9 @@ class Supplier(db.Model):
         self.vat_number = data.get('vatNumber')
         self.organisation_size = data.get('organisationSize')
         self.trading_status = data.get('tradingStatus')
+
+        if 'companyDetailsConfirmed' in data:
+            self.company_details_confirmed = data.get('companyDetailsConfirmed')
 
         return self
 

@@ -1362,6 +1362,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
             "vatNumber": "321321321",
             "organisationSize": "medium",
             "tradingStatus": "sole trader",
+            "companyDetailsConfirmed": False,
         }
         self.supplier.update_from_json(update_data)
 
@@ -1389,6 +1390,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                     'self': (('main.get_supplier',), {'supplier_id': 0})
                 },
                 'name': u'Supplier 0',
+                'companyDetailsConfirmed': False,
             }
 
     def test_update_from_json(self):
@@ -1412,6 +1414,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
         assert self.supplier.vat_number == "321321321"
         assert self.supplier.organisation_size == "medium"
         assert self.supplier.trading_status == "sole trader"
+        assert self.supplier.company_details_confirmed is False
 
         # Check that serialization of a supplier with all details added looks as it should
         with mock.patch('app.models.main.url_for') as url_for:
@@ -1442,6 +1445,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                 'registeredName': 'Tape and String Inc.',
                 'registrationCountry': 'country:GB',
                 'tradingStatus': 'sole trader',
+                'companyDetailsConfirmed': False,
                 'vatNumber': '321321321',
             }
 

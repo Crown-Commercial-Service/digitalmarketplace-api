@@ -51,6 +51,9 @@
     },
     "vatNumber": {
       "type": "string"
+    },
+    "companyDetailsConfirmed": {
+      "type": "boolean"
     }
   },
   "required": [
