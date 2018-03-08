@@ -582,7 +582,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         now = datetime.utcnow()
         super(TestUsersUpdate, self).setup()
         self.setup_default_buyer_domain()
-        user = User(
+        self.user = User(
             id=123,
             email_address="test@digital.gov.uk",
             name="my name",
@@ -621,7 +621,7 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             password_changed_at=now
         )
         db.session.add(supplier)
-        db.session.add(user)
+        db.session.add(self.user)
         db.session.add(supplier_user)
         db.session.add(admin_user)
         db.session.commit()
@@ -827,6 +827,44 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         data = json.loads(response.get_data())['users']
         assert data['locked'] is False
         assert data['failedLoginCount'] == 0
+
+    def test_user_research_opted_in_defaults_to_false(self):
+        response = self.client.get('/users/123')
+        assert response.status_code == 200
+
+        data = json.loads(response.get_data())['users']
+        assert data['userResearchOptedIn'] is False
+
+    def test_can_update_user_research_opted_in_to_true(self):
+
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'userResearchOptedIn': True
+                }}),
+            content_type='application/json')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['userResearchOptedIn'] is True
+
+    def test_can_update_user_research_opted_in_to_false(self):
+        self.user.user_research_opted_in = True
+        db.session.add(self.user)
+        db.session.commit()
+
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'userResearchOptedIn': False
+                }}),
+            content_type='application/json')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['userResearchOptedIn'] is False
 
     def test_can_update_name(self):
         response = self.client.post(
