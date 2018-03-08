@@ -3,6 +3,7 @@ from .celery import make_celery
 from config import configs
 from os import getenv, environ
 from app.modelsbase import MySQLAlchemy as SQLAlchemy
+from dmutils import rollbar_agent
 
 
 def get_flask_app():
@@ -17,7 +18,8 @@ def get_flask_app():
         app.config['SQLALCHEMY_DATABASE_URI'] = environ['DATABASE_URL'].replace('reconnect=true', '')
     return app
 
-db = SQLAlchemy()
+db = SQLAlchemy(session_options={'autocommit': True})
 flask_app = get_flask_app()
 db.init_app(flask_app)
+rollbar_agent.init_app(flask_app)
 celery = make_celery(flask_app)

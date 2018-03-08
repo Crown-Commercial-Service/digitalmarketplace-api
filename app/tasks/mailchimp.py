@@ -5,18 +5,15 @@ from __future__ import \
 from . import celery
 from flask import current_app
 from mailchimp3 import MailChimp
-from app.api.suppliers import remove
-from app.models import Supplier, SupplierFramework, SupplierDomain, User, Framework
+from app.models import Brief, Supplier, SupplierFramework, SupplierDomain, User, Framework, AuditEvent
+from dmapiclient.audit import AuditTypes
 from app import db
-from itertools import groupby
-from operator import itemgetter
 from requests.utils import default_headers
 from requests.exceptions import RequestException
-from sqlalchemy.orm.util import aliased
-from sqlalchemy import true
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import true, func
 from os import getenv
-import time
+from jinja2 import Environment, PackageLoader, select_autoescape
+import pendulum
 
 
 class MailChimpConfigException(Exception):
@@ -29,10 +26,107 @@ def get_client():
     client = MailChimp(
         getenv('MAILCHIMP_USERNAME'),
         getenv('MAILCHIMP_SECRET_API_KEY'),
-        timeout=10.0,
+        timeout=30.0,
         request_headers=headers
     )
     return client
+
+template_env = Environment(
+    loader=PackageLoader('app.emails', 'templates'),
+    autoescape=select_autoescape(['html', 'xml'])
+)
+
+
+@celery.task
+def send_new_briefs_email():
+    client = get_client()
+    list_id = getenv('MAILCHIMP_SELLER_EMAIL_LIST_ID')
+
+    if not list_id:
+        raise MailChimpConfigException('Failed to get MAILCHIMP_SELLER_EMAIL_LIST_ID from the environment variables.')
+
+    # determine the age of the briefs being requested, defaulting to 24 hours ago
+    last_run_audit = (
+        db.session.query(AuditEvent)
+        .filter(AuditEvent.type == AuditTypes.send_seller_opportunities_campaign.value)
+        .order_by(AuditEvent.created_at.desc())
+        .first()
+    )
+    if last_run_audit:
+        last_run_time = last_run_audit.created_at
+    else:
+        last_run_time = pendulum.now().subtract(hours=24)
+
+    # gather the briefs
+    briefs = (
+        db.session.query(Brief)
+        .filter(
+            Framework.slug == 'digital-marketplace',
+            func.date(Brief.published_at) >= last_run_time
+        )
+        .all()
+    )
+
+    if len(briefs) < 1:
+        current_app.logger.info('No briefs found for daily seller email - the campaign was not sent')
+        return
+
+    # create a campaign
+    try:
+        today = pendulum.today()
+        campaign = client.campaigns.create(
+            data={
+                'type': 'regular',
+                'recipients': {
+                    'list_id': list_id
+                },
+                'settings': {
+                    'title': 'New opportunities - DMP sellers %s-%s-%s' % (today.year, today.month, today.day),
+                    'subject_line':
+                        'New opportunities in the Digital Marketplace' if len(briefs) > 1
+                        else 'A new opportunity in the Digital Marketplace',
+                    'reply_to': current_app.config.get('GENERIC_CONTACT_EMAIL'),
+                    'from_name': 'The Marketplace team'
+                }
+            }
+        )
+    except RequestException as e:
+        current_app.logger.error("An Mailchimp API error occurred, aborting: %s %s", e, e.response)
+        raise e
+
+    # add content to the campaign
+    try:
+        template = template_env.get_template('mailchimp_new_seller_opportunities.html')
+        email_body = template.render(briefs=briefs, current_year=pendulum.today().year)
+        client.campaigns.content.update(
+            campaign_id=campaign['id'],
+            data={
+                'html': email_body.encode('utf-8')
+            }
+        )
+    except RequestException as e:
+        current_app.logger.error("An Mailchimp API error occurred, aborting: %s %s", e, e.response)
+        raise e
+
+    # send the campaign
+    try:
+        client.campaigns.actions.send(campaign_id=campaign['id'])
+        current_app.logger.info('Sent new briefs seller email campaign')
+    except RequestException as e:
+        current_app.logger.error("An Mailchimp API error occurred, aborting: %s %s", e, e.response)
+        raise e
+
+    # record the audit event
+    audit = AuditEvent(
+        audit_type=AuditTypes.send_seller_opportunities_campaign,
+        user=None,
+        data={
+            'briefs_sent': len(briefs)
+        },
+        db_object=None
+    )
+    db.session.add(audit)
+    db.session.commit()
 
 
 @celery.task
@@ -51,7 +145,7 @@ def sync_mailchimp_seller_list():
             get_all=True
         )
     except RequestException as e:
-        current_app.logger.error("An Mailchimp API error occurred, aborting: %s %s", e, e.response.text)
+        current_app.logger.error("An Mailchimp API error occurred, aborting: %s %s", e, e.response)
         raise e
 
     current_member_addresses = []
@@ -104,4 +198,4 @@ def sync_mailchimp_seller_list():
                 new_address
             )
         except RequestException as e:
-            current_app.logger.error("An Mailchimp API error occurred: %s %s", e, e.response.text)
+            current_app.logger.error("An Mailchimp API error occurred: %s %s", e, e.response)

@@ -238,6 +238,10 @@ class Production(Live):
         'maintain-seller-email-list': {
             'task': 'app.tasks.mailchimp.sync_mailchimp_seller_list',
             'schedule': crontab(hour='*/4', minute=0)
+        },
+        'send-daily-seller-email': {
+            'task': 'app.tasks.mailchimp.send_new_briefs_email',
+            'schedule': crontab(hour=5, minute=0)
         }
     }
 

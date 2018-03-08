@@ -191,6 +191,8 @@ def application_user(app, request, applications):
 
 @pytest.fixture()
 def briefs(app, request, users):
+    params = request.param if hasattr(request, 'param') else {}
+    published_at = pendulum.parse(params['published_at']) if 'published_at' in params else utcnow()
     with app.app_context():
         for i in range(1, 6):
             db.session.add(Brief(
@@ -199,7 +201,7 @@ def briefs(app, request, users):
                 framework=Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").first(),
                 lot=Lot.query.filter(Lot.slug == 'digital-specialists').first(),
                 users=users,
-                published_at=utcnow(),
+                published_at=published_at,
                 withdrawn_at=None
             ))
             db.session.flush()
