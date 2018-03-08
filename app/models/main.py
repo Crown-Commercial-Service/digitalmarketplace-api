@@ -795,6 +795,8 @@ class User(db.Model):
 
     supplier = db.relationship(Supplier, lazy='joined', innerjoin=False)
 
+    user_research_opted_in = db.Column(db.Boolean, index=False, unique=False, nullable=False, default=False)
+
     @validates('email_address')
     def validate_email_address(self, key, value):
         existing_buyer_domains = BuyerEmailDomain.query.all()
@@ -852,6 +854,7 @@ class User(db.Model):
             'loggedInAt': self.logged_in_at.strftime(DATETIME_FORMAT)
                 if self.logged_in_at else self.created_at.strftime(DATETIME_FORMAT),
             'failedLoginCount': self.failed_login_count,
+            'userResearchOptedIn': self.user_research_opted_in,
         }
 
         if self.role == 'supplier':
