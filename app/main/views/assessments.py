@@ -126,6 +126,7 @@ def reject_assessment(id):
         db.session.commit()
         if message is not None:
             send_assessment_rejected_notification(assessment.supplier_domain.supplier_id,
+                                                  assessment.id,
                                                   assessment.supplier_domain.domain.name, message)
     except IntegrityError:
         abort(400)

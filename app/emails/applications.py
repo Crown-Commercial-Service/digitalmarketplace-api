@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 
 from flask import current_app
-from app.models import Application, User, Supplier, Domain
+from app.models import Assessment, Application, User, Supplier, Domain
 
 from dmutils.formats import DateFormatter
 from .util import render_email_template, send_or_handle_error
@@ -204,22 +204,26 @@ def send_assessment_requested_notification(assessment, requested_by):
     )
 
 
-def send_assessment_rejected_notification(supplier_id, domain_name, message):
+def send_assessment_rejected_notification(supplier_id, assessment_id, domain_name, message):
     TEMPLATE_FILENAME = 'assessment_rejected.md'
     supplier = Supplier.query.get(supplier_id)
 
     users = User.query.filter(User.supplier_code == supplier.code, User.active).all()
 
+    assessment = Assessment.query.get(assessment_id)
+
     email_addresses = [u.email_address for u in users]
     email_addresses.append(current_app.config['GENERIC_CONTACT_EMAIL'])
 
-    subject = "Notification: Outcome of area of expertise assessment"
+    subject = "Outcome of assessment for %s" % (domain_name)
 
     # prepare copy
     email_body = render_email_template(
         TEMPLATE_FILENAME,
         reject_message=message,
-        domain_name=domain_name
+        domain_name=domain_name,
+        opportunity_name=assessment.briefs[0].data['title'],
+        opportunity_id=assessment.briefs[0].id
     )
 
     send_or_handle_error(
@@ -244,7 +248,7 @@ def send_revert_notification(application_id, message):
         reversion_message=message
     )
 
-    subject = "Digital Marketplace application changes requested"
+    subject = "Feedback on your application to join Digital Marketplace"
 
     send_or_handle_error(
         email_addresses,
