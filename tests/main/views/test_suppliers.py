@@ -569,6 +569,10 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert response.status_code == 400
         assert "Invalid trading status" in response.get_data(as_text=True)
 
+    def test_update_succeeds_with_null_other_company_registration_number(self):
+        response = self.update_request({"otherCompanyRegistrationNumber": None})
+        assert response.status_code == 200
+
     @pytest.mark.parametrize('trading_status', filter(lambda x: x, Supplier.TRADING_STATUSES))
     def test_update_succeeds_with_valid_trading_status(self, trading_status):
         response = self.update_request({"tradingStatus": trading_status})
