@@ -10,7 +10,7 @@ from dmapiclient.audit import AuditTypes
 from app import db
 from requests.utils import default_headers
 from requests.exceptions import RequestException
-from sqlalchemy import true, func
+from sqlalchemy import true
 from os import getenv
 from jinja2 import Environment, PackageLoader, select_autoescape
 import pendulum
@@ -62,7 +62,8 @@ def send_new_briefs_email():
         db.session.query(Brief)
         .filter(
             Framework.slug == 'digital-marketplace',
-            func.date(Brief.published_at) >= last_run_time
+            Brief.data['sellerSelector'].astext == 'allSellers',
+            Brief.published_at >= last_run_time
         )
         .all()
     )
@@ -108,10 +109,21 @@ def send_new_briefs_email():
         current_app.logger.error("An Mailchimp API error occurred, aborting: %s %s", e, e.response)
         raise e
 
-    # send the campaign
+    # schedule the campaign to send at least an hour from runtime, rounded up to the nearest 15 minute mark
     try:
-        client.campaigns.actions.send(campaign_id=campaign['id'])
-        current_app.logger.info('Sent new briefs seller email campaign')
+        schedule_time = pendulum.now('UTC').add(hours=1)
+        current_minute = schedule_time.minute
+        if current_minute % 15 != 0:
+            new_minute = current_minute
+            while new_minute % 15 != 0:
+                new_minute = new_minute + 1
+            delta = new_minute - current_minute
+            schedule_time = schedule_time.add(minutes=delta)
+
+        client.campaigns.actions.schedule(campaign_id=campaign['id'], data={
+            'schedule_time': schedule_time
+        })
+        current_app.logger.info('Scheduled new briefs seller email campaign for %s', schedule_time.isoformat())
     except RequestException as e:
         current_app.logger.error("An Mailchimp API error occurred, aborting: %s %s", e, e.response)
         raise e

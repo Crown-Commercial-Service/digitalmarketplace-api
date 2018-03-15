@@ -193,11 +193,12 @@ def application_user(app, request, applications):
 def briefs(app, request, users):
     params = request.param if hasattr(request, 'param') else {}
     published_at = pendulum.parse(params['published_at']) if 'published_at' in params else utcnow()
+    data = params['data'] if 'data' in params else COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
     with app.app_context():
         for i in range(1, 6):
             db.session.add(Brief(
                 id=i,
-                data=COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy(),
+                data=data,
                 framework=Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").first(),
                 lot=Lot.query.filter(Lot.slug == 'digital-specialists').first(),
                 users=users,

@@ -6,7 +6,12 @@ from requests.exceptions import RequestException
 from os import environ
 from mock.mock import MagicMock
 from datetime import date
+from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF
 import pytest
+
+
+briefs_data_all_sellers = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
+briefs_data_all_sellers.update({'sellerSelector': 'allSellers'})
 
 
 @pytest.mark.parametrize('suppliers', [{'framework_slug': 'digital-marketplace'}], indirect=True)
@@ -80,6 +85,7 @@ def test_sync_mailchimp_seller_list_fails_with_empty_list_id(app, mocker):
             assert str(e) == 'Failed to get MAILCHIMP_SELLER_LIST_ID from the environment variables.'
 
 
+@pytest.mark.parametrize('briefs', [{'data': briefs_data_all_sellers}], indirect=True)
 def test_send_new_briefs_email_success(app, briefs, mocker):
     mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
     client = MagicMock()
@@ -92,7 +98,7 @@ def test_send_new_briefs_email_success(app, briefs, mocker):
 
         assert client.campaigns.create.called
         assert client.campaigns.content.update.called
-        assert client.campaigns.actions.send.called
+        assert client.campaigns.actions.schedule.called
 
         audit_event = AuditEvent.query.filter(
             AuditEvent.type == AuditTypes.send_seller_opportunities_campaign.value
@@ -102,7 +108,11 @@ def test_send_new_briefs_email_success(app, briefs, mocker):
         assert audit_event.data['briefs_sent'] == len(briefs)
 
 
-@pytest.mark.parametrize('briefs', [{'published_at': '%s-01-01' % (date.today().year - 1)}], indirect=True)
+@pytest.mark.parametrize(
+    'briefs',
+    [{'published_at': '%s-01-01' % (date.today().year - 1), 'data': briefs_data_all_sellers}],
+    indirect=True
+)
 def test_send_new_briefs_email_fails_no_new_briefs_in_past_24hrs(app, briefs, mocker):
     mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
     client = MagicMock()
@@ -115,7 +125,7 @@ def test_send_new_briefs_email_fails_no_new_briefs_in_past_24hrs(app, briefs, mo
 
         assert not client.campaigns.create.called
         assert not client.campaigns.content.update.called
-        assert not client.campaigns.actions.send.called
+        assert not client.campaigns.actions.schedule.called
 
 
 def test_send_new_briefs_email_fails_no_new_briefs_since_last_run(app, briefs, mocker):
@@ -140,7 +150,7 @@ def test_send_new_briefs_email_fails_no_new_briefs_since_last_run(app, briefs, m
 
         assert not client.campaigns.create.called
         assert not client.campaigns.content.update.called
-        assert not client.campaigns.actions.send.called
+        assert not client.campaigns.actions.schedule.called
 
 
 def test_send_new_briefs_email_fails_with_empty_list_id(app, mocker):
@@ -158,6 +168,7 @@ def test_send_new_briefs_email_fails_with_empty_list_id(app, mocker):
             assert str(e) == 'Failed to get MAILCHIMP_SELLER_EMAIL_LIST_ID from the environment variables.'
 
 
+@pytest.mark.parametrize('briefs', [{'data': briefs_data_all_sellers}], indirect=True)
 def test_send_new_briefs_email_fails_mailchimp_api_call_with_requests_error(app, briefs, mocker):
     mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
     requestEx = mocker.patch('app.tasks.mailchimp.RequestException')
