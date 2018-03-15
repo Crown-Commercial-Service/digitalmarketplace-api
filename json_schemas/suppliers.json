@@ -38,7 +38,14 @@
       "type": "string"
     },
     "otherCompanyRegistrationNumber": {
-      "type": "string"
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "registeredName": {
       "type": "string"
