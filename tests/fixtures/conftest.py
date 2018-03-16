@@ -4,9 +4,9 @@ import pytest
 import pendulum
 
 from app import create_app
-from app.models import db, utcnow, Contact, Supplier, SupplierDomain, User, Brief, ServiceTypePriceCeiling,\
+from app.models import db, utcnow, Agency, Contact, Supplier, SupplierDomain, User, Brief, ServiceTypePriceCeiling,\
     Framework, Lot, Domain, Assessment, Application, Region, ServiceType, ServiceTypePrice, ServiceSubType,\
-    SupplierFramework, UserFramework, BriefResponse
+    SupplierFramework, UserFramework, BriefResponse, BriefUser
 from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, WSGIApplicationWithEnvironment
 
 from sqlbag import temporary_database
@@ -54,6 +54,27 @@ def bearer(app):
 @pytest.fixture()
 def client(app):
     yield app.test_client()
+
+
+@pytest.fixture()
+def agencies(app, request):
+    with app.app_context():
+        db.session.add(Agency(
+            id=1,
+            name='Digital Transformation Agency',
+            domain='digital.gov.au',
+            category='Commonwealth'
+        ))
+
+        db.session.add(Agency(
+            id=2,
+            name='Test Agency',
+            domain='test.gov.au',
+            category='Commonwealth'
+        ))
+
+        db.session.commit()
+        yield Agency.query.all()
 
 
 @pytest.fixture()
@@ -223,6 +244,12 @@ def brief_responses(app, request, briefs, supplier_user):
 
         db.session.commit()
         yield BriefResponse.query.all()
+
+
+@pytest.fixture()
+def brief_users(app):
+    with app.app_context():
+        yield BriefUser.query.all()
 
 
 @pytest.fixture()

@@ -259,6 +259,11 @@ def parse_date(dt):
         abort(message=str(e))
 
 
+def get_user_email_domain():
+    """Returns the user's email domain without the '@' symbol."""
+    return current_user.email_address.split('@')[-1]
+
+
 class ServiceException(Exception):
     def __init__(self, msg):
         self.msg = msg
