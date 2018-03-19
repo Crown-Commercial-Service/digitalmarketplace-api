@@ -57,4 +57,4 @@ class TestStatus(BaseApplicationTest):
         json_data = json.loads(response.get_data().decode('utf-8'))
 
         assert "{}".format(json_data['status']) == "error"
-        assert json_data.get('search_api_status') is None
+        assert json_data.get('search_api_status') == {'status': 'n/a'}
