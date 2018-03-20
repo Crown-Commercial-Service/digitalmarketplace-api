@@ -61,6 +61,7 @@ def create_framework():
             lots=lots
         )
         db.session.add(framework)
+        db.session.flush()
         db.session.add(
             AuditEvent(
                 audit_type=AuditTypes.create_framework,
@@ -178,7 +179,11 @@ WHERE
                 audit_type=AuditTypes.framework_update,
                 db_object=framework,
                 user=updater_json['updated_by'],
-                data={'update': json_payload['frameworks']})
+                data={
+                    'update': json_payload['frameworks'],
+                    'frameworkSlug': framework.slug,
+                },
+            )
         )
         db.session.commit()
     except IntegrityError as e:
