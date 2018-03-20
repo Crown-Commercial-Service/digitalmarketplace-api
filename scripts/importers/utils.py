@@ -17,16 +17,20 @@ def nonEmptyOrNone(s):
     return None
 
 
-def check_response(response):
+def check_response(response, exit=True):
+    data = response.get_data()
     if response.status_code >= 400:
         msg = 'Error: server returned code {} {}'.format(
             response.status_code,
-            response.get_data()
+            data
         )
         logging.error(msg)
-        sys.exit(1)
+        if exit is True:
+            sys.exit(1)
+        else:
+            return json.loads(data)
     else:
-        return json.loads(response.get_data())
+        return json.loads(data)
 
 
 class Response(object):

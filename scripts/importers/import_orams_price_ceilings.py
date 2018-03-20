@@ -7,6 +7,7 @@ from utils import makeClient, check_response
 
 def run_import(input_file, client):
     num_successes = 0
+    num_updates = 0
 
     for record in csv.DictReader(input_file):
 
@@ -19,16 +20,27 @@ def run_import(input_file, client):
             'price': float(record['price_ceiling'])
         }
 
-        check_response(
-            client.post('/api/service-type-price-ceilings',
-                        data=json.dumps({'price': price}),
-                        content_type='application/json'))
+        response = client.post('/api/service-type-price-ceilings',
+                               data=json.dumps({'price': price}),
+                               content_type='application/json')
+        data = check_response(response, False)
+        msg = data.get('msg')
+        updated = response.status_code == 201
+
+        if updated is True:
+            num_updates += 1
 
         num_successes += 1
-        print '{}:{},{},{},{},{}'.format(num_successes, price['supplier_name'],
-                                         price['service_name'], price['region_name'], price['state'], price['price'])
+        print ('{:>5}[msg={}]:{},{},{},{},{}'
+               .format(num_successes,
+                       msg,
+                       price['supplier_name'],
+                       price['service_name'],
+                       price['region_name'],
+                       price['state'],
+                       price['price']))
 
-    print 'Total:{}'.format(num_successes)
+    print 'Total:{}, Updates:{}'.format(num_successes, num_updates)
 
 
 if __name__ == '__main__':

@@ -14,7 +14,7 @@ from ...utils import (
     url_for, pagination_links, display_list, get_valid_page_or_1,
     validate_and_return_updater_request, get_int_or_400
 )
-
+from pendulum import Pendulum
 from ...service_utils import (
     validate_and_return_service_request,
     update_and_validate_service,
@@ -408,10 +408,70 @@ def add_service_type_price():
     price = ServiceTypePrice()
     price.update_from_json(price_json['price'])
 
+    today = Pendulum.today()
+    tomorrow = Pendulum.tomorrow()
+    service_type_prices = (
+        ServiceTypePrice.query.filter(ServiceTypePrice.supplier_code == price.supplier_code,
+                                      ServiceTypePrice.service_type_id == price.service_type_id,
+                                      ServiceTypePrice.sub_service_id == price.sub_service_id,
+                                      ServiceTypePrice.region_id == price.region_id)
+                              .order_by(ServiceTypePrice.updated_at.desc())
+                              .all())
+
+    # look for current price
+    current_service_type_price = None
+    current_service_type_prices = [c for c in service_type_prices if c.date_from < today and c.date_to >= today]
+    current_service_type_prices_length = len(current_service_type_prices)
+    if current_service_type_prices_length >= 1:
+        # takes the one with the latest update date
+        current_service_type_price = current_service_type_prices[0]
+
+    # look for future price
+    future_service_type_price = None
+    future_service_type_prices = [c for c in service_type_prices if c.date_from <= tomorrow and c.date_to > tomorrow]
+    future_service_type_prices_length = len(future_service_type_prices)
+    if future_service_type_prices_length >= 1:
+        # takes the one with the latest update date
+        future_service_type_price = future_service_type_prices[0]
+
+    if current_service_type_price is not None and (future_service_type_price is None or
+                                                   future_service_type_price.id == current_service_type_price.id):
+        if current_service_type_price.price != price.price:
+            # Only add record when there are no future prices
+            current_service_type_price.updated_at = Pendulum.utcnow()
+            current_service_type_price.date_to = today
+
+            price.date_from = tomorrow
+            price.date_to = Pendulum(2050, 1, 1)
+
+            db.session.add(current_service_type_price)
+            db.session.add(price)
+            db.session.commit()
+            return jsonify(price=price.serializable,
+                           msg="Expired current price. Added new price"), 201
+        else:
+            return jsonify(price=current_service_type_price,
+                           msg="No changes made. Price is the same."), 200
+
+    if future_service_type_price is not None:
+        if future_service_type_price.price != price.price:
+            # Update future record. This should only happen when the import is executed mulitple times during the day.
+            # Assumming this is okay because the prices is not in effect yet.
+            future_service_type_price.price = price.price
+            future_service_type_price.updated_at = Pendulum.utcnow()
+            db.session.add(future_service_type_price)
+            db.session.commit()
+            return jsonify(price=future_service_type_price.serializable,
+                           msg="Updated future price record."), 201
+        else:
+            return jsonify(price=future_service_type_price.serializable,
+                           msg="No changes made. Price is the same."), 200
+
+    price.date_from = tomorrow
+    price.date_to = Pendulum(2050, 1, 1)
     db.session.add(price)
     db.session.commit()
-
-    return jsonify(price=price.serializable), 201
+    return jsonify(price=price.serializable, msg="Added price"), 201
 
 
 @main.route('/service-type-price-ceilings', methods=['POST'])
@@ -422,10 +482,30 @@ def add_service_type_price_ceilings():
     price = ServiceTypePriceCeiling()
     price.update_from_json(price_json['price'])
 
+    service_type_price_ceiling = ServiceTypePriceCeiling.query.filter(
+        ServiceTypePriceCeiling.supplier_code == price.supplier_code,
+        ServiceTypePriceCeiling.service_type_id == price.service_type_id,
+        ServiceTypePriceCeiling.sub_service_id == price.sub_service_id,
+        ServiceTypePriceCeiling.region_id == price.region_id
+    ).one_or_none()
+
+    if service_type_price_ceiling is not None:
+        if service_type_price_ceiling.price != price.price:
+            service_type_price_ceiling.price = price.price
+            service_type_price_ceiling.updated_at = Pendulum.utcnow()
+            db.session.add(service_type_price_ceiling)
+            db.session.commit()
+            return jsonify(price_ceiling=price.serializable,
+                           msg="Updated price ceiling record."), 201
+        else:
+            return jsonify(price_ceiling=price.serializable,
+                           msg="No changes made. Price is the same."), 200
+
     db.session.add(price)
     db.session.commit()
 
-    return jsonify(price_ceiling=price.serializable), 201
+    return jsonify(price_ceiling=price.serializable,
+                   msg="Added price ceiling record."), 201
 
 
 @main.route('/service-sub-types', methods=['POST'])
