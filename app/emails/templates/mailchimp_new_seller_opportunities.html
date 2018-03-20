@@ -560,8 +560,8 @@ For more information about the brief click on the headline, or simply <a data-sa
 								{% if brief.published_at %}
 								<strong>Published:</strong> {{ brief.published_at.strftime('%A %d %B %Y') }}<br>
 								{% endif %}
-								{% if brief.questions_closed_at %}
-								<strong>Closing:</strong> {{ brief.questions_closed_at.strftime('%A %d %B %Y') }}
+								{% if brief.closed_at %}
+								<strong>Closing:</strong> {{ brief.closed_at.strftime('%A %d %B %Y') }}
 								{% endif %}
 								{% if brief.data['summary'] %}
 								<p style="color: #4F4F4F;margin: 10px 0;padding: 0;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;font-family: Helvetica;font-size: 18px;line-height: 150%;text-align: left;">{{ brief.data['summary'] }}</p>
