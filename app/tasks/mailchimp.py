@@ -63,7 +63,8 @@ def send_new_briefs_email():
         .filter(
             Framework.slug == 'digital-marketplace',
             Brief.data['sellerSelector'].astext == 'allSellers',
-            Brief.published_at >= last_run_time
+            Brief.published_at >= last_run_time,
+            Brief.withdrawn_at.is_(None)
         )
         .all()
     )
