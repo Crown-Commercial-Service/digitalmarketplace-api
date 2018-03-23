@@ -75,16 +75,42 @@ class TestCreateFramework(BaseApplicationTest):
         assert len(framework.lots) == 4
 
     def test_create_adds_audit_event(self):
-        self.client.post("/frameworks",
-                         data=json.dumps(self.framework()),
-                         content_type="application/json")
+        framework_response = self.client.post(
+            "/frameworks",
+            data=json.dumps(self.framework()),
+            content_type="application/json",
+        )
+        audit_response = self.client.get("/audit-events")
 
-        response = self.client.get("/audit-events")
-
-        data = json.loads(response.get_data(as_text=True))
+        framework_id = json.loads(framework_response.data)['frameworks']['id']
+        data = json.loads(audit_response.get_data(as_text=True))
 
         assert len(data["auditEvents"]) == 1
-        assert data["auditEvents"][0]["type"] == "create_framework"
+        assert data["auditEvents"][0] == {
+            'acknowledged': False,
+            'createdAt': mock.ANY,
+            'data': {
+                'update': {
+                    'clarificationQuestionsOpen': False,
+                    'framework': 'g-cloud',
+                    'lots': [
+                        'saas',
+                        'paas',
+                        'iaas',
+                        'scs'
+                    ],
+                    'name': 'Example',
+                    'slug': 'example',
+                    'status': 'coming'
+                },
+            },
+            'id': mock.ANY,
+            'links': {'self': 'http://127.0.0.1:5000/audit-events'},
+            'objectId': framework_id,
+            'objectType': 'Framework',
+            'type': 'create_framework',
+            'user': 'example',
+        }
 
     def test_create_fails_if_framework_already_exists(self):
         self.client.post("/frameworks",
@@ -275,6 +301,31 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
                 self.client.get('/frameworks/example-framework').get_data()
             )['frameworks']
             assert post_data == get_data
+
+    def test_adds_audit_event(self, open_example_framework):
+        update_response = self.post_framework_update({'status': 'expired'})
+        framework_id = json.loads(update_response.data)['frameworks']['id']
+
+        audit_response = self.client.get("/audit-events")
+        data = json.loads(audit_response.get_data(as_text=True))
+
+        assert len(data["auditEvents"]) == 1
+        assert data["auditEvents"][0] == {
+            'acknowledged': False,
+            'createdAt': mock.ANY,
+            'data': {
+                'frameworkSlug': 'example-framework',
+                'update': {
+                    'status': 'expired'
+                }
+            },
+            'id': mock.ANY,
+            'links': {'self': 'http://127.0.0.1:5000/audit-events'},
+            'objectId': framework_id,
+            'objectType': 'Framework',
+            'type': 'framework_update',
+            'user': 'example user',
+        }
 
     def test_cannot_update_non_whitelisted_fields(self, open_example_framework):
         invalid_attributes_and_values = {

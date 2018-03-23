@@ -1196,6 +1196,8 @@ class AuditEvent(db.Model):
             'acknowledged': self.acknowledged,
             'user': self.user,
             'data': self.data,
+            'objectType': self.object_type,
+            'objectId': self.object_id,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'links': filter_null_value_fields({
                 "self": url_for("main.list_audits"),

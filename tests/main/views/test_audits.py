@@ -629,7 +629,11 @@ class TestAuditEvents(BaseTestAuditEvents):
         assert AuditEvent.query.count() == count + 1
 
     def test_should_get_audit_event(self):
-        aid = self.add_audit_event(0)
+        supplier_id = self.setup_dummy_suppliers(1)[0]
+        supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).first()
+        object_id = supplier.id
+        aid = self.add_audit_event(0, db_object=supplier)
+
         response = self.client.get('/audit-events')
         data = json.loads(response.get_data())
         assert response.status_code == 200
@@ -639,6 +643,8 @@ class TestAuditEvents(BaseTestAuditEvents):
             'acknowledged': False,
             'user': '0',
             'data': {'request': 'data'},
+            'objectType': 'Supplier',
+            'objectId': object_id,
             'id': aid,
             'createdAt': mock.ANY
         }
