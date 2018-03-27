@@ -1,6 +1,6 @@
 from app.api.helpers import Service
 from app import db
-from app.models import Brief, BriefResponse, BriefUser, AuditEvent, Framework, Lot, User
+from app.models import Brief, BriefResponse, BriefUser, AuditEvent, Framework, Lot, User, WorkOrder
 from sqlalchemy import and_, case, func, or_
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.functions import concat
@@ -35,11 +35,13 @@ class BriefsService(Service):
         """Returns summary of a user's briefs with the total number of sellers that applied."""
         results = (db.session.query(Brief.id, Brief.data['title'].astext.label('name'),
                                     Brief.closed_at, Brief.status, func.count(BriefResponse.id).label('applications'),
-                                    Framework.slug.label('framework'), Lot.slug.label('lot'))
+                                    Framework.slug.label('framework'), Lot.slug.label('lot'),
+                                    WorkOrder.id.label('work_order'))
                    .join(BriefUser, Framework, Lot)
                    .filter(current_user_id == BriefUser.user_id)
                    .outerjoin(BriefResponse, Brief.id == BriefResponse.brief_id)
-                   .group_by(Brief.id, Framework.slug, Lot.slug)
+                   .outerjoin(WorkOrder)
+                   .group_by(Brief.id, Framework.slug, Lot.slug, WorkOrder.id)
                    .order_by(sql_case([
                        (Brief.status == 'draft', 1),
                        (Brief.status == 'live', 2),

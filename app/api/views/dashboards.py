@@ -77,6 +77,7 @@ def get_buyer_dashboard_data_for_my_briefs():
             type: integer
           closed_at:
             type: string
+            nullable: true
           framework:
             type: string
           id:
@@ -87,6 +88,9 @@ def get_buyer_dashboard_data_for_my_briefs():
             type: string
           status:
             type: string
+          work_order:
+            type: integer
+            nullable: true
     responses:
       200:
         description: Buyer dashboard data for the 'My briefs' tab
@@ -124,6 +128,7 @@ def get_buyer_dashboard_data_for_team_briefs():
             type: string
           closed_at:
             type: string
+            nullable: true
           framework:
             type: string
           id:

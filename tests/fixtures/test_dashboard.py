@@ -2,7 +2,7 @@ import json
 import pytest
 
 from app import encryption
-from app.models import db, utcnow, Brief, BriefResponse, BriefUser, Framework, Lot, User, UserFramework
+from app.models import db, utcnow, Brief, BriefResponse, BriefUser, Framework, Lot, User, UserFramework, WorkOrder
 from faker import Faker
 from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF
 
@@ -99,11 +99,18 @@ def buyer_dashboard_briefs(app, request, buyer_dashboard_users, supplier_user):
                 db.session.add(brief_user)
                 db.session.flush()
 
-                # Link briefs with responses when they're live or closed
+                # Link briefs with responses and work orders when they're live or closed
                 if status == 'live' or status == 'closed':
                     db.session.add(BriefResponse(
                         brief_id=brief.id,
                         supplier_code=supplier_user.supplier_code,
+                        data={}
+                    ))
+
+                    db.session.add(WorkOrder(
+                        brief_id=brief.id,
+                        supplier_code=supplier_user.supplier_code,
+                        created_at=utcnow(),
                         data={}
                     ))
 
@@ -148,6 +155,18 @@ def test_buyer_dashboard_my_briefs_response_includes_count_of_applications(clien
     assert items[2]['applications'] == 1
 
 
+def test_buyer_dashboard_my_briefs_response_includes_work_order_ids(client, buyer_dashboard_briefs):
+    client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'testpassword'
+    }), content_type='application/json')
+
+    response = client.get('/2/dashboard/my/briefs')
+    items = json.loads(response.data)['items']
+    assert items[0]['work_order'] is None
+    assert items[1]['work_order'] == 1
+    assert items[2]['work_order'] == 2
+
+
 def test_buyer_dashboard_my_briefs_response_contains_items(client, buyer_dashboard_briefs):
     client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'testpassword'
@@ -163,6 +182,7 @@ def test_buyer_dashboard_my_briefs_response_contains_items(client, buyer_dashboa
     assert 'lot' in items[0]
     assert 'name' in items[0]
     assert 'status' in items[0]
+    assert 'work_order' in items[0]
 
 
 def test_buyer_dashboard_my_briefs_response_contains_organisation(client, agencies, buyer_dashboard_briefs):
