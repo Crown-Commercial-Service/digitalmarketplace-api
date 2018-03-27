@@ -243,6 +243,7 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
             'status': "standstill",
             'clarificationQuestionsOpen': False,
             'lots': ['saas', 'paas', 'iaas', 'scs'],
+            'applicationCloseDate': '2023-04-11T16:00:00.000000Z',
             'allowDeclarationReuse': True,
         }
 
@@ -250,6 +251,7 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
             'frameworkAgreementDetails',
             'status',
             'clarificationQuestionsOpen',
+            'applicationCloseDate',
             'allowDeclarationReuse',
         ]
 

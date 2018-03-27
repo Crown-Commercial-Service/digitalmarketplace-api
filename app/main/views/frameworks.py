@@ -95,6 +95,7 @@ def update_framework(framework_slug):
         'status': 'status',
         'clarificationQuestionsOpen': 'clarification_questions_open',
         'frameworkAgreementDetails': 'framework_agreement_details',
+        'applicationCloseDate': 'application_close_date',
         'allowDeclarationReuse': 'allow_declaration_reuse',
     }
 
