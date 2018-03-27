@@ -1,0 +1,28 @@
+{
+    "api": {
+        "npm": [],
+        "path": "dto-digitalmarketplace-api"
+    },
+    "buyer": {
+        "npm": [],
+        "path": "dto-digitalmarketplace-buyer-frontend"
+    },
+    "supplier": {
+        "npm": [
+            "install",
+            "run frontend-install",
+            "run frontend-build:production"
+        ],
+        "path": "dto-digitalmarketplace-supplier-frontend"
+    },
+    "frontend": {
+        "npm": [
+            "run build"
+        ],
+        "path": "dto-digitalmarketplace-frontend"
+    },
+    "admin": {
+        "npm": [],
+        "path": "dto-digitalmarketplace-admin-frontend"
+    }
+}

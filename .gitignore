@@ -71,3 +71,6 @@ dump.py
 *.csv
 /*.sh
 **/.vscode/
+**/scripts/env-deploy/temp
+**/scripts/env-deploy/secrets
+**/scripts/env-deploy/schema-sync/*.tar
