@@ -177,7 +177,7 @@ def process_declaration_manifest(path_to_manifest):
     """
     all_the_questions_in_order = []
     with open(path_to_manifest, 'r') as f:
-        declaration_pages = yaml.load(f)
+        declaration_pages = yaml.safe_load(f)
         for declaration_page in declaration_pages:
             for question in declaration_page['questions']:
                 all_the_questions_in_order.append(question)
