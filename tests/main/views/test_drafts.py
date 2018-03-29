@@ -337,10 +337,28 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         assert data2['services']['serviceTypes'] == ['Implementation']
         assert data2['services']['serviceBenefits'] == ['Tests pass']
 
-    @mock.patch('app.db')
-    def test_update_draft_uses_serializable_isolation_level(self, db):
-        self.client.post('/draft-services/1234')
-        db.session.connection.assert_called_with(execution_options={'isolation_level': 'SERIALIZABLE'})
+    def test_update_draft_uses_with_for_update_for_isolation(self):
+        filter_mock = mock.Mock()
+        filter_mock.with_for_update.return_value = DraftService.query
+        query_patch = mock.patch('app.main.views.drafts.DraftService.query')
+        query = query_patch.start()
+        query.filter.return_value = filter_mock
+
+        self.client.post(
+            '/draft-services/1234',
+            data=json.dumps({
+                'services': {
+                    'serviceTypes': [
+                        'Implementation'
+                    ]
+                },
+                'updated_by': 'Test',
+            }),
+            content_type='application/json')
+
+        query_patch.stop()
+
+        filter_mock.with_for_update.assert_called_once_with(of=DraftService)
 
     def test_update_draft_should_create_audit_event(self):
         res = self.client.post(
