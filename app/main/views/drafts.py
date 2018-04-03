@@ -1,10 +1,11 @@
 from dmapiclient.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import lazyload
 from sqlalchemy import asc
 
 from .. import main
-from ... import db, isolation_level
+from ... import db
 from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, Supplier, AuditEvent, Framework
 from ...utils import (
@@ -76,7 +77,6 @@ def copy_draft_service_from_existing_service(service_id):
 
 
 @main.route('/draft-services/<int:draft_id>', methods=['POST'])
-@isolation_level("SERIALIZABLE")
 def edit_draft_service(draft_id):
     """
     Edit a draft service
@@ -90,6 +90,10 @@ def edit_draft_service(draft_id):
 
     draft = DraftService.query.filter(
         DraftService.id == draft_id
+    ).with_for_update(
+        of=DraftService
+    ).options(
+        lazyload('*')
     ).first_or_404()
 
     draft.update_from_json(update_json)
