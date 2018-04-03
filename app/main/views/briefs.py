@@ -318,7 +318,7 @@ def award_brief_details(brief_id, brief_response_id):
         BriefResponse.id == brief_response_id
     ).first_or_404()
 
-    if not brief_response.award_details.get('pending'):
+    if brief_response.status not in ('pending-awarded', 'awarded'):
         abort(400, "Cannot update award details for a Brief without a winning supplier")
 
     # Drop any null values to ensure correct validation messages
@@ -331,7 +331,12 @@ def award_brief_details(brief_id, brief_response_id):
         abort(400, errors)
 
     brief_response.award_details = award_details
-    brief_response.awarded_at = datetime.utcnow()
+    if brief_response.status == 'pending-awarded':
+        brief_response.awarded_at = datetime.utcnow()
+    else:
+        current_app.logger.info(
+            "Updating previously awarded Brief so awarded_at is not reset. See audit event for details."
+        )
 
     audit_event = AuditEvent(
         audit_type=AuditTypes.update_brief_response,
