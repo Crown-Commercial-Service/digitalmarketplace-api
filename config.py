@@ -241,7 +241,7 @@ class Production(Live):
         },
         'send-daily-seller-email': {
             'task': 'app.tasks.mailchimp.send_new_briefs_email',
-            'schedule': crontab(hour=6, minute=0)
+            'schedule': crontab(hour=7, minute=0)
         }
     }
 
