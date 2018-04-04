@@ -437,7 +437,6 @@ def reset_password(token):
     try:
         update_user_details(
             password=json_payload['password'],
-            email_address=json_payload['email_address'],
             user_id=json_payload['user_id']
         )
 
