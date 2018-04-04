@@ -486,17 +486,13 @@ class SupplierFramework(db.Model):
         return value
 
     @staticmethod
-    def find_by_framework(framework_slug):
+    def find_by_supplier_and_framework(supplier_id, framework_slug):
         return SupplierFramework.query.filter(
             SupplierFramework.framework.has(
-                Framework.slug == framework_slug)
+                Framework.slug == framework_slug
+            ),
+            SupplierFramework.supplier_id == supplier_id,
         )
-
-    @staticmethod
-    def find_by_supplier_and_framework(supplier_id, framework_slug):
-        return SupplierFramework.find_by_framework(framework_slug).filter(
-            SupplierFramework.supplier_id == supplier_id
-        ).first()
 
     @staticmethod
     def get_service_counts(supplier_id):

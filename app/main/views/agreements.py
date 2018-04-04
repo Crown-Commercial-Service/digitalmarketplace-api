@@ -31,7 +31,7 @@ def create_framework_agreement():
 
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         update_json['supplierId'], update_json['frameworkSlug']
-    )
+    ).first()
 
     if not supplier_framework or not supplier_framework.on_framework:
         abort(
