@@ -1476,6 +1476,23 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
         "updated_by": "user@email.com"
     }
 
+    def _setup_brief_response(self, status='pending-awarded'):
+        self.setup_dummy_briefs(1, status="closed")
+        self.setup_dummy_suppliers(1)
+        if status == 'draft':
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, data={})
+        else:
+            brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
+        db.session.add(brief_response)
+        db.session.commit()
+        if status == 'pending-awarded':
+            brief_response.award_details = {'pending': True}
+            db.session.add(brief_response)
+            db.session.commit()
+
+        assert brief_response.status == status
+        return brief_response.id
+
     def _post_to_award_details_endpoint(self, payload, brief_response_id):
         return self.client.post(
             self.award_url.format(brief_response_id),
@@ -1484,16 +1501,7 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
         )
 
     def test_can_supply_award_details_for_closed_brief_with_awarded_brief_response(self, index_brief):
-        self.setup_dummy_briefs(1, status="closed")
-        self.setup_dummy_suppliers(1)
-        brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-        db.session.add(brief_response)
-        db.session.commit()
-        brief_response.award_details = {'pending': True}
-        db.session.add(brief_response)
-        db.session.commit()
-        assert brief_response.status == 'pending-awarded'
-        brief_response_id = brief_response.id
+        brief_response_id = self._setup_brief_response()
 
         res = self._post_to_award_details_endpoint(self.valid_payload, brief_response_id)
         assert res.status_code == 200
@@ -1512,29 +1520,44 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
             }
         }
 
-    def test_400_if_supplying_details_for_closed_brief_without_awarded_brief_response(self, index_brief):
-        self.setup_dummy_briefs(1, status="closed")
-        self.setup_dummy_suppliers(1)
-        brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-        db.session.add(brief_response)
-        db.session.commit()
-        assert brief_response.status == 'submitted'
+    def test_edit_award_details_for_awarded_brief(self, index_brief):
+        brief_response_id = self._setup_brief_response()
 
-        res = self._post_to_award_details_endpoint(self.valid_payload, brief_response.id)
+        self._post_to_award_details_endpoint(
+            {
+                "awardDetails": {
+                    "awardedContractStartDate": "2020-12-31",
+                    "awardedContractValue": "9900000.95",  # Wrong value
+                },
+                "updated_by": "user@email.com"
+            },
+            brief_response_id
+        )
+        assert BriefResponse.query.get(brief_response_id).status == 'awarded'
+
+        # Fix the details
+        res = self._post_to_award_details_endpoint(self.valid_payload, brief_response_id)
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))
+        assert data['briefs']['awardedBriefResponseId'] == brief_response_id
+        assert BriefResponse.query.get(brief_response_id).award_details == {
+            "awardedContractStartDate": "2020-12-31",
+            "awardedContractValue": "99.95",
+        }
+        assert index_brief.called
+
+    @pytest.mark.parametrize('brief_response_status', ['draft', 'submitted'])
+    def test_400_if_supplying_details_for_draft_or_submitted_brief_response(self, index_brief, brief_response_status):
+        brief_response_id = self._setup_brief_response(status=brief_response_status)
+
+        res = self._post_to_award_details_endpoint(self.valid_payload, brief_response_id)
         assert res.status_code == 400
         data = json.loads(res.get_data(as_text=True))
         assert data['error'] == "Cannot update award details for a Brief without a winning supplier"
         assert index_brief.called is False
 
     def test_400_if_award_details_payload_invalid(self, index_brief):
-        self.setup_dummy_briefs(1, status="closed")
-        self.setup_dummy_suppliers(1)
-        brief_response = BriefResponse(brief_id=1, supplier_id=0, submitted_at=datetime.utcnow(), data={})
-        db.session.add(brief_response)
-        db.session.commit()
-        brief_response.award_details = {'pending': True}
-        db.session.add(brief_response)
-        db.session.commit()
+        brief_response_id = self._setup_brief_response()
 
         res = self._post_to_award_details_endpoint(
             {
@@ -1545,7 +1568,7 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
                     "awardedContractStartDate-year": None,
                 },
                 "updated_by": "user@email.com"
-            }, brief_response.id
+            }, brief_response_id
         )
 
         data = json.loads(res.get_data(as_text=True))
