@@ -21,7 +21,8 @@ def get_metrics():
             metrics["briefs_" + key] = {"value": metric, "ts": timestamp}
 
     brief_response_count = BriefResponse.query\
-        .filter(BriefResponse.data.isnot(None))\
+        .filter(BriefResponse.data.isnot(None),
+                BriefResponse.withdrawn_at.is_(None))\
         .order_by(desc(BriefResponse.created_at)).count()
     metrics["brief_response_count"] = {"value": brief_response_count, "ts": timestamp}
 

@@ -10,11 +10,13 @@ from ...utils import (
     pagination_links, get_valid_page_or_1, url_for,
     validate_and_return_updater_request,
 )
+from ..helpers import debug_only
 
 from ...service_utils import validate_and_return_supplier
 
 
 @main.route('/brief-responses', methods=['POST'])
+@debug_only
 def create_brief_response():
     json_payload = get_json_from_request()
     updater_json = validate_and_return_updater_request()
@@ -81,7 +83,8 @@ def create_brief_response():
 @main.route('/brief-responses/<int:brief_response_id>', methods=['GET'])
 def get_brief_response(brief_response_id):
     brief_response = BriefResponse.query.filter(
-        BriefResponse.id == brief_response_id
+        BriefResponse.id == brief_response_id,
+        BriefResponse.withdrawn_at.is_(None)
     ).first_or_404()
 
     return jsonify(briefResponses=brief_response.serialize())
@@ -93,13 +96,12 @@ def list_brief_responses():
     brief_id = get_int_or_400(request.args, 'brief_id')
     supplier_code = get_int_or_400(request.args, 'supplier_code')
 
-    brief_responses = BriefResponse.query
+    brief_responses = BriefResponse.query.filter(BriefResponse.withdrawn_at.is_(None))
     if supplier_code is not None:
         brief_responses = brief_responses.filter(BriefResponse.supplier_code == supplier_code)
 
     if brief_id is not None:
         brief_responses = brief_responses.filter(BriefResponse.brief_id == brief_id)
-
         if request.headers.get('User-Agent', '').startswith('DM-API-Client'):
             audit = AuditEvent(
                 audit_type=AuditTypes.read_brief_responses,
@@ -113,8 +115,10 @@ def list_brief_responses():
             db.session.commit()
 
     if brief_id or supplier_code:
+        brief_responses = [brief_response.serialize() for brief_response in brief_responses.all()]
+
         return jsonify(
-            briefResponses=[brief_response.serialize() for brief_response in brief_responses.all()],
+            briefResponses=brief_responses,
             links={'self': url_for('.list_brief_responses', supplier_code=supplier_code, brief_id=brief_id)}
         )
 
@@ -123,8 +127,10 @@ def list_brief_responses():
         per_page=current_app.config['DM_API_BRIEF_RESPONSES_PAGE_SIZE']
     )
 
+    brief_responses_json = [brief_response.serialize() for brief_response in brief_responses.items]
+
     return jsonify(
-        briefResponses=[brief_response.serialize() for brief_response in brief_responses.items],
+        briefResponses=brief_responses_json,
         links=pagination_links(
             brief_responses,
             '.list_brief_responses',

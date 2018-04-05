@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/schema#",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "properties": {
     "attachedDocumentURL": {
       "items": {
@@ -33,6 +33,9 @@
       "maxItems": 20,
       "minItems": 0,
       "type": "array"
+    },
+    "specialistName": {
+      "type": "string"
     },
     "respondToEmailAddress": {
       "format": "email",

@@ -16,8 +16,8 @@ from app.models import (
     User, Lot, Framework, Service,
     Supplier, SupplierFramework,
     SupplierDomain, Domain, Product,
-    Brief, BriefResponse, Address,
-    ValidationError,
+    Brief, BriefResponse,
+    Address, ValidationError,
     BriefClarificationQuestion,
     WorkOrder, ServiceCategory, ServiceRole, Application,
     Agreement, SignedAgreement
@@ -703,19 +703,7 @@ class TestBriefResponses(BaseApplicationTest):
             assert isinstance(brief_response.created_at, builtindatetime)
             assert brief_response.data == {}
 
-    def test_foreign_fields_are_removed_from_brief_response_data(self):
-        brief_response = BriefResponse(data={})
-        brief_response.data = {'foo': 'bar', 'briefId': 5, 'supplierCode': 100}
-
-        assert brief_response.data == {'foo': 'bar'}
-
-    def test_nulls_are_removed_from_brief_response_data(self):
-        brief_response = BriefResponse(data={})
-        brief_response.data = {'foo': 'bar', 'bar': None}
-
-        assert brief_response.data == {'foo': 'bar'}
-
-    def test_whitespace_is_stripped_from_brief_response_data(self):
+    def test_whitespace_is_stripped_from_brief_response_answer(self):
         brief_response = BriefResponse(data={})
         brief_response.data = {'foo': ' bar ', 'bar': ['', '  foo']}
 

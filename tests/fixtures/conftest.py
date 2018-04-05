@@ -220,8 +220,8 @@ def briefs(app, request, users):
             db.session.add(Brief(
                 id=i,
                 data=data,
-                framework=Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").first(),
-                lot=Lot.query.filter(Lot.slug == 'digital-specialists').first(),
+                framework=Framework.query.filter(Framework.slug == "digital-service-professionals").first(),
+                lot=Lot.query.filter(Lot.slug == 'digital-professionals').first(),
                 users=users,
                 published_at=published_at,
                 withdrawn_at=None

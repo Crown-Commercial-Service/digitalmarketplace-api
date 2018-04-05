@@ -80,6 +80,7 @@ def test_create_new_brief_response(client, supplier_user, supplier_domains, brie
             'essentialRequirements': ['ABC', 'XYZ'],
             'availability': '01/01/2018',
             'respondToEmailAddress': 'supplier@email.com',
+            'specialistName': 'Test Specialist Name',
             'dayRate': '100',
         }),
         content_type='application/json'
@@ -100,6 +101,7 @@ def test_create_brief_response_creates_an_audit_event(client, supplier_user, sup
             'essentialRequirements': ['ABC', 'XYZ'],
             'availability': '01/01/2018',
             'respondToEmailAddress': 'supplier@email.com',
+            'specialistName': 'Test Specialist Name',
             'dayRate': '100',
         }),
         content_type='application/json'
@@ -114,9 +116,9 @@ def test_create_brief_response_creates_an_audit_event(client, supplier_user, sup
     assert audit_events[0].data['briefResponseId'] == 1
 
 
-def test_cannot_respond_to_a_brief_more_than_once_from_the_same_supplier(client, supplier_user,
-                                                                         supplier_domains, briefs,
-                                                                         assessments, suppliers):
+def test_create_brief_response_with_object(client, supplier_user,
+                                           supplier_domains, briefs,
+                                           assessments, suppliers):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
     }), content_type='application/json')
@@ -125,14 +127,38 @@ def test_cannot_respond_to_a_brief_more_than_once_from_the_same_supplier(client,
     res = client.post(
         '/2/brief/1/respond',
         data=json.dumps({
-            'essentialRequirements': ['ABC', 'XYZ'],
+            'essentialRequirements': {'0': 'ABC', '1': 'XYZ'},
             'availability': '01/01/2018',
             'respondToEmailAddress': 'supplier@email.com',
+            'specialistName': 'Test Specialist Name',
             'dayRate': '100',
         }),
         content_type='application/json'
     )
     assert res.status_code == 201
+
+
+def test_cannot_respond_to_a_brief_more_than_three_times_from_the_same_supplier(client, supplier_user,
+                                                                                supplier_domains, briefs,
+                                                                                assessments, suppliers):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    for i in range(0, 3):
+        res = client.post(
+            '/2/brief/1/respond',
+            data=json.dumps({
+                'essentialRequirements': ['ABC', 'XYZ'],
+                'availability': '01/01/2018',
+                'respondToEmailAddress': 'supplier@email.com',
+                'specialistName': 'Test Specialist Name',
+                'dayRate': '100',
+            }),
+            content_type='application/json'
+        )
+        assert res.status_code == 201
 
     res = client.post(
         '/2/brief/1/respond',
@@ -140,12 +166,13 @@ def test_cannot_respond_to_a_brief_more_than_once_from_the_same_supplier(client,
             'essentialRequirements': ['ABC', 'XYZ'],
             'availability': '01/01/2018',
             'respondToEmailAddress': 'supplier@email.com',
+            'specialistName': 'Test Specialist Name',
             'dayRate': '100',
         }),
         content_type='application/json'
     )
     assert res.status_code == 400
-    assert 'Brief response already exists' in res.get_data(as_text=True)
+    assert 'There are already 3 brief responses for supplier' in res.get_data(as_text=True)
 
 
 def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(client, supplier_user,
@@ -162,6 +189,7 @@ def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(client, s
             'essentialRequirements': ['XYZ'],
             'availability': '01/01/2018',
             'respondToEmailAddress': 'supplier@email.com',
+            'specialistName': 'Test Specialist Name',
             'dayRate': '100',
         }),
         content_type='application/json'
@@ -172,7 +200,7 @@ def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(client, s
 
 def test_create_brief_response_success_with_audit_exception(client, supplier_user, supplier_domains,
                                                             briefs, assessments, suppliers, mocker):
-    audit_event = mocker.patch('app.api.views.briefs.AuditEvent')
+    audit_event = mocker.patch('app.api.views.briefs.audit_service')
     audit_event.side_effect = Exception('Test')
 
     res = client.post('/2/login', data=json.dumps({
@@ -186,6 +214,7 @@ def test_create_brief_response_success_with_audit_exception(client, supplier_use
             'essentialRequirements': ['ABC', 'XYZ'],
             'availability': '01/01/2018',
             'respondToEmailAddress': 'supplier@email.com',
+            'specialistName': 'Test Specialist Name',
             'dayRate': '100',
         }),
         content_type='application/json'
@@ -205,6 +234,7 @@ def test_get_brief(client, supplier_user, supplier_domains, briefs, assessments,
             'essentialRequirements': ['ABC', 'XYZ'],
             'availability': '01/01/2018',
             'respondToEmailAddress': 'supplier@email.com',
+            'specialistName': 'Test Specialist Name',
             'dayRate': '100',
         }),
         content_type='application/json'

@@ -29,10 +29,10 @@
 {{nice_to_have_requirements}}
 
 
-Thanks and good luck,
+Thanks,
 
-The Marketplace team
+The Digital Marketplace Team  
+Digital Transformation Agency  
+marketplace.service.gov.au | dta.gov.au
 
-**Your feedback shapes the Marketplace**
-
-The Digital Marketplace is an agile development in Beta. This means it evolves over time in response to user needs. If you have any questions, feedback or would like to take part in user research, please email [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au)</a>.
+Note: Digital Marketplace is an agile development informed by user research. Please feedback or comment at [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au)

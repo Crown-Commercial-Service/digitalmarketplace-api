@@ -25,7 +25,10 @@ class BriefsService(Service):
             .join(Brief, Lot)\
             .outerjoin(AuditEvent, and_(Brief.id == AuditEvent.data['briefId'].astext.cast(Numeric),
                                         AuditEvent.type == 'read_brief_responses'))\
-            .filter(BriefResponse.supplier_code == code, Brief.closed_at > pendulum.create(2018, 1, 1))\
+            .filter(BriefResponse.supplier_code == code,
+                    Brief.closed_at > pendulum.create(2018, 1, 1),
+                    BriefResponse.withdrawn_at.is_(None)
+                    )\
             .order_by(Brief.closed_at, Brief.id)\
             .all()
 

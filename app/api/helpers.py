@@ -252,6 +252,14 @@ def abort(message):
     return flask_abort(make_response(jsonify(message=message), 400))
 
 
+def forbidden(message):
+    return flask_abort(make_response(jsonify(message=message), 403))
+
+
+def not_found(message):
+    return flask_abort(make_response(jsonify(message=message), 404))
+
+
 def parse_date(dt):
     try:
         return pendulum.parse(dt).date()

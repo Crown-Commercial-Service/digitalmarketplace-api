@@ -155,6 +155,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
 
         assert res.status_code == 400
 
+    @pytest.mark.skip()
     def test_cannot_create_brief_response_with_invalid_json(self, live_framework):
         res = self.client.post(
             '/brief-responses',

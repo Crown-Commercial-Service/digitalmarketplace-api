@@ -50,6 +50,9 @@ def send_brief_response_received_email(supplier, brief, brief_response):
     )
 
     subject = "We've received your application"
+    specialist_name = brief_response.data.get('specialistName', None)
+    if specialist_name:
+        subject = '{} for {}'.format(subject, specialist_name)
 
     send_or_handle_error(
         to_address,

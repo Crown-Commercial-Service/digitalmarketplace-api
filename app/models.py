@@ -2064,6 +2064,7 @@ class BriefResponse(db.Model):
     supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
 
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+    withdrawn_at = db.Column(DateTime, index=True, nullable=True)
 
     brief = db.relationship('Brief')
     supplier = db.relationship('Supplier', lazy='joined')
@@ -2071,7 +2072,7 @@ class BriefResponse(db.Model):
     @validates('data')
     def validates_data(self, key, data):
         data = drop_foreign_fields(data, [
-            'supplierCode', 'briefId',
+            'supplierCode', 'briefId'
         ])
 
         NTF = 'niceToHaveRequirements'
