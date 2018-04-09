@@ -817,9 +817,9 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
                 content_type='application/json')
 
             assert response.status_code == 201
-            answers = SupplierFramework \
-                .find_by_supplier_and_framework(0, 'test-open')
-            assert answers.declaration['question'] == 'answer'
+            answer = SupplierFramework \
+                .find_by_supplier_and_framework(0, 'test-open').first()
+            assert answer.declaration['question'] == 'answer'
 
     def test_add_null_declaration_should_result_in_dict(self):
         response = self.client.put(
@@ -831,9 +831,9 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
             content_type='application/json')
 
         assert response.status_code == 201
-        answers = SupplierFramework \
-            .find_by_supplier_and_framework(0, 'test-open')
-        assert isinstance(answers.declaration, dict)
+        answer = SupplierFramework \
+            .find_by_supplier_and_framework(0, 'test-open').first()
+        assert isinstance(answer.declaration, dict)
 
     def test_update_existing_declaration(self):
         framework_id = Framework.query.filter(
@@ -857,7 +857,7 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
 
         assert response.status_code == 200
         supplier_framework = SupplierFramework \
-            .find_by_supplier_and_framework(0, 'test-open')
+            .find_by_supplier_and_framework(0, 'test-open').first()
         assert supplier_framework.declaration['question'] == 'answer2'
 
 
@@ -1248,7 +1248,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
     def test_get_supplier_framework_does_not_return_draft_framework_agreement(self, supplier_framework):
         supplier_framework_object = SupplierFramework.find_by_supplier_and_framework(
             supplier_framework['supplierId'], supplier_framework['frameworkSlug']
-        )
+        ).first()
 
         framework_agreement = FrameworkAgreement(
             supplier_framework=supplier_framework_object,
@@ -1295,7 +1295,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
     def test_get_supplier_framework_returns_signed_framework_agreement(self, supplier_framework):
         supplier_framework_object = SupplierFramework.find_by_supplier_and_framework(
             supplier_framework['supplierId'], supplier_framework['frameworkSlug']
-        )
+        ).first()
 
         framework_agreement = FrameworkAgreement(
             supplier_framework=supplier_framework_object,
@@ -1349,7 +1349,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
     def test_get_supplier_framework_returns_countersigned_framework_agreement(self, supplier_framework, supplier):
         supplier_framework_object = SupplierFramework.find_by_supplier_and_framework(
             supplier_framework['supplierId'], supplier_framework['frameworkSlug']
-        )
+        ).first()
 
         framework_agreement = FrameworkAgreement(
             supplier_framework=supplier_framework_object,

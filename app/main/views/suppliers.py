@@ -2,6 +2,7 @@ from datetime import datetime
 
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.orm import lazyload
 from dmapiclient.audit import AuditTypes
 from dmutils.formats import DATETIME_FORMAT
 
@@ -268,7 +269,8 @@ def set_a_declaration(supplier_id, framework_slug):
 
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         supplier_id, framework_slug
-    )
+    ).first()
+
     if supplier_framework is not None:
         status_code = 200 if supplier_framework.declaration else 201
     else:
@@ -347,7 +349,10 @@ def get_supplier_frameworks_info(supplier_id):
 def get_supplier_framework_info(supplier_id, framework_slug):
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         supplier_id, framework_slug
-    )
+    ).options(
+        lazyload('*')
+    ).first()
+
     if supplier_framework is None:
         abort(404)
 
