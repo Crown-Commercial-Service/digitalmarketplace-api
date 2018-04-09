@@ -948,6 +948,8 @@ class Domain(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     ordering = db.Column(db.Integer, nullable=False)
+    price_minimum = db.Column(db.Numeric, nullable=False)
+    price_maximum = db.Column(db.Numeric, nullable=False)
 
     suppliers = relationship("SupplierDomain", back_populates="domain", lazy='joined')
     assoc_suppliers = association_proxy('suppliers', 'supplier')

@@ -152,20 +152,20 @@ SELECT pg_catalog.setval('audit_event_id_seq', 1, false);
 --
 -- Data for Name: domain; Type: TABLE DATA; Schema: public; Owner: -
 --
-
-INSERT INTO domain (id, name, ordering) VALUES (1, 'Strategy and Policy', 1);
-INSERT INTO domain (id, name, ordering) VALUES (2, 'Change, Training and Transformation', 2);
-INSERT INTO domain (id, name, ordering) VALUES (3, 'User research and Design', 3);
-INSERT INTO domain (id, name, ordering) VALUES (4, 'Agile delivery and Governance', 4);
-INSERT INTO domain (id, name, ordering) VALUES (5, 'Recruitment', 5);
-INSERT INTO domain (id, name, ordering) VALUES (6, 'Software engineering and Development', 6);
-INSERT INTO domain (id, name, ordering) VALUES (7, 'Content and Publishing', 7);
-INSERT INTO domain (id, name, ordering) VALUES (8, 'Cyber security', 8);
-INSERT INTO domain (id, name, ordering) VALUES (9, 'Marketing, Communications and Engagement', 9);
-INSERT INTO domain (id, name, ordering) VALUES (10, 'Support and Operations', 10);
-INSERT INTO domain (id, name, ordering) VALUES (11, 'Data science', 11);
-INSERT INTO domain (id, name, ordering) VALUES (12, 'Digital products', 12);
-INSERT INTO domain (id, name, ordering) VALUES (13, 'Emerging technology', 13);
+    
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (1, 'Strategy and Policy'                     , 1 , 0, 10000);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (2, 'Change, Training and Transformation'     , 2 , 0, 10000);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (3, 'User research and Design'                , 3 , 0, 10000);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (4, 'Agile delivery and Governance'           , 4 , 0, 10000);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (5, 'Recruitment'                             , 5 , 0, 10000);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (6, 'Software engineering and Development'    , 6 , 0, 10000);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (7, 'Content and Publishing'                  , 7 , 0, 10000);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (8, 'Cyber security'                          , 8 , 0, 10000);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (9, 'Marketing, Communications and Engagement', 9 , 0, 10000);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (10, 'Support and Operations'                 , 10, 0, 10000);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (11, 'Data science'                           , 11, 0, 10000);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (12, 'Digital products'                       , 12, 0, 10000);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum) VALUES (13, 'Emerging technology'                    , 13, 0, 10000);
 
 
 --
