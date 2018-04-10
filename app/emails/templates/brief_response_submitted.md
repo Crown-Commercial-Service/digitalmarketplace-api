@@ -1,17 +1,9 @@
 ##What happens next
+- When the opportunity closes on {{ closing_at }} the buyer will start reviewing all responses.
+- If you are shortlisted for evaluation, the buyer will be in touch to arrange an evaluation. See the "How sellers will be evaluated" section of [{{ brief_name }}]({{ brief_url }})
+- If you're not successful, the buyer has been asked to give you feedback.
 
-<blockquote>Once the opportunity closes (on {{ closing_at }}) the buyer will review all responses.</blockquote>
-
-###If you're shortlisted for evaluation
-- The buyer will be in touch to arrange your evaluation.
-- The evaluation methods are listed in the opportunity: [{{ brief_name }}]({{ brief_url }})
-  
-
-###If you're not successful
-- The buyer has been asked to give you feedback.
-<hr>
-
-##How you responded:
+##{{ response_title }}:
 
 ###Earliest start date
 {{ brief_response.availability }}
