@@ -6,28 +6,29 @@
       "oneOf": [
         {
           "properties": {
-            "emailOrTicketingSupport": {
-              "enum": [
-                "no"
-              ]
-            },
-            "emailOrTicketingSupportPriority": {
+            "resellingOrganisations": {
               "type": "null"
+            },
+            "resellingType": {
+              "enum": [
+                "not_reseller"
+              ]
             }
           }
         },
         {
           "properties": {
-            "emailOrTicketingSupport": {
+            "resellingType": {
               "enum": [
-                "yes",
-                "yes_extra_cost"
+                "reseller_extra_features_and_support",
+                "reseller_extra_support",
+                "reseller_no_extras"
               ]
             }
           },
           "required": [
-            "emailOrTicketingSupport",
-            "emailOrTicketingSupportPriority"
+            "resellingType",
+            "resellingOrganisations"
           ]
         }
       ]
@@ -66,6 +67,36 @@
       "oneOf": [
         {
           "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "emailOrTicketingSupportPriority": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "emailOrTicketingSupport",
+            "emailOrTicketingSupportPriority"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "emailOrTicketingSupportAccessibility": {
               "type": "null"
             },
@@ -95,27 +126,27 @@
       "oneOf": [
         {
           "properties": {
-            "metrics": {
+            "phoneSupport": {
               "enum": [
                 false
               ]
             },
-            "metricsHow": {
+            "phoneSupportAvailability": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "metrics": {
+            "phoneSupport": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "metrics",
-            "metricsHow"
+            "phoneSupport",
+            "phoneSupportAvailability"
           ]
         }
       ]
@@ -124,27 +155,28 @@
       "oneOf": [
         {
           "properties": {
-            "metrics": {
+            "webChatSupport": {
               "enum": [
-                false
+                "no"
               ]
             },
-            "metricsWhat": {
+            "webChatSupportAvailability": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "metrics": {
+            "webChatSupport": {
               "enum": [
-                true
+                "yes",
+                "yes_extra_cost"
               ]
             }
           },
           "required": [
-            "metrics",
-            "metricsWhat"
+            "webChatSupport",
+            "webChatSupportAvailability"
           ]
         }
       ]
@@ -153,43 +185,89 @@
       "oneOf": [
         {
           "properties": {
-            "metricsWhat": {
-              "items": {
-                "enum": [
-                  "cpu",
-                  "disk",
-                  "http",
-                  "memory",
-                  "network",
-                  "num_instances"
-                ]
-              }
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
             },
-            "metricsWhatOther": {
+            "webChatSupportAccessibility": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "metricsWhat": {
-              "not": {
-                "items": {
-                  "enum": [
-                    "cpu",
-                    "disk",
-                    "http",
-                    "memory",
-                    "network",
-                    "num_instances"
-                  ]
-                }
-              }
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
             }
           },
           "required": [
-            "metricsWhat",
-            "metricsWhatOther"
+            "webChatSupport",
+            "webChatSupportAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAccessibilityTesting": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAccessibilityTesting"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupportAccessibility": {
+              "enum": [
+                "wcag_a",
+                "wcag_aa",
+                "wcag_aaa"
+              ]
+            },
+            "webChatSupportAccessibilityDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupportAccessibility": {
+              "enum": [
+                "none_or_not_sure"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupportAccessibility",
+            "webChatSupportAccessibilityDescription"
           ]
         }
       ]
@@ -316,1336 +394,27 @@
       "oneOf": [
         {
           "properties": {
-            "userAuthentication": {
-              "items": {
-                "enum": [
-                  "dedicated_link",
-                  "government_network",
-                  "identity_federation",
-                  "pka",
-                  "two_factor",
-                  "username_or_password"
-                ]
-              }
-            },
-            "userAuthenticationDescription": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "userAuthentication": {
-              "not": {
-                "items": {
-                  "enum": [
-                    "dedicated_link",
-                    "government_network",
-                    "identity_federation",
-                    "pka",
-                    "two_factor",
-                    "username_or_password"
-                  ]
-                }
-              }
-            }
-          },
-          "required": [
-            "userAuthentication",
-            "userAuthenticationDescription"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsCSASTAR": {
+            "APIHosting": {
               "enum": [
                 false
               ]
             },
-            "standardsCSASTARLevel": {
+            "APIUsage": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "standardsCSASTAR": {
+            "APIHosting": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "standardsCSASTAR",
-            "standardsCSASTARLevel"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsCSASTAR": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsCSASTARExclusions": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsCSASTAR": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsCSASTAR",
-            "standardsCSASTARExclusions"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsCSASTAR": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsCSASTARWhen": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsCSASTAR": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsCSASTAR",
-            "standardsCSASTARWhen"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "webChatSupport": {
-              "enum": [
-                "no"
-              ]
-            },
-            "webChatSupportAccessibility": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "webChatSupport": {
-              "enum": [
-                "yes",
-                "yes_extra_cost"
-              ]
-            }
-          },
-          "required": [
-            "webChatSupport",
-            "webChatSupportAccessibility"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "webChatSupport": {
-              "enum": [
-                "no"
-              ]
-            },
-            "webChatSupportAvailability": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "webChatSupport": {
-              "enum": [
-                "yes",
-                "yes_extra_cost"
-              ]
-            }
-          },
-          "required": [
-            "webChatSupport",
-            "webChatSupportAvailability"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "webChatSupport": {
-              "enum": [
-                "no"
-              ]
-            },
-            "webChatSupportAccessibilityTesting": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "webChatSupport": {
-              "enum": [
-                "yes",
-                "yes_extra_cost"
-              ]
-            }
-          },
-          "required": [
-            "webChatSupport",
-            "webChatSupportAccessibilityTesting"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "webChatSupportAccessibility": {
-              "enum": [
-                "wcag_a",
-                "wcag_aa",
-                "wcag_aaa"
-              ]
-            },
-            "webChatSupportAccessibilityDescription": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "webChatSupportAccessibility": {
-              "enum": [
-                "none_or_not_sure"
-              ]
-            }
-          },
-          "required": [
-            "webChatSupportAccessibility",
-            "webChatSupportAccessibilityDescription"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "documentation": {
-              "enum": [
-                false
-              ]
-            },
-            "documentationFormats": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "documentation": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "documentation",
-            "documentationFormats"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "documentationFormats": {
-              "items": {
-                "enum": [
-                  "html",
-                  "odf",
-                  "pdf"
-                ]
-              }
-            },
-            "documentationFormatsOther": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "documentationFormats": {
-              "not": {
-                "items": {
-                  "enum": [
-                    "html",
-                    "odf",
-                    "pdf"
-                  ]
-                }
-              }
-            }
-          },
-          "required": [
-            "documentationFormats",
-            "documentationFormatsOther"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "managementAccessAuthentication": {
-              "items": {
-                "enum": [
-                  "dedicated_link",
-                  "government_network",
-                  "identity_federation",
-                  "other",
-                  "public_key",
-                  "two_factor",
-                  "username_or_password"
-                ]
-              }
-            },
-            "managementAccessAuthenticationDescription": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "managementAccessAuthentication": {
-              "not": {
-                "items": {
-                  "enum": [
-                    "dedicated_link",
-                    "government_network",
-                    "identity_federation",
-                    "other",
-                    "public_key",
-                    "two_factor",
-                    "username_or_password"
-                  ]
-                }
-              }
-            }
-          },
-          "required": [
-            "managementAccessAuthentication",
-            "managementAccessAuthenticationDescription"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "phoneSupport": {
-              "enum": [
-                false
-              ]
-            },
-            "phoneSupportAvailability": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "phoneSupport": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "phoneSupport",
-            "phoneSupportAvailability"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsPCI": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsPCIWho": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsPCI": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsPCI",
-            "standardsPCIWho"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsPCI": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsPCIWhen": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsPCI": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsPCI",
-            "standardsPCIWhen"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsPCI": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsPCIExclusions": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsPCI": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsPCI",
-            "standardsPCIExclusions"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsISO28000": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsISO28000When": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsISO28000": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsISO28000",
-            "standardsISO28000When"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsISO28000": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsISO28000Exclusions": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsISO28000": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsISO28000",
-            "standardsISO28000Exclusions"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsISO28000": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsISO28000Who": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsISO28000": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsISO28000",
-            "standardsISO28000Who"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "dataProtectionBetweenNetworks": {
-              "items": {
-                "enum": [
-                  "bonded_fibre",
-                  "ipsec_or_vpn",
-                  "legacy_ssl",
-                  "private_or_psn",
-                  "tls"
-                ]
-              }
-            },
-            "dataProtectionBetweenNetworksOther": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "dataProtectionBetweenNetworks": {
-              "not": {
-                "items": {
-                  "enum": [
-                    "bonded_fibre",
-                    "ipsec_or_vpn",
-                    "legacy_ssl",
-                    "private_or_psn",
-                    "tls"
-                  ]
-                }
-              }
-            }
-          },
-          "required": [
-            "dataProtectionBetweenNetworks",
-            "dataProtectionBetweenNetworksOther"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "backup": {
-              "enum": [
-                false
-              ]
-            },
-            "backupWhatData": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "backup": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "backup"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "backup": {
-              "enum": [
-                false
-              ]
-            },
-            "backupScheduling": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "backup": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "backup",
-            "backupScheduling"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "backup": {
-              "enum": [
-                false
-              ]
-            },
-            "backupRecovery": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "backup": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "backup",
-            "backupRecovery"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "backup": {
-              "enum": [
-                false
-              ]
-            },
-            "backupControls": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "backup": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "backup",
-            "backupControls"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "backup": {
-              "enum": [
-                false
-              ]
-            },
-            "backupDatacentre": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "backup": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "backup",
-            "backupDatacentre"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "auditBuyersActions": {
-              "enum": [
-                "not_available"
-              ]
-            },
-            "auditBuyersActionsStorage": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "auditBuyersActions": {
-              "enum": [
-                "real_time",
-                "regular",
-                "support_request",
-                "supplier_controlled"
-              ]
-            }
-          },
-          "required": [
-            "auditBuyersActions",
-            "auditBuyersActionsStorage"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "penetrationTesting": {
-              "enum": [
-                "never"
-              ]
-            },
-            "penetrationTestingApproach": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "penetrationTesting": {
-              "enum": [
-                "at_least_every_6_months",
-                "at_least_once_a_year",
-                "less_than_once_a_year"
-              ]
-            }
-          },
-          "required": [
-            "penetrationTesting",
-            "penetrationTestingApproach"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "securityGovernanceAccreditation": {
-              "enum": [
-                true
-              ]
-            },
-            "securityGovernanceApproach": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "securityGovernanceAccreditation": {
-              "enum": [
-                false
-              ]
-            }
-          },
-          "required": [
-            "securityGovernanceAccreditation",
-            "securityGovernanceApproach"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "securityGovernanceAccreditation": {
-              "enum": [
-                false
-              ]
-            },
-            "securityGovernanceStandards": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "securityGovernanceAccreditation": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "securityGovernanceAccreditation",
-            "securityGovernanceStandards"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "securityGovernanceStandards": {
-              "items": {
-                "enum": [
-                  "csa_ccm",
-                  "iso_iec_27001"
-                ]
-              }
-            },
-            "securityGovernanceStandardsOther": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "securityGovernanceStandards": {
-              "not": {
-                "items": {
-                  "enum": [
-                    "csa_ccm",
-                    "iso_iec_27001"
-                  ]
-                }
-              }
-            }
-          },
-          "required": [
-            "securityGovernanceStandards",
-            "securityGovernanceStandardsOther"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "dataStorageAndProcessing": {
-              "enum": [
-                false
-              ]
-            },
-            "dataStorageAndProcessingLocations": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "dataStorageAndProcessing": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "dataStorageAndProcessing",
-            "dataStorageAndProcessingLocations"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "dataStorageAndProcessing": {
-              "enum": [
-                false
-              ]
-            },
-            "dataStorageAndProcessingUserControl": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "dataStorageAndProcessing": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "dataStorageAndProcessing",
-            "dataStorageAndProcessingUserControl"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "dataSanitisation": {
-              "enum": [
-                false
-              ]
-            },
-            "dataSanitisationType": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "dataSanitisation": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "dataSanitisation",
-            "dataSanitisationType"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "protectionOfDataAtRest": {
-              "items": {
-                "enum": [
-                  "csa_ccm",
-                  "encrypted_media",
-                  "other_standard",
-                  "scale_obfuscation_sharding",
-                  "ssae_isae"
-                ]
-              }
-            },
-            "protectionOfDataAtRestOther": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "protectionOfDataAtRest": {
-              "not": {
-                "items": {
-                  "enum": [
-                    "csa_ccm",
-                    "encrypted_media",
-                    "other_standard",
-                    "scale_obfuscation_sharding",
-                    "ssae_isae"
-                  ]
-                }
-              }
-            }
-          },
-          "required": [
-            "protectionOfDataAtRest",
-            "protectionOfDataAtRestOther"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsISOIEC27001": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsISOIEC27001When": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsISOIEC27001": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsISOIEC27001",
-            "standardsISOIEC27001When"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsISOIEC27001": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsISOIEC27001Exclusions": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsISOIEC27001": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsISOIEC27001",
-            "standardsISOIEC27001Exclusions"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "standardsISOIEC27001": {
-              "enum": [
-                false
-              ]
-            },
-            "standardsISOIEC27001Who": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "standardsISOIEC27001": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "standardsISOIEC27001",
-            "standardsISOIEC27001Who"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "auditSuppliersActions": {
-              "enum": [
-                "not_available"
-              ]
-            },
-            "auditSuppliersActionsStorage": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "auditSuppliersActions": {
-              "enum": [
-                "real_time",
-                "regular",
-                "support_request",
-                "supplier_controlled"
-              ]
-            }
-          },
-          "required": [
-            "auditSuppliersActions",
-            "auditSuppliersActionsStorage"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "usageNotifications": {
-              "enum": [
-                false
-              ]
-            },
-            "usageNotificationsHow": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "usageNotifications": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "usageNotifications",
-            "usageNotificationsHow"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "commandLineInterface": {
-              "enum": [
-                false
-              ]
-            },
-            "commandLineOS": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "commandLineInterface": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "commandLineInterface",
-            "commandLineOS"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "commandLineInterface": {
-              "enum": [
-                false
-              ]
-            },
-            "commandLineUsage": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "commandLineInterface": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "commandLineInterface",
-            "commandLineUsage"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "accreditationsOther": {
-              "enum": [
-                false
-              ]
-            },
-            "accreditationsOtherList": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "accreditationsOther": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "accreditationsOther",
-            "accreditationsOtherList"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "freeVersionLink": {
-              "type": "null"
-            },
-            "freeVersionTrialOption": {
-              "enum": [
-                false
-              ]
-            }
-          }
-        },
-        {
-          "properties": {
-            "freeVersionTrialOption": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "freeVersionTrialOption"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "freeVersionDescription": {
-              "type": "null"
-            },
-            "freeVersionTrialOption": {
-              "enum": [
-                false
-              ]
-            }
-          }
-        },
-        {
-          "properties": {
-            "freeVersionTrialOption": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "freeVersionTrialOption",
-            "freeVersionDescription"
+            "APIHosting",
+            "APIUsage"
           ]
         }
       ]
@@ -1675,35 +444,6 @@
           "required": [
             "APIHosting",
             "APIAutomationTools"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "APIHosting": {
-              "enum": [
-                false
-              ]
-            },
-            "APIUsage": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "APIHosting": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "APIHosting",
-            "APIUsage"
           ]
         }
       ]
@@ -1814,6 +554,480 @@
       "oneOf": [
         {
           "properties": {
+            "commandLineInterface": {
+              "enum": [
+                false
+              ]
+            },
+            "commandLineOS": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "commandLineInterface": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "commandLineInterface",
+            "commandLineOS"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "commandLineInterface": {
+              "enum": [
+                false
+              ]
+            },
+            "commandLineUsage": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "commandLineInterface": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "commandLineInterface",
+            "commandLineUsage"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "documentation": {
+              "enum": [
+                false
+              ]
+            },
+            "documentationFormats": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "documentation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "documentation",
+            "documentationFormats"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "documentationFormats": {
+              "items": {
+                "enum": [
+                  "html",
+                  "odf",
+                  "pdf"
+                ]
+              }
+            },
+            "documentationFormatsOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "documentationFormats": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "html",
+                    "odf",
+                    "pdf"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "documentationFormats",
+            "documentationFormatsOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                false
+              ]
+            },
+            "backupWhatData": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "backup"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                false
+              ]
+            },
+            "backupControls": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "backup",
+            "backupControls"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                false
+              ]
+            },
+            "backupDatacentre": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "backup",
+            "backupDatacentre"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                false
+              ]
+            },
+            "backupScheduling": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "backup",
+            "backupScheduling"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                false
+              ]
+            },
+            "backupRecovery": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "backup",
+            "backupRecovery"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                false
+              ]
+            },
+            "metricsWhat": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "metrics",
+            "metricsWhat"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                false
+              ]
+            },
+            "metricsHow": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "metrics",
+            "metricsHow"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "metricsWhat": {
+              "items": {
+                "enum": [
+                  "cpu",
+                  "disk",
+                  "http",
+                  "memory",
+                  "network",
+                  "num_instances"
+                ]
+              }
+            },
+            "metricsWhatOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "metricsWhat": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "cpu",
+                    "disk",
+                    "http",
+                    "memory",
+                    "network",
+                    "num_instances"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "metricsWhat",
+            "metricsWhatOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "scaling": {
+              "enum": [
+                false
+              ]
+            },
+            "scalingType": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "scaling": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "scaling",
+            "scalingType"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "usageNotifications": {
+              "enum": [
+                false
+              ]
+            },
+            "usageNotificationsHow": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "usageNotifications": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "usageNotifications",
+            "usageNotificationsHow"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataProtectionBetweenNetworks": {
+              "items": {
+                "enum": [
+                  "bonded_fibre",
+                  "ipsec_or_vpn",
+                  "legacy_ssl",
+                  "private_or_psn",
+                  "tls"
+                ]
+              }
+            },
+            "dataProtectionBetweenNetworksOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataProtectionBetweenNetworks": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "bonded_fibre",
+                    "ipsec_or_vpn",
+                    "legacy_ssl",
+                    "private_or_psn",
+                    "tls"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "dataProtectionBetweenNetworks",
+            "dataProtectionBetweenNetworksOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "dataProtectionWithinNetwork": {
               "items": {
                 "enum": [
@@ -1845,6 +1059,167 @@
           "required": [
             "dataProtectionWithinNetwork",
             "dataProtectionWithinNetworkOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataStorageAndProcessing": {
+              "enum": [
+                false
+              ]
+            },
+            "dataStorageAndProcessingLocations": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataStorageAndProcessing": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "dataStorageAndProcessing",
+            "dataStorageAndProcessingLocations"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataStorageAndProcessing": {
+              "enum": [
+                false
+              ]
+            },
+            "dataStorageAndProcessingUserControl": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataStorageAndProcessing": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "dataStorageAndProcessing",
+            "dataStorageAndProcessingUserControl"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "penetrationTesting": {
+              "enum": [
+                "never"
+              ]
+            },
+            "penetrationTestingApproach": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "penetrationTesting": {
+              "enum": [
+                "at_least_every_6_months",
+                "at_least_once_a_year",
+                "less_than_once_a_year"
+              ]
+            }
+          },
+          "required": [
+            "penetrationTesting",
+            "penetrationTestingApproach"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "protectionOfDataAtRest": {
+              "items": {
+                "enum": [
+                  "csa_ccm",
+                  "encrypted_media",
+                  "other_standard",
+                  "scale_obfuscation_sharding",
+                  "ssae_isae"
+                ]
+              }
+            },
+            "protectionOfDataAtRestOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "protectionOfDataAtRest": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "csa_ccm",
+                    "encrypted_media",
+                    "other_standard",
+                    "scale_obfuscation_sharding",
+                    "ssae_isae"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "protectionOfDataAtRest",
+            "protectionOfDataAtRestOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataSanitisation": {
+              "enum": [
+                false
+              ]
+            },
+            "dataSanitisationType": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataSanitisation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "dataSanitisation",
+            "dataSanitisationType"
           ]
         }
       ]
@@ -1913,35 +1288,6 @@
           "properties": {
             "virtualisationImplementedBy": {
               "enum": [
-                "supplier"
-              ]
-            },
-            "virtualisationThirdPartyProvider": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "virtualisationImplementedBy": {
-              "enum": [
-                "third_party"
-              ]
-            }
-          },
-          "required": [
-            "virtualisationImplementedBy",
-            "virtualisationThirdPartyProvider"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "virtualisationImplementedBy": {
-              "enum": [
                 "third_party"
               ]
             },
@@ -1961,6 +1307,35 @@
           "required": [
             "virtualisationImplementedBy",
             "virtualisationTechnologiesUsed"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "virtualisationImplementedBy": {
+              "enum": [
+                "supplier"
+              ]
+            },
+            "virtualisationThirdPartyProvider": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "virtualisationImplementedBy": {
+              "enum": [
+                "third_party"
+              ]
+            }
+          },
+          "required": [
+            "virtualisationImplementedBy",
+            "virtualisationThirdPartyProvider"
           ]
         }
       ]
@@ -2003,29 +1378,27 @@
       "oneOf": [
         {
           "properties": {
-            "resellingOrganisations": {
-              "type": "null"
-            },
-            "resellingType": {
+            "securityGovernanceAccreditation": {
               "enum": [
-                "not_reseller"
+                false
               ]
+            },
+            "securityGovernanceStandards": {
+              "type": "null"
             }
           }
         },
         {
           "properties": {
-            "resellingType": {
+            "securityGovernanceAccreditation": {
               "enum": [
-                "reseller_extra_features_and_support",
-                "reseller_extra_support",
-                "reseller_no_extras"
+                true
               ]
             }
           },
           "required": [
-            "resellingType",
-            "resellingOrganisations"
+            "securityGovernanceAccreditation",
+            "securityGovernanceStandards"
           ]
         }
       ]
@@ -2034,27 +1407,654 @@
       "oneOf": [
         {
           "properties": {
-            "scaling": {
+            "securityGovernanceAccreditation": {
               "enum": [
-                false
+                true
               ]
             },
-            "scalingType": {
+            "securityGovernanceApproach": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "scaling": {
+            "securityGovernanceAccreditation": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "securityGovernanceAccreditation",
+            "securityGovernanceApproach"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityGovernanceStandards": {
+              "items": {
+                "enum": [
+                  "csa_ccm",
+                  "iso_iec_27001"
+                ]
+              }
+            },
+            "securityGovernanceStandardsOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityGovernanceStandards": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "csa_ccm",
+                    "iso_iec_27001"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityGovernanceStandards",
+            "securityGovernanceStandardsOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "userAuthentication": {
+              "items": {
+                "enum": [
+                  "dedicated_link",
+                  "government_network",
+                  "identity_federation",
+                  "pka",
+                  "two_factor",
+                  "username_or_password"
+                ]
+              }
+            },
+            "userAuthenticationDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "userAuthentication": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "dedicated_link",
+                    "government_network",
+                    "identity_federation",
+                    "pka",
+                    "two_factor",
+                    "username_or_password"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "userAuthentication",
+            "userAuthenticationDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "managementAccessAuthentication": {
+              "items": {
+                "enum": [
+                  "dedicated_link",
+                  "government_network",
+                  "identity_federation",
+                  "other",
+                  "public_key",
+                  "two_factor",
+                  "username_or_password"
+                ]
+              }
+            },
+            "managementAccessAuthenticationDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "managementAccessAuthentication": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "dedicated_link",
+                    "government_network",
+                    "identity_federation",
+                    "other",
+                    "public_key",
+                    "two_factor",
+                    "username_or_password"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "managementAccessAuthentication",
+            "managementAccessAuthenticationDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "auditBuyersActions": {
+              "enum": [
+                "not_available"
+              ]
+            },
+            "auditBuyersActionsStorage": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "auditBuyersActions": {
+              "enum": [
+                "real_time",
+                "regular",
+                "support_request",
+                "supplier_controlled"
+              ]
+            }
+          },
+          "required": [
+            "auditBuyersActions",
+            "auditBuyersActionsStorage"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "auditSuppliersActions": {
+              "enum": [
+                "not_available"
+              ]
+            },
+            "auditSuppliersActionsStorage": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "auditSuppliersActions": {
+              "enum": [
+                "real_time",
+                "regular",
+                "support_request",
+                "supplier_controlled"
+              ]
+            }
+          },
+          "required": [
+            "auditSuppliersActions",
+            "auditSuppliersActionsStorage"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISOIEC27001Who": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISOIEC27001": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "scaling",
-            "scalingType"
+            "standardsISOIEC27001",
+            "standardsISOIEC27001Who"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISOIEC27001When": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISOIEC27001",
+            "standardsISOIEC27001When"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISOIEC27001Exclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISOIEC27001",
+            "standardsISOIEC27001Exclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISO28000Who": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISO28000",
+            "standardsISO28000Who"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISO28000When": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISO28000",
+            "standardsISO28000When"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISO28000Exclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISO28000",
+            "standardsISO28000Exclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsCSASTARWhen": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsCSASTAR",
+            "standardsCSASTARWhen"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsCSASTARLevel": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsCSASTAR",
+            "standardsCSASTARLevel"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsCSASTARExclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsCSASTAR",
+            "standardsCSASTARExclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsPCIWho": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsPCI",
+            "standardsPCIWho"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsPCIWhen": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsPCI",
+            "standardsPCIWhen"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsPCIExclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsPCI",
+            "standardsPCIExclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "accreditationsOther": {
+              "enum": [
+                false
+              ]
+            },
+            "accreditationsOtherList": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "accreditationsOther": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "accreditationsOther",
+            "accreditationsOtherList"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "freeVersionDescription": {
+              "type": "null"
+            },
+            "freeVersionTrialOption": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "freeVersionTrialOption": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "freeVersionTrialOption",
+            "freeVersionDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "freeVersionLink": {
+              "type": "null"
+            },
+            "freeVersionTrialOption": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "freeVersionTrialOption": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "freeVersionTrialOption"
           ]
         }
       ]

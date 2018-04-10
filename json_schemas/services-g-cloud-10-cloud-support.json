@@ -241,9 +241,13 @@
             "securityTestingWhat": {
               "items": {
                 "enum": [
-                  "it_health_checks",
-                  "penetration_testing",
-                  "risk_analysis"
+                  "cyber_security_consultancy",
+                  "security_audit_services",
+                  "security_design",
+                  "security_incident_management",
+                  "security_risk_management",
+                  "security_strategy",
+                  "security_testing"
                 ]
               }
             },
@@ -258,9 +262,13 @@
               "not": {
                 "items": {
                   "enum": [
-                    "it_health_checks",
-                    "penetration_testing",
-                    "risk_analysis"
+                    "cyber_security_consultancy",
+                    "security_audit_services",
+                    "security_design",
+                    "security_incident_management",
+                    "security_risk_management",
+                    "security_strategy",
+                    "security_testing"
                   ]
                 }
               }
@@ -283,8 +291,13 @@
             "securityTestingWhat": {
               "items": {
                 "enum": [
+                  "cyber_security_consultancy",
                   "other",
-                  "risk_analysis"
+                  "security_audit_services",
+                  "security_design",
+                  "security_incident_management",
+                  "security_risk_management",
+                  "security_strategy"
                 ]
               }
             }
@@ -296,8 +309,13 @@
               "not": {
                 "items": {
                   "enum": [
+                    "cyber_security_consultancy",
                     "other",
-                    "risk_analysis"
+                    "security_audit_services",
+                    "security_design",
+                    "security_incident_management",
+                    "security_risk_management",
+                    "security_strategy"
                   ]
                 }
               }
@@ -320,9 +338,14 @@
             "securityTestingWhat": {
               "items": {
                 "enum": [
-                  "it_health_checks",
+                  "cyber_security_consultancy",
                   "other",
-                  "penetration_testing"
+                  "security_audit_services",
+                  "security_design",
+                  "security_incident_management",
+                  "security_risk_management",
+                  "security_strategy",
+                  "security_testing"
                 ]
               }
             }
@@ -334,9 +357,14 @@
               "not": {
                 "items": {
                   "enum": [
-                    "it_health_checks",
+                    "cyber_security_consultancy",
                     "other",
-                    "penetration_testing"
+                    "security_audit_services",
+                    "security_design",
+                    "security_incident_management",
+                    "security_risk_management",
+                    "security_strategy",
+                    "security_testing"
                   ]
                 }
               }
@@ -385,7 +413,10 @@
             "securityTestingAccreditations": {
               "items": {
                 "enum": [
+                  "check",
                   "crest",
+                  "cyber_scheme",
+                  "gbest",
                   "tigerscheme"
                 ]
               }
@@ -401,7 +432,10 @@
               "not": {
                 "items": {
                   "enum": [
+                    "check",
                     "crest",
+                    "cyber_scheme",
+                    "gbest",
                     "tigerscheme"
                   ]
                 }
@@ -992,12 +1026,15 @@
     "securityTestingAccreditations": {
       "items": {
         "enum": [
-          "tigerscheme",
+          "gbest",
+          "check",
           "crest",
+          "tigerscheme",
+          "cyber_scheme",
           "other"
         ]
       },
-      "maxItems": 3,
+      "maxItems": 6,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
@@ -1021,13 +1058,17 @@
     "securityTestingWhat": {
       "items": {
         "enum": [
-          "penetration_testing",
-          "it_health_checks",
-          "risk_analysis",
+          "security_strategy",
+          "security_risk_management",
+          "security_design",
+          "cyber_security_consultancy",
+          "security_testing",
+          "security_incident_management",
+          "security_audit_services",
           "other"
         ]
       },
-      "maxItems": 4,
+      "maxItems": 8,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true

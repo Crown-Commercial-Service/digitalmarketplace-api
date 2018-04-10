@@ -1906,7 +1906,8 @@
           "ie7",
           "ie8",
           "ie9",
-          "ie10+",
+          "ie10",
+          "ie11",
           "edge",
           "firefox",
           "chrome",
@@ -1914,7 +1915,7 @@
           "opera"
         ]
       },
-      "maxItems": 9,
+      "maxItems": 10,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
