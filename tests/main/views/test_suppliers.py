@@ -446,6 +446,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         assert audit.user == "supplier@user.dmdev"
         assert audit.data == {
             'update': {'name': "Name"},
+            'supplierId': supplier.supplier_id,
         }
 
     def test_update_response_matches_payload_plus_defaults(self):
@@ -689,6 +690,7 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
         assert audit.user == "supplier@user.dmdev"
         assert audit.data == {
             'update': {'city': "New City"},
+            'supplierId': contact.supplier.supplier_id,
         }
 
     def test_update_response_matches_payload(self):
@@ -892,7 +894,10 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         ).first()
         assert audit.type == "create_supplier"
         assert audit.user == "no logged-in user"
-        assert audit.data == {'update': payload}
+        assert audit.data == {
+            'update': payload,
+            'supplierId': supplier.supplier_id,
+        }
 
     def test_when_supplier_has_missing_contact_information(self):
         payload = load_example_listing("new-supplier")
