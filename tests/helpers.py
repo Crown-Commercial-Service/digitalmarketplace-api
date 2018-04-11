@@ -217,8 +217,8 @@ class FixtureMixin(object):
         db.session.commit()
         return service.id
 
-    def setup_dummy_services(self, n, supplier_id=None, framework_id=1,
-                             start_id=0, lot_id=1, model=Service):
+    def setup_dummy_services(self, n, supplier_id=None, framework_id=1, data=None,
+                             start_id=0, lot_id=1, model=Service, status='published'):
         for i in range(start_id, start_id + n):
             self.setup_dummy_service(
                 service_id=str(2000000000 + start_id + i),
@@ -226,6 +226,8 @@ class FixtureMixin(object):
                 framework_id=framework_id,
                 lot_id=lot_id,
                 model=model,
+                status=status,
+                data=data,
             )
 
     def setup_dummy_services_including_unpublished(self, n):

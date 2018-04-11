@@ -1668,7 +1668,7 @@ class TestDraftService(BaseApplicationTest, FixtureMixin):
         }
 
     @pytest.mark.parametrize(
-        ['questions_to_copy', 'should_raise'],
+        ('questions_to_copy', 'should_raise'),
         (
             (None, True),
             ({'questions': 'to_copy'}, True),

@@ -5,6 +5,7 @@ from flask import json
 import mock
 from app.models import AuditEvent, Supplier, ContactInformation, Service, Framework, DraftService
 from app import db
+from sqlalchemy import desc
 from sqlalchemy.exc import IntegrityError
 from tests.helpers import FixtureMixin, load_example_listing
 
@@ -13,7 +14,7 @@ class DraftsHelpersMixin(BaseApplicationTest, FixtureMixin):
     service_id = None
     updater_json = None
     create_draft_json = None
-    basic_questions_to_copy = None
+    basic_questions_json = None
 
     def setup(self):
         super().setup()
@@ -30,7 +31,7 @@ class DraftsHelpersMixin(BaseApplicationTest, FixtureMixin):
             'lot': 'scs',
             'supplierId': 1
         }
-        self.basic_questions_to_copy = {
+        self.basic_questions_json = {
             'questionsToCopy': ['serviceName']
         }
 
@@ -202,7 +203,7 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             '/draft-services/copy-from/{}'.format(self.service_id),
             data=json.dumps({
                 **self.updater_json,
-                **self.basic_questions_to_copy,
+                **self.basic_questions_json,
                 'targetFramework': 'g-cloud-7'
             }),
             content_type='application/json')
@@ -217,7 +218,7 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             '/draft-services/copy-from/{}'.format(self.service_id),
             data=json.dumps({
                 **self.updater_json,
-                **self.basic_questions_to_copy,
+                **self.basic_questions_json,
                 'targetFramework': 'z-cloud'
             }),
             content_type='application/json')
@@ -236,7 +237,6 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
         assert res.status_code == 400
         assert "Required data missing: 'questions_to_copy'" in json.loads(res.get_data(as_text=True))['error']
 
-
     def test_existing_copied_draft_does_not_prevent_copy_to_new_framework(self):
         res1 = self.client.put(
             '/draft-services/copy-from/{}'.format(self.service_id),
@@ -249,7 +249,7 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             '/draft-services/copy-from/{}'.format(self.service_id),
             data=json.dumps({
                 **self.updater_json,
-                **self.basic_questions_to_copy,
+                **self.basic_questions_json,
                 'targetFramework': 'g-cloud-7'
             }),
             content_type='application/json')
@@ -281,7 +281,7 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             '/draft-services/copy-from/{}'.format(self.service_id),
             data=json.dumps({
                 **self.updater_json,
-                **self.basic_questions_to_copy,
+                **self.basic_questions_json,
                 'targetFramework': 'g-cloud-7'
             }),
             content_type='application/json')
@@ -316,13 +316,243 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             '/draft-services/copy-from/{}'.format(self.service_id),
             data=json.dumps({
                 **self.updater_json,
-                **self.basic_questions_to_copy,
+                **self.basic_questions_json,
                 'targetFramework': 'g-cloud-7'
             }),
             content_type='application/json')
 
         assert res.status_code == 400
         assert 'Target framework is not open' in res.get_data(as_text=True)
+
+
+class TestCopyPublishedFromFramework(DraftsHelpersMixin):
+    def post_to_copy_published_from_framework(
+        self, source_framework_slug="g-cloud-6", override_questions_to_copy=None, target_framework_slug='g-cloud-7'
+    ):
+        """
+        :param source_framework_slug: The framework slug for the services being copied.
+        :param override_questions_to_copy: A list of questions to copy, rather than the default fixture. There is a
+                                           special case where an empty list is used. This causes the 'questionsToCopy'
+                                           key to be skipped from the request data, for test purposes.
+        :param target_framework_slug: The frameworks slug for where the drafts are being created.
+        :return: The json response from the api
+        """
+        data = {
+            **self.updater_json,
+            "sourceFrameworkSlug": source_framework_slug,
+            "supplierId": 1,
+        }
+
+        if override_questions_to_copy == []:
+            pass
+        elif override_questions_to_copy:
+            data.update(questionsToCopy=override_questions_to_copy)
+        else:
+            data.update(self.basic_questions_json)
+
+        res = self.client.post(
+            f'/draft-services/{target_framework_slug}/paas/copy-published-from-framework',
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+
+        return res
+
+    def test_should_copy_all_lots_services_to_new_framwork(self):
+        self.setup_dummy_services(5, supplier_id=1, lot_id=2)
+
+        services = Service.query.filter(
+            Service.supplier_id == 1,
+            Service.framework_id == 1,  # G-Cloud 6
+            Service.lot_id == 2,
+        ).all()
+
+        res = self.post_to_copy_published_from_framework()
+        assert res.status_code == 201
+
+        data = json.loads(res.get_data(as_text=True))
+        serialized_drafts = data['services']
+
+        db_drafts = DraftService.query.filter(
+            DraftService.supplier_id == 1,
+            DraftService.framework_id == 4,  # G-Cloud 7
+            DraftService.lot_id == 2,
+        ).all()
+
+        assert len(serialized_drafts) == 5
+        assert len(db_drafts) == 5
+        assert all(service['status'] == 'not-submitted' for service in serialized_drafts)
+        assert all(service['frameworkSlug'] == 'g-cloud-7' for service in serialized_drafts)
+        assert all('serviceId' not in service for service in serialized_drafts)
+        for service, serialized_draft, db_draft in zip(services, serialized_drafts, db_drafts):
+            assert service.data['serviceName'] == serialized_draft['serviceName'] == db_draft.data['serviceName']
+
+    def test_should_400_if_no_source_framework_slug(self):
+        res = self.post_to_copy_published_from_framework(source_framework_slug=None)
+
+        assert res.status_code == 400
+        assert "Required data missing: 'source_framework_slug'" in res.get_data(as_text=True)
+
+    def test_should_400_if_no_questions_to_copy(self):
+        res = self.post_to_copy_published_from_framework(override_questions_to_copy=[])
+
+        assert res.status_code == 400
+        assert "Required data missing: 'questions_to_copy'" in json.loads(res.get_data(as_text=True))['error']
+
+    def test_should_400_if_questions_to_copy_is_not_a_list(self):
+        res = self.post_to_copy_published_from_framework(override_questions_to_copy='Not a list')
+
+        assert res.status_code == 400
+        assert "Data error: 'questions_to_copy' must be a list" in json.loads(res.get_data(as_text=True))['error']
+
+    def test_should_404_if_framework_does_not_exist(self):
+        res = self.post_to_copy_published_from_framework(target_framework_slug='z-cloud')
+
+        assert res.status_code == 404
+
+    @pytest.mark.parametrize('framework_status', Framework.STATUSES)
+    def test_should_400_if_target_framework_not_open(self, framework_status):
+        if framework_status == 'open':
+            return
+
+        self.set_framework_status('g-cloud-7', framework_status)
+
+        res = self.post_to_copy_published_from_framework()
+        assert res.status_code == 400
+
+        assert 'Target framework is not open' in res.get_data(as_text=True)
+
+    def test_should_only_copy_published_services_from_correct_framework_and_lot(self):
+        self.setup_dummy_services(3, supplier_id=1, lot_id=1, status='published')
+        self.setup_dummy_services(2, supplier_id=1, lot_id=1, status='disabled', start_id=3)
+        self.setup_dummy_services(4, supplier_id=1, lot_id=2, status='published', start_id=5)
+        self.setup_dummy_services(1, supplier_id=1, lot_id=2, status='disabled', start_id=9)
+        self.setup_dummy_services(2, supplier_id=1, lot_id=3, status='published', start_id=10)
+        self.setup_dummy_services(3, supplier_id=1, lot_id=3, status='enabled', start_id=12)
+
+        services = Service.query.filter(
+            Service.supplier_id == 1,
+            Service.framework_id == 1,  # G-Cloud 6
+            Service.lot_id == 2,
+            Service.status == 'published'
+        ).all()
+
+        res = self.post_to_copy_published_from_framework()
+        assert res.status_code == 201
+
+        drafts = json.loads(res.get_data(as_text=True))['services']
+
+        assert len(drafts) == 4
+        assert all(draft['frameworkSlug'] == 'g-cloud-7' for draft in drafts)
+        assert all(draft['lotSlug'] == 'paas' for draft in drafts)
+        assert all(draft['status'] == 'not-submitted' for draft in drafts)
+        for service, draft in zip(services, drafts):
+            assert service.data['serviceName'] == draft['serviceName']
+
+    def test_should_only_copy_published_services_from_correct_supplier(self):
+        self.setup_additional_dummy_suppliers(1, 'A')
+        self.setup_dummy_services(3, supplier_id=1, lot_id=2, status='published')
+        self.setup_dummy_services(4, supplier_id=1000, lot_id=2, status='published', start_id=3)
+
+        res = self.post_to_copy_published_from_framework()
+        assert res.status_code == 201
+
+        drafts = json.loads(res.get_data(as_text=True))['services']
+
+        assert len(drafts) == 3
+        assert all(draft['supplierId'] == 1 for draft in drafts)
+
+    def test_should_create_drafts_in_reverse_alphabetical_order_by_service_name(self):
+        for service_id, char in enumerate('SERVICE'):
+            self.setup_dummy_service(
+                str(2000000000 + service_id),
+                lot_id=2,
+                data={'serviceName': f'{char} service'},
+            )
+
+        res = self.post_to_copy_published_from_framework()
+        assert res.status_code == 201
+
+        drafts = json.loads(res.get_data(as_text=True))['services']
+
+        assert [draft['serviceName'] for draft in drafts] == \
+            ['V service', 'S service', 'R service', 'I service', 'E service', 'E service', 'C service']
+
+    def test_should_only_copy_questions_specified(self):
+        service_data = {
+            'serviceName': 'My service',
+            'serviceBenefits': 'Free tea and cake',
+            'provisioningTime': '4 hours',
+            'termsAndConditionsDocumentURL': 'example.com',
+            'serviceSummary': 'The best one going',
+        }
+        self.setup_dummy_services(5, supplier_id=1, lot_id=2, data=service_data)
+
+        questions_to_copy = ["provisioningTime", "termsAndConditionsDocumentURL"]
+        questions_to_drop = ["serviceName", "serviceBenefits", "serviceSummary"]
+
+        res = self.post_to_copy_published_from_framework(override_questions_to_copy=questions_to_copy)
+        assert res.status_code == 201
+
+        drafts = json.loads(res.get_data(as_text=True))['services']
+
+        assert all(question in draft for draft in drafts for question in questions_to_copy)
+        assert all(question not in draft for draft in drafts for question in questions_to_drop)
+
+    def test_should_mark_source_services_as_copied(self):
+        self.setup_dummy_services(5, supplier_id=1, lot_id=2)
+
+        pre_copy_services = Service.query.filter(
+            Service.supplier_id == 1,
+            Service.framework_id == 1,
+            Service.lot_id == 2,
+        ).all()
+
+        assert len(pre_copy_services) == 5
+        assert all(service.copied_to_following_framework is False for service in pre_copy_services)
+
+        res = self.post_to_copy_published_from_framework()
+        assert res.status_code == 201
+
+        post_copy_services = Service.query.filter(
+            Service.supplier_id == 1,
+            Service.framework_id == 1,
+            Service.lot_id == 2,
+        ).all()
+
+        assert len(post_copy_services) == 5
+        assert all(service.copied_to_following_framework is True for service in post_copy_services)
+
+    def test_should_create_an_audit_event_for_each_service_copied(self):
+        self.setup_dummy_services(3, supplier_id=1, lot_id=2)
+
+        res = self.post_to_copy_published_from_framework()
+        assert res.status_code == 201
+
+        services = Service.query.filter(
+            Service.supplier_id == 1,
+            Service.lot_id == 2,
+        ).order_by(
+            desc(Service.data['serviceName'].astext)
+        ).all()
+        assert len(services) == 3
+
+        audit_events = AuditEvent.query.all()
+        assert len(audit_events) == 3
+
+        for audit_event, service in zip(audit_events, services):
+            assert audit_event.user == 'joeblogs'
+            assert audit_event.type == 'create_draft_service'
+            assert audit_event.data['serviceId'] == service.id
+
+    @mock.patch('app.db.session.commit')
+    def test_should_catch_integrity_errors(self, db_commit):
+        db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
+
+        res = self.post_to_copy_published_from_framework()
+        assert res.status_code == 400
+
+        assert "Could not commit" in json.loads(res.get_data())['error']
 
 
 class TestDraftServices(DraftsHelpersMixin):
