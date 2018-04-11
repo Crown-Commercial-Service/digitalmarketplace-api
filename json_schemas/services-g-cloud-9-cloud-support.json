@@ -6,87 +6,27 @@
       "oneOf": [
         {
           "properties": {
-            "emailOrTicketingSupport": {
-              "enum": [
-                "no"
-              ]
-            },
-            "emailOrTicketingSupportPriority": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "emailOrTicketingSupport": {
-              "enum": [
-                "yes",
-                "yes_extra_cost"
-              ]
-            }
-          },
-          "required": [
-            "emailOrTicketingSupport",
-            "emailOrTicketingSupportPriority"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "emailOrTicketingSupport": {
-              "enum": [
-                "no"
-              ]
-            },
-            "emailOrTicketingSupportResponseTimes": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "emailOrTicketingSupport": {
-              "enum": [
-                "yes",
-                "yes_extra_cost"
-              ]
-            }
-          },
-          "required": [
-            "emailOrTicketingSupport",
-            "emailOrTicketingSupportResponseTimes"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "emailOrTicketingSupportAccessibility": {
-              "type": "null"
-            },
-            "emailOrTicketingSupportPriority": {
+            "planningService": {
               "enum": [
                 false
               ]
+            },
+            "planningServiceDescription": {
+              "type": "null"
             }
           }
         },
         {
           "properties": {
-            "emailOrTicketingSupportPriority": {
+            "planningService": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "emailOrTicketingSupportPriority",
-            "emailOrTicketingSupportAccessibility"
+            "planningService",
+            "planningServiceDescription"
           ]
         }
       ]
@@ -95,27 +35,27 @@
       "oneOf": [
         {
           "properties": {
-            "ongoingSupport": {
+            "planningService": {
               "enum": [
                 false
               ]
             },
-            "ongoingSupportServices": {
+            "planningServiceCompatibility": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "ongoingSupport": {
+            "planningService": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "ongoingSupport",
-            "ongoingSupportServices"
+            "planningService",
+            "planningServiceCompatibility"
           ]
         }
       ]
@@ -124,148 +64,27 @@
       "oneOf": [
         {
           "properties": {
-            "ongoingSupport": {
+            "planningServiceCompatibility": {
               "enum": [
                 false
               ]
             },
-            "ongoingSupportDescription": {
+            "planningServiceCompatibilityList": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "ongoingSupport": {
+            "planningServiceCompatibility": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "ongoingSupport",
-            "ongoingSupportDescription"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "webChatSupport": {
-              "enum": [
-                "no"
-              ]
-            },
-            "webChatSupportAccessibility": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "webChatSupport": {
-              "enum": [
-                "yes",
-                "yes_extra_cost"
-              ]
-            }
-          },
-          "required": [
-            "webChatSupport",
-            "webChatSupportAccessibility"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "webChatSupport": {
-              "enum": [
-                "no"
-              ]
-            },
-            "webChatSupportAvailability": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "webChatSupport": {
-              "enum": [
-                "yes",
-                "yes_extra_cost"
-              ]
-            }
-          },
-          "required": [
-            "webChatSupport",
-            "webChatSupportAvailability"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "webChatSupport": {
-              "enum": [
-                "no"
-              ]
-            },
-            "webChatSupportAccessibilityTesting": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "webChatSupport": {
-              "enum": [
-                "yes",
-                "yes_extra_cost"
-              ]
-            }
-          },
-          "required": [
-            "webChatSupport",
-            "webChatSupportAccessibilityTesting"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "webChatSupportAccessibility": {
-              "enum": [
-                "wcag_a",
-                "wcag_aa",
-                "wcag_aaa"
-              ]
-            },
-            "webChatSupportAccessibilityDescription": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "webChatSupportAccessibility": {
-              "enum": [
-                "none_or_not_sure"
-              ]
-            }
-          },
-          "required": [
-            "webChatSupportAccessibility",
-            "webChatSupportAccessibilityDescription"
+            "planningServiceCompatibility",
+            "planningServiceCompatibilityList"
           ]
         }
       ]
@@ -361,27 +180,27 @@
       "oneOf": [
         {
           "properties": {
-            "phoneSupport": {
+            "QAAndTesting": {
               "enum": [
                 false
               ]
             },
-            "phoneSupportAvailability": {
+            "QAAndTestingDescription": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "phoneSupport": {
+            "QAAndTesting": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "phoneSupport",
-            "phoneSupportAvailability"
+            "QAAndTesting",
+            "QAAndTestingDescription"
           ]
         }
       ]
@@ -411,45 +230,6 @@
           "required": [
             "securityTesting",
             "securityTestingWhat"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "securityTestingCCP": {
-              "type": "null"
-            },
-            "securityTestingWhat": {
-              "items": {
-                "enum": [
-                  "it_health_checks",
-                  "other",
-                  "penetration_testing"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "properties": {
-            "securityTestingWhat": {
-              "not": {
-                "items": {
-                  "enum": [
-                    "it_health_checks",
-                    "other",
-                    "penetration_testing"
-                  ]
-                }
-              }
-            }
-          },
-          "required": [
-            "securityTestingWhat",
-            "securityTestingCCP"
           ]
         }
       ]
@@ -534,6 +314,45 @@
       "oneOf": [
         {
           "properties": {
+            "securityTestingCCP": {
+              "type": "null"
+            },
+            "securityTestingWhat": {
+              "items": {
+                "enum": [
+                  "it_health_checks",
+                  "other",
+                  "penetration_testing"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTestingWhat": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "it_health_checks",
+                    "other",
+                    "penetration_testing"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityTestingWhat",
+            "securityTestingCCP"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "securityTestingAccreditations": {
               "type": "null"
             },
@@ -592,35 +411,6 @@
           "required": [
             "securityTestingAccreditations",
             "securityTestingAccreditationsOther"
-          ]
-        }
-      ]
-    },
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "QAAndTesting": {
-              "enum": [
-                false
-              ]
-            },
-            "QAAndTestingDescription": {
-              "type": "null"
-            }
-          }
-        },
-        {
-          "properties": {
-            "QAAndTesting": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "QAAndTesting",
-            "QAAndTestingDescription"
           ]
         }
       ]
@@ -716,6 +506,64 @@
       "oneOf": [
         {
           "properties": {
+            "ongoingSupport": {
+              "enum": [
+                false
+              ]
+            },
+            "ongoingSupportDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "ongoingSupport": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "ongoingSupport",
+            "ongoingSupportDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "ongoingSupport": {
+              "enum": [
+                false
+              ]
+            },
+            "ongoingSupportServices": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "ongoingSupport": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "ongoingSupport",
+            "ongoingSupportServices"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "resellingOrganisations": {
               "type": "null"
             },
@@ -747,27 +595,28 @@
       "oneOf": [
         {
           "properties": {
-            "planningService": {
+            "emailOrTicketingSupport": {
               "enum": [
-                false
+                "no"
               ]
             },
-            "planningServiceDescription": {
+            "emailOrTicketingSupportResponseTimes": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "planningService": {
+            "emailOrTicketingSupport": {
               "enum": [
-                true
+                "yes",
+                "yes_extra_cost"
               ]
             }
           },
           "required": [
-            "planningService",
-            "planningServiceDescription"
+            "emailOrTicketingSupport",
+            "emailOrTicketingSupportResponseTimes"
           ]
         }
       ]
@@ -776,27 +625,28 @@
       "oneOf": [
         {
           "properties": {
-            "planningService": {
+            "emailOrTicketingSupport": {
               "enum": [
-                false
+                "no"
               ]
             },
-            "planningServiceCompatibility": {
+            "emailOrTicketingSupportPriority": {
               "type": "null"
             }
           }
         },
         {
           "properties": {
-            "planningService": {
+            "emailOrTicketingSupport": {
               "enum": [
-                true
+                "yes",
+                "yes_extra_cost"
               ]
             }
           },
           "required": [
-            "planningService",
-            "planningServiceCompatibility"
+            "emailOrTicketingSupport",
+            "emailOrTicketingSupportPriority"
           ]
         }
       ]
@@ -805,27 +655,177 @@
       "oneOf": [
         {
           "properties": {
-            "planningServiceCompatibility": {
+            "emailOrTicketingSupportAccessibility": {
+              "type": "null"
+            },
+            "emailOrTicketingSupportPriority": {
               "enum": [
                 false
               ]
-            },
-            "planningServiceCompatibilityList": {
-              "type": "null"
             }
           }
         },
         {
           "properties": {
-            "planningServiceCompatibility": {
+            "emailOrTicketingSupportPriority": {
               "enum": [
                 true
               ]
             }
           },
           "required": [
-            "planningServiceCompatibility",
-            "planningServiceCompatibilityList"
+            "emailOrTicketingSupportPriority",
+            "emailOrTicketingSupportAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "phoneSupport": {
+              "enum": [
+                false
+              ]
+            },
+            "phoneSupportAvailability": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "phoneSupport": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "phoneSupport",
+            "phoneSupportAvailability"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAvailability": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAvailability"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAccessibility": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAccessibilityTesting": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAccessibilityTesting"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupportAccessibility": {
+              "enum": [
+                "wcag_a",
+                "wcag_aa",
+                "wcag_aaa"
+              ]
+            },
+            "webChatSupportAccessibilityDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupportAccessibility": {
+              "enum": [
+                "none_or_not_sure"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupportAccessibility",
+            "webChatSupportAccessibilityDescription"
           ]
         }
       ]
