@@ -890,6 +890,8 @@ class ServiceTableMixin(object):
     updated_at = db.Column(db.DateTime, index=False, nullable=False,
                            default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    copied_to_following_framework = db.Column(db.Boolean, nullable=False, server_default=sql_false())
+
     @declared_attr
     def supplier_id(cls):
         return db.Column(db.BigInteger, db.ForeignKey('suppliers.supplier_id'),
@@ -944,7 +946,7 @@ class ServiceTableMixin(object):
             'supplierId', 'supplierName',
             'frameworkSlug', 'frameworkFramework', 'frameworkName', 'frameworkStatus',
             'lot', 'lotSlug', 'lotName',
-            'updatedAt', 'createdAt', 'links'
+            'updatedAt', 'createdAt', 'links', 'copiedToFollowingFramework'
         ])
 
         data = strip_whitespace_from_data(data)
@@ -972,7 +974,8 @@ class ServiceTableMixin(object):
             'lotName': self.lot.name,
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
-            'status': self.status
+            'status': self.status,
+            'copiedToFollowingFramework': self.copied_to_following_framework,
         })
 
         data['links'] = link(
