@@ -168,7 +168,10 @@ def create_supplier():
                 audit_type=AuditTypes.create_supplier,
                 db_object=supplier,
                 user="no logged-in user",
-                data={'update': request_data}
+                data={
+                    "update": request_data,
+                    "supplierId": supplier.supplier_id,
+                },
             )
         )
         db.session.commit()
@@ -208,7 +211,11 @@ def update_supplier(supplier_id):
             audit_type=AuditTypes.supplier_update,
             db_object=supplier,
             user=updater_json['updated_by'],
-            data={'update': request_data['suppliers']})
+            data={
+                "update": request_data["suppliers"],
+                "supplierId": supplier.supplier_id,
+            },
+        )
     )
 
     try:
@@ -249,7 +256,11 @@ def update_contact_information(supplier_id, contact_id):
             audit_type=AuditTypes.contact_update,
             db_object=contact.supplier,
             user=updater_json['updated_by'],
-            data={'update': request_data['contactInformation']})
+            data={
+                "update": request_data["contactInformation"],
+                "supplierId": contact.supplier.supplier_id,
+            },
+        )
     )
 
     try:
@@ -296,7 +307,11 @@ def set_a_declaration(supplier_id, framework_slug):
             audit_type=AuditTypes.answer_selection_questions,
             db_object=supplier_framework,
             user=updater_json['updated_by'],
-            data={'update': request_data['declaration']})
+            data={
+                "update": request_data["declaration"],
+                "supplierId": supplier_id,
+            },
+        )
     )
 
     try:
