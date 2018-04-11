@@ -1,3 +1,4 @@
+import pytest
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from datetime import datetime
 from flask import json
@@ -8,13 +9,14 @@ from sqlalchemy.exc import IntegrityError
 from tests.helpers import FixtureMixin, load_example_listing
 
 
-class TestDraftServices(BaseApplicationTest, FixtureMixin):
+class DraftsHelpersMixin(BaseApplicationTest, FixtureMixin):
     service_id = None
     updater_json = None
     create_draft_json = None
+    basic_questions_to_copy = None
 
     def setup(self):
-        super(TestDraftServices, self).setup()
+        super().setup()
 
         payload = load_example_listing("G6-SaaS")
 
@@ -27,6 +29,9 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
             'frameworkSlug': 'g-cloud-7',
             'lot': 'scs',
             'supplierId': 1
+        }
+        self.basic_questions_to_copy = {
+            'questionsToCopy': ['serviceName']
         }
 
         db.session.add(
@@ -56,6 +61,271 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
     def draft_service_count(self):
         return DraftService.query.count()
 
+    def create_draft_service(self):
+        res = self.client.post(
+            '/draft-services',
+            data=json.dumps(self.create_draft_json),
+            content_type='application/json')
+        assert res.status_code == 201
+        draft = json.loads(res.get_data())['services']
+
+        g7_complete = load_example_listing("G7-SCS").copy()
+        g7_complete.pop('id')
+        draft_update_json = {'services': g7_complete,
+                             'updated_by': 'joeblogs'}
+        res2 = self.client.post(
+            '/draft-services/{}'.format(draft['id']),
+            data=json.dumps(draft_update_json),
+            content_type='application/json')
+        assert res2.status_code == 200
+        draft = json.loads(res2.get_data())['services']
+
+        return draft
+
+    def complete_draft_service(self, draft_id):
+        return self.client.post(
+            '/draft-services/{}/complete'.format(draft_id),
+            data=json.dumps({'updated_by': 'joeblogs'}),
+            content_type='application/json')
+
+    def publish_draft_service(self, draft_id):
+        return self.client.post(
+            '/draft-services/{}/publish'.format(draft_id),
+            data=json.dumps({
+                'updated_by': 'joeblogs'
+            }),
+            content_type='application/json')
+
+    def publish_new_draft_service(self):
+        draft = self.create_draft_service()
+        res = self.complete_draft_service(draft['id'])
+        assert res.status_code == 200
+
+        res = self.publish_draft_service(draft['id'])
+        assert res.status_code == 200
+
+        return res
+
+
+class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
+    def test_reject_copy_with_no_updated_by(self):
+        res = self.client.put(
+            '/draft-services/copy-from/0000000000',
+            data=json.dumps({}),
+            content_type='application/json',
+        )
+        assert res.status_code == 400
+        assert "'updated_by' is a required property" in json.loads(res.get_data(as_text=True))['error']
+
+    def test_reject_invalid_service_id_on_copy(self):
+        res = self.client.put(
+            '/draft-services/copy-from/invalid-id!',
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        assert res.status_code == 400
+        assert "Invalid service ID supplied: invalid-id!" in json.loads(res.get_data(as_text=True))['error']
+
+    def test_should_404_if_service_does_not_exist_on_copy(self):
+        res = self.client.put(
+            '/draft-services/copy-from/0000000000',
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        assert res.status_code == 404
+
+    @mock.patch('app.db.session.commit')
+    def test_copy_from_existing_service_catches_db_integrity_error(self, db_commit):
+        db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        assert res.status_code == 400
+        assert "Could not commit" in json.loads(res.get_data())['error']
+
+    def test_should_create_draft_from_existing_service(self):
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        data = json.loads(res.get_data())
+        assert res.status_code == 201
+        assert data['services']['serviceId'] == self.service_id
+        assert data['services']['frameworkSlug'] == 'g-cloud-6'
+
+    def test_create_draft_from_existing_should_create_audit_event(self):
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        assert res.status_code == 201
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+
+        data = json.loads(audit_response.get_data())
+        assert len(data['auditEvents']) == 1
+        assert data['auditEvents'][0]['user'] == 'joeblogs'
+        assert data['auditEvents'][0]['type'] == 'create_draft_service'
+        assert data['auditEvents'][0]['data']['serviceId'] == self.service_id
+
+    def test_should_not_create_two_drafts_from_existing_service(self):
+        self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        data = json.loads(res.get_data())
+
+        assert res.status_code == 400
+        assert 'Draft already exists for service {}'.format(self.service_id) in data['error']
+
+    def test_submission_draft_should_not_prevent_draft_being_created_from_existing_service(self):
+        res = self.publish_new_draft_service()
+
+        service = json.loads(res.get_data())['services']
+
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(service['id']),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        assert res.status_code == 201
+
+    def test_should_create_draft_on_different_framework_if_passed_target_framework(self):
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps({
+                **self.updater_json,
+                **self.basic_questions_to_copy,
+                'targetFramework': 'g-cloud-7'
+            }),
+            content_type='application/json')
+
+        data = json.loads(res.get_data())
+        assert res.status_code == 201
+        assert data['services']['frameworkSlug'] == 'g-cloud-7'
+        assert 'serviceId' not in data['services']
+
+    def test_should_404_if_target_framework_does_not_exist(self):
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps({
+                **self.updater_json,
+                **self.basic_questions_to_copy,
+                'targetFramework': 'z-cloud'
+            }),
+            content_type='application/json')
+
+        assert res.status_code == 404
+
+    def test_400_if_target_framework_and_not_questions_to_copy(self):
+        res = self.client.put(
+            '/draft-services/copy-from/0000000000',
+            data=json.dumps({
+                **self.updater_json,
+                'targetFramework': 'g-cloud-7'
+            }),
+            content_type='application/json',
+        )
+        assert res.status_code == 400
+        assert "Required data missing: 'questions_to_copy'" in json.loads(res.get_data(as_text=True))['error']
+
+
+    def test_existing_copied_draft_does_not_prevent_copy_to_new_framework(self):
+        res1 = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        assert res1.status_code == 201
+
+        res2 = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps({
+                **self.updater_json,
+                **self.basic_questions_to_copy,
+                'targetFramework': 'g-cloud-7'
+            }),
+            content_type='application/json')
+
+        assert res2.status_code == 201
+
+    def test_only_specified_questions_are_copied(self):
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps({
+                **self.updater_json,
+                'targetFramework': 'g-cloud-7',
+                'questionsToCopy': ['serviceBenefits', 'termsAndConditionsDocumentURL']
+            }),
+            content_type='application/json')
+        assert res.status_code == 201
+
+        draft = DraftService.query.filter(
+            DraftService.framework_id == 4,
+        ).first()
+
+        assert {'serviceBenefits', 'termsAndConditionsDocumentURL'} == set(draft.data.keys())
+
+    def test_source_service_is_marked_as_copied_after_copy_to_new_framework(self):
+        pre_copy_source_service = Service.query.first()
+        assert pre_copy_source_service.copied_to_following_framework is False
+
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps({
+                **self.updater_json,
+                **self.basic_questions_to_copy,
+                'targetFramework': 'g-cloud-7'
+            }),
+            content_type='application/json')
+        assert res.status_code == 201
+
+        post_copy_source_service = Service.query.first()
+        assert post_copy_source_service.copied_to_following_framework is True
+
+    def test_source_service_is_not_marked_as_copied_if_copied_to_same_framework(self):
+        pre_copy_source_service = Service.query.first()
+        assert pre_copy_source_service.copied_to_following_framework is False
+
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps({
+                **self.updater_json,
+            }),
+            content_type='application/json')
+        assert res.status_code == 201
+
+        post_copy_source_service = Service.query.first()
+        assert post_copy_source_service.copied_to_following_framework is False
+
+    @pytest.mark.parametrize('framework_status', Framework.STATUSES)
+    def test_services_can_not_be_copied_to_a_framework_that_is_not_open(self, framework_status):
+        if framework_status == 'open':
+            return
+
+        self.set_framework_status('g-cloud-7', framework_status)
+
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps({
+                **self.updater_json,
+                **self.basic_questions_to_copy,
+                'targetFramework': 'g-cloud-7'
+            }),
+            content_type='application/json')
+
+        assert res.status_code == 400
+        assert 'Target framework is not open' in res.get_data(as_text=True)
+
+
+class TestDraftServices(DraftsHelpersMixin):
     def test_reject_list_drafts_no_supplier_id(self):
         res = self.client.get('/draft-services')
         assert res.status_code == 400
@@ -163,38 +433,9 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         res = self.client.post('/draft-services/0000000000')
         assert res.status_code == 400
 
-    def test_reject_copy_with_no_updated_by(self):
-        res = self.client.put('/draft-services/copy-from/0000000000')
-        assert res.status_code == 400
-
     def test_reject_create_with_no_updated_by(self):
         res = self.client.post('/draft-services')
         assert res.status_code == 400
-
-    def test_reject_invalid_service_id_on_copy(self):
-        res = self.client.put(
-            '/draft-services/copy-from/invalid-id!',
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-        assert res.status_code == 400
-
-    def test_should_404_if_service_does_not_exist_on_copy(self):
-        res = self.client.put(
-            '/draft-services/copy-from/0000000000',
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-        assert res.status_code == 404
-
-    @mock.patch('app.db.session.commit')
-    def test_copy_from_existing_service_catches_db_integrity_error(self, db_commit):
-        db_commit.side_effect = IntegrityError("Could not commit", orig=None, params={})
-        res = self.client.put(
-            '/draft-services/copy-from/{}'.format(self.service_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-
-        assert res.status_code == 400
-        assert "Could not commit" in json.loads(res.get_data())['error']
 
     def test_reject_invalid_service_id_on_get(self):
         res = self.client.get('/draft-services?service_id=invalid-id!')
@@ -529,59 +770,6 @@ class TestDraftServices(BaseApplicationTest, FixtureMixin):
         assert res.status_code == 400
         assert "'badField' was unexpected" in str(data['error']['_form'])
         assert "no_unit_specified" in data['error']['priceUnit']
-
-    def test_should_create_draft_from_existing_service(self):
-        res = self.client.put(
-            '/draft-services/copy-from/{}'.format(self.service_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-
-        data = json.loads(res.get_data())
-        assert res.status_code == 201
-        assert data['services']['serviceId'] == self.service_id
-
-    def test_create_draft_from_existing_should_create_audit_event(self):
-        res = self.client.put(
-            '/draft-services/copy-from/{}'.format(self.service_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-        assert res.status_code == 201
-
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-
-        data = json.loads(audit_response.get_data())
-        assert len(data['auditEvents']) == 1
-        assert data['auditEvents'][0]['user'] == 'joeblogs'
-        assert data['auditEvents'][0]['type'] == 'create_draft_service'
-        assert data['auditEvents'][0]['data']['serviceId'] == self.service_id
-
-    def test_should_not_create_two_drafts_from_existing_service(self):
-        self.client.put(
-            '/draft-services/copy-from/{}'.format(self.service_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-
-        res = self.client.put(
-            '/draft-services/copy-from/{}'.format(self.service_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-        data = json.loads(res.get_data())
-
-        assert res.status_code == 400
-        assert 'Draft already exists for service {}'.format(self.service_id) in data['error']
-
-    def test_submission_draft_should_not_prevent_draft_being_created_from_existing_service(self):
-        res = self.publish_new_draft_service()
-
-        service = json.loads(res.get_data())['services']
-
-        res = self.client.put(
-            '/draft-services/copy-from/{}'.format(service['id']),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-
-        assert res.status_code == 201
 
     def test_should_fetch_a_draft(self):
         res = self.client.put(

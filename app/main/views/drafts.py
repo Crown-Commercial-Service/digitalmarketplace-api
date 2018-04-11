@@ -10,6 +10,7 @@ from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, Supplier, AuditEvent, Framework
 from ...utils import (
     get_int_or_400,
+    get_json_from_request,
     get_request_page_questions,
     json_only_has_required_keys,
     list_result_response,
@@ -39,21 +40,46 @@ def copy_draft_service_from_existing_service(service_id):
     """
     is_valid_service_id_or_400(service_id)
     updater_json = validate_and_return_updater_request()
+    json_payload = get_json_from_request()
+
+    target_framework_slug = json_payload.get('targetFramework')
+    questions_to_copy = set(json_payload.get('questionsToCopy', []))
+
+    if target_framework_slug and not questions_to_copy:
+        abort(400, "Required data missing: 'questions_to_copy'")
 
     service = Service.query.filter(
         Service.service_id == service_id
     ).first_or_404()
 
+    if target_framework_slug:
+        target_framework = Framework.query.filter(
+            Framework.slug == target_framework_slug
+        ).first_or_404()
+        if not target_framework.status == 'open':
+            abort(400, "Target framework is not open")
+        target_framework_id = target_framework.id
+    else:
+        target_framework_id = service.framework.id
+
     draft_service = DraftService.query.filter(
         DraftService.service_id == service_id,
         DraftService.status.notin_(('not-submitted', 'submitted')),
     ).first()
-    if draft_service:
+
+    if draft_service and draft_service.framework.id == target_framework_id:
         abort(400, "Draft already exists for service {}".format(service_id))
 
-    draft = DraftService.from_service(service)
+    draft = DraftService.from_service(
+        service,
+        questions_to_copy=questions_to_copy,
+        target_framework_id=target_framework_id,
+    )
 
-    db.session.add(draft)
+    if target_framework_id != service.framework.id:
+        service.copied_to_following_framework = True
+
+    db.session.add(draft, service)
     db.session.flush()
 
     audit = AuditEvent(
