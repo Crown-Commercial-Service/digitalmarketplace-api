@@ -52,12 +52,9 @@ def send_brief_response_received_email(supplier, brief, brief_response):
         specialist_name=specialist_name,
         response_title=response_title,
         brief_response=brief_response.data,
-        header='<div style="padding: 0rem; border: 2px solid #007554; font-size: 2rem;">'
-               '<p style="background: white; margin: 0;"><span style="background: #007554; padding: 1rem; '
-               'display: inline-block; line-height: 2rem; width: 3rem; margin-right: 1rem;">'
-               '<span style="text-align: center; width: 2rem; background: white; padding: 0.5rem; '
-               'display: inline-block; color: #007554; border-radius: 2rem;">✔</span>'
-               '</span>{}</div>'.format(subject)
+        header='<div style="font-size: 1.8rem">'
+               '<span style="color: #007554;padding-right: 1rem;">✔</span>'
+               '<span>{}</span></div>'.format(subject)
     )
 
     send_or_handle_error(
