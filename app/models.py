@@ -62,7 +62,7 @@ class Agency(db.Model):
     __tablename__ = 'agency'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
+    name = db.Column(db.String)
     domain = db.Column(db.String, nullable=False, unique=True, index=True)
     category = db.Column(db.String)
     state = db.Column(db.String)
