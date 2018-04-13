@@ -66,7 +66,7 @@ class Agency(db.Model):
     domain = db.Column(db.String, nullable=False, unique=True, index=True)
     category = db.Column(db.String)
     state = db.Column(db.String)
-    whitelisted = db.Column(db.Boolean, nullable=False)
+    whitelisted = db.Column(db.Boolean, nullable=False, default=True)
 
 
 class Council(db.Model):
