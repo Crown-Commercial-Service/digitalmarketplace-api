@@ -47,10 +47,11 @@ class TestJira(BaseApplicationTest):
             application = Application(
                 id=99,
                 status='saved',
-                data={'name': 'Umbrella Corporation'},
+                data={'name': 'Umbrella Corporation'}
             )
+            domains = db.session.query(Domain).all()
             application.submit_for_approval()
-            mj.create_application_approval_task.assert_called_with(application, None)
+            mj.create_application_approval_task.assert_called_with(application, domains, None)
 
     @mock.patch('app.jiraapi.get_api_oauth')
     @mock.patch('app.jiraapi.JIRA')

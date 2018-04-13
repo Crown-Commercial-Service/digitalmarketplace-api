@@ -1,6 +1,6 @@
 from flask import jsonify, abort, current_app, request
 from app.main import main
-from app.models import db, Assessment, AuditEvent, SupplierDomain, Supplier, Domain
+from app.models import db, Application, Assessment, AuditEvent, SupplierDomain, Supplier, Domain
 from dmapiclient.audit import AuditTypes
 from app.utils import (get_json_from_request, json_has_required_keys, validate_and_return_updater_request)
 from sqlalchemy.exc import IntegrityError
@@ -17,13 +17,14 @@ def create_assessment():
     data = json_payload['assessment']
     json_has_required_keys(data, ['supplier_code'])
     json_has_required_keys(data, ['domain_name'])
+    supplier_code = data['supplier_code']
 
     existing_assessment = db.session.query(
         Assessment
     ).join(
         SupplierDomain, Supplier, Domain
     ).filter(
-        Supplier.code == data['supplier_code'],
+        Supplier.code == supplier_code,
         Domain.name == data['domain_name'],
         Assessment.active
     ).first()
@@ -49,8 +50,14 @@ def create_assessment():
     ))
 
     if current_app.config['JIRA_FEATURES']:
+        application = db.session.query(Application).filter(
+            Application.supplier_code == supplier_code,
+            Application.type == 'edit',
+            Application.status == 'submitted'
+        ).one_or_none()
+
         mj = get_marketplace_jira()
-        mj.create_domain_approval_task(assessment)
+        mj.create_domain_approval_task(assessment, application)
 
     send_assessment_requested_notification(assessment, updater_json['updated_by'])
 

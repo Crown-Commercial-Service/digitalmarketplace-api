@@ -109,11 +109,11 @@ class MarketplaceJIRA(object):
     def make_link(self, key):
         return self.server_url + '/browse/' + key
 
-    def create_domain_approval_task(self, assessment):
+    def create_domain_approval_task(self, assessment, application=None):
         supplier = assessment.supplier_domain.supplier
         brief = assessment.briefs[0]
-        domain_name = assessment.supplier_domain.domain.name
-        summary = 'Domain Assessment: {}(#{})'.format(supplier.name, supplier.code)
+        domain = assessment.supplier_domain.domain
+        domain_name = domain.name
         relevant_case_studies = []
         case_study_links = ""
         for case_study in supplier.case_studies:
@@ -124,23 +124,86 @@ class MarketplaceJIRA(object):
                 case_study_links += "Case study: [{}|{}/case-study/{}]\n"\
                     .format(simple_case_study['title'], current_app.config['FRONTEND_ADDRESS'], simple_case_study['id'])
                 relevant_case_studies.append(simple_case_study)
-        description_values = {"supplier_name": supplier.name,
-                              "supplier_url": current_app.config['ADMIN_ADDRESS'] + "/admin/assessments/supplier/" +
-                              str(supplier.code),
-                              "domain": domain_name,
-                              "brief_name": brief.data.get('title'),
-                              "brief_close_date":  brief.applications_closed_at.format('%A %-d %B %Y'),
-                              "case_study_links": case_study_links
-                              }
-        description = '[{supplier_name}|{supplier_url}] has applied for assessment ' \
-                      'under the "{domain}" domain in order to apply for the "{brief_name}" brief ' \
-                      'which closes for applications on {brief_close_date} at 6PM.' \
-                      '\n\n' \
-                      'Please assess their suitability to be approved for ' \
-                      'this domain based on the ' \
-                      '[assessment criteria|https://marketplace.service.gov.au/assessment-criteria] and ' \
-                      'clearly indicate an approve/reject recommendation in your comments.'\
-                      '\n\n{case_study_links}'.format(**description_values)
+
+        summary = 'Domain Assessment: {}(#{})'.format(supplier.name, supplier.code)
+        price_description = ''
+        format_text = ''
+
+        application_awaiting_approval = ''
+        if application:
+            application_awaiting_approval = (
+                '---------\n\n'
+                '*WARNING*: There is an awaiting profile edit.\n'
+            )
+
+        if supplier.is_recruiter == 'true' and case_study_links == '':
+            summary += '[RECRUITER]'
+        elif supplier.is_recruiter == 'false' or case_study_links != '':
+            price_approved = True
+            maxPrice = supplier.data.get('pricing')[domain_name]['maxPrice']
+            if application:
+                pricing = application.data.get('pricing', None)
+                if pricing:
+                    domain_pricing = pricing[domain_name]
+                    if domain_pricing:
+                        price_approved = False
+                        maxPrice = domain_pricing = domain_pricing['maxPrice']
+
+            price_description_values = {
+                "domain": domain_name,
+                "domain_price_min": domain.price_minimum,
+                "domain_price_max": domain.price_maximum,
+                "max_price": maxPrice,
+                "price_approved": 'Approved' if price_approved is True else '*Unapproved*'
+            }
+            price_description = (
+                '---------\n\n'
+                'Price threshold for *{domain}*:\n'
+                'Minimum Price: {domain_price_min}\n'
+                'Maximum Price: {domain_price_max}\n'
+                'Seller Price: {max_price} - {price_approved}\n'
+            ).format(**price_description_values)
+
+            format_text = (
+                '---------\n\n'
+                '+Please use the following format for completing the assessment:+\n\n'
+                '{panel}'
+                'Comments:\n\n'
+                'Criteria met:\n\n'
+                '1. <Criteria 1>\n'
+                '2. <Criteria 2>\n'
+                '3. <etc>\n\n'
+                'Recommendation: *Pass* or *Reject*\n\n'
+                '{panel}'
+                'Once complete - please assign back to Luke Roughley'
+            )
+
+        description_values = {
+            "supplier_name": supplier.name,
+            "supplier_url": current_app.config['ADMIN_ADDRESS'] + "/admin/assessments/supplier/" + str(supplier.code),
+            "domain": domain_name,
+            "brief_name": brief.data.get('title'),
+            "brief_close_date": brief.applications_closed_at.format('%A %-d %B %Y'),
+            "case_study_links": case_study_links,
+            "price_description": price_description,
+            "format_text": format_text,
+            "application_awaiting_approval": application_awaiting_approval
+        }
+
+        description = ('[{supplier_name}|{supplier_url}] has applied for assessment '
+                       'under the "*{domain}*" domain in order to apply for the "*{brief_name}*" brief '
+                       'which closes for applications on *{brief_close_date}* at 6PM.'
+                       '\n\n'
+                       'Please assess their suitability to be approved for '
+                       'this domain based on the '
+                       '[assessment criteria|https://marketplace.service.gov.au/assessment-criteria] and '
+                       'clearly indicate an approve/reject recommendation in your comments.\n\n'
+                       '{case_study_links}\n\n'
+                       '{application_awaiting_approval}'
+                       '{price_description}'
+                       '{format_text}'
+                       ).format(**description_values)
+
         details = dict(
             project=self.marketplace_project_code,
             summary=summary,
@@ -159,7 +222,7 @@ class MarketplaceJIRA(object):
         attachment.write(json.dumps(relevant_case_studies))
         self.generic_jira.jira.add_attachment(new_issue.id, attachment, 'casestudies.json')
 
-    def create_application_approval_task(self, application, closing_date=None):
+    def create_application_approval_task(self, application, domains, closing_date=None):
         if application.type != 'edit':
             summary = 'Application assessment: {}'.format(application.data.get('name'))
             description = TICKET_DESCRIPTION % (current_app.config['ADMIN_ADDRESS'] +
@@ -167,17 +230,47 @@ class MarketplaceJIRA(object):
             issuetype_name = INITIAL_ASSESSMENT_ISSUE_TYPE
         else:
             summary = 'Profile edit: {} (#{})'.format(application.data.get('name'), application.supplier_code)
-            description = "+*This is a profile edit*+\n\n" \
-                          "Please evaluate the changes made by the seller and ensure they meet the " \
-                          "[assessment guidelines|" \
-                          "https://govausites.atlassian.net/wiki/display/DM/Initial+Assessment+Checklist]. \n" \
-                          "Changes will be summarised at the top of the seller profile.\n\n" \
-                          "Seller profile link: [%s]\n\n" \
-                          "---\n\n" \
-                          "A snapshot of the application is attached." \
-                          "" % (current_app.config['ADMIN_ADDRESS'] +
-                                "/admin/applications/preview/{}".format(application.id))
+            description = (
+                "+*This is a profile edit*+\n\n"
+                "Please evaluate the changes made by the seller and ensure they meet the "
+                "[assessment guidelines|"
+                "https://govausites.atlassian.net/wiki/display/DM/Initial+Assessment+Checklist]. \n"
+                "Changes will be summarised at the top of the seller profile.\n\n"
+                "Seller profile link: [%s]\n\n"
+                "---\n\n"
+                "A snapshot of the application is attached."
+                "" % (current_app.config['ADMIN_ADDRESS'] + "/admin/applications/preview/{}".format(application.id))
+            )
             issuetype_name = SUBSEQUENT_ASSESSMENT_ISSUE_TYPE
+
+        pricing = application.data.get('pricing', None)
+        competitive = True
+        description += "---\n\n"
+        if pricing is not None:
+            for k, v in pricing.iteritems():
+                max_price = v.get('maxPrice')
+                domain = next(d for d in domains if d.name == k)
+                domain_price_min = domain.price_minimum
+                domain_price_max = domain.price_maximum
+
+                price_description = (
+                    "Price threshold for *{domain_name}*:\n"
+                    "Seller Price: {max_price}\n"
+                    "Minimum Price: {domain_price_min}\n"
+                    "Maximum Price: {domain_price_max}\n"
+                ).format(
+                    max_price=max_price,
+                    domain_name=domain.name,
+                    domain_price_min=domain_price_min,
+                    domain_price_max=domain_price_max
+                )
+                description += price_description
+                if (max_price >= domain_price_min and max_price <= domain_price_max):
+                    description += "Seller is competitive\n\n"
+                else:
+                    competitive = False
+                    description += "*Seller is not competitive*\n\n"
+
         details = dict(
             project=self.marketplace_project_code,
             summary=summary,
@@ -210,6 +303,17 @@ class MarketplaceJIRA(object):
                               self.supplier_field_code: str(application.supplier_code)
                               if application.supplier_code else str(0)
                               })
+
+        steps = application.data.get('steps', None)
+        if (application.type == 'edit' and
+                steps is not None and
+                steps.get('pricing', None) and
+                len(steps.keys()) == 1 and
+                competitive is True):
+            from app.main.views.applications import application_approval
+            application_approval(application.id, True)
+            self.generic_jira.jira.transition_issue(new_issue, 'Done')
+
         attachment = StringIO.StringIO()
         attachment.write(json.dumps(application.json))
         self.generic_jira.jira.add_attachment(new_issue.id, attachment,
