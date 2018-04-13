@@ -1,1 +1,1 @@
-alter table "public"."agency" add column "whitelisted" boolean not null;
+alter table "public"."agency" add column "whitelisted" boolean;
