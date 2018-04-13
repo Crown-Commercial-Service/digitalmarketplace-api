@@ -1,3 +1,4 @@
+
 DO $$                  
     BEGIN 
 		IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'brief_response' AND COLUMN_NAME = 'withdrawn_at')

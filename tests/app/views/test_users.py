@@ -1308,7 +1308,7 @@ class TestTeamsGet(BaseUserTest):
             'name': 'John Buyer'
         }
 
-        assert jdata['teamname'] == 'Bega Valley Shire Council'
+        assert jdata['teamname'] == 'Unknown'
 
 
 class TestUsersExport(BaseUserTest):

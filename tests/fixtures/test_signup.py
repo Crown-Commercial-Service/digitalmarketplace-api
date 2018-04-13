@@ -1,4 +1,7 @@
 import json
+import pytest
+
+from app.models import db, Agency
 from nose.tools import assert_equal
 
 test_seller = {
@@ -6,6 +9,65 @@ test_seller = {
     'email_address': 'email+s@company.com',
     'user_type': 'seller'
 }
+
+gov_au_buyer = {
+    'name': 'Indiana Jones',
+    'email_address': 'indy+b@adventure.gov.au',
+    'user_type': 'buyer'
+}
+
+whitelisted_non_gov_au_buyer = {
+    'name': 'Han Solo',
+    'email_address': 'solo+b@falcon.net.au',
+    'user_type': 'buyer'
+}
+
+non_whitelisted_buyer_in_agency = {
+    'name': 'Luke Skywalker',
+    'email_address': 'luke+b@jedi.edu.au',
+    'user_type': 'buyer'
+}
+
+non_whitelisted_buyer = {
+    'name': 'Rick Deckard',
+    'email_address': 'deckard+b@runner.com.au',
+    'user_type': 'buyer'
+}
+
+
+@pytest.fixture()
+def agencies(app, request):
+    with app.app_context():
+        db.session.add(Agency(
+            id=1,
+            name='Department of Adventure',
+            domain='adventure.gov.au',
+            category='Commonwealth',
+            state='ACT',
+            whitelisted=True
+        ))
+
+        db.session.add(Agency(
+            id=2,
+            name='Department of Millenium Falcons',
+            domain='falcon.net.au',
+            category='Commonwealth',
+            state='NSW',
+            whitelisted=True
+        ))
+
+        db.session.add(Agency(
+            id=3,
+            name='Jedi Temple',
+            domain='jedi.edu.au',
+            category='State',
+            state='NSW',
+            whitelisted=False
+        ))
+
+        db.session.commit()
+
+        yield Agency.query.all()
 
 
 def test_send_seller_type_signup_invite_email(client, mocker):
@@ -156,3 +218,67 @@ def test_generic_domain(client):
 
     data = json.loads(response.data)
     assert_equal(data['message'], 'Email invite sent successfully')
+
+
+@pytest.mark.parametrize('user', [gov_au_buyer, whitelisted_non_gov_au_buyer])
+def test_buyer_can_signup_with_whitelisted_email(client, mocker, agencies, user):
+    send_email = mocker.patch('app.api.views.users.send_account_activation_email')
+
+    response = client.post(
+        '/2/signup',
+        data=json.dumps({
+            'name': user['name'],
+            'email_address': user['email_address'],
+            'employment_status': 'employee',
+            'user_type': user['user_type']
+        }),
+        content_type='application/json')
+
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['message'] == 'Email invite sent successfully'
+
+    send_email.assert_called_once_with(
+        email_address=user['email_address'],
+        name=user['name'],
+        user_type='buyer',
+        framework='digital-marketplace'
+    )
+
+
+@pytest.mark.parametrize('user', [non_whitelisted_buyer_in_agency, non_whitelisted_buyer])
+def test_buyer_can_not_signup_with_non_whitelisted_email(client, mocker, agencies, user):
+    response = client.post(
+        '/2/signup',
+        data=json.dumps({
+            'name': user['name'],
+            'email_address': user['email_address'],
+            'employment_status': 'employee',
+            'user_type': user['user_type']
+        }),
+        content_type='application/json')
+
+    assert response.status_code == 403
+    data = json.loads(response.data)
+    assert data['message'] == 'A buyer account must have a valid government entity email domain'
+
+
+@pytest.mark.parametrize('user', [gov_au_buyer, whitelisted_non_gov_au_buyer, non_whitelisted_buyer])
+def test_any_email_address_can_be_used_for_orams_signup(client, mocker, user):
+    send_email = mocker.patch('app.api.views.users.orams_send_account_activation_admin_email')
+
+    response = client.post(
+        '/2/signup',
+        data=json.dumps({
+            'name': user['name'],
+            'email_address': user['email_address'],
+            'framework': 'orams',
+            'user_type': user['user_type']
+        }),
+        content_type='application/json')
+
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['message'] == 'Email invite sent successfully'
+
+    send_email.assert_called_once_with(user['name'], user['email_address'], 'orams')

@@ -2,7 +2,7 @@ from flask import jsonify
 from flask_login import login_required, current_user
 from app.api import api
 from app.api.services import briefs, suppliers, users
-from app.api.helpers import get_user_email_domain, role_required
+from app.api.helpers import get_email_domain, role_required
 
 
 @api.route('/seller-dashboard', methods=['GET'])
@@ -97,7 +97,7 @@ def get_buyer_dashboard_data_for_my_briefs():
         schema:
           $ref: '#/definitions/BuyerDashboardItems'
     """
-    organisation = users.get_user_organisation(get_user_email_domain())
+    organisation = users.get_user_organisation(get_email_domain(current_user.email_address))
     user_briefs = briefs.get_user_briefs(current_user.get_id())
 
     return jsonify(items=user_briefs, organisation=organisation), 200
@@ -145,8 +145,8 @@ def get_buyer_dashboard_data_for_team_briefs():
         schema:
           $ref: '#/definitions/BuyerDashboardTeamItems'
     """
-    organisation = users.get_user_organisation(get_user_email_domain())
-    team_briefs = briefs.get_team_briefs(current_user.get_id(), get_user_email_domain())
+    organisation = users.get_user_organisation(get_email_domain(current_user.email_address))
+    team_briefs = briefs.get_team_briefs(current_user.get_id(), get_email_domain(current_user.email_address))
 
     return jsonify(items=team_briefs, organisation=organisation), 200
 
@@ -182,7 +182,7 @@ def get_buyer_dashboard_data_for_team_overview():
         schema:
           $ref: '#/definitions/BuyerDashboardTeamOverviewItems'
     """
-    organisation = users.get_user_organisation(get_user_email_domain())
-    team_members = users.get_team_members(current_user.get_id(), get_user_email_domain())
+    organisation = users.get_user_organisation(get_email_domain(current_user.email_address))
+    team_members = users.get_team_members(current_user.get_id(), get_email_domain(current_user.email_address))
 
     return jsonify(items=team_members, organisation=organisation), 200

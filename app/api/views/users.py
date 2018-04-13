@@ -5,7 +5,8 @@ from urllib import quote
 from app import db, encryption
 from app.api import api
 from app.api.helpers import (
-    generate_reset_password_token, decode_reset_password_token, get_root_url
+    generate_reset_password_token, decode_reset_password_token, get_root_url,
+    get_email_domain, has_whitelisted_email_domain
 )
 from app.models import User
 from app.utils import get_json_from_request
@@ -14,7 +15,7 @@ from app.emails.users import (
     send_reset_password_confirm_email, orams_send_account_activation_admin_email
 )
 from dmutils.email import EmailError, InvalidToken
-from app.api.helpers import decode_creation_token, is_government_email, user_info
+from app.api.helpers import decode_creation_token, user_info
 from app.api.user import is_duplicate_user, update_user_details
 from datetime import datetime
 from app.swagger import swag
@@ -205,12 +206,7 @@ def signup():
                 message='An account with this email domain already exists'
             ), 409
 
-    if user_type == 'buyer' and not is_government_email(email_address):
-        return jsonify(
-            email_address=email_address,
-            message="A buyer account must have a valid government entity email domain"
-        ), 400
-
+    # New ORAMS users don't need their email domain checked as that's done manually
     if framework == 'orams':
         try:
             orams_send_account_activation_admin_email(name, email_address, framework)
@@ -221,6 +217,12 @@ def signup():
 
         except EmailError:
             return jsonify(message='An error occured when trying to send an email'), 500
+
+    if user_type == 'buyer' and not has_whitelisted_email_domain(get_email_domain(email_address)):
+        return jsonify(
+            email_address=email_address,
+            message="A buyer account must have a valid government entity email domain"
+        ), 403
 
     if employment_status == 'contractor':
         try:

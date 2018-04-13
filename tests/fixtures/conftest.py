@@ -63,14 +63,16 @@ def agencies(app, request):
             id=1,
             name='Digital Transformation Agency',
             domain='digital.gov.au',
-            category='Commonwealth'
+            category='Commonwealth',
+            whitelisted=True
         ))
 
         db.session.add(Agency(
             id=2,
             name='Test Agency',
             domain='test.gov.au',
-            category='Commonwealth'
+            category='Commonwealth',
+            whitelisted=True
         ))
 
         db.session.commit()

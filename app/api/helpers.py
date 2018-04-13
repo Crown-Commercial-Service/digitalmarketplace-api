@@ -1,7 +1,7 @@
 from flask import current_app, render_template_string, jsonify, make_response, abort as flask_abort
 import requests
 import rollbar
-from app.models import db, User, ServiceType
+from app.models import db, Agency, User, ServiceType
 from dmutils.email import (
     decode_token, EmailError, generate_token, InvalidToken, ONE_DAY_IN_SECONDS, send_email,
     parse_fernet_timestamp
@@ -267,9 +267,16 @@ def parse_date(dt):
         abort(message=str(e))
 
 
-def get_user_email_domain():
-    """Returns the user's email domain without the '@' symbol."""
-    return current_user.email_address.split('@')[-1]
+def get_email_domain(email_address):
+    return email_address.split('@')[-1]
+
+
+def has_whitelisted_email_domain(email_domain):
+    if email_domain.endswith('.gov.au'):
+        return True
+    else:
+        agency = Agency.query.filter(Agency.domain == email_domain).first()
+        return agency.whitelisted if agency else False
 
 
 class ServiceException(Exception):

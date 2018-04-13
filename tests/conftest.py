@@ -11,9 +11,7 @@ from app import create_app
 from app.models import db, Framework, Application
 
 
-from sqlbag import temporary_database, S
-from app.loading import populate_agency_and_council_from_csv_files
-
+from sqlbag import temporary_database
 from migrations import \
     load_from_app_model, load_test_fixtures
 
@@ -29,8 +27,6 @@ def db_initialization(request):
         load_from_app_model(dburi)
         load_test_fixtures(dburi)
 
-        with S(dburi) as s:
-            populate_agency_and_council_from_csv_files(s)
         yield
 
 
