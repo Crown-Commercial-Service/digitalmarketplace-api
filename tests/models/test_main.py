@@ -1614,6 +1614,102 @@ class TestServices(BaseApplicationTest, FixtureMixin):
         assert service.data == {'foo': 'bar', 'serviceName': 'Service 1000000000'}
 
 
+class TestDraftService(BaseApplicationTest, FixtureMixin):
+    def setup(self):
+        super().setup()
+
+        self.setup_dummy_suppliers(1)
+        self.setup_dummy_service(
+            service_id='1000000000',
+            supplier_id=0,
+            status='published',
+            framework_id=2)
+
+    def test_from_service(self):
+        service = Service.query.filter(Service.service_id == '1000000000').first()
+        draft_service = DraftService.from_service(service)
+
+        db.session.add(draft_service)
+        db.session.commit()
+
+        assert draft_service.framework_id == service.framework_id
+        assert draft_service.lot == service.lot
+        assert draft_service.service_id == service.service_id
+        assert draft_service.supplier == service.supplier
+        assert draft_service.data == service.data
+        assert draft_service.status == service.status
+
+    def test_from_service_with_target_framework_id_and_questions(self):
+        service = Service.query.filter(Service.service_id == '1000000000').first()
+        service.data.update(
+            questionOne='Question one',
+            questionTwo='Question two',
+            questionThree='Question three'
+        )
+
+        draft_service = DraftService.from_service(
+            service,
+            questions_to_copy=['serviceName', 'questionOne', 'questionThree'],
+            target_framework_id=3,
+        )
+
+        db.session.add(draft_service)
+        db.session.commit()
+
+        assert draft_service.framework_id == 3
+        assert draft_service.lot == service.lot
+        assert draft_service.service_id is None
+        assert draft_service.supplier == service.supplier
+        assert draft_service.status == 'not-submitted'
+        assert draft_service.data == {
+            'serviceName': 'Service 1000000000',
+            'questionOne': 'Question one',
+            'questionThree': 'Question three',
+        }
+
+    @pytest.mark.parametrize(
+        ('questions_to_copy', 'should_raise'),
+        (
+            (None, True),
+            ({'questions': 'to_copy'}, True),
+            ('Questions', True),
+            (1, True),
+            (['question1', 'question2'], False),
+            (('question1', 'question2'), False),
+            ({'question1', 'question2'}, False),
+        )
+    )
+    def test_from_service_questions_to_copy_must_be_a_set_or_list_or_tuple_if_target_framework_id(
+        self, questions_to_copy, should_raise
+    ):
+        service = Service.query.filter(Service.service_id == '1000000000').first()
+
+        if should_raise:
+            with pytest.raises(TypeError) as e:
+                DraftService.from_service(
+                    service,
+                    questions_to_copy=questions_to_copy,
+                    target_framework_id=3
+                )
+            assert "'questions_to_copy' must be a list, set or tuple" in str(e.value)
+        else:
+            assert DraftService.from_service(
+                service,
+                questions_to_copy=questions_to_copy,
+                target_framework_id=3
+            )
+
+    def test_from_service_copies_status_if_target_framework_id_is_the_same(self):
+        service = Service.query.filter(Service.service_id == '1000000000').first()
+        draft_service = DraftService.from_service(
+            service,
+            questions_to_copy=['serviceName'],
+            target_framework_id=service.framework_id,
+        )
+
+        assert draft_service.status == service.status
+
+
 class TestSupplierFrameworks(BaseApplicationTest, FixtureMixin):
     def test_nulls_are_stripped_from_declaration(self):
         supplier_framework = SupplierFramework()

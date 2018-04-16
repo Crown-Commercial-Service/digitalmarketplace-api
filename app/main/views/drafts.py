@@ -2,14 +2,15 @@ from dmapiclient.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import lazyload
-from sqlalchemy import asc
+from sqlalchemy import asc, desc
 
 from .. import main
 from ... import db
 from ...validation import is_valid_service_id_or_400
-from ...models import Service, DraftService, Supplier, AuditEvent, Framework
+from ...models import Service, DraftService, Supplier, AuditEvent, Framework, Lot
 from ...utils import (
     get_int_or_400,
+    get_json_from_request,
     get_request_page_questions,
     json_only_has_required_keys,
     list_result_response,
@@ -39,21 +40,46 @@ def copy_draft_service_from_existing_service(service_id):
     """
     is_valid_service_id_or_400(service_id)
     updater_json = validate_and_return_updater_request()
+    json_payload = get_json_from_request()
+
+    target_framework_slug = json_payload.get('targetFramework')
+    questions_to_copy = set(json_payload.get('questionsToCopy', []))
+
+    if target_framework_slug and not questions_to_copy:
+        abort(400, "Required data missing: 'questions_to_copy'")
 
     service = Service.query.filter(
         Service.service_id == service_id
     ).first_or_404()
 
+    if target_framework_slug:
+        target_framework = Framework.query.filter(
+            Framework.slug == target_framework_slug
+        ).first_or_404()
+        if not target_framework.status == 'open':
+            abort(400, "Target framework is not open")
+        target_framework_id = target_framework.id
+    else:
+        target_framework_id = service.framework.id
+
     draft_service = DraftService.query.filter(
         DraftService.service_id == service_id,
         DraftService.status.notin_(('not-submitted', 'submitted')),
     ).first()
-    if draft_service:
+
+    if draft_service and draft_service.framework.id == target_framework_id:
         abort(400, "Draft already exists for service {}".format(service_id))
 
-    draft = DraftService.from_service(service)
+    draft = DraftService.from_service(
+        service,
+        questions_to_copy=questions_to_copy,
+        target_framework_id=target_framework_id,
+    )
 
-    db.session.add(draft)
+    if target_framework_id != service.framework.id:
+        service.copied_to_following_framework = True
+
+    db.session.add(draft, service)
     db.session.flush()
 
     audit = AuditEvent(
@@ -74,6 +100,88 @@ def copy_draft_service_from_existing_service(service_id):
         abort(400, format(e))
 
     return single_result_response(RESOURCE_NAME, draft), 201
+
+
+@main.route('/draft-services/<framework_slug>/<lot_slug>/copy-published-from-framework', methods=['POST'])
+def copy_published_from_framework(framework_slug, lot_slug):
+    """
+    Copy all published services from a given framework/lot to a different framework's drafts.
+    :param framework_slug: The slug for the framework to create the new drafts in.
+    :param lot: The slug for the lot to copy services from/create drafts forself.
+    :return: The serialized drafts.
+    """
+    updater_json = validate_and_return_updater_request()
+    json_payload = get_json_from_request()
+
+    supplier_id = get_int_or_400(json_payload, 'supplierId')
+    source_framework_slug = json_payload.get('sourceFrameworkSlug')
+    questions_to_copy = json_payload.get('questionsToCopy')
+
+    if not source_framework_slug:
+        abort(400, "Required data missing: 'source_framework_slug'")
+    if not questions_to_copy:
+        abort(400, "Required data missing: 'questions_to_copy'")
+    if not isinstance(questions_to_copy, list):
+        abort(400, "Data error: 'questions_to_copy' must be a list")
+
+    target_framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first_or_404()
+
+    if target_framework.status != 'open':
+        abort(400, "Target framework is not open")
+
+    source_services = Service.query.filter(
+        Service.supplier_id == supplier_id,
+        Service.framework.has(
+            Framework.slug == source_framework_slug
+        ),
+        Service.lot.has(
+            Lot.slug == lot_slug
+        ),
+        Service.status == 'published',
+        Service.copied_to_following_framework == False,  # NOQA
+    ).order_by(
+        # Descending order so created drafts id's are sequential in reverse alphabetical order. Helps with ordering
+        # in the frontend (most recent id first).
+        desc(Service.data['serviceName'].astext)
+    ).all()
+
+    drafts_services = []
+    for service in source_services:
+        draft = DraftService.from_service(
+            service,
+            questions_to_copy,
+            target_framework_id=target_framework.id,
+        )
+        drafts_services.append((draft, service))
+
+        service.copied_to_following_framework = True
+        db.session.add(draft, service)
+
+    # Flush so the new drafts are assigned an ID, which is used below in the audit events.
+    db.session.flush()
+
+    for draft, service in drafts_services:
+        audit = AuditEvent(
+            audit_type=AuditTypes.create_draft_service,
+            user=updater_json['updated_by'],
+            data={
+                "draftId": draft.id,
+                "serviceId": service.id
+            },
+            db_object=draft
+        )
+
+        db.session.add(audit)
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, format(e))
+
+    return list_result_response(RESOURCE_NAME, [draft_service[0] for draft_service in drafts_services]), 201
 
 
 @main.route('/draft-services/<int:draft_id>', methods=['POST'])

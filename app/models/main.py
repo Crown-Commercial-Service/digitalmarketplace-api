@@ -890,6 +890,8 @@ class ServiceTableMixin(object):
     updated_at = db.Column(db.DateTime, index=False, nullable=False,
                            default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    copied_to_following_framework = db.Column(db.Boolean, nullable=False, server_default=sql_false())
+
     @declared_attr
     def supplier_id(cls):
         return db.Column(db.BigInteger, db.ForeignKey('suppliers.supplier_id'),
@@ -944,7 +946,7 @@ class ServiceTableMixin(object):
             'supplierId', 'supplierName',
             'frameworkSlug', 'frameworkFramework', 'frameworkName', 'frameworkStatus',
             'lot', 'lotSlug', 'lotName',
-            'updatedAt', 'createdAt', 'links'
+            'updatedAt', 'createdAt', 'links', 'copiedToFollowingFramework'
         ])
 
         data = strip_whitespace_from_data(data)
@@ -972,7 +974,8 @@ class ServiceTableMixin(object):
             'lotName': self.lot.name,
             'updatedAt': self.updated_at.strftime(DATETIME_FORMAT),
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
-            'status': self.status
+            'status': self.status,
+            'copiedToFollowingFramework': self.copied_to_following_framework,
         })
 
         data['links'] = link(
@@ -1089,15 +1092,27 @@ class DraftService(db.Model, ServiceTableMixin):
                            default=None)
 
     @staticmethod
-    def from_service(service):
-        return DraftService(
-            framework_id=service.framework_id,
-            lot=service.lot,
-            service_id=service.service_id,
-            supplier=service.supplier,
-            data=service.data,
-            status=service.status
-        )
+    def from_service(service, questions_to_copy=None, target_framework_id=None):
+        draft_not_on_same_framework_as_service = target_framework_id and target_framework_id != service.framework.id
+        if draft_not_on_same_framework_as_service and not isinstance(questions_to_copy, (set, list, tuple)):
+            raise TypeError("'questions_to_copy' must be a list, set or tuple")
+
+        kwargs = {
+            'framework_id': service.framework_id if not target_framework_id else target_framework_id,
+            'lot': service.lot,
+            'service_id': service.service_id,
+            'supplier': service.supplier,
+            'data': {
+                key: value for key, value in service.data.items() if key in questions_to_copy
+            } if draft_not_on_same_framework_as_service else service.data,
+            'status': service.status if not target_framework_id or
+            target_framework_id == service.framework.id else 'not-submitted',
+        }
+
+        if draft_not_on_same_framework_as_service:
+            kwargs.pop('service_id')
+
+        return DraftService(**kwargs)
 
     def copy(self):
         if self.lot.one_service_limit:
