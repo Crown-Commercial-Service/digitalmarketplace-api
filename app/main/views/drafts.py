@@ -108,7 +108,7 @@ def copy_published_from_framework(framework_slug, lot_slug):
     Copy all published services from a given framework/lot to a different framework's drafts.
     :param framework_slug: The slug for the framework to create the new drafts in.
     :param lot: The slug for the lot to copy services from/create drafts forself.
-    :return: The serialized drafts.
+    :return: The count of created drafts.
     """
     updater_json = validate_and_return_updater_request()
     json_payload = get_json_from_request()
@@ -181,7 +181,11 @@ def copy_published_from_framework(framework_slug, lot_slug):
         db.session.rollback()
         abort(400, format(e))
 
-    return list_result_response(RESOURCE_NAME, [draft_service[0] for draft_service in drafts_services]), 201
+    return jsonify({
+        RESOURCE_NAME: {
+            'draftsCreatedCount': len(drafts_services)
+        }
+    }), 201
 
 
 @main.route('/draft-services/<int:draft_id>', methods=['POST'])
