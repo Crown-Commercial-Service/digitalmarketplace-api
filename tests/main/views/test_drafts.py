@@ -371,7 +371,7 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
         assert res.status_code == 201
 
         data = json.loads(res.get_data(as_text=True))
-        serialized_drafts = data['services']
+        drafts_count = data['services']['draftsCreatedCount']
 
         db_drafts = DraftService.query.filter(
             DraftService.supplier_id == 1,
@@ -379,13 +379,13 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
             DraftService.lot_id == 2,
         ).all()
 
-        assert len(serialized_drafts) == 5
+        assert drafts_count == 5
         assert len(db_drafts) == 5
-        assert all(service['status'] == 'not-submitted' for service in serialized_drafts)
-        assert all(service['frameworkSlug'] == 'g-cloud-7' for service in serialized_drafts)
-        assert all('serviceId' not in service for service in serialized_drafts)
-        for service, serialized_draft, db_draft in zip(services, serialized_drafts, db_drafts):
-            assert service.data['serviceName'] == serialized_draft['serviceName'] == db_draft.data['serviceName']
+        assert all(draft_service.status == 'not-submitted' for draft_service in db_drafts)
+        assert all(draft_service.framework.slug == 'g-cloud-7' for draft_service in db_drafts)
+        assert all(draft_service.service_id is None for draft_service in db_drafts)
+        for service, db_draft in zip(services, db_drafts):
+            assert service.data['serviceName'] == db_draft.data['serviceName']
 
     def test_should_400_if_no_source_framework_slug(self):
         res = self.post_to_copy_published_from_framework(source_framework_slug=None)
@@ -440,14 +440,19 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
         res = self.post_to_copy_published_from_framework()
         assert res.status_code == 201
 
-        drafts = json.loads(res.get_data(as_text=True))['services']
+        data = json.loads(res.get_data(as_text=True))
+        drafts_count = data['services']['draftsCreatedCount']
 
-        assert len(drafts) == 4
-        assert all(draft['frameworkSlug'] == 'g-cloud-7' for draft in drafts)
-        assert all(draft['lotSlug'] == 'paas' for draft in drafts)
-        assert all(draft['status'] == 'not-submitted' for draft in drafts)
-        for service, draft in zip(services, drafts):
-            assert service.data['serviceName'] == draft['serviceName']
+        db_drafts = DraftService.query.filter(
+            DraftService.supplier_id == 1,
+        ).all()
+
+        assert drafts_count == 4
+        assert all(draft.framework.slug == 'g-cloud-7' for draft in db_drafts)
+        assert all(draft.lot.slug == 'paas' for draft in db_drafts)
+        assert all(draft.status == 'not-submitted' for draft in db_drafts)
+        for service, draft in zip(services, db_drafts):
+            assert service.data['serviceName'] == draft.data['serviceName']
 
     def test_should_only_copy_published_services_from_correct_supplier(self):
         self.setup_additional_dummy_suppliers(1, 'A')
@@ -457,10 +462,14 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
         res = self.post_to_copy_published_from_framework()
         assert res.status_code == 201
 
-        drafts = json.loads(res.get_data(as_text=True))['services']
+        data = json.loads(res.get_data(as_text=True))
+        drafts_count = data['services']['draftsCreatedCount']
 
-        assert len(drafts) == 3
-        assert all(draft['supplierId'] == 1 for draft in drafts)
+        db_drafts = DraftService.query.all()
+
+        assert drafts_count == 3
+        assert len(db_drafts) == 3
+        assert all(draft.supplier_id == 1 for draft in db_drafts)
 
     def test_should_create_drafts_in_reverse_alphabetical_order_by_service_name(self):
         for service_id, char in enumerate('SERVICE'):
@@ -473,9 +482,13 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
         res = self.post_to_copy_published_from_framework()
         assert res.status_code == 201
 
-        drafts = json.loads(res.get_data(as_text=True))['services']
+        db_drafts = DraftService.query.filter(
+            DraftService.supplier_id == 1,
+        ).order_by(
+            DraftService.id
+        ).all()
 
-        assert [draft['serviceName'] for draft in drafts] == \
+        assert [draft.data['serviceName'] for draft in db_drafts] == \
             ['V service', 'S service', 'R service', 'I service', 'E service', 'E service', 'C service']
 
     def test_should_only_copy_questions_specified(self):
@@ -494,10 +507,12 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
         res = self.post_to_copy_published_from_framework(override_questions_to_copy=questions_to_copy)
         assert res.status_code == 201
 
-        drafts = json.loads(res.get_data(as_text=True))['services']
+        db_drafts = DraftService.query.filter(
+            DraftService.supplier_id == 1,
+        ).all()
 
-        assert all(question in draft for draft in drafts for question in questions_to_copy)
-        assert all(question not in draft for draft in drafts for question in questions_to_drop)
+        assert all(question in draft.data for draft in db_drafts for question in questions_to_copy)
+        assert all(question not in draft.data for draft in db_drafts for question in questions_to_drop)
 
     def test_should_mark_source_services_as_copied(self):
         self.setup_dummy_services(5, supplier_id=1, lot_id=2)
@@ -553,6 +568,19 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
         assert res.status_code == 400
 
         assert "Could not commit" in json.loads(res.get_data())['error']
+
+    def test_uses_with_for_update_for_isolation(self):
+        filter_mock = mock.Mock()
+        filter_mock.with_for_update.return_value = Service.query
+        query_patch = mock.patch('app.main.views.drafts.Service.query')
+        query = query_patch.start()
+        query.filter.return_value = filter_mock
+
+        self.post_to_copy_published_from_framework()
+
+        query_patch.stop()
+
+        filter_mock.with_for_update.assert_called_once_with(of=Service)
 
 
 class TestDraftServices(DraftsHelpersMixin):
