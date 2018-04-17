@@ -141,6 +141,8 @@ def copy_published_from_framework(framework_slug, lot_slug):
         ),
         Service.status == 'published',
         Service.copied_to_following_framework == False,  # NOQA
+    ).with_for_update(
+        of=Service
     ).order_by(
         # Descending order so created drafts id's are sequential in reverse alphabetical order. Helps with ordering
         # in the frontend (most recent id first).

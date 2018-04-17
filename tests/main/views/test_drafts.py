@@ -569,6 +569,19 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
 
         assert "Could not commit" in json.loads(res.get_data())['error']
 
+    def test_uses_with_for_update_for_isolation(self):
+        filter_mock = mock.Mock()
+        filter_mock.with_for_update.return_value = Service.query
+        query_patch = mock.patch('app.main.views.drafts.Service.query')
+        query = query_patch.start()
+        query.filter.return_value = filter_mock
+
+        self.post_to_copy_published_from_framework()
+
+        query_patch.stop()
+
+        filter_mock.with_for_update.assert_called_once_with(of=Service)
+
 
 class TestDraftServices(DraftsHelpersMixin):
     def test_reject_list_drafts_no_supplier_id(self):
