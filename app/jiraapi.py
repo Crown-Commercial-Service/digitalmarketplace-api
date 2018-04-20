@@ -140,7 +140,11 @@ class MarketplaceJIRA(object):
             summary += '[RECRUITER]'
         elif supplier.is_recruiter == 'false' or case_study_links != '':
             price_approved = True
-            maxPrice = supplier.data.get('pricing')[domain_name]['maxPrice']
+            maxPrice = ''
+            try:
+                maxPrice = supplier.data.get('pricing')[domain_name]['maxPrice']
+            except KeyError:
+                pass
             if application:
                 pricing = application.data.get('pricing', None)
                 if pricing:
@@ -246,9 +250,9 @@ class MarketplaceJIRA(object):
         pricing = application.data.get('pricing', None)
         competitive = True
         description += "---\n\n"
-        if pricing is not None:
+        if pricing:
             for k, v in pricing.iteritems():
-                max_price = int(v.get('maxPrice'))
+                max_price = int(v.get('maxPrice')) if v.get('maxPrice', None) else 0
                 domain = next(d for d in domains if d.name == k)
                 domain_price_min = domain.price_minimum
                 domain_price_max = domain.price_maximum
