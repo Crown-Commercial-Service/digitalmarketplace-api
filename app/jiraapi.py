@@ -142,7 +142,9 @@ class MarketplaceJIRA(object):
             price_approved = True
             maxPrice = ''
             try:
-                maxPrice = supplier.data.get('pricing')[domain_name]['maxPrice']
+                pricing = supplier.data.get('pricing', None)
+                if pricing:
+                    maxPrice = pricing[domain_name]['maxPrice']
             except KeyError:
                 pass
             if application:
