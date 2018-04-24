@@ -34,6 +34,12 @@ class TestListFrameworks(BaseApplicationTest):
             'variations',
             'countersignerName',
             'applicationCloseDate',
+            'applicationsCloseAtUTC',
+            'intentionToAwardAtUTC',
+            'clarificationsCloseAtUTC',
+            'clarificationsPublishAtUTC',
+            'frameworkLiveAtUTC',
+            'frameworkExpiresAtUTC',
             'allowDeclarationReuse',
         ])
 
@@ -244,6 +250,12 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
             'clarificationQuestionsOpen': False,
             'lots': ['saas', 'paas', 'iaas', 'scs'],
             'applicationCloseDate': '2023-04-11T16:00:00.000000Z',
+            'applicationsCloseAtUTC': '2023-04-11T16:00:00.000000Z',
+            'intentionToAwardAtUTC': '2023-04-25T00:00:00.000000Z',
+            'clarificationsCloseAtUTC': '2023-03-30T17:00:00.000000Z',
+            'clarificationsPublishAtUTC': '2023-04-04T17:00:00.000000Z',
+            'frameworkLiveAtUTC': '2023-05-01T00:00:00.000000Z',
+            'frameworkExpiresAtUTC': '2024-04-30T00:00:00.000000Z',
             'allowDeclarationReuse': True,
         }
 
@@ -252,6 +264,12 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
             'status',
             'clarificationQuestionsOpen',
             'applicationCloseDate',
+            'applicationsCloseAtUTC',
+            'intentionToAwardAtUTC',
+            'clarificationsCloseAtUTC',
+            'clarificationsPublishAtUTC',
+            'frameworkLiveAtUTC',
+            'frameworkExpiresAtUTC',
             'allowDeclarationReuse',
         ]
 

@@ -125,7 +125,14 @@ class Framework(db.Model):
         backref='frameworks'
     )
     allow_declaration_reuse = db.Column(db.Boolean, nullable=False, default=False)
+
     application_close_date = db.Column(db.DateTime, nullable=True)
+    applications_close_at_utc = db.Column(db.DateTime, nullable=True)
+    intention_to_award_at_utc = db.Column(db.DateTime, nullable=True)
+    clarifications_close_at_utc = db.Column(db.DateTime, nullable=True)
+    clarifications_publish_at_utc = db.Column(db.DateTime, nullable=True)
+    framework_live_at_utc = db.Column(db.DateTime, nullable=True)
+    framework_expires_at_utc = db.Column(db.DateTime, nullable=True)
 
     def get_lot(self, lot_slug):
         return next(
@@ -144,6 +151,24 @@ class Framework(db.Model):
             'lots': [lot.serialize() for lot in self.lots],
             'applicationCloseDate': (
                 self.application_close_date and self.application_close_date.strftime(DATETIME_FORMAT)
+            ),
+            'applicationsCloseAtUTC': (
+                self.applications_close_at_utc and self.applications_close_at_utc.strftime(DATETIME_FORMAT)
+            ),
+            'intentionToAwardAtUTC': (
+                self.intention_to_award_at_utc and self.intention_to_award_at_utc.strftime(DATETIME_FORMAT)
+            ),
+            'clarificationsCloseAtUTC': (
+                self.clarifications_close_at_utc and self.clarifications_close_at_utc.strftime(DATETIME_FORMAT)
+            ),
+            'clarificationsPublishAtUTC': (
+                self.clarifications_publish_at_utc and self.clarifications_publish_at_utc.strftime(DATETIME_FORMAT)
+            ),
+            'frameworkLiveAtUTC': (
+                self.framework_live_at_utc and self.framework_live_at_utc.strftime(DATETIME_FORMAT)
+            ),
+            'frameworkExpiresAtUTC': (
+                self.framework_expires_at_utc and self.framework_expires_at_utc.strftime(DATETIME_FORMAT)
             ),
             'allowDeclarationReuse': self.allow_declaration_reuse,
             'frameworkAgreementDetails': self.framework_agreement_details or {},

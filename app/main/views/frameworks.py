@@ -96,6 +96,12 @@ def update_framework(framework_slug):
         'clarificationQuestionsOpen': 'clarification_questions_open',
         'frameworkAgreementDetails': 'framework_agreement_details',
         'applicationCloseDate': 'application_close_date',
+        'applicationsCloseAtUTC': 'applications_close_at_utc',
+        'intentionToAwardAtUTC': 'intention_to_award_at_utc',
+        'clarificationsCloseAtUTC': 'clarifications_close_at_utc',
+        'clarificationsPublishAtUTC': 'clarifications_publish_at_utc',
+        'frameworkLiveAtUTC': 'framework_live_at_utc',
+        'frameworkExpiresAtUTC': 'framework_expires_at_utc',
         'allowDeclarationReuse': 'allow_declaration_reuse',
     }
 
