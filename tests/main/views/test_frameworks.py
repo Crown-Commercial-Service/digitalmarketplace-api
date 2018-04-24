@@ -22,25 +22,25 @@ class TestListFrameworks(BaseApplicationTest):
         assert response.status_code == 200
         assert len(data['frameworks']) == len(Framework.query.all())
         assert set(data['frameworks'][0].keys()) == set([
+            'allowDeclarationReuse',
+            'applicationCloseDate',
+            'applicationsCloseAtUTC',
             'clarificationQuestionsOpen',
+            'clarificationsCloseAtUTC',
+            'clarificationsPublishAtUTC',
+            'countersignerName',
             'framework',
-            'frameworkAgreementVersion',
             'frameworkAgreementDetails',
+            'frameworkAgreementVersion',
+            'frameworkExpiresAtUTC',
+            'frameworkLiveAtUTC',
             'id',
+            'intentionToAwardAtUTC',
             'lots',
             'name',
             'slug',
             'status',
             'variations',
-            'countersignerName',
-            'applicationCloseDate',
-            'applicationsCloseAtUTC',
-            'intentionToAwardAtUTC',
-            'clarificationsCloseAtUTC',
-            'clarificationsPublishAtUTC',
-            'frameworkLiveAtUTC',
-            'frameworkExpiresAtUTC',
-            'allowDeclarationReuse',
         ])
 
 
@@ -260,17 +260,17 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
         }
 
         self.attribute_whitelist = [
-            'frameworkAgreementDetails',
-            'status',
-            'clarificationQuestionsOpen',
+            'allowDeclarationReuse',
             'applicationCloseDate',
             'applicationsCloseAtUTC',
-            'intentionToAwardAtUTC',
+            'clarificationQuestionsOpen',
             'clarificationsCloseAtUTC',
             'clarificationsPublishAtUTC',
-            'frameworkLiveAtUTC',
+            'frameworkAgreementDetails',
             'frameworkExpiresAtUTC',
-            'allowDeclarationReuse',
+            'frameworkLiveAtUTC',
+            'intentionToAwardAtUTC',
+            'status',
         ]
 
     def post_framework_update(self, update):

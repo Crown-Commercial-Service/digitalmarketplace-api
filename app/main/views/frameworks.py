@@ -92,17 +92,17 @@ def get_framework(framework_slug):
 @main.route('/frameworks/<string:framework_slug>', methods=['POST'])
 def update_framework(framework_slug):
     attribute_whitelist = {
-        'status': 'status',
-        'clarificationQuestionsOpen': 'clarification_questions_open',
-        'frameworkAgreementDetails': 'framework_agreement_details',
+        'allowDeclarationReuse': 'allow_declaration_reuse',
         'applicationCloseDate': 'application_close_date',
         'applicationsCloseAtUTC': 'applications_close_at_utc',
         'intentionToAwardAtUTC': 'intention_to_award_at_utc',
+        'clarificationQuestionsOpen': 'clarification_questions_open',
         'clarificationsCloseAtUTC': 'clarifications_close_at_utc',
         'clarificationsPublishAtUTC': 'clarifications_publish_at_utc',
-        'frameworkLiveAtUTC': 'framework_live_at_utc',
+        'frameworkAgreementDetails': 'framework_agreement_details',
         'frameworkExpiresAtUTC': 'framework_expires_at_utc',
-        'allowDeclarationReuse': 'allow_declaration_reuse',
+        'frameworkLiveAtUTC': 'framework_live_at_utc',
+        'status': 'status',
     }
 
     updater_json = validate_and_return_updater_request()
