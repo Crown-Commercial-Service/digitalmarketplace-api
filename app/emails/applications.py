@@ -114,8 +114,6 @@ def send_approval_notification(application_id):
 def send_rejection_notification(application_id):
     TEMPLATE_FILENAME = 'application_rejected.md'
 
-    FRONTEND_ADDRESS = current_app.config['FRONTEND_ADDRESS']
-
     application = Application.query.get(application_id)
     to_address = application.data['email']
 

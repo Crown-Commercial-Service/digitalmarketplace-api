@@ -19,6 +19,7 @@ from ...utils import (
 from ...service_utils import validate_and_return_lot, filter_services
 from ...brief_utils import validate_brief_data
 from ...datetime_utils import parse_time_of_day, combine_date_and_time
+from app.emails.briefs import send_brief_closed_email
 
 
 @main.route('/briefs', methods=['POST'])
@@ -185,7 +186,6 @@ def update_brief_admin(brief_id):
     DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
     DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
     t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
-
     if brief_json.get('clarification_questions_closed_at'):
         try:
             d = pendulum.parse(brief_json['clarification_questions_closed_at'])
@@ -194,7 +194,8 @@ def update_brief_admin(brief_id):
         except ParserError, e:
             raise ValidationError(e.message)
 
-    if brief_json.get('applications_closed_at'):
+    applications_closed_at = brief_json.get('applications_closed_at')
+    if applications_closed_at:
         try:
             d = pendulum.parse(brief_json['applications_closed_at'])
             combined = combine_date_and_time(d, t, DEADLINES_TZ_NAME)
@@ -221,6 +222,10 @@ def update_brief_admin(brief_id):
     db.session.add(brief)
     db.session.add(audit)
     db.session.commit()
+
+    if applications_closed_at:
+        if (brief.closed_at <= pendulum.today()):
+            send_brief_closed_email(brief)
 
     return jsonify(briefs=brief.serialize(with_users=True)), 200
 

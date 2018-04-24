@@ -213,17 +213,14 @@ def post_brief_response(brief_id):
         brief_response_json['brief_id'] = brief_id
         rollbar.report_exc_info(extra_data=brief_response_json)
 
-    audit = AuditEvent(
+    audit_service.log_audit_event(
         audit_type=AuditTypes.create_brief_response,
         user=current_user.email_address,
         data={
             'briefResponseId': brief_response.id,
             'briefResponseJson': brief_response_json,
         },
-        db_object=brief_response,
-    )
-    audit_service.log_audit_event(audit, {'audit_type': AuditTypes.create_brief_response,
-                                          'briefResponseId': brief_response.id})
+        db_object=brief_response)
 
     return jsonify(briefResponses=brief_response.serialize()), 201
 

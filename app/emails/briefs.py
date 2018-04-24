@@ -26,7 +26,8 @@ def send_brief_response_received_email(supplier, brief, brief_response):
     nth = ""
     i = 0
     for req in brief.data['niceToHaveRequirements']:
-        nth += "####• {}\n{}\n\n".format(req, brief_response.data.get('niceToHaveRequirements', [])[i]
+        nth += "####• {}\n{}\n\n".format(req,
+                                           brief_response.data.get('niceToHaveRequirements', [])[i]
                                            if i < len(brief_response.data.get('niceToHaveRequirements', [])) else '')
         i += 1
 
@@ -65,3 +66,46 @@ def send_brief_response_received_email(supplier, brief, brief_response):
         current_app.config['DM_GENERIC_SUPPORT_NAME'],
         event_description_for_errors='brief response recieved'
     )
+
+
+def send_brief_closed_email(brief):
+    from app.api.services import audit_service, audit_types  # to circumvent circular dependency
+
+    brief_email_sent_audit_event = audit_service.find(type=audit_types.sent_closed_brief_email.value,
+                                                      object_type="Brief",
+                                                      object_id=brief.id).count()
+
+    if (brief_email_sent_audit_event > 0):
+        return
+
+    to_addresses = [user.email_address
+                    for user in brief.users
+                    if user.active and user.email_address.endswith('@digital.gov.au')]
+
+    # prepare copy
+    email_body = render_email_template(
+        'brief_closed.md',
+        frontend_url=current_app.config['FRONTEND_ADDRESS'],
+        brief_name=brief.data['title']
+    )
+
+    subject = "Your brief has closed - please review all responses."
+
+    send_or_handle_error(
+        to_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='brief closed'
+    )
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.sent_closed_brief_email,
+        user='',
+        data={
+            "to_addresses": ', '.join(to_addresses),
+            "email_body": email_body,
+            "subject": subject
+        },
+        db_object=brief)

@@ -242,6 +242,10 @@ class Production(Live):
         'send-daily-seller-email': {
             'task': 'app.tasks.mailchimp.send_new_briefs_email',
             'schedule': crontab(hour=7, minute=0)
+        },
+        'process_closed_briefs': {
+            'task': 'app.tasks.brief_tasks.process_closed_briefs',
+            'schedule': crontab(hour=20)
         }
     }
 
