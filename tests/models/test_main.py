@@ -883,7 +883,7 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
         supplier_framework = SupplierFramework(
             supplier=self.supplier,
             framework=framework,
-            declaration={}
+            declaration={'organisationSize': 'small'}
         )
         db.session.add(supplier_framework)
         db.session.commit()
@@ -1391,7 +1391,6 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                 },
                 'name': u'Supplier 0',
                 'companyDetailsConfirmed': False,
-                'organisationSize': 'small'
             }
 
     def test_update_from_json(self):
