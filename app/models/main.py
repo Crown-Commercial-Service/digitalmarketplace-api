@@ -463,14 +463,6 @@ class SupplierFramework(db.Model):
 
     # vvvv current_framework_agreement defined further down (after FrameworkAgreement) vvvv
 
-    @hybrid_property
-    def supplier_organisation_size(self):
-        return self.declaration.get('organisationSize') if self.declaration else None
-
-    @supplier_organisation_size.expression
-    def supplier_organisation_size(cls):
-        return cls.declaration['organisationSize'].astext
-
     @validates('declaration')
     def validates_declaration(self, key, value):
         value = strip_whitespace_from_data(value)
@@ -1719,7 +1711,7 @@ class BriefResponse(db.Model):
             'briefId': self.brief_id,
             'supplierId': self.supplier_id,
             'supplierName': self.supplier.name,
-            'supplierOrganisationSize': self.supplier_framework.supplier_organisation_size,
+            'supplierOrganisationSize': self.supplier.organisation_size,
             'createdAt': self.created_at.strftime(DATETIME_FORMAT),
             'submittedAt': (
                 self.submitted_at and self.submitted_at.strftime(DATETIME_FORMAT)
@@ -1743,58 +1735,6 @@ class BriefResponse(db.Model):
             })
 
         return purge_nulls_from_data(data)
-
-
-# The following is the code to fetch the supplier_framework of a BriefResponse.
-# A standard relationship would not work in this case because we want to join 3 tables, BriefResponses, Briefs and
-# SupplierFrameworks but use a key from BriefResponses (supplier_id) to denote the record from SupplierFrameworks.
-# See docs below, specifically; 'the A->secondary->B pattern does not support any references between A and B directly'.
-# http://docs.sqlalchemy.org/en/latest/orm/join_conditions.html#relationship-to-non-primary-mapper
-
-# Create a join of 3 tables (like a TEMP TABLE) that, in SQL, would look like:
-# SELECT *
-# FROM brief_responses
-#   JOIN briefs
-#     ON brief_responses.brief_id = briefs.id
-#   JOIN supplier_frameworks AS sf
-#     ON sf.supplier_id = brief_responses.supplier_id AND sf.framework_id = briefs.framework_id
-# ;
-brief_responses_supplier_frameworks_join = brsf = db.join(
-    BriefResponse,
-    Brief,
-    BriefResponse.brief_id == Brief.id
-).join(
-    SupplierFramework,
-    sql_and(
-        SupplierFramework.framework_id == Brief.framework_id,
-        SupplierFramework.supplier_id == BriefResponse.supplier_id
-    )
-)
-
-# Map the join to SupplierFramework to tell the ORM what object we want to get from the join.
-# We also have to disambiguate the duplicate name fields (id, data, created_at etc.) using the properties kwarg.
-brief_responses_supplier_frameworks_to_supplier_frameworks_mapping = mapper(
-    SupplierFramework,
-    brief_responses_supplier_frameworks_join,
-    properties={
-        "brief_id": [brsf.c.briefs_id, brsf.c.brief_responses_brief_id],
-        'briefs_data': brsf.c.briefs_data,
-        'briefs_created_at': brsf.c.briefs_created_at,
-        'supplier_id': [brsf.c.brief_responses_supplier_id, brsf.c.supplier_frameworks_supplier_id],
-        'framework_id': [brsf.c.supplier_frameworks_framework_id, brsf.c.briefs_framework_id],
-    },
-    non_primary=True,
-)
-
-# Join the mapping to the brief_responses table as a relationship:
-# SELECT supplier_framework.* FROM brief_responses JOIN brsf ON brief_responses.id = brsf.brief_responses_id
-BriefResponse.supplier_framework = db.relationship(
-    brief_responses_supplier_frameworks_to_supplier_frameworks_mapping,
-    primaryjoin=db.foreign(BriefResponse.id) == brief_responses_supplier_frameworks_join.c.brief_responses_id,
-    lazy="joined",
-    uselist=False,
-    viewonly=True,
-)
 
 
 class BriefClarificationQuestion(db.Model):
