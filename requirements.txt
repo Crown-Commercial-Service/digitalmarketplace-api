@@ -121,3 +121,4 @@ webencodings==0.5.1
 Werkzeug==0.12.2
 workdays==1.4
 WTForms==2.1
+zdesk==2.6.0
