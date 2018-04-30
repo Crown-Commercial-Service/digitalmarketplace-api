@@ -108,9 +108,8 @@ def get_brief(brief_id):
 
 @api.route('/brief/<int:brief_id>/responses', methods=['GET'])
 @login_required
-@role_required('supplier')
 def get_brief_responses(brief_id):
-    """All brief responses (role=supplier)
+    """All brief responses (role=supplier,buyer)
     ---
     tags:
       - "Brief"
@@ -140,7 +139,16 @@ def get_brief_responses(brief_id):
     if not brief:
         not_found("Invalid brief id '{}'".format(brief_id))
 
-    brief_responses = brief_responses_service.get_brief_responses(brief_id, current_user.supplier_code)
+    if current_user.role == 'buyer':
+        brief_user_ids = [user.id for user in brief.users]
+        if current_user.id not in brief_user_ids:
+            return forbidden("Unauthorised to view brief or brief does not exist")
+
+    supplier_code = getattr(current_user, 'supplier_code', None)
+    if current_user.role == 'buyer' and brief.status != 'closed':
+        brief_responses = []
+    else:
+        brief_responses = brief_responses_service.get_brief_responses(brief_id, supplier_code)
 
     return jsonify(brief=brief.serialize(with_users=False), briefResponses=brief_responses)
 
