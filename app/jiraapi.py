@@ -254,7 +254,7 @@ class MarketplaceJIRA(object):
         description += "---\n\n"
         if pricing:
             for k, v in pricing.iteritems():
-                max_price = int(v.get('maxPrice')) if v.get('maxPrice', None) else 0
+                max_price = int(float(v.get('maxPrice'))) if v.get('maxPrice', None) else 0
                 domain = next(d for d in domains if d.name == k)
                 domain_price_min = domain.price_minimum
                 domain_price_max = domain.price_maximum
