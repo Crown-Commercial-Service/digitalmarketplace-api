@@ -1,7 +1,7 @@
 from app.api.helpers import Service
 from app import db
 from app.models import User
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from sqlalchemy.sql.functions import concat
 
 
@@ -34,3 +34,13 @@ class UsersService(Service):
                    .order_by(func.lower(User.name)))
 
         return [r._asdict() for r in results]
+
+    def get_supplier_last_login(self, application_id):
+        user_by_application_query = (db.session.query(User.supplier_code)
+                                     .filter(User.application_id == application_id))
+
+        user_by_supplier_query = (db.session.query(User)
+                                  .filter(User.supplier_code.in_(user_by_application_query))
+                                  .order_by(desc(User.logged_in_at)))
+
+        return user_by_supplier_query.first()

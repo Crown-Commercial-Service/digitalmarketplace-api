@@ -174,6 +174,23 @@ def users(app, request):
 
 
 @pytest.fixture()
+def admin_users(app, request):
+    with app.app_context():
+        db.session.add(User(
+            id=7,
+            email_address='testadmin@digital.gov.au',
+            name=fake.name(),
+            password=encryption.hashpw('testpassword'),
+            active=True,
+            role='admin',
+            password_changed_at=utcnow()
+        ))
+
+        db.session.commit()
+        yield User.query.filter(User.role == 'admin').all()
+
+
+@pytest.fixture()
 def supplier_user(app, request, suppliers):
     with app.app_context():
         user = User.query.order_by(User.id.desc()).first()
