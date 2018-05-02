@@ -14,7 +14,7 @@ ALERTS = {
     },
     'hourly': {
         'type': 'warning',
-        'message': 'The prices for this service are per hour. Travel can be charged.'
+        'message': 'The prices for this service are per hour and inclusive of travel costs.'
     }
 }
 
