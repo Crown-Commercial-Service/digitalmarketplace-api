@@ -306,7 +306,7 @@ def lock_project(project_external_id):
     project.locked_at = now
     db.session.add(project)
 
-    db.session.commit()
+    db.session.flush()
 
     audit = AuditEvent(
         audit_type=AuditTypes.lock_project,
