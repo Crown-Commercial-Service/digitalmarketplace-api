@@ -170,6 +170,46 @@ class TestFrameworks(BaseApplicationTest):
             db.session.add(f)
             db.session.commit()
 
+    def test_framework_serialization(self):
+        f = Framework(
+            id=109,
+            name='foo',
+            slug='foo-109',
+            framework='g-cloud',
+            status='open',
+            application_close_date=datetime(2000, 1, 1),
+            applications_close_at_utc=datetime(2000, 1, 1),
+            intention_to_award_at_utc=datetime(2000, 2, 2),
+            clarifications_close_at_utc=datetime(2000, 3, 3),
+            clarifications_publish_at_utc=datetime(2000, 4, 4),
+            framework_live_at_utc=datetime(2000, 5, 5),
+            framework_expires_at_utc=datetime(2000, 6, 6),
+        )
+        db.session.add(f)
+        db.session.commit()
+
+        assert f.serialize() == {
+            'id': 109,
+            'name': 'foo',
+            'slug': 'foo-109',
+            'framework': 'g-cloud',
+            'status': 'open',
+            'clarificationQuestionsOpen': False,
+            'lots': [],
+            'applicationCloseDate': '2000-01-01T00:00:00.000000Z',
+            'applicationsCloseAtUTC': '2000-01-01T00:00:00.000000Z',
+            'intentionToAwardAtUTC': '2000-02-02T00:00:00.000000Z',
+            'clarificationsCloseAtUTC': '2000-03-03T00:00:00.000000Z',
+            'clarificationsPublishAtUTC': '2000-04-04T00:00:00.000000Z',
+            'frameworkLiveAtUTC': '2000-05-05T00:00:00.000000Z',
+            'frameworkExpiresAtUTC': '2000-06-06T00:00:00.000000Z',
+            'allowDeclarationReuse': False,
+            'frameworkAgreementDetails': {},
+            'countersignerName': None,
+            'frameworkAgreementVersion': None,
+            'variations': {}
+        }
+
 
 class TestBriefs(BaseApplicationTest, FixtureMixin):
     def setup(self):

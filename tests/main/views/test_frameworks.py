@@ -22,19 +22,25 @@ class TestListFrameworks(BaseApplicationTest):
         assert response.status_code == 200
         assert len(data['frameworks']) == len(Framework.query.all())
         assert set(data['frameworks'][0].keys()) == set([
+            'allowDeclarationReuse',
+            'applicationCloseDate',
+            'applicationsCloseAtUTC',
             'clarificationQuestionsOpen',
+            'clarificationsCloseAtUTC',
+            'clarificationsPublishAtUTC',
+            'countersignerName',
             'framework',
-            'frameworkAgreementVersion',
             'frameworkAgreementDetails',
+            'frameworkAgreementVersion',
+            'frameworkExpiresAtUTC',
+            'frameworkLiveAtUTC',
             'id',
+            'intentionToAwardAtUTC',
             'lots',
             'name',
             'slug',
             'status',
             'variations',
-            'countersignerName',
-            'applicationCloseDate',
-            'allowDeclarationReuse',
         ])
 
 
@@ -244,15 +250,27 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
             'clarificationQuestionsOpen': False,
             'lots': ['saas', 'paas', 'iaas', 'scs'],
             'applicationCloseDate': '2023-04-11T16:00:00.000000Z',
+            'applicationsCloseAtUTC': '2023-04-11T16:00:00.000000Z',
+            'intentionToAwardAtUTC': '2023-04-25T00:00:00.000000Z',
+            'clarificationsCloseAtUTC': '2023-03-30T17:00:00.000000Z',
+            'clarificationsPublishAtUTC': '2023-04-04T17:00:00.000000Z',
+            'frameworkLiveAtUTC': '2023-05-01T00:00:00.000000Z',
+            'frameworkExpiresAtUTC': '2024-04-30T00:00:00.000000Z',
             'allowDeclarationReuse': True,
         }
 
         self.attribute_whitelist = [
-            'frameworkAgreementDetails',
-            'status',
-            'clarificationQuestionsOpen',
-            'applicationCloseDate',
             'allowDeclarationReuse',
+            'applicationCloseDate',
+            'applicationsCloseAtUTC',
+            'clarificationQuestionsOpen',
+            'clarificationsCloseAtUTC',
+            'clarificationsPublishAtUTC',
+            'frameworkAgreementDetails',
+            'frameworkExpiresAtUTC',
+            'frameworkLiveAtUTC',
+            'intentionToAwardAtUTC',
+            'status',
         ]
 
     def post_framework_update(self, update):
