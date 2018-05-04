@@ -6,9 +6,9 @@ from app import db, encryption
 from app.api import api
 from app.api.helpers import (
     generate_reset_password_token, decode_reset_password_token, get_root_url,
-    get_email_domain, has_whitelisted_email_domain
+    get_email_domain
 )
-from app.models import User
+from app.models import User, has_whitelisted_email_domain
 from app.utils import get_json_from_request
 from app.emails.users import (
     send_account_activation_email, send_account_activation_manager_email,

@@ -37,8 +37,6 @@ from app.utils import (
 )
 from .validation import is_valid_service_id, get_validation_errors, get_validator
 
-from dmutils.forms import is_government_email
-
 from .datetime_utils import DateTime, utcnow, parse_interval, is_textual, \
     parse_time_of_day, combine_date_and_time, localnow
 
@@ -56,6 +54,14 @@ with io.open('data/domain_mapping_old_to_new.yaml') as f:
 
 with io.open('data/specialist_role_old_to_new.yaml') as f:
     DOMAIN_MAPPING_SPECIALISTS = yaml.load(f.read())
+
+
+def has_whitelisted_email_domain(email_domain):
+    if email_domain.endswith('.gov.au'):
+        return True
+    else:
+        agency = Agency.query.filter(Agency.domain == email_domain).first()
+        return agency.whitelisted if agency else False
 
 
 class Agency(db.Model):
@@ -1192,13 +1198,14 @@ class User(db.Model):
 
     @validates('email_address')
     def validate_email_address(self, key, value):
-        if value and self.role == 'buyer' and not is_government_email(value):
+        if value and self.role == 'buyer' and not has_whitelisted_email_domain(value.split('@')[-1]):
             raise ValidationError("invalid_buyer_domain")
         return value
 
     @validates('role')
     def validate_role(self, key, value):
-        if self.email_address and value == 'buyer' and not is_government_email(self.email_address):
+        if self.email_address and value == 'buyer'\
+                and not has_whitelisted_email_domain(self.email_address.split('@')[-1]):
             raise ValidationError("invalid_buyer_domain")
         return value
 

@@ -35,7 +35,7 @@ def test_send_buyer_invite_invalid_token(client):
     assert data['message'] == 'The token provided is invalid. It may have expired'
 
 
-def test_create_user(client, app, applications):
+def test_create_user(client, app, applications, agencies):
     with app.app_context():
         user_role = 'buyer'
         user_email = 'es@asdf.gov.au'
@@ -57,6 +57,42 @@ def test_create_user(client, app, applications):
 
         assert fetched_user is not None
         assert fetched_user.name == user_name
+
+
+def test_create_whitelisted_user(client, app, applications, agencies):
+    with app.app_context():
+        user_role = 'buyer'
+        user_email = 'es@asdf.com.au'
+        user_name = 'new buyer with supplier code'
+
+        response = client.post(
+            '/2/users',
+            data=json.dumps({
+                'name': user_name,
+                'email_address': user_email,
+                'password': 'pa$$werd1',
+                'user_type': user_role,
+                'framework': 'digital-marketplace'
+            }),
+            content_type='application/json')
+        assert response.status_code == 200
+        fetched_user = User.query.filter(
+            User.email_address == user_email.lower()).first()
+
+        assert fetched_user is not None
+        assert fetched_user.name == user_name
+
+        response = client.post(
+            '/2/users',
+            data=json.dumps({
+                'name': user_name,
+                'email_address': 'es@zzzz.com.au',
+                'password': 'pa$$werd1',
+                'user_type': user_role,
+                'framework': 'digital-marketplace'
+            }),
+            content_type='application/json')
+        assert response.status_code == 400
 
 
 def test_should_require_minimum_args(client):

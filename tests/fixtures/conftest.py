@@ -75,6 +75,14 @@ def agencies(app, request):
             whitelisted=True
         ))
 
+        db.session.add(Agency(
+            id=3,
+            name='Another Test Agency',
+            domain='asdf.com.au',
+            category='Commonwealth',
+            whitelisted=True
+        ))
+
         db.session.commit()
         yield Agency.query.all()
 

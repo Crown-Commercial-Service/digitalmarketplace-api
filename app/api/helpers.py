@@ -272,14 +272,6 @@ def get_email_domain(email_address):
     return email_address.split('@')[-1]
 
 
-def has_whitelisted_email_domain(email_domain):
-    if email_domain.endswith('.gov.au'):
-        return True
-    else:
-        agency = Agency.query.filter(Agency.domain == email_domain).first()
-        return agency.whitelisted if agency else False
-
-
 class ServiceException(Exception):
     def __init__(self, msg):
         self.msg = msg
