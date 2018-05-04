@@ -249,6 +249,7 @@ def get_root_url(framework_slug):
 
 
 def abort(message):
+    current_app.logger.error(message)
     return flask_abort(make_response(jsonify(message=message), 400))
 
 
