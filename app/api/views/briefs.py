@@ -209,11 +209,11 @@ def post_brief_response(brief_id):
             del e.message['essentialRequirements']
         if len(e.message) > 0:
             message += json.dumps(e.message)
-        return jsonify(errorMessage=message), 400
+        return jsonify(message=message), 400
     except Exception as e:
         brief_response_json['brief_id'] = brief_id
         rollbar.report_exc_info(extra_data=brief_response_json)
-        return jsonify(errorMessage=e.message), 400
+        return jsonify(message=e.message), 400
 
     try:
         send_brief_response_received_email(supplier, brief, brief_response)
