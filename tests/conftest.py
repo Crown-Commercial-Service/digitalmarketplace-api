@@ -25,15 +25,13 @@ def db_migration(request):
     app = create_app('test')
     Migrate(app, db)
     Manager(db, MigrateCommand)
-    ALEMBIC_CONFIG = \
-        os.path.join(os.path.dirname(__file__),
-                     '../migrations/alembic.ini')
+    ALEMBIC_CONFIG = os.path.join(os.path.dirname(__file__), '../migrations/alembic.ini')
     config = Config(ALEMBIC_CONFIG)
-    config.set_main_option(
-        "script_location",
-        "migrations")
+    config.set_main_option("script_location", "migrations")
+
     with app.app_context():
         upgrade(config, 'head')
+
     print("Done db setup")
 
     def teardown():
@@ -217,31 +215,67 @@ _g8_framework_defaults = {
     "slug": "g-cloud-8",
     "framework": "g-cloud",
     "framework_agreement_details": _generic_framework_agreement_details,
+    "applications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "intention_to_award_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
 }
 _g7_framework_defaults = {
     "slug": "g-cloud-7",
     "framework": "g-cloud",
     "framework_agreement_details": None,
+    "applications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "intention_to_award_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
 }
 _g6_framework_defaults = {
     "slug": "g-cloud-6",
     "framework": "g-cloud",
     "framework_agreement_details": None,
+    "applications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "intention_to_award_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
 }
 _dos_framework_defaults = {
     "slug": "digital-outcomes-and-specialists",
     "framework": "digital-outcomes-and-specialists",
     "framework_agreement_details": None,
+    "applications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "intention_to_award_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
 }
 _dos2_framework_defaults = {
     "slug": "digital-outcomes-and-specialists-2",
     "framework": "digital-outcomes-and-specialists",
     "framework_agreement_details": None,
+    "applications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "intention_to_award_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
 }
 _example_framework_details = {
     "slug": "example-framework",
     "framework": "g-cloud",
-    "framework_agreement_details": None
+    "framework_agreement_details": None,
+    "applications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "intention_to_award_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
 }
 _dos_framework_lots = ["digital-specialists", "digital-outcomes", "user-research-participants", "user-research-studios"]
 
