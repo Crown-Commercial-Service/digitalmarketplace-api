@@ -65,8 +65,10 @@ def load_user_from_request(request):
                              user.frameworks)
             return user
 
-from app.api.views import (applications, briefs, brief_responses,
+from app.api.views import (briefs, brief_responses,
                            users, feedback, suppliers, services, prices, regions, tokens, dashboards)  # noqa
+
+from app.api.views.reports import (suppliers)  # noqa
 
 
 def get_token_from_headers(headers):
