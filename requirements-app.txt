@@ -11,7 +11,7 @@ SQLAlchemy==1.1.4
 SQLAlchemy-Utils==0.30.5
 
 git+https://github.com/alphagov/digitalmarketplace-utils.git@35.2.0#egg=digitalmarketplace-utils==35.2.0
-git+https://github.com/alphagov/digitalmarketplace-apiclient.git@15.0.0#egg=digitalmarketplace-apiclient==15.0.0
+git+https://github.com/alphagov/digitalmarketplace-apiclient.git@15.2.0#egg=digitalmarketplace-apiclient==15.2.0
 
 # For schema validation
 jsonschema==2.5.1
