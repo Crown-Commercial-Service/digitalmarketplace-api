@@ -365,6 +365,8 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
             Service.supplier_id == 1,
             Service.framework_id == 1,  # G-Cloud 6
             Service.lot_id == 2,
+        ).order_by(
+            desc(Service.data['serviceName'].astext)
         ).all()
 
         res = self.post_to_copy_published_from_framework()
@@ -377,7 +379,7 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
             DraftService.supplier_id == 1,
             DraftService.framework_id == 4,  # G-Cloud 7
             DraftService.lot_id == 2,
-        ).all()
+        ).order_by(DraftService.id).all()
 
         assert drafts_count == 5
         assert len(db_drafts) == 5
@@ -435,6 +437,8 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
             Service.framework_id == 1,  # G-Cloud 6
             Service.lot_id == 2,
             Service.status == 'published'
+        ).order_by(
+            desc(Service.data['serviceName'].astext)
         ).all()
 
         res = self.post_to_copy_published_from_framework()
@@ -445,7 +449,7 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
 
         db_drafts = DraftService.query.filter(
             DraftService.supplier_id == 1,
-        ).all()
+        ).order_by(DraftService.id).all()
 
         assert drafts_count == 4
         assert all(draft.framework.slug == 'g-cloud-7' for draft in db_drafts)
