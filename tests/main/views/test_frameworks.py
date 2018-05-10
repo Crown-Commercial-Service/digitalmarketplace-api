@@ -23,7 +23,6 @@ class TestListFrameworks(BaseApplicationTest):
         assert len(data['frameworks']) == len(Framework.query.all())
         assert set(data['frameworks'][0].keys()) == set([
             'allowDeclarationReuse',
-            'applicationCloseDate',
             'applicationsCloseAtUTC',
             'clarificationQuestionsOpen',
             'clarificationsCloseAtUTC',
@@ -249,7 +248,6 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
             'status': "standstill",
             'clarificationQuestionsOpen': False,
             'lots': ['saas', 'paas', 'iaas', 'scs'],
-            'applicationCloseDate': '2023-04-11T16:00:00.000000Z',
             'applicationsCloseAtUTC': '2023-04-11T16:00:00.000000Z',
             'intentionToAwardAtUTC': '2023-04-25T00:00:00.000000Z',
             'clarificationsCloseAtUTC': '2023-03-30T17:00:00.000000Z',
@@ -261,7 +259,6 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
 
         self.attribute_whitelist = [
             'allowDeclarationReuse',
-            'applicationCloseDate',
             'applicationsCloseAtUTC',
             'clarificationQuestionsOpen',
             'clarificationsCloseAtUTC',

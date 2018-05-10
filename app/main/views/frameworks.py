@@ -93,7 +93,6 @@ def get_framework(framework_slug):
 def update_framework(framework_slug):
     attribute_whitelist = {
         'allowDeclarationReuse': 'allow_declaration_reuse',
-        'applicationCloseDate': 'application_close_date',
         'applicationsCloseAtUTC': 'applications_close_at_utc',
         'intentionToAwardAtUTC': 'intention_to_award_at_utc',
         'clarificationQuestionsOpen': 'clarification_questions_open',

@@ -104,6 +104,7 @@ class Framework(db.Model):
         'g-cloud',
         'digital-outcomes-and-specialists',
     )
+    UNIX_EPOCH = datetime.strptime('1970-01-01T00:00:00.000000Z', DATETIME_FORMAT)
 
     id = db.Column(db.Integer, primary_key=True)
     slug = db.Column(db.String, nullable=False, unique=True, index=True)
@@ -126,13 +127,12 @@ class Framework(db.Model):
     )
     allow_declaration_reuse = db.Column(db.Boolean, nullable=False, default=False)
 
-    application_close_date = db.Column(db.DateTime, nullable=True)
-    applications_close_at_utc = db.Column(db.DateTime, nullable=True)
-    intention_to_award_at_utc = db.Column(db.DateTime, nullable=True)
-    clarifications_close_at_utc = db.Column(db.DateTime, nullable=True)
-    clarifications_publish_at_utc = db.Column(db.DateTime, nullable=True)
-    framework_live_at_utc = db.Column(db.DateTime, nullable=True)
-    framework_expires_at_utc = db.Column(db.DateTime, nullable=True)
+    applications_close_at_utc = db.Column(db.DateTime, nullable=False, default=UNIX_EPOCH)
+    intention_to_award_at_utc = db.Column(db.DateTime, nullable=False, default=UNIX_EPOCH)
+    clarifications_close_at_utc = db.Column(db.DateTime, nullable=False, default=UNIX_EPOCH)
+    clarifications_publish_at_utc = db.Column(db.DateTime, nullable=False, default=UNIX_EPOCH)
+    framework_live_at_utc = db.Column(db.DateTime, nullable=False, default=UNIX_EPOCH)
+    framework_expires_at_utc = db.Column(db.DateTime, nullable=False, default=UNIX_EPOCH)
 
     def get_lot(self, lot_slug):
         return next(
@@ -149,9 +149,6 @@ class Framework(db.Model):
             'status': self.status,
             'clarificationQuestionsOpen': self.clarification_questions_open,
             'lots': [lot.serialize() for lot in self.lots],
-            'applicationCloseDate': (
-                self.application_close_date and self.application_close_date.strftime(DATETIME_FORMAT)
-            ),
             'applicationsCloseAtUTC': (
                 self.applications_close_at_utc and self.applications_close_at_utc.strftime(DATETIME_FORMAT)
             ),
