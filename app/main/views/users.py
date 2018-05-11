@@ -1,14 +1,13 @@
 from datetime import datetime
 
 from dmapiclient.audit import AuditTypes
-from sqlalchemy import func
 from sqlalchemy.orm import lazyload
 from sqlalchemy.exc import DataError, IntegrityError
 from flask import abort, current_app, jsonify, request
 
 from .. import main
 from ... import db, encryption
-from ...models import AuditEvent, BuyerEmailDomain, Framework, Service, Supplier, SupplierFramework, User
+from ...models import AuditEvent, BuyerEmailDomain, DraftService, Framework, Service, Supplier, SupplierFramework, User
 from ...supplier_utils import check_supplier_role
 from ...utils import (
     get_json_from_request,
@@ -250,25 +249,31 @@ def export_users_for_framework(framework_slug):
     if framework.status == 'coming':
         abort(400, 'framework not yet open')
 
-    suppliers_with_a_complete_service = frozenset(framework.get_supplier_ids_for_completed_service())
+    suppliers_ids_with_a_complete_service = db.session.query(
+        DraftService.supplier_id
+    ).filter(
+        DraftService.status.in_(('submitted', 'failed')),
+        DraftService.framework_id == framework.id
+    ).distinct().subquery()
 
-    supplier_id_published_service_count = dict(db.session.query(
-        Service.supplier_id,
-        func.count(Service.id)
+    supplier_ids_with_a_published_service = db.session.query(
+        Service.supplier_id
     ).filter(
         Service.status == 'published',
         Service.framework_id == framework.id
-    ).group_by(
-        Service.supplier_id
-    ).all())
+    ).distinct().subquery()
 
     supplier_frameworks_and_users = db.session.query(
-        SupplierFramework, User
+        SupplierFramework, User, suppliers_ids_with_a_complete_service, supplier_ids_with_a_published_service
+    ).outerjoin(
+        suppliers_ids_with_a_complete_service,
+        suppliers_ids_with_a_complete_service.c.supplier_id == SupplierFramework.supplier_id
+    ).outerjoin(
+        supplier_ids_with_a_published_service,
+        supplier_ids_with_a_published_service.c.supplier_id == SupplierFramework.supplier_id
     ).filter(
-        SupplierFramework.supplier_id == User.supplier_id
-    ).filter(
-        SupplierFramework.framework_id == framework.id
-    ).filter(
+        SupplierFramework.supplier_id == User.supplier_id,
+        SupplierFramework.framework_id == framework.id,
         User.active.is_(True)
     ).options(
         lazyload(User.supplier),
@@ -282,13 +287,11 @@ def export_users_for_framework(framework_slug):
     ).all()
 
     user_rows = []
-
-    for sf, u in supplier_frameworks_and_users:
-
+    for sf, u, has_a_completed_service, has_a_published_service in supplier_frameworks_and_users:
         # always get the declaration status
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
         application_status = 'application' if (
-            declaration_status == 'complete' and sf.supplier_id in suppliers_with_a_complete_service
+            declaration_status == 'complete' and has_a_completed_service
         ) else 'no_application'
         application_result = ''
         framework_agreement = ''
@@ -302,7 +305,7 @@ def export_users_for_framework(framework_slug):
                 application_result = 'pass' if sf.on_framework else 'fail'
             framework_agreement = bool(getattr(sf.current_framework_agreement, 'signed_agreement_returned_at', None))
             variations_agreed = ', '.join(sf.agreed_variations.keys()) if sf.agreed_variations else ''
-
+        # TODO standardise this response to use camelCase in line with other api response views
         user_rows.append({
             'email address': u.email_address,
             'user_name': u.name,
@@ -313,7 +316,7 @@ def export_users_for_framework(framework_slug):
             'framework_agreement': framework_agreement,
             'application_result': application_result,
             'variations_agreed': variations_agreed,
-            'published_service_count': supplier_id_published_service_count.get(sf.supplier_id, 0)
+            'published_service': bool(has_a_published_service)
         })
 
     return jsonify(users=[user for user in user_rows]), 200

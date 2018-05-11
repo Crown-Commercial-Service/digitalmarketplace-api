@@ -13,7 +13,6 @@ from app.models import (
     ValidationError,
     BriefClarificationQuestion,
     DraftService,
-    FrameworkLot,
     ContactInformation
 )
 from tests.bases import BaseApplicationTest
@@ -1856,98 +1855,6 @@ class TestLot(BaseApplicationTest):
             u'unitSingular': u'lab',
             u'unitPlural': u'labs',
         }
-
-
-class TestFrameworkSupplierIds(BaseApplicationTest):
-    """Test getting supplier ids for framework."""
-
-    def test_1_supplier(self, draft_service):
-        """Test that when one supplier exists in the framework that only supplier is shown."""
-        ds = DraftService.query.filter(DraftService.service_id == draft_service['serviceId']).first()
-        f = Framework.query.filter(Framework.id == ds.framework_id).first()
-        supplier_ids_with_completed_service = f.get_supplier_ids_for_completed_service()
-        assert len(supplier_ids_with_completed_service) == 1
-        assert ds.supplier.supplier_id in supplier_ids_with_completed_service
-
-    def test_submitted_shows(self, draft_service):
-        """Test sevice with status 'submitted' is shown."""
-        ds = DraftService.query.filter(DraftService.service_id == draft_service['serviceId']).first()
-        f = Framework.query.filter(Framework.id == ds.framework_id).first()
-        supplier_ids_with_completed_service = f.get_supplier_ids_for_completed_service()
-        assert ds.status == 'submitted'
-        assert ds.supplier.supplier_id in supplier_ids_with_completed_service
-
-    def test_failed_shows(self, draft_service):
-        """Test sevice with status 'failed' is shown."""
-        ds = DraftService.query.filter(DraftService.service_id == draft_service['serviceId']).first()
-        ds.status = 'failed'
-        db.session.add(ds)
-        db.session.commit()
-        f = Framework.query.filter(Framework.id == ds.framework_id).first()
-        supplier_ids_with_completed_service = f.get_supplier_ids_for_completed_service()
-        assert ds.status == 'failed'
-        assert ds.supplier.supplier_id in supplier_ids_with_completed_service
-
-    def test_not_submitted_does_not_show(self, draft_service):
-        """Test sevice with status 'not-submitted' is not shown."""
-        ds = DraftService.query.filter(DraftService.service_id == draft_service['serviceId']).first()
-        ds.status = 'not-submitted'
-        db.session.add(ds)
-        db.session.commit()
-        f = Framework.query.filter(Framework.id == ds.framework_id).first()
-        supplier_ids_with_completed_service = f.get_supplier_ids_for_completed_service()
-        assert ds.status == 'not-submitted'
-        assert ds.supplier.supplier_id not in supplier_ids_with_completed_service
-
-    def test_no_suppliers(self, open_example_framework):
-        """Test a framework with no suppliers on it returns no submitted services."""
-        f = Framework.query.filter(Framework.id == open_example_framework['id']).first()
-        supplier_ids_with_completed_service = f.get_supplier_ids_for_completed_service()
-        assert len(supplier_ids_with_completed_service) == 0
-
-
-class TestFrameworkSupplierIdsMany(BaseApplicationTest, FixtureMixin):
-    """Test multiple suppliers, multiple services."""
-
-    def test_multiple_services(self):
-        self.setup_dos_2_framework()
-        lot = Lot.query.first()
-        self.fl_query = {
-            'framework_id': 101,
-            'lot_id': lot.id
-        }
-        fl = FrameworkLot(**self.fl_query)
-        db.session.add(fl)
-        db.session.commit()
-
-        # Set u 5 dummy suppliers
-        self.setup_dummy_suppliers(5)
-        supplier_ids = range(5)
-        # 5 sets of statuses for their respective services.
-        service_status_choices = [
-            ('failed',),
-            ('not-submitted',),
-            ('failed', 'failed', 'failed', 'not-submitted', 'submitted', 'submitted', 'not-submitted', 'failed'),
-            (),
-            ('not-submitted', 'submitted', 'not-submitted', 'not-submitted', 'failed')
-        ]
-        # For the supplier, service_status sets create the services and draft services.
-        count = 0
-        for supplier_id, service_statuses in zip(supplier_ids, service_status_choices):
-            for service_status in service_statuses:
-                service_id = str(count) * 10
-                count += 1
-                self.setup_dummy_service(service_id, supplier_id=supplier_id, **self.fl_query)
-
-                db.session.commit()
-                with mock.patch('app.models.main.url_for', autospec=lambda i, **values: 'test.url/test'):
-                    ds = DraftService.from_service(Service.query.filter(Service.service_id == service_id).first())
-                    ds.status = service_status
-                db.session.add(ds)
-                db.session.commit()
-        # Assert that only those suppliers whose service_status list contains failed and/ or submitted are returned.
-        framework = Framework.query.filter(Framework.id == 101).first()
-        assert sorted(framework.get_supplier_ids_for_completed_service()) == [0, 2, 4]
 
 
 class TestFrameworkAgreements(BaseApplicationTest, FixtureMixin):
