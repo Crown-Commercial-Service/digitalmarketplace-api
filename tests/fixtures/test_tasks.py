@@ -1,4 +1,5 @@
 from app.tasks.mailchimp import sync_mailchimp_seller_list, MailChimpConfigException, send_new_briefs_email
+from app.tasks.s3 import create_resumes_zip, CreateResumesZipException
 from app.models import AuditEvent
 from app import db
 from dmapiclient.audit import AuditTypes
@@ -185,3 +186,54 @@ def test_send_new_briefs_email_fails_mailchimp_api_call_with_requests_error(app,
             assert False
         except RequestException as e:
             assert True
+
+
+brief_response_data = {
+    'attachedDocumentURL': [
+        'attachment_1.pdf',
+        'attachment_2.pdf'
+    ]
+}
+
+
+@pytest.mark.parametrize('brief_responses', [{'data': brief_response_data}], indirect=True)
+def test_create_resumes_zip_success(app, briefs, brief_responses, mocker):
+    boto3 = mocker.patch('app.tasks.s3.boto3')
+    s3 = MagicMock()
+    bucket = MagicMock()
+
+    boto3.resource.return_value = s3
+    s3.Bucket.return_value = bucket
+
+    with app.app_context():
+        create_resumes_zip(1)
+        assert boto3.resource.called
+        assert s3.Bucket.called
+        assert bucket.download_fileobj.called
+        assert bucket.upload_fileobj.called
+
+
+brief_response_data = {
+    'attachedDocumentURL': []
+}
+
+
+@pytest.mark.parametrize('brief_responses', [{'data': brief_response_data}], indirect=True)
+def test_create_resumes_zip_fails_when_no_attachments(app, briefs, brief_responses, mocker):
+    boto3 = mocker.patch('app.tasks.s3.boto3')
+    s3 = MagicMock()
+    bucket = MagicMock()
+
+    boto3.resource.return_value = s3
+    s3.Bucket.return_value = bucket
+
+    with app.app_context():
+        try:
+            create_resumes_zip(1)
+            assert False
+        except CreateResumesZipException as e:
+            assert boto3.resource.called
+            assert s3.Bucket.called
+            assert not bucket.download_fileobj.called
+            assert not bucket.upload_fileobj.called
+            assert str(e) == 'The brief id "1" did not have any attachments'

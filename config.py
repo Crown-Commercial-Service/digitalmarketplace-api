@@ -245,7 +245,7 @@ class Production(Live):
         },
         'process_closed_briefs': {
             'task': 'app.tasks.brief_tasks.process_closed_briefs',
-            'schedule': crontab(hour=20)
+            'schedule': crontab(hour=20, minute=0)
         }
     }
 

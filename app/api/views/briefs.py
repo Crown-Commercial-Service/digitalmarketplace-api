@@ -19,6 +19,7 @@ from dmutils.file import s3_upload_file_from_request, s3_download_file
 import mimetypes
 import rollbar
 import json
+import botocore
 
 
 def _can_do_brief_response(brief_id):
@@ -162,6 +163,32 @@ def upload_brief_response_file(brief_id, supplier_code, slug):
                                                                          'brief-' + str(brief_id),
                                                                          'supplier-' + str(supplier.code)))
                     })
+
+
+@api.route('/brief/<int:brief_id>/respond/documents')
+@login_required
+@role_required('buyer')
+def download_brief_responses(brief_id):
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+    brief_user_ids = [user.id for user in brief.users]
+    if current_user.id not in brief_user_ids:
+        return forbidden("Unauthorised to view brief or brief does not exist")
+    if brief.status != 'closed':
+        return forbidden("You can only download documents for closed briefs")
+    try:
+        file = s3_download_file(
+            'brief-{}-resumes.zip'.format(brief_id),
+            os.path.join(brief.framework.slug, 'archives', 'brief-{}'.format(brief_id))
+        )
+    except botocore.exceptions.ClientError as e:
+        rollbar.report_exc_info()
+        not_found("Brief documents not found for brief id '{}'".format(brief_id))
+
+    response = Response(file, mimetype='application/zip')
+    response.headers['Content-Disposition'] = 'attachment; filename="brief-{}-resumes.zip"'.format(brief_id)
+    return response
 
 
 @api.route('/brief/<int:brief_id>/respond/documents/<int:supplier_code>/<slug>', methods=['GET'])

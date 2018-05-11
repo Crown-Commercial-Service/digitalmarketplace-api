@@ -261,12 +261,14 @@ def briefs(app, request, users):
 
 @pytest.fixture()
 def brief_responses(app, request, briefs, supplier_user):
+    params = request.param if hasattr(request, 'param') else {}
+    data = params['data'] if 'data' in params else {}
     with app.app_context():
         db.session.add(BriefResponse(
             id=1,
             brief_id=1,
             supplier_code=supplier_user.supplier_code,
-            data={}
+            data=data
         ))
 
         db.session.commit()

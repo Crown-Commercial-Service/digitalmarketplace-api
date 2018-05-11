@@ -6,6 +6,8 @@ from flask import current_app
 
 from .util import render_email_template, send_or_handle_error
 
+import rollbar
+
 
 def send_brief_response_received_email(supplier, brief, brief_response):
     TEMPLATE_FILENAME = 'brief_response_submitted_outcome.md' if brief.lot.slug == 'digital-outcome' \
@@ -70,6 +72,7 @@ def send_brief_response_received_email(supplier, brief, brief_response):
 
 def send_brief_closed_email(brief):
     from app.api.services import audit_service, audit_types  # to circumvent circular dependency
+    from app.tasks.s3 import create_resumes_zip, CreateResumesZipException
 
     brief_email_sent_audit_event = audit_service.find(type=audit_types.sent_closed_brief_email.value,
                                                       object_type="Brief",
@@ -77,6 +80,15 @@ def send_brief_closed_email(brief):
 
     if (brief_email_sent_audit_event > 0):
         return
+
+    # create the resumes zip
+    has_resumes_zip = False
+    try:
+        create_resumes_zip(brief.id)
+        has_resumes_zip = True
+    except Exception as e:
+        rollbar.report_exc_info()
+        pass
 
     to_addresses = [user.email_address
                     for user in brief.users
@@ -86,7 +98,9 @@ def send_brief_closed_email(brief):
     email_body = render_email_template(
         'brief_closed.md',
         frontend_url=current_app.config['FRONTEND_ADDRESS'],
-        brief_name=brief.data['title']
+        brief_name=brief.data['title'],
+        brief_id=brief.id,
+        has_resumes_zip=has_resumes_zip
     )
 
     subject = "Your brief has closed - please review all responses."

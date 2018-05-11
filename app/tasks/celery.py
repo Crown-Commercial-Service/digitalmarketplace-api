@@ -38,7 +38,8 @@ def make_celery(flask_app):
         include=[
             'app.tasks.email',
             'app.tasks.mailchimp',
-            'app.tasks.brief_tasks'
+            'app.tasks.brief_tasks',
+            'app.tasks.s3'
         ]
     )
     celery.conf.update(flask_app.config)
