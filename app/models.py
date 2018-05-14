@@ -117,7 +117,7 @@ class Lot(db.Model):
         return self.one_service_limit
 
     def serialize(self):
-        data = dict(self.data.items())
+        data = dict(self.data.items()) if self.data is not None else {}
         data.update({
             'id': self.id,
             'slug': self.slug,
@@ -669,6 +669,15 @@ class Supplier(db.Model):
         ))
         db.session.flush()
 
+    def remove_domain(self, name):
+        sd = db.session.query(SupplierDomain)\
+            .join(Domain, Supplier)\
+            .filter(Supplier.id == self.id, Domain.name == name).first()
+
+        if sd:
+            db.session.delete(sd)
+            db.session.flush()
+
     def update_domain_assessment_status(self, name_or_id, status, user=''):
         d = Domain.get_by_name_or_id(name_or_id)
 
@@ -927,6 +936,10 @@ class Supplier(db.Model):
             for name, checked in self.data['services'].items():
                 if name not in self.all_domains and checked:
                     self.add_unassessed_domain(name)
+            for domain in self.all_domains:
+                if not any(domain in service for service in self.data['services']):
+                    self.remove_domain(domain)
+
             del self.data['services']
 
         if 'seller_types' in self.data:
