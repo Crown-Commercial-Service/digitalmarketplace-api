@@ -34,6 +34,19 @@
     "essentialRequirements",
     "respondToEmailAddress"
   ],
+  "sections": [
+    {
+      "name": "Apply for this opportunity",
+      "optional": [
+        "niceToHaveRequirements"
+      ],
+      "required": [
+        "essentialRequirements",
+        "availability",
+        "respondToEmailAddress"
+      ]
+    }
+  ],
   "title": "Digital Outcome Brief Response Schema",
   "type": "object"
 }

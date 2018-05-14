@@ -272,6 +272,86 @@
     "workingArrangements",
     "workplaceAddress"
   ],
+  "sections": [
+    {
+      "name": "Title",
+      "optional": [],
+      "required": [
+        "title"
+      ]
+    },
+    {
+      "name": "Location",
+      "optional": [],
+      "required": [
+        "location"
+      ]
+    },
+    {
+      "name": "Description of work",
+      "optional": [
+        "workAlreadyDone",
+        "additionalRelevantInformation",
+        "securityClearance",
+        "contractLength",
+        "additionalTerms",
+        "budgetRange"
+      ],
+      "required": [
+        "organisation",
+        "backgroundInformation",
+        "outcome",
+        "endUsers",
+        "phase",
+        "existingTeam",
+        "workplaceAddress",
+        "workingArrangements",
+        "startDate",
+        "summary"
+      ]
+    },
+    {
+      "name": "Shortlist and evaluation process",
+      "optional": [
+        "niceToHaveRequirements",
+        "evaluationType"
+      ],
+      "required": [
+        "numberOfSuppliers",
+        "technicalWeighting",
+        "culturalWeighting",
+        "priceWeighting",
+        "essentialRequirements",
+        "successCriteria",
+        "culturalFitCriteria",
+        "priceCriteria"
+      ]
+    },
+    {
+      "name": "How long your brief will be open",
+      "optional": [],
+      "required": [
+        "requirementsLength"
+      ]
+    },
+    {
+      "name": "Question and answer session details",
+      "optional": [
+        "questionAndAnswerSessionDetails"
+      ],
+      "required": []
+    },
+    {
+      "name": "Who can respond",
+      "optional": [
+        "sellerEmailList",
+        "sellerEmail"
+      ],
+      "required": [
+        "sellerSelector"
+      ]
+    }
+  ],
   "title": "Digital Outcome Brief Schema",
   "type": "object"
 }

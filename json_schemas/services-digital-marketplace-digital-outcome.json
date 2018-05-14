@@ -247,6 +247,39 @@
     "locations",
     "openStandardsPrinciples"
   ],
+  "sections": [
+    {
+      "name": "Service essentials",
+      "optional": [],
+      "required": [
+        "helpGovernmentImproveServices",
+        "bespokeSystemInformation",
+        "dataProtocols",
+        "openStandardsPrinciples"
+      ]
+    },
+    {
+      "name": "Team capabilities",
+      "optional": [
+        "performanceAnalysisTypes",
+        "securityTypes",
+        "deliveryTypes",
+        "softwareDevelopmentTypes",
+        "supportAndOperationsTypes",
+        "testingAndAuditingTypes",
+        "userExperienceAndDesignTypes",
+        "userResearchTypes"
+      ],
+      "required": []
+    },
+    {
+      "name": "Outcomes locations",
+      "optional": [],
+      "required": [
+        "locations"
+      ]
+    }
+  ],
   "title": "Digital Outcomes Service Schema",
   "type": "object"
 }

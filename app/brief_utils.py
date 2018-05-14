@@ -1,10 +1,11 @@
-from flask import abort, request
 import json
+
 import rollbar
+from flask import abort, request
 
 from .models import Service
-from .validation import get_validation_errors
 from .service_utils import filter_services
+from .validation import get_validation_errors
 
 
 def validate_brief_data(brief, enforce_required=True, required_fields=None):

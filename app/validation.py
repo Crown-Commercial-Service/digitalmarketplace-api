@@ -80,6 +80,14 @@ def load_schemas(schemas_path, schema_names):
 _SCHEMAS = load_schemas(JSON_SCHEMAS_PATH, SCHEMA_NAMES)
 
 
+def get_sections(schema_name):
+    try:
+        schema = _SCHEMAS[schema_name]
+        return schema['sections']
+    except KeyError as e:
+        abort(500, 'Missing key: {}'.format(e.message))
+
+
 def get_validator(schema_name, enforce_required=True, required_fields=None):
     if required_fields is None:
         required_fields = []

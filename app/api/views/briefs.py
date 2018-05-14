@@ -1,25 +1,24 @@
+import json
+import mimetypes
 import os
 
-from flask import jsonify, request, current_app, Response
+import botocore
+import rollbar
+from flask import Response, current_app, jsonify, request
 from flask_login import current_user, login_required
+from sqlalchemy.exc import DataError
+
 from app.api import api
-from app.api.services import (briefs, brief_responses_service,
-                              lots_service,
-                              audit_service)
-from app.api.helpers import role_required, abort, forbidden, not_found
+from app.api.helpers import abort, forbidden, not_found, role_required
+from app.api.services import (audit_service, brief_overview_service,
+                              brief_responses_service, briefs, lots_service)
 from app.emails import send_brief_response_received_email
 from dmapiclient.audit import AuditTypes
-from ...models import (db, AuditEvent, Brief, BriefResponse,
-                       Supplier, Framework, ValidationError)
-from sqlalchemy.exc import DataError
-from ...utils import (
-    get_json_from_request
-)
-from dmutils.file import s3_upload_file_from_request, s3_download_file
-import mimetypes
-import rollbar
-import json
-import botocore
+from dmutils.file import s3_download_file, s3_upload_file_from_request
+
+from ...models import (AuditEvent, Brief, BriefResponse, Framework, Supplier,
+                       ValidationError, db)
+from ...utils import get_json_from_request
 
 
 def _can_do_brief_response(brief_id):
@@ -105,6 +104,141 @@ def get_brief(brief_id):
             return forbidden("Unauthorised to view brief or brief does not exist")
     else:
         return jsonify(brief.serialize(with_users=False))
+
+
+@api.route('/brief/<int:brief_id>', methods=['DELETE'])
+@login_required
+@role_required('buyer')
+def delete_brief(brief_id):
+    """Delete brief (role=buyer)
+    ---
+    tags:
+        - Brief
+    definitions:
+        DeleteBrief:
+            type: object
+            properties:
+                message:
+                    type: string
+    responses:
+        200:
+            description: Brief deleted successfully.
+            schema:
+                $ref: '#/definitions/DeleteBrief'
+        400:
+            description: Bad request. Brief status must be 'draft'.
+        403:
+            description: Unauthorised to delete brief.
+        404:
+            description: brief_id not found.
+        500:
+            description: Unexpected error.
+    """
+    brief = briefs.get(brief_id)
+
+    if not brief:
+        not_found("Invalid brief id '{}'".format(brief_id))
+
+    if current_user.role == 'buyer':
+        brief_user_ids = [user.id for user in brief.users]
+        if current_user.id not in brief_user_ids:
+            return forbidden('Unauthorised to delete brief')
+
+    if brief.status != 'draft':
+        abort('Cannot delete a {} brief'.format(brief.status))
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.delete_brief,
+        user=current_user.email_address,
+        data={
+            'briefId': brief_id
+        },
+        db_object=None
+    )
+
+    try:
+        audit_service.save(audit)
+        briefs.delete(brief)
+    except Exception as e:
+        extra_data = {'audit_type': AuditTypes.delete_brief, 'briefId': brief.id, 'exception': e.message}
+        rollbar.report_exc_info(extra_data=extra_data)
+
+    return jsonify(message='Brief {} deleted'.format(brief_id)), 200
+
+
+@api.route('/brief/<int:brief_id>/overview', methods=["GET"])
+@login_required
+@role_required('buyer')
+def get_brief_overview(brief_id):
+    """Overview (role=buyer)
+    ---
+    tags:
+        - overview
+    definitions:
+        BriefOverview:
+            type: object
+            properties:
+                sections:
+                    type: array
+                    items:
+                        $ref: '#/definitions/BriefOverviewSections'
+                title:
+                    type: string
+        BriefOverviewSections:
+            type: array
+            items:
+                $ref: '#/definitions/BriefOverviewSection'
+        BriefOverviewSection:
+            type: object
+            properties:
+                links:
+                    type: array
+                    items:
+                        $ref: '#/definitions/BriefOverviewSectionLinks'
+                title:
+                    type: string
+        BriefOverviewSectionLinks:
+            type: array
+            items:
+                $ref: '#/definitions/BriefOverviewSectionLink'
+        BriefOverviewSectionLink:
+            type: object
+            properties:
+                complete:
+                    type: boolean
+                path:
+                    type: string
+                    nullable: true
+                text:
+                    type: string
+    responses:
+        200:
+            description: Data for the Overview page
+            schema:
+                $ref: '#/definitions/BriefOverview'
+        400:
+            description: Lot not supported.
+        403:
+            description: Unauthorised to view brief.
+        404:
+            description: brief_id not found
+    """
+    brief = briefs.get(brief_id)
+
+    if not brief:
+        not_found("Invalid brief id '{}'".format(brief_id))
+
+    if current_user.role == 'buyer':
+        brief_user_ids = [user.id for user in brief.users]
+        if current_user.id not in brief_user_ids:
+            return forbidden('Unauthorised to view brief')
+
+    if brief.lot.slug != 'digital-professionals':
+        abort('Lot {} is not supported'.format(brief.lot.slug))
+
+    sections = brief_overview_service.get_sections(brief)
+
+    return jsonify(sections=sections, status=brief.status, title=brief.data['title']), 200
 
 
 @api.route('/brief/<int:brief_id>/responses', methods=['GET'])

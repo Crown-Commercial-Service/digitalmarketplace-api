@@ -49,6 +49,21 @@
     "essentialRequirements",
     "respondToEmailAddress"
   ],
+  "sections": [
+    {
+      "name": "Apply for this opportunity",
+      "optional": [
+        "niceToHaveRequirements"
+      ],
+      "required": [
+        "essentialRequirements",
+        "availability",
+        "dayRate",
+        "attachedDocumentURL",
+        "respondToEmailAddress"
+      ]
+    }
+  ],
   "title": "Digital Service Professionals Brief Response Schema",
   "type": "object"
 }
