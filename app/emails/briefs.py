@@ -87,6 +87,7 @@ def send_brief_closed_email(brief):
         create_resumes_zip(brief.id)
         has_resumes_zip = True
     except Exception as e:
+        current_app.logger.error(str(e))
         rollbar.report_exc_info()
         pass
 

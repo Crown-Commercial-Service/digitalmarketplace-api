@@ -10,6 +10,7 @@ def get_flask_app():
     config_name = getenv('DM_ENVIRONMENT') or 'development'
     app = Flask(__name__)
     app.config['DM_ENVIRONMENT'] = config_name
+    app.config['ROLLBAR_TOKEN'] = getenv('ROLLBAR_TOKEN')
     app.config.from_object(configs[config_name])
     # FIXME: The service broker adds a 'reconnect' parameter that's rejected by Postgres and
     # doesn't seem to be in the Postgres documentation anyway.  We need to patch the broker to fix

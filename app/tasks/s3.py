@@ -20,7 +20,7 @@ class CreateResumesZipException(Exception):
 
 @celery.task
 def create_resumes_zip(brief_id):
-    BUCKET_NAME = current_app.config.get('S3_BUCKET_NAME')
+    BUCKET_NAME = getenv('S3_BUCKET_NAME')
     s3 = boto3.resource(
         's3',
         region_name=getenv('AWS_REGION'),
