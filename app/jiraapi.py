@@ -90,7 +90,9 @@ class MarketplaceJIRA(object):
             generic_jira,
             marketplace_project_code=None,
             application_field_code=None,
-            supplier_field_code=None):
+            supplier_field_code=None,
+            ranking_assessor_1_field_code=None,
+            ranking_assessor_2_field_code=None):
         if not marketplace_project_code:
             marketplace_project_code = current_app.config.get('JIRA_MARKETPLACE_PROJECT_CODE')
         self.marketplace_project_code = marketplace_project_code
@@ -102,6 +104,14 @@ class MarketplaceJIRA(object):
         if not supplier_field_code:
             supplier_field_code = current_app.config.get('JIRA_SUPPLIER_FIELD_CODE')
         self.supplier_field_code = supplier_field_code
+
+        if not ranking_assessor_1_field_code:
+            ranking_assessor_1_field_code = current_app.config.get('JIRA_RANKING_ASSESSOR_1_FIELD_CODE')
+        self.ranking_assessor_1_field_code = ranking_assessor_1_field_code
+
+        if not ranking_assessor_2_field_code:
+            ranking_assessor_2_field_code = current_app.config.get('JIRA_RANKING_ASSESSOR_2_FIELD_CODE')
+        self.ranking_assessor_2_field_code = ranking_assessor_2_field_code
 
         self.generic_jira = generic_jira
         self.server_url = current_app.config['JIRA_URL']
@@ -139,35 +149,44 @@ class MarketplaceJIRA(object):
         if supplier.is_recruiter == 'true' and case_study_links == '':
             summary += '[RECRUITER]'
         elif supplier.is_recruiter == 'false' or case_study_links != '':
-            price_approved = True
-            maxPrice = ''
-            try:
-                pricing = supplier.data.get('pricing', None)
-                if pricing:
-                    maxPrice = pricing[domain_name]['maxPrice']
-            except KeyError:
-                pass
+            price_status = None
+            domain_price_minimum = domain.price_minimum
+            domain_price_maximum = domain.price_maximum
+            max_price = None
+
             if application:
                 pricing = application.data.get('pricing', None)
                 if pricing:
                     domain_pricing = pricing[domain_name]
                     if domain_pricing:
-                        price_approved = False
-                        maxPrice = domain_pricing = domain_pricing['maxPrice']
+                        max_price = float(domain_pricing['maxPrice'])
+            elif 'pricing' in supplier.data:
+                supplier_pricing = supplier.data.get('pricing', None)
+                if domain_name in supplier_pricing:
+                    max_price = float(supplier_pricing[domain_name]['maxPrice'])
+
+            if max_price:
+                if (domain_price_minimum <= max_price and
+                        domain_price_maximum >= max_price):
+                    price_status = 'Seller Price: (/) {}'.format(max_price)
+                else:
+                    price_status = 'Seller Price: (x) {}'.format(max_price)
+            else:
+                price_status = 'Seller Price: (!) No price provided'
 
             price_description_values = {
                 "domain": domain_name,
-                "domain_price_min": domain.price_minimum,
-                "domain_price_max": domain.price_maximum,
-                "max_price": maxPrice,
-                "price_approved": 'Approved' if price_approved is True else '*Unapproved*'
+                "domain_price_min": domain_price_minimum,
+                "domain_price_max": domain_price_maximum,
+                "max_price": max_price,
+                "price_status": price_status
             }
             price_description = (
                 '---------\n\n'
                 'Price threshold for *{domain}*:\n'
                 'Minimum Price: {domain_price_min}\n'
                 'Maximum Price: {domain_price_max}\n'
-                'Seller Price: {max_price} - {price_approved}\n'
+                '{price_status}\n'
             ).format(**price_description_values)
 
             format_text = (
@@ -176,9 +195,9 @@ class MarketplaceJIRA(object):
                 '{panel}'
                 'Comments:\n\n'
                 'Criteria met:\n\n'
-                '1. <Criteria 1>\n'
-                '2. <Criteria 2>\n'
-                '3. <etc>\n\n'
+                '# <Criteria 1>\n'
+                '# <Criteria 2>\n'
+                '# <etc>\n\n'
                 'Recommendation: *Pass* or *Reject*\n\n'
                 '{panel}'
                 'Once complete - please assign back to Luke Roughley'
@@ -222,7 +241,11 @@ class MarketplaceJIRA(object):
         new_issue = self.generic_jira.create_issue(**details)
         for issue in existing_issues:
             self.generic_jira.jira.create_issue_link('Relates', new_issue, issue)
-        new_issue.update({self.supplier_field_code: str(supplier.code)})
+        new_issue.update({
+            self.supplier_field_code: str(supplier.code),
+            self.ranking_assessor_1_field_code: {"value": "Unassessed"},
+            self.ranking_assessor_2_field_code: {"value": "Unassessed"}
+        })
 
         attachment = StringIO.StringIO()
         attachment.write(json.dumps(relevant_case_studies))
@@ -254,7 +277,7 @@ class MarketplaceJIRA(object):
         description += "---\n\n"
         if pricing:
             for k, v in pricing.iteritems():
-                max_price = int(float(v.get('maxPrice'))) if v.get('maxPrice', None) else 0
+                max_price = float(v.get('maxPrice')) if v.get('maxPrice', None) else 0
                 domain = next(d for d in domains if d.name == k)
                 domain_price_min = domain.price_minimum
                 domain_price_max = domain.price_maximum
