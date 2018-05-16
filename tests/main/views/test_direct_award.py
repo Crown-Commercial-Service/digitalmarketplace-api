@@ -932,24 +932,3 @@ class TestDirectAwardRecordProjectDownload(DirectAwardSetupAndTeardown):
         assert res.status_code == 200
 
         self._assert_one_audit_event_created_for_only_project(AuditTypes.downloaded_project.value)
-
-
-class TestDirectAwardRoutesAcceptInternalAndExternalIdentifiers(DirectAwardSetupAndTeardown):
-    def setup(self):
-        super(TestDirectAwardRoutesAcceptInternalAndExternalIdentifiers, self).setup()
-        self.project_id, self.project_external_id = self.create_direct_award_project(
-            user_id=self.user_id, project_name=self.direct_award_project_name
-        )
-        self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id)
-
-    @pytest.mark.parametrize('route', ['/direct-award/projects/{project_id}',
-                                       '/direct-award/projects/{project_id}/searches',
-                                       '/direct-award/projects/{project_id}/searches/{search_id}'])
-    def test_routes_return_same_result(self, route):
-        internal_id_response = self.client.get(route.format(project_id=self.project_id,
-                                                            search_id=self.search_id))
-        external_id_response = self.client.get(route.format(project_id=self.project_external_id,
-                                                            search_id=self.search_id))
-
-        assert internal_id_response.status_code == external_id_response.status_code == 200
-        assert internal_id_response.get_data(as_text=True) == external_id_response.get_data(as_text=True)

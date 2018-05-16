@@ -25,11 +25,6 @@ from ...utils import (
 
 
 def get_project_by_id_or_404(project_id: int):
-    """During the transitional period, project_id may be either the internal or the public ID of the project."""
-    project = DirectAwardProject.query.filter(DirectAwardProject.id == project_id).first()
-    if project:
-        return project
-
     return DirectAwardProject.query.filter(DirectAwardProject.external_id == project_id).first_or_404()
 
 
@@ -227,7 +222,7 @@ def list_project_services(project_external_id):
     project = get_project_by_id_or_404(project_external_id)
 
     if not project.locked_at:
-        abort(400, 'Project has not been locked: {}'.format(project.id))
+        abort(400, 'Project has not been locked: {}'.format(project.external_id))
 
     # TODO: This should work for _all_ active searches, not just the first (although we currently enforce only one
     # TODO: active search) - SW 21/09/2017
@@ -236,7 +231,7 @@ def list_project_services(project_external_id):
         DirectAwardSearch.active == True  # noqa
     ).first()
     if not search:
-        abort(400, 'Project does not have a saved search: {}'.format(project.id))
+        abort(400, 'Project does not have a saved search: {}'.format(project.external_id))
 
     paginated_archived_services = search.archived_services.paginate(
         page=page,
