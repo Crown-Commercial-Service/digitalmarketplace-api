@@ -134,6 +134,10 @@ class Framework(db.Model):
     framework_live_at_utc = db.Column(db.DateTime, nullable=False, default=UNIX_EPOCH)
     framework_expires_at_utc = db.Column(db.DateTime, nullable=False, default=UNIX_EPOCH)
 
+    # We can't logically declare defaults for these values, so they must be provided explicitly at creation-time.
+    has_direct_award = db.Column(db.Boolean, nullable=True)
+    has_further_competition = db.Column(db.Boolean, nullable=True)
+
     def get_lot(self, lot_slug):
         return next(
             (lot for lot in self.lots if lot.slug == lot_slug),
@@ -174,6 +178,8 @@ class Framework(db.Model):
             'countersignerName': (self.framework_agreement_details or {}).get("countersignerName"),
             'frameworkAgreementVersion': (self.framework_agreement_details or {}).get("frameworkAgreementVersion"),
             'variations': (self.framework_agreement_details or {}).get("variations", {}),
+            'hasDirectAward': self.has_direct_award,
+            'hasFurtherCompetition': self.has_further_competition,
         }
 
     def get_supplier_ids_for_completed_service(self):
@@ -231,6 +237,16 @@ class Framework(db.Model):
 
     def __repr__(self):
         return '<{}: {} slug={}>'.format(self.__class__.__name__, self.name, self.slug)
+
+    @validates('has_direct_award', 'has_further_competition')
+    def validates_framework_components(self, key, value):
+        has_direct_award = value if key == 'has_direct_award' else self.has_direct_award
+        has_further_competition = value if key == 'has_further_competition' else self.has_further_competition
+
+        if has_direct_award is False and has_further_competition is False:
+            raise ValidationError('At least one of `hasDirectAward` or `hasFurtherCompetition` must be True')
+
+        return value
 
 
 class ContactInformation(db.Model):

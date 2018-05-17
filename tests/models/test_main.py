@@ -155,6 +155,8 @@ class TestFrameworks(BaseApplicationTest):
                 slug='foo',
                 framework='g-cloud',
                 status='invalid',
+                has_direct_award=True,
+                has_further_competition=False,
             )
             db.session.add(f)
             db.session.commit()
@@ -166,6 +168,8 @@ class TestFrameworks(BaseApplicationTest):
                 slug='foo-{}'.format(i),
                 framework='g-cloud',
                 status=status,
+                has_direct_award=True,
+                has_further_competition=False,
             )
             db.session.add(f)
             db.session.commit()
@@ -183,6 +187,8 @@ class TestFrameworks(BaseApplicationTest):
             clarifications_publish_at_utc=datetime(2000, 4, 4),
             framework_live_at_utc=datetime(2000, 5, 5),
             framework_expires_at_utc=datetime(2000, 6, 6),
+            has_direct_award=True,
+            has_further_competition=False,
         )
         db.session.add(f)
         db.session.commit()
@@ -205,7 +211,9 @@ class TestFrameworks(BaseApplicationTest):
             'frameworkAgreementDetails': {},
             'countersignerName': None,
             'frameworkAgreementVersion': None,
-            'variations': {}
+            'variations': {},
+            'hasDirectAward': True,
+            'hasFurtherCompetition': False,
         }
 
     def test_framework_serialization_with_default_datetimes(self):
@@ -215,6 +223,8 @@ class TestFrameworks(BaseApplicationTest):
             slug='foo-109',
             framework='g-cloud',
             status='open',
+            has_direct_award=True,
+            has_further_competition=False,
         )
         db.session.add(f)
         db.session.commit()
@@ -237,7 +247,9 @@ class TestFrameworks(BaseApplicationTest):
             'frameworkAgreementDetails': {},
             'countersignerName': None,
             'frameworkAgreementVersion': None,
-            'variations': {}
+            'variations': {},
+            'hasDirectAward': True,
+            'hasFurtherCompetition': False,
         }
 
 
