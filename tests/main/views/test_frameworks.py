@@ -12,6 +12,7 @@ from app.models.main import ContactInformation, Supplier
 from tests.helpers import FixtureMixin
 
 from app import supplier_constants
+from app.main.views.frameworks import FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MAP
 
 
 class TestListFrameworks(BaseApplicationTest):
@@ -286,20 +287,11 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
             'frameworkLiveAtUTC': '2023-05-01T00:00:00.000000Z',
             'frameworkExpiresAtUTC': '2024-04-30T00:00:00.000000Z',
             'allowDeclarationReuse': True,
+            'hasDirectAward': True,
+            'hasFurtherCompetition': False,
         }
 
-        self.attribute_whitelist = [
-            'allowDeclarationReuse',
-            'applicationsCloseAtUTC',
-            'clarificationQuestionsOpen',
-            'clarificationsCloseAtUTC',
-            'clarificationsPublishAtUTC',
-            'frameworkAgreementDetails',
-            'frameworkExpiresAtUTC',
-            'frameworkLiveAtUTC',
-            'intentionToAwardAtUTC',
-            'status',
-        ]
+        self.attribute_whitelist = FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MAP.keys()
 
     def post_framework_update(self, update):
         return self.client.post(
@@ -500,7 +492,8 @@ class TestUpdateFrameworkPending(BaseApplicationTest):
         super(TestUpdateFrameworkPending, self).setup()
 
         self.framework = Framework(id=999, slug='g-cloud-10', name='G-Cloud 10', framework='g-cloud', status='open',
-                                   clarification_questions_open=False, allow_declaration_reuse=True)
+                                   clarification_questions_open=False, allow_declaration_reuse=True,
+                                   has_direct_award=True, has_further_competition=False)
         db.session.add(self.framework)
         db.session.commit()
 

@@ -22,6 +22,7 @@ from sqlalchemy.sql.expression import (
     false as sql_false,
     null as sql_null,
     and_ as sql_and,
+    or_ as sql_or,
 )
 from sqlalchemy.types import String
 from sqlalchemy_utils import generic_relationship
@@ -135,8 +136,17 @@ class Framework(db.Model):
     framework_expires_at_utc = db.Column(db.DateTime, nullable=False, default=UNIX_EPOCH)
 
     # We can't logically declare defaults for these values, so they must be provided explicitly at creation-time.
-    has_direct_award = db.Column(db.Boolean, nullable=True)
-    has_further_competition = db.Column(db.Boolean, nullable=True)
+    has_direct_award = db.Column(db.Boolean, nullable=False)
+    has_further_competition = db.Column(db.Boolean, nullable=False)
+
+    __table_args__ = (
+        # We want to make sure the framework has at least one direct award or further competition component (but it can
+        # have both in theory).
+        db.CheckConstraint(
+            sql_or(has_direct_award.is_(True), has_further_competition.is_(True)),
+            name='ck_framework_has_direct_award_or_further_competition'
+        ),
+    )
 
     def get_lot(self, lot_slug):
         return next(
@@ -237,16 +247,6 @@ class Framework(db.Model):
 
     def __repr__(self):
         return '<{}: {} slug={}>'.format(self.__class__.__name__, self.name, self.slug)
-
-    @validates('has_direct_award', 'has_further_competition')
-    def validates_framework_components(self, key, value):
-        has_direct_award = value if key == 'has_direct_award' else self.has_direct_award
-        has_further_competition = value if key == 'has_further_competition' else self.has_further_competition
-
-        if has_direct_award is False and has_further_competition is False:
-            raise ValidationError('At least one of `hasDirectAward` or `hasFurtherCompetition` must be True')
-
-        return value
 
 
 class ContactInformation(db.Model):

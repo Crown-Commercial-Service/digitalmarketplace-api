@@ -1401,6 +1401,8 @@ class TestGetService(BaseApplicationTest):
             slug="expired",
             framework="g-cloud",
             status="expired",
+            has_direct_award=True,
+            has_further_competition=False,
         ))
         db.session.commit()
         db.session.add(FrameworkLot(

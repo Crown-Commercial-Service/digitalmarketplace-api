@@ -17,6 +17,7 @@ from app import create_app
 from app.models import (
     db, Framework, SupplierFramework, Supplier, User, ContactInformation, DraftService, Lot, Service, FrameworkLot
 )
+from app.main.views.frameworks import FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MAP
 
 
 @pytest.fixture(autouse=True, scope='session')
@@ -123,7 +124,7 @@ def supplier_framework(request, app, supplier, live_example_framework):
         return sf.serialize()
 
 
-_framework_kwargs_whitelist = set(("status", "framework", "framework_agreement_details",))
+_framework_kwargs_whitelist = set(FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MAP.values()).union({'framework'})
 
 
 def _update_framework(request, app, slug, **kwargs):
@@ -221,6 +222,8 @@ _g8_framework_defaults = {
     "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
     "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
     "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
+    "has_direct_award": True,
+    "has_further_competition": False,
 }
 _g7_framework_defaults = {
     "slug": "g-cloud-7",
@@ -232,6 +235,8 @@ _g7_framework_defaults = {
     "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
     "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
     "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
+    "has_direct_award": True,
+    "has_further_competition": False,
 }
 _g6_framework_defaults = {
     "slug": "g-cloud-6",
@@ -243,6 +248,8 @@ _g6_framework_defaults = {
     "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
     "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
     "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
+    "has_direct_award": True,
+    "has_further_competition": False,
 }
 _dos_framework_defaults = {
     "slug": "digital-outcomes-and-specialists",
@@ -254,6 +261,8 @@ _dos_framework_defaults = {
     "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
     "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
     "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
+    "has_direct_award": False,
+    "has_further_competition": True,
 }
 _dos2_framework_defaults = {
     "slug": "digital-outcomes-and-specialists-2",
@@ -265,6 +274,8 @@ _dos2_framework_defaults = {
     "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
     "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
     "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
+    "has_direct_award": False,
+    "has_further_competition": True,
 }
 _example_framework_details = {
     "slug": "example-framework",
@@ -276,6 +287,8 @@ _example_framework_details = {
     "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
     "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
     "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
+    "has_direct_award": True,
+    "has_further_competition": False,
 }
 _dos_framework_lots = ["digital-specialists", "digital-outcomes", "user-research-participants", "user-research-studios"]
 
