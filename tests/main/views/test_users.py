@@ -1,11 +1,14 @@
+from datetime import datetime
+
 from flask import json
 from freezegun import freeze_time
-from app import db, encryption
-from app.models import User, Supplier, BuyerEmailDomain
-from datetime import datetime
 import mock
+import pytest
 from sqlalchemy.exc import DataError
-from tests.bases import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
+
+from app import db, encryption
+from app.models import User, Supplier, BuyerEmailDomain, AuditEvent
+from tests.bases import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, WSGIApplicationWithEnvironment
 from tests.helpers import FixtureMixin, load_example_listing
 
 
@@ -59,6 +62,21 @@ class TestUsersAuth(BaseUserTest):
             auth_users={'password': 'invalid'},
             status_code=403
         )
+
+    @staticmethod
+    def assert_failed_login_audit_is_created(email_address='joeblogs@digital.cabinet-office.gov.uk',
+                                             client_ip='127.0.0.1',
+                                             failed_login_count=1):
+        failed_login_audit = AuditEvent.query.filter(AuditEvent.type == 'user_auth_failed').all()
+
+        assert len(failed_login_audit) == 1
+        assert failed_login_audit[0].user == email_address
+        assert failed_login_audit[0].data == {
+            'email_address': email_address,
+            'client_ip': client_ip,
+            'failed_login_count': failed_login_count,
+            'request_id': mock.ANY,
+        }
 
     def test_should_validate_credentials(self):
         self.create_user()
@@ -122,6 +140,7 @@ class TestUsersAuth(BaseUserTest):
             self.invalid_password()
             user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
+            self.assert_failed_login_audit_is_created()
             assert user.logged_in_at is None
 
     def test_failed_login_should_increment_failed_login_counter(self):
@@ -129,6 +148,7 @@ class TestUsersAuth(BaseUserTest):
         self.invalid_password()
         user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
+        self.assert_failed_login_audit_is_created()
         assert user.failed_login_count == 1
 
     def test_successful_login_resets_failed_login_counter(self):
@@ -147,6 +167,7 @@ class TestUsersAuth(BaseUserTest):
         self.invalid_password()
         user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
 
+        self.assert_failed_login_audit_is_created()
         assert user.locked is True
 
     def test_all_login_attempts_fail_for_locked_users(self):
@@ -160,6 +181,22 @@ class TestUsersAuth(BaseUserTest):
         db.session.add(user)
         db.session.commit()
         self._return_post_login(status_code=403)
+        self.assert_failed_login_audit_is_created(failed_login_count=2)
+
+    @pytest.mark.parametrize('http_x_real_ip, expected_audit_client_ip',
+                             (
+                                 (None, '127.0.0.1',),
+                                 ('10.0.0.1', '10.0.0.1',),
+                             ))
+    def test_failed_login_audit_event_stores_client_ip_from_environment(self, http_x_real_ip, expected_audit_client_ip):
+        if http_x_real_ip:
+            self.app.wsgi_app = WSGIApplicationWithEnvironment(self.app.wsgi_app, HTTP_X_REAL_IP=http_x_real_ip)
+
+        self.create_user()
+
+        self.invalid_password()
+
+        self.assert_failed_login_audit_is_created(client_ip=expected_audit_client_ip)
 
 
 class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):

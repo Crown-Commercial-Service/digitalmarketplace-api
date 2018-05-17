@@ -51,7 +51,8 @@ class BaseApplicationTest(object):
         self.app = create_app('test')
         self.app.wsgi_app = WSGIApplicationWithEnvironment(
             self.app.wsgi_app,
-            HTTP_AUTHORIZATION='Bearer {}'.format(self.app.config['DM_API_AUTH_TOKENS'])
+            HTTP_AUTHORIZATION='Bearer {}'.format(self.app.config['DM_API_AUTH_TOKENS']),
+            REMOTE_ADDR='127.0.0.1',
         )
         self.app.test_client_class = TestClient
         self.client = self.app.test_client()
