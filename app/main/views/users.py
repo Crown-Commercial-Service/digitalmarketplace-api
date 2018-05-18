@@ -40,6 +40,7 @@ def auth_user():
 
     if user is None:
         return jsonify(authorization=False), 404
+
     elif encryption.authenticate_user(json_payload['password'], user) and user.active:
         user.logged_in_at = datetime.utcnow()
         user.failed_login_count = 0
@@ -47,9 +48,27 @@ def auth_user():
         db.session.commit()
 
         return single_result_response(RESOURCE_NAME, user), 200
+
     else:
         user.failed_login_count += 1
         db.session.add(user)
+        db.session.flush()
+
+        audit_data = {
+            'email_address': json_payload['emailAddress'].lower(),
+            'client_ip': request.environ.get('HTTP_X_REAL_IP', request.remote_addr),  # HTTP_X_REAL_IP added by nginx
+            'failed_login_count': user.failed_login_count,
+            'request_id': request.trace_id,
+        }
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.user_auth_failed,
+            user=json_payload['emailAddress'].lower(),
+            data=audit_data,
+            db_object=user
+        )
+
+        db.session.add(audit)
         db.session.commit()
 
         return jsonify(authorization=False), 403
