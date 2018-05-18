@@ -91,8 +91,7 @@ def send_brief_closed_email(brief):
         rollbar.report_exc_info()
         pass
 
-    # to_addresses = [user.email_address for user in brief.users if user.active]
-    to_addresses = ['marketplace@digital.gov.au']
+    to_addresses = [user.email_address for user in brief.users if user.active]
 
     # prepare copy
     email_body = render_email_template(
