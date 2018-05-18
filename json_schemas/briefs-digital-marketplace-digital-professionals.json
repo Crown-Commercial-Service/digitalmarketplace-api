@@ -149,13 +149,14 @@
       "format": "email",
       "maxLength": 300,
       "minLength": 0,
+      "pattern": "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$)",
       "type": "string"
     },
     "sellerEmailList": {
       "items": {
         "format": "email",
-        "maxLength": 100,
-        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "maxLength": 300,
+        "pattern": "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$)",
         "type": "string"
       },
       "maxItems": 15,

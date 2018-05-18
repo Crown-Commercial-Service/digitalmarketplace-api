@@ -40,6 +40,7 @@
     "respondToEmailAddress": {
       "format": "email",
       "minLength": 1,
+      "pattern": "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$)",
       "type": "string"
     }
   },

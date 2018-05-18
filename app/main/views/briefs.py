@@ -17,7 +17,7 @@ from ...utils import (
     get_positive_int_or_400
 )
 from ...service_utils import validate_and_return_lot, filter_services
-from ...brief_utils import validate_brief_data
+from ...brief_utils import validate_brief_data, clean_brief_data
 from ...datetime_utils import parse_time_of_day, combine_date_and_time
 from app.emails.briefs import send_brief_closed_email
 
@@ -88,6 +88,7 @@ def update_brief(brief_id):
 
     brief.update_from_json(brief_json)
 
+    clean_brief_data(brief)
     validate_brief_data(brief, enforce_required=False, required_fields=page_questions)
 
     audit = AuditEvent(

@@ -44,3 +44,11 @@ class UsersService(Service):
                                   .order_by(desc(User.logged_in_at)))
 
         return user_by_supplier_query.first()
+
+    def get_sellers_by_email(self, emails):
+        return (db.session
+                  .query(User)
+                  .filter(User.email_address.in_(emails))
+                  .filter(User.active)
+                  .filter(User.role == 'supplier')
+                  .all())
