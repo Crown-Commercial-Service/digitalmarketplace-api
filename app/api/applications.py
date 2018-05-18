@@ -8,8 +8,7 @@ def create_application(email_address=None, name=None):
         status='saved',
         data={
             'framework': 'digital-marketplace',
-            'email': email_address,
-            'name': name
+            'email': email_address
         }
     )
 

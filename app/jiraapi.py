@@ -253,7 +253,7 @@ class MarketplaceJIRA(object):
 
     def create_application_approval_task(self, application, domains, closing_date=None):
         if application.type != 'edit':
-            summary = 'Application assessment: {}'.format(application.data.get('name'))
+            summary = 'Application assessment: {} (App #{})'.format(application.data.get('name'), application.id)
             description = TICKET_DESCRIPTION % (current_app.config['ADMIN_ADDRESS'] +
                                                 "/admin/applications/preview/{}".format(application.id))
             issuetype_name = INITIAL_ASSESSMENT_ISSUE_TYPE
@@ -313,7 +313,8 @@ class MarketplaceJIRA(object):
                                                                .format(str(application.id), issuetype_name))
         if len(existing_issues) > 0 and closing_date is None:
             new_issue = existing_issues[0]
-            new_issue.update({'duedate': pendulum.now().add(weeks=2).to_date_string(),
+            new_issue.update({'summary': summary,
+                              'duedate': pendulum.now().add(weeks=2).to_date_string(),
                               self.supplier_field_code: str(application.supplier_code)
                               if application.supplier_code else str(0)
                               })
@@ -322,6 +323,7 @@ class MarketplaceJIRA(object):
         elif len(existing_issues) > 0 and closing_date is not None:
             new_issue = existing_issues[0]
             new_issue.update({
+                'summary': summary,
                 'duedate': pendulum.from_format(closing_date, '%Y-%m-%d').subtract(days=3).to_date_string(),
                 self.supplier_field_code: str(application.supplier_code)
                 if application.supplier_code else str(0)
