@@ -10,6 +10,7 @@ class Config:
     DM_SEARCH_API_URL = None
     DM_SEARCH_API_AUTH_TOKEN = None
     DM_API_AUTH_TOKENS = None
+    DM_API_CALLBACK_AUTH_TOKENS = None
     ES_ENABLED = True
     AUTH_REQUIRED = True
     DM_HTTP_PROTO = 'http'
@@ -63,6 +64,7 @@ class Test(Config):
     ES_ENABLED = False
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace_test'
     DM_API_AUTH_TOKENS = 'myToken'
+    DM_API_CALLBACK_AUTH_TOKENS = 'myCallbackToken'
     DM_API_SERVICES_PAGE_SIZE = 5
     DM_API_SUPPLIERS_PAGE_SIZE = 5
     DM_API_BRIEFS_PAGE_SIZE = 5
@@ -76,6 +78,7 @@ class Development(Config):
     DM_PLAIN_TEXT_LOGS = True
 
     DM_API_AUTH_TOKENS = 'myToken'
+    DM_API_CALLBACK_AUTH_TOKENS = 'myToken'
     DM_SEARCH_API_AUTH_TOKEN = 'myToken'
     DM_SEARCH_API_URL = 'http://localhost:5001'
 

@@ -2,6 +2,7 @@
 Tests for the application infrastructure
 """
 from flask import json
+import pytest
 
 from tests.bases import BaseApplicationTest
 
@@ -20,16 +21,29 @@ class TestApplication(BaseApplicationTest):
         """Stop the client from sending an auth header and assert response is 401 Unauthorised."""
         self.app.wsgi_app.kwargs.pop('HTTP_AUTHORIZATION')
         response = self.client.get('/')
+
         assert response.status_code == 401
         assert 'WWW-Authenticate' in response.headers
 
-    def test_invalid_bearer_token_is_not_allowed(self):
+    @pytest.mark.parametrize('endpoint, token, unauthorized',
+                             (
+                                 ('/', 'bad-token', True),
+                                 ('/', 'myToken', False),  # Main API token succeeds
+                                 ('/', 'myCallbackToken', True),  # Callback API token fails
+                                 ('/callbacks', 'bad-token', True),
+                                 ('/callbacks', 'myToken', True),  # Main API token fails
+                                 ('/callbacks', 'myCallbackToken', False),  # Callback API token succeeds
+                             ))
+    def test_invalid_bearer_token_is_not_allowed(self, endpoint, token, unauthorized):
         """Force the client to send an invalid auth header and assert response is 403 Forbidden."""
-        self.app.wsgi_app.kwargs['HTTP_AUTHORIZATION'] = 'Bearer invalid-token'
-        response = self.client.get(
-            '/',
-        )
-        assert response.status_code == 403
+        self.app.wsgi_app.kwargs['HTTP_AUTHORIZATION'] = f'Bearer {token}'
+        response = self.client.get(endpoint)
+
+        if unauthorized:
+            assert response.status_code == 403
+
+        else:
+            assert response.status_code == 200
 
     def test_max_age_is_one_day(self):
         response = self.client.get('/')
