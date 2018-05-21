@@ -551,7 +551,7 @@ class SupplierDomain(db.Model):
 
     domain = relationship("Domain", back_populates="suppliers")
     supplier = relationship("Supplier", back_populates="domains")
-    assessments = relationship("Assessment")
+    assessments = relationship("Assessment", cascade="delete")
 
     recruiter_info = relationship("RecruiterInfo", back_populates="suppliers")
 
