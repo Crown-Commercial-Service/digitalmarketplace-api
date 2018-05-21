@@ -1,13 +1,13 @@
 import json
-import mock
-
-from tests.app.helpers import BaseApplicationTest
-
-from app.models import db, Application, AuditEvent, Framework, User, utcnow, Agreement, Product
-
 from itertools import tee
-from six.moves import zip as izip
+
+import mock
 import six
+
+from app.models import (Agreement, Application, AuditEvent, Domain, Framework,
+                        Product, User, db, utcnow)
+from six.moves import zip as izip
+from tests.app.helpers import BaseApplicationTest
 
 
 def test_approval(sample_submitted_application):
@@ -313,8 +313,18 @@ class TestUpdateApplication(BaseApplicationsTest):
 class TestGetApplication(BaseApplicationsTest):
     def setup(self):
         super(TestGetApplication, self).setup()
-
         self.application_id = self.setup_dummy_application()
+
+        with self.app.app_context():
+            db.session.add(Domain(name='test domain', ordering=1, price_minimum=123, price_maximum=1234))
+            db.session.commit()
+
+    def teardown(self):
+        with self.app.app_context():
+            Domain.query.filter(Domain.name == 'test domain').delete()
+            db.session.commit()
+
+        super(TestGetApplication, self).teardown()
 
     def test_get_application(self):
         res = self.get_application(self.application_id)
@@ -328,6 +338,12 @@ class TestGetApplication(BaseApplicationsTest):
         res = self.get_application(999)
 
         assert res.status_code == 404
+
+    def test_maximum_prices_are_returned_for_domains(self):
+        res = self.get_application(self.application_id)
+        data = json.loads(res.get_data(as_text=True))
+
+        assert data['domains']['prices']['maximum']['test domain'] == '1234'
 
 
 class TestListApplications(BaseApplicationsTest):

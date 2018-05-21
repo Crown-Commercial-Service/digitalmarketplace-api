@@ -2,7 +2,7 @@ from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
 from app.jiraapi import get_marketplace_jira
 from app.main import main
-from app.models import db, Application, Agreement, SignedAgreement, User, AuditEvent
+from app.models import db, Application, Agreement, SignedAgreement, User, AuditEvent, Domain
 from app.utils import (
     get_json_from_request, json_has_required_keys,
     pagination_links, get_valid_page_or_1,
@@ -151,7 +151,13 @@ def get_application_by_id(application_id):
     ).first_or_404()
     if application.status == 'deleted':
         abort(404)
-    return jsonify(application=application.serializable)
+
+    # Maximum prices are used on the pricing page to encourage value for money
+    result = Domain.query.all()
+    domains = {'prices': {'maximum': {}}}
+    domains['prices']['maximum'] = {domain.name: domain.price_maximum for domain in result}
+
+    return jsonify(application=application.serializable, domains=domains)
 
 
 @main.route('/prioritise/<int:application_id>', methods=['POST'])
