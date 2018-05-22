@@ -39,26 +39,35 @@ def list_frameworks():
 @main.route("/frameworks", methods=["POST"])
 def create_framework():
     updater_json = validate_and_return_updater_request()
-
     json_payload = get_json_from_request()
+
     json_has_required_keys(json_payload, ['frameworks'])
-    json_only_has_required_keys(json_payload['frameworks'], [
-        "slug", "name", "framework", "status", "clarificationQuestionsOpen", "lots"
+
+    json_framework = json_payload['frameworks']
+    json_only_has_required_keys(json_framework, [
+        "slug", "name", "framework", "status", "clarificationQuestionsOpen", "lots", "hasDirectAward",
+        "hasFurtherCompetition",
     ])
 
-    lots = Lot.query.filter(Lot.slug.in_(json_payload["frameworks"]["lots"])).all()
-    unfound_lots = set(json_payload["frameworks"]["lots"]) - set(lot.slug for lot in lots)
+    lots = Lot.query.filter(Lot.slug.in_(json_framework["lots"])).all()
+    unfound_lots = set(json_framework["lots"]) - set(lot.slug for lot in lots)
+
     if len(unfound_lots) > 0:
         abort(400, "Invalid lot slugs: {}".format(", ".join(sorted(unfound_lots))))
 
+    if json_framework['hasDirectAward'] is False and json_framework['hasFurtherCompetition'] is False:
+        abort(400, 'At least one of `hasDirectAward` or `hasFurtherCompetition` must be True')
+
     try:
         framework = Framework(
-            slug=json_payload["frameworks"]["slug"],
-            name=json_payload["frameworks"]["name"],
-            framework=json_payload["frameworks"]["framework"],
-            status=json_payload["frameworks"]["status"],
-            clarification_questions_open=json_payload["frameworks"]["clarificationQuestionsOpen"],
-            lots=lots
+            slug=json_framework["slug"],
+            name=json_framework["name"],
+            framework=json_framework["framework"],
+            status=json_framework["status"],
+            clarification_questions_open=json_framework["clarificationQuestionsOpen"],
+            lots=lots,
+            has_direct_award=json_framework["hasDirectAward"],
+            has_further_competition=json_framework["hasFurtherCompetition"],
         )
         db.session.add(framework)
         db.session.flush()
@@ -67,15 +76,17 @@ def create_framework():
                 audit_type=AuditTypes.create_framework,
                 db_object=framework,
                 user=updater_json['updated_by'],
-                data={'update': json_payload['frameworks']})
+                data={'update': json_framework})
         )
         db.session.commit()
+
     except DataError:
         db.session.rollback()
         abort(400, "Invalid framework")
+
     except IntegrityError:
         db.session.rollback()
-        abort(400, "Slug '{}' already in use".format(json_payload["frameworks"]["slug"]))
+        abort(400, "Slug '{}' already in use".format(json_framework["slug"]))
 
     return single_result_response(RESOURCE_NAME, framework), 201
 
@@ -102,6 +113,8 @@ def update_framework(framework_slug):
         'frameworkExpiresAtUTC': 'framework_expires_at_utc',
         'frameworkLiveAtUTC': 'framework_live_at_utc',
         'status': 'status',
+        'hasDirectAward': 'has_direct_award',
+        'hasFurtherCompetition': 'has_further_competition',
     }
 
     updater_json = validate_and_return_updater_request()

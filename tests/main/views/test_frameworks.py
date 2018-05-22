@@ -40,6 +40,8 @@ class TestListFrameworks(BaseApplicationTest):
             'slug',
             'status',
             'variations',
+            'hasDirectAward',
+            'hasFurtherCompetition',
         ])
 
 
@@ -54,7 +56,9 @@ class TestCreateFramework(BaseApplicationTest):
                 "clarificationQuestionsOpen": kwargs.get("clarificationQuestionsOpen", False),
                 "lots": kwargs.get("lots", [
                     "saas", "paas", "iaas", "scs"
-                ])
+                ]),
+                "hasDirectAward": True,
+                "hasFurtherCompetition": False,
             },
             "updated_by": "example"
         }
@@ -106,7 +110,9 @@ class TestCreateFramework(BaseApplicationTest):
                     ],
                     'name': 'Example',
                     'slug': 'example',
-                    'status': 'coming'
+                    'status': 'coming',
+                    'hasDirectAward': True,
+                    'hasFurtherCompetition': False,
                 },
             },
             'id': mock.ANY,
@@ -160,6 +166,31 @@ class TestCreateFramework(BaseApplicationTest):
 
         assert response.status_code == 400
         assert json.loads(response.get_data(as_text=True))["error"] == "Invalid slug value 'this is/invalid'"
+
+    def test_create_fails_if_direct_award_and_further_competition_false(self):
+        framework = self.framework()
+        framework['frameworks']['hasDirectAward'] = False
+        framework['frameworks']['hasFurtherCompetition'] = False
+
+        response = self.client.post("/frameworks",
+                                    data=json.dumps(framework),
+                                    content_type="application/json")
+
+        assert response.status_code == 400
+        assert json.loads(response.get_data(as_text=True))["error"] == "At least one of `hasDirectAward` or " \
+                                                                       "`hasFurtherCompetition` must be True"
+
+    def test_update_fails_if_direct_award_and_further_competition_both_false(self):
+        framework = self.framework(slug='example')
+
+        self.client.post("/frameworks", data=json.dumps(framework), content_type="application/json")
+
+        framework = {'frameworks': {'hasDirectAward': False, 'hasFurtherCompetition': False}, 'updated_by': 'test'}
+        response = self.client.post(f'/frameworks/example', data=json.dumps(framework), content_type='application/json')
+
+        assert response.status_code == 400
+        assert json.loads(response.get_data(as_text=True))["error"] == "At least one of `hasDirectAward` or " \
+                                                                       "`hasFurtherCompetition` must be True"
 
 
 class TestGetFramework(BaseApplicationTest):
