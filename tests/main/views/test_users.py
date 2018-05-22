@@ -1411,6 +1411,11 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
             'application_status': 'no_application',
             'declaration_status': 'unstarted',
             'framework_agreement': False,
+            'supplier_name': "Supplier 1",
+            'supplier_organisation_size': "small",
+            'duns_number': "100000001",
+            'registered_name': 'Registered Supplier Name 1',
+            'companies_house_number': None
         }
 
         if parameters is not None and isinstance(parameters, dict):
@@ -1424,6 +1429,11 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         assert row['declaration_status'] == _parameters['declaration_status']
         assert row['framework_agreement'] == _parameters['framework_agreement']
         assert row['published_service_count'] == _parameters['published_service_count']
+        assert row['supplier_name'] == _parameters['supplier_name']
+        assert row['supplier_organisation_size'] == _parameters['supplier_organisation_size']
+        assert row['duns_number'] == _parameters['duns_number']
+        assert row['registered_name'] == _parameters['registered_name']
+        assert row['companies_house_number'] == _parameters['companies_house_number']
 
     ############################################################################################
 

@@ -1473,7 +1473,8 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                 },
                 'name': u'Supplier 0',
                 'companyDetailsConfirmed': False,
-                'organisationSize': 'small'
+                'organisationSize': 'small',
+                'dunsNumber': '100000000'
             }
 
     def test_update_from_json(self):

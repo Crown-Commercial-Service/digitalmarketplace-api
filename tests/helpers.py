@@ -158,9 +158,11 @@ class FixtureMixin(object):
             db.session.add(
                 Supplier(
                     supplier_id=i,
+                    registered_name='Registered Supplier Name {}'.format(i),
                     name=u'Supplier {}'.format(i),
                     description='',
                     organisation_size='small',
+                    duns_number='{}'.format(100000000 + i)
                 )
             )
             db.session.add(

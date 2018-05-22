@@ -332,7 +332,12 @@ def export_users_for_framework(framework_slug):
             'framework_agreement': framework_agreement,
             'application_result': application_result,
             'variations_agreed': variations_agreed,
-            'published_service_count': supplier_id_published_service_count.get(sf.supplier_id, 0)
+            'published_service_count': supplier_id_published_service_count.get(sf.supplier_id, 0),
+            'supplier_name': u.supplier.name,
+            'supplier_organisation_size': u.supplier.organisation_size,
+            'duns_number': u.supplier.duns_number,
+            'registered_name': u.supplier.registered_name,
+            'companies_house_number': u.supplier.companies_house_number,
         })
 
     return jsonify(users=[user for user in user_rows]), 200
