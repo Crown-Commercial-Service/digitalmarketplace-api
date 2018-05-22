@@ -88,30 +88,11 @@ class MarketplaceJIRA(object):
     def __init__(
             self,
             generic_jira,
-            marketplace_project_code=None,
-            application_field_code=None,
-            supplier_field_code=None,
-            ranking_assessor_1_field_code=None,
-            ranking_assessor_2_field_code=None):
-        if not marketplace_project_code:
-            marketplace_project_code = current_app.config.get('JIRA_MARKETPLACE_PROJECT_CODE')
-        self.marketplace_project_code = marketplace_project_code
+            jira_field_codes=None):
 
-        if not application_field_code:
-            application_field_code = current_app.config.get('JIRA_APPLICATION_FIELD_CODE')
-        self.application_field_code = application_field_code
-
-        if not supplier_field_code:
-            supplier_field_code = current_app.config.get('JIRA_SUPPLIER_FIELD_CODE')
-        self.supplier_field_code = supplier_field_code
-
-        if not ranking_assessor_1_field_code:
-            ranking_assessor_1_field_code = current_app.config.get('JIRA_RANKING_ASSESSOR_1_FIELD_CODE')
-        self.ranking_assessor_1_field_code = ranking_assessor_1_field_code
-
-        if not ranking_assessor_2_field_code:
-            ranking_assessor_2_field_code = current_app.config.get('JIRA_RANKING_ASSESSOR_2_FIELD_CODE')
-        self.ranking_assessor_2_field_code = ranking_assessor_2_field_code
+        if not jira_field_codes:
+            jira_field_codes = current_app.config.get('JIRA_FIELD_CODES')
+        self.jira_field_codes = jira_field_codes
 
         self.generic_jira = generic_jira
         self.server_url = current_app.config['JIRA_URL']
@@ -137,7 +118,6 @@ class MarketplaceJIRA(object):
 
         summary = 'Domain Assessment: {}(#{})'.format(supplier.name, supplier.code)
         price_description = ''
-        format_text = ''
 
         application_awaiting_approval = ''
         if application:
@@ -189,20 +169,6 @@ class MarketplaceJIRA(object):
                 '{price_status}\n'
             ).format(**price_description_values)
 
-            format_text = (
-                '---------\n\n'
-                '+Please use the following format for completing the assessment:+\n\n'
-                '{panel}'
-                'Comments:\n\n'
-                'Criteria met:\n\n'
-                '# <Criteria 1>\n'
-                '# <Criteria 2>\n'
-                '# <etc>\n\n'
-                'Recommendation: *Pass* or *Reject*\n\n'
-                '{panel}'
-                'Once complete - please assign back to Luke Roughley'
-            )
-
         description_values = {
             "supplier_name": supplier.name,
             "supplier_url": current_app.config['ADMIN_ADDRESS'] + "/admin/assessments/supplier/" + str(supplier.code),
@@ -211,7 +177,6 @@ class MarketplaceJIRA(object):
             "brief_close_date": brief.applications_closed_at.format('%A %-d %B %Y'),
             "case_study_links": case_study_links,
             "price_description": price_description,
-            "format_text": format_text,
             "application_awaiting_approval": application_awaiting_approval
         }
 
@@ -226,11 +191,12 @@ class MarketplaceJIRA(object):
                        '{case_study_links}\n\n'
                        '{application_awaiting_approval}'
                        '{price_description}'
-                       '{format_text}'
+                       '---------\n\n'
+                       'Once complete - please assign back to Luke Roughley'
                        ).format(**description_values)
 
         details = dict(
-            project=self.marketplace_project_code,
+            project=self.jira_field_codes['MARKETPLACE_PROJECT_CODE'],
             summary=summary,
             description=description,
             issuetype_name='Domain Assessment',
@@ -241,11 +207,18 @@ class MarketplaceJIRA(object):
         new_issue = self.generic_jira.create_issue(**details)
         for issue in existing_issues:
             self.generic_jira.jira.create_issue_link('Relates', new_issue, issue)
-        new_issue.update({
-            self.supplier_field_code: str(supplier.code),
-            self.ranking_assessor_1_field_code: {"value": "Unassessed"},
-            self.ranking_assessor_2_field_code: {"value": "Unassessed"}
-        })
+
+        new_issue_update_data = {
+            self.jira_field_codes['SUPPLIER_FIELD_CODE']: str(supplier.code),
+            self.jira_field_codes['RANKING_ASSESSOR_1_FIELD_CODE']: {"value": "Unassessed"},
+            self.jira_field_codes['RANKING_ASSESSOR_2_FIELD_CODE']: {"value": "Unassessed"}
+        }
+
+        assessor_result_codes = self.jira_field_codes['ASSESSOR_RESULT_CODES'][str(domain.id)]
+        for arc in assessor_result_codes:
+            new_issue_update_data[arc] = [{'value': 'No criteria met'}]
+
+        new_issue.update(new_issue_update_data)
 
         attachment = StringIO.StringIO()
         attachment.write(json.dumps(relevant_case_studies))
@@ -301,7 +274,7 @@ class MarketplaceJIRA(object):
                     description += "*Seller is not competitive*\n\n"
 
         details = dict(
-            project=self.marketplace_project_code,
+            project=self.jira_field_codes['MARKETPLACE_PROJECT_CODE'],
             summary=summary,
             description=description,
             duedate=pendulum.now().add(weeks=2).to_date_string(),
@@ -315,7 +288,7 @@ class MarketplaceJIRA(object):
             new_issue = existing_issues[0]
             new_issue.update({'summary': summary,
                               'duedate': pendulum.now().add(weeks=2).to_date_string(),
-                              self.supplier_field_code: str(application.supplier_code)
+                              self.jira_field_codes['SUPPLIER_FIELD_CODE']: str(application.supplier_code)
                               if application.supplier_code else str(0)
                               })
             if new_issue.fields.status.name == 'Closed':
@@ -325,13 +298,13 @@ class MarketplaceJIRA(object):
             new_issue.update({
                 'summary': summary,
                 'duedate': pendulum.from_format(closing_date, '%Y-%m-%d').subtract(days=3).to_date_string(),
-                self.supplier_field_code: str(application.supplier_code)
+                self.jira_field_codes['SUPPLIER_FIELD_CODE']: str(application.supplier_code)
                 if application.supplier_code else str(0)
             })
         else:
             new_issue = self.generic_jira.create_issue(**details)
-            new_issue.update({self.application_field_code: str(application.id),
-                              self.supplier_field_code: str(application.supplier_code)
+            new_issue.update({self.jira_field_codes['APPLICATION_FIELD_CODE']: str(application.id),
+                              self.jira_field_codes['SUPPLIER_FIELD_CODE']: str(application.supplier_code)
                               if application.supplier_code else str(0)
                               })
 
@@ -355,13 +328,13 @@ class MarketplaceJIRA(object):
 
     def get_assessment_tasks(self):
         return self.generic_jira.issues_with_subtasks(
-            self.marketplace_project_code,
+            self.jira_field_codes['MARKETPLACE_PROJECT_CODE'],
             INITIAL_ASSESSMENT_ISSUE_TYPE
         )
 
     def assessment_tasks_by_application_id(self):
         assessment_issues = self.generic_jira.issues_with_subtasks(
-            self.marketplace_project_code,
+            self.jira_field_codes['MARKETPLACE_PROJECT_CODE'],
             INITIAL_ASSESSMENT_ISSUE_TYPE
         )
 
@@ -381,7 +354,7 @@ class MarketplaceJIRA(object):
                 pass
             return info
 
-        return {_['fields'][self.application_field_code]: task_info(_) for _ in assessment_issues}
+        return {_['fields'][self.jira_field_codes['APPLICATION_FIELD_CODE']]: task_info(_) for _ in assessment_issues}
 
     def custom_fields(self):
         f = self.generic_jira.get_fields()
@@ -394,7 +367,7 @@ class MarketplaceJIRA(object):
 
     def assessment_issue_type_attached(self):
         return self.generic_jira.issue_type_is_attached_to_project(INITIAL_ASSESSMENT_ISSUE_TYPE,
-                                                                   self.marketplace_project_code)
+                                                                   self.jira_field_codes['MARKETPLACE_PROJECT_CODE'])
 
 
 class GenericJIRA(object):

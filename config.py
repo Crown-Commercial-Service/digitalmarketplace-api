@@ -61,11 +61,26 @@ class Config:
     JIRA_CREDS = ''
     JIRA_CREDS_OAUTH = ''
 
-    JIRA_MARKETPLACE_PROJECT_CODE = 'MARADMIN'
-    JIRA_APPLICATION_FIELD_CODE = 'customfield_11100'
-    JIRA_SUPPLIER_FIELD_CODE = 'customfield_11000'
-    JIRA_RANKING_ASSESSOR_1_FIELD_CODE = 'customfield_11204'
-    JIRA_RANKING_ASSESSOR_2_FIELD_CODE = 'customfield_11206'
+    JIRA_FIELD_CODES = {
+        'ASSESSOR_RESULT_CODES': {
+            '1': ['customfield_11210', 'customfield_11208'],  # Strategy and Policy
+            '2': ['customfield_11222', 'customfield_11221'],  # Change, Training and Transformation
+            '3': ['customfield_11211', 'customfield_11212'],  # User research and Design
+            '4': ['customfield_11213', 'customfield_11214'],  # Agile delivery and Governance
+            '6': ['customfield_11215', 'customfield_11216'],  # Software engineering and Development
+            '7': ['customfield_11220', 'customfield_11219'],  # Content and Publishing
+            '8': ['customfield_11225', 'customfield_11226'],  # Cyber security
+            '9': ['customfield_11223', 'customfield_11224'],  # Marketing, Communications and Engagement
+            '10': ['customfield_11217', 'customfield_11218'],  # Support and Operations
+            '11': ['customfield_11227', 'customfield_11228'],  # Data science
+            '13': ['customfield_11230', 'customfield_11229']  # Emerging technologies
+        },
+        'MARKETPLACE_PROJECT_CODE': 'MARADMIN',
+        'APPLICATION_FIELD_CODE': 'customfield_11100',
+        'SUPPLIER_FIELD_CODE': 'customfield_11000',
+        'RANKING_ASSESSOR_1_FIELD_CODE': 'customfield_11204',
+        'RANKING_ASSESSOR_2_FIELD_CODE': 'customfield_11206'
+    }
 
     JIRA_FEATURES = False
 
