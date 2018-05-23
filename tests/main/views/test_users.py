@@ -1344,6 +1344,20 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
 
         assert complete.status_code == 200
 
+    def _post_company_details_confirmed(self):
+        response = self.client.post(
+            f'/suppliers/{self.supplier_id}',
+            data=json.dumps({
+                "updated_by": "Mr Sausages",
+                "suppliers": {
+                    "companyDetailsConfirmed": True
+                }
+            }),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 200
+
     def _post_framework_interest(self, data):
         data.update(self.updater_json)
         response = self.client.post(
@@ -1489,6 +1503,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
     # Test users for supplier with completed declaration one draft
     def test_response_complete_declaration_one_draft(self):
         self._setup()
+        self._post_company_details_confirmed()
         self._put_complete_declaration()
         self._post_complete_draft_service()
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
@@ -1500,9 +1515,24 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 'published_service_count': 0
             })
 
+    # Test users for supplier with completed declaration one draft and company details not confirmed
+    def test_response_complete_declaration_one_draft_company_details_not_confirmed(self):
+        self._setup()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        assert len(data) == len(self.users)
+        for datum in data:
+            self._assert_things_about_export_response(datum, parameters={
+                'declaration_status': 'complete',
+                'application_status': 'no_application',
+                'published_service_count': 0,
+            })
+
     # Test users for supplier with completed declaration one draft but framework still open
     def test_response_complete_declaration_one_draft_while_framework_still_open(self):
         self._setup()
+        self._post_company_details_confirmed()
         self._put_complete_declaration()
         self._post_complete_draft_service()
         data = json.loads(self._return_users_export_after_setting_framework_status(status='open').get_data())["users"]
@@ -1518,6 +1548,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
 
     def test_response_awarded_on_framework_and_submitted_framework_agreement(self):
         self._setup()
+        self._post_company_details_confirmed()
         self._put_complete_declaration()
         self._post_complete_draft_service()
         self._post_result(True)
@@ -1535,6 +1566,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
 
     def test_response_not_awarded_on_framework(self):
         self._setup()
+        self._post_company_details_confirmed()
         self._put_complete_declaration()
         self._post_complete_draft_service()
         self._post_result(False)
@@ -1585,6 +1617,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
 
     def test_response_agreed_contract_variation(self):
         self._setup()
+        self._post_company_details_confirmed()
         self._put_complete_declaration()
         self._post_complete_draft_service()
         self._post_result(True)
@@ -1605,6 +1638,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
 
     def test_published_service_count_with_different_statuses(self):
         self._setup()
+        self._post_company_details_confirmed()
         self._put_complete_declaration()
         self._post_complete_draft_service()
         self._post_result(True)

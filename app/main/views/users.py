@@ -306,8 +306,12 @@ def export_users_for_framework(framework_slug):
 
         # always get the declaration status
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
+        # For G10 we need to check the suppliers company detatils have been confirmed
+        comany_details_confirmed = sf.supplier.company_details_confirmed
         application_status = 'application' if (
-            declaration_status == 'complete' and sf.supplier_id in suppliers_with_a_complete_service
+            declaration_status == 'complete' and
+            sf.supplier_id in suppliers_with_a_complete_service and
+            comany_details_confirmed
         ) else 'no_application'
         application_result = ''
         framework_agreement = ''
