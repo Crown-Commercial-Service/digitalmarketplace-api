@@ -8,7 +8,9 @@ from flask import abort, current_app, jsonify, request
 
 from .. import main
 from ... import db, encryption
-from ...models import AuditEvent, BuyerEmailDomain, Framework, Service, Supplier, SupplierFramework, User
+from ...models import (
+    AuditEvent, BuyerEmailDomain, Framework, Service, Supplier, SupplierFramework, ContactInformation, User
+)
 from ...supplier_utils import check_supplier_role
 from ...utils import (
     get_json_from_request,
@@ -282,13 +284,15 @@ def export_users_for_framework(framework_slug):
     ).all())
 
     supplier_frameworks_and_users = db.session.query(
-        SupplierFramework, User
+        SupplierFramework, User, ContactInformation
     ).filter(
         SupplierFramework.supplier_id == User.supplier_id
     ).filter(
         SupplierFramework.framework_id == framework.id
     ).filter(
-        User.active.is_(True)
+        ContactInformation.supplier_id == User.supplier_id
+    ).filter(
+    User.active.is_(True)
     ).options(
         lazyload(User.supplier),
         lazyload(SupplierFramework.supplier),
@@ -302,7 +306,7 @@ def export_users_for_framework(framework_slug):
 
     user_rows = []
 
-    for sf, u in supplier_frameworks_and_users:
+    for sf, u, ci in supplier_frameworks_and_users:
 
         # always get the declaration status
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
@@ -338,6 +342,9 @@ def export_users_for_framework(framework_slug):
             'duns_number': u.supplier.duns_number,
             'registered_name': u.supplier.registered_name,
             'companies_house_number': u.supplier.companies_house_number,
+            'contact_name': ci.contact_name,
+            'contact_email': ci.email,
+            'contact_phone_number': ci.phone_number,
         })
 
     return jsonify(users=[user for user in user_rows]), 200
