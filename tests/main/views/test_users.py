@@ -1419,6 +1419,11 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
             'contact_name': 'Contact for Supplier 1',
             'contact_email': '1@contact.com',
             'contact_phone_number': None,
+            'address_first_line': '7 Gem Lane',
+            'address_city': 'Cantelot',
+            'address_postcode': 'CN1A 1AA',
+            'address_country': 'country:GB',
+
         }
 
         if parameters is not None and isinstance(parameters, dict):
@@ -1440,6 +1445,10 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         assert row['contact_name'] == _parameters['contact_name']
         assert row['contact_email'] == _parameters['contact_email']
         assert row['contact_phone_number'] == _parameters['contact_phone_number']
+        assert row['address_first_line'] == _parameters['address_first_line']
+        assert row['address_city'] == _parameters['address_city']
+        assert row['address_postcode'] == _parameters['address_postcode']
+        assert row['address_country'] == _parameters['address_country']
 
     ############################################################################################
 

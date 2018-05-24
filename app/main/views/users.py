@@ -345,6 +345,10 @@ def export_users_for_framework(framework_slug):
             'contact_name': ci.contact_name,
             'contact_email': ci.email,
             'contact_phone_number': ci.phone_number,
+            'address_first_line': ci.address1,
+            'address_city': ci.city,
+            'address_postcode': ci.postcode,
+            'address_country': u.supplier.registration_country,
         })
 
     return jsonify(users=[user for user in user_rows]), 200
