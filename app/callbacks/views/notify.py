@@ -19,11 +19,11 @@ def callbacks_root():
 def notify_callback():
     notify_data = get_json_from_request()
 
-    user = User.query.filter(
-        User.email_address == notify_data['to']
-    ).first()
-
     if notify_data['status'] == 'permanent-failure':
+        user = User.query.filter(
+            User.email_address == notify_data['to']
+        ).first()
+
         if user and user.active:
             user.active = False
             db.session.add(user)
@@ -39,7 +39,7 @@ def notify_callback():
             db.session.commit()
 
     elif notify_data['status'] == 'technical-failure':
-        current_app.logger.error("Notify failed to deliver {reference} to {hashed_email}".format(
+        current_app.logger.warning("Notify failed to deliver {reference} to {hashed_email}".format(
             reference=notify_data['reference'],
             hashed_email=hash_string(notify_data['to']),
         ))

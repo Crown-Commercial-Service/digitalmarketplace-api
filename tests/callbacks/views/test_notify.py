@@ -7,7 +7,7 @@ from testfixtures import logcapture
 
 from dmutils.formats import DATETIME_FORMAT
 
-from app.models import AuditEvent
+from app.models import AuditEvent, User
 from tests.bases import BaseApplicationTest
 
 
@@ -38,11 +38,17 @@ class TestNotifyCallback(BaseApplicationTest):
     def test_user_account_deactivated_on_permanent_delivery_failure(self, user_role_supplier):
         notify_data = self.notify_data(to='test+1@digital.gov.uk')
 
+        user = User.query.filter(User.email_address == 'test+1@digital.gov.uk').first()
+        assert user.active is True
+
         response = self.client.post('/callbacks/notify',
                                     data=json.dumps(notify_data),
                                     content_type='application/json')
 
         assert response.status_code == 200
+
+        user = User.query.filter(User.email_address == 'test+1@digital.gov.uk').first()
+        assert user.active is False
 
         audit_events = AuditEvent.query.filter(AuditEvent.type == 'update_user').all()
         assert len(audit_events) == 1
@@ -60,7 +66,7 @@ class TestNotifyCallback(BaseApplicationTest):
     def test_error_logged_on_technical_delivery_failure(self):
         notify_data = self.notify_data(status='technical-failure')
 
-        with logcapture.LogCapture(names=('app',), level=logging.ERROR) as logs:
+        with logcapture.LogCapture(names=('app',), level=logging.WARNING) as logs:
             response = self.client.post('/callbacks/notify',
                                         data=json.dumps(notify_data),
                                         content_type='application/json')

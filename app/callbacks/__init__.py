@@ -10,4 +10,4 @@ callback_authentication_partial = partial(requires_authentication, module='callb
 callbacks.before_request(callback_authentication_partial)
 
 
-from .views import notify  # noqa
+from .views import notify

@@ -14,5 +14,5 @@ def add_cache_control(response):
 
 
 from .views import suppliers, services, users, drafts, audits, frameworks, briefs, brief_responses, agreements,\
-    direct_award, buyer_domains  # noqa
-from .. import errors  # noqa
+    direct_award, buyer_domains
+from .. import errors
