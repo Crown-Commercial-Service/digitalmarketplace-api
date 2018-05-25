@@ -310,7 +310,6 @@ def export_users_for_framework(framework_slug):
             else:
                 supplier_id_published_service_count[supplier_id] = service_count
 
-
     supplier_frameworks_and_users = db.session.query(
         SupplierFramework, User, ContactInformation
     ).filter(
@@ -320,7 +319,7 @@ def export_users_for_framework(framework_slug):
     ).filter(
         ContactInformation.supplier_id == User.supplier_id
     ).filter(
-    User.active.is_(True)
+        User.active.is_(True)
     ).options(
         lazyload(User.supplier),
         lazyload(SupplierFramework.supplier),

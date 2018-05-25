@@ -1452,10 +1452,18 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         assert row['address_city'] == _parameters['address_city']
         assert row['address_postcode'] == _parameters['address_postcode']
         assert row['address_country'] == _parameters['address_country']
-        assert row['published_services_count_on_digital-outcomes_lot'] == _parameters['published_services_count_on_digital-outcomes_lot']
-        assert row['published_services_count_on_digital-specialists_lot'] == _parameters['published_services_count_on_digital-specialists_lot']
-        assert row['published_services_count_on_user-research-studios_lot'] == _parameters['published_services_count_on_user-research-studios_lot']
-        assert row['published_services_count_on_user-research-participants_lot'] == _parameters['published_services_count_on_user-research-participants_lot']
+        assert row['published_services_count_on_digital-outcomes_lot'] == _parameters[
+            'published_services_count_on_digital-outcomes_lot'
+        ]
+        assert row['published_services_count_on_digital-specialists_lot'] == _parameters[
+            'published_services_count_on_digital-specialists_lot'
+        ]
+        assert row['published_services_count_on_user-research-studios_lot'] == _parameters[
+            'published_services_count_on_user-research-studios_lot'
+        ]
+        assert row['published_services_count_on_user-research-participants_lot'] == _parameters[
+            'published_services_count_on_user-research-participants_lot'
+        ]
 
     ############################################################################################
 
