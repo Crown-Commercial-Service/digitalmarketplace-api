@@ -1642,11 +1642,11 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         self._post_result(True)
         self.set_framework_status(self.framework_slug, 'open')
 
-        self.setup_dummy_service('10000000002', 1, frameworkSlug=self.framework_slug, lot_id=5)
-        self.setup_dummy_service('10000000003', 1, frameworkSlug=self.framework_slug, lot_id=5)
-        self.setup_dummy_service('10000000004', 1, frameworkSlug=self.framework_slug, lot_id=5)
-        self.setup_dummy_service('10000000005', 1, frameworkSlug=self.framework_slug, lot_id=5, status='enabled')
-        self.setup_dummy_service('10000000006', 1, frameworkSlug=self.framework_slug, lot_id=5, status='disabled')
+        self.setup_dummy_service('10000000002', 1, frameworkSlug=self.framework_slug, lot_id=7)
+        self.setup_dummy_service('10000000003', 1, frameworkSlug=self.framework_slug, lot_id=7)
+        self.setup_dummy_service('10000000004', 1, frameworkSlug=self.framework_slug, lot_id=7)
+        self.setup_dummy_service('10000000005', 1, frameworkSlug=self.framework_slug, lot_id=7, status='enabled')
+        self.setup_dummy_service('10000000006', 1, frameworkSlug=self.framework_slug, lot_id=7, status='disabled')
 
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
         assert len(data) == len(self.users)
@@ -1656,7 +1656,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 'application_status': 'application',
                 'application_result': 'pass',
                 'published_service_count': 3,
-                'published_services_count_on_digital-outcomes_lot': 3,
+                'published_services_count_on_user-research-studios_lot': 3,
             })
 
 

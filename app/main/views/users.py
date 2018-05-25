@@ -282,19 +282,20 @@ def export_users_for_framework(framework_slug):
 
     suppliers_with_a_complete_service = frozenset(framework.get_supplier_ids_for_completed_service())
 
-    lots_ids = db.session.query(FrameworkLot.lot_id).filter(FrameworkLot.framework_id == framework.id).all()
-    lots = db.session.query(Lot).filter(Lot.id.in_(lots_ids)).all()
+    lots = db.session.query(FrameworkLot.lot_id, Lot.slug).join(Lot, FrameworkLot.lot_id == Lot.id).filter(
+        FrameworkLot.framework_id == framework.id
+    ).distinct().all()
     published_service_count_by_supplier_and_lot = {}
 
-    for lot in lots:
+    for lot_id, slug in lots:
         published_service_count_by_supplier_and_lot[
-            "published_services_count_on_{}_lot".format(lot.slug)
+            "published_services_count_on_{}_lot".format(slug)
         ] = dict(db.session.query(
             Service.supplier_id,
             func.count(Service.id)
         ).filter(
             Service.status == 'published',
-            Service.lot_id == lot.id
+            Service.lot_id == lot_id
         ).group_by(
             Service.supplier_id
         ).group_by(
