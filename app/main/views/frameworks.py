@@ -26,9 +26,23 @@ from ...utils import (
     single_result_response,
     validate_and_return_updater_request,
 )
-from ...framework_utils import validate_framework_agreement_details_data
+from ...framework_utils import validate_framework_agreement_details_data, format_framework_integrity_error_message
 
 RESOURCE_NAME = "frameworks"
+FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MAP = {
+    'allowDeclarationReuse': 'allow_declaration_reuse',
+    'applicationsCloseAtUTC': 'applications_close_at_utc',
+    'intentionToAwardAtUTC': 'intention_to_award_at_utc',
+    'clarificationQuestionsOpen': 'clarification_questions_open',
+    'clarificationsCloseAtUTC': 'clarifications_close_at_utc',
+    'clarificationsPublishAtUTC': 'clarifications_publish_at_utc',
+    'frameworkAgreementDetails': 'framework_agreement_details',
+    'frameworkExpiresAtUTC': 'framework_expires_at_utc',
+    'frameworkLiveAtUTC': 'framework_live_at_utc',
+    'status': 'status',
+    'hasDirectAward': 'has_direct_award',
+    'hasFurtherCompetition': 'has_further_competition',
+}
 
 
 @main.route('/frameworks', methods=['GET'])
@@ -54,9 +68,6 @@ def create_framework():
 
     if len(unfound_lots) > 0:
         abort(400, "Invalid lot slugs: {}".format(", ".join(sorted(unfound_lots))))
-
-    if json_framework['hasDirectAward'] is False and json_framework['hasFurtherCompetition'] is False:
-        abort(400, 'At least one of `hasDirectAward` or `hasFurtherCompetition` must be True')
 
     try:
         framework = Framework(
@@ -84,9 +95,9 @@ def create_framework():
         db.session.rollback()
         abort(400, "Invalid framework")
 
-    except IntegrityError:
+    except IntegrityError as error:
         db.session.rollback()
-        abort(400, "Slug '{}' already in use".format(json_framework["slug"]))
+        abort(400, format_framework_integrity_error_message(error, json_framework))
 
     return single_result_response(RESOURCE_NAME, framework), 201
 
@@ -102,21 +113,6 @@ def get_framework(framework_slug):
 
 @main.route('/frameworks/<string:framework_slug>', methods=['POST'])
 def update_framework(framework_slug):
-    attribute_whitelist = {
-        'allowDeclarationReuse': 'allow_declaration_reuse',
-        'applicationsCloseAtUTC': 'applications_close_at_utc',
-        'intentionToAwardAtUTC': 'intention_to_award_at_utc',
-        'clarificationQuestionsOpen': 'clarification_questions_open',
-        'clarificationsCloseAtUTC': 'clarifications_close_at_utc',
-        'clarificationsPublishAtUTC': 'clarifications_publish_at_utc',
-        'frameworkAgreementDetails': 'framework_agreement_details',
-        'frameworkExpiresAtUTC': 'framework_expires_at_utc',
-        'frameworkLiveAtUTC': 'framework_live_at_utc',
-        'status': 'status',
-        'hasDirectAward': 'has_direct_award',
-        'hasFurtherCompetition': 'has_further_competition',
-    }
-
     updater_json = validate_and_return_updater_request()
     framework = Framework.query.filter(
         Framework.slug == framework_slug
@@ -125,21 +121,22 @@ def update_framework(framework_slug):
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['frameworks'])
 
-    if not json_payload['frameworks']:
+    json_framework = json_payload['frameworks']
+    if not json_framework:
         abort(400, "Framework update expects a payload")
 
-    invalid_keys = (set(json_payload['frameworks'].keys()) - set(attribute_whitelist.keys()))
+    invalid_keys = (set(json_framework.keys()) - set(FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MAP.keys()))
     if invalid_keys:
         abort(400, "Invalid keys for framework update: '{}'".format("', '".join(invalid_keys)))
 
-    if 'frameworkAgreementDetails' in json_payload['frameworks']:
+    if 'frameworkAgreementDetails' in json_framework:
         # all frameworkAgreementDetails keys must be present or the update will fail
         validate_framework_agreement_details_data(
-            json_payload['frameworks']['frameworkAgreementDetails'],
+            json_framework['frameworkAgreementDetails'],
             enforce_required=True
         )
 
-    if json_payload['frameworks'].get('status', None) == 'pending' and framework.status != 'pending':
+    if json_framework.get('status', None) == 'pending' and framework.status != 'pending':
         # When we set a framework to pending, we want to polyfill all supplier declarations (regardless of whether
         # their application is 'complete' or not) with information from their supplier account. We have a set of
         # hardcoded keys for these values. Currently these keys don't need to mean anything outside of the API, so
@@ -187,9 +184,9 @@ WHERE
 
         db.session.execute(statement, {"framework_id": framework.id})
 
-    for whitelisted_key, value in attribute_whitelist.items():
-        if whitelisted_key in json_payload['frameworks']:
-            setattr(framework, value, json_payload['frameworks'][whitelisted_key])
+    for whitelisted_key, value in FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MAP.items():
+        if whitelisted_key in json_framework:
+            setattr(framework, value, json_framework[whitelisted_key])
 
     try:
         db.session.add(framework)
@@ -199,15 +196,15 @@ WHERE
                 db_object=framework,
                 user=updater_json['updated_by'],
                 data={
-                    'update': json_payload['frameworks'],
+                    'update': json_framework,
                     'frameworkSlug': framework.slug,
                 },
             )
         )
         db.session.commit()
-    except IntegrityError as e:
+    except IntegrityError as error:
         db.session.rollback()
-        abort(400, format(e))
+        abort(400, format_framework_integrity_error_message(error, json_framework))
 
     return single_result_response(RESOURCE_NAME, framework), 200
 

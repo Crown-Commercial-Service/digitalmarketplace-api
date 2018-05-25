@@ -802,7 +802,9 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
             slug='test-open',
             name='Test open',
             framework='g-cloud',
-            status='open')
+            status='open',
+            has_direct_award=True,
+            has_further_competition=False)
         db.session.add(framework)
         db.session.commit()
         self.setup_dummy_suppliers(1)

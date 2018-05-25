@@ -272,7 +272,9 @@ class FixtureMixin(object):
                       Lot.query.filter(Lot.slug == 'digital-specialists').first(),
                       Lot.query.filter(Lot.slug == 'user-research-participants').first(),
                       Lot.query.filter(Lot.slug == 'user-research-studios').first(),
-                      ]
+                      ],
+                has_direct_award=False,
+                has_further_competition=True,
             )
         )
         db.session.commit()
