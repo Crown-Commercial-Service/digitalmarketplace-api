@@ -9,7 +9,16 @@ from flask import abort, current_app, jsonify, request
 from .. import main
 from ... import db, encryption
 from ...models import (
-    AuditEvent, BuyerEmailDomain, Framework, Service, Supplier, SupplierFramework, ContactInformation, User
+    AuditEvent,
+    BuyerEmailDomain,
+    ContactInformation,
+    Framework,
+    FrameworkLot,
+    Lot,
+    Service,
+    Supplier,
+    SupplierFramework,
+    User
 )
 from ...supplier_utils import check_supplier_role
 from ...utils import (
@@ -283,6 +292,28 @@ def export_users_for_framework(framework_slug):
         Service.supplier_id
     ).all())
 
+    framework_lots = db.session.query(FrameworkLot).filter(FrameworkLot.framework_id == framework.id).all()
+
+    lots_ids = [framework_lot.lot_id for framework_lot in framework_lots]
+
+    lots = db.session.query(Lot).filter(Lot.id.in_(lots_ids)).all()
+    published_service_count_by_supplier_and_lot = {}
+
+    for lot in lots:
+        published_service_count_by_supplier_and_lot[
+            "published_services_count_on_{}_lot".format(lot.slug)
+        ] = dict(db.session.query(
+            Service.supplier_id,
+            func.count(Service.id)
+        ).filter(
+            Service.status == 'published',
+            Service.lot_id == lot.id
+        ).group_by(
+            Service.supplier_id
+        ).group_by(
+            Service.lot_id
+        ).all())
+
     supplier_frameworks_and_users = db.session.query(
         SupplierFramework, User, ContactInformation
     ).filter(
@@ -350,7 +381,12 @@ def export_users_for_framework(framework_slug):
             'address_postcode': ci.postcode,
             'address_country': u.supplier.registration_country,
         })
-
+        for lot, supplier_services in published_service_count_by_supplier_and_lot.items():
+            if sf.supplier_id in supplier_services:
+                services_count = supplier_services[sf.supplier_id]
+            else:
+                services_count = 0
+            user_rows[-1][lot] = services_count
     return jsonify(users=[user for user in user_rows]), 200
 
 

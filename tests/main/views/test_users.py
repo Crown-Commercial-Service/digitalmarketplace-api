@@ -1423,6 +1423,10 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
             'address_city': 'Cantelot',
             'address_postcode': 'CN1A 1AA',
             'address_country': 'country:GB',
+            'published_services_count_on_digital-outcomes_lot': 3,
+            'published_services_count_on_digital-specialists_lot': 0,
+            'published_services_count_on_user-research-studios_lot': 0,
+            'published_services_count_on_user-research-participants_lot': 0,
 
         }
 
@@ -1449,6 +1453,10 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         assert row['address_city'] == _parameters['address_city']
         assert row['address_postcode'] == _parameters['address_postcode']
         assert row['address_country'] == _parameters['address_country']
+        assert row['published_services_count_on_digital-outcomes_lot'] == _parameters['published_services_count_on_digital-outcomes_lot']
+        assert row['published_services_count_on_digital-specialists_lot'] == _parameters['published_services_count_on_digital-specialists_lot']
+        assert row['published_services_count_on_user-research-studios_lot'] == _parameters['published_services_count_on_user-research-studios_lot']
+        assert row['published_services_count_on_user-research-participants_lot'] == _parameters['published_services_count_on_user-research-participants_lot']
 
     ############################################################################################
 
@@ -1648,7 +1656,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 'declaration_status': 'complete',
                 'application_status': 'application',
                 'application_result': 'pass',
-                'published_service_count': 3
+                'published_service_count': 3,
             })
 
 
