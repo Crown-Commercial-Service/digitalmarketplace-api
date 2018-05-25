@@ -1423,11 +1423,10 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
             'address_city': 'Cantelot',
             'address_postcode': 'CN1A 1AA',
             'address_country': 'country:GB',
-            'published_services_count_on_digital-outcomes_lot': 3,
+            'published_services_count_on_digital-outcomes_lot': 0,
             'published_services_count_on_digital-specialists_lot': 0,
             'published_services_count_on_user-research-studios_lot': 0,
             'published_services_count_on_user-research-participants_lot': 0,
-
         }
 
         if parameters is not None and isinstance(parameters, dict):
@@ -1657,6 +1656,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 'application_status': 'application',
                 'application_result': 'pass',
                 'published_service_count': 3,
+                'published_services_count_on_digital-outcomes_lot': 3,
             })
 
 
