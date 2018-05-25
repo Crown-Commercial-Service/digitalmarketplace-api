@@ -49,11 +49,17 @@ class BaseApplicationTest(object):
 
     def setup(self):
         self.app = create_app('test')
-        self.app.wsgi_app = WSGIApplicationWithEnvironment(
+        self.wsgi_app_main = WSGIApplicationWithEnvironment(
             self.app.wsgi_app,
             HTTP_AUTHORIZATION='Bearer {}'.format(self.app.config['DM_API_AUTH_TOKENS']),
             REMOTE_ADDR='127.0.0.1',
         )
+        self.wsgi_app_callbacks = WSGIApplicationWithEnvironment(
+            self.app.wsgi_app,
+            HTTP_AUTHORIZATION='Bearer {}'.format(self.app.config['DM_API_CALLBACK_AUTH_TOKENS']),
+            REMOTE_ADDR='127.0.0.1',
+        )
+        self.app.wsgi_app = self.wsgi_app_main
         self.app.test_client_class = TestClient
         self.client = self.app.test_client()
         self.app_context = self.app.app_context()
