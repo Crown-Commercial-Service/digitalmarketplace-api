@@ -52,7 +52,8 @@ class TestNotifyCallback(BaseApplicationTest):
 
         audit_events = AuditEvent.query.filter(AuditEvent.type == 'update_user').all()
         assert len(audit_events) == 1
-        assert audit_events[0].data == notify_data
+        assert audit_events[0].data['user'] == {'active': False}
+        assert audit_events[0].data['notify_callback_data'] == notify_data
 
     def test_no_audit_event_if_already_inactive_on_permanent_delivery_failure(self):
         notify_data = self.notify_data()
