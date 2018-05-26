@@ -31,7 +31,7 @@ def notify_callback():
             audit_event = AuditEvent(
                 audit_type=AuditTypes.update_user,
                 user='Notify callback',
-                data=notify_data,
+                data={"user": {"active": False}, "notify_callback_data": notify_data},
                 db_object=user,
             )
             db.session.add(audit_event)
