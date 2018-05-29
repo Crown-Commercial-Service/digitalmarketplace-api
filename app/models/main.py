@@ -136,6 +136,11 @@ class Framework(db.Model):
     framework_expires_at_utc = db.Column(db.DateTime, nullable=False, default=UNIX_EPOCH)
 
     # We can't logically declare defaults for these values, so they must be provided explicitly at creation-time.
+    # Addendum:
+    # We think that storing these attributes (whether or not a thing has direct award elements and/or further
+    # competition elements) at the framework level is probably the wrong level, and that technically these are
+    # probably related to the lot. However, for the time being, we store it here as a proxy for the lots as our
+    # frontends put a lot of faith in frameworks making the decisions for how things work.
     has_direct_award = db.Column(db.Boolean, nullable=False)
     has_further_competition = db.Column(db.Boolean, nullable=False)
 
