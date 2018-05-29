@@ -1466,6 +1466,47 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         ]
 
     ############################################################################################
+    def test_that_api_response_correct(self):
+        response = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
+
+        expected_response = [{
+            'id': 1,
+            'application_result': 'no result',
+            'application_status': 'no_application',
+            'declaration_status': 'unstarted',
+            'framework_agreement': False,
+            'supplier_name': "Supplier 1",
+            'supplier_organisation_size': "small",
+            'duns_number': "100000001",
+            'registered_name': 'Registered Supplier Name 1',
+            'companies_house_number': None,
+            "published_services_count": {
+                "digital-outcomes": 0,
+                "digital-specialists": 0,
+                "user-research-studios": 3,
+                "user-research-participants": 0,
+            },
+            "contact_inforomation": {
+                'contact_name': 'Contact for Supplier 1',
+                'contact_email': '1@contact.com',
+                'contact_phone_number': None,
+                'address_first_line': '7 Gem Lane',
+                'address_city': 'Cantelot',
+                'address_postcode': 'CN1A 1AA',
+                'address_country': 'country:GB',
+            },
+            "users": [
+                {
+                   'email address': "email@example.com",
+                    'user_name': "Johny",
+                    'user_research_opted_in': True,
+                },
+            ],
+            'variations_agreed': 3,
+
+        }]
+
+        assert response == expected_response
 
     # Test no suppliers
     def test_get_response_when_no_suppliers(self):
