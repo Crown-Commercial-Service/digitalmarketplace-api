@@ -1706,6 +1706,7 @@ class Brief(db.Model):
     closed_at = db.Column(DateTime, index=True, nullable=True)
     questions_closed_at = db.Column(DateTime, index=True, nullable=True)
     withdrawn_at = db.Column(DateTime, index=True, nullable=True)
+    responses_zip_filesize = db.Column(db.BigInteger, nullable=True)
 
     __table_args__ = (db.ForeignKeyConstraint([framework_id, _lot_id],
                                               ['framework_lot.framework_id', 'framework_lot.lot_id']),
@@ -2033,7 +2034,8 @@ class Brief(db.Model):
             'clarificationQuestions': [
                 question.serialize() for question in self.clarification_questions
             ],
-            'author': ''
+            'author': '',
+            'responsesZipFilesize': self.responses_zip_filesize
         })
 
         if len(self.users) > 0:

@@ -1,5 +1,5 @@
 from app.tasks.mailchimp import sync_mailchimp_seller_list, MailChimpConfigException, send_new_briefs_email
-from app.tasks.s3 import create_resumes_zip, CreateResumesZipException
+from app.tasks.s3 import create_responses_zip, CreateResponsesZipException
 from app.models import AuditEvent
 from app import db
 from dmapiclient.audit import AuditTypes
@@ -197,7 +197,7 @@ brief_response_data = {
 
 
 @pytest.mark.parametrize('brief_responses', [{'data': brief_response_data}], indirect=True)
-def test_create_resumes_zip_success(app, briefs, brief_responses, mocker):
+def test_create_responses_zip_success(app, briefs, brief_responses, mocker):
     boto3 = mocker.patch('app.tasks.s3.boto3')
     s3 = MagicMock()
     bucket = MagicMock()
@@ -206,7 +206,7 @@ def test_create_resumes_zip_success(app, briefs, brief_responses, mocker):
     s3.Bucket.return_value = bucket
 
     with app.app_context():
-        create_resumes_zip(1)
+        create_responses_zip(1)
         assert boto3.resource.called
         assert s3.Bucket.called
         assert bucket.download_fileobj.called
@@ -218,8 +218,7 @@ brief_response_data = {
 }
 
 
-@pytest.mark.parametrize('brief_responses', [{'data': brief_response_data}], indirect=True)
-def test_create_resumes_zip_fails_when_no_attachments(app, briefs, brief_responses, mocker):
+def test_create_responses_zip_fails_when_no_responses(app, briefs, mocker):
     boto3 = mocker.patch('app.tasks.s3.boto3')
     s3 = MagicMock()
     bucket = MagicMock()
@@ -229,11 +228,11 @@ def test_create_resumes_zip_fails_when_no_attachments(app, briefs, brief_respons
 
     with app.app_context():
         try:
-            create_resumes_zip(1)
+            create_responses_zip(1)
             assert False
-        except CreateResumesZipException as e:
-            assert boto3.resource.called
-            assert s3.Bucket.called
+        except CreateResponsesZipException as e:
+            assert not boto3.resource.called
+            assert not s3.Bucket.called
             assert not bucket.download_fileobj.called
             assert not bucket.upload_fileobj.called
-            assert str(e) == 'The brief id "1" did not have any attachments'
+            assert str(e) == 'There were no respones for brief id 1'

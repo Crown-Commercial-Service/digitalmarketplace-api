@@ -41,10 +41,11 @@ class BriefResponsesService(Service):
         responses = [r._asdict() for r in query.all()]
         attachments = []
         for response in responses:
-            for attachment in response['attachments']:
-                attachments.append({
-                    'supplier_code': response['supplier_code'],
-                    'supplier_name': response['supplier_name'],
-                    'file_name': attachment
-                })
+            if 'attachments' in response and response['attachments']:
+                for attachment in response['attachments']:
+                    attachments.append({
+                        'supplier_code': response['supplier_code'],
+                        'supplier_name': response['supplier_name'],
+                        'file_name': attachment
+                    })
         return attachments

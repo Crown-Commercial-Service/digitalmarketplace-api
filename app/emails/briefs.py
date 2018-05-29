@@ -72,7 +72,6 @@ def send_brief_response_received_email(supplier, brief, brief_response):
 
 def send_brief_closed_email(brief):
     from app.api.services import audit_service, audit_types  # to circumvent circular dependency
-    from app.tasks.s3 import create_resumes_zip, CreateResumesZipException
 
     brief_email_sent_audit_event = audit_service.find(type=audit_types.sent_closed_brief_email.value,
                                                       object_type="Brief",
@@ -81,16 +80,6 @@ def send_brief_closed_email(brief):
     if (brief_email_sent_audit_event > 0):
         return
 
-    # create the resumes zip
-    has_resumes_zip = False
-    try:
-        create_resumes_zip(brief.id)
-        has_resumes_zip = True
-    except Exception as e:
-        current_app.logger.error(str(e))
-        rollbar.report_exc_info()
-        pass
-
     to_addresses = [user.email_address for user in brief.users if user.active]
 
     # prepare copy
@@ -98,8 +87,7 @@ def send_brief_closed_email(brief):
         'brief_closed.md',
         frontend_url=current_app.config['FRONTEND_ADDRESS'],
         brief_name=brief.data['title'],
-        brief_id=brief.id,
-        has_resumes_zip=has_resumes_zip
+        brief_id=brief.id
     )
 
     subject = "Your brief has closed - please review all responses."

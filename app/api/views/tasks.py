@@ -1,5 +1,5 @@
 from flask import jsonify, current_app
-from app.tasks.brief_tasks import process_closed_briefs
+from app.tasks.brief_tasks import process_closed_briefs, create_responses_zip_for_closed_briefs
 from app.tasks.mailchimp import sync_mailchimp_seller_list, send_new_briefs_email
 from app.api import api
 from app.api.helpers import role_required
@@ -62,4 +62,24 @@ def run_send_daily_seller_email():
         return jsonify(res.id)
     else:
         send_new_briefs_email()
+        return jsonify("finished")
+
+
+@api.route('/tasks/create-responses-zip', methods=['POST'])
+@role_required('admin')
+def run_create_brief_responses_zip():
+    """Trigger Create Brief Responses Zip
+    ---
+    tags:
+      - tasks
+    responses:
+      200:
+        type: string
+        description: string
+    """
+    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
+        res = create_responses_zip_for_closed_briefs.delay()
+        return jsonify(res.id)
+    else:
+        create_responses_zip_for_closed_briefs()
         return jsonify("finished")

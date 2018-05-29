@@ -38,7 +38,7 @@ class BriefOverviewService():
         SHORTLIST_AND_EVALUATION_TEXT: '{path}/shortlist-and-evaluation-process',
         START_WORK_ORDER_TEXT: '{path}/work-orders/create',
         TITLE_TEXT: '{path}/edit/title/title',
-        VIEW_RESPONSES_TEXT: '{path}/responses',
+        VIEW_RESPONSES_TEXT: '/2/brief/{brief_id}/download-responses',
         WHO_CAN_RESPOND_TEXT: '{path}/edit/who-can-respond/specifySeller'
     }
 
@@ -46,7 +46,7 @@ class BriefOverviewService():
         path = '/buyers/frameworks/{}/requirements/{}/{}'.format(brief.framework.slug, brief.lot.slug, brief.id)
         work_order_id = brief.work_order.id if brief.work_order else None
 
-        return self.PATHS[link_text].format(path=path, work_order_id=work_order_id)
+        return self.PATHS[link_text].format(path=path, work_order_id=work_order_id, brief_id=brief.id)
 
     def brief_contains_all_required_fields(self, brief, required_fields):
         for key in required_fields:

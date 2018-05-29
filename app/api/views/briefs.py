@@ -19,6 +19,7 @@ from dmutils.file import s3_download_file, s3_upload_file_from_request
 from ...models import (AuditEvent, Brief, BriefResponse, Framework, Supplier,
                        ValidationError, db)
 from ...utils import get_json_from_request
+from app.api.csv import generate_brief_responses_csv
 
 
 def _can_do_brief_response(brief_id):
@@ -311,17 +312,30 @@ def download_brief_responses(brief_id):
         return forbidden("Unauthorised to view brief or brief does not exist")
     if brief.status != 'closed':
         return forbidden("You can only download documents for closed briefs")
-    try:
-        file = s3_download_file(
-            'brief-{}-resumes.zip'.format(brief_id),
-            os.path.join(brief.framework.slug, 'archives', 'brief-{}'.format(brief_id))
-        )
-    except botocore.exceptions.ClientError as e:
-        rollbar.report_exc_info()
-        not_found("Brief documents not found for brief id '{}'".format(brief_id))
 
-    response = Response(file, mimetype='application/zip')
-    response.headers['Content-Disposition'] = 'attachment; filename="brief-{}-resumes.zip"'.format(brief_id)
+    response = ('', 404)
+    if brief.lot.slug == 'digital-professionals':
+        try:
+            file = s3_download_file(
+                'brief-{}-resumes.zip'.format(brief_id),
+                os.path.join(brief.framework.slug, 'archives', 'brief-{}'.format(brief_id))
+            )
+        except botocore.exceptions.ClientError as e:
+            rollbar.report_exc_info()
+            not_found("Brief documents not found for brief id '{}'".format(brief_id))
+
+        response = Response(file, mimetype='application/zip')
+        response.headers['Content-Disposition'] = 'attachment; filename="brief-{}-responses.zip"'.format(brief_id)
+    elif brief.lot.slug == 'digital-outcome':
+        responses = BriefResponse.query.filter(
+            BriefResponse.brief_id == brief_id,
+            BriefResponse.withdrawn_at.is_(None)
+        ).all()
+        csvdata = generate_brief_responses_csv(brief, responses)
+        response = Response(csvdata, mimetype='text/csv')
+        response.headers['Content-Disposition'] = (
+            'attachment; filename="responses-to-requirements-{}.csv"'.format(brief_id))
+
     return response
 
 

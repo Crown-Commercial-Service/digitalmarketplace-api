@@ -263,6 +263,10 @@ class Production(Live):
         'process_closed_briefs': {
             'task': 'app.tasks.brief_tasks.process_closed_briefs',
             'schedule': crontab(hour=20, minute=0)
+        },
+        'create_responses_zip_for_closed_briefs': {
+            'task': 'app.tasks.brief_tasks.create_responses_zip_for_closed_briefs',
+            'schedule': crontab(hour=8, minute=1)
         }
     }
 

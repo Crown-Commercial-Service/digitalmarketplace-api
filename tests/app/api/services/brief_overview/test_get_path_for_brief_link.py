@@ -85,8 +85,8 @@ def test_correct_path_returned_for_answer_a_question(brief, framework, lot):
 def test_correct_path_returned_for_view_responses(brief, framework, lot):
     test_brief = brief(framework, lot())
     path = brief_overview_service.get_path_for_brief_link(test_brief, brief_overview_service.VIEW_RESPONSES_TEXT)
-    assert path == ('/buyers/frameworks/{}/requirements/{}/{}/responses'
-                    .format(test_brief.framework.slug, test_brief.lot.slug, test_brief.id))
+    assert path == ('/2/brief/{}/download-responses'
+                    .format(test_brief.id))
 
 
 @pytest.mark.parametrize('brief, lot', [(outcome_brief, outcome_lot), (specialist_brief, specialist_lot)])

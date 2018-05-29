@@ -3,23 +3,40 @@ from __future__ import \
     absolute_import
 
 from . import celery
+from app import db
 from flask import current_app
 from io import BytesIO
 from os import getenv
 from app.api.services import brief_responses_service
-from app.models import BriefResponse
+from app.api.csv import generate_brief_responses_csv
+from app.models import Brief, BriefResponse
 from werkzeug.utils import secure_filename
 import boto3
 import botocore
 import zipfile
 
 
-class CreateResumesZipException(Exception):
+class CreateResponsesZipException(Exception):
     """Raised when the resume zip fails to create."""
 
 
 @celery.task
-def create_resumes_zip(brief_id):
+def create_responses_zip(brief_id):
+    brief = Brief.query.filter(Brief.id == brief_id).first_or_404()
+    responses = BriefResponse.query.filter(
+        BriefResponse.brief_id == brief_id,
+        BriefResponse.withdrawn_at.is_(None)
+    ).all()
+
+    if not brief:
+        raise CreateResponsesZipException('Failed to load brief for id {}'.format(brief_id))
+
+    if not responses:
+        raise CreateResponsesZipException('There were no respones for brief id {}'.format(brief_id))
+
+    if not brief.lot.slug == 'digital-professionals':
+        raise CreateResponsesZipException('Brief id {} is not a specialist brief'.format(brief_id))
+
     BUCKET_NAME = getenv('S3_BUCKET_NAME')
     s3 = boto3.resource(
         's3',
@@ -34,34 +51,41 @@ def create_resumes_zip(brief_id):
     for attachment in attachments:
         files.append({
             'key': 'supplier-{}/{}'.format(attachment['supplier_code'], attachment['file_name']),
-            'zip_name': 'brief-{}/{}/{}'.format(
+            'zip_name': 'brief-{}-documents/{}/{}'.format(
                 brief_id,
                 secure_filename(attachment['supplier_name']),
                 attachment['file_name']
             )
         })
 
-    if not files:
-        raise CreateResumesZipException('The brief id "{}" did not have any attachments'.format(brief_id))
-
     with BytesIO() as archive:
         with zipfile.ZipFile(archive, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
             for file in files:
+                s3file = 'digital-marketplace/documents/brief-{}/{}'.format(brief_id, file['key'])
                 with BytesIO() as s3io:
                     try:
-                        bucket.download_fileobj(
-                            'digital-marketplace/documents/brief-{}/{}'.format(brief_id, file['key']),
-                            s3io
-                        )
+                        bucket.download_fileobj(s3file, s3io)
                         zf.writestr(file['zip_name'], s3io.getvalue())
                     except botocore.exceptions.ClientError as e:
-                        raise CreateResumesZipException('The file "{}" failed to download'.format(file))
+                        raise CreateResponsesZipException('The file "{}" failed to download'.format(s3file))
+
+            csvdata = generate_brief_responses_csv(brief, responses)
+            zf.writestr('responses-to-requirements-{}.csv'.format(brief_id), csvdata)
 
         archive.seek(0)
+
+        try:
+            brief.responses_zip_filesize = len(archive.getvalue())
+            db.session.add(brief)
+            db.session.commit()
+        except Exception as e:
+            raise CreateResponsesZipException(str(e))
+
         try:
             bucket.upload_fileobj(
                 archive,
                 'digital-marketplace/archives/brief-{}/brief-{}-resumes.zip'.format(brief_id, brief_id)
             )
         except botocore.exceptions.ClientError as e:
-            raise CreateResumesZipException('The resumes archive for brief id "{}" failed to upload'.format(brief_id))
+            raise CreateResponsesZipException('The responses archive for brief id "{}" failed to upload'
+                                              .format(brief_id))

@@ -456,7 +456,8 @@ class TestBriefs(BaseApplicationTest):
                             'questions_closing_date': '2015-01-08'
                         }
                     },
-                    "author": "my name"
+                    "author": "my name",
+                    "responsesZipFilesize": None
                 }
             )
 
