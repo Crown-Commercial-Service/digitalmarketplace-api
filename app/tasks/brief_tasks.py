@@ -2,7 +2,6 @@ from . import celery
 from app import db
 from app.models import Brief, Framework, Lot
 from app.emails.briefs import send_brief_closed_email
-from app.tasks.s3 import create_responses_zip, CreateResponsesZipException
 from flask import current_app
 import pendulum
 
@@ -23,6 +22,7 @@ def process_closed_briefs():
 
 @celery.task
 def create_responses_zip_for_closed_briefs():
+    from app.tasks.s3 import create_responses_zip, CreateResponsesZipException
     closed_briefs = (db.session.query(Brief).join(Framework, Lot)
                                             .filter(Brief.status == 'closed',
                                                     Brief.responses_zip_filesize.is_(None),
