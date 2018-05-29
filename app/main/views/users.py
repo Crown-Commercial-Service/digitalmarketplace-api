@@ -286,6 +286,14 @@ def export_users_for_framework(framework_slug):
         User.supplier_id, User.name, User.email_address, User.user_research_opted_in
     ).filter(User.supplier_id.in_(suppliers_with_a_complete_service)).filter(User.active.is_(True))
 
+    users_by_supplier = {
+        u.supplier_id: {
+            'email address': u.email_address,
+            'user_name': u.name,
+            'user_research_opted_in': u.user_research_opted_in,
+        } for u in users
+    }
+
     lots = db.session.query(FrameworkLot.lot_id, Lot.slug).join(Lot, FrameworkLot.lot_id == Lot.id).filter(
         FrameworkLot.framework_id == framework.id
     ).distinct().all()
@@ -317,23 +325,22 @@ def export_users_for_framework(framework_slug):
     supplier_frameworks_and_users = db.session.query(
         SupplierFramework, Supplier, ContactInformation
     ).filter(
-        SupplierFramework.supplier_id == Supplier.id
+        SupplierFramework.supplier_id == Supplier.supplier_id
     ).filter(
         SupplierFramework.framework_id == framework.id
     ).filter(
-        ContactInformation.supplier_id == Supplier.id
+        ContactInformation.supplier_id == Supplier.supplier_id
     ).options(
         lazyload(SupplierFramework.framework),
         lazyload(SupplierFramework.prefill_declaration_from_framework),
         lazyload(SupplierFramework.framework_agreements),
     ).order_by(
-        Supplier.id,
+        Supplier.supplier_id,
     ).all()
 
     supplier_rows = []
 
     for sf, supplier, ci in supplier_frameworks_and_users:
-
 
         # always get the declaration status
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
@@ -355,13 +362,9 @@ def export_users_for_framework(framework_slug):
 
         supplier_rows.append({
             "users": [
-                {
-                    'email address': supplier_user.email_address,
-                    'user_name': supplier_user.name,
-                    'user_research_opted_in': supplier_user.user_research_opted_in,
-                } for supplier_user in users.filter(User.supplier_id == supplier.id)
+                users_by_supplier.get(supplier.supplier_id)
             ],
-            'supplier_id': supplier.id,
+            'supplier_id': supplier.supplier_id,
             'declaration_status': declaration_status,
             'application_status': application_status,
             'framework_agreement': framework_agreement,
