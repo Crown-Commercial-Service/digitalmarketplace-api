@@ -38,6 +38,11 @@ def notify_callback():
 
             db.session.commit()
 
+            current_app.logger.info(
+                "User account disabled for {hashed_email} after Notify reported permanent delivery "
+                "failure.".format(hashed_email=hash_string(notify_data['to']))
+            )
+
     elif notify_data['status'] == 'technical-failure':
         current_app.logger.warning("Notify failed to deliver {reference} to {hashed_email}".format(
             reference=notify_data['reference'],
