@@ -1467,13 +1467,25 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
 
     ############################################################################################
     def test_that_api_response_correct(self):
+        self._setup()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_result(True)
+        self.set_framework_status(self.framework_slug, 'open')
+
+        self.setup_dummy_service('10000000002', 1, frameworkSlug=self.framework_slug, lot_id=7)
+        self.setup_dummy_service('10000000003', 1, frameworkSlug=self.framework_slug, lot_id=7)
+        self.setup_dummy_service('10000000004', 1, frameworkSlug=self.framework_slug, lot_id=7)
+        self.setup_dummy_service('10000000005', 1, frameworkSlug=self.framework_slug, lot_id=7, status='enabled')
+        self.setup_dummy_service('10000000006', 1, frameworkSlug=self.framework_slug, lot_id=7, status='disabled')
+
         response = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
 
         expected_response = [{
-            'id': 1,
-            'application_result': 'no result',
-            'application_status': 'no_application',
-            'declaration_status': 'unstarted',
+            'supplier_id': 1,
+            'application_result': 'pass',
+            'application_status': 'application',
+            'declaration_status': 'commplete',
             'framework_agreement': False,
             'supplier_name': "Supplier 1",
             'supplier_organisation_size': "small",
@@ -1486,7 +1498,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 "user-research-studios": 3,
                 "user-research-participants": 0,
             },
-            "contact_inforomation": {
+            "contact_information": {
                 'contact_name': 'Contact for Supplier 1',
                 'contact_email': '1@contact.com',
                 'contact_phone_number': None,
@@ -1497,12 +1509,12 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
             },
             "users": [
                 {
-                   'email address': "email@example.com",
-                    'user_name': "Johny",
-                    'user_research_opted_in': True,
+                    'email address': "j@examplecompany.biz",
+                    'user_name': "John Example",
+                    'user_research_opted_in': False,
                 },
             ],
-            'variations_agreed': 3,
+            'variations_agreed': '',
 
         }]
 

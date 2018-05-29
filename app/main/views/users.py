@@ -331,7 +331,7 @@ def export_users_for_framework(framework_slug):
         User.id,
     ).all()
 
-    user_rows = []
+    supplier_rows = []
 
     for sf, u, ci in supplier_frameworks_and_users:
 
@@ -353,10 +353,14 @@ def export_users_for_framework(framework_slug):
             framework_agreement = bool(getattr(sf.current_framework_agreement, 'signed_agreement_returned_at', None))
             variations_agreed = ', '.join(sf.agreed_variations.keys()) if sf.agreed_variations else ''
 
-        user_rows.append({
-            'email address': u.email_address,
-            'user_name': u.name,
-            'user_research_opted_in': u.user_research_opted_in,
+        supplier_rows.append({
+            "users": [
+                {
+                    'email address': u.email_address,
+                    'user_name': u.name,
+                    'user_research_opted_in': u.user_research_opted_in,
+                }
+            ],
             'supplier_id': sf.supplier_id,
             'declaration_status': declaration_status,
             'application_status': application_status,
@@ -369,21 +373,24 @@ def export_users_for_framework(framework_slug):
             'duns_number': u.supplier.duns_number,
             'registered_name': u.supplier.registered_name,
             'companies_house_number': u.supplier.companies_house_number,
-            'contact_name': ci.contact_name,
-            'contact_email': ci.email,
-            'contact_phone_number': ci.phone_number,
-            'address_first_line': ci.address1,
-            'address_city': ci.city,
-            'address_postcode': ci.postcode,
-            'address_country': u.supplier.registration_country,
+            "contact_information": {
+                'contact_name': ci.contact_name,
+                'contact_email': ci.email,
+                'contact_phone_number': ci.phone_number,
+                'address_first_line': ci.address1,
+                'address_city': ci.city,
+                'address_postcode': ci.postcode,
+                'address_country': u.supplier.registration_country,
+            },
+            "published_services_count": {
+                "digital-outcomes": 0,
+                "digital-specialists": 0,
+                "user-research-studios": 3,
+                "user-research-participants": 0,
+            }
         })
-        for lot, supplier_services in published_service_count_by_supplier_and_lot.items():
-            if sf.supplier_id in supplier_services:
-                services_count = supplier_services[sf.supplier_id]
-            else:
-                services_count = 0
-            user_rows[-1][lot] = services_count
-    return jsonify(users=[user for user in user_rows]), 200
+
+    return jsonify(suppliers=[supplier for supplier in supplier_rows]), 200
 
 
 @main.route("/users/check-buyer-email", methods=["GET"])
