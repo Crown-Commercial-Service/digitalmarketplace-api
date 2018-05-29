@@ -282,6 +282,10 @@ def export_users_for_framework(framework_slug):
 
     suppliers_with_a_complete_service = frozenset(framework.get_supplier_ids_for_completed_service())
 
+    users = db.session.query(
+        User.supplier_id, User.name, User.email_address, User.user_research_opted_in
+    ).filter(User.supplier_id.in_(suppliers_with_a_complete_service)).filter(User.active.is_(True))
+
     lots = db.session.query(FrameworkLot.lot_id, Lot.slug).join(Lot, FrameworkLot.lot_id == Lot.id).filter(
         FrameworkLot.framework_id == framework.id
     ).distinct().all()
@@ -311,29 +315,25 @@ def export_users_for_framework(framework_slug):
                 supplier_id_published_service_count[supplier_id] = service_count
 
     supplier_frameworks_and_users = db.session.query(
-        SupplierFramework, User, ContactInformation
+        SupplierFramework, Supplier, ContactInformation
     ).filter(
-        SupplierFramework.supplier_id == User.supplier_id
+        SupplierFramework.supplier_id == Supplier.id
     ).filter(
         SupplierFramework.framework_id == framework.id
     ).filter(
-        ContactInformation.supplier_id == User.supplier_id
-    ).filter(
-        User.active.is_(True)
+        ContactInformation.supplier_id == Supplier.id
     ).options(
-        lazyload(User.supplier),
-        lazyload(SupplierFramework.supplier),
         lazyload(SupplierFramework.framework),
         lazyload(SupplierFramework.prefill_declaration_from_framework),
         lazyload(SupplierFramework.framework_agreements),
     ).order_by(
-        SupplierFramework.supplier_id,
-        User.id,
+        Supplier.id,
     ).all()
 
     supplier_rows = []
 
-    for sf, u, ci in supplier_frameworks_and_users:
+    for sf, supplier, ci in supplier_frameworks_and_users:
+
 
         # always get the declaration status
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
@@ -356,23 +356,23 @@ def export_users_for_framework(framework_slug):
         supplier_rows.append({
             "users": [
                 {
-                    'email address': u.email_address,
-                    'user_name': u.name,
-                    'user_research_opted_in': u.user_research_opted_in,
-                }
+                    'email address': supplier_user.email_address,
+                    'user_name': supplier_user.name,
+                    'user_research_opted_in': supplier_user.user_research_opted_in,
+                } for supplier_user in users.filter(User.supplier_id == supplier.id)
             ],
-            'supplier_id': sf.supplier_id,
+            'supplier_id': supplier.id,
             'declaration_status': declaration_status,
             'application_status': application_status,
             'framework_agreement': framework_agreement,
             'application_result': application_result,
             'variations_agreed': variations_agreed,
             'published_service_count': supplier_id_published_service_count.get(sf.supplier_id, 0),
-            'supplier_name': u.supplier.name,
-            'supplier_organisation_size': u.supplier.organisation_size,
-            'duns_number': u.supplier.duns_number,
-            'registered_name': u.supplier.registered_name,
-            'companies_house_number': u.supplier.companies_house_number,
+            'supplier_name': supplier.name,
+            'supplier_organisation_size': supplier.organisation_size,
+            'duns_number': supplier.duns_number,
+            'registered_name': supplier.registered_name,
+            'companies_house_number': supplier.companies_house_number,
             "contact_information": {
                 'contact_name': ci.contact_name,
                 'contact_email': ci.email,
@@ -380,7 +380,7 @@ def export_users_for_framework(framework_slug):
                 'address_first_line': ci.address1,
                 'address_city': ci.city,
                 'address_postcode': ci.postcode,
-                'address_country': u.supplier.registration_country,
+                'address_country': supplier.registration_country,
             },
             "published_services_count": {
                 "digital-outcomes": 0,

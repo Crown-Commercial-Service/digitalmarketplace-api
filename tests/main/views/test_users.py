@@ -1513,6 +1513,11 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                     'user_name': "John Example",
                     'user_research_opted_in': False,
                 },
+                {
+                    'email address': "don@don.com",
+                    'user_name': "Don",
+                    'user_research_opted_in': False,
+                },
             ],
             'variations_agreed': '',
 
