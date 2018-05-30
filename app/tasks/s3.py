@@ -70,7 +70,7 @@ def create_responses_zip(brief_id):
                         raise CreateResponsesZipException('The file "{}" failed to download'.format(s3file))
 
             csvdata = generate_brief_responses_csv(brief, responses)
-            zf.writestr('responses-to-requirements-{}.csv'.format(brief_id), csvdata)
+            zf.writestr('responses-to-requirements-{}.csv'.format(brief_id), csvdata.encode('utf-8'))
 
         archive.seek(0)
 
