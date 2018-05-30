@@ -1467,63 +1467,46 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         assert row['users'] == _parameters['users']
 
     ############################################################################################
-    def test_that_api_response_correct(self):
-        self._setup()
-        self._put_complete_declaration()
-        self._post_complete_draft_service()
-        self._post_result(True)
-        self.set_framework_status(self.framework_slug, 'open')
-
-        self.setup_dummy_service('10000000002', 1, frameworkSlug=self.framework_slug, lot_id=7)
-        self.setup_dummy_service('10000000003', 1, frameworkSlug=self.framework_slug, lot_id=7)
-        self.setup_dummy_service('10000000004', 1, frameworkSlug=self.framework_slug, lot_id=7)
-        self.setup_dummy_service('10000000005', 1, frameworkSlug=self.framework_slug, lot_id=7, status='enabled')
-        self.setup_dummy_service('10000000006', 1, frameworkSlug=self.framework_slug, lot_id=7, status='disabled')
-
-        response = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
-        for row in response:
-            self._assert_things_about_export_response(row, parameters={'published_service_count': 0})
-
     # Test no suppliers
     def test_get_response_when_no_suppliers(self):
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert data == []
 
     # Test one supplier with no users
     def test_get_response_when_no_users(self):
         self._setup(post_users=False, register_supplier_with_framework=False)
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert data == []
 
     # Test one supplier not registered on the framework
     def test_get_response_when_not_registered_with_framework(self):
         self._setup(register_supplier_with_framework=False)
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert data == []
 
     # Test users for supplier with unstarted declaration no drafts
     def test_response_unstarted_declaration_no_drafts(self):
         self._setup()
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
-        assert len(data) == len(self.users)
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
+        assert len(data) == 1
         for datum in data:
-            self._assert_things_about_export_response(datum, parameters={'published_service_count': 0})
+            self._assert_things_about_export_response(datum, parameters={'published_services_count': {}})
 
     # Test users for supplier with unstarted declaration one draft
     def test_response_unstarted_declaration_one_draft(self):
         self._setup()
         self._post_complete_draft_service()
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert len(data) == len(self.users)
         for datum in data:
-            self._assert_things_about_export_response(datum, parameters={'published_service_count': 0})
+            self._assert_things_about_export_response(datum, parameters={'published_services_count': 0})
 
     # Test users for supplier with started declaration one draft
     def test_response_started_declaration_one_draft(self):
         self._setup()
         self._put_incomplete_declaration()
         self._post_complete_draft_service()
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert len(data) == len(self.users)
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
@@ -1535,7 +1518,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
     def test_response_complete_declaration_no_drafts(self):
         self._setup()
         self._put_complete_declaration()
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert len(data) == len(self.users)
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
@@ -1548,7 +1531,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert len(data) == len(self.users)
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
@@ -1562,7 +1545,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
-        data = json.loads(self._return_users_export_after_setting_framework_status(status='open').get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status(status='open').get_data())["suppliers"]
         assert len(data) == len(self.users)
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
@@ -1579,7 +1562,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         self._post_complete_draft_service()
         self._post_result(True)
         self._create_and_sign_framework_agreement()
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert len(data) == len(self.users)
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
@@ -1595,7 +1578,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         self._put_complete_declaration()
         self._post_complete_draft_service()
         self._post_result(False)
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert len(data) == len(self.users)
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
@@ -1624,7 +1607,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
             content_type='application/json')
         assert response.status_code == 200
 
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert len(data) == len(self.users) - 1
 
     # Test 400 if bad framework name
@@ -1648,7 +1631,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         self._create_and_sign_framework_agreement()
         self._set_framework_variation()
         self._put_variation_agreement()
-        data = json.loads(self._return_users_export_after_setting_framework_status(status='live').get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status(status='live').get_data())["suppliers"]
         assert len(data) == len(self.users)
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
@@ -1673,7 +1656,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         self.setup_dummy_service('10000000005', 1, frameworkSlug=self.framework_slug, lot_id=7, status='enabled')
         self.setup_dummy_service('10000000006', 1, frameworkSlug=self.framework_slug, lot_id=7, status='disabled')
 
-        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["users"]
+        data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert len(data) == len(self.users)
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={

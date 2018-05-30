@@ -282,12 +282,15 @@ def export_users_for_framework(framework_slug):
     suppliers_with_a_complete_service = frozenset(framework.get_supplier_ids_for_completed_service())
 
     users = db.session.query(
-        User.supplier_id, User.name, User.email_address, User.user_research_opted_in
+        User.supplier_id, User.name, User.email_address, User.user_research_opted_in,
+        SupplierFramework.framework_id, SupplierFramework.supplier_id,
     ).filter(
-        User.supplier_id.in_(suppliers_with_a_complete_service)
+        SupplierFramework.supplier_id == User.supplier_id
+    ).filter(
+        SupplierFramework.framework_id == framework.id
     ).filter(
         User.active.is_(True)
-    )
+    ).all()
 
     users_for_each_supplier = {}
     for u in users:
@@ -377,7 +380,9 @@ def export_users_for_framework(framework_slug):
                 'framework_agreement': framework_agreement,
                 'variations_agreed': variations_agreed,
                 "published_services_count": {
-                    lot_slugs_by_id[lot_id]: service_counts_by_lot_by_supplier[supplier.supplier_id].get(lot_id, 0)
+                    lot_slugs_by_id[lot_id]: service_counts_by_lot_by_supplier.get(
+                        supplier.supplier_id, {}
+                    ).get(lot_id, 0)
                     for lot_id in lot_slugs_by_id.keys()
                 },
                 "contact_information": {
