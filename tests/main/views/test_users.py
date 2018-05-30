@@ -1407,81 +1407,6 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
 
     def _assert_things_about_export_response(self, row, parameters=None):
         _parameters = {
-            'application_result': 'no result',
-            'application_status': 'no_application',
-            'declaration_status': 'unstarted',
-            'framework_agreement': False,
-            'supplier_name': "Supplier 1",
-            'supplier_organisation_size': "small",
-            'duns_number': "100000001",
-            'registered_name': 'Registered Supplier Name 1',
-            'companies_house_number': None,
-            'contact_name': 'Contact for Supplier 1',
-            'contact_email': '1@contact.com',
-            'contact_phone_number': None,
-            'address_first_line': '7 Gem Lane',
-            'address_city': 'Cantelot',
-            'address_postcode': 'CN1A 1AA',
-            'address_country': 'country:GB',
-            'published_services_count_on_digital-outcomes_lot': 0,
-            'published_services_count_on_digital-specialists_lot': 0,
-            'published_services_count_on_user-research-studios_lot': 0,
-            'published_services_count_on_user-research-participants_lot': 0,
-        }
-
-        if parameters is not None and isinstance(parameters, dict):
-            _parameters.update(parameters)
-
-        assert row['email address'] in [user['emailAddress'] for user in self.users]
-        assert row['user_name'] in [user['name'] for user in self.users]
-        assert row['supplier_id'] == self.supplier_id
-        assert row['application_result'] == _parameters['application_result']
-        assert row['application_status'] == _parameters['application_status']
-        assert row['declaration_status'] == _parameters['declaration_status']
-        assert row['framework_agreement'] == _parameters['framework_agreement']
-        assert row['published_service_count'] == _parameters['published_service_count']
-        assert row['supplier_name'] == _parameters['supplier_name']
-        assert row['supplier_organisation_size'] == _parameters['supplier_organisation_size']
-        assert row['duns_number'] == _parameters['duns_number']
-        assert row['registered_name'] == _parameters['registered_name']
-        assert row['companies_house_number'] == _parameters['companies_house_number']
-        assert row['contact_name'] == _parameters['contact_name']
-        assert row['contact_email'] == _parameters['contact_email']
-        assert row['contact_phone_number'] == _parameters['contact_phone_number']
-        assert row['address_first_line'] == _parameters['address_first_line']
-        assert row['address_city'] == _parameters['address_city']
-        assert row['address_postcode'] == _parameters['address_postcode']
-        assert row['address_country'] == _parameters['address_country']
-        assert row['published_services_count_on_digital-outcomes_lot'] == _parameters[
-            'published_services_count_on_digital-outcomes_lot'
-        ]
-        assert row['published_services_count_on_digital-specialists_lot'] == _parameters[
-            'published_services_count_on_digital-specialists_lot'
-        ]
-        assert row['published_services_count_on_user-research-studios_lot'] == _parameters[
-            'published_services_count_on_user-research-studios_lot'
-        ]
-        assert row['published_services_count_on_user-research-participants_lot'] == _parameters[
-            'published_services_count_on_user-research-participants_lot'
-        ]
-
-    ############################################################################################
-    def test_that_api_response_correct(self):
-        self._setup()
-        self._put_complete_declaration()
-        self._post_complete_draft_service()
-        self._post_result(True)
-        self.set_framework_status(self.framework_slug, 'open')
-
-        self.setup_dummy_service('10000000002', 1, frameworkSlug=self.framework_slug, lot_id=7)
-        self.setup_dummy_service('10000000003', 1, frameworkSlug=self.framework_slug, lot_id=7)
-        self.setup_dummy_service('10000000004', 1, frameworkSlug=self.framework_slug, lot_id=7)
-        self.setup_dummy_service('10000000005', 1, frameworkSlug=self.framework_slug, lot_id=7, status='enabled')
-        self.setup_dummy_service('10000000006', 1, frameworkSlug=self.framework_slug, lot_id=7, status='disabled')
-
-        response = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
-
-        expected_response = [{
             'supplier_id': 1,
             'application_result': 'pass',
             'application_status': 'application',
@@ -1509,21 +1434,55 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
             },
             "users": [
                 {
-                    'email address': "j@examplecompany.biz",
-                    'user_name': "John Example",
+                    'email_address': "j@examplecompany.biz",
+                    'name': "John Example",
                     'user_research_opted_in': False,
                 },
                 {
-                    'email address': "don@don.com",
-                    'user_name': "Don",
+                    'email_address': "don@don.com",
+                    'name': "Don",
                     'user_research_opted_in': False,
                 },
             ],
             'variations_agreed': '',
+        }
 
-        }]
+        if parameters is not None and isinstance(parameters, dict):
+            _parameters.update(parameters)
 
-        assert response == expected_response
+        assert row['supplier_id'] == self.supplier_id
+        assert row['supplier_name'] == _parameters['supplier_name']
+        assert row['supplier_organisation_size'] == _parameters['supplier_organisation_size']
+        assert row['duns_number'] == _parameters['duns_number']
+        assert row['registered_name'] == _parameters['registered_name']
+        assert row['companies_house_number'] == _parameters['companies_house_number']
+
+        assert row['application_result'] == _parameters['application_result']
+        assert row['application_status'] == _parameters['application_status']
+        assert row['declaration_status'] == _parameters['declaration_status']
+        assert row['framework_agreement'] == _parameters['framework_agreement']
+
+        assert row['published_services_count'] == _parameters['published_services_count']
+        assert row['contact_information'] == _parameters['contact_information']
+        assert row['users'] == _parameters['users']
+
+    ############################################################################################
+    def test_that_api_response_correct(self):
+        self._setup()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_result(True)
+        self.set_framework_status(self.framework_slug, 'open')
+
+        self.setup_dummy_service('10000000002', 1, frameworkSlug=self.framework_slug, lot_id=7)
+        self.setup_dummy_service('10000000003', 1, frameworkSlug=self.framework_slug, lot_id=7)
+        self.setup_dummy_service('10000000004', 1, frameworkSlug=self.framework_slug, lot_id=7)
+        self.setup_dummy_service('10000000005', 1, frameworkSlug=self.framework_slug, lot_id=7, status='enabled')
+        self.setup_dummy_service('10000000006', 1, frameworkSlug=self.framework_slug, lot_id=7, status='disabled')
+
+        response = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
+        for row in response:
+            self._assert_things_about_export_response(row, parameters={'published_service_count': 0})
 
     # Test no suppliers
     def test_get_response_when_no_suppliers(self):

@@ -14,8 +14,6 @@ from ...models import (
     BuyerEmailDomain,
     ContactInformation,
     Framework,
-    FrameworkLot,
-    Lot,
     Service,
     Supplier,
     SupplierFramework,
@@ -294,8 +292,8 @@ def export_users_for_framework(framework_slug):
     users_for_each_supplier = {}
     for u in users:
         user_obj = {
-            'email address': u.email_address,
-            'user_name': u.name,
+            'email_address': u.email_address,
+            'name': u.name,
             'user_research_opted_in': u.user_research_opted_in,
         }
         # If supplier id key already exists, append the user to that supplier's list
@@ -367,18 +365,21 @@ def export_users_for_framework(framework_slug):
                 variations_agreed = ', '.join(sf.agreed_variations.keys()) if sf.agreed_variations else ''
 
             supplier_rows.append({
-                'users': users_for_each_supplier[supplier.supplier_id],
                 'supplier_id': supplier.supplier_id,
-                'declaration_status': declaration_status,
-                'application_status': application_status,
-                'framework_agreement': framework_agreement,
-                'application_result': application_result,
-                'variations_agreed': variations_agreed,
                 'supplier_name': supplier.name,
                 'supplier_organisation_size': supplier.organisation_size,
                 'duns_number': supplier.duns_number,
                 'registered_name': supplier.registered_name,
                 'companies_house_number': supplier.companies_house_number,
+                'application_result': application_result,
+                'application_status': application_status,
+                'declaration_status': declaration_status,
+                'framework_agreement': framework_agreement,
+                'variations_agreed': variations_agreed,
+                "published_services_count": {
+                    lot_slugs_by_id[lot_id]: service_counts_by_lot_by_supplier[supplier.supplier_id].get(lot_id, 0)
+                    for lot_id in lot_slugs_by_id.keys()
+                },
                 "contact_information": {
                     'contact_name': ci.contact_name,
                     'contact_email': ci.email,
@@ -388,10 +389,7 @@ def export_users_for_framework(framework_slug):
                     'address_postcode': ci.postcode,
                     'address_country': supplier.registration_country,
                 },
-                "published_services_count": {
-                    lot_slugs_by_id[lot_id]: service_counts_by_lot_by_supplier[supplier.supplier_id].get(lot_id, 0)
-                    for lot_id in lot_slugs_by_id.keys()
-                }
+                'users': users_for_each_supplier[supplier.supplier_id],
             })
 
     return jsonify(suppliers=[supplier for supplier in supplier_rows]), 200
