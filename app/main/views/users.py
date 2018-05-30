@@ -1,4 +1,5 @@
 from datetime import datetime
+from itertools import groupby
 
 from dmapiclient.audit import AuditTypes
 from sqlalchemy import func
@@ -300,33 +301,28 @@ def export_users_for_framework(framework_slug):
         # If supplier id key already exists, append the user to that supplier's list
         users_for_each_supplier.setdefault(u.supplier_id, []).append(user_obj)
 
-    lots = db.session.query(FrameworkLot.lot_id, Lot.slug).join(Lot, FrameworkLot.lot_id == Lot.id).filter(
-        FrameworkLot.framework_id == framework.id
-    ).distinct().all()
-    published_service_count_by_supplier_and_lot = {}
+    lot_slugs_by_id = {lot.id: lot.slug for lot in framework.lots}
 
-    for lot_id, slug in lots:
-        published_service_count_by_supplier_and_lot[
-            "published_services_count_on_{}_lot".format(slug)
-        ] = dict(db.session.query(
-            Service.supplier_id,
-            func.count(Service.id)
-        ).filter(
-            Service.status == 'published',
-            Service.lot_id == lot_id
-        ).group_by(
-            Service.supplier_id
-        ).group_by(
-            Service.lot_id
-        ).all())
-
-    supplier_id_published_service_count = {}
-    for k, v in published_service_count_by_supplier_and_lot.items():
-        for supplier_id, service_count in v.items():
-            if supplier_id in supplier_id_published_service_count:
-                supplier_id_published_service_count[supplier_id] += service_count
-            else:
-                supplier_id_published_service_count[supplier_id] = service_count
+    # Creates a dictionary of dictionaries, with published service counts per lot per supplier.
+    # To do this we use dictionary comprehension, SQL query and itertools' 'groupby' function.
+    # Grouping by supplier id is more efficient as this is what we will be iterating over later.
+    service_counts_by_lot_by_supplier = {
+        supplier_id: {row[1]: row[2] for row in rows}
+        for supplier_id, rows in groupby(
+            db.session.query(
+                Service.supplier_id,
+                Service.lot_id,
+                func.count(Service.id)
+            ).filter(
+                Service.status == 'published',
+                Service.framework_id == framework.id
+            ).group_by(
+                Service.supplier_id,
+                Service.lot_id,
+            ).all(),
+            key=lambda row: row[0],
+        )
+    }
 
     supplier_frameworks_and_users = db.session.query(
         SupplierFramework, Supplier, ContactInformation
@@ -393,10 +389,8 @@ def export_users_for_framework(framework_slug):
                     'address_country': supplier.registration_country,
                 },
                 "published_services_count": {
-                    "digital-outcomes": 0,
-                    "digital-specialists": 0,
-                    "user-research-studios": 3,
-                    "user-research-participants": 0,
+                    lot_slugs_by_id[lot_id]: service_counts_by_lot_by_supplier[supplier.supplier_id].get(lot_id, 0)
+                    for lot_id in lot_slugs_by_id.keys()
                 }
             })
 
