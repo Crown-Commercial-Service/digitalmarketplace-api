@@ -15,12 +15,10 @@ def check_token(headers, expected_token, message=None):
     assert get_token_from_headers(headers) == expected_token, message
 
 
-@pytest.mark.parametrize('config,module, tokens', [
-    ({'DM_API_AUTH_TOKENS': 'foo:bar'}, 'main', ['foo', 'bar']),
-    ({'DM_API_AUTH_TOKENS': 'bar'}, 'main', ['bar']),
-    ({'DM_API_CALLBACK_AUTH_TOKENS': 'potato:carrot'}, 'callbacks', ['potato', 'carrot']),
-    ({'DM_API_CALLBACK_AUTH_TOKENS': 'parsnip'}, 'callbacks', ['parsnip']),
-    ({}, 'main', []),
+@pytest.mark.parametrize('config,tokens', [
+    ({'DM_API_AUTH_TOKENS': 'foo:bar'}, ['foo', 'bar']),
+    ({'DM_API_AUTH_TOKENS': 'bar'}, ['bar']),
+    ({}, []),
 ])
-def test_get_allowed_tokens_from_config(config, tokens, module):
-    assert get_allowed_tokens_from_config(config, module=module) == tokens
+def test_get_allowed_tokens_from_config(config, tokens):
+    assert get_allowed_tokens_from_config(config) == tokens

@@ -40,11 +40,8 @@ def create_app(config_name):
         application.config['SQLALCHEMY_DATABASE_URI'] = cf_services['postgres'][0]['credentials']['uri']
 
     from .main import main as main_blueprint
-    from .status import status as status_blueprint
-    from .callbacks import callbacks as callbacks_blueprint
-
     application.register_blueprint(main_blueprint)
-    application.register_blueprint(callbacks_blueprint, url_prefix='/callbacks')
+    from .status import status as status_blueprint
     application.register_blueprint(status_blueprint)
 
     return application

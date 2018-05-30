@@ -9,5 +9,6 @@ ignore = D203,W503
 max-complexity = 24
 max-line-length = 120
 per-file-ignores =
-    app/*/__init__.py : E402, F401
+    app/main/__init__.py : E402, F401
+    app/status/__init__.py : E402, F401
     app/explorer/__init__.py : E402
