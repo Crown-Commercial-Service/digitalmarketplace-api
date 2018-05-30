@@ -1463,7 +1463,9 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                                 {'contact_id': self.contact_id, 'supplier_id': 0}
                             )
                         },
-                        'postcode': u'SW1A 1AA',
+                        'postcode': u'CN1A 1AA',
+                        'address1': '7 Gem Lane',
+                        'city': 'Cantelot',
                     }
                 ],
                 'description': u'',
@@ -1473,7 +1475,10 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                 },
                 'name': u'Supplier 0',
                 'companyDetailsConfirmed': False,
-                'organisationSize': 'small'
+                'organisationSize': 'small',
+                'dunsNumber': '100000000',
+                'registeredName': 'Registered Supplier Name 0',
+                'registrationCountry': 'country:GB',
             }
 
     def test_update_from_json(self):
@@ -1515,7 +1520,9 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                                 {'contact_id': self.contact_id, 'supplier_id': 0}
                             )
                         },
-                        'postcode': u'SW1A 1AA',
+                        'postcode': u'CN1A 1AA',
+                        'address1': '7 Gem Lane',
+                        'city': 'Cantelot',
                     }
                 ],
                 'description': 'All your parcel wrapping needs catered for',

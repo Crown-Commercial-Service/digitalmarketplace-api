@@ -8,7 +8,18 @@ from flask import abort, current_app, jsonify, request
 
 from .. import main
 from ... import db, encryption
-from ...models import AuditEvent, BuyerEmailDomain, Framework, Service, Supplier, SupplierFramework, User
+from ...models import (
+    AuditEvent,
+    BuyerEmailDomain,
+    ContactInformation,
+    Framework,
+    FrameworkLot,
+    Lot,
+    Service,
+    Supplier,
+    SupplierFramework,
+    User
+)
 from ...supplier_utils import check_supplier_role
 from ...utils import (
     get_json_from_request,
@@ -271,38 +282,65 @@ def export_users_for_framework(framework_slug):
 
     suppliers_with_a_complete_service = frozenset(framework.get_supplier_ids_for_completed_service())
 
-    supplier_id_published_service_count = dict(db.session.query(
-        Service.supplier_id,
-        func.count(Service.id)
-    ).filter(
-        Service.status == 'published',
-        Service.framework_id == framework.id
-    ).group_by(
-        Service.supplier_id
-    ).all())
+    users = db.session.query(
+        User.supplier_id, User.name, User.email_address, User.user_research_opted_in
+    ).filter(User.supplier_id.in_(suppliers_with_a_complete_service)).filter(User.active.is_(True))
+
+    users_by_supplier = {
+        u.supplier_id: {
+            'email address': u.email_address,
+            'user_name': u.name,
+            'user_research_opted_in': u.user_research_opted_in,
+        } for u in users
+    }
+
+    lots = db.session.query(FrameworkLot.lot_id, Lot.slug).join(Lot, FrameworkLot.lot_id == Lot.id).filter(
+        FrameworkLot.framework_id == framework.id
+    ).distinct().all()
+    published_service_count_by_supplier_and_lot = {}
+
+    for lot_id, slug in lots:
+        published_service_count_by_supplier_and_lot[
+            "published_services_count_on_{}_lot".format(slug)
+        ] = dict(db.session.query(
+            Service.supplier_id,
+            func.count(Service.id)
+        ).filter(
+            Service.status == 'published',
+            Service.lot_id == lot_id
+        ).group_by(
+            Service.supplier_id
+        ).group_by(
+            Service.lot_id
+        ).all())
+
+    supplier_id_published_service_count = {}
+    for k, v in published_service_count_by_supplier_and_lot.items():
+        for supplier_id, service_count in v.items():
+            if supplier_id in supplier_id_published_service_count:
+                supplier_id_published_service_count[supplier_id] += service_count
+            else:
+                supplier_id_published_service_count[supplier_id] = service_count
 
     supplier_frameworks_and_users = db.session.query(
-        SupplierFramework, User
+        SupplierFramework, Supplier, ContactInformation
     ).filter(
-        SupplierFramework.supplier_id == User.supplier_id
+        SupplierFramework.supplier_id == Supplier.supplier_id
     ).filter(
         SupplierFramework.framework_id == framework.id
     ).filter(
-        User.active.is_(True)
+        ContactInformation.supplier_id == Supplier.supplier_id
     ).options(
-        lazyload(User.supplier),
-        lazyload(SupplierFramework.supplier),
         lazyload(SupplierFramework.framework),
         lazyload(SupplierFramework.prefill_declaration_from_framework),
         lazyload(SupplierFramework.framework_agreements),
     ).order_by(
-        SupplierFramework.supplier_id,
-        User.id,
+        Supplier.supplier_id,
     ).all()
 
-    user_rows = []
+    supplier_rows = []
 
-    for sf, u in supplier_frameworks_and_users:
+    for sf, supplier, ci in supplier_frameworks_and_users:
 
         # always get the declaration status
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
@@ -326,20 +364,40 @@ def export_users_for_framework(framework_slug):
             framework_agreement = bool(getattr(sf.current_framework_agreement, 'signed_agreement_returned_at', None))
             variations_agreed = ', '.join(sf.agreed_variations.keys()) if sf.agreed_variations else ''
 
-        user_rows.append({
-            'email address': u.email_address,
-            'user_name': u.name,
-            'user_research_opted_in': u.user_research_opted_in,
-            'supplier_id': sf.supplier_id,
+        supplier_rows.append({
+            "users": [
+                users_by_supplier.get(supplier.supplier_id)
+            ],
+            'supplier_id': supplier.supplier_id,
             'declaration_status': declaration_status,
             'application_status': application_status,
             'framework_agreement': framework_agreement,
             'application_result': application_result,
             'variations_agreed': variations_agreed,
-            'published_service_count': supplier_id_published_service_count.get(sf.supplier_id, 0)
+            'published_service_count': supplier_id_published_service_count.get(sf.supplier_id, 0),
+            'supplier_name': supplier.name,
+            'supplier_organisation_size': supplier.organisation_size,
+            'duns_number': supplier.duns_number,
+            'registered_name': supplier.registered_name,
+            'companies_house_number': supplier.companies_house_number,
+            "contact_information": {
+                'contact_name': ci.contact_name,
+                'contact_email': ci.email,
+                'contact_phone_number': ci.phone_number,
+                'address_first_line': ci.address1,
+                'address_city': ci.city,
+                'address_postcode': ci.postcode,
+                'address_country': supplier.registration_country,
+            },
+            "published_services_count": {
+                "digital-outcomes": 0,
+                "digital-specialists": 0,
+                "user-research-studios": 3,
+                "user-research-participants": 0,
+            }
         })
 
-    return jsonify(users=[user for user in user_rows]), 200
+    return jsonify(suppliers=[supplier for supplier in supplier_rows]), 200
 
 
 @main.route("/users/check-buyer-email", methods=["GET"])
