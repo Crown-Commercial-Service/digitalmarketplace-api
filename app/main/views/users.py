@@ -284,15 +284,21 @@ def export_users_for_framework(framework_slug):
 
     users = db.session.query(
         User.supplier_id, User.name, User.email_address, User.user_research_opted_in
-    ).filter(User.supplier_id.in_(suppliers_with_a_complete_service)).filter(User.active.is_(True))
+    ).filter(
+        User.supplier_id.in_(suppliers_with_a_complete_service)
+    ).filter(
+        User.active.is_(True)
+    )
 
-    users_by_supplier = {
-        u.supplier_id: {
+    users_for_each_supplier = {}
+    for u in users:
+        user_obj = {
             'email address': u.email_address,
             'user_name': u.name,
             'user_research_opted_in': u.user_research_opted_in,
-        } for u in users
-    }
+        }
+        # If supplier id key already exists, append the user to that supplier's list
+        users_for_each_supplier.setdefault(u.supplier_id, []).append(user_obj)
 
     lots = db.session.query(FrameworkLot.lot_id, Lot.slug).join(Lot, FrameworkLot.lot_id == Lot.id).filter(
         FrameworkLot.framework_id == framework.id
@@ -341,57 +347,56 @@ def export_users_for_framework(framework_slug):
     supplier_rows = []
 
     for sf, supplier, ci in supplier_frameworks_and_users:
+        # Only export suppliers that have users
+        if users_for_each_supplier.get(supplier.supplier_id):
 
-        # always get the declaration status
-        declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
-        application_status = 'application' if (
-            declaration_status == 'complete' and sf.supplier_id in suppliers_with_a_complete_service
-        ) else 'no_application'
-        application_result = ''
-        framework_agreement = ''
-        variations_agreed = ''
+            # always get the declaration status
+            declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
+            application_status = 'application' if (
+                declaration_status == 'complete' and sf.supplier_id in suppliers_with_a_complete_service
+            ) else 'no_application'
+            application_result = ''
+            framework_agreement = ''
+            variations_agreed = ''
 
-        # if framework is pending, live, or expired
-        if framework.status != 'open':
-            if sf.on_framework is None:
-                application_result = 'no result'
-            else:
-                application_result = 'pass' if sf.on_framework else 'fail'
-            framework_agreement = bool(getattr(sf.current_framework_agreement, 'signed_agreement_returned_at', None))
-            variations_agreed = ', '.join(sf.agreed_variations.keys()) if sf.agreed_variations else ''
+            # if framework is pending, live, or expired
+            if framework.status != 'open':
+                if sf.on_framework is None:
+                    application_result = 'no result'
+                else:
+                    application_result = 'pass' if sf.on_framework else 'fail'
+                framework_agreement = bool(getattr(sf.current_framework_agreement, 'signed_agreement_returned_at', None))
+                variations_agreed = ', '.join(sf.agreed_variations.keys()) if sf.agreed_variations else ''
 
-        supplier_rows.append({
-            "users": [
-                users_by_supplier.get(supplier.supplier_id)
-            ],
-            'supplier_id': supplier.supplier_id,
-            'declaration_status': declaration_status,
-            'application_status': application_status,
-            'framework_agreement': framework_agreement,
-            'application_result': application_result,
-            'variations_agreed': variations_agreed,
-            'published_service_count': supplier_id_published_service_count.get(sf.supplier_id, 0),
-            'supplier_name': supplier.name,
-            'supplier_organisation_size': supplier.organisation_size,
-            'duns_number': supplier.duns_number,
-            'registered_name': supplier.registered_name,
-            'companies_house_number': supplier.companies_house_number,
-            "contact_information": {
-                'contact_name': ci.contact_name,
-                'contact_email': ci.email,
-                'contact_phone_number': ci.phone_number,
-                'address_first_line': ci.address1,
-                'address_city': ci.city,
-                'address_postcode': ci.postcode,
-                'address_country': supplier.registration_country,
-            },
-            "published_services_count": {
-                "digital-outcomes": 0,
-                "digital-specialists": 0,
-                "user-research-studios": 3,
-                "user-research-participants": 0,
-            }
-        })
+            supplier_rows.append({
+                'users': users_for_each_supplier[supplier.supplier_id],
+                'supplier_id': supplier.supplier_id,
+                'declaration_status': declaration_status,
+                'application_status': application_status,
+                'framework_agreement': framework_agreement,
+                'application_result': application_result,
+                'variations_agreed': variations_agreed,
+                'supplier_name': supplier.name,
+                'supplier_organisation_size': supplier.organisation_size,
+                'duns_number': supplier.duns_number,
+                'registered_name': supplier.registered_name,
+                'companies_house_number': supplier.companies_house_number,
+                "contact_information": {
+                    'contact_name': ci.contact_name,
+                    'contact_email': ci.email,
+                    'contact_phone_number': ci.phone_number,
+                    'address_first_line': ci.address1,
+                    'address_city': ci.city,
+                    'address_postcode': ci.postcode,
+                    'address_country': supplier.registration_country,
+                },
+                "published_services_count": {
+                    "digital-outcomes": 0,
+                    "digital-specialists": 0,
+                    "user-research-studios": 3,
+                    "user-research-participants": 0,
+                }
+            })
 
     return jsonify(suppliers=[supplier for supplier in supplier_rows]), 200
 

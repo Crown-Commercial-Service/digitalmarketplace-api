@@ -1485,7 +1485,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
             'supplier_id': 1,
             'application_result': 'pass',
             'application_status': 'application',
-            'declaration_status': 'commplete',
+            'declaration_status': 'complete',
             'framework_agreement': False,
             'supplier_name': "Supplier 1",
             'supplier_organisation_size': "small",
