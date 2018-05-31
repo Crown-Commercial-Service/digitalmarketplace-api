@@ -1542,7 +1542,9 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
-        data = json.loads(self._return_users_export_after_setting_framework_status(status='open').get_data())["suppliers"]
+        data = json.loads(
+            self._return_users_export_after_setting_framework_status(status='open').get_data()
+        )["suppliers"]
         assert len(data) == 1
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
@@ -1626,7 +1628,9 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         self._create_and_sign_framework_agreement()
         self._set_framework_variation()
         self._put_variation_agreement()
-        data = json.loads(self._return_users_export_after_setting_framework_status(status='live').get_data())["suppliers"]
+        data = json.loads(
+            self._return_users_export_after_setting_framework_status(status='live').get_data()
+        )["suppliers"]
         assert len(data) == 1
         for datum in data:
             self._assert_things_about_export_response(datum, parameters={
