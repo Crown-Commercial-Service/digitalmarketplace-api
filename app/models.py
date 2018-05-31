@@ -2840,6 +2840,15 @@ class UserFramework(db.Model):
     framework = db.relationship(Framework, lazy='joined', innerjoin=True)
 
 
+class BriefAssessor(db.Model):
+    __tablename__ = 'brief_assessor'
+
+    id = db.Column(db.Integer, primary_key=True)
+    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    email_address = db.Column(db.String)
+
+
 # Index for .last_for_object queries. Without a composite index the
 # query executes an index backward scan on created_at with filter,
 # which takes a long time for old events

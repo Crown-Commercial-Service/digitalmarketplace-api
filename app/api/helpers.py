@@ -1,7 +1,7 @@
 from flask import current_app, render_template_string, jsonify, make_response, abort as flask_abort
 import requests
 import rollbar
-from app.models import db, Agency, User, ServiceType
+from app.models import db, Agency, User, ServiceType, BriefUser
 from dmutils.email import (
     decode_token, EmailError, generate_token, InvalidToken, ONE_DAY_IN_SECONDS, send_email,
     parse_fernet_timestamp
@@ -48,6 +48,29 @@ def is_service_current_framework(func):
 
                 if current_user.frameworks and current_user.frameworks[0].framework.slug != service_type.framework.slug:
                     return jsonify(message="Unauthorised to view service"), 403
+        return func(*args, **kwargs)
+    return decorated_view
+
+
+def is_current_user_in_brief(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        if kwargs is not None:
+            brief_id = kwargs.get('brief_id', None)
+
+            if not brief_id:
+                not_found('Invalid brief {}'.format(brief_id))
+
+            users = db.session.query(BriefUser.user_id)\
+                .filter(BriefUser.brief_id == brief_id).all()
+
+            if not users:
+                not_found('No users for brief {}'.format(brief_id))
+
+            valid_users = [user for user in users if current_user.id in user]
+
+            if not valid_users:
+                forbidden(message='User is not associated to brief {}'.format(brief_id))
         return func(*args, **kwargs)
     return decorated_view
 

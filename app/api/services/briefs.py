@@ -1,6 +1,6 @@
 from app.api.helpers import Service
 from app import db
-from app.models import Brief, BriefResponse, BriefUser, AuditEvent, Framework, Lot, User, WorkOrder
+from app.models import Brief, BriefResponse, BriefUser, AuditEvent, Framework, Lot, User, WorkOrder, BriefAssessor
 from sqlalchemy import and_, case, func, or_
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.functions import concat
@@ -67,6 +67,15 @@ class BriefsService(Service):
                    .order_by(sql_case([
                        (Brief.status == 'live', 1),
                        (Brief.status == 'closed', 2)]), Brief.closed_at.desc().nullslast())
+                   .all())
+
+        return [r._asdict() for r in results]
+
+    def get_assessors(self, brief_id):
+        results = (db.session.query(BriefAssessor.id, BriefAssessor.brief_id, BriefAssessor.email_address,
+                                    User.email_address.label('user_email_address'))
+                   .outerjoin(User)
+                   .filter(BriefAssessor.brief_id == brief_id)
                    .all())
 
         return [r._asdict() for r in results]
