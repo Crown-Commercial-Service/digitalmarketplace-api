@@ -1472,28 +1472,24 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert data == []
 
-    # Test one supplier with no users
-    def test_get_response_when_no_users(self):
+    def test_get_response_when_no_active_users(self):
         self._setup(post_users=False, register_supplier_with_framework=False)
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert data == []
 
-    # Test one supplier not registered on the framework
     def test_get_response_when_not_registered_with_framework(self):
         self._setup(register_supplier_with_framework=False)
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert data == []
 
-    # Test users for supplier with unstarted declaration no drafts
-    def test_response_unstarted_declaration_no_drafts(self):
+    def test_response_for_supplier_with_unstarted_declaration_no_drafts(self):
         self._setup()
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
         assert len(data) == 1
         for datum in data:
             self._assert_things_about_export_response(datum)
 
-    # Test users for supplier with unstarted declaration one draft
-    def test_response_unstarted_declaration_one_draft(self):
+    def test_response_for_supplier_with_unstarted_declaration_one_draft(self):
         self._setup()
         self._post_complete_draft_service()
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
@@ -1501,8 +1497,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         for datum in data:
             self._assert_things_about_export_response(datum)
 
-    # Test users for supplier with started declaration one draft
-    def test_response_started_declaration_one_draft(self):
+    def test_response_for_supplier_with_started_declaration_one_draft(self):
         self._setup()
         self._put_incomplete_declaration()
         self._post_complete_draft_service()
@@ -1513,8 +1508,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 'declaration_status': 'started'
             })
 
-    # Test users for supplier with completed declaration no drafts
-    def test_response_complete_declaration_no_drafts(self):
+    def test_response_for_supplier_with_complete_declaration_no_drafts(self):
         self._setup()
         self._put_complete_declaration()
         data = json.loads(self._return_users_export_after_setting_framework_status().get_data())["suppliers"]
@@ -1524,8 +1518,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 'declaration_status': 'complete'
             })
 
-    # Test users for supplier with completed declaration one draft
-    def test_response_complete_declaration_one_draft(self):
+    def test_response_for_supplier_with_complete_declaration_one_draft(self):
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
@@ -1537,8 +1530,7 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
                 'application_status': 'application'
             })
 
-    # Test users for supplier with completed declaration one draft but framework still open
-    def test_response_complete_declaration_one_draft_while_framework_still_open(self):
+    def test_response_for_supplier_with_complete_declaration_one_draft_while_framework_still_open(self):
         self._setup()
         self._put_complete_declaration()
         self._post_complete_draft_service()
@@ -1607,13 +1599,11 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         assert len(data) == 1
         # TODO: assert that only 1 user has been returned
 
-    # Test 400 if bad framework name
     def test_400_response_if_bad_framework_name(self):
         self._setup()
         response = self.client.get('/users/export/{}'.format('cyber-outcomes-and-cyber-specialists'))
         assert response.status_code == 400
 
-    # Test 400 if bad framework status
     def test_400_response_if_framework_is_coming(self):
         self._setup()
         self._set_framework_status('coming')
