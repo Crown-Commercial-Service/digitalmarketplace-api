@@ -49,19 +49,27 @@ def create_responses_zip(brief_id):
     files = []
     attachments = brief_responses_service.get_all_attachments(brief_id)
     for attachment in attachments:
+        if attachment['file_name'].startswith('digital-marketplace'):
+            key = attachment['file_name']
+            zip_file_name = attachment['file_name'].split('/')[-1]
+        else:
+            key = 'digital-marketplace/documents/brief-{}/supplier-{}/{}'.format(brief_id,
+                                                                                 attachment['supplier_code'],
+                                                                                 attachment['file_name'])
+            zip_file_name = attachment['file_name']
         files.append({
-            'key': 'supplier-{}/{}'.format(attachment['supplier_code'], attachment['file_name']),
+            'key': key,
             'zip_name': 'brief-{}-documents/{}/{}'.format(
                 brief_id,
                 secure_filename(attachment['supplier_name']),
-                attachment['file_name']
+                zip_file_name
             )
         })
 
     with BytesIO() as archive:
         with zipfile.ZipFile(archive, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
             for file in files:
-                s3file = 'digital-marketplace/documents/brief-{}/{}'.format(brief_id, file['key'])
+                s3file = file['key']
                 with BytesIO() as s3io:
                     try:
                         bucket.download_fileobj(s3file, s3io)
