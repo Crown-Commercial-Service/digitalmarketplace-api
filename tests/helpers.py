@@ -159,9 +159,12 @@ class FixtureMixin(object):
             db.session.add(
                 Supplier(
                     supplier_id=i,
+                    registered_name='Registered Supplier Name {}'.format(i),
                     name=u'Supplier {}'.format(i),
                     description='',
                     organisation_size='small',
+                    duns_number='{}'.format(100000000 + i),
+                    registration_country='country:GB',
                 )
             )
             db.session.add(
@@ -169,7 +172,9 @@ class FixtureMixin(object):
                     supplier_id=i,
                     contact_name=u'Contact for Supplier {}'.format(i),
                     email=u'{}@contact.com'.format(i),
-                    postcode=u'SW1A 1AA'
+                    postcode=u'CN1A 1AA',
+                    address1='7 Gem Lane',
+                    city='Cantelot'
                 )
             )
             supplier_ids.append(i)

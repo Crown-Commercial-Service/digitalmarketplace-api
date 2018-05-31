@@ -88,6 +88,69 @@ def list_suppliers():
         abort(400, 'invalid framework')
 
 
+@main.route('/suppliers/export/<framework_slug>', methods=['GET'])
+def export_suppliers_for_framework(framework_slug):
+    # 400 if framework slug is invalid
+    framework = Framework.query.filter(Framework.slug == framework_slug).first()
+    if not framework:
+        abort(400, 'invalid framework')
+
+    if framework.status == 'coming':
+        abort(400, 'framework not yet open')
+
+    suppliers_and_framework = db.session.query(
+        SupplierFramework, Supplier, ContactInformation
+    ).filter(
+        SupplierFramework.supplier_id == Supplier.supplier_id
+    ).filter(
+        SupplierFramework.framework_id == framework.id
+    ).filter(
+        ContactInformation.supplier_id == Supplier.supplier_id
+    ).options(
+        lazyload(SupplierFramework.framework),
+        lazyload(SupplierFramework.prefill_declaration_from_framework),
+        lazyload(SupplierFramework.framework_agreements),
+    ).order_by(
+        Supplier.supplier_id
+    ).all()
+
+    supplier_rows = []
+
+    for sf, supplier, ci in suppliers_and_framework:
+        supplier_rows.append({
+            "supplier_id": supplier.supplier_id,
+            "supplier_name": supplier.name,
+            "supplier_organisation_size": supplier.organisation_size,
+            "duns_number": supplier.duns_number,
+            "registered_name": supplier.registered_name,
+            "companies_house_number": supplier.companies_house_number,
+            # TODO: framework application status
+            'application_result': 'no result',
+            'application_status': 'no_application',
+            'declaration_status': 'unstarted',
+            'framework_agreement': False,
+            'variations_agreed': '',
+            # TODO: service counts for each lot
+            "published_services_count": {
+                "digital-outcomes": 0,
+                "digital-specialists": 0,
+                "user-research-studios": 0,
+                "user-research-participants": 0,
+            },
+            "contact_information": {
+                'contact_name': ci.contact_name,
+                'contact_email': ci.email,
+                'contact_phone_number': ci.phone_number,
+                'address_first_line': ci.address1,
+                'address_city': ci.city,
+                'address_postcode': ci.postcode,
+                'address_country': supplier.registration_country,
+            }
+        })
+
+    return jsonify(suppliers=[supplier for supplier in supplier_rows]), 200
+
+
 @main.route('/suppliers/<int:supplier_id>', methods=['GET'])
 def get_supplier(supplier_id):
     supplier = Supplier.query.filter(
