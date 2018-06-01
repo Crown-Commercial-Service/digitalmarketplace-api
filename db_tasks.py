@@ -70,6 +70,17 @@ def databases_are_equal(dburl_a, dburl_b):
         return not m.statements
 
 
+def remove_search_path(outfile):
+    print('REMOVING SEARCH PATH FROM SCHEMA')
+    with open(outfile, 'r') as schema_file:
+        lines = schema_file.readlines()
+
+    with open(outfile, 'w') as schema_file:
+        for line in lines:
+            if line != 'SELECT pg_catalog.set_config(\'search_path\', \'\', false);\n':
+                schema_file.write(line)
+
+
 # cld_host: uaa.system.example.com
 # dbexport_host: db-export.system.example.com
 def do_schema_dump(outfile, cld_host, dbexport_host, username, password, service_binding):
@@ -109,6 +120,7 @@ def do_schema_dump(outfile, cld_host, dbexport_host, username, password, service
     with open(outfile, "w") as schema_file:
         schema_file.write(schema)
 
+    remove_search_path(outfile)
 
 # cfapi_host: api.system.example.com
 # service_name: database name (must be at least one app already deployed that is bound to it)
