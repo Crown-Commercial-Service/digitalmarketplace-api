@@ -133,9 +133,10 @@ class Config:
     BUYER_CREATION_TOKEN_SALT = 'BuyerCreation'
     SUPPLIER_INVITE_TOKEN_SALT = 'SupplierInviteEmail'
 
-    GENERIC_EMAIL_DOMAINS = ['gmail.com', 'bigpond.com', 'outlook.com', 'outlook.com.au', 'hotmail.com', 'yahoo.com',
-                             'optusnet.com.au', 'msn.com', 'internode.on.net', 'iinet.net.au', 'ozemail.com.au',
-                             'live.com.au', 'digital.gov.au', 'icloud.com', 'me.com']
+    GENERIC_EMAIL_DOMAINS = ['bigpond.com', 'digital.gov.au', 'gmail.com', 'hotmail.com', 'icloud.com',
+                             'iinet.net.au', 'internode.on.net', 'live.com.au', 'me.com', 'msn.com',
+                             'optusnet.com.au', 'outlook.com', 'outlook.com.au', 'ozemail.com.au',
+                             'yahoo.com', 'yahoo.com.au']
 
     FRONTEND_ADDRESS = 'https://dm-dev.apps.y.cld.gov.au'
     ADMIN_ADDRESS = 'https://dm-dev-admin.apps.y.cld.gov.au'
