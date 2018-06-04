@@ -1,6 +1,4 @@
 machine:
-  services:
-    - docker  # For monitoring
   timezone:
     Australia/Sydney
   pre:
@@ -13,13 +11,6 @@ machine:
     - sudo su - postgres -c "echo \"create user ubuntu with password 'ubuntu';\" | psql"
     - sudo su - postgres -c "echo \"alter user ubuntu with superuser;\" | psql"
     - sudo su - postgres -c "echo \"create database ubuntu;\" | psql"
-
-  post:
-    # For monitoring:
-    - pip install awscli
-    - sudo curl -o /usr/local/bin/ecs-cli https://s3.amazonaws.com/amazon-ecs-cli/ecs-cli-linux-amd64-latest
-    - sudo chmod +x /usr/local/bin/ecs-cli
-    - /usr/local/bin/ecs-cli --version
 
 dependencies:
   pre:
@@ -45,8 +36,8 @@ deployment:
       - cf login -a https://api.system.y.cld.gov.au -o dta -s marketplace -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
       - python ./db_tasks.py v2_test_migration $CIRCLE_BUILD_NUM api.system.y.cld.gov.au $CF_USER_STAGING $CF_PASSWORD_STAGING marketplace-dev-shared
       - cf zero-downtime-push dm-dev-api -f manifest.yml --show-app-log
-      - cf zero-downtime-push dm-dev-celery -f manifest.celery.yml --show-app-log
       - cf run-and-wait dm-dev-api "python ./db_tasks.py do_migration $CIRCLE_BUILD_NUM"
+      - cf zero-downtime-push dm-dev-celery -f manifest.celery.yml --show-app-log
 
   production:
     tag: /release-.*/
@@ -54,12 +45,6 @@ deployment:
       - cf login -a https://api.system.b.cld.gov.au -o dta -s marketplace -u $CF_USER_PROD -p $CF_PASSWORD_PROD
       - python ./db_tasks.py v2_test_migration $CIRCLE_BUILD_NUM api.system.b.cld.gov.au $CF_USER_PROD $CF_PASSWORD_PROD pgdb-96-prod
       - cf zero-downtime-push dm-api -f manifest.production.yml --show-app-log
-      - cf zero-downtime-push dm-celery -f manifest.celery.production.yml --show-app-log
       - cf run-and-wait dm-api "python ./db_tasks.py do_migration $CIRCLE_BUILD_NUM"
+      - cf zero-downtime-push dm-celery -f manifest.celery.production.yml --show-app-log
       - ./scripts/ci-notify.sh
-
-  monitoring:
-    tag: /monitor-.*/
-    commands:
-      - DOCKERFILE_PATH=./monitoring/Dockerfile DOCKER_IMAGE_NAME=gov-au-marketplace-api ./scripts/ci-monitor-build.sh
-      - API_TOKEN="$DM_API_TOKEN_PROD" DOCKER_COMPOSE_FILE_PATH=./monitoring/docker-compose-ecs.yml DOCKER_IMAGE_NAME=gov-au-marketplace-api DOCKER_CONTAINER_NAME=gov-au-marketplace-api ./scripts/ci-monitor-deploy.sh
