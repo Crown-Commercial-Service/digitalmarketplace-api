@@ -13,8 +13,9 @@ from tests.bases import BaseApplicationTest
 
 from sqlalchemy import desc, BigInteger
 from dmapiclient.audit import AuditTypes
+from dmtestutils.comparisons import RestrictedAny, AnyStringMatching, AnySupersetOf
 
-from app.models import DATETIME_FORMAT, AuditEvent, User, ArchivedService
+from app.models import DATETIME_FORMAT, AuditEvent, User, ArchivedService, Outcome
 from app.models.direct_award import (
     DirectAwardProjectUser,
     DirectAwardSearch,
@@ -932,3 +933,298 @@ class TestDirectAwardRecordProjectDownload(DirectAwardSetupAndTeardown):
         assert res.status_code == 200
 
         self._assert_one_audit_event_created_for_only_project(AuditTypes.downloaded_project.value)
+
+
+class TestDirectAwardOutcomeAward(DirectAwardSetupAndTeardown):
+    def test_nonexistent_project_id(self):
+        res = self.client.post(
+            f"/direct-award/projects/976149527383380/services/2000000001/award",
+            data=json.dumps(self._updated_by_data()),
+            content_type="application/json",
+        )
+        assert res.status_code == 404
+        assert json.loads(res.get_data()) == {
+            "error": "Project 976149527383380 not found",
+        }
+
+    @pytest.mark.parametrize(
+        (
+            "has_active_search",
+            "has_non_active_search",
+            "active_search_has_chosen_sid",
+            "non_active_search_has_chosen_sid",
+            "project_locked",
+            "existing_outcome_result",
+            "existing_outcome_complete",
+            "expected_status_code",
+            "expected_response_data",
+        ),
+        (
+            # "happy" paths
+            (True, True, True, True, True, None, False, 200, AnySupersetOf({}),),
+            (True, False, True, False, True, None, False, 200, AnySupersetOf({}),),
+            (True, False, True, False, True, "awarded", False, 200, AnySupersetOf({}),),
+            (True, True, True, False, True, "cancelled", False, 200, AnySupersetOf({}),),
+            # "failure" paths
+            (
+                True,
+                True,
+                False,
+                True,
+                True,
+                None,
+                False,
+                404,
+                {
+                    "error": AnyStringMatching(r"Service \d+ is not in project \d+\'s active search search results"),
+                },
+            ),
+            (
+                False,
+                True,
+                False,
+                True,
+                True,
+                None,
+                False,
+                404,
+                {
+                    "error": AnyStringMatching(r"Project \d+ doesn't have an active search"),
+                },
+            ),
+            (
+                True,
+                False,
+                True,
+                False,
+                False,
+                None,
+                False,
+                400,
+                {
+                    "error": AnyStringMatching(r"Project \d+ has not been locked"),
+                },
+            ),
+            (
+                True,
+                False,
+                False,
+                False,
+                False,
+                None,
+                False,
+                400,
+                {
+                    "error": AnyStringMatching(r"Project \d+ has not been locked"),
+                },
+            ),
+            (
+                True,
+                True,
+                False,
+                False,
+                True,
+                "cancelled",
+                True,
+                410,
+                {
+                    "error": AnyStringMatching(r"Project \d+ already has a completed outcome: \d+"),
+                },
+            ),
+            (
+                True,
+                False,
+                True,
+                False,
+                True,
+                "awarded",
+                True,
+                410,
+                {
+                    "error": AnyStringMatching(r"Project \d+ already has a completed outcome: \d+"),
+                },
+            ),
+        )
+    )
+    def test_direct_award_outcome_scenarios(
+        self,
+        has_active_search,
+        has_non_active_search,
+        active_search_has_chosen_sid,
+        non_active_search_has_chosen_sid,
+        project_locked,
+        existing_outcome_result,
+        existing_outcome_complete,
+        expected_status_code,
+        expected_response_data,
+    ):
+        """
+        A number of arguments control the background context this test is run in. Clearly, not all of the combinations
+        make sense together and a caller should not expect a test to pass with a nonsensical combination of arguments
+
+        :param has_active_search:                 whether the project should have an active search
+        :param has_non_active_search:             whether the project should have a non-active search
+        :param active_search_has_chosen_sid:      whether the service_id we're going to "choose" should exist in the
+                                                  active search
+        :param non_active_search_has_chosen_sid:  whether the service_id we're going to "choose" should exist in the
+                                                  non-active search
+        :param project_locked:                    whether the project should be marked as "locked"
+        :param existing_outcome_result:           what the "result" field of an existing Outcome for this project
+                                                  should be set to, None for no existing Outcome
+        :param existing_outcome_complete:         whether any existing existing Outcome for this project should
+                                                  be marked as "complete"
+        :param expected_status_code:              numeric status code to expect for this request
+        :param expected_response_data:
+        """
+        self.setup_dummy_suppliers(3)
+        self.setup_dummy_services(3, model=ArchivedService)
+
+        project = DirectAwardProject(
+            name=self.direct_award_project_name,
+            users=[User.query.get(self.user_id)],
+        )
+        db.session.add(project)
+
+        active_search = None
+        if has_active_search:
+            active_search = DirectAwardSearch(
+                project=project,
+                created_by=self.user_id,
+                active=True,
+                search_url="http://nothing.nowhere",
+            )
+            db.session.add(active_search)
+
+        non_active_search = None
+        if has_non_active_search:
+            non_active_search = DirectAwardSearch(
+                project=project,
+                created_by=self.user_id,
+                active=False,
+                search_url="http://nothing.anyhere",
+            )
+            db.session.add(non_active_search)
+
+        archived_service_non_chosen, archived_service_chosen = db.session.query(ArchivedService).filter(
+            ArchivedService.service_id.in_(("2000000000", "2000000001",))
+        ).order_by(ArchivedService.service_id).all()
+
+        if active_search:
+            active_search.archived_services.append(archived_service_non_chosen)
+            if active_search_has_chosen_sid:
+                active_search.archived_services.append(archived_service_chosen)
+        if non_active_search:
+            non_active_search.archived_services.append(archived_service_non_chosen)
+            if non_active_search_has_chosen_sid:
+                non_active_search.archived_services.append(archived_service_chosen)
+
+        existing_outcome = None
+        if existing_outcome_result is not None:
+            # create an "existing" Outcome pointing at this project
+            existing_outcome = Outcome(
+                result=existing_outcome_result,
+                direct_award_project=project,
+                # if this test iteration wants an *awarded* existing_outcome we'll just set it to be awarded to
+                # whichever service makes sense...
+                **({
+                    "direct_award_search": project.active_search,
+                    "direct_award_archived_service": project.active_search.archived_services.order_by(
+                        desc(ArchivedService.service_id)
+                    ).first(),
+                    "start_date": datetime(2020, 3, 3).date(),
+                    "end_date": datetime(2020, 3, 3).date(),
+                    "awarding_organisation_name": "Circumlocution department",
+                    "award_value": 123,
+                } if existing_outcome_result == "awarded" else {})
+            )
+            if existing_outcome_complete:
+                # this has to be set *after* we know all the other fields are set due to the way sa's validators work
+                existing_outcome.completed_at = datetime(2018, 2, 2, 2, 2, 2)
+            db.session.add(existing_outcome)
+
+        # must assign ids before we can lock project
+        db.session.flush()
+        if project_locked:
+            project.locked_at = datetime.now()
+
+        project_external_id = project.external_id
+        active_search_id = active_search and active_search.id
+        audit_event_count = AuditEvent.query.count()
+        outcome_count = Outcome.query.count()
+        chosen_archived_service_id = db.session.query(ArchivedService.id).filter_by(service_id="2000000001").first()[0]
+        db.session.commit()
+
+        res = self.client.post(
+            f"/direct-award/projects/{project.external_id}/services/2000000001/award",
+            data=json.dumps(self._updated_by_data()),
+            content_type="application/json",
+        )
+        assert res.status_code == expected_status_code
+        response_data = json.loads(res.get_data())
+
+        assert response_data == expected_response_data
+
+        # allow these to be re-used in this session, "refreshed"
+        db.session.add(project)
+        if active_search:
+            db.session.add(active_search)
+        db.session.expire_all()
+
+        if res.status_code != 200:
+            # assert no database objects have been created
+            assert Outcome.query.count() == outcome_count
+            assert AuditEvent.query.count() == audit_event_count
+        else:
+            assert response_data == {
+                "outcome": {
+                    "id": RestrictedAny(lambda x: isinstance(x, int) and x > 0),
+                    "result": "awarded",
+                    "completed": False,
+                    "completedAt": None,
+                    "award": {
+                        "awardValue": None,
+                        "awardingOrganisationName": None,
+                        "endDate": None,
+                        "startDate": None,
+                    },
+                    "resultOfDirectAward": {
+                        "projectId": project_external_id,
+                        "searchId": active_search_id,
+                        "serviceId": "2000000001",
+                        "archivedServiceId": chosen_archived_service_id,
+                    },
+                }
+            }
+
+            outcome = db.session.query(Outcome).filter_by(
+                external_id=response_data["outcome"]["id"]
+            ).first()
+
+            # check the modifications actually hit the database correctly
+            assert outcome.direct_award_project is project
+            assert outcome.direct_award_project.active_search is active_search
+            assert outcome.direct_award_search is active_search
+            assert outcome.direct_award_archived_service.id == chosen_archived_service_id
+            assert outcome.direct_award_archived_service.service_id == "2000000001"
+            assert outcome.result == "awarded"
+            assert outcome.completed_at is None
+            assert outcome.start_date is outcome.end_date \
+                is outcome.awarding_organisation_name is outcome.award_value is None
+
+            assert AuditEvent.query.count() == audit_event_count + 1
+            audit_event = db.session.query(AuditEvent).order_by(
+                desc(AuditEvent.created_at),
+                desc(AuditEvent.id),
+            ).first()
+            assert audit_event.object is outcome
+            assert audit_event.acknowledged is False
+            assert audit_event.acknowledged_at is None
+            assert not audit_event.acknowledged_by
+            assert audit_event.type == "create_outcome"
+            assert audit_event.user == "1"
+            assert audit_event.data == {
+                "archivedServiceId": response_data["outcome"]["resultOfDirectAward"]["archivedServiceId"],
+                "projectExternalId": project_external_id,
+                "searchId": active_search_id,
+                "result": "awarded",
+            }

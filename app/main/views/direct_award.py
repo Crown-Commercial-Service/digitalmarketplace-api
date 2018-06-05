@@ -9,7 +9,7 @@ from dmutils.config import convert_to_boolean
 
 from .. import main
 from ... import db
-from ...models import User, AuditEvent, ArchivedService
+from ...models import User, AuditEvent, ArchivedService, Outcome
 from ...models.direct_award import DirectAwardProject, DirectAwardSearch
 from ...utils import (
     drop_all_other_fields,
@@ -343,3 +343,72 @@ def record_project_download(project_external_id):
     db.session.commit()
 
     return single_result_response("project", project), 200
+
+
+@main.route('/direct-award/projects/<int:project_external_id>/services/<string:service_id>/award', methods=['POST'])
+def create_award_outcome(project_external_id, service_id):
+    updater_json = validate_and_return_updater_request()
+
+    # Acquire share-lock on project and active search rows - what we're trying to assert here is that the "locked" field
+    # of the project and the "active" field of the search are set to appropriate values at the time we create this
+    # outcome
+    project = db.session.query(DirectAwardProject).options(
+        # this has to be performed as an inner join for the row-lock to work, just means we have to perform an extra
+        # database hit in the no-rows case to disambiguate the error message
+        db.joinedload(DirectAwardProject.active_search, innerjoin=True)
+    ).filter(
+        DirectAwardProject.external_id == project_external_id,
+    ).with_for_update(read=True).first()
+
+    if project is None:
+        if db.session.query(DirectAwardProject.id).filter_by(external_id=project_external_id).first():
+            # we reach the following conclusion by deduction...
+            abort(404, f"Project {project_external_id} doesn't have an active search")
+        else:
+            abort(404, f"Project {project_external_id} not found")
+
+    if not project.locked_at:
+        abort(400, f"Project {project_external_id} has not been locked")
+
+    if project.outcome is not None:
+        abort(410, "Project {} already has a completed outcome: {}".format(
+            project_external_id,
+            project.outcome.external_id,
+        ))
+
+    archived_service = project.active_search.archived_services.options(db.load_only("id")).filter_by(
+        service_id=service_id
+    ).first()
+
+    if not archived_service:
+        abort(404, f"Service {service_id} is not in project {project_external_id}'s active search search results")
+
+    # TODO? try-loop to assign ids, handling (unlikely) external_id collisions using sub-transaction so we don't lose
+    # our DirectAwardProject row-lock
+    outcome = Outcome(
+        result="awarded",
+        direct_award_project=project,
+        direct_award_search=project.active_search,
+        direct_award_archived_service=archived_service,
+    )
+
+    db.session.add(outcome)
+    # ensure database constraints are happy with the object (initially at least: some constraints are only verified
+    # on commit) and assign id
+    db.session.flush()
+
+    audit_event = AuditEvent(
+        audit_type=AuditTypes.create_outcome,
+        user=updater_json['updated_by'],
+        data={
+            "projectExternalId": project.external_id,
+            "searchId": project.active_search.id,
+            "archivedServiceId": archived_service.id,
+            "result": outcome.result,
+        },
+        db_object=outcome,
+    )
+    db.session.add(audit_event)
+    db.session.commit()
+
+    return single_result_response("outcome", outcome), 200

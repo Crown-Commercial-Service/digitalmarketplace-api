@@ -151,6 +151,7 @@ class FixtureMixin(object):
             ))
 
         db.session.commit()
+        return brief
 
     def setup_dummy_suppliers(self, n):
         supplier_ids = []
