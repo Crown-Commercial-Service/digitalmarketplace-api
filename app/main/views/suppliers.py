@@ -468,11 +468,13 @@ def update_supplier_framework(supplier_id, framework_slug):
             prefill_declaration_from_framework_id = None
         interest_record.prefill_declaration_from_framework_id = prefill_declaration_from_framework_id
 
+    # The type of this audit event changed from `supplier_update` to `update_supplier_framework` in early June 2018.
+    # For an accurate date, check the date this commit went live on the stage you're interested in (probably prod).
     audit_event = AuditEvent(
-        audit_type=AuditTypes.supplier_update,
+        audit_type=AuditTypes.update_supplier_framework,
         user=updater_json['updated_by'],
         data={'supplierId': supplier.supplier_id, 'frameworkSlug': framework_slug, 'update': update_json},
-        db_object=supplier
+        db_object=supplier,
     )
 
     try:

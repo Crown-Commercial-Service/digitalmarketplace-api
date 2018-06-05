@@ -1456,14 +1456,14 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             AuditEvent.object == Supplier.query.filter(
                 Supplier.supplier_id == supplier_id
             ).first(),
-            AuditEvent.type == "supplier_update",
+            AuditEvent.type == "update_supplier_framework",
         ).order_by(AuditEvent.created_at.desc()).first()
 
     @classmethod
     def _assert_and_return_audit_event(cls, supplier_framework):
         # must be performed within an app context
         audit = cls._latest_supplier_update_audit_event(supplier_framework['supplierId'])
-        assert audit.type == "supplier_update"
+        assert audit.type == "update_supplier_framework"
         assert audit.user == "interested@example.com"
         assert audit.data['supplierId'] == supplier_framework['supplierId']
         assert audit.data['frameworkSlug'] == supplier_framework['frameworkSlug']
