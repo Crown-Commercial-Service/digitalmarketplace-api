@@ -1,3 +1,6 @@
+import datetime
+import decimal
+
 from sqlalchemy.orm import validates, backref
 from sqlalchemy.sql.expression import (
     and_ as sql_and,
@@ -190,6 +193,32 @@ class Outcome(db.Model):
         # named as such to be explicit that this includes incomplete "outcomes"
         backref="outcomes_all",
     )
+
+    def update_from_json(self, update_data):
+        award_dict = update_data.get("award", {})
+        if not isinstance(award_dict, dict):
+            raise ValidationError(f"'award' expected to be a dictionary")
+        for k, v in award_dict.items():
+            key_mapping = {
+                "startDate": "start_date",
+                "endDate": "end_date",
+                "awardingOrganisationName": "awarding_organisation_name",
+                "awardValue": "award_value",
+            }
+            if k in key_mapping:
+                if k == "awardValue":
+                    try:
+                        v = decimal.Decimal(v) if v is not None else None
+                    except decimal.InvalidOperation as e:
+                        raise ValidationError(f"Failed to parse {v!r} as decimal for field {k!r}")
+                elif k in ("startDate", "endDate",):
+                    if v is not None:
+                        try:
+                            v = datetime.datetime.strptime(v, DATE_FORMAT).date()
+                        except ValueError as e:
+                            raise ValidationError(f"Failed to parse {v!r} as date for field {k!r}: {e.args[0]}")
+
+                setattr(self, key_mapping[k], v)
 
     def serialize(self):
         return {
