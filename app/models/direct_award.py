@@ -84,9 +84,13 @@ class DirectAwardSearch(db.Model):
     project = db.relationship(DirectAwardProject)
     user = db.relationship(User)
 
-    # Partial index on project_id,active==1. Enforces only one active search per project at a time.
-    __table_args__ = (db.Index('idx_project_id_active', project_id, active, unique=True,
-                               postgresql_where=db.Column('active')),)
+    __table_args__ = (
+        # this may appear tautological (id is a unique column *on its own*, so clearly the combination of id/project_id
+        # is), but is required by postgres to be able to make a compound foreign key to these together
+        db.UniqueConstraint(id, project_id, name="uq_direct_award_searches_id_project_id"),
+        # Partial index on project_id,active==1. Enforces only one active search per project at a time.
+        db.Index('idx_project_id_active', project_id, active, unique=True, postgresql_where=db.Column('active')),
+    )
 
     def serialize(self):
         resolved_search_url = urljoin(current_app.config['DM_SEARCH_API_URL'], self.search_url)
@@ -119,3 +123,11 @@ class DirectAwardSearchResultEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     search_id = db.Column(db.Integer, db.ForeignKey('direct_award_searches.id'), index=True, nullable=False)
     archived_service_id = db.Column(db.Integer, db.ForeignKey('archived_services.id'), index=True, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            archived_service_id,
+            search_id,
+            name="uq_direct_award_search_result_entries_archived_service_id_search_id",
+        ),
+    )

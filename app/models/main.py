@@ -1658,6 +1658,12 @@ class BriefResponse(db.Model):
 
     award_details = db.Column(JSON, nullable=True, default={})
 
+    __table_args__ = (
+        # this may appear tautological (id is a unique column *on its own*, so clearly the combination of id/brief_id
+        # is), but is required by postgres to be able to make a compound foreign key to these together
+        db.UniqueConstraint(id, brief_id, name="uq_brief_responses_id_brief_id"),
+    )
+
     brief = db.relationship('Brief', lazy='joined')
     supplier = db.relationship('Supplier', lazy='joined')
 
