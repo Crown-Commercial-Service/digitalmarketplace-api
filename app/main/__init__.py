@@ -13,6 +13,18 @@ def add_cache_control(response):
     return response
 
 
-from .views import suppliers, services, users, drafts, audits, frameworks, briefs, brief_responses, agreements,\
-    direct_award, buyer_domains
+from .views import (
+    agreements,
+    audits,
+    brief_responses,
+    briefs,
+    buyer_domains,
+    direct_award,
+    drafts,
+    frameworks,
+    outcomes,
+    services,
+    suppliers,
+    users,
+)
 from .. import errors

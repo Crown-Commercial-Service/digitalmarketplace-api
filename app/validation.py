@@ -80,6 +80,13 @@ def validate_supplier_json_or_400(submitted_json):
         abort(400, "JSON was not a valid format. {}".format(e.message))
 
 
+def validate_outcome_json_or_400(submitted_json):
+    try:
+        get_validator('outcome-update').validate(submitted_json)
+    except ValidationError as e:
+        abort(400, "JSON was not a valid format. {}".format(e.message))
+
+
 def validate_new_supplier_json_or_400(submitted_json):
     try:
         get_validator('new-supplier').validate(submitted_json)

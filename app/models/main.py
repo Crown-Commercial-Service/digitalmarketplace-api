@@ -13,7 +13,7 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import INTERVAL
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import validates, backref, mapper
+from sqlalchemy.orm import validates, backref, mapper, foreign, remote
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import (
     case as sql_case,
@@ -29,8 +29,8 @@ from sqlalchemy_utils import generic_relationship
 
 from dmutils.dates import get_publishing_dates
 from dmutils.formats import DATETIME_FORMAT
-from .. import db
-from ..models.buyer_domains import BuyerEmailDomain
+
+from app import db
 from app.utils import (
     drop_foreign_fields,
     link,
@@ -39,10 +39,15 @@ from app.utils import (
     strip_whitespace_from_data,
     url_for,
 )
-from ..validation import (
+from app.validation import (
     is_valid_service_id, get_validation_errors, buyer_email_address_has_approved_domain,
     admin_email_address_has_approved_domain
 )
+
+# there is a danger of circular imports here. as such, it is not necessarily "safe" to expect all other models to be
+# present in `models` at import time, but it should be "safe" to reference any of them in this file from within a
+# function or an sqlalchemy expression declared as a lambda
+from app import models
 
 
 class JSON(sqlalchemy.dialects.postgresql.JSON):
@@ -835,7 +840,7 @@ class User(db.Model):
 
     @validates('email_address')
     def validate_email_address(self, key, value):
-        existing_buyer_domains = BuyerEmailDomain.query.all()
+        existing_buyer_domains = models.BuyerEmailDomain.query.all()
         if value:
             if self.role == 'buyer' and not buyer_email_address_has_approved_domain(existing_buyer_domains, value):
                 raise ValidationError("invalid_buyer_domain")
@@ -845,7 +850,7 @@ class User(db.Model):
 
     @validates('role')
     def validate_role(self, key, value):
-        existing_buyer_domains = BuyerEmailDomain.query.all()
+        existing_buyer_domains = models.BuyerEmailDomain.query.all()
         if self.email_address:
             if value == 'buyer' and \
                     not buyer_email_address_has_approved_domain(existing_buyer_domains, self.email_address):
@@ -1319,6 +1324,16 @@ class Brief(db.Model):
         viewonly=True
     )
 
+    outcome = db.relationship(
+        "Outcome",
+        primaryjoin=lambda: (sql_and(
+            foreign(Brief.id) == remote(models.Outcome.brief_id),
+            remote(models.Outcome.completed_at).isnot(None),
+        )),
+        viewonly=True,
+        uselist=False,
+    )
+
     @validates('users')
     def validates_users(self, key, user):
         if user.role != 'buyer':
@@ -1657,6 +1672,12 @@ class BriefResponse(db.Model):
     awarded_at = db.Column(db.DateTime, nullable=True)
 
     award_details = db.Column(JSON, nullable=True, default={})
+
+    __table_args__ = (
+        # this may appear tautological (id is a unique column *on its own*, so clearly the combination of id/brief_id
+        # is), but is required by postgres to be able to make a compound foreign key to these together
+        db.UniqueConstraint(id, brief_id, name="uq_brief_responses_id_brief_id"),
+    )
 
     brief = db.relationship('Brief', lazy='joined')
     supplier = db.relationship('Supplier', lazy='joined')

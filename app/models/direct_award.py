@@ -1,15 +1,21 @@
 from datetime import datetime
 from urllib.parse import urljoin
 
-from sqlalchemy.orm import validates
+from sqlalchemy.orm import validates, foreign, remote
+from sqlalchemy.sql.expression import and_ as sql_and, true as sql_true
 from flask import current_app
 
 from app import db
 from app.utils import random_positive_external_id
 from app.url_utils import force_relative_url
-from app.models import User, ValidationError, ArchivedService
+from app.models import ValidationError
 
 from dmutils.formats import DATETIME_FORMAT
+
+# there is a danger of circular imports here. as such, it is not necessarily "safe" to expect all other models to be
+# present in `models` at import time, but it should be "safe" to reference any of them in this file from within a
+# function or an sqlalchemy expression declared as a lambda
+from app import models
 
 
 class DirectAwardProject(db.Model):
@@ -23,7 +29,29 @@ class DirectAwardProject(db.Model):
     downloaded_at = db.Column(db.DateTime, nullable=True)  # When the project's shortlist was last downloaded
     active = db.Column(db.Boolean, default=True, nullable=False)
 
-    users = db.relationship(User, secondary='direct_award_project_users', order_by=lambda: DirectAwardProjectUser.id)
+    users = db.relationship(
+        lambda: models.User,
+        secondary='direct_award_project_users',
+        order_by=lambda: DirectAwardProjectUser.id
+    )
+    active_search = db.relationship(
+        "DirectAwardSearch",
+        primaryjoin=lambda: (sql_and(
+            foreign(DirectAwardProject.id) == remote(DirectAwardSearch.project_id),
+            remote(DirectAwardSearch.active) == sql_true(),
+        )),
+        viewonly=True,
+        uselist=False,
+    )
+    outcome = db.relationship(
+        "Outcome",
+        primaryjoin=lambda: (sql_and(
+            foreign(DirectAwardProject.id) == remote(models.Outcome.direct_award_project_id),
+            remote(models.Outcome.completed_at).isnot(None),
+        )),
+        viewonly=True,
+        uselist=False,
+    )
 
     def serialize(self, with_users=False):
         data = {
@@ -78,15 +106,19 @@ class DirectAwardSearch(db.Model):
     # in a given state at a specific time. We can still access the live version of the service through the Archived
     # Service, but by storing this we have the flexibility to show either the live state or the state at the time
     # the user ran the search.
-    archived_services = db.relationship(ArchivedService, secondary='direct_award_search_result_entries',
+    archived_services = db.relationship(lambda: models.ArchivedService, secondary='direct_award_search_result_entries',
                                         order_by=lambda: DirectAwardSearchResultEntry.id, lazy='dynamic')
 
-    project = db.relationship(DirectAwardProject)
-    user = db.relationship(User)
+    project = db.relationship(DirectAwardProject, backref="searches")
+    user = db.relationship(lambda: models.User)
 
-    # Partial index on project_id,active==1. Enforces only one active search per project at a time.
-    __table_args__ = (db.Index('idx_project_id_active', project_id, active, unique=True,
-                               postgresql_where=db.Column('active')),)
+    __table_args__ = (
+        # this may appear tautological (id is a unique column *on its own*, so clearly the combination of id/project_id
+        # is), but is required by postgres to be able to make a compound foreign key to these together
+        db.UniqueConstraint(id, project_id, name="uq_direct_award_searches_id_project_id"),
+        # Partial index on project_id,active==1. Enforces only one active search per project at a time.
+        db.Index('idx_project_id_active', project_id, active, unique=True, postgresql_where=db.Column('active')),
+    )
 
     def serialize(self):
         resolved_search_url = urljoin(current_app.config['DM_SEARCH_API_URL'], self.search_url)
@@ -119,3 +151,11 @@ class DirectAwardSearchResultEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     search_id = db.Column(db.Integer, db.ForeignKey('direct_award_searches.id'), index=True, nullable=False)
     archived_service_id = db.Column(db.Integer, db.ForeignKey('archived_services.id'), index=True, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            archived_service_id,
+            search_id,
+            name="uq_direct_award_search_result_entries_archived_service_id_search_id",
+        ),
+    )
