@@ -2026,6 +2026,34 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
 
         assert response.status_code == 200
 
+    def _post_framework_application_result(self, result):
+        data = {'frameworkInterest': {'onFramework': result}, 'updated_by': 'The Great Suprendo'}
+        data.update(self.updater_json)
+        response = self.client.post(
+            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug),
+            data=json.dumps(data),
+            content_type='application/json')
+        assert response.status_code == 200
+
+    def _create_and_sign_framework_agreement(self):
+        response = self.client.post(
+            '/agreements',
+            data=json.dumps(
+                {
+                    'updated_by': 'interested@example.com',
+                    'agreement': {
+                        'supplierId': self.supplier_id,
+                        'frameworkSlug': self.framework_slug
+                    },
+                }),
+            content_type='application/json')
+        agreement_id = json.loads(response.get_data(as_text=True))['agreement']['id']
+        self.client.post(
+            "/agreements/{}/sign".format(agreement_id),
+            data=json.dumps({'updated_by': 'interested@example.com'}),
+            content_type='application/json'
+        )
+
     def test_get_response_when_no_suppliers(self):
         data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
         assert data == []
@@ -2113,3 +2141,16 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
         data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
         assert data[0]['declaration_status'] == 'complete'
         assert data[0]['application_status'] == 'application'
+
+    def test_response_awarded_on_framework_and_submitted_framework_agreement(self):
+        self._setup_supplier_on_framework()
+        self._post_company_details_confirmed()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_framework_application_result(True)
+        self._create_and_sign_framework_agreement()
+
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+
+        assert data[0]['application_result'] == 'pass'
+        assert data[0]['framework_agreement'] is True
