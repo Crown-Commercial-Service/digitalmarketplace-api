@@ -137,6 +137,7 @@ def export_suppliers_for_framework(framework_slug):
             else:
                 application_result = 'pass' if sf.on_framework else 'fail'
             framework_agreement = bool(getattr(sf.current_framework_agreement, 'signed_agreement_returned_at', None))
+            variations_agreed = ', '.join(sf.agreed_variations.keys()) if sf.agreed_variations else ''
 
         supplier_rows.append({
             "supplier_id": supplier.supplier_id,

@@ -1945,6 +1945,15 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
         self.framework_slug = 'digital-outcomes-and-specialists'
         self.set_framework_status(self.framework_slug, 'open')
         self.updater_json = {'updated_by': 'Paula'}
+        self.users = []
+
+    def _post_user(self, user):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({'users': user}),
+            content_type='application/json')
+        assert response.status_code == 201
+        self.users.append(json.loads(response.get_data())["users"])
 
     def _set_framework_status(self, status='pending'):
         self.set_framework_status(self.framework_slug, status)
@@ -2054,6 +2063,17 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
             content_type='application/json'
         )
 
+    def _put_variation_agreement(self):
+        data = {"agreedVariations": {"agreedUserId": self.users[0].get("id")}}
+        data.update(self.updater_json)
+
+        response = self.client.put(
+            '/suppliers/{}/frameworks/{}/variation/1'.format(self.supplier_id, self.framework_slug),
+            data=json.dumps(data),
+            content_type='application/json')
+
+        assert response.status_code == 200
+
     def test_get_response_when_no_suppliers(self):
         data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
         assert data == []
@@ -2154,3 +2174,34 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
 
         assert data[0]['application_result'] == 'pass'
         assert data[0]['framework_agreement'] is True
+
+    def test_response_not_awarded_on_framework(self):
+        self._setup_supplier_on_framework()
+        self._post_company_details_confirmed()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_framework_application_result(False)
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data[0]['framework_agreement'] == False
+        assert data[0]['application_result'] == 'fail'
+
+    def test_response_agreed_contract_variation(self):
+        self._setup_supplier_on_framework()
+        self._post_user({
+            "emailAddress": "j@examplecompany.biz",
+            "name": "John Example",
+            "password": "minimum10characterpassword",
+            "role": "supplier",
+            "supplierId": self.supplier_id
+        })
+        self._post_company_details_confirmed()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_framework_application_result(True)
+        self._create_and_sign_framework_agreement()
+        self.set_framework_variation(self.framework_slug)
+        self._put_variation_agreement()
+        data = json.loads(
+            self._return_suppliers_export_after_setting_framework_status(status='live').get_data()
+        )["suppliers"]
+        assert data[0]['variations_agreed'] == '1'
