@@ -117,6 +117,7 @@ def export_suppliers_for_framework(framework_slug):
     supplier_rows = []
 
     for sf, supplier, ci in suppliers_and_framework:
+        declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
         supplier_rows.append({
             "supplier_id": supplier.supplier_id,
             "supplier_name": supplier.name,
@@ -127,7 +128,7 @@ def export_suppliers_for_framework(framework_slug):
             # TODO: framework application status
             'application_result': 'no result',
             'application_status': 'no_application',
-            'declaration_status': 'unstarted',
+            'declaration_status': declaration_status,
             'framework_agreement': False,
             'variations_agreed': '',
             # TODO: service counts for each lot

@@ -1972,6 +1972,46 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
         if register_supplier_with_framework:
             self._register_supplier_with_framework()
 
+    def _post_complete_draft_service(self):
+        payload = load_example_listing("DOS-digital-specialist")
+
+        self.draft_json = {'services': payload}
+        self.draft_json['services']['supplierId'] = self.supplier_id
+        self.draft_json['services']['frameworkSlug'] = self.framework_slug
+        self.draft_json.update(self.updater_json)
+
+        response = self.client.post(
+            '/draft-services',
+            data=json.dumps(self.draft_json),
+            content_type='application/json')
+
+        assert response.status_code == 201
+
+        draft_id = json.loads(response.get_data())['services']['id']
+        complete = self.client.post(
+            '/draft-services/{}/complete'.format(draft_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        assert complete.status_code == 200
+
+    def _put_declaration(self, status):
+        data = {'declaration': {'status': status}}
+        data.update(self.updater_json)
+
+        response = self.client.put(
+            '/suppliers/{}/frameworks/{}/declaration'.format(self.supplier_id, self.framework_slug),
+            data=json.dumps(data),
+            content_type='application/json')
+
+        assert response.status_code == 201
+
+    def _put_complete_declaration(self):
+        self._put_declaration(status='complete')
+
+    def _put_incomplete_declaration(self):
+        self._put_declaration(status='started')
+
     def test_get_response_when_no_suppliers(self):
         data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
         assert data == []
@@ -2026,3 +2066,22 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
                 'variations_agreed': '',
             }
         ]
+
+    def test_response_unstarted_declaration_one_draft(self):
+        self._setup_supplier_on_framework()
+        self._post_complete_draft_service()
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data[0]["published_services_count"] == {
+            "digital-outcomes": 0,
+            "digital-specialists": 0,
+            "user-research-studios": 0,
+            "user-research-participants": 0
+        }
+
+
+    def test_response_started_declaration_one_draft(self):
+        self._setup_supplier_on_framework()
+        self._put_incomplete_declaration()
+        self._post_complete_draft_service()
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data[0]['declaration_status'] == 'started'
