@@ -1018,10 +1018,10 @@ class TestDirectAwardOutcomeAward(DirectAwardSetupAndTeardown):
         ),
         (
             # "happy" paths
-            (True, True, True, True, True, None, False, 200, AnySupersetOf({}),),
-            (True, False, True, False, True, None, False, 200, AnySupersetOf({}),),
-            (True, False, True, False, True, "awarded", False, 200, AnySupersetOf({}),),
-            (True, True, True, False, True, "cancelled", False, 200, AnySupersetOf({}),),
+            (True, True, True, True, True, None, False, 200, _anydict,),
+            (True, False, True, False, True, None, False, 200, _anydict,),
+            (True, False, True, False, True, "awarded", False, 200, _anydict,),
+            (True, True, True, False, True, "cancelled", False, 200, _anydict,),
             # "failure" paths
             (
                 True,
@@ -1101,7 +1101,8 @@ class TestDirectAwardOutcomeAward(DirectAwardSetupAndTeardown):
                     "error": AnyStringMatching(r"Project \d+ already has a completed outcome: \d+"),
                 },
             ),
-        )
+        ),
+        ids=(lambda val: "ANYDICT" if val is _anydict else None),
     )
     def test_direct_award_outcome_scenarios(
         self,
@@ -1209,6 +1210,7 @@ class TestDirectAwardOutcomeAward(DirectAwardSetupAndTeardown):
         audit_event_count = AuditEvent.query.count()
         outcome_count = Outcome.query.count()
         chosen_archived_service_id = db.session.query(ArchivedService.id).filter_by(service_id="2000000001").first()[0]
+        outcome_count = Outcome.query.count()
         db.session.commit()
 
         res = self.client.post(
@@ -1252,6 +1254,9 @@ class TestDirectAwardOutcomeAward(DirectAwardSetupAndTeardown):
                     },
                 }
             }
+
+            # only one outcome has been created
+            assert Outcome.query.count() == outcome_count + 1
 
             outcome = db.session.query(Outcome).filter_by(
                 external_id=response_data["outcome"]["id"]
