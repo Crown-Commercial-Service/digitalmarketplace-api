@@ -30,6 +30,7 @@ class TestListFrameworks(BaseApplicationTest):
             'clarificationsPublishAtUTC',
             'countersignerName',
             'framework',
+            'family',
             'frameworkAgreementDetails',
             'frameworkAgreementVersion',
             'frameworkExpiresAtUTC',
@@ -264,6 +265,7 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
             'name': "Example Framework 2",
             'slug': "example-framework-2",
             'framework': "digital-outcomes-and-specialists",
+            'family': "digital-outcomes-and-specialists",
             'frameworkAgreementDetails': {
                 "countersignerName": "Dan Saxby",
                 "frameworkAgreementVersion": "v1.0",
