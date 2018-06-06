@@ -48,7 +48,7 @@ class BriefsService(Service):
                    .order_by(sql_case([
                        (Brief.status == 'draft', 1),
                        (Brief.status == 'live', 2),
-                       (Brief.status == 'closed', 3)]), Brief.closed_at.desc().nullslast())
+                       (Brief.status == 'closed', 3)]), Brief.closed_at.desc().nullslast(), Brief.id.desc())
                    .all())
 
         return [r._asdict() for r in results]
@@ -66,7 +66,7 @@ class BriefsService(Service):
                    .filter(Brief.id.in_(team_brief_ids), or_(Brief.status == 'live', Brief.status == 'closed'))
                    .order_by(sql_case([
                        (Brief.status == 'live', 1),
-                       (Brief.status == 'closed', 2)]), Brief.closed_at.desc().nullslast())
+                       (Brief.status == 'closed', 2)]), Brief.closed_at.desc().nullslast(), Brief.id.desc())
                    .all())
 
         return [r._asdict() for r in results]
