@@ -2012,6 +2012,20 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
     def _put_incomplete_declaration(self):
         self._put_declaration(status='started')
 
+    def _post_company_details_confirmed(self):
+        response = self.client.post(
+            f'/suppliers/{self.supplier_id}',
+            data=json.dumps({
+                "updated_by": "Miss Fig",
+                "suppliers": {
+                    "companyDetailsConfirmed": True
+                }
+            }),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 200
+
     def test_get_response_when_no_suppliers(self):
         data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
         assert data == []
@@ -2078,10 +2092,24 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
             "user-research-participants": 0
         }
 
-
     def test_response_started_declaration_one_draft(self):
         self._setup_supplier_on_framework()
         self._put_incomplete_declaration()
         self._post_complete_draft_service()
         data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
         assert data[0]['declaration_status'] == 'started'
+
+    def test_response_complete_declaration_no_drafts(self):
+        self._setup_supplier_on_framework()
+        self._put_complete_declaration()
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data[0]['declaration_status'] == 'complete'
+
+    def test_response_complete_declaration_one_draft(self):
+        self._setup_supplier_on_framework()
+        self._post_company_details_confirmed()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data[0]['declaration_status'] == 'complete'
+        assert data[0]['application_status'] == 'application'

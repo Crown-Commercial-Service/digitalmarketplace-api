@@ -116,8 +116,21 @@ def export_suppliers_for_framework(framework_slug):
 
     supplier_rows = []
 
+    suppliers_with_a_complete_service = frozenset(framework.get_supplier_ids_for_completed_service())
+
     for sf, supplier, ci in suppliers_and_framework:
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
+        # For G10 we need to check the suppliers company detatils have been confirmed
+        company_details_confirmed = supplier.company_details_confirmed
+        application_status = 'application' if (
+                declaration_status == 'complete' and
+                supplier.supplier_id in suppliers_with_a_complete_service and
+                company_details_confirmed
+        ) else 'no_application'
+        application_result = 'no result'
+        framework_agreement = False
+        variations_agreed = ''
+
         supplier_rows.append({
             "supplier_id": supplier.supplier_id,
             "supplier_name": supplier.name,
@@ -125,12 +138,12 @@ def export_suppliers_for_framework(framework_slug):
             "duns_number": supplier.duns_number,
             "registered_name": supplier.registered_name,
             "companies_house_number": supplier.companies_house_number,
-            # TODO: framework application status
-            'application_result': 'no result',
-            'application_status': 'no_application',
+            # TODO: framework application result, framework agreement, variations agreed
+            'application_result': application_result,
+            'application_status': application_status,
             'declaration_status': declaration_status,
-            'framework_agreement': False,
-            'variations_agreed': '',
+            'framework_agreement': framework_agreement,
+            'variations_agreed': variations_agreed,
             # TODO: service counts for each lot
             "published_services_count": {
                 "digital-outcomes": 0,
