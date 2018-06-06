@@ -1102,6 +1102,7 @@ class TestDirectAwardOutcomeAward(DirectAwardSetupAndTeardown):
                 },
             ),
         ),
+        # help pytest make its printed representation of the parameter set a little more readable
         ids=(lambda val: "ANYDICT" if val is _anydict else None),
     )
     def test_direct_award_outcome_scenarios(
@@ -1400,6 +1401,7 @@ class TestDirectAwardOutcomeNonAwarded(DirectAwardSetupAndTeardown):
                 ),
             ),
         )),
+        # help pytest make its printed representation of the parameter set a little more readable
         ids=(lambda val: "ANYDICT" if val is _anydict else None),
     )
     def test_direct_award_nonawarded_scenarios(
