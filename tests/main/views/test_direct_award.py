@@ -1,9 +1,10 @@
 import json
 from datetime import datetime
 from freezegun import freeze_time
-from itertools import product
+from itertools import chain, product
 import math
 import random
+import re
 import sys
 from urllib.parse import urljoin
 
@@ -1317,29 +1318,9 @@ class TestDirectAwardOutcomeNonAwarded(DirectAwardSetupAndTeardown):
         (False, True, True, "cancelled", False, 200, _anydict,),
         (True, False, True, "awarded", False, 200, _anydict,),
         (True, True, True, "cancelled", False, 200, _anydict,),
+        (True, False, False, "none-suitable", False, 200, _anydict),
+        (False, False, False, None, False, 200, _anydict),
         # "failure" paths
-        (
-            True,
-            False,
-            False,
-            None,
-            False,
-            400,
-            {
-                "error": AnyStringMatching(r"Project \d+ has not been locked"),
-            },
-        ),
-        (
-            True,
-            False,
-            False,
-            None,
-            False,
-            400,
-            {
-                "error": AnyStringMatching(r"Project \d+ has not been locked"),
-            },
-        ),
         (
             True,
             True,

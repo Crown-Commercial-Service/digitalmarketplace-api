@@ -428,20 +428,16 @@ def create_nonawarded_outcome(project_external_id, nonawarded_reason):
     updater_json = validate_and_return_updater_request()
     uniform_now = datetime.datetime.utcnow()
 
+    # an extra guard against incorrect url configuration or unintended call circumstances
     if nonawarded_reason not in ("cancelled", "none-suitable",):
-        abort(404, f"Unknown nonawarded_reason {nonawarded_reason!r}")
+        abort(404, f"Unknown nonawarded-reason {nonawarded_reason!r}")
 
-    # Acquire share-lock on project row - what we're trying to assert here is that the "locked" field is true at the
-    # time we create this outcome
     project = db.session.query(DirectAwardProject).filter_by(
         external_id=project_external_id,
-    ).with_for_update(read=True).first()
+    ).first()
 
     if project is None:
         abort(404, f"Project {project_external_id} not found")
-
-    if not project.locked_at:
-        abort(400, f"Project {project_external_id} has not been locked")
 
     if project.outcome is not None:
         abort(410, "Project {} already has a completed outcome: {}".format(
@@ -450,7 +446,7 @@ def create_nonawarded_outcome(project_external_id, nonawarded_reason):
         ))
 
     # TODO? try-loop to assign ids, handling (unlikely) external_id collisions using sub-transaction so we don't lose
-    # our DirectAwardProject row-lock
+    # any row-locks we might have
     outcome = Outcome(
         result=nonawarded_reason,
         direct_award_project=project,
