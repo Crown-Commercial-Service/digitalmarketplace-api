@@ -2205,3 +2205,25 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
             self._return_suppliers_export_after_setting_framework_status(status='live').get_data()
         )["suppliers"]
         assert data[0]['variations_agreed'] == '1'
+
+    def test_published_service_count_with_different_statuses(self):
+        self._setup_supplier_on_framework()
+        self._post_company_details_confirmed()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_framework_application_result(True)
+        self.set_framework_status(self.framework_slug, 'open')
+
+        self.setup_dummy_service('10000000002', 1, frameworkSlug=self.framework_slug, lot_id=5)
+        self.setup_dummy_service('10000000003', 1, frameworkSlug=self.framework_slug, lot_id=5)
+        self.setup_dummy_service('10000000004', 1, frameworkSlug=self.framework_slug, lot_id=5)
+        self.setup_dummy_service('10000000005', 1, frameworkSlug=self.framework_slug, lot_id=5, status='enabled')
+        self.setup_dummy_service('10000000006', 1, frameworkSlug=self.framework_slug, lot_id=5, status='disabled')
+
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data[0]["published_services_count"] == {
+            "digital-outcomes": 3,
+            "digital-specialists": 0,
+            "user-research-studios": 0,
+            "user-research-participants": 0,
+        }

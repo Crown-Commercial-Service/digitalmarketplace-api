@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from flask import jsonify, abort, request, current_app
+from itertools import groupby
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.orm import lazyload
 from dmapiclient.audit import AuditTypes
@@ -98,6 +100,29 @@ def export_suppliers_for_framework(framework_slug):
     if framework.status == 'coming':
         abort(400, 'framework not yet open')
 
+    lot_slugs_by_id = {lot.id: lot.slug for lot in framework.lots}
+
+    # Creates a dictionary of dictionaries, with published service counts per lot per supplier.
+    # To do this we use dictionary comprehension, SQL query and itertools' 'groupby' function.
+    # Grouping by supplier id is more efficient as this is what we will be iterating over later.
+    service_counts_by_lot_by_supplier = {
+        supplier_id: {row[1]: row[2] for row in rows}
+        for supplier_id, rows in groupby(
+            db.session.query(
+                Service.supplier_id,
+                Service.lot_id,
+                func.count(Service.id)
+            ).filter(
+                Service.status == 'published',
+                Service.framework_id == framework.id
+            ).group_by(
+                Service.supplier_id,
+                Service.lot_id,
+            ).all(),
+            key=lambda row: row[0],
+        )
+    }
+
     suppliers_and_framework = db.session.query(
         SupplierFramework, Supplier, ContactInformation
     ).filter(
@@ -154,10 +179,10 @@ def export_suppliers_for_framework(framework_slug):
             'variations_agreed': variations_agreed,
             # TODO: service counts for each lot
             "published_services_count": {
-                "digital-outcomes": 0,
-                "digital-specialists": 0,
-                "user-research-studios": 0,
-                "user-research-participants": 0,
+                lot_slugs_by_id[lot_id]: service_counts_by_lot_by_supplier.get(
+                    supplier.supplier_id, {}
+                ).get(lot_id, 0)
+                for lot_id in lot_slugs_by_id.keys()
             },
             "contact_information": {
                 'contact_name': ci.contact_name,
