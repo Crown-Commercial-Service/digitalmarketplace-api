@@ -2122,7 +2122,7 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
                     'contact_phone_number': None,
                     'address_first_line': '7 Gem Lane',
                     'address_city': 'Cantelot',
-                    'address_postcode': 'CN1A 1AA',
+                    'address_postcode': 'SW1A 1AA',
                     'address_country': 'country:GB',
                 },
                 'variations_agreed': '',

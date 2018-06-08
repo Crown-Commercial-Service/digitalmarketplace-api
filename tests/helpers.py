@@ -172,7 +172,7 @@ class FixtureMixin(object):
                     supplier_id=i,
                     contact_name=u'Contact for Supplier {}'.format(i),
                     email=u'{}@contact.com'.format(i),
-                    postcode=u'CN1A 1AA',
+                    postcode=u'SW1A 1AA',
                     address1='7 Gem Lane',
                     city='Cantelot'
                 )
