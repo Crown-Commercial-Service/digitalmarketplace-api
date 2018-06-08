@@ -60,7 +60,8 @@ class DirectAwardProject(db.Model):
             "createdAt": self.created_at.strftime(DATETIME_FORMAT),
             "lockedAt": self.locked_at.strftime(DATETIME_FORMAT) if self.locked_at is not None else None,
             "downloadedAt": self.downloaded_at.strftime(DATETIME_FORMAT) if self.downloaded_at is not None else None,
-            "active": self.active
+            "active": self.active,
+            "outcome": self.outcome.serialize() if self.outcome is not None else None,
         }
 
         if with_users:

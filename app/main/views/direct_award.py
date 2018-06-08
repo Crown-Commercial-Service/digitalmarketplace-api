@@ -32,7 +32,7 @@ def get_project_by_id_or_404(project_id: int):
 def list_projects():
     page = get_valid_page_or_1()
 
-    projects = DirectAwardProject.query
+    projects = DirectAwardProject.query.options(db.joinedload(DirectAwardProject.outcome))
 
     includes = request.args.get('include', '').split(',')
 
