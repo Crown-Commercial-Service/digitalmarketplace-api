@@ -2182,7 +2182,7 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
         self._post_complete_draft_service()
         self._post_framework_application_result(False)
         data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
-        assert data[0]['framework_agreement'] == False
+        assert data[0]['framework_agreement'] is False
         assert data[0]['application_result'] == 'fail'
 
     def test_response_agreed_contract_variation(self):

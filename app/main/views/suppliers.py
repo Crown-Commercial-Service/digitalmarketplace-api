@@ -148,9 +148,9 @@ def export_suppliers_for_framework(framework_slug):
         # For G10 we need to check the suppliers company detatils have been confirmed
         company_details_confirmed = supplier.company_details_confirmed
         application_status = 'application' if (
-                declaration_status == 'complete' and
-                supplier.supplier_id in suppliers_with_a_complete_service and
-                company_details_confirmed
+            declaration_status == 'complete' and
+            supplier.supplier_id in suppliers_with_a_complete_service and
+            company_details_confirmed
         ) else 'no_application'
         application_result = ''
         framework_agreement = False
@@ -171,13 +171,11 @@ def export_suppliers_for_framework(framework_slug):
             "duns_number": supplier.duns_number,
             "registered_name": supplier.registered_name,
             "companies_house_number": supplier.companies_house_number,
-            # TODO: framework application result, framework agreement, variations agreed
             'application_result': application_result,
             'application_status': application_status,
             'declaration_status': declaration_status,
             'framework_agreement': framework_agreement,
             'variations_agreed': variations_agreed,
-            # TODO: service counts for each lot
             "published_services_count": {
                 lot_slugs_by_id[lot_id]: service_counts_by_lot_by_supplier.get(
                     supplier.supplier_id, {}
