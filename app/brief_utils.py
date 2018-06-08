@@ -2,7 +2,7 @@ import json
 
 import rollbar
 from flask import abort, request
-from app.api.services import users
+from app.api.services import suppliers, users
 from .models import Service
 from .service_utils import filter_services
 from .validation import get_validation_errors
@@ -78,9 +78,17 @@ def check_seller_emails(brief_data, errs):
     error = {seller_email_key: 'email_not_found'}
 
     if any(emails_to_check):
-        found_emails = users.get_sellers_by_email(emails_to_check)
+        # Buyers may enter emails with upper case
+        user_emails = [email.lower() for email in emails_to_check]
+        found_emails = users.get_sellers_by_email(user_emails)
+
         if len(found_emails) != len(emails_to_check):
-            return error
+            # Check to see if contact emails were used
+            contact_emails_to_check = [email.lower() for email in emails_to_check if email not in found_emails]
+            contact_emails_found = suppliers.get_suppliers_by_contact_email(contact_emails_to_check)
+
+            if len(found_emails) + len(contact_emails_found) != len(emails_to_check):
+                return error
 
     return None
 
