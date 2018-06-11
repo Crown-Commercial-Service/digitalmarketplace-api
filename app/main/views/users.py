@@ -339,7 +339,7 @@ def export_users_for_framework(framework_slug):
             'published_service_count': supplier_id_published_service_count.get(sf.supplier_id, 0)
         })
 
-    return jsonify(users=[user for user in user_rows]), 200
+    return jsonify(users=user_rows), 200
 
 
 @main.route("/users/check-buyer-email", methods=["GET"])

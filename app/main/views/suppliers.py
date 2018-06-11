@@ -193,7 +193,7 @@ def export_suppliers_for_framework(framework_slug):
             }
         })
 
-    return jsonify(suppliers=[supplier for supplier in supplier_rows]), 200
+    return jsonify(suppliers=supplier_rows), 200
 
 
 @main.route('/suppliers/<int:supplier_id>', methods=['GET'])
