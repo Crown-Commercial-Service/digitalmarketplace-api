@@ -210,6 +210,57 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         assert len(data['projects']) == 1
         assert not data['projects'][0].get('users')
 
+    def test_serialization_includes_completed_outcomes(self):
+        project_incomplete_id, project_incomplete_external_id = self.create_direct_award_project(
+            user_id=self.user_id,
+            project_id=self.project_id + 1,
+        )
+        outcome_incomplete = Outcome(
+            result="cancelled",
+            direct_award_project_id=self.project_id + 1,
+            completed_at=None,
+        )
+        db.session.add(outcome_incomplete)
+        project_complete_id, project_complete_external_id = self.create_direct_award_project(
+            user_id=self.user_id,
+            project_id=self.project_id + 2,
+        )
+        outcome_complete = Outcome(
+            result="none-suitable",
+            direct_award_project_id=self.project_id + 2,
+            completed_at=datetime(2018, 5, 4, 3, 2, 1),
+        )
+        db.session.add(outcome_complete)
+        db.session.commit()
+
+        res = self.client.get("/direct-award/projects")
+        data = json.loads(res.get_data(as_text=True))
+
+        db.session.add(outcome_complete)
+        db.session.expire_all()
+
+        assert data == AnySupersetOf({
+            "projects": [
+                AnySupersetOf({
+                    "id": self.project_external_id,
+                    "outcome": None,
+                }),
+                AnySupersetOf({
+                    "id": project_incomplete_external_id,
+                    "outcome": None,
+                }),
+                AnySupersetOf({
+                    "id": project_complete_external_id,
+                    "outcome": AnySupersetOf({
+                        "id": outcome_complete.external_id,
+                        "result": "none-suitable",
+                        "completed": True,
+                        "completedAt": "2018-05-04T03:02:01.000000Z",
+                    }),
+                }),
+            ],
+        })
+
 
 class TestDirectAwardCreateProject(DirectAwardSetupAndTeardown):
     @pytest.mark.parametrize('drop_project_keys, expected_status',
