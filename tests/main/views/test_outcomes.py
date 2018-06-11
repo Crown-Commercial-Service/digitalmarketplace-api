@@ -670,6 +670,7 @@ class TestUpdateOutcome(BaseApplicationTest, FixtureMixin):
                 ),
             ),
         )),
+        # help pytest make its printed representation of the parameter set a little more readable
         ids=(lambda val: "EMPTYDCT" if val == {} else None),
     )
     def test_update_outcome_scenarios(

@@ -412,3 +412,68 @@ def create_award_outcome(project_external_id, service_id):
     db.session.commit()
 
     return single_result_response("outcome", outcome), 200
+
+
+@main.route(
+    "/direct-award/projects/<int:project_external_id>/none-suitable",
+    methods=("POST",),
+    defaults={"nonawarded_reason": "none-suitable"},
+)
+@main.route(
+    "/direct-award/projects/<int:project_external_id>/cancel",
+    methods=("POST",),
+    defaults={"nonawarded_reason": "cancelled"},
+)
+def create_nonawarded_outcome(project_external_id, nonawarded_reason):
+    updater_json = validate_and_return_updater_request()
+    uniform_now = datetime.datetime.utcnow()
+
+    project = db.session.query(DirectAwardProject).filter_by(
+        external_id=project_external_id,
+    ).first()
+
+    if project is None:
+        abort(404, f"Project {project_external_id} not found")
+
+    if project.outcome is not None:
+        abort(410, "Project {} already has a completed outcome: {}".format(
+            project_external_id,
+            project.outcome.external_id,
+        ))
+
+    # TODO? try-loop to assign ids, handling (unlikely) external_id collisions using sub-transaction so we don't lose
+    # any row-locks we might have
+    outcome = Outcome(
+        result=nonawarded_reason,
+        direct_award_project=project,
+    )
+    outcome.completed_at = uniform_now
+
+    db.session.add(outcome)
+    # ensure database constraints are happy with the object (initially at least: some constraints are only verified
+    # on commit) and assign id
+    db.session.flush()
+
+    creation_audit_event = AuditEvent(
+        audit_type=AuditTypes.create_outcome,
+        user=updater_json['updated_by'],
+        data={
+            "projectExternalId": project.external_id,
+            "result": outcome.result,
+        },
+        db_object=outcome,
+    )
+    creation_audit_event.created_at = uniform_now
+    db.session.add(creation_audit_event)
+
+    completion_audit_event = AuditEvent(
+        audit_type=AuditTypes.complete_outcome,
+        user=updater_json['updated_by'],
+        data={},
+        db_object=outcome,
+    )
+    completion_audit_event.created_at = uniform_now
+    db.session.add(completion_audit_event)
+    db.session.commit()
+
+    return single_result_response("outcome", outcome), 200
