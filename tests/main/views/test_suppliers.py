@@ -1932,3 +1932,298 @@ class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
         assert audit_events[1].data["update"] == {
             "agreedUserId": 2,
         }
+
+
+class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
+
+    framework_slug = None
+    updater_json = None
+
+    def setup(self):
+        super(TestSuppliersExport, self).setup()
+        self.setup_default_buyer_domain()
+        self.framework_slug = 'digital-outcomes-and-specialists'
+        self.set_framework_status(self.framework_slug, 'open')
+        self.updater_json = {'updated_by': 'Paula'}
+        self.users = []
+
+    def _post_user(self, user):
+        response = self.client.post(
+            '/users',
+            data=json.dumps({'users': user}),
+            content_type='application/json')
+        assert response.status_code == 201
+        self.users.append(json.loads(response.get_data())["users"])
+
+    def _set_framework_status(self, status='pending'):
+        self.set_framework_status(self.framework_slug, status)
+
+    def _return_suppliers_export(self):
+        response = self.client.get('/suppliers/export/{}'.format(self.framework_slug))
+        assert response.status_code == 200
+        return response
+
+    def _return_suppliers_export_after_setting_framework_status(self, status='pending'):
+        self._set_framework_status(status)
+        return self._return_suppliers_export()
+
+    def _register_supplier_with_framework(self):
+        response = self.client.put(
+            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        assert response.status_code == 201
+
+    def _setup_supplier_on_framework(self, post_supplier=True, register_supplier_with_framework=True):
+        if post_supplier:
+            # set the supplier_id to the id of the last supplier created
+            self.supplier_id = self.setup_dummy_suppliers(2)[-1]
+        if register_supplier_with_framework:
+            self._register_supplier_with_framework()
+
+    def _post_complete_draft_service(self):
+        payload = load_example_listing("DOS-digital-specialist")
+
+        self.draft_json = {'services': payload}
+        self.draft_json['services']['supplierId'] = self.supplier_id
+        self.draft_json['services']['frameworkSlug'] = self.framework_slug
+        self.draft_json.update(self.updater_json)
+
+        response = self.client.post(
+            '/draft-services',
+            data=json.dumps(self.draft_json),
+            content_type='application/json')
+
+        assert response.status_code == 201
+
+        draft_id = json.loads(response.get_data())['services']['id']
+        complete = self.client.post(
+            '/draft-services/{}/complete'.format(draft_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+
+        assert complete.status_code == 200
+
+    def _put_declaration(self, status):
+        data = {'declaration': {'status': status}}
+        data.update(self.updater_json)
+
+        response = self.client.put(
+            '/suppliers/{}/frameworks/{}/declaration'.format(self.supplier_id, self.framework_slug),
+            data=json.dumps(data),
+            content_type='application/json')
+
+        assert response.status_code == 201
+
+    def _put_complete_declaration(self):
+        self._put_declaration(status='complete')
+
+    def _put_incomplete_declaration(self):
+        self._put_declaration(status='started')
+
+    def _post_company_details_confirmed(self):
+        response = self.client.post(
+            f'/suppliers/{self.supplier_id}',
+            data=json.dumps({
+                "updated_by": "Miss Fig",
+                "suppliers": {
+                    "companyDetailsConfirmed": True
+                }
+            }),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 200
+
+    def _post_framework_application_result(self, result):
+        data = {'frameworkInterest': {'onFramework': result}, 'updated_by': 'The Great Suprendo'}
+        data.update(self.updater_json)
+        response = self.client.post(
+            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug),
+            data=json.dumps(data),
+            content_type='application/json')
+        assert response.status_code == 200
+
+    def _create_and_sign_framework_agreement(self):
+        response = self.client.post(
+            '/agreements',
+            data=json.dumps(
+                {
+                    'updated_by': 'interested@example.com',
+                    'agreement': {
+                        'supplierId': self.supplier_id,
+                        'frameworkSlug': self.framework_slug
+                    },
+                }),
+            content_type='application/json')
+        agreement_id = json.loads(response.get_data(as_text=True))['agreement']['id']
+        self.client.post(
+            "/agreements/{}/sign".format(agreement_id),
+            data=json.dumps({'updated_by': 'interested@example.com'}),
+            content_type='application/json'
+        )
+
+    def _put_variation_agreement(self):
+        data = {"agreedVariations": {"agreedUserId": self.users[0].get("id")}}
+        data.update(self.updater_json)
+
+        response = self.client.put(
+            '/suppliers/{}/frameworks/{}/variation/1'.format(self.supplier_id, self.framework_slug),
+            data=json.dumps(data),
+            content_type='application/json')
+
+        assert response.status_code == 200
+
+    def test_get_response_when_no_suppliers(self):
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data == []
+
+    def test_400_response_if_bad_framework_name(self):
+        self._setup_supplier_on_framework()
+        response = self.client.get('/suppliers/export/{}'.format('cyber-outcomes-and-cyber-specialists'))
+        assert response.status_code == 400
+
+    def test_400_response_if_framework_is_coming(self):
+        self._setup_supplier_on_framework()
+        self._set_framework_status('coming')
+        response = self.client.get('/suppliers/export/{}'.format(self.framework_slug))
+        assert response.status_code == 400
+
+    def test_get_response_when_not_registered_with_framework(self):
+        self._setup_supplier_on_framework(register_supplier_with_framework=False)
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data == []
+
+    def test_response_unstarted_declaration_no_drafts(self):
+        self._setup_supplier_on_framework()
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+
+        assert data == [
+            {
+                'supplier_id': 1,
+                'application_result': 'no result',
+                'application_status': 'no_application',
+                'declaration_status': 'unstarted',
+                'framework_agreement': False,
+                'supplier_name': "Supplier 1",
+                'supplier_organisation_size': "small",
+                'duns_number': "100000001",
+                'registered_name': 'Registered Supplier Name 1',
+                'companies_house_number': None,
+                "published_services_count": {
+                    "digital-outcomes": 0,
+                    "digital-specialists": 0,
+                    "user-research-studios": 0,
+                    "user-research-participants": 0,
+                },
+                "contact_information": {
+                    'contact_name': 'Contact for Supplier 1',
+                    'contact_email': '1@contact.com',
+                    'contact_phone_number': None,
+                    'address_first_line': '7 Gem Lane',
+                    'address_city': 'Cantelot',
+                    'address_postcode': 'SW1A 1AA',
+                    'address_country': 'country:GB',
+                },
+                'variations_agreed': '',
+            }
+        ]
+
+    def test_response_unstarted_declaration_one_draft(self):
+        self._setup_supplier_on_framework()
+        self._post_complete_draft_service()
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data[0]["published_services_count"] == {
+            "digital-outcomes": 0,
+            "digital-specialists": 0,
+            "user-research-studios": 0,
+            "user-research-participants": 0
+        }
+
+    def test_response_started_declaration_one_draft(self):
+        self._setup_supplier_on_framework()
+        self._put_incomplete_declaration()
+        self._post_complete_draft_service()
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data[0]['declaration_status'] == 'started'
+
+    def test_response_complete_declaration_no_drafts(self):
+        self._setup_supplier_on_framework()
+        self._put_complete_declaration()
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data[0]['declaration_status'] == 'complete'
+
+    def test_response_complete_declaration_one_draft(self):
+        self._setup_supplier_on_framework()
+        self._post_company_details_confirmed()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data[0]['declaration_status'] == 'complete'
+        assert data[0]['application_status'] == 'application'
+
+    def test_response_awarded_on_framework_and_submitted_framework_agreement(self):
+        self._setup_supplier_on_framework()
+        self._post_company_details_confirmed()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_framework_application_result(True)
+        self._create_and_sign_framework_agreement()
+
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+
+        assert data[0]['application_result'] == 'pass'
+        assert data[0]['framework_agreement'] is True
+
+    def test_response_not_awarded_on_framework(self):
+        self._setup_supplier_on_framework()
+        self._post_company_details_confirmed()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_framework_application_result(False)
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data[0]['framework_agreement'] is False
+        assert data[0]['application_result'] == 'fail'
+
+    def test_response_agreed_contract_variation(self):
+        self._setup_supplier_on_framework()
+        self._post_user({
+            "emailAddress": "j@examplecompany.biz",
+            "name": "John Example",
+            "password": "minimum10characterpassword",
+            "role": "supplier",
+            "supplierId": self.supplier_id
+        })
+        self._post_company_details_confirmed()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_framework_application_result(True)
+        self._create_and_sign_framework_agreement()
+        self.set_framework_variation(self.framework_slug)
+        self._put_variation_agreement()
+        data = json.loads(
+            self._return_suppliers_export_after_setting_framework_status(status='live').get_data()
+        )["suppliers"]
+        assert data[0]['variations_agreed'] == '1'
+
+    def test_published_service_count_with_different_statuses(self):
+        self._setup_supplier_on_framework()
+        self._post_company_details_confirmed()
+        self._put_complete_declaration()
+        self._post_complete_draft_service()
+        self._post_framework_application_result(True)
+        self.set_framework_status(self.framework_slug, 'open')
+
+        self.setup_dummy_service('10000000002', 1, frameworkSlug=self.framework_slug, lot_id=5)
+        self.setup_dummy_service('10000000003', 1, frameworkSlug=self.framework_slug, lot_id=5)
+        self.setup_dummy_service('10000000004', 1, frameworkSlug=self.framework_slug, lot_id=5)
+        self.setup_dummy_service('10000000005', 1, frameworkSlug=self.framework_slug, lot_id=5, status='enabled')
+        self.setup_dummy_service('10000000006', 1, frameworkSlug=self.framework_slug, lot_id=5, status='disabled')
+
+        data = json.loads(self._return_suppliers_export_after_setting_framework_status().get_data())["suppliers"]
+        assert data[0]["published_services_count"] == {
+            "digital-outcomes": 3,
+            "digital-specialists": 0,
+            "user-research-studios": 0,
+            "user-research-participants": 0,
+        }

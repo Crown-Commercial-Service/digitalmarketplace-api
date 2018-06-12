@@ -72,6 +72,13 @@ class BaseApplicationTest(object):
                 db.engine.execute(table.delete())
         FrameworkLot.query.filter(FrameworkLot.framework_id >= 100).delete()
         Framework.query.filter(Framework.id >= 100).delete()
+
+        # Remove any framework variation details
+        frameworks = db.session.query(Framework).filter(Framework.framework_agreement_details is not None)
+        for framework in frameworks.all():
+            framework.framework_agreement_details = None
+            db.session.add(framework)
+
         db.session.commit()
         db.get_engine(self.app).dispose()
         self.app_context.pop()

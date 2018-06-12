@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from flask import jsonify, abort, request, current_app
+from itertools import groupby
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.orm import lazyload
 from dmapiclient.audit import AuditTypes
@@ -86,6 +88,112 @@ def list_suppliers():
         ), 200
     except DataError:
         abort(400, 'invalid framework')
+
+
+@main.route('/suppliers/export/<framework_slug>', methods=['GET'])
+def export_suppliers_for_framework(framework_slug):
+    # 400 if framework slug is invalid
+    framework = Framework.query.filter(Framework.slug == framework_slug).first()
+    if not framework:
+        abort(400, 'invalid framework')
+
+    if framework.status == 'coming':
+        abort(400, 'framework not yet open')
+
+    lot_slugs_by_id = {lot.id: lot.slug for lot in framework.lots}
+
+    # Creates a dictionary of dictionaries, with published service counts per lot per supplier.
+    # To do this we use dictionary comprehension, SQL query and itertools' 'groupby' function.
+    # Grouping by supplier id is more efficient as this is what we will be iterating over later.
+    service_counts_by_lot_by_supplier = {
+        supplier_id: {row[1]: row[2] for row in rows}
+        for supplier_id, rows in groupby(
+            db.session.query(
+                Service.supplier_id,
+                Service.lot_id,
+                func.count(Service.id)
+            ).filter(
+                Service.status == 'published',
+                Service.framework_id == framework.id
+            ).group_by(
+                Service.supplier_id,
+                Service.lot_id,
+            ).all(),
+            key=lambda row: row[0],
+        )
+    }
+
+    suppliers_and_framework = db.session.query(
+        SupplierFramework, Supplier, ContactInformation
+    ).filter(
+        SupplierFramework.supplier_id == Supplier.supplier_id
+    ).filter(
+        SupplierFramework.framework_id == framework.id
+    ).filter(
+        ContactInformation.supplier_id == Supplier.supplier_id
+    ).options(
+        lazyload(SupplierFramework.framework),
+        lazyload(SupplierFramework.prefill_declaration_from_framework),
+        lazyload(SupplierFramework.framework_agreements),
+    ).order_by(
+        Supplier.supplier_id
+    ).all()
+
+    supplier_rows = []
+
+    suppliers_with_a_complete_service = frozenset(framework.get_supplier_ids_for_completed_service())
+
+    for sf, supplier, ci in suppliers_and_framework:
+        declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
+        # For G10 we need to check the suppliers company detatils have been confirmed
+        company_details_confirmed = supplier.company_details_confirmed
+        application_status = 'application' if (
+            declaration_status == 'complete' and
+            supplier.supplier_id in suppliers_with_a_complete_service and
+            company_details_confirmed
+        ) else 'no_application'
+        application_result = ''
+        framework_agreement = False
+        variations_agreed = ''
+
+        if framework.status != 'open':
+            if sf.on_framework is None:
+                application_result = 'no result'
+            else:
+                application_result = 'pass' if sf.on_framework else 'fail'
+            framework_agreement = bool(getattr(sf.current_framework_agreement, 'signed_agreement_returned_at', None))
+            variations_agreed = ', '.join(sf.agreed_variations.keys()) if sf.agreed_variations else ''
+
+        supplier_rows.append({
+            "supplier_id": supplier.supplier_id,
+            "supplier_name": supplier.name,
+            "supplier_organisation_size": supplier.organisation_size,
+            "duns_number": supplier.duns_number,
+            "registered_name": supplier.registered_name,
+            "companies_house_number": supplier.companies_house_number,
+            'application_result': application_result,
+            'application_status': application_status,
+            'declaration_status': declaration_status,
+            'framework_agreement': framework_agreement,
+            'variations_agreed': variations_agreed,
+            "published_services_count": {
+                lot_slugs_by_id[lot_id]: service_counts_by_lot_by_supplier.get(
+                    supplier.supplier_id, {}
+                ).get(lot_id, 0)
+                for lot_id in lot_slugs_by_id.keys()
+            },
+            "contact_information": {
+                'contact_name': ci.contact_name,
+                'contact_email': ci.email,
+                'contact_phone_number': ci.phone_number,
+                'address_first_line': ci.address1,
+                'address_city': ci.city,
+                'address_postcode': ci.postcode,
+                'address_country': supplier.registration_country,
+            }
+        })
+
+    return jsonify(suppliers=supplier_rows), 200
 
 
 @main.route('/suppliers/<int:supplier_id>', methods=['GET'])
