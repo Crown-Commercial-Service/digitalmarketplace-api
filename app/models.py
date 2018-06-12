@@ -2326,6 +2326,11 @@ class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+    updated_at = db.Column(DateTime,
+                           index=True,
+                           nullable=False,
+                           default=utcnow,
+                           onupdate=utcnow)
 
     status = db.Column(
         db.Enum(

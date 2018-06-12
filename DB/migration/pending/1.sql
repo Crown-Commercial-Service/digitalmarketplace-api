@@ -1,16 +1,14 @@
-create sequence "public"."brief_assessor_id_seq";
+INSERT INTO "domain" VALUES ('14', 'Change and Transformation', '12', '0', '10000') ON CONFLICT (id) DO NOTHING;
+INSERT INTO "domain" VALUES ('15', 'Training, Learning and Development', '13', '0', '10000') ON CONFLICT (id) DO NOTHING;
 
-create table "public"."brief_assessor" (
-    "id" integer not null default nextval('brief_assessor_id_seq'::regclass),
-    "brief_id" integer not null,
-    "user_id" integer,
-    "email_address" character varying
-);
+DO $$                  
+    BEGIN 
+		IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'application' AND COLUMN_NAME = 'updated_at')
+		THEN
 
-CREATE UNIQUE INDEX brief_assessor_pkey ON brief_assessor USING btree (id);
-
-alter table "public"."brief_assessor" add constraint "brief_assessor_pkey" PRIMARY KEY using index "brief_assessor_pkey";
-
-alter table "public"."brief_assessor" add constraint "brief_assessor_brief_id_fkey" FOREIGN KEY (brief_id) REFERENCES brief(id);
-
-alter table "public"."brief_assessor" add constraint "brief_assessor_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id);
+			ALTER TABLE public.application ADD COLUMN updated_at timestamp without time zone;
+			update public.application set updated_at = created_at;
+			ALTER TABLE public.application ALTER COLUMN updated_at set not null;
+		END IF;
+	END;
+$$ ;

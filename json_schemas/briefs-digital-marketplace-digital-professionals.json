@@ -21,6 +21,8 @@
         "Support and Operations",
         "Content and Publishing",
         "Change, Training and Transformation",
+        "Change and Transformation",
+        "Training, Learning and Development",
         "Marketing, Communications and Engagement",
         "Cyber security",
         "Data science",
@@ -33,7 +35,6 @@
       "type": "string"
     },
     "contractLength": {
-      "maxLength": 100,
       "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
