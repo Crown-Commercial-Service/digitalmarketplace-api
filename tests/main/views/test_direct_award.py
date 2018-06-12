@@ -1248,10 +1248,18 @@ class TestDirectAwardOutcomeAward(DirectAwardSetupAndTeardown):
                         "startDate": None,
                     },
                     "resultOfDirectAward": {
-                        "projectId": project_external_id,
-                        "searchId": active_search_id,
-                        "serviceId": "2000000001",
-                        "archivedServiceId": chosen_archived_service_id,
+                        "project": {
+                            "id": project_external_id,
+                        },
+                        "search": {
+                            "id": active_search_id,
+                        },
+                        "archivedService": {
+                            "id": chosen_archived_service_id,
+                            "service": {
+                                "id": "2000000001",
+                            },
+                        },
                     },
                 }
             }
@@ -1286,7 +1294,7 @@ class TestDirectAwardOutcomeAward(DirectAwardSetupAndTeardown):
             assert audit_event.type == "create_outcome"
             assert audit_event.user == "1"
             assert audit_event.data == {
-                "archivedServiceId": response_data["outcome"]["resultOfDirectAward"]["archivedServiceId"],
+                "archivedServiceId": response_data["outcome"]["resultOfDirectAward"]["archivedService"]["id"],
                 "projectExternalId": project_external_id,
                 "searchId": active_search_id,
                 "result": "awarded",
@@ -1537,7 +1545,9 @@ class TestDirectAwardOutcomeNonAwarded(DirectAwardSetupAndTeardown):
                     "completed": True,
                     "completedAt": AnyStringMatching(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z"),
                     "resultOfDirectAward": {
-                        "projectId": project_external_id,
+                        "project": {
+                            "id": project_external_id,
+                        },
                     },
                 }
             }

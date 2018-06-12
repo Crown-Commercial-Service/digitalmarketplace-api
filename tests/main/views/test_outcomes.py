@@ -845,18 +845,30 @@ class TestUpdateOutcome(BaseApplicationTest, FixtureMixin):
                     ),
                     **({
                         "resultOfFurtherCompetition": {
-                            "briefId": brief_id,
+                            "brief": {
+                                "id": brief_id,
+                            },
                             **({
-                                "briefResponseId": chosen_brief_response_id,
+                                "briefResponse": {
+                                    "id": chosen_brief_response_id,
+                                },
                             } if initial_data.get("result", "awarded") == "awarded" else {}),
                         },
                     } if initial_brief_based else {
                         "resultOfDirectAward": {
-                            "projectId": project_external_id,
+                            "project": {
+                                "id": project_external_id,
+                            },
                             **({
-                                "searchId": search_id,
-                                "serviceId": chosen_archived_service_service_id,
-                                "archivedServiceId": chosen_archived_service_id,
+                                "search": {
+                                    "id": search_id,
+                                },
+                                "archivedService": {
+                                    "id": chosen_archived_service_id,
+                                    "service": {
+                                        "id": chosen_archived_service_service_id,
+                                    },
+                                },
                             } if initial_data.get("result", "awarded") == "awarded" else {})
                         },
                     }),

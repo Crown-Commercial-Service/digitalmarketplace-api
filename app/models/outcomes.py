@@ -229,12 +229,21 @@ class Outcome(db.Model):
             **(
                 {
                     "resultOfDirectAward": {
-                        "projectId": self.direct_award_project.external_id,
+                        "project": {
+                            "id": self.direct_award_project.external_id,
+                        },
                         **(
                             {
-                                "searchId": self.direct_award_search_id,
-                                "archivedServiceId": self.direct_award_archived_service_id,
-                                "serviceId": self.direct_award_archived_service.service_id,
+                                # heavily abbreviated versions of these objects' serializations
+                                "search": {
+                                    "id": self.direct_award_search_id,
+                                },
+                                "archivedService": {
+                                    "id": self.direct_award_archived_service_id,
+                                    "service": {
+                                        "id": self.direct_award_archived_service.service_id,
+                                    },
+                                },
                             } if self.result == "awarded" else {}
                         ),
                     },
@@ -243,9 +252,15 @@ class Outcome(db.Model):
             **(
                 {
                     "resultOfFurtherCompetition": {
-                        "briefId": self.brief_id,
+                        "brief": {
+                            "id": self.brief_id,
+                        },
                         **(
-                            {"briefResponseId": self.brief_response_id} if self.result == "awarded" else {}
+                            {
+                                "briefResponse": {
+                                    "id": self.brief_response_id,
+                                },
+                            } if self.result == "awarded" else {}
                         )
                     },
                 } if self.brief_id is not None else {}
