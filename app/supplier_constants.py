@@ -1,6 +1,7 @@
 # Here we define a set of hardcoded keys that we use when denormalizing data from Supplier/ContactInformation tables
-# into the SupplierFramework.declaration field. These are only used internally by the API - the frontends currently
-# do not need knowledge of them, so there is no reason to centralise them e.g. in utils at this time.
+# into the SupplierFramework.declaration field. These are used only by the API and by the
+# `digitalmarketplace-scripts/scripts/generate-framework-agreement-*-pages`, which generates framework agreement
+# signature pages for successful suppliers to sign. These agreements are populated with some of the details below.
 KEY_DUNS_NUMBER = 'supplierDunsNumber'
 KEY_ORGANISATION_SIZE = 'supplierOrganisationSize'
 KEY_REGISTERED_NAME = 'supplierRegisteredName'
