@@ -19,14 +19,6 @@
       "minLength": 1,
       "type": "string"
     },
-    "frameworkStartDate": {
-      "minLength": 1,
-      "type": "string"
-    },
-    "frameworkEndDate": {
-      "minLength": 1,
-      "type": "string"
-    },
     "frameworkExtensionLength": {
       "minLength": 1,
       "type": "string"
