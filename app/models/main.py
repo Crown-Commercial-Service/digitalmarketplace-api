@@ -1,6 +1,8 @@
 # TODO split this file into per-functional-area modules
 
+from abc import ABCMeta, abstractmethod
 from datetime import datetime
+from uuid import uuid4
 
 import re
 import sqlalchemy.dialects.postgresql
@@ -10,10 +12,11 @@ from sqlalchemy import Sequence
 from sqlalchemy import asc, desc, exists
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import INTERVAL
+from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates, backref, mapper, foreign, remote
-from sqlalchemy.orm.session import Session
+from sqlalchemy.orm.session import Session, object_session
 from sqlalchemy.sql.expression import (
     case as sql_case,
     cast as sql_cast,
@@ -57,6 +60,39 @@ class JSON(sqlalchemy.dialects.postgresql.JSON):
 
     def __init__(self, astext_type=None):
         super(JSON, self).__init__(none_as_null=True, astext_type=astext_type)
+
+
+class RemovePersonalDataModelMixin:
+    """This should be added to classes we wish to remove personal data from."""
+
+    __metaclass__ = ABCMeta
+
+    personal_data_removed = db.Column(db.Boolean, index=False, unique=False, nullable=False, default=False)
+
+    @abstractmethod
+    def remove_personal_data(self):
+        """Implement this method on the inheriting model removing personal data from the inheriting object.
+
+        It should at some point set the 'personal_data_removed' flag to True
+        """
+        pass
+
+    @staticmethod
+    def validate_personal_data_removed(mapper, connection, instance):
+        # """The only time we should be able to update an object with """
+        session = object_session(instance)
+        model_class = instance.__class__
+        if session.query(model_class.personal_data_removed).filter(model_class.id == instance.id).scalar():
+            raise ValidationError("Cannot update an object once personal data has been removed")
+
+
+listen(
+    RemovePersonalDataModelMixin,
+    'before_update',
+    RemovePersonalDataModelMixin.validate_personal_data_removed,
+    propagate=True,
+    active_history=True
+)
 
 
 class FrameworkLot(db.Model):
