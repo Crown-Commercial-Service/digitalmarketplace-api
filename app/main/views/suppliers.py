@@ -380,6 +380,42 @@ def update_contact_information(supplier_id, contact_id):
     return single_result_response("contactInformation", contact), 200
 
 
+@main.route('/suppliers/<int:supplier_id>/contact-information/<int:contact_id>/remove-personal-data', methods=['POST'])
+def remove_contact_information_personal_data(supplier_id, contact_id):
+    """Remove personal data from a contact information entry. Looks contact information up in DB, and removes personal
+    data.
+
+    This should be used to completely remove contact_information from the Marketplace.
+    This is useful for our retention strategy (3 years) and for right to be forgotten requests.
+    """
+    updater_json = validate_and_return_updater_request()
+
+    contact_information = ContactInformation.query.filter(
+        ContactInformation.supplier_id == supplier_id,
+        ContactInformation.id == contact_id
+    ).first_or_404()
+    contact_information.remove_personal_data()
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.contact_update,
+        user=updater_json['updated_by'],
+        db_object=contact_information.supplier,
+        data={}
+    )
+
+    db.session.add(contact_information)
+    db.session.add(audit)
+
+    try:
+        db.session.commit()
+    except (IntegrityError, DataError):
+        db.session.rollback()
+        error_msg = "Could not remove personal data from contact information: supplier_id {}, id {}"
+        abort(400, error_msg.format(supplier_id, contact_id))
+
+    return single_result_response("contactInformation", contact_information), 200
+
+
 @main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>/declaration', methods=['PUT'])
 def set_a_declaration(supplier_id, framework_slug):
     framework = Framework.query.filter(
