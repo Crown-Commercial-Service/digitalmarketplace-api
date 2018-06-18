@@ -1,16 +1,18 @@
 # TODO split this file into per-functional-area modules
 
+import re
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
+from six import string_types, iteritems
 from uuid import uuid4
 
-import re
-import sqlalchemy.dialects.postgresql
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
+
 from sqlalchemy import Sequence
 from sqlalchemy import asc, desc, exists
 from sqlalchemy import func
+import sqlalchemy.dialects.postgresql
 from sqlalchemy.dialects.postgresql import INTERVAL
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declared_attr
@@ -31,8 +33,7 @@ from sqlalchemy_utils import generic_relationship
 
 from dmutils.dates import get_publishing_dates
 from dmutils.formats import DATETIME_FORMAT
-
-from app import db
+from app import db, encryption
 from app.utils import (
     drop_foreign_fields,
     link,
@@ -821,7 +822,7 @@ SupplierFramework.current_framework_agreement = db.relationship(
 )
 
 
-class User(db.Model):
+class User(db.Model, RemovePersonalDataModelMixin):
     __tablename__ = 'users'
 
     ADMIN_ROLES = [
@@ -945,6 +946,20 @@ class User(db.Model):
             user['supplier'] = supplier
 
         return user
+
+    def remove_personal_data(self):
+        """This method needs to remove all personal data from this object."""
+        if self.role == 'buyer' or self.role in self.ADMIN_ROLES:
+            self.email_address = re.sub('.+?\@', '<removed><{}>@'.format(uuid4()), self.email_address)
+        else:
+            self.email_address = '<removed>@{uuid}.com'.format(uuid=str(uuid4()))
+        self.personal_data_removed = True
+        self.active = False
+        self.name = '<removed>'
+        self.phone_number = '<removed>'
+
+        self.password = encryption.hashpw(str(uuid4()))
+        self.user_research_opted_in = False
 
 
 class ServiceTableMixin(object):
