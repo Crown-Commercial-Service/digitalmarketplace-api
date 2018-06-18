@@ -145,6 +145,134 @@ class TestUser(BaseApplicationTest, FixtureMixin):
             valid_buyer_user.role = role
         assert str(exc.value) == 'invalid_admin_domain'
 
+    @pytest.mark.parametrize('role', User.ROLES)
+    def test_remove_personal_data_should_set_personal_data_removed_flag(self, role):
+        self.default_buyer_domain = "digital.cabinet-office.gov.uk"
+        self.setup_default_buyer_domain()
+        now = datetime.utcnow()
+        user = User(
+            email_address='email@digital.cabinet-office.gov.uk',
+            name='name',
+            phone_number='555-555-555',
+            role=role,
+            password='password',
+            active=True,
+            failed_login_count=0,
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now,
+        )
+
+        db.session.add(user)
+        db.session.commit()
+        user.remove_personal_data()
+        db.session.add(user)
+        db.session.commit()
+
+        assert user.personal_data_removed is True
+
+    @pytest.mark.parametrize('role', set(User.ROLES) - {'supplier'})
+    @mock.patch('app.models.main.uuid4', return_value='111')
+    @mock.patch('app.encryption.generate_password_hash', return_value=b'222')
+    def test_remove_personal_data_should_remove_personal_data(self, generate_password_hash, uuid4, role):
+        self.default_buyer_domain = "digital.cabinet-office.gov.uk"
+        self.setup_default_buyer_domain()
+        now = datetime.utcnow()
+        user = User(
+            email_address='email@digital.cabinet-office.gov.uk',
+            name='name',
+            phone_number='555-555-555',
+            role=role,
+            password='password',
+            active=True,
+            failed_login_count=0,
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now,
+        )
+
+        db.session.add(user)
+        db.session.commit()
+        user.remove_personal_data()
+        db.session.add(user)
+        db.session.commit()
+
+        assert user.active is False
+        assert user.name == '<removed>'
+        assert user.phone_number == '<removed>'
+        assert user.email_address == '<removed><111>@digital.cabinet-office.gov.uk'
+        assert user.user_research_opted_in is False
+        assert user.password == '222'
+
+        generate_password_hash.assert_called_once_with('111', 10)
+        assert uuid4.call_count == 2
+
+    @mock.patch('app.models.main.uuid4', return_value='111')
+    @mock.patch('app.encryption.generate_password_hash', return_value=b'222')
+    def test_supplier_personal_data_removal(self, generate_password_hash, uuid4):
+        now = datetime.utcnow()
+        user = User(
+            email_address='email@digital.cabinet-office.gov.uk',
+            name='name',
+            phone_number='555-555-555',
+            role='supplier',
+            password='password',
+            active=True,
+            failed_login_count=0,
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now,
+        )
+        db.session.add(user)
+        db.session.commit()
+        user.remove_personal_data()
+        db.session.add(user)
+        db.session.commit()
+
+        assert user.email_address == '<removed>@111.com'
+
+        assert user.active is False
+        assert user.name == '<removed>'
+        assert user.phone_number == '<removed>'
+        assert user.user_research_opted_in is False
+        assert user.password == '222'
+
+        generate_password_hash.assert_called_once_with('111', 10)
+        assert uuid4.call_count == 2
+
+    @pytest.mark.parametrize('role', set(User.ROLES))
+    def test_cannot_change_once_personal_data_removed(self, role):
+        self.default_buyer_domain = "digital.cabinet-office.gov.uk"
+        self.setup_default_buyer_domain()
+        now = datetime.utcnow()
+        user = User(
+            email_address='email@digital.cabinet-office.gov.uk',
+            name='name',
+            phone_number='555-555-555',
+            role=role,
+            password='password',
+            active=True,
+            failed_login_count=0,
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now,
+        )
+        db.session.add(user)
+        db.session.commit()
+
+        user.remove_personal_data()
+
+        db.session.add(user)
+        db.session.commit()
+
+        with pytest.raises(ValidationError) as e:
+            user = User.query.filter(User.id == user.id).first()
+            user.name = 'We are not allowed to update a user whose personal data has been removed'
+            db.session.add(user)
+            db.session.commit()
+
+        assert str(e.value) == 'Cannot update an object once personal data has been removed'
+
 
 class TestFrameworks(BaseApplicationTest):
 
