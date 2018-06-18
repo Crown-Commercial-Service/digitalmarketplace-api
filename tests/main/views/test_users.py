@@ -4,7 +4,7 @@ from flask import json
 from freezegun import freeze_time
 import mock
 import pytest
-from sqlalchemy.exc import DataError
+from sqlalchemy.exc import DataError, IntegrityError
 
 from app import db, encryption
 from app.models import User, Supplier, BuyerEmailDomain, AuditEvent
@@ -1251,6 +1251,194 @@ class TestUsersGet(BaseUserTest, FixtureMixin):
 
         assert response.status_code == 400
         assert "Invalid user role: incorrect" in data
+
+
+class TestUsersRemovePersonalData(BaseUserTest):
+    """Test the `remove_user_personal_data` functionality for different roles."""
+
+    @mock.patch('app.models.main.uuid4', return_value='111')
+    @pytest.mark.parametrize('role', set(User.ROLES) - {'supplier', 'buyer'})
+    def test_remove_user_personal_data(self, uuid4, role):
+        now = datetime.utcnow()
+        user = User(
+            email_address='email@digital.cabinet-office.gov.uk',
+            name='name',
+            phone_number='555-555-555',
+            role=role,
+            password='password',
+            active=True,
+            failed_login_count=0,
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now,
+        )
+        db.session.add(user)
+        db.session.commit()
+
+        response = self.client.post(
+            '/users/{}/remove-personal-data'.format(user.id),
+            data=json.dumps({'updated_by': 'test@example.com'}),
+            content_type='application/json'
+        )
+        assert response.status_code == 200
+
+        data = json.loads(response.get_data())
+        assert data['users']['active'] is False
+        assert data['users']['name'] == '<removed>'
+        assert data['users']['phoneNumber'] == '<removed>'
+        assert data['users']['emailAddress'] == '<removed><111>@digital.cabinet-office.gov.uk'
+        assert data['users']['userResearchOptedIn'] is False
+        assert data['users']['personalDataRemoved'] is True
+
+    @mock.patch('app.models.main.uuid4', return_value='111')
+    def test_remove_buyer_user_personal_data(self, uuid4):
+        now = datetime.utcnow()
+        buyer_email_domain = BuyerEmailDomain(domain_name='digital.cabinet-office.gov.uk')
+        db.session.add(buyer_email_domain)
+        db.session.commit()
+
+        user = User(
+            email_address='email@digital.cabinet-office.gov.uk',
+            name='name',
+            phone_number='555-555-555',
+            role='buyer',
+            password='password',
+            active=True,
+            failed_login_count=0,
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now,
+        )
+        db.session.add(user)
+        db.session.commit()
+
+        response = self.client.post(
+            '/users/{}/remove-personal-data'.format(user.id),
+            data=json.dumps({'updated_by': 'test@example.com'}),
+            content_type='application/json'
+        )
+        assert response.status_code == 200
+
+        data = json.loads(response.get_data())
+        assert data['users']['active'] is False
+        assert data['users']['name'] == '<removed>'
+        assert data['users']['phoneNumber'] == '<removed>'
+        assert data['users']['emailAddress'] == '<removed><111>@digital.cabinet-office.gov.uk'
+        assert data['users']['userResearchOptedIn'] is False
+        assert data['users']['personalDataRemoved'] is True
+
+    @mock.patch('app.models.main.uuid4', return_value='111')
+    def test_remove_supplier_user_personal_data(self, uuid4):
+        now = datetime.utcnow()
+        supplier = Supplier(
+            supplier_id=456,
+            name="A test supplier"
+        )
+        db.session.add(supplier)
+        db.session.commit()
+
+        user = User(
+            email_address='email@digital.cabinet-office.gov.uk',
+            name='name',
+            phone_number='555-555-555',
+            role='supplier',
+            password='password',
+            active=True,
+            failed_login_count=0,
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now,
+            supplier_id=456
+        )
+        db.session.add(user)
+        db.session.commit()
+
+        response = self.client.post(
+            '/users/{}/remove-personal-data'.format(user.id),
+            data=json.dumps({'updated_by': 'test@example.com'}),
+            content_type='application/json'
+        )
+        assert response.status_code == 200
+
+        data = json.loads(response.get_data())
+        assert data['users']['active'] is False
+        assert data['users']['name'] == '<removed>'
+        assert data['users']['phoneNumber'] == '<removed>'
+        assert data['users']['emailAddress'] == '<removed>@111.com'
+        assert data['users']['userResearchOptedIn'] is False
+        assert data['users']['personalDataRemoved'] is True
+
+    @mock.patch('app.models.main.uuid4', return_value='111')
+    @pytest.mark.parametrize('role', set(User.ROLES) - {'supplier', 'buyer'})
+    def test_remove_user_personal_data_audit_event(self, uuid4, role):
+        now = datetime.utcnow()
+        user = User(
+            email_address='email@digital.cabinet-office.gov.uk',
+            name='name',
+            phone_number='555-555-555',
+            role=role,
+            password='password',
+            active=True,
+            failed_login_count=0,
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now,
+        )
+        db.session.add(user)
+        db.session.commit()
+
+        response = self.client.post(
+            '/users/{}/remove-personal-data'.format(user.id),
+            data=json.dumps({'updated_by': 'test@example.com'}),
+            content_type='application/json'
+        )
+
+        assert response.status_code == 200
+        assert AuditEvent.query.filter(
+            AuditEvent.type == 'update_user',
+            AuditEvent.object_type == 'User',
+            AuditEvent.object_id == user.id
+        ).count() == 1
+
+    def test_updated_by_required(self):
+        response = self.client.post(
+            '/users/0/remove-personal-data',
+            data=json.dumps({}),
+            content_type='application/json'
+        )
+        assert response.status_code == 400
+
+        data = json.loads(response.get_data())
+        assert data['error'] == "JSON validation error: 'updated_by' is a required property"
+
+    @pytest.mark.parametrize('error_class', (DataError, IntegrityError))
+    def test_errors_on_commit(self, error_class):
+        now = datetime.utcnow()
+        user = User(
+            email_address='email@digital.cabinet-office.gov.uk',
+            name='name',
+            phone_number='555-555-555',
+            role='admin',
+            password='password',
+            active=True,
+            failed_login_count=0,
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now,
+        )
+        db.session.add(user)
+        db.session.commit()
+
+        with mock.patch('app.db.session.commit', side_effect=error_class("Unable to commit", orig=None, params={})):
+            response = self.client.post(
+                '/users/{}/remove-personal-data'.format(user.id),
+                data=json.dumps({'updated_by': 'test@example.com'}),
+                content_type='application/json'
+            )
+        assert response.status_code == 400
+
+        data = json.loads(response.get_data())
+        assert data['error'] == "Could not remove personal data from user with: ID {}".format(user.id)
 
 
 class TestUsersExport(BaseUserTest, FixtureMixin):
