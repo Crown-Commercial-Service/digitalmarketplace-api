@@ -274,6 +274,46 @@ class TestUser(BaseApplicationTest, FixtureMixin):
         assert str(e.value) == 'Cannot update an object once personal data has been removed'
 
 
+class TestContactInformation(BaseApplicationTest):
+
+    def setup(self):
+        super(TestContactInformation, self).setup()
+        self.supplier = Supplier(name="Test Supplier", organisation_size="micro", supplier_id=11111)
+        self.contact_information = ContactInformation(
+            supplier_id=11111,
+            contact_name='Test Name',
+            phone_number='Test Number',
+            email='test.email@example.com',
+            address1='Test address line 1',
+            city='Test city',
+            postcode='Test Postcode'
+        )
+        db.session.add_all([self.supplier, self.contact_information])
+
+    def test_remove_personal_data(self):
+        self.contact_information.remove_personal_data()
+
+        assert self.contact_information.personal_data_removed
+        assert self.contact_information.contact_name == '<removed>'
+        assert self.contact_information.phone_number == '<removed>'
+        assert self.contact_information.email == '<removed>'
+        assert self.contact_information.address1 == '<removed>'
+        assert self.contact_information.city == '<removed>'
+        assert self.contact_information.postcode == '<removed>'
+
+    def test_cannot_change_object_once_personal_data_removed(self):
+        self.contact_information.remove_personal_data()
+        db.session.add(self.contact_information)
+        db.session.commit()
+
+        with pytest.raises(ValidationError) as e:
+            self.contact_information.contact_name = 'Cannot change this value'
+            db.session.add(self.contact_information)
+            db.session.commit()
+
+        assert str(e.value) == 'Cannot update an object once personal data has been removed'
+
+
 class TestFrameworks(BaseApplicationTest):
 
     def test_framework_should_not_accept_invalid_status(self):
