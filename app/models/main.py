@@ -296,7 +296,7 @@ class Framework(db.Model):
         return '<{}: {} slug={}>'.format(self.__class__.__name__, self.name, self.slug)
 
 
-class ContactInformation(db.Model):
+class ContactInformation(db.Model, RemovePersonalDataModelMixin):
     __tablename__ = 'contact_information'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -360,6 +360,16 @@ class ContactInformation(db.Model):
         }
 
         return filter_null_value_fields(serialized)
+
+    def remove_personal_data(self):
+        self.personal_data_removed = True
+
+        self.contact_name = '<removed>'
+        self.phone_number = '<removed>'
+        self.email = '<removed>'
+        self.address1 = '<removed>'
+        self.city = '<removed>'
+        self.postcode = '<removed>'
 
 
 class Supplier(db.Model):
