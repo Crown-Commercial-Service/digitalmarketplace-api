@@ -258,6 +258,38 @@ def update_user(user_id):
         abort(400, "Could not update user with: {0}".format(user_update))
 
 
+@main.route('/users/<int:user_id>/remove-personal-data', methods=['POST'])
+def remove_user_personal_data(user_id):
+    """ Remove personal data from a user. Looks user up in DB, and removes personal data.
+
+    This should be used to completely remove a user from the Marketplace. Their account will no longer be accessible.
+    This is useful for our retention strategy (3 years) and for right to be forgotten requests.
+    """
+    updater_json = validate_and_return_updater_request()
+    user = User.query.filter(
+        User.id == user_id
+    ).first_or_404()
+    user.remove_personal_data()
+
+    audit = AuditEvent(
+        audit_type=AuditTypes.update_user,
+        user=updater_json['updated_by'],
+        db_object=user,
+        data={}
+    )
+
+    db.session.add(user)
+    db.session.add(audit)
+
+    try:
+        db.session.commit()
+    except (IntegrityError, DataError):
+        db.session.rollback()
+        abort(400, "Could not remove personal data from user with: ID {0}".format(user.id))
+
+    return single_result_response(RESOURCE_NAME, user), 200
+
+
 @main.route('/users/export/<framework_slug>', methods=['GET'])
 def export_users_for_framework(framework_slug):
 
