@@ -356,7 +356,7 @@ class ContactInformation(db.Model, RemovePersonalDataModelMixin):
             'address1': self.address1,
             'city': self.city,
             'postcode': self.postcode,
-            # 'personalDataRemoved': self.personal_data_removed,
+            'personalDataRemoved': self.personal_data_removed,
             'links': links,
         }
 

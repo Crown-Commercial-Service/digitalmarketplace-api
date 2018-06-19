@@ -1636,6 +1636,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                         'address1': '7 Gem Lane',
                         'city': 'Cantelot',
                         'postcode': 'SW1A 1AA',
+                        'personalDataRemoved': False,
                     }
                 ],
                 'description': u'',
@@ -1693,6 +1694,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                         'address1': '7 Gem Lane',
                         'city': 'Cantelot',
                         'postcode': 'SW1A 1AA',
+                        'personalDataRemoved': False,
                     }
                 ],
                 'description': 'All your parcel wrapping needs catered for',

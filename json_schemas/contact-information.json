@@ -26,6 +26,9 @@
     "phoneNumber": {
       "type": "string"
     },
+    "personalDataRemoved": {
+      "type": "boolean"
+    },
     "postcode": {
       "type": "string"
     },
