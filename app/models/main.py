@@ -356,6 +356,7 @@ class ContactInformation(db.Model, RemovePersonalDataModelMixin):
             'address1': self.address1,
             'city': self.city,
             'postcode': self.postcode,
+            # 'personalDataRemoved': self.personal_data_removed,
             'links': links,
         }
 
@@ -944,6 +945,7 @@ class User(db.Model, RemovePersonalDataModelMixin):
                 if self.logged_in_at else self.created_at.strftime(DATETIME_FORMAT),
             'failedLoginCount': self.failed_login_count,
             'userResearchOptedIn': self.user_research_opted_in,
+            'personalDataRemoved': self.personal_data_removed,
         }
 
         if self.role == 'supplier':

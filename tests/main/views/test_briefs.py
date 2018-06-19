@@ -447,6 +447,7 @@ class TestGetBrief(FrameworkSetupAndTeardown):
                         'role': 'buyer',
                         'active': True,
                         'userResearchOptedIn': False,
+                        'personalDataRemoved': False,
                     }
                 ],
                 "clarificationQuestions": [],
