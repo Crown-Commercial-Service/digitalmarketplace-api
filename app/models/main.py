@@ -6,7 +6,6 @@ import re
 import sqlalchemy.dialects.postgresql
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
-from six import string_types, iteritems
 from sqlalchemy import Sequence
 from sqlalchemy import asc, desc, exists
 from sqlalchemy import func
@@ -580,8 +579,8 @@ class SupplierFramework(db.Model):
     def serialize(self, data=None, with_users=False, with_declaration=True):
         agreed_variations = {
             k: self.serialize_agreed_variation(v, with_users=with_users)
-            for k, v in iteritems(self.agreed_variations or {})
-        }
+            for k, v in self.agreed_variations.items()
+        } if self.agreed_variations else {}
 
         supplier_framework = {
             "supplierId": self.supplier_id,
@@ -1824,11 +1823,11 @@ class BriefClarificationQuestion(db.Model):
 
     @validates('question')
     def validates_question(self, key, value):
-        return value.strip() if isinstance(value, string_types) else value
+        return value.strip() if isinstance(value, str) else value
 
     @validates('answer')
     def validates_answer(self, key, value):
-        return value.strip() if isinstance(value, string_types) else value
+        return value.strip() if isinstance(value, str) else value
 
     @brief_id.setter
     def brief_id(self, brief_id):
