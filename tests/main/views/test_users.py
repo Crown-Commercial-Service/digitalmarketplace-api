@@ -1253,6 +1253,49 @@ class TestUsersGet(BaseUserTest, FixtureMixin):
         assert "Invalid user role: incorrect" in data
 
 
+class TestUsersGetFilterByRemovePersonalData(BaseUserTest):
+
+    def setup(self):
+        super(TestUsersGetFilterByRemovePersonalData, self).setup()
+        now = datetime.utcnow()
+        for personal_data_removed in [True, True, False, False, False]:
+            from uuid import uuid4
+            user = User(
+                email_address=f'{uuid4()}@digital.cabinet-office.gov.uk',
+                name='name',
+                phone_number='555-555-555',
+                role='admin',
+                password='password',
+                active=True,
+                failed_login_count=0,
+                created_at=now,
+                updated_at=now,
+                password_changed_at=now,
+            )
+            if personal_data_removed:
+                user.remove_personal_data()
+            db.session.add(user)
+            db.session.commit()
+
+    def test_can_list_users_by_personal_data_removed_true(self):
+        response = self.client.get('/users?personal_data_removed=true')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())["users"]
+        assert len(data) == 2
+
+    def test_can_list_users_by_personal_data_removed_false(self):
+        response = self.client.get('/users?personal_data_removed=false')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())["users"]
+        assert len(data) == 3
+
+    def test_default_list_users_by_personal_data_removed_unaffected(self):
+        response = self.client.get('/users')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())["users"]
+        assert len(data) == 5
+
+
 class TestUsersRemovePersonalData(BaseUserTest):
     """Test the `remove_user_personal_data` functionality for different roles."""
 

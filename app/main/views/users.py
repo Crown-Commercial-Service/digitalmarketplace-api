@@ -6,6 +6,8 @@ from sqlalchemy.orm import lazyload
 from sqlalchemy.exc import DataError, IntegrityError
 from flask import abort, current_app, jsonify, request
 
+from dmutils.config import convert_to_boolean
+
 from .. import main
 from ... import db, encryption
 from ...models import AuditEvent, BuyerEmailDomain, Framework, Service, Supplier, SupplierFramework, User
@@ -118,6 +120,10 @@ def list_users():
             abort(404, "supplier_id '{}' not found".format(supplier_id))
 
         user_query = user_query.filter(User.supplier_id == supplier_id)
+
+    personal_data_removed = request.args.get('personal_data_removed')
+    if personal_data_removed is not None:
+        user_query = user_query.filter(User.personal_data_removed == convert_to_boolean(personal_data_removed))
 
     return paginated_result_response(
         result_name=RESOURCE_NAME,
