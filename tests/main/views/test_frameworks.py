@@ -3,15 +3,12 @@ import datetime
 from flask import json
 from freezegun import freeze_time
 import mock
-import pytest
 from sqlalchemy.exc import IntegrityError
 
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from app.models import db, Framework, SupplierFramework, DraftService, User, FrameworkLot
-from app.models.main import ContactInformation, Supplier
 from tests.helpers import FixtureMixin
 
-from app import supplier_constants
 from app.main.views.frameworks import FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MAP
 
 
@@ -473,145 +470,6 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
 
             assert response.status_code == 400
             assert "Could not commit" in json.loads(response.get_data())["error"]
-
-
-class TestUpdateFrameworkPending(BaseApplicationTest):
-    EXPECTED_FRAMEWORK_DECLARATION_SUPPLIER_INFO = {
-        supplier_constants.KEY_VAT_NUMBER: "123456789",
-        supplier_constants.KEY_DUNS_NUMBER: "987654321",
-        supplier_constants.KEY_TRADING_NAME: "Sam's Sweaters",
-        supplier_constants.KEY_TRADING_STATUS: "limited company (LTD)",
-        supplier_constants.KEY_REGISTERED_NAME: "Sam's Sweaters",
-        supplier_constants.KEY_ORGANISATION_SIZE: "small",
-        supplier_constants.KEY_REGISTRATION_COUNTRY: "country:GB",
-        supplier_constants.KEY_REGISTRATION_BUILDING: "1 Sweater Lane",
-        supplier_constants.KEY_REGISTRATION_TOWN: "Milton Keynes",
-        supplier_constants.KEY_REGISTRATION_POSTCODE: "SW3 8T",
-        supplier_constants.KEY_REGISTRATION_NUMBER: "000123000",
-    }
-
-    def setup(self):
-        super(TestUpdateFrameworkPending, self).setup()
-
-        self.framework = Framework(id=999, slug='g-cloud-10', name='G-Cloud 10', framework='g-cloud', status='open',
-                                   clarification_questions_open=False, allow_declaration_reuse=True,
-                                   has_direct_award=True, has_further_competition=False)
-        db.session.add(self.framework)
-        db.session.commit()
-
-        expected_info = self.EXPECTED_FRAMEWORK_DECLARATION_SUPPLIER_INFO
-
-        self.supplier = Supplier(supplier_id=1,
-                                 name=expected_info["supplierTradingName"], description='',
-                                 organisation_size=expected_info['supplierOrganisationSize'],
-                                 trading_status=expected_info['supplierTradingStatus'],
-                                 vat_number=expected_info['supplierVatNumber'],
-                                 duns_number=expected_info['supplierDunsNumber'],
-                                 other_company_registration_number=expected_info["supplierCompanyRegistrationNumber"],
-                                 registration_country=expected_info["supplierRegisteredCountry"],
-                                 registered_name=expected_info["supplierRegisteredName"],
-                                 )
-
-        self.contact_info = ContactInformation(supplier_id=1,
-                                               contact_name='Contact for Supplier 1',
-                                               email='1@contact.com',
-                                               address1=expected_info['supplierRegisteredBuilding'],
-                                               city=expected_info['supplierRegisteredTown'],
-                                               postcode=expected_info['supplierRegisteredPostcode']
-                                               )
-
-        self.supplier_framework = SupplierFramework(framework_id=self.framework.id,
-                                                    supplier_id=1,
-                                                    declaration={}
-                                                    )
-
-        db.session.add(self.supplier)
-        db.session.add(self.contact_info)
-        db.session.add(self.supplier_framework)
-        db.session.commit()
-
-    def teardown(self):
-        SupplierFramework.query.delete()
-        ContactInformation.query.delete()
-        Supplier.query.delete()
-
-        super(TestUpdateFrameworkPending, self).teardown()
-
-    def _update_framework_status(self, new_status='pending'):
-        self.client.post(
-            '/frameworks/g-cloud-10',
-            data=json.dumps({
-                'frameworks': {'status': new_status},
-                'updated_by': 'example user'
-            }),
-            content_type="application/json"
-        )
-
-    def _assert_declaration_matches(self, expected_declaration_data):
-        supplier_framework = SupplierFramework.query.filter(SupplierFramework.supplier_id == 1).first()
-        assert supplier_framework.declaration == expected_declaration_data
-
-    @pytest.mark.parametrize('framework_start_status, framework_new_status, expected_declaration_data',
-                             (
-                                 ('coming', 'open', {}),
-                                 ('open', 'pending', EXPECTED_FRAMEWORK_DECLARATION_SUPPLIER_INFO),
-                                 ('pending', 'pending', {}),
-                                 ('pending', 'live', {})
-                             ))
-    def test_updating_framework_to_pending_copies_supplier_information_to_declaration(self,
-                                                                                      framework_start_status,
-                                                                                      framework_new_status,
-                                                                                      expected_declaration_data):
-        self.framework.status = framework_start_status
-        db.session.add(self.framework)
-        db.session.commit()
-
-        self._update_framework_status(framework_new_status)
-
-        self._assert_declaration_matches(expected_declaration_data)
-
-    def test_updating_framework_merges_json_and_overwrites_existing_keys_in_declaration(self):
-        start_declaration = {
-            "new-key": "should remain",
-            supplier_constants.KEY_TRADING_NAME: "existing key to be overwritten"
-        }
-        self.supplier_framework.declaration = start_declaration
-        db.session.commit()
-
-        self._update_framework_status()
-
-        self._assert_declaration_matches({**start_declaration, **self.EXPECTED_FRAMEWORK_DECLARATION_SUPPLIER_INFO})
-
-    def test_updating_framework_to_pending_uses_first_contact_information_entry(self):
-        """Digital Marketplace theoretically supports multiple contact informations per supplier. When copying contact
-        information across to fill in the supplier declaration, we want to take the details of the first (lowest id)
-        contact information associated with the account."""
-        db.session.add(ContactInformation(supplier_id=1,
-                                          contact_name='Our awesome contact',
-                                          email='2_is_the_new_1@contact.com',
-                                          address1="Twilight's Library",
-                                          city="Ponyville",
-                                          postcode="PO42"))
-        db.session.commit()
-
-        self._update_framework_status()
-
-        self._assert_declaration_matches(self.EXPECTED_FRAMEWORK_DECLARATION_SUPPLIER_INFO)
-
-    def test_updating_framework_includes_keys_with_none_value_for_null_supplier_account_information(self):
-        self.supplier.vat_number = None
-        self.supplier.registered_name = None
-        self.contact_info.city = None
-        db.session.commit()
-
-        self._update_framework_status()
-
-        expected_declaration_data = self.EXPECTED_FRAMEWORK_DECLARATION_SUPPLIER_INFO.copy()
-        expected_declaration_data[supplier_constants.KEY_VAT_NUMBER] = None
-        expected_declaration_data[supplier_constants.KEY_REGISTERED_NAME] = None
-        expected_declaration_data[supplier_constants.KEY_REGISTRATION_TOWN] = None
-
-        self._assert_declaration_matches(expected_declaration_data)
 
 
 class TestFrameworkStats(BaseApplicationTest, FixtureMixin):

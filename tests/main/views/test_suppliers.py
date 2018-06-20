@@ -613,6 +613,34 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin, PutDeclaratio
         else:
             assert error_message_is_displayed
 
+    def test_update_with_open_framework_application_updates_declaration(self):
+        framework = Framework(
+            id=100,
+            slug='g-cloud-10',
+            name='G-Cloud 10',
+            framework='g-cloud',
+            status='open',
+            has_direct_award=True,
+            has_further_competition=False)
+        db.session.add(framework)
+        db.session.commit()
+        self.updater_json = {'updated_by': 'Paula'}
+        self.framework_slug = 'g-cloud-10'
+        self._register_supplier_with_framework()
+        assert self._get_declaration() == {}
+
+        self.update_request({"organisationSize": "micro"})
+
+        assert self._get_declaration() == {
+            'supplierCompanyRegistrationNumber': 'SC000111',
+            'supplierDunsNumber': '333333333',
+            'supplierOrganisationSize': 'micro',
+            'supplierRegisteredBuilding': '123 Fake Street',
+            'supplierRegisteredPostcode': 'F4 K1E',
+            'supplierRegisteredTown': 'London',
+            'supplierTradingName': 'Example Company Limited',
+        }
+
 
 class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin, PutDeclarationAndDetailsAndServicesMixin):
     method = "post"
@@ -630,9 +658,9 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin, Put
             data=json.dumps({'suppliers': self.supplier}),
             content_type='application/json')
         assert response.status_code == 201
-        supplier = json.loads(response.get_data())['suppliers']
-        self.supplier_id = supplier['id']
-        self.contact_id = supplier['contactInformation'][0]['id']
+        self.supplier_json = json.loads(response.get_data())['suppliers']
+        self.supplier_id = self.supplier_json['id']
+        self.contact_id = self.supplier_json['contactInformation'][0]['id']
 
     def update_request(self, data=None, user=None, full_data=None):
         return self.client.post(
@@ -790,6 +818,36 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin, Put
         })
 
         assert response.status_code == 400
+
+    def test_update_with_open_framework_application_updates_declaration(self):
+        framework = Framework(
+            id=100,
+            slug='g-cloud-10',
+            name='G-Cloud 10',
+            framework='g-cloud',
+            status='open',
+            has_direct_award=True,
+            has_further_competition=False)
+        db.session.add(framework)
+        db.session.commit()
+        self.updater_json = {'updated_by': 'Paula'}
+        self.framework_slug = 'g-cloud-10'
+        self._register_supplier_with_framework()
+        assert self._get_declaration() == {}
+
+        self.update_request(full_data={
+            'contactInformation': {'city': "New City"},
+            **self.updater_json
+        })
+
+        assert self._get_declaration() == {
+            'supplierCompanyRegistrationNumber': 'SC000111',
+            'supplierDunsNumber': '333333333',
+            'supplierRegisteredBuilding': '123 Fake Street',
+            'supplierRegisteredPostcode': 'F4 K1E',
+            'supplierRegisteredTown': 'New City',
+            'supplierTradingName': 'Example Company Limited',
+        }
 
 
 class TestRemoveContactInformationPersonalData(BaseApplicationTest):
@@ -1178,6 +1236,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'agreementReturned': False,
                         'agreementReturnedAt': None,
                         'agreementStatus': None,
+                        'applicationCompanyDetailsConfirmed': False,
                         'complete_drafts_count': 1,
                         'countersigned': False,
                         'countersignedAt': None,
@@ -1213,6 +1272,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                         'agreementReturned': False,
                         'agreementReturnedAt': None,
                         'agreementStatus': None,
+                        'applicationCompanyDetailsConfirmed': False,
                         'complete_drafts_count': 0,
                         'countersigned': False,
                         'countersignedAt': None,
@@ -1401,6 +1461,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             'agreementReturned': False,
             'agreementReturnedAt': None,
             'agreementStatus': None,
+            'applicationCompanyDetailsConfirmed': False,
             'countersigned': False,
             'countersignedAt': None,
             'countersignedDetails': None,
@@ -1456,6 +1517,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             'agreementReturned': True,
             'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
             'agreementStatus': 'signed',
+            'applicationCompanyDetailsConfirmed': False,
             'countersigned': False,
             'countersignedAt': None,
             'countersignedDetails': None,
@@ -1516,6 +1578,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             'agreementReturned': True,
             'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
             'agreementStatus': 'countersigned',
+            'applicationCompanyDetailsConfirmed': False,
             'countersigned': True,
             'countersignedAt': '2017-02-01T01:01:01.000000Z',
             'countersignedDetails': {'some': 'data'},
@@ -1776,6 +1839,66 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         # check nothing has changed on db
         assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
         assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
+
+    def test_set_application_company_details_confirmed_updates_declaration(
+        self,
+        open_g8_framework_live_dos_framework_suppliers_on_framework,
+    ):
+        # -------------------------------------------------
+        # SETUP
+        supplier_framework = SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
+        ).order_by(Supplier.id.asc()).first()
+
+        contact_information = ContactInformation(
+            email='my@email.com',
+            contact_name='Sam',
+            address1='My House',
+            city='My City',
+            postcode='P0 5T'
+        )
+        db.session.add(contact_information)
+
+        supplier_framework.declaration = {'an_answer': 'Yes it is'}
+        supplier = Supplier.query.filter(Supplier.supplier_id == supplier_framework.supplier_id).first()
+        supplier.contact_information = [contact_information]
+
+        db.session.add(supplier_framework)
+        db.session.add(supplier)
+        db.session.commit()
+
+        framework_interest = self.client.get(
+            '/suppliers/{}/frameworks/{}'.format(
+                supplier_framework.supplier_id, supplier_framework.framework.slug,
+            )
+        )
+
+        assert json.loads(framework_interest.get_data(as_text=True))['frameworkInterest']['declaration'] == {
+            'an_answer': 'Yes it is'
+        }
+
+        # ENDPOINT UNDER TEST
+        response = self.supplier_framework_interest(
+            {'supplierId': supplier_framework.supplier_id, 'frameworkSlug': supplier_framework.framework.slug},
+            {'applicationCompanyDetailsConfirmed': True}
+        )
+
+        # ASSERTIONS
+        assert response.status_code == 200
+
+        framework_interest = self.client.get(
+            '/suppliers/{}/frameworks/{}'.format(
+                supplier_framework.supplier_id, supplier_framework.framework.slug
+            )
+        )
+
+        assert json.loads(framework_interest.get_data(as_text=True))['frameworkInterest']['declaration'] == {
+            'an_answer': 'Yes it is',
+            'supplierRegisteredBuilding': 'My House',
+            'supplierRegisteredPostcode': 'P0 5T',
+            'supplierRegisteredTown': 'My City',
+            'supplierTradingName': 'Supplier 1',
+        }
 
 
 class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):

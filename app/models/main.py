@@ -415,6 +415,11 @@ class Supplier(db.Model):
     vat_number = db.Column(db.String, index=False, unique=False, nullable=True)
     organisation_size = db.Column(db.String, index=False, unique=False, nullable=True)
     trading_status = db.Column(db.String, index=False, unique=False, nullable=True)
+
+    # This flag records whether a supplier has _ever_ confirmed their company details, which effectively locks down
+    # certain attributes (currently company name and number, vat number, and duns number). A supplier needs to confirm
+    # their details are correct for every application to a framework - this detail is stored in
+    # SupplierFramework.application_company_details_confirmed
     company_details_confirmed = db.Column(db.Boolean, index=False, default=False, nullable=False)
 
     @validates('trading_status')
@@ -529,6 +534,12 @@ class SupplierFramework(db.Model):
         nullable=True,
     )
 
+    # Suppliers must confirm that their details are accurate for every framework application they make.
+    # The flag `company_details_confirmed` is set on the Supplier object the first time a supplier confirms their
+    # details (company name+number, vat number, duns number). The below SupplierFramework flag is set when a
+    # supplier confirms their details with an open application to an iteration of a framework.
+    application_company_details_confirmed = db.Column(db.Boolean, index=False, default=False, nullable=True)
+
     __table_args__ = (
         db.ForeignKeyConstraint(
             [supplier_id, prefill_declaration_from_framework_id],
@@ -641,6 +652,7 @@ class SupplierFramework(db.Model):
             "prefillDeclarationFromFrameworkSlug": (
                 self.prefill_declaration_from_framework and self.prefill_declaration_from_framework.slug
             ),
+            "applicationCompanyDetailsConfirmed": self.application_company_details_confirmed,
         }
         if with_declaration:
             supplier_framework.update({

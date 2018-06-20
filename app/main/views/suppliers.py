@@ -10,6 +10,10 @@ from dmutils.formats import DATETIME_FORMAT
 
 from .. import main
 from ... import db
+from ...supplier_utils import (
+    company_details_confirmed_if_required_for_framework,
+    update_open_declarations_with_company_details,
+)
 from ...models import Supplier, ContactInformation, AuditEvent, Service, SupplierFramework, Framework, User
 from ...validation import (
     is_valid_string_or_400,
@@ -148,13 +152,14 @@ def export_suppliers_for_framework(framework_slug):
 
     for sf, supplier, ci in suppliers_and_framework:
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
-        # For G10 we need to check the suppliers company detatils have been confirmed
-        company_details_confirmed = supplier.company_details_confirmed
+
+        # This `application_status` logic also exists in users.export_users_for_framework
         application_status = 'application' if (
             declaration_status == 'complete' and
             supplier.supplier_id in suppliers_with_a_complete_service and
-            company_details_confirmed
+            company_details_confirmed_if_required_for_framework(framework_slug, sf)
         ) else 'no_application'
+
         application_result = ''
         framework_agreement = False
         variations_agreed = ''
@@ -329,6 +334,8 @@ def update_supplier(supplier_id):
         )
     )
 
+    update_open_declarations_with_company_details(db, supplier_id, updater_json)
+
     try:
         db.session.commit()
     except IntegrityError as e:
@@ -373,6 +380,8 @@ def update_contact_information(supplier_id, contact_id):
             },
         )
     )
+
+    update_open_declarations_with_company_details(db, supplier_id, updater_json)
 
     try:
         db.session.commit()
@@ -589,7 +598,8 @@ def update_supplier_framework(supplier_id, framework_slug):
     updater_json = validate_and_return_updater_request()
     json_has_required_keys(json_payload, ["frameworkInterest"])
     update_json = json_payload["frameworkInterest"]
-    json_has_keys(update_json, optional_keys=("onFramework", "prefillDeclarationFromFrameworkSlug",))
+    json_has_keys(update_json, optional_keys=("onFramework", "prefillDeclarationFromFrameworkSlug",
+                                              "applicationCompanyDetailsConfirmed"))
 
     interest_record = SupplierFramework.query.filter(
         SupplierFramework.supplier_id == supplier.supplier_id,
@@ -601,6 +611,7 @@ def update_supplier_framework(supplier_id, framework_slug):
 
     if "onFramework" in update_json:
         interest_record.on_framework = update_json["onFramework"]
+
     if "prefillDeclarationFromFrameworkSlug" in update_json:
         if update_json["prefillDeclarationFromFrameworkSlug"] is not None:
             prefill_declaration_from_framework_id = db.session.query(SupplierFramework.framework_id).filter(
@@ -614,6 +625,12 @@ def update_supplier_framework(supplier_id, framework_slug):
         else:
             prefill_declaration_from_framework_id = None
         interest_record.prefill_declaration_from_framework_id = prefill_declaration_from_framework_id
+
+    if "applicationCompanyDetailsConfirmed" in update_json:
+        interest_record.application_company_details_confirmed = update_json['applicationCompanyDetailsConfirmed']
+        if update_json['applicationCompanyDetailsConfirmed'] is True:
+            update_open_declarations_with_company_details(db, supplier_id, updater_json,
+                                                          specific_framework_slug=framework_slug)
 
     # The type of this audit event changed from `supplier_update` to `update_supplier_framework` in early June 2018.
     # For an accurate date, check the date this commit went live on the stage you're interested in (probably prod).
