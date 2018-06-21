@@ -238,19 +238,6 @@ class Framework(db.Model):
             'hasFurtherCompetition': self.has_further_competition,
         }
 
-    def get_supplier_ids_for_completed_service(self):
-        """Only suppliers whose service has a status of submitted or failed."""
-        results = db.session.query(
-            DraftService
-        ).filter(
-            DraftService.status.in_(('submitted', 'failed')),
-            DraftService.framework_id == self.id
-        ).with_entities(
-            DraftService.supplier_id
-        ).distinct()
-        # Unpack list of lists and set
-        return set(item for sublist in results for item in sublist)
-
     @validates('status')
     def validates_status(self, key, value):
         if value not in self.STATUSES:
@@ -634,6 +621,32 @@ class SupplierFramework(db.Model):
             "agreedUserName": user.name,
             "agreedUserEmail": user.email_address,
         })
+
+    @property
+    def application_status(self):
+        submitted_services = DraftService.query.filter(
+            DraftService.status.in_(('submitted', 'failed',)),
+            DraftService.framework_id == self.framework_id,
+            DraftService.supplier_id == self.supplier_id
+        ).count()
+
+        # These 'old' frameworks had no concept of company details needing to be confirmed.
+        old_framework_slugs = {
+            'g-cloud-4', 'g-cloud-5', 'g-cloud-6', 'g-cloud-7', 'g-cloud-8', 'g-cloud-9',
+            'digital-outcomes-and-specialists', 'digital-outcomes-and-specialists-2',
+        }
+
+        company_details_confirmed_if_required_for_framework = (
+            True
+            if self.framework.slug in old_framework_slugs else
+            self.supplier.company_details_confirmed
+        )
+
+        return 'complete' if (
+            self.declaration.get('status', 'unstarted') == 'complete' and
+            submitted_services > 0 and
+            company_details_confirmed_if_required_for_framework
+        ) else 'incomplete'
 
     def serialize(self, data=None, with_users=False, with_declaration=True):
         agreed_variations = {

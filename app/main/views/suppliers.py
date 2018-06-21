@@ -148,18 +148,8 @@ def export_suppliers_for_framework(framework_slug):
 
     supplier_rows = []
 
-    suppliers_with_a_complete_service = frozenset(framework.get_supplier_ids_for_completed_service())
-
     for sf, supplier, ci in suppliers_and_framework:
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
-
-        # This `application_status` logic also exists in users.export_users_for_framework
-        application_status = 'application' if (
-            declaration_status == 'complete' and
-            supplier.supplier_id in suppliers_with_a_complete_service and
-            company_details_confirmed_if_required_for_framework(framework_slug, sf)
-        ) else 'no_application'
-
         application_result = ''
         framework_agreement = False
         variations_agreed = ''
@@ -180,7 +170,7 @@ def export_suppliers_for_framework(framework_slug):
             "registered_name": supplier.registered_name,
             "companies_house_number": supplier.companies_house_number,
             'application_result': application_result,
-            'application_status': application_status,
+            'application_status': 'application' if sf.application_status == 'complete' else 'no_application',
             'declaration_status': declaration_status,
             'framework_agreement': framework_agreement,
             'variations_agreed': variations_agreed,
