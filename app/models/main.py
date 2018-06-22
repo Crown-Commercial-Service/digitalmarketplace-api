@@ -3,16 +3,15 @@
 import re
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
-from six import string_types, iteritems
 from uuid import uuid4
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
 
+import sqlalchemy.dialects.postgresql
 from sqlalchemy import Sequence
 from sqlalchemy import asc, desc, exists
 from sqlalchemy import func
-import sqlalchemy.dialects.postgresql
 from sqlalchemy.dialects.postgresql import INTERVAL
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declared_attr
