@@ -52,6 +52,14 @@ def list_projects():
     if user_id:
         projects = projects.filter(DirectAwardProject.users.any(id=user_id))
 
+    if "having-outcome" in request.args:
+        projects = projects.filter(
+            db.cast(
+                DirectAwardProject.outcome.has(),
+                db.Boolean,
+            ) == convert_to_boolean(request.args.get("having-outcome"))
+        )
+
     if 'latest-first' in request.args:
         if convert_to_boolean(request.args.get('latest-first')):
             projects = projects.order_by(desc(DirectAwardProject.created_at), desc(DirectAwardProject.id))

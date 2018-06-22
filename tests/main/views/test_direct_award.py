@@ -216,33 +216,36 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         assert len(data['projects']) == 1
         assert not data['projects'][0].get('users')
 
-    def test_serialization_includes_completed_outcomes(self):
-        project_incomplete_id, project_incomplete_external_id = self.create_direct_award_project(
+    def _create_projects_with_outcomes(self):
+        self.project_incomplete_id, self.project_incomplete_external_id = self.create_direct_award_project(
             user_id=self.user_id,
             project_id=self.project_id + 1,
         )
-        outcome_incomplete = Outcome(
+        self.outcome_incomplete = Outcome(
             result="cancelled",
             direct_award_project_id=self.project_id + 1,
             completed_at=None,
         )
-        db.session.add(outcome_incomplete)
-        project_complete_id, project_complete_external_id = self.create_direct_award_project(
+        db.session.add(self.outcome_incomplete)
+        self.project_complete_id, self.project_complete_external_id = self.create_direct_award_project(
             user_id=self.user_id,
             project_id=self.project_id + 2,
         )
-        outcome_complete = Outcome(
+        self.outcome_complete = Outcome(
             result="none-suitable",
             direct_award_project_id=self.project_id + 2,
             completed_at=datetime(2018, 5, 4, 3, 2, 1),
         )
-        db.session.add(outcome_complete)
+        db.session.add(self.outcome_complete)
         db.session.commit()
+
+    def test_serialization_includes_completed_outcomes(self):
+        self._create_projects_with_outcomes()
 
         res = self.client.get("/direct-award/projects")
         data = json.loads(res.get_data(as_text=True))
 
-        db.session.add(outcome_complete)
+        db.session.add(self.outcome_complete)
         db.session.expire_all()
 
         assert data == AnySupersetOf({
@@ -252,19 +255,62 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
                     "outcome": None,
                 }),
                 AnySupersetOf({
-                    "id": project_incomplete_external_id,
+                    "id": self.project_incomplete_external_id,
                     "outcome": None,
                 }),
                 AnySupersetOf({
-                    "id": project_complete_external_id,
+                    "id": self.project_complete_external_id,
                     "outcome": AnySupersetOf({
-                        "id": outcome_complete.external_id,
+                        "id": self.outcome_complete.external_id,
                         "result": "none-suitable",
                         "completed": True,
                         "completedAt": "2018-05-04T03:02:01.000000Z",
                     }),
                 }),
             ],
+        })
+
+    def test_filtering_having_outcome(self):
+        self._create_projects_with_outcomes()
+
+        res = self.client.get("/direct-award/projects?having-outcome=true")
+        data = json.loads(res.get_data(as_text=True))
+
+        db.session.add(self.outcome_complete)
+        db.session.expire_all()
+
+        assert data == AnySupersetOf({
+            "projects": [
+                AnySupersetOf({
+                    "id": self.project_complete_external_id,
+                    "outcome": AnySupersetOf({"id": self.outcome_complete.external_id}),
+                }),
+            ],
+            "meta": AnySupersetOf({
+                "total": 1,
+            }),
+        })
+
+    def test_filtering_having_no_outcome(self):
+        self._create_projects_with_outcomes()
+
+        res = self.client.get("/direct-award/projects?having-outcome=false")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert data == AnySupersetOf({
+            "projects": [
+                AnySupersetOf({
+                    "id": self.project_external_id,
+                    "outcome": None,
+                }),
+                AnySupersetOf({
+                    "id": self.project_incomplete_external_id,
+                    "outcome": None,
+                }),
+            ],
+            "meta": AnySupersetOf({
+                "total": 2,
+            }),
         })
 
 
