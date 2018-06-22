@@ -6,7 +6,7 @@ import pendulum
 from app import create_app
 from app.models import db, utcnow, Agency, Contact, Supplier, SupplierDomain, User, Brief, ServiceTypePriceCeiling,\
     Framework, Lot, Domain, Assessment, Application, Region, ServiceType, ServiceTypePrice, ServiceSubType,\
-    SupplierFramework, UserFramework, BriefResponse, BriefUser
+    SupplierFramework, UserFramework, BriefResponse, BriefUser, FrameworkLot
 from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, WSGIApplicationWithEnvironment
 
 from sqlbag import temporary_database
@@ -242,13 +242,14 @@ def briefs(app, request, users):
     params = request.param if hasattr(request, 'param') else {}
     published_at = pendulum.parse(params['published_at']) if 'published_at' in params else utcnow()
     data = params['data'] if 'data' in params else COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
+    lot_slug = params['lot_slug'] if 'lot_slug' in params else 'digital-professionals'
     with app.app_context():
         for i in range(1, 6):
             db.session.add(Brief(
                 id=i,
                 data=data,
                 framework=Framework.query.filter(Framework.slug == "digital-service-professionals").first(),
-                lot=Lot.query.filter(Lot.slug == 'digital-professionals').first(),
+                lot=Lot.query.filter(Lot.slug == lot_slug).first(),
                 users=users,
                 published_at=published_at,
                 withdrawn_at=None

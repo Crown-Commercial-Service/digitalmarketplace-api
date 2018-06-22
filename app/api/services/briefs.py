@@ -79,3 +79,52 @@ class BriefsService(Service):
                    .all())
 
         return [r._asdict() for r in results]
+
+    def get_briefs_by_filters(self, status=None, open_to=None, brief_type=None):
+        status = status or []
+        open_to = open_to or []
+        brief_type = brief_type or []
+        status_filters = [x for x in status if x in ['live', 'closed']]
+        open_to_filters = [x for x in open_to if x in ['all', 'selected', 'one']]
+        brief_type_filters = [x for x in brief_type if x in ['innovation', 'outcomes', 'training', 'specialists']]
+
+        query = (db.session
+                   .query(Brief.id, Brief.data['title'].astext.label('name'), Brief.closed_at,
+                          Brief.data['organisation'].astext.label('company'),
+                          Brief.data['location'].label('location'),
+                          Brief.data['sellerSelector'].astext.label('openTo'),
+                          func.count(BriefResponse.id).label('submissions'))
+                   .outerjoin(BriefResponse, Brief.id == BriefResponse.brief_id)
+                   .group_by(Brief.id))
+
+        if status_filters:
+            cond = or_(*[Brief.status == x for x in status_filters])
+            query = query.filter(cond)
+
+        if open_to_filters:
+            switcher = {
+                'all': 'allSellers',
+                'selected': 'someSellers',
+                'one': 'oneSeller'
+            }
+            cond = or_(*[Brief.data['sellerSelector'].astext == switcher.get(x) for x in open_to_filters])
+            query = query.filter(cond)
+
+        if brief_type_filters:
+            switcher = {
+                'innovation': '0',
+                'outcomes': db.session.query(Lot.id).filter(Lot.slug == 'digital-outcome').first(),
+                'training': db.session.query(Lot.id).filter(Lot.slug == 'training').first(),
+                'specialists': db.session.query(Lot.id).filter(Lot.slug == 'digital-professionals').first()
+            }
+            cond = or_(*[Brief._lot_id == switcher.get(x) for x in brief_type_filters])
+            query = query.filter(cond)
+
+        query = (query
+                 .filter(Brief.published_at.isnot(None))
+                 .filter(Brief.withdrawn_at.is_(None))
+                 .order_by(Brief.published_at.desc()))
+
+        results = query.all()
+
+        return [r._asdict() for r in results]

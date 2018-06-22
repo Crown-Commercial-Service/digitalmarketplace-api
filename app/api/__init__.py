@@ -76,7 +76,8 @@ from app.api.views import (briefs,  # noqa
                            regions,
                            tasks,
                            tokens,
-                           dashboards)
+                           dashboards,
+                           opportunities)
 
 from app.api.views.reports import (suppliers)  # noqa
 
