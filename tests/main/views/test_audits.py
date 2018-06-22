@@ -4,8 +4,7 @@ from itertools import chain, repeat
 import mock
 import pytest
 from flask import json
-from six.moves import zip as izip
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 from freezegun import freeze_time
 
 from dmapiclient.audit import AuditTypes
@@ -61,8 +60,8 @@ class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
         audit_events = []
 
         for (ref_model, ref_model_ids), (obj_id, audit_type, created_at, acknowledged_at) in chain(
-            izip(repeat((Service, service_ids,)), service_audit_event_params),
-            izip(repeat((Supplier, supplier_ids,)), supplier_audit_event_params),
+            zip(repeat((Service, service_ids,)), service_audit_event_params),
+            zip(repeat((Supplier, supplier_ids,)), supplier_audit_event_params),
         ):
             ae = AuditEvent(audit_type, "henry.flower@example.com", {}, ref_model(id=ref_model_ids[obj_id]))
             ae.created_at = created_at

@@ -10,7 +10,6 @@ from alembic.command import upgrade
 from alembic.config import Config
 from flask.ext.migrate import Migrate, MigrateCommand
 from flask.ext.script import Manager
-from six import iteritems, iterkeys
 from sqlalchemy import inspect
 
 from app import create_app
@@ -134,13 +133,13 @@ def _update_framework(request, app, slug, **kwargs):
         return
 
     # first whitelist the kwargs to limit what we have to worry about
-    kwargs = {k: v for k, v in iteritems(kwargs) if k in _framework_kwargs_whitelist}
+    kwargs = {k: v for k, v in kwargs.items() if k in _framework_kwargs_whitelist}
 
     framework = Framework.query.filter(
         Framework.slug == slug
     ).first()
-    original_values = {k: getattr(framework, k) for k in iterkeys(kwargs)}
-    for k, v in iteritems(kwargs):
+    original_values = {k: getattr(framework, k) for k in kwargs.keys()}
+    for k, v in kwargs.items():
         setattr(framework, k, v)
 
     db.session.add(framework)
@@ -151,7 +150,7 @@ def _update_framework(request, app, slug, **kwargs):
             framework = Framework.query.filter(
                 Framework.slug == slug
             ).first()
-            for k, v in iteritems(original_values):
+            for k, v in original_values.items():
                 setattr(framework, k, v)
 
             db.session.add(framework)
@@ -163,7 +162,7 @@ def _update_framework(request, app, slug, **kwargs):
 
 def _add_framework(request, app, slug, **kwargs):
     # first whitelist the kwargs to limit what we have to worry about
-    kwargs = {k: v for k, v in iteritems(kwargs) if k in _framework_kwargs_whitelist}
+    kwargs = {k: v for k, v in kwargs.items() if k in _framework_kwargs_whitelist}
     if "status" in kwargs and "clarification_questions_open" not in kwargs:
         kwargs["clarification_questions_open"] = (kwargs["status"] == "open")
 

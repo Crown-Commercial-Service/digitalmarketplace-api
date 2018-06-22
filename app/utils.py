@@ -2,7 +2,6 @@ import random
 
 from flask import url_for as base_url_for
 from flask import abort, current_app, request, jsonify
-from six import iteritems, string_types
 from werkzeug.exceptions import BadRequest
 
 from .validation import validate_updater_json_or_400
@@ -167,7 +166,7 @@ def keyfilter_json(json_object, filter_func, recurse=True):
             filtered_object.append(keyfilter_json(item, filter_func))
     elif isinstance(json_object, dict):
         filtered_object = dict()
-        for k, v in iteritems(json_object):
+        for k, v in json_object.items():
             if filter_func(k):
                 filtered_object[k] = keyfilter_json(v, filter_func) if recurse else v
 
@@ -192,7 +191,7 @@ def display_list(l):
 
 def strip_whitespace_from_data(data):
     """Recursively strips whitespace and removes empty items from lists"""
-    if isinstance(data, string_types):
+    if isinstance(data, str):
         return data.strip()
     elif isinstance(data, dict):
         return {key: strip_whitespace_from_data(value) for key, value in data.items()}
@@ -203,7 +202,7 @@ def strip_whitespace_from_data(data):
 
 
 def purge_nulls_from_data(data):
-    return dict((k, v) for k, v in iteritems(data) if v is not None)
+    return dict((k, v) for k, v in data.items() if v is not None)
 
 
 def get_request_page_questions():
