@@ -1,19 +1,23 @@
 # TODO split this file into per-functional-area modules
 
-from datetime import datetime
-
 import re
-import sqlalchemy.dialects.postgresql
+from abc import ABCMeta, abstractmethod
+from datetime import datetime
+from uuid import uuid4
+
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
+
+import sqlalchemy.dialects.postgresql
 from sqlalchemy import Sequence
 from sqlalchemy import asc, desc, exists
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import INTERVAL
+from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates, backref, mapper, foreign, remote
-from sqlalchemy.orm.session import Session
+from sqlalchemy.orm.session import Session, object_session
 from sqlalchemy.sql.expression import (
     case as sql_case,
     cast as sql_cast,
@@ -28,8 +32,7 @@ from sqlalchemy_utils import generic_relationship
 
 from dmutils.dates import get_publishing_dates
 from dmutils.formats import DATETIME_FORMAT
-
-from app import db
+from app import db, encryption
 from app.utils import (
     drop_foreign_fields,
     link,
@@ -57,6 +60,39 @@ class JSON(sqlalchemy.dialects.postgresql.JSON):
 
     def __init__(self, astext_type=None):
         super(JSON, self).__init__(none_as_null=True, astext_type=astext_type)
+
+
+class RemovePersonalDataModelMixin:
+    """This should be added to classes we wish to remove personal data from."""
+
+    __metaclass__ = ABCMeta
+
+    personal_data_removed = db.Column(db.Boolean, index=False, unique=False, nullable=False, default=False)
+
+    @abstractmethod
+    def remove_personal_data(self):
+        """Implement this method on the inheriting model removing personal data from the inheriting object.
+
+        It should at some point set the 'personal_data_removed' flag to True
+        """
+        pass
+
+    @staticmethod
+    def validate_personal_data_removed(mapper, connection, instance):
+        # """The only time we should be able to update an object with """
+        session = object_session(instance)
+        model_class = instance.__class__
+        if session.query(model_class.personal_data_removed).filter(model_class.id == instance.id).scalar():
+            raise ValidationError("Cannot update an object once personal data has been removed")
+
+
+listen(
+    RemovePersonalDataModelMixin,
+    'before_update',
+    RemovePersonalDataModelMixin.validate_personal_data_removed,
+    propagate=True,
+    active_history=True
+)
 
 
 class FrameworkLot(db.Model):
@@ -259,7 +295,7 @@ class Framework(db.Model):
         return '<{}: {} slug={}>'.format(self.__class__.__name__, self.name, self.slug)
 
 
-class ContactInformation(db.Model):
+class ContactInformation(db.Model, RemovePersonalDataModelMixin):
     __tablename__ = 'contact_information'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -319,10 +355,21 @@ class ContactInformation(db.Model):
             'address1': self.address1,
             'city': self.city,
             'postcode': self.postcode,
+            'personalDataRemoved': self.personal_data_removed,
             'links': links,
         }
 
         return filter_null_value_fields(serialized)
+
+    def remove_personal_data(self):
+        self.personal_data_removed = True
+
+        self.contact_name = '<removed>'
+        self.phone_number = '<removed>'
+        self.email = '<removed>'
+        self.address1 = '<removed>'
+        self.city = '<removed>'
+        self.postcode = '<removed>'
 
 
 class Supplier(db.Model):
@@ -785,7 +832,7 @@ SupplierFramework.current_framework_agreement = db.relationship(
 )
 
 
-class User(db.Model):
+class User(db.Model, RemovePersonalDataModelMixin):
     __tablename__ = 'users'
 
     ADMIN_ROLES = [
@@ -897,6 +944,7 @@ class User(db.Model):
                 if self.logged_in_at else self.created_at.strftime(DATETIME_FORMAT),
             'failedLoginCount': self.failed_login_count,
             'userResearchOptedIn': self.user_research_opted_in,
+            'personalDataRemoved': self.personal_data_removed,
         }
 
         if self.role == 'supplier':
@@ -909,6 +957,20 @@ class User(db.Model):
             user['supplier'] = supplier
 
         return user
+
+    def remove_personal_data(self):
+        """This method needs to remove all personal data from this object."""
+        if self.role == 'buyer' or self.role in self.ADMIN_ROLES:
+            self.email_address = re.sub('.+?\@', '<removed><{}>@'.format(uuid4()), self.email_address)
+        else:
+            self.email_address = '<removed>@{uuid}.com'.format(uuid=str(uuid4()))
+        self.personal_data_removed = True
+        self.active = False
+        self.name = '<removed>'
+        self.phone_number = '<removed>'
+
+        self.password = encryption.hashpw(str(uuid4()))
+        self.user_research_opted_in = False
 
 
 class ServiceTableMixin(object):

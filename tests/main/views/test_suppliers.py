@@ -7,6 +7,8 @@ import pytest
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
     SupplierFramework, Framework, FrameworkAgreement, DraftService, Service
+from mock import mock
+from sqlalchemy.exc import DataError, IntegrityError
 from tests.bases import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
 from tests.helpers import fixture_params, FixtureMixin, load_example_listing
 
@@ -788,6 +790,103 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
         })
 
         assert response.status_code == 400
+
+
+class TestRemoveContactInformationPersonalData(BaseApplicationTest):
+
+    def setup(self):
+        super(TestRemoveContactInformationPersonalData, self).setup()
+        self.supplier = Supplier(name="Test Supplier", organisation_size="micro", supplier_id=11111)
+        self.contact_information = ContactInformation(
+            supplier_id=11111,
+            contact_name='Test Name',
+            phone_number='Test Number',
+            email='test.email@example.com',
+            address1='Test address line 1',
+            city='Test city',
+            postcode='Test Postcode'
+        )
+        db.session.add_all([self.supplier, self.contact_information])
+        db.session.commit()
+
+    def test_remove_contact_information_personal_data(self):
+        url = '/suppliers/{}/contact-information/{}/remove-personal-data'.format(
+            self.supplier.supplier_id,
+            self.contact_information.id
+        )
+        response = self.client.post(
+            url,
+            data=json.dumps({'updated_by': 'test@example.com'}),
+            content_type='application/json'
+        )
+        assert response.status_code == 200
+
+        data = json.loads(response.get_data())
+
+        assert data['contactInformation']['address1'] == '<removed>'
+        assert data['contactInformation']['city'] == '<removed>'
+        assert data['contactInformation']['contactName'] == '<removed>'
+        assert data['contactInformation']['email'] == '<removed>'
+        assert data['contactInformation']['phoneNumber'] == '<removed>'
+        assert data['contactInformation']['postcode'] == '<removed>'
+
+    def test_updated_by_required(self):
+        url = '/suppliers/{}/contact-information/{}/remove-personal-data'.format(
+            self.supplier.supplier_id,
+            self.contact_information.id
+        )
+        response = self.client.post(
+            url,
+            data=json.dumps({}),
+            content_type='application/json'
+        )
+        assert response.status_code == 400
+
+        data = json.loads(response.get_data())
+        assert data['error'] == "JSON validation error: 'updated_by' is a required property"
+
+    def test_remove_contact_information_personal_data_audit_event(self):
+        url = '/suppliers/{}/contact-information/{}/remove-personal-data'.format(
+            self.supplier.supplier_id,
+            self.contact_information.id
+        )
+        response = self.client.post(
+            url,
+            data=json.dumps({'updated_by': 'test@example.com'}),
+            content_type='application/json'
+        )
+
+        assert response.status_code == 200
+        assert AuditEvent.query.filter(
+            AuditEvent.type == 'contact_update',
+            AuditEvent.object_type == 'Supplier',
+            AuditEvent.object_id == self.supplier.id
+        ).count() == 1
+
+    @pytest.mark.parametrize('error_class', (DataError, IntegrityError))
+    def test_errors_on_commit(self, error_class):
+        url = '/suppliers/{}/contact-information/{}/remove-personal-data'.format(
+            self.supplier.supplier_id,
+            self.contact_information.id
+        )
+        expected_error_message = (
+            "Could not remove personal data from contact information: supplier_id {}, id {}"
+        ).format(
+            self.supplier.supplier_id,
+            self.contact_information.id
+        )
+
+        with mock.patch('app.db.session.commit', side_effect=error_class("Unable to commit", orig=None, params={})):
+            response = self.client.post(
+                url,
+                data=json.dumps({'updated_by': 'test@example.com'}),
+                content_type='application/json'
+            )
+        assert response.status_code == 400
+
+        data = json.loads(response.get_data())
+
+        assert data['error'] == expected_error_message
 
 
 class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateTestMixin):

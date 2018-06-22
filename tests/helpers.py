@@ -50,9 +50,11 @@ def fixture_params(fixture_name, params):
 
 class FixtureMixin(object):
 
+    default_buyer_domain = 'digital.gov.uk'
+
     def setup_default_buyer_domain(self):
-        if BuyerEmailDomain.query.filter(BuyerEmailDomain.domain_name == 'digital.gov.uk').count() == 0:
-            db.session.add(BuyerEmailDomain(domain_name='digital.gov.uk'))
+        if BuyerEmailDomain.query.filter(BuyerEmailDomain.domain_name == self.default_buyer_domain).count() == 0:
+            db.session.add(BuyerEmailDomain(domain_name=self.default_buyer_domain))
             db.session.commit()
 
     def setup_dummy_user(self, id=123, role='buyer'):
