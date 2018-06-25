@@ -60,6 +60,14 @@ def list_projects():
             ) == convert_to_boolean(request.args.get("having-outcome"))
         )
 
+    if "locked" in request.args:
+        projects = projects.filter(
+            db.cast(
+                DirectAwardProject.locked_at.isnot(None),
+                db.Boolean,
+            ) == convert_to_boolean(request.args.get("locked"))
+        )
+
     if 'latest-first' in request.args:
         if convert_to_boolean(request.args.get('latest-first')):
             projects = projects.order_by(desc(DirectAwardProject.created_at), desc(DirectAwardProject.id))

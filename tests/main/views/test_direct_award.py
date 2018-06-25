@@ -313,6 +313,35 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
             }),
         })
 
+    @pytest.mark.parametrize("set_locked", (False, True,))
+    @pytest.mark.parametrize("filter_locked", (False, True,))
+    def test_filtering_locked(self, set_locked, filter_locked):
+        self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id)
+
+        locked_at_isoformat = None
+        if set_locked:
+            # Lock the project.
+            project = DirectAwardProject.query.get(self.project_id)
+            project.locked_at = datetime.utcnow()
+            locked_at_isoformat = project.locked_at.isoformat()
+            db.session.add(project)
+            db.session.commit()
+
+        res = self.client.get(f"/direct-award/projects?locked={filter_locked}")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert data == AnySupersetOf({
+            "projects": [
+                AnySupersetOf({
+                    "id": self.project_external_id,
+                    "lockedAt": locked_at_isoformat and (locked_at_isoformat + "Z"),
+                }),
+            ] if set_locked == filter_locked else [],
+            "meta": AnySupersetOf({
+                "total": 1 if set_locked == filter_locked else 0,
+            }),
+        })
+
 
 class TestDirectAwardCreateProject(DirectAwardSetupAndTeardown):
     @pytest.mark.parametrize('drop_project_keys, expected_status',
