@@ -9,7 +9,7 @@ from sqlalchemy.exc import DataError, IntegrityError
 from app import db, encryption
 from app.models import User, Supplier, BuyerEmailDomain, AuditEvent
 from tests.bases import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, WSGIApplicationWithEnvironment
-from tests.helpers import FixtureMixin, load_example_listing
+from tests.helpers import FixtureMixin, PutDeclarationAndDetailsAndServicesMixin
 
 
 class BaseUserTest(BaseApplicationTest):
@@ -1484,7 +1484,7 @@ class TestUsersRemovePersonalData(BaseUserTest):
         assert data['error'] == "Could not remove personal data from user with: ID {}".format(user.id)
 
 
-class TestUsersExport(BaseUserTest, FixtureMixin):
+class TestUsersExport(BaseUserTest, FixtureMixin, PutDeclarationAndDetailsAndServicesMixin):
     framework_slug = None
     updater_json = None
 
@@ -1516,79 +1516,6 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
         for user in users:
             self._post_user(user)
 
-    def _register_supplier_with_framework(self):
-        response = self.client.put(
-            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-
-        assert response.status_code == 201
-
-    def _put_declaration(self, status):
-        data = {'declaration': {'status': status}}
-        data.update(self.updater_json)
-
-        response = self.client.put(
-            '/suppliers/{}/frameworks/{}/declaration'.format(self.supplier_id, self.framework_slug),
-            data=json.dumps(data),
-            content_type='application/json')
-
-        assert response.status_code == 201
-
-    def _put_variation_agreement(self):
-        data = {"agreedVariations": {"agreedUserId": self.users[0].get("id")}}
-        data.update(self.updater_json)
-
-        response = self.client.put(
-            '/suppliers/{}/frameworks/{}/variation/1'.format(self.supplier_id, self.framework_slug),
-            data=json.dumps(data),
-            content_type='application/json')
-
-        assert response.status_code == 200
-
-    def _put_complete_declaration(self):
-        self._put_declaration(status='complete')
-
-    def _put_incomplete_declaration(self):
-        self._put_declaration(status='started')
-
-    def _post_complete_draft_service(self):
-        payload = load_example_listing("DOS-digital-specialist")
-
-        self.draft_json = {'services': payload}
-        self.draft_json['services']['supplierId'] = self.supplier_id
-        self.draft_json['services']['frameworkSlug'] = self.framework_slug
-        self.draft_json.update(self.updater_json)
-
-        response = self.client.post(
-            '/draft-services',
-            data=json.dumps(self.draft_json),
-            content_type='application/json')
-
-        assert response.status_code == 201
-
-        draft_id = json.loads(response.get_data())['services']['id']
-        complete = self.client.post(
-            '/draft-services/{}/complete'.format(draft_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-
-        assert complete.status_code == 200
-
-    def _post_company_details_confirmed(self):
-        response = self.client.post(
-            f'/suppliers/{self.supplier_id}',
-            data=json.dumps({
-                "updated_by": "Mr Sausages",
-                "suppliers": {
-                    "companyDetailsConfirmed": True
-                }
-            }),
-            content_type='application/json',
-        )
-
-        assert response.status_code == 200
-
     def _post_framework_interest(self, data):
         data.update(self.updater_json)
         response = self.client.post(
@@ -1597,25 +1524,6 @@ class TestUsersExport(BaseUserTest, FixtureMixin):
             content_type='application/json')
 
         assert response.status_code == 200
-
-    def _create_and_sign_framework_agreement(self):
-        response = self.client.post(
-            '/agreements',
-            data=json.dumps(
-                {
-                    'updated_by': 'interested@example.com',
-                    'agreement': {
-                        'supplierId': self.supplier_id,
-                        'frameworkSlug': self.framework_slug
-                    },
-                }),
-            content_type='application/json')
-        agreement_id = json.loads(response.get_data(as_text=True))['agreement']['id']
-        self.client.post(
-            "/agreements/{}/sign".format(agreement_id),
-            data=json.dumps({'updated_by': 'interested@example.com'}),
-            content_type='application/json'
-        )
 
     def _post_result(self, result):
         data = {'frameworkInterest': {'onFramework': result}, 'updated_by': 'Paul'}

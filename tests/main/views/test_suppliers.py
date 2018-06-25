@@ -10,7 +10,7 @@ from app.models import Supplier, ContactInformation, AuditEvent, \
 from mock import mock
 from sqlalchemy.exc import DataError, IntegrityError
 from tests.bases import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
-from tests.helpers import fixture_params, FixtureMixin, load_example_listing
+from tests.helpers import fixture_params, FixtureMixin, load_example_listing, PutDeclarationAndDetailsAndServicesMixin
 
 
 class TestGetSupplier(BaseApplicationTest, FixtureMixin):
@@ -391,7 +391,7 @@ class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
             assert item in json.loads(response.get_data())['error']
 
 
-class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
+class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin, PutDeclarationAndDetailsAndServicesMixin):
     method = "post"
     endpoint = "/suppliers/{self.supplier_id}"
     supplier = supplier_id = None
@@ -614,7 +614,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
             assert error_message_is_displayed
 
 
-class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
+class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin, PutDeclarationAndDetailsAndServicesMixin):
     method = "post"
     endpoint = "/suppliers/{self.supplier_id}/contact-information/{self.contact_id}"
     supplier = supplier_id = contact_id = None
@@ -2047,8 +2047,7 @@ class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
         }
 
 
-class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
-
+class TestSuppliersExport(BaseApplicationTest, FixtureMixin, PutDeclarationAndDetailsAndServicesMixin):
     framework_slug = None
     updater_json = None
 
@@ -2080,73 +2079,12 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
         self._set_framework_status(status)
         return self._return_suppliers_export()
 
-    def _register_supplier_with_framework(self):
-        response = self.client.put(
-            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-        assert response.status_code == 201
-
     def _setup_supplier_on_framework(self, post_supplier=True, register_supplier_with_framework=True):
         if post_supplier:
             # set the supplier_id to the id of the last supplier created
             self.supplier_id = self.setup_dummy_suppliers(2)[-1]
         if register_supplier_with_framework:
             self._register_supplier_with_framework()
-
-    def _post_complete_draft_service(self):
-        payload = load_example_listing("DOS-digital-specialist")
-
-        self.draft_json = {'services': payload}
-        self.draft_json['services']['supplierId'] = self.supplier_id
-        self.draft_json['services']['frameworkSlug'] = self.framework_slug
-        self.draft_json.update(self.updater_json)
-
-        response = self.client.post(
-            '/draft-services',
-            data=json.dumps(self.draft_json),
-            content_type='application/json')
-
-        assert response.status_code == 201
-
-        draft_id = json.loads(response.get_data())['services']['id']
-        complete = self.client.post(
-            '/draft-services/{}/complete'.format(draft_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-
-        assert complete.status_code == 200
-
-    def _put_declaration(self, status):
-        data = {'declaration': {'status': status}}
-        data.update(self.updater_json)
-
-        response = self.client.put(
-            '/suppliers/{}/frameworks/{}/declaration'.format(self.supplier_id, self.framework_slug),
-            data=json.dumps(data),
-            content_type='application/json')
-
-        assert response.status_code == 201
-
-    def _put_complete_declaration(self):
-        self._put_declaration(status='complete')
-
-    def _put_incomplete_declaration(self):
-        self._put_declaration(status='started')
-
-    def _post_company_details_confirmed(self):
-        response = self.client.post(
-            f'/suppliers/{self.supplier_id}',
-            data=json.dumps({
-                "updated_by": "Miss Fig",
-                "suppliers": {
-                    "companyDetailsConfirmed": True
-                }
-            }),
-            content_type='application/json',
-        )
-
-        assert response.status_code == 200
 
     def _post_framework_application_result(self, result):
         data = {'frameworkInterest': {'onFramework': result}, 'updated_by': 'The Great Suprendo'}
@@ -2155,36 +2093,6 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
             '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug),
             data=json.dumps(data),
             content_type='application/json')
-        assert response.status_code == 200
-
-    def _create_and_sign_framework_agreement(self):
-        response = self.client.post(
-            '/agreements',
-            data=json.dumps(
-                {
-                    'updated_by': 'interested@example.com',
-                    'agreement': {
-                        'supplierId': self.supplier_id,
-                        'frameworkSlug': self.framework_slug
-                    },
-                }),
-            content_type='application/json')
-        agreement_id = json.loads(response.get_data(as_text=True))['agreement']['id']
-        self.client.post(
-            "/agreements/{}/sign".format(agreement_id),
-            data=json.dumps({'updated_by': 'interested@example.com'}),
-            content_type='application/json'
-        )
-
-    def _put_variation_agreement(self):
-        data = {"agreedVariations": {"agreedUserId": self.users[0].get("id")}}
-        data.update(self.updater_json)
-
-        response = self.client.put(
-            '/suppliers/{}/frameworks/{}/variation/1'.format(self.supplier_id, self.framework_slug),
-            data=json.dumps(data),
-            content_type='application/json')
-
         assert response.status_code == 200
 
     def test_get_response_when_no_suppliers(self):
