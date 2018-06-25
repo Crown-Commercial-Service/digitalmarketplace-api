@@ -79,15 +79,16 @@ def check_seller_emails(brief_data, errs):
 
     if any(emails_to_check):
         # Buyers may enter emails with upper case
-        user_emails = [email.lower() for email in emails_to_check]
-        found_emails = users.get_sellers_by_email(user_emails)
+        seller_emails = [email.lower() for email in emails_to_check]
+        found_users = users.get_sellers_by_email(seller_emails)
 
-        if len(found_emails) != len(emails_to_check):
+        if len(found_users) != len(emails_to_check):
             # Check to see if contact emails were used
-            contact_emails_to_check = [email.lower() for email in emails_to_check if email not in found_emails]
-            contact_emails_found = suppliers.get_suppliers_by_contact_email(contact_emails_to_check)
+            found_user_emails = [user.email_address for user in found_users]
+            contact_emails_to_check = [email.lower() for email in seller_emails if email not in found_user_emails]
+            found_suppliers = suppliers.get_suppliers_by_contact_email(contact_emails_to_check)
 
-            if len(found_emails) + len(contact_emails_found) != len(emails_to_check):
+            if len(found_users) + len(found_suppliers) != len(emails_to_check):
                 return error
 
     return None
