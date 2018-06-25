@@ -110,6 +110,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
 
         res = self.client.get('/direct-award/projects?user-id={}'.format(self.user_id))
         data = json.loads(res.get_data(as_text=True))
+        assert res.status_code == 200
 
         num_pages = math.ceil((extra_projects + 1) / page_size)
         if num_pages > 1:
@@ -131,6 +132,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         for i in range(pages):
             res = self.client.get('/direct-award/projects?user-id={}&page={}'.format(self.user_id, i + 1))
             data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 200
 
             for project in data['projects']:
                 projects_seen.append(project['id'])
@@ -150,6 +152,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         for i in range(5):
             res = self.client.get('/direct-award/projects?user-id={}&page={}'.format(self.user_id, i + 1))
             data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 200
 
             for project in data['projects']:
                 project = DirectAwardProject.query.filter(DirectAwardProject.external_id == project['id']).first()
@@ -174,6 +177,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
             res = self.client.get('/direct-award/projects?user-id={}&page={}'
                                   '&latest-first=true'.format(self.user_id, i + 1))
             data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 200
 
             # Check that each project has a created_at date older than the last, i.e. reverse chronological order.
             for project in data['projects']:
@@ -188,6 +192,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         res = self.client.get('/direct-award/projects?user-id={}'.format(self.user_id))
         data = json.loads(res.get_data(as_text=True))
 
+        assert res.status_code == 200
         assert 'projects' in data
         assert data['meta']['total'] == 1
         assert len(data['projects']) == 1
@@ -198,6 +203,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         res = self.client.get('/direct-award/projects?include=users')
         data = json.loads(res.get_data(as_text=True))
 
+        assert res.status_code == 200
         assert 'projects' in data
         assert data['meta']['total'] == 1
         assert len(data['projects']) == 1
@@ -211,6 +217,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         res = self.client.get('/direct-award/projects{}'.format(param))
         data = json.loads(res.get_data(as_text=True))
 
+        assert res.status_code == 200
         assert 'projects' in data
         assert data['meta']['total'] == 1
         assert len(data['projects']) == 1
@@ -248,6 +255,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         db.session.add(self.outcome_complete)
         db.session.expire_all()
 
+        assert res.status_code == 200
         assert data == AnySupersetOf({
             "projects": [
                 AnySupersetOf({
@@ -279,6 +287,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         db.session.add(self.outcome_complete)
         db.session.expire_all()
 
+        assert res.status_code == 200
         assert data == AnySupersetOf({
             "projects": [
                 AnySupersetOf({
@@ -297,6 +306,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         res = self.client.get("/direct-award/projects?having-outcome=false")
         data = json.loads(res.get_data(as_text=True))
 
+        assert res.status_code == 200
         assert data == AnySupersetOf({
             "projects": [
                 AnySupersetOf({
@@ -330,6 +340,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         res = self.client.get(f"/direct-award/projects?locked={filter_locked}")
         data = json.loads(res.get_data(as_text=True))
 
+        assert res.status_code == 200
         assert data == AnySupersetOf({
             "projects": [
                 AnySupersetOf({
