@@ -117,8 +117,17 @@ class BriefsService(Service):
                 'training': db.session.query(Lot.id).filter(Lot.slug == 'training').first(),
                 'specialists': db.session.query(Lot.id).filter(Lot.slug == 'digital-professionals').first()
             }
-            cond = or_(*[Brief._lot_id == switcher.get(x) for x in brief_type_filters])
-            query = query.filter(cond)
+            lot_cond = or_(*[Brief._lot_id == switcher.get(x) for x in brief_type_filters])
+
+            # this is a list of historic prod brief ids we want to show when the training filter is active
+            if 'training' in brief_type_filters:
+                training_ids = [105, 183, 205, 215, 217, 292, 313, 336, 358, 438, 477, 498, 535, 577, 593, 762,
+                                864, 868, 886, 907, 933, 1029, 1136, 1164]
+                ids_cond = or_(Brief.id.in_(training_ids))
+                cond = or_(lot_cond, ids_cond)
+                query = query.filter(cond)
+            else:
+                query = query.filter(lot_cond)
 
         query = (query
                  .filter(Brief.published_at.isnot(None))
