@@ -1100,6 +1100,20 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         data = json.loads(response.get_data())
         assert 'duplicate key value violates unique constraint "ix_suppliers_duns_number"' in data['error']
 
+    def test_supplier_contact_information_returned_in_consistent_order(self):
+        payload1 = load_example_listing("new-supplier")
+        payload1['contactInformation'].extend(
+            {'contactName': f'Contact {i}', 'email': f'{i}@email.com'} for i in range(1, 5)
+        )
+
+        post_supplier_response = self.post_supplier(payload1)
+
+        assert post_supplier_response.status_code == 201
+        supplier_id = json.loads(post_supplier_response.get_data(as_text=True))['suppliers']['id']
+        get_supplier_response = self.client.get(f'/suppliers/{supplier_id}')
+        contacts = json.loads(get_supplier_response.get_data(as_text=True))['suppliers']['contactInformation']
+        assert [contact['id'] for contact in contacts] == list(sorted([contact['id'] for contact in contacts]))
+
 
 class TestGetSupplierFrameworks(BaseApplicationTest):
     def setup(self):

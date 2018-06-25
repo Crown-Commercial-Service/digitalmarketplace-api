@@ -405,7 +405,8 @@ class Supplier(db.Model):
     contact_information = db.relationship(ContactInformation,
                                           backref='supplier',
                                           lazy='joined',
-                                          innerjoin=False)
+                                          innerjoin=False,
+                                          order_by=lambda: ContactInformation.id)
     duns_number = db.Column(db.String, index=True, unique=True, nullable=True)
     companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
     registered_name = db.Column(db.String, index=False, unique=False, nullable=True)
