@@ -110,6 +110,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
 
         res = self.client.get('/direct-award/projects?user-id={}'.format(self.user_id))
         data = json.loads(res.get_data(as_text=True))
+        assert res.status_code == 200
 
         num_pages = math.ceil((extra_projects + 1) / page_size)
         if num_pages > 1:
@@ -131,6 +132,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         for i in range(pages):
             res = self.client.get('/direct-award/projects?user-id={}&page={}'.format(self.user_id, i + 1))
             data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 200
 
             for project in data['projects']:
                 projects_seen.append(project['id'])
@@ -150,6 +152,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         for i in range(5):
             res = self.client.get('/direct-award/projects?user-id={}&page={}'.format(self.user_id, i + 1))
             data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 200
 
             for project in data['projects']:
                 project = DirectAwardProject.query.filter(DirectAwardProject.external_id == project['id']).first()
@@ -174,6 +177,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
             res = self.client.get('/direct-award/projects?user-id={}&page={}'
                                   '&latest-first=true'.format(self.user_id, i + 1))
             data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 200
 
             # Check that each project has a created_at date older than the last, i.e. reverse chronological order.
             for project in data['projects']:
@@ -188,6 +192,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         res = self.client.get('/direct-award/projects?user-id={}'.format(self.user_id))
         data = json.loads(res.get_data(as_text=True))
 
+        assert res.status_code == 200
         assert 'projects' in data
         assert data['meta']['total'] == 1
         assert len(data['projects']) == 1
@@ -198,6 +203,7 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         res = self.client.get('/direct-award/projects?include=users')
         data = json.loads(res.get_data(as_text=True))
 
+        assert res.status_code == 200
         assert 'projects' in data
         assert data['meta']['total'] == 1
         assert len(data['projects']) == 1
@@ -211,40 +217,45 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
         res = self.client.get('/direct-award/projects{}'.format(param))
         data = json.loads(res.get_data(as_text=True))
 
+        assert res.status_code == 200
         assert 'projects' in data
         assert data['meta']['total'] == 1
         assert len(data['projects']) == 1
         assert not data['projects'][0].get('users')
 
-    def test_serialization_includes_completed_outcomes(self):
-        project_incomplete_id, project_incomplete_external_id = self.create_direct_award_project(
+    def _create_projects_with_outcomes(self):
+        self.project_incomplete_id, self.project_incomplete_external_id = self.create_direct_award_project(
             user_id=self.user_id,
             project_id=self.project_id + 1,
         )
-        outcome_incomplete = Outcome(
+        self.outcome_incomplete = Outcome(
             result="cancelled",
             direct_award_project_id=self.project_id + 1,
             completed_at=None,
         )
-        db.session.add(outcome_incomplete)
-        project_complete_id, project_complete_external_id = self.create_direct_award_project(
+        db.session.add(self.outcome_incomplete)
+        self.project_complete_id, self.project_complete_external_id = self.create_direct_award_project(
             user_id=self.user_id,
             project_id=self.project_id + 2,
         )
-        outcome_complete = Outcome(
+        self.outcome_complete = Outcome(
             result="none-suitable",
             direct_award_project_id=self.project_id + 2,
             completed_at=datetime(2018, 5, 4, 3, 2, 1),
         )
-        db.session.add(outcome_complete)
+        db.session.add(self.outcome_complete)
         db.session.commit()
+
+    def test_serialization_includes_completed_outcomes(self):
+        self._create_projects_with_outcomes()
 
         res = self.client.get("/direct-award/projects")
         data = json.loads(res.get_data(as_text=True))
 
-        db.session.add(outcome_complete)
+        db.session.add(self.outcome_complete)
         db.session.expire_all()
 
+        assert res.status_code == 200
         assert data == AnySupersetOf({
             "projects": [
                 AnySupersetOf({
@@ -252,19 +263,94 @@ class TestDirectAwardListProjects(DirectAwardSetupAndTeardown):
                     "outcome": None,
                 }),
                 AnySupersetOf({
-                    "id": project_incomplete_external_id,
+                    "id": self.project_incomplete_external_id,
                     "outcome": None,
                 }),
                 AnySupersetOf({
-                    "id": project_complete_external_id,
+                    "id": self.project_complete_external_id,
                     "outcome": AnySupersetOf({
-                        "id": outcome_complete.external_id,
+                        "id": self.outcome_complete.external_id,
                         "result": "none-suitable",
                         "completed": True,
                         "completedAt": "2018-05-04T03:02:01.000000Z",
                     }),
                 }),
             ],
+        })
+
+    def test_filtering_having_outcome(self):
+        self._create_projects_with_outcomes()
+
+        res = self.client.get("/direct-award/projects?having-outcome=true")
+        data = json.loads(res.get_data(as_text=True))
+
+        db.session.add(self.outcome_complete)
+        db.session.expire_all()
+
+        assert res.status_code == 200
+        assert data == AnySupersetOf({
+            "projects": [
+                AnySupersetOf({
+                    "id": self.project_complete_external_id,
+                    "outcome": AnySupersetOf({"id": self.outcome_complete.external_id}),
+                }),
+            ],
+            "meta": AnySupersetOf({
+                "total": 1,
+            }),
+        })
+
+    def test_filtering_having_no_outcome(self):
+        self._create_projects_with_outcomes()
+
+        res = self.client.get("/direct-award/projects?having-outcome=false")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data == AnySupersetOf({
+            "projects": [
+                AnySupersetOf({
+                    "id": self.project_external_id,
+                    "outcome": None,
+                }),
+                AnySupersetOf({
+                    "id": self.project_incomplete_external_id,
+                    "outcome": None,
+                }),
+            ],
+            "meta": AnySupersetOf({
+                "total": 2,
+            }),
+        })
+
+    @pytest.mark.parametrize("set_locked", (False, True,))
+    @pytest.mark.parametrize("filter_locked", (False, True,))
+    def test_filtering_locked(self, set_locked, filter_locked):
+        self.search_id = self.create_direct_award_project_search(created_by=self.user_id, project_id=self.project_id)
+
+        locked_at_isoformat = None
+        if set_locked:
+            # Lock the project.
+            project = DirectAwardProject.query.get(self.project_id)
+            project.locked_at = datetime.utcnow()
+            locked_at_isoformat = project.locked_at.isoformat()
+            db.session.add(project)
+            db.session.commit()
+
+        res = self.client.get(f"/direct-award/projects?locked={filter_locked}")
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+        assert data == AnySupersetOf({
+            "projects": [
+                AnySupersetOf({
+                    "id": self.project_external_id,
+                    "lockedAt": locked_at_isoformat and (locked_at_isoformat + "Z"),
+                }),
+            ] if set_locked == filter_locked else [],
+            "meta": AnySupersetOf({
+                "total": 1 if set_locked == filter_locked else 0,
+            }),
         })
 
 
