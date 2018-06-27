@@ -7,7 +7,9 @@ from datetime import datetime, timedelta
 import pytest
 
 from app import db
-from app.models import Framework, User, Lot, Brief, Supplier, ContactInformation, Service, BriefClarificationQuestion
+from app.models import (
+    DATETIME_FORMAT, Framework, User, Lot, Brief, Supplier, ContactInformation, Service, BriefClarificationQuestion
+)
 from app.models.direct_award import DirectAwardProject, DirectAwardProjectUser, DirectAwardSearch
 from app.models.buyer_domains import BuyerEmailDomain
 
@@ -39,6 +41,7 @@ COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
 
 DIRECT_AWARD_PROJECT_NAME = 'My Direct Award Project'
 DIRECT_AWARD_FROZEN_TIME = '2017-01-01T00:00:00.000000Z'
+DIRECT_AWARD_FROZEN_TIME_DATETIME = datetime.strptime(DIRECT_AWARD_FROZEN_TIME, DATETIME_FORMAT)
 DIRECT_AWARD_SEARCH_BASE = 'https://search-api.digitalmarketplace.service.gov.uk/'
 DIRECT_AWARD_SEARCH_RELATIVE_URL = 'g-cloud/services/search?q=hosting'
 DIRECT_AWARD_SEARCH_URL = DIRECT_AWARD_SEARCH_BASE + DIRECT_AWARD_SEARCH_RELATIVE_URL

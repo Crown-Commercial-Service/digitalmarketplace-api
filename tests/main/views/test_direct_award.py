@@ -26,7 +26,12 @@ from app.models.direct_award import (
     DirectAwardSearchResultEntry
 )
 from ...helpers import (
-    DIRECT_AWARD_SEARCH_URL, DIRECT_AWARD_PROJECT_NAME, DIRECT_AWARD_FROZEN_TIME, load_example_listing, FixtureMixin
+    DIRECT_AWARD_SEARCH_URL,
+    DIRECT_AWARD_PROJECT_NAME,
+    DIRECT_AWARD_FROZEN_TIME,
+    DIRECT_AWARD_FROZEN_TIME_DATETIME,
+    load_example_listing,
+    FixtureMixin
 )
 
 
@@ -1691,3 +1696,107 @@ class TestDirectAwardOutcomeNonAwarded(DirectAwardSetupAndTeardown):
                     "none-suitable": "none-suitable",
                 }[endpoint_rel_path],
             }
+
+
+class TestDirectAwardProjectUpdate(DirectAwardSetupAndTeardown):
+
+    def project(self, direct_award_project_name):
+        project = DirectAwardProject(
+            name=direct_award_project_name,
+            users=[User.query.get(self.user_id)],
+        )
+        db.session.add(project)
+        db.session.flush()
+        return project
+
+    def outcome(self, project):
+        outcome = Outcome(
+            result="none-suitable",
+            direct_award_project_id=project.id,
+            completed_at=datetime(2018, 5, 4, 3, 2, 1),
+        )
+        db.session.add(outcome)
+        db.session.flush()
+        return outcome
+
+    def test_project_update_endpoint_exists(self):
+        project = self.project(self.direct_award_project_name)
+        db.session.commit()
+
+        res = self.client.patch(f'/direct-award/projects/{project.external_id}',
+                                content_type='application/json',
+                                data=json.dumps({
+                                    'project': {},
+                                    'updated_by': 'example@example.com',
+                                }))
+
+        assert res.status_code == 200
+
+    def test_project_update_endpoint_does_not_change_project_if_json_is_empty(self):
+        project = self.project(self.direct_award_project_name)
+        project_json = project.serialize()
+        db.session.commit()
+
+        res = self.client.patch(f'/direct-award/projects/{project.external_id}',
+                                content_type='application/json',
+                                data=json.dumps({
+                                    'project': {},
+                                    'updated_by': 'example@example.com',
+                                }))
+
+        assert res.status_code == 200
+        assert json.loads(res.get_data())['project'] == project_json
+
+    @freeze_time(DIRECT_AWARD_FROZEN_TIME)
+    def test_project_update_still_assessing(self):
+        project = self.project(self.direct_award_project_name)
+        db.session.commit()
+
+        res = self.client.patch(f'/direct-award/projects/{project.external_id}',
+                                content_type='application/json',
+                                data=json.dumps({
+                                    'project': {
+                                        'stillAssessing': True,
+                                    },
+                                    'updated_by': 'example@example.com',
+                                }))
+
+        project_json = json.loads(res.get_data())
+        assert project_json['project']['stillAssessingAt']
+
+        # reset the db cache before reading
+        db.session.add(project)
+        db.session.expire_all()
+
+        assert project.still_assessing_at == DIRECT_AWARD_FROZEN_TIME_DATETIME
+
+    def test_still_assessing_update_not_possible_if_outcome_exists(self):
+        project = self.project(self.direct_award_project_name)
+        self.outcome(project)
+        db.session.commit()
+
+        res = self.client.patch(f'/direct-award/projects/{project.external_id}',
+                                content_type='application/json',
+                                data=json.dumps({
+                                    'project': {
+                                        'stillAssessing': True,
+                                    },
+                                    'updated_by': 'example@example.com',
+                                }))
+
+        assert res.status_code == 400
+
+    def test_project_update_creates_audit_event(self):
+        project = self.project(self.direct_award_project_name)
+        db.session.commit()
+
+        initial_count = AuditEvent.query.count()
+
+        self.client.patch(f'/direct-award/projects/{project.external_id}',
+                          content_type='application/json',
+                          data=json.dumps({
+                              'project': {},
+                              'updated_by': 'example@example.com',
+                          }))
+
+        assert AuditEvent.query.count() == initial_count + 1
