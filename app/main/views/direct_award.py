@@ -23,6 +23,8 @@ from ...utils import (
     validate_and_return_updater_request,
 )
 
+from ...validation import validate_direct_award_project_json_or_400
+
 
 def get_project_by_id_or_404(project_id: int):
     return DirectAwardProject.query.filter(DirectAwardProject.external_id == project_id).first_or_404()
@@ -139,6 +141,47 @@ def get_project(project_external_id):
     project = get_project_by_id_or_404(project_external_id)
 
     return single_result_response("project", project, serialize_kwargs={"with_users": True}), 200
+
+
+@main.route('/direct-award/projects/<int:project_external_id>', methods=['PATCH'])
+def update_project(project_external_id):
+    uniform_now = datetime.datetime.utcnow()
+
+    updater_json = validate_and_return_updater_request()
+
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ["project"])
+    project_json = json_payload["project"]
+
+    validate_direct_award_project_json_or_400(project_json)
+
+    # fetch and lock row
+    project = db.session.query(DirectAwardProject).filter_by(
+        external_id=project_external_id,
+    ).with_for_update().first()
+
+    if not project:
+        abort(404, f"Project {project_external_id} not found")
+
+    # TODO: project.update_from_json(project_json)
+
+    if project_json.get('stillAssessing'):
+        if project.outcome:
+            abort(400, "Cannot update stillAssessing when an outcome is present")
+        project.still_assessing_at = uniform_now
+
+    update_audit_event = AuditEvent(
+        audit_type=AuditTypes.update_project,
+        user=updater_json['updated_by'],
+        db_object=project,
+        data=project_json,
+    )
+    update_audit_event.created_at = uniform_now
+    db.session.add(update_audit_event)
+
+    db.session.commit()
+
+    return single_result_response('project', project), 200
 
 
 @main.route('/direct-award/projects/<int:project_external_id>/searches', methods=['GET'])
