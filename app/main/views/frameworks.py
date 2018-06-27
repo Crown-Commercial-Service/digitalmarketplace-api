@@ -135,6 +135,22 @@ def update_framework(framework_slug):
             enforce_required=True
         )
 
+    # We can ensure that some of the timestamps we have for a framework are accurate, as they are tied to state changes.
+    status_timestamp_audit_data = {}
+    if json_framework.get('clarificationQuestionsOpen') is False and framework.clarification_questions_open is True:
+        framework.clarifications_close_at_utc = datetime.datetime.utcnow()
+        status_timestamp_audit_data = {"clarifications_close_at_utc set": "clarification questions closed"}
+
+    if json_framework.get('status') == 'pending' and framework.status != 'pending':
+        framework.applications_close_at_utc = datetime.datetime.utcnow()
+        status_timestamp_audit_data = {"applications_close_at_utc set": "framework status set to 'pending'"}
+    elif json_framework.get('status') == 'live' and framework.status != 'live':
+        framework.framework_live_at_utc = datetime.datetime.utcnow()
+        status_timestamp_audit_data = {"framework_live_at_utc set": "framework status set to 'live'"}
+    elif json_framework.get('status') == 'expired' and framework.status != 'expired':
+        framework.framework_expires_at_utc = datetime.datetime.utcnow()
+        status_timestamp_audit_data = {"framework_expires_at_utc set": "framework status set to 'expired'"}
+
     for whitelisted_key, value in FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MAP.items():
         if whitelisted_key in json_framework:
             setattr(framework, value, json_framework[whitelisted_key])
@@ -149,6 +165,7 @@ def update_framework(framework_slug):
                 data={
                     'update': json_framework,
                     'frameworkSlug': framework.slug,
+                    **status_timestamp_audit_data,
                 },
             )
         )
