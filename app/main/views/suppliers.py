@@ -115,11 +115,14 @@ def export_suppliers_for_framework(framework_slug):
             ).filter(
                 Service.status == 'published',
                 Service.framework_id == framework.id
+            ).order_by(
+                Service.supplier_id,
+                Service.lot_id,
             ).group_by(
                 Service.supplier_id,
                 Service.lot_id,
             ).all(),
-            key=lambda row: row[0],
+            key = lambda row: row[0],
         )
     }
 
