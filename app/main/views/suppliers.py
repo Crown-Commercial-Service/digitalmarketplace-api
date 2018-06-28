@@ -122,7 +122,7 @@ def export_suppliers_for_framework(framework_slug):
                 Service.supplier_id,
                 Service.lot_id,
             ).all(),
-            key = lambda row: row[0],
+            key=lambda row: row[0],
         )
     }
 
