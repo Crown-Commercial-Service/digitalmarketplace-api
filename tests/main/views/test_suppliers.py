@@ -718,7 +718,7 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
             "email": "new-value@example.com",
             "address1": "New address1",
             "city": "New city",
-            "postcode": "New postcode",
+            "postcode": "N3W P05C0",
         })
 
         assert response.status_code == 200
@@ -732,7 +732,7 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
         assert contact.email == "new-value@example.com"
         assert contact.address1 == "New address1"
         assert contact.city == "New city"
-        assert contact.postcode == "New postcode"
+        assert contact.postcode == "N3W P05C0"
 
     def test_supplier_json_id_does_not_match_oiginal_id(self):
         response = self.update_request({
@@ -804,7 +804,7 @@ class TestRemoveContactInformationPersonalData(BaseApplicationTest):
             email='test.email@example.com',
             address1='Test address line 1',
             city='Test city',
-            postcode='Test Postcode'
+            postcode='T3S P05C0'
         )
         db.session.add_all([self.supplier, self.contact_information])
         db.session.commit()

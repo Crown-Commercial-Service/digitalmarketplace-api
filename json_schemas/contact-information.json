@@ -30,6 +30,8 @@
       "type": "boolean"
     },
     "postcode": {
+      "maxLength": 15,
+      "minLength": 1,
       "type": "string"
     },
     "website": {

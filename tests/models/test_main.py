@@ -286,7 +286,7 @@ class TestContactInformation(BaseApplicationTest):
             email='test.email@example.com',
             address1='Test address line 1',
             city='Test city',
-            postcode='Test Postcode'
+            postcode='T3S P05C0'
         )
         db.session.add_all([self.supplier, self.contact_information])
 
