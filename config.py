@@ -73,7 +73,9 @@ class Config:
             '9': ['customfield_11223', 'customfield_11224'],  # Marketing, Communications and Engagement
             '10': ['customfield_11217', 'customfield_11218'],  # Support and Operations
             '11': ['customfield_11227', 'customfield_11228'],  # Data science
-            '13': ['customfield_11230', 'customfield_11229']  # Emerging technologies
+            '13': ['customfield_11230', 'customfield_11229'],  # Emerging technologies
+            '14': ['customfield_11241', 'customfield_11242'],  # Change and Transformation
+            '15': ['customfield_11243', 'customfield_11244']   # Training, Learning and Development
         },
         'MARKETPLACE_PROJECT_CODE': 'MARADMIN',
         'APPLICATION_FIELD_CODE': 'customfield_11100',
