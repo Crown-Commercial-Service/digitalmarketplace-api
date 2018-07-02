@@ -1700,10 +1700,11 @@ class TestDirectAwardOutcomeNonAwarded(DirectAwardSetupAndTeardown):
 
 class TestDirectAwardProjectUpdate(DirectAwardSetupAndTeardown):
 
-    def project(self, direct_award_project_name):
+    def project(self, direct_award_project_name, **kwargs):
         project = DirectAwardProject(
             name=direct_award_project_name,
             users=[User.query.get(self.user_id)],
+            **kwargs
         )
         db.session.add(project)
         db.session.flush()
@@ -1748,6 +1749,52 @@ class TestDirectAwardProjectUpdate(DirectAwardSetupAndTeardown):
         assert json.loads(res.get_data())['project'] == project_json
 
     @freeze_time(DIRECT_AWARD_FROZEN_TIME)
+    def test_project_update_ready_to_assess(self):
+        project = self.project(self.direct_award_project_name)
+        db.session.commit()
+
+        res = self.client.patch(f'/direct-award/projects/{project.external_id}',
+                                content_type='application/json',
+                                data=json.dumps({
+                                    'project': {
+                                        'readyToAssess': True,
+                                    },
+                                    'updated_by': 'example@example.com',
+                                }))
+
+        project_json = json.loads(res.get_data())
+        assert project_json['project']['readyToAssessAt'] == DIRECT_AWARD_FROZEN_TIME
+
+        # reset the db cache before reading
+        db.session.add(project)
+        db.session.expire_all()
+
+        assert project.ready_to_assess_at == DIRECT_AWARD_FROZEN_TIME_DATETIME
+
+    @freeze_time(DIRECT_AWARD_FROZEN_TIME)
+    def test_project_ready_to_assess_ignored_a_second_time(self):
+        project = self.project(self.direct_award_project_name, ready_to_assess_at=datetime(2016, 1, 1))
+        db.session.commit()
+
+        res = self.client.patch(f'/direct-award/projects/{project.external_id}',
+                                content_type='application/json',
+                                data=json.dumps({
+                                    'project': {
+                                        'readyToAssess': True,
+                                    },
+                                    'updated_by': 'example@example.com',
+                                }))
+
+        project_json = json.loads(res.get_data())
+        assert project_json['project']['readyToAssessAt'] == '2016-01-01T00:00:00.000000Z'
+
+        # reset the db cache before reading
+        db.session.add(project)
+        db.session.expire_all()
+
+        assert project.ready_to_assess_at == datetime(2016, 1, 1)
+
+    @freeze_time(DIRECT_AWARD_FROZEN_TIME)
     def test_project_update_still_assessing(self):
         project = self.project(self.direct_award_project_name)
         db.session.commit()
@@ -1762,7 +1809,7 @@ class TestDirectAwardProjectUpdate(DirectAwardSetupAndTeardown):
                                 }))
 
         project_json = json.loads(res.get_data())
-        assert project_json['project']['stillAssessingAt']
+        assert project_json['project']['stillAssessingAt'] == DIRECT_AWARD_FROZEN_TIME
 
         # reset the db cache before reading
         db.session.add(project)
@@ -1770,7 +1817,11 @@ class TestDirectAwardProjectUpdate(DirectAwardSetupAndTeardown):
 
         assert project.still_assessing_at == DIRECT_AWARD_FROZEN_TIME_DATETIME
 
-    def test_still_assessing_update_not_possible_if_outcome_exists(self):
+    @pytest.mark.parametrize('field', ('readyToAssess', 'stillAssessing'))
+    def test_assessing_update_not_possible_if_outcome_exists(self, field):
+        """
+        Testing a couple of different fields that cannot be updated if an outcome is already present.
+        """
         project = self.project(self.direct_award_project_name)
         self.outcome(project)
         db.session.commit()
@@ -1779,7 +1830,7 @@ class TestDirectAwardProjectUpdate(DirectAwardSetupAndTeardown):
                                 content_type='application/json',
                                 data=json.dumps({
                                     'project': {
-                                        'stillAssessing': True,
+                                        field: True,
                                     },
                                     'updated_by': 'example@example.com',
                                 }))

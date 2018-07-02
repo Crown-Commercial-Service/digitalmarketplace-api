@@ -3,6 +3,9 @@
   "properties": {
     "stillAssessing": {
       "type": "boolean"
+    },
+    "readyToAssess": {
+      "type": "boolean"
     }
   }
 }
