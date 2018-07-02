@@ -10,7 +10,7 @@ from app.models import Supplier, ContactInformation, AuditEvent, \
 from mock import mock
 from sqlalchemy.exc import DataError, IntegrityError
 from tests.bases import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
-from tests.helpers import fixture_params, FixtureMixin, load_example_listing
+from tests.helpers import fixture_params, FixtureMixin, load_example_listing, PutDeclarationAndDetailsAndServicesMixin
 
 
 class TestGetSupplier(BaseApplicationTest, FixtureMixin):
@@ -391,7 +391,7 @@ class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
             assert item in json.loads(response.get_data())['error']
 
 
-class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
+class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin, PutDeclarationAndDetailsAndServicesMixin):
     method = "post"
     endpoint = "/suppliers/{self.supplier_id}"
     supplier = supplier_id = None
@@ -613,8 +613,36 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin):
         else:
             assert error_message_is_displayed
 
+    def test_update_with_open_framework_application_updates_declaration(self):
+        framework = Framework(
+            id=100,
+            slug='g-cloud-10',
+            name='G-Cloud 10',
+            framework='g-cloud',
+            status='open',
+            has_direct_award=True,
+            has_further_competition=False)
+        db.session.add(framework)
+        db.session.commit()
+        self.updater_json = {'updated_by': 'Paula'}
+        self.framework_slug = 'g-cloud-10'
+        self._register_supplier_with_framework()
+        assert self._get_declaration() == {}
 
-class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
+        self.update_request({"organisationSize": "micro"})
+
+        assert self._get_declaration() == {
+            'supplierCompanyRegistrationNumber': 'SC000111',
+            'supplierDunsNumber': '333333333',
+            'supplierOrganisationSize': 'micro',
+            'supplierRegisteredBuilding': '123 Fake Street',
+            'supplierRegisteredPostcode': 'F4 K1E',
+            'supplierRegisteredTown': 'London',
+            'supplierTradingName': 'Example Company Limited',
+        }
+
+
+class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin, PutDeclarationAndDetailsAndServicesMixin):
     method = "post"
     endpoint = "/suppliers/{self.supplier_id}/contact-information/{self.contact_id}"
     supplier = supplier_id = contact_id = None
@@ -630,9 +658,9 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
             data=json.dumps({'suppliers': self.supplier}),
             content_type='application/json')
         assert response.status_code == 201
-        supplier = json.loads(response.get_data())['suppliers']
-        self.supplier_id = supplier['id']
-        self.contact_id = supplier['contactInformation'][0]['id']
+        self.supplier_json = json.loads(response.get_data())['suppliers']
+        self.supplier_id = self.supplier_json['id']
+        self.contact_id = self.supplier_json['contactInformation'][0]['id']
 
     def update_request(self, data=None, user=None, full_data=None):
         return self.client.post(
@@ -790,6 +818,36 @@ class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin):
         })
 
         assert response.status_code == 400
+
+    def test_update_with_open_framework_application_updates_declaration(self):
+        framework = Framework(
+            id=100,
+            slug='g-cloud-10',
+            name='G-Cloud 10',
+            framework='g-cloud',
+            status='open',
+            has_direct_award=True,
+            has_further_competition=False)
+        db.session.add(framework)
+        db.session.commit()
+        self.updater_json = {'updated_by': 'Paula'}
+        self.framework_slug = 'g-cloud-10'
+        self._register_supplier_with_framework()
+        assert self._get_declaration() == {}
+
+        self.update_request(full_data={
+            'contactInformation': {'city': "New City"},
+            **self.updater_json
+        })
+
+        assert self._get_declaration() == {
+            'supplierCompanyRegistrationNumber': 'SC000111',
+            'supplierDunsNumber': '333333333',
+            'supplierRegisteredBuilding': '123 Fake Street',
+            'supplierRegisteredPostcode': 'F4 K1E',
+            'supplierRegisteredTown': 'New City',
+            'supplierTradingName': 'Example Company Limited',
+        }
 
 
 class TestRemoveContactInformationPersonalData(BaseApplicationTest):
@@ -1100,6 +1158,20 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         data = json.loads(response.get_data())
         assert 'duplicate key value violates unique constraint "ix_suppliers_duns_number"' in data['error']
 
+    def test_supplier_contact_information_returned_in_consistent_order(self):
+        payload1 = load_example_listing("new-supplier")
+        payload1['contactInformation'].extend(
+            {'contactName': f'Contact {i}', 'email': f'{i}@email.com'} for i in range(1, 5)
+        )
+
+        post_supplier_response = self.post_supplier(payload1)
+
+        assert post_supplier_response.status_code == 201
+        supplier_id = json.loads(post_supplier_response.get_data(as_text=True))['suppliers']['id']
+        get_supplier_response = self.client.get(f'/suppliers/{supplier_id}')
+        contacts = json.loads(get_supplier_response.get_data(as_text=True))['suppliers']['contactInformation']
+        assert [contact['id'] for contact in contacts] == list(sorted([contact['id'] for contact in contacts]))
+
 
 class TestGetSupplierFrameworks(BaseApplicationTest):
     def setup(self):
@@ -1157,28 +1229,29 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
             {
                 'frameworkInterest': [
                     {
+                        'agreedVariations': {},
+                        'agreementDetails': None,
+                        'agreementId': None,
+                        'agreementPath': None,
                         'agreementReturned': False,
                         'agreementReturnedAt': None,
-                        'onFramework': False,
-                        'declaration': {},
-                        'frameworkSlug': 'g-cloud-6',
-                        'frameworkFramework': 'g-cloud',
-                        'frameworkFamily': 'g-cloud',
-                        'supplierId': 1,
-                        'drafts_count': 1,
+                        'agreementStatus': None,
+                        'applicationCompanyDetailsConfirmed': False,
                         'complete_drafts_count': 1,
-                        'services_count': 0,
-                        'supplierName': 'Supplier 1',
-                        'agreementDetails': None,
-                        'agreementPath': None,
                         'countersigned': False,
                         'countersignedAt': None,
                         'countersignedDetails': None,
                         'countersignedPath': None,
-                        'agreementStatus': None,
-                        'agreementId': None,
-                        'agreedVariations': {},
+                        'declaration': {},
+                        'drafts_count': 1,
+                        'frameworkFamily': 'g-cloud',
+                        'frameworkFramework': 'g-cloud',
+                        'frameworkSlug': 'g-cloud-6',
+                        'onFramework': False,
                         'prefillDeclarationFromFrameworkSlug': None,
+                        'services_count': 0,
+                        'supplierId': 1,
+                        'supplierName': 'Supplier 1',
                     }
                 ]
             })
@@ -1192,28 +1265,29 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
             {
                 'frameworkInterest': [
                     {
+                        'agreedVariations': {},
+                        'agreementDetails': None,
+                        'agreementId': None,
+                        'agreementPath': None,
                         'agreementReturned': False,
                         'agreementReturnedAt': None,
-                        'onFramework': False,
-                        'declaration': {},
-                        'frameworkSlug': 'g-cloud-6',
-                        'frameworkFramework': 'g-cloud',
-                        'frameworkFamily': 'g-cloud',
-                        'supplierId': 2,
-                        'drafts_count': 0,
+                        'agreementStatus': None,
+                        'applicationCompanyDetailsConfirmed': False,
                         'complete_drafts_count': 0,
-                        'services_count': 1,
-                        'supplierName': 'Supplier 2',
-                        'agreementDetails': None,
-                        'agreementPath': None,
                         'countersigned': False,
                         'countersignedAt': None,
                         'countersignedDetails': None,
                         'countersignedPath': None,
-                        'agreementStatus': None,
-                        'agreementId': None,
-                        'agreedVariations': {},
+                        'declaration': {},
+                        'drafts_count': 0,
+                        'frameworkFamily': 'g-cloud',
+                        'frameworkFramework': 'g-cloud',
+                        'frameworkSlug': 'g-cloud-6',
+                        'onFramework': False,
                         'prefillDeclarationFromFrameworkSlug': None,
+                        'services_count': 1,
+                        'supplierId': 2,
+                        'supplierName': 'Supplier 2',
                     }
                 ]
             })
@@ -1380,25 +1454,26 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
         assert response.status_code, 200
         assert 'frameworkInterest' in data
         assert data['frameworkInterest'] == {
-            'supplierId': supplier_framework['supplierId'],
-            'supplierName': 'Supplier name',
-            'frameworkSlug': supplier_framework['frameworkSlug'],
-            'frameworkFramework': supplier_framework['frameworkFramework'],
-            'frameworkFamily': supplier_framework['frameworkFamily'],
-            'declaration': {'an_answer': 'Yes it is'},
-            'onFramework': True,
+            'agreedVariations': {},
+            'agreementDetails': None,
             'agreementId': None,
+            'agreementPath': None,
             'agreementReturned': False,
             'agreementReturnedAt': None,
-            'agreementDetails': None,
-            'agreementPath': None,
+            'agreementStatus': None,
+            'applicationCompanyDetailsConfirmed': False,
             'countersigned': False,
             'countersignedAt': None,
             'countersignedDetails': None,
             'countersignedPath': None,
-            'agreementStatus': None,
-            'agreedVariations': {},
+            'declaration': {'an_answer': 'Yes it is'},
+            'frameworkFamily': supplier_framework['frameworkFamily'],
+            'frameworkFramework': supplier_framework['frameworkFramework'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'onFramework': True,
             'prefillDeclarationFromFrameworkSlug': None,
+            'supplierId': supplier_framework['supplierId'],
+            'supplierName': 'Supplier name',
         }
 
     def test_get_supplier_framework_returns_signed_framework_agreement(self, supplier_framework):
@@ -1431,29 +1506,30 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
         assert response.status_code, 200
         assert 'frameworkInterest' in data, data
         assert data['frameworkInterest'] == {
-            'supplierId': supplier_framework['supplierId'],
-            'supplierName': 'Supplier name',
-            'frameworkSlug': supplier_framework['frameworkSlug'],
-            'frameworkFramework': supplier_framework['frameworkFramework'],
-            'frameworkFamily': supplier_framework['frameworkFamily'],
-            'declaration': {'an_answer': 'Yes it is'},
-            'onFramework': True,
-            'agreementId': framework_agreement_id,
-            'agreementReturned': True,
-            'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
-            'agreementPath': '/agreement.pdf',
-            'countersigned': False,
-            'countersignedAt': None,
-            'countersignedDetails': None,
-            'countersignedPath': None,
+            'agreedVariations': {},
             'agreementDetails': {
                 'signerName': 'thing 2',
                 'signerRole': 'thing 2',
                 'uploaderUserId': 30
             },
+            'agreementId': framework_agreement_id,
+            'agreementPath': '/agreement.pdf',
+            'agreementReturned': True,
+            'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
             'agreementStatus': 'signed',
-            'agreedVariations': {},
+            'applicationCompanyDetailsConfirmed': False,
+            'countersigned': False,
+            'countersignedAt': None,
+            'countersignedDetails': None,
+            'countersignedPath': None,
+            'declaration': {'an_answer': 'Yes it is'},
+            'frameworkFamily': supplier_framework['frameworkFamily'],
+            'frameworkFramework': supplier_framework['frameworkFramework'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'onFramework': True,
             'prefillDeclarationFromFrameworkSlug': None,
+            'supplierId': supplier_framework['supplierId'],
+            'supplierName': 'Supplier name',
         }
 
     def test_get_supplier_framework_returns_countersigned_framework_agreement(self, supplier_framework, supplier):
@@ -1491,29 +1567,30 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
         assert response.status_code, 200
         assert 'frameworkInterest' in data
         assert data['frameworkInterest'] == {
-            'supplierId': supplier_framework['supplierId'],
-            'supplierName': 'Supplier name',
-            'frameworkSlug': supplier_framework['frameworkSlug'],
-            'frameworkFramework': supplier_framework['frameworkFramework'],
-            'frameworkFamily': supplier_framework['frameworkFamily'],
-            'declaration': {'an_answer': 'Yes it is'},
-            'onFramework': True,
-            'agreementId': framework_agreement_id,
-            'agreementReturned': True,
-            'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
+            'agreedVariations': {},
             'agreementDetails': {
                 'signerName': 'thing 2',
                 'signerRole': 'thing 2',
                 'uploaderUserId': 30
             },
+            'agreementId': framework_agreement_id,
             'agreementPath': '/agreement.pdf',
+            'agreementReturned': True,
+            'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
+            'agreementStatus': 'countersigned',
+            'applicationCompanyDetailsConfirmed': False,
             'countersigned': True,
             'countersignedAt': '2017-02-01T01:01:01.000000Z',
             'countersignedDetails': {'some': 'data'},
             'countersignedPath': 'path',
-            'agreementStatus': 'countersigned',
-            'agreedVariations': {},
+            'declaration': {'an_answer': 'Yes it is'},
+            'frameworkFamily': supplier_framework['frameworkFamily'],
+            'frameworkFramework': supplier_framework['frameworkFramework'],
+            'frameworkSlug': supplier_framework['frameworkSlug'],
+            'onFramework': True,
             'prefillDeclarationFromFrameworkSlug': None,
+            'supplierId': supplier_framework['supplierId'],
+            'supplierName': 'Supplier name',
         }
 
     def test_get_supplier_framework_info_with_non_existent_framework(self, supplier_framework):
@@ -1762,6 +1839,66 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         # check nothing has changed on db
         assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
         assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
+
+    def test_set_application_company_details_confirmed_updates_declaration(
+        self,
+        open_g8_framework_live_dos_framework_suppliers_on_framework,
+    ):
+        # -------------------------------------------------
+        # SETUP
+        supplier_framework = SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
+        ).order_by(Supplier.id.asc()).first()
+
+        contact_information = ContactInformation(
+            email='my@email.com',
+            contact_name='Sam',
+            address1='My House',
+            city='My City',
+            postcode='P0 5T'
+        )
+        db.session.add(contact_information)
+
+        supplier_framework.declaration = {'an_answer': 'Yes it is'}
+        supplier = Supplier.query.filter(Supplier.supplier_id == supplier_framework.supplier_id).first()
+        supplier.contact_information = [contact_information]
+
+        db.session.add(supplier_framework)
+        db.session.add(supplier)
+        db.session.commit()
+
+        framework_interest = self.client.get(
+            '/suppliers/{}/frameworks/{}'.format(
+                supplier_framework.supplier_id, supplier_framework.framework.slug,
+            )
+        )
+
+        assert json.loads(framework_interest.get_data(as_text=True))['frameworkInterest']['declaration'] == {
+            'an_answer': 'Yes it is'
+        }
+
+        # ENDPOINT UNDER TEST
+        response = self.supplier_framework_interest(
+            {'supplierId': supplier_framework.supplier_id, 'frameworkSlug': supplier_framework.framework.slug},
+            {'applicationCompanyDetailsConfirmed': True}
+        )
+
+        # ASSERTIONS
+        assert response.status_code == 200
+
+        framework_interest = self.client.get(
+            '/suppliers/{}/frameworks/{}'.format(
+                supplier_framework.supplier_id, supplier_framework.framework.slug
+            )
+        )
+
+        assert json.loads(framework_interest.get_data(as_text=True))['frameworkInterest']['declaration'] == {
+            'an_answer': 'Yes it is',
+            'supplierRegisteredBuilding': 'My House',
+            'supplierRegisteredPostcode': 'P0 5T',
+            'supplierRegisteredTown': 'My City',
+            'supplierTradingName': 'Supplier 1',
+        }
 
 
 class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
@@ -2033,8 +2170,7 @@ class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
         }
 
 
-class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
-
+class TestSuppliersExport(BaseApplicationTest, FixtureMixin, PutDeclarationAndDetailsAndServicesMixin):
     framework_slug = None
     updater_json = None
 
@@ -2066,73 +2202,12 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
         self._set_framework_status(status)
         return self._return_suppliers_export()
 
-    def _register_supplier_with_framework(self):
-        response = self.client.put(
-            '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-        assert response.status_code == 201
-
     def _setup_supplier_on_framework(self, post_supplier=True, register_supplier_with_framework=True):
         if post_supplier:
             # set the supplier_id to the id of the last supplier created
             self.supplier_id = self.setup_dummy_suppliers(2)[-1]
         if register_supplier_with_framework:
             self._register_supplier_with_framework()
-
-    def _post_complete_draft_service(self):
-        payload = load_example_listing("DOS-digital-specialist")
-
-        self.draft_json = {'services': payload}
-        self.draft_json['services']['supplierId'] = self.supplier_id
-        self.draft_json['services']['frameworkSlug'] = self.framework_slug
-        self.draft_json.update(self.updater_json)
-
-        response = self.client.post(
-            '/draft-services',
-            data=json.dumps(self.draft_json),
-            content_type='application/json')
-
-        assert response.status_code == 201
-
-        draft_id = json.loads(response.get_data())['services']['id']
-        complete = self.client.post(
-            '/draft-services/{}/complete'.format(draft_id),
-            data=json.dumps(self.updater_json),
-            content_type='application/json')
-
-        assert complete.status_code == 200
-
-    def _put_declaration(self, status):
-        data = {'declaration': {'status': status}}
-        data.update(self.updater_json)
-
-        response = self.client.put(
-            '/suppliers/{}/frameworks/{}/declaration'.format(self.supplier_id, self.framework_slug),
-            data=json.dumps(data),
-            content_type='application/json')
-
-        assert response.status_code == 201
-
-    def _put_complete_declaration(self):
-        self._put_declaration(status='complete')
-
-    def _put_incomplete_declaration(self):
-        self._put_declaration(status='started')
-
-    def _post_company_details_confirmed(self):
-        response = self.client.post(
-            f'/suppliers/{self.supplier_id}',
-            data=json.dumps({
-                "updated_by": "Miss Fig",
-                "suppliers": {
-                    "companyDetailsConfirmed": True
-                }
-            }),
-            content_type='application/json',
-        )
-
-        assert response.status_code == 200
 
     def _post_framework_application_result(self, result):
         data = {'frameworkInterest': {'onFramework': result}, 'updated_by': 'The Great Suprendo'}
@@ -2141,36 +2216,6 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin):
             '/suppliers/{}/frameworks/{}'.format(self.supplier_id, self.framework_slug),
             data=json.dumps(data),
             content_type='application/json')
-        assert response.status_code == 200
-
-    def _create_and_sign_framework_agreement(self):
-        response = self.client.post(
-            '/agreements',
-            data=json.dumps(
-                {
-                    'updated_by': 'interested@example.com',
-                    'agreement': {
-                        'supplierId': self.supplier_id,
-                        'frameworkSlug': self.framework_slug
-                    },
-                }),
-            content_type='application/json')
-        agreement_id = json.loads(response.get_data(as_text=True))['agreement']['id']
-        self.client.post(
-            "/agreements/{}/sign".format(agreement_id),
-            data=json.dumps({'updated_by': 'interested@example.com'}),
-            content_type='application/json'
-        )
-
-    def _put_variation_agreement(self):
-        data = {"agreedVariations": {"agreedUserId": self.users[0].get("id")}}
-        data.update(self.updater_json)
-
-        response = self.client.put(
-            '/suppliers/{}/frameworks/{}/variation/1'.format(self.supplier_id, self.framework_slug),
-            data=json.dumps(data),
-            content_type='application/json')
-
         assert response.status_code == 200
 
     def test_get_response_when_no_suppliers(self):

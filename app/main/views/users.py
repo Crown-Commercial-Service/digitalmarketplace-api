@@ -11,7 +11,10 @@ from dmutils.config import convert_to_boolean
 from .. import main
 from ... import db, encryption
 from ...models import AuditEvent, BuyerEmailDomain, Framework, Service, Supplier, SupplierFramework, User
-from ...supplier_utils import check_supplier_role
+from ...supplier_utils import (
+    check_supplier_role,
+    company_details_confirmed_if_required_for_framework,
+)
 from ...utils import (
     get_json_from_request,
     get_valid_page_or_1,
@@ -344,13 +347,14 @@ def export_users_for_framework(framework_slug):
 
         # always get the declaration status
         declaration_status = sf.declaration.get('status') if sf.declaration else 'unstarted'
-        # For G10 we need to check the suppliers company detatils have been confirmed
-        comany_details_confirmed = sf.supplier.company_details_confirmed
+
+        # This `application_status` logic also exists in suppliers.export_suppliers_for_framework
         application_status = 'application' if (
             declaration_status == 'complete' and
             sf.supplier_id in suppliers_with_a_complete_service and
-            comany_details_confirmed
+            company_details_confirmed_if_required_for_framework(framework_slug, sf)
         ) else 'no_application'
+
         application_result = ''
         framework_agreement = ''
         variations_agreed = ''

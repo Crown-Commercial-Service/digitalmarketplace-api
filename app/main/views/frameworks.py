@@ -1,7 +1,7 @@
 import datetime
 
 from flask import jsonify, abort, request
-from sqlalchemy import func, orm, case, text
+from sqlalchemy import func, orm, case
 from sqlalchemy.exc import IntegrityError, DataError
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
@@ -17,7 +17,6 @@ from ...models import (
     SupplierFramework,
     User,
 )
-from ... import supplier_constants
 from ...utils import (
     get_json_from_request,
     json_has_required_keys,
@@ -135,54 +134,6 @@ def update_framework(framework_slug):
             json_framework['frameworkAgreementDetails'],
             enforce_required=True
         )
-
-    if json_framework.get('status', None) == 'pending' and framework.status != 'pending':
-        # When we set a framework to pending, we want to polyfill all supplier declarations (regardless of whether
-        # their application is 'complete' or not) with information from their supplier account. We have a set of
-        # hardcoded keys for these values. Currently these keys don't need to mean anything outside of the API, so
-        # they are defined in dm-api/app/supplier_constants. At the time this was written, it didn't seem feasible to
-        # manage this query through SQLAlchemy in an efficient (i.e. 100% server-side) manner, so we are using raw SQL.
-
-        # We pump this data into the declaration before updating the framework state, so that if for some reason the
-        # framework state fails to update, when a second attempt is made the data is overwritten. We deal with the
-        # theoretical scenario where a supplier has multiple ContactInformation entries by taking the first associated
-        # entry and using the details from that. If we add more advanced logic in the future, this will need updating.
-        statement = text(f"""
-UPDATE
-    supplier_frameworks
-SET
-    declaration = supplier_frameworks.declaration::jsonb || (
-        SELECT
-            row_to_json(data)
-        FROM
-        (
-            SELECT
-                suppliers.name AS "{supplier_constants.KEY_TRADING_NAME}",
-                suppliers.registered_name AS "{supplier_constants.KEY_REGISTERED_NAME}",
-                COALESCE(suppliers.companies_house_number,
-                         suppliers.other_company_registration_number) AS "{supplier_constants.KEY_REGISTRATION_NUMBER}",
-                suppliers.duns_number AS "{supplier_constants.KEY_DUNS_NUMBER}",
-                suppliers.vat_number AS "{supplier_constants.KEY_VAT_NUMBER}",
-                suppliers.trading_status AS "{supplier_constants.KEY_TRADING_STATUS}",
-                suppliers.organisation_size AS "{supplier_constants.KEY_ORGANISATION_SIZE}",
-                suppliers.registration_country AS "{supplier_constants.KEY_REGISTRATION_COUNTRY}",
-                contact_information.address1 AS "{supplier_constants.KEY_REGISTRATION_BUILDING}",
-                contact_information.city AS "{supplier_constants.KEY_REGISTRATION_TOWN}",
-                contact_information.postcode AS "{supplier_constants.KEY_REGISTRATION_POSTCODE}"
-            FROM
-                suppliers
-            JOIN
-                contact_information ON suppliers.supplier_id = contact_information.supplier_id
-            WHERE
-                suppliers.supplier_id = supplier_frameworks.supplier_id
-            ORDER BY contact_information.id ASC
-            LIMIT 1
-        ) AS data
-    )::jsonb
-WHERE
-    supplier_frameworks.framework_id = :framework_id""")
-
-        db.session.execute(statement, {"framework_id": framework.id})
 
     for whitelisted_key, value in FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MAP.items():
         if whitelisted_key in json_framework:
