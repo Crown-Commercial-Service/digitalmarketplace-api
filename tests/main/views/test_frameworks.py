@@ -6,7 +6,7 @@ import mock
 from sqlalchemy.exc import IntegrityError
 
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
-from app.models import db, Framework, SupplierFramework, DraftService, User, FrameworkLot
+from app.models import db, Framework, SupplierFramework, DraftService, User, FrameworkLot, AuditEvent
 from tests.helpers import FixtureMixin
 
 from app.main.views.frameworks import FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MAP
@@ -341,7 +341,7 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
             )['frameworks']
             assert post_data == get_data
 
-    def test_adds_audit_event(self, open_example_framework):
+    def test_adds_audit_event(self, live_example_framework):
         update_response = self.post_framework_update({'status': 'expired'})
         framework_id = json.loads(update_response.data)['frameworks']['id']
 
@@ -355,8 +355,9 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
             'data': {
                 'frameworkSlug': 'example-framework',
                 'update': {
-                    'status': 'expired'
-                }
+                    'status': 'expired',
+                },
+                'framework_expires_at_utc set': "framework status set to 'expired'",
             },
             'id': mock.ANY,
             'links': {'self': 'http://127.0.0.1:5000/audit-events'},
@@ -470,6 +471,75 @@ class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin
 
             assert response.status_code == 400
             assert "Could not commit" in json.loads(response.get_data())["error"]
+
+    def test_timestamps_set_on_state_change_with_audit_data(self, open_example_framework):
+        updates = [
+            {'clarificationQuestionsOpen': False},
+            {'status': 'pending'},
+            {'status': 'live'},
+            {'status': 'expired'},
+        ]
+        timestamp_keys = [
+            'clarificationsCloseAtUTC',
+            'applicationsCloseAtUTC',
+            'frameworkLiveAtUTC',
+            'frameworkExpiresAtUTC'
+        ]
+        audit_data = [
+            {'clarifications_close_at_utc set': 'clarification questions closed'},
+            {'applications_close_at_utc set': "framework status set to 'pending'"},
+            {'framework_live_at_utc set': "framework status set to 'live'"},
+            {'framework_expires_at_utc set': "framework status set to 'expired'"},
+        ]
+
+        for update, timestamp_key, data in zip(updates, timestamp_keys, audit_data):
+            update_timestamp = f'{datetime.datetime.utcnow().isoformat()}Z'
+            with freeze_time(update_timestamp):
+                self.post_framework_update(update)
+
+            response = self.client.get('/frameworks/example-framework')
+            framework = json.loads(response.get_data())['frameworks']
+            assert framework[timestamp_key] == update_timestamp
+
+            audit = AuditEvent.query.all()[-1]
+            assert audit.data == {
+                'frameworkSlug': 'example-framework',
+                'update': update,
+                **data,
+            }
+
+    def test_timestamps_not_updated_if_not_change_in_state(self, open_example_framework):
+        updates = [
+            {'clarificationQuestionsOpen': False},
+            {'status': 'pending'},
+            {'status': 'live'},
+            {'status': 'expired'},
+        ]
+        timestamp_keys = [
+            'clarificationsCloseAtUTC',
+            'applicationsCloseAtUTC',
+            'frameworkLiveAtUTC',
+            'frameworkExpiresAtUTC'
+        ]
+
+        for update, timestamp_key in zip(updates, timestamp_keys):
+            # Update the framework
+            self.post_framework_update(update)
+            check_time = datetime.datetime.utcnow()
+            response = self.client.get('/frameworks/example-framework')
+            framework = json.loads(response.get_data())['frameworks']
+            timestamp = framework[timestamp_key]
+
+            # Make sure a measurable amount of time has passed since last update
+            assert datetime.datetime.utcnow() > check_time
+
+            # Update the framework again, with the same values.
+            self.post_framework_update(update)
+            response = self.client.get('/frameworks/example-framework')
+            framework = json.loads(response.get_data())['frameworks']
+
+            # Make sure the timestamp hasn't changed.
+            assert framework[timestamp_key] == timestamp
 
 
 class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
