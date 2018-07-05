@@ -15,6 +15,7 @@ class BriefResponsesService(Service):
                              BriefResponse.id,
                              BriefResponse.brief_id,
                              BriefResponse.supplier_code,
+                             BriefResponse.data['respondToEmailAddress'].label('respondToEmailAddress'),
                              Supplier.name.label('supplier_name'))
             .join(Supplier)
             .filter(

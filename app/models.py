@@ -2176,9 +2176,21 @@ class BriefResponse(db.Model):
             pass
 
         # if the UI is sending back the dayRate. remove it from data
-        if self.brief.lot.slug == 'digital-outcome':
+        if self.brief.lot.slug == 'digital-outcome' or self.brief.lot.slug == 'training':
             self.data = drop_foreign_fields(self.data, [
                 'dayRate'
+            ])
+
+        # remove the training specific fields for non training briefs
+        if not self.brief.lot.slug == 'training':
+            self.data = drop_foreign_fields(self.data, [
+                'respondToPhone'
+            ])
+
+        # remove the uploaded docs field for outcomes
+        if self.brief.lot.slug == 'digital-outcome':
+            self.data = drop_foreign_fields(self.data, [
+                'attachedDocumentURL'
             ])
 
         errs = get_validation_errors(
@@ -2189,6 +2201,7 @@ class BriefResponse(db.Model):
         )
 
         if (
+            self.brief.lot.slug != 'training' and
             'essentialRequirements' not in errs and
             len(filter(None, self.data.get('essentialRequirements', []))) !=
             len(self.brief.data['essentialRequirements'])

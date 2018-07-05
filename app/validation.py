@@ -31,6 +31,7 @@ SCHEMA_NAMES = [
     'brief-responses-digital-service-professionals-digital-outcome',
     'brief-responses-digital-marketplace-digital-professionals',
     'brief-responses-digital-marketplace-digital-outcome',
+    'brief-responses-digital-marketplace-training',
     'services-g-cloud-4',
     'services-g-cloud-5',
     'services-g-cloud-6-iaas',

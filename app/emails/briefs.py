@@ -10,8 +10,12 @@ import rollbar
 
 
 def send_brief_response_received_email(supplier, brief, brief_response):
-    TEMPLATE_FILENAME = 'brief_response_submitted_outcome.md' if brief.lot.slug == 'digital-outcome' \
-        else 'brief_response_submitted.md'
+    if brief.lot.slug == 'digital-outcome':
+        TEMPLATE_FILENAME = 'brief_response_submitted_outcome.md'
+    elif brief.lot.slug == 'training':
+        TEMPLATE_FILENAME = 'brief_response_submitted_training.md'
+    else:
+        TEMPLATE_FILENAME = 'brief_response_submitted.md'
 
     to_address = brief_response.data['respondToEmailAddress']
     specialist_name = brief_response.data.get('specialistName', None)
@@ -21,17 +25,21 @@ def send_brief_response_received_email(supplier, brief, brief_response):
         '/api/2/brief/' + str(brief.id) + '/respond/documents/' + str(supplier.code) + '/'
 
     ess = ""
-    i = 0
-    for req in brief.data['essentialRequirements']:
-        ess += "####• {}\n{}\n\n".format(req, brief_response.data['essentialRequirements'][i])
-        i += 1
+    if brief_response.data.get('essentialRequirements', None):
+        i = 0
+        for req in brief.data['essentialRequirements']:
+            ess += "####• {}\n{}\n\n".format(req, brief_response.data['essentialRequirements'][i])
+            i += 1
     nth = ""
-    i = 0
-    for req in brief.data['niceToHaveRequirements']:
-        nth += "####• {}\n{}\n\n".format(req,
-                                           brief_response.data.get('niceToHaveRequirements', [])[i]
-                                           if i < len(brief_response.data.get('niceToHaveRequirements', [])) else '')
-        i += 1
+    if brief_response.data.get('niceToHaveRequirements', None):
+        i = 0
+        for req in brief.data['niceToHaveRequirements']:
+            nth += "####• {}\n{}\n\n".format(
+                req,
+                brief_response.data.get('niceToHaveRequirements', [])[i]
+                if i < len(brief_response.data.get('niceToHaveRequirements', [])) else ''
+            )
+            i += 1
 
     attachments = ""
     for attch in brief_response.data.get('attachedDocumentURL', []):

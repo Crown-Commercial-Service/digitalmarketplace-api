@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "availability": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "attachedDocumentURL": {
+      "items": {
+        "minLength": 0,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "respondToEmailAddress": {
+      "format": "email",
+      "minLength": 1,
+      "pattern": "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$)",
+      "type": "string"
+    },
+    "respondToPhone": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "availability",
+    "respondToEmailAddress",
+    "respondToPhone"
+  ],
+  "sections": [
+    {
+      "name": "Apply for this opportunity",
+      "optional": [],
+      "required": [
+        "availability",
+        "respondToEmailAddress",
+        "respondToPhone",
+        "attachedDocumentURL"
+      ]
+    }
+  ],
+    "title": "Training Brief Response Schema",
+    "type": "object"
+}
+  
