@@ -36,6 +36,30 @@
     },
     {
       "required": [
+        "dataArchitectLocations",
+        "dataArchitectPriceMax",
+        "dataArchitectPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "dataEngineerLocations",
+        "dataEngineerPriceMax",
+        "dataEngineerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "dataScientistLocations",
+        "dataScientistPriceMax",
+        "dataScientistPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
         "deliveryManagerLocations",
         "deliveryManagerPriceMax",
         "deliveryManagerPriceMin"
@@ -187,6 +211,42 @@
     "contentDesignerPriceMin": [
       "contentDesignerLocations",
       "contentDesignerPriceMax"
+    ],
+    "dataArchitectLocations": [
+      "dataArchitectPriceMax",
+      "dataArchitectPriceMin"
+    ],
+    "dataArchitectPriceMax": [
+      "dataArchitectLocations",
+      "dataArchitectPriceMin"
+    ],
+    "dataArchitectPriceMin": [
+      "dataArchitectLocations",
+      "dataArchitectPriceMax"
+    ],
+    "dataEngineerLocations": [
+      "dataEngineerPriceMax",
+      "dataEngineerPriceMin"
+    ],
+    "dataEngineerPriceMax": [
+      "dataEngineerLocations",
+      "dataEngineerPriceMin"
+    ],
+    "dataEngineerPriceMin": [
+      "dataEngineerLocations",
+      "dataEngineerPriceMax"
+    ],
+    "dataScientistLocations": [
+      "dataScientistPriceMax",
+      "dataScientistPriceMin"
+    ],
+    "dataScientistPriceMax": [
+      "dataScientistLocations",
+      "dataScientistPriceMin"
+    ],
+    "dataScientistPriceMin": [
+      "dataScientistLocations",
+      "dataScientistPriceMax"
     ],
     "deliveryManagerLocations": [
       "deliveryManagerPriceMax",
@@ -473,8 +533,101 @@
       "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
+    "dataArchitectLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataArchitectPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "dataArchitectPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "dataEngineerLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataEngineerPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "dataEngineerPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
     "dataProtocols": {
       "type": "boolean"
+    },
+    "dataScientistLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataScientistPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "dataScientistPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
     },
     "deliveryManagerLocations": {
       "items": {
