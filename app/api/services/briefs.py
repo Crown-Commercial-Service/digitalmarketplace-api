@@ -80,13 +80,15 @@ class BriefsService(Service):
 
         return [r._asdict() for r in results]
 
-    def get_briefs_by_filters(self, status=None, open_to=None, brief_type=None):
+    def get_briefs_by_filters(self, status=None, open_to=None, brief_type=None, location=None):
         status = status or []
         open_to = open_to or []
         brief_type = brief_type or []
+        location = location or []
         status_filters = [x for x in status if x in ['live', 'closed']]
         open_to_filters = [x for x in open_to if x in ['all', 'selected', 'one']]
         brief_type_filters = [x for x in brief_type if x in ['innovation', 'outcomes', 'training', 'specialists']]
+        location_filters = [x for x in location if x in ['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA', 'Remote']]
 
         query = (db.session
                    .query(Brief.id, Brief.data['title'].astext.label('name'), Brief.closed_at,
@@ -110,6 +112,21 @@ class BriefsService(Service):
             cond = or_(*[Brief.data['sellerSelector'].astext == switcher.get(x) for x in open_to_filters])
             query = query.filter(cond)
 
+        if location_filters:
+            switcher = {
+                'ACT': 'Australian Capital Territory',
+                'NSW': 'New South Wales',
+                'NT': 'Northern Territory',
+                'QLD': 'Queensland',
+                'SA': 'South Australia',
+                'TAS': 'Tasmania',
+                'VIC': 'Victoria',
+                'WA': 'Western Australia',
+                'Remote': 'Offsite'
+            }
+            cond = or_(*[Brief.data['location'].astext.contains(switcher.get(x)) for x in location_filters])
+            query = query.filter(cond)
+
         if brief_type_filters:
             switcher = {
                 'innovation': '0',
@@ -119,12 +136,16 @@ class BriefsService(Service):
             }
             lot_cond = or_(*[Brief._lot_id == switcher.get(x) for x in brief_type_filters])
 
-            # this is a list of historic prod brief ids we want to show when the training filter is active
             if 'training' in brief_type_filters:
+                # this is a list of historic prod brief ids we want to show when the training filter is active
                 training_ids = [105, 183, 205, 215, 217, 292, 313, 336, 358, 438, 477, 498, 535, 577, 593, 762,
-                                864, 868, 886, 907, 933, 1029, 1136, 1164]
+                                864, 868, 886, 907, 933, 1029, 1136, 1164, 1310, 1443]
                 ids_cond = or_(Brief.id.in_(training_ids))
-                cond = or_(lot_cond, ids_cond)
+
+                # we also want specialist briefs with a area of expertise of 'Training, Learning and Development'
+                aoe_cond = or_(Brief.data['areaOfExpertise'].astext == 'Training, Learning and Development')
+
+                cond = or_(lot_cond, ids_cond, aoe_cond)
                 query = query.filter(cond)
             else:
                 query = query.filter(lot_cond)

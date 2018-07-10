@@ -63,11 +63,13 @@ def get_opportunities():
     status_filters = request.args.get('statusFilters') or ''
     open_to_filters = request.args.get('openToFilters') or ''
     type_filters = request.args.get('typeFilters') or ''
+    location_filters = request.args.get('locationFilters') or ''
 
     opportunities = briefs.get_briefs_by_filters(
         status=status_filters.split(','),
         open_to=open_to_filters.split(','),
-        brief_type=type_filters.split(',')
+        brief_type=type_filters.split(','),
+        location=location_filters.split(',')
     )
 
     return jsonify({'opportunities': opportunities})
