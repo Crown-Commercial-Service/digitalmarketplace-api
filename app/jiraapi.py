@@ -281,13 +281,29 @@ class MarketplaceJIRA(object):
             issuetype_name=issuetype_name,
             labels=[application.type] if application.type else []
         )
-
-        new_issue = self.generic_jira.create_issue(**details)
-        new_issue.update({
-            self.jira_field_codes['APPLICATION_FIELD_CODE']: str(application.id),
-            self.jira_field_codes['SUPPLIER_FIELD_CODE']: str(application.supplier_code)
-            if application.supplier_code else str(0)
-        })
+        existing_issues = self.generic_jira.jira.search_issues('"Marketplace Application ID" ~ "{}" '
+                                                               'AND issuetype = "{}"'
+                                                               .format(str(application.id), issuetype_name))
+        if len(existing_issues) > 0 and application.type == 'new':
+            new_issue = existing_issues[0]
+            if closing_date is None:
+                duedate = pendulum.now().add(weeks=2).to_date_string()
+            else:
+                duedate = pendulum.from_format(closing_date, '%Y-%m-%d').subtract(days=3).to_date_string()
+            new_issue.update({
+                'summary': summary,
+                'duedate': duedate,
+                self.jira_field_codes['SUPPLIER_FIELD_CODE']: str(application.supplier_code)
+                if application.supplier_code else str(0)
+            })
+            if new_issue.fields.status.name == 'Closed':
+                self.generic_jira.jira.transition_issue(new_issue, 'Reopen')
+        else:
+            new_issue = self.generic_jira.create_issue(**details)
+            new_issue.update({self.jira_field_codes['APPLICATION_FIELD_CODE']: str(application.id),
+                              self.jira_field_codes['SUPPLIER_FIELD_CODE']: str(application.supplier_code)
+                              if application.supplier_code else str(0)
+                              })
 
         steps = application.data.get('steps', None)
         if (application.type == 'edit' and
