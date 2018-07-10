@@ -1,7 +1,7 @@
 from datetime import datetime
 from dmapiclient.audit import AuditTypes
 from sqlalchemy import func
-from sqlalchemy.orm import lazyload
+from sqlalchemy.orm import lazyload, noload
 from sqlalchemy.exc import IntegrityError, DataError
 from flask import jsonify, abort, request, current_app
 
@@ -136,6 +136,15 @@ def list_users():
             abort(404, "application_id '{}' not found".format(application_id))
 
         user_query = user_query.filter(User.application_id == application_id)
+
+    # simple means we don't load the relationships
+    if request.args.get('simple'):
+        user_query = (
+            user_query
+            .options(noload('supplier'))
+            .options(noload('application'))
+            .options(noload('frameworks'))
+        )
 
     users = user_query.paginate(
         page=page,
