@@ -26,37 +26,29 @@ class TestProjects(BaseApplicationTest, FixtureMixin):
         assert project.locked_at is None
         assert project.active is True
 
-    def test_serialize_project_contains_required_keys(self):
+    @pytest.mark.parametrize('with_users', ((True,), (False,),))
+    def test_serialize_project_contains_required_keys(self, with_users):
         self.setup_dummy_user(role='buyer')
 
         project = DirectAwardProject(name=DIRECT_AWARD_PROJECT_NAME, users=User.query.all())
         db.session.add(project)
         db.session.commit()
 
-        serialized_project = project.serialize()
+        serialized_project = project.serialize(with_users=with_users)
         project_keys_set = set(serialized_project.keys())
-        assert {'id', 'name', 'createdAt', 'lockedAt', 'active'} <= project_keys_set
+
+        expected_keys = {'id', 'name', 'createdAt', 'lockedAt', 'active', 'outcome', 'downloadedAt', 'readyToAssessAt',
+                         'stillAssessingAt'}
+        if with_users:
+            expected_keys.add('users')
+
+        assert project_keys_set == expected_keys
         assert serialized_project['id'] == project.external_id
 
-        # We aren't serializing with_users=True, so we better not get them.
-        assert 'users' not in project_keys_set
-
-    def test_serialize_project_includes_users_if_requested(self):
-        self.setup_dummy_user(role='buyer')
-
-        project = DirectAwardProject(name=DIRECT_AWARD_PROJECT_NAME, users=User.query.all())
-        db.session.add(project)
-        db.session.commit()
-
-        serialized_project = project.serialize(with_users=True)
-        project_keys_set = set(serialized_project.keys())
-        # Must send at least these keys.
-        assert {'id', 'name', 'createdAt', 'lockedAt', 'active', 'users'} <= project_keys_set
-        assert serialized_project['id'] == project.external_id
-
-        # Must send these keys exactly - don't want to unknowingly expose more info.
-        for user in serialized_project['users']:
-            assert {'active', 'emailAddress', 'id', 'name', 'role'} == set(user.keys())
+        if with_users:
+            # Must send these keys exactly - don't want to unknowingly expose more info.
+            for user in serialized_project['users']:
+                assert {'active', 'emailAddress', 'id', 'name', 'role'} == set(user.keys())
 
     def test_create_new_project_creates_project_users(self):
         self.setup_dummy_user(role='buyer')

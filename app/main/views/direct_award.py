@@ -170,6 +170,11 @@ def update_project(project_external_id):
             abort(400, "Cannot update stillAssessing when an outcome is present")
         project.still_assessing_at = uniform_now
 
+    if project_json.get('readyToAssess') and project.ready_to_assess_at is None:
+        if project.outcome:
+            abort(400, "Cannot update readyToAssess when an outcome is present")
+        project.ready_to_assess_at = uniform_now
+
     update_audit_event = AuditEvent(
         audit_type=AuditTypes.update_project,
         user=updater_json['updated_by'],
