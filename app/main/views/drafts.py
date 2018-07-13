@@ -87,7 +87,8 @@ def copy_draft_service_from_existing_service(service_id):
         user=updater_json['updated_by'],
         data={
             "draftId": draft.id,
-            "serviceId": service_id
+            "serviceId": service_id,
+            "supplierId": draft.supplier_id,
         },
         db_object=draft
     )
@@ -170,7 +171,8 @@ def copy_published_from_framework(framework_slug, lot_slug):
             user=updater_json['updated_by'],
             data={
                 "draftId": draft.id,
-                "serviceId": service.id
+                "serviceId": service.id,
+                "supplierId": supplier_id,
             },
             db_object=draft
         )
@@ -219,7 +221,8 @@ def edit_draft_service(draft_id):
         data={
             "draftId": draft_id,
             "serviceId": draft.service_id,
-            "updateJson": update_json
+            "updateJson": update_json,
+            "supplierId": draft.supplier_id,
         },
         db_object=draft
     )
@@ -313,7 +316,8 @@ def delete_draft_service(draft_id):
         user=updater_json['updated_by'],
         data={
             "draftId": draft_id,
-            "serviceId": draft.service_id
+            "serviceId": draft.service_id,
+            "supplierId": draft.supplier_id,
         },
         db_object=None
     )
@@ -430,6 +434,7 @@ def create_new_draft_service():
             user=updater_json['updated_by'],
             data={
                 "draftId": draft.id,
+                "supplierId": draft.supplier_id,
                 "draftJson": draft_json,
             },
             db_object=draft
@@ -463,7 +468,8 @@ def complete_draft_service(draft_id):
             audit_type=AuditTypes.complete_draft_service,
             user=updater_json['updated_by'],
             data={
-                "draftId": draft.id
+                "draftId": draft.id,
+                "supplierId": draft.supplier_id,
             },
             db_object=draft
         )
@@ -501,7 +507,8 @@ def update_draft_service_status(draft_id):
             user=updater_json['updated_by'],
             data={
                 "draftId": draft.id,
-                "status": new_status
+                "status": new_status,
+                "supplierId": draft.supplier_id,
             },
             db_object=draft
         )
@@ -535,6 +542,7 @@ def copy_draft_service(draft_id):
             data={
                 "draftId": draft_copy.id,
                 "originalDraftId": original_draft.id,
+                "supplierId": draft_copy.supplier_id,
             },
             db_object=draft_copy
         )
