@@ -119,7 +119,7 @@ class TestIndexObject(BaseApplicationTest):
         index_object('g-cloud-9', 'services', 123, {'serialized': 'object'})
 
         current_app.logger.warning.assert_called_once_with(
-            'Failed to add services object with id 123 to g-cloud-9 index: Request failed'
+            'Failed to add services object with id 123 to g-cloud-9 index: Unknown request failure in dmapiclient'
         )
 
 
