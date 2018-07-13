@@ -47,6 +47,9 @@ class Config:
         'g-cloud-9': {
             'services': 'g-cloud-9'
         },
+        'g-cloud-10': {
+            'services': 'g-cloud-10'
+        },
         'digital-outcomes-and-specialists': {
             'briefs': 'briefs-digital-outcomes-and-specialists'
         },
