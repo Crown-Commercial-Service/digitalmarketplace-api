@@ -1571,7 +1571,8 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
         assert data['auditEvents'][1]['type'] == 'create_draft_service'
         assert data['auditEvents'][1]['data'] == {
             'draftId': draft_id,
-            'originalDraftId': self.draft_id
+            'originalDraftId': self.draft_id,
+            'supplierId': 1,
         }
 
     def test_should_not_create_draft_with_invalid_data(self):
@@ -1676,6 +1677,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
         assert data['auditEvents'][1]['type'] == 'complete_draft_service'
         assert data['auditEvents'][1]['data'] == {
             'draftId': self.draft_id,
+            'supplierId': 1,
         }
 
     def test_should_not_complete_draft_without_updated_by(self):
@@ -2041,7 +2043,9 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
         assert data['auditEvents'][1]['user'] == 'joeblogs'
         assert data['auditEvents'][1]['type'] == 'update_draft_service_status'
         assert data['auditEvents'][1]['data'] == {
-            'draftId': self.draft_id, 'status': 'failed'
+            'draftId': self.draft_id,
+            'status': 'failed',
+            'supplierId': 1,
         }
 
     def test_should_not_update_draft_status_to_invalid_status(self):
