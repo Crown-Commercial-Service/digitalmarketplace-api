@@ -301,17 +301,19 @@ class TestContactInformation(BaseApplicationTest):
         assert self.contact_information.city == '<removed>'
         assert self.contact_information.postcode == '<removed>'
 
-    def test_cannot_change_object_once_personal_data_removed(self):
+    def test_can_change_object_once_personal_data_removed(self):
         self.contact_information.remove_personal_data()
         db.session.add(self.contact_information)
         db.session.commit()
 
-        with pytest.raises(ValidationError) as e:
-            self.contact_information.contact_name = 'Cannot change this value'
-            db.session.add(self.contact_information)
-            db.session.commit()
+        self.contact_information.contact_name = 'Can change this value'
+        db.session.add(self.contact_information)
+        db.session.commit()
 
-        assert str(e.value) == 'Cannot update an object once personal data has been removed'
+        assert (
+            ContactInformation.query.filter(ContactInformation.id == self.contact_information.id).first().contact_name
+            == 'Can change this value'
+        )
 
 
 class TestFrameworks(BaseApplicationTest):

@@ -77,23 +77,6 @@ class RemovePersonalDataModelMixin:
         """
         pass
 
-    @staticmethod
-    def validate_personal_data_removed(mapper, connection, instance):
-        # """The only time we should be able to update an object with """
-        session = object_session(instance)
-        model_class = instance.__class__
-        if session.query(model_class.personal_data_removed).filter(model_class.id == instance.id).scalar():
-            raise ValidationError("Cannot update an object once personal data has been removed")
-
-
-listen(
-    RemovePersonalDataModelMixin,
-    'before_update',
-    RemovePersonalDataModelMixin.validate_personal_data_removed,
-    propagate=True,
-    active_history=True
-)
-
 
 class FrameworkLot(db.Model):
     __tablename__ = 'framework_lots'
@@ -985,6 +968,21 @@ class User(db.Model, RemovePersonalDataModelMixin):
         self.failed_login_count = 0
         self.password = encryption.hashpw(str(uuid4()))
         self.user_research_opted_in = False
+
+    @staticmethod
+    def validate_personal_data_removed(mapper, connection, instance):
+        """The only time we should be able to update an object with """
+        session = object_session(instance)
+        if session.query(User.personal_data_removed).filter(User.id == instance.id).scalar():
+            raise ValidationError("Cannot update an object once personal data has been removed")
+
+
+listen(
+    User,
+    'before_update',
+    User.validate_personal_data_removed,
+    propagate=True,
+)
 
 
 class ServiceTableMixin(object):
