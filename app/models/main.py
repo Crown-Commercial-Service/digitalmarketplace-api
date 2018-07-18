@@ -982,6 +982,7 @@ class User(db.Model, RemovePersonalDataModelMixin):
         self.name = '<removed>'
         self.phone_number = '<removed>'
 
+        self.failed_login_count = 0
         self.password = encryption.hashpw(str(uuid4()))
         self.user_research_opted_in = False
 

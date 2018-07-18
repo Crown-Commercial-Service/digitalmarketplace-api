@@ -1310,7 +1310,7 @@ class TestUsersRemovePersonalData(BaseUserTest):
             role=role,
             password='password',
             active=True,
-            failed_login_count=0,
+            failed_login_count=3,
             created_at=now,
             updated_at=now,
             password_changed_at=now,
@@ -1332,6 +1332,7 @@ class TestUsersRemovePersonalData(BaseUserTest):
         assert data['users']['emailAddress'] == '<removed><111>@digital.cabinet-office.gov.uk'
         assert data['users']['userResearchOptedIn'] is False
         assert data['users']['personalDataRemoved'] is True
+        assert data['users']['failedLoginCount'] is 0
 
     @mock.patch('app.models.main.uuid4', return_value='111')
     def test_remove_buyer_user_personal_data(self, uuid4):
@@ -1369,6 +1370,7 @@ class TestUsersRemovePersonalData(BaseUserTest):
         assert data['users']['emailAddress'] == '<removed><111>@digital.cabinet-office.gov.uk'
         assert data['users']['userResearchOptedIn'] is False
         assert data['users']['personalDataRemoved'] is True
+        assert data['users']['failedLoginCount'] is 0
 
     @mock.patch('app.models.main.uuid4', return_value='111')
     def test_remove_supplier_user_personal_data(self, uuid4):
@@ -1410,6 +1412,7 @@ class TestUsersRemovePersonalData(BaseUserTest):
         assert data['users']['emailAddress'] == '<removed>@111.com'
         assert data['users']['userResearchOptedIn'] is False
         assert data['users']['personalDataRemoved'] is True
+        assert data['users']['failedLoginCount'] is 0
 
     @mock.patch('app.models.main.uuid4', return_value='111')
     @pytest.mark.parametrize('role', set(User.ROLES) - {'supplier', 'buyer'})
