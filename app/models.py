@@ -675,6 +675,9 @@ class Supplier(db.Model):
             .filter(Supplier.id == self.id, Domain.name == name).first()
 
         if sd:
+            if sd.recruiter_info:
+                db.session.delete(sd.recruiter_info)
+
             db.session.delete(sd)
             db.session.flush()
 

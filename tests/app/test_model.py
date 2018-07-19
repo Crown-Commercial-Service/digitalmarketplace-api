@@ -1,39 +1,25 @@
+import json
 from datetime import datetime as builtindatetime
 
+import mock
+import pendulum
+import pytest
+from nose.tools import assert_equal, assert_raises
 from pendulum import create as datetime
 from pendulum import interval
-
-import json
-import mock
-import pytest
 from pytest import raises
-from nose.tools import assert_equal, assert_raises
-from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.exc import DataError, IntegrityError
 
-from app import db, create_app
+from app import create_app, db
+from app.datetime_utils import naive, utcnow
+from app.models import (Address, Agreement, Application, Brief,
+                        BriefClarificationQuestion, BriefResponse, Domain,
+                        Framework, Lot, Product, RecruiterInfo, Service,
+                        SignedAgreement, Supplier, SupplierDomain,
+                        SupplierFramework, User, ValidationError, WorkOrder)
 
-from app.models import (
-    User, Lot, Framework, Service,
-    Supplier, SupplierFramework,
-    SupplierDomain, Domain, Product,
-    Brief, BriefResponse,
-    Address, ValidationError,
-    BriefClarificationQuestion,
-    WorkOrder, ServiceCategory, ServiceRole, Application,
-    Agreement, SignedAgreement
-)
-
-from app.datetime_utils import naive
-
-from .helpers import BaseApplicationTest, INCOMING_APPLICATION_DATA, setup_dummy_user
-
-import pendulum
-
-from app.datetime_utils import utcnow
-
-from itertools import product
-
-from pytest import raises
+from .helpers import (INCOMING_APPLICATION_DATA, BaseApplicationTest,
+                      setup_dummy_user)
 
 
 def naive_datetime(*args, **kwargs):
@@ -1352,3 +1338,41 @@ class TestApplication(BaseApplicationTest):
                  'signed_at': now,
                  'url': 'http://url',
                  'version': 'Marketplace Agreement 2.0'}
+
+
+class TestSuppliers(BaseApplicationTest):
+    def setup(self):
+        super(TestSuppliers, self).setup()
+
+    @pytest.fixture()
+    def supplier(self):
+        self.setup()
+        with self.app.app_context():
+            self.setup_dummy_suppliers(1)
+            supplier = Supplier.query.first()
+            supplier.is_recruiter = True
+
+            recruiter_info = RecruiterInfo(
+                id=1, active_candidates=12, database_size=34, placed_candidates=56, margin='10%', markup='10%'
+            )
+
+            db.session.add(recruiter_info)
+            supplier_domain = SupplierDomain(
+                supplier=supplier,
+                domain=Domain.get_by_name_or_id('Data science'),
+                status='unassessed',
+                recruiter_info=recruiter_info
+            )
+
+            db.session.add(supplier_domain)
+            db.session.commit()
+            yield supplier
+
+    def test_recruiter_info_is_deleted_when_domain_is_removed(self, supplier):
+        supplier.remove_domain('Data science')
+        supplier_domain = SupplierDomain.query.first()
+        recruiter_info = RecruiterInfo.query.first()
+
+        assert supplier_domain is None
+        assert recruiter_info is None
+        assert len(supplier.domains) == 0
