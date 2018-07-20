@@ -219,8 +219,10 @@ def applications_list_response(with_task_status=False, status=None):
 
 
 def format_applications(applications, with_task_status):
-    ordering = request.args.get('order_by', 'application.created_at desc')
-    order_by = ordering.split(',')
+    if request.args.get('order_by', None) == 'application.status desc, created_at desc':
+        order_by = ['application.status desc', 'created_at desc']
+    else:
+        order_by = ['application.created_at desc']
 
     applications = applications.order_by(*order_by)
 
