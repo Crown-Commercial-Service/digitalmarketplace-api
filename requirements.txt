@@ -14,7 +14,7 @@ SQLAlchemy-Utils==0.30.5
 git+https://github.com/alphagov/Flask-FeatureFlags.git@1.0#egg=Flask-FeatureFlags==1.0
 
 git+https://github.com/alphagov/digitalmarketplace-utils.git@40.9.0#egg=digitalmarketplace-utils==40.9.0
-git+https://github.com/alphagov/digitalmarketplace-apiclient.git@18.1.0#egg=digitalmarketplace-apiclient==18.1.0
+git+https://github.com/alphagov/digitalmarketplace-apiclient.git@19.0.0#egg=digitalmarketplace-apiclient==19.0.0
 
 # For schema validation
 jsonschema==2.5.1
@@ -24,7 +24,6 @@ strict-rfc3339==0.5
 ## The following requirements were added by pip freeze:
 alembic==1.0.0
 asn1crypto==0.24.0
-backoff==1.0.7
 bcrypt==3.1.4
 boto3==1.4.8
 botocore==1.8.50
