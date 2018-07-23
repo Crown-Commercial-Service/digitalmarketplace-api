@@ -292,6 +292,8 @@ class TestContactInformation(BaseApplicationTest):
 
     def test_remove_personal_data(self):
         self.contact_information.remove_personal_data()
+        db.session.add(self.contact_information)
+        db.session.commit()
 
         assert self.contact_information.personal_data_removed
         assert self.contact_information.contact_name == '<removed>'
@@ -300,6 +302,29 @@ class TestContactInformation(BaseApplicationTest):
         assert self.contact_information.address1 == '<removed>'
         assert self.contact_information.city == '<removed>'
         assert self.contact_information.postcode == '<removed>'
+
+    def test_update_from_json_resets_remove_personal_data_flag(self):
+        """If we are using the update_from_json it is to introduce fields that should be wiped of personal data as per
+        our retention policy. An update via this method means that we are introducing personal data and that the flag
+        should be reset.
+        """
+        self.contact_information.remove_personal_data()
+        db.session.add(self.contact_information)
+        db.session.commit()
+
+        self.contact_information.update_from_json({
+            'contactName': 'New Test Name',
+            'phoneNumber': 'New Test Number',
+            'email': 'new.test.email@example.com',
+            'address1': 'New Test address line 1',
+            'city': 'New Test City',
+            'postcode': 'T3S P05C0',
+        })
+        db.session.add(self.contact_information)
+        db.session.commit()
+
+        assert not self.contact_information.personal_data_removed
+        assert self.contact_information.phone_number == 'New Test Number'
 
     def test_can_change_object_once_personal_data_removed(self):
         self.contact_information.remove_personal_data()

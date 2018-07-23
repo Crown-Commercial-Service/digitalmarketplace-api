@@ -305,6 +305,7 @@ class ContactInformation(db.Model, RemovePersonalDataModelMixin):
                          unique=False, nullable=True)
 
     def update_from_json(self, data):
+        self.personal_data_removed = False
         self.contact_name = data.get("contactName")
         self.phone_number = data.get("phoneNumber")
         self.email = data.get("email")
