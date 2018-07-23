@@ -177,7 +177,11 @@ def send_assessment_requested_notification(assessment, requested_by):
     supplier = Supplier.query.get(assessment.supplier_domain.supplier_id)
     brief = assessment.briefs[0]
     brief_url = '{}/digital-marketplace/opportunities/{}'.format(FRONTEND_ADDRESS, brief.id)
-    brief_xls_url = '{}/digital-marketplace/opportunities/{}/response'.format(FRONTEND_ADDRESS, brief.id)
+    brief_template_file_details = 'DOCX 11KB' if brief.lot.slug == 'training' else 'XLS 130KB'
+    brief_template_url = (
+        '{}/static/media/documents/Training_opportunities_questions_for_sellers.docx'.format(FRONTEND_ADDRESS)
+        if brief.lot.slug == 'training'
+        else '{}/digital-marketplace/opportunities/{}/response'.format(FRONTEND_ADDRESS, brief.id))
     brief_deadline = df.datetimeformat(brief.applications_closed_at).replace('(', '').replace(')', '')
     email_addresses = list(set([supplier.contacts[0].email, requested_by]))
 
@@ -188,7 +192,8 @@ def send_assessment_requested_notification(assessment, requested_by):
         domain_name=assessment.supplier_domain.domain.name,
         brief_name=brief.data['title'],
         brief_url=brief_url,
-        brief_xls_url=brief_xls_url,
+        brief_template_file_details=brief_template_file_details,
+        brief_template_url=brief_template_url,
         brief_deadline=brief_deadline
     )
 
