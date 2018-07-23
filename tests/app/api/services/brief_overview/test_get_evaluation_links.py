@@ -5,7 +5,7 @@ from app.api.services import brief_overview_service
 
 @pytest.fixture()
 def evaluation_link_texts():
-    return [brief_overview_service.EVALUATION_TEMPLATE_TEXT]
+    return ['Evaluation template (XLSX 13KB)']
 
 
 def test_evaluation_section_has_all_links_for_specialist_brief(specialist_brief, evaluation_link_texts):

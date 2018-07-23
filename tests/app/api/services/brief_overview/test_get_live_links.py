@@ -6,7 +6,7 @@ from app.models import utcnow
 
 @pytest.fixture()
 def live_links():
-    return [brief_overview_service.ANSWER_QUESTION_TEXT]
+    return ['Answer a question']
 
 
 def test_live_section_has_all_links_for_published_specialist_brief(app, specialist_brief, live_links):

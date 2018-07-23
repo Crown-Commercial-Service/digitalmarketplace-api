@@ -12,7 +12,7 @@ def test_work_order_section_has_start_work_order_link_for_specialist_brief(app, 
         start_work_order_link = next(iter(links))
 
         assert start_work_order_link['path']
-        assert start_work_order_link['text'] == brief_overview_service.START_WORK_ORDER_TEXT
+        assert start_work_order_link['text'] == 'Start a work order'
 
 
 def test_work_order_section_has_edit_work_order_link_for_specialist_brief(app, specialist_brief, work_order):
@@ -26,4 +26,4 @@ def test_work_order_section_has_edit_work_order_link_for_specialist_brief(app, s
         edit_work_order_link = next(iter(links))
 
         assert edit_work_order_link['path']
-        assert edit_work_order_link['text'] == brief_overview_service.EDIT_WORK_ORDER_TEXT
+        assert edit_work_order_link['text'] == 'Edit work order'

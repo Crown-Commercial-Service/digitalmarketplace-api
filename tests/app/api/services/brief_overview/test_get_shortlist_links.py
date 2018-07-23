@@ -6,7 +6,7 @@ from app.models import utcnow
 
 @pytest.fixture()
 def shortlist_links():
-    return [brief_overview_service.VIEW_RESPONSES_TEXT]
+    return ['View responses']
 
 
 def test_shortlist_section_has_all_links_for_closed_specialist_brief(app,

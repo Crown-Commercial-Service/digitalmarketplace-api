@@ -14,6 +14,9 @@
       },
       "type": "array"
     },
+    "hasCitizenship": {
+      "type": "boolean"
+    },
     "respondToEmailAddress": {
       "format": "email",
       "minLength": 1,
@@ -32,7 +35,9 @@
   "sections": [
     {
       "name": "Apply for this opportunity",
-      "optional": [],
+      "optional": [
+        "hasCitizenship"
+      ],
       "required": [
         "availability",
         "respondToEmailAddress",

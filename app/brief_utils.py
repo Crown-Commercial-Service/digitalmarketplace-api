@@ -1,19 +1,34 @@
-import json
+# coding: utf-8
 
+import json
+import copy
 import rollbar
 from flask import abort, request
 from app.api.services import suppliers, users
 from .models import Service
 from .service_utils import filter_services
-from .validation import get_validation_errors
+from .validation import get_validation_errors, get_required_fields
 
 
 def clean_brief_data(brief):
     __del_seller_email_list(brief.data)
     __del_seller_email(brief.data)
+    __del_lds(brief)
+    __del_own_preference(brief)
+
+
+def add_defaults(brief_json):
+    if brief_json.get('lot') != 'training':
+        return
+
+    brief_json['evaluationTypeSellerSubmissions'] = ['Written proposal', 'Project costs', u'Trainer r\u00E9sum\u00E9s']
 
 
 def validate_brief_data(brief, enforce_required=True, required_fields=None):
+    required_fields = determine_required_fields(brief=brief,
+                                                enforce_required=enforce_required,
+                                                required_fields=required_fields)
+
     errs = get_validation_errors(
         'briefs-{}-{}'.format(brief.framework.slug, brief.lot.slug),
         brief.data,
@@ -31,6 +46,16 @@ def validate_brief_data(brief, enforce_required=True, required_fields=None):
     seller_email_error = check_seller_emails(brief.data, errs)
     if seller_email_error:
         for k, value in seller_email_error.iteritems():
+            errs[k] = value
+
+    lds_errors = check_lds(brief, required_fields)
+    for lds_error in lds_errors:
+        for k, value in lds_error.iteritems():
+            errs[k] = value
+
+    training_method_error = check_training_method(brief)
+    if training_method_error:
+        for k, value in training_method_error.iteritems():
             errs[k] = value
 
     if errs:
@@ -94,6 +119,54 @@ def check_seller_emails(brief_data, errs):
     return None
 
 
+# This function is only applicable for training briefs.
+# It is used to determine the required fields based on what is selected in what_training
+# and what is selected in the proposal fields.
+# This also takes into account where the user is. i.e. section, page or brief
+def determine_required_fields(brief, section=None, enforce_required=True, required_fields=None):
+    optional_fields = []
+
+    if section:
+        required_fields = copy.deepcopy(section['required'])
+        optional_fields = copy.deepcopy(section['optional'])
+    elif required_fields is not None:
+        pass
+    else:
+        required_fields = copy.deepcopy(get_required_fields(brief))
+
+    if brief.lot.name != 'Training':
+        return required_fields
+
+    brief_data = brief.data
+    for wt in [wt.lower() for wt in brief_data.get('whatTraining', [])]:
+        fields = __get_lds_fields_from_what_training(wt)
+        if wt == 'other':
+            for field in fields:
+                if (enforce_required is True or
+                        (enforce_required is False and
+                         field in required_fields or
+                         field in optional_fields)):
+                    required_fields.append(field)
+        else:
+            proposal_field = fields[0]
+            unit_field = fields[1]
+            training_need_field = fields[2]
+
+            if (enforce_required is True or
+                    (enforce_required is False and
+                     (proposal_field in required_fields or
+                      proposal_field in optional_fields))):
+                lds_radio = brief_data.get(proposal_field, None)
+                if lds_radio == 'ldsUnits':
+                    required_fields.append(unit_field)
+                elif lds_radio == 'specify':
+                    required_fields.append(training_need_field)
+                else:
+                    required_fields.append(proposal_field)
+
+    return required_fields
+
+
 def __del_seller_email(brief_data):
     seller_selector = brief_data.get('sellerSelector', None)
     seller_email = 'sellerEmail'
@@ -108,3 +181,142 @@ def __del_seller_email_list(brief_data):
     if seller_email_list_key in brief_data:
         if (seller_selector == 'oneSeller' or seller_selector == 'allSellers'):
             del brief_data[seller_email_list_key]
+
+
+def __del_own_preference(brief):
+    if brief.lot.name != 'Training':
+        return
+
+    brief_data = brief.data
+    approach_selector = brief_data.get('approachSelector', None)
+    if not approach_selector:
+        return
+
+    if approach_selector == 'open':
+        if 'trainingApproachOwn' in brief_data:
+            del brief_data['trainingApproachOwn']
+
+
+def check_training_method(brief):
+    if brief.lot.name != 'Training':
+        return
+
+    brief_data = brief.data
+    approach_selector = brief_data.get('approachSelector', None)
+    if not approach_selector:
+        return
+
+    if approach_selector == 'ownPreference':
+        if ('trainingApproachOwn' not in brief_data or
+                brief_data.get('trainingApproachOwn', None) == ''):
+            return {'trainingApproachOwn': 'answer_required'}
+
+
+def check_lds(brief, required_fields):
+    result = []
+    brief_data = brief.data
+    if brief.lot.name != 'Training':
+        return result
+
+    for what_training in [wt.lower() for wt in brief_data.get('whatTraining', [])]:
+        lds_field = __get_lds_fields_from_what_training(what_training)
+        if what_training == 'other':
+            for f in lds_field:
+                if brief_data.get(f, None) is None and f in required_fields:
+                    result.append({f: 'answer_required'})
+        else:
+            proposal_field = lds_field[0]
+            unit_field = lds_field[1]
+            training_need_field = lds_field[2]
+
+            lds_radio = brief_data.get(proposal_field, None)
+            if lds_radio:
+                if lds_radio == 'ldsUnits':
+                    if brief_data.get(unit_field, None) is None and unit_field in required_fields:
+                        result.append({unit_field: 'answer_required'})
+                elif lds_radio == 'specify':
+                    if (brief_data.get(training_need_field, None) is None and
+                            training_need_field in required_fields):
+                        result.append({training_need_field: 'answer_required'})
+            elif proposal_field in required_fields:
+                result.append({proposal_field: 'answer_required'})
+
+    return result
+
+
+def __del_lds(brief):
+    brief_data = brief.data
+    if brief.lot.name != 'Training':
+        return
+
+    lds_values = [
+        'digital foundations',
+        'agile delivery',
+        'user research',
+        'content design',
+        'other'
+    ]
+    what_trainings = [wt.lower() for wt in brief_data.get('whatTraining', [])]
+    for lds_value in lds_values:
+        if lds_value not in what_trainings:
+            try:
+                lds_field = __get_lds_fields_from_what_training(lds_value)
+                for f in lds_field:
+                    del brief_data[f]
+            except KeyError:
+                pass
+
+    for what_training in what_trainings:
+        if what_training == 'other':
+            continue
+
+        lds_field = __get_lds_fields_from_what_training(what_training)
+        try:
+            proposal_field = lds_field[0]
+            unit_field = lds_field[1]
+            training_need_field = lds_field[2]
+
+            lds_radio = brief_data.get(proposal_field, None)
+            if lds_radio:
+                if lds_radio == 'sellerProposal':
+                    del brief_data[training_need_field]
+                    del brief_data[unit_field]
+                elif lds_radio == 'ldsUnits':
+                    del brief_data[training_need_field]
+                elif lds_radio == 'specify':
+                    del brief_data[unit_field]
+        except KeyError:
+            pass
+
+
+def __get_lds_fields_from_what_training(what_training):
+    lds_fields = {
+        'digital foundations': [
+            'ldsDigitalFoundationProposalOrLds',
+            'ldsDigitalFoundationUnits',
+            'ldsDigitalFoundationTrainingNeeds'
+        ],
+        'agile delivery': [
+            'ldsAgileDeliveryProposalOrLds',
+            'ldsAgileDeliveryUnits',
+            'ldsAgileDeliveryTrainingNeeds'
+        ],
+        'user research': [
+            'ldsUserResearchProposalOrLds',
+            'ldsUserResearchUnits',
+            'ldsUserResearchTrainingNeeds'
+        ],
+        'content design': [
+            'ldsContentDesignProposalOrLds',
+            'ldsContentDesignUnits',
+            'ldsContentDesignTrainingNeeds'
+        ],
+        'other': [
+            'trainingDetailType',
+            'trainingDetailCover'
+        ]
+    }
+    for k, v in lds_fields.iteritems():
+        if what_training.lower() == k:
+            return v
+    return None

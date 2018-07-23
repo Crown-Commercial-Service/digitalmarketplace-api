@@ -60,7 +60,8 @@ SCHEMA_NAMES = [
     'suppliers',
     'new-supplier',
     'contact-information',
-    'application'
+    'application',
+    'briefs-digital-marketplace-training'
 ]
 FORMAT_CHECKER = FormatChecker()
 
@@ -87,6 +88,12 @@ def get_sections(schema_name):
         return schema['sections']
     except KeyError as e:
         abort(500, 'Missing key: {}'.format(e.message))
+
+
+def get_required_fields(brief):
+    schema_name = 'briefs-{}-{}'.format(brief.framework.slug, brief.lot.slug)
+    schema = _SCHEMAS[schema_name]
+    return schema['required']
 
 
 def get_validator(schema_name, enforce_required=True, required_fields=None):

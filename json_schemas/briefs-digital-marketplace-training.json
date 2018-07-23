@@ -1,0 +1,523 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "additionalTerms": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
+      "type": "string"
+    },
+    "approachSelector": {
+      "enum": [
+        "open",
+        "ownPreference"
+      ]
+    },
+    "audience": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "budgetRange": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
+      "type": "string"
+    },
+    "contactNumber": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "contractLength": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
+      "type": "string"
+    },
+    "culturalFitCriteria": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "culturalWeighting": {
+      "exclusiveMaximum": false,
+      "maximum": 100,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "essentialRequirements": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "evaluationTypeSellerRequests": {
+      "items": {
+        "enum": [
+          "Case study",
+          "References",
+          "Interview",
+          "Presentation"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "evaluationTypeSellerSubmissions": {
+      "items": {
+        "enum": [
+          "Written proposal",
+          "Project costs",
+          "Trainer r\u00e9sum\u00e9s"
+        ]
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "intellectualProperty": {
+      "enum": [
+        "negotiation",
+        "commonwealth"
+      ]
+    },
+    "ldsAgileDeliveryProposalOrLds": {
+      "enum": [
+        "sellerProposal",
+        "ldsUnits",
+        "specify"
+      ]
+    },
+    "ldsAgileDeliveryTrainingNeeds": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,499}\\S+$)",
+      "type": "string"
+    },
+    "ldsAgileDeliveryUnits": {
+      "items": {
+        "enum": [
+          "Unit 1. Why Government needs agile delivery management",
+          "Unit 2. The agile mindset",
+          "Unit 3. Frameworks and practices of agile delivery",
+          "Unit 4. Tools and techniques used in agile delivery",
+          "Unit 5. Managing an agile delivery team"
+        ]
+      },
+      "maxItems": 5,
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "ldsContentDesignProposalOrLds": {
+      "enum": [
+        "sellerProposal",
+        "ldsUnits",
+        "specify"
+      ]
+    },
+    "ldsContentDesignTrainingNeeds": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,499}\\S+$)",
+      "type": "string"
+    },
+    "ldsContentDesignUnits": {
+      "items": {
+        "enum": [
+          "Unit 1: Introduction to content design\u200b",
+          "Unit 2: Content design process\u200b"
+        ]
+      },
+      "maxItems": 2,
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "ldsDigitalFoundationProposalOrLds": {
+      "enum": [
+        "sellerProposal",
+        "ldsUnits",
+        "specify"
+      ]
+    },
+    "ldsDigitalFoundationTrainingNeeds": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,499}\\S+$)",
+      "type": "string"
+    },
+    "ldsDigitalFoundationUnits": {
+      "items": {
+        "enum": [
+          "Unit 1: The Australian Government\u2019s digital service context",
+          "Unit 2: Agile and working in a multidisciplinary team\u200b",
+          "Unit 3: Working in a digital delivery team - design and delivery phases\u200b",
+          "Unit 4: Frameworks for digital services"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "ldsUserResearchProposalOrLds": {
+      "enum": [
+        "sellerProposal",
+        "ldsUnits",
+        "specify"
+      ]
+    },
+    "ldsUserResearchTrainingNeeds": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,499}\\S+$)",
+      "type": "string"
+    },
+    "ldsUserResearchUnits": {
+      "items": {
+        "enum": [
+          "Unit 1. The role of user research in the digital service design context",
+          "Unit 2. User research protocols and governance",
+          "Unit 3. User research in the different design and delivery phases",
+          "Unit 4. Methods and tools of user research",
+          "Unit 5. Conducting user research",
+          "Unit 6. Analysing and presenting user research findings"
+        ]
+      },
+      "maxItems": 6,
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "location": {
+      "items": {
+        "enum": [
+          "Australian Capital Territory",
+          "New South Wales",
+          "Northern Territory",
+          "Queensland",
+          "South Australia",
+          "Tasmania",
+          "Victoria",
+          "Western Australia",
+          "Can be delivered remotely"
+        ]
+      },
+      "maxItems": 9,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "locationCityOrRegion": {
+      "maxLength": 100,
+      "minLength": 0,
+      "type": "string"
+    },
+    "niceToHaveRequirements": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 5,
+      "minItems": 0,
+      "type": "array"
+    },
+    "numberOfSuppliers": {
+      "exclusiveMaximum": false,
+      "maximum": 15,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "organisation": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "paymentApproach": {
+      "enum": [
+        "fixedPrice",
+        "timeMaterials",
+        "cappedTimeMaterials"
+      ]
+    },
+    "paymentApproachAdditionalInformation": {
+      "minLength": 0,
+      "type": "string"
+    },
+    "priceWeighting": {
+      "exclusiveMaximum": false,
+      "maximum": 100,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "questionAndAnswerSessionDetails": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
+      "type": "string"
+    },
+    "requirementsLength": {
+      "enum": [
+        "1 week",
+        "2 weeks"
+      ]
+    },
+    "securityClearance": {
+      "maxLength": 100,
+      "minLength": 0,
+      "type": "string"
+    },
+    "sellerEmail": {
+      "format": "email",
+      "maxLength": 300,
+      "minLength": 0,
+      "pattern": "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$)",
+      "type": "string"
+    },
+    "sellerEmailList": {
+      "items": {
+        "format": "email",
+        "maxLength": 300,
+        "pattern": "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$)",
+        "type": "string"
+      },
+      "maxItems": 15,
+      "minItems": 0,
+      "type": "array"
+    },
+    "sellerSelector": {
+      "enum": [
+        "allSellers",
+        "someSellers",
+        "oneSeller"
+      ]
+    },
+    "startDate": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "summary": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "technicalWeighting": {
+      "exclusiveMaximum": false,
+      "maximum": 100,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "timeframeConstraints": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "trainingApproachOwn": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
+    "trainingDetailCover": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,499}\\S+$)",
+      "type": "string"
+    },
+    "trainingDetailType": {
+      "maxLength": 100,
+      "minLength": 0,
+      "type": "string"
+    },
+    "trainingLength": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "whatTraining": {
+      "items": {
+        "enum": [
+          "Digital foundations",
+          "Agile delivery",
+          "User research",
+          "Content design",
+          "Other"
+        ]
+      },
+      "maxItems": 5,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "whyTraining": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,499}\\S+$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "approachSelector",
+    "audience",
+    "contactNumber",
+    "culturalFitCriteria",
+    "culturalWeighting",
+    "essentialRequirements",
+    "evaluationTypeSellerRequests",
+    "evaluationTypeSellerSubmissions",
+    "intellectualProperty",
+    "location",
+    "numberOfSuppliers",
+    "organisation",
+    "paymentApproach",
+    "priceWeighting",
+    "requirementsLength",
+    "sellerSelector",
+    "startDate",
+    "summary",
+    "technicalWeighting",
+    "title",
+    "trainingLength",
+    "whatTraining",
+    "whyTraining"
+  ],
+  "sections": [
+    {
+      "editable": true,
+      "name": "Title",
+      "optional": [],
+      "required": [
+        "title"
+      ]
+    },
+    {
+      "editable": true,
+      "name": "Organisation",
+      "optional": [],
+      "required": [
+        "organisation"
+      ]
+    },
+    {
+      "editable": true,
+      "name": "Description of training",
+      "optional": [
+        "ldsDigitalFoundationProposalOrLds",
+        "ldsDigitalFoundationUnits",
+        "ldsDigitalFoundationTrainingNeeds",
+        "ldsAgileDeliveryProposalOrLds",
+        "ldsAgileDeliveryUnits",
+        "ldsAgileDeliveryTrainingNeeds",
+        "ldsUserResearchProposalOrLds",
+        "ldsUserResearchUnits",
+        "ldsUserResearchTrainingNeeds",
+        "ldsContentDesignProposalOrLds",
+        "ldsContentDesignUnits",
+        "ldsContentDesignTrainingNeeds",
+        "trainingDetailType",
+        "trainingDetailCover",
+        "trainingApproachOwn"
+      ],
+      "required": [
+        "whatTraining",
+        "whyTraining",
+        "audience",
+        "trainingLength",
+        "approachSelector"
+      ]
+    },
+    {
+      "editable": true,
+      "name": "Approach to market",
+      "optional": [
+        "sellerEmailList",
+        "sellerEmail"
+      ],
+      "required": [
+        "requirementsLength",
+        "sellerSelector",
+        "contactNumber"
+      ]
+    },
+    {
+      "editable": true,
+      "name": "Timeframes, location and budget",
+      "optional": [
+        "timeframeConstraints",
+        "locationCityOrRegion",
+        "budgetRange",
+        "paymentApproachAdditionalInformation"
+      ],
+      "required": [
+        "startDate",
+        "location",
+        "paymentApproach"
+      ]
+    },
+    {
+      "editable": true,
+      "name": "Additional information",
+      "optional": [
+        "securityClearance",
+        "contractLength",
+        "additionalTerms"
+      ],
+      "required": [
+        "intellectualProperty"
+      ]
+    },
+    {
+      "editable": true,
+      "name": "Evaluate responses",
+      "optional": [
+        "niceToHaveRequirements"
+      ],
+      "required": [
+        "numberOfSuppliers",
+        "technicalWeighting",
+        "culturalWeighting",
+        "priceWeighting",
+        "essentialRequirements",
+        "culturalFitCriteria",
+        "evaluationTypeSellerRequests"
+      ]
+    },
+    {
+      "editable": true,
+      "name": "Summary",
+      "optional": [],
+      "required": [
+        "summary"
+      ]
+    },
+    {
+      "editable": true,
+      "name": "Question and answer session details",
+      "optional": [
+        "questionAndAnswerSessionDetails"
+      ],
+      "required": []
+    },
+    {
+      "editable": false,
+      "name": "Not Editable",
+      "optional": [],
+      "required": [
+        "evaluationTypeSellerSubmissions"
+      ]
+    }
+  ],
+  "title": "Training Schema",
+  "type": "object"
+}

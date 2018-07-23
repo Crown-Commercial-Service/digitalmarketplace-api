@@ -90,6 +90,7 @@ INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (8, 'user-resea
 INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (9, 'digital-professionals', 'Digital professionals', true, '{"unitSingular": "service", "unitPlural": "services"}');
 INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (10, 'digital-outcome', 'Digital outcome', true, '{"unitSingular": "service", "unitPlural": "services"}');
 INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (11, 'orams', 'orams', true, '{"unitSingular": "service", "unitPlural": "services"}');
+INSERT INTO lot (id, slug, name, one_service_limit, data) VALUES (15, 'training', 'Training', true, '{"unitSingular": "service", "unitPlural": "services"}');
 
 
 --
@@ -121,6 +122,7 @@ INSERT INTO framework_lot (framework_id, lot_id) VALUES (6, 10);
 INSERT INTO framework_lot (framework_id, lot_id) VALUES (7, 9);
 INSERT INTO framework_lot (framework_id, lot_id) VALUES (7, 10);
 INSERT INTO framework_lot (framework_id, lot_id) VALUES (8, 11);
+INSERT INTO framework_lot (framework_id, lot_id) VALUES (7, 15);
 
 
 --

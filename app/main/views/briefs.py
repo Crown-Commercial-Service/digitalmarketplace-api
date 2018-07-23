@@ -17,7 +17,11 @@ from ...utils import (
     get_positive_int_or_400
 )
 from ...service_utils import validate_and_return_lot, filter_services
-from ...brief_utils import validate_brief_data, clean_brief_data
+from ...brief_utils import (
+    validate_brief_data,
+    clean_brief_data,
+    add_defaults
+)
 from ...datetime_utils import parse_time_of_day, combine_date_and_time
 from app.emails.briefs import send_brief_closed_email
 
@@ -33,6 +37,7 @@ def create_brief():
 
     json_has_required_keys(brief_json, ['frameworkSlug', 'lot', 'userId'])
 
+    add_defaults(brief_json)
     framework, lot = validate_and_return_lot(brief_json)
 
     if framework.status != 'live':

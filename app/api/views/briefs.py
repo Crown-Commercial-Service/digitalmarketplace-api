@@ -68,11 +68,18 @@ def _can_do_brief_response(brief_id):
                      current_user_domain.lower() != domain(brief.data['sellerEmail'].lower())):
             forbidden("Supplier not selected for this brief")
 
-    if len(supplier.frameworks) == 0 \
-            or 'digital-marketplace' != supplier.frameworks[0].framework.slug \
-            or len(supplier.assessed_domains) == 0:
-        abort("Supplier does not have Digital Marketplace framework "
-              "or does not have at least one assessed domain")
+    if (len(supplier.frameworks) == 0 or
+            'digital-marketplace' != supplier.frameworks[0].framework.slug):
+
+        abort("Supplier does not have Digital Marketplace framework")
+
+    if len(supplier.assessed_domains) == 0:
+        abort("Supplier does not have at least one assessed domain")
+    else:
+        training_lot = lots_service.find(slug='training').one_or_none()
+        if brief.lot_id == training_lot.id:
+            if 'Training, Learning and Development' not in supplier.assessed_domains:
+                abort("Supplier needs to be assessed in 'Training, Learning and Development'")
 
     lot = lots_service.first(slug='digital-professionals')
     if brief.lot_id == lot.id:
@@ -121,6 +128,11 @@ def delete_brief(brief_id):
             properties:
                 message:
                     type: string
+    parameters:
+      - name: brief_id
+        in: path
+        type: number
+        required: true
     responses:
         200:
             description: Brief deleted successfully.
@@ -234,7 +246,8 @@ def get_brief_overview(brief_id):
         if current_user.id not in brief_user_ids:
             return forbidden('Unauthorised to view brief')
 
-    if brief.lot.slug != 'digital-professionals':
+    if not (brief.lot.slug == 'digital-professionals' or
+            brief.lot.slug == 'training'):
         abort('Lot {} is not supported'.format(brief.lot.slug))
 
     sections = brief_overview_service.get_sections(brief)
