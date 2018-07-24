@@ -88,7 +88,7 @@ def send_approval_notification(application_id):
 
     url_sellers_guide = FRONTEND_ADDRESS + '/sellers-guide'
     url_assessments = FRONTEND_ADDRESS + '/sellers-guide#assessments'
-    url_latest_opportunities = FRONTEND_ADDRESS + '/digital-marketplace/opportunities'
+    url_latest_opportunities = FRONTEND_ADDRESS + '/2/opportunities'
     url_seller_page = FRONTEND_ADDRESS + '/supplier/' + str(application.supplier.code)
 
     # prepare copy
@@ -146,7 +146,7 @@ def send_assessment_approval_notification(supplier_id, domain_id):
     users = User.query.filter(User.supplier_code == supplier.code, User.active).all()
 
     email_addresses = [u.email_address for u in users]
-    url_latest_opportunities = FRONTEND_ADDRESS + '/digital-marketplace/opportunities'
+    url_latest_opportunities = FRONTEND_ADDRESS + '/2/opportunities'
     url_seller_page = FRONTEND_ADDRESS + '/supplier/' + str(supplier.code)
 
     # prepare copy
