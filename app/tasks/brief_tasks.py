@@ -4,6 +4,7 @@ from app.models import Brief, Framework, Lot
 from app.emails.briefs import send_brief_closed_email
 from flask import current_app
 import pendulum
+from sqlalchemy import or_
 
 
 @celery.task
@@ -26,7 +27,8 @@ def create_responses_zip_for_closed_briefs():
     closed_briefs = (db.session.query(Brief).join(Framework, Lot)
                                             .filter(Brief.status == 'closed',
                                                     Brief.responses_zip_filesize.is_(None),
-                                                    Lot.slug == 'digital-professionals',
+                                                    (or_(Lot.slug == 'digital-professionals',
+                                                         Lot.slug == 'training')),
                                                     Framework.slug == 'digital-marketplace')
                                             .all())
 
