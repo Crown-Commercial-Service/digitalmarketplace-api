@@ -15,17 +15,22 @@ def generate_brief_responses_csv(brief, responses):
 
         ess_req_names = brief.data.get('essentialRequirements', [])
         nth_req_names = brief.data.get('niceToHaveRequirements', [])
-        ess_responses = r.data.get('essentialRequirements', ['']*len(ess_req_names))
+        ess_responses = r.data.get('essentialRequirements', [''] * len(ess_req_names))
         nth_responses = [r.data.get('niceToHaveRequirements')[i] if
                          i < len(r.data.get('niceToHaveRequirements', [])) else
                          '' for i in range(len(nth_req_names))]
 
         answers.update({'Supplier': r.supplier.name})
-        answers.update({'Contact': r.data.get('respondToEmailAddress', 'UNKNOWN')})
+        answers.update({'Email': r.data.get('respondToEmailAddress', 'UNKNOWN')})
         if brief.lot.slug == 'digital-professionals':
             answers.update({'Specialist Name': r.data.get('specialistName', 'UNKNOWN')})
+
         answers.update({'Availability Date': r.data.get('availability', 'UNKNOWN')})
-        answers.update({'Day rate': r.data.get('dayRate', '')})
+
+        if brief.lot.slug == 'training':
+            answers.update({'Phone number': r.data.get('contactNumber', '')})
+        else:
+            answers.update({'Day rate': r.data.get('dayRate', '')})
         answers.update(zip(ess_req_names, ess_responses))
         answers.update(zip(nth_req_names, nth_responses))
 

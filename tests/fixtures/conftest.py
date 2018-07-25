@@ -243,12 +243,13 @@ def briefs(app, request, users):
     published_at = pendulum.parse(params['published_at']) if 'published_at' in params else utcnow()
     data = params['data'] if 'data' in params else COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
     lot_slug = params['lot_slug'] if 'lot_slug' in params else 'digital-professionals'
+    framework_slug = params['framework_slug'] if 'framework_slug' in params else 'digital-service-professionals'
     with app.app_context():
         for i in range(1, 6):
             db.session.add(Brief(
                 id=i,
                 data=data,
-                framework=Framework.query.filter(Framework.slug == "digital-service-professionals").first(),
+                framework=Framework.query.filter(Framework.slug == framework_slug).first(),
                 lot=Lot.query.filter(Lot.slug == lot_slug).first(),
                 users=users,
                 published_at=published_at,
