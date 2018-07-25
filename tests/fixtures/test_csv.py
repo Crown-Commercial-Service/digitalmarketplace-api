@@ -39,7 +39,7 @@ brief_response_data_4 = {
     "essentialRequirements": [True, True],
     "niceToHaveRequirements": [True, False, False],
     "respondToEmailAddress": "test1@email.com",
-    "contactNumber": '1234'
+    "respondToPhone": '1234'
 }
 
 

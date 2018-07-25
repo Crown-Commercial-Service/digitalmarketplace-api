@@ -28,7 +28,7 @@ def generate_brief_responses_csv(brief, responses):
         answers.update({'Availability Date': r.data.get('availability', 'UNKNOWN')})
 
         if brief.lot.slug == 'training':
-            answers.update({'Phone number': r.data.get('contactNumber', '')})
+            answers.update({'Phone number': r.data.get('respondToPhone', '')})
         else:
             answers.update({'Day rate': r.data.get('dayRate', '')})
         answers.update(zip(ess_req_names, ess_responses))
