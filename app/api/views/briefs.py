@@ -327,7 +327,7 @@ def download_brief_responses(brief_id):
         return forbidden("You can only download documents for closed briefs")
 
     response = ('', 404)
-    if brief.lot.slug == 'digital-professionals':
+    if brief.lot.slug == 'digital-professionals' or brief.lot.slug == 'training':
         try:
             file = s3_download_file(
                 'brief-{}-resumes.zip'.format(brief_id),
