@@ -259,34 +259,33 @@ def __del_lds(brief):
     what_trainings = [wt.lower() for wt in brief_data.get('whatTraining', [])]
     for lds_value in lds_values:
         if lds_value not in what_trainings:
-            try:
-                lds_field = __get_lds_fields_from_what_training(lds_value)
-                for f in lds_field:
+            lds_field = __get_lds_fields_from_what_training(lds_value)
+            for f in lds_field:
+                if f in brief_data:
                     del brief_data[f]
-            except KeyError:
-                pass
 
     for what_training in what_trainings:
         if what_training == 'other':
             continue
 
         lds_field = __get_lds_fields_from_what_training(what_training)
-        try:
-            proposal_field = lds_field[0]
-            unit_field = lds_field[1]
-            training_need_field = lds_field[2]
+        proposal_field = lds_field[0]
+        unit_field = lds_field[1]
+        training_need_field = lds_field[2]
 
-            lds_radio = brief_data.get(proposal_field, None)
-            if lds_radio:
-                if lds_radio == 'sellerProposal':
+        lds_radio = brief_data.get(proposal_field, None)
+        if lds_radio:
+            if lds_radio == 'sellerProposal':
+                if training_need_field in brief_data:
                     del brief_data[training_need_field]
+                if unit_field in brief_data:
                     del brief_data[unit_field]
-                elif lds_radio == 'ldsUnits':
+            elif lds_radio == 'ldsUnits':
+                if training_need_field in brief_data:
                     del brief_data[training_need_field]
-                elif lds_radio == 'specify':
+            elif lds_radio == 'specify':
+                if unit_field in brief_data:
                     del brief_data[unit_field]
-        except KeyError:
-            pass
 
 
 def __get_lds_fields_from_what_training(what_training):
