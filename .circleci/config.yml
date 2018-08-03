@@ -141,6 +141,7 @@ jobs:
       - run:
           name: Deploy to Staging
           command: |
+            source venv/bin/activate
             cf login -a https://api.system.y.cld.gov.au -o dta -s marketplace -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
             python ./db_tasks.py v2_test_migration $CIRCLE_BUILD_NUM api.system.y.cld.gov.au $CF_USER_STAGING $CF_PASSWORD_STAGING marketplace-dev-shared
             cf zero-downtime-push dm-dev-api -f manifest.yml --show-app-log
@@ -156,6 +157,7 @@ jobs:
       - run:
           name: Deploy to Production
           command: |
+            source venv/bin/activate
             cf login -a https://api.system.b.cld.gov.au -o dta -s marketplace -u $CF_USER_PROD -p $CF_PASSWORD_PROD
             python ./db_tasks.py v2_test_migration $CIRCLE_BUILD_NUM api.system.b.cld.gov.au $CF_USER_PROD $CF_PASSWORD_PROD pgdb-96-prod
             cf zero-downtime-push dm-api -f manifest.production.yml --show-app-log
