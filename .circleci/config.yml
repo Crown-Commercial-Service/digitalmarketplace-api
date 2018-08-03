@@ -138,6 +138,8 @@ jobs:
       - attach_workspace:
           at: .
       - *cf_install
+      - *update_libs
+      - *postgres_install
       - run:
           name: Deploy to Staging
           command: |
@@ -154,6 +156,8 @@ jobs:
       - attach_workspace:
           at: .
       - *cf_install
+      - *update_libs
+      - *postgres_install
       - run:
           name: Deploy to Production
           command: |
