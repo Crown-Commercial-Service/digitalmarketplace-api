@@ -19,6 +19,7 @@ def get_flask_app():
         app.config['SQLALCHEMY_DATABASE_URI'] = environ['DATABASE_URL'].replace('reconnect=true', '')
     return app
 
+
 db = SQLAlchemy(session_options={'autocommit': True})
 flask_app = get_flask_app()
 db.init_app(flask_app)

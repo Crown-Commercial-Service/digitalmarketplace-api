@@ -355,7 +355,7 @@ def search_applications(keyword):
             Application.data["name"].astext.ilike('%{}%'.format(keyword)),
             Application.data['contact_email'].astext.ilike('%{}%'.format(keyword)),
             User.email_address.ilike('%{}%'.format(keyword))
-            ))
+        ))
 
     return format_applications(applications, False)
 

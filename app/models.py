@@ -2148,7 +2148,7 @@ class BriefResponse(db.Model):
                     result = []
                     keys = sorted([int(x) for x in answers.iterkeys()])
                     max_key = max(keys)
-                    for i in range(0, max_key+1):
+                    for i in range(0, max_key + 1):
                         if i in keys:
                             result.append(to_text(answers[str(i)]))
                         else:

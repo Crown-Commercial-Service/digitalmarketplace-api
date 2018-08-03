@@ -301,7 +301,7 @@ class BaseApplicationTest(object):
             framework = Framework.query.filter_by(slug='digital-outcomes-and-specialists').first()
             self.set_framework_status(framework.slug, 'open')
 
-            for i in range(1, n+1):
+            for i in range(1, n + 1):
                 if i == 2:
                     ps = PriceSchedule.from_json({
                         'serviceRole': {
@@ -317,7 +317,7 @@ class BaseApplicationTest(object):
 
                 NON_MATCHING_STRING = 'aaaaaaaaaaaaaaaaa'
 
-                name = "Supplier {}".format(i-1)
+                name = "Supplier {}".format(i - 1)
                 summary = "suppliers of supplies" if name != 'Supplier 3' else NON_MATCHING_STRING
                 name = name if name != 'Supplier 3' else NON_MATCHING_STRING
 

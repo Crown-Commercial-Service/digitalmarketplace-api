@@ -53,6 +53,7 @@ class CustomEncoder(json.JSONEncoder):
             return str(obj)
         return super(CustomEncoder, self).default(obj)
 
+
 enc = CustomEncoder(indent=4, sort_keys=True)
 jsondumps = enc.encode
 
@@ -81,6 +82,7 @@ def identity_link(name, id):
         url_root = '/'
 
     return url_root + '{}/{}'.format(pluralize(name), id)
+
 
 DEFAULT_REPR_FIELDS = ['id', 'name', 'slug']
 
@@ -280,9 +282,9 @@ class MyModel(Model):
             if x is None:
                 return None
             elif not isinstance(x, string_types) and isinstance(x, Iterable):
-                return [_._serializable(exclude=exclude, only=only, recurse=recurse+1) for _ in x]
+                return [_._serializable(exclude=exclude, only=only, recurse=recurse + 1) for _ in x]
             else:
-                return x._serializable(exclude=exclude, only=only, recurse=recurse+1)
+                return x._serializable(exclude=exclude, only=only, recurse=recurse + 1)
 
         if len(exclude) != len(set(exclude)):
             print('duplicates in exclude!')

@@ -183,7 +183,7 @@ def get_application_metrics_csv():
 
     writer = csv.writer(si, delimiter=',', quotechar='"')
     writer.writerow(metrics.keys())
-    writer.writerow([timestamp]+[x['value'] for x in metrics.values()])
+    writer.writerow([timestamp] + [x['value'] for x in metrics.values()])
 
     output = make_response(si.getvalue())
     output.headers["Content-Disposition"] = "attachment; filename=application_metrics.csv"

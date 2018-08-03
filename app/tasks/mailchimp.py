@@ -31,6 +31,7 @@ def get_client():
     )
     return client
 
+
 template_env = Environment(
     loader=PackageLoader('app.emails', 'templates'),
     autoescape=select_autoescape(['html', 'xml'])

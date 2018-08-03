@@ -3,7 +3,7 @@ import mock
 import datetime
 
 from tests.app.helpers import BaseApplicationTest
-from app.models import db, SignedAgreement,  Agreement
+from app.models import db, SignedAgreement, Agreement
 
 
 class TestAgreements(BaseApplicationTest):

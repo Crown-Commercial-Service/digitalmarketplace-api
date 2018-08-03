@@ -16,6 +16,8 @@ queue_name = getenv('AWS_SQS_QUEUE_NAME')
 # see: https://github.com/celery/kombu/pull/834
 def monkey_patch(self, queue_name_prefix):
     self._queue_cache[queue_name] = 'https://%s.queue.amazonaws.com/%s/%s' % (region, queue_account, queue_name)
+
+
 SQS.Channel._update_queue_cache = monkey_patch
 
 

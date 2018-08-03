@@ -65,7 +65,7 @@ def list_suppliers():
                 Supplier.name.ilike(prefix + '%'),
                 Supplier.data['email'].astext.ilike('%{}%'.format(prefix)),
                 Contact.email.ilike('%{}%'.format(prefix))
-                ))
+            ))
 
     suppliers = suppliers.distinct(Supplier.name, Supplier.code)
 
@@ -157,14 +157,13 @@ def product_search():
         if ' ' in search_term:
             tsquery = func.plainto_tsquery(search_term)
         else:
-            tsquery = func.to_tsquery(search_term+":*")
+            tsquery = func.to_tsquery(search_term + ":*")
         q = q.add_column(func.ts_headline(
-                'english',
-                Product.summary,
-                tsquery,
-                'MaxWords=150, MinWords=75, ShortWord=3, HighlightAll=FALSE, MaxFragments=1, FragmentDelimiter=" ... " '
-            )
-        )
+            'english',
+            Product.summary,
+            tsquery,
+            'MaxWords=150, MinWords=75, ShortWord=3, HighlightAll=FALSE, MaxFragments=1, FragmentDelimiter=" ... " '
+        ))
     else:
         q = q.add_column("''")
     q = q.add_column(Supplier.name)
@@ -251,7 +250,7 @@ def casestudies_search():
         if ' ' in search_term:
             tsquery = func.plainto_tsquery(search_term)
         else:
-            tsquery = func.to_tsquery(search_term+":*")
+            tsquery = func.to_tsquery(search_term + ":*")
         q = q.add_column(func.ts_headline(
             'english',
             func.concat(
@@ -362,7 +361,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
 
         try:
             seller_types_list = terms['seller_types']
-        except:
+        except:  # noqa
             pass
 
     try:
@@ -387,18 +386,18 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
         if ' ' in search_term:
             tsquery = func.plainto_tsquery(search_term)
         else:
-            tsquery = func.to_tsquery(search_term+":*")
+            tsquery = func.to_tsquery(search_term + ":*")
         q = q.add_column(func.ts_headline(
-             'english',
-             func.concat(Supplier.summary,
+            'english',
+            func.concat(Supplier.summary,
                          ' ',
                          Supplier.data['tools'].astext,
                          ' ',
                          Supplier.data['methodologies'].astext,
                          ' ',
                          Supplier.data['technologies'].astext, ''),
-             tsquery,
-             'MaxWords=25, MinWords=20, ShortWord=3, HighlightAll=FALSE, MaxFragments=1'
+            tsquery,
+            'MaxWords=25, MinWords=20, ShortWord=3, HighlightAll=FALSE, MaxFragments=1'
         ))
 
     q = q.group_by(Supplier.id)
