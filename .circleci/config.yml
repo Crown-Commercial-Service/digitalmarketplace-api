@@ -97,6 +97,7 @@ jobs:
             virtualenv venv
             source venv/bin/activate
             pip install -r requirements.txt
+            pip uninstall -y pytest-sugar
       - save_cache:
           <<: *venv_cache_key
           paths:
