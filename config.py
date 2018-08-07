@@ -56,6 +56,9 @@ class Config:
         'digital-outcomes-and-specialists-2': {
             'briefs': 'briefs-digital-outcomes-and-specialists'
         },
+        'digital-outcomes-and-specialists-3': {
+            'briefs': 'briefs-digital-outcomes-and-specialists'
+        },
     }
 
 
