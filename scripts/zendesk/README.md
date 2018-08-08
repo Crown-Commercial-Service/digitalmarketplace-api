@@ -8,6 +8,9 @@ The following environment variables are needed:
 * `ZENDESK_TOKEN` - API token. You will need to create this in your Zendesk profile.
 * `ZENDESK_OUTPUT_PATH` - where you want to output the files.
 
+For `('Connection aborted.', error(54, 'Connection reset by peer'))` errors run:
+`pip install requests[security]`
+
 ## Usage
 * To do a full run: `python main.py run`.
 * To execute individual parts, run `python main.py` and use the exposed options.
