@@ -18,16 +18,16 @@ from tests.helpers import FixtureMixin
 
 class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
     @staticmethod
-    def audit_event(user=0, type=AuditTypes.supplier_update, db_object=None):
+    def audit_event(user=0, type=AuditTypes.supplier_update, db_object=None, data={"request": "data"}):
         return AuditEvent(
             audit_type=type,
             db_object=db_object,
             user=user,
-            data={'request': "data"}
+            data=data,
         )
 
-    def add_audit_event(self, user=0, type=AuditTypes.supplier_update, db_object=None):
-        ae = self.audit_event(user, type, db_object)
+    def add_audit_event(self, user=0, type=AuditTypes.supplier_update, db_object=None, data={"request": "data"}):
+        ae = self.audit_event(user, type, db_object, data)
         db.session.add(
             ae
         )
@@ -886,6 +886,18 @@ class TestAuditEvents(BaseTestAuditEvents):
         self.add_audit_event()
         response = self.client.get('/audit-events?per_page=foo')
         assert response.status_code == 400
+
+    def test_should_get_audit_events_by_supplier_id_field_in_data(self):
+        for id, info in [(0, 'miss'), (3, 'hit'), (2, 'miss'), (7, 'miss'), (3, 'hit'), (1, 'miss')]:
+            self.add_audit_event(data={'supplierId': id, 'info': info})
+
+        response = self.client.get('/audit-events?data-supplier-id=3')
+        audit_events = json.loads(response.get_data())['auditEvents']
+
+        assert response.status_code == 200
+        assert len(audit_events) == 2
+        assert all(audit_event['data']['supplierId'] == 3 for audit_event in audit_events)
+        assert all(audit_event['data']['info'] == 'hit' for audit_event in audit_events)
 
     def test_reject_invalid_audit_id_on_acknowledgement(self):
         res = self.client.post(

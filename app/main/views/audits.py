@@ -87,6 +87,12 @@ def list_audits():
             AuditEvent.user == user
         )
 
+    data_supplier_id = request.args.get('data-supplier-id')
+    if data_supplier_id:
+        audits = audits.filter(
+            AuditEvent.data['supplierId'] == data_supplier_id
+        )
+
     acknowledged = request.args.get('acknowledged', None)
     if acknowledged and acknowledged != 'all':
         if is_valid_acknowledged_state(acknowledged):
