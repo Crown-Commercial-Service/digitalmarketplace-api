@@ -12,7 +12,7 @@ import sqlalchemy.dialects.postgresql
 from sqlalchemy import Sequence
 from sqlalchemy import asc, desc, exists
 from sqlalchemy import func
-from sqlalchemy.dialects.postgresql import INTERVAL
+from sqlalchemy.dialects.postgresql import INTERVAL, JSONB
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -1278,7 +1278,7 @@ class AuditEvent(db.Model):
     type = db.Column(db.String, index=True, nullable=False)
     created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
     user = db.Column(db.String)
-    data = db.Column(JSON, nullable=False)
+    data = db.Column(JSONB, nullable=False)
 
     object_type = db.Column(db.String)
     object_id = db.Column(db.BigInteger)
@@ -1942,6 +1942,11 @@ db.Index(
     AuditEvent.created_at,
 )
 
+db.Index(
+    'idx_audit_events_data_supplier_id',
+    AuditEvent.data['supplierId'],
+    postgresql_where=AuditEvent.data['supplierId'] != sql_null()
+)
 
 # DEPRECATED - remove in a migration once service update admin app feature has been updated
 db.Index(
