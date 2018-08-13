@@ -1,0 +1,47 @@
+{
+    "title": "AuditEvent",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "type": {
+            "type": "string"
+        },
+        "created_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "user": {
+            "type": "string"
+        },
+        "object_type": {
+            "type": "string"
+        },
+        "object_id": {
+            "type": "string"
+        },
+        "acknowledged": {
+            "type": "boolean"
+        },
+        "acknowledged_by": {
+            "type": "string"
+        },
+        "acknowledged_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "data": {
+            "type": "object",
+            "properties": {
+                "$ref": "#/path/to/audit_events_data/schema"
+            }
+        }
+    },
+    "required": [
+        "id",
+        "type",
+        "acknowledged"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

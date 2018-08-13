@@ -1,0 +1,51 @@
+{
+    "title": "FrameworkAgreement",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "supplier_id": {
+            "type": "integer"
+        },
+        "framework_id": {
+            "type": "integer"
+        },
+        "signed_agreement_path": {
+            "type": "string"
+        },
+        "signed_agreement_returned_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "signed_agreement_put_on_hold_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "countersigned_agreement_path": {
+            "type": "string"
+        },
+        "countersigned_agreement_returned_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "signed_agreement_details": {
+            "type": "object",
+            "properties": {
+                "$ref": "#/path/to/framework_agreements_signed_agreement_details/schema"
+            }
+        },
+        "countersigned_agreement_details": {
+            "type": "object",
+            "properties": {
+                "$ref": "#/path/to/framework_agreements_countersigned_agreement_details/schema"
+            }
+        }
+    },
+    "required": [
+        "id",
+        "supplier_id",
+        "framework_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

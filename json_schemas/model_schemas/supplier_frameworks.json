@@ -1,0 +1,38 @@
+{
+    "title": "SupplierFramework",
+    "type": "object",
+    "properties": {
+        "supplier_id": {
+            "type": "integer"
+        },
+        "framework_id": {
+            "type": "integer"
+        },
+        "on_framework": {
+            "type": "boolean"
+        },
+        "prefill_declaration_from_framework_id": {
+            "type": "integer"
+        },
+        "application_company_details_confirmed": {
+            "type": "boolean"
+        },
+        "declaration": {
+            "type": "object",
+            "properties": {
+                "$ref": "#/path/to/supplier_frameworks_declaration/schema"
+            }
+        },
+        "agreed_variations": {
+            "type": "object",
+            "properties": {
+                "$ref": "#/path/to/supplier_frameworks_agreed_variations/schema"
+            }
+        }
+    },
+    "required": [
+        "supplier_id",
+        "framework_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

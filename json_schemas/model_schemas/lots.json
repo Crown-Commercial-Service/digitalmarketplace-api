@@ -1,0 +1,30 @@
+{
+    "title": "Lot",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "slug": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string"
+        },
+        "one_service_limit": {
+            "type": "boolean"
+        },
+        "data": {
+            "type": "object",
+            "properties": {
+                "$ref": "#/path/to/lots_data/schema"
+            }
+        }
+    },
+    "required": [
+        "id",
+        "slug",
+        "name"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

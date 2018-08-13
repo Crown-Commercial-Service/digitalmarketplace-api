@@ -1,0 +1,17 @@
+{
+    "title": "BriefUser",
+    "type": "object",
+    "properties": {
+        "brief_id": {
+            "type": "integer"
+        },
+        "user_id": {
+            "type": "integer"
+        }
+    },
+    "required": [
+        "brief_id",
+        "user_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

@@ -1,0 +1,51 @@
+{
+    "title": "Service",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "service_id": {
+            "type": "string"
+        },
+        "status": {
+            "type": "string"
+        },
+        "created_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "updated_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "copied_to_following_framework": {
+            "type": "boolean"
+        },
+        "supplier_id": {
+            "type": "string"
+        },
+        "framework_id": {
+            "type": "string"
+        },
+        "lot_id": {
+            "type": "string"
+        },
+        "data": {
+            "type": "object",
+            "properties": {
+                "$ref": "#/path/to/services_data/schema"
+            }
+        }
+    },
+    "required": [
+        "id",
+        "service_id",
+        "status",
+        "copied_to_following_framework",
+        "supplier_id",
+        "framework_id",
+        "lot_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

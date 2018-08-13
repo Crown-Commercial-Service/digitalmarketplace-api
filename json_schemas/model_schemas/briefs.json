@@ -1,0 +1,55 @@
+{
+    "title": "Brief",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "framework_id": {
+            "type": "integer"
+        },
+        "lot_id": {
+            "type": "integer"
+        },
+        "is_a_copy": {
+            "type": "boolean"
+        },
+        "created_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "updated_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "published_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "withdrawn_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "cancelled_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "unsuccessful_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "data": {
+            "type": "object",
+            "properties": {
+                "$ref": "#/path/to/briefs_data/schema"
+            }
+        }
+    },
+    "required": [
+        "id",
+        "framework_id",
+        "is_a_copy",
+        "lot_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

@@ -1,0 +1,45 @@
+{
+    "title": "BriefResponse",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "brief_id": {
+            "type": "integer"
+        },
+        "supplier_id": {
+            "type": "integer"
+        },
+        "created_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "submitted_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "awarded_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "data": {
+            "type": "object",
+            "properties": {
+                "$ref": "#/path/to/brief_responses_data/schema"
+            }
+        },
+        "award_details": {
+            "type": "object",
+            "properties": {
+                "$ref": "#/path/to/brief_responses_award_details/schema"
+            }
+        }
+    },
+    "required": [
+        "id",
+        "brief_id",
+        "supplier_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

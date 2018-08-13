@@ -1,0 +1,29 @@
+{
+    "title": "BriefClarificationQuestion",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "brief_id": {
+            "type": "integer"
+        },
+        "question": {
+            "type": "string"
+        },
+        "answer": {
+            "type": "string"
+        },
+        "published_at": {
+            "type": "string",
+            "format": "date-time"
+        }
+    },
+    "required": [
+        "id",
+        "question",
+        "answer",
+        "brief_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}
