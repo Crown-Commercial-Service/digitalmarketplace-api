@@ -175,7 +175,8 @@ def create_user():
 
     if "supplierId" in json_payload:
         user.supplier_id = json_payload['supplierId']
-        audit_data['supplier_id'] = user.supplier_id
+        #  This key changed from `supplier_id` to `supplierId` to match how we do it everywhere else in August 2018
+        audit_data['supplierId'] = user.supplier_id
 
     check_supplier_role(user.role, user.supplier_id)
 

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.sql.expression import true, false
+from sqlalchemy.sql.expression import true, false, func
 from sqlalchemy.orm import class_mapper
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
@@ -89,8 +89,12 @@ def list_audits():
 
     data_supplier_id = request.args.get('data-supplier-id')
     if data_supplier_id:
+        #  This filter relies on index `idx_audit_events_data_supplier_id`. See `app..models.main` for its definition.
         audits = audits.filter(
-            AuditEvent.__table__.c.data['supplierId'].astext == data_supplier_id
+            func.coalesce(
+                AuditEvent.__table__.c.data['supplierId'].astext,
+                AuditEvent.__table__.c.data['supplier_id'].astext,
+            ) == data_supplier_id
         )
 
     acknowledged = request.args.get('acknowledged', None)

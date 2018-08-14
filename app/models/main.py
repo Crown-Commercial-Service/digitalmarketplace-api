@@ -1942,10 +1942,12 @@ db.Index(
     AuditEvent.created_at,
 )
 
+# Index for searching audit events by the supplier id included in the data blob. Both `supplierId` and `supplier_id`
+#  have been used, hence the need for the coalesce. Audits all now use `supplierId` consistantly.
 db.Index(
     'idx_audit_events_data_supplier_id',
-    str(AuditEvent.data['supplierId']),
-    postgresql_where=AuditEvent.data['supplierId'] != sql_null()
+    func.coalesce(AuditEvent.data['supplierId'], AuditEvent.data['supplier_id']),
+    postgresql_where=func.coalesce(AuditEvent.data['supplierId'], AuditEvent.data['supplier_id']) != sql_null()
 )
 
 # DEPRECATED - remove in a migration once service update admin app feature has been updated

@@ -911,6 +911,33 @@ class TestAuditEvents(BaseTestAuditEvents):
         assert {audit_event['data']['supplierId'] for audit_event in audit_events} == {3, '3'}
         assert all(audit_event['data']['info'] == 'hit' for audit_event in audit_events)
 
+    def test_should_not_choke_if_supplier_id_field_in_data_does_not_exist(self):
+        for id, info in [(0, 'miss'), (3, 'hit'), (2, 'miss'), (7, 'miss'), (3, 'hit'), (1, 'miss')]:
+            self.add_audit_event(data={'supplierId': id, 'info': info})
+        self.add_audit_event(data={'something': 'completely different'})
+
+        response = self.client.get('/audit-events?data-supplier-id=3')
+        audit_events = json.loads(response.get_data())['auditEvents']
+
+        assert response.status_code == 200
+        assert len(audit_events) == 2
+        assert all(audit_event['data']['supplierId'] == 3 for audit_event in audit_events)
+        assert all(audit_event['data']['info'] == 'hit' for audit_event in audit_events)
+
+    def test_should_search_for_deprecated_supplier_id_field_key(self):
+        for id, info in [(0, 'miss'), (3, 'hit'), (2, 'miss'), (7, 'miss'), (4, 'hit'), (1, 'miss')]:
+            self.add_audit_event(data={'supplierId': id, 'info': info})
+        self.add_audit_event(data={'supplier_id': 3, 'info': 'hit'})
+
+        response = self.client.get('/audit-events?data-supplier-id=3')
+        audit_events = json.loads(response.get_data())['auditEvents']
+
+        assert response.status_code == 200
+        assert len(audit_events) == 2
+        assert any(audit_event['data'].get('supplierId') == 3 for audit_event in audit_events)
+        assert any(audit_event['data'].get('supplier_id') == 3 for audit_event in audit_events)
+        assert all(audit_event['data']['info'] == 'hit' for audit_event in audit_events)
+
     def test_reject_invalid_audit_id_on_acknowledgement(self):
         res = self.client.post(
             '/audit-events/invalid-id!/acknowledge',
