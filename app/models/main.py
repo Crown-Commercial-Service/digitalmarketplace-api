@@ -1944,7 +1944,7 @@ db.Index(
 
 db.Index(
     'idx_audit_events_data_supplier_id',
-    AuditEvent.data['supplierId'],
+    str(AuditEvent.data['supplierId']),
     postgresql_where=AuditEvent.data['supplierId'] != sql_null()
 )
 

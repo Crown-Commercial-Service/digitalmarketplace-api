@@ -19,7 +19,7 @@ down_revision = '1250'
 
 def upgrade():
     op.alter_column('audit_events', 'data', type_=JSONB, postgresql_using='data::text::jsonb')
-    op.create_index('idx_audit_events_data_supplier_id', 'audit_events', [sa.text("(data -> 'supplierId')")], unique=False, postgresql_where=sa.text("(data -> 'supplierId') IS NOT NULL"))
+    op.create_index('idx_audit_events_data_supplier_id', 'audit_events', [sa.text("(data ->> 'supplierId')")], unique=False, postgresql_where=sa.text("(data -> 'supplierId') IS NOT NULL"))
 
 
 def downgrade():

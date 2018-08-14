@@ -90,7 +90,7 @@ def list_audits():
     data_supplier_id = request.args.get('data-supplier-id')
     if data_supplier_id:
         audits = audits.filter(
-            AuditEvent.data['supplierId'] == data_supplier_id
+            AuditEvent.__table__.c.data['supplierId'].astext == data_supplier_id
         )
 
     acknowledged = request.args.get('acknowledged', None)
