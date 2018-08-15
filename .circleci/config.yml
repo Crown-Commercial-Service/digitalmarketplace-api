@@ -113,12 +113,17 @@ jobs:
       - attach_workspace:
           at: .
       - *cf_install
+      - *update_libs
+      - *postgres_install
       - run:
           name: Deploy to RC
           command: |
-            echo Deploy to RC
-            # cf login -a https://api.system.y.cld.gov.au -o dta -s marketplace -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
-            # cf zero-downtime-push dm-rc-admin -f manifest.rc.yml --show-app-log
+            source venv/bin/activate
+            cf login -a https://api.system.y.cld.gov.au -o dta -s marketplace -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
+            python ./db_tasks.py v2_test_migration $CIRCLE_BUILD_NUM api.system.y.cld.gov.au $CF_USER_STAGING $CF_PASSWORD_STAGING marketplace-dm-rc-shared
+            cf zero-downtime-push dm-rc-api -f manifest.rc.yml --show-app-log
+            cf run-and-wait dm-rc-api "python ./db_tasks.py do_migration $CIRCLE_BUILD_NUM"
+            cf zero-downtime-push dm-rc-celery -f manifest.celery.rc.yml --show-app-log
 
   deploy_to_production_clone:
     <<: *deploy_docker
@@ -126,12 +131,17 @@ jobs:
       - attach_workspace:
           at: .
       - *cf_install
+      - *update_libs
+      - *postgres_install
       - run:
           name: Deploy to Production Clone
           command: |
-            echo Deploy to Production Clone
-            # cf login -a https://api.system.y.cld.gov.au -o dta -s marketplace -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
-            # cf zero-downtime-push dm-dev-admin -f manifest.production.clone.yml --show-app-log
+            source venv/bin/activate
+            cf login -a https://api.system.y.cld.gov.au -o dta -s marketplace -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
+            python ./db_tasks.py v2_test_migration $CIRCLE_BUILD_NUM api.system.y.cld.gov.au $CF_USER_STAGING $CF_PASSWORD_STAGING marketplace-dm-pc-shared
+            cf zero-downtime-push dm-pc-api -f manifest.pc.yml --show-app-log
+            cf run-and-wait dm-pc-api "python ./db_tasks.py do_migration $CIRCLE_BUILD_NUM"
+            cf zero-downtime-push dm-pc-celery -f manifest.celery.pc.yml --show-app-log
 
   deploy_to_staging:
     <<: *deploy_docker

@@ -76,6 +76,7 @@ class EnvDeploy:
                 self.__print_result(s.echo("y").pipe().cf("delete-service", postgres_service_name).run())
             else:
                 self.__print_result(s.cf("create-service", "postgres", "shared", postgres_service_name).run())
+                self.__print_result(s.cf("update-service", postgres_service_name, "-c '{\"extensions\":[\"pg_trgm\"]}'").run())
 
     def app(self, name, delete=False):
         app_names = self.__get_app_names(name)
