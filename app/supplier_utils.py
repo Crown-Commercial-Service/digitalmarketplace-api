@@ -1,6 +1,7 @@
 import inspect
 
 from flask import abort
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import lazyload
 
 from dmapiclient.audit import AuditTypes
@@ -69,7 +70,13 @@ def update_open_declarations_with_company_details(db, supplier_id, updater_json,
 
     # We need to ensure that SupplierFramework and Framework haven't changed during this transaction, so grab
     # the affected rows with a for update lock.
-    open_supplier_frameworks = open_supplier_frameworks_query.options(lazyload('*')).with_for_update().all()
+    try:
+        # This query invokes an autoflush. If there is something wrong with an object which has been staged for commit,
+        # such as a supplier with a bad update, this kicks an Integrity error which we need to catch and handle.
+        open_supplier_frameworks = open_supplier_frameworks_query.options(lazyload('*')).with_for_update().all()
+    except IntegrityError as e:
+        db.session.rollback()
+        abort(400, format(e))
 
     if not open_supplier_frameworks:
         return
