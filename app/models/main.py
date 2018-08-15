@@ -12,7 +12,7 @@ import sqlalchemy.dialects.postgresql
 from sqlalchemy import Sequence
 from sqlalchemy import asc, desc, exists
 from sqlalchemy import func
-from sqlalchemy.dialects.postgresql import INTERVAL
+from sqlalchemy.dialects.postgresql import INTERVAL, JSONB
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -1278,7 +1278,7 @@ class AuditEvent(db.Model):
     type = db.Column(db.String, index=True, nullable=False)
     created_at = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow)
     user = db.Column(db.String)
-    data = db.Column(JSON, nullable=False)
+    data = db.Column(JSONB, nullable=False)
 
     object_type = db.Column(db.String)
     object_id = db.Column(db.BigInteger)
@@ -1942,6 +1942,13 @@ db.Index(
     AuditEvent.created_at,
 )
 
+# Index for searching audit events by the supplier id included in the data blob. Both `supplierId` and `supplier_id`
+#  have been used, hence the need for the coalesce. Audits all now use `supplierId` consistantly.
+db.Index(
+    'idx_audit_events_data_supplier_id',
+    func.coalesce(AuditEvent.data['supplierId'], AuditEvent.data['supplier_id']),
+    postgresql_where=func.coalesce(AuditEvent.data['supplierId'], AuditEvent.data['supplier_id']) != sql_null()
+)
 
 # DEPRECATED - remove in a migration once service update admin app feature has been updated
 db.Index(

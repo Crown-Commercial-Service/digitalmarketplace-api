@@ -441,7 +441,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
 
         assert len(data['auditEvents']) == 1
         assert data['auditEvents'][0]['type'] == 'create_user'
-        assert data['auditEvents'][0]['data']['supplier_id'] == supplier_basic
+        assert data['auditEvents'][0]['data']['supplierId'] == supplier_basic
 
     def test_should_reject_a_supplier_user_with_invalid_supplier_id(self):
         response = self.client.post(
