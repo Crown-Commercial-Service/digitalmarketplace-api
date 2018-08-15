@@ -641,6 +641,19 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin, PutDeclaratio
             'supplierTradingName': 'Example Company Limited',
         }
 
+    def test_update_causing_integrity_error_returns_400(self):
+        new_supplier_payload = self.supplier.copy()
+        new_supplier_payload['dunsNumber'] = '444444444'
+        self.client.post(
+            '/suppliers',
+            data=json.dumps({'suppliers': new_supplier_payload}),
+            content_type='application/json')
+
+        response = self.update_request({"dunsNumber": "444444444"})
+
+        assert response.status_code == 400
+        assert 'duplicate key value violates unique constraint' in response.get_data(as_text=True)
+
 
 class TestUpdateContactInformation(BaseApplicationTest, JSONUpdateTestMixin, PutDeclarationAndDetailsAndServicesMixin):
     method = "post"
