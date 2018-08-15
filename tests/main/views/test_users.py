@@ -1124,6 +1124,32 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         data = json.loads(response.get_data())['users']
         assert data['emailAddress'] == 'myshinynew@digital.gov.uk'
 
+    def test_can_update_phone_number(self):
+        response = self.client.post(
+            '/users/123',
+            data=json.dumps({
+                "updated_by": "a.user",
+                'users': {
+                    'phoneNumber': '0800666666',
+                }}),
+            content_type='application/json')
+
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['phoneNumber'] == '0800666666'
+
+        response = self.client.post(
+            '/users/auth',
+            data=json.dumps({
+                'authUsers': {
+                    'emailAddress': 'test@digital.gov.uk',
+                    'password': 'my long password'}}),
+            content_type='application/json')
+
+        assert response.status_code == 200
+        data = json.loads(response.get_data())['users']
+        assert data['phoneNumber'] == '0800666666'
+
 
 class TestUsersGet(BaseUserTest, FixtureMixin):
     supplier_id = None

@@ -231,6 +231,8 @@ def update_user(user_id):
         user.name = user_update['name']
     if 'emailAddress' in user_update:
         user.email_address = user_update['emailAddress']
+    if 'phoneNumber' in user_update:
+        user.phone_number = user_update['phoneNumber']
     if 'role' in user_update:
         if user.role == 'supplier' and user_update['role'] != user.role:
             user.supplier_id = None
