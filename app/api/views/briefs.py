@@ -9,9 +9,15 @@ from flask_login import current_user, login_required
 from sqlalchemy.exc import DataError
 
 from app.api import api
+from app.api.csv import generate_brief_responses_csv
+from app.api.business.validators import SupplierValidator
 from app.api.helpers import abort, forbidden, not_found, role_required, is_current_user_in_brief
-from app.api.services import (audit_service, brief_overview_service,
-                              brief_responses_service, briefs, lots_service)
+from app.api.services import (audit_service,
+                              brief_overview_service,
+                              brief_responses_service,
+                              briefs,
+                              lots_service,
+                              suppliers)
 from app.emails import send_brief_response_received_email
 from dmapiclient.audit import AuditTypes
 from dmutils.file import s3_download_file, s3_upload_file_from_request
@@ -19,7 +25,6 @@ from dmutils.file import s3_download_file, s3_upload_file_from_request
 from ...models import (AuditEvent, Brief, BriefResponse, Framework, Supplier,
                        ValidationError, db)
 from ...utils import get_json_from_request
-from app.api.csv import generate_brief_responses_csv
 
 
 def _can_do_brief_response(brief_id):
@@ -49,6 +54,10 @@ def _can_do_brief_response(brief_id):
 
     if not supplier:
         forbidden("Invalid supplier Code '{}'".format(current_user.supplier_code))
+
+    errors = SupplierValidator(supplier).validate_all()
+    if len(errors) > 0:
+        abort(errors)
 
     def domain(email):
         return email.split('@')[-1]
@@ -294,12 +303,18 @@ def get_brief_responses(brief_id):
             return forbidden("Unauthorised to view brief or brief does not exist")
 
     supplier_code = getattr(current_user, 'supplier_code', None)
+    supplier = suppliers.get_supplier_by_code(supplier_code)
+    supplier_errors = SupplierValidator(supplier).validate_all()
+    if len(supplier_errors) > 0:
+        abort(supplier_errors)
+
     if current_user.role == 'buyer' and brief.status != 'closed':
         brief_responses = []
     else:
         brief_responses = brief_responses_service.get_brief_responses(brief_id, supplier_code)
 
-    return jsonify(brief=brief.serialize(with_users=False), briefResponses=brief_responses)
+    return jsonify(brief=brief.serialize(with_users=False),
+                   briefResponses=brief_responses)
 
 
 @api.route('/brief/<int:brief_id>/respond/documents/<string:supplier_code>/<slug>', methods=['POST'])

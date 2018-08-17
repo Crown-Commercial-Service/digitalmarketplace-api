@@ -6,6 +6,7 @@ from app.models import Brief, Lot, db, utcnow, Supplier, SupplierFramework, Cont
     Framework, UserFramework, AuditEvent
 from faker import Faker
 from dmapiclient.audit import AuditTypes
+import pendulum
 
 fake = Faker()
 
@@ -18,7 +19,54 @@ def suppliers(app, request):
                 abn=i,
                 code=(i),
                 name='Test Supplier{}'.format(i),
-                contacts=[Contact(name='auth rep', email='auth@rep.com')]
+                contacts=[Contact(name='auth rep', email='auth@rep.com')],
+                data={
+                    'documents': {
+                        "liability": {
+                            "filename": "1.pdf",
+                            "expiry": pendulum.tomorrow().date().to_date_string()
+                        },
+                        "workers": {
+                            "filename": "2.pdf",
+                            "expiry": pendulum.tomorrow().date().to_date_string()
+                        },
+                        "financial": {
+                            "filename": "3.pdf"
+                        }
+                    },
+                    'pricing': {
+                        "Emerging technologies": {
+                            "maxPrice": "1000"
+                        },
+                        "Support and Operations": {
+                            "maxPrice": "100"
+                        },
+                        "Agile delivery and Governance": {
+                            "maxPrice": "1000"
+                        },
+                        "Data science": {
+                            "maxPrice": "100"
+                        },
+                        "Change, Training and Transformation": {
+                            "maxPrice": "1000"
+                        },
+                        "Training, Learning and Development": {
+                            "maxPrice": "1000"
+                        },
+                        "Strategy and Policy": {
+                            "maxPrice": "1000"
+                        },
+                        "Software engineering and Development": {
+                            "maxPrice": "1000"
+                        },
+                        "User research and Design": {
+                            "maxPrice": "1000"
+                        },
+                        "Recruitment": {
+                            "maxPrice": "1000"
+                        }
+                    }
+                }
             ))
 
             db.session.flush()

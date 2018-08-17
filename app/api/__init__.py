@@ -81,6 +81,11 @@ from app.api.views import (briefs,  # noqa
 
 from app.api.views.reports import (suppliers)  # noqa
 
+from app.api.business.validators import (  # noqa
+    application_validator,
+    supplier_validator
+)
+
 
 def get_token_from_headers(headers):
     print headers
