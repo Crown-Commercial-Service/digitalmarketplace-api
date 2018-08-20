@@ -304,9 +304,9 @@ def get_brief_responses(brief_id):
 
     supplier_code = getattr(current_user, 'supplier_code', None)
     supplier = suppliers.get_supplier_by_code(supplier_code)
-    supplier_errors = SupplierValidator(supplier).validate_all()
-    if len(supplier_errors) > 0:
-        abort(supplier_errors)
+    # supplier_errors = SupplierValidator(supplier).validate_all()
+    # if len(supplier_errors) > 0:
+    #     abort(supplier_errors)
 
     if current_user.role == 'buyer' and brief.status != 'closed':
         brief_responses = []
