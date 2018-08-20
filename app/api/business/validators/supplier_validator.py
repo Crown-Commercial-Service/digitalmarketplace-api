@@ -8,7 +8,7 @@ class SupplierValidator(object):
 
     def validate_all(self):
         return (self.validate_basics() +
-                self.validate_documents() +
+                # self.validate_documents() +
                 self.validate_pricing())
 
     def validate_basics(self):
