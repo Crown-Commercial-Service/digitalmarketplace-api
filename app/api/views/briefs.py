@@ -313,7 +313,6 @@ def get_brief_responses(brief_id):
         brief_responses = []
     else:
         brief_responses = brief_responses_service.get_brief_responses(brief_id, supplier_code)
-        
 
     return jsonify(brief=brief.serialize(with_users=False),
                    briefResponses=brief_responses)
