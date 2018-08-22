@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 import pendulum
 from pendulum.parsing.exceptions import ParserError
 
-from dmapiclient.audit import AuditTypes
+from app.api.services import AuditTypes
 from .. import main
 from ... import db
 from ...models import User, Brief, AuditEvent, Framework, Lot, Supplier, Service
@@ -177,6 +177,44 @@ def update_brief_remove_user(brief_id, user):
     return jsonify(briefs=brief.serialize(with_users=True)), 200
 
 
+@main.route('/briefs/<int:brief_id>/json/admin', methods=['PUT'])
+def update_brief_json_admin(brief_id):
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['brief'])
+    brief_json = json_payload['brief']
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    if brief.status == 'live' or brief.status == 'draft':
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.update_application_admin,
+            user='',
+            data={
+                'new': brief_json,
+                'old': brief.serialize()
+            },
+            db_object=brief,
+        )
+        brief.update_from_json(brief_json)
+
+        db.session.add(brief)
+        db.session.add(audit)
+        db.session.commit()
+
+        return jsonify(brief=brief.serialize()), 200
+    else:
+        return jsonify(
+            brief=brief.serialize(),
+            errors=[{
+                'serverity': 'error',
+                'message': 'Unable to update briefs that are either closed or withdrawn'
+            }]
+        ), 200
+
+
 @main.route('/briefs/<int:brief_id>/admin', methods=['POST'])
 def update_brief_admin(brief_id):
     updater_json = validate_and_return_updater_request()
@@ -211,6 +249,9 @@ def update_brief_admin(brief_id):
 
     if 'sellerEmailList' in brief_json:
         brief.update_from_json({'sellerEmailList': brief_json.get('sellerEmailList')})
+
+    if 'sellerEmail' in brief_json:
+        brief.update_from_json({'sellerEmail': brief_json.get('sellerEmail')})
 
     if 'areaOfExpertise' in brief_json:
         brief.update_from_json({'areaOfExpertise': brief_json.get('areaOfExpertise', None)})

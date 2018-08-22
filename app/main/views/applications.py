@@ -11,7 +11,8 @@ from app.utils import (
 import pendulum
 from sqlalchemy.sql.expression import true
 from sqlalchemy import or_
-from dmapiclient.audit import AuditTypes
+# from dmapiclient.audit import AuditTypes
+from app.api.services import AuditTypes
 from app.emails import send_approval_notification, send_rejection_notification, \
     send_submitted_existing_seller_notification, send_submitted_new_seller_notification, \
     send_revert_notification
@@ -74,6 +75,36 @@ def update_application(application_id):
     save_application(application)
 
     return jsonify(application=application.serializable), 200
+
+
+@main.route('/applications/<int:application_id>/admin', methods=['PUT'])
+def update_application_admin(application_id):
+    application_json = get_application_json()
+
+    application = Application.query.get(application_id)
+    if application is None:
+        abort(404, "Application '{}' does not exist".format(application_id))
+
+    if application.status == 'submitted' or application.status == 'saved':
+        db.session.add(AuditEvent(
+            audit_type=AuditTypes.update_application_admin,
+            user='',
+            data={
+                'old': application.serialize(),
+                'new': application_json
+            },
+            db_object=application
+        ))
+
+        application.update_from_json(application_json)
+        save_application(application)
+
+        return jsonify(application=application.serializable), 200
+    else:
+        return jsonify(application=application.serializable, errors=[{
+            'serverity': 'error',
+            'message': 'Application can only be updated when the status is submitted or saved'
+        }]), 200
 
 
 @main.route('/applications/<int:application_id>/approve', methods=['POST'])
