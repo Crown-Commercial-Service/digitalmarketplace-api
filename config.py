@@ -20,9 +20,6 @@ class Config:
     DM_LOG_PATH = None
     DM_APP_NAME = 'api'
 
-    # Feature Flags
-    RAISE_ERROR_ON_MISSING_FEATURES = True
-
     DM_API_SERVICES_PAGE_SIZE = 100
     DM_API_SUPPLIERS_PAGE_SIZE = 100
     DM_API_BRIEFS_PAGE_SIZE = 100

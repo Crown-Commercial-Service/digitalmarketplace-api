@@ -5,7 +5,7 @@ import json
 from sqlalchemy import MetaData
 
 import dmapiclient
-from dmutils import init_app, flask_featureflags
+from dmutils import init_app
 
 from config import configs
 
@@ -17,7 +17,6 @@ db = SQLAlchemy(metadata=MetaData(naming_convention={
     "pk": "%(table_name)s_pkey",
 }))
 search_api_client = dmapiclient.SearchAPIClient()
-feature_flags = flask_featureflags.FeatureFlag()
 
 
 def create_app(config_name):
@@ -28,7 +27,6 @@ def create_app(config_name):
         application,
         configs[config_name],
         db=db,
-        feature_flags=feature_flags,
         search_api_client=search_api_client
     )
 
