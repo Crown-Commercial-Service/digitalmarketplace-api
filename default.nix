@@ -12,7 +12,7 @@ in (with args; {
     name = "digitalmarketplace-api-env";
     shortName = "dm-api";
     buildInputs = [
-      pythonPackages.virtualenv
+      pythonPackages.python
       pkgs.libffi
       pkgs.libyaml
       # pip requires git to fetch some of its dependencies
@@ -41,7 +41,7 @@ in (with args; {
       export PS1="\[\e[0;36m\](nix-shell\[\e[0m\]:\[\e[0;36m\]${shortName})\[\e[0;32m\]\u@\h\[\e[0m\]:\[\e[0m\]\[\e[0;36m\]\w\[\e[0m\]\$ "
 
       if [ ! -e $VIRTUALENV_ROOT ]; then
-        ${pythonPackages.virtualenv}/bin/virtualenv $VIRTUALENV_ROOT
+        ${pythonPackages.python}/bin/python -m venv $VIRTUALENV_ROOT
       fi
       source $VIRTUALENV_ROOT/bin/activate
       make requirements${pkgs.stdenv.lib.optionalString forDev "-dev"}
