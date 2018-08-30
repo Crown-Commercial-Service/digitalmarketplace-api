@@ -10,11 +10,6 @@ API tier for Digital Marketplace.
 
 ## Quickstart
 
-Install [Virtualenv](https://virtualenv.pypa.io/en/latest/)
-```
-sudo easy_install virtualenv
-```
-
 Bootstrap the database
 ```
 make bootstrap
@@ -27,12 +22,6 @@ make run-all
 
 ## Full setup
 
-Install [Virtualenv](https://virtualenv.pypa.io/en/latest/)
-
-```
-sudo easy_install virtualenv
-```
-
 Ensure you have Postgres running locally, and then bootstrap your development
 environment
 
@@ -43,7 +32,7 @@ make bootstrap
 On Debian Jessie, the following packages are required for bootstrapping to work:
 
 ```
-apt-get install gcc virtualenv python-dev libffi-dev libpq-dev
+apt-get install gcc python3-dev libffi-dev libpq-dev python3-venv
 ```
 
 ### Activate the virtual environment
