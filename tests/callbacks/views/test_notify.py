@@ -41,7 +41,7 @@ class TestNotifyCallback(BaseApplicationTest):
         user = User.query.filter(User.email_address == 'test+1@digital.gov.uk').first()
         assert user.active is True
 
-        with logcapture.LogCapture(names=('app',), level=logging.INFO) as logs:
+        with logcapture.LogCapture(names=('flask.app',), level=logging.INFO) as logs:
             response = self.client.post('/callbacks/notify',
                                         data=json.dumps(notify_data),
                                         content_type='application/json')
@@ -71,7 +71,7 @@ class TestNotifyCallback(BaseApplicationTest):
     def test_error_logged_on_technical_delivery_failure(self):
         notify_data = self.notify_data(status='technical-failure')
 
-        with logcapture.LogCapture(names=('app',), level=logging.WARNING) as logs:
+        with logcapture.LogCapture(names=('flask.app',), level=logging.WARNING) as logs:
             response = self.client.post('/callbacks/notify',
                                         data=json.dumps(notify_data),
                                         content_type='application/json')
