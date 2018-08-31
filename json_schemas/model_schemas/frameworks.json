@@ -59,6 +59,16 @@
             "properties": {
                 "$ref": "file:json_schemas/framework-agreement-details.json"
             }
+        },
+        "lots": {
+            "description": "Relationship link to multiple Lot instances",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "$ref": "file:json_schemas/model_schemas/lots.json"
+                }
+            }
         }
     },
     "required": [

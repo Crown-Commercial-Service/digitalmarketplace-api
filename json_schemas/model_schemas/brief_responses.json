@@ -54,6 +54,20 @@
                     {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-3-user-research-participants.json"}
                 ]
             }
+        },
+        "supplier": {
+            "description": "Relationship link to a Supplier instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/suppliers.json"
+            }
+        },
+        "brief": {
+            "description": "Relationship link to a Brief instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/briefs.json"
+            }
         }
     },
     "required": [

@@ -41,6 +41,16 @@
         },
         "company_details_confirmed": {
             "type": "boolean"
+        },
+        "contact_information": {
+            "description": "Relationship link to multiple ContactInformation instances",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "$ref": "file:json_schemas/model_schemas/contact_information.json"
+                }
+            }
         }
     },
     "required": [

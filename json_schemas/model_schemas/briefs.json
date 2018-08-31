@@ -53,6 +53,54 @@
                     {"$ref": "file:json_schemas/briefs-digital-outcomes-and-specialists-3-user-research-participants.json"}
                 ]
             }
+        },
+        "users": {
+            "description": "Relationship link to multiple User instances",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "$ref": "file:json_schemas/model_schemas/users.json"
+                }
+            }
+        },
+        "framework": {
+            "description": "Relationship link to a Framework instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/frameworks.json"
+            }
+        },
+        "lot": {
+            "description": "Relationship link to a Lot instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/lots.json"
+            }
+        },
+        "clarification_questions": {
+            "description": "Relationship link to multiple BriefClarificationQuestion instances",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "$ref": "file:json_schemas/model_schemas/brief_clarification_questions.json"
+                }
+            }
+        },
+        "awarded_brief_response": {
+            "description": "Relationship link to a BriefResponse instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/brief_responses.json"
+            }
+        },
+        "outcome": {
+            "description": "Relationship link to an Outcome instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/outcomes.json"
+            }
         }
     },
     "required": [

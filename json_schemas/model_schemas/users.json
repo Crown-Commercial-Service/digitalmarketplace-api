@@ -60,6 +60,13 @@
         },
         "user_research_opted_in": {
             "type": "boolean"
+        },
+        "supplier": {
+            "description": "Relationship link to a Supplier instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/suppliers.json"
+            }
         }
     },
     "required": [

@@ -43,6 +43,13 @@
                     "type": "integer"
                 }
             }
+        },
+        "supplier_framework": {
+            "description": "Relationship link to a SupplierFramework instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/supplier_frameworks.json"
+            }
         }
     },
     "required": [
