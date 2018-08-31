@@ -9,7 +9,7 @@ import pytest
 from alembic.command import upgrade
 from alembic.config import Config
 from flask_migrate import Migrate, MigrateCommand
-from flask.ext.script import Manager
+from flask_script import Manager
 from sqlalchemy import inspect
 
 from app import create_app
