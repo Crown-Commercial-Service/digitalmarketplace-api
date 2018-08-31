@@ -8,7 +8,7 @@ Flask-SQLAlchemy==2.1
 --no-binary=psycopg2
 psycopg2==2.7.3
 SQLAlchemy==1.1.4
-SQLAlchemy-Utils==0.30.5
+SQLAlchemy-Utils==0.33.3
 
 git+https://github.com/alphagov/digitalmarketplace-utils.git@43.0.0#egg=digitalmarketplace-utils==43.0.0
 git+https://github.com/alphagov/digitalmarketplace-apiclient.git@19.0.0#egg=digitalmarketplace-apiclient==19.0.0
