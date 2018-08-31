@@ -5,7 +5,7 @@ from __future__ import print_function
 import os
 
 from dmutils import init_manager
-from flask.ext.migrate import Migrate, MigrateCommand
+from flask_migrate import Migrate, MigrateCommand
 
 from app import create_app, db
 
