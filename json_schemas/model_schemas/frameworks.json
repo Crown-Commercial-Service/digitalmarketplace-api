@@ -57,7 +57,7 @@
         "framework_agreement_details": {
             "type": "object",
             "properties": {
-                "$ref": "#/path/to/frameworks_framework_agreement_details/schema"
+                "$ref": "file:json_schemas/framework-agreement-details.json"
             }
         }
     },

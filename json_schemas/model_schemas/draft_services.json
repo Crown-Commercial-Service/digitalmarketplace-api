@@ -34,7 +34,28 @@
         "data": {
             "type": "object",
             "properties": {
-                "$ref": "#/path/to/draft_services_data/schema"
+                "anyOf": [
+                    {"$ref": "file:json_schemas/services-g-cloud-4.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-5.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-6-iaas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-6-paas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-6-saas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-6-scs.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-7-iaas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-7-paas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-7-saas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-7-scs.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-8-iaas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-8-paas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-8-saas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-8-scs.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-9-cloud-hosting.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-9-cloud-software.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-9-cloud-support.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-10-cloud-hosting.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-10-cloud-software.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-10-cloud-support.json"}
+                ]
             }
         }
     },

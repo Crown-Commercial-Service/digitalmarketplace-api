@@ -26,13 +26,33 @@
         "data": {
             "type": "object",
             "properties": {
-                "$ref": "#/path/to/brief_responses_data/schema"
+                "anyOf": [
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-user-research-participants.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-2-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-2-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-2-user-research-participants.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-3-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-3-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-3-user-research-participants.json"}
+                ]
             }
         },
         "award_details": {
             "type": "object",
             "properties": {
-                "$ref": "#/path/to/brief_responses_award_details/schema"
+                "anyOf": [
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-user-research-participants.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-2-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-2-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-2-user-research-participants.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-3-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-3-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-3-user-research-participants.json"}
+                ]
             }
         }
     },
