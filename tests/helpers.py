@@ -270,25 +270,42 @@ class FixtureMixin(object):
         )
         db.session.commit()
 
-    def setup_dos_2_framework(self, status='open', clarifications=True):
-        db.session.add(
-            Framework(
-                id=101,
-                slug=u'digital-outcomes-and-specialists-2',
-                name=u'Digital Outcomes and Specialists 2',
-                framework=u'digital-outcomes-and-specialists',
-                status=status,
-                clarification_questions_open=clarifications,
-                lots=[Lot.query.filter(Lot.slug == 'digital-outcomes').first(),
-                      Lot.query.filter(Lot.slug == 'digital-specialists').first(),
-                      Lot.query.filter(Lot.slug == 'user-research-participants').first(),
-                      Lot.query.filter(Lot.slug == 'user-research-studios').first(),
-                      ],
-                has_direct_award=False,
-                has_further_competition=True,
-            )
+    def setup_dummy_framework(
+        self, slug, framework_family, name='New Framework', id=None, status='open', clarifications=False, lots=None,
+        has_direct_award=True, has_further_competition=False,
+    ):
+        if lots is None:
+            if framework_family.startswith('g-cloud'):
+                lots = [
+                    Lot.query.filter(Lot.slug == 'cloud-hosting').first(),
+                    Lot.query.filter(Lot.slug == 'cloud-software').first(),
+                    Lot.query.filter(Lot.slug == 'cloud-support').first(),
+                ]
+            elif framework_family.startswith('digital-outcomes-and-specialists'):
+                lots = [
+                    Lot.query.filter(Lot.slug == 'digital-outcomes').first(),
+                    Lot.query.filter(Lot.slug == 'digital-specialists').first(),
+                    Lot.query.filter(Lot.slug == 'user-research-participants').first(),
+                    Lot.query.filter(Lot.slug == 'user-research-studios').first(),
+                ]
+            else:
+                lots = []
+
+        framework = Framework(
+            id=id,
+            slug=slug,
+            name=name,
+            framework=framework_family,
+            status=status,
+            clarification_questions_open=clarifications,
+            lots=lots,
+            has_direct_award=has_direct_award,
+            has_further_competition=has_further_competition,
         )
+        db.session.add(framework)
         db.session.commit()
+
+        return framework.id
 
     def set_framework_status(self, slug, status):
         Framework.query.filter_by(slug=slug).update({'status': status})

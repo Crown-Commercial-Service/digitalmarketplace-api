@@ -3,6 +3,7 @@ import datetime
 from flask import jsonify, abort, request
 from sqlalchemy import func, orm, case
 from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.orm import lazyload
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
 
@@ -16,6 +17,7 @@ from ...models import (
     Supplier,
     SupplierFramework,
     User,
+    Brief,
 )
 from ...utils import (
     get_json_from_request,
@@ -330,3 +332,107 @@ def get_framework_interest(framework_slug):
     supplier_ids = [supplier_framework.supplier_id for supplier_framework in supplier_frameworks]
 
     return jsonify(interestedSuppliers=supplier_ids), 200
+
+
+@main.route('/frameworks/transition-dos/<string:framework_slug>', methods=['POST'])
+def transition_dos_framework(framework_slug):
+    updater_json = validate_and_return_updater_request()
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['expiringFramework'])
+
+    going_live_framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).with_for_update(
+        of=Framework,
+    ).options(
+        lazyload(Framework.lots)
+    ).first_or_404()
+    expiring_framework = Framework.query.filter(
+        Framework.slug == json_payload['expiringFramework']
+    ).with_for_update(
+        of=Framework,
+    ).options(
+        lazyload(Framework.lots)
+    ).first_or_404()
+
+    if going_live_framework.id <= expiring_framework.id:
+        abort(400, f"'going_live_framework' ID ('{going_live_framework.id}') must greater than"
+              f"'expiring_framework' ID ('{expiring_framework.id}')")
+
+    if any(f.framework != 'digital-outcomes-and-specialists' for f in (going_live_framework, expiring_framework)):
+        abort(400, f"'going_live_framework' family: '{going_live_framework.framework}' and 'expiring_framework' family:"
+              f" '{expiring_framework.framework}' must both be 'digital-outcomes-and-specialists'")
+
+    if going_live_framework.status != 'standstill' or expiring_framework.status != 'live':
+        abort(400, f"'going_live_framework' status ({going_live_framework.status}) must be 'standstill', and "
+              f"'expiring_framework' status ({expiring_framework.status}) must be 'live'")
+
+    expiring_framework_draft_briefs = Brief.query.filter(
+        Brief.status == 'draft',
+        Brief.framework_id == expiring_framework.id,
+    ).with_for_update(
+        of=Brief,
+    ).all()
+
+    for brief in expiring_framework_draft_briefs:
+        brief.framework_id = going_live_framework.id
+        db.session.add(brief)
+        db.session.flush()
+
+        audit = AuditEvent(
+            audit_type=AuditTypes.update_brief_framework_id,
+            user=updater_json['updated_by'],
+            data={
+                'briefId': brief.id,
+                'previousFrameworkId': expiring_framework.id,
+                'newFrameworkId': going_live_framework.id,
+            },
+            db_object=brief,
+        )
+
+        db.session.add(audit)
+
+    going_live_framework.status = 'live'
+    going_live_framework.framework_live_at_utc = datetime.datetime.utcnow()
+    expiring_framework.status = 'expired'
+    expiring_framework.framework_expires_at_utc = datetime.datetime.utcnow()
+
+    db.session.add_all((going_live_framework, going_live_framework))
+
+    db.session.add(
+        AuditEvent(
+            audit_type=AuditTypes.framework_update,
+            db_object=expiring_framework,
+            user=updater_json['updated_by'],
+            data={
+                "update": {
+                    "status": "expired",
+                    "framework_expires_at_utc set": "framework status set to 'expired'"
+                },
+                "frameworkSlug": expiring_framework.slug,
+            },
+        )
+    )
+
+    db.session.add(
+        AuditEvent(
+            audit_type=AuditTypes.framework_update,
+            db_object=going_live_framework,
+            user=updater_json['updated_by'],
+            data={
+                "update": {
+                    "status": "live",
+                    "framework_live_at_utc set": "framework status set to 'live'"
+                },
+                "frameworkSlug": going_live_framework.slug,
+            },
+        )
+    )
+
+    try:
+        db.session.commit()
+    except IntegrityError as error:
+        db.session.rollback()
+        abort(400, format_framework_integrity_error_message(error, {}))
+
+    return single_result_response(RESOURCE_NAME, going_live_framework), 200

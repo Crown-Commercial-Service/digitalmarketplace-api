@@ -1800,7 +1800,12 @@ class TestDOSServices(BaseApplicationTest, FixtureMixin):
         assert data['error'] == "'digital-specialists' service already exists for supplier '1'"
 
     def test_allow_multiple_drafts_for_one_service_lots_on_different_frameworks(self):
-        self.setup_dos_2_framework()
+        self.setup_dummy_framework(
+            slug='digital-outcomes-and-specialists-2',
+            framework_family='digital-outcomes-and-specialists',
+            name='Digital Outcomes and Specialists 2',
+            id=101,
+        )
         self._post_dos_draft()
 
         dos_2_draft = self.create_draft_json.copy()
