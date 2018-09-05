@@ -374,12 +374,14 @@ def transition_dos_framework(framework_slug):
         of=Brief,
     ).all()
 
+    timestamp = datetime.datetime.utcnow()
+
     for brief in expiring_framework_draft_briefs:
         brief.framework_id = going_live_framework.id
         db.session.add(brief)
         db.session.flush()
 
-        audit = AuditEvent(
+        brief_audit = AuditEvent(
             audit_type=AuditTypes.update_brief_framework_id,
             user=updater_json['updated_by'],
             data={
@@ -389,45 +391,46 @@ def transition_dos_framework(framework_slug):
             },
             db_object=brief,
         )
+        brief_audit.created_at = timestamp
 
-        db.session.add(audit)
+        db.session.add(brief_audit)
 
     going_live_framework.status = 'live'
-    going_live_framework.framework_live_at_utc = datetime.datetime.utcnow()
+    going_live_framework.framework_live_at_utc = timestamp
     expiring_framework.status = 'expired'
-    expiring_framework.framework_expires_at_utc = datetime.datetime.utcnow()
+    expiring_framework.framework_expires_at_utc = timestamp
 
     db.session.add_all((going_live_framework, going_live_framework))
 
-    db.session.add(
-        AuditEvent(
-            audit_type=AuditTypes.framework_update,
-            db_object=expiring_framework,
-            user=updater_json['updated_by'],
-            data={
-                "update": {
-                    "status": "expired",
-                    "framework_expires_at_utc set": "framework status set to 'expired'"
-                },
-                "frameworkSlug": expiring_framework.slug,
+    expired_audit = AuditEvent(
+        audit_type=AuditTypes.framework_update,
+        db_object=expiring_framework,
+        user=updater_json['updated_by'],
+        data={
+            "update": {
+                "status": "expired",
+                "framework_expires_at_utc set": "framework status set to 'expired'"
             },
-        )
+            "frameworkSlug": expiring_framework.slug,
+        },
     )
+    expired_audit.created_at = timestamp
+    db.session.add(expired_audit)
 
-    db.session.add(
-        AuditEvent(
-            audit_type=AuditTypes.framework_update,
-            db_object=going_live_framework,
-            user=updater_json['updated_by'],
-            data={
-                "update": {
-                    "status": "live",
-                    "framework_live_at_utc set": "framework status set to 'live'"
-                },
-                "frameworkSlug": going_live_framework.slug,
+    live_audit = AuditEvent(
+        audit_type=AuditTypes.framework_update,
+        db_object=going_live_framework,
+        user=updater_json['updated_by'],
+        data={
+            "update": {
+                "status": "live",
+                "framework_live_at_utc set": "framework status set to 'live'"
             },
-        )
+            "frameworkSlug": going_live_framework.slug,
+        },
     )
+    live_audit.created_at = timestamp
+    db.session.add(live_audit)
 
     try:
         db.session.commit()

@@ -1113,6 +1113,24 @@ class TestGetFrameworkInterest(BaseApplicationTest, FixtureMixin):
 
 
 class TestTransitionDosFramework(BaseApplicationTest, FixtureMixin):
+    def _setup_for_succesful_call(self):
+        self.setup_dummy_framework(
+            slug="digital-outcomes-and-specialists-2", framework_family="digital-outcomes-and-specialists",
+            status='live', id=101,
+        )
+        self.setup_dummy_framework(
+            slug="digital-outcomes-and-specialists-3", framework_family="digital-outcomes-and-specialists",
+            status='standstill', id=102,
+        )
+        self.setup_dummy_user()
+        for status in ("draft", "live", "withdrawn", "closed", "draft", "cancelled", "unsuccessful"):
+            self.setup_dummy_brief(
+                status=status,
+                framework_slug="digital-outcomes-and-specialists-2",
+                data={"some": "data"},
+                user_id=123,
+            )
+
     def test_400s_if_invalid_updater_json(self):
         response = self.client.post(
             "/frameworks/transition-dos/sausage-cloud-6",
@@ -1213,22 +1231,7 @@ class TestTransitionDosFramework(BaseApplicationTest, FixtureMixin):
     def test_success_does_all_the_right_things(self):
         # Remove all audit events to make assertions easier later
         AuditEvent.query.delete()
-        self.setup_dummy_framework(
-            slug="digital-outcomes-and-specialists-2", framework_family="digital-outcomes-and-specialists",
-            status='live', id=101,
-        )
-        self.setup_dummy_framework(
-            slug="digital-outcomes-and-specialists-3", framework_family="digital-outcomes-and-specialists",
-            status='standstill', id=102,
-        )
-        self.setup_dummy_user()
-        for status in ("draft", "live", "withdrawn", "closed", "draft", "cancelled", "unsuccessful"):
-            self.setup_dummy_brief(
-                status=status,
-                framework_slug="digital-outcomes-and-specialists-2",
-                data={"some": "data"},
-                user_id=123,
-            )
+        self._setup_for_succesful_call()
 
         # keep track of brief ids for assertions later
         draft_brief_ids = {
@@ -1288,23 +1291,28 @@ class TestTransitionDosFramework(BaseApplicationTest, FixtureMixin):
         # Assert the endpoint returns the new live framework to us
         assert json.loads(response.get_data(as_text=True))["frameworks"]["slug"] == "digital-outcomes-and-specialists-3"
 
+    def test_all_audit_events_have_the_same_timestamp(self):
+        AuditEvent.query.delete()
+        self._setup_for_succesful_call()
+
+        response = self.client.post(
+            "/frameworks/transition-dos/digital-outcomes-and-specialists-3",
+            data=json.dumps({
+                "updated_by": "🤖",
+                "expiringFramework": "digital-outcomes-and-specialists-2",
+            }),
+            content_type="application/json"
+        )
+
+        assert response.status_code == 200
+
+        audit_events = AuditEvent.query.all()
+        assert all(audit.created_at == audit_events[0].created_at for audit in audit_events)
+
+
     def test_integrity_errors_are_handled_and_changes_rolled_back(self):
-        self.setup_dummy_framework(
-            slug="digital-outcomes-and-specialists-2", framework_family="digital-outcomes-and-specialists",
-            status='live', id=101,
-        )
-        self.setup_dummy_framework(
-            slug="digital-outcomes-and-specialists-3", framework_family="digital-outcomes-and-specialists",
-            status='standstill', id=102,
-        )
-        self.setup_dummy_user()
-        for status in ("draft", "live", "withdrawn", "closed", "draft", "cancelled", "unsuccessful"):
-            self.setup_dummy_brief(
-                status=status,
-                framework_slug="digital-outcomes-and-specialists-2",
-                data={"some": "data"},
-                user_id=123,
-            )
+        self._setup_for_succesful_call()
+        
         with mock.patch("app.main.views.frameworks.db.session.commit") as commit_mock:
             commit_mock.side_effect = IntegrityError("Could not commit", orig=None, params={})
             response = self.client.post(
