@@ -1,8 +1,8 @@
 from sqlalchemy import func
-from sqlalchemy.orm import joinedload, Load
+from sqlalchemy.orm import joinedload, Load, noload, raiseload
 from app import db
 from app.api.helpers import Service
-from app.models import Supplier, SupplierDomain, Domain
+from app.models import Supplier, SupplierDomain, Domain, SupplierFramework
 
 
 class SuppliersService(Service):
@@ -25,3 +25,16 @@ class SuppliersService(Service):
         )
             .filter(Supplier.code == code)
             .one_or_none())
+
+    def get_suppliers_by_name_keyword(self, keyword):
+        return (db.session.query(Supplier)
+                .filter(Supplier.name.ilike('%{}%'.format(keyword.encode('utf-8'))))
+                .filter(Supplier.status != 'deleted')
+                .order_by(Supplier.name.asc())
+                .options(
+                    joinedload(Supplier.frameworks),
+                    joinedload('frameworks.framework'),
+                    noload('frameworks.framework.lots'),
+                    raiseload('*'))
+                .limit(20)
+                .all())

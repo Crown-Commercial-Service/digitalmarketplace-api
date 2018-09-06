@@ -1,9 +1,10 @@
-from flask import jsonify
+from flask import jsonify, request
 from flask_login import login_required
 from app.api import api
 from app.utils import get_json_from_request
 from app.api.suppliers import get_supplier, update_supplier, list_suppliers
 from app.api.helpers import role_required, is_current_supplier
+from app.api.services import suppliers
 
 
 @api.route('/suppliers/<int:code>', methods=['GET'], endpoint='get_supplier')
@@ -173,3 +174,68 @@ def get_list():
                         type: string
     """
     return list_suppliers()
+
+
+@api.route('/suppliers/search', methods=['GET'])
+def get_suppliers():
+    """Suppliers search names by keyword
+    ---
+    tags:
+        - suppliers
+    definitions:
+        SupplierMinimal:
+            type: object
+            properties:
+                name:
+                    type: string
+                code:
+                    type: integer
+                panel:
+                    type: boolean
+                sme:
+                    type: boolean
+        Suppliers:
+            type: object
+            properties:
+                sellers:
+                    type: array
+                    items:
+                        $ref: '#/definitions/SupplierMinimal'
+    parameters:
+        - name: keyword
+          in: query
+          type: string
+          required: false
+          description: the keyword to search on
+    responses:
+        200:
+            description: a list of matching suppliers
+            schema:
+                $ref: '#/definitions/Suppliers'
+        400:
+            description: invalid request data, such as a missing keyword param
+    """
+    keyword = request.args.get('keyword') or ''
+    if keyword:
+        results = suppliers.get_suppliers_by_name_keyword(keyword)
+        supplier_results = []
+        for result in results:
+            supplier = {}
+            supplier['name'] = result.name
+            supplier['code'] = result.code
+
+            try:
+                supplier['panel'] = 'Digital Marketplace' in [f.framework.name for f in result.frameworks]
+            except (TypeError, KeyError):
+                supplier['panel'] = False
+
+            try:
+                supplier['sme'] = result.data['seller_type']['sme']
+            except (TypeError, KeyError):
+                supplier['sme'] = False
+
+            supplier_results.append(supplier)
+
+        return jsonify(sellers=supplier_results), 200
+    else:
+        return jsonify(message='You must provide a keyword param.'), 400
