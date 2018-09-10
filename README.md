@@ -109,12 +109,6 @@ revision IDs increment by 10 each time; check the output of `python application.
 revision. Until you run the migration to update the database state, you can delete the generated revision and
 re-generate it as you need to.
 
-## Using FeatureFlags
-
-To use feature flags, check out the documentation in (the README of)
-[digitalmarketplace-utils](https://github.com/alphagov/digitalmarketplace-utils#using-featureflags).
-
-
 ## Utility scripts
 
 ### Getting a list of migration versions
