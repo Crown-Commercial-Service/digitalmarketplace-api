@@ -2128,10 +2128,13 @@ class TestFrameworkSupplierIdsMany(BaseApplicationTest, FixtureMixin):
     """Test multiple suppliers, multiple services."""
 
     def test_multiple_services(self):
-        self.setup_dos_2_framework()
+        framework_id = self.setup_dummy_framework(
+            slug='digital-outcomes-and-specialists-2',
+            framework_family='digital-outcomes-and-specialists',
+        )
         lot = Lot.query.first()
         self.fl_query = {
-            'framework_id': 101,
+            'framework_id': framework_id,
             'lot_id': lot.id
         }
         fl = FrameworkLot(**self.fl_query)
@@ -2164,7 +2167,7 @@ class TestFrameworkSupplierIdsMany(BaseApplicationTest, FixtureMixin):
                 db.session.add(ds)
                 db.session.commit()
         # Assert that only those suppliers whose service_status list contains failed and/ or submitted are returned.
-        framework = Framework.query.filter(Framework.id == 101).first()
+        framework = Framework.query.filter(Framework.id == framework_id).first()
         assert sorted(framework.get_supplier_ids_for_completed_service()) == [0, 2, 4]
 
 

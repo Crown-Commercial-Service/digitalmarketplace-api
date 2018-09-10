@@ -1,14 +1,14 @@
 import datetime
+import mock
+import pytest
 
 from flask import json
 from freezegun import freeze_time
-import mock
 from sqlalchemy.exc import IntegrityError
 
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
-from app.models import db, Framework, SupplierFramework, DraftService, User, FrameworkLot, AuditEvent
+from app.models import db, Framework, SupplierFramework, DraftService, User, FrameworkLot, AuditEvent, Brief
 from tests.helpers import FixtureMixin
-
 from app.main.views.frameworks import FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MAP
 
 
@@ -1110,3 +1110,228 @@ class TestGetFrameworkInterest(BaseApplicationTest, FixtureMixin):
         response = self.client.get('/frameworks/biscuits-for-gov/interest')
 
         assert response.status_code == 404
+
+
+class TestTransitionDosFramework(BaseApplicationTest, FixtureMixin):
+    def _setup_for_succesful_call(self):
+        self.setup_dummy_framework(
+            slug="digital-outcomes-and-specialists-2", framework_family="digital-outcomes-and-specialists",
+            status='live', id=101,
+        )
+        self.setup_dummy_framework(
+            slug="digital-outcomes-and-specialists-3", framework_family="digital-outcomes-and-specialists",
+            status='standstill', id=102,
+        )
+        self.setup_dummy_user()
+        for status in ("draft", "live", "withdrawn", "closed", "draft", "cancelled", "unsuccessful"):
+            self.setup_dummy_brief(
+                status=status,
+                framework_slug="digital-outcomes-and-specialists-2",
+                data={"some": "data"},
+                user_id=123,
+            )
+
+    def test_400s_if_invalid_updater_json(self):
+        response = self.client.post(
+            "/frameworks/transition-dos/sausage-cloud-6",
+            data=json.dumps({"not-updated": "correctly"}),
+            content_type="application/json"
+        )
+        data = response.get_data(as_text=True)
+
+        assert response.status_code == 400
+        assert json.loads(data)['error'] == "JSON validation error: 'updated_by' is a required property"
+
+    def test_400s_if_expiring_framework_not_in_request_body(self):
+        response = self.client.post(
+            "/frameworks/transition-dos/sausage-cloud-6",
+            data=json.dumps({"updated_by": "🤖"}),
+            content_type="application/json"
+        )
+        data = response.get_data(as_text=True)
+
+        assert response.status_code == 400
+        assert json.loads(data)['error'] == "Invalid JSON must have 'expiringFramework' keys"
+
+    def test_400s_if_going_live_framework_is_older_than_expiring_framework(self):
+        dos_2_id = self.setup_dummy_framework(
+            slug="digital-outcomes-and-specialists-2", framework_family="digital-outcomes-and-specialists", id=101,
+        )
+
+        response = self.client.post(
+            "/frameworks/transition-dos/digital-outcomes-and-specialists",
+            data=json.dumps({
+                "updated_by": "🤖",
+                "expiringFramework": "digital-outcomes-and-specialists-2",
+            }),
+            content_type="application/json"
+        )
+        data = response.get_data(as_text=True)
+
+        assert response.status_code == 400
+        assert json.loads(data)['error'] == \
+            f"'going_live_framework' ID ('5') must greater than'expiring_framework' ID ('{dos_2_id}')"
+
+    @pytest.mark.parametrize(
+        ("going_live_slug", "going_live_family", "expiring_slug", "expiring_family"),
+        (
+            ("g-cloud-10", "g-cloud", "digital-outcomes-and-specialists", "digital-outcomes-and-specialists",),
+            ("digital-outcomes-and-specialists-2", "digital-outcomes-and-specialists", "g-cloud-10", "g-cloud",)
+        )
+    )
+    def test_400s_if_either_framework_has_wrong_family(
+        self, going_live_slug, going_live_family, expiring_slug, expiring_family,
+    ):
+        self.setup_dummy_framework(
+            slug="g-cloud-10", framework_family="g-cloud", lots=[], id=101,
+        )
+        self.setup_dummy_framework(
+            slug="digital-outcomes-and-specialists-2", framework_family="digital-outcomes-and-specialists", id=102,
+        )
+
+        response = self.client.post(
+            f"/frameworks/transition-dos/{going_live_slug}",
+            data=json.dumps({
+                "updated_by": "🤖",
+                "expiringFramework": f"{expiring_slug}",
+            }),
+            content_type="application/json"
+        )
+        data = response.get_data(as_text=True)
+
+        assert response.status_code == 400
+        assert json.loads(data)['error'] == f"'going_live_framework' family: '{going_live_family}' and " \
+            f"'expiring_framework' family: '{expiring_family}' must both be 'digital-outcomes-and-specialists'"
+
+    @pytest.mark.parametrize('status', ('coming', 'open', 'pending', 'live', 'expired'))
+    def test_400s_if_going_live_framework_status_is_not_standstill(self, status):
+        self.setup_dummy_framework(
+            slug="digital-outcomes-and-specialists-2", framework_family="digital-outcomes-and-specialists",
+            status='live', id=101,
+        )
+        self.setup_dummy_framework(
+            slug="digital-outcomes-and-specialists-3", framework_family="digital-outcomes-and-specialists",
+            status=status, id=102,
+        )
+
+        response = self.client.post(
+            "/frameworks/transition-dos/digital-outcomes-and-specialists-3",
+            data=json.dumps({
+                "updated_by": "🤖",
+                "expiringFramework": "digital-outcomes-and-specialists-2",
+            }),
+            content_type="application/json"
+        )
+        data = response.get_data(as_text=True)
+
+        assert response.status_code == 400
+        assert json.loads(data)['error'] == f"'going_live_framework' status ({status}) must be 'standstill', and " \
+            "'expiring_framework' status (live) must be 'live'"
+
+    def test_success_does_all_the_right_things(self):
+        # Remove all audit events to make assertions easier later
+        AuditEvent.query.delete()
+        self._setup_for_succesful_call()
+
+        # keep track of brief ids for assertions later
+        draft_brief_ids = {
+            brief.id for brief in Brief.query.filter(Brief.framework_id == 101).all() if brief.status == 'draft'
+        }
+        assert len(draft_brief_ids) == 2
+
+        not_draft_brief_ids = {
+            brief.id for brief in Brief.query.filter(Brief.framework_id == 101).all() if brief.status != 'draft'
+        }
+        assert len(not_draft_brief_ids) == 5
+
+        with freeze_time('2018-09-03 17:09:56.999999'):
+            response = self.client.post(
+                "/frameworks/transition-dos/digital-outcomes-and-specialists-3",
+                data=json.dumps({
+                    "updated_by": "🤖",
+                    "expiringFramework": "digital-outcomes-and-specialists-2",
+                }),
+                content_type="application/json"
+            )
+
+        assert response.status_code == 200
+
+        # Assert that the correct briefs were transferred to the new live framework
+        expired_framework_briefs = Brief.query.filter(Brief.framework_id == 101).all()
+        new_live_framework_briefs = Brief.query.filter(Brief.framework_id == 102).all()
+
+        assert all(brief.status == "draft" for brief in new_live_framework_briefs)
+        assert {brief.id for brief in new_live_framework_briefs} == draft_brief_ids
+
+        assert all(brief.status != "draft" for brief in expired_framework_briefs)
+        assert {brief.id for brief in expired_framework_briefs} == not_draft_brief_ids
+
+        # Assert audit events were created for the brief changes
+        brief_audits = AuditEvent.query.filter(AuditEvent.type == "update_brief_framework_id").all()
+        assert len(brief_audits) == 2
+        assert all(
+            (audit.data["previousFrameworkId"], audit.data["newFrameworkId"]) == (101, 102) for audit in brief_audits
+        )
+        assert {audit.data["briefId"] for audit in brief_audits} == draft_brief_ids
+
+        # Assert the frameworks statuses were correctly changed and timestamps set
+        expired_framework = Framework.query.get(101)
+        new_live_framework = Framework.query.get(102)
+        assert expired_framework.status == "expired"
+        assert expired_framework.framework_expires_at_utc == datetime.datetime(2018, 9, 3, 17, 9, 56, 999999)
+        assert new_live_framework.status == "live"
+        assert new_live_framework.framework_live_at_utc == datetime.datetime(2018, 9, 3, 17, 9, 56, 999999)
+
+        # Assert audit events for the framework updates were created
+        framework_audits = AuditEvent.query.filter(AuditEvent.type == "framework_update").all()
+        assert len(framework_audits) == 2
+        assert {(audit.data["update"]["status"], audit.data["frameworkSlug"]) for audit in framework_audits} == \
+            {("expired", "digital-outcomes-and-specialists-2"), ("live", "digital-outcomes-and-specialists-3")}
+
+        # Assert the endpoint returns the new live framework to us
+        assert json.loads(response.get_data(as_text=True))["frameworks"]["slug"] == "digital-outcomes-and-specialists-3"
+
+    def test_all_audit_events_have_the_same_timestamp(self):
+        AuditEvent.query.delete()
+        self._setup_for_succesful_call()
+
+        response = self.client.post(
+            "/frameworks/transition-dos/digital-outcomes-and-specialists-3",
+            data=json.dumps({
+                "updated_by": "🤖",
+                "expiringFramework": "digital-outcomes-and-specialists-2",
+            }),
+            content_type="application/json"
+        )
+
+        assert response.status_code == 200
+
+        audit_events = AuditEvent.query.all()
+        assert all(audit.created_at == audit_events[0].created_at for audit in audit_events)
+
+    def test_integrity_errors_are_handled_and_changes_rolled_back(self):
+        self._setup_for_succesful_call()
+
+        with mock.patch("app.main.views.frameworks.db.session.commit") as commit_mock:
+            commit_mock.side_effect = IntegrityError("Could not commit", orig=None, params={})
+            response = self.client.post(
+                "/frameworks/transition-dos/digital-outcomes-and-specialists-3",
+                data=json.dumps({
+                    "updated_by": "🤖",
+                    "expiringFramework": "digital-outcomes-and-specialists-2",
+                }),
+                content_type="application/json"
+            )
+        data = response.get_data(as_text=True)
+
+        assert response.status_code == 400
+        assert "Could not commit" in json.loads(data)["error"]
+
+        expiring_framework_briefs = Brief.query.filter(Brief.framework_id == 101).all()
+        going_live_framework_briefs = Brief.query.filter(Brief.framework_id == 102).all()
+
+        assert len(expiring_framework_briefs) == 7
+        assert not going_live_framework_briefs
+
+        assert Framework.query.get(101).status == "live"
+        assert Framework.query.get(102).status == "standstill"
