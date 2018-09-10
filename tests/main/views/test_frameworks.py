@@ -1309,10 +1309,9 @@ class TestTransitionDosFramework(BaseApplicationTest, FixtureMixin):
         audit_events = AuditEvent.query.all()
         assert all(audit.created_at == audit_events[0].created_at for audit in audit_events)
 
-
     def test_integrity_errors_are_handled_and_changes_rolled_back(self):
         self._setup_for_succesful_call()
-        
+
         with mock.patch("app.main.views.frameworks.db.session.commit") as commit_mock:
             commit_mock.side_effect = IntegrityError("Could not commit", orig=None, params={})
             response = self.client.post(

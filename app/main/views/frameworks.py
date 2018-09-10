@@ -336,6 +336,17 @@ def get_framework_interest(framework_slug):
 
 @main.route('/frameworks/transition-dos/<string:framework_slug>', methods=['POST'])
 def transition_dos_framework(framework_slug):
+    """When we transition from one DOS framework to another, there is no overlap period. One framework is expired at the
+    same time the other is made live. A buyer publishes a requirement, and it will either be on one framework or the
+    other. Suppliers are able to apply to an opportunity even if the framework it was published on is expired, as long
+    as the brief is still open (within 1 or 2 weeks of its publication date).
+
+    The issue is that a brief is tied to a framework at the point it is created (as a draft). If a framework is expired,
+    any drafts that belong to it are no longer editable/publishable. We don't want a buyer to lose a draft.
+
+    This endpoint will update the framework statuses, move the draft briefs belonging to that framework to the incoming
+    framework, and create audit events for it all, in a transactionally safe way.
+    """
     updater_json = validate_and_return_updater_request()
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['expiringFramework'])
