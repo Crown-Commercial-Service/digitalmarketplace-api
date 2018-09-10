@@ -5,7 +5,7 @@ applications:
   health-check-type: port
   health-check-timeout: 180
   instances: 1
-  memory: 1G
+  memory: 512M
   disk_quota: 512M
   services:
   - ups-secret-service
