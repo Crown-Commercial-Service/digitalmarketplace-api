@@ -3,7 +3,7 @@ import datetime
 from flask import jsonify, abort, request
 from sqlalchemy import func, orm, case
 from sqlalchemy.exc import IntegrityError, DataError
-from sqlalchemy.orm import lazyload
+from sqlalchemy.orm import lazyload, load_only
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
 
@@ -345,7 +345,9 @@ def transition_dos_framework(framework_slug):
     any drafts that belong to it are no longer editable/publishable. We don't want a buyer to lose a draft.
 
     This endpoint will update the framework statuses, move the draft briefs belonging to that framework to the incoming
-    framework, and create audit events for it all, in a transactionally safe way.
+    framework, and create audit events for it all. The frameworks are commited in a separate transation before the
+    briefs. This is to prevent the framework rows from being locked for any longer than necessary - they're used heavily
+    by many api calls. If there are lots of briefs to update the framework rows could be locked for a while, otherwise.
     """
     updater_json = validate_and_return_updater_request()
     json_payload = get_json_from_request()
@@ -378,14 +380,62 @@ def transition_dos_framework(framework_slug):
         abort(400, f"'going_live_framework' status ({going_live_framework.status}) must be 'standstill', and "
               f"'expiring_framework' status ({expiring_framework.status}) must be 'live'")
 
-    expiring_framework_draft_briefs = Brief.query.filter(
+    framework_timestamp = datetime.datetime.utcnow()
+
+    going_live_framework.status = 'live'
+    going_live_framework.framework_live_at_utc = framework_timestamp
+    expiring_framework.status = 'expired'
+    expiring_framework.framework_expires_at_utc = framework_timestamp
+    db.session.add_all((going_live_framework, expiring_framework))
+
+    expired_audit = AuditEvent(
+        audit_type=AuditTypes.framework_update,
+        db_object=expiring_framework,
+        user=updater_json['updated_by'],
+        data={
+            "update": {
+                "status": "expired",
+                "framework_expires_at_utc set": "framework status set to 'expired'"
+            },
+            "frameworkSlug": expiring_framework.slug,
+        },
+    )
+    expired_audit.created_at = framework_timestamp
+    db.session.add(expired_audit)
+
+    live_audit = AuditEvent(
+        audit_type=AuditTypes.framework_update,
+        db_object=going_live_framework,
+        user=updater_json['updated_by'],
+        data={
+            "update": {
+                "status": "live",
+                "framework_live_at_utc set": "framework status set to 'live'"
+            },
+            "frameworkSlug": going_live_framework.slug,
+        },
+    )
+    live_audit.created_at = framework_timestamp
+    db.session.add(live_audit)
+
+    # Commit the frameworks to release the locks on their rows to help mitigate issues that may occur if updating the
+    # briefs below takes a long time.
+    try:
+        db.session.commit()
+    except IntegrityError as error:
+        db.session.rollback()
+        abort(400, format_framework_integrity_error_message(error, {}))
+
+    expiring_framework_draft_briefs = Brief.query.options(
+        load_only('id', 'framework_id'),
+    ).filter(
         Brief.status == 'draft',
         Brief.framework_id == expiring_framework.id,
     ).with_for_update(
         of=Brief,
     ).all()
 
-    timestamp = datetime.datetime.utcnow()
+    brief_timestamp = datetime.datetime.utcnow()
 
     for brief in expiring_framework_draft_briefs:
         brief.framework_id = going_live_framework.id
@@ -402,46 +452,9 @@ def transition_dos_framework(framework_slug):
             },
             db_object=brief,
         )
-        brief_audit.created_at = timestamp
+        brief_audit.created_at = brief_timestamp
 
         db.session.add(brief_audit)
-
-    going_live_framework.status = 'live'
-    going_live_framework.framework_live_at_utc = timestamp
-    expiring_framework.status = 'expired'
-    expiring_framework.framework_expires_at_utc = timestamp
-
-    db.session.add_all((going_live_framework, going_live_framework))
-
-    expired_audit = AuditEvent(
-        audit_type=AuditTypes.framework_update,
-        db_object=expiring_framework,
-        user=updater_json['updated_by'],
-        data={
-            "update": {
-                "status": "expired",
-                "framework_expires_at_utc set": "framework status set to 'expired'"
-            },
-            "frameworkSlug": expiring_framework.slug,
-        },
-    )
-    expired_audit.created_at = timestamp
-    db.session.add(expired_audit)
-
-    live_audit = AuditEvent(
-        audit_type=AuditTypes.framework_update,
-        db_object=going_live_framework,
-        user=updater_json['updated_by'],
-        data={
-            "update": {
-                "status": "live",
-                "framework_live_at_utc set": "framework status set to 'live'"
-            },
-            "frameworkSlug": going_live_framework.slug,
-        },
-    )
-    live_audit.created_at = timestamp
-    db.session.add(live_audit)
 
     try:
         db.session.commit()
