@@ -2,7 +2,7 @@
 # Run `make freeze-requirements` to update requirements.txt
 # with package version changes made in requirements-app.txt
 
-Flask==0.12.4
+Flask==1.0.2
 Flask-Bcrypt==0.7.1
 Flask-Migrate==2.0.3
 Flask-SQLAlchemy==2.1
@@ -11,8 +11,8 @@ psycopg2==2.7.3
 SQLAlchemy==1.1.4
 SQLAlchemy-Utils==0.33.3
 
-git+https://github.com/alphagov/digitalmarketplace-utils.git@43.0.0#egg=digitalmarketplace-utils==43.0.0
-git+https://github.com/alphagov/digitalmarketplace-apiclient.git@19.0.0#egg=digitalmarketplace-apiclient==19.0.0
+git+https://github.com/alphagov/digitalmarketplace-utils.git@44.0.1#egg=digitalmarketplace-utils==44.0.1
+git+https://github.com/alphagov/digitalmarketplace-apiclient.git@19.0.0#egg=digitalmarketplace-apiclient==19.4.0
 
 # For schema validation
 jsonschema==2.5.1
@@ -23,8 +23,8 @@ strict-rfc3339==0.5
 alembic==1.0.0
 asn1crypto==0.24.0
 bcrypt==3.1.4
-boto3==1.4.8
-botocore==1.8.50
+boto3==1.7.83
+botocore==1.10.84
 certifi==2018.8.24
 cffi==1.11.5
 chardet==3.0.4
@@ -38,7 +38,6 @@ Flask-Script==2.0.6
 Flask-WTF==0.14.2
 future==0.16.0
 idna==2.7
-inflection==0.3.1
 itsdangerous==0.24
 Jinja2==2.10
 jmespath==0.9.3
@@ -55,7 +54,6 @@ python-dateutil==2.7.3
 python-editor==1.0.3
 python-json-logger==0.1.4
 pytz==2015.4
-PyYAML==3.11
 requests==2.18.4
 s3transfer==0.1.13
 six==1.11.0
