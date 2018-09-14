@@ -1291,7 +1291,7 @@ class TestTransitionDosFramework(BaseApplicationTest, FixtureMixin):
         # Assert the endpoint returns the new live framework to us
         assert json.loads(response.get_data(as_text=True))["frameworks"]["slug"] == "digital-outcomes-and-specialists-3"
 
-    def test_all_audit_events_have_the_same_timestamp(self):
+    def test_audit_events_have_corresponding_timestamps(self):
         AuditEvent.query.delete()
         self._setup_for_succesful_call()
 
@@ -1306,14 +1306,27 @@ class TestTransitionDosFramework(BaseApplicationTest, FixtureMixin):
 
         assert response.status_code == 200
 
-        audit_events = AuditEvent.query.all()
-        assert all(audit.created_at == audit_events[0].created_at for audit in audit_events)
+        framework_audit_events = AuditEvent.query.filter(AuditEvent.type == "framework_update").all()
+        assert all(audit.created_at == framework_audit_events[0].created_at for audit in framework_audit_events)
 
-    def test_integrity_errors_are_handled_and_changes_rolled_back(self):
+        brief_audit_events = AuditEvent.query.filter(AuditEvent.type == "update_brief_framework_id").all()
+        assert all(audit.created_at == brief_audit_events[0].created_at for audit in brief_audit_events)
+
+    @pytest.mark.parametrize('commit_to_fail_on', ('frameworks', 'briefs'))
+    def test_integrity_errors_are_handled_and_changes_rolled_back(self, commit_to_fail_on):
+        from app.main.views.frameworks import db as app_db
+        commit_func = app_db.session.commit
+
+        # Using a generator here so that `commit_func` gets called when the commit mock is called, and not before.
+        def _side_effects(commit_to_fail_on):
+            if commit_to_fail_on == 'briefs':
+                yield commit_func()
+            raise IntegrityError("Could not commit", orig=None, params={})
+
         self._setup_for_succesful_call()
 
         with mock.patch("app.main.views.frameworks.db.session.commit") as commit_mock:
-            commit_mock.side_effect = IntegrityError("Could not commit", orig=None, params={})
+            commit_mock.side_effect = _side_effects(commit_to_fail_on)
             response = self.client.post(
                 "/frameworks/transition-dos/digital-outcomes-and-specialists-3",
                 data=json.dumps({
@@ -1333,5 +1346,9 @@ class TestTransitionDosFramework(BaseApplicationTest, FixtureMixin):
         assert len(expiring_framework_briefs) == 7
         assert not going_live_framework_briefs
 
-        assert Framework.query.get(101).status == "live"
-        assert Framework.query.get(102).status == "standstill"
+        if commit_to_fail_on == 'frameworks':
+            assert Framework.query.get(101).status == "live"
+            assert Framework.query.get(102).status == "standstill"
+        else:
+            assert Framework.query.get(101).status == "expired"
+            assert Framework.query.get(102).status == "live"
