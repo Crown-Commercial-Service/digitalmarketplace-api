@@ -2203,6 +2203,16 @@ class BriefResponse(db.Model):
             required_fields=required_fields
         )
 
+        if self.brief.lot.slug != 'digital-outcome':
+            attachedDocumentURL = self.data.get('attachedDocumentURL', [])
+            if attachedDocumentURL:
+                p = re.compile('.+\.(pdf|odt|doc|docx)$', re.IGNORECASE)
+                for ad in attachedDocumentURL:
+                    if not p.match(ad):
+                        errs['attachedDocumentURL'] = 'file_incorrect_format'
+            else:
+                errs['attachedDocumentURL'] = 'answer_required'
+
         if (
             self.brief.lot.slug != 'training' and
             'essentialRequirements' not in errs and

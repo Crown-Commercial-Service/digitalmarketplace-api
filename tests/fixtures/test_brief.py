@@ -130,6 +130,9 @@ def test_create_new_brief_response(client, supplier_user, supplier_domains, brie
             'respondToEmailAddress': 'supplier@email.com',
             'specialistName': 'Test Specialist Name',
             'dayRate': '100',
+            'attachedDocumentURL': [
+                'test.pdf'
+            ]
         }),
         content_type='application/json'
     )
@@ -151,6 +154,9 @@ def test_create_brief_response_creates_an_audit_event(client, supplier_user, sup
             'respondToEmailAddress': 'supplier@email.com',
             'specialistName': 'Test Specialist Name',
             'dayRate': '100',
+            'attachedDocumentURL': [
+                'test.pdf'
+            ]
         }),
         content_type='application/json'
     )
@@ -180,6 +186,9 @@ def test_create_brief_response_with_object(client, supplier_user,
             'respondToEmailAddress': 'supplier@email.com',
             'specialistName': 'Test Specialist Name',
             'dayRate': '100',
+            'attachedDocumentURL': [
+                'test.pdf'
+            ]
         }),
         content_type='application/json'
     )
@@ -203,6 +212,9 @@ def test_cannot_respond_to_a_brief_more_than_three_times_from_the_same_supplier(
                 'respondToEmailAddress': 'supplier@email.com',
                 'specialistName': 'Test Specialist Name',
                 'dayRate': '100',
+                'attachedDocumentURL': [
+                    'test.pdf'
+                ]
             }),
             content_type='application/json'
         )
@@ -216,6 +228,9 @@ def test_cannot_respond_to_a_brief_more_than_three_times_from_the_same_supplier(
             'respondToEmailAddress': 'supplier@email.com',
             'specialistName': 'Test Specialist Name',
             'dayRate': '100',
+            'attachedDocumentURL': [
+                'test.pdf'
+            ]
         }),
         content_type='application/json'
     )
@@ -239,6 +254,9 @@ def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(client, s
             'respondToEmailAddress': 'supplier@email.com',
             'specialistName': 'Test Specialist Name',
             'dayRate': '100',
+            'attachedDocumentURL': [
+                'test.pdf'
+            ]
         }),
         content_type='application/json'
     )
@@ -264,10 +282,52 @@ def test_create_brief_response_success_with_audit_exception(client, supplier_use
             'respondToEmailAddress': 'supplier@email.com',
             'specialistName': 'Test Specialist Name',
             'dayRate': '100',
+            'attachedDocumentURL': [
+                'test.pdf'
+            ]
         }),
         content_type='application/json'
     )
     assert res.status_code == 201
+
+
+def test_create_brief_response_fail_with_incorrect_attachment(client, supplier_user, supplier_domains,
+                                                              briefs, assessments, suppliers, mocker):
+    audit_event = mocker.patch('app.api.views.briefs.audit_service')
+    audit_event.side_effect = Exception('Test')
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post(
+        '/2/brief/1/respond',
+        data=json.dumps({
+            'essentialRequirements': ['ABC', 'XYZ'],
+            'availability': '01/01/2018',
+            'respondToEmailAddress': 'supplier@email.com',
+            'specialistName': 'Test Specialist Name',
+            'dayRate': '100',
+            'attachedDocumentURL': [[{}]]
+        }),
+        content_type='application/json'
+    )
+    assert res.status_code == 400
+
+    res = client.post(
+        '/2/brief/1/respond',
+        data=json.dumps({
+            'essentialRequirements': ['ABC', 'XYZ'],
+            'availability': '01/01/2018',
+            'respondToEmailAddress': 'supplier@email.com',
+            'specialistName': 'Test Specialist Name',
+            'dayRate': '100',
+            'attachedDocumentURL': ['test.exe']
+        }),
+        content_type='application/json'
+    )
+    assert res.status_code == 400
 
 
 def test_get_brief(client, supplier_user, supplier_domains, briefs, assessments, suppliers):
@@ -284,6 +344,9 @@ def test_get_brief(client, supplier_user, supplier_domains, briefs, assessments,
             'respondToEmailAddress': 'supplier@email.com',
             'specialistName': 'Test Specialist Name',
             'dayRate': '100',
+            'attachedDocumentURL': [
+                'test.pdf'
+            ]
         }),
         content_type='application/json'
     )

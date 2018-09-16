@@ -130,6 +130,9 @@ def test_get_brief_response(client, supplier_user, supplier_domains, briefs, ass
                 'respondToEmailAddress': 'supplier@email.com',
                 'specialistName': 'Test Specialist Name',
                 'dayRate': '100',
+                'attachedDocumentURL': [
+                    'test.pdf'
+                ]
             }),
             content_type='application/json'
         )
@@ -160,6 +163,9 @@ def test_withdraw_brief_response(client, supplier_user, supplier_domains, briefs
                 'respondToEmailAddress': 'supplier@email.com',
                 'specialistName': 'Test Specialist Name',
                 'dayRate': '100',
+                'attachedDocumentURL': [
+                    'test.pdf'
+                ]
             }),
             content_type='application/json'
         )
@@ -211,6 +217,9 @@ def test_withdraw_already_withdrawn_brief_response(client,
                 'respondToEmailAddress': 'supplier@email.com',
                 'specialistName': 'Test Specialist Name',
                 'dayRate': '100',
+                'attachedDocumentURL': [
+                    'test.pdf'
+                ]
             }),
             content_type='application/json'
         )
@@ -223,7 +232,7 @@ def test_withdraw_already_withdrawn_brief_response(client,
                 'availability': '01/01/2018',
                 'respondToEmailAddress': 'supplier@email.com',
                 'specialistName': 'Test Specialist Name',
-                'dayRate': '100',
+                'dayRate': '100'
             }),
             content_type='application/json'
         )

@@ -411,6 +411,12 @@ def post_brief_response(brief_id):
         if 'essentialRequirements' in e.message and e.message['essentialRequirements'] == 'answer_required':
             message = "Essential requirements must be completed"
             del e.message['essentialRequirements']
+        if 'attachedDocumentURL' in e.message:
+            if e.message['attachedDocumentURL'] == 'answer_required':
+                message = "Documents must be uploaded"
+            if e.message['attachedDocumentURL'] == 'file_incorrect_format':
+                message = "Uploaded documents are in the wrong format"
+            del e.message['attachedDocumentURL']
         if len(e.message) > 0:
             message += json.dumps(e.message)
         return jsonify(message=message), 400
