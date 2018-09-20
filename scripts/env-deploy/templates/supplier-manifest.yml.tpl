@@ -2,8 +2,8 @@ applications:
 - name: {supplier_name}
   command: scripts/cf_run_app.sh
   buildpack: python_buildpack
-  memory: 1G
-  disk_quota: 1G
+  memory: 256M
+  disk_quota: 512M
   instances: 1
   services:
   - ups-secret-service

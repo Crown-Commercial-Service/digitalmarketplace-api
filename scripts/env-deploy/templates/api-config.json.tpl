@@ -21,5 +21,6 @@
         "RANKING_ASSESSOR_1_FIELD_CODE": "customfield_11204",
         "RANKING_ASSESSOR_2_FIELD_CODE": "customfield_11206"
     }},
-    "SEND_EMAILS": "True"
+    "SEND_EMAILS": "True",
+    "DM_ENVIRONMENT": "staging"
 }}
