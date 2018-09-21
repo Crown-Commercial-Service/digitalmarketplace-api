@@ -425,6 +425,12 @@ def search_applications(keyword):
             User.email_address.ilike('%{}%'.format(keyword))
         ))
 
+    applications = applications.options(
+        noload("supplier"),
+        noload("supplier.domains"),
+        noload("supplier.domains.assessments")
+    )
+
     return format_applications(applications, False)
 
 
