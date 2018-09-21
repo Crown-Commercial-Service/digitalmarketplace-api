@@ -11,6 +11,7 @@ from app.utils import (
 import pendulum
 from sqlalchemy.sql.expression import true
 from sqlalchemy import or_
+from sqlalchemy.orm import noload, joinedload
 # from dmapiclient.audit import AuditTypes
 from app.api.services import AuditTypes
 from app.emails import send_approval_notification, send_rejection_notification, \
@@ -173,6 +174,42 @@ def application_approval(application_id, result):
     application.set_approval(approved=result)
     db.session.commit()
     return jsonify(application=application.serializable), 200
+
+
+@main.route('/applications/<int:application_id>/admin', methods=['GET'])
+def get_application_by_id_admin(application_id):
+    #  this function is copied from get_application_by_id and should replace it
+    #  at a later point
+    application = (
+        Application
+        .query
+        .filter(
+            Application.id == application_id
+        )
+        .options(
+            joinedload("supplier"),
+            joinedload("supplier.domains"),
+            noload("supplier.domains.assessments")
+        )
+        .first_or_404()
+    )
+
+    if application.status == 'deleted':
+        abort(404)
+
+    # Maximum prices are used on the pricing page to encourage value for money
+    result = (
+        Domain
+        .query
+        .options(
+            noload('suppliers')
+        )
+        .all()
+    )
+    domains = {'prices': {'maximum': {}}}
+    domains['prices']['maximum'] = {domain.name: domain.price_maximum for domain in result}
+
+    return jsonify(application=application.serializable, domains=domains)
 
 
 @main.route('/applications/<int:application_id>', methods=['GET'])
