@@ -377,6 +377,8 @@ def get_briefs_stats():
     briefs = {
         'total': brief_query.count(),
 
+        'live': brief_query.filter(Brief.closed_at.isnot(None), Brief.closed_at > pendulum.now()).count(),
+
         'open_to_all': brief_query.filter(Brief.data['sellerSelector'].astext == 'allSellers').count(),
 
         'open_to_selected': brief_query.filter(Brief.data['sellerSelector'].astext == 'someSellers').count(),
