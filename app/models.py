@@ -19,7 +19,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import validates, relationship, column_property
+from sqlalchemy.orm import validates, relationship, column_property, noload
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.expression import cast as sql_cast
@@ -994,6 +994,8 @@ class Domain(db.Model):
         if isinstance(name_or_id, six.string_types):
             d = Domain.query.filter(
                 func.lower(Domain.name) == func.lower(name_or_id)
+            ).options(
+                noload('suppliers')
             ).first()
         else:
             d = Domain.query.filter_by(id=name_or_id).first()

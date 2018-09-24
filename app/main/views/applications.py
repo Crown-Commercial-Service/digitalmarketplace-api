@@ -11,7 +11,7 @@ from app.utils import (
 import pendulum
 from sqlalchemy.sql.expression import true
 from sqlalchemy import or_
-from sqlalchemy.orm import noload, joinedload
+from sqlalchemy.orm import joinedload, noload
 # from dmapiclient.audit import AuditTypes
 from app.api.services import AuditTypes
 from app.emails import send_approval_notification, send_rejection_notification, \
@@ -214,9 +214,19 @@ def get_application_by_id_admin(application_id):
 
 @main.route('/applications/<int:application_id>', methods=['GET'])
 def get_application_by_id(application_id):
-    application = Application.query.filter(
-        Application.id == application_id
-    ).first_or_404()
+    application = (
+        Application
+        .query
+        .filter(
+            Application.id == application_id
+        )
+        .options(
+            joinedload('supplier.domains'),
+            joinedload('supplier.domains.assessments'),
+            noload('supplier.domains.assessments.briefs')
+        )
+        .first_or_404()
+    )
     if application.status == 'deleted':
         abort(404)
 

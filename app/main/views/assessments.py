@@ -4,7 +4,7 @@ from app.models import db, Application, Assessment, AuditEvent, SupplierDomain, 
 from dmapiclient.audit import AuditTypes
 from app.utils import (get_json_from_request, json_has_required_keys, validate_and_return_updater_request)
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, noload
 from app.jiraapi import get_marketplace_jira
 from app.emails import send_assessment_requested_notification, send_assessment_rejected_notification
 
@@ -146,7 +146,16 @@ def get_supplier_assessments(supplier_code):
         Supplier.code == supplier_code,
         Supplier.status != 'deleted'
     ).first_or_404()
-    existing_assessment = SupplierDomain.query.filter(SupplierDomain.supplier_id == supplier.id).all()
+    existing_assessment = (
+        SupplierDomain
+        .query
+        .filter(SupplierDomain.supplier_id == supplier.id)
+        .options(
+            joinedload('assessments'),
+            joinedload('domain'),
+        )
+        .all()
+    )
 
     assessments = {'assessed': [], 'unassessed': [], 'briefs': []}
 

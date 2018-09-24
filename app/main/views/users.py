@@ -56,10 +56,57 @@ def auth_user():
 
 @main.route('/users/<int:user_id>', methods=['GET'])
 def get_user_by_id(user_id):
-    user = User.query.options(lazyload('application')).options(lazyload('supplier')).filter(
-        User.id == user_id
-    ).first_or_404()
-    return jsonify(users=user.serialize())
+    user = (
+        db
+        .session
+        .query(User.active,
+               User.application_id,
+               User.created_at,
+               User.email_address,
+               User.failed_login_count,
+               User.id,
+               User.failed_login_count,
+               User.logged_in_at,
+               User.name,
+               User.password_changed_at,
+               User.phone_number,
+               User.role,
+               User.supplier_code,
+               User.terms_accepted_at,
+               User.updated_at,
+               Supplier.name.label('supplier_name'))
+        .outerjoin(Supplier)
+        .filter(User.id == user_id)
+        .one_or_none()
+    )
+
+    result = user._asdict()
+    login_attempt_limit = current_app.config['DM_FAILED_LOGIN_LIMIT']
+    result['locked'] = user.failed_login_count >= login_attempt_limit
+    result.update({
+        'supplier': {
+            'name': user.supplier_name,
+            'supplierCode': user.supplier_code
+        }
+    })
+    result.update({
+        'application': {
+            'id': user.application_id
+        }
+    })
+    legacy = {
+        'emailAddress': user.email_address,
+        'phoneNumber': user.phone_number,
+        'createdAt': user.created_at,
+        'updatedAt': user.updated_at,
+        'passwordChangedAt': user.password_changed_at,
+        'loggedInAt': user.logged_in_at if user.logged_in_at else None,
+        'termsAcceptedAt': user.terms_accepted_at,
+        'failedLoginCount': user.failed_login_count
+    }
+    result.update(legacy)
+
+    return jsonify(users=result)
 
 
 @main.route('/teammembers/<string:domain>', methods=['GET'])

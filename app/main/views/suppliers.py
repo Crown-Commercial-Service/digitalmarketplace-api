@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import ARRAY, array
 from sqlalchemy.dialects import postgresql as postgres
 from sqlalchemy import String, literal
 from sqlalchemy.types import TEXT
+from sqlalchemy.orm import noload, joinedload
 
 from .. import main
 from ... import db
@@ -94,10 +95,21 @@ def list_suppliers():
 
 @main.route('/suppliers/<int:code>', methods=['GET'])
 def get_supplier(code):
-    supplier = Supplier.query.filter(
-        Supplier.code == code,
-        Supplier.status != 'deleted'
-    ).first_or_404()
+    supplier = (
+        Supplier
+        .query
+        .filter(
+            Supplier.code == code,
+            Supplier.status != 'deleted'
+        )
+        .options(
+            joinedload('domains.domain'),
+            noload('domains.supplier'),
+            noload('domains.assessments'),
+            joinedload('domains.recruiter_info')
+        )
+        .first_or_404()
+    )
 
     supplier.get_service_counts()
     return jsonify(supplier=supplier.serializable)
