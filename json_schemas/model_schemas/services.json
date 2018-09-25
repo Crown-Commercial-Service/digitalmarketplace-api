@@ -1,0 +1,72 @@
+{
+    "title": "Service",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "service_id": {
+            "type": "string"
+        },
+        "status": {
+            "type": "string"
+        },
+        "created_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "updated_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "copied_to_following_framework": {
+            "type": "boolean"
+        },
+        "supplier_id": {
+            "type": "string"
+        },
+        "framework_id": {
+            "type": "string"
+        },
+        "lot_id": {
+            "type": "string"
+        },
+        "data": {
+            "type": "object",
+            "properties": {
+                "anyOf": [
+                    {"$ref": "file:json_schemas/services-g-cloud-4.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-5.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-6-iaas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-6-paas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-6-saas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-6-scs.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-7-iaas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-7-paas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-7-saas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-7-scs.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-8-iaas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-8-paas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-8-saas.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-8-scs.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-9-cloud-hosting.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-9-cloud-software.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-9-cloud-support.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-10-cloud-hosting.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-10-cloud-software.json"},
+                    {"$ref": "file:json_schemas/services-g-cloud-10-cloud-support.json"}
+                ]
+            }
+        }
+    },
+    "required": [
+        "id",
+        "service_id",
+        "status",
+        "copied_to_following_framework",
+        "supplier_id",
+        "framework_id",
+        "lot_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

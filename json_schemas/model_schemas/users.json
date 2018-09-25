@@ -1,0 +1,82 @@
+{
+    "title": "User",
+    "type": "object",
+    "properties": {
+        "personal_data_removed": {
+            "type": "boolean"
+        },
+        "id": {
+            "type": "integer"
+        },
+        "name": {
+            "type": "string"
+        },
+        "email_address": {
+            "type": "string"
+        },
+        "phone_number": {
+            "type": "string"
+        },
+        "password": {
+            "type": "string"
+        },
+        "active": {
+            "type": "boolean"
+        },
+        "created_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "updated_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "password_changed_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "logged_in_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "failed_login_count": {
+            "type": "integer"
+        },
+        "role": {
+            "type": "string",
+            "maxLength": 23,
+            "enum": [
+                "admin",
+                "admin-ccs-category",
+                "admin-ccs-sourcing",
+                "admin-manager",
+                "admin-framework-manager",
+                "buyer",
+                "supplier"
+            ]
+        },
+        "supplier_id": {
+            "type": "string"
+        },
+        "user_research_opted_in": {
+            "type": "boolean"
+        },
+        "supplier": {
+            "description": "Relationship link to a Supplier instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/suppliers.json"
+            }
+        }
+    },
+    "required": [
+        "id",
+        "name",
+        "email_address",
+        "password",
+        "active",
+        "password_changed_at",
+        "role"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

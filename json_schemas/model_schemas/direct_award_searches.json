@@ -1,0 +1,36 @@
+{
+    "title": "DirectAwardSearch",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "created_by": {
+            "type": "integer"
+        },
+        "project_id": {
+            "type": "integer"
+        },
+        "created_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "searched_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "search_url": {
+            "type": "string"
+        },
+        "active": {
+            "type": "boolean"
+        }
+    },
+    "required": [
+        "id",
+        "created_by",
+        "project_id",
+        "search_url"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

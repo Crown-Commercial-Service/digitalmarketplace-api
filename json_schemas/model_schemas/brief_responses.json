@@ -1,0 +1,79 @@
+{
+    "title": "BriefResponse",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "brief_id": {
+            "type": "integer"
+        },
+        "supplier_id": {
+            "type": "integer"
+        },
+        "created_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "submitted_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "awarded_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "data": {
+            "type": "object",
+            "properties": {
+                "anyOf": [
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-user-research-participants.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-2-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-2-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-2-user-research-participants.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-3-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-3-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/brief-responses-digital-outcomes-and-specialists-3-user-research-participants.json"}
+                ]
+            }
+        },
+        "award_details": {
+            "type": "object",
+            "properties": {
+                "anyOf": [
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-user-research-participants.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-2-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-2-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-2-user-research-participants.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-3-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-3-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/brief-awards-digital-outcomes-and-specialists-3-user-research-participants.json"}
+                ]
+            }
+        },
+        "supplier": {
+            "description": "Relationship link to a Supplier instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/suppliers.json"
+            }
+        },
+        "brief": {
+            "description": "Relationship link to a Brief instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/briefs.json"
+            }
+        }
+    },
+    "required": [
+        "id",
+        "brief_id",
+        "supplier_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

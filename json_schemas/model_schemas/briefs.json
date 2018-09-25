@@ -1,0 +1,113 @@
+{
+    "title": "Brief",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "framework_id": {
+            "type": "integer"
+        },
+        "lot_id": {
+            "type": "integer"
+        },
+        "is_a_copy": {
+            "type": "boolean"
+        },
+        "created_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "updated_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "published_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "withdrawn_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "cancelled_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "unsuccessful_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "data": {
+            "type": "object",
+            "properties": {
+                "anyOf": [
+                    {"$ref": "file:json_schemas/briefs-digital-outcomes-and-specialists-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/briefs-digital-outcomes-and-specialists-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/briefs-digital-outcomes-and-specialists-user-research-participants.json"},
+                    {"$ref": "file:json_schemas/briefs-digital-outcomes-and-specialists-2-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/briefs-digital-outcomes-and-specialists-2-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/briefs-digital-outcomes-and-specialists-2-user-research-participants.json"},
+                    {"$ref": "file:json_schemas/briefs-digital-outcomes-and-specialists-3-digital-outcomes.json"},
+                    {"$ref": "file:json_schemas/briefs-digital-outcomes-and-specialists-3-digital-specialists.json"},
+                    {"$ref": "file:json_schemas/briefs-digital-outcomes-and-specialists-3-user-research-participants.json"}
+                ]
+            }
+        },
+        "users": {
+            "description": "Relationship link to multiple User instances",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "$ref": "file:json_schemas/model_schemas/users.json"
+                }
+            }
+        },
+        "framework": {
+            "description": "Relationship link to a Framework instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/frameworks.json"
+            }
+        },
+        "lot": {
+            "description": "Relationship link to a Lot instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/lots.json"
+            }
+        },
+        "clarification_questions": {
+            "description": "Relationship link to multiple BriefClarificationQuestion instances",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "$ref": "file:json_schemas/model_schemas/brief_clarification_questions.json"
+                }
+            }
+        },
+        "awarded_brief_response": {
+            "description": "Relationship link to a BriefResponse instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/brief_responses.json"
+            }
+        },
+        "outcome": {
+            "description": "Relationship link to an Outcome instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/outcomes.json"
+            }
+        }
+    },
+    "required": [
+        "id",
+        "framework_id",
+        "is_a_copy",
+        "lot_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

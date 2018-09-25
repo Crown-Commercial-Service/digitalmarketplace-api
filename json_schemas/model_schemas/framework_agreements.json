@@ -1,0 +1,61 @@
+{
+    "title": "FrameworkAgreement",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "supplier_id": {
+            "type": "integer"
+        },
+        "framework_id": {
+            "type": "integer"
+        },
+        "signed_agreement_path": {
+            "type": "string"
+        },
+        "signed_agreement_returned_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "signed_agreement_put_on_hold_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "countersigned_agreement_path": {
+            "type": "string"
+        },
+        "countersigned_agreement_returned_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "signed_agreement_details": {
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/agreement-details.json"
+            }
+        },
+        "countersigned_agreement_details": {
+            "type": "object",
+            "description": "No formal validation or schema for this JSON field.",
+            "properties": {
+                "approvedByUserId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "supplier_framework": {
+            "description": "Relationship link to a SupplierFramework instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/supplier_frameworks.json"
+            }
+        }
+    },
+    "required": [
+        "id",
+        "supplier_id",
+        "framework_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

@@ -1,0 +1,36 @@
+{
+    "title": "BriefClarificationQuestion",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "brief_id": {
+            "type": "integer"
+        },
+        "question": {
+            "type": "string"
+        },
+        "answer": {
+            "type": "string"
+        },
+        "published_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "brief": {
+            "description": "Relationship link to a Brief instance",
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/model_schemas/briefs.json"
+            }
+        }
+    },
+    "required": [
+        "id",
+        "question",
+        "answer",
+        "brief_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

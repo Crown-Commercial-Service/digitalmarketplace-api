@@ -1,0 +1,61 @@
+{
+    "title": "Supplier",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "supplier_id": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string",
+            "maxLength": 255
+        },
+        "description": {
+            "type": "string"
+        },
+        "duns_number": {
+            "type": "string"
+        },
+        "companies_house_number": {
+            "type": "string"
+        },
+        "registered_name": {
+            "type": "string"
+        },
+        "registration_country": {
+            "type": "string"
+        },
+        "other_company_registration_number": {
+            "type": "string"
+        },
+        "vat_number": {
+            "type": "string"
+        },
+        "organisation_size": {
+            "type": "string"
+        },
+        "trading_status": {
+            "type": "string"
+        },
+        "company_details_confirmed": {
+            "type": "boolean"
+        },
+        "contact_information": {
+            "description": "Relationship link to multiple ContactInformation instances",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "$ref": "file:json_schemas/model_schemas/contact_information.json"
+                }
+            }
+        }
+    },
+    "required": [
+        "id",
+        "name"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

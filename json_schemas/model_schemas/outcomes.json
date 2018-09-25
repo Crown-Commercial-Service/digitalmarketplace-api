@@ -1,0 +1,53 @@
+{
+    "title": "Outcome",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "external_id": {
+            "type": "string"
+        },
+        "completed_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "start_date": {
+            "type": "string",
+            "format": "date"
+        },
+        "end_date": {
+            "type": "string",
+            "format": "date"
+        },
+        "awarding_organisation_name": {
+            "type": "string"
+        },
+        "award_value": {
+            "type": "integer"
+        },
+        "result": {
+            "type": "string"
+        },
+        "direct_award_project_id": {
+            "type": "integer"
+        },
+        "direct_award_search_id": {
+            "type": "integer"
+        },
+        "direct_award_archived_service_id": {
+            "type": "integer"
+        },
+        "brief_id": {
+            "type": "integer"
+        },
+        "brief_response_id": {
+            "type": "integer"
+        }
+    },
+    "required": [
+        "id",
+        "result"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

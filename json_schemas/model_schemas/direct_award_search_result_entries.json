@@ -1,0 +1,21 @@
+{
+    "title": "DirectAwardSearchResultEntry",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "search_id": {
+            "type": "integer"
+        },
+        "archived_service_id": {
+            "type": "integer"
+        }
+    },
+    "required": [
+        "id",
+        "search_id",
+        "archived_service_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

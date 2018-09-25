@@ -1,0 +1,17 @@
+{
+    "title": "FrameworkLot",
+    "type": "object",
+    "properties": {
+        "framework_id": {
+            "type": "integer"
+        },
+        "lot_id": {
+            "type": "integer"
+        }
+    },
+    "required": [
+        "framework_id",
+        "lot_id"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

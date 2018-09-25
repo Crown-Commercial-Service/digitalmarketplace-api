@@ -1,0 +1,44 @@
+{
+    "title": "DirectAwardProject",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "external_id": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string",
+            "maxLength": 255
+        },
+        "created_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "locked_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "downloaded_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "ready_to_assess_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "still_assessing_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "active": {
+            "type": "boolean"
+        }
+    },
+    "required": [
+        "id",
+        "name"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}

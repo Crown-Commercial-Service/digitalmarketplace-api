@@ -1,0 +1,83 @@
+{
+    "title": "Framework",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "slug": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string",
+            "maxLength": 255
+        },
+        "framework": {
+            "type": "string"
+        },
+        "status": {
+            "type": "string"
+        },
+        "clarification_questions_open": {
+            "type": "boolean"
+        },
+        "allow_declaration_reuse": {
+            "type": "boolean"
+        },
+        "applications_close_at_utc": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "intention_to_award_at_utc": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "clarifications_close_at_utc": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "clarifications_publish_at_utc": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "framework_live_at_utc": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "framework_expires_at_utc": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "has_direct_award": {
+            "type": "boolean"
+        },
+        "has_further_competition": {
+            "type": "boolean"
+        },
+        "framework_agreement_details": {
+            "type": "object",
+            "properties": {
+                "$ref": "file:json_schemas/framework-agreement-details.json"
+            }
+        },
+        "lots": {
+            "description": "Relationship link to multiple Lot instances",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "$ref": "file:json_schemas/model_schemas/lots.json"
+                }
+            }
+        }
+    },
+    "required": [
+        "id",
+        "slug",
+        "name",
+        "framework",
+        "has_direct_award",
+        "has_further_competition"
+    ],
+    "$schema": "http://json-schema.org/schema#"
+}
