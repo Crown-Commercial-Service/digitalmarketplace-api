@@ -119,3 +119,10 @@ list of migration versions
 ### Getting a list of application URLs
 
 `python application.py list_routes` prints a full list of registered application URLs with supported HTTP methods
+
+
+## Model schemas
+
+`app/generate_model_schemas.py` uses the `alchemyjsonschema` library to generate reference schemas of our database models.
+Note that the `alchemyjsonschema` library is a dev requirement only.
+
