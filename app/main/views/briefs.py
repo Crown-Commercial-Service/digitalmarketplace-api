@@ -213,7 +213,7 @@ def update_brief_status(brief_id, action):
     }
     new_brief_status = action_to_status[action]
 
-    if new_brief_status in ['live', 'withdrawn'] and framework_status != 'live':
+    if new_brief_status == 'live' and framework_status != 'live':
         abort(400, "Framework is not live")
 
     if brief.status != new_brief_status:
