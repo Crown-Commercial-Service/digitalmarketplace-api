@@ -814,7 +814,13 @@ class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
         assert data['briefs']['status'] == 'live'
         assert index_brief.called is True
 
-    def test_withdraw_a_brief(self, index_brief):
+    @pytest.mark.parametrize(('framework_status'), ('live', 'expired'))
+    def test_withdraw_a_brief(self, index_brief, framework_status):
+        framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+        framework.status = framework_status
+        db.session.add(framework)
+        db.session.commit()
+
         self.setup_dummy_briefs(1, title='The Title', status='live')
 
         res = self.client.post(
