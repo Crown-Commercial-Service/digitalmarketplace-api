@@ -1,6 +1,7 @@
 import rollbar
 from dmutils.csrf import check_valid_csrf
 from dmutils.user import User as LoginUser
+from sqlalchemy.orm import noload
 from flask import Blueprint, request, abort, current_app
 from flask_login import LoginManager
 from app.models import User
@@ -18,7 +19,9 @@ def on_load(state):
 
 @login_manager.user_loader
 def load_user(userid):
-    user = User.query.get(int(userid))
+    user = User.query.options(
+        noload('*')
+    ).get(int(userid))
 
     if user is not None:
         user = LoginUser(user.id, user.email_address, user.supplier_code, None, user.locked,

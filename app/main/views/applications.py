@@ -60,7 +60,9 @@ def create_application():
 def update_application(application_id):
     application_json = get_application_json()
 
-    application = Application.query.get(application_id)
+    application = Application.query.options(
+        noload('supplier.*')
+    ).get(application_id)
     if application is None:
         abort(404, "Application '{}' does not exist".format(application_id))
 
@@ -259,7 +261,9 @@ def delete_application(application_id):
     :return:
     """
     updater_json = validate_and_return_updater_request()
-    application = Application.query.filter(
+    application = Application.query.options(
+        noload('supplier')
+    ).filter(
         Application.id == application_id
     ).first_or_404()
 
@@ -275,6 +279,7 @@ def delete_application(application_id):
         User.application_id == application_id
     ).all()
 
+    # this should go back to previous application id, not just none.
     for user in users:
         user.application = None
 
@@ -289,7 +294,10 @@ def delete_application(application_id):
 
 def applications_list_response(with_task_status=False, status=None):
     if status:
-        applications = Application.query.filter(Application.status == status)
+        applications = Application.query.options(
+            joinedload('supplier'),
+            noload('supplier.domains')
+        ).filter(Application.status == status)
     else:
         applications = Application.query.filter(Application.status != 'deleted')
 

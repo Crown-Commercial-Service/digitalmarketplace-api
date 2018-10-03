@@ -1,6 +1,7 @@
 from flask import jsonify, abort, request
 from sqlalchemy.types import String
 from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.orm import joinedload
 from sqlalchemy import func, orm, case, cast
 import datetime
 
@@ -70,9 +71,17 @@ def create_framework():
 
 @main.route('/frameworks/<string:framework_slug>', methods=['GET'])
 def get_framework(framework_slug):
-    framework = Framework.query.filter(
-        Framework.slug == framework_slug
-    ).first_or_404()
+    framework = (
+        Framework
+        .query
+        .options(
+            joinedload(Framework.lots)
+        )
+        .filter(
+            Framework.slug == framework_slug
+        )
+        .first_or_404()
+    )
 
     return jsonify(frameworks=framework.serialize())
 

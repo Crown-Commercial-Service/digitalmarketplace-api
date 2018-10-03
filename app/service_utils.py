@@ -1,5 +1,6 @@
 from flask import current_app, abort
 from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.orm import joinedload
 
 from .utils import get_json_from_request, \
     json_has_matching_id, json_has_required_keys
@@ -19,9 +20,17 @@ def validate_and_return_service_request(service_id):
 def validate_and_return_lot(json_payload):
     json_has_required_keys(json_payload, ['frameworkSlug', 'lot'])
 
-    framework = Framework.query.filter(
-        Framework.slug == json_payload['frameworkSlug']
-    ).first()
+    framework = (
+        Framework
+        .query
+        .options(
+            joinedload(Framework.lots)
+        )
+        .filter(
+            Framework.slug == json_payload['frameworkSlug']
+        )
+        .first()
+    )
 
     if not framework:
         abort(400, "Framework '{}' does not exist".format(json_payload['frameworkSlug']))

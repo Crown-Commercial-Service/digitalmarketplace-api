@@ -647,9 +647,18 @@ def get_supplier_frameworks_info(code):
 
     service_counts = SupplierFramework.get_service_counts(code)
 
-    supplier_frameworks = SupplierFramework.query.filter(
-        SupplierFramework.supplier == supplier
-    ).all()
+    supplier_frameworks = (
+        SupplierFramework
+        .query
+        .options(
+            joinedload('framework'),
+            noload('framework.lots')
+        )
+        .filter(
+            SupplierFramework.supplier == supplier
+        )
+        .all()
+    )
 
     return jsonify(frameworkInterest=[
         framework.serialize({
@@ -841,15 +850,23 @@ def create_application_from_supplier(code, application_type=None):
     json_has_required_keys(json_payload, ["current_user"])
     current_user = json_payload["current_user"]
 
-    supplier = Supplier.query.filter(
+    supplier = Supplier.query.options(
+        joinedload('domains'),
+        joinedload('domains.assessments'),
+        joinedload('domains.domain'),
+        joinedload('domains.recruiter_info'),
+        noload('domains.supplier'),
+        noload('domains.assessments.briefs')
+    ).filter(
         Supplier.code == code
     ).first_or_404()
 
     # hotfix for exception. shouldn't need to do this
     supplier.data = supplier.data or {}
     application_type = application_type or 'upgrade'
-
-    existing_application = Application.query.filter(
+    existing_application = Application.query.options(
+        joinedload('supplier')
+    ).filter(
         Application.supplier_code == supplier.code,
         or_(Application.status == 'submitted', Application.status == 'saved')
     ).first()
@@ -895,7 +912,10 @@ def create_application_from_supplier(code, application_type=None):
 
     # TODO stop using application_id on user
     supplier.update_from_json({'application_id': application.id})
-    users = User.query.filter(
+    users = User.query.options(
+        noload('supplier'),
+        noload('application')
+    ).filter(
         User.supplier_code == code and User.active == true()
     ).all()
 

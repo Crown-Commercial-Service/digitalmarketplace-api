@@ -1,7 +1,7 @@
 from datetime import datetime
 from dmapiclient.audit import AuditTypes
 from sqlalchemy import func
-from sqlalchemy.orm import lazyload, noload
+from sqlalchemy.orm import lazyload, noload, joinedload, raiseload
 from sqlalchemy.exc import IntegrityError, DataError
 from flask import jsonify, abort, request, current_app
 
@@ -35,7 +35,15 @@ def auth_user():
         # will remove camel case email address with future api
         email_address = json_payload.get('emailAddress', None)
 
-    user = User.get_by_email_address(email_address.lower())
+    user = User.query.options(
+        joinedload('supplier'),
+        noload('supplier.*'),
+        joinedload('application'),
+        noload('application.*'),
+        noload('*')
+    ).filter(
+        User.email_address == email_address.lower()
+    ).first()
 
     if user is None or (user.supplier and user.supplier.status == 'deleted'):
         return jsonify(authorization=False), 404
