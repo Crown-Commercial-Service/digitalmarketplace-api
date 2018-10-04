@@ -145,7 +145,7 @@ class Config:
     APP_ROOT = {'digital-marketplace': '/2', 'orams': '/orams'}
 
     SEND_EMAILS = True
-    CSRF_ENABLED = False
+    CSRF_ENABLED = True
     BASIC_AUTH = False
 
     ALLOWED_EXTENSIONS = ['pdf', 'odt', 'doc', 'docx']
