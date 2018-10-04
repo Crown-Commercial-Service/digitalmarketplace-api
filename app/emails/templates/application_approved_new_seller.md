@@ -12,11 +12,11 @@ This is important because you may need to be assessed before you can apply for t
 
 Thanks for being part of the Digital Marketplace.
 
-The Marketplace team 
+The Digital Marketplace team 
 
 **Where to next?**
 
-[Read the seller guide]({{url_sellers_guide}})
+[Read the seller guide](https://marketplace1.zendesk.com/hc/en-gb/categories/115001540368-Seller-guide-and-FAQs)
 
 [View the latest opportunities]({{url_latest_opportunities}})
 

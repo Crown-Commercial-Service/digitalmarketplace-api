@@ -8,7 +8,7 @@ You can now apply for [any open opportunities]({{url_latest_opportunities}}) tha
 
 Thanks for being part of the Marketplace
 
-The Marketplace team
+The Digital Marketplace team
 
 [View the latest opportunities]({{url_latest_opportunities}})
 

@@ -6,5 +6,5 @@ If you're not part of {{business_name}} or if you're unable to reach {{represent
 
 Regards
 
-The Marketplace team
+The Digital Marketplace team
 [https://marketplace.service.gov.au](https://marketplace.service.gov.au)

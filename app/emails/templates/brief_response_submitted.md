@@ -23,7 +23,7 @@
 
 Thanks,
 
-The Digital Marketplace Team  
+The Digital Marketplace team  
 Digital Transformation Agency  
 marketplace.service.gov.au | dta.gov.au
 

@@ -6,4 +6,4 @@ If you still wish to be part of the Digital Marketplace, you can update your app
 
 You can also contact us at [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au) with any questions or feedback.
 
-The Marketplace team
+The Digital Marketplace team

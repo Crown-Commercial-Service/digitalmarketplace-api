@@ -6,5 +6,5 @@ If you are unable to reach {{representative}} or you want to apply on behalf of 
 
 Regards
 
-The Marketplace team
+The Digital Marketplace team
 [https://marketplace.service.gov.au](https://marketplace.service.gov.au)

@@ -10,7 +10,7 @@ This link expires in 14 days.
 
 Please do not reply to this email. If you need any help, email [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).
 
-The Marketplace team
+The Digital Marketplace team
   
 Your feedback shapes the Marketplace
 

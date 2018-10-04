@@ -7,7 +7,7 @@ This means:
 
 Thanks for being part of the Digital Marketplace.
 
-The Marketplace team 
+The Digital Marketplace team 
 
 **Where to next?**
 
