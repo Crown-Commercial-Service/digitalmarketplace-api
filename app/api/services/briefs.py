@@ -1,11 +1,12 @@
-from app.api.helpers import Service
-from app import db
-from app.models import Brief, BriefResponse, BriefUser, AuditEvent, Framework, Lot, User, WorkOrder, BriefAssessor
-from sqlalchemy import and_, case, func, or_
+from sqlalchemy import and_, case, func, or_, desc
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.functions import concat
 from sqlalchemy.types import Numeric
 import pendulum
+from app.api.helpers import Service
+from app import db
+from app.models import Brief, BriefResponse, BriefUser, AuditEvent, Framework, Lot, User, WorkOrder, BriefAssessor
+from dmutils.filters import timesince
 
 
 class BriefsService(Service):
@@ -158,3 +159,35 @@ class BriefsService(Service):
         results = query.all()
 
         return [r._asdict() for r in results]
+
+    def get_metrics(self):
+        brief_query = (
+            db
+            .session
+            .query(
+                Brief.id,
+                Brief.published_at
+            )
+            .filter(
+                Brief.withdrawn_at.is_(None),
+                Brief.published_at.isnot(None)
+            )
+        )
+        most_recent_brief = (
+            brief_query
+            .order_by(
+                desc(
+                    Brief.published_at
+                )
+            )
+            .first()
+        )
+
+        return {
+            'total': brief_query.count(),
+            'live': brief_query.filter(Brief.closed_at.isnot(None), Brief.closed_at > pendulum.now()).count(),
+            'open_to_all': brief_query.filter(Brief.data['sellerSelector'].astext == 'allSellers').count(),
+            'open_to_selected': brief_query.filter(Brief.data['sellerSelector'].astext == 'someSellers').count(),
+            'open_to_one': brief_query.filter(Brief.data['sellerSelector'].astext == 'oneSellers').count(),
+            'recent_brief_time_since': (timesince(most_recent_brief.published_at)) if most_recent_brief else ''
+        }

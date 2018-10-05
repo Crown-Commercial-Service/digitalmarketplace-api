@@ -9,27 +9,33 @@ import io
 import csv
 from collections import defaultdict
 from flask import jsonify, make_response
+from app.api.services import key_values_service
 
 
 @main.route('/metrics', methods=['GET'])
 def get_metrics():
-    timestamp = pendulum.now().to_iso8601_string()
+    key_values = key_values_service.get_by_keys(
+        'brief_metrics',
+        'brief_response_metrics',
+        'total_contracted',
+        'supplier_metrics',
+        'awarded_to_smes'
+    )
     metrics = {}
-    brief_metrics = json.loads(briefs.get_briefs_stats().data)["briefs"]
-    for key, metric in brief_metrics.items():
-        if type(metric) == int:
-            metrics["briefs_" + key] = {"value": metric, "ts": timestamp}
+    for kv in key_values:
+        updated_at = kv['updated_at'].to_iso8601_string()
+        if kv['key'] == 'brief_metrics':
+            for k, v in kv['data'].iteritems():
+                metrics["briefs_" + k] = {"value": v, "ts": updated_at}
+        elif kv['key'] == 'total_contracted':
+            metrics['total_contracted'] = {"value": kv['data']['total'], "ts": updated_at}
+        elif kv['key'] == 'awarded_to_smes':
+            metrics['awarded_to_smes'] = {"value": kv['data']['total'], "ts": updated_at}
+        elif kv['key'] == 'brief_response_metrics':
+            metrics['brief_response_count'] = {"value": kv['data']['total'], "ts": updated_at}
+        elif kv['key'] == 'supplier_metrics':
+            metrics['supplier_count'] = {"value": kv['data']['total'], "ts": updated_at}
 
-    brief_response_count = BriefResponse.query\
-        .filter(BriefResponse.data.isnot(None),
-                BriefResponse.withdrawn_at.is_(None))\
-        .order_by(desc(BriefResponse.created_at)).count()
-    metrics["brief_response_count"] = {"value": brief_response_count, "ts": timestamp}
-
-    buyer_count = json.loads(users.get_buyers_stats().data)["buyers"]['total']
-    metrics["buyer_count"] = {"value": buyer_count, "ts": timestamp}
-    supplier_count = json.loads(suppliers.get_suppliers_stats().data)["suppliers"]['total']
-    metrics["supplier_count"] = {"value": supplier_count, "ts": timestamp}
     return jsonify(metrics)
 
 

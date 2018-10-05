@@ -1,15 +1,28 @@
-INSERT INTO "domain" VALUES ('14', 'Change and Transformation', '12', '0', '10000') ON CONFLICT (id) DO NOTHING;
-INSERT INTO "domain" VALUES ('15', 'Training, Learning and Development', '13', '0', '10000') ON CONFLICT (id) DO NOTHING;
-
 DO $$                  
     BEGIN 
-		IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'application' AND COLUMN_NAME = 'updated_at')
+		IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'key_value')
 		THEN
+            create sequence "public"."key_value_id_seq";
 
-			ALTER TABLE public.application ADD COLUMN updated_at timestamp without time zone;
-			update public.application set updated_at = created_at;
-			ALTER TABLE public.application ALTER COLUMN updated_at set not null;
-			CREATE INDEX ix_application_updated_at ON public.application USING btree (updated_at);
+            create table "public"."key_value" (
+                "id" integer not null default nextval('key_value_id_seq'::regclass),
+                "updated_at" timestamp without time zone not null,
+                "key" character varying,
+                "data" json
+            );
+
+
+            CREATE INDEX ix_key_value_updated_at ON public.key_value USING btree (updated_at);
+
+            CREATE UNIQUE INDEX key_value_key_key ON public.key_value USING btree (key);
+
+            CREATE UNIQUE INDEX key_value_pkey ON public.key_value USING btree (id);
+
+            alter table "public"."key_value" add constraint "key_value_pkey" PRIMARY KEY using index "key_value_pkey";
+
+            alter table "public"."key_value" add constraint "key_value_key_key" UNIQUE using index "key_value_key_key";
+
 		END IF;
 	END;
 $$ ;
+

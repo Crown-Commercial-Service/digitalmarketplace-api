@@ -1688,6 +1688,19 @@ class AuditEvent(db.Model):
         return data
 
 
+class KeyValue(db.Model):
+    __tablename__ = 'key_value'
+
+    id = db.Column(db.Integer, primary_key=True)
+    updated_at = db.Column(DateTime, index=True, nullable=False, default=utcnow, onupdate=utcnow)
+    key = db.Column(db.String, unique=True)
+    data = db.Column(MutableDict.as_mutable(JSON), default=dict)
+
+    def __init__(self, key, data):
+        self.key = key
+        self.data = data
+
+
 class Brief(db.Model):
     __tablename__ = 'brief'
 

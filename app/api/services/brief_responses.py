@@ -1,3 +1,4 @@
+from sqlalchemy import func, desc
 from app.api.helpers import Service
 from app import db
 from app.models import BriefResponse, Supplier
@@ -50,3 +51,21 @@ class BriefResponsesService(Service):
                         'file_name': attachment
                     })
         return attachments
+
+    def get_metrics(self):
+        brief_response_count = (
+            db
+            .session
+            .query(
+                func.count(BriefResponse.id)
+            )
+            .filter(
+                BriefResponse.data.isnot(None),
+                BriefResponse.withdrawn_at.is_(None)
+            )
+            .scalar()
+        )
+
+        return {
+            "brief_response_count": brief_response_count
+        }
