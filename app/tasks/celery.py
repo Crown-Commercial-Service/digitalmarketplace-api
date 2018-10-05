@@ -38,13 +38,13 @@ def make_celery(flask_app):
         flask_app.import_name,
         broker=broker,
         include=[
+            'app.api.services',
             'app.tasks.email',
             'app.tasks.mailchimp',
             'app.tasks.brief_tasks',
             'app.tasks.s3',
             'app.tasks.brief_response_tasks',
-            'app.tasks.user_tasks',
-            'app.tasks.supplier_tasks'
+            'app.tasks.supplier_tasks',
         ]
     )
     celery.conf.update(flask_app.config)
