@@ -261,15 +261,15 @@ class Production(Live):
         },
         'send-daily-seller-email': {
             'task': 'app.tasks.mailchimp.send_new_briefs_email',
-            'schedule': crontab(hour=7, minute=0)
+            'schedule': crontab(hour=6, minute=0)
         },
         'process_closed_briefs': {
             'task': 'app.tasks.brief_tasks.process_closed_briefs',
-            'schedule': crontab(hour=20, minute=0)
+            'schedule': crontab(hour=19, minute=0)
         },
         'create_responses_zip_for_closed_briefs': {
             'task': 'app.tasks.brief_tasks.create_responses_zip_for_closed_briefs',
-            'schedule': crontab(hour=8, minute=1)
+            'schedule': crontab(hour=7, minute=1)
         },
         'update_brief_metrics': {
             'task': 'app.tasks.brief_tasks.update_brief_metrics',
