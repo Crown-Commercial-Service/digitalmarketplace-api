@@ -169,9 +169,9 @@ def run_update_all_metrics():
     """
     if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
         return jsonify({
-            "update_brief_metrics": update_brief_metrics.delay(),
-            "update_brief_response_metrics": update_brief_response_metrics.delay(),
-            "update_supplier_metrics": update_supplier_metrics.delay()
+            "update_brief_metrics": update_brief_metrics.delay().id,
+            "update_brief_response_metrics": update_brief_response_metrics.delay().id,
+            "update_supplier_metrics": update_supplier_metrics.delay().id
         })
     else:
         update_brief_metrics()
