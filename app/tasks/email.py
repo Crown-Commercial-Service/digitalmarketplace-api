@@ -86,7 +86,8 @@ def send_email(to_email_addresses, email_body, subject, from_email, from_name, r
 
         except botocore.exceptions.ClientError as e:
             current_app.logger.error(
-                "An SES error occurred: {error}",
-                extra={'error': e.response['Error']['Message']}
+                "An SES error occurred: %s, when sending to %s",
+                e.response['Error']['Message'],
+                (' & ').join(to_email_addresses)
             )
             raise EmailError(e.response['Error']['Message'])
