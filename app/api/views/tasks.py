@@ -1,18 +1,15 @@
-from flask import jsonify, current_app
-from app.tasks.brief_tasks import (
-    process_closed_briefs,
-    create_responses_zip_for_closed_briefs,
-    update_brief_metrics
-)
-from app.tasks.brief_response_tasks import (
-    update_brief_response_metrics
-)
-from app.tasks.supplier_tasks import (
-    update_supplier_metrics
-)
-from app.tasks.mailchimp import sync_mailchimp_seller_list, send_new_briefs_email
+from flask import current_app, jsonify
+
 from app.api import api
 from app.api.helpers import role_required
+from app.tasks.brief_response_tasks import update_brief_response_metrics
+from app.tasks.brief_tasks import (create_responses_zip_for_closed_briefs,
+                                   process_closed_briefs, update_brief_metrics)
+from app.tasks.jira import (sync_application_approvals_with_jira,
+                            sync_domain_assessment_approvals_with_jira)
+from app.tasks.mailchimp import (send_new_briefs_email,
+                                 sync_mailchimp_seller_list)
+from app.tasks.supplier_tasks import update_supplier_metrics
 
 
 @api.route('/tasks/process-closed-briefs', methods=['POST'])
@@ -177,4 +174,44 @@ def run_update_all_metrics():
         update_brief_metrics()
         update_brief_response_metrics()
         update_supplier_metrics()
+        return jsonify("finished")
+
+
+@api.route('/tasks/sync-jira-application-approvals', methods=['POST'])
+@role_required('admin')
+def sync_jira_application_approvals():
+    """Synchronise application approvals with Jira
+    ---
+    tags:
+      - tasks
+    responses:
+      200:
+        type: string
+        description: string
+    """
+    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
+        res = sync_application_approvals_with_jira.delay()
+        return jsonify(res.id)
+    else:
+        sync_application_approvals_with_jira()
+        return jsonify("finished")
+
+
+@api.route('/tasks/sync-jira-assessment-approvals', methods=['POST'])
+@role_required('admin')
+def sync_jira_assessment_approvals():
+    """Synchronise domain assessment approvals with Jira
+    ---
+    tags:
+      - tasks
+    responses:
+      200:
+        type: string
+        description: string
+    """
+    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
+        res = sync_domain_assessment_approvals_with_jira.delay()
+        return jsonify(res.id)
+    else:
+        sync_domain_assessment_approvals_with_jira()
         return jsonify("finished")

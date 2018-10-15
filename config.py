@@ -283,6 +283,14 @@ class Production(Live):
         'update_supplier_metrics': {
             'task': 'app.tasks.supplier_tasks.update_supplier_metrics',
             'schedule': crontab(hour='*/4', minute=4)
+        },
+        'sync_application_approvals_with_jira': {
+            'task': 'jiratasks.sync_application_approvals_with_jira',
+            'schedule': crontab(hour='22-8/2', minute=10)
+        },
+        'sync_domain_assessment_approvals_with_jira': {
+            'task': 'jiratasks.sync_domain_assessment_approvals_with_jira',
+            'schedule': crontab(hour='22-8/2', minute=12)
         }
     }
 

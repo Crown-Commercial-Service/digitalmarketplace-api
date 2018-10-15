@@ -320,6 +320,22 @@ class MarketplaceJIRA(object):
         self.generic_jira.jira.add_attachment(new_issue.id, attachment,
                                               'snapshot_{}.json'.format(pendulum.now().to_date_string()))
 
+    def find_approved_application_issues(self, application_ids):
+        jql = ('project = MARADMIN AND type IN ("Initial Assessment", "Profile Edit") AND status = Done AND ({})'
+               .format(' OR '.join(['"Marketplace Application ID" ~ ' +
+                                    str(app_id) for app_id in application_ids])))
+
+        return self.generic_jira.jira.search_issues(jql, json_result=True)
+
+    def find_approved_assessment_issues(self, open_assessments):
+        jql = ('project = MARADMIN AND type = "Domain Assessment" AND status = Done AND ({})'
+               .format(' OR '.join(['("Marketplace Supplier ID" ~ ' + str(assessment['supplier_code']) +
+                                    ' AND labels IN ({}))'.format(', '.join('"' + domain.replace(' ', '_') + '"'
+                                                                            for domain in assessment['domains']))
+                                    for assessment in open_assessments])))
+
+        return self.generic_jira.jira.search_issues(jql, json_result=True)
+
     def get_supplier_tasks(self, supplier_code):
         return self.generic_jira.jira.search_issues('"Marketplace Supplier ID" ~ "{}"'.format(supplier_code))
 

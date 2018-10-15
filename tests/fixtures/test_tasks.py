@@ -1,15 +1,24 @@
-from app.tasks.mailchimp import sync_mailchimp_seller_list, MailChimpConfigException, send_new_briefs_email
-from app.tasks.s3 import create_responses_zip, CreateResponsesZipException
-from app.models import AuditEvent
-from app import db
-from dmapiclient.audit import AuditTypes
-from requests.exceptions import RequestException
-from os import environ
-from mock.mock import MagicMock
 from datetime import date
-from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF
-import pytest
+from os import environ
 
+import pytest
+from flask import current_app
+from mock.mock import MagicMock
+from requests.exceptions import RequestException
+
+from app import db
+from app.api.services import AuditTypes
+from app.models import (Application, Assessment, AuditEvent, Supplier,
+                        SupplierDomain)
+from app.tasks.jira import (sync_application_approvals_with_jira,
+                            sync_domain_assessment_approvals_with_jira)
+from app.tasks.mailchimp import (MailChimpConfigException,
+                                 send_new_briefs_email,
+                                 sync_mailchimp_seller_list)
+from app.tasks.s3 import CreateResponsesZipException, create_responses_zip
+from dmapiclient.audit import AuditTypes
+from tests.app.helpers import (COMPLETE_DIGITAL_SPECIALISTS_BRIEF,
+                               INCOMING_APPLICATION_DATA)
 
 briefs_data_all_sellers = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
 briefs_data_all_sellers.update({'sellerSelector': 'allSellers'})
@@ -236,3 +245,104 @@ def test_create_responses_zip_fails_when_no_responses(app, briefs, mocker):
             assert not bucket.download_fileobj.called
             assert not bucket.upload_fileobj.called
             assert str(e) == 'There were no respones for brief id 1'
+
+
+@pytest.fixture
+def mock_jira_application_response(mocker):
+    marketplace_jira = MagicMock()
+
+    marketplace_jira.find_approved_application_issues.return_value = {
+        'issues': [{
+            'fields': {
+                current_app.config['JIRA_FIELD_CODES'].get('APPLICATION_FIELD_CODE'): '1'
+            },
+            'key': 'MARADMIN-123'
+        }]
+    }
+    get_marketplace_jira = mocker.patch('app.tasks.jira.get_marketplace_jira', autospec=True)
+    get_marketplace_jira.return_value = marketplace_jira
+    yield get_marketplace_jira
+
+
+@pytest.fixture
+def application(app, applications):
+    with app.app_context():
+        application = db.session.query(Application).filter(Application.id == 1).first()
+        application.data = INCOMING_APPLICATION_DATA
+        application.status = 'submitted'
+        yield application
+
+
+def test_sync_jira_application_approvals_task_updates_applications(app, application, mocker,
+                                                                   mock_jira_application_response):
+    with app.app_context():
+        approval_notification = mocker.patch('app.tasks.jira.send_approval_notification', autospec=True)
+
+        sync_application_approvals_with_jira()
+
+        updated_application = db.session.query(Application).filter(Application.id == 1).first()
+        assert updated_application.status == 'approved'
+        assert approval_notification.called
+
+
+def test_sync_jira_application_approvals_task_creates_audit_event_on_approval(app, application,
+                                                                              mock_jira_application_response):
+    with app.app_context():
+        sync_application_approvals_with_jira()
+
+        audit_event = (db.session.query(AuditEvent).filter(
+            AuditEvent.type == AuditTypes.approve_application.value,
+            AuditEvent.object_id == application.id).first())
+
+        assert audit_event.data['jira_issue_key'] == 'MARADMIN-123'
+
+
+@pytest.fixture
+def mock_jira_assessment_response(mocker):
+    marketplace_jira = MagicMock()
+    marketplace_jira.find_approved_assessment_issues.return_value = {
+        'issues': [{
+            'fields': {
+                current_app.config['JIRA_FIELD_CODES'].get('SUPPLIER_FIELD_CODE'): '123',
+                'labels': ['Strategy_And_Policy']
+            },
+            'key': 'MARADMIN-123'
+        }]
+    }
+    get_marketplace_jira = mocker.patch('app.tasks.jira.get_marketplace_jira', autospec=True)
+    get_marketplace_jira.return_value = marketplace_jira
+
+    yield get_marketplace_jira
+
+
+@pytest.fixture
+def supplier(app):
+    with app.app_context():
+        db.session.add(Supplier(id=1, code=123, name='ABC'))
+        yield db.session.query(Supplier).filter(Supplier.id == 1).first()
+
+
+@pytest.fixture
+def supplier_domain(app, domains, supplier):
+    with app.app_context():
+        db.session.add(SupplierDomain(id=1, domain_id=1, status='unassessed', supplier_id=1))
+        yield db.session.query(SupplierDomain).filter(SupplierDomain.id == 1).first()
+
+
+@pytest.fixture
+def assessment(app, supplier_domain):
+    with app.app_context():
+        db.session.add(Assessment(id=1, supplier_domain_id=1))
+        yield db.session.query(Assessment).filter(Assessment.id == 1).first()
+
+
+def test_sync_jira_domain_assessment_approvals_task_updates_supplier_domain(app, assessment, mocker,
+                                                                            mock_jira_assessment_response):
+    with app.app_context():
+        approval_notification = mocker.patch('app.tasks.jira.send_assessment_approval_notification', autospec=True)
+
+        sync_domain_assessment_approvals_with_jira()
+
+        supplier_domain = db.session.query(SupplierDomain).filter(SupplierDomain.id == 1).first()
+        assert supplier_domain.status == 'assessed'
+        assert approval_notification.called

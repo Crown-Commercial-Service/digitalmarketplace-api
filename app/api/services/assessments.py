@@ -1,7 +1,10 @@
 import pendulum
-from app.api.helpers import Service
+from sqlalchemy import func
+
 from app import db
-from app.models import Assessment, Domain, SupplierDomain, Brief, BriefAssessment, Supplier
+from app.api.helpers import Service
+from app.models import (Assessment, Brief, BriefAssessment, Domain, Supplier,
+                        SupplierDomain)
 
 
 class AssessmentsService(Service):
@@ -23,3 +26,17 @@ class AssessmentsService(Service):
             .all()
 
         return [a._asdict() for a in assessments]
+
+    def get_open_assessments(self):
+        results = (db.session
+                   .query(Supplier.code.label('supplier_code'), func.array_agg(Domain.name).label('domains'))
+                   .join(SupplierDomain, Assessment)
+                   .filter(Assessment.supplier_domain_id == SupplierDomain.id,
+                           SupplierDomain.supplier_id == Supplier.id,
+                           SupplierDomain.domain_id == Domain.id,
+                           SupplierDomain.status == 'unassessed',
+                           Assessment.active)
+                   .group_by(Supplier.code, Supplier.name)
+                   .all())
+
+        return [r._asdict() for r in results]

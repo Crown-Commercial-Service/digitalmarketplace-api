@@ -1,10 +1,11 @@
-import sys
 import re
+import sys
 from contextlib import contextmanager
-from app.jiraapi import get_marketplace_jira
-from app import create_app
-from app.models import Application, BriefResponse
 from pprint import pprint as p
+
+from app import create_app
+from app.jiraapi import get_marketplace_jira
+from app.models import Application
 
 app = create_app('development')
 

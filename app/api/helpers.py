@@ -315,7 +315,7 @@ class Service(object):
     def save(self, model):
         self._isinstance(model)
         db.session.add(model)
-        db.session.commit()
+        self.commit_changes()
         return model
 
     def all(self):
@@ -326,6 +326,9 @@ class Service(object):
 
     def get_all(self, *ids):
         return self.__model__.query.filter(self.__model__.id.in_(ids)).all()
+
+    def filter(self, *args):
+        return self.__model__.query.filter(*args)
 
     def find(self, **kwargs):
         return self.__model__.query.filter_by(**kwargs)
@@ -349,4 +352,7 @@ class Service(object):
     def delete(self, model):
         self._isinstance(model)
         db.session.delete(model)
+        self.commit_changes()
+
+    def commit_changes(self):
         db.session.commit()
