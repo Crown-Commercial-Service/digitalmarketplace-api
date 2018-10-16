@@ -9,7 +9,7 @@ import six
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
-
+from operator import itemgetter
 from six import string_types, text_type, binary_type
 
 from sqlalchemy import text
@@ -570,6 +570,21 @@ class SupplierDomain(db.Model):
         nullable=False
     )
 
+    price_status = db.Column(
+        db.Enum(
+            *[
+                'approved',
+                'rejected',
+                'unassessed'
+            ],
+            name='supplier_domain_price_status_enum'
+        ),
+        default='unassessed',
+        index=False,
+        unique=False,
+        nullable=False
+    )
+
 
 supplier_code_seq = Sequence('supplier_code_seq')
 
@@ -659,7 +674,7 @@ class Supplier(db.Model):
 
     def add_unassessed_domain(self, name_or_id):
         d = Domain.get_by_name_or_id(name_or_id)
-        sd = SupplierDomain(supplier=self, domain=d, status='unassessed')
+        sd = SupplierDomain(supplier=self, domain=d, status='unassessed', price_status='unassessed')
         db.session.add(sd)
         db.session.add(AuditEvent(
             audit_type=AuditTypes.unassessed_domain,
@@ -799,6 +814,16 @@ class Supplier(db.Model):
             'country': address.country
         }
 
+    def serialize_supplier_domain(self, supplier_domain):
+        return {
+            'id': supplier_domain.id,
+            'domain_id': supplier_domain.domain_id,
+            'domain_name': supplier_domain.domain.name,
+            'recruiter_info_id': supplier_domain.recruiter_info_id,
+            'status': supplier_domain.status,
+            'price_status': supplier_domain.price_status
+        }
+
     def serializable_after(self, j):
         legacy = {
             'longName': self.long_name,
@@ -811,6 +836,7 @@ class Supplier(db.Model):
         j.update(legacy)
 
         j['domains'] = {
+            'all': sorted([self.serialize_supplier_domain(d) for d in self.domains], key=itemgetter('domain_name')),
             'assessed': self.assessed_domains,
             'unassessed': self.unassessed_domains,
             'legacy': self.legacy_domains

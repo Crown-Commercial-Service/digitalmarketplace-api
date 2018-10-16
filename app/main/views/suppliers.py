@@ -944,3 +944,62 @@ def assess_supplier_for_domain(supplier_id, domain_id, status):
 
     db.session.refresh(supplier)
     return jsonify(supplier=supplier.serializable), 200
+
+
+@main.route('/suppliers/<int:supplier_code>/domain/<int:supplier_domain_id>', methods=['POST'])
+def update_supplier_domain(supplier_code, supplier_domain_id):
+    json_payload = get_json_from_request()
+
+    supplier_id = (
+        db
+        .session
+        .query(Supplier.id)
+        .filter(Supplier.code == supplier_code)
+        .one_or_none()
+    )
+
+    supplier_domain = (
+        db
+        .session
+        .query(SupplierDomain)
+        .filter(SupplierDomain.supplier_id == supplier_id)
+        .filter(SupplierDomain.id == supplier_domain_id)
+        .one_or_none()
+    )
+
+    if not supplier_domain:
+        abort(404, "Supplier {} does not have domain '{}' does not exist".format(supplier_id, supplier_domain_id))
+
+    user = ''
+    dirty = False
+    if 'update_details' in json_payload:
+        user = json_payload['update_details']['updated_by']
+
+    if 'status' in json_payload:
+        supplier_domain.status = json_payload['status']
+        dirty = True
+
+    if 'price_status' in json_payload:
+        supplier_domain.price_status = json_payload['price_status']
+        dirty = True
+
+    if dirty is True:
+        db.session.add(AuditEvent(
+            audit_type=AuditTypes.assessed_domain,
+            user=user,
+            data={
+                'payload': json_payload
+            },
+            db_object=supplier_domain
+        ))
+        db.session.commit()
+
+    supplier = (
+        db
+        .session
+        .query(Supplier)
+        .filter(Supplier.code == supplier_code)
+        .one_or_none()
+    )
+
+    return jsonify(supplier=supplier.serializable), 200
