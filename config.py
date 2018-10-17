@@ -285,11 +285,11 @@ class Production(Live):
             'schedule': crontab(hour='*/4', minute=4)
         },
         'sync_application_approvals_with_jira': {
-            'task': 'jiratasks.sync_application_approvals_with_jira',
+            'task': 'app.tasks.jira.sync_application_approvals_with_jira',
             'schedule': crontab(hour='22-8/2', minute=10)
         },
         'sync_domain_assessment_approvals_with_jira': {
-            'task': 'jiratasks.sync_domain_assessment_approvals_with_jira',
+            'task': 'app.tasks.jira.sync_domain_assessment_approvals_with_jira',
             'schedule': crontab(hour='22-8/2', minute=12)
         }
     }
