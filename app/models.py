@@ -819,6 +819,8 @@ class Supplier(db.Model):
             'id': supplier_domain.id,
             'domain_id': supplier_domain.domain_id,
             'domain_name': supplier_domain.domain.name,
+            'domain_price_minimum': supplier_domain.domain.price_minimum,
+            'domain_price_maximum': supplier_domain.domain.price_maximum,
             'recruiter_info_id': supplier_domain.recruiter_info_id,
             'status': supplier_domain.status,
             'price_status': supplier_domain.price_status
