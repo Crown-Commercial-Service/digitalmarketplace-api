@@ -1,13 +1,13 @@
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'supplier_domain_price_status_enum') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'case_study_status_enum') THEN
 
-        create type "public"."supplier_domain_price_status_enum" as enum ('approved', 'rejected', 'unassessed');
+        create type "public"."case_study_status_enum" as enum ('unassessed', 'approved', 'rejected');
 
-        alter table "public"."supplier_domain" add column "price_status" supplier_domain_price_status_enum null;
+        alter table "public"."case_study" add column "status" case_study_status_enum null;
 
-        update "public"."supplier_domain" set price_status = 'unassessed';
+        update "public"."case_study" set status = 'unassessed';
 
-        ALTER TABLE "public"."supplier_domain" ALTER COLUMN price_status SET NOT NULL;
+        ALTER TABLE "public"."case_study" ALTER COLUMN status SET NOT NULL;
     END IF;
 END$$;

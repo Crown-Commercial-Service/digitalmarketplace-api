@@ -2588,6 +2588,20 @@ class CaseStudy(db.Model):
     data = db.Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
     supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+    status = db.Column(
+        db.Enum(
+            *[
+                'unassessed',
+                'approved',
+                'rejected'
+            ],
+            name='case_study_status_enum'
+        ),
+        default='unassessed',
+        index=False,
+        unique=False,
+        nullable=False
+    )
 
     @validates('data')
     def validates_data(self, key, data):
@@ -2606,6 +2620,7 @@ class CaseStudy(db.Model):
             'id': self.id,
             'supplierCode': self.supplier_code,
             'createdAt': self.created_at.to_iso8601_string(extended=True),
+            'status': self.status,
             'links': {
                 'self': url_for('.get_work_order', work_order_id=self.id),
                 'supplier': url_for(".get_supplier", code=self.supplier_code),
