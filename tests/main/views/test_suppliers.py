@@ -1914,6 +1914,31 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         }
 
 
+class TestDeleteUnsuccessfulApplicantDeclarations(BaseApplicationTest, FixtureMixin,
+                                                  PutDeclarationAndDetailsAndServicesMixin):
+    def setup(self):
+        """
+        This sets up the class. It creates a dummy framework and a supplier that applied to that framework, with a
+        declaration.
+        :return:
+        :rtype:
+        """
+        super(TestDeleteUnsuccessfulApplicantDeclarations, self).setup()
+        self.supplier_id = self.setup_dummy_suppliers(1)[0]
+        self.framework_slug = 'digital-outcomes-and-specialists'
+        self.set_framework_status('digital-outcomes-and-specialists', 'open')
+        self.updater_json = {'updated_by': 'Joe Bloggs'}
+
+    def test_a_supplier_framework_object_is_returned_with_an_empty_declaration(self):
+        self._register_supplier_with_framework()
+        self._put_declaration("Success!")
+        response = self.client.post("/suppliers/{}/frameworks/{}/declaration".format(
+            self.supplier_id, self.framework_slug),
+            data=json.dumps(self.updater_json), content_type='application/json')
+        assert response.status_code == 200
+        assert SupplierFramework.query.first().declaration == {}
+
+
 class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestSupplierFrameworkVariation, self).setup()
