@@ -482,18 +482,18 @@ def set_a_declaration(supplier_id, framework_slug):
 @main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>/declaration', methods=['POST'])
 def remove_a_declaration(framework_slug, supplier_id):
     """
-    This route will replace unsuccessful applicants's declarations with an empty dict and return the altered object.
+    This route will replace unsuccessful applicants' declarations with an empty dict and returns an empty body
     :param framework_slug: a string describing the framework
     :type framework_slug: string
     :param supplier_id: a way of identifying the supplier whose declaration will be removed
     :type supplier_id: int
-    :return: The altered SupplierFramework object
-    :rtype: SupplierFramework
+    :return: An empty body and a status code
+    :rtype: Tuple(Dict, int)
     """
     updater_json = validate_and_return_updater_request()
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         supplier_id, framework_slug
-    ).first()
+    ).first_or_404()
 
     supplier_framework.declaration = {}
 
@@ -507,11 +507,12 @@ def remove_a_declaration(framework_slug, supplier_id):
     db.session.add(supplier_framework, audit_event)
     try:
         db.session.commit()
-    except IntegrityError as e:
+    except (IntegrityError, DataError):
         db.session.rollback()
-        abort(400, format(e))
+        error_msg = "Could not remove declaration data from supplier framework: supplier_id {}, framework {}"
+        abort(400, error_msg.format(supplier_id, framework_slug))
 
-    return jsonify(message="Successful!"), 200
+    return jsonify(), 200
 
 
 @main.route('/suppliers/<int:supplier_id>/frameworks/interest', methods=['GET'])
