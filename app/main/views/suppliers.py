@@ -498,7 +498,7 @@ def remove_a_declaration(framework_slug, supplier_id):
     supplier_framework.declaration = {}
 
     audit_event = AuditEvent(
-        audit_type=AuditTypes.update_supplier_framework,
+        audit_type=AuditTypes.delete_supplier_framework_declaration,
         db_object=supplier_framework,
         user=updater_json['updated_by'],
         data={}
