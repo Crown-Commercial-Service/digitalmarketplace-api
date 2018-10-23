@@ -1935,6 +1935,7 @@ class TestDeleteUnsuccessfulApplicantDeclarations(BaseApplicationTest, FixtureMi
         response = self.client.post("/suppliers/{}/frameworks/{}/declaration".format(
             self.supplier_id, self.framework_slug),
             data=json.dumps(self.updater_json), content_type='application/json')
+        assert len(response.get_json()['supplierFramework']['declaration']) == 0
         assert response.status_code == 200
         assert SupplierFramework.query.first().declaration == {}
 
