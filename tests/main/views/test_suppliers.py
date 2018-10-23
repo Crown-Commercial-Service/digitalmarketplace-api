@@ -1914,6 +1914,57 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         }
 
 
+class TestDeleteUnsuccessfulApplicantDeclarations(BaseApplicationTest, FixtureMixin,
+                                                  PutDeclarationAndDetailsAndServicesMixin):
+    def setup(self):
+        """
+        This sets up the class. Sets up test data for a supplier and their successful application to a framework.
+        :return: an instance of the class
+        :rtype: TestDeleteUnsuccessfulApplicantDeclarations
+        """
+        super(TestDeleteUnsuccessfulApplicantDeclarations, self).setup()
+
+        self.supplier_id = self.setup_dummy_suppliers(1)[0]
+        self.framework_slug = 'digital-outcomes-and-specialists'
+        self.set_framework_status('digital-outcomes-and-specialists', 'open')
+        self.updater_json = {'updated_by': 'Joe Bloggs'}
+        self._register_supplier_with_framework()
+
+    def test_a_supplier_framework_object_is_returned_with_an_empty_declaration(self):
+        self._put_declaration("complete")
+        response = self.client.post("/suppliers/{}/frameworks/{}/declaration".format(
+            self.supplier_id, self.framework_slug),
+            data=json.dumps(self.updater_json), content_type='application/json')
+        assert len(response.get_json()['supplierFramework']['declaration']) == 0
+        assert response.status_code == 200
+        assert SupplierFramework.query.first().declaration == {}
+
+    @pytest.mark.parametrize('error_class', (DataError, IntegrityError))
+    def test_errors_on_commit(self, error_class):
+        url = '/suppliers/{}/frameworks/{}/declaration'.format(
+            self.supplier_id,
+            self.framework_slug
+        )
+        expected_error_message = (
+            "Could not remove declaration data from supplier framework: supplier_id {}, framework {}"
+        ).format(
+            self.supplier_id,
+            self.framework_slug
+        )
+
+        with mock.patch('app.db.session.commit', side_effect=error_class("Unable to commit", orig=None, params={})):
+            response = self.client.post(
+                url,
+                data=json.dumps({'updated_by': 'test@example.com'}),
+                content_type='application/json'
+            )
+        assert response.status_code == 400
+
+        data = json.loads(response.get_data())
+
+        assert data['error'] == expected_error_message
+
+
 class TestSupplierFrameworkVariation(BaseApplicationTest, FixtureMixin):
     def setup(self):
         super(TestSupplierFrameworkVariation, self).setup()
