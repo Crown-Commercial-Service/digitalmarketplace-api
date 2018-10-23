@@ -706,6 +706,7 @@ class Supplier(db.Model):
 
         sd.status = status
         if status == 'assessed':
+            sd.price_status = 'approved'
             db.session.add(AuditEvent(
                 audit_type=AuditTypes.assessed_domain,
                 user=user,
