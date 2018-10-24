@@ -192,7 +192,7 @@ class MarketplaceJIRA(object):
                        '{application_awaiting_approval}'
                        '{price_description}'
                        '---------\n\n'
-                       'Once complete - please assign back to Luke Roughley'
+                       'Once complete - please assign back to Jordan Williams'
                        ).format(**description_values)
 
         details = dict(
@@ -271,7 +271,7 @@ class MarketplaceJIRA(object):
                     description += "Seller is competitive\n\n"
                 else:
                     competitive = False
-                    description += "*Seller is not competitive*\n\n"
+                    description += "*Seller is less competitive*\n\n"
 
         details = dict(
             project=self.jira_field_codes['MARKETPLACE_PROJECT_CODE'],
