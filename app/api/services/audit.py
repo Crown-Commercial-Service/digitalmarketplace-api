@@ -47,3 +47,4 @@ class AuditTypes(Enum):
     read_brief_responses = 'read_brief_responses'
     add_brief_clarification_question = 'add_brief_clarification_question'
     delete_brief = 'delete_brief'
+    seller_requested_feedback_from_buyer_email = 'seller_requested_feedback_from_buyer_email'

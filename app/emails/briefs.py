@@ -118,3 +118,38 @@ def send_brief_closed_email(brief):
             "subject": subject
         },
         db_object=brief)
+
+
+def send_seller_requested_feedback_from_buyer_email(brief):
+    from app.api.services import audit_service, audit_types  # to circumvent circular dependency
+
+    to_addresses = [user.email_address for user in brief.users if user.active]
+
+    # prepare copy
+    email_body = render_email_template(
+        'seller_requested_feedback_from_buyer_email.md',
+        frontend_url=current_app.config['FRONTEND_ADDRESS'],
+        brief_name=brief.data['title'],
+        brief_id=brief.id
+    )
+
+    subject = "Your brief has closed - please review all responses."
+
+    send_or_handle_error(
+        to_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='seller_requested_feedback_from_buyer_email'
+    )
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.seller_requested_feedback_from_buyer_email,
+        user='',
+        data={
+            "to_addresses": ', '.join(to_addresses),
+            "email_body": email_body,
+            "subject": subject
+        },
+        db_object=brief)

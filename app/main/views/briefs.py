@@ -23,7 +23,10 @@ from ...brief_utils import (
     add_defaults
 )
 from ...datetime_utils import parse_time_of_day, combine_date_and_time
-from app.emails.briefs import send_brief_closed_email
+from app.emails.briefs import (
+    send_brief_closed_email,
+    send_seller_requested_feedback_from_buyer_email
+)
 
 
 @main.route('/briefs', methods=['POST'])
@@ -273,6 +276,18 @@ def update_brief_admin(brief_id):
     if applications_closed_at:
         if (brief.closed_at <= pendulum.today()):
             send_brief_closed_email(brief)
+
+    return jsonify(briefs=brief.serialize(with_users=True)), 200
+
+
+@main.route('/briefs/<int:brief_id>/send_feedback_email', methods=['POST'])
+def send_feedback_email(brief_id):
+    updater_json = validate_and_return_updater_request()
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    send_seller_requested_feedback_from_buyer_email(brief)
 
     return jsonify(briefs=brief.serialize(with_users=True)), 200
 
