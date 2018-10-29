@@ -30,6 +30,7 @@ from sqlalchemy.sql.expression import (
 from sqlalchemy.sql.sqltypes import Interval
 from sqlalchemy.types import String
 from sqlalchemy_utils import generic_relationship
+from sqlalchemy_json import NestedMutable
 
 from dmutils.dates import get_publishing_dates
 from dmutils.formats import DATETIME_FORMAT
@@ -61,6 +62,10 @@ class JSON(sqlalchemy.dialects.postgresql.JSON):
 
     def __init__(self, astext_type=None):
         super(JSON, self).__init__(none_as_null=True, astext_type=astext_type)
+
+
+# Enable tracking of updates/ changes on nested attributes for all usages of the JSON class in this file
+NestedMutable.associate_with(JSON)
 
 
 class RemovePersonalDataModelMixin:
