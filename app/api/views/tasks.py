@@ -24,12 +24,8 @@ def run_process_closed_briefs():
         type: string
         description: string
     """
-    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
-        res = process_closed_briefs.delay()
-        return jsonify(res.id)
-    else:
-        process_closed_briefs()
-        return jsonify("finished")
+    res = process_closed_briefs.delay()
+    return jsonify(res.id)
 
 
 @api.route('/tasks/maintain-seller-email-list', methods=['POST'])
@@ -44,12 +40,8 @@ def run_maintain_seller_email_list():
         type: string
         description: string
     """
-    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
-        res = sync_mailchimp_seller_list.delay()
-        return jsonify(res.id)
-    else:
-        sync_mailchimp_seller_list()
-        return jsonify("finished")
+    res = sync_mailchimp_seller_list.delay()
+    return jsonify(res.id)
 
 
 @api.route('/tasks/send-daily-seller-email', methods=['POST'])
@@ -64,12 +56,8 @@ def run_send_daily_seller_email():
         type: string
         description: string
     """
-    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
-        res = send_new_briefs_email.delay()
-        return jsonify(res.id)
-    else:
-        send_new_briefs_email()
-        return jsonify("finished")
+    res = send_new_briefs_email.delay()
+    return jsonify(res.id)
 
 
 @api.route('/tasks/create-responses-zip', methods=['POST'])
@@ -84,12 +72,8 @@ def run_create_brief_responses_zip():
         type: string
         description: string
     """
-    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
-        res = create_responses_zip_for_closed_briefs.delay()
-        return jsonify(res.id)
-    else:
-        create_responses_zip_for_closed_briefs()
-        return jsonify("finished")
+    res = create_responses_zip_for_closed_briefs.delay()
+    return jsonify(res.id)
 
 
 @api.route('/tasks/update-brief-metrics', methods=['POST'])
@@ -104,12 +88,8 @@ def run_update_brief_metrics():
         type: string
         description: string
     """
-    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
-        res = update_brief_metrics.delay()
-        return jsonify(res.id)
-    else:
-        update_brief_metrics()
-        return jsonify("finished")
+    res = update_brief_metrics.delay()
+    return jsonify(res.id)
 
 
 @api.route('/tasks/update-brief-response-metrics', methods=['POST'])
@@ -124,12 +104,8 @@ def run_update_brief_response_metrics():
         type: string
         description: string
     """
-    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
-        res = update_brief_response_metrics.delay()
-        return jsonify(res.id)
-    else:
-        update_brief_response_metrics()
-        return jsonify("finished")
+    res = update_brief_response_metrics.delay()
+    return jsonify(res.id)
 
 
 @api.route('/tasks/update-supplier-metrics', methods=['POST'])
@@ -144,12 +120,8 @@ def run_update_supplier_metrics():
         type: string
         description: string
     """
-    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
-        res = update_supplier_metrics.delay()
-        return jsonify(res.id)
-    else:
-        update_supplier_metrics()
-        return jsonify("finished")
+    res = update_supplier_metrics.delay()
+    return jsonify(res.id)
 
 
 @api.route('/tasks/update-all-metrics', methods=['POST'])
@@ -164,17 +136,11 @@ def run_update_all_metrics():
         type: string
         description: string
     """
-    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
-        return jsonify({
-            "update_brief_metrics": update_brief_metrics.delay().id,
-            "update_brief_response_metrics": update_brief_response_metrics.delay().id,
-            "update_supplier_metrics": update_supplier_metrics.delay().id
-        })
-    else:
-        update_brief_metrics()
-        update_brief_response_metrics()
-        update_supplier_metrics()
-        return jsonify("finished")
+    return jsonify({
+        "update_brief_metrics": update_brief_metrics.delay().id,
+        "update_brief_response_metrics": update_brief_response_metrics.delay().id,
+        "update_supplier_metrics": update_supplier_metrics.delay().id
+    })
 
 
 @api.route('/tasks/sync-jira-application-approvals', methods=['POST'])
@@ -189,12 +155,8 @@ def sync_jira_application_approvals():
         type: string
         description: string
     """
-    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
-        res = sync_application_approvals_with_jira.delay()
-        return jsonify(res.id)
-    else:
-        sync_application_approvals_with_jira()
-        return jsonify("finished")
+    res = sync_application_approvals_with_jira.delay()
+    return jsonify(res.id)
 
 
 @api.route('/tasks/sync-jira-assessment-approvals', methods=['POST'])
@@ -209,9 +171,5 @@ def sync_jira_assessment_approvals():
         type: string
         description: string
     """
-    if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
-        res = sync_domain_assessment_approvals_with_jira.delay()
-        return jsonify(res.id)
-    else:
-        sync_domain_assessment_approvals_with_jira()
-        return jsonify("finished")
+    res = sync_domain_assessment_approvals_with_jira.delay()
+    return jsonify(res.id)

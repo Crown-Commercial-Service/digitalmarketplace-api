@@ -33,6 +33,12 @@ Some system-level libraries are required for the following packages to work. On 
 
 	apt install gcc python-dev libffi-dev libpq-dev
 
+### Docker
+
+It is easier to have all services (Postgres, Localstack) running using docker-compose.
+
+Just run `docker-compose up -d` in your api root.
+
 ### Upgrade database schema
 
 This project is set up with some migration tooling that largely automates migrations.
@@ -109,14 +115,22 @@ To just run the application use the `run_app` target.
 
 ### Enable Celery tasking and run the Celery worker
 
-When the config item `CELERY_ASYNC_TASKING_ENABLED` is set to `True`, the API will use asynchronous Celery for certain tasks (such as emailing). Celery is configured to use Amazon SQS for its broker, and requires various environment variables to be present in the API's execution environment for this to work:
+The API will use asynchronous Celery for certain tasks (such as emailing).
+Celery needs to be configured to use Amazon SQS or localstack for its broker, and requires various environment variables to be present in the API's execution environment for this to work:
 
+#### Amazon SQS
 ```
 export AWS_SQS_REGION='us-west-1'
-export AWS_SQS_ACCOUNT_ID='1234567890'
 export AWS_SQS_QUEUE_NAME='my-queue'
-export AWS_SQS_ACCESS_KEY_ID='MYACCESSKEYID'
-export AWS_SQS_SECRET_ACCESS_KEY='MYSECRETKEY'
+export AWS_SQS_QUEUE_URL='https://<region>.queue.amazonaws.com/<queue_account>/<queue_name>'
+export AWS_SQS_BROKER_URL='sqs://[<MYACCESSKEYID>]:[<MYSECRETKEY>]@[localhost:4576]'
+```
+
+#### Localstack
+In addition to Amazon SQS environment variables, the endpoint_url of boto3 needs to be overridden with the following environment variables
+```
+export AWS_S3_URL=http://localhost:4572
+export AWS_SES_URL=http://localhost:4579
 ```
 
 To add CRON like task scheduling, modify the config item `CELERYBEAT_SCHEDULE` to include your scheduled task. See [Celery Periodic Tasks - Entries](http://docs.celeryproject.org/en/latest/userguide/periodic-tasks.html) for more information on Celery beat tasks.

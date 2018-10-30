@@ -3,6 +3,46 @@ from dmutils.status import get_version_label
 from celery.schedules import crontab
 
 
+CELERYBEAT_SCHEDULE = {
+    'maintain-seller-email-list': {
+        'task': 'app.tasks.mailchimp.sync_mailchimp_seller_list',
+        'schedule': crontab(hour='*/4', minute=0)
+    },
+    'send-daily-seller-email': {
+        'task': 'app.tasks.mailchimp.send_new_briefs_email',
+        'schedule': crontab(hour=17, minute=0)
+    },
+    'process_closed_briefs': {
+        'task': 'app.tasks.brief_tasks.process_closed_briefs',
+        'schedule': crontab(hour=6, minute=0)
+    },
+    'create_responses_zip_for_closed_briefs': {
+        'task': 'app.tasks.brief_tasks.create_responses_zip_for_closed_briefs',
+        'schedule': crontab(hour=18, minute=1)
+    },
+    'update_brief_metrics': {
+        'task': 'app.tasks.brief_tasks.update_brief_metrics',
+        'schedule': crontab(hour='*/1', minute=1)
+    },
+    'update_brief_response_metrics': {
+        'task': 'app.tasks.brief_response_tasks.update_brief_response_metrics',
+        'schedule': crontab(hour='*/2', minute=2)
+    },
+    'update_supplier_metrics': {
+        'task': 'app.tasks.supplier_tasks.update_supplier_metrics',
+        'schedule': crontab(hour='*/4', minute=4)
+    },
+    'sync_application_approvals_with_jira': {
+        'task': 'app.tasks.jira.sync_application_approvals_with_jira',
+        'schedule': crontab(day_of_week='mon-fri', hour='8-18/1', minute=45)
+    },
+    'sync_domain_assessment_approvals_with_jira': {
+        'task': 'app.tasks.jira.sync_domain_assessment_approvals_with_jira',
+        'schedule': crontab(day_of_week='mon-fri', hour='8-18/1', minute=46)
+    }
+}
+
+
 class Config:
     VERSION = get_version_label(
         os.path.abspath(os.path.dirname(__file__))
@@ -156,9 +196,12 @@ class Config:
     AWS_DEFAULT_REGION = ''
     SWAGGER = {'title': 'Digital Marketplace API', 'uiversion': 3}
     ORAMS_FRAMEWORK = 'orams'
+    AWS_S3_URL = None
+    AWS_SES_URL = None
+    AWS_SQS_BROKER_URL = None
+    AWS_SQS_QUEUE_URL = None
 
     # CELERY
-    CELERY_ASYNC_TASKING_ENABLED = True
     CELERY_TIMEZONE = 'Australia/Sydney'
     CELERYBEAT_SCHEDULE = {}
 
@@ -195,8 +238,7 @@ class Test(Config):
     CSRF_FAKED = False
     BASIC_AUTH = True
     DEADLINES_TZ_NAME = 'Australia/Sydney'
-
-    CELERY_ASYNC_TASKING_ENABLED = False
+    SEND_EMAILS = False
 
 
 class Development(Config):
@@ -213,15 +255,18 @@ class Development(Config):
         'TRANSACTION_ISOLATION': False
     }
 
-    JIRA_FEATURES = True
+    JIRA_FEATURES = False
 
     DM_SEND_EMAIL_TO_STDERR = True
     SEND_EMAILS = True
     SECRET_KEY = 'DevKeyDevKeyDevKeyDevKeyDevKeyDevKeyDevKeyX='
     FRONTEND_ADDRESS = 'http://localhost:8000'
     BASIC_AUTH = True
-
-    CELERY_ASYNC_TASKING_ENABLED = False
+    AWS_S3_URL = 'http://localhost:4572'
+    AWS_SES_URL = 'http://localhost:4579'
+    AWS_SQS_BROKER_URL = 'sqs://@localhost:4576'
+    AWS_SQS_QUEUE_URL = 'http://localhost:4576/queue/dta-marketplace-local'
+    CELERYBEAT_SCHEDULE = CELERYBEAT_SCHEDULE
 
 
 class Live(Config):
@@ -250,49 +295,12 @@ class Preview(Live):
 class Staging(Development):
     JIRA_FEATURES = True
     BASIC_AUTH = True
-    CELERY_ASYNC_TASKING_ENABLED = True
     DM_SEND_EMAIL_TO_STDERR = False
+    CELERYBEAT_SCHEDULE = {}
 
 
 class Production(Live):
-    CELERYBEAT_SCHEDULE = {
-        'maintain-seller-email-list': {
-            'task': 'app.tasks.mailchimp.sync_mailchimp_seller_list',
-            'schedule': crontab(hour='*/4', minute=0)
-        },
-        'send-daily-seller-email': {
-            'task': 'app.tasks.mailchimp.send_new_briefs_email',
-            'schedule': crontab(hour=17, minute=0)
-        },
-        'process_closed_briefs': {
-            'task': 'app.tasks.brief_tasks.process_closed_briefs',
-            'schedule': crontab(hour=6, minute=0)
-        },
-        'create_responses_zip_for_closed_briefs': {
-            'task': 'app.tasks.brief_tasks.create_responses_zip_for_closed_briefs',
-            'schedule': crontab(hour=18, minute=1)
-        },
-        'update_brief_metrics': {
-            'task': 'app.tasks.brief_tasks.update_brief_metrics',
-            'schedule': crontab(hour='*/1', minute=1)
-        },
-        'update_brief_response_metrics': {
-            'task': 'app.tasks.brief_response_tasks.update_brief_response_metrics',
-            'schedule': crontab(hour='*/2', minute=2)
-        },
-        'update_supplier_metrics': {
-            'task': 'app.tasks.supplier_tasks.update_supplier_metrics',
-            'schedule': crontab(hour='*/4', minute=4)
-        },
-        'sync_application_approvals_with_jira': {
-            'task': 'app.tasks.jira.sync_application_approvals_with_jira',
-            'schedule': crontab(day_of_week='mon-fri', hour='8-18/1', minute=45)
-        },
-        'sync_domain_assessment_approvals_with_jira': {
-            'task': 'app.tasks.jira.sync_domain_assessment_approvals_with_jira',
-            'schedule': crontab(day_of_week='mon-fri', hour='8-18/1', minute=46)
-        }
-    }
+    CELERYBEAT_SCHEDULE = CELERYBEAT_SCHEDULE
 
 
 configs = {

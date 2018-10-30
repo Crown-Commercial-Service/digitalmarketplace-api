@@ -42,7 +42,8 @@ def create_responses_zip(brief_id):
         's3',
         region_name=getenv('AWS_REGION'),
         aws_access_key_id=getenv('AWS_ACCESS_KEY_ID'),
-        aws_secret_access_key=getenv('AWS_SECRET_ACCESS_KEY')
+        aws_secret_access_key=getenv('AWS_SECRET_ACCESS_KEY'),
+        endpoint_url=getenv('AWS_S3_URL')
     )
     bucket = s3.Bucket(BUCKET_NAME)
 

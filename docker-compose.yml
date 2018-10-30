@@ -1,0 +1,35 @@
+version: '3.1'
+
+services:
+
+  db:
+    image: postgres:9.6.7-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - "./docker/postgresql/data:/var/lib/postgresql/data"
+    ports:
+      - 15432:5432
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: always
+    ports:
+      - 8080:80
+    volumes:
+      - "./docker/pgadmin:/var/lib/pgadmin"
+
+  localstack:
+    image: localstack/localstack
+    restart: always
+    ports:
+      - "4567-4583:4567-4583"
+      - "9000:8080"
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DATA_DIR=/tmp/localstack/data
+    volumes:
+      - "./docker/localstack/data:/tmp/localstack/data"
+      - "/var/run/docker.sock:/var/run/docker.sock"

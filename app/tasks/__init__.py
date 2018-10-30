@@ -14,6 +14,7 @@ def get_flask_app():
     app.config.from_object(configs[config_name])
     jira_creds_oauth = getenv('JIRA_CREDS_OAUTH')
     app.config['JIRA_CREDS_OAUTH'] = jira_creds_oauth if jira_creds_oauth else ''
+    app.config['DM_SEND_EMAIL_TO_STDERR'] = getenv('DM_SEND_EMAIL_TO_STDERR', app.config['DM_SEND_EMAIL_TO_STDERR'])
     # FIXME: The service broker adds a 'reconnect' parameter that's rejected by Postgres and
     # doesn't seem to be in the Postgres documentation anyway.  We need to patch the broker to fix
     # the username stability issue anyway.

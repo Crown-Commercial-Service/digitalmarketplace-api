@@ -6,37 +6,40 @@ from kombu.transport import SQS
 from flask import current_app
 
 
-region = getenv('AWS_SQS_REGION')
-queue_account = getenv('AWS_SQS_ACCOUNT_ID')
-queue_name = getenv('AWS_SQS_QUEUE_NAME')
+QUEUE_NAME = getenv('AWS_SQS_QUEUE_NAME')
+QUEUE_URL = getenv('AWS_SQS_QUEUE_URL')  # remove when monkey_patch is removed
 
 
 # we need to patch the kombu SQS transport so ListQueues isn't
 # being performed on the AWS SQS API while our PR remains open.
 # see: https://github.com/celery/kombu/pull/834
 def monkey_patch(self, queue_name_prefix):
-    self._queue_cache[queue_name] = 'https://%s.queue.amazonaws.com/%s/%s' % (region, queue_account, queue_name)
+    self._queue_cache[QUEUE_NAME] = QUEUE_URL
 
 
 SQS.Channel._update_queue_cache = monkey_patch
 
 
 def make_celery(flask_app):
-    CELERY_OPTIONS = {
+    region = getenv('AWS_SQS_REGION')
+    celery_options = {
         'broker_transport_options': {
             'region': region
         },
-        'task_default_queue': queue_name
+        'task_default_queue': QUEUE_NAME
     }
-    broker = 'sqs://'
-    if getenv('AWS_SQS_ACCESS_KEY_ID') and getenv('AWS_SQS_SECRET_ACCESS_KEY'):
-        broker += '{}:{}@'.format(
-            quote_plus(getenv('AWS_SQS_ACCESS_KEY_ID')),
-            quote_plus(getenv('AWS_SQS_SECRET_ACCESS_KEY'))
-        )
+    broker_url = getenv('AWS_SQS_BROKER_URL')
+    if not broker_url:
+        broker_url = 'sqs://'
+        if getenv('AWS_SQS_ACCESS_KEY_ID') and getenv('AWS_SQS_SECRET_ACCESS_KEY'):
+            broker_url += '{}:{}@'.format(
+                quote_plus(getenv('AWS_SQS_ACCESS_KEY_ID')),
+                quote_plus(getenv('AWS_SQS_SECRET_ACCESS_KEY'))
+            )
+
     celery = Celery(
         flask_app.import_name,
-        broker=broker,
+        broker=broker_url,
         include=[
             'app.api.services',
             'app.tasks.email',
@@ -49,7 +52,7 @@ def make_celery(flask_app):
         ]
     )
     celery.conf.update(flask_app.config)
-    celery.config_from_object(CELERY_OPTIONS)
+    celery.config_from_object(celery_options)
     TaskBase = celery.Task
 
     class ContextTask(TaskBase):

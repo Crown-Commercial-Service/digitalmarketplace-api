@@ -49,10 +49,7 @@ def send_or_handle_error(*args, **kwargs):
     error_desc = kwargs.pop('event_description_for_errors', 'unspecified')
 
     try:
-        if current_app.config['CELERY_ASYNC_TASKING_ENABLED']:
-            send_email.delay(*args, **kwargs)
-        else:
-            send_email(*args, **kwargs)
+        send_email.delay(*args, **kwargs)
 
     except EmailError as e:
         rollbar.report_exc_info()

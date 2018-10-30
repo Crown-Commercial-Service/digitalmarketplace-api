@@ -3,9 +3,10 @@ import requests
 import rollbar
 from app.models import db, Agency, User, ServiceType, BriefUser
 from dmutils.email import (
-    decode_token, EmailError, generate_token, InvalidToken, ONE_DAY_IN_SECONDS, send_email,
+    decode_token, EmailError, generate_token, InvalidToken, ONE_DAY_IN_SECONDS,
     parse_fernet_timestamp
 )
+from app.tasks.email import send_email
 from functools import wraps
 from flask_login import current_user
 import pendulum
