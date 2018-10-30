@@ -266,6 +266,7 @@ class Development(Config):
     AWS_SES_URL = 'http://localhost:4579'
     AWS_SQS_BROKER_URL = 'sqs://@localhost:4576'
     AWS_SQS_QUEUE_URL = 'http://localhost:4576/queue/dta-marketplace-local'
+    AWS_SQS_QUEUE_NAME = 'dta-marketplace-local'
     CELERYBEAT_SCHEDULE = CELERYBEAT_SCHEDULE
 
 
