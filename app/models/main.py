@@ -12,7 +12,7 @@ import sqlalchemy.dialects.postgresql
 from sqlalchemy import Sequence
 from sqlalchemy import asc, desc, exists
 from sqlalchemy import func
-from sqlalchemy.dialects.postgresql import INTERVAL, JSONB
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -27,6 +27,7 @@ from sqlalchemy.sql.expression import (
     and_ as sql_and,
     or_ as sql_or,
 )
+from sqlalchemy.sql.sqltypes import Interval
 from sqlalchemy.types import String
 from sqlalchemy_utils import generic_relationship
 
@@ -1459,8 +1460,8 @@ class Brief(db.Model):
         Set the applications_closed_at based on whether a brief has 'requirementsLength' one week or two weeks.
         """
         is_one_week = cls.data['requirementsLength'].astext == '1 week'
-        one_week_addition_function = func.date_trunc('day', cls.published_at) + sql_cast('1 week 23:59:59', INTERVAL)
-        two_week_addition_function = func.date_trunc('day', cls.published_at) + sql_cast('2 weeks 23:59:59', INTERVAL)
+        one_week_addition_function = func.date_trunc('day', cls.published_at) + sql_cast('1 week 23:59:59', Interval)
+        two_week_addition_function = func.date_trunc('day', cls.published_at) + sql_cast('2 weeks 23:59:59', Interval)
         return sql_case(
             [(is_one_week, one_week_addition_function)],
             else_=two_week_addition_function
