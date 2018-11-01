@@ -2,7 +2,7 @@ import datetime
 
 from flask import jsonify, abort, request
 from sqlalchemy import func, orm, case
-from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.exc import IntegrityError, DataError, StatementError
 from sqlalchemy.orm import lazyload, load_only
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
@@ -96,7 +96,7 @@ def create_framework():
         db.session.rollback()
         abort(400, "Invalid framework")
 
-    except IntegrityError as error:
+    except StatementError as error:
         db.session.rollback()
         abort(400, format_framework_integrity_error_message(error, json_framework))
 

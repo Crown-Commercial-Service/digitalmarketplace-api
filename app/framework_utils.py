@@ -1,3 +1,5 @@
+import re
+
 from flask import abort
 from .validation import get_validation_errors
 
@@ -20,7 +22,8 @@ def format_framework_integrity_error_message(error, json_framework):
 
     elif 'duplicate key value violates unique constraint "ix_frameworks_slug"' in str(error):
         error_message = "Slug '{}' already in use".format(json_framework.get('slug', '<unknown slug>'))
-
+    elif re.search('Not a [a-z]+? value:', str(error)):
+        error_message = 'Invalid framework'
     else:
         error_message = format(error)
 
