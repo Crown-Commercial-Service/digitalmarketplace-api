@@ -1,21 +1,18 @@
 from __future__ import absolute_import
 
-import pytest
 import pendulum
-
-from app import create_app
-from app.models import db, utcnow, Agency, Contact, Supplier, SupplierDomain, User, Brief, ServiceTypePriceCeiling,\
-    Framework, Lot, Domain, Assessment, Application, Region, ServiceType, ServiceTypePrice, ServiceSubType,\
-    SupplierFramework, UserFramework, BriefResponse, BriefUser, FrameworkLot
-from tests.app.helpers import COMPLETE_DIGITAL_SPECIALISTS_BRIEF, WSGIApplicationWithEnvironment
-
-from sqlbag import temporary_database
+import pytest
 from faker import Faker
+from sqlbag import temporary_database
 
-from migrations import \
-    load_from_app_model, load_test_fixtures
-
-from app import encryption
+from app import create_app, encryption
+from app.models import (Agency, Application, Assessment, Brief, BriefResponse,
+                        BriefUser, Contact, Domain, Framework, FrameworkLot,
+                        Lot, Supplier, SupplierDomain, SupplierFramework, User,
+                        UserFramework, db, utcnow)
+from migrations import load_from_app_model, load_test_fixtures
+from tests.app.helpers import (COMPLETE_DIGITAL_SPECIALISTS_BRIEF,
+                               WSGIApplicationWithEnvironment)
 
 fake = Faker()
 
@@ -90,7 +87,7 @@ def agencies(app, request):
 @pytest.fixture()
 def suppliers(app, request):
     params = request.param if hasattr(request, 'param') else {}
-    framework_slug = params['framework_slug'] if 'framework_slug' in params else 'orams'
+    framework_slug = params['framework_slug'] if 'framework_slug' in params else 'digital-marketplace'
     with app.app_context():
         framework = Framework.query.filter(Framework.slug == framework_slug).first()
         for i in range(1, 6):
@@ -145,7 +142,7 @@ def users(app, request):
     params = request.param if hasattr(request, 'param') else {}
     user_role = params['user_role'] if 'user_role' in params else 'buyer'
     email_domain = params['email_domain'] if 'email_domain' in params else 'digital.gov.au'
-    framework_slug = params['framework_slug'] if 'framework_slug' in params else 'orams'
+    framework_slug = params['framework_slug'] if 'framework_slug' in params else 'digital-marketplace'
     with app.app_context():
         for i in range(1, 6):
             new_user = User(
@@ -214,7 +211,7 @@ def supplier_user(app, request, suppliers):
             password_changed_at=utcnow()
         ))
         db.session.commit()
-        framework = Framework.query.filter(Framework.slug == "orams").first()
+        framework = Framework.query.filter(Framework.slug == 'digital-marketplace').first()
         db.session.add(UserFramework(user_id=id, framework_id=framework.id))
         db.session.commit()
         yield User.query.get(id)
@@ -302,112 +299,3 @@ def assessments(app, request, supplier_domains, briefs):
 
         db.session.commit()
         yield Assessment.query.all()
-
-
-@pytest.fixture()
-def regions(app, request):
-    with app.app_context():
-        db.session.add(Region(
-            name='Metro',
-            state='NSW'
-        ))
-        db.session.add(Region(
-            name='Remote',
-            state='NSW'
-        ))
-        db.session.add(Region(
-            name='Metro',
-            state='QLD'
-        ))
-
-        db.session.commit()
-        yield Region.query.all()
-
-
-@pytest.fixture()
-def services(app, request):
-    with app.app_context():
-        db.session.add(ServiceType(
-            name='Service1',
-            fee_type='Hourly',
-            category_id=10,
-            framework_id=8,
-            lot_id=11
-        ))
-        db.session.add(ServiceType(
-            name='Service2',
-            fee_type='Fixed',
-            category_id=11,
-            framework_id=8,
-            lot_id=11
-        ))
-
-        db.session.commit()
-        yield ServiceType.query.all()
-
-
-@pytest.fixture()
-def service_type_prices(app, request, regions, services, suppliers):
-    with app.app_context():
-        db.session.add(ServiceSubType(
-            id=1,
-            name=''
-        ))
-        db.session.add(ServiceSubType(
-            id=2,
-            name='SubType1'
-        ))
-        db.session.flush()
-
-        db.session.add(ServiceTypePriceCeiling(
-            service_type_id=1,
-            sub_service_id=1,
-            region_id=1,
-            supplier_code=1,
-            price=321.56
-        ))
-        db.session.flush()
-
-        db.session.add(ServiceTypePrice(
-            service_type_id=1,
-            sub_service_id=1,
-            region_id=1,
-            supplier_code=1,
-            service_type_price_ceiling_id=1,
-            price=210.60,
-            date_from='1/1/2016',
-            date_to=pendulum.Date.today()
-        ))
-        db.session.add(ServiceTypePrice(
-            service_type_id=1,
-            sub_service_id=1,
-            region_id=1,
-            supplier_code=1,
-            service_type_price_ceiling_id=1,
-            price=200.50,
-            date_from='1/1/2016',
-            date_to=pendulum.Date.today()
-        ))
-        db.session.add(ServiceTypePrice(
-            service_type_id=1,
-            sub_service_id=1,
-            region_id=1,
-            supplier_code=1,
-            service_type_price_ceiling_id=1,
-            price=100.50,
-            date_from=pendulum.Date.tomorrow(),
-            date_to='1/1/2050'
-        ))
-        db.session.add(ServiceTypePrice(
-            service_type_id=2,
-            sub_service_id=2,
-            region_id=2,
-            supplier_code=2,
-            service_type_price_ceiling_id=1,
-            price=200.90,
-            date_from=pendulum.Date.today(),
-            date_to='1/1/2050'
-        ))
-
-        db.session.commit()
-        yield ServiceTypePrice.query.all()

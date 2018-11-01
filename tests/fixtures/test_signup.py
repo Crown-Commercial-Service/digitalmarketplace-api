@@ -261,24 +261,3 @@ def test_buyer_can_not_signup_with_non_whitelisted_email(client, mocker, agencie
     assert response.status_code == 403
     data = json.loads(response.data)
     assert data['message'] == 'A buyer account must have a valid government entity email domain'
-
-
-@pytest.mark.parametrize('user', [gov_au_buyer, whitelisted_non_gov_au_buyer, non_whitelisted_buyer])
-def test_any_email_address_can_be_used_for_orams_signup(client, mocker, user):
-    send_email = mocker.patch('app.api.views.users.orams_send_account_activation_admin_email')
-
-    response = client.post(
-        '/2/signup',
-        data=json.dumps({
-            'name': user['name'],
-            'email_address': user['email_address'],
-            'framework': 'orams',
-            'user_type': user['user_type']
-        }),
-        content_type='application/json')
-
-    assert response.status_code == 200
-    data = json.loads(response.data)
-    assert data['message'] == 'Email invite sent successfully'
-
-    send_email.assert_called_once_with(user['name'], user['email_address'], 'orams')

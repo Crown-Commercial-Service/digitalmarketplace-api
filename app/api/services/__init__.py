@@ -1,4 +1,3 @@
-from .prices import PricesService
 from .application import ApplicationService
 from .audit import AuditService, AuditTypes
 from .assessments import AssessmentsService
@@ -11,7 +10,6 @@ from .brief_responses import BriefResponsesService
 from .users import UsersService
 from .key_value import KeyValueService
 
-prices = PricesService()
 application_service = ApplicationService()
 audit_service = AuditService()
 audit_types = AuditTypes

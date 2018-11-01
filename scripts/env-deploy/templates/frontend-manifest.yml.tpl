@@ -13,4 +13,3 @@ applications:
   - route: {frontend_name}.apps.y.cld.gov.au
   - route: {env_name}.apps.y.cld.gov.au/bundle
   - route: {env_name}.apps.y.cld.gov.au/2
-  - route: {env_name}.apps.y.cld.gov.au/orams

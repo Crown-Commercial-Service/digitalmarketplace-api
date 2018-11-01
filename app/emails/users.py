@@ -95,8 +95,6 @@ def generate_user_creation_token(name, email_address, user_type, framework, **un
 
 
 def send_account_activation_email(name, email_address, user_type, framework):
-    template = 'orams_create_user_email.md' if framework == 'orams' else 'create_user_email.md'
-    subject = 'ORAMS_INVITE_EMAIL_SUBJECT' if framework == 'orams' else 'INVITE_EMAIL_SUBJECT'
     token = generate_user_creation_token(name=name, email_address=email_address,
                                          user_type=user_type, framework=framework)
     url = '{}{}/create-user/{}'.format(
@@ -105,13 +103,13 @@ def send_account_activation_email(name, email_address, user_type, framework):
         escape_token_markdown(quote(token))
     )
 
-    email_body = render_email_template(template, url=url)
+    email_body = render_email_template('create_user_email.md', url=url)
 
     try:
         send_or_handle_error(
             email_address,
             email_body,
-            current_app.config[subject],
+            current_app.config['INVITE_EMAIL_SUBJECT'],
             current_app.config['INVITE_EMAIL_FROM'],
             current_app.config['INVITE_EMAIL_NAME'],
         )
@@ -228,42 +226,8 @@ def _send_account_activation_admin_email(manager_name, manager_email, applicant_
                 'email_hash': hash_email(manager_email)})
 
 
-def orams_send_account_activation_admin_email(applicant_name, applicant_email, framework):
-    token = generate_user_creation_token(name=applicant_name, email_address=applicant_email,
-                                         user_type="buyer", framework=framework)
-    url = '{}{}/send-invite/{}'.format(
-        current_app.config['FRONTEND_ADDRESS'],
-        get_root_url(framework),
-        escape_token_markdown(quote(token))
-    )
-
-    email_body = render_email_template(
-        'orams_buyer_account_invite_request_email.md',
-        applicant_name=applicant_name,
-        applicant_email=applicant_email,
-        invite_url=url
-    )
-
-    try:
-        send_or_handle_error(
-            current_app.config['ORAMS_BUYER_INVITE_REQUEST_ADMIN_EMAIL'],
-            email_body,
-            'ORAMS Portal - New RCM Request',
-            current_app.config['INVITE_EMAIL_FROM'],
-            current_app.config['INVITE_EMAIL_NAME'],
-        )
-        session['email_sent_to'] = current_app.config['ORAMS_BUYER_INVITE_REQUEST_ADMIN_EMAIL']
-
-    except EmailError as e:
-        rollbar.report_exc_info()
-        current_app.logger.error(
-            'Invitation email to orams failed to send. '
-            'error {error}',
-            extra={'error': six.text_type(e)})
-
-
 def send_new_user_onboarding_email(name, email_address, user_type, framework):
-    if user_type != 'buyer' or framework == 'orams':
+    if user_type != 'buyer':
         return False
 
     assert user_type == 'buyer'
@@ -294,20 +258,12 @@ def send_new_user_onboarding_email(name, email_address, user_type, framework):
 
 
 def send_reset_password_confirm_email(email_address, url, locked, framework):
-    if framework == "orams":
-        subject = current_app.config['ORAMS_RESET_PASSWORD_EMAIL_SUBJECT']
-        name = current_app.config['ORAMS_GENERIC_SUPPORT_NAME']
-        if locked:
-            email_template = 'reset_password_email_locked_account_orams.md'
-        else:
-            email_template = 'reset_password_email_orams.md'
+    subject = current_app.config['RESET_PASSWORD_EMAIL_SUBJECT']
+    name = current_app.config['RESET_PASSWORD_EMAIL_NAME']
+    if locked:
+        email_template = 'reset_password_email_locked_account_marketplace.md'
     else:
-        subject = current_app.config['RESET_PASSWORD_EMAIL_SUBJECT']
-        name = current_app.config['RESET_PASSWORD_EMAIL_NAME']
-        if locked:
-            email_template = 'reset_password_email_locked_account_marketplace.md'
-        else:
-            email_template = 'reset_password_email_marketplace.md'
+        email_template = 'reset_password_email_marketplace.md'
 
     email_body = render_email_template(
         email_template,

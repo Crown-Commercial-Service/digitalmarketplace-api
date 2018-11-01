@@ -146,20 +146,16 @@ class Config:
     DM_GENERIC_NOREPLY_EMAIL = 'no-reply@marketplace.digital.gov.au'
     DM_GENERIC_ADMIN_NAME = 'Digital Marketplace Admin'
     DM_GENERIC_SUPPORT_NAME = 'Digital Marketplace'
-    ORAMS_GENERIC_SUPPORT_NAME = 'ORAMS'
 
     RESET_PASSWORD_EMAIL_NAME = DM_GENERIC_ADMIN_NAME
     RESET_PASSWORD_EMAIL_FROM = 'no-reply@marketplace.digital.gov.au'
     RESET_PASSWORD_EMAIL_SUBJECT = 'Reset your Digital Marketplace password'
-    ORAMS_RESET_PASSWORD_EMAIL_SUBJECT = 'Reset your ORAMS password'
 
     INVITE_EMAIL_NAME = DM_GENERIC_ADMIN_NAME
     INVITE_EMAIL_FROM = 'no-reply@marketplace.digital.gov.au'
     INVITE_EMAIL_SUBJECT = 'Activate your new Marketplace account'
-    ORAMS_INVITE_EMAIL_SUBJECT = 'Create your ORAMS Portal account'
     BUYER_INVITE_MANAGER_CONFIRMATION_SUBJECT = 'Digital Marketplace buyer account request [SEC=UNCLASSIFIED]'
     BUYER_INVITE_REQUEST_ADMIN_EMAIL = 'marketplace+buyer-request@digital.gov.au'
-    ORAMS_BUYER_INVITE_REQUEST_ADMIN_EMAIL = 'nick.ball+bcc@digital.gov.au'
 
     NEW_SUPPLIER_INVITE_SUBJECT = 'Digital Marketplace - invitation to create seller account'
 
@@ -183,7 +179,7 @@ class Config:
 
     FRONTEND_ADDRESS = 'https://dm-dev.apps.y.cld.gov.au'
     ADMIN_ADDRESS = 'https://dm-dev-admin.apps.y.cld.gov.au'
-    APP_ROOT = {'digital-marketplace': '/2', 'orams': '/orams'}
+    APP_ROOT = {'digital-marketplace': '/2'}
 
     SEND_EMAILS = True
     CSRF_ENABLED = True
@@ -195,7 +191,6 @@ class Config:
     S3_ENDPOINT_URL = 's3-ap-southeast-2.amazonaws.com'
     AWS_DEFAULT_REGION = ''
     SWAGGER = {'title': 'Digital Marketplace API', 'uiversion': 3}
-    ORAMS_FRAMEWORK = 'orams'
     AWS_S3_URL = None
     AWS_SES_URL = None
     AWS_SQS_BROKER_URL = None
@@ -283,7 +278,6 @@ class Live(Config):
     ADMIN_ADDRESS = 'https://dm-admin.apps.b.cld.gov.au'
 
     SEND_EMAILS = True
-    ORAMS_BUYER_INVITE_REQUEST_ADMIN_EMAIL = 'orams@ato.gov.au'
 
 
 class Preview(Live):

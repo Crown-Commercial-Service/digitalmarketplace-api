@@ -1,31 +1,25 @@
 from operator import itemgetter
 
+from flask import abort, current_app, jsonify, request
+from pendulum import Pendulum
+from sqlalchemy import asc
+
+from app.utils import get_json_from_request, json_has_required_keys
 from dmapiclient.audit import AuditTypes
 
-from flask import jsonify, abort, request, current_app
-
 from .. import main
-from ...models import ArchivedService, Service, ServiceRole, Supplier, AuditEvent, Framework, ValidationError,\
-    PriceSchedule, ServiceType, db, Region, Location, ServiceTypePrice, ServiceTypePriceCeiling, ServiceSubType
-
-from sqlalchemy import asc
+from ...models import (ArchivedService, AuditEvent, Framework, PriceSchedule,
+                       Service, ServiceRole, Supplier, ValidationError, db)
+from ...service_utils import (commit_and_archive_service,
+                              delete_service_from_index, filter_services,
+                              index_service, update_and_validate_service,
+                              validate_and_return_related_objects,
+                              validate_and_return_service_request,
+                              validate_service_data)
+from ...utils import (display_list, get_int_or_400, get_valid_page_or_1,
+                      pagination_links, url_for,
+                      validate_and_return_updater_request)
 from ...validation import is_valid_service_id_or_400
-from ...utils import (
-    url_for, pagination_links, display_list, get_valid_page_or_1,
-    validate_and_return_updater_request, get_int_or_400
-)
-from pendulum import Pendulum
-from ...service_utils import (
-    validate_and_return_service_request,
-    update_and_validate_service,
-    index_service,
-    delete_service_from_index,
-    commit_and_archive_service,
-    validate_service_data,
-    validate_and_return_related_objects,
-    filter_services)
-
-from app.utils import (get_json_from_request, json_has_required_keys)
 
 
 @main.route('/')
@@ -337,186 +331,3 @@ def update_service_status(service_id, status):
             index_service(service)
 
     return jsonify(services=service.serialize()), 200
-
-
-@main.route('/service-types/<string:service_type_id>', methods=['GET'])
-def get_service_type(service_type_id):
-    service_type = ServiceType.query.filter(
-        ServiceType.id == service_type_id
-    ).first_or_404()
-
-    return jsonify(
-        service_type=service_type.serializable
-    )
-
-
-@main.route('/service-types', methods=['POST'])
-def add_service_type():
-    service_type_json = get_json_from_request()
-    json_has_required_keys(service_type_json, ['service_type'])
-
-    service_type = ServiceType()
-    service_type.update_from_json(service_type_json['service_type'])
-
-    db.session.add(service_type)
-    db.session.commit()
-
-    return jsonify(service_type=service_type.serializable), 201
-
-
-@main.route('/regions', methods=['POST'])
-def add_region():
-    region_json = get_json_from_request()
-    json_has_required_keys(region_json, ['region'])
-
-    region = Region.query.filter(
-        Region.name == region_json['region']['name'],
-        Region.state == region_json['region']['state']
-    ).first()
-
-    if region is not None:
-        return jsonify(region=region.serializable), 200
-
-    region = Region()
-    region.update_from_json(region_json['region'])
-
-    db.session.add(region)
-    db.session.commit()
-
-    return jsonify(region=region.serializable), 201
-
-
-@main.route('/locations', methods=['POST'])
-def add_location():
-    location_json = get_json_from_request()
-    json_has_required_keys(location_json, ['location'])
-
-    location = Location()
-    location.update_from_json(location_json['location'])
-
-    db.session.add(location)
-    db.session.commit()
-
-    return jsonify(location=location.serializable), 201
-
-
-@main.route('/service-type-prices', methods=['POST'])
-def add_service_type_price():
-    price_json = get_json_from_request()
-    json_has_required_keys(price_json, ['price'])
-
-    price = ServiceTypePrice()
-    price.update_from_json(price_json['price'])
-
-    today = Pendulum.today()
-    tomorrow = Pendulum.tomorrow()
-    service_type_prices = (
-        ServiceTypePrice.query.filter(ServiceTypePrice.supplier_code == price.supplier_code,
-                                      ServiceTypePrice.service_type_id == price.service_type_id,
-                                      ServiceTypePrice.sub_service_id == price.sub_service_id,
-                                      ServiceTypePrice.region_id == price.region_id)
-                              .order_by(ServiceTypePrice.updated_at.desc())
-                              .all())
-
-    # look for current price
-    current_service_type_price = None
-    current_service_type_prices = [c for c in service_type_prices if c.date_from < today and c.date_to >= today]
-    current_service_type_prices_length = len(current_service_type_prices)
-    if current_service_type_prices_length >= 1:
-        # takes the one with the latest update date
-        current_service_type_price = current_service_type_prices[0]
-
-    # look for future price
-    future_service_type_price = None
-    future_service_type_prices = [c for c in service_type_prices if c.date_from <= tomorrow and c.date_to > tomorrow]
-    future_service_type_prices_length = len(future_service_type_prices)
-    if future_service_type_prices_length >= 1:
-        # takes the one with the latest update date
-        future_service_type_price = future_service_type_prices[0]
-
-    if current_service_type_price is not None and (future_service_type_price is None or
-                                                   future_service_type_price.id == current_service_type_price.id):
-        if current_service_type_price.price != price.price:
-            # Only add record when there are no future prices
-            current_service_type_price.updated_at = Pendulum.utcnow()
-            current_service_type_price.date_to = today
-
-            price.date_from = tomorrow
-            price.date_to = Pendulum(2050, 1, 1)
-
-            db.session.add(current_service_type_price)
-            db.session.add(price)
-            db.session.commit()
-            return jsonify(price=price.serializable,
-                           msg="Expired current price. Added new price"), 201
-        else:
-            return jsonify(price=current_service_type_price,
-                           msg="No changes made. Price is the same."), 200
-
-    if future_service_type_price is not None:
-        if future_service_type_price.price != price.price:
-            # Update future record. This should only happen when the import is executed mulitple times during the day.
-            # Assumming this is okay because the prices is not in effect yet.
-            future_service_type_price.price = price.price
-            future_service_type_price.updated_at = Pendulum.utcnow()
-            db.session.add(future_service_type_price)
-            db.session.commit()
-            return jsonify(price=future_service_type_price.serializable,
-                           msg="Updated future price record."), 201
-        else:
-            return jsonify(price=future_service_type_price.serializable,
-                           msg="No changes made. Price is the same."), 200
-
-    price.date_from = tomorrow
-    price.date_to = Pendulum(2050, 1, 1)
-    db.session.add(price)
-    db.session.commit()
-    return jsonify(price=price.serializable, msg="Added price"), 201
-
-
-@main.route('/service-type-price-ceilings', methods=['POST'])
-def add_service_type_price_ceilings():
-    price_json = get_json_from_request()
-    json_has_required_keys(price_json, ['price'])
-
-    price = ServiceTypePriceCeiling()
-    price.update_from_json(price_json['price'])
-
-    service_type_price_ceiling = ServiceTypePriceCeiling.query.filter(
-        ServiceTypePriceCeiling.supplier_code == price.supplier_code,
-        ServiceTypePriceCeiling.service_type_id == price.service_type_id,
-        ServiceTypePriceCeiling.sub_service_id == price.sub_service_id,
-        ServiceTypePriceCeiling.region_id == price.region_id
-    ).one_or_none()
-
-    if service_type_price_ceiling is not None:
-        if service_type_price_ceiling.price != price.price:
-            service_type_price_ceiling.price = price.price
-            service_type_price_ceiling.updated_at = Pendulum.utcnow()
-            db.session.add(service_type_price_ceiling)
-            db.session.commit()
-            return jsonify(price_ceiling=price.serializable,
-                           msg="Updated price ceiling record."), 201
-        else:
-            return jsonify(price_ceiling=price.serializable,
-                           msg="No changes made. Price is the same."), 200
-
-    db.session.add(price)
-    db.session.commit()
-
-    return jsonify(price_ceiling=price.serializable,
-                   msg="Added price ceiling record."), 201
-
-
-@main.route('/service-sub-types', methods=['POST'])
-def add_service_sub_type():
-    service_sub_type_json = get_json_from_request()
-    json_has_required_keys(service_sub_type_json, ['service_sub_type'])
-
-    service_sub_type = ServiceSubType()
-    service_sub_type.update_from_json(service_sub_type_json['service_sub_type'])
-
-    db.session.add(service_sub_type)
-    db.session.commit()
-
-    return jsonify(service_sub_type=service_sub_type.serializable), 201

@@ -760,44 +760,6 @@ class Supplier(db.Model):
         if self.frameworks:
             return [f.framework.framework for f in self.frameworks]
 
-    @property
-    def category_name(self):
-        price = ServiceTypePrice.query.filter(ServiceTypePrice.supplier_code == self.code).first()
-        if price:
-            return price.service_type.category.name
-
-    @property
-    def regions(self):
-        prices = ServiceTypePrice.query.\
-            join(ServiceTypePrice.region).\
-            filter(ServiceTypePrice.supplier_code == self.code).\
-            distinct(Region.state, Region.name).\
-            order_by(Region.state, Region.name).\
-            all()
-
-        if prices:
-            return [dict(state=p.region.state, name=p.region.name) for p in prices]
-
-    @property
-    def services(self):
-        service_types = db.session\
-            .query(ServiceTypePrice.service_type_id,
-                   ServiceType.name, ServiceTypePrice.sub_service_id, ServiceSubType.name.label('sub_service_name'))\
-            .join(ServiceType, ServiceTypePrice.service_type_id == ServiceType.id)\
-            .outerjoin(ServiceSubType, ServiceTypePrice.sub_service_id == ServiceSubType.id)\
-            .filter(ServiceTypePrice.supplier_code == self.code)\
-            .group_by(ServiceTypePrice.service_type_id, ServiceType.name,
-                      ServiceTypePrice.sub_service_id, ServiceSubType.name)\
-            .order_by(ServiceType.name)\
-            .all()
-
-        result = []
-        for key, group in groupby(service_types, key=lambda x: dict(id=x.service_type_id, name=x.name)):
-            subcategories = [dict(id=s.sub_service_id, name=s.sub_service_name) for s in group]
-            result.append(dict(key, subCategories=subcategories))
-
-        return result
-
     def get_service_counts(self):
         # FIXME: To be removed from Australian version
         return {}
@@ -873,25 +835,6 @@ class Supplier(db.Model):
         for v in j['signed_agreements']:
             v['agreement'] = Agreement.query.get(v['agreement_id'])
 
-        if self.framework_names and current_app.config['ORAMS_FRAMEWORK'] in self.framework_names:
-            j['category_name'] = self.category_name
-            j['regions'] = self.regions
-            j['services'] = self.services
-
-            if self.addresses:
-                for k, v in j['address'].items():
-                    if k != 'id':
-                        j['address_' + k] = v
-
-            keys = ['addresses', 'address', 'contacts', 'acn', 'address_links', 'case_studies', 'case_study_ids',
-                    'contact_links', 'domains', 'frameworks', 'extraLinks', 'extra_links', 'is_recruiter',
-                    'lastUpdateTime', 'last_update_time', 'links', 'longName', 'long_name', 'prices', 'products',
-                    'recruiter_info', 'references', 'seller_types', 'signed_agreements', 'supplierCode', 'status',
-                    'text_vector', 'creationTime', 'creation_time', 'description']
-
-            for k in keys:
-                j.pop(k, None)
-
         return j
 
     def update_from_json_before(self, data):
@@ -942,13 +885,6 @@ class Supplier(db.Model):
 
         if 'regions' in data:
             del data['regions']
-
-        if 'category_name' in data:
-            del data['category_name']
-
-        if 'services' in data and self.framework_names \
-                and current_app.config['ORAMS_FRAMEWORK'] in self.framework_names:
-            del data['services']
 
         overridden = [
             'longName',
@@ -2735,185 +2671,6 @@ class Project(db.Model):
                 c.update_from_json(v)
                 yield c
         return list(y())
-
-
-class ServiceType(db.Model):
-    __tablename__ = 'service_type'
-
-    id = db.Column(db.Integer, primary_key=True)
-    category_id = db.Column(db.Integer, db.ForeignKey('service_category.id'), nullable=False)
-    category = db.relationship('ServiceCategory')
-    name = db.Column(db.String, nullable=False)
-    fee_type = db.Column(db.String, nullable=True)
-    framework_id = db.Column(db.BigInteger, db.ForeignKey('framework.id'), index=True, unique=False, nullable=False)
-    lot_id = db.Column(db.BigInteger, db.ForeignKey('lot.id'), index=True, unique=False, nullable=False)
-    framework = db.relationship(Framework, lazy='joined', innerjoin=True)
-    lot = db.relationship(Lot, lazy='joined', innerjoin=True)
-    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
-    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
-
-    def update_from_json_before(self, data):
-        if 'category_name' in data:
-            category = ServiceCategory.query.filter(
-                func.lower(ServiceCategory.name) == func.lower(data['category_name'])
-            ).first()
-
-            self.category_id = category.id
-            del data['category_name']
-
-        return data
-
-
-class ServiceSubType(db.Model):
-    __tablename__ = 'service_sub_type'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
-    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
-
-
-class Region(db.Model):
-    __tablename__ = 'region'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    state = db.Column(db.String, nullable=False)
-    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
-    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
-
-
-class Location(db.Model):
-    __tablename__ = 'location'
-
-    id = db.Column(db.Integer, primary_key=True)
-    region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
-    region = db.relationship('Region')
-    name = db.Column(db.String, nullable=False)
-    postal_code = db.Column(db.Integer, nullable=False)
-    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
-    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
-
-
-def update_price_json(self, data):
-    if 'sub_service' in data:
-        sub_service = ServiceSubType.query.filter(
-            func.lower(ServiceSubType.name) == func.lower(data['sub_service'])
-        ).first()
-
-        del data['sub_service']
-
-    if sub_service is not None:
-        self.sub_service_id = sub_service.id
-
-    if 'supplier_name' in data:
-        supplier = Supplier.query.filter(
-            func.lower(Supplier.name) == func.lower(data['supplier_name'])
-        ).first()
-
-        self.supplier_code = supplier.code
-        del data['supplier_name']
-
-    if 'service_name' in data:
-        if 'sub_service' in data and len(data['sub_service']) > 0:
-            sub_service = ServiceSubType.query.filter(
-                func.lower(ServiceSubType.name) == func.lower(data['sub_service'])
-            ).first()
-
-            service_type = ServiceType.query.filter(
-                func.lower(ServiceType.name) == func.lower(data['service_name']),
-                ServiceType.sub_service_id == sub_service.id
-            ).first()
-            del data['sub_service']
-        else:
-            service_type = ServiceType.query.filter(
-                func.lower(ServiceType.name) == func.lower(data['service_name'])
-            ).first()
-
-        self.service_type_id = service_type.id
-        del data['service_name']
-
-    if 'region_name' in data:
-        region = Region.query.filter(
-            func.lower(Region.name) == func.lower(data['region_name']),
-            func.lower(Region.state) == func.lower(data['state'])
-        ).first()
-
-        self.region_id = region.id
-        del data['region_name']
-        del data['state']
-
-    return data
-
-
-class ServiceTypePrice(db.Model):
-    __tablename__ = 'service_type_price'
-
-    id = db.Column(db.Integer, primary_key=True)
-    supplier_code = db.Column(db.Integer, db.ForeignKey('supplier.code'), nullable=False)
-    service_type_id = db.Column(db.Integer, db.ForeignKey('service_type.id'), nullable=False)
-    service_type = db.relationship('ServiceType', lazy='joined')
-    sub_service_id = db.Column(db.Integer, db.ForeignKey('service_sub_type.id'), nullable=False)
-    service_sub_type = db.relationship('ServiceSubType', lazy='joined')
-    region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
-    region = db.relationship('Region', lazy='joined')
-    service_type_price_ceiling_id = db.Column(db.Integer,
-                                              db.ForeignKey('service_type_price_ceiling.id'), nullable=True)
-    service_type_price_ceiling = db.relationship('ServiceTypePriceCeiling', lazy='joined')
-    date_from = db.Column(Date, index=False, nullable=False)
-    date_to = db.Column(Date, index=False, nullable=False)
-    price = db.Column(db.Numeric(asdecimal=False), nullable=False)
-    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
-    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
-
-    @hybrid_method
-    def is_current_price(self, date):
-        return self.date_from <= date and self.date_to >= date
-
-    @is_current_price.expression
-    def is_current_price(cls, date):
-        return and_(cls.date_from <= date,
-                    cls.date_to >= date)
-
-    def update_from_json_before(self, data):
-        data = update_price_json(self, data)
-        service_type_price_ceiling = ServiceTypePriceCeiling.query.filter(
-            ServiceTypePriceCeiling.supplier_code == self.supplier_code,
-            ServiceTypePriceCeiling.service_type_id == self.service_type_id,
-            ServiceTypePriceCeiling.sub_service_id == self.sub_service_id,
-            ServiceTypePriceCeiling.region_id == self.region_id
-        ).first()
-
-        if service_type_price_ceiling is not None:
-            self.service_type_price_ceiling_id = service_type_price_ceiling.id
-
-        return data
-
-    def serializable_after(self, data):
-        data = dict(
-            id=self.id,
-            region=dict(state=self.region.state, name=self.region.name),
-            price=format_price(self.price),
-            capPrice=format_price(self.service_type_price_ceiling.price),
-            startDate=format_date(self.date_from),
-            endDate=format_date(self.date_to))
-        return data
-
-
-class ServiceTypePriceCeiling(db.Model):
-    __tablename__ = 'service_type_price_ceiling'
-
-    id = db.Column(db.Integer, primary_key=True)
-    supplier_code = db.Column(db.Integer, db.ForeignKey('supplier.code'), nullable=False)
-    service_type_id = db.Column(db.Integer, db.ForeignKey('service_type.id'), nullable=False)
-    sub_service_id = db.Column(db.Integer, db.ForeignKey('service_sub_type.id'), nullable=False)
-    region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
-    price = db.Column(db.Numeric(asdecimal=False), nullable=False)
-    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
-    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
-
-    def update_from_json_before(self, data):
-        return update_price_json(self, data)
 
 
 class UserFramework(db.Model):

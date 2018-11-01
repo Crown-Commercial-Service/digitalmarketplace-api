@@ -93,36 +93,3 @@ def test_login(client, users):
         'emailAddress': 'test@digital.gov.au', 'password': 'testpasswor'
     }), content_type='application/json')
     assert res.status_code == 403
-
-
-def test_profile_supplier(client, supplier_user):
-    code = supplier_user.supplier_code
-    res = client.get('/2/suppliers')
-    assert res.status_code == 401
-
-    res = client.post('/2/login', data=json.dumps({
-        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
-    }), content_type='application/json')
-    assert res.status_code == 200
-
-    res = client.get('/2/suppliers/{}'.format(code))
-    assert res.status_code == 200
-    data = json.loads(res.get_data(as_text=True))
-    assert data['code']
-
-    res = client.get('/2/suppliers/2')
-    data = json.loads(res.get_data(as_text=True))
-    assert res.status_code == 403
-
-
-def test_profile_buyer(client, users, suppliers):
-    res = client.post('/2/login', data=json.dumps({
-        'emailAddress': 'test@digital.gov.au', 'password': 'testpassword',
-    }), content_type='application/json')
-    assert res.status_code == 200
-
-    res = client.get('/2/suppliers/1')
-    assert res.status_code == 200
-
-    res = client.get('/2/suppliers')
-    assert res.status_code == 200

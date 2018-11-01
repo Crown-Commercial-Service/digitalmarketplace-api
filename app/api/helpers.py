@@ -1,16 +1,18 @@
-from flask import current_app, render_template_string, jsonify, make_response, abort as flask_abort
+from functools import wraps
+
+import pendulum
 import requests
 import rollbar
-from app.models import db, Agency, User, ServiceType, BriefUser
-from dmutils.email import (
-    decode_token, EmailError, generate_token, InvalidToken, ONE_DAY_IN_SECONDS,
-    parse_fernet_timestamp
-)
-from app.tasks.email import send_email
-from functools import wraps
+from flask import abort as flask_abort
+from flask import current_app, jsonify, make_response, render_template_string
 from flask_login import current_user
-import pendulum
+
+from app.models import Agency, BriefUser, User, db
+from app.tasks.email import send_email
 from dmutils.csrf import get_csrf_token
+from dmutils.email import (ONE_DAY_IN_SECONDS, EmailError, InvalidToken,
+                           decode_token, generate_token,
+                           parse_fernet_timestamp)
 
 
 def role_required(*roles):
@@ -32,24 +34,6 @@ def is_current_supplier(func):
         if current_user.role == 'supplier' and current_user.supplier_code != code:
             return jsonify(message="Unauthorised to view supplier"), 403
         return func(code, *args, **kwargs)
-    return decorated_view
-
-
-def is_service_current_framework(func):
-    @wraps(func)
-    def decorated_view(*args, **kwargs):
-        if kwargs is not None:
-            service_type_id = kwargs.get('service_type_id', None)
-
-            if service_type_id is not None:
-                service_type = ServiceType.query.get(service_type_id)
-
-                if (service_type is None):
-                    return jsonify(), 404
-
-                if current_user.frameworks and current_user.frameworks[0].framework.slug != service_type.framework.slug:
-                    return jsonify(message="Unauthorised to view service"), 403
-        return func(*args, **kwargs)
     return decorated_view
 
 

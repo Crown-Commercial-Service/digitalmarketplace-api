@@ -1,25 +1,24 @@
-from app.api.user import create_user
-from flask import jsonify, current_app, request
-from flask_login import current_user, login_required, logout_user, login_user
+from datetime import datetime
 from urllib import quote
+
+from flask import current_app, jsonify, request
+from flask_login import current_user, login_required, login_user, logout_user
+
 from app import db, encryption
 from app.api import api
-from app.api.helpers import (
-    generate_reset_password_token, decode_reset_password_token, get_root_url,
-    get_email_domain
-)
+from app.api.helpers import (decode_creation_token,
+                             decode_reset_password_token,
+                             generate_reset_password_token, get_email_domain,
+                             get_root_url, user_info)
+from app.api.user import create_user, is_duplicate_user, update_user_details
+from app.emails.users import (send_account_activation_email,
+                              send_account_activation_manager_email,
+                              send_reset_password_confirm_email,
+                              send_user_existing_password_reset_email)
 from app.models import User, has_whitelisted_email_domain
-from app.utils import get_json_from_request
-from app.emails.users import (
-    send_account_activation_email, send_account_activation_manager_email,
-    send_reset_password_confirm_email, orams_send_account_activation_admin_email,
-    send_user_existing_password_reset_email
-)
-from dmutils.email import EmailError, InvalidToken
-from app.api.helpers import decode_creation_token, user_info
-from app.api.user import is_duplicate_user, update_user_details
-from datetime import datetime
 from app.swagger import swag
+from app.utils import get_json_from_request
+from dmutils.email import EmailError, InvalidToken
 
 
 @api.route('/users/me', methods=["GET"], endpoint='ping')
@@ -207,18 +206,6 @@ def signup():
                 email_address=email_address,
                 message='An account with this email domain already exists'
             ), 409
-
-    # New ORAMS users don't need their email domain checked as that's done manually
-    if framework == 'orams':
-        try:
-            orams_send_account_activation_admin_email(name, email_address, framework)
-            return jsonify(
-                email_address=email_address,
-                message="Email invite sent successfully"
-            ), 200
-
-        except EmailError:
-            return jsonify(message='An error occured when trying to send an email'), 500
 
     if user_type == 'buyer' and not has_whitelisted_email_domain(get_email_domain(email_address)):
         return jsonify(
