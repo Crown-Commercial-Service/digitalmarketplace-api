@@ -12,7 +12,8 @@ from app.models import User, has_whitelisted_email_domain
 from app.utils import get_json_from_request
 from app.emails.users import (
     send_account_activation_email, send_account_activation_manager_email,
-    send_reset_password_confirm_email, orams_send_account_activation_admin_email
+    send_reset_password_confirm_email, orams_send_account_activation_admin_email,
+    send_user_existing_password_reset_email
 )
 from dmutils.email import EmailError, InvalidToken
 from app.api.helpers import decode_creation_token, user_info
@@ -194,10 +195,11 @@ def signup():
         User.email_address == email_address.lower()).first()
 
     if user is not None:
+        send_user_existing_password_reset_email(user.name, email_address)
         return jsonify(
             email_address=email_address,
-            message="A user with the email address '{}' already exists".format(email_address)
-        ), 409
+            message="Email invite sent successfully"
+        ), 200
 
     if user_type == 'seller' or user_type == 'applicant':
         if is_duplicate_user(email_address):

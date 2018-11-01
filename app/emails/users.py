@@ -127,6 +127,35 @@ def send_account_activation_email(name, email_address, user_type, framework):
                 'email_hash': hash_email(email_address)})
 
 
+def send_user_existing_password_reset_email(name, email_address):
+    frontend_url = current_app.config['FRONTEND_ADDRESS']
+    email_body = render_email_template(
+        'user_existing_password_reset.md',
+        frontend_url=frontend_url,
+        name=name,
+        reset_password_url='{}/2/reset-password'.format(frontend_url)
+    )
+
+    try:
+        send_or_handle_error(
+            email_address,
+            email_body,
+            'You are already registered',
+            current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+            current_app.config['DM_GENERIC_SUPPORT_NAME']
+        )
+        session['email_sent_to'] = email_address
+
+    except EmailError as e:
+        rollbar.report_exc_info()
+        current_app.logger.error(
+            'Invitation email failed to send. '
+            'error {error} email_hash {email_hash}',
+            extra={
+                'error': six.text_type(e),
+                'email_hash': hash_email(email_address)})
+
+
 def send_account_activation_manager_email(manager_name, manager_email, applicant_name, applicant_email, framework):
     _send_account_activation_admin_email(
         manager_name=manager_name,
