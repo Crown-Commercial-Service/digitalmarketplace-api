@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     volumes:
-      - "./docker/postgresql/data:/var/lib/postgresql/data"
+      - "~/dm/docker/postgresql/data:/var/lib/postgresql/data"
     ports:
       - 15432:5432
 
@@ -19,7 +19,7 @@ services:
     ports:
       - 8080:80
     volumes:
-      - "./docker/pgadmin:/var/lib/pgadmin"
+      - "~/dm/docker/pgadmin:/var/lib/pgadmin"
 
   localstack:
     image: localstack/localstack
@@ -31,5 +31,5 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - DATA_DIR=/tmp/localstack/data
     volumes:
-      - "./docker/localstack/data:/tmp/localstack/data"
+      - "~/dm/docker/localstack/data:/tmp/localstack/data"
       - "/var/run/docker.sock:/var/run/docker.sock"

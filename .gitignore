@@ -74,4 +74,3 @@ dump.py
 **/scripts/env-deploy/temp
 **/scripts/env-deploy/secrets
 **/scripts/env-deploy/schema-sync/*.tar
-docker
