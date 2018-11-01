@@ -20,6 +20,35 @@ from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
 
 
+class TestJSONFieldsAreMutable(BaseApplicationTest):
+
+    def test_json_fields_are_mutable_and_updated(self):
+        test_object = Lot(slug='test-lot', name='Test Lot', data={'test': 'data'})
+        db.session.add(test_object)
+        db.session.commit()
+
+        assert Lot.query.get(test_object.id).data == {'test': 'data'}
+
+        test_object.data['test'] = 'update'
+        db.session.add(test_object)
+        db.session.commit()
+
+        assert Lot.query.get(test_object.id).data == {'test': 'update'}
+
+    def test_json_fields_with_nested_data_are_mutable_and_updated(self):
+        test_object = Lot(slug='test-lot', name='Test Lot', data={'test': {'with': {'nested': 'data'}}})
+        db.session.add(test_object)
+        db.session.commit()
+
+        assert Lot.query.get(test_object.id).data == {'test': {'with': {'nested': 'data'}}}
+
+        test_object.data['test']['with']['nested'] = 'update'
+        db.session.add(test_object)
+        db.session.commit()
+
+        assert Lot.query.get(test_object.id).data == {'test': {'with': {'nested': 'update'}}}
+
+
 class TestUser(BaseApplicationTest, FixtureMixin):
     def test_should_not_return_password_on_user(self):
         self.setup_default_buyer_domain()
