@@ -18,7 +18,7 @@ from app.api.services import (audit_service,
                               briefs,
                               lots_service,
                               suppliers)
-from app.emails import send_brief_response_received_email
+from app.emails import send_brief_response_received_email, render_email_template
 from dmapiclient.audit import AuditTypes
 from dmutils.file import s3_download_file, s3_upload_file_from_request
 
@@ -494,3 +494,19 @@ def get_assessors(brief_id):
     """
     assessors = briefs.get_assessors(brief_id)
     return jsonify(assessors)
+
+
+@api.route('/brief/<int:brief_id>/notification/<string:template>', methods=["GET"])
+def get_notification_template(brief_id, template):
+    brief = briefs.get(brief_id)
+    if brief:
+        frontend_url = current_app.config['FRONTEND_ADDRESS']
+        return render_email_template(
+            '{}.md'.format(template),
+            frontend_url=frontend_url,
+            brief_name=brief.data['title'],
+            brief_id=brief.id,
+            brief_url='{}/digital-marketplace/opportunities/{}'.format(frontend_url, brief_id)
+        )
+
+    return not_found('brief not found')

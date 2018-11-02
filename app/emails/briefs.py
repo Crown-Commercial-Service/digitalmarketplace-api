@@ -133,7 +133,7 @@ def send_seller_requested_feedback_from_buyer_email(brief):
         brief_id=brief.id
     )
 
-    subject = "Your brief has closed - please review all responses."
+    subject = "Buyer notifications to unsuccessful sellers"
 
     send_or_handle_error(
         to_addresses,
