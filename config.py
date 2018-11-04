@@ -65,7 +65,7 @@ class Config:
     DM_LOG_PATH = None
     DM_APP_NAME = 'api'
     DM_REQUEST_ID_HEADER = 'DM-Request-ID'
-    DM_DOWNSTREAM_REQUEST_ID_HEADER = 'X-Amz-Cf-Id'
+    DM_DOWNSTREAM_REQUEST_ID_HEADER = 'X-Vcap-Request-Id'
     DM_API_ADMIN_USERNAME = 'admin'
     DM_API_ADMIN_PASSWORD = None
 
