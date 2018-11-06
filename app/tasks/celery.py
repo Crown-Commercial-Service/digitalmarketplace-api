@@ -4,6 +4,7 @@ from urllib import quote_plus
 from os import getenv
 from kombu.transport import SQS
 from flask import current_app
+from app import db
 
 
 QUEUE_NAME = getenv('AWS_SQS_QUEUE_NAME')
@@ -57,6 +58,9 @@ def make_celery(flask_app):
 
     class ContextTask(TaskBase):
         abstract = True
+
+        def after_return(self, *args, **kwargs):
+            db.session.remove()
 
         def __call__(self, *args, **kwargs):
             if current_app:
