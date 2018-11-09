@@ -48,6 +48,7 @@ def sync_domain_assessment_approvals_with_jira():
         domain_name = issue['fields']['labels'][0].replace('_', ' ')
         if supplier and domain_name:
             supplier.update_domain_assessment_status(
+                audit_data={'jira_issue_key': issue['key']},
                 name_or_id=domain_name,
                 status='assessed',
                 user='Sync assessment approvals with Jira task'

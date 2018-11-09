@@ -346,3 +346,15 @@ def test_sync_jira_domain_assessment_approvals_task_updates_supplier_domain(app,
         supplier_domain = db.session.query(SupplierDomain).filter(SupplierDomain.id == 1).first()
         assert supplier_domain.status == 'assessed'
         assert approval_notification.called
+
+
+def test_sync_jira_domain_assessment_approvals_task_creates_audit_event_on_approval(app, assessment,
+                                                                                    mock_jira_assessment_response):
+    with app.app_context():
+        sync_domain_assessment_approvals_with_jira()
+
+        audit_event = (db.session.query(AuditEvent).filter(
+            AuditEvent.type == AuditTypes.assessed_domain.value,
+            AuditEvent.object_id == assessment.id).first())
+
+        assert audit_event.data['jira_issue_key'] == 'MARADMIN-123'
