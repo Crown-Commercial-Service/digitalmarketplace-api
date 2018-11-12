@@ -46,7 +46,7 @@ def requirements_list(draw, length, answers=False):
     if answers:
         elements = booleans() if length is not None else one_of(booleans(), none())
     else:
-        elements = text(min_size=1, average_size=10, max_size=300, alphabet=_descriptive_alphabet).filter(
+        elements = text(min_size=1, max_size=300, alphabet=_descriptive_alphabet).filter(
             partial(_word_count_filter, max_words=30)
         )
     return draw(lists(
@@ -56,7 +56,7 @@ def requirements_list(draw, length, answers=False):
     ))
 
 
-_brief_response_availability = text(min_size=1, average_size=10, max_size=100, alphabet=_descriptive_alphabet).filter(
+_brief_response_availability = text(min_size=1, max_size=100, alphabet=_descriptive_alphabet).filter(
     _word_count_filter
 )
 
@@ -84,7 +84,7 @@ def brief_data(essential_count=5, nice_to_have_count=5):
     return fixed_dictionaries({
         'title': just('My Test Brief Title'),
         'specialistRole': just('developer'),
-        'location': text(min_size=1, average_size=10, alphabet='abcdefghijkl'),
+        'location': text(min_size=1, alphabet='abcdefghijkl'),
         'essentialRequirements': requirements_list(essential_count),
         'niceToHaveRequirements': requirements_list(nice_to_have_count),
     })
