@@ -8,7 +8,6 @@ flake8==3.5.0
 freezegun==0.3.8
 hypothesis==2.0.0
 mock==2.0.0
-pycodestyle==2.3.0
 pytest-cov==2.5.1
 pytest==3.2.3
 python-coveralls==2.5.0
