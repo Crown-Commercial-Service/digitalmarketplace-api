@@ -109,14 +109,13 @@ def check_seller_emails(brief_data, errs):
 
         if len(found_users) != len(emails_to_check):
             # Check to see if contact emails were used
-            found_user_emails = [user.email_address for user in found_users]
+            found_user_emails = [user.email_address.lower() for user in found_users]
             contact_emails_to_check = [email.lower() for email in seller_emails if email not in found_user_emails]
             found_suppliers = [
-                f.data.get('contact_email')
+                f.data.get('contact_email').lower()
                 for f in suppliers.get_suppliers_by_contact_email(contact_emails_to_check)
             ]
-
-            diff = set(emails_to_check) - set(found_user_emails + found_suppliers)
+            diff = set(seller_emails) - set(found_user_emails + found_suppliers)
             if len(diff) > 0:
                 error[seller_email_key] = str(error[seller_email_key]) + '~' + ','.join(diff)
                 return error
