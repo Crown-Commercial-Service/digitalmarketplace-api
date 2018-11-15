@@ -33,6 +33,7 @@ from app.emails import send_assessment_approval_notification
 import json
 from itertools import groupby, chain
 from operator import itemgetter
+from app.api.business.validators import ApplicationValidator
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -871,7 +872,9 @@ def create_application_from_supplier(code, application_type=None):
         or_(Application.status == 'submitted', Application.status == 'saved')
     ).first()
     if existing_application:
-        return jsonify(application=existing_application.serializable)
+        errors = ApplicationValidator(existing_application).validate_all()
+        return jsonify(application=existing_application.serializable,
+                       application_errors=errors)
 
     data = json.loads(supplier.json)
 

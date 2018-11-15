@@ -2410,8 +2410,6 @@ class Application(db.Model):
         except KeyError:
             pass
 
-        get_validator('application').validate(data)
-
         return data
 
     def serialize(self):

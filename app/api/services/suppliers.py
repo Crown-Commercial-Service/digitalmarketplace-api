@@ -18,13 +18,19 @@ class SuppliersService(Service):
                 .all())
 
     def get_supplier_by_code(self, code):
-        return (db.session.query(Supplier).options(
-            joinedload(Supplier.domains, innerjoin=True)
-            .joinedload(SupplierDomain.domain, innerjoin=True),
-            Load(Supplier)
-        )
+        return (
+            db
+            .session
+            .query(
+                Supplier
+            )
+            .options(
+                joinedload(Supplier.domains)
+                .joinedload(SupplierDomain.domain)
+            )
             .filter(Supplier.code == code)
-            .one_or_none())
+            .one_or_none()
+        )
 
     def get_suppliers_by_name_keyword(self, keyword):
         return (db.session.query(Supplier)

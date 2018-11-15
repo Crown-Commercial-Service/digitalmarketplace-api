@@ -55,9 +55,9 @@ def _can_do_brief_response(brief_id):
     if not supplier:
         forbidden("Invalid supplier Code '{}'".format(current_user.supplier_code))
 
-    errors = SupplierValidator(supplier).validate_all()
-    if len(errors) > 0:
-        abort(errors)
+    validation_result = SupplierValidator(supplier).validate_all()
+    if len(validation_result.errors) > 0:
+        abort(validation_result.errors)
 
     def domain(email):
         return email.split('@')[-1]
@@ -305,9 +305,9 @@ def get_brief_responses(brief_id):
     supplier_code = getattr(current_user, 'supplier_code', None)
     if current_user.role == 'supplier':
         supplier = suppliers.get_supplier_by_code(supplier_code)
-        supplier_errors = SupplierValidator(supplier).validate_all()
-        if len(supplier_errors) > 0:
-            abort(supplier_errors)
+        validation_result = SupplierValidator(supplier).validate_all()
+        if len(validation_result.errors) > 0:
+            abort(validation_result.errors)
 
     if current_user.role == 'buyer' and brief.status != 'closed':
         brief_responses = []

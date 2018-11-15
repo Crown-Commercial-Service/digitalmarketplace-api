@@ -17,6 +17,7 @@ from app.api.services import AuditTypes
 from app.emails import send_approval_notification, send_rejection_notification, \
     send_submitted_existing_seller_notification, send_submitted_new_seller_notification, \
     send_revert_notification
+from app.api.business.validators import ApplicationValidator
 
 
 def get_application_json():
@@ -76,8 +77,13 @@ def update_application(application_id):
 
     application.update_from_json(application_json)
     save_application(application)
+    errors = ApplicationValidator(application).validate_all()
 
-    return jsonify(application=application.serializable), 200
+    return (
+        jsonify(
+            application=application.serializable,
+            application_errors=errors),
+        200)
 
 
 @main.route('/applications/<int:application_id>/admin', methods=['PUT'])
@@ -237,7 +243,12 @@ def get_application_by_id(application_id):
     domains = {'prices': {'maximum': {}}}
     domains['prices']['maximum'] = {domain.name: domain.price_maximum for domain in result}
 
-    return jsonify(application=application.serializable, domains=domains)
+    errors = ApplicationValidator(application).validate_all()
+
+    return jsonify(
+        application=application.serializable,
+        domains=domains,
+        application_errors=errors)
 
 
 @main.route('/prioritise/<int:application_id>', methods=['POST'])

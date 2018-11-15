@@ -20,6 +20,9 @@ from app.validation import validate_user_json_or_400, validate_user_auth_json_or
 from app.emails.users import (
     send_existing_seller_notification, send_existing_application_notification,
 )
+from app.api.business import (
+    supplier_business
+)
 
 from dmutils.logging import notify_team
 
@@ -53,7 +56,16 @@ def auth_user():
         db.session.add(user)
         db.session.commit()
 
-        return jsonify(users=user.serialize()), 200
+        if user.role == 'supplier':
+            validation_result = (
+                supplier_business
+                .get_supplier_validation_result(user.supplier_code)
+                ._asdict()
+            )
+        else:
+            validation_result = None
+
+        return jsonify(users=user.serialize(), validation_result=validation_result), 200
     else:
         user.failed_login_count += 1
         db.session.add(user)

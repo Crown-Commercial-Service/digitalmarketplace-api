@@ -110,10 +110,17 @@ INCOMING_APPLICATION_DATA = {
         }
     },
     "documents": {
-        "financial": "Marketplace_Frontend_1.png",
-        "liability": "Marketplace_Frontend.png",
-        "workers": "apple-touch-icon_360.png",
-        "deed": "workorder_5.pdf"
+        "financial": {
+            "filename": "Marketplace_Frontend_1.png"
+        },
+        "liability": {
+            "expiry": "23131-01-12",
+            "filename": "Marketplace_Frontend.png"
+        },
+        "workers": {
+            "expiry": "Invalid Date",
+            "filename": "apple-touch-icon_360.png"
+        }
     },
     "references": [],
     "services": {

@@ -1,4 +1,6 @@
 import pendulum
+from pendulum.parsing.exceptions import ParserError
+import collections
 
 
 class SupplierValidator(object):
@@ -7,16 +9,23 @@ class SupplierValidator(object):
         self.supplier = supplier
 
     def validate_all(self):
-        return (self.validate_basics() +
-                # self.validate_documents() +
-                self.validate_pricing())
+        result = (
+            self.validate_basics() +
+            # self.validate_documents() +
+            self.validate_pricing()
+        )
+        warnings = [n for n in result if n.get('severity', 'error') == 'warning']
+        errors = [n for n in result if n.get('severity', 'error') == 'error']
+        validation_result = collections.namedtuple('Notification', 'warnings errors')
+        return validation_result(warnings=warnings, errors=errors)
 
     def validate_basics(self):
         errors = []
         if not self.supplier.name:
             errors.append({
                 'message': 'Supplier name is required',
-                'severity': 'error'
+                'severity': 'error',
+                'step': 'business-details'
             })
 
         return errors
@@ -28,16 +37,13 @@ class SupplierValidator(object):
         supplier_domains = self.supplier.domains
 
         if recruiter == 'no' or recruiter == 'both':
-            if len(supplier_domains) != len(pricing):
-                for supplier_domain in supplier_domains:
-                    if supplier_domain.domain.name not in pricing:
-                        errors.append({
-                            'message': 'Pricing for {}'.format(supplier_domain.domain.name),
-                            'severity': 'error'
-                        })
-        elif recruiter == 'yes':
-            # [DOCO] there are no prices for recruiters
-            pass
+            for supplier_domain in supplier_domains:
+                if supplier_domain.domain.name not in pricing:
+                    errors.append({
+                        'message': 'Pricing for {}'.format(supplier_domain.domain.name),
+                        'severity': 'error',
+                        'step': 'pricing'
+                    })
 
         return errors
 
@@ -46,7 +52,8 @@ class SupplierValidator(object):
         if not documents:
             return [{
                 'message': 'Documents are required',
-                'severity': 'error'
+                'severity': 'warning',
+                'step': 'documents'
             }]
 
         now = pendulum.now().date()
@@ -57,28 +64,63 @@ class SupplierValidator(object):
     def __validate_document(self, documents, name, now, has_expiry=True):
         errors = []
         document = documents.get(name)
+        document_required = (
+            (
+                name == 'workers' and
+                (
+                    document and
+                    document.get('noWorkersCompensation', False) is False
+                )
+            ) or (
+                document and
+                'noWorkersCompensation' not in document
+            )
+        )
 
         if not document:
             errors.append({
                 'message': 'Document "{}" is required'.format(name),
-                'severity': 'error'
+                'severity': 'warning',
+                'step': 'documents'
             })
             return errors
 
         filename = document.get('filename', '')
-        if not filename:
+        if not filename and document_required:
             errors.append({
-                'message': 'Filename is required for your document',
-                'severity': 'error'
+                'message': 'Filename is required for {} document'.format(name),
+                'severity': 'error',
+                'step': 'documents'
             })
-            return errors
 
         if has_expiry:
             expiry = document.get('expiry')
-            if now > pendulum.parse(expiry).date():
+            if not expiry and document_required:
                 errors.append({
-                    'message': 'Up-to-date {} document'.format(name),
-                    'severity': 'error'
+                    'message': 'Expiry is required for {} document'.format(name),
+                    'severity': 'error',
+                    'step': 'documents'
                 })
+            elif document_required:
+                try:
+                    expiry_date = pendulum.parse(expiry)
+                    if now > expiry_date.date():
+                        errors.append({
+                            'message': '{} document has expired'.format(name),
+                            'severity': 'error',
+                            'step': 'documents'
+                        })
+                    elif now.add(months=1) > expiry_date.date():
+                        errors.append({
+                            'message': '{} document is about to expire'.format(name),
+                            'severity': 'warning',
+                            'step': 'documents'
+                        })
+                except ParserError:
+                    errors.append({
+                        'message': '"{}" is an invalid date format'.format(expiry),
+                        'severity': 'error',
+                        'step': 'documents'
+                    })
 
         return errors
