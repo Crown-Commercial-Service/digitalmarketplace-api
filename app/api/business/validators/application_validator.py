@@ -400,7 +400,8 @@ class ApplicationValidator(object):
         )
 
         for k, v in url_fields.iteritems():
-            if not product.get(k, 'http').startswith('http'):
+            value = product.get(k, 'http')
+            if value and not value.startswith('http'):
                 errors.append({
                     'field': k,
                     'message': '{} must begin with http'.format(v),
