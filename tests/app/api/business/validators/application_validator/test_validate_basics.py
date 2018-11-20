@@ -22,26 +22,6 @@ def test_can_get_errors_with_empty_string():
     assert len(errors) == 8
 
 
-def test_can_get_errors_with_space():
-    application = Application(
-        data={
-            'name': ' ',
-            'abn': '  ',
-            'summary': '   ',
-            'website': '    ',
-            'addresses': [{
-                'address_line': '    ',
-                'suburb': '    ',
-                'state': '    ',
-                'postal_code': '    '
-            }]
-        }
-    )
-    errors = ApplicationValidator(application).validate_basics()
-
-    assert len(errors) == 8
-
-
 def test_can_get_errors_with_nulls():
     application = Application(
         data={
