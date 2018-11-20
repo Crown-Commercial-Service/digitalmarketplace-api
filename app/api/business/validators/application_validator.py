@@ -25,7 +25,7 @@ class ApplicationValidator(object):
         errors = []
         for field, label in required_fields.iteritems():
             value = data.get(field)
-            if not value or str(value).isspace():
+            if not value:
                 errors.append({
                     'field': field,
                     'message': '{} is required'.format(label),
