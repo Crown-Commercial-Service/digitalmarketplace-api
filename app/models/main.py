@@ -844,6 +844,7 @@ class User(db.Model, RemovePersonalDataModelMixin):
         'admin-ccs-sourcing',  # can perform admin actions involving supplier acceptance.
         'admin-manager',  # can add, edit and disable other types of admin user
         'admin-framework-manager',  # can perform admin actions involving framework applications
+        'admin-ccs-data-controller',  # can view and edit supplier company registration details
     ]
 
     ROLES = ADMIN_ROLES + [
