@@ -30,12 +30,16 @@ template_env = Environment(
 )
 
 
+def fill_template(filename, **kwargs):
+    template = template_env.get_template(filename)
+    return template.render(**kwargs)
+
+
 def render_email_template(filename, **kwargs):
     header = kwargs.pop('header', '')
     styles = kwargs.pop('styles', DEFAULT_STYLES)
 
-    template = template_env.get_template(filename)
-    md = template.render(**kwargs)
+    md = fill_template(filename, **kwargs)
     rendered = markdown_with_inline_styles(md, styles)
     template = template_env.get_template('master.html')
     rendered = template.render(header=header, body=rendered)

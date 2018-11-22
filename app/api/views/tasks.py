@@ -10,6 +10,7 @@ from app.tasks.jira import (sync_application_approvals_with_jira,
 from app.tasks.mailchimp import (send_new_briefs_email,
                                  sync_mailchimp_seller_list)
 from app.tasks.supplier_tasks import update_supplier_metrics
+from app.tasks.dreamail import send_dreamail
 
 
 @api.route('/tasks/process-closed-briefs', methods=['POST'])
@@ -172,4 +173,21 @@ def sync_jira_assessment_approvals():
         description: string
     """
     res = sync_domain_assessment_approvals_with_jira.delay()
+    return jsonify(res.id)
+
+
+@api.route('/tasks/send_dreamail', methods=['POST'])
+@role_required('admin')
+def run_send_dreamail():
+    """Send email to suppliers notifying them of price and case study
+       rejection
+    ---
+    tags:
+      - tasks
+    responses:
+      200:
+        type: string
+        description: string
+    """
+    res = send_dreamail.delay()
     return jsonify(res.id)

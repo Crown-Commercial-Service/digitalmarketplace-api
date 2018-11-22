@@ -43,13 +43,16 @@ def make_celery(flask_app):
         broker=broker_url,
         include=[
             'app.api.services',
+            'app.emails',
+            'app.emails.util',
             'app.tasks.email',
             'app.tasks.mailchimp',
             'app.tasks.brief_tasks',
             'app.tasks.s3',
             'app.tasks.brief_response_tasks',
             'app.tasks.supplier_tasks',
-            'app.tasks.jira'
+            'app.tasks.jira',
+            'app.tasks.dreamail'
         ]
     )
     celery.conf.update(flask_app.config)

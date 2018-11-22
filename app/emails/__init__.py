@@ -15,4 +15,7 @@ from .briefs import (
     send_brief_closed_email,
     send_seller_requested_feedback_from_buyer_email
 )  # noqa
+from .dreamail import (
+    send_dreamail
+)  # noqa
 from .util import render_email_template, escape_token_markdown  # noqa
