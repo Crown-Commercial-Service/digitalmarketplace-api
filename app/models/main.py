@@ -839,12 +839,12 @@ class User(db.Model, RemovePersonalDataModelMixin):
     __tablename__ = 'users'
 
     ADMIN_ROLES = [
-        'admin',  # a general admin user, with permission to do most (but not all) admin actions.
-        'admin-ccs-category',  # generally restricted to read-only access to admin views.
-        'admin-ccs-sourcing',  # can perform admin actions involving supplier acceptance.
-        'admin-manager',  # can add, edit and disable other types of admin user
-        'admin-framework-manager',  # can perform admin actions involving framework applications
-        'admin-ccs-data-controller',  # can view and edit supplier company registration details
+        'admin',                        # can view and suspend supplier and buyer user accounts
+        'admin-ccs-category',           # can view, edit and suspend supplier services
+        'admin-ccs-sourcing',           # can view framework applications and countersign agreements
+        'admin-manager',                # can add, edit and disable other types of admin user
+        'admin-framework-manager',      # can perform admin actions involving framework applications
+        'admin-ccs-data-controller',    # can view and edit supplier company registration details
     ]
 
     ROLES = ADMIN_ROLES + [
