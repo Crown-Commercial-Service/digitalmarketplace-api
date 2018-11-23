@@ -1,4 +1,4 @@
-from flask import current_app, jsonify
+from flask import current_app, jsonify, request
 
 from app.api import api
 from app.api.helpers import role_required
@@ -189,5 +189,10 @@ def run_send_dreamail():
         type: string
         description: string
     """
-    res = send_dreamail.delay()
-    return jsonify(res.id)
+    simulate = request.args.get('simulate') or True
+
+    if simulate == 'False':
+        res = send_dreamail.delay(False)
+        return jsonify(res.id)
+    else:
+        return jsonify(send_dreamail(True)), 200

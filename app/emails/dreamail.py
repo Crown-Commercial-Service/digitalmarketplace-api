@@ -2,12 +2,13 @@ from flask import current_app
 from .util import render_email_template, send_or_handle_error, fill_template
 
 
-def send_dreamail():
+def send_dreamail(simulate):
     from app.api.services import (
         audit_service,
         audit_types,
         suppliers
     )
+    simulation_result = []
 
     result = suppliers.get_suppliers_with_rejected_price()
 
@@ -66,22 +67,32 @@ def send_dreamail():
             e['email_address']
             for e in suppliers.get_supplier_contacts(supplier_code)
         ]
+        if simulate:
+            simulation_result.append({
+                'to_addresses': to_addresses,
+                'email_body': email_body,
+                'subject': subject,
+                'supplier_code': supplier_code
+            })
+        else:
+            send_or_handle_error(
+                to_addresses,
+                email_body,
+                subject,
+                current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+                current_app.config['DM_GENERIC_SUPPORT_NAME'],
+                event_description_for_errors=audit_types.seller_to_review_pricing_case_study_email
+            )
 
-        send_or_handle_error(
-            to_addresses,
-            email_body,
-            subject,
-            current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
-            current_app.config['DM_GENERIC_SUPPORT_NAME'],
-            event_description_for_errors=audit_types.seller_to_review_pricing_case_study_email
-        )
+            audit_service.log_audit_event(
+                audit_type=audit_types.seller_to_review_pricing_case_study_email,
+                user='',
+                data={
+                    "to_addresses": ', '.join(to_addresses),
+                    "email_body": email_body,
+                    "subject": subject
+                },
+                db_object=supplier)
 
-        audit_service.log_audit_event(
-            audit_type=audit_types.seller_to_review_pricing_case_study_email,
-            user='',
-            data={
-                "to_addresses": ', '.join(to_addresses),
-                "email_body": email_body,
-                "subject": subject
-            },
-            db_object=supplier)
+    if simulate:
+        return simulation_result

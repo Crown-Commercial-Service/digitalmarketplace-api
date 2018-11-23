@@ -9,5 +9,5 @@ from . import celery
 
 
 @celery.task
-def send_dreamail():
-    dreamail.send_dreamail()
+def send_dreamail(simulate):
+    return dreamail.send_dreamail(simulate)
