@@ -248,6 +248,7 @@ class MarketplaceJIRA(object):
         pricing = application.data.get('pricing', None)
         competitive = True
         description += "---\n\n"
+        supplier = application.supplier
         if pricing:
             for k, v in pricing.iteritems():
                 max_price = float(v.get('maxPrice')) if v.get('maxPrice', None) else 0
@@ -272,6 +273,61 @@ class MarketplaceJIRA(object):
                 else:
                     competitive = False
                     description += "*Seller is less competitive*\n\n"
+
+                if supplier:
+                    current_max_price = supplier.data.get('pricing', {}).get(k, {}).get('maxPrice', max_price)
+                    current_domain = next(iter([sd for sd in supplier.domains if sd.domain.name == k]), None)
+
+                    if float(current_max_price) != float(max_price) and current_domain:
+                        if current_domain.price_status == 'rejected' and competitive is True:
+                            description += (
+                                "Price for *{domain_name}* has been changed to within threshold. "
+                                "Current status is *{price_status}*. "
+                                "Please evaluate and update price status if appropriate.\n\n"
+                                .format(
+                                    domain_name=domain.name,
+                                    price_status=current_domain.price_status
+                                )
+                            )
+                        elif current_domain.price_status == 'approved' and competitive is False:
+                            description += (
+                                "Price for *{domain_name}* has been changed to now be outside of threshold. "
+                                "Current status is *{price_status}*. "
+                                "Please evaluate and update if appropriate.\n\n"
+                                .format(
+                                    domain_name=domain.name,
+                                    price_status=current_domain.price_status
+                                )
+                            )
+
+        description += "---\n\n"
+        if supplier:
+            case_studies = application.data.get('case_studies', [])
+            for k, case_study in case_studies.iteritems():
+                current_case_study = next(
+                    iter(
+                        [scs for scs in supplier.case_studies if scs.id == case_study.get('id')]
+                    ), None)
+
+                if not current_case_study or current_case_study.status != 'rejected':
+                    continue
+
+                case_study_different = application.is_case_study_different(case_study, current_case_study.data)
+
+                if case_study_different:
+                    description += (
+                        "Case study *[{title}|{link}]* is currently *rejected*. "
+                        "Once this edit is approved, the status will be updated to *unassessed*. "
+                        "Please review to ensure it meets the appropriate number of criteria.\n\n"
+                        .format(
+                            title=case_study.get('title'),
+                            link='{}/admin/applications/case-study/{}/{}'.format(
+                                current_app.config['ADMIN_ADDRESS'],
+                                application.id,
+                                case_study.get('id')
+                            )
+                        )
+                    )
 
         details = dict(
             project=self.jira_field_codes['MARKETPLACE_PROJECT_CODE'],

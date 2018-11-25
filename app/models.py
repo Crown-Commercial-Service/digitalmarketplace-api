@@ -2436,6 +2436,22 @@ class Application(db.Model):
     def is_existing(self):
         return self.supplier is not None
 
+    def is_case_study_different(self, application_case_study, supplier_case_study):
+
+        case_study_different = (
+            supplier_case_study.get('client') != application_case_study.get('client') or
+            supplier_case_study.get('approach') != application_case_study.get('approach') or
+            supplier_case_study.get('opportunity') != application_case_study.get('opportunity') or
+            supplier_case_study.get('roles') != application_case_study.get('roles') or
+            (
+                ','.join(supplier_case_study.get('project_links', [])) !=
+                ','.join(application_case_study.get('project_links', []))
+            ) or
+            ','.join(supplier_case_study.get('outcome', [])) != ','.join(application_case_study.get('outcome', []))
+        )
+
+        return case_study_different
+
     def set_approval(self, approved):
         existing = self.is_existing
 
@@ -2445,6 +2461,19 @@ class Application(db.Model):
         if approved:
             if existing:
                 supplier = self.supplier
+
+                case_studies = self.data.get('case_studies', [])
+                for k, case_study in case_studies.iteritems():
+                    current_case_study = next(
+                        iter(
+                            [scs for scs in supplier.case_studies if scs.id == case_study.get('id')]
+                        ), None)
+                    if not current_case_study or current_case_study.status != 'rejected':
+                        continue
+
+                    if self.is_case_study_different(case_study, current_case_study.data):
+                        case_study['status'] = 'unassessed'
+
             else:
                 supplier = Supplier()
             supplier.update_from_json(self.data)
