@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/alphagov/digitalmarketplace-api.svg?branch=master)](https://travis-ci.org/alphagov/digitalmarketplace-api)
 [![Coverage Status](https://coveralls.io/repos/alphagov/digitalmarketplace-api/badge.svg?branch=master&service=github)](https://coveralls.io/github/alphagov/digitalmarketplace-api?branch=master)
 [![Requirements Status](https://requires.io/github/alphagov/digitalmarketplace-api/requirements.svg?branch=master)](https://requires.io/github/alphagov/digitalmarketplace-api/requirements/?branch=master)
+![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)
 
 API tier for Digital Marketplace.
 
