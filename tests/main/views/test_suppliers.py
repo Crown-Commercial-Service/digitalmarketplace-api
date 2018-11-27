@@ -242,6 +242,50 @@ class TestListSuppliersByDunsNumber(BaseApplicationTest):
         assert len(data['suppliers']) == 2
 
 
+class TestListSuppliersByCompanyRegistrationNumber(BaseApplicationTest):
+
+    def setup(self):
+        super(TestListSuppliersByCompanyRegistrationNumber, self).setup()
+
+        db.session.add(
+            Supplier(supplier_id=1, name=u"CRN 789", duns_number="123", companies_house_number="78900000")
+        )
+        db.session.add(
+            Supplier(supplier_id=2, name=u"CRN 567", duns_number="xyz", companies_house_number="56700000")
+        )
+        db.session.commit()
+
+    def test_invalid_company_registration_number_returns_400(self):
+        response = self.client.get('/suppliers?company_registration_number=invalid!')
+        assert response.status_code == 400
+
+    def test_should_return_suppliers_by_company_registration_number(self):
+        response = self.client.get('/suppliers?company_registration_number=78900000')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert len(data['suppliers']) == 1
+        assert data['suppliers'][0]['name'] == 'CRN 789'
+
+    def test_should_return_no_suppliers_if_nonexisting_crn(self):
+        response = self.client.get('/suppliers?company_registration_number=not-existing')
+        data = json.loads(response.get_data())
+        assert response.status_code == 200
+        assert len(data['suppliers']) == 0
+
+    def test_should_return_all_suppliers_if_no_crn(self):
+        response = self.client.get('/suppliers')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert len(data['suppliers']) == 2
+
+    def test_should_ignore_crn_if_duns_number_param_supplied(self):
+        response = self.client.get('/suppliers?company_registration_number=56700000&duns_number=123')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert len(data['suppliers']) == 1
+        assert data['suppliers'][0]['name'] == 'CRN 789'
+
+
 class TestPutSupplier(BaseApplicationTest, JSONTestMixin):
     method = "put"
     endpoint = "/suppliers/{self.supplier_id}"

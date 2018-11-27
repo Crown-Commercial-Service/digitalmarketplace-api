@@ -47,6 +47,8 @@ def list_suppliers():
 
     duns_number = request.args.get('duns_number')
 
+    company_registration_number = request.args.get('company_registration_number')
+
     if framework:
         is_valid_string_or_400(framework)
 
@@ -64,10 +66,17 @@ def list_suppliers():
     else:
         suppliers = Supplier.query.order_by(Supplier.name, Supplier.supplier_id)
 
+    # Can search by either DUNS or Company Registration number but not both
     if duns_number:
         is_valid_string_or_400(duns_number)
         suppliers = suppliers.filter(
             Supplier.duns_number == duns_number
+        )
+    elif company_registration_number:
+        is_valid_string_or_400(company_registration_number)
+        # TODO: enable search by other registration number
+        suppliers = suppliers.filter(
+            Supplier.companies_house_number == company_registration_number
         )
 
     if prefix:
