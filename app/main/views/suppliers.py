@@ -74,7 +74,7 @@ def list_suppliers():
         )
     elif company_registration_number:
         is_valid_string_or_400(company_registration_number)
-        # TODO: enable search by other registration number
+        # For now we only need to search by Companies House number, not overseas registration numbers
         suppliers = suppliers.filter(
             Supplier.companies_house_number == company_registration_number
         )
