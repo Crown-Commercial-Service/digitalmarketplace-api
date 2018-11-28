@@ -25,18 +25,20 @@ def send_dreamail(simulate):
             continue
 
         case_studies = supplier.case_studies
-        domains = supplier.domains
 
         option_1_aoe = []
         option_2_aoe = []
-        for domain in domains:
-            domain_name = domain.domain.name
+        for supplier_domain in supplier.domains:
+            if supplier_domain.price_status != 'rejected':
+                continue
+
+            domain_name = supplier_domain.domain.name
             case_studies_in_domain = [cs for cs in case_studies if cs.data['service'] == domain_name]
-            no_approved_case_studies = all(cs.status == 'rejected' for cs in case_studies_in_domain)
-            if no_approved_case_studies:
-                option_2_aoe.append('* {}'.format(domain_name))
-            else:
+            approved_case_studies = any(cs.status == 'approved' for cs in case_studies_in_domain)
+            if approved_case_studies:
                 option_1_aoe.append('* {}'.format(domain_name))
+            else:
+                option_2_aoe.append('* {}'.format(domain_name))
 
         dreamail_option_1_content = ''
         if option_1_aoe:
@@ -52,6 +54,9 @@ def send_dreamail(simulate):
                 frontend_url=current_app.config['FRONTEND_ADDRESS'],
                 aoe='\n'.join(option_2_aoe)
             )
+
+        if dreamail_option_1_content == '' and dreamail_option_2_content == '':
+            continue
 
         email_body = render_email_template(
             'dreamail.md',
