@@ -34,7 +34,10 @@ def send_dreamail(simulate):
 
             domain_name = supplier_domain.domain.name
             case_studies_in_domain = [cs for cs in case_studies if cs.data['service'] == domain_name]
-            approved_case_studies = any(cs.status == 'approved' for cs in case_studies_in_domain)
+            approved_case_studies = any((
+                cs.status == 'approved' or
+                cs.status == 'unassessed'
+            ) for cs in case_studies_in_domain)
             if approved_case_studies:
                 option_1_aoe.append('* {}'.format(domain_name))
             else:
