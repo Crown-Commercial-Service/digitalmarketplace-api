@@ -56,14 +56,12 @@ def auth_user():
         db.session.add(user)
         db.session.commit()
 
+        validation_result = None
         if user.role == 'supplier':
+            messages = supplier_business.get_supplier_messages(user.supplier_code, False)
             validation_result = (
-                supplier_business
-                .get_supplier_validation_result(user.supplier_code)
-                ._asdict()
+                messages._asdict() if messages else None
             )
-        else:
-            validation_result = None
 
         return jsonify(users=user.serialize(), validation_result=validation_result), 200
     else:

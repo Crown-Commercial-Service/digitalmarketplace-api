@@ -74,6 +74,7 @@ from app.api.views import (briefs,  # noqa
                            brief_responses,
                            users,
                            feedback,
+                           messages,
                            suppliers,
                            tasks,
                            tokens,
