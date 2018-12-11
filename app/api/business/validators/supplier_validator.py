@@ -93,9 +93,11 @@ class SupplierValidator(object):
 
                 if len(domain_case_studies) == 0:
                     errors.append({
-                        'message': 'Your seller profile is missing a case study '
-                                   'for {}.'.format(supplier_domain.domain.name),
-                        'severity': 'error',
+                        'message': 'Your seller profile is missing a case study for '
+                                   '{}. From January 2019, you will no longer '
+                                   'be able to apply for opportunities without a '
+                                   'supporting case study.'.format(supplier_domain.domain.name),
+                        'severity': 'warning',
                         'step': 'case-study'
                     })
                 else:
