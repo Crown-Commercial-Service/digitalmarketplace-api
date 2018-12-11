@@ -116,7 +116,7 @@ class SupplierValidator(object):
                            '{{assessment criteria}} '
                            'and update your case study to ensure the required number of criteria are met.'
                 .format(
-                    title=case_study.data.get('title'),
+                    title=case_study.data.get('title', '').encode('utf-8'),
                     domain=case_study.data.get('service'),
                     cs_link=''
                 ),
