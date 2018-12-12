@@ -2,8 +2,10 @@ from dmapiclient.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 from sqlalchemy import asc
 
+from dmutils.errors.api import ValidationError
+
 from .. import main
-from ...models import ArchivedService, Service, Supplier, AuditEvent, Framework, ValidationError
+from ...models import ArchivedService, Service, Supplier, AuditEvent, Framework
 from ...validation import is_valid_service_id_or_400
 from ...utils import (
     display_list,

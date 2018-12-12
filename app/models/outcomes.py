@@ -7,11 +7,11 @@ from sqlalchemy.sql.expression import (
     case as sql_case,
 )
 
+from dmutils.errors.api import ValidationError
+from dmutils.formats import DATE_FORMAT, DATETIME_FORMAT
+
 from app import db
 from app.utils import random_positive_external_id
-from app.models import ValidationError
-
-from dmutils.formats import DATE_FORMAT, DATETIME_FORMAT
 
 
 class Outcome(db.Model):

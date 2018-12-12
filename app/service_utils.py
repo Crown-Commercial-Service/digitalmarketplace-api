@@ -5,7 +5,10 @@ from .utils import get_json_from_request, index_object, json_has_matching_id, js
 from .validation import get_validation_errors
 from . import search_api_client, dmapiclient
 from . import db
-from .models import ArchivedService, AuditEvent, Framework, Service, Supplier, ValidationError
+
+from dmutils.errors.api import ValidationError
+
+from .models import ArchivedService, AuditEvent, Framework, Service, Supplier
 
 
 def validate_and_return_service_request(service_id):
