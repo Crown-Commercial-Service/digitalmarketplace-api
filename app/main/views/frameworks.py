@@ -97,6 +97,9 @@ def create_framework():
         abort(400, "Invalid framework")
 
     except StatementError as error:
+        # here we catch StatementError where most views would normally catch IntegrityError - this is because this view
+        # does not use e.g. a json schema for validation of the passed json structure, and so can't be certain e.g.
+        # of the object types being assigned to database fields above
         db.session.rollback()
         abort(400, format_framework_integrity_error_message(error, json_framework))
 
