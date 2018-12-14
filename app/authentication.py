@@ -1,12 +1,17 @@
 from flask import current_app, abort, request
 
+from dmutils.authentication import UnauthorizedWWWAuthenticate
+
 
 def requires_authentication(module='main'):
     if current_app.config['AUTH_REQUIRED']:
         incoming_token = get_token_from_headers(request.headers)
 
         if not incoming_token:
-            abort(401, "Unauthorized; bearer token must be provided")
+            raise UnauthorizedWWWAuthenticate(
+                www_authenticate=f"Bearer realm={module}",
+                description="Unauthorized; bearer token must be provided",
+            )
         if not token_is_valid(incoming_token, module=module):
             abort(403, "Forbidden; invalid bearer token provided {}".format(incoming_token))
 

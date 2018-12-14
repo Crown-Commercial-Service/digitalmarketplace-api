@@ -8,8 +8,8 @@ from flask import current_app
 from app import db
 from app.utils import random_positive_external_id
 from app.url_utils import force_relative_url
-from app.models import ValidationError
 
+from dmutils.errors.api import ValidationError
 from dmutils.formats import iso_datetime_format
 
 # there is a danger of circular imports here. as such, it is not necessarily "safe" to expect all other models to be

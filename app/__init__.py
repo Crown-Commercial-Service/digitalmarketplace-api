@@ -5,7 +5,7 @@ import json
 from sqlalchemy import MetaData
 
 import dmapiclient
-from dmutils import init_app
+from dmutils.flask_init import init_app, api_error_handlers
 
 from config import configs
 
@@ -27,7 +27,8 @@ def create_app(config_name):
         application,
         configs[config_name],
         db=db,
-        search_api_client=search_api_client
+        search_api_client=search_api_client,
+        error_handlers=api_error_handlers,
     )
 
     if not application.config['DM_API_AUTH_TOKENS']:

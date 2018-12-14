@@ -34,6 +34,7 @@ from sqlalchemy_json import NestedMutable
 
 from dmutils.dates import get_publishing_dates
 from dmutils.formats import DATETIME_FORMAT
+from dmutils.errors.api import ValidationError
 from app import db, encryption
 from app.utils import (
     drop_foreign_fields,
@@ -89,11 +90,6 @@ class FrameworkLot(db.Model):
 
     framework_id = db.Column(db.Integer, db.ForeignKey('frameworks.id'), primary_key=True)
     lot_id = db.Column(db.Integer, db.ForeignKey('lots.id'), primary_key=True)
-
-
-class ValidationError(ValueError):
-    def __init__(self, message):
-        self.message = message
 
 
 class Lot(db.Model):
