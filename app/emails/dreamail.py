@@ -42,7 +42,7 @@ def send_dreamail(simulate, skip_audit_check):
                 ]
                 for cs in rejected_case_studies:
                     option_2_cs.append('* [{title}]({frontend_url}/case-study/{cs_id}) ({domain_name})'.format(
-                        title=cs.data.get('title'),
+                        title=cs.data.get('title').encode('utf-8'),
                         frontend_url=current_app.config['FRONTEND_ADDRESS'],
                         cs_id=cs.id,
                         domain_name=domain_name
@@ -60,7 +60,7 @@ def send_dreamail(simulate, skip_audit_check):
             dreamail_option_2_content = fill_template(
                 'dreamail_option_2.md',
                 frontend_url=current_app.config['FRONTEND_ADDRESS'],
-                cs='\n'.join(option_2_cs)
+                cs='\n'.join(option_2_cs).decode('utf-8')
             )
 
         if dreamail_option_1_content == '' and dreamail_option_2_content == '':
