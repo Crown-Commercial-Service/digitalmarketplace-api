@@ -189,10 +189,11 @@ def run_send_dreamail():
         type: string
         description: string
     """
-    simulate = request.args.get('simulate') or True
+    simulate = False if request.args.get('simulate') == 'False' else True
+    skip_audit_check = True if request.args.get('skip_audit_check') == 'True' else False
 
-    if simulate == 'False':
-        res = send_dreamail.delay(False)
+    if simulate is False:
+        res = send_dreamail.delay(simulate, skip_audit_check)
         return jsonify(res.id)
     else:
-        return jsonify(send_dreamail(True)), 200
+        return jsonify(send_dreamail(simulate, skip_audit_check)), 200

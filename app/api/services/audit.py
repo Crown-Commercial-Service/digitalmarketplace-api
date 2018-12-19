@@ -49,3 +49,4 @@ class AuditTypes(Enum):
     delete_brief = 'delete_brief'
     seller_requested_feedback_from_buyer_email = 'seller_requested_feedback_from_buyer_email'
     seller_to_review_pricing_case_study_email = 'seller_to_review_pricing_case_study_email'
+    seller_to_review_pricing_case_study_email_part_2 = 'seller_to_review_pricing_case_study_email_part_2'

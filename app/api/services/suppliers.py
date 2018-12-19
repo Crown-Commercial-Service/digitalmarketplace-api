@@ -94,12 +94,17 @@ class SuppliersService(Service):
 
         return [r._asdict() for r in result]
 
-    def get_suppliers_with_rejected_price(self):
-        subquery = (
-            db.session.query(SupplierDomain.supplier_id)
-            .filter(SupplierDomain.price_status == 'rejected')
-            .subquery()
-        )
+    def get_suppliers_codes_with_domains(self, rejected_price_only):
+        subquery = None
+        if rejected_price_only:
+            subquery = (
+                db.session.query(SupplierDomain.supplier_id)
+                .filter(SupplierDomain.price_status == 'rejected')
+                .subquery()
+            )
+        else:
+            subquery = db.session.query(SupplierDomain.supplier_id).subquery()
+
         result = (
             db
             .session

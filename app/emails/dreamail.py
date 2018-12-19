@@ -2,7 +2,7 @@ from flask import current_app
 from .util import render_email_template, send_or_handle_error, fill_template
 
 
-def send_dreamail(simulate):
+def send_dreamail(simulate, skip_audit_check):
     from app.api.services import (
         audit_service,
         audit_types,
@@ -10,38 +10,43 @@ def send_dreamail(simulate):
     )
     simulation_result = []
 
-    result = suppliers.get_suppliers_with_rejected_price()
+    result = suppliers.get_suppliers_codes_with_domains(False)
 
     for item in result:
         supplier_code = item['code']
         supplier = suppliers.find(code=item['code']).one_or_none()
 
-        sent = audit_service.find(
-            object_id=supplier.id,
-            object_type='Supplier',
-            type='seller_to_review_pricing_case_study_email'
-        ).one_or_none()
-        if sent:
-            continue
+        if skip_audit_check is False:
+            sent = audit_service.find(
+                object_id=supplier.id,
+                object_type='Supplier',
+                type='seller_to_review_pricing_case_study_email_part_2'
+            ).one_or_none()
+
+            if sent:
+                continue
 
         case_studies = supplier.case_studies
 
         option_1_aoe = []
-        option_2_aoe = []
+        option_2_cs = []
         for supplier_domain in supplier.domains:
-            if supplier_domain.price_status != 'rejected':
-                continue
-
             domain_name = supplier_domain.domain.name
-            case_studies_in_domain = [cs for cs in case_studies if cs.data['service'] == domain_name]
-            approved_case_studies = any((
-                cs.status == 'approved' or
-                cs.status == 'unassessed'
-            ) for cs in case_studies_in_domain)
-            if approved_case_studies:
+            if supplier_domain.price_status == 'rejected':
                 option_1_aoe.append('* {}'.format(domain_name))
-            else:
-                option_2_aoe.append('* {}'.format(domain_name))
+
+            elif supplier_domain.price_status == 'approved':
+                rejected_case_studies = [
+                    cs for cs in case_studies
+                    if cs.data['service'] == domain_name and cs.status == 'rejected'
+                ]
+                for cs in rejected_case_studies:
+                    option_2_cs.append('* [{title}]({frontend_url}/case-study/{cs_id}) ({domain_name})'.format(
+                        title=cs.data.get('title'),
+                        frontend_url=current_app.config['FRONTEND_ADDRESS'],
+                        cs_id=cs.id,
+                        domain_name=domain_name
+                    ))
 
         dreamail_option_1_content = ''
         if option_1_aoe:
@@ -51,11 +56,11 @@ def send_dreamail(simulate):
             )
 
         dreamail_option_2_content = ''
-        if option_2_aoe:
+        if option_2_cs:
             dreamail_option_2_content = fill_template(
                 'dreamail_option_2.md',
                 frontend_url=current_app.config['FRONTEND_ADDRESS'],
-                aoe='\n'.join(option_2_aoe)
+                cs='\n'.join(option_2_cs)
             )
 
         if dreamail_option_1_content == '' and dreamail_option_2_content == '':
@@ -89,18 +94,19 @@ def send_dreamail(simulate):
                 subject,
                 current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
                 current_app.config['DM_GENERIC_SUPPORT_NAME'],
-                event_description_for_errors=audit_types.seller_to_review_pricing_case_study_email
+                event_description_for_errors=audit_types.seller_to_review_pricing_case_study_email_part_2
             )
 
-            audit_service.log_audit_event(
-                audit_type=audit_types.seller_to_review_pricing_case_study_email,
-                user='',
-                data={
-                    "to_addresses": ', '.join(to_addresses),
-                    "email_body": email_body,
-                    "subject": subject
-                },
-                db_object=supplier)
+            if skip_audit_check is False:
+                audit_service.log_audit_event(
+                    audit_type=audit_types.seller_to_review_pricing_case_study_email_part_2,
+                    user='',
+                    data={
+                        "to_addresses": ', '.join(to_addresses),
+                        "email_body": email_body,
+                        "subject": subject
+                    },
+                    db_object=supplier)
 
     if simulate:
         return simulation_result
