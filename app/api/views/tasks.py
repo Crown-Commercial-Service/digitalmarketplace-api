@@ -7,7 +7,8 @@ from app.tasks.brief_tasks import (create_responses_zip_for_closed_briefs,
                                    process_closed_briefs, update_brief_metrics)
 from app.tasks.jira import (sync_application_approvals_with_jira,
                             sync_domain_assessment_approvals_with_jira)
-from app.tasks.mailchimp import (send_new_briefs_email,
+from app.tasks.mailchimp import (send_document_expiry_reminder,
+                                 send_new_briefs_email,
                                  sync_mailchimp_seller_list)
 from app.tasks.supplier_tasks import update_supplier_metrics
 from app.tasks.dreamail import send_dreamail
@@ -142,6 +143,22 @@ def run_update_all_metrics():
         "update_brief_response_metrics": update_brief_response_metrics.delay().id,
         "update_supplier_metrics": update_supplier_metrics.delay().id
     })
+
+
+@api.route('/tasks/send-document-expiry-reminder', methods=['POST'])
+@role_required('admin')
+def send_document_expiry_reminder_email():
+    """Send document expiry reminder
+    ---
+    tags:
+      - tasks
+    responses:
+      200:
+        type: string
+        description: string
+    """
+    res = send_document_expiry_reminder.delay()
+    return jsonify(res.id)
 
 
 @api.route('/tasks/sync-jira-application-approvals', methods=['POST'])

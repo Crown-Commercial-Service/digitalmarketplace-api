@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from os import environ
 
 import pytest
@@ -7,12 +7,14 @@ from mock.mock import MagicMock
 from requests.exceptions import RequestException
 
 from app import db
-from app.api.services import AuditTypes
+from app.api.services import AuditTypes as audit_types
 from app.models import (Application, Assessment, AuditEvent, Supplier,
                         SupplierDomain)
 from app.tasks.jira import (sync_application_approvals_with_jira,
                             sync_domain_assessment_approvals_with_jira)
 from app.tasks.mailchimp import (MailChimpConfigException,
+                                 send_document_expiry_campaign,
+                                 send_document_expiry_reminder,
                                  send_new_briefs_email,
                                  sync_mailchimp_seller_list)
 from app.tasks.s3 import CreateResponsesZipException, create_responses_zip
@@ -42,7 +44,7 @@ def test_sync_mailchimp_seller_list_success(app, mocker, suppliers, supplier_dom
     }
     supplier_emails = [x.data['contact_email'].lower() for x in suppliers]
     user_emails = [x.email_address.lower() for x in users]
-    emails_to_subscribe = user_emails + supplier_emails
+    emails_to_subscribe = supplier_emails + user_emails
 
     mailchimp.return_value = client
 
@@ -54,11 +56,12 @@ def test_sync_mailchimp_seller_list_success(app, mocker, suppliers, supplier_dom
         sync_mailchimp_seller_list()
 
         client.lists.members.all.assert_called_with('123456', fields='members.email_address,members.id', get_all=True)
-        for email in emails_to_subscribe:
-            client.lists.members.create.assert_any_call(
-                '123456',
-                data={'email_address': email, 'status': 'subscribed'}
-            )
+        client.lists.update_members.assert_any_call(list_id='123456', data={
+            'members': [{
+                'email_address': email,
+                'status': 'subscribed'
+            } for email in emails_to_subscribe]
+        })
 
 
 def test_sync_mailchimp_seller_list_fails_mailchimp_api_call_with_requests_error(app, mocker):
@@ -316,9 +319,23 @@ def mock_jira_assessment_response(mocker):
 
 
 @pytest.fixture
-def supplier(app):
+def expiry_date():
+    expiry_date = date.today() + timedelta(days=28)
+    yield '{}-{}-{}'.format(expiry_date.year, expiry_date.month, expiry_date.day)
+
+
+@pytest.fixture
+def supplier(app, expiry_date):
     with app.app_context():
-        db.session.add(Supplier(id=1, code=123, name='ABC'))
+        db.session.add(Supplier(id=1, code=123, name='ABC', data={
+            'contact_email': 'business.contact@digital.gov.au',
+            'email': 'authorised.rep@digital.gov.au',
+            'documents': {
+                'liability': {
+                    'expiry': expiry_date
+                }
+            }
+        }))
         yield db.session.query(Supplier).filter(Supplier.id == 1).first()
 
 
@@ -358,3 +375,157 @@ def test_sync_jira_domain_assessment_approvals_task_creates_audit_event_on_appro
             AuditEvent.object_id == assessment.id).first())
 
         assert audit_event.data['jira_issue_key'] == 'MARADMIN-123'
+
+
+@pytest.fixture
+def audit_events(app, suppliers_service):
+    today = date.today()
+
+    with app.app_context():
+        db.session.add(AuditEvent(
+            audit_type=audit_types.sent_expiring_documents_email,
+            data={
+                'campaign_title': ('Expiring documents - {}-{}-{}'
+                                   .format(today.year, today.month, today.day)),
+                'sellers': suppliers_service.get_suppliers_with_expiring_documents()
+            },
+            db_object=None,
+            user=None
+        ))
+        yield db.session.query(AuditEvent).all()
+
+
+@pytest.fixture
+def suppliers_service(expiry_date, mocker, supplier):
+    suppliers = mocker.patch('app.tasks.mailchimp.suppliers')
+    suppliers.get_suppliers_with_expiring_documents.return_value = [
+        {
+            'code': 123,
+            'documents': [
+                {
+                    'expiry': expiry_date,
+                    'type': 'liability'
+                }
+            ],
+            'email_addresses': [
+                'authorised.rep@digital.gov.au',
+                'business.contact@digital.gov.au',
+                'abc.user@digital.gov.au'
+            ],
+            'name': 'ABC'
+        }
+    ]
+
+    suppliers.get_supplier_by_code.return_value = supplier
+    yield suppliers
+
+
+def test_document_expiry_campaign_is_not_created_when_no_sellers_with_expiring_documents(mocker,
+                                                                                         suppliers_service):
+    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+    client = MagicMock()
+    mailchimp.return_value = client
+
+    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+
+    client.campaigns.create.return_value = {
+        'id': 123
+    }
+
+    suppliers_service.get_suppliers_with_expiring_documents.return_value = []
+
+    send_document_expiry_reminder()
+
+    assert not client.campaigns.create.called
+    assert not client.campaigns.content.update.called
+    assert not client.campaigns.actions.send.called
+
+
+def test_document_expiry_campaign_is_not_created_if_audit_event_exists(audit_events, mocker,
+                                                                       supplier, suppliers_service):
+    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+    client = MagicMock()
+    mailchimp.return_value = client
+
+    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+
+    send_document_expiry_reminder()
+
+    assert not client.campaigns.create.called
+    assert not client.campaigns.content.update.called
+    assert not client.campaigns.actions.send.called
+
+
+def test_document_expiry_campaign_success(mocker, supplier, suppliers_service):
+    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+    client = MagicMock()
+    mailchimp.return_value = client
+
+    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+
+    client.campaigns.create.return_value = {
+        'id': 123
+    }
+
+    send_document_expiry_reminder()
+
+    assert client.campaigns.create.called
+    assert client.campaigns.content.update.called
+    assert client.campaigns.actions.schedule.called
+
+
+def test_document_expiry_campaign_is_created_with_segment_options(mocker, supplier, suppliers_service):
+    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+    client = MagicMock()
+    mailchimp.return_value = client
+
+    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+
+    client.campaigns.create.return_value = {
+        'id': 123
+    }
+
+    email_addresses = suppliers_service.get_suppliers_with_expiring_documents()[0]['email_addresses']
+    sellers = suppliers_service.get_suppliers_with_expiring_documents()
+
+    send_document_expiry_campaign(client, sellers)
+
+    segment_options = client.campaigns.create.call_args[1]['data']['recipients']['segment_opts']
+
+    assert segment_options['match'] == 'any'
+    assert len(segment_options['conditions']) == 3
+    for condition in segment_options['conditions']:
+        assert condition['condition_type'] == 'EmailAddress'
+        assert condition['op'] == 'is'
+        assert condition['field'] == 'EMAIL'
+        assert condition['value'] in email_addresses
+
+
+def test_document_expiry_campaign_adds_audit_event_on_success(expiry_date, mocker, supplier, suppliers_service):
+    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+    client = MagicMock()
+    mailchimp.return_value = client
+
+    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+
+    client.campaigns.create.return_value = {
+        'id': 123
+    }
+
+    today = date.today()
+
+    assert db.session.query(AuditEvent).count() == 0
+
+    sellers = suppliers_service.get_suppliers_with_expiring_documents()
+    send_document_expiry_campaign(client, sellers)
+
+    audit_event = db.session.query(AuditEvent).first()
+    assert audit_event.type == audit_types.sent_expiring_documents_email.value
+    assert audit_event.data['campaign_title'] == ('Expiring documents - {}-{}-{}'
+                                                  .format(today.year, today.month, today.day))
+    assert audit_event.data['sellers'] == suppliers_service.get_suppliers_with_expiring_documents()
