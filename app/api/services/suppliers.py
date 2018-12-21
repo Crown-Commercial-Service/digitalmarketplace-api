@@ -80,7 +80,7 @@ class SuppliersService(Service):
         return union(authorised_representative, business_contact, user_email_addresses).alias('email_addresses')
 
     def get_supplier_contacts(self, supplier_code):
-        email_addresses = get_supplier_contacts_union()
+        email_addresses = self.get_supplier_contacts_union()
 
         result = (
             db

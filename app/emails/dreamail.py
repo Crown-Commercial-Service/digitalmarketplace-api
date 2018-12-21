@@ -35,7 +35,7 @@ def send_dreamail(simulate, skip_audit_check):
             if supplier_domain.price_status == 'rejected':
                 option_1_aoe.append('* {}'.format(domain_name))
 
-            elif supplier_domain.price_status == 'approved':
+            else:
                 rejected_case_studies = [
                     cs for cs in case_studies
                     if cs.data['service'] == domain_name and cs.status == 'rejected'

@@ -12,10 +12,10 @@ CELERYBEAT_SCHEDULE = {
         'task': 'app.tasks.mailchimp.send_new_briefs_email',
         'schedule': crontab(hour=17, minute=0)
     },
-    'send_document_expiry_reminder': {
-        'task': 'app.tasks.mailchimp.send_document_expiry_reminder',
-        'schedule': crontab(hour=6, minute=0)
-    },
+    # 'send_document_expiry_reminder': {
+    #     'task': 'app.tasks.mailchimp.send_document_expiry_reminder',
+    #     'schedule': crontab(hour=6, minute=0)
+    # },
     'process_closed_briefs': {
         'task': 'app.tasks.brief_tasks.process_closed_briefs',
         'schedule': crontab(hour=6, minute=0)
