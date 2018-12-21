@@ -61,12 +61,9 @@ def list_audits():
 
     audit_type = request.args.get('audit-type')
     if audit_type:
-        if AuditTypes.is_valid_audit_type(audit_type):
-            audits = audits.filter(
-                AuditEvent.type == audit_type
-            )
-        else:
-            abort(400, "Invalid audit type")
+        audits = audits.filter(
+            AuditEvent.type == audit_type
+        )
 
     acknowledged = request.args.get('acknowledged', None)
     if acknowledged and acknowledged != 'all':

@@ -100,12 +100,6 @@ class TestAuditEvents(BaseApplicationTest):
         assert_equal(data['auditEvents'][0]['type'], 'contact_update')
         assert_equal(data['auditEvents'][0]['data']['request'], 'data')
 
-    def test_should_reject_invalid_audit_type(self):
-        self.add_audit_events(1)
-        response = self.client.get('/audit-events?audit-type=invalid')
-
-        assert_equal(response.status_code, 400)
-
     def test_should_get_audit_event_by_object(self):
         self.add_audit_events_with_db_object()
 
