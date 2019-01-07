@@ -321,7 +321,7 @@ def mock_jira_assessment_response(mocker):
 @pytest.fixture
 def expiry_date():
     expiry_date = date.today() + timedelta(days=28)
-    yield '{}-{}-{}'.format(expiry_date.year, expiry_date.month, expiry_date.day)
+    yield expiry_date.isoformat()
 
 
 @pytest.fixture
@@ -379,14 +379,12 @@ def test_sync_jira_domain_assessment_approvals_task_creates_audit_event_on_appro
 
 @pytest.fixture
 def audit_events(app, suppliers_service):
-    today = date.today()
-
     with app.app_context():
         db.session.add(AuditEvent(
             audit_type=audit_types.sent_expiring_documents_email,
             data={
-                'campaign_title': ('Expiring documents - {}-{}-{}'
-                                   .format(today.year, today.month, today.day)),
+                'campaign_title': ('Expiring documents - {}'
+                                   .format(date.today().isoformat())),
                 'sellers': suppliers_service.get_suppliers_with_expiring_documents()
             },
             db_object=None,
@@ -429,17 +427,13 @@ def test_document_expiry_campaign_is_not_created_when_no_sellers_with_expiring_d
     environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
     environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
 
-    client.campaigns.create.return_value = {
-        'id': 123
-    }
-
     suppliers_service.get_suppliers_with_expiring_documents.return_value = []
 
     send_document_expiry_reminder()
 
     assert not client.campaigns.create.called
     assert not client.campaigns.content.update.called
-    assert not client.campaigns.actions.send.called
+    assert not client.campaigns.actions.schedule.called
 
 
 def test_document_expiry_campaign_is_not_created_if_audit_event_exists(audit_events, mocker,
@@ -455,7 +449,7 @@ def test_document_expiry_campaign_is_not_created_if_audit_event_exists(audit_eve
 
     assert not client.campaigns.create.called
     assert not client.campaigns.content.update.called
-    assert not client.campaigns.actions.send.called
+    assert not client.campaigns.actions.schedule.called
 
 
 def test_document_expiry_campaign_success(mocker, supplier, suppliers_service):
@@ -517,8 +511,6 @@ def test_document_expiry_campaign_adds_audit_event_on_success(expiry_date, mocke
         'id': 123
     }
 
-    today = date.today()
-
     assert db.session.query(AuditEvent).count() == 0
 
     sellers = suppliers_service.get_suppliers_with_expiring_documents()
@@ -526,6 +518,6 @@ def test_document_expiry_campaign_adds_audit_event_on_success(expiry_date, mocke
 
     audit_event = db.session.query(AuditEvent).first()
     assert audit_event.type == audit_types.sent_expiring_documents_email.value
-    assert audit_event.data['campaign_title'] == ('Expiring documents - {}-{}-{}'
-                                                  .format(today.year, today.month, today.day))
+    assert audit_event.data['campaign_title'] == ('Expiring documents - {}'
+                                                  .format(date.today().isoformat()))
     assert audit_event.data['sellers'] == suppliers_service.get_suppliers_with_expiring_documents()
