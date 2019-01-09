@@ -2,11 +2,15 @@ import datetime
 from itertools import chain, product
 import json
 import re
+from urllib.parse import urlparse
 
-import pytest
+from flask import current_app
 from sqlalchemy import desc
 
-from dmtestutils.comparisons import AnyStringMatching, AnySupersetOf
+from mock import ANY
+import pytest
+
+from dmtestutils.comparisons import AnyStringMatching, AnySupersetOf, RestrictedAny
 
 from app import db
 from app.models import (
@@ -929,4 +933,286 @@ class TestUpdateOutcome(BaseApplicationTest, FixtureMixin):
         assert res.status_code == 404
         assert json.loads(res.get_data()) == {
             "error": "Outcome 314159 not found",
+        }
+
+
+class TestListOutcomes(BaseApplicationTest, FixtureMixin):
+    @pytest.mark.parametrize("query_string", ("", "completed=true", "completed=false",))
+    def test_list_outcomes_empty(self, query_string):
+        res = self.client.get(
+            f"/outcomes?{query_string}",
+        )
+        assert res.status_code == 200
+        assert json.loads(res.get_data()) == {
+            "links": {"self": RestrictedAny(lambda u: urlparse(u) == (ANY, ANY, "/outcomes", "", query_string, "",))},
+            "meta": {
+                "total": 0,
+            },
+            "outcomes": [],
+        }
+
+    def setup_outcomes(self):
+        user_id = self.setup_dummy_user(id=1, role='buyer')
+        self.setup_dummy_suppliers(5)
+
+        # create required objects for direct award-based Outcome
+        self.setup_dummy_services(5, model=ArchivedService)
+
+        #
+        # create required objects for direct-award-related Outcomes
+        #
+
+        projects = tuple(
+            DirectAwardProject(
+                name=name,
+                users=[User.query.get(user_id)],
+            ) for name in ("alumno optimo", "palmam ferenti", "vere dignum et iustum est",)
+        )
+        db.session.add_all(projects)
+
+        searches = tuple(
+            DirectAwardSearch(
+                project=project,
+                created_by=user_id,
+                active=True,
+                search_url="http://nothing.nowhere",
+            ) for project in projects
+        )
+        db.session.add_all(searches)
+
+        for i, search in enumerate(searches):
+            for archived_service in db.session.query(ArchivedService).filter(
+                ArchivedService.service_id.in_([str(j) for j in range(2000000000 + i, 2000000000 + i + 3)])
+            ).all():
+                search.archived_services.append(archived_service)
+
+        #
+        # create required objects for Brief-related Outcomes
+        #
+
+        briefs = tuple(
+            self.setup_dummy_brief(status="closed", user_id=user_id, data={})
+            for _ in range(4)
+        )
+        db.session.add_all(briefs)
+        # increasingly many BriefResponses for each Brief in `briefs`
+        brief_responses = tuple(BriefResponse(
+            brief=brief,
+            supplier_id=j,
+            submitted_at=datetime.datetime.utcnow(),
+            data={},
+        ) for j in range(i) for i, brief in enumerate(briefs))
+        db.session.add_all(brief_responses)
+
+        outcomes = (
+            Outcome(
+                external_id=100000000,
+                direct_award_project=searches[0].project,
+                direct_award_search=searches[0],
+                direct_award_archived_service=searches[0].archived_services[0],
+                result="awarded",
+                start_date=datetime.date(2006, 2, 2),
+                end_date=datetime.date(2006, 3, 3),
+                awarding_organisation_name="Omnium Gatherum",
+                award_value=81396,
+                completed_at=datetime.datetime(2005, 10, 10, 10, 10, 10),
+            ),
+            Outcome(
+                external_id=100000005,
+                direct_award_project=searches[0].project,
+                direct_award_search=searches[0],
+                direct_award_archived_service=searches[0].archived_services[1],
+                result="awarded",
+                start_date=datetime.date(2006, 4, 4),
+                awarding_organisation_name="Nisus Formativus",
+            ),
+            Outcome(
+                external_id=100000002,
+                direct_award_project=searches[0].project,
+                result="none-suitable",
+            ),
+            Outcome(
+                external_id=100000011,
+                direct_award_project=searches[1].project,
+                result="none-suitable",
+            ),
+            Outcome(
+                external_id=100000004,
+                direct_award_project=searches[2].project,
+                result="cancelled",
+                completed_at=datetime.datetime(2005, 10, 9, 9, 9, 9),
+            ),
+            Outcome(
+                external_id=100000001,
+                brief=briefs[0],
+                result="cancelled",
+                completed_at=datetime.datetime(2005, 5, 5, 5, 5, 5),
+            ),
+            Outcome(
+                external_id=100000008,
+                brief=briefs[0],
+                result="cancelled",
+            ),
+            Outcome(
+                external_id=100000012,
+                brief=briefs[1],
+                brief_response=briefs[1].brief_responses[0],
+                result="awarded",
+                start_date=datetime.date(2010, 1, 1),
+                end_date=datetime.date(2011, 8, 8),
+                awarding_organisation_name="Viridum Toxicum",
+                award_value=81396,
+                completed_at=datetime.datetime(2005, 11, 11, 11, 11, 11),
+            ),
+            Outcome(
+                external_id=100000006,
+                brief=briefs[1],
+                brief_response=briefs[1].brief_responses[0],
+                result="awarded",
+                award_value=83300,
+            ),
+            Outcome(
+                external_id=100000009,
+                brief=briefs[2],
+                result="none-suitable",
+                completed_at=datetime.datetime(2005, 10, 10, 10, 11, 11),
+            ),
+            Outcome(
+                external_id=100000013,
+                brief=briefs[2],
+                brief_response=briefs[2].brief_responses[0],
+                result="awarded",
+                start_date=datetime.date(2011, 1, 1),
+                end_date=datetime.date(2011, 1, 2),
+                award_value=3072,
+            ),
+            Outcome(
+                external_id=100000003,
+                brief=briefs[2],
+                brief_response=briefs[2].brief_responses[1],
+                result="awarded",
+            ),
+            Outcome(
+                external_id=100000007,
+                brief=briefs[3],
+                result="none-suitable",
+            ),
+            Outcome(
+                external_id=100000010,
+                brief=briefs[3],
+                brief_response=briefs[3].brief_responses[0],
+                result="awarded",
+                start_date=datetime.date(2006, 1, 1),
+                end_date=datetime.date(2008, 1, 1),
+                awarding_organisation_name="Lacus Mortis",
+                award_value=4386035,
+                completed_at=datetime.datetime(2006, 1, 1, 1, 1, 1),
+            ),
+        )
+        db.session.add_all(outcomes)
+
+        db.session.commit()
+
+    @pytest.mark.parametrize("query_string,expected_response_data", (
+        ("", {
+            "links": {"self": RestrictedAny(lambda u: urlparse(u) == (ANY, ANY, "/outcomes", "", "", "",))},
+            "meta": {
+                "total": 14,
+            },
+            "outcomes": [
+                AnySupersetOf({"id": 100000001}),
+                AnySupersetOf({"id": 100000004}),
+                AnySupersetOf({"id": 100000000}),
+                AnySupersetOf({"id": 100000009}),
+                AnySupersetOf({"id": 100000012}),
+                AnySupersetOf({"id": 100000010}),
+                AnySupersetOf({"id": 100000002}),
+                AnySupersetOf({"id": 100000003}),
+                AnySupersetOf({"id": 100000005}),
+                AnySupersetOf({"id": 100000006}),
+                AnySupersetOf({"id": 100000007}),
+                AnySupersetOf({"id": 100000008}),
+                AnySupersetOf({"id": 100000011}),
+                AnySupersetOf({"id": 100000013}),
+            ],
+        }),
+        ("completed=true", {
+            "links": {
+                "self": RestrictedAny(lambda u: urlparse(u) == (ANY, ANY, "/outcomes", "", "completed=true", "",)),
+            },
+            "meta": {
+                "total": 6,
+            },
+            "outcomes": [
+                AnySupersetOf({"id": 100000001}),
+                AnySupersetOf({"id": 100000004}),
+                AnySupersetOf({"id": 100000000}),
+                AnySupersetOf({"id": 100000009}),
+                AnySupersetOf({"id": 100000012}),
+                AnySupersetOf({"id": 100000010}),
+            ],
+        }),
+        ("completed=false", {
+            "links": {
+                "self": RestrictedAny(lambda u: urlparse(u) == (ANY, ANY, "/outcomes", "", "completed=false", "",)),
+            },
+            "meta": {
+                "total": 8,
+            },
+            "outcomes": [
+                AnySupersetOf({"id": 100000002}),
+                AnySupersetOf({"id": 100000003}),
+                AnySupersetOf({"id": 100000005}),
+                AnySupersetOf({"id": 100000006}),
+                AnySupersetOf({"id": 100000007}),
+                AnySupersetOf({"id": 100000008}),
+                AnySupersetOf({"id": 100000011}),
+                AnySupersetOf({"id": 100000013}),
+            ],
+        }),
+    ))
+    def test_list_outcomes(self, query_string, expected_response_data):
+        self.setup_outcomes()
+
+        res = self.client.get(
+            f"/outcomes?{query_string}",
+        )
+
+        assert res.status_code == 200
+        response_data = json.loads(res.get_data())
+
+        # allow parameter to check its coarse constraints
+        assert response_data == expected_response_data
+
+        # now we'll follow that up by checking that outcomes with a particular id match their correct serialization
+        assert response_data["outcomes"] == [
+            Outcome.query.filter(Outcome.external_id == outcome_dict["id"]).one().serialize()
+            for outcome_dict in response_data["outcomes"]
+        ]
+
+    def test_list_outcomes_paging(self):
+        self.setup_outcomes()
+        current_app.config["DM_API_OUTCOMES_PAGE_SIZE"] = 3
+
+        res = self.client.get(
+            f"/outcomes?page=2",
+        )
+
+        assert res.status_code == 200
+        response_data = json.loads(res.get_data())
+
+        assert response_data == {
+            "links": {
+                "next": RestrictedAny(lambda u: urlparse(u) == (ANY, ANY, "/outcomes", "", "page=3", "",)),
+                "self": RestrictedAny(lambda u: urlparse(u) == (ANY, ANY, "/outcomes", "", "page=2", "",)),
+                "prev": RestrictedAny(lambda u: urlparse(u) == (ANY, ANY, "/outcomes", "", "page=1", "",)),
+                "last": RestrictedAny(lambda u: urlparse(u) == (ANY, ANY, "/outcomes", "", "page=5", "",)),
+            },
+            "meta": {
+                "total": 14,
+            },
+            "outcomes": [
+                Outcome.query.filter(Outcome.external_id == expected_id).one().serialize()
+                for expected_id in (100000009, 100000012, 100000010,)
+            ],
         }
