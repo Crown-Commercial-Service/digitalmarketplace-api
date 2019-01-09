@@ -1714,19 +1714,40 @@ class Brief(db.Model):
         name = DOMAIN_MAPPING_SPECIALISTS[specialist_role]
         return Domain.get_by_name_or_id(name)
 
-    def publish(self):
+    def publish(self, closed_at=None):
         if not self.published_at:
             self.published_at = pendulum.now('UTC')
         DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
         DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
         t = parse_time_of_day(DEADLINES_TIME_OF_DAY)
 
-        self.closed_at = combine_date_and_time(
-            self.published_day + parse_interval(self.requirements_length),
-            t, DEADLINES_TZ_NAME).in_tz('UTC')
-        self.questions_closed_at = combine_date_and_time(
-            workday(self.published_day, self.questions_duration_workdays),
-            t, DEADLINES_TZ_NAME).in_tz('UTC')
+        if closed_at:
+            closed_at_parsed = combine_date_and_time(
+                pendulum.parse(closed_at),
+                t, DEADLINES_TZ_NAME).in_tz('UTC')
+            if closed_at_parsed <= pendulum.now('UTC').add(days=3):
+                questions_closed_at = workday(closed_at_parsed, -1)
+                if (self.published_day > questions_closed_at):
+                    questions_closed_at = self.published_day
+            elif closed_at_parsed < pendulum.now('UTC').add(days=8):
+                questions_closed_at = workday(self.published_day, 2)
+            else:
+                questions_closed_at = workday(self.published_day, 5)
+
+            if questions_closed_at > closed_at_parsed:
+                questions_closed_at = closed_at_parsed
+
+            self.questions_closed_at = combine_date_and_time(
+                questions_closed_at,
+                t, DEADLINES_TZ_NAME).in_tz('UTC')
+            self.closed_at = closed_at_parsed
+        else:
+            self.closed_at = combine_date_and_time(
+                self.published_day + parse_interval(self.requirements_length),
+                t, DEADLINES_TZ_NAME).in_tz('UTC')
+            self.questions_closed_at = combine_date_and_time(
+                workday(self.published_day, self.questions_duration_workdays),
+                t, DEADLINES_TZ_NAME).in_tz('UTC')
 
     @property
     def dates_for_serialization(self):
@@ -2158,14 +2179,14 @@ class BriefResponse(db.Model):
         except TypeError:
             pass
 
-        # if the UI is sending back the dayRate. remove it from data
-        if self.brief.lot.slug == 'digital-outcome' or self.brief.lot.slug == 'training':
+        # if the UI is sending back the dayRate. remove it from data for some lots
+        if self.brief.lot.slug in ['digital-outcome', 'training', 'rfx']:
             self.data = drop_foreign_fields(self.data, [
                 'dayRate'
             ])
 
-        # remove the training specific fields for non training briefs
-        if not self.brief.lot.slug == 'training':
+        # only keep the contact number for some lots
+        if self.brief.lot.slug not in ['training', 'rfx']:
             self.data = drop_foreign_fields(self.data, [
                 'respondToPhone'
             ])
@@ -2176,12 +2197,21 @@ class BriefResponse(db.Model):
                 'attachedDocumentURL'
             ])
 
-        errs = get_validation_errors(
-            'brief-responses-{}-{}'.format(self.brief.framework.slug, self.brief.lot.slug),
-            self.data,
-            enforce_required=enforce_required,
-            required_fields=required_fields
-        )
+        # remove availability for RFX
+        if self.brief.lot.slug == 'rfx':
+            self.data = drop_foreign_fields(self.data, [
+                'availability'
+            ])
+
+        # only perform schema validation on non RFX responses
+        errs = []
+        if self.brief.lot.slug != 'rfx':
+            errs = get_validation_errors(
+                'brief-responses-{}-{}'.format(self.brief.framework.slug, self.brief.lot.slug),
+                self.data,
+                enforce_required=enforce_required,
+                required_fields=required_fields
+            )
 
         if self.brief.lot.slug != 'digital-outcome':
             attachedDocumentURL = self.data.get('attachedDocumentURL', [])
@@ -2195,6 +2225,7 @@ class BriefResponse(db.Model):
 
         if (
             self.brief.lot.slug != 'training' and
+            self.brief.lot.slug != 'rfx' and
             'essentialRequirements' not in errs and
             len(filter(None, self.data.get('essentialRequirements', []))) !=
             len(self.brief.data['essentialRequirements'])

@@ -1,16 +1,17 @@
 import json
 import mimetypes
 import os
-
 import botocore
 import rollbar
+import pendulum
+from pendulum.parsing.exceptions import ParserError
 from flask import Response, current_app, jsonify, request
 from flask_login import current_user, login_required
 from sqlalchemy.exc import DataError
 
 from app.api import api
 from app.api.csv import generate_brief_responses_csv
-from app.api.business.validators import SupplierValidator
+from app.api.business.validators import SupplierValidator, RFXDataValidator
 from app.api.business import supplier_business
 from app.api.helpers import abort, forbidden, not_found, role_required, is_current_user_in_brief
 from app.api.services import (audit_service,
@@ -18,13 +19,15 @@ from app.api.services import (audit_service,
                               brief_responses_service,
                               briefs,
                               lots_service,
-                              suppliers)
-from app.emails import send_brief_response_received_email, render_email_template
+                              suppliers,
+                              frameworks_service,
+                              domain_service)
+from app.emails import send_brief_response_received_email, render_email_template, send_seller_invited_to_rfx_email
 from dmapiclient.audit import AuditTypes
 from dmutils.file import s3_download_file, s3_upload_file_from_request
 
 from ...models import (AuditEvent, Brief, BriefResponse, Framework, Supplier,
-                       ValidationError, db)
+                       ValidationError, Lot, User, Domain, db)
 from ...utils import get_json_from_request
 
 
@@ -67,16 +70,28 @@ def _can_do_brief_response(brief_id):
         if domain(current_user.email_address) not in current_app.config.get('GENERIC_EMAIL_DOMAINS') \
         else None
 
-    if brief.data.get('sellerSelector', '') == 'someSellers':
-        seller_domain_list = [domain(x).lower() for x in brief.data['sellerEmailList']]
-        if current_user.email_address not in brief.data['sellerEmailList'] \
-                and (not current_user_domain or current_user_domain.lower() not in seller_domain_list):
-            forbidden("Supplier not selected for this brief")
-    if brief.data.get('sellerSelector', '') == 'oneSeller':
-        if current_user.email_address.lower() != brief.data['sellerEmail'].lower() \
-                and (not current_user_domain or
-                     current_user_domain.lower() != domain(brief.data['sellerEmail'].lower())):
-            forbidden("Supplier not selected for this brief")
+    rfx_lot = lots_service.find(slug='rfx').one_or_none()
+    rfx_lot_id = rfx_lot.id if rfx_lot else None
+
+    is_selected = False
+    seller_selector = brief.data.get('sellerSelector', '')
+    if not seller_selector or (seller_selector == 'allSellers' and brief.lot_id != rfx_lot_id):
+        is_selected = True
+    elif brief.lot_id == rfx_lot_id:
+        if str(current_user.supplier_code) in brief.data['sellers'].keys():
+            is_selected = True
+    else:
+        if seller_selector == 'someSellers':
+            seller_domain_list = [domain(x).lower() for x in brief.data['sellerEmailList']]
+            if current_user.email_address in brief.data['sellerEmailList'] \
+               or (current_user_domain and current_user_domain.lower() in seller_domain_list):
+                is_selected = True
+        if seller_selector == 'oneSeller':
+            if current_user.email_address.lower() == brief.data['sellerEmail'].lower() \
+               or (current_user_domain and current_user_domain.lower() == domain(brief.data['sellerEmail'].lower())):
+                is_selected = True
+    if not is_selected:
+        forbidden("Supplier not selected for this brief")
 
     if (len(supplier.frameworks) == 0 or
             'digital-marketplace' != supplier.frameworks[0].framework.slug):
@@ -109,19 +124,321 @@ def _can_do_brief_response(brief_id):
     return supplier, brief
 
 
+@api.route('/brief/rfx', methods=['POST'])
+@login_required
+@role_required('buyer')
+def create_rfx_brief():
+    """Create RFX brief (role=buyer)
+    ---
+    tags:
+        - brief
+    definitions:
+        RFXBriefCreated:
+            type: object
+            properties:
+                id:
+                    type: number
+                lot:
+                    type: string
+                status:
+                    type: string
+                author:
+                    type: string
+    responses:
+        200:
+            description: Brief created successfully.
+            schema:
+                $ref: '#/definitions/RFXBriefCreated'
+        400:
+            description: Bad request.
+        403:
+            description: Unauthorised to create RFX brief.
+        500:
+            description: Unexpected error.
+    """
+    try:
+        lot = lots_service.find(slug='rfx').one_or_none()
+        framework = frameworks_service.find(slug='digital-marketplace').one_or_none()
+        user = User.query.get(current_user.id)
+        brief = briefs.create_brief(user, framework, lot)
+    except Exception as e:
+        rollbar.report_exc_info()
+        return jsonify(message=e.message), 400
+
+    try:
+        audit_service.log_audit_event(
+            audit_type=AuditTypes.create_brief,
+            user=current_user.email_address,
+            data={
+                'briefId': brief.id
+            },
+            db_object=brief)
+    except Exception as e:
+        rollbar.report_exc_info()
+
+    return jsonify(brief.serialize(with_users=False))
+
+
 @api.route('/brief/<int:brief_id>', methods=["GET"])
 def get_brief(brief_id):
-    brief = Brief.query.filter(
-        Brief.id == brief_id
-    ).first_or_404()
-    if brief.status == 'draft':
+    """Get brief
+    ---
+    tags:
+        - brief
+    parameters:
+      - name: brief_id
+        in: path
+        type: number
+        required: true
+    responses:
+        200:
+            description: Brief retrieved successfully.
+            schema:
+                type: object
+                properties:
+                    brief:
+                        type: object
+                    brief_response_count:
+                        type: number
+                    invited_seller_count:
+                        type: number
+                    is_invited_seller:
+                        type: boolean
+                    is_brief_owner:
+                        type: boolean
+                    is_buyer:
+                        type: boolean
+                    has_responded:
+                        type: boolean
+                    domains:
+                        type: array
+                        items:
+                            type: object
+        403:
+            description: Unauthorised to view brief.
+        404:
+            description: Brief not found.
+        500:
+            description: Unexpected error.
+    """
+    brief = briefs.find(id=brief_id).one_or_none()
+    if not brief:
+        not_found("No brief for id '%s' found" % (brief_id))
+
+    user_role = current_user.role if hasattr(current_user, 'role') else None
+    invited_sellers = brief.data['sellers'] if 'sellers' in brief.data else {}
+
+    is_buyer = False
+    is_brief_owner = False
+    brief_user_ids = [user.id for user in brief.users]
+    if user_role == 'buyer':
+        is_buyer = True
+        if current_user.id in brief_user_ids:
+            is_brief_owner = True
+
+    if brief.status == 'draft' and not is_brief_owner:
+        return forbidden("Unauthorised to view brief")
+
+    brief_response_count = len(brief_responses_service.get_brief_responses(brief_id, None))
+    invited_seller_count = len(invited_sellers)
+
+    # is the current user an invited seller, and have they already responded?
+    is_invited_seller = False
+    has_responded = False
+    if (user_role == 'supplier' and str(current_user.supplier_code) in invited_sellers.keys()):
+        is_invited_seller = True
+        has_responded = brief_responses_service.find(supplier_code=current_user.supplier_code,
+                                                     brief_id=brief_id,
+                                                     withdrawn_at=None).count() > 0
+
+    # remove private data for non brief owners
+    if not is_buyer:
+        brief.data['sellers'] = {}
+        brief.responses_zip_filesize = None
+        if not is_invited_seller:
+            brief.data['proposalType'] = []
+            brief.data['evaluationType'] = []
+            brief.data['responseTemplate'] = []
+            brief.data['requirementsDocument'] = []
+            brief.data['industryBriefing'] = ''
+            brief.data['attachments'] = []
+    if is_buyer and not is_brief_owner:
+        brief.data['sellers'] = {}
+        brief.data['industryBriefing'] = ''
+
+    # add the domains available for the buyer during RFX brief build
+    domains = []
+    if is_buyer or is_brief_owner:
+        for domain in domain_service.all():
+            domains.append({
+                'id': str(domain.id),
+                'name': domain.name
+            })
+
+    return jsonify(brief=brief.serialize(with_users=False),
+                   brief_response_count=brief_response_count,
+                   invited_seller_count=invited_seller_count,
+                   is_invited_seller=is_invited_seller,
+                   is_brief_owner=is_brief_owner,
+                   is_buyer=is_buyer,
+                   has_responded=has_responded,
+                   domains=domains)
+
+
+@api.route('/brief/<int:brief_id>', methods=['PATCH'])
+@login_required
+@role_required('buyer')
+def update_brief(brief_id):
+    """Update RFX brief (role=buyer)
+    ---
+    tags:
+        - brief
+    definitions:
+        RFXBrief:
+            type: object
+            properties:
+                title:
+                    type: string
+                organisation:
+                    type: string
+                location:
+                    type: array
+                    items:
+                        type: string
+                summary:
+                    type: string
+                industryBriefing:
+                    type: string
+                sellerCategory:
+                    type: string
+                sellers:
+                    type: object
+                attachments:
+                    type: array
+                    items:
+                        type: string
+                requirementsDocument:
+                    type: array
+                    items:
+                        type: string
+                responseTemplate:
+                    type: array
+                    items:
+                        type: string
+                evaluationType:
+                    type: array
+                    items:
+                        type: string
+                proposalType:
+                    type: array
+                    items:
+                        type: string
+                evaluationCriteria:
+                    type: array
+                    items:
+                        type: object
+                includeWeightings:
+                    type: boolean
+                closedAt:
+                    type: string
+                contactNumber:
+                    type: string
+                startDate:
+                    type: string
+                contractLength:
+                    type: string
+                contractExtensions:
+                    type: string
+                budgetRange:
+                    type: string
+                workingArrangements:
+                    type: string
+                securityClearance:
+                    type: string
+    parameters:
+      - name: brief_id
+        in: path
+        type: number
+        required: true
+      - name: body
+        in: body
+        required: true
+        schema:
+            $ref: '#/definitions/RFXBrief'
+    responses:
+        200:
+            description: Brief updated successfully.
+            schema:
+                $ref: '#/definitions/RFXBrief'
+        400:
+            description: Bad request.
+        403:
+            description: Unauthorised to update RFX brief.
+        404:
+            description: Brief not found.
+        500:
+            description: Unexpected error.
+    """
+    brief = briefs.get(brief_id)
+
+    if not brief:
+        not_found("Invalid brief id '{}'".format(brief_id))
+
+    if brief.status != 'draft':
+        abort('Cannot edit a {} brief'.format(brief.status))
+
+    if brief.lot.slug not in ['rfx']:
+        abort('Brief lot not supported for editing')
+
+    if current_user.role == 'buyer':
         brief_user_ids = [user.id for user in brief.users]
-        if hasattr(current_user, 'role') and current_user.role == 'buyer' and current_user.id in brief_user_ids:
-            return jsonify(brief.serialize(with_users=True))
-        else:
-            return forbidden("Unauthorised to view brief or brief does not exist")
-    else:
-        return jsonify(brief.serialize(with_users=False))
+        if current_user.id not in brief_user_ids:
+            return forbidden('Unauthorised to update brief')
+
+    data = get_json_from_request()
+
+    publish = False
+    if 'publish' in data and data['publish']:
+        del data['publish']
+        publish = True
+
+    # validate the RFX JSON request data
+    errors = RFXDataValidator(data).validate(publish=publish)
+    if len(errors) > 0:
+        abort(', '.join(errors))
+
+    if 'evaluationType' in data:
+        if 'Written proposal' not in data['evaluationType']:
+            data['proposalType'] = []
+        if 'Response template' not in data['evaluationType']:
+            data['responseTemplate'] = []
+
+    if 'sellers' in data and len(data['sellers']) > 0:
+        data['sellerSelector'] = 'someSellers' if len(data['sellers']) > 1 else 'oneSeller'
+
+    if publish:
+        brief.publish(closed_at=data['closedAt'])
+        if 'sellers' in brief.data:
+            for seller_code, seller in brief.data['sellers'].iteritems():
+                supplier = suppliers.get_supplier_by_code(seller_code)
+                send_seller_invited_to_rfx_email(brief, supplier)
+
+    brief.data = data
+    briefs.save_brief(brief)
+
+    try:
+        audit_service.log_audit_event(
+            audit_type=AuditTypes.update_brief,
+            user=current_user.email_address,
+            data={
+                'briefId': brief.id,
+                'briefData': brief.data
+            },
+            db_object=brief)
+    except Exception as e:
+        rollbar.report_exc_info()
+
+    return jsonify(brief.serialize(with_users=False))
 
 
 @api.route('/brief/<int:brief_id>', methods=['DELETE'])
@@ -308,6 +625,15 @@ def get_brief_responses(brief_id):
         validation_result = supplier_business.get_supplier_messages(supplier_code, True)
         if len(validation_result.errors) > 0:
             abort(validation_result.errors)
+        # strip data from seller view
+        if 'sellers' in brief.data:
+            brief.data['sellers'] = {}
+        if brief.responses_zip_filesize:
+            brief.responses_zip_filesize = None
+        if 'industryBriefing' in brief.data:
+            brief.data['industryBriefing'] = ''
+        if 'attachments' in brief.data:
+            brief.data['attachments'] = []
 
     if current_user.role == 'buyer' and brief.status != 'closed':
         brief_responses = []
@@ -329,6 +655,51 @@ def upload_brief_response_file(brief_id, supplier_code, slug):
                     })
 
 
+@api.route('/brief/<int:brief_id>/attachments/<slug>', methods=['POST'])
+@login_required
+@role_required('buyer')
+def upload_brief_rfx_attachment_file(brief_id, slug):
+    """Add brief attachments (role=buyer)
+    ---
+    tags:
+        - brief
+    parameters:
+      - name: brief_id
+        in: path
+        type: number
+        required: true
+      - name: slug
+        in: path
+        type: string
+        required: true
+      - name: file
+        in: body
+        required: true
+    responses:
+        200:
+            description: Attachment uploaded successfully.
+        403:
+            description: Unauthorised to update brief.
+        404:
+            description: Brief not found.
+        500:
+            description: Unexpected error.
+    """
+    brief = briefs.get(brief_id)
+
+    if not brief:
+        not_found("Invalid brief id '{}'".format(brief_id))
+
+    brief_user_ids = [user.id for user in brief.users]
+    if current_user.id not in brief_user_ids:
+        return forbidden('Unauthorised to update brief')
+
+    return jsonify({"filename": s3_upload_file_from_request(request, slug,
+                                                            os.path.join(brief.framework.slug, 'attachments',
+                                                                         'brief-' + str(brief_id)))
+                    })
+
+
 @api.route('/brief/<int:brief_id>/respond/documents')
 @login_required
 @role_required('buyer')
@@ -343,7 +714,7 @@ def download_brief_responses(brief_id):
         return forbidden("You can only download documents for closed briefs")
 
     response = ('', 404)
-    if brief.lot.slug == 'digital-professionals' or brief.lot.slug == 'training':
+    if brief.lot.slug == 'digital-professionals' or brief.lot.slug == 'training' or brief.lot.slug == 'rfx':
         try:
             file = s3_download_file(
                 'brief-{}-resumes.zip'.format(brief_id),
@@ -366,6 +737,44 @@ def download_brief_responses(brief_id):
             'attachment; filename="responses-to-requirements-{}.csv"'.format(brief_id))
 
     return response
+
+
+@api.route('/brief/<int:brief_id>/attachments/<slug>', methods=['GET'])
+@login_required
+def download_brief_rfx_attachment(brief_id, slug):
+    """Get brief attachments.
+    ---
+    tags:
+        - brief
+    parameters:
+      - name: brief_id
+        in: path
+        type: number
+        required: true
+      - name: slug
+        in: path
+        type: string
+        required: true
+    responses:
+        200:
+            description: Attachment retrieved successfully.
+        404:
+            description: Attachment not found.
+        500:
+            description: Unexpected error.
+    """
+    brief = briefs.get(brief_id)
+    brief_user_ids = [user.id for user in brief.users]
+
+    if ((hasattr(current_user, 'role') and current_user.role == 'buyer') or
+        ('sellers' in brief.data and hasattr(current_user, 'role') and current_user.role == 'supplier' and
+         str(current_user.supplier_code) in brief.data['sellers'].keys())):
+        file = s3_download_file(slug, os.path.join(brief.framework.slug, 'attachments',
+                                                   'brief-' + str(brief_id)))
+        mimetype = mimetypes.guess_type(slug)[0] or 'binary/octet-stream'
+        return Response(file, mimetype=mimetype)
+    else:
+        return not_found('File not found')
 
 
 @api.route('/brief/<int:brief_id>/respond/documents/<int:supplier_code>/<slug>', methods=['GET'])

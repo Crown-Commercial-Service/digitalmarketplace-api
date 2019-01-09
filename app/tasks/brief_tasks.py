@@ -48,7 +48,8 @@ def create_responses_zip_for_closed_briefs():
             Brief.responses_zip_filesize.is_(None), (
                 or_(
                     Lot.slug == 'digital-professionals',
-                    Lot.slug == 'training'
+                    Lot.slug == 'training',
+                    Lot.slug == 'rfx'
                 )
             ),
             Framework.slug == 'digital-marketplace')

@@ -256,3 +256,112 @@ def test_withdraw_already_withdrawn_brief_response(client,
             content_type='application/json'
         )
         assert res.status_code == 400
+
+
+rfx_data = {
+    'title': 'TEST',
+    'organisation': 'ABC',
+    'summary': 'TEST',
+    'workingArrangements': 'TEST',
+    'location': [
+        'New South Wales'
+    ],
+    'sellerCategory': '1',
+    'sellers': {
+        '1': 'Test Supplier1'
+    },
+    'evaluationType': [
+        'Response template',
+        'Written proposal'
+    ],
+    'proposalType': [
+        'Breakdown of costs'
+    ],
+    'requirementsDocument': [
+        'TEST.pdf'
+    ],
+    'responseTemplate': [
+        'TEST2.pdf'
+    ],
+    'startDate': 'ASAP',
+    'contractLength': 'TEST',
+    'includeWeightings': True,
+    'evaluationCriteria': [
+        {
+            'criteria': 'TEST',
+            'weighting': '55'
+        },
+        {
+            'criteria': 'TEST 2',
+            'weighting': '45'
+        }
+    ],
+    'contactNumber': '0263635544'
+}
+
+
+def test_rfx_invited_seller_can_respond(client, suppliers, supplier_user, supplier_domains, buyer_user, rfx_brief):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = rfx_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post(
+        '/2/brief/1/respond',
+        data=json.dumps({
+            'respondToEmailAddress': 'supplier@email.com',
+            'attachedDocumentURL': [
+                'test.pdf'
+            ]
+        }),
+        content_type='application/json'
+    )
+    assert res.status_code == 201
+
+
+def test_rfx_non_invited_seller_can_not_respond(client, suppliers, supplier_user, supplier_domains, buyer_user,
+                                                rfx_brief):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = rfx_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+    data['sellers'] = {
+        '2': 'Test Supplier1'
+    }
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post(
+        '/2/brief/1/respond',
+        data=json.dumps({
+            'respondToEmailAddress': 'supplier@email.com',
+            'respondToPhone': '0263636363',
+            'attachedDocumentURL': [
+                'test.pdf'
+            ]
+        }),
+        content_type='application/json'
+    )
+    assert res.status_code == 403

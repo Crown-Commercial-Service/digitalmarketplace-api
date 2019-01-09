@@ -14,13 +14,20 @@ def send_brief_response_received_email(supplier, brief, brief_response):
         TEMPLATE_FILENAME = 'brief_response_submitted_outcome.md'
     elif brief.lot.slug == 'training':
         TEMPLATE_FILENAME = 'brief_response_submitted_training.md'
+    elif brief.lot.slug == 'rfx':
+        TEMPLATE_FILENAME = 'brief_response_submitted_rfx.md'
     else:
         TEMPLATE_FILENAME = 'brief_response_submitted.md'
 
     to_address = brief_response.data['respondToEmailAddress']
     specialist_name = brief_response.data.get('specialistName', None)
 
-    brief_url = current_app.config['FRONTEND_ADDRESS'] + '/' + brief.framework.slug + '/opportunities/' + str(brief.id)
+    if brief.lot.slug == 'rfx':
+        brief_url = current_app.config['FRONTEND_ADDRESS'] + '/2/' + brief.framework.slug + '/opportunities/' \
+            + str(brief.id)
+    else:
+        brief_url = current_app.config['FRONTEND_ADDRESS'] + '/' + brief.framework.slug + '/opportunities/' \
+            + str(brief.id)
     attachment_url = current_app.config['FRONTEND_ADDRESS'] +\
         '/api/2/brief/' + str(brief.id) + '/respond/documents/' + str(supplier.code) + '/'
 
@@ -153,3 +160,42 @@ def send_seller_requested_feedback_from_buyer_email(brief):
             "subject": subject
         },
         db_object=brief)
+
+
+def send_seller_invited_to_rfx_email(brief, invited_supplier):
+    from app.api.services import audit_service, audit_types  # to circumvent circular dependency
+
+    to_addresses = []
+    if 'contact_email' in invited_supplier.data:
+        to_addresses = [invited_supplier.data['contact_email']]
+    elif 'email' in invited_supplier.data:
+        to_addresses = [invited_supplier.data['email']]
+
+    if len(to_addresses) > 0:
+        email_body = render_email_template(
+            'brief_rfx_invite_seller.md',
+            frontend_url=current_app.config['FRONTEND_ADDRESS'],
+            brief_name=brief.data['title'],
+            brief_id=brief.id
+        )
+
+        subject = "You have been invited to respond to an opportunity"
+
+        send_or_handle_error(
+            to_addresses,
+            email_body,
+            subject,
+            current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+            current_app.config['DM_GENERIC_SUPPORT_NAME'],
+            event_description_for_errors='seller_invited_to_rfx_opportunity'
+        )
+
+        audit_service.log_audit_event(
+            audit_type=audit_types.seller_invited_to_rfx_opportunity,
+            user='',
+            data={
+                "to_addresses": ', '.join(to_addresses),
+                "email_body": email_body,
+                "subject": subject
+            },
+            db_object=brief)

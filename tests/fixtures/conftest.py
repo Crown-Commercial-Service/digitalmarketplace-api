@@ -218,6 +218,24 @@ def supplier_user(app, request, suppliers):
 
 
 @pytest.fixture()
+def buyer_user(app, request):
+    with app.app_context():
+        user = User.query.order_by(User.id.desc()).first()
+        id = user.id + 1 if user else 1
+        db.session.add(User(
+            id=id,
+            email_address='me@digital.gov.au',
+            name=fake.name(),
+            password=encryption.hashpw('test'),
+            active=True,
+            role='buyer',
+            password_changed_at=utcnow()
+        ))
+        db.session.commit()
+        yield User.query.get(id)
+
+
+@pytest.fixture()
 def application_user(app, request, applications):
     with app.app_context():
         db.session.add(User(
@@ -299,3 +317,23 @@ def assessments(app, request, supplier_domains, briefs):
 
         db.session.commit()
         yield Assessment.query.all()
+
+
+@pytest.fixture()
+def rfx_brief(client, app, request, buyer_user):
+    params = request.param if hasattr(request, 'param') else {}
+    data = params['data'] if 'data' in params else {'title': 'RFX TEST'}
+    with app.app_context():
+        framework = Framework.query.filter(Framework.slug == 'digital-marketplace').first()
+        framework.status = 'live'
+        db.session.add(framework)
+        db.session.commit()
+        db.session.add(Brief(
+            id=1,
+            data=data,
+            framework=Framework.query.filter(Framework.slug == "digital-marketplace").first(),
+            lot=Lot.query.filter(Lot.slug == 'rfx').first(),
+            users=[buyer_user]
+        ))
+        db.session.commit()
+        yield Brief.query.all()

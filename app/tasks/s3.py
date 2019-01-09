@@ -34,8 +34,8 @@ def create_responses_zip(brief_id):
     if not responses:
         raise CreateResponsesZipException('There were no respones for brief id {}'.format(brief_id))
 
-    if not (brief.lot.slug == 'digital-professionals' or brief.lot.slug == 'training'):
-        raise CreateResponsesZipException('Brief id {} is not a specialist brief'.format(brief_id))
+    if not (brief.lot.slug == 'digital-professionals' or brief.lot.slug == 'training' or brief.lot.slug == 'rfx'):
+        raise CreateResponsesZipException('Brief id {} is not a compatible lot'.format(brief_id))
 
     BUCKET_NAME = getenv('S3_BUCKET_NAME')
     s3 = boto3.resource(

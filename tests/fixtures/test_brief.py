@@ -1,11 +1,14 @@
+# -*- coding: utf-8 -*-
 import json
 import pytest
 
 from app import encryption
 from app.models import Brief, Lot, db, utcnow, Supplier, SupplierFramework, Contact, SupplierDomain, User,\
-    Framework, UserFramework, AuditEvent
+    Framework, UserFramework, AuditEvent, FrameworkLot
+from app.api.business.validators import RFXDataValidator
 from faker import Faker
 from dmapiclient.audit import AuditTypes
+from workdays import workday
 import pendulum
 
 fake = Faker()
@@ -358,7 +361,7 @@ def test_get_brief(client, supplier_user, supplier_domains, briefs, assessments,
     )
     data = json.loads(res.get_data(as_text=True))
     assert res.status_code == 200
-    assert data['id'] == 1
+    assert data['brief']['id'] == 1
 
 
 @pytest.fixture()
@@ -560,3 +563,582 @@ def test_404_is_returned_when_deleting_a_missing_brief(client, overview_briefs):
     res = client.delete('/2/brief/10', content_type='application/json')
 
     assert res.status_code == 404
+
+
+def test_rfx_brief_create_success_and_visible_to_author(client, buyer_user):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post('/2/brief/rfx', content_type='application/json')
+    assert res.status_code == 200
+
+    response = json.loads(res.data)
+    assert response['id'] == 1
+
+    res = client.get('/2/brief/1', content_type='application/json')
+    assert res.status_code == 200
+
+
+rfx_data = {
+    'title': 'TEST',
+    'organisation': 'ABC',
+    'summary': 'TEST',
+    'workingArrangements': 'TEST',
+    'location': [
+        'New South Wales'
+    ],
+    'sellerCategory': '1',
+    'sellers': {
+        '1': 'Seller1'
+    },
+    'evaluationType': [
+        'Response template',
+        'Written proposal'
+    ],
+    'proposalType': [
+        'Breakdown of costs',
+        'Résumés'
+    ],
+    'requirementsDocument': [
+        'TEST.pdf'
+    ],
+    'responseTemplate': [
+        'TEST2.pdf'
+    ],
+    'attachments': [
+        'TEST3.pdf'
+    ],
+    'industryBriefing': 'TEST',
+    'startDate': 'ASAP',
+    'contractLength': 'TEST',
+    'includeWeightings': True,
+    'evaluationCriteria': [
+        {
+            'criteria': 'TEST',
+            'weighting': '55'
+        },
+        {
+            'criteria': 'TEST 2',
+            'weighting': '45'
+        }
+    ],
+    'contactNumber': '0263635544'
+}
+
+
+def test_rfx_field_access_as_owner(client, supplier_domains, suppliers, buyer_user, rfx_brief):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = rfx_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    response = json.loads(res.data)
+
+    res = client.get('/2/brief/1')
+    response = json.loads(res.data)
+    assert response['brief']['industryBriefing'] == 'TEST'
+    assert response['brief']['attachments'] == ['TEST3.pdf']
+    assert response['brief']['sellers'] == {'1': 'Seller1'}
+    assert response['brief']['evaluationType'] == ['Response template', 'Written proposal']
+    assert response['brief']['proposalType'] == ['Breakdown of costs', u'R\xe9sum\xe9s']
+    assert response['brief']['requirementsDocument'] == ['TEST.pdf']
+    assert response['brief']['responseTemplate'] == ['TEST2.pdf']
+
+
+def test_rfx_field_access_as_invited_seller(client, supplier_domains, suppliers, buyer_user, rfx_brief, supplier_user):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = rfx_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.get('/2/brief/1')
+    response = json.loads(res.data)
+    assert response['brief']['industryBriefing'] == 'TEST'
+    assert response['brief']['attachments'] == ['TEST3.pdf']
+    assert response['brief']['sellers'] == {}
+    assert response['brief']['evaluationType'] == ['Response template', 'Written proposal']
+    assert response['brief']['proposalType'] == ['Breakdown of costs', u'R\xe9sum\xe9s']
+    assert response['brief']['requirementsDocument'] == ['TEST.pdf']
+    assert response['brief']['responseTemplate'] == ['TEST2.pdf']
+
+
+def test_rfx_field_access_as_non_invited_seller(client, supplier_domains, suppliers, buyer_user, rfx_brief,
+                                                supplier_user):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = rfx_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['sellers'] = {'2': 'Test Supplier2'}
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.get('/2/brief/1')
+    response = json.loads(res.data)
+    assert response['brief']['industryBriefing'] == ''
+    assert response['brief']['attachments'] == []
+    assert response['brief']['sellers'] == {}
+    assert response['brief']['evaluationType'] == []
+    assert response['brief']['proposalType'] == []
+    assert response['brief']['requirementsDocument'] == []
+    assert response['brief']['responseTemplate'] == []
+
+
+def test_rfx_field_access_as_anonymous_user(client, supplier_domains, suppliers, buyer_user, rfx_brief):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = rfx_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+
+    res = client.get('/2/logout')
+    res = client.get('/2/brief/1')
+    response = json.loads(res.data)
+    assert response['brief']['industryBriefing'] == ''
+    assert response['brief']['evaluationType'] == []
+    assert response['brief']['responseTemplate'] == []
+    assert response['brief']['requirementsDocument'] == []
+    assert response['brief']['industryBriefing'] == ''
+    assert response['brief']['attachments'] == []
+    assert response['brief']['sellers'] == {}
+
+
+def test_rfx_publish_success_2_days_correct_dates(client, supplier_domains, suppliers, buyer_user, rfx_brief):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = rfx_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+    response = json.loads(res.data)
+    assert response['closedAt'] == pendulum.today().add(days=2).format('%Y-%m-%d')
+    question_closing_date = pendulum.instance(workday(pendulum.today(), 1)).format('%Y-%m-%d')
+    if question_closing_date > response['closedAt']:
+        question_closing_date = pendulum.today().format('%Y-%m-%d')
+    assert response['dates']['questions_closing_date'] == question_closing_date
+
+
+def test_rfx_publish_failure_next_day(client, buyer_user, supplier_domains, suppliers, rfx_brief):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = rfx_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today().add(days=1).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 400
+
+
+@pytest.fixture()
+def get_day_count(request):
+    params = request.param if hasattr(request, 'param') else {}
+    day_count = params['day_count'] if 'day_count' in params else 0
+    return day_count
+
+
+@pytest.mark.parametrize(
+    'get_day_count',
+    [{'day_count': 3}, {'day_count': 4}, {'day_count': 5}, {'day_count': 6}, {'day_count': 7}], indirect=True
+)
+def test_rfx_publish_success_under_one_week_correct_dates(client, buyer_user, supplier_domains, suppliers, rfx_brief,
+                                                          get_day_count):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = rfx_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(rfx_data))
+    assert res.status_code == 200
+    response = json.loads(res.data)
+    assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+    question_closing_date = pendulum.instance(workday(pendulum.today(), 2)).format('%Y-%m-%d')
+    if question_closing_date > response['closedAt']:
+        question_closing_date = response['closedAt']
+    assert response['dates']['questions_closing_date'] == question_closing_date
+
+
+@pytest.mark.parametrize(
+    'get_day_count',
+    [{'day_count': 8}, {'day_count': 9}, {'day_count': 10}, {'day_count': 22}], indirect=True
+)
+def test_rfx_publish_success_over_one_week_correct_dates(client, buyer_user, supplier_domains, suppliers, rfx_brief,
+                                                         get_day_count):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = rfx_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+    response = json.loads(res.data)
+    assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+    assert response['dates']['questions_closing_date'] == (
+        pendulum.instance(workday(pendulum.today(), 5)).format('%Y-%m-%d')
+    )
+
+
+def test_rfx_brief_create_failure_as_seller(client, supplier_user):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post('/2/brief/rfx', content_type='application/json')
+    assert res.status_code == 403
+
+
+def test_rfx_brief_update_success(client, buyer_user, rfx_brief):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps({
+        'closedAt': pendulum.today().add(weeks=2).format('%Y-%m-%d')
+    }))
+    assert res.status_code == 200
+    response = json.loads(res.data)
+    assert response['closedAt'] == pendulum.today().add(weeks=2).format('%Y-%m-%d')
+
+
+def test_rfx_brief_update_failure_closing_date_invalid(client, buyer_user, rfx_brief):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps({
+        'publish': True,
+        'closedAt': 'baddate'
+    }))
+    assert res.status_code == 400
+
+
+def test_rfx_brief_update_failure_unknown_property(client, buyer_user, rfx_brief):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps({
+        'publish': True,
+        'xxx': 'yyy'
+    }))
+    assert res.status_code == 400
+
+
+def test_rfx_validate_location():
+    data = {
+        'location': [
+            'New South Wales',
+            'Queensland'
+        ]
+    }
+    valid = RFXDataValidator(data).validate_location()
+    assert valid
+
+    data = {
+        'location': []
+    }
+    valid = RFXDataValidator(data).validate_location()
+    assert not valid
+
+    data = {
+        'location': [
+            'Spain'
+        ]
+    }
+    valid = RFXDataValidator(data).validate_location()
+    assert not valid
+
+
+def test_rfx_validate_seller_category(domains):
+    data = {
+        'sellerCategory': '1'
+    }
+    valid = RFXDataValidator(data).validate_seller_category()
+    assert valid
+
+    data = {
+        'sellerCategory': '999'
+    }
+    valid = RFXDataValidator(data).validate_seller_category()
+    assert not valid
+
+    data = {
+        'sellerCategory': ''
+    }
+    valid = RFXDataValidator(data).validate_seller_category()
+    assert not valid
+
+
+def test_rfx_validate_sellers(supplier_domains, suppliers):
+    data = {
+        'sellerCategory': '1',
+        'sellers': {
+            '1': {
+                'name': 'seller1'
+            }
+        }
+    }
+    valid = RFXDataValidator(data).validate_sellers()
+    assert valid
+
+    data = {
+        'sellerCategory': '1',
+        'sellers': {
+            '999': {
+                'name': 'seller1'
+            }
+        }
+    }
+    valid = RFXDataValidator(data).validate_sellers()
+    assert not valid
+
+    data = {
+        'sellerCategory': '999',
+        'sellers': {
+            '1': {
+                'name': 'seller1'
+            }
+        }
+    }
+    valid = RFXDataValidator(data).validate_sellers()
+    assert not valid
+
+
+def test_rfx_validate_response_formats():
+    data = {
+        'evaluationType': [
+            'Response template',
+            'Written proposal',
+            'Presentation'
+        ]
+    }
+    valid = RFXDataValidator(data).validate_response_formats()
+    assert valid
+
+    data = {
+        'evaluationType': ''
+    }
+    valid = RFXDataValidator(data).validate_response_formats()
+    assert not valid
+
+    data = {
+        'evaluationType': [
+            'Response template',
+            'Written proposal',
+            'ABC'
+        ]
+    }
+    valid = RFXDataValidator(data).validate_response_formats()
+    assert not valid
+
+
+def test_rfx_validate_proposal_type():
+    data = {
+        'evaluationType': [
+            'Written proposal'
+        ],
+        'proposalType': [
+            'Breakdown of costs',
+            'Case study',
+            'References',
+            'Résumés'.decode('utf-8')
+        ]
+    }
+    valid = RFXDataValidator(data).validate_proposal_type()
+    assert valid
+
+    data = {
+        'evaluationType': [
+            'Response template'
+        ],
+        'proposalType': []
+    }
+    valid = RFXDataValidator(data).validate_proposal_type()
+    assert valid
+
+    data = {
+        'evaluationType': [
+            'Written proposal'
+        ],
+        'proposalType': []
+    }
+    valid = RFXDataValidator(data).validate_proposal_type()
+    assert not valid
+
+    data = {
+        'evaluationType': [
+            'Written proposal'
+        ],
+        'proposalType': [
+            'ABC'
+        ]
+    }
+    valid = RFXDataValidator(data).validate_proposal_type()
+    assert not valid
+
+
+def test_rfx_validate_evaluation_criteria():
+    data = {
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST',
+                'weighting': '55'
+            },
+            {
+                'criteria': 'TEST 2',
+                'weighting': '45'
+            }
+        ]
+    }
+    valid = RFXDataValidator(data).validate_evaluation_criteria()
+    assert valid
+
+    data = {
+        'includeWeightings': False,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST'
+            },
+            {
+                'criteria': 'TEST 2'
+            }
+        ]
+    }
+    valid = RFXDataValidator(data).validate_evaluation_criteria()
+    assert valid
+
+    data = {
+        'includeWeightings': False,
+        'evaluationCriteria': [
+            {
+                'criteria': ''
+            }
+        ]
+    }
+    valid = RFXDataValidator(data).validate_evaluation_criteria()
+    assert not valid
+
+    data = {
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST'
+            }
+        ]
+    }
+    valid = RFXDataValidator(data).validate_evaluation_criteria()
+    assert not valid
+
+    data = {
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST',
+                'weighting': ''
+            }
+        ]
+    }
+    valid = RFXDataValidator(data).validate_evaluation_criteria()
+    assert not valid
+
+    data = {
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST',
+                'weighting': '0'
+            }
+        ]
+    }
+    valid = RFXDataValidator(data).validate_evaluation_criteria()
+    assert not valid
+
+    data = {
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST',
+                'weighting': '80'
+            },
+            {
+                'criteria': 'TEST 2',
+                'weighting': '30'
+            },
+        ]
+    }
+    valid = RFXDataValidator(data).validate_evaluation_criteria()
+    assert not valid
+
+
+def test_rfx_validate_closed_at():
+    data = {
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=21).format('%Y-%m-%d')
+    }
+    valid = RFXDataValidator(data).validate_closed_at()
+    assert valid
+
+    data = {
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+    }
+    valid = RFXDataValidator(data).validate_closed_at()
+    assert valid
+
+    data = {
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=1).format('%Y-%m-%d')
+    }
+    valid = RFXDataValidator(data).validate_closed_at()
+    assert not valid
+
+    data = {
+        'closedAt': ''
+    }
+    valid = RFXDataValidator(data).validate_closed_at()
+    assert not valid

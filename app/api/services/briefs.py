@@ -62,9 +62,12 @@ class BriefsService(Service):
         team_brief_ids = db.session.query(BriefUser.brief_id).filter(BriefUser.user_id.in_(team_ids))
 
         results = (db.session.query(Brief.id, Brief.data['title'].astext.label('name'), Brief.closed_at, Brief.status,
-                                    Framework.slug.label('framework'), Lot.slug.label('lot'), User.name.label('author'))
+                                    Framework.slug.label('framework'), Lot.slug.label('lot'), User.name.label('author'),
+                                    func.count(BriefResponse.id).label('applications'))
                    .join(BriefUser, Framework, Lot, User)
                    .filter(Brief.id.in_(team_brief_ids), or_(Brief.status == 'live', Brief.status == 'closed'))
+                   .outerjoin(BriefResponse, Brief.id == BriefResponse.brief_id)
+                   .group_by(Brief.id, Framework.slug, Lot.slug, User.name)
                    .order_by(sql_case([
                        (Brief.status == 'live', 1),
                        (Brief.status == 'closed', 2)]), Brief.closed_at.desc().nullslast(), Brief.id.desc())
@@ -88,7 +91,7 @@ class BriefsService(Service):
         location = location or []
         status_filters = [x for x in status if x in ['live', 'closed']]
         open_to_filters = [x for x in open_to if x in ['all', 'selected', 'one']]
-        brief_type_filters = [x for x in brief_type if x in ['innovation', 'outcomes', 'training', 'specialists']]
+        brief_type_filters = [x for x in brief_type if x in ['outcomes', 'training', 'specialists']]
         location_filters = [x for x in location if x in ['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA', 'Remote']]
 
         query = (db.session
@@ -96,9 +99,11 @@ class BriefsService(Service):
                           Brief.data['organisation'].astext.label('company'),
                           Brief.data['location'].label('location'),
                           Brief.data['sellerSelector'].astext.label('openTo'),
-                          func.count(BriefResponse.id).label('submissions'))
+                          func.count(BriefResponse.id).label('submissions'),
+                          Lot.slug.label('lot'))
                    .outerjoin(BriefResponse, Brief.id == BriefResponse.brief_id)
-                   .group_by(Brief.id))
+                   .outerjoin(Lot)
+                   .group_by(Brief.id, Lot.id))
 
         if status_filters:
             cond = or_(*[Brief.status == x for x in status_filters])
@@ -129,13 +134,13 @@ class BriefsService(Service):
             query = query.filter(cond)
 
         if brief_type_filters:
+            lots = db.session.query(Lot).all()
             switcher = {
-                'innovation': '0',
-                'outcomes': db.session.query(Lot.id).filter(Lot.slug == 'digital-outcome').first(),
-                'training': db.session.query(Lot.id).filter(Lot.slug == 'training').first(),
-                'specialists': db.session.query(Lot.id).filter(Lot.slug == 'digital-professionals').first()
+                'outcomes': [x.id for x in lots if x.slug in ['digital-outcome', 'rfx']],
+                'training': [x.id for x in lots if x.slug == 'training'],
+                'specialists': [x.id for x in lots if x.slug == 'digital-professionals']
             }
-            lot_cond = or_(*[Brief._lot_id == switcher.get(x) for x in brief_type_filters])
+            lot_cond = or_(*[Brief._lot_id.in_(switcher.get(x)) for x in brief_type_filters])
 
             if 'training' in brief_type_filters:
                 # this is a list of historic prod brief ids we want to show when the training filter is active
@@ -191,3 +196,21 @@ class BriefsService(Service):
             'open_to_one': brief_query.filter(Brief.data['sellerSelector'].astext == 'oneSellers').count(),
             'recent_brief_time_since': (timesince(most_recent_brief.published_at)) if most_recent_brief else ''
         }
+
+    def create_brief(self, user, framework, lot, data=None):
+        if not data:
+            data = {}
+        brief = Brief(
+            users=[user],
+            framework=framework,
+            lot=lot,
+            data=data
+        )
+        db.session.add(brief)
+        db.session.commit()
+        return brief
+
+    def save_brief(self, brief):
+        db.session.add(brief)
+        db.session.commit()
+        return brief

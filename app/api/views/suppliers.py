@@ -134,8 +134,13 @@ def get_suppliers():
         - name: keyword
           in: query
           type: string
-          required: false
+          required: true
           description: the keyword to search on
+        - name: category
+          in: query
+          type: string
+          required: false
+          description: the seller category to filter on
     responses:
         200:
             description: a list of matching suppliers
@@ -145,24 +150,16 @@ def get_suppliers():
             description: invalid request data, such as a missing keyword param
     """
     keyword = request.args.get('keyword') or ''
+    category = request.args.get('category') or ''
     if keyword:
-        results = suppliers.get_suppliers_by_name_keyword(keyword)
+        results = suppliers.get_suppliers_by_name_keyword(keyword,
+                                                          framework_slug='digital-marketplace',
+                                                          category=category)
         supplier_results = []
         for result in results:
             supplier = {}
             supplier['name'] = result.name
             supplier['code'] = result.code
-
-            try:
-                supplier['panel'] = 'Digital Marketplace' in [f.framework.name for f in result.frameworks]
-            except (TypeError, KeyError):
-                supplier['panel'] = False
-
-            try:
-                supplier['sme'] = result.data['seller_type']['sme']
-            except (TypeError, KeyError):
-                supplier['sme'] = False
-
             supplier_results.append(supplier)
 
         return jsonify(sellers=supplier_results), 200

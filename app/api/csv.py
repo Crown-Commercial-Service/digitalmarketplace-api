@@ -20,19 +20,27 @@ def generate_brief_responses_csv(brief, responses):
                          i < len(r.data.get('niceToHaveRequirements', [])) else
                          '' for i in range(len(nth_req_names))]
 
-        answers.update({'Supplier': r.supplier.name})
+        answers.update({'Seller name': r.supplier.name})
         answers.update({'Email': r.data.get('respondToEmailAddress', 'UNKNOWN')})
+
         if brief.lot.slug == 'digital-professionals':
             answers.update({'Specialist Name': r.data.get('specialistName', 'UNKNOWN')})
-
-        answers.update({'Availability Date': r.data.get('availability', 'UNKNOWN')})
-
-        if brief.lot.slug == 'training':
-            answers.update({'Phone number': r.data.get('respondToPhone', '')})
-        else:
+            answers.update({'Availability Date': r.data.get('availability', 'UNKNOWN')})
             answers.update({'Day rate': r.data.get('dayRate', '')})
-        answers.update(zip(ess_req_names, ess_responses))
-        answers.update(zip(nth_req_names, nth_responses))
+        elif brief.lot.slug == 'digital-outcome':
+            answers.update({'Availability Date': r.data.get('availability', 'UNKNOWN')})
+            answers.update({'Day rate': r.data.get('dayRate', '')})
+        elif brief.lot.slug == 'training':
+            answers.update({'Availability Date': r.data.get('availability', 'UNKNOWN')})
+            answers.update({'Phone number': r.data.get('respondToPhone', '')})
+        elif brief.lot.slug == 'rfx':
+            answers.update({'Phone number': r.data.get('respondToPhone', '')})
+
+        answers.update({'ABN': r.supplier.abn})
+
+        if brief.lot.slug in ['digital-professionals', 'digital-outcome', 'training']:
+            answers.update(zip(ess_req_names, ess_responses))
+            answers.update(zip(nth_req_names, nth_responses))
 
         for k, v in answers.items():
             answers[k] = csv_cell_sanitize(v)

@@ -37,18 +37,33 @@ class SuppliersService(Service):
             .one_or_none()
         )
 
-    def get_suppliers_by_name_keyword(self, keyword):
-        return (db.session.query(Supplier)
-                .filter(Supplier.name.ilike('%{}%'.format(keyword.encode('utf-8'))))
-                .filter(Supplier.status != 'deleted')
-                .order_by(Supplier.name.asc())
-                .options(
-                    joinedload(Supplier.frameworks),
-                    joinedload('frameworks.framework'),
-                    noload('frameworks.framework.lots'),
-                    raiseload('*'))
-                .limit(20)
-                .all())
+    def get_suppliers_by_name_keyword(self, keyword, framework_slug=None, category=None):
+        query = (db.session.query(Supplier)
+                 .filter(Supplier.name.ilike('%{}%'.format(keyword.encode('utf-8'))))
+                 .filter(Supplier.status != 'deleted')
+                 .options(
+                     joinedload(Supplier.frameworks),
+                     joinedload('frameworks.framework'),
+                     noload('frameworks.framework.lots'),
+                     raiseload('*')))
+        if framework_slug:
+            query = query.outerjoin(SupplierFramework).outerjoin(Framework)
+            query = query.filter(Framework.slug == framework_slug)
+        if category:
+            query = query.outerjoin(SupplierDomain)
+            query = query.filter(SupplierDomain.domain_id == category).filter(SupplierDomain.status == 'assessed')
+        query.order_by(Supplier.name.asc()).limit(20)
+        return query.all()
+
+    def get_supplier_assessed_status(self, supplier_id, category):
+        return (
+            db
+            .session
+            .query(SupplierDomain.status)
+            .filter(SupplierDomain.domain_id == category)
+            .filter(SupplierDomain.supplier_id == supplier_id)
+            .scalar()
+        )
 
     def get_metrics(self):
         supplier_count = (

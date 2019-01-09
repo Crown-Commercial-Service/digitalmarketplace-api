@@ -13,7 +13,8 @@ from .users import send_existing_seller_notification, send_existing_application_
 from .briefs import (
     send_brief_response_received_email,
     send_brief_closed_email,
-    send_seller_requested_feedback_from_buyer_email
+    send_seller_requested_feedback_from_buyer_email,
+    send_seller_invited_to_rfx_email
 )  # noqa
 from .dreamail import (
     send_dreamail
