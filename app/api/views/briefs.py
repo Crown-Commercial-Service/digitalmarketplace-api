@@ -23,6 +23,7 @@ from app.api.services import (audit_service,
                               frameworks_service,
                               domain_service)
 from app.emails import send_brief_response_received_email, render_email_template, send_seller_invited_to_rfx_email
+from app.api.helpers import notify_team
 from dmapiclient.audit import AuditTypes
 from dmutils.file import s3_download_file, s3_upload_file_from_request
 
@@ -122,6 +123,16 @@ def _can_do_brief_response(brief_id):
             abort("Brief response already exists for supplier '{}'".format(supplier.code))
 
     return supplier, brief
+
+
+def _notify_team_brief_published(brief_title, brief_org, user_name, user_email, url):
+    notification_message = '{}\n{}\nBy: {} ({})'.format(
+        brief_title,
+        brief_org,
+        user_name,
+        user_email
+    )
+    notify_team('A buyer has published a new opportunity', notification_message, url)
 
 
 @api.route('/brief/rfx', methods=['POST'])
@@ -422,6 +433,20 @@ def update_brief(brief_id):
             for seller_code, seller in brief.data['sellers'].iteritems():
                 supplier = suppliers.get_supplier_by_code(seller_code)
                 send_seller_invited_to_rfx_email(brief, supplier)
+        try:
+            brief_url_external = '{}/2/digital-marketplace/opportunities/{}'.format(
+                current_app.config['FRONTEND_ADDRESS'],
+                brief_id
+            )
+            _notify_team_brief_published(
+                brief.data['title'],
+                brief.data['organisation'],
+                current_user.name,
+                current_user.email_address,
+                brief_url_external
+            )
+        except Exception as e:
+            pass
 
     brief.data = data
     briefs.save_brief(brief)
