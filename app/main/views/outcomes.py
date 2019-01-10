@@ -1,6 +1,6 @@
 import datetime
 
-from flask import abort
+from flask import abort, current_app, request
 from dmapiclient.audit import AuditTypes
 
 from .. import main
@@ -9,7 +9,9 @@ from ...models import AuditEvent, Outcome
 
 from ...utils import (
     get_json_from_request,
+    get_valid_page_or_1,
     json_has_required_keys,
+    paginated_result_response,
     single_result_response,
     validate_and_return_updater_request,
 )
@@ -84,3 +86,32 @@ def update_outcome(outcome_id):
     db.session.commit()
 
     return single_result_response("outcome", outcome), 200
+
+
+@main.route("/outcomes", methods=("GET",))
+def list_outcomes():
+    # Because the external_id is random, it's probably best to, by default, do primary ordering by `completed_at`.
+    # We do this because we want to minimize the amount of "shifting between pages" that happens to results as a result
+    # of the presence/absence of Outcomes appearing in earlier pages (in rare curcumstances this can cause results to
+    # "fall between the cracks" when a client is iterating through pages).
+    # `completed_at` is assigned fairly monotonically and once an Outcome has a `completed_at` value set, it's fairly
+    # permanent. Outcomes without `completed_at` set are going to be more volatile and so are put at the end.
+    # `external_id` is used as the tie-breaker - it's permanent, but anything but monotonic in assignment.
+
+    outcomes = Outcome.query.order_by(Outcome.completed_at.nullslast(), Outcome.external_id)
+
+    page = get_valid_page_or_1()
+
+    completed = request.args.get("completed")
+    if completed is not None and completed.lower() in ("false", "true"):
+        completed_bool = (completed.lower() == "true")
+        outcomes = outcomes.filter(Outcome.completed_at.is_(None) != completed_bool)
+
+    return paginated_result_response(
+        result_name="outcomes",
+        results_query=outcomes,
+        page=page,
+        per_page=current_app.config['DM_API_OUTCOMES_PAGE_SIZE'],
+        endpoint='.list_outcomes',
+        request_args=request.args,
+    )

@@ -65,11 +65,6 @@ class Outcome(db.Model):
         nullable=True,
     )
 
-    # a concise wrapper to reduce the ugliness of the workaround for https://bitbucket.org/zzzeek/sqlalchemy/issues/3999
-    # (which should no longer be needed once we switch to sqlalchemy 1.2)
-    def c(expression):
-        return db.cast(expression, db.Boolean)
-
     # The following constraints enforce this general scheme:
     # All Outcomes must point at either a DirectAwardProject OR a Brief. If the Outcome's "result" is
     # "awarded", then a DirectAwardProject-based Outcome must also point at the DirectAwardProject's active
@@ -89,24 +84,24 @@ class Outcome(db.Model):
                 # if awarded, the "null-ness" of direct_award_project_id, direct_award_search_id &
                 # direct_award_archived_service_id must be the same
                 (result == "awarded", sql_and(
-                    (c(direct_award_project_id.is_(None)) == c(direct_award_search_id.is_(None))),
-                    (c(direct_award_project_id.is_(None)) == c(direct_award_archived_service_id.is_(None))),
+                    (direct_award_project_id.is_(None) == direct_award_search_id.is_(None)),
+                    (direct_award_project_id.is_(None) == direct_award_archived_service_id.is_(None)),
                 )),
             ),
             # if not awarded, we shouldn't have direct_award_search_id or direct_award_archived_service_id set
-            else_=sql_and(c(direct_award_search_id.is_(None)), c(direct_award_archived_service_id.is_(None))),
+            else_=sql_and(direct_award_search_id.is_(None), direct_award_archived_service_id.is_(None)),
         ), name="ck_outcomes_direct_award_keys_nullable"),
         db.CheckConstraint(sql_case(
             (
                 # if awarded, the "null-ness" of brief_response_id and brief_id must be the same
-                (result == "awarded", c(brief_response_id.is_(None)) == c(brief_id.is_(None)),),
+                (result == "awarded", brief_response_id.is_(None) == brief_id.is_(None),),
             ),
             # if not awarded, brief_response_id should not be set
-            else_=c(brief_response_id.is_(None)),
+            else_=brief_response_id.is_(None),
         ), name="ck_outcomes_brief_keys_nullable"),
         # the "null-ness" of direct_award_project_id and brief_id must *never* be the same
         db.CheckConstraint(
-            (c(direct_award_project_id.is_(None)) != c(brief_id.is_(None))),
+            (direct_award_project_id.is_(None) != brief_id.is_(None)),
             name="ck_outcomes_either_brief_xor_direct_award",
         ),
         # only one completed award can point at a DirectAwardProject at once
@@ -148,9 +143,6 @@ class Outcome(db.Model):
             initially="DEFERRED",
         ),
     )
-
-    # let's not leave our de-uglification wrapper hanging around as a method
-    del c
 
     direct_award_project = db.relationship(
         "DirectAwardProject",

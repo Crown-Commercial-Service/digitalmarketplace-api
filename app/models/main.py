@@ -1759,7 +1759,7 @@ class BriefResponse(db.Model):
         db.UniqueConstraint(id, brief_id, name="uq_brief_responses_id_brief_id"),
     )
 
-    brief = db.relationship('Brief', lazy='joined')
+    brief = db.relationship('Brief', lazy='joined', backref=backref("brief_responses", lazy="select"))
     supplier = db.relationship('Supplier', lazy='joined')
 
     @validates('data')
