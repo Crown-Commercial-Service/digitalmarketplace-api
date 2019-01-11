@@ -15,6 +15,8 @@ from app.models import Supplier, Service
 from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
 
+from dmtestutils.api_model_stubs import AuditEventStub
+
 
 class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
     @staticmethod
@@ -1034,6 +1036,12 @@ class TestAuditEvents(BaseTestAuditEvents):
         assert res.status_code == 200
         assert len(new_data['auditEvents']) == 1
         assert new_data['auditEvents'][0]['id'] == data['auditEvents'][1]['id']
+
+    def test_audit_event_serialize_keys_match_api_stub_keys(self):
+        # Ensures our dmtestutils.api_model_stubs are kept up to date
+        audit_event_id = self.add_audit_event(type=AuditTypes.update_service)
+        audit_event = AuditEvent.query.get(audit_event_id)
+        assert sorted(audit_event.serialize().keys()) == sorted(AuditEventStub().response().keys())
 
 
 class TestCreateAuditEvent(BaseApplicationTest, FixtureMixin):

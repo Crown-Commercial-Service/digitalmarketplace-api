@@ -19,6 +19,10 @@ from app.models import (
 from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
 
+from dmtestutils.api_model_stubs import (
+    BriefStub, FrameworkStub, FrameworkAgreementStub, LotStub, SupplierStub, SupplierFrameworkStub
+)
+
 
 class TestJSONFieldsAreMutable(BaseApplicationTest):
 
@@ -478,6 +482,22 @@ class TestFrameworks(BaseApplicationTest):
             'hasFurtherCompetition': False,
         }
 
+    def test_framework_serialize_keys_match_api_stub_keys(self):
+        # Ensures our dmtestutils.api_model_stubs are kept up to date
+        framework = Framework(
+            id=109,
+            name='foo',
+            slug='foo-109',
+            framework='g-cloud',
+            has_direct_award=True,
+            has_further_competition=False,
+        )
+        db.session.add(framework)
+        db.session.commit()
+
+        framework_stub = FrameworkStub()
+        assert sorted(framework.serialize().keys()) == sorted(framework_stub.response().keys())
+
 
 class TestBriefs(BaseApplicationTest, FixtureMixin):
     def setup(self):
@@ -639,6 +659,20 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
 
         assert brief.clarification_questions[0].question == "How?"
         assert brief.clarification_questions[1].question == "When"
+
+    def test_brief_serialize_keys_match_api_stub_keys(self):
+        # Ensures our dmtestutils.api_model_stubs are kept up to date
+        brief = Brief(
+            data={"title": "something"}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1)
+        )
+        # Commit the Brief so we get an id
+        db.session.add(brief)
+        db.session.commit()
+
+        brief_stub = BriefStub(
+            framework_slug=self.framework.slug, status='open', lot=self.lot, clarification_questions_closed=True,
+        )
+        assert sorted(brief.serialize(with_users=True).keys()) == sorted(brief_stub.response().keys())
 
 
 class TestBriefStatuses(BaseApplicationTest, FixtureMixin):
@@ -1666,7 +1700,6 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
             "companiesHouseNumber": "98765432",
             "registeredName": "Tape and String Inc.",
             "registrationCountry": "country:GB",
-            "otherCompanyRegistrationNumber": "",
             "vatNumber": "321321321",
             "organisationSize": "medium",
             "tradingStatus": "sole trader",
@@ -1725,7 +1758,6 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
         assert self.supplier.companies_house_number == "98765432"
         assert self.supplier.registered_name == "Tape and String Inc."
         assert self.supplier.registration_country == "country:GB"
-        assert self.supplier.other_company_registration_number == ""
         assert self.supplier.vat_number == "321321321"
         assert self.supplier.organisation_size == "medium"
         assert self.supplier.trading_status == "sole trader"
@@ -1759,13 +1791,20 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                 'links': {'self': (('main.get_supplier',), {'supplier_id': 0})},
                 'name': 'String and Sticky Tape Inc.',
                 'organisationSize': 'medium',
-                'otherCompanyRegistrationNumber': '',
                 'registeredName': 'Tape and String Inc.',
                 'registrationCountry': 'country:GB',
                 'tradingStatus': 'sole trader',
                 'companyDetailsConfirmed': False,
                 'vatNumber': '321321321',
             }
+
+    def test_supplier_serialize_keys_match_api_stub_keys(self):
+        # Ensures our dmtestutils.api_model_stubs are kept up to date
+        self._update_supplier_from_json_with_all_details()
+        supplier_stub = SupplierStub(id=0, contact_id=self.contact_id)
+        with mock.patch('app.models.main.url_for') as url_for:
+            url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+            assert sorted(self.supplier.serialize().keys()) == sorted(supplier_stub.response().keys())
 
 
 class TestServices(BaseApplicationTest, FixtureMixin):
@@ -2088,12 +2127,26 @@ class TestSupplierFrameworks(BaseApplicationTest, FixtureMixin):
             # this should fail because it removes the sf that supplier_framework1 implicitly points to
             db.session.commit()
 
+    def test_supplier_framework_serialize_keys_match_api_stub_keys(self):
+        # Ensures our dmtestutils.api_model_stubs are kept up to date
+        self.setup_dummy_suppliers(1)
+        supplier_framework = SupplierFramework(supplier_id=0, framework_id=1)
+        supplier_framework.declaration = {'foo': 'bar', 'bar': None}
+        db.session.add(supplier_framework)
+        db.session.commit()
+
+        supplier_framework_stub = SupplierFrameworkStub()
+        assert sorted(supplier_framework.serialize().keys()) == sorted(supplier_framework_stub.response().keys())
+
 
 class TestLot(BaseApplicationTest):
-    def test_lot_data_is_serialized(self):
+
+    def setup(self):
+        super().setup()
         self.framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
         self.lot = self.framework.get_lot('user-research-studios')
 
+    def test_lot_data_is_serialized(self):
         assert self.lot.serialize() == {
             u'id': 7,
             u'name': u'User research studios',
@@ -2103,6 +2156,10 @@ class TestLot(BaseApplicationTest):
             u'unitSingular': u'lab',
             u'unitPlural': u'labs',
         }
+
+    def test_lot_serialize_keys_match_api_stub_keys(self):
+        # Ensures our dmtestutils.api_model_stubs are kept up to date
+        assert sorted(self.lot.serialize().keys()) == sorted(LotStub().response().keys())
 
 
 class TestFrameworkSupplierIds(BaseApplicationTest):
@@ -2329,6 +2386,15 @@ class TestFrameworkAgreements(BaseApplicationTest, FixtureMixin):
         framework_agreement.countersigned_agreement_returned_at = datetime(2016, 10, 11, 10, 12, 0, 0)
 
         assert framework_agreement.most_recent_signature_time == datetime(2016, 10, 11, 10, 12, 0, 0)
+
+    def test_framework_agreement_serialize_keys_match_api_stub_keys(self):
+        # Ensures our dmtestutils.api_model_stubs are kept up to date
+        framework_agreement = FrameworkAgreement(supplier_id=0, framework_id=1)
+        db.session.add(framework_agreement)
+        db.session.commit()
+
+        framework_agreement_stub = FrameworkAgreementStub()
+        assert sorted(framework_agreement.serialize().keys()) == sorted(framework_agreement_stub.response().keys())
 
 
 class TestCurrentFrameworkAgreement(BaseApplicationTest, FixtureMixin):
