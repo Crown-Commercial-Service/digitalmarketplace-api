@@ -97,7 +97,7 @@ requests-mock==1.3.0
 requests-oauthlib==0.8.0
 requests-toolbelt==0.8.0
 rfc3987==1.3.7
-rollbar==0.13.11
+rollbar==0.14.6
 s3transfer==0.1.10
 schemainspect==0.1.1494928171
 six==1.11.0
