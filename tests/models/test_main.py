@@ -673,6 +673,10 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
             framework_slug=self.framework.slug, status='open', lot=self.lot, clarification_questions_closed=True,
         )
         assert sorted(brief.serialize().keys()) == sorted(brief_stub.response().keys())
+        assert (
+            sorted(brief.serialize(with_users=True, with_clarification_questions=True).keys()) ==
+            sorted(brief_stub.single_result_response()['briefs'].keys())
+        )
 
 
 class TestBriefStatuses(BaseApplicationTest, FixtureMixin):
