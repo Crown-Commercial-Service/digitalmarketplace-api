@@ -4,6 +4,7 @@ from flask import jsonify, abort, request, current_app
 from itertools import groupby
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.sql.expression import or_ as sql_or
 from sqlalchemy.orm import lazyload
 from dmapiclient.audit import AuditTypes
 from dmutils.formats import DATETIME_FORMAT
@@ -86,7 +87,12 @@ def list_suppliers():
         else:
             # case insensitive LIKE comparison for matching supplier names
             suppliers = suppliers.filter(
-                Supplier.name.ilike(prefix + '%'))
+                sql_or(
+                    Supplier.name.ilike(prefix + '%'),
+                    Supplier.registered_name.ilike(prefix + '%'),
+                )
+
+            )
 
     suppliers = suppliers.distinct(Supplier.name, Supplier.supplier_id)
 
