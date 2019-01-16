@@ -658,10 +658,13 @@ def update_supplier_framework(supplier_id, framework_slug):
     json_has_keys(update_json, optional_keys=("onFramework", "prefillDeclarationFromFrameworkSlug",
                                               "applicationCompanyDetailsConfirmed"))
 
+    # fetch and lock SupplierFramework row
     interest_record = SupplierFramework.query.filter(
         SupplierFramework.supplier_id == supplier.supplier_id,
         SupplierFramework.framework_id == framework.id
-    ).first()
+    ).options(
+        lazyload('*')
+    ).with_for_update().first()
 
     if not interest_record:
         abort(404, "supplier_id '{}' has not registered interest in {}".format(supplier_id, framework_slug))
