@@ -78,12 +78,14 @@ class TestListSuppliers(BaseApplicationTest, FixtureMixin):
         response = self.client.get('/suppliers')
         assert response.status_code == 200
 
-    def test_query_string_prefix_empty(self):
-        response = self.client.get('/suppliers?prefix=')
+    @pytest.mark.parametrize('qs', ('prefix', 'name'))
+    def test_query_string_prefix_empty(self, qs):
+        response = self.client.get('/suppliers?{}='.format(qs))
         assert response.status_code == 200
 
-    def test_query_string_prefix_returns_none(self):
-        response = self.client.get('/suppliers?prefix=canada')
+    @pytest.mark.parametrize('qs', ('prefix', 'name'))
+    def test_query_string_prefix_returns_none(self, qs):
+        response = self.client.get('/suppliers?{}=canada'.format(qs))
         assert response.status_code == 200
         data = json.loads(response.get_data())
         assert len(data['suppliers']) == 0
@@ -102,7 +104,7 @@ class TestListSuppliers(BaseApplicationTest, FixtureMixin):
         assert data['suppliers'][0]['id'] == 999
         assert u"999 Supplier" == data['suppliers'][0]['name']
 
-    def test_query_string_prefix_matches_name_and_registered_name(self):
+    def test_query_string_name_matches_supplier_name_and_registered_name_anywhere_in_string(self):
         db.session.add(
             Supplier(
                 supplier_id=1004,
@@ -119,16 +121,32 @@ class TestListSuppliers(BaseApplicationTest, FixtureMixin):
                 description=''
             )
         )
+        db.session.add(
+            Supplier(
+                supplier_id=1006,
+                name='Y suppliers X',
+                registered_name='Y suppliers 1004 Ltd',
+                description=''
+            )
+        )
+        db.session.add(
+            Supplier(
+                supplier_id=1007,
+                name='Y suppliers Y',
+                registered_name='Y suppliers X 1004 Ltd',
+                description=''
+            )
+        )
         db.session.commit()
-        response = self.client.get('/suppliers?prefix=X')
+        response = self.client.get('/suppliers?name=X')
 
         data = json.loads(response.get_data())
         assert response.status_code == 200
-        assert len(data['suppliers']) == 2
-        assert data['suppliers'][0]['id'] == 1004
-        assert data['suppliers'][1]['id'] == 1005
-        assert data['suppliers'][0]['name'] == 'X suppliers'
-        assert data['suppliers'][1]['name'] == 'Y suppliers'
+        assert len(data['suppliers']) == 4
+        assert [s['id'] for s in data['suppliers']] == [1004, 1005, 1006, 1007]
+        assert [s['name'] for s in data['suppliers']] == [
+            'X suppliers', 'Y suppliers', 'Y suppliers X', 'Y suppliers Y'
+        ]
 
     def test_query_string_prefix_returns_paginated_page_one(self):
         response = self.client.get('/suppliers?prefix=s')
