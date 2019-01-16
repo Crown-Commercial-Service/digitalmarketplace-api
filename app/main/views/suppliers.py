@@ -450,19 +450,25 @@ def remove_contact_information_personal_data(supplier_id, contact_id):
 
 @main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>/declaration', methods=['PUT'])
 def set_a_declaration(supplier_id, framework_slug):
-    framework = Framework.query.filter(
-        Framework.slug == framework_slug
-    ).first_or_404()
-
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         supplier_id, framework_slug
-    ).first()
+    ).options(
+        lazyload('*')
+    ).with_for_update().first()
 
     if supplier_framework is not None:
         status_code = 200 if supplier_framework.declaration else 201
     else:
+        framework = Framework.query.filter(
+            Framework.slug == framework_slug
+        ).options(
+            lazyload('*')
+        ).first_or_404()
+
         supplier = Supplier.query.filter(
             Supplier.supplier_id == supplier_id
+        ).options(
+            lazyload('*')
         ).first_or_404()
 
         supplier_framework = SupplierFramework(
