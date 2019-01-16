@@ -102,6 +102,34 @@ class TestListSuppliers(BaseApplicationTest, FixtureMixin):
         assert data['suppliers'][0]['id'] == 999
         assert u"999 Supplier" == data['suppliers'][0]['name']
 
+    def test_query_string_prefix_matches_name_and_registered_name(self):
+        db.session.add(
+            Supplier(
+                supplier_id=1004,
+                name='X suppliers',
+                registered_name='Y suppliers 1004 Ltd',
+                description=''
+            )
+        )
+        db.session.add(
+            Supplier(
+                supplier_id=1005,
+                name='Y suppliers',
+                registered_name='X suppliers 1004 Ltd',
+                description=''
+            )
+        )
+        db.session.commit()
+        response = self.client.get('/suppliers?prefix=X')
+
+        data = json.loads(response.get_data())
+        assert response.status_code == 200
+        assert len(data['suppliers']) == 2
+        assert data['suppliers'][0]['id'] == 1004
+        assert data['suppliers'][1]['id'] == 1005
+        assert data['suppliers'][0]['name'] == 'X suppliers'
+        assert data['suppliers'][1]['name'] == 'Y suppliers'
+
     def test_query_string_prefix_returns_paginated_page_one(self):
         response = self.client.get('/suppliers?prefix=s')
         data = json.loads(response.get_data())
