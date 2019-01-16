@@ -44,6 +44,8 @@ def list_suppliers():
 
     prefix = request.args.get('prefix', '')
 
+    name = request.args.get('name', '')
+
     framework = request.args.get('framework')
 
     duns_number = request.args.get('duns_number')
@@ -86,13 +88,16 @@ def list_suppliers():
                 Supplier.name.op('~')('^[^A-Za-z]'))
         else:
             # case insensitive LIKE comparison for matching supplier names
-            suppliers = suppliers.filter(
-                sql_or(
-                    Supplier.name.ilike(prefix + '%'),
-                    Supplier.registered_name.ilike(prefix + '%'),
-                )
+            suppliers = suppliers.filter(Supplier.name.ilike(prefix + '%'))
 
+    if name:
+        # case insensitive LIKE comparison for matching supplier names and registered names
+        suppliers = suppliers.filter(
+            sql_or(
+                Supplier.name.ilike('%{}%'.format(name)),
+                Supplier.registered_name.ilike('%{}%'.format(name))
             )
+        )
 
     suppliers = suppliers.distinct(Supplier.name, Supplier.supplier_id)
 
