@@ -650,6 +650,7 @@ def test_rfx_field_access_as_owner(client, supplier_domains, suppliers, buyer_us
     assert response['brief']['proposalType'] == ['Breakdown of costs', u'R\xe9sum\xe9s']
     assert response['brief']['requirementsDocument'] == ['TEST.pdf']
     assert response['brief']['responseTemplate'] == ['TEST2.pdf']
+    assert response['brief']['contactNumber'] == '0263635544'
 
 
 def test_rfx_field_access_as_invited_seller(client, supplier_domains, suppliers, buyer_user, rfx_brief, supplier_user):
@@ -677,6 +678,7 @@ def test_rfx_field_access_as_invited_seller(client, supplier_domains, suppliers,
     assert response['brief']['proposalType'] == ['Breakdown of costs', u'R\xe9sum\xe9s']
     assert response['brief']['requirementsDocument'] == ['TEST.pdf']
     assert response['brief']['responseTemplate'] == ['TEST2.pdf']
+    assert response['brief']['contactNumber'] == ''
 
 
 def test_rfx_field_access_as_non_invited_seller(client, supplier_domains, suppliers, buyer_user, rfx_brief,
@@ -706,6 +708,7 @@ def test_rfx_field_access_as_non_invited_seller(client, supplier_domains, suppli
     assert response['brief']['proposalType'] == []
     assert response['brief']['requirementsDocument'] == []
     assert response['brief']['responseTemplate'] == []
+    assert response['brief']['contactNumber'] == ''
 
 
 def test_rfx_field_access_as_anonymous_user(client, supplier_domains, suppliers, buyer_user, rfx_brief):
@@ -729,6 +732,7 @@ def test_rfx_field_access_as_anonymous_user(client, supplier_domains, suppliers,
     assert response['brief']['industryBriefing'] == ''
     assert response['brief']['attachments'] == []
     assert response['brief']['sellers'] == {}
+    assert response['brief']['contactNumber'] == ''
 
 
 def test_rfx_publish_success_2_days_correct_dates(client, supplier_domains, suppliers, buyer_user, rfx_brief):

@@ -266,6 +266,7 @@ def get_brief(brief_id):
     if not is_buyer:
         brief.data['sellers'] = {}
         brief.responses_zip_filesize = None
+        brief.data['contactNumber'] = ''
         if not is_invited_seller:
             brief.data['proposalType'] = []
             brief.data['evaluationType'] = []
@@ -276,6 +277,7 @@ def get_brief(brief_id):
     if is_buyer and not is_brief_owner:
         brief.data['sellers'] = {}
         brief.data['industryBriefing'] = ''
+        brief.data['contactNumber'] = ''
 
     # add the domains available for the buyer during RFX brief build
     domains = []
@@ -286,7 +288,7 @@ def get_brief(brief_id):
                 'name': domain.name
             })
 
-    return jsonify(brief=brief.serialize(with_users=False),
+    return jsonify(brief=brief.serialize(with_users=False, with_author=is_brief_owner),
                    brief_response_count=brief_response_count,
                    invited_seller_count=invited_seller_count,
                    is_invited_seller=is_invited_seller,

@@ -2021,7 +2021,7 @@ class Brief(db.Model):
             'requirementsLength': requirements_length
         }
 
-    def serialize(self, with_users=False):
+    def serialize(self, with_users=False, with_author=True):
         data = dict(self.data.items())
         data.update({
             'id': self.id,
@@ -2042,7 +2042,7 @@ class Brief(db.Model):
             'responsesZipFilesize': self.responses_zip_filesize
         })
 
-        if len(self.users) > 0:
+        if with_author and len(self.users) > 0:
             data.update({
                 'author': self.users[0].name
             })
