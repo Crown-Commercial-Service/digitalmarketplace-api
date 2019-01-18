@@ -20,7 +20,7 @@ from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
 
 from dmtestutils.api_model_stubs import (
-    BriefStub, FrameworkStub, FrameworkAgreementStub, LotStub, SupplierStub, SupplierFrameworkStub
+    BriefStub, BriefResponseStub, FrameworkStub, FrameworkAgreementStub, LotStub, SupplierStub, SupplierFrameworkStub
 )
 
 
@@ -672,7 +672,11 @@ class TestBriefs(BaseApplicationTest, FixtureMixin):
         brief_stub = BriefStub(
             framework_slug=self.framework.slug, status='open', lot=self.lot, clarification_questions_closed=True,
         )
-        assert sorted(brief.serialize(with_users=True).keys()) == sorted(brief_stub.response().keys())
+        assert sorted(brief.serialize().keys()) == sorted(brief_stub.response().keys())
+        assert (
+            sorted(brief.serialize(with_users=True, with_clarification_questions=True).keys()) ==
+            sorted(brief_stub.single_result_response()['briefs'].keys())
+        )
 
 
 class TestBriefStatuses(BaseApplicationTest, FixtureMixin):
@@ -1572,6 +1576,25 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             brief_response.awarded_at = None
 
         assert 'Cannot remove or change award datestamp on previously awarded Brief Response' in e.value.message
+
+    def test_brief_response_serialize_keys_match_api_stub_keys(self):
+        # Ensures our dmtestutils.api_model_stubs are kept up to date
+        brief_response = BriefResponse(
+            data={
+                'availability': '02/01/2018',
+                'essentialRequirements': [],
+                'essentialRequirementsMet': True,
+                'niceToHaveRequirements': [],
+                'respondToEmailAddress': 'davidbowie@example.com'
+            },
+            brief=self.brief, supplier=self.supplier, submitted_at=datetime(2016, 9, 28)
+        )
+        db.session.add(brief_response)
+        db.session.commit()
+
+        with mock.patch('app.models.main.url_for') as url_for:
+            url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+            assert sorted(brief_response.serialize().keys()) == sorted(BriefResponseStub().response().keys())
 
 
 class TestBriefClarificationQuestion(BaseApplicationTest):
