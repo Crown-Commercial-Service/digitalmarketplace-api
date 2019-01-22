@@ -1070,22 +1070,44 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
         self.setup_dummy_suppliers(1)
 
     def test_add_new_declaration(self):
-            response = self.client.put(
-                '/suppliers/0/frameworks/test-open/declaration',
-                data=json.dumps({
-                    'updated_by': 'testing',
-                    'declaration': {
-                        'question': 'answer'
-                    }
-                }),
-                content_type='application/json')
+        existing_audit_events_ids = tuple(db.session.query(AuditEvent.id))
 
-            assert response.status_code == 201
-            answer = SupplierFramework \
-                .find_by_supplier_and_framework(0, 'test-open').first()
-            assert answer.declaration['question'] == 'answer'
+        response = self.client.put(
+            '/suppliers/0/frameworks/test-open/declaration',
+            data=json.dumps({
+                'updated_by': 'testing',
+                'declaration': {
+                    'question': 'answer'
+                }
+            }),
+            content_type='application/json')
+
+        assert response.status_code == 201
+        answer = SupplierFramework \
+            .find_by_supplier_and_framework(0, 'test-open').first()
+        assert answer.declaration == {
+            'question': 'answer',
+        }
+
+        assert db.session.query(
+            AuditEvent.type,
+            AuditEvent.object_type,
+            AuditEvent.object_id,
+            AuditEvent.data,
+            AuditEvent.user,
+        ).filter(AuditEvent.id.notin_(existing_audit_events_ids)).order_by(AuditEvent.id).all() == [
+            (
+                'answer_selection_questions',
+                'SupplierFramework',
+                0,
+                {'update': {'question': 'answer'}, 'supplierId': 0},
+                "testing",
+            ),
+        ]
 
     def test_add_null_declaration_should_result_in_dict(self):
+        existing_audit_events_ids = tuple(db.session.query(AuditEvent.id))
+
         response = self.client.put(
             '/suppliers/0/frameworks/test-open/declaration',
             data=json.dumps({
@@ -1097,9 +1119,27 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
         assert response.status_code == 201
         answer = SupplierFramework \
             .find_by_supplier_and_framework(0, 'test-open').first()
-        assert isinstance(answer.declaration, dict)
+        assert answer.declaration == {}
 
-    def test_update_existing_declaration(self):
+        assert db.session.query(
+            AuditEvent.type,
+            AuditEvent.object_type,
+            AuditEvent.object_id,
+            AuditEvent.data,
+            AuditEvent.user,
+        ).filter(AuditEvent.id.notin_(existing_audit_events_ids)).order_by(AuditEvent.id).all() == [
+            (
+                'answer_selection_questions',
+                'SupplierFramework',
+                0,
+                {'update': None, 'supplierId': 0},
+                "testing",
+            ),
+        ]
+
+    def test_overwrite_existing_declaration(self):
+        existing_audit_events_ids = tuple(db.session.query(AuditEvent.id))
+
         framework_id = Framework.query.filter(
             Framework.slug == 'test-open').first().id
         answers = SupplierFramework(
@@ -1122,7 +1162,25 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
         assert response.status_code == 200
         supplier_framework = SupplierFramework \
             .find_by_supplier_and_framework(0, 'test-open').first()
-        assert supplier_framework.declaration['question'] == 'answer2'
+        assert supplier_framework.declaration == {
+            'question': 'answer2',
+        }
+
+        assert db.session.query(
+            AuditEvent.type,
+            AuditEvent.object_type,
+            AuditEvent.object_id,
+            AuditEvent.data,
+            AuditEvent.user,
+        ).filter(AuditEvent.id.notin_(existing_audit_events_ids)).order_by(AuditEvent.id).all() == [
+            (
+                'answer_selection_questions',
+                'SupplierFramework',
+                0,
+                {'update': {'question': 'answer2'}, 'supplierId': 0},
+                "testing",
+            ),
+        ]
 
 
 class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
