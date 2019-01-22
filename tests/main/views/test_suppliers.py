@@ -1050,12 +1050,12 @@ class TestRemoveContactInformationPersonalData(BaseApplicationTest):
         assert data['error'] == expected_error_message
 
 
-class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateTestMixin):
+class TestSetSupplierDeclarationsBasic(BaseApplicationTest, FixtureMixin, JSONUpdateTestMixin):
     method = 'put'
     endpoint = '/suppliers/0/frameworks/g-cloud-4/declaration'
 
     def setup(self):
-        super(TestSetSupplierDeclarations, self).setup()
+        super().setup()
         # This is automatically removed in BaseApplicationTest.teardown
         framework = Framework(
             id=100,
@@ -1064,123 +1064,229 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
             framework='g-cloud',
             status='open',
             has_direct_award=True,
-            has_further_competition=False)
+            has_further_competition=False,
+        )
         db.session.add(framework)
         db.session.commit()
         self.setup_dummy_suppliers(1)
 
-    def test_add_new_declaration(self):
-        existing_audit_events_ids = tuple(db.session.query(AuditEvent.id))
 
-        response = self.client.put(
-            '/suppliers/0/frameworks/test-open/declaration',
-            data=json.dumps({
-                'updated_by': 'testing',
-                'declaration': {
-                    'question': 'answer'
-                }
-            }),
-            content_type='application/json')
-
-        assert response.status_code == 201
-        answer = SupplierFramework \
-            .find_by_supplier_and_framework(0, 'test-open').first()
-        assert answer.declaration == {
-            'question': 'answer',
-        }
-
-        assert db.session.query(
-            AuditEvent.type,
-            AuditEvent.object_type,
-            AuditEvent.object_id,
-            AuditEvent.data,
-            AuditEvent.user,
-        ).filter(AuditEvent.id.notin_(existing_audit_events_ids)).order_by(AuditEvent.id).all() == [
+class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
+    @pytest.mark.parametrize(
+        (
+            "has_existing_sf",
+            "existing_declaration",
+            "new_declaration",
+            "expected_status_code",
+            "expected_result_decl",
+            "expected_audit_events",
+        ),
+        (
             (
-                'answer_selection_questions',
-                'SupplierFramework',
-                0,
-                {'update': {'question': 'answer'}, 'supplierId': 0},
-                "testing",
+                # has_existing_sf
+                False,
+                # existing_declaration
+                None,
+                # new_declaration
+                {"question": "answer"},
+                # expected_status_code
+                201,
+                # expected_result_decl
+                {"question": "answer"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "answer_selection_questions",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {"question": "answer"}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
             ),
-        ]
-
-    def test_add_null_declaration_should_result_in_dict(self):
-        existing_audit_events_ids = tuple(db.session.query(AuditEvent.id))
-
-        response = self.client.put(
-            '/suppliers/0/frameworks/test-open/declaration',
-            data=json.dumps({
-                'updated_by': 'testing',
-                'declaration': None
-            }),
-            content_type='application/json')
-
-        assert response.status_code == 201
-        answer = SupplierFramework \
-            .find_by_supplier_and_framework(0, 'test-open').first()
-        assert answer.declaration == {}
-
-        assert db.session.query(
-            AuditEvent.type,
-            AuditEvent.object_type,
-            AuditEvent.object_id,
-            AuditEvent.data,
-            AuditEvent.user,
-        ).filter(AuditEvent.id.notin_(existing_audit_events_ids)).order_by(AuditEvent.id).all() == [
             (
-                'answer_selection_questions',
-                'SupplierFramework',
-                0,
-                {'update': None, 'supplierId': 0},
-                "testing",
+                # has_existing_sf
+                False,
+                # existing_declaration
+                None,
+                # new_declaration
+                None,
+                # expected_status_code
+                201,
+                # expected_result_decl
+                {},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "answer_selection_questions",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": None, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
             ),
-        ]
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer", "foo": "bar"},
+                # new_declaration
+                {},
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "answer_selection_questions",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer", "foo": "bar"},
+                # new_declaration
+                {"question": "answer2", "baz": "qux"},
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {"question": "answer2", "baz": "qux"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "answer_selection_questions",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {"question": "answer2", "baz": "qux"}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer"},
+                # new_declaration
+                None,
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "answer_selection_questions",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": None, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+        ),
+    )
+    def test_set_supplier_declaration(
+        self,
+        has_existing_sf,
+        existing_declaration,
+        new_declaration,
+        expected_status_code,
+        expected_result_decl,
+        expected_audit_events,
+    ):
+        """
+        :param has_existing_sf: whether a SupplierFramework should already exist for this s-f combo
+        :param existing_declaration: contents of any existing declaration on an existing SupplierFramework
+        :param new_declaration: contents of new declaration to be submitted to endpoint
+        :param expected_status_code: status code to expect in response
+        :param expected_result_decl: expected resultant declaration (both in response and db-stored value)
+        :param expected_audit_events: sequence tuples of parameters corresponding to AuditEvents added to the database:
+            (
+                audit_type,
+                object_type,
+                object_id,
+                data,
+                user,
+            )
+        """
+        self.setup_dummy_suppliers(1)
+        framework = Framework(
+            id=100,
+            slug='test-open',
+            name='Test open',
+            framework='g-cloud',
+            status='open',
+            has_direct_award=True,
+            has_further_competition=False,
+        )
+        db.session.add(framework)
 
-    def test_overwrite_existing_declaration(self):
-        existing_audit_events_ids = tuple(db.session.query(AuditEvent.id))
+        if has_existing_sf:
+            existing_sf = SupplierFramework(
+                supplier_id=0,
+                framework_id=framework.id,
+                declaration=existing_declaration,
+            )
+            db.session.add(existing_sf)
+        else:
+            assert existing_declaration is None, "Cannot have exsting_declaration without has_existing_sf"
 
-        framework_id = Framework.query.filter(
-            Framework.slug == 'test-open').first().id
-        answers = SupplierFramework(
-            supplier_id=0,
-            framework_id=framework_id,
-            declaration={'question': 'answer'})
-        db.session.add(answers)
         db.session.commit()
 
+        existing_audit_events_ids = tuple(db.session.query(AuditEvent.id))
+
         response = self.client.put(
             '/suppliers/0/frameworks/test-open/declaration',
             data=json.dumps({
                 'updated_by': 'testing',
-                'declaration': {
-                    'question': 'answer2',
-                }
+                'declaration': new_declaration,
             }),
-            content_type='application/json')
+            content_type='application/json',
+        )
 
-        assert response.status_code == 200
-        supplier_framework = SupplierFramework \
-            .find_by_supplier_and_framework(0, 'test-open').first()
-        assert supplier_framework.declaration == {
-            'question': 'answer2',
-        }
+        assert response.status_code == expected_status_code
+
+        response_data = json.loads(response.get_data())
+        assert response_data["declaration"] == SupplierFramework.find_by_supplier_and_framework(
+            0,
+            'test-open',
+        ).one().declaration
+
+        assert response_data["declaration"] == expected_result_decl
 
         assert db.session.query(
             AuditEvent.type,
             AuditEvent.object_type,
-            AuditEvent.object_id,
+            # can't be entirely certain of the resultant object_id
             AuditEvent.data,
             AuditEvent.user,
-        ).filter(AuditEvent.id.notin_(existing_audit_events_ids)).order_by(AuditEvent.id).all() == [
-            (
-                'answer_selection_questions',
-                'SupplierFramework',
-                0,
-                {'update': {'question': 'answer2'}, 'supplierId': 0},
-                "testing",
-            ),
-        ]
+        ).filter(
+            AuditEvent.id.notin_(existing_audit_events_ids)
+        ).order_by(AuditEvent.id).all() == list(expected_audit_events)
 
 
 class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
