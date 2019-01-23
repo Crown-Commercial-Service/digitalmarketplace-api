@@ -448,7 +448,7 @@ def remove_contact_information_personal_data(supplier_id, contact_id):
     return single_result_response("contactInformation", contact_information), 200
 
 
-@main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>/declaration', methods=['PUT'])
+@main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>/declaration', methods=["PUT", "PATCH"])
 def set_a_declaration(supplier_id, framework_slug):
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         supplier_id, framework_slug
@@ -482,11 +482,19 @@ def set_a_declaration(supplier_id, framework_slug):
     updater_json = validate_and_return_updater_request()
     json_has_required_keys(request_data, ['declaration'])
 
-    supplier_framework.declaration = request_data['declaration'] or {}
+    if request.method == "PUT" or not supplier_framework.declaration:
+        supplier_framework.declaration = request_data['declaration'] or {}
+    elif request_data['declaration']:
+        supplier_framework.declaration.update(request_data['declaration'])
+
     db.session.add(supplier_framework)
     db.session.add(
         AuditEvent(
-            audit_type=AuditTypes.answer_selection_questions,
+            audit_type=(
+                AuditTypes.answer_selection_questions
+                if request.method == "PUT" else
+                AuditTypes.update_declaration_answers
+            ),
             db_object=supplier_framework,
             user=updater_json['updated_by'],
             data={

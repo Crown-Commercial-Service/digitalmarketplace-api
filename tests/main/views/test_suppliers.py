@@ -1050,12 +1050,10 @@ class TestRemoveContactInformationPersonalData(BaseApplicationTest):
         assert data['error'] == expected_error_message
 
 
-class TestSetSupplierDeclarationsBasic(BaseApplicationTest, FixtureMixin, JSONUpdateTestMixin):
-    method = 'put'
-    endpoint = '/suppliers/0/frameworks/g-cloud-4/declaration'
-
+class _TestSetSupplierDeclarationsSetupMixin:
     def setup(self):
         super().setup()
+        self.setup_dummy_suppliers(1)
         # This is automatically removed in BaseApplicationTest.teardown
         framework = Framework(
             id=100,
@@ -1068,14 +1066,78 @@ class TestSetSupplierDeclarationsBasic(BaseApplicationTest, FixtureMixin, JSONUp
         )
         db.session.add(framework)
         db.session.commit()
-        self.setup_dummy_suppliers(1)
+
+
+class TestSetSupplierDeclarationsBasicPut(
+    _TestSetSupplierDeclarationsSetupMixin,
+    BaseApplicationTest,
+    FixtureMixin,
+    JSONUpdateTestMixin,
+):
+    endpoint = '/suppliers/0/frameworks/test-open/declaration'
+    method = 'put'
+
+
+class TestSetSupplierDeclarationsBasicPatch(
+    _TestSetSupplierDeclarationsSetupMixin,
+    BaseApplicationTest,
+    FixtureMixin,
+    JSONUpdateTestMixin,
+):
+    endpoint = '/suppliers/0/frameworks/test-open/declaration'
+    method = 'patch'
+
+
+@pytest.mark.parametrize("method", ("PUT", "PATCH",))
+class TestSetSupplierDeclarations404s(_TestSetSupplierDeclarationsSetupMixin, BaseApplicationTest, FixtureMixin):
+    def test_nonexistent_framework(self, method):
+        existing_audit_events_ids = frozenset(db.session.query(AuditEvent.id))
+
+        response = self.client.open(
+            '/suppliers/0/frameworks/fishy-flesh/declaration',
+            method=method,
+            data=json.dumps({
+                'updated_by': 'testing',
+                'declaration': {"gulls": "seagoose"},
+            }),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 404
+
+        assert existing_audit_events_ids == frozenset(db.session.query(AuditEvent.id))
+
+    def test_nonexistent_supplier(self, method):
+        existing_audit_events_ids = frozenset(db.session.query(AuditEvent.id))
+
+        response = self.client.open(
+            '/suppliers/110/frameworks/test-open/declaration',
+            method=method,
+            data=json.dumps({
+                'updated_by': 'testing',
+                'declaration': {"gulls": "seagoose"},
+            }),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 404
+
+        assert existing_audit_events_ids == frozenset(db.session.query(AuditEvent.id))
+
+
+def _id_func(value):
+    "A simple function to make display of parametrized ids a little easier to digest"
+    if value == {}:
+        return "EMPTYDCT"
 
 
 class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
+
     @pytest.mark.parametrize(
         (
             "has_existing_sf",
             "existing_declaration",
+            "method",
             "new_declaration",
             "expected_status_code",
             "expected_result_decl",
@@ -1087,6 +1149,8 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
                 False,
                 # existing_declaration
                 None,
+                # method
+                "PUT",
                 # new_declaration
                 {"question": "answer"},
                 # expected_status_code
@@ -1112,6 +1176,8 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
                 False,
                 # existing_declaration
                 None,
+                # method
+                "PUT",
                 # new_declaration
                 None,
                 # expected_status_code
@@ -1136,7 +1202,9 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
                 # has_existing_sf
                 True,
                 # existing_declaration
-                {"question": "answer", "foo": "bar"},
+                {"question": "answer", "Robinson": "Crusoe"},
+                # method
+                "PUT",
                 # new_declaration
                 {},
                 # expected_status_code
@@ -1161,13 +1229,15 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
                 # has_existing_sf
                 True,
                 # existing_declaration
-                {"question": "answer", "foo": "bar"},
+                {"question": "answer", "Robinson": "Crusoe"},
+                # method
+                "PUT",
                 # new_declaration
-                {"question": "answer2", "baz": "qux"},
+                {"question": "answer2", "swan": "meat"},
                 # expected_status_code
                 200,
                 # expected_result_decl
-                {"question": "answer2", "baz": "qux"},
+                {"question": "answer2", "swan": "meat"},
                 # expected_audit_events
                 (
                     (
@@ -1176,7 +1246,7 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
                         # object_type
                         "SupplierFramework",
                         # data
-                        {"update": {"question": "answer2", "baz": "qux"}, "supplierId": 0},
+                        {"update": {"question": "answer2", "swan": "meat"}, "supplierId": 0},
                         # user
                         "testing",
                     ),
@@ -1187,6 +1257,8 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
                 True,
                 # existing_declaration
                 {"question": "answer"},
+                # method
+                "PUT",
                 # new_declaration
                 None,
                 # expected_status_code
@@ -1207,12 +1279,149 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
                     ),
                 ),
             ),
+            (
+                # has_existing_sf
+                False,
+                # existing_declaration
+                None,
+                # method
+                "PATCH",
+                # new_declaration
+                {"question": "answer"},
+                # expected_status_code
+                201,
+                # expected_result_decl
+                {"question": "answer"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "update_declaration_answers",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {"question": "answer"}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                False,
+                # existing_declaration
+                None,
+                # method
+                "PATCH",
+                # new_declaration
+                None,
+                # expected_status_code
+                201,
+                # expected_result_decl
+                {},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "update_declaration_answers",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": None, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer", "Robinson": "Crusoe"},
+                # method
+                "PATCH",
+                # new_declaration
+                {},
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {"question": "answer", "Robinson": "Crusoe"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "update_declaration_answers",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer", "Robinson": "Crusoe"},
+                # method
+                "PATCH",
+                # new_declaration
+                {"question": "answer2", "swan": "meat"},
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {"question": "answer2", "swan": "meat", "Robinson": "Crusoe"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "update_declaration_answers",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {"question": "answer2", "swan": "meat"}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer"},
+                # method
+                "PATCH",
+                # new_declaration
+                None,
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {"question": "answer"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "update_declaration_answers",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": None, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
         ),
+        ids=_id_func,
     )
     def test_set_supplier_declaration(
         self,
         has_existing_sf,
         existing_declaration,
+        method,
         new_declaration,
         expected_status_code,
         expected_result_decl,
@@ -1221,6 +1430,7 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
         """
         :param has_existing_sf: whether a SupplierFramework should already exist for this s-f combo
         :param existing_declaration: contents of any existing declaration on an existing SupplierFramework
+        :param method: method to send request as
         :param new_declaration: contents of new declaration to be submitted to endpoint
         :param expected_status_code: status code to expect in response
         :param expected_result_decl: expected resultant declaration (both in response and db-stored value)
@@ -1228,7 +1438,6 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
             (
                 audit_type,
                 object_type,
-                object_id,
                 data,
                 user,
             )
@@ -1253,14 +1462,15 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
             )
             db.session.add(existing_sf)
         else:
-            assert existing_declaration is None, "Cannot have exsting_declaration without has_existing_sf"
+            assert existing_declaration is None, "Test cannot have exsting_declaration without has_existing_sf"
 
         db.session.commit()
 
         existing_audit_events_ids = tuple(db.session.query(AuditEvent.id))
 
-        response = self.client.put(
+        response = self.client.open(
             '/suppliers/0/frameworks/test-open/declaration',
+            method=method,
             data=json.dumps({
                 'updated_by': 'testing',
                 'declaration': new_declaration,
