@@ -72,7 +72,7 @@ pathlib==1.0.1
 pbr==3.0.1
 pendulum==1.2.0
 pluggy==0.4.0
-psycopg2==2.7.1
+psycopg2==2.7.6
 py==1.4.33
 pyasn1==0.2.3
 pycodestyle==2.4.0
