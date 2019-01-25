@@ -112,8 +112,15 @@ class MarketplaceJIRA(object):
                 simple_case_study = {key: case_study.serializable[key]
                                      for key in case_study.serializable
                                      if key not in ['links', 'supplier', 'createdAt', 'created_at']}
-                case_study_links += "Case study: [{}|{}/case-study/{}]\n"\
-                    .format(simple_case_study['title'], current_app.config['FRONTEND_ADDRESS'], simple_case_study['id'])
+                case_study_links += (
+                    "Case study: [{}|{}/case-study/{}] (Current status: *{}*)\n"
+                    .format(
+                        simple_case_study['title'],
+                        current_app.config['FRONTEND_ADDRESS'],
+                        simple_case_study['id'],
+                        case_study.status
+                    )
+                )
                 relevant_case_studies.append(simple_case_study)
 
         summary = 'Domain Assessment: {}(#{})'.format(supplier.name, supplier.code)
@@ -148,9 +155,9 @@ class MarketplaceJIRA(object):
             if max_price:
                 if (domain_price_minimum <= max_price and
                         domain_price_maximum >= max_price):
-                    price_status = 'Seller Price: (/) {}'.format(max_price)
+                    price_status = 'Seller Price: (/) *{}*'.format(max_price)
                 else:
-                    price_status = 'Seller Price: (x) {}'.format(max_price)
+                    price_status = 'Seller Price: (x) *{}*'.format(max_price)
             else:
                 price_status = 'Seller Price: (!) No price provided'
 
@@ -165,7 +172,7 @@ class MarketplaceJIRA(object):
                 '---------\n\n'
                 'Price threshold for *{domain}*:\n'
                 'Minimum Price: {domain_price_min}\n'
-                'Maximum Price: {domain_price_max}\n'
+                'Maximum Price: *{domain_price_max}*\n'
                 '{price_status}\n'
             ).format(**price_description_values)
 
@@ -258,9 +265,9 @@ class MarketplaceJIRA(object):
 
                 price_description = (
                     "Price threshold for *{domain_name}*:\n"
-                    "Seller Price: {max_price}\n"
+                    "Seller Price: *{max_price}*\n"
                     "Minimum Price: {domain_price_min}\n"
-                    "Maximum Price: {domain_price_max}\n"
+                    "Maximum Price: *{domain_price_max}*\n"
                 ).format(
                     max_price=max_price,
                     domain_name=domain.name,
@@ -302,6 +309,21 @@ class MarketplaceJIRA(object):
 
         description += "---\n\n"
         if supplier:
+            current_recruiter = supplier.data.get('recruiter')
+            new_recruiter = application.data.get('recruiter')
+            if current_recruiter == 'yes' and new_recruiter != 'yes':
+                description += (
+                    '*This seller was previously purely a recruiter. '
+                    'If approving this edit - please ensure appropriate domain assessments are conducted.*\n\n'
+                    '---\n\n'
+                )
+
+            if current_recruiter != 'yes' and new_recruiter == 'yes':
+                description += (
+                    '*This seller was previously a hybrid recruiter (and consultancy).*\n\n'
+                    '---\n\n'
+                )
+
             case_studies = application.data.get('case_studies', [])
             for k, case_study in case_studies.iteritems():
                 current_case_study = next(
@@ -309,7 +331,22 @@ class MarketplaceJIRA(object):
                         [scs for scs in supplier.case_studies if scs.id == case_study.get('id')]
                     ), None)
 
-                if not current_case_study or current_case_study.status != 'rejected':
+                if not current_case_study:
+                    supplier_domain = next(iter([
+                        sd
+                        for sd in supplier.domains
+                        if sd.domain.name == case_study.get('service') and sd.price_status == 'rejected'
+                    ]), None)
+                    if supplier_domain:
+                        description += (
+                            '*Price for {} was previously rejected. '
+                            'Seller has added a new case study for this domain - '
+                            'please raise a domain assessment for this domain if required.*\n\n'
+                            .format(case_study.get('service'))
+                        )
+
+                    continue
+                elif current_case_study.status != 'rejected':
                     continue
 
                 case_study_different = application.is_case_study_different(case_study, current_case_study.data)
