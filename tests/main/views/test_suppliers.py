@@ -1229,6 +1229,33 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
                 # has_existing_sf
                 True,
                 # existing_declaration
+                {"question": "answer", "turkey": "chestnutmeal"},
+                # method
+                "PUT",
+                # new_declaration
+                {"turkey": None},
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "answer_selection_questions",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {"turkey": None}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
                 {"question": "answer", "Robinson": "Crusoe"},
                 # method
                 "PUT",
@@ -1355,6 +1382,33 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
                         "SupplierFramework",
                         # data
                         {"update": {}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer", "turkey": "chestnutmeal"},
+                # method
+                "PATCH",
+                # new_declaration
+                {"turkey": None},
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {"question": "answer"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "update_declaration_answers",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {"turkey": None}, "supplierId": 0},
                         # user
                         "testing",
                     ),
