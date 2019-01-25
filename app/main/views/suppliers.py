@@ -448,21 +448,27 @@ def remove_contact_information_personal_data(supplier_id, contact_id):
     return single_result_response("contactInformation", contact_information), 200
 
 
-@main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>/declaration', methods=['PUT'])
+@main.route('/suppliers/<int:supplier_id>/frameworks/<framework_slug>/declaration', methods=["PUT", "PATCH"])
 def set_a_declaration(supplier_id, framework_slug):
-    framework = Framework.query.filter(
-        Framework.slug == framework_slug
-    ).first_or_404()
-
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         supplier_id, framework_slug
-    ).first()
+    ).options(
+        lazyload('*')
+    ).with_for_update().first()
 
     if supplier_framework is not None:
         status_code = 200 if supplier_framework.declaration else 201
     else:
+        framework = Framework.query.filter(
+            Framework.slug == framework_slug
+        ).options(
+            lazyload('*')
+        ).first_or_404()
+
         supplier = Supplier.query.filter(
             Supplier.supplier_id == supplier_id
+        ).options(
+            lazyload('*')
         ).first_or_404()
 
         supplier_framework = SupplierFramework(
@@ -476,11 +482,22 @@ def set_a_declaration(supplier_id, framework_slug):
     updater_json = validate_and_return_updater_request()
     json_has_required_keys(request_data, ['declaration'])
 
-    supplier_framework.declaration = request_data['declaration'] or {}
+    if request.method == "PUT" or not supplier_framework.declaration:
+        supplier_framework.declaration = request_data['declaration'] or {}
+    elif request_data['declaration']:
+        supplier_framework.declaration.update(request_data['declaration'])
+        # FIXME fix json fields to actually run validators on value mutation - until then the following little absurdity
+        # is required, assigning the declaration attr back to itself to ensure validation is performed.
+        supplier_framework.declaration = supplier_framework.declaration
+
     db.session.add(supplier_framework)
     db.session.add(
         AuditEvent(
-            audit_type=AuditTypes.answer_selection_questions,
+            audit_type=(
+                AuditTypes.answer_selection_questions
+                if request.method == "PUT" else
+                AuditTypes.update_declaration_answers
+            ),
             db_object=supplier_framework,
             user=updater_json['updated_by'],
             data={
@@ -658,10 +675,13 @@ def update_supplier_framework(supplier_id, framework_slug):
     json_has_keys(update_json, optional_keys=("onFramework", "prefillDeclarationFromFrameworkSlug",
                                               "applicationCompanyDetailsConfirmed"))
 
+    # fetch and lock SupplierFramework row
     interest_record = SupplierFramework.query.filter(
         SupplierFramework.supplier_id == supplier.supplier_id,
         SupplierFramework.framework_id == framework.id
-    ).first()
+    ).options(
+        lazyload('*')
+    ).with_for_update().first()
 
     if not interest_record:
         abort(404, "supplier_id '{}' has not registered interest in {}".format(supplier_id, framework_slug))

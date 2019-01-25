@@ -1050,12 +1050,10 @@ class TestRemoveContactInformationPersonalData(BaseApplicationTest):
         assert data['error'] == expected_error_message
 
 
-class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateTestMixin):
-    method = 'put'
-    endpoint = '/suppliers/0/frameworks/g-cloud-4/declaration'
-
+class _TestSetSupplierDeclarationsSetupMixin:
     def setup(self):
-        super(TestSetSupplierDeclarations, self).setup()
+        super().setup()
+        self.setup_dummy_suppliers(1)
         # This is automatically removed in BaseApplicationTest.teardown
         framework = Framework(
             id=100,
@@ -1064,65 +1062,495 @@ class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin, JSONUpdateT
             framework='g-cloud',
             status='open',
             has_direct_award=True,
-            has_further_competition=False)
+            has_further_competition=False,
+        )
         db.session.add(framework)
         db.session.commit()
-        self.setup_dummy_suppliers(1)
 
-    def test_add_new_declaration(self):
-            response = self.client.put(
-                '/suppliers/0/frameworks/test-open/declaration',
-                data=json.dumps({
-                    'updated_by': 'testing',
-                    'declaration': {
-                        'question': 'answer'
-                    }
-                }),
-                content_type='application/json')
 
-            assert response.status_code == 201
-            answer = SupplierFramework \
-                .find_by_supplier_and_framework(0, 'test-open').first()
-            assert answer.declaration['question'] == 'answer'
+class TestSetSupplierDeclarationsBasicPut(
+    _TestSetSupplierDeclarationsSetupMixin,
+    BaseApplicationTest,
+    FixtureMixin,
+    JSONUpdateTestMixin,
+):
+    endpoint = '/suppliers/0/frameworks/test-open/declaration'
+    method = 'put'
 
-    def test_add_null_declaration_should_result_in_dict(self):
-        response = self.client.put(
-            '/suppliers/0/frameworks/test-open/declaration',
+
+class TestSetSupplierDeclarationsBasicPatch(
+    _TestSetSupplierDeclarationsSetupMixin,
+    BaseApplicationTest,
+    FixtureMixin,
+    JSONUpdateTestMixin,
+):
+    endpoint = '/suppliers/0/frameworks/test-open/declaration'
+    method = 'patch'
+
+
+@pytest.mark.parametrize("method", ("PUT", "PATCH",))
+class TestSetSupplierDeclarations404s(_TestSetSupplierDeclarationsSetupMixin, BaseApplicationTest, FixtureMixin):
+    def test_nonexistent_framework(self, method):
+        existing_audit_events_ids = frozenset(db.session.query(AuditEvent.id))
+
+        response = self.client.open(
+            '/suppliers/0/frameworks/fishy-flesh/declaration',
+            method=method,
             data=json.dumps({
                 'updated_by': 'testing',
-                'declaration': None
+                'declaration': {"gulls": "seagoose"},
             }),
-            content_type='application/json')
+            content_type='application/json',
+        )
 
-        assert response.status_code == 201
-        answer = SupplierFramework \
-            .find_by_supplier_and_framework(0, 'test-open').first()
-        assert isinstance(answer.declaration, dict)
+        assert response.status_code == 404
 
-    def test_update_existing_declaration(self):
-        framework_id = Framework.query.filter(
-            Framework.slug == 'test-open').first().id
-        answers = SupplierFramework(
-            supplier_id=0,
-            framework_id=framework_id,
-            declaration={'question': 'answer'})
-        db.session.add(answers)
+        assert existing_audit_events_ids == frozenset(db.session.query(AuditEvent.id))
+
+    def test_nonexistent_supplier(self, method):
+        existing_audit_events_ids = frozenset(db.session.query(AuditEvent.id))
+
+        response = self.client.open(
+            '/suppliers/110/frameworks/test-open/declaration',
+            method=method,
+            data=json.dumps({
+                'updated_by': 'testing',
+                'declaration': {"gulls": "seagoose"},
+            }),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 404
+
+        assert existing_audit_events_ids == frozenset(db.session.query(AuditEvent.id))
+
+
+def _id_func(value):
+    "A simple function to make display of parametrized ids a little easier to digest"
+    if value == {}:
+        return "EMPTYDCT"
+
+
+class TestSetSupplierDeclarations(BaseApplicationTest, FixtureMixin):
+
+    @pytest.mark.parametrize(
+        (
+            "has_existing_sf",
+            "existing_declaration",
+            "method",
+            "new_declaration",
+            "expected_status_code",
+            "expected_result_decl",
+            "expected_audit_events",
+        ),
+        (
+            (
+                # has_existing_sf
+                False,
+                # existing_declaration
+                None,
+                # method
+                "PUT",
+                # new_declaration
+                {"question": "answer"},
+                # expected_status_code
+                201,
+                # expected_result_decl
+                {"question": "answer"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "answer_selection_questions",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {"question": "answer"}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                False,
+                # existing_declaration
+                None,
+                # method
+                "PUT",
+                # new_declaration
+                None,
+                # expected_status_code
+                201,
+                # expected_result_decl
+                {},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "answer_selection_questions",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": None, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer", "Robinson": "Crusoe"},
+                # method
+                "PUT",
+                # new_declaration
+                {},
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "answer_selection_questions",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer", "turkey": "chestnutmeal"},
+                # method
+                "PUT",
+                # new_declaration
+                {"turkey": None},
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "answer_selection_questions",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {"turkey": None}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer", "Robinson": "Crusoe"},
+                # method
+                "PUT",
+                # new_declaration
+                {"question": "answer2", "swan": "meat"},
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {"question": "answer2", "swan": "meat"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "answer_selection_questions",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {"question": "answer2", "swan": "meat"}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer"},
+                # method
+                "PUT",
+                # new_declaration
+                None,
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "answer_selection_questions",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": None, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                False,
+                # existing_declaration
+                None,
+                # method
+                "PATCH",
+                # new_declaration
+                {"question": "answer"},
+                # expected_status_code
+                201,
+                # expected_result_decl
+                {"question": "answer"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "update_declaration_answers",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {"question": "answer"}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                False,
+                # existing_declaration
+                None,
+                # method
+                "PATCH",
+                # new_declaration
+                None,
+                # expected_status_code
+                201,
+                # expected_result_decl
+                {},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "update_declaration_answers",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": None, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer", "Robinson": "Crusoe"},
+                # method
+                "PATCH",
+                # new_declaration
+                {},
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {"question": "answer", "Robinson": "Crusoe"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "update_declaration_answers",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer", "turkey": "chestnutmeal"},
+                # method
+                "PATCH",
+                # new_declaration
+                {"turkey": None},
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {"question": "answer"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "update_declaration_answers",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {"turkey": None}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer", "Robinson": "Crusoe"},
+                # method
+                "PATCH",
+                # new_declaration
+                {"question": "answer2", "swan": "meat"},
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {"question": "answer2", "swan": "meat", "Robinson": "Crusoe"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "update_declaration_answers",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": {"question": "answer2", "swan": "meat"}, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+            (
+                # has_existing_sf
+                True,
+                # existing_declaration
+                {"question": "answer"},
+                # method
+                "PATCH",
+                # new_declaration
+                None,
+                # expected_status_code
+                200,
+                # expected_result_decl
+                {"question": "answer"},
+                # expected_audit_events
+                (
+                    (
+                        # audit_type
+                        "update_declaration_answers",
+                        # object_type
+                        "SupplierFramework",
+                        # data
+                        {"update": None, "supplierId": 0},
+                        # user
+                        "testing",
+                    ),
+                ),
+            ),
+        ),
+        ids=_id_func,
+    )
+    def test_set_supplier_declaration(
+        self,
+        has_existing_sf,
+        existing_declaration,
+        method,
+        new_declaration,
+        expected_status_code,
+        expected_result_decl,
+        expected_audit_events,
+    ):
+        """
+        :param has_existing_sf: whether a SupplierFramework should already exist for this s-f combo
+        :param existing_declaration: contents of any existing declaration on an existing SupplierFramework
+        :param method: method to send request as
+        :param new_declaration: contents of new declaration to be submitted to endpoint
+        :param expected_status_code: status code to expect in response
+        :param expected_result_decl: expected resultant declaration (both in response and db-stored value)
+        :param expected_audit_events: sequence tuples of parameters corresponding to AuditEvents added to the database:
+            (
+                audit_type,
+                object_type,
+                data,
+                user,
+            )
+        """
+        self.setup_dummy_suppliers(1)
+        framework = Framework(
+            id=100,
+            slug='test-open',
+            name='Test open',
+            framework='g-cloud',
+            status='open',
+            has_direct_award=True,
+            has_further_competition=False,
+        )
+        db.session.add(framework)
+
+        if has_existing_sf:
+            existing_sf = SupplierFramework(
+                supplier_id=0,
+                framework_id=framework.id,
+                declaration=existing_declaration,
+            )
+            db.session.add(existing_sf)
+        else:
+            assert existing_declaration is None, "Test cannot have exsting_declaration without has_existing_sf"
+
         db.session.commit()
 
-        response = self.client.put(
+        existing_audit_events_ids = tuple(db.session.query(AuditEvent.id))
+
+        response = self.client.open(
             '/suppliers/0/frameworks/test-open/declaration',
+            method=method,
             data=json.dumps({
                 'updated_by': 'testing',
-                'declaration': {
-                    'question': 'answer2',
-                }
+                'declaration': new_declaration,
             }),
-            content_type='application/json')
+            content_type='application/json',
+        )
 
-        assert response.status_code == 200
-        supplier_framework = SupplierFramework \
-            .find_by_supplier_and_framework(0, 'test-open').first()
-        assert supplier_framework.declaration['question'] == 'answer2'
+        assert response.status_code == expected_status_code
+
+        response_data = json.loads(response.get_data())
+        assert response_data["declaration"] == SupplierFramework.find_by_supplier_and_framework(
+            0,
+            'test-open',
+        ).one().declaration
+
+        assert response_data["declaration"] == expected_result_decl
+
+        assert db.session.query(
+            AuditEvent.type,
+            AuditEvent.object_type,
+            # can't be entirely certain of the resultant object_id
+            AuditEvent.data,
+            AuditEvent.user,
+        ).filter(
+            AuditEvent.id.notin_(existing_audit_events_ids)
+        ).order_by(AuditEvent.id).all() == list(expected_audit_events)
 
 
 class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
