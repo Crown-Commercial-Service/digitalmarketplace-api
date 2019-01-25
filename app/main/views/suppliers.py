@@ -486,6 +486,9 @@ def set_a_declaration(supplier_id, framework_slug):
         supplier_framework.declaration = request_data['declaration'] or {}
     elif request_data['declaration']:
         supplier_framework.declaration.update(request_data['declaration'])
+        # FIXME fix json fields to actually run validators on value mutation - until then the following little absurdity
+        # is required, assigning the declaration attr back to itself to ensure validation is performed.
+        supplier_framework.declaration = supplier_framework.declaration
 
     db.session.add(supplier_framework)
     db.session.add(
