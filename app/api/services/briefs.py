@@ -91,7 +91,7 @@ class BriefsService(Service):
         location = location or []
         status_filters = [x for x in status if x in ['live', 'closed']]
         open_to_filters = [x for x in open_to if x in ['all', 'selected', 'one']]
-        brief_type_filters = [x for x in brief_type if x in ['outcomes', 'training', 'specialists']]
+        brief_type_filters = [x for x in brief_type if x in ['outcomes', 'training', 'specialists', 'atm']]
         location_filters = [x for x in location if x in ['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA', 'Remote']]
 
         query = (db.session
@@ -136,6 +136,7 @@ class BriefsService(Service):
         if brief_type_filters:
             lots = db.session.query(Lot).all()
             switcher = {
+                'atm': [x.id for x in lots if x.slug == 'atm'],
                 'outcomes': [x.id for x in lots if x.slug in ['digital-outcome', 'rfx']],
                 'training': [x.id for x in lots if x.slug == 'training'],
                 'specialists': [x.id for x in lots if x.slug == 'digital-professionals']
@@ -152,6 +153,13 @@ class BriefsService(Service):
                 aoe_cond = or_(Brief.data['areaOfExpertise'].astext == 'Training, Learning and Development')
 
                 cond = or_(lot_cond, ids_cond, aoe_cond)
+                query = query.filter(cond)
+            elif 'atm' in brief_type_filters:
+                # this is a list of historic prod brief ids we want to show when the atm filter is active
+                atm_ids = [136, 180, 207, 351, 383, 453, 485, 490, 548, 568, 633, 743, 819, 830, 862, 975, 1071,
+                           1147, 1176, 1238, 1239, 1260, 1263, 1268, 1413, 1476, 1620, 1646, 1935]
+                ids_cond = or_(Brief.id.in_(atm_ids))
+                cond = or_(lot_cond, ids_cond)
                 query = query.filter(cond)
             else:
                 query = query.filter(lot_cond)
