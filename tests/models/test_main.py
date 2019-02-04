@@ -12,7 +12,7 @@ from app.models import (
     Brief, BriefResponse,
     ValidationError,
     BriefClarificationQuestion,
-    DraftService,
+    ArchivedService, DraftService,
     FrameworkLot,
     ContactInformation
 )
@@ -20,6 +20,7 @@ from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
 
 from dmtestutils.api_model_stubs import (
+    ArchivedServiceStub,
     BriefStub,
     BriefResponseStub,
     DraftServiceStub,
@@ -2558,3 +2559,49 @@ class TestCurrentFrameworkAgreement(BaseApplicationTest, FixtureMixin):
         )
         supplier_framework = self.get_supplier_framework()
         assert supplier_framework.current_framework_agreement.id == 5
+
+
+class TestArchivedService(BaseApplicationTest, FixtureMixin):
+
+    def setup(self):
+        super().setup()
+
+        self.framework_id = \
+            self.setup_dummy_framework("g-cloud-11", "g-cloud", "G-Cloud 11", id=111)
+        self.supplier_id = self.setup_dummy_suppliers(1)[0]
+        self.service_id = "1000000000"
+        self.setup_dummy_service(
+            data={"serviceName": "Cloud Pies"},
+            service_id=self.service_id,
+            supplier_id=self.supplier_id,
+            status="published",
+            lot_id=9,  # cloud-hosting
+            framework_id=self.framework_id,
+            createdAt="2017-04-07T12:34:00.000000Z",
+            updatedAt="2017-05-08T13:24:00.000000Z",
+        )
+
+        self.service = Service.query.filter(Service.service_id == self.service_id).first()
+
+    def test_archived_service_serialize_matches_api_stub_response(self):
+        # Ensures our dmtestutils.api_model_stubs are kept up to date
+        model = ArchivedService.from_service(self.service)
+        db.session.add(model)
+        db.session.commit()
+
+        stub = ArchivedServiceStub(
+            id=model.id,
+            service_id=self.service_id,
+            framework_slug="g-cloud-11",
+            lot="cloud-hosting",
+            lot_slug="cloud-hosting",
+            lot_name="Cloud hosting",
+            service_name="Cloud Pies",
+            status="published",
+            supplier_id=self.supplier_id,
+            supplier_name="Supplier 0",
+            created_at="2017-04-07T12:34:00.000000Z",
+            updated_at="2017-05-08T13:24:00.000000Z",
+        )
+
+        assert model.serialize() == stub.response()
