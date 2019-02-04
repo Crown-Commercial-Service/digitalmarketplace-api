@@ -20,7 +20,14 @@ from tests.bases import BaseApplicationTest
 from tests.helpers import FixtureMixin
 
 from dmtestutils.api_model_stubs import (
-    BriefStub, BriefResponseStub, FrameworkStub, FrameworkAgreementStub, LotStub, SupplierStub, SupplierFrameworkStub
+    BriefStub,
+    BriefResponseStub,
+    DraftServiceStub,
+    FrameworkStub,
+    FrameworkAgreementStub,
+    LotStub,
+    SupplierStub,
+    SupplierFrameworkStub
 )
 
 
@@ -2088,6 +2095,37 @@ class TestDraftService(BaseApplicationTest, FixtureMixin):
         )
 
         assert draft_service.status == service.status
+
+    def test_draft_service_serialize_matches_api_stub_response(self):
+        # Ensures our dmtestutils.api_model_stubs are kept up to date
+        framework_id = self.setup_dummy_framework("g-cloud-11", "g-cloud", "G-Cloud 11", id=111)
+        draft_service = DraftService(
+            data={"serviceName": "Pies as a service"},
+            framework_id=framework_id,
+            lot_id=9,  # cloud-hosting
+            supplier_id=0,
+            status="enabled",
+            created_at="2017-04-07T12:34:00.000000Z",
+            updated_at="2017-05-08T13:24:00.000000Z",
+        )
+        db.session.add(draft_service)
+        db.session.commit()
+
+        stub = DraftServiceStub(
+            id=draft_service.id,
+            framework_slug="g-cloud-11",
+            lot="cloud-hosting",
+            lot_slug="cloud-hosting",
+            lot_name="Cloud hosting",
+            service_name="Pies as a service",
+            status="enabled",
+            supplier_id=0,
+            supplier_name="Supplier 0",
+            created_at="2017-04-07T12:34:00.000000Z",
+            updated_at="2017-05-08T13:24:00.000000Z",
+        )
+
+        assert draft_service.serialize() == stub.response()
 
 
 class TestSupplierFrameworks(BaseApplicationTest, FixtureMixin):
