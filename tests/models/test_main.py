@@ -12,7 +12,7 @@ from app.models import (
     Brief, BriefResponse,
     ValidationError,
     BriefClarificationQuestion,
-    ArchivedService, DraftService,
+    ArchivedService, DraftService, Service,
     FrameworkLot,
     ContactInformation
 )
@@ -27,6 +27,7 @@ from dmtestutils.api_model_stubs import (
     FrameworkStub,
     FrameworkAgreementStub,
     LotStub,
+    ServiceStub,
     SupplierStub,
     SupplierFrameworkStub
 )
@@ -2000,6 +2001,41 @@ class TestServices(BaseApplicationTest, FixtureMixin):
         assert service.created_at == created_at
         assert service.updated_at > updated_at
         assert service.data == {'foo': 'bar', 'serviceName': 'Service 1000000000'}
+
+    def test_service_serialize_matches_api_stub_response(self):
+        # Ensures our dmtestutils.api_model_stubs are kept up to date
+        self.framework_id = \
+            self.setup_dummy_framework("g-cloud-11", "g-cloud", "G-Cloud 11", id=111)
+        self.supplier_id = self.setup_dummy_suppliers(1)[0]
+
+        model = Service(
+            data={"serviceName": "Pie Mania"},
+            framework_id=self.framework_id,
+            lot_id=11,  # cloud-support
+            service_id="1010101010",
+            status="published",
+            supplier_id=self.supplier_id,
+            created_at="2018-04-07T12:34:00.000000Z",
+            updated_at="2019-05-08T13:24:00.000000Z",
+        )
+        db.session.add(model)
+        db.session.commit()
+
+        stub = ServiceStub(
+            service_id="1010101010",
+            framework_slug="g-cloud-11",
+            lot="cloud-support",
+            lot_slug="cloud-support",
+            lot_name="Cloud support",
+            service_name="Pie Mania",
+            status="published",
+            supplier_id=self.supplier_id,
+            supplier_name="Supplier 0",
+            created_at="2018-04-07T12:34:00.000000Z",
+            updated_at="2019-05-08T13:24:00.000000Z",
+        )
+
+        assert model.serialize() == stub.response()
 
 
 class TestDraftService(BaseApplicationTest, FixtureMixin):
