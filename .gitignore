@@ -1,5 +1,4 @@
 venv*
-.elasticbeanstalk/
 *.pyc
 __pycache__
 version_label
