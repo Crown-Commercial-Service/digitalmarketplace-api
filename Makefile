@@ -1,5 +1,6 @@
 SHELL := /bin/bash
 VIRTUALENV_ROOT := $(shell [ -z $$VIRTUAL_ENV ] && echo $$(pwd)/venv || echo $$VIRTUAL_ENV)
+DATABASE_HOST := localhost
 
 .PHONY: run-all
 run-all: requirements run-migrations run-app
@@ -16,10 +17,6 @@ run-migrations: virtualenv
 virtualenv:
 	[ -z $$VIRTUAL_ENV ] && [ ! -d venv ] && python3 -m venv venv || true
 
-.PHONY: bootstrap
-bootstrap: virtualenv
-	./scripts/bootstrap.sh
-
 .PHONY: requirements
 requirements: virtualenv test-requirements requirements.txt
 	${VIRTUALENV_ROOT}/bin/pip install -r requirements.txt
@@ -34,6 +31,11 @@ freeze-requirements: virtualenv requirements-dev requirements-app.txt
 
 .PHONY: test
 test: test-requirements test-flake8 test-migrations test-unit
+
+.PHONY: test-bootstrap
+test-bootstrap: virtualenv
+	dropdb -h ${DATABASE_HOST} --if-exists digitalmarketplace_test
+	createdb -h ${DATABASE_HOST} digitalmarketplace_test
 
 .PHONY: test-requirements
 test-requirements:
