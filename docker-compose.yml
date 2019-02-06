@@ -20,6 +20,10 @@ services:
       - 8080:80
     volumes:
       - "~/dm/docker/pgadmin:/var/lib/pgadmin"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: a@b.cm
+      PGADMIN_DEFAULT_PASSWORD: 1234
+
 
   localstack:
     image: localstack/localstack
