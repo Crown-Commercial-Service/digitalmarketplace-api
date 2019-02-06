@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.models import (
-    User, Lot, Framework, Service,
+    User, Lot, Framework,
     Supplier, SupplierFramework, FrameworkAgreement,
     Brief, BriefResponse,
     ValidationError,
