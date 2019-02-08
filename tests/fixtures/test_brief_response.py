@@ -1,6 +1,6 @@
 import json
 import pytest
-
+import mock
 from app import encryption
 from app.models import db, utcnow, Supplier, SupplierFramework, Contact, SupplierDomain, User,\
     Framework, UserFramework, AuditEvent
@@ -115,7 +115,8 @@ def supplier_user(app, request, suppliers):
         yield User.query.first()
 
 
-def test_get_brief_response(client, supplier_user, supplier_domains, briefs, assessments, suppliers):
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_get_brief_response(brief_response, client, supplier_user, supplier_domains, briefs, assessments, suppliers):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
     }), content_type='application/json')
@@ -137,6 +138,7 @@ def test_get_brief_response(client, supplier_user, supplier_domains, briefs, ass
             content_type='application/json'
         )
         assert res.status_code == 201
+        assert brief_response.delay.called is True
 
         res = client.get(
             '/2/brief-response/{}'.format(i),
@@ -147,7 +149,14 @@ def test_get_brief_response(client, supplier_user, supplier_domains, briefs, ass
         assert data['id'] == i
 
 
-def test_withdraw_brief_response(client, supplier_user, supplier_domains, briefs, assessments, suppliers):
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_withdraw_brief_response(brief_response,
+                                 client,
+                                 supplier_user,
+                                 supplier_domains,
+                                 briefs,
+                                 assessments,
+                                 suppliers):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
     }), content_type='application/json')
@@ -170,6 +179,7 @@ def test_withdraw_brief_response(client, supplier_user, supplier_domains, briefs
             content_type='application/json'
         )
         assert res.status_code == 201
+        assert brief_response.delay.called is True
 
         res = client.get(
             '/2/brief-response/{}'.format(i),
@@ -197,7 +207,9 @@ def test_withdraw_brief_response(client, supplier_user, supplier_domains, briefs
         assert res.status_code == 400
 
 
-def test_withdraw_already_withdrawn_brief_response(client,
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_withdraw_already_withdrawn_brief_response(brief_response,
+                                                   client,
                                                    supplier_user,
                                                    supplier_domains,
                                                    briefs,
@@ -224,6 +236,7 @@ def test_withdraw_already_withdrawn_brief_response(client,
             content_type='application/json'
         )
         assert res.status_code == 201
+        assert brief_response.delay.called is True
 
         res = client.put(
             '/2/brief-response/{}/withdraw'.format(i),
@@ -300,7 +313,16 @@ rfx_data = {
 }
 
 
-def test_rfx_invited_seller_can_respond(client, suppliers, supplier_user, supplier_domains, buyer_user, rfx_brief):
+@mock.patch('app.tasks.publish_tasks.brief')
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_rfx_invited_seller_can_respond(brief_response,
+                                        brief,
+                                        client,
+                                        suppliers,
+                                        supplier_user,
+                                        supplier_domains,
+                                        buyer_user,
+                                        rfx_brief):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -312,6 +334,7 @@ def test_rfx_invited_seller_can_respond(client, suppliers, supplier_user, suppli
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert res.status_code == 200
+    assert brief.delay.called is True
 
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
@@ -329,9 +352,11 @@ def test_rfx_invited_seller_can_respond(client, suppliers, supplier_user, suppli
         content_type='application/json'
     )
     assert res.status_code == 201
+    assert brief_response.delay.called is True
 
 
-def test_rfx_non_invited_seller_can_not_respond(client, suppliers, supplier_user, supplier_domains, buyer_user,
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_rfx_non_invited_seller_can_not_respond(brief, client, suppliers, supplier_user, supplier_domains, buyer_user,
                                                 rfx_brief):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
@@ -347,6 +372,7 @@ def test_rfx_non_invited_seller_can_not_respond(client, suppliers, supplier_user
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert res.status_code == 200
+    assert brief.delay.called is True
 
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'

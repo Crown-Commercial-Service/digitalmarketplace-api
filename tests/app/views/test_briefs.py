@@ -813,7 +813,8 @@ class TestBriefs(BaseApplicationTest):
             'briefStatus': 'live',
         }
 
-    def test_publish_a_brief(self):
+    @mock.patch('app.tasks.publish_tasks.brief')
+    def test_publish_a_brief(self, brief):
         self.setup_dummy_briefs(1, title='The Title')
 
         res = self.client.post(
@@ -826,8 +827,10 @@ class TestBriefs(BaseApplicationTest):
 
         assert res.status_code == 200
         assert data['briefs']['status'] == 'live'
+        assert brief.delay.called is True
 
-    def test_withdraw_a_brief(self):
+    @mock.patch('app.tasks.publish_tasks.brief')
+    def test_withdraw_a_brief(self, brief):
         self.setup_dummy_briefs(1, title='The Title', status='live')
 
         res = self.client.post(
@@ -841,6 +844,7 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 200
         assert data['briefs']['status'] == 'withdrawn'
         assert data['briefs']['withdrawnAt'] is not None
+        assert brief.delay.called is True
 
     def test_cannot_publish_withdrawn_brief(self):
         self.setup_dummy_briefs(1, title='The Title', status='withdrawn')
@@ -928,7 +932,8 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 400
         assert data['error'] == "Framework is not live"
 
-    def test_publish_brief_makes_audit_event(self):
+    @mock.patch('app.tasks.publish_tasks.brief')
+    def test_publish_brief_makes_audit_event(self, brief):
         self.setup_dummy_briefs(1, title='The Title')
 
         res = self.client.post(
@@ -938,6 +943,7 @@ class TestBriefs(BaseApplicationTest):
             }),
             content_type='application/json')
         assert res.status_code == 200
+        assert brief.delay.called is True
 
         audit_response = self.client.get('/audit-events')
         assert audit_response.status_code == 200
@@ -951,7 +957,8 @@ class TestBriefs(BaseApplicationTest):
             'briefStatus': 'live',
         }
 
-    def test_withdraw_brief_makes_audit_event(self):
+    @mock.patch('app.tasks.publish_tasks.brief')
+    def test_withdraw_brief_makes_audit_event(self, brief):
         self.setup_dummy_briefs(1, title='The Title', status='live')
 
         res = self.client.post(
@@ -961,6 +968,7 @@ class TestBriefs(BaseApplicationTest):
             }),
             content_type='application/json')
         assert res.status_code == 200
+        assert brief.delay.called is True
 
         audit_response = self.client.get('/audit-events')
         assert audit_response.status_code == 200

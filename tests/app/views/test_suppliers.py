@@ -1,5 +1,6 @@
 from flask import json
 import pytest
+import mock
 from six.moves.urllib import parse as urlparse
 import time
 from freezegun import freeze_time
@@ -45,10 +46,12 @@ class TestGetSupplier(BaseApplicationTest):
         response = self.client.get('/suppliers/abc123')
         assert_equal(404, response.status_code)
 
-    def test_deleted_supplier_code(self):
+    @mock.patch('app.tasks.publish_tasks.supplier')
+    def test_deleted_supplier_code(self, supplier):
         self.client.delete('/suppliers/{}'.format(self.supplier_code))
         response = self.client.get('/suppliers/{}'.format(self.supplier_code))
         assert_equal(404, response.status_code)
+        supplier.delay.called is False
 
     def test_get_supplier(self):
         response = self.client.get('/suppliers/{}'.format(self.supplier_code))
@@ -100,13 +103,15 @@ class TestListSuppliers(BaseApplicationTest):
         assert 'suppliers' in data
         assert len(data['suppliers']) == 2
 
-    def test_results_after_delete(self):
+    @mock.patch('app.tasks.publish_tasks.supplier')
+    def test_results_after_delete(self, supplier):
         self.client.delete('/suppliers/{}'.format(1))
         response = self.client.get('/suppliers')
         assert_equal(200, response.status_code)
         data = json.loads(response.get_data())
         assert 'suppliers' in data
         assert len(data['suppliers']) == 5
+        assert supplier.delay.called is True
 
     def test_invalid_results_per_page(self):
         response = self.client.get('/suppliers?per_page=bork')
@@ -746,7 +751,8 @@ class TestDomains(BaseApplicationTest):
             'Emerging technology'
         ]
 
-    def test_domain_approvals(self):
+    @mock.patch('app.tasks.publish_tasks.supplier_domain')
+    def test_domain_approvals(self, supplier_domain):
         SAMPLE_DOMAIN = 'data science'
 
         with self.app.app_context():
@@ -776,6 +782,7 @@ class TestDomains(BaseApplicationTest):
             supplier = json.loads(response.get_data(as_text=True))['supplier']
             assessed = supplier['domains']['assessed']
             assert 'Data science' in assessed
+            assert supplier_domain.delay.called is True
 
 
 class TestDeleteSupplier(BaseApplicationTest):
@@ -795,12 +802,14 @@ class TestDeleteSupplier(BaseApplicationTest):
                 content_type='application/json')
             assert_equal(response.status_code, 201)
 
-    def test_delete(self):
+    @mock.patch('app.tasks.publish_tasks.supplier')
+    def test_delete(self, supplier):
         with self.app.app_context():
             assert_is_not_none(Supplier.query.filter_by(code=self.supplier_code).first())
             response = self.client.delete('/suppliers/{}'.format(self.supplier_code))
             assert_equal(200, response.status_code)
             assert_is_not_none(Supplier.query.filter_by(code=self.supplier_code, status='deleted').first())
+            assert supplier.delay.called is True
 
     def test_nonexistant_delete(self):
         with self.app.app_context():
@@ -1334,7 +1343,8 @@ class TestSupplierApplication(BaseApplicationTest):
             json.loads(response.get_data())
             assert_equal(response.status_code, 201)
 
-    def test_supplier_already_has_application(self):
+    @mock.patch('app.tasks.publish_tasks.application')
+    def test_supplier_already_has_application(self, application):
         application_id = self.setup_dummy_application()
 
         with self.app.app_context():
@@ -1355,8 +1365,10 @@ class TestSupplierApplication(BaseApplicationTest):
             data = json.loads(response.get_data())
             assert 'application' in data
             assert six.viewitems(self.application_data) <= six.viewitems(data['application'])
+            assert application.delay.called is True
 
-    def test_supplier_create_application(self):
+    @mock.patch('app.tasks.publish_tasks.application')
+    def test_supplier_create_application(self, application_task):
         with self.app.app_context():
             user = User(
                 id=1,
@@ -1386,6 +1398,7 @@ class TestSupplierApplication(BaseApplicationTest):
             application = data['application']
             assert application['status'] == 'saved'
             assert application['type'] == 'upgrade'
+            assert application_task.delay.called is True
 
             user = User.query.filter(User.id == 1).first()
             assert user.application_id == application['id']

@@ -9,6 +9,7 @@ fi
 echo "Setup Localstack"
 aws --endpoint-url=http://localhost:4572 s3 mb s3://dta-digital-marketplace-local
 aws --endpoint-url=http://localhost:4576 sqs create-queue --queue-name dta-marketplace-local
+aws --endpoint-url=http://localhost:4575 sns create-topic --name dta-marketplace-local
 aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address marketplace@digital.gov.au
 aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address no-reply@marketplace.digital.gov.au
 aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address "Digital Marketplace <no-reply@marketplace.digital.gov.au>"

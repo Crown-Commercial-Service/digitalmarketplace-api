@@ -9,6 +9,7 @@ from .brief_overview import BriefOverviewService
 from .brief_responses import BriefResponsesService
 from .users import UsersService
 from .key_value import KeyValueService
+from .publish import Publish
 from .frameworks import FrameworksService
 
 application_service = ApplicationService()
@@ -23,4 +24,5 @@ brief_overview_service = BriefOverviewService()
 brief_responses_service = BriefResponsesService()
 users = UsersService()
 key_values_service = KeyValueService()
+publish = Publish()
 frameworks_service = FrameworksService()

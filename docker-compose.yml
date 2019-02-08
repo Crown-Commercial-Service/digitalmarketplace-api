@@ -33,6 +33,7 @@ services:
     environment:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - DATA_DIR=/tmp/localstack/data
+      - LAMBDA_EXECUTOR=local
     volumes:
       - "~/dm/docker/localstack/data:/tmp/localstack/data"
       - "/var/run/docker.sock:/var/run/docker.sock"

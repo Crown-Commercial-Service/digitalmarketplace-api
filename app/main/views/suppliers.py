@@ -34,6 +34,7 @@ import json
 from itertools import groupby, chain
 from operator import itemgetter
 from app.api.business.validators import ApplicationValidator
+from app.tasks import publish_tasks
 
 
 @main.route('/suppliers', methods=['GET'])
@@ -124,6 +125,7 @@ def delete_supplier(code):
     supplier.status = 'deleted'
     try:
         db.session.commit()
+        publish_tasks.supplier.delay(supplier.serializable, 'deleted')
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
@@ -588,6 +590,7 @@ def set_a_declaration(code, framework_slug):
     supplier_framework = SupplierFramework.find_by_supplier_and_framework(
         code, framework_slug
     )
+    supplier = None
     if supplier_framework is not None:
         status_code = 200 if supplier_framework.declaration else 201
     else:
@@ -618,6 +621,8 @@ def set_a_declaration(code, framework_slug):
 
     try:
         db.session.commit()
+        if supplier:
+            publish_tasks.supplier.delay(supplier.serialize(), 'set_declaration')
     except IntegrityError as e:
         db.session.rollback()
         abort(400, "Database Error: {}".format(e))
@@ -927,6 +932,7 @@ def create_application_from_supplier(code, application_type=None):
 
     db.session.commit()
 
+    publish_tasks.application.delay(application.serialize(), 'created', supplier_code=code)
     return jsonify(application=application)
 
 
@@ -944,6 +950,14 @@ def assess_supplier_for_domain(supplier_id, domain_id, status):
 
     if status == 'assessed':
         send_assessment_approval_notification(supplier_id, domain_id)
+
+    publish_tasks.supplier_domain.delay(
+        supplier.serializable,
+        'domain_assessed',
+        status=status,
+        domain_id=domain_id,
+        supplier_code=supplier.code
+    )
 
     db.session.refresh(supplier)
     return jsonify(supplier=supplier.serializable), 200
@@ -996,6 +1010,8 @@ def update_supplier_domain(supplier_code, supplier_domain_id):
             db_object=supplier_domain
         ))
         db.session.commit()
+
+        publish_tasks.supplier_domain.delay(supplier_domain.serialize(), 'updated', supplier_code=supplier_code)
 
     supplier = (
         db

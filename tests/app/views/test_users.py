@@ -1,4 +1,5 @@
 from flask import json
+import mock
 from freezegun import freeze_time
 from nose.tools import assert_equal, assert_not_equal, assert_in, assert_is_none
 from app import db, encryption
@@ -17,6 +18,12 @@ class BaseUserTest(BaseApplicationTest):
     supplier = None
     supplier_code = None
     users = None
+    patcher_application = None
+    patcher_supplier = None
+    patcher_user = None
+    pub_application = None
+    pub_supplier = None
+    pub_user = None
 
     def setup(self):
         super(BaseUserTest, self).setup()
@@ -24,6 +31,19 @@ class BaseUserTest(BaseApplicationTest):
         self.supplier = payload
         self.supplier_code = payload['code']
         self.users = []
+        self.patcher_application = mock.patch('app.tasks.publish_tasks.application')
+        self.patcher_supplier = mock.patch('app.tasks.publish_tasks.supplier')
+        self.patcher_user = mock.patch('app.tasks.publish_tasks.user')
+
+        self.pub_application = self.patcher_application.start()
+        self.pub_supplier = self.patcher_supplier.start()
+        self.pub_user = self.patcher_user.start()
+
+    def teardown(self):
+        super(BaseUserTest, self).teardown()
+        self.patcher_application.stop()
+        self.patcher_supplier.stop()
+        self.patcher_user.stop()
 
     def _post_supplier(self):
         response = self.client.post(
@@ -40,6 +60,7 @@ class BaseUserTest(BaseApplicationTest):
             content_type='application/json')
 
         assert response.status_code == 201
+        assert self.pub_user.delay.called is True
         self.users.append(json.loads(response.get_data())["users"])
 
     def _return_post_login(self, auth_users=None, status_code=200):
@@ -68,6 +89,7 @@ class BaseUserTest(BaseApplicationTest):
         )
         self.application_id = json.loads(response.get_data())['application']['id']
         assert response.status_code == 201
+        assert self.pub_application.delay.called is True
 
 
 class TestUsersAuth(BaseUserTest):
@@ -233,7 +255,7 @@ class TestUsersAuth(BaseUserTest):
             self._return_post_login(status_code=403)
 
 
-class TestUsersPost(BaseApplicationTest, JSONTestMixin):
+class TestUsersPost(BaseUserTest, JSONTestMixin):
     method = "post"
     endpoint = "/users"
 
@@ -681,7 +703,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin):
         assert_in("JSON was not a valid format", data)
 
 
-class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin):
+class TestUsersUpdate(BaseUserTest, JSONUpdateTestMixin):
     method = "post"
     endpoint = "/users/123"
 

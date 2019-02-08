@@ -148,7 +148,8 @@ class TestCreateApplication(BaseApplicationsTest):
     endpoint = '/applications'
     method = 'post'
 
-    def test_create_new_application(self):
+    @mock.patch('app.tasks.publish_tasks.application')
+    def test_create_new_application(self, application):
         res = self.create_application(
             dict(self.application_data)
         )
@@ -156,6 +157,7 @@ class TestCreateApplication(BaseApplicationsTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 201, data
+        assert application.delay.called is True
 
     def test_cannot_create_application_with_empty_json(self):
         res = self.client.post(
@@ -187,7 +189,8 @@ class TestApproveApplication(BaseApplicationsTest):
     @mock.patch('app.jiraapi.JIRA')
     @mock.patch('app.main.views.applications.get_marketplace_jira')
     @mock.patch('app.emails.util.send_email')
-    def test_application_assessments_and_domain_approvals(self, send_email, get_marketplace_jira, jira):
+    @mock.patch('app.tasks.publish_tasks.application')
+    def test_application_assessments_and_domain_approvals(self, application, send_email, get_marketplace_jira, jira):
         with self.app.app_context():
             self.patch_application(self.application_id, data={'status': 'submitted'})
             a = self.reject_application(self.application_id)
@@ -210,6 +213,7 @@ class TestApproveApplication(BaseApplicationsTest):
             assert j['status'] == 'submitted'
 
             a = self.approve_application(self.application_id)
+            assert application.delay.called is True
 
             assert a.status_code == 200
             f = Framework.query.filter(
@@ -297,7 +301,8 @@ class TestUpdateApplication(BaseApplicationsTest):
         res = self.client.patch('/applications/1', data={'notAApplication': 'no'})
         assert res.status_code == 400
 
-    def test_can_delete_a_application(self):
+    @mock.patch('app.tasks.publish_tasks.application')
+    def test_can_delete_a_application(self, application):
         delete = self.client.delete(
             '/applications/{}'.format(self.application_id),
             data=json.dumps({
@@ -305,6 +310,7 @@ class TestUpdateApplication(BaseApplicationsTest):
             }),
             content_type='application/json')
         assert delete.status_code == 200
+        assert application.delay.called is True
 
         fetch_again = self.client.get('/applications/{}'.format(self.application_id))
         assert fetch_again.status_code == 404
@@ -481,7 +487,8 @@ class TestSubmitApplication(BaseApplicationsTest):
         assert response.status_code == 400
         assert 'Application is already submitted' in response.get_data(as_text=True)
 
-    def test_application_unauthorized_user(self):
+    @mock.patch('app.tasks.publish_tasks.application')
+    def test_application_unauthorized_user(self, application):
         self.patch_application(self.application_id, data={'status': 'saved'})
         application_id = self.setup_dummy_application(data=self.application_data)
         user_id = self.setup_dummy_applicant(2, application_id)
@@ -494,8 +501,10 @@ class TestSubmitApplication(BaseApplicationsTest):
 
         assert response.status_code == 400
         assert 'User is not authorized to submit application' in response.get_data(as_text=True)
+        assert application.delay.called is True
 
-    def test_no_current_agreeement(self):
+    @mock.patch('app.tasks.publish_tasks.application')
+    def test_no_current_agreeement(self, application):
         self.patch_application(self.application_id, data={'status': 'saved'})
         user_id = self.setup_dummy_applicant(2, self.application_id)
 
@@ -505,9 +514,11 @@ class TestSubmitApplication(BaseApplicationsTest):
             content_type='application/json')
 
         assert response.status_code == 404
+        assert application.delay.called is True
 
     @mock.patch('app.jiraapi.JIRA')
-    def test_application_submitted(self, jira):
+    @mock.patch('app.tasks.publish_tasks.application')
+    def test_application_submitted(self, application, jira):
         self.patch_application(self.application_id, data={'status': 'saved'})
         user_id = self.setup_dummy_applicant(2, self.application_id)
         self.setup_agreement()
@@ -519,6 +530,7 @@ class TestSubmitApplication(BaseApplicationsTest):
 
         assert response.status_code == 200
         data = json.loads(response.get_data())
+        assert application.delay.called is True
 
         assert data['application']['status'] == 'submitted'
         assert data['signed_agreement']['user_id'] == user_id
@@ -546,7 +558,8 @@ class TestRevertApplication(BaseApplicationsTest):
 
         assert response.status_code == 404
 
-    def test_application_already_reverted(self):
+    @mock.patch('app.tasks.publish_tasks.application')
+    def test_application_already_reverted(self, application):
         self.patch_application(self.application_id, data={'status': 'saved'})
 
         response = self.client.post('/applications/{}/revert'.format(self.application_id),
@@ -557,6 +570,7 @@ class TestRevertApplication(BaseApplicationsTest):
 
         assert response.status_code == 400
         assert 'not in submitted state for reverting' in response.get_data(as_text=True)
+        assert application.delay.called is True
 
     def test_application_reverted(self):
         self.patch_application(self.application_id, data={'status': 'submitted'})

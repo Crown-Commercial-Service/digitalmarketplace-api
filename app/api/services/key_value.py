@@ -52,3 +52,10 @@ class KeyValueService(Service):
         )
 
         return [kv._asdict() for kv in key_values]
+
+    def convert_to_object(self, key_values):
+        result = {}
+        for kv in key_values:
+            result[kv['key']] = kv['data']
+
+        return result

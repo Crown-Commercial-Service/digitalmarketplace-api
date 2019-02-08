@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload, noload
 from app.jiraapi import get_marketplace_jira
 from app.emails import send_assessment_requested_notification, send_assessment_rejected_notification
+from app.tasks import publish_tasks
 
 
 @main.route('/assessments', methods=['POST'])
@@ -18,6 +19,7 @@ def create_assessment():
     json_has_required_keys(data, ['supplier_code'])
     json_has_required_keys(data, ['domain_name'])
     supplier_code = data['supplier_code']
+    updated_by = updater_json['updated_by']
 
     existing_assessment = db.session.query(
         Assessment
@@ -30,7 +32,8 @@ def create_assessment():
     ).first()
 
     if existing_assessment:
-        send_assessment_requested_notification(existing_assessment, updater_json['updated_by'])
+        send_assessment_requested_notification(existing_assessment, updated_by)
+        publish_tasks.assessment.delay(existing_assessment.serializable, 'existing', updated_by=updated_by)
         return jsonify(assessment=existing_assessment.serializable), 201
 
     assessment = Assessment()
@@ -44,7 +47,7 @@ def create_assessment():
 
     db.session.add(AuditEvent(
         audit_type=AuditTypes.create_assessment,
-        user=updater_json['updated_by'],
+        user=updated_by,
         data={},
         db_object=assessment
     ))
@@ -60,6 +63,8 @@ def create_assessment():
         mj.create_domain_approval_task(assessment, application)
 
     send_assessment_requested_notification(assessment, updater_json['updated_by'])
+
+    publish_tasks.assessment.delay(assessment.serializable, 'created')
 
     return jsonify(assessment=assessment.serializable), 201
 

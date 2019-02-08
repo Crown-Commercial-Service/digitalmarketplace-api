@@ -23,6 +23,7 @@ from app.emails.users import (
 from app.api.business import (
     supplier_business
 )
+from app.tasks import publish_tasks
 
 from dmutils.logging import notify_team
 
@@ -291,6 +292,8 @@ def create_user():
         db.session.add(audit)
         db.session.commit()
 
+        publish_tasks.user.delay(user.serialize(), 'created')
+
         if user.role == 'buyer':
             notification_message = 'Domain: {}'.format(
                 email_address.split('@')[-1]
@@ -325,6 +328,7 @@ def update_user(user_id):
     user_update = json_payload["users"]
 
     json_has_matching_id(user_update, user_id)
+    existing_user = user.serialize()
 
     if 'password' in user_update:
         user.password = encryption.hashpw(user_update['password'])
@@ -364,6 +368,8 @@ def update_user(user_id):
 
     db.session.add(user)
     db.session.add(audit)
+
+    publish_tasks.user.delay(user.serialize(), 'updated', old_user=existing_user)
 
     try:
         db.session.commit()

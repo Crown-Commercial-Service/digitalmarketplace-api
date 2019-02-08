@@ -13,7 +13,10 @@ from sqlalchemy.sql.expression import true
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, noload
 # from dmapiclient.audit import AuditTypes
-from app.api.services import AuditTypes
+from app.api.services import (
+    AuditTypes
+)
+from app.tasks import publish_tasks
 from app.emails import send_approval_notification, send_rejection_notification, \
     send_submitted_existing_seller_notification, send_submitted_new_seller_notification, \
     send_revert_notification
@@ -53,6 +56,7 @@ def create_application():
         db_object=application
     ))
     db.session.commit()
+    publish_tasks.application.delay(application.serializable, 'created')
 
     return jsonify(application=application.serializable), 201
 
@@ -74,6 +78,7 @@ def update_application(application_id):
             data={},
             db_object=application
         ))
+        publish_tasks.application.delay(application.serializable, 'reverted')
 
     application.update_from_json(application_json)
     save_application(application)
@@ -107,6 +112,7 @@ def update_application_admin(application_id):
 
         application.update_from_json(application_json)
         save_application(application)
+        publish_tasks.application.delay(application.serializable, 'updated')
 
         return jsonify(application=application.serializable), 200
     else:
@@ -181,6 +187,8 @@ def application_approval(application_id, result):
     ))
     application.set_approval(approved=result)
     db.session.commit()
+
+    publish_tasks.application.delay(application.serializable, 'approved' if result else 'approval_rejected')
     return jsonify(application=application.serializable), 200
 
 
@@ -286,6 +294,7 @@ def delete_application(application_id):
     ))
     application.status = 'deleted'
 
+    deleted_application = application.serialize()
     users = User.query.filter(
         User.application_id == application_id
     ).all()
@@ -296,6 +305,7 @@ def delete_application(application_id):
 
     try:
         db.session.commit()
+        publish_tasks.application.delay(deleted_application, 'delete')
     except IntegrityError as e:
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))
@@ -420,6 +430,7 @@ def submit_application(application_id):
             send_submitted_new_seller_notification(application.id)
 
     db.session.commit()
+    publish_tasks.application.delay(application.serializable, 'submitted')
     return jsonify(application=application.serializable,
                    signed_agreement=signed_agreement)
 

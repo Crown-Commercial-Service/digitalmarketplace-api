@@ -7,7 +7,10 @@ from sqlalchemy.exc import IntegrityError
 import pendulum
 from pendulum.parsing.exceptions import ParserError
 
-from app.api.services import AuditTypes
+from app.api.services import (
+    AuditTypes
+)
+from app.tasks import publish_tasks
 from .. import main
 from ... import db
 from ...models import User, Brief, AuditEvent, Framework, Lot, Supplier, Service
@@ -470,7 +473,7 @@ def update_brief_status_by_action(brief_id, action):
         'withdraw': 'withdrawn'
     }
     if brief.status != action_to_status[action]:
-        previousStatus = brief.status
+        previous_status = brief.status
         brief.status = action_to_status[action]
 
         if action == 'publish':
@@ -481,7 +484,7 @@ def update_brief_status_by_action(brief_id, action):
             user=updater_json['updated_by'],
             data={
                 'briefId': brief.id,
-                'briefPreviousStatus': previousStatus,
+                'briefPreviousStatus': previous_status,
                 'briefStatus': brief.status,
             },
             db_object=brief,
@@ -490,6 +493,12 @@ def update_brief_status_by_action(brief_id, action):
         db.session.add(brief)
         db.session.add(audit)
         db.session.commit()
+
+        publish_tasks.brief.delay(
+            brief.serialize(),
+            'published' if action == 'publish' else 'withdrawn',
+            previous_status=previous_status
+        )
 
     return jsonify(briefs=brief.serialize()), 200
 

@@ -52,7 +52,8 @@ def make_celery(flask_app):
             'app.tasks.brief_response_tasks',
             'app.tasks.supplier_tasks',
             'app.tasks.jira',
-            'app.tasks.dreamail'
+            'app.tasks.dreamail',
+            'app.tasks.publish_tasks'
         ]
     )
     celery.conf.update(flask_app.config)

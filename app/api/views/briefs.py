@@ -24,6 +24,7 @@ from app.api.services import (audit_service,
                               domain_service)
 from app.emails import send_brief_response_received_email, render_email_template, send_seller_invited_to_rfx_email
 from app.api.helpers import notify_team
+from app.tasks import publish_tasks
 from dmapiclient.audit import AuditTypes
 from dmutils.file import s3_download_file, s3_upload_file_from_request
 
@@ -429,6 +430,7 @@ def update_brief(brief_id):
     if 'sellers' in data and len(data['sellers']) > 0:
         data['sellerSelector'] = 'someSellers' if len(data['sellers']) > 1 else 'oneSeller'
 
+    previous_status = brief.status
     if publish:
         brief.publish(closed_at=data['closedAt'])
         if 'sellers' in brief.data:
@@ -453,6 +455,12 @@ def update_brief(brief_id):
     brief.data = data
     briefs.save_brief(brief)
 
+    if publish:
+        publish_tasks.brief.delay(
+            brief.serialize(),
+            'published',
+            previous_status=previous_status
+        )
     try:
         audit_service.log_audit_event(
             audit_type=AuditTypes.update_brief,
@@ -524,8 +532,10 @@ def delete_brief(brief_id):
     )
 
     try:
+        deleted_brief = brief.serialize()
         audit_service.save(audit)
         briefs.delete(brief)
+        publish_tasks.brief.delay(deleted_brief, 'delete', user=current_user.email_address)
     except Exception as e:
         extra_data = {'audit_type': AuditTypes.delete_brief, 'briefId': brief.id, 'exception': e.message}
         rollbar.report_exc_info(extra_data=extra_data)
@@ -876,6 +886,7 @@ def post_brief_response(brief_id):
         },
         db_object=brief_response)
 
+    publish_tasks.brief_response.delay(brief_response.serialize(), 'submitted', user=current_user.email_address)
     return jsonify(briefResponses=brief_response.serialize()), 201
 
 

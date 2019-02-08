@@ -2,8 +2,13 @@ from flask import jsonify
 from flask_login import current_user, login_required
 from app.api import api
 from app.api.helpers import abort, not_found
+from app.api.services import (
+    brief_responses_service,
+    audit_service,
+    audit_types
+)
+from app.tasks import publish_tasks
 from ...models import AuditEvent
-from app.api.services import brief_responses_service, audit_service, audit_types
 from app.api.helpers import role_required
 from ...datetime_utils import utcnow
 import rollbar
@@ -55,6 +60,8 @@ def withdraw_brief_response(brief_response_id):
             except Exception as e:
                 extra_data = {'audit_type': audit_types.update_brief_response, 'briefResponseId': brief_response.id}
                 rollbar.report_exc_info(extra_data=extra_data)
+
+            publish_tasks.brief_response.delay(brief_response.serialize(), 'withdrawn', user=current_user.email_address)
         else:
             abort('Brief response with brief_response_id "{}" is already withdrawn'.format(brief_response_id))
     else:

@@ -126,6 +126,20 @@ export AWS_SQS_QUEUE_URL='https://<region>.queue.amazonaws.com/<queue_account>/<
 export AWS_SQS_BROKER_URL='sqs://[<MYACCESSKEYID>]:[<MYSECRETKEY>]@[localhost:4576]'
 ```
 
+#### Amazon SNS
+The SNS config is taken from the database. For localstack use only `aws_sns_url` and `aws_sns_topicarn`. For production all is required except for `aws_sns_url`.
+```
+{
+  "data": {
+    "aws_sns_region": "",
+    "aws_sns_access_key_id": "",
+    "aws_sns_secret_access_key": "",
+    "aws_sns_url": "",
+    "aws_sns_topicarn": ""
+  }
+}
+```
+
 #### Localstack
 In addition to Amazon SQS environment variables, the endpoint_url of boto3 needs to be overridden with the following environment variables
 ```

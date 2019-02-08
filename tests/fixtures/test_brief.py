@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import pytest
+import mock
 
 from app import encryption
 from app.models import Brief, Lot, db, utcnow, Supplier, SupplierFramework, Contact, SupplierDomain, User,\
@@ -119,7 +120,14 @@ def supplier_user(app, request, suppliers):
         yield User.query.first()
 
 
-def test_create_new_brief_response(client, supplier_user, supplier_domains, briefs, assessments, suppliers):
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_create_new_brief_response(brief_response,
+                                   client,
+                                   supplier_user,
+                                   supplier_domains,
+                                   briefs,
+                                   assessments,
+                                   suppliers):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
     }), content_type='application/json')
@@ -140,9 +148,11 @@ def test_create_new_brief_response(client, supplier_user, supplier_domains, brie
         content_type='application/json'
     )
     assert res.status_code == 201
+    assert brief_response.delay.called is True
 
 
-def test_create_brief_response_creates_an_audit_event(client, supplier_user, supplier_domains,
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_create_brief_response_creates_an_audit_event(brief_response, client, supplier_user, supplier_domains,
                                                       briefs, assessments, suppliers):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
@@ -164,6 +174,7 @@ def test_create_brief_response_creates_an_audit_event(client, supplier_user, sup
         content_type='application/json'
     )
     assert res.status_code == 201
+    assert brief_response.delay.called is True
 
     audit_events = AuditEvent.query.filter(
         AuditEvent.type == AuditTypes.create_brief_response.value
@@ -173,7 +184,8 @@ def test_create_brief_response_creates_an_audit_event(client, supplier_user, sup
     assert audit_events[0].data['briefResponseId'] == 1
 
 
-def test_create_brief_response_with_object(client, supplier_user,
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_create_brief_response_with_object(brief_response, client, supplier_user,
                                            supplier_domains, briefs,
                                            assessments, suppliers):
     res = client.post('/2/login', data=json.dumps({
@@ -196,9 +208,12 @@ def test_create_brief_response_with_object(client, supplier_user,
         content_type='application/json'
     )
     assert res.status_code == 201
+    assert brief_response.delay.called is True
 
 
-def test_cannot_respond_to_a_brief_more_than_three_times_from_the_same_supplier(client, supplier_user,
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_cannot_respond_to_a_brief_more_than_three_times_from_the_same_supplier(brief_response,
+                                                                                client, supplier_user,
                                                                                 supplier_domains, briefs,
                                                                                 assessments, suppliers):
     res = client.post('/2/login', data=json.dumps({
@@ -222,6 +237,7 @@ def test_cannot_respond_to_a_brief_more_than_three_times_from_the_same_supplier(
             content_type='application/json'
         )
         assert res.status_code == 201
+        assert brief_response.delay.called is True
 
     res = client.post(
         '/2/brief/1/respond',
@@ -267,7 +283,9 @@ def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(client, s
     assert 'Essential requirements must be completed' in res.get_data(as_text=True)
 
 
-def test_create_brief_response_success_with_audit_exception(client, supplier_user, supplier_domains,
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_create_brief_response_success_with_audit_exception(brief_response,
+                                                            client, supplier_user, supplier_domains,
                                                             briefs, assessments, suppliers, mocker):
     audit_event = mocker.patch('app.api.views.briefs.audit_service')
     audit_event.side_effect = Exception('Test')
@@ -292,6 +310,7 @@ def test_create_brief_response_success_with_audit_exception(client, supplier_use
         content_type='application/json'
     )
     assert res.status_code == 201
+    assert brief_response.delay.called is True
 
 
 def test_create_brief_response_fail_with_incorrect_attachment(client, supplier_user, supplier_domains,
@@ -333,7 +352,8 @@ def test_create_brief_response_fail_with_incorrect_attachment(client, supplier_u
     assert res.status_code == 400
 
 
-def test_get_brief(client, supplier_user, supplier_domains, briefs, assessments, suppliers):
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_get_brief(brief_response, client, supplier_user, supplier_domains, briefs, assessments, suppliers):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
     }), content_type='application/json')
@@ -354,6 +374,7 @@ def test_get_brief(client, supplier_user, supplier_domains, briefs, assessments,
         content_type='application/json'
     )
     assert res.status_code == 201
+    assert brief_response.delay.called is True
 
     res = client.get(
         '/2/brief/1',
@@ -628,7 +649,8 @@ rfx_data = {
 }
 
 
-def test_rfx_field_access_as_owner(client, supplier_domains, suppliers, buyer_user, rfx_brief):
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_rfx_field_access_as_owner(brief, client, supplier_domains, suppliers, buyer_user, rfx_brief):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -640,6 +662,7 @@ def test_rfx_field_access_as_owner(client, supplier_domains, suppliers, buyer_us
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     response = json.loads(res.data)
+    assert brief.delay.called is True
 
     res = client.get('/2/brief/1')
     response = json.loads(res.data)
@@ -653,7 +676,9 @@ def test_rfx_field_access_as_owner(client, supplier_domains, suppliers, buyer_us
     assert response['brief']['contactNumber'] == '0263635544'
 
 
-def test_rfx_field_access_as_invited_seller(client, supplier_domains, suppliers, buyer_user, rfx_brief, supplier_user):
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_rfx_field_access_as_invited_seller(brief, client, supplier_domains, suppliers,
+                                            buyer_user, rfx_brief, supplier_user):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -663,6 +688,7 @@ def test_rfx_field_access_as_invited_seller(client, supplier_domains, suppliers,
     data['publish'] = True
     data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert brief.delay.called is True
 
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
@@ -681,7 +707,8 @@ def test_rfx_field_access_as_invited_seller(client, supplier_domains, suppliers,
     assert response['brief']['contactNumber'] == ''
 
 
-def test_rfx_field_access_as_non_invited_seller(client, supplier_domains, suppliers, buyer_user, rfx_brief,
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_rfx_field_access_as_non_invited_seller(brief, client, supplier_domains, suppliers, buyer_user, rfx_brief,
                                                 supplier_user):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
@@ -693,6 +720,7 @@ def test_rfx_field_access_as_non_invited_seller(client, supplier_domains, suppli
     data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
     data['sellers'] = {'2': 'Test Supplier2'}
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert brief.delay.called is True
 
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
@@ -711,7 +739,8 @@ def test_rfx_field_access_as_non_invited_seller(client, supplier_domains, suppli
     assert response['brief']['contactNumber'] == ''
 
 
-def test_rfx_field_access_as_anonymous_user(client, supplier_domains, suppliers, buyer_user, rfx_brief):
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_rfx_field_access_as_anonymous_user(brief, client, supplier_domains, suppliers, buyer_user, rfx_brief):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -721,6 +750,7 @@ def test_rfx_field_access_as_anonymous_user(client, supplier_domains, suppliers,
     data['publish'] = True
     data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert brief.delay.called is True
 
     res = client.get('/2/logout')
     res = client.get('/2/brief/1')
@@ -735,7 +765,8 @@ def test_rfx_field_access_as_anonymous_user(client, supplier_domains, suppliers,
     assert response['brief']['contactNumber'] == ''
 
 
-def test_rfx_publish_success_2_days_correct_dates(client, supplier_domains, suppliers, buyer_user, rfx_brief):
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_rfx_publish_success_2_days_correct_dates(brief, client, supplier_domains, suppliers, buyer_user, rfx_brief):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -747,6 +778,8 @@ def test_rfx_publish_success_2_days_correct_dates(client, supplier_domains, supp
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert res.status_code == 200
+    assert brief.delay.called is True
+
     response = json.loads(res.data)
     assert response['closedAt'] == pendulum.today().add(days=2).format('%Y-%m-%d')
     question_closing_date = pendulum.instance(workday(pendulum.today(), 1)).format('%Y-%m-%d')
@@ -776,11 +809,13 @@ def get_day_count(request):
     return day_count
 
 
+@mock.patch('app.tasks.publish_tasks.brief')
 @pytest.mark.parametrize(
     'get_day_count',
     [{'day_count': 3}, {'day_count': 4}, {'day_count': 5}, {'day_count': 6}, {'day_count': 7}], indirect=True
 )
-def test_rfx_publish_success_under_one_week_correct_dates(client, buyer_user, supplier_domains, suppliers, rfx_brief,
+def test_rfx_publish_success_under_one_week_correct_dates(brief, client, buyer_user,
+                                                          supplier_domains, suppliers, rfx_brief,
                                                           get_day_count):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
@@ -793,6 +828,8 @@ def test_rfx_publish_success_under_one_week_correct_dates(client, buyer_user, su
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(rfx_data))
     assert res.status_code == 200
+    assert brief.delay.called is True
+
     response = json.loads(res.data)
     assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
     question_closing_date = pendulum.instance(workday(pendulum.today(), 2)).format('%Y-%m-%d')
@@ -801,11 +838,13 @@ def test_rfx_publish_success_under_one_week_correct_dates(client, buyer_user, su
     assert response['dates']['questions_closing_date'] == question_closing_date
 
 
+@mock.patch('app.tasks.publish_tasks.brief')
 @pytest.mark.parametrize(
     'get_day_count',
     [{'day_count': 8}, {'day_count': 9}, {'day_count': 10}, {'day_count': 22}], indirect=True
 )
-def test_rfx_publish_success_over_one_week_correct_dates(client, buyer_user, supplier_domains, suppliers, rfx_brief,
+def test_rfx_publish_success_over_one_week_correct_dates(brief, client, buyer_user,
+                                                         supplier_domains, suppliers, rfx_brief,
                                                          get_day_count):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
@@ -818,6 +857,8 @@ def test_rfx_publish_success_over_one_week_correct_dates(client, buyer_user, sup
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert res.status_code == 200
+    assert brief.delay.called is True
+
     response = json.loads(res.data)
     assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
     assert response['dates']['questions_closing_date'] == (
