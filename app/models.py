@@ -833,7 +833,8 @@ class Supplier(db.Model):
         if 'case_studies' in j:
             j['case_studies'] = [normalize_key_case(c) for c in j['case_studies']]
         for v in j['signed_agreements']:
-            v['agreement'] = Agreement.query.get(v['agreement_id'])
+            agreement = Agreement.query.get(v['agreement_id'])
+            v['agreement'] = agreement.serialize() if agreement else None
 
         return j
 
