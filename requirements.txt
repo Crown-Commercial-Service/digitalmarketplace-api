@@ -10,7 +10,7 @@ itsdangerous==0.24
 --no-binary=psycopg2
 psycopg2==2.7.3
 SQLAlchemy==1.2.12
-SQLAlchemy-Utils==0.33.3
+SQLAlchemy-Utils==0.33.11
 sqlalchemy-json==0.2.2
 
 git+https://github.com/alphagov/digitalmarketplace-utils.git@45.2.0#egg=digitalmarketplace-utils==45.2.0
