@@ -44,7 +44,7 @@ future==0.17.1
 idna==2.8
 Jinja2==2.10
 jmespath==0.9.3
-mailchimp3==2.0.18
+mailchimp3==3.0.6
 Mako==1.0.7
 mandrill==1.0.57
 MarkupSafe==1.1.0
