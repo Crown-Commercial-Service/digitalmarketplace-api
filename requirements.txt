@@ -19,7 +19,7 @@ git+https://github.com/alphagov/digitalmarketplace-apiclient.git@19.14.0#egg=dig
 # For schema validation
 jsonschema==2.5.1
 rfc3987==1.3.4
-strict-rfc3339==0.5
+strict-rfc3339==0.7
 
 ## The following requirements were added by pip freeze:
 alembic==1.0.6
