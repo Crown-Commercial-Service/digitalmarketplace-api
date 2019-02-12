@@ -11,7 +11,7 @@ mock==2.0.0
 pytest==3.3.0
 pytest-cov==2.6.0
 requests-mock==1.5.2
-testfixtures==6.3.0
+testfixtures==6.5.0
 
 git+https://github.com/alphagov/digitalmarketplace-test-utils.git@2.3.0#egg=digitalmarketplace-test-utils==2.3.0
 
