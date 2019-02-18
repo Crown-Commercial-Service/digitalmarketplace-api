@@ -226,7 +226,7 @@ def index_object(framework, doc_type, object_id, serialized_object):
                 'Failed to add {} object with id {} to {} index: {}'.format(
                     doc_type, object_id, index_name, e.message))
 
-    except KeyError as e:
+    except KeyError:
         current_app.logger.error(
             "Failed to find index name for framework '{}' with object type '{}'".format(framework, doc_type)
         )

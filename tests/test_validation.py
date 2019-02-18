@@ -23,21 +23,21 @@ def drop_api_exported_fields_so_that_api_import_will_validate(data):
 def test_supplier_validates():
     data = load_example_listing("supplier_creation")
     errs = get_validation_errors("new-supplier", data)
-    assert len(errs) is 0
+    assert len(errs) == 0
 
 
 def test_supplier_validates_with_no_companies_house_number():
     data = load_example_listing("supplier_creation")
     data.pop("companiesHouseNumber", None)
     errs = get_validation_errors("new-supplier", data)
-    assert len(errs) is 0
+    assert len(errs) == 0
 
 
 def test_supplier_fails_with_bad_companies_house_number():
     data = load_example_listing("supplier_creation")
     data["companiesHouseNumber"] = "short"
     errs = get_validation_errors("new-supplier", data)
-    assert len(errs) is 1
+    assert len(errs) == 1
 
 
 def test_for_valid_date():

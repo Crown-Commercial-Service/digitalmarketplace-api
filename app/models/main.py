@@ -253,7 +253,7 @@ class Framework(db.Model):
             raise ValidationError("Invalid framework value '{}'".format(framework))
         return framework
 
-    slug_pattern = re.compile("^[\w-]+$")
+    slug_pattern = re.compile(r"^[\w-]+$")
 
     @validates('slug')
     def validates_slug(self, key, slug):
@@ -961,7 +961,7 @@ class User(db.Model, RemovePersonalDataModelMixin):
     def remove_personal_data(self):
         """This method needs to remove all personal data from this object."""
         if self.role == 'buyer' or self.role in self.ADMIN_ROLES:
-            self.email_address = re.sub('.+?\@', '<removed><{}>@'.format(uuid4()), self.email_address)
+            self.email_address = re.sub(r'.+?\@', '<removed><{}>@'.format(uuid4()), self.email_address)
         else:
             self.email_address = '<removed>@{uuid}.com'.format(uuid=str(uuid4()))
         self.personal_data_removed = True
