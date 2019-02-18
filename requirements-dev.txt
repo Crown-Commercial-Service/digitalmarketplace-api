@@ -8,7 +8,7 @@ flake8-per-file-ignores==0.8.1
 freezegun==0.3.11
 hypothesis==4.6.0
 mock==2.0.0
-pytest==3.3.0
+pytest==4.2.1
 pytest-cov==2.6.0
 requests-mock==1.5.2
 testfixtures==6.3.0
