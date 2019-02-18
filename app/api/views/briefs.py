@@ -11,18 +11,24 @@ from sqlalchemy.exc import DataError
 
 from app.api import api
 from app.api.csv import generate_brief_responses_csv
-from app.api.business.validators import SupplierValidator, RFXDataValidator
+from app.api.business.validators import SupplierValidator, RFXDataValidator, ATMDataValidator
+from app.api.business.brief import BriefUserStatus
 from app.api.business import supplier_business
 from app.api.helpers import abort, forbidden, not_found, role_required, is_current_user_in_brief
 from app.api.services import (audit_service,
                               brief_overview_service,
                               brief_responses_service,
                               briefs,
+                              domain_service,
+                              frameworks_service,
                               lots_service,
                               suppliers,
-                              frameworks_service,
-                              domain_service)
-from app.emails import send_brief_response_received_email, render_email_template, send_seller_invited_to_rfx_email
+                              users)
+from app.emails import (
+    send_brief_response_received_email,
+    render_email_template,
+    send_seller_invited_to_rfx_email
+)
 from app.api.helpers import notify_team
 from app.tasks import publish_tasks
 from dmapiclient.audit import AuditTypes
@@ -75,20 +81,35 @@ def _can_do_brief_response(brief_id):
     rfx_lot = lots_service.find(slug='rfx').one_or_none()
     rfx_lot_id = rfx_lot.id if rfx_lot else None
 
+    atm_lot = lots_service.find(slug='atm').one_or_none()
+    atm_lot_id = atm_lot.id if atm_lot else None
+
     is_selected = False
     seller_selector = brief.data.get('sellerSelector', '')
-    if not seller_selector or (seller_selector == 'allSellers' and brief.lot_id != rfx_lot_id):
-        is_selected = True
-    elif brief.lot_id == rfx_lot_id:
+    open_to = brief.data.get('openTo', '')
+    brief_category = brief.data.get('sellerCategory', '')
+    brief_domain = domain_service.get_by_name_or_id(int(brief_category)) if brief_category else None
+
+    if brief.lot_id == rfx_lot_id:
         if str(current_user.supplier_code) in brief.data['sellers'].keys():
             is_selected = True
+
+    elif brief.lot_id == atm_lot_id:
+        if seller_selector == 'allSellers' and len(supplier.assessed_domains) > 0:
+            is_selected = True
+        elif seller_selector == 'someSellers' and open_to == 'category' and brief_domain and\
+                                brief_domain.name in supplier.assessed_domains:
+            is_selected = True
+
     else:
-        if seller_selector == 'someSellers':
+        if not seller_selector or seller_selector == 'allSellers':
+            is_selected = True
+        elif seller_selector == 'someSellers':
             seller_domain_list = [domain(x).lower() for x in brief.data['sellerEmailList']]
             if current_user.email_address in brief.data['sellerEmailList'] \
                or (current_user_domain and current_user_domain.lower() in seller_domain_list):
                 is_selected = True
-        if seller_selector == 'oneSeller':
+        elif seller_selector == 'oneSeller':
             if current_user.email_address.lower() == brief.data['sellerEmail'].lower() \
                or (current_user_domain and current_user_domain.lower() == domain(brief.data['sellerEmail'].lower())):
                 is_selected = True
@@ -171,7 +192,62 @@ def create_rfx_brief():
     try:
         lot = lots_service.find(slug='rfx').one_or_none()
         framework = frameworks_service.find(slug='digital-marketplace').one_or_none()
-        user = User.query.get(current_user.id)
+        user = users.get(current_user.id)
+        brief = briefs.create_brief(user, framework, lot)
+    except Exception as e:
+        rollbar.report_exc_info()
+        return jsonify(message=e.message), 400
+
+    try:
+        audit_service.log_audit_event(
+            audit_type=AuditTypes.create_brief,
+            user=current_user.email_address,
+            data={
+                'briefId': brief.id
+            },
+            db_object=brief)
+    except Exception as e:
+        rollbar.report_exc_info()
+
+    return jsonify(brief.serialize(with_users=False))
+
+
+@api.route('/brief/atm', methods=['POST'])
+@login_required
+@role_required('buyer')
+def create_atm_brief():
+    """Create ATM brief (role=buyer)
+    ---
+    tags:
+        - brief
+    definitions:
+        ATMBriefCreated:
+            type: object
+            properties:
+                id:
+                    type: number
+                lot:
+                    type: string
+                status:
+                    type: string
+                author:
+                    type: string
+    responses:
+        200:
+            description: Brief created successfully.
+            schema:
+                $ref: '#/definitions/ATMBriefCreated'
+        400:
+            description: Bad request.
+        403:
+            description: Unauthorised to create ATM brief.
+        500:
+            description: Unexpected error.
+    """
+    try:
+        lot = lots_service.find(slug='atm').one_or_none()
+        framework = frameworks_service.find(slug='digital-marketplace').one_or_none()
+        user = users.get(current_user.id)
         brief = briefs.create_brief(user, framework, lot)
     except Exception as e:
         rollbar.report_exc_info()
@@ -214,13 +290,35 @@ def get_brief(brief_id):
                         type: number
                     invited_seller_count:
                         type: number
-                    is_invited_seller:
+                    can_respond:
+                        type: boolean
+                    open_to_all:
                         type: boolean
                     is_brief_owner:
                         type: boolean
                     is_buyer:
                         type: boolean
                     has_responded:
+                        type: boolean
+                    has_chosen_brief_category:
+                        type: boolean
+                    is_assessed_for_category:
+                        type: boolean
+                    is_assessed_in_any_category:
+                        type: boolean
+                    is_approved_seller:
+                        type: boolean
+                    is_awaiting_application_assessment:
+                        type: boolean
+                    is_awaiting_domain_assessment:
+                        type: boolean
+                    has_been_assessed_for_brief:
+                        type: boolean
+                    open_to_category:
+                        type: boolean
+                    is_applicant:
+                        type: boolean
+                    is_recruiter:
                         type: boolean
                     domains:
                         type: array
@@ -253,48 +351,75 @@ def get_brief(brief_id):
 
     brief_response_count = len(brief_responses_service.get_brief_responses(brief_id, None))
     invited_seller_count = len(invited_sellers)
+    open_to_all = brief.lot.slug == 'atm' and brief.data.get('openTo', '') == 'all'
+    open_to_category = brief.lot.slug == 'atm' and brief.data.get('openTo', '') == 'category'
+    is_applicant = user_role == 'applicant'
 
-    # is the current user an invited seller, and have they already responded?
-    is_invited_seller = False
-    has_responded = False
-    if (user_role == 'supplier' and str(current_user.supplier_code) in invited_sellers.keys()):
-        is_invited_seller = True
-        has_responded = brief_responses_service.find(supplier_code=current_user.supplier_code,
-                                                     brief_id=brief_id,
-                                                     withdrawn_at=None).count() > 0
+    # gather facts about the user's status against this brief
+    user_status = BriefUserStatus(brief, current_user)
+    has_chosen_brief_category = user_status.has_chosen_brief_category()
+    is_assessed_for_category = user_status.is_assessed_for_category()
+    is_assessed_in_any_category = user_status.is_assessed_in_any_category()
+    is_awaiting_application_assessment = user_status.is_awaiting_application_assessment()
+    is_awaiting_domain_assessment = user_status.is_awaiting_domain_assessment()
+    has_been_assessed_for_brief = user_status.has_been_assessed_for_brief()
+    is_recruiter_only = user_status.is_recruiter_only()
+    is_approved_seller = user_status.is_approved_seller()
+    can_respond = user_status.can_respond()
+    has_responded = user_status.has_responded()
 
     # remove private data for non brief owners
+    brief.data['contactEmail'] = ''
+    brief.data['users'] = None
     if not is_buyer:
-        brief.data['sellers'] = {}
+        if 'sellers' in brief.data:
+            brief.data['sellers'] = {}
         brief.responses_zip_filesize = None
         brief.data['contactNumber'] = ''
-        if not is_invited_seller:
+        if not can_respond:
             brief.data['proposalType'] = []
             brief.data['evaluationType'] = []
             brief.data['responseTemplate'] = []
             brief.data['requirementsDocument'] = []
             brief.data['industryBriefing'] = ''
+            brief.data['backgroundInformation'] = ''
+            brief.data['outcome'] = ''
+            brief.data['endUsers'] = ''
+            brief.data['workAlreadyDone'] = ''
+            brief.data['timeframeConstraints'] = ''
             brief.data['attachments'] = []
-    if is_buyer and not is_brief_owner:
-        brief.data['sellers'] = {}
-        brief.data['industryBriefing'] = ''
-        brief.data['contactNumber'] = ''
+    else:
+        brief.data['contactEmail'] = [user.email_address for user in brief.users][0]
+        if not is_brief_owner:
+            if 'sellers' in brief.data:
+                brief.data['sellers'] = {}
+            brief.data['industryBriefing'] = ''
+            brief.data['contactNumber'] = ''
 
-    # add the domains available for the buyer during RFX brief build
     domains = []
-    if is_buyer or is_brief_owner:
-        for domain in domain_service.all():
-            domains.append({
-                'id': str(domain.id),
-                'name': domain.name
-            })
+    for domain in domain_service.all():
+        domains.append({
+            'id': str(domain.id),
+            'name': domain.name
+        })
 
     return jsonify(brief=brief.serialize(with_users=False, with_author=is_brief_owner),
                    brief_response_count=brief_response_count,
                    invited_seller_count=invited_seller_count,
-                   is_invited_seller=is_invited_seller,
+                   can_respond=can_respond,
+                   has_chosen_brief_category=has_chosen_brief_category,
+                   is_assessed_for_category=is_assessed_for_category,
+                   is_assessed_in_any_category=is_assessed_in_any_category,
+                   is_approved_seller=is_approved_seller,
+                   is_awaiting_application_assessment=is_awaiting_application_assessment,
+                   is_awaiting_domain_assessment=is_awaiting_domain_assessment,
+                   has_been_assessed_for_brief=has_been_assessed_for_brief,
+                   open_to_all=open_to_all,
+                   open_to_category=open_to_category,
                    is_brief_owner=is_brief_owner,
                    is_buyer=is_buyer,
+                   is_applicant=is_applicant,
+                   is_recruiter_only=is_recruiter_only,
                    has_responded=has_responded,
                    domains=domains)
 
@@ -401,7 +526,7 @@ def update_brief(brief_id):
     if brief.status != 'draft':
         abort('Cannot edit a {} brief'.format(brief.status))
 
-    if brief.lot.slug not in ['rfx']:
+    if brief.lot.slug not in ['rfx', 'atm']:
         abort('Brief lot not supported for editing')
 
     if current_user.role == 'buyer':
@@ -416,27 +541,48 @@ def update_brief(brief_id):
         del data['publish']
         publish = True
 
-    # validate the RFX JSON request data
-    errors = RFXDataValidator(data).validate(publish=publish)
-    if len(errors) > 0:
-        abort(', '.join(errors))
+    if brief.lot.slug == 'rfx':
+        # validate the RFX JSON request data
+        errors = RFXDataValidator(data).validate(publish=publish)
+        if len(errors) > 0:
+            abort(', '.join(errors))
 
-    if 'evaluationType' in data:
+    if brief.lot.slug == 'atm':
+        # validate the ATM JSON request data
+        errors = ATMDataValidator(data).validate(publish=publish)
+        if len(errors) > 0:
+            abort(', '.join(errors))
+
+    if brief.lot.slug == 'rfx' and 'evaluationType' in data:
         if 'Written proposal' not in data['evaluationType']:
             data['proposalType'] = []
         if 'Response template' not in data['evaluationType']:
             data['responseTemplate'] = []
 
-    if 'sellers' in data and len(data['sellers']) > 0:
+    if brief.lot.slug == 'rfx' and 'sellers' in data and len(data['sellers']) > 0:
         data['sellerSelector'] = 'someSellers' if len(data['sellers']) > 1 else 'oneSeller'
+
+    data['areaOfExpertise'] = ''
+    if brief.lot.slug == 'atm' and 'openTo' in data:
+        if data['openTo'] == 'all':
+            data['sellerSelector'] = 'allSellers'
+            data['sellerCategory'] = ''
+        elif data['openTo'] == 'category':
+            data['sellerSelector'] = 'someSellers'
+            brief_domain = (
+                domain_service.get_by_name_or_id(int(data['sellerCategory'])) if data['sellerCategory'] else None
+            )
+            if brief_domain:
+                data['areaOfExpertise'] = brief_domain.name
 
     previous_status = brief.status
     if publish:
         brief.publish(closed_at=data['closedAt'])
-        if 'sellers' in brief.data:
+        if 'sellers' in brief.data and data['sellerSelector'] != 'allSellers':
             for seller_code, seller in brief.data['sellers'].iteritems():
                 supplier = suppliers.get_supplier_by_code(seller_code)
-                send_seller_invited_to_rfx_email(brief, supplier)
+                if brief.lot.slug == 'rfx':
+                    send_seller_invited_to_rfx_email(brief, supplier)
         try:
             brief_url_external = '{}/2/digital-marketplace/opportunities/{}'.format(
                 current_app.config['FRONTEND_ADDRESS'],
@@ -671,13 +817,25 @@ def get_brief_responses(brief_id):
             brief.data['industryBriefing'] = ''
         if 'attachments' in brief.data:
             brief.data['attachments'] = []
+        if 'backgroundInformation' in brief.data:
+            brief.data['backgroundInformation'] = ''
+        if 'outcome' in brief.data:
+            brief.data['outcome'] = ''
+        if 'endUsers' in brief.data:
+            brief.data['endUsers'] = ''
+        if 'workAlreadyDone' in brief.data:
+            brief.data['workAlreadyDone'] = ''
+        if 'timeframeConstraints' in brief.data:
+            brief.data['timeframeConstraints'] = ''
+        if 'contactNumber' in brief.data:
+            brief.data['contactNumber'] = ''
 
     if current_user.role == 'buyer' and brief.status != 'closed':
         brief_responses = []
     else:
         brief_responses = brief_responses_service.get_brief_responses(brief_id, supplier_code)
 
-    return jsonify(brief=brief.serialize(with_users=False),
+    return jsonify(brief=brief.serialize(with_users=False, with_author=False),
                    briefResponses=brief_responses)
 
 
@@ -751,7 +909,7 @@ def download_brief_responses(brief_id):
         return forbidden("You can only download documents for closed briefs")
 
     response = ('', 404)
-    if brief.lot.slug == 'digital-professionals' or brief.lot.slug == 'training' or brief.lot.slug == 'rfx':
+    if brief.lot.slug in ['digital-professionals', 'training', 'rfx', 'atm']:
         try:
             file = s3_download_file(
                 'brief-{}-resumes.zip'.format(brief_id),
@@ -778,7 +936,7 @@ def download_brief_responses(brief_id):
 
 @api.route('/brief/<int:brief_id>/attachments/<slug>', methods=['GET'])
 @login_required
-def download_brief_rfx_attachment(brief_id, slug):
+def download_brief_attachment(brief_id, slug):
     """Get brief attachments.
     ---
     tags:
@@ -803,9 +961,9 @@ def download_brief_rfx_attachment(brief_id, slug):
     brief = briefs.get(brief_id)
     brief_user_ids = [user.id for user in brief.users]
 
-    if ((hasattr(current_user, 'role') and current_user.role == 'buyer') or
-        ('sellers' in brief.data and hasattr(current_user, 'role') and current_user.role == 'supplier' and
-         str(current_user.supplier_code) in brief.data['sellers'].keys())):
+    if (hasattr(current_user, 'role') and
+        (current_user.role == 'buyer' or
+            (current_user.role == 'supplier' and _can_do_brief_response(brief_id)))):
         file = s3_download_file(slug, os.path.join(brief.framework.slug, 'attachments',
                                                    'brief-' + str(brief_id)))
         mimetype = mimetypes.guess_type(slug)[0] or 'binary/octet-stream'
@@ -863,6 +1021,8 @@ def post_brief_response(brief_id):
             if e.message['attachedDocumentURL'] == 'file_incorrect_format':
                 message = "Uploaded documents are in the wrong format"
             del e.message['attachedDocumentURL']
+        if 'criteria' in e.message and e.message['criteria'] == 'answer_required':
+            message = "Criteria must be completed"
         if len(e.message) > 0:
             message += json.dumps(e.message)
         return jsonify(message=message), 400

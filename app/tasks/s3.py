@@ -34,7 +34,7 @@ def create_responses_zip(brief_id):
     if not responses:
         raise CreateResponsesZipException('There were no respones for brief id {}'.format(brief_id))
 
-    if not (brief.lot.slug == 'digital-professionals' or brief.lot.slug == 'training' or brief.lot.slug == 'rfx'):
+    if brief.lot.slug not in ['digital-professionals', 'training', 'rfx', 'atm']:
         raise CreateResponsesZipException('Brief id {} is not a compatible lot'.format(brief_id))
 
     BUCKET_NAME = getenv('S3_BUCKET_NAME')
@@ -50,7 +50,7 @@ def create_responses_zip(brief_id):
     files = []
     attachments = brief_responses_service.get_all_attachments(brief_id)
     for attachment in attachments:
-        if attachment['file_name'].startswith('digital-marketplace'):
+        if attachment['file_name'].startswith('digital-marketplace') and '/' in attachment['file_name']:
             key = attachment['file_name']
             zip_file_name = attachment['file_name'].split('/')[-1]
         else:

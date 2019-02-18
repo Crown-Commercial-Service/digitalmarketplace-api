@@ -19,6 +19,14 @@ def generate_brief_responses_csv(brief, responses):
         nth_responses = [r.data.get('niceToHaveRequirements')[i] if
                          i < len(r.data.get('niceToHaveRequirements', [])) else
                          '' for i in range(len(nth_req_names))]
+        criteriaResponses = {}
+        evaluationCriteriaResponses = r.data.get('criteria', {})
+        if evaluationCriteriaResponses:
+            for evaluationCriteria in brief.data['evaluationCriteria']:
+                if 'criteria' in evaluationCriteria and\
+                   evaluationCriteria['criteria'] in evaluationCriteriaResponses.keys():
+                    criteriaResponses[evaluationCriteria['criteria']] =\
+                        evaluationCriteriaResponses[evaluationCriteria['criteria']]
 
         answers.update({'Seller name': r.supplier.name})
         answers.update({'Email': r.data.get('respondToEmailAddress', 'UNKNOWN')})
@@ -35,12 +43,18 @@ def generate_brief_responses_csv(brief, responses):
             answers.update({'Phone number': r.data.get('respondToPhone', '')})
         elif brief.lot.slug == 'rfx':
             answers.update({'Phone number': r.data.get('respondToPhone', '')})
+        elif brief.lot.slug == 'atm':
+            answers.update({'Phone number': r.data.get('respondToPhone', '')})
 
         answers.update({'ABN': r.supplier.abn})
 
         if brief.lot.slug in ['digital-professionals', 'digital-outcome', 'training']:
             answers.update(zip(ess_req_names, ess_responses))
             answers.update(zip(nth_req_names, nth_responses))
+
+        if brief.lot.slug == 'atm' and criteriaResponses:
+            for criteria, response in criteriaResponses.items():
+                answers.update({criteria: response})
 
         for k, v in answers.items():
             answers[k] = csv_cell_sanitize(v)

@@ -43,6 +43,10 @@ class SuppliersService(Service):
                  .filter(Supplier.status != 'deleted')
                  .options(
                      joinedload(Supplier.frameworks),
+                     joinedload(Supplier.domains),
+                     joinedload(Supplier.prices),
+                     joinedload('domains.domain'),
+                     joinedload('prices.service_role'),
                      joinedload('frameworks.framework'),
                      noload('frameworks.framework.lots'),
                      raiseload('*')))

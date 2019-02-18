@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import random
 from datetime import datetime
 from decimal import InvalidOperation
@@ -2175,19 +2176,29 @@ class BriefResponse(db.Model):
             except KeyError:
                 pass
 
+        def atm_must_upload_doc():
+            must_upload = False
+            if (self.brief.lot.slug == 'atm' and
+                'evaluationType' in self.brief.data and
+                ('Case study' in self.brief.data['evaluationType'] or
+                 'References' in self.brief.data['evaluationType'] or
+                 'Résumés' in self.brief.data['evaluationType'])):
+                must_upload = True
+            return must_upload
+
         try:
             clean_non_strings()
         except TypeError:
             pass
 
         # if the UI is sending back the dayRate. remove it from data for some lots
-        if self.brief.lot.slug in ['digital-outcome', 'training', 'rfx']:
+        if self.brief.lot.slug in ['digital-outcome', 'training', 'rfx', 'atm']:
             self.data = drop_foreign_fields(self.data, [
                 'dayRate'
             ])
 
         # only keep the contact number for some lots
-        if self.brief.lot.slug not in ['training', 'rfx']:
+        if self.brief.lot.slug not in ['training', 'rfx', 'atm']:
             self.data = drop_foreign_fields(self.data, [
                 'respondToPhone'
             ])
@@ -2204,9 +2215,22 @@ class BriefResponse(db.Model):
                 'availability'
             ])
 
-        # only perform schema validation on non RFX responses
-        errs = []
-        if self.brief.lot.slug != 'rfx':
+        errs = {}
+
+        # only perform criteria validation on ATM responses
+        if self.brief.lot.slug == 'atm':
+            evaluationCriteria = self.brief.data['evaluationCriteria']
+            if evaluationCriteria:
+                missing = [x for x in evaluationCriteria if x['criteria'] not in self.data['criteria'].keys()]
+                if missing:
+                    errs['criteria'] = 'answer_required'
+                else:
+                    empty = [x for x in evaluationCriteria if not self.data['criteria'][x['criteria']]]
+                    if empty:
+                        errs['criteria'] = 'answer_required'
+
+        # only perform schema validation on non RFX or ATM responses
+        if self.brief.lot.slug != 'rfx' and self.brief.lot.slug != 'atm':
             errs = get_validation_errors(
                 'brief-responses-{}-{}'.format(self.brief.framework.slug, self.brief.lot.slug),
                 self.data,
@@ -2214,7 +2238,7 @@ class BriefResponse(db.Model):
                 required_fields=required_fields
             )
 
-        if self.brief.lot.slug != 'digital-outcome':
+        if self.brief.lot.slug not in ['digital-outcome', 'atm'] or atm_must_upload_doc():
             attachedDocumentURL = self.data.get('attachedDocumentURL', [])
             if attachedDocumentURL:
                 p = re.compile('.+\.(pdf|odt|doc|docx)$', re.IGNORECASE)
@@ -2227,6 +2251,7 @@ class BriefResponse(db.Model):
         if (
             self.brief.lot.slug != 'training' and
             self.brief.lot.slug != 'rfx' and
+            self.brief.lot.slug != 'atm' and
             'essentialRequirements' not in errs and
             len(filter(None, self.data.get('essentialRequirements', []))) !=
             len(self.brief.data['essentialRequirements'])

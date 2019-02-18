@@ -4,7 +4,7 @@ from app.api import api
 from app.utils import get_json_from_request
 from app.api.suppliers import get_supplier
 from app.api.helpers import role_required, is_current_supplier
-from app.api.services import suppliers
+from app.api.services import suppliers, domain_service
 
 
 @api.route('/suppliers/<int:code>', methods=['GET'], endpoint='get_supplier')
@@ -157,10 +157,15 @@ def get_suppliers():
                                                           category=category)
         supplier_results = []
         for result in results:
-            supplier = {}
-            supplier['name'] = result.name
-            supplier['code'] = result.code
-            supplier_results.append(supplier)
+            if len(result.assessed_domains) > 0:
+                if category:
+                    domain = domain_service.get_by_name_or_id(int(category))
+                    if not domain or domain.name not in result.assessed_domains:
+                        continue
+                supplier = {}
+                supplier['name'] = result.name
+                supplier['code'] = result.code
+                supplier_results.append(supplier)
 
         return jsonify(sellers=supplier_results), 200
     else:

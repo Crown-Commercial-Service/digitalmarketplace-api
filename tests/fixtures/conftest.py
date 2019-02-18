@@ -9,7 +9,7 @@ from app import create_app, encryption
 from app.models import (Agency, Application, Assessment, Brief, BriefResponse,
                         BriefUser, Contact, Domain, Framework, FrameworkLot,
                         Lot, Supplier, SupplierDomain, SupplierFramework, User,
-                        UserFramework, db, utcnow)
+                        UserFramework, CaseStudy, db, utcnow)
 from migrations import load_from_app_model, load_test_fixtures
 from tests.app.helpers import (COMPLETE_DIGITAL_SPECIALISTS_BRIEF,
                                WSGIApplicationWithEnvironment)
@@ -124,6 +124,26 @@ def supplier_domains(app, request, suppliers):
 
 
 @pytest.fixture()
+def case_studies(app, request, domains, suppliers, supplier_domains):
+    params = request.param if hasattr(request, 'param') else {}
+    status = params['status'] if 'status' in params else 'approved'
+    supplier_code = params['supplier_code'] if 'supplier_code' in params else suppliers[0].code
+    with app.app_context():
+        for domain in domains:
+            case_study = CaseStudy.query.order_by(CaseStudy.id.desc()).first()
+            id = case_study.id + 1 if case_study else 1
+            db.session.add(CaseStudy(
+                id=id,
+                data={'service': domain.name, 'title': 'TEST'},
+                supplier_code=supplier_code,
+                status=status
+            ))
+            db.session.flush()
+        db.session.commit()
+        yield CaseStudy.query.all()
+
+
+@pytest.fixture()
 def applications(app, request):
     with app.app_context():
         for i in range(1, 6):
@@ -208,6 +228,28 @@ def supplier_user(app, request, suppliers):
             active=True,
             role='supplier',
             supplier_code=suppliers[0].code,
+            password_changed_at=utcnow()
+        ))
+        db.session.commit()
+        framework = Framework.query.filter(Framework.slug == 'digital-marketplace').first()
+        db.session.add(UserFramework(user_id=id, framework_id=framework.id))
+        db.session.commit()
+        yield User.query.get(id)
+
+
+@pytest.fixture()
+def applicant_user(app, request):
+    with app.app_context():
+        user = User.query.order_by(User.id.desc()).first()
+        id = user.id + 1 if user else 1
+        db.session.add(User(
+            id=id,
+            email_address='j@examplecompany.biz',
+            name=fake.name(),
+            password=encryption.hashpw('testpassword'),
+            active=True,
+            role='applicant',
+            supplier_code=None,
             password_changed_at=utcnow()
         ))
         db.session.commit()
@@ -336,4 +378,24 @@ def rfx_brief(client, app, request, buyer_user):
             users=[buyer_user]
         ))
         db.session.commit()
-        yield Brief.query.all()
+        yield Brief.query.get(1)
+
+
+@pytest.fixture()
+def atm_brief(client, app, request, buyer_user):
+    params = request.param if hasattr(request, 'param') else {}
+    data = params['data'] if 'data' in params else {'title': 'ATM TEST'}
+    with app.app_context():
+        framework = Framework.query.filter(Framework.slug == 'digital-marketplace').first()
+        framework.status = 'live'
+        db.session.add(framework)
+        db.session.commit()
+        db.session.add(Brief(
+            id=1,
+            data=data,
+            framework=Framework.query.filter(Framework.slug == "digital-marketplace").first(),
+            lot=Lot.query.filter(Lot.slug == 'atm').first(),
+            users=[buyer_user]
+        ))
+        db.session.commit()
+        yield Brief.query.get(1)

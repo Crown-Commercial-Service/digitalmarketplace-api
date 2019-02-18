@@ -49,7 +49,8 @@ def create_responses_zip_for_closed_briefs():
                 or_(
                     Lot.slug == 'digital-professionals',
                     Lot.slug == 'training',
-                    Lot.slug == 'rfx'
+                    Lot.slug == 'rfx',
+                    Lot.slug == 'atm'
                 )
             ),
             Framework.slug == 'digital-marketplace')

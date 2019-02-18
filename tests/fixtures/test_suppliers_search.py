@@ -1,10 +1,34 @@
 import json
-from app.models import Supplier
+from app.models import Supplier, SupplierDomain, CaseStudy, db
 import pytest
 
 
+@pytest.fixture()
+def supplier_domains(app, request, suppliers):
+    with app.app_context():
+        for s in suppliers:
+            for i in range(1, 6):
+                supplier_domain = SupplierDomain(
+                    supplier_id=s.id,
+                    domain_id=i,
+                    status='assessed',
+                    price_status='approved'
+                )
+                db.session.add(supplier_domain)
+                db.session.flush()
+
+                db.session.add(CaseStudy(
+                    data={'service': supplier_domain.domain.name},
+                    status='approved',
+                    supplier_code=s.code
+                ))
+
+        db.session.commit()
+        yield SupplierDomain.query.all()
+
+
 @pytest.mark.parametrize('suppliers', [{'framework_slug': 'digital-marketplace'}], indirect=True)
-def test_search_suppliers_success(client, suppliers):
+def test_search_suppliers_success(client, suppliers, domains, supplier_domains):
     response = client.get('/2/suppliers/search?keyword=test')
     assert response.status_code == 200
     assert json.loads(response.data) == {'sellers': [

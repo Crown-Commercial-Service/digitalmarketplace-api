@@ -6,7 +6,7 @@ import mock
 from app import encryption
 from app.models import Brief, Lot, db, utcnow, Supplier, SupplierFramework, Contact, SupplierDomain, User,\
     Framework, UserFramework, AuditEvent, FrameworkLot
-from app.api.business.validators import RFXDataValidator
+from app.api.business.validators import RFXDataValidator, ATMDataValidator
 from faker import Faker
 from dmapiclient.audit import AuditTypes
 from workdays import workday
@@ -602,55 +602,59 @@ def test_rfx_brief_create_success_and_visible_to_author(client, buyer_user):
     assert res.status_code == 200
 
 
-rfx_data = {
-    'title': 'TEST',
-    'organisation': 'ABC',
-    'summary': 'TEST',
-    'workingArrangements': 'TEST',
-    'location': [
-        'New South Wales'
-    ],
-    'sellerCategory': '1',
-    'sellers': {
-        '1': 'Seller1'
-    },
-    'evaluationType': [
-        'Response template',
-        'Written proposal'
-    ],
-    'proposalType': [
-        'Breakdown of costs',
-        'Résumés'
-    ],
-    'requirementsDocument': [
-        'TEST.pdf'
-    ],
-    'responseTemplate': [
-        'TEST2.pdf'
-    ],
-    'attachments': [
-        'TEST3.pdf'
-    ],
-    'industryBriefing': 'TEST',
-    'startDate': 'ASAP',
-    'contractLength': 'TEST',
-    'includeWeightings': True,
-    'evaluationCriteria': [
-        {
-            'criteria': 'TEST',
-            'weighting': '55'
+@pytest.fixture()
+def rfx_data():
+    yield {
+        'title': 'TEST',
+        'organisation': 'ABC',
+        'summary': 'TEST',
+        'workingArrangements': 'TEST',
+        'location': [
+            'New South Wales'
+        ],
+        'sellerCategory': '1',
+        'sellers': {
+            '1': {
+                'name': 'Test Supplier1'
+            }
         },
-        {
-            'criteria': 'TEST 2',
-            'weighting': '45'
-        }
-    ],
-    'contactNumber': '0263635544'
-}
+        'evaluationType': [
+            'Response template',
+            'Written proposal'
+        ],
+        'proposalType': [
+            'Breakdown of costs',
+            'Résumés'
+        ],
+        'requirementsDocument': [
+            'TEST.pdf'
+        ],
+        'responseTemplate': [
+            'TEST2.pdf'
+        ],
+        'attachments': [
+            'TEST3.pdf'
+        ],
+        'industryBriefing': 'TEST',
+        'startDate': 'ASAP',
+        'contractLength': 'TEST',
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST',
+                'weighting': '55'
+            },
+            {
+                'criteria': 'TEST 2',
+                'weighting': '45'
+            }
+        ],
+        'contactNumber': '0263635544'
+    }
 
 
 @mock.patch('app.tasks.publish_tasks.brief')
-def test_rfx_field_access_as_owner(brief, client, supplier_domains, suppliers, buyer_user, rfx_brief):
+def test_rfx_field_access_as_owner(brief, client, supplier_domains, suppliers, buyer_user, rfx_brief, rfx_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -668,7 +672,7 @@ def test_rfx_field_access_as_owner(brief, client, supplier_domains, suppliers, b
     response = json.loads(res.data)
     assert response['brief']['industryBriefing'] == 'TEST'
     assert response['brief']['attachments'] == ['TEST3.pdf']
-    assert response['brief']['sellers'] == {'1': 'Seller1'}
+    assert response['brief']['sellers'] == {'1': {'name': 'Test Supplier1'}}
     assert response['brief']['evaluationType'] == ['Response template', 'Written proposal']
     assert response['brief']['proposalType'] == ['Breakdown of costs', u'R\xe9sum\xe9s']
     assert response['brief']['requirementsDocument'] == ['TEST.pdf']
@@ -678,7 +682,7 @@ def test_rfx_field_access_as_owner(brief, client, supplier_domains, suppliers, b
 
 @mock.patch('app.tasks.publish_tasks.brief')
 def test_rfx_field_access_as_invited_seller(brief, client, supplier_domains, suppliers,
-                                            buyer_user, rfx_brief, supplier_user):
+                                            buyer_user, rfx_brief, rfx_data, supplier_user):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -709,7 +713,7 @@ def test_rfx_field_access_as_invited_seller(brief, client, supplier_domains, sup
 
 @mock.patch('app.tasks.publish_tasks.brief')
 def test_rfx_field_access_as_non_invited_seller(brief, client, supplier_domains, suppliers, buyer_user, rfx_brief,
-                                                supplier_user):
+                                                supplier_user, rfx_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -740,7 +744,8 @@ def test_rfx_field_access_as_non_invited_seller(brief, client, supplier_domains,
 
 
 @mock.patch('app.tasks.publish_tasks.brief')
-def test_rfx_field_access_as_anonymous_user(brief, client, supplier_domains, suppliers, buyer_user, rfx_brief):
+def test_rfx_field_access_as_anonymous_user(brief, client, supplier_domains, suppliers, buyer_user, rfx_brief,
+                                            rfx_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -766,7 +771,8 @@ def test_rfx_field_access_as_anonymous_user(brief, client, supplier_domains, sup
 
 
 @mock.patch('app.tasks.publish_tasks.brief')
-def test_rfx_publish_success_2_days_correct_dates(brief, client, supplier_domains, suppliers, buyer_user, rfx_brief):
+def test_rfx_publish_success_2_days_correct_dates(brief, client, supplier_domains, suppliers, buyer_user, rfx_brief,
+                                                  rfx_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -788,7 +794,7 @@ def test_rfx_publish_success_2_days_correct_dates(brief, client, supplier_domain
     assert response['dates']['questions_closing_date'] == question_closing_date
 
 
-def test_rfx_publish_failure_next_day(client, buyer_user, supplier_domains, suppliers, rfx_brief):
+def test_rfx_publish_failure_next_day(client, buyer_user, supplier_domains, suppliers, rfx_brief, rfx_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -816,7 +822,7 @@ def get_day_count(request):
 )
 def test_rfx_publish_success_under_one_week_correct_dates(brief, client, buyer_user,
                                                           supplier_domains, suppliers, rfx_brief,
-                                                          get_day_count):
+                                                          get_day_count, rfx_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -841,11 +847,11 @@ def test_rfx_publish_success_under_one_week_correct_dates(brief, client, buyer_u
 @mock.patch('app.tasks.publish_tasks.brief')
 @pytest.mark.parametrize(
     'get_day_count',
-    [{'day_count': 8}, {'day_count': 9}, {'day_count': 10}, {'day_count': 22}], indirect=True
+    [{'day_count': 9}, {'day_count': 10}, {'day_count': 22}], indirect=True
 )
 def test_rfx_publish_success_over_one_week_correct_dates(brief, client, buyer_user,
                                                          supplier_domains, suppliers, rfx_brief,
-                                                         get_day_count):
+                                                         get_day_count, rfx_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -1186,4 +1192,507 @@ def test_rfx_validate_closed_at():
         'closedAt': ''
     }
     valid = RFXDataValidator(data).validate_closed_at()
+    assert not valid
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_atm_brief_create_success_and_visible_to_author(brief, client, buyer_user):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post('/2/brief/atm', content_type='application/json')
+    assert res.status_code == 200
+
+    response = json.loads(res.data)
+    assert response['id'] == 1
+
+    res = client.get('/2/brief/1', content_type='application/json')
+    assert res.status_code == 200
+
+
+@pytest.fixture()
+def atm_data():
+    yield {
+        'title': 'TEST',
+        'organisation': 'ABC',
+        'summary': 'TEST',
+        'location': [
+            'New South Wales'
+        ],
+        'sellerCategory': '',
+        'openTo': 'all',
+        'requestMoreInfo': 'yes',
+        'evaluationType': [
+            'References',
+            'Case study',
+        ],
+        'attachments': [
+            'TEST3.pdf'
+        ],
+        'industryBriefing': 'TEST',
+        'startDate': 'ASAP',
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST',
+                'weighting': '55'
+            },
+            {
+                'criteria': 'TEST 2',
+                'weighting': '45'
+            }
+        ],
+        'contactNumber': '0263635544',
+        'timeframeConstraints': 'TEST',
+        'backgroundInformation': 'TEST',
+        'outcome': 'TEST',
+        'endUsers': 'TEST',
+        'workAlreadyDone': 'TEST'
+    }
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_atm_field_access_as_owner(brief, client, supplier_domains, suppliers, buyer_user, atm_brief, atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    response = json.loads(res.data)
+
+    res = client.get('/2/brief/1')
+    response = json.loads(res.data)
+    assert response['brief']['industryBriefing'] == 'TEST'
+    assert response['brief']['attachments'] == ['TEST3.pdf']
+    assert response['brief']['evaluationType'] == ['References', 'Case study']
+    assert response['brief']['timeframeConstraints'] == 'TEST'
+    assert response['brief']['backgroundInformation'] == 'TEST'
+    assert response['brief']['outcome'] == 'TEST'
+    assert response['brief']['endUsers'] == 'TEST'
+    assert response['brief']['workAlreadyDone'] == 'TEST'
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_atm_field_access_as_seller_open_to_all(brief, client, supplier_domains, suppliers, buyer_user, atm_brief,
+                                                supplier_user, atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['openTo'] = 'all'
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.get('/2/brief/1')
+    response = json.loads(res.data)
+    assert response['brief']['industryBriefing'] == 'TEST'
+    assert response['brief']['attachments'] == ['TEST3.pdf']
+    assert response['brief']['evaluationType'] == ['References', 'Case study']
+    assert response['brief']['timeframeConstraints'] == 'TEST'
+    assert response['brief']['backgroundInformation'] == 'TEST'
+    assert response['brief']['outcome'] == 'TEST'
+    assert response['brief']['endUsers'] == 'TEST'
+    assert response['brief']['workAlreadyDone'] == 'TEST'
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_atm_field_access_as_anonymous_user(brief, client, supplier_domains, suppliers, buyer_user, atm_brief,
+                                            atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+
+    res = client.get('/2/logout')
+    res = client.get('/2/brief/1')
+    response = json.loads(res.data)
+    assert response['brief']['industryBriefing'] == ''
+    assert response['brief']['attachments'] == []
+    assert response['brief']['evaluationType'] == []
+    assert response['brief']['timeframeConstraints'] == ''
+    assert response['brief']['backgroundInformation'] == ''
+    assert response['brief']['outcome'] == ''
+    assert response['brief']['endUsers'] == ''
+    assert response['brief']['workAlreadyDone'] == ''
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_atm_publish_success_2_days_correct_dates(brief, client, supplier_domains, suppliers, buyer_user, atm_brief,
+                                                  atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+    response = json.loads(res.data)
+    assert response['closedAt'] == pendulum.today().add(days=2).format('%Y-%m-%d')
+    question_closing_date = pendulum.instance(workday(pendulum.today(), 1)).format('%Y-%m-%d')
+    if question_closing_date > response['closedAt']:
+        question_closing_date = pendulum.today().format('%Y-%m-%d')
+    assert response['dates']['questions_closing_date'] == question_closing_date
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_atm_publish_failure_next_day(brief, client, buyer_user, supplier_domains, suppliers, atm_brief, atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today().add(days=1).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 400
+
+
+@pytest.fixture()
+def get_day_count(request):
+    params = request.param if hasattr(request, 'param') else {}
+    day_count = params['day_count'] if 'day_count' in params else 0
+    return day_count
+
+
+@pytest.mark.parametrize(
+    'get_day_count',
+    [{'day_count': 3}, {'day_count': 4}, {'day_count': 5}, {'day_count': 6}, {'day_count': 7}], indirect=True
+)
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_atm_publish_success_under_one_week_correct_dates(brief, client, buyer_user, supplier_domains, suppliers,
+                                                          atm_brief, get_day_count, atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(atm_data))
+    assert res.status_code == 200
+    response = json.loads(res.data)
+    assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+    question_closing_date = pendulum.instance(workday(pendulum.today(), 2)).format('%Y-%m-%d')
+    if question_closing_date > response['closedAt']:
+        question_closing_date = response['closedAt']
+    assert response['dates']['questions_closing_date'] == question_closing_date
+
+
+@pytest.mark.parametrize(
+    'get_day_count',
+    [{'day_count': 8}, {'day_count': 9}, {'day_count': 10}, {'day_count': 22}], indirect=True
+)
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_atm_publish_success_over_one_week_correct_dates(brief, client, buyer_user, supplier_domains, suppliers,
+                                                         atm_brief, get_day_count, atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+    response = json.loads(res.data)
+    assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+    assert response['dates']['questions_closing_date'] == (
+        pendulum.instance(workday(pendulum.today(), 5)).format('%Y-%m-%d')
+    )
+
+
+def test_atm_brief_create_failure_as_seller(client, supplier_user):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post('/2/brief/atm', content_type='application/json')
+    assert res.status_code == 403
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_atm_brief_update_success(brief, client, buyer_user, atm_brief):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps({
+        'closedAt': pendulum.today().add(weeks=2).format('%Y-%m-%d')
+    }))
+    assert res.status_code == 200
+    response = json.loads(res.data)
+    assert response['closedAt'] == pendulum.today().add(weeks=2).format('%Y-%m-%d')
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_atm_brief_update_failure_closing_date_invalid(brief, client, buyer_user, atm_brief):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps({
+        'publish': True,
+        'closedAt': 'baddate'
+    }))
+    assert res.status_code == 400
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_atm_brief_update_failure_unknown_property(brief, client, buyer_user, atm_brief):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps({
+        'publish': True,
+        'xxx': 'yyy'
+    }))
+    assert res.status_code == 400
+
+
+def test_atm_validate_location():
+    data = {
+        'location': [
+            'New South Wales',
+            'Queensland'
+        ]
+    }
+    valid = ATMDataValidator(data).validate_location()
+    assert valid
+
+    data = {
+        'location': []
+    }
+    valid = ATMDataValidator(data).validate_location()
+    assert not valid
+
+    data = {
+        'location': [
+            'Spain'
+        ]
+    }
+    valid = ATMDataValidator(data).validate_location()
+    assert not valid
+
+
+def test_atm_validate_seller_category(domains):
+    data = {
+        'sellerCategory': '',
+        'openTo': 'all'
+    }
+    valid = ATMDataValidator(data).validate_seller_category()
+    assert valid
+
+    data = {
+        'sellerCategory': '1',
+        'openTo': 'category'
+    }
+    valid = ATMDataValidator(data).validate_seller_category()
+    assert valid
+
+    data = {
+        'sellerCategory': '1',
+        'openTo': 'all'
+    }
+    valid = ATMDataValidator(data).validate_seller_category()
+    assert not valid
+
+
+def test_atm_validate_response_formats():
+    data = {
+        'requestMoreInfo': 'yes',
+        'evaluationType': [
+            'References',
+            'Case study',
+            'Presentation',
+        ]
+    }
+    valid = ATMDataValidator(data).validate_response_formats()
+    assert valid
+
+    data = {
+        'requestMoreInfo': 'no',
+        'evaluationType': ''
+    }
+    valid = ATMDataValidator(data).validate_response_formats()
+    assert valid
+
+    data = {
+        'requestMoreInfo': 'no',
+        'evaluationType': [
+            'References',
+            'Case study',
+            'Prototype'
+            'ABC'
+        ]
+    }
+    valid = ATMDataValidator(data).validate_response_formats()
+    assert not valid
+
+    data = {
+        'requestMoreInfo': 'yes',
+        'evaluationType': []
+    }
+    valid = ATMDataValidator(data).validate_response_formats()
+    assert not valid
+
+    data = {
+        'requestMoreInfo': 'xxx',
+        'evaluationType': ''
+    }
+    valid = ATMDataValidator(data).validate_response_formats()
+    assert not valid
+
+
+def test_atm_validate_evaluation_criteria():
+    data = {
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST',
+                'weighting': '55'
+            },
+            {
+                'criteria': 'TEST 2',
+                'weighting': '45'
+            }
+        ]
+    }
+    valid = ATMDataValidator(data).validate_evaluation_criteria()
+    assert valid
+
+    data = {
+        'includeWeightings': False,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST'
+            },
+            {
+                'criteria': 'TEST 2'
+            }
+        ]
+    }
+    valid = ATMDataValidator(data).validate_evaluation_criteria()
+    assert valid
+
+    data = {
+        'includeWeightings': False,
+        'evaluationCriteria': [
+            {
+                'criteria': ''
+            }
+        ]
+    }
+    valid = ATMDataValidator(data).validate_evaluation_criteria()
+    assert not valid
+
+    data = {
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST'
+            }
+        ]
+    }
+    valid = ATMDataValidator(data).validate_evaluation_criteria()
+    assert not valid
+
+    data = {
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST',
+                'weighting': ''
+            }
+        ]
+    }
+    valid = ATMDataValidator(data).validate_evaluation_criteria()
+    assert not valid
+
+    data = {
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST',
+                'weighting': '0'
+            }
+        ]
+    }
+    valid = ATMDataValidator(data).validate_evaluation_criteria()
+    assert not valid
+
+    data = {
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST',
+                'weighting': '80'
+            },
+            {
+                'criteria': 'TEST 2',
+                'weighting': '30'
+            },
+        ]
+    }
+    valid = ATMDataValidator(data).validate_evaluation_criteria()
+    assert not valid
+
+
+def test_atm_validate_closed_at():
+    data = {
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=21).format('%Y-%m-%d')
+    }
+    valid = ATMDataValidator(data).validate_closed_at()
+    assert valid
+
+    data = {
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+    }
+    valid = ATMDataValidator(data).validate_closed_at()
+    assert valid
+
+    data = {
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=1).format('%Y-%m-%d')
+    }
+    valid = ATMDataValidator(data).validate_closed_at()
+    assert not valid
+
+    data = {
+        'closedAt': ''
+    }
+    valid = ATMDataValidator(data).validate_closed_at()
     assert not valid

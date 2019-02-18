@@ -7,6 +7,7 @@ from app.models import db, utcnow, Supplier, SupplierFramework, Contact, Supplie
 from faker import Faker
 from dmapiclient.audit import AuditTypes
 import pendulum
+import copy
 fake = Faker()
 
 
@@ -271,46 +272,50 @@ def test_withdraw_already_withdrawn_brief_response(brief_response,
         assert res.status_code == 400
 
 
-rfx_data = {
-    'title': 'TEST',
-    'organisation': 'ABC',
-    'summary': 'TEST',
-    'workingArrangements': 'TEST',
-    'location': [
-        'New South Wales'
-    ],
-    'sellerCategory': '1',
-    'sellers': {
-        '1': 'Test Supplier1'
-    },
-    'evaluationType': [
-        'Response template',
-        'Written proposal'
-    ],
-    'proposalType': [
-        'Breakdown of costs'
-    ],
-    'requirementsDocument': [
-        'TEST.pdf'
-    ],
-    'responseTemplate': [
-        'TEST2.pdf'
-    ],
-    'startDate': 'ASAP',
-    'contractLength': 'TEST',
-    'includeWeightings': True,
-    'evaluationCriteria': [
-        {
-            'criteria': 'TEST',
-            'weighting': '55'
+@pytest.fixture()
+def rfx_data():
+    yield {
+        'title': 'TEST',
+        'organisation': 'ABC',
+        'summary': 'TEST',
+        'workingArrangements': 'TEST',
+        'location': [
+            'New South Wales'
+        ],
+        'sellerCategory': '1',
+        'sellers': {
+            '1': {
+                'name': 'Test Supplier1'
+            }
         },
-        {
-            'criteria': 'TEST 2',
-            'weighting': '45'
-        }
-    ],
-    'contactNumber': '0263635544'
-}
+        'evaluationType': [
+            'Response template',
+            'Written proposal'
+        ],
+        'proposalType': [
+            'Breakdown of costs'
+        ],
+        'requirementsDocument': [
+            'TEST.pdf'
+        ],
+        'responseTemplate': [
+            'TEST2.pdf'
+        ],
+        'startDate': 'ASAP',
+        'contractLength': 'TEST',
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST',
+                'weighting': '55'
+            },
+            {
+                'criteria': 'TEST 2',
+                'weighting': '45'
+            }
+        ],
+        'contactNumber': '0263635544'
+    }
 
 
 @mock.patch('app.tasks.publish_tasks.brief')
@@ -322,7 +327,8 @@ def test_rfx_invited_seller_can_respond(brief_response,
                                         supplier_user,
                                         supplier_domains,
                                         buyer_user,
-                                        rfx_brief):
+                                        rfx_brief,
+                                        rfx_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -357,7 +363,7 @@ def test_rfx_invited_seller_can_respond(brief_response,
 
 @mock.patch('app.tasks.publish_tasks.brief')
 def test_rfx_non_invited_seller_can_not_respond(brief, client, suppliers, supplier_user, supplier_domains, buyer_user,
-                                                rfx_brief):
+                                                rfx_brief, rfx_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -391,3 +397,311 @@ def test_rfx_non_invited_seller_can_not_respond(brief, client, suppliers, suppli
         content_type='application/json'
     )
     assert res.status_code == 403
+
+
+@pytest.fixture()
+def atm_data():
+    yield {
+        'title': 'TEST',
+        'organisation': 'ABC',
+        'summary': 'TEST',
+        'location': [
+            'New South Wales'
+        ],
+        'sellerCategory': '',
+        'openTo': 'all',
+        'requestMoreInfo': 'no',
+        'evaluationType': [],
+        'attachments': [
+            'TEST3.pdf'
+        ],
+        'industryBriefing': 'TEST',
+        'startDate': 'ASAP',
+        'includeWeightings': True,
+        'evaluationCriteria': [
+            {
+                'criteria': 'TEST',
+                'weighting': '55'
+            },
+            {
+                'criteria': 'TEST 2',
+                'weighting': '45'
+            }
+        ],
+        'contactNumber': '0263635544',
+        'timeframeConstraints': 'TEST',
+        'backgroundInformation': 'TEST',
+        'outcome': 'TEST',
+        'endUsers': 'TEST',
+        'workAlreadyDone': 'TEST'
+    }
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_atm_invited_seller_can_respond_open_to_all(brief_response, brief, client, suppliers, supplier_user,
+                                                    supplier_domains, buyer_user, atm_brief, atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['openTo'] = 'all'
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+    assert brief.delay.called is True
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post(
+        '/2/brief/1/respond',
+        data=json.dumps({
+            'respondToEmailAddress': 'supplier@email.com',
+            'criteria': {
+                'TEST': 'bla bla',
+                'TEST 2': 'bla bla'
+            }
+        }),
+        content_type='application/json'
+    )
+    assert res.status_code == 201
+    assert brief_response.delay.called is True
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_atm_seller_can_respond_open_to_category(brief_response, brief, client, suppliers, supplier_user,
+                                                 supplier_domains, buyer_user, atm_brief, atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['openTo'] = 'category'
+    data['sellerCategory'] = '1'
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+    assert brief.delay.called is True
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post(
+        '/2/brief/1/respond',
+        data=json.dumps({
+            'respondToEmailAddress': 'supplier@email.com',
+            'criteria': {
+                'TEST': 'bla bla',
+                'TEST 2': 'bla bla'
+            }
+        }),
+        content_type='application/json'
+    )
+    assert res.status_code == 201
+    assert brief_response.delay.called is True
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_atm_seller_can_not_respond_open_to_category(brief_response, brief, client, suppliers, supplier_user,
+                                                     supplier_domains, buyer_user, atm_brief, atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['openTo'] = 'category'
+    data['sellerCategory'] = '11'
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+    assert brief.delay.called is True
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post(
+        '/2/brief/1/respond',
+        data=json.dumps({
+            'respondToEmailAddress': 'supplier@email.com',
+            'respondToPhone': '0263636363',
+            'criteria': {
+                'TEST': 'bla bla',
+                'TEST 2': 'bla bla'
+            }
+        }),
+        content_type='application/json'
+    )
+    assert res.status_code == 403
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_atm_seller_failed_missing_criteria(brief_response, brief, client, suppliers, supplier_user, supplier_domains,
+                                            buyer_user, atm_brief, atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+    assert brief.delay.called is True
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post(
+        '/2/brief/1/respond',
+        data=json.dumps({
+            'respondToEmailAddress': 'supplier@email.com',
+            'respondToPhone': '0263636363',
+            'criteria': {
+                'TEST': 'bla bla'
+            }
+        }),
+        content_type='application/json'
+    )
+    assert res.status_code == 400
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_atm_seller_failed_empty_criteria(brief_response, brief, client, suppliers, supplier_user, supplier_domains,
+                                          buyer_user, atm_brief, atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+    assert brief.delay.called is True
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post(
+        '/2/brief/1/respond',
+        data=json.dumps({
+            'respondToEmailAddress': 'supplier@email.com',
+            'respondToPhone': '0263636363',
+            'criteria': {
+                'TEST': 'bla bla',
+                'TEST 2': ''
+            }
+        }),
+        content_type='application/json'
+    )
+    assert res.status_code == 400
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_atm_seller_failed_missing_file(brief_response, brief, client, suppliers, supplier_user, supplier_domains,
+                                        buyer_user, atm_brief, atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['requestMoreInfo'] = 'yes'
+    data['requestMoreInfo'] = 'yes'
+    data['evaluationType'].append('Case study')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+    assert brief.delay.called is True
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post(
+        '/2/brief/1/respond',
+        data=json.dumps({
+            'respondToEmailAddress': 'supplier@email.com',
+            'respondToPhone': '0263636363',
+            'criteria': {
+                'TEST': 'bla bla',
+                'TEST 2': 'bla bla'
+            }
+        }),
+        content_type='application/json'
+    )
+    assert res.status_code == 400
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_atm_seller_success_with_file(brief_response, brief, client, suppliers, supplier_user, supplier_domains,
+                                      buyer_user, atm_brief, atm_data):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    data = atm_data
+    data['publish'] = True
+    data['requestMoreInfo'] = 'yes'
+    data['evaluationType'].append('Case study')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+    assert brief.delay.called is True
+
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post(
+        '/2/brief/1/respond',
+        data=json.dumps({
+            'respondToEmailAddress': 'supplier@email.com',
+            'respondToPhone': '0263636363',
+            'attachedDocumentURL': ['TEST.pdf'],
+            'criteria': {
+                'TEST': 'bla bla',
+                'TEST 2': 'bla bla'
+            }
+        }),
+        content_type='application/json'
+    )
+    assert res.status_code == 201
+    assert brief_response.delay.called is True

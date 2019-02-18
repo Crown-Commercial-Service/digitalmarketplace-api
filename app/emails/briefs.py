@@ -16,13 +16,15 @@ def send_brief_response_received_email(supplier, brief, brief_response):
         TEMPLATE_FILENAME = 'brief_response_submitted_training.md'
     elif brief.lot.slug == 'rfx':
         TEMPLATE_FILENAME = 'brief_response_submitted_rfx.md'
+    elif brief.lot.slug == 'atm':
+        TEMPLATE_FILENAME = 'brief_response_submitted_atm.md'
     else:
         TEMPLATE_FILENAME = 'brief_response_submitted.md'
 
     to_address = brief_response.data['respondToEmailAddress']
     specialist_name = brief_response.data.get('specialistName', None)
 
-    if brief.lot.slug == 'rfx':
+    if brief.lot.slug == 'rfx' or brief.lot.slug == 'atm':
         brief_url = current_app.config['FRONTEND_ADDRESS'] + '/2/' + brief.framework.slug + '/opportunities/' \
             + str(brief.id)
     else:
@@ -47,6 +49,16 @@ def send_brief_response_received_email(supplier, brief, brief_response):
                 if i < len(brief_response.data.get('niceToHaveRequirements', [])) else ''
             )
             i += 1
+    criteriaResponses = ""
+    evaluationCriteriaResponses = brief_response.data.get('criteria', {})
+    if evaluationCriteriaResponses:
+        for evaluationCriteria in brief.data['evaluationCriteria']:
+            if 'criteria' in evaluationCriteria and\
+               evaluationCriteria['criteria'] in evaluationCriteriaResponses.keys():
+                criteriaResponses += "####• {}\n{}\n\n".format(
+                    evaluationCriteria['criteria'],
+                    evaluationCriteriaResponses[evaluationCriteria['criteria']]
+                )
 
     attachments = ""
     for attch in brief_response.data.get('attachedDocumentURL', []):
@@ -65,6 +77,7 @@ def send_brief_response_received_email(supplier, brief, brief_response):
         brief_name=brief.data['title'],
         essential_requirements=ess,
         nice_to_have_requirements=nth,
+        criteria_responses=criteriaResponses,
         attachments=attachments,
         closing_at=brief.closed_at.to_formatted_date_string(),
         specialist_name=specialist_name,
