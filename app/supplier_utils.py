@@ -94,7 +94,6 @@ def update_open_declarations_with_company_details(db, supplier_id, updater_json,
                 supplier.companies_house_number or supplier.other_company_registration_number
             ),
             supplier_constants.KEY_DUNS_NUMBER: supplier.duns_number,
-            supplier_constants.KEY_VAT_NUMBER: supplier.vat_number,
             supplier_constants.KEY_TRADING_STATUS: supplier.trading_status,
             supplier_constants.KEY_ORGANISATION_SIZE: supplier.organisation_size,
             supplier_constants.KEY_REGISTRATION_COUNTRY: supplier.registration_country,
