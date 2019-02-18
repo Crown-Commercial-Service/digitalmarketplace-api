@@ -192,6 +192,7 @@ def send_assessment_requested_notification(assessment, requested_by):
         domain_name=assessment.supplier_domain.domain.name,
         brief_name=brief.data['title'],
         brief_url=brief_url,
+        brief_lot=brief.lot.slug,
         brief_template_file_details=brief_template_file_details,
         brief_template_url=brief_template_url,
         brief_deadline=brief_deadline

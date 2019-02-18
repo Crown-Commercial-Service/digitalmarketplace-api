@@ -5,7 +5,9 @@
 ### What happens next:
 
 - We’ve prioritised your request and the Marketplace assessors will review your case study as soon as possible.
+{% if brief_lot != 'atm' %}
 - Meanwhile, you can prepare your response using the [opportunity response template ({{brief_template_file_details}})]({{brief_template_url}}).
+{% endif %}
 - Requests received less than 2 business days before the opportunity deadline ({{brief_deadline}}) may not be completed in time.
 
 ### If you are successful:
