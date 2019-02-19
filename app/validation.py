@@ -334,7 +334,7 @@ def _translate_json_schema_error(key, validator, validator_value, message):
 
 
 def _get_word_count(message):
-    count_minus_one_string = re.search("\{0,(\d+)", message).group(1)
+    count_minus_one_string = re.search(r"\{0,(\d+)", message).group(1)
     count_minus_one = int(count_minus_one_string)
     return count_minus_one + 1
 

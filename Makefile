@@ -23,7 +23,7 @@ requirements: virtualenv test-requirements requirements.txt
 
 .PHONY: requirements-dev
 requirements-dev: virtualenv requirements-dev.txt
-	${VIRTUALENV_ROOT}/bin/pip install -r requirements-dev.txt
+	${VIRTUALENV_ROOT}/bin/pip install -Ur requirements-dev.txt
 
 .PHONY: freeze-requirements
 freeze-requirements: virtualenv requirements-dev requirements-app.txt

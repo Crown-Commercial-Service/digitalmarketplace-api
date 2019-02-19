@@ -36,14 +36,14 @@ def get_or_else_empty_list(map_to_check, key):
 
 
 def bool_to_yes_no(value):
-        """
-        Turn a boolean into a yes/no string
-        :param value eg True:
-        :return string eg "yes":
-        """
-        if value:
-            return "yes"
-        return "no"
+    """
+    Turn a boolean into a yes/no string
+    :param value eg True:
+    :return string eg "yes":
+    """
+    if value:
+        return "yes"
+    return "no"
 
 
 def has_checked_all_boxes(array, total):

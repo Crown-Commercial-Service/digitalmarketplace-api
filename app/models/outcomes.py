@@ -201,7 +201,7 @@ class Outcome(db.Model):
                 if k == "awardValue":
                     try:
                         v = decimal.Decimal(v) if v is not None else None
-                    except decimal.InvalidOperation as e:
+                    except decimal.InvalidOperation:
                         raise ValidationError(f"Failed to parse {v!r} as decimal for field {k!r}")
                 elif k in ("startDate", "endDate",):
                     if v is not None:
