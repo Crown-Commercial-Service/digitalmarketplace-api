@@ -916,12 +916,6 @@ class User(db.Model, RemovePersonalDataModelMixin):
         login_attempt_limit = current_app.config['DM_FAILED_LOGIN_LIMIT']
         return self.failed_login_count >= login_attempt_limit
 
-    @staticmethod
-    def get_by_email_address(email_address):
-        return User.query.filter(
-            User.email_address == email_address
-        ).first()
-
     def get_link(self):
         return url_for('main.get_user_by_id', user_id=self.id)
 

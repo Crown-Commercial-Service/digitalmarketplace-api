@@ -41,7 +41,14 @@ def auth_user():
     json_payload = json_payload["authUsers"]
     validate_user_auth_json_or_400(json_payload)
 
-    user = User.get_by_email_address(json_payload['emailAddress'].lower())
+    user = User.query.filter(
+        User.email_address == json_payload['emailAddress'].lower()
+    ).options(
+        # specifying a lazyload here to satisfy the FOR UPDATE OF's limitations, but inevitably the supplier
+        # will be fetched on-demand when the result comes to be serialized.
+        # the FOR UPDATE lock is required to prevent a race condition when incrementing user.failed_login_count
+        lazyload(User.supplier),
+    ).with_for_update(of=User).first()
 
     if user is None:
         return jsonify(authorization=False), 404

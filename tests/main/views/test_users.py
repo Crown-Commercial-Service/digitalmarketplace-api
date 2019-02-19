@@ -130,7 +130,7 @@ class TestUsersAuth(BaseUserTest):
         self.create_user()
         with freeze_time('2015-06-06'):
             self.valid_login()
-            user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
+            user = User.query.filter(User.email_address == 'joeblogs@digital.cabinet-office.gov.uk').first()
 
             assert user.logged_in_at == datetime(2015, 6, 6)
 
@@ -138,7 +138,7 @@ class TestUsersAuth(BaseUserTest):
         self.create_user()
         with freeze_time('2015-06-06'):
             self.invalid_password()
-            user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
+            user = User.query.filter(User.email_address == 'joeblogs@digital.cabinet-office.gov.uk').first()
 
             self.assert_failed_login_audit_is_created()
             assert user.logged_in_at is None
@@ -146,7 +146,7 @@ class TestUsersAuth(BaseUserTest):
     def test_failed_login_should_increment_failed_login_counter(self):
         self.create_user()
         self.invalid_password()
-        user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
+        user = User.query.filter(User.email_address == 'joeblogs@digital.cabinet-office.gov.uk').first()
 
         self.assert_failed_login_audit_is_created()
         assert user.failed_login_count == 1
@@ -156,7 +156,7 @@ class TestUsersAuth(BaseUserTest):
         self.invalid_password()
         self.valid_login()
 
-        user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
+        user = User.query.filter(User.email_address == 'joeblogs@digital.cabinet-office.gov.uk').first()
         assert user.failed_login_count == 0
 
     def test_user_is_locked_after_too_many_failed_login_attempts(self):
@@ -165,7 +165,7 @@ class TestUsersAuth(BaseUserTest):
         self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
 
         self.invalid_password()
-        user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
+        user = User.query.filter(User.email_address == 'joeblogs@digital.cabinet-office.gov.uk').first()
 
         self.assert_failed_login_audit_is_created()
         assert user.locked is True
@@ -175,7 +175,7 @@ class TestUsersAuth(BaseUserTest):
 
         self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
 
-        user = User.get_by_email_address('joeblogs@digital.cabinet-office.gov.uk')
+        user = User.query.filter(User.email_address == 'joeblogs@digital.cabinet-office.gov.uk').first()
 
         user.failed_login_count = 1
         db.session.add(user)
