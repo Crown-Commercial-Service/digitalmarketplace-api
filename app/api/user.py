@@ -206,6 +206,9 @@ def create_user():
             message="A user with the email address '{}' already exists".format(email_address)
         ), 409
 
+    if user_type not in ['seller', 'supplier', 'buyer', 'applicant']:
+        return jsonify(message='An invalid user type was passed to create new user api'), 400
+
     if user_type == "seller":
         if shared_application_id is None:
             try:
