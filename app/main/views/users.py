@@ -319,7 +319,9 @@ def update_user(user_id):
     """
     update_details = validate_and_return_updater_request()
 
-    user = User.query.filter(
+    user = User.query.options(
+        noload('*')
+    ).filter(
         User.id == user_id
     ).first_or_404()
 
