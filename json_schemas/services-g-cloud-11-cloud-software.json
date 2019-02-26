@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
@@ -393,6 +393,93 @@
       "oneOf": [
         {
           "properties": {
+            "serviceInterface": {
+              "enum": [
+                false
+              ]
+            },
+            "serviceInterfaceDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "serviceInterface": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "serviceInterface",
+            "serviceInterfaceDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "serviceInterface": {
+              "enum": [
+                false
+              ]
+            },
+            "serviceInterfaceAccessibility": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "serviceInterface": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "serviceInterface",
+            "serviceInterfaceAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "serviceInterface": {
+              "enum": [
+                false
+              ]
+            },
+            "serviceInterfaceTesting": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "serviceInterface": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "serviceInterface",
+            "serviceInterfaceTesting"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "serviceInterfaceAccessibility": {
               "enum": [
                 "wcag_a",
@@ -598,6 +685,35 @@
       "oneOf": [
         {
           "properties": {
+            "documentation": {
+              "enum": [
+                false
+              ]
+            },
+            "documentationAccessibility": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "documentation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "documentation",
+            "documentationAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "documentationFormats": {
               "items": {
                 "enum": [
@@ -629,6 +745,37 @@
           "required": [
             "documentationFormats",
             "documentationFormatsOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "documentationAccessibility": {
+              "enum": [
+                "wcag_a",
+                "wcag_aa",
+                "wcag_aaa"
+              ]
+            },
+            "documentationAccessibilityDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "documentationAccessibility": {
+              "enum": [
+                "none_or_not_sure"
+              ]
+            }
+          },
+          "required": [
+            "documentationAccessibility",
+            "documentationAccessibilityDescription"
           ]
         }
       ]
@@ -801,6 +948,7 @@
             "publicSectorNetworksTypes": {
               "items": {
                 "enum": [
+                  "hscn",
                   "janet",
                   "n3",
                   "other",
@@ -818,6 +966,7 @@
               "not": {
                 "items": {
                   "enum": [
+                    "hscn",
                     "janet",
                     "n3",
                     "other",
@@ -1921,12 +2070,18 @@
       "uniqueItems": true
     },
     "cloudDeploymentModel": {
-      "enum": [
-        "public",
-        "private",
-        "community",
-        "hybrid"
-      ]
+      "items": {
+        "enum": [
+          "public",
+          "private",
+          "community",
+          "hybrid"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
     },
     "configurationAndChangeManagementProcesses": {
       "maxLength": 1000,
@@ -2087,6 +2242,20 @@
     },
     "documentation": {
       "type": "boolean"
+    },
+    "documentationAccessibility": {
+      "enum": [
+        "wcag_aaa",
+        "wcag_aa",
+        "wcag_a",
+        "none_or_not_sure"
+      ]
+    },
+    "documentationAccessibilityDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
     },
     "documentationFormats": {
       "items": {
@@ -2438,10 +2607,11 @@
           "n3",
           "janet",
           "swan",
+          "hscn",
           "other"
         ]
       },
-      "maxItems": 6,
+      "maxItems": 7,
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
@@ -2801,6 +2971,9 @@
       "minItems": 1,
       "type": "array"
     },
+    "serviceInterface": {
+      "type": "boolean"
+    },
     "serviceInterfaceAccessibility": {
       "enum": [
         "wcag_aaa",
@@ -2810,6 +2983,12 @@
       ]
     },
     "serviceInterfaceAccessibilityDescription": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "serviceInterfaceDescription": {
       "maxLength": 1000,
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
@@ -3078,8 +3257,7 @@
     "serviceConstraints",
     "serviceDescription",
     "serviceFeatures",
-    "serviceInterfaceAccessibility",
-    "serviceInterfaceTesting",
+    "serviceInterface",
     "serviceName",
     "staffSecurityClearanceChecks",
     "standardsCSASTAR",
