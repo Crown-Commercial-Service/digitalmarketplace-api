@@ -494,10 +494,26 @@ def update_brief_status_by_action(brief_id, action):
         db.session.add(audit)
         db.session.commit()
 
+        brief_url_external = '{}/2/digital-marketplace/opportunities/{}'.format(
+            current_app.config['FRONTEND_ADDRESS'],
+            brief_id
+        )
+
+        email_address = ''
+        name = ''
+        if len(brief.users) > 0:
+            user = brief.users[0].serialize()
+            email_address = user.get('email_address')
+            name = user.get('name')
+
         publish_tasks.brief.delay(
             brief.serialize(),
             'published' if action == 'publish' else 'withdrawn',
-            previous_status=previous_status
+            previous_status=previous_status,
+            updated_by=updater_json['updated_by'],
+            name=name,
+            email_address=email_address,
+            url=brief_url_external
         )
 
     return jsonify(briefs=brief.serialize()), 200

@@ -305,7 +305,7 @@ def delete_application(application_id):
 
     try:
         db.session.commit()
-        publish_tasks.application.delay(deleted_application, 'delete')
+        publish_tasks.application.delay(deleted_application, 'deleted')
     except IntegrityError as e:
         db.session.rollback()
         abort(400, "Database Error: {0}".format(e))

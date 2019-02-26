@@ -1,6 +1,7 @@
 from app import db
 from app.models import Application, AuditEvent, AuditTypes
 from helpers import notify_team
+from app.tasks import publish_tasks
 
 
 def create_application(email_address=None, name=None):
@@ -24,6 +25,14 @@ def create_application(email_address=None, name=None):
 
     db.session.add(audit)
     db.session.commit()
+
+    publish_tasks.application.delay(
+        application.serialize(),
+        'created',
+        name=name,
+        email_address=email_address,
+        application_type=application.type
+    )
 
     notify_team_new_applicant(
         application_id=application.id,

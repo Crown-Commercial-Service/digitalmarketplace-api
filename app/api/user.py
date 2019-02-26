@@ -6,6 +6,7 @@ from sqlalchemy.exc import DataError, InvalidRequestError, IntegrityError
 from app.emails.users import send_existing_application_notification, send_existing_seller_notification
 from app.api.applications import create_application
 from app.emails.users import send_new_user_onboarding_email
+from app.tasks import publish_tasks
 
 
 def add_user(data):
@@ -81,6 +82,8 @@ def add_user(data):
 
     db.session.add(audit)
     db.session.commit()
+
+    publish_tasks.user.delay(user.serialize(), 'created')
 
     return user
 

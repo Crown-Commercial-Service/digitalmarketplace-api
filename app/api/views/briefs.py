@@ -602,10 +602,17 @@ def update_brief(brief_id):
     briefs.save_brief(brief)
 
     if publish:
+        brief_url_external = '{}/2/digital-marketplace/opportunities/{}'.format(
+            current_app.config['FRONTEND_ADDRESS'],
+            brief_id
+        )
         publish_tasks.brief.delay(
             brief.serialize(),
             'published',
-            previous_status=previous_status
+            previous_status=previous_status,
+            name=current_user.name,
+            email_address=current_user.email_address,
+            url=brief_url_external
         )
     try:
         audit_service.log_audit_event(
@@ -681,7 +688,7 @@ def delete_brief(brief_id):
         deleted_brief = brief.serialize()
         audit_service.save(audit)
         briefs.delete(brief)
-        publish_tasks.brief.delay(deleted_brief, 'delete', user=current_user.email_address)
+        publish_tasks.brief.delay(deleted_brief, 'deleted', user=current_user.email_address)
     except Exception as e:
         extra_data = {'audit_type': AuditTypes.delete_brief, 'briefId': brief.id, 'exception': e.message}
         rollbar.report_exc_info(extra_data=extra_data)

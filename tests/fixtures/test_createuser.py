@@ -1,4 +1,5 @@
 import json
+import mock
 from app.api.helpers import generate_creation_token
 from app.models import User
 
@@ -35,7 +36,8 @@ def test_send_buyer_invite_invalid_token(client):
     assert data['message'] == 'The token provided is invalid. It may have expired'
 
 
-def test_create_user(client, app, applications, agencies):
+@mock.patch('app.tasks.publish_tasks.user')
+def test_create_user(user, client, app, applications, agencies):
     with app.app_context():
         user_role = 'buyer'
         user_email = 'es@asdf.gov.au'
@@ -51,6 +53,7 @@ def test_create_user(client, app, applications, agencies):
                 'framework': 'digital-marketplace'
             }),
             content_type='application/json')
+        assert user.delay.called is True
         assert response.status_code == 200
         fetched_user = User.query.filter(
             User.email_address == user_email.lower()).first()
@@ -59,7 +62,8 @@ def test_create_user(client, app, applications, agencies):
         assert fetched_user.name == user_name
 
 
-def test_create_whitelisted_user(client, app, applications, agencies):
+@mock.patch('app.tasks.publish_tasks.user')
+def test_create_whitelisted_user(user, client, app, applications, agencies):
     with app.app_context():
         user_role = 'buyer'
         user_email = 'es@asdf.com.au'
@@ -75,6 +79,8 @@ def test_create_whitelisted_user(client, app, applications, agencies):
                 'framework': 'digital-marketplace'
             }),
             content_type='application/json')
+        assert user.delay.called is True
+
         assert response.status_code == 200
         fetched_user = User.query.filter(
             User.email_address == user_email.lower()).first()
@@ -171,7 +177,8 @@ def test_non_supplier_role_should_not_have_supplier_code(client):
     assert data['message'] == "'supplier_code' is only valid for users with 'supplier' role, not '{}'".format(user_role)
 
 
-def test_applicant_requires_app_id_property(client, applications):
+@mock.patch('app.tasks.publish_tasks.user')
+def test_applicant_requires_app_id_property(user, client, applications):
     application_id = applications[0].id
     user_role = 'applicant'
     user_email = 'es@asdf.gov.au'
@@ -188,6 +195,7 @@ def test_applicant_requires_app_id_property(client, applications):
             'framework': 'digital-marketplace'
         }),
         content_type='application/json')
+    assert user.delay.called is True
 
     assert response.status_code == 200
     fetched_user = User.query.filter(
