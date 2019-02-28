@@ -77,7 +77,6 @@ from app.api.views import (briefs,  # noqa
                            messages,
                            suppliers,
                            tasks,
-                           tokens,
                            dashboards,
                            opportunities,
                            key_values)

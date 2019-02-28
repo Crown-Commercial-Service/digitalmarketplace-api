@@ -442,8 +442,6 @@ class TestUsersPost(BaseUserTest, JSONTestMixin):
         assert_equal(response.status_code, 201)
         data = json.loads(response.get_data())["users"]
         assert_equal(data["emailAddress"], "joeblogs@email.com")
-        assert_equal(data["supplier"]["name"], "Supplier 1")
-        assert_equal(data["supplier"]["supplierCode"], 1)
 
     def test_can_post_an_applicant_user(self):
         with self.app.app_context():
@@ -466,8 +464,6 @@ class TestUsersPost(BaseUserTest, JSONTestMixin):
         assert_equal(response.status_code, 201)
         data = json.loads(response.get_data())["users"]
         assert_equal(data["emailAddress"], "joeblogs@email.com")
-        assert_equal(data["application"]["name"], "my company")
-        assert_equal(data["application"]["id"], 1)
 
     def test_post_a_user_creates_audit_event(self):
         with self.app.app_context():

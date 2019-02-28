@@ -3,6 +3,8 @@ from functools import wraps
 import pendulum
 import requests
 import rollbar
+from os import urandom
+from binascii import hexlify
 from flask import abort as flask_abort
 from flask import current_app, jsonify, make_response, render_template_string
 from flask_login import current_user
@@ -10,9 +12,7 @@ from flask_login import current_user
 from app.models import Agency, BriefUser, User, db
 from app.tasks.email import send_email
 from dmutils.csrf import get_csrf_token
-from dmutils.email import (ONE_DAY_IN_SECONDS, EmailError, InvalidToken,
-                           decode_token, generate_token,
-                           parse_fernet_timestamp)
+from dmutils.email import ONE_DAY_IN_SECONDS, EmailError, parse_fernet_timestamp
 
 
 def role_required(*roles):
@@ -60,32 +60,9 @@ def is_current_user_in_brief(func):
     return decorated_view
 
 
-def generate_creation_token(name, email_address, user_type, framework, **unused):
-    data = {
-        'name': name,
-        'email_address': email_address,
-        'user_type': user_type,
-        'framework': framework
-    }
-    token = generate_token(data, current_app.config['SECRET_KEY'], current_app.config['SIGNUP_INVITATION_TOKEN_SALT'])
-    return token
-
-
-def decode_creation_token(token):
-    try:
-        data = decode_token(
-            token,
-            current_app.config['SECRET_KEY'],
-            current_app.config['SIGNUP_INVITATION_TOKEN_SALT'],
-            14 * ONE_DAY_IN_SECONDS
-        )
-    except InvalidToken:
-        raise InvalidToken
-
-    if not set(('name', 'email_address')).issubset(set(data.keys())):
-        raise InvalidToken
-
-    return data
+# returns an ascii hex encoded random value
+def generate_random_token(length=32):
+    return hexlify(urandom(length))
 
 
 _GOV_EMAIL_DOMAINS = [
@@ -209,47 +186,6 @@ def notify_team(subject, body, more_info_url=None):
                 msg = str(error)
             rollbar.report_exc_info()
             current_app.logger.error('Failed to send notification email: {}'.format(msg))
-
-
-def generate_reset_password_token(email_address, user_id):
-    data = {"user_id": user_id, "email_address": email_address}
-    token = generate_token(
-        data,
-        current_app.config['SECRET_KEY'],
-        current_app.config['RESET_PASSWORD_SALT']
-    )
-
-    return token
-
-
-def decode_reset_password_token(token):
-    data = decode_token(
-        token,
-        current_app.config['SECRET_KEY'],
-        current_app.config['RESET_PASSWORD_SALT'],
-        1 * ONE_DAY_IN_SECONDS
-    )
-    timestamp = parse_fernet_timestamp(token)
-
-    email_address = data.get('email_address', None)
-
-    if email_address is None:
-        raise ValueError("Required argument email address was not returned from token decoding")
-
-    user = User.query.filter(
-        User.email_address == email_address).first()
-    user_last_changed_password_at = user.password_changed_at
-
-    """
-        timestamp of token returned from parse_fernet_timestamp does not use ms,
-        User model does so if you compare
-        these two immediately - like you will in a test, this will return a false positive
-    """
-    if timestamp < user_last_changed_password_at.replace(microsecond=0):
-        current_app.logger.info("Token generated earlier than password was last changed")
-        raise InvalidToken("Token generated earlier than password was last changed")
-
-    return data
 
 
 def get_root_url(framework_slug):

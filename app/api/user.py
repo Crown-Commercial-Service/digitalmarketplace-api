@@ -3,6 +3,7 @@ from app.models import Application, AuditEvent, AuditTypes, User, Framework, Use
 from datetime import datetime
 from flask import current_app, request, jsonify
 from sqlalchemy.exc import DataError, InvalidRequestError, IntegrityError
+from sqlalchemy.orm import noload
 from app.emails.users import send_existing_application_notification, send_existing_seller_notification
 from app.api.applications import create_application
 from app.emails.users import send_new_user_onboarding_email
@@ -83,6 +84,7 @@ def add_user(data):
     db.session.add(audit)
     db.session.commit()
 
+    user = db.session.query(User).options(noload('*')).filter(User.id == user.id).one_or_none()
     publish_tasks.user.delay(user.serialize(), 'created')
 
     return user
@@ -192,13 +194,12 @@ def check_supplier_role(role, supplier_code):
         raise("'supplier_code' is only valid for users with 'supplier' role, not '{}'".format(role))
 
 
-def create_user():
-    json_payload = request.get_json()
-    user_type = json_payload.get('user_type')
-    name = json_payload.get('name')
-    email_address = json_payload.get('email_address')
-    shared_application_id = json_payload.get('application_id', None)
-    framework = json_payload.get('framework', 'digital-marketplace')
+def create_user(user_type=None, name=None, email_address=None, password=None, framework=None):
+    if not user_type or not name or not email_address or not password or not framework:
+        return jsonify(
+            application_id=user.application_id,
+            message="Missing input"
+        ), 400
 
     user = User.query.filter(
         User.email_address == email_address.lower()).first()
@@ -209,33 +210,27 @@ def create_user():
             message="A user with the email address '{}' already exists".format(email_address)
         ), 409
 
-    if user_type not in ['seller', 'supplier', 'buyer', 'applicant']:
+    if user_type not in ['seller', 'buyer']:
         return jsonify(message='An invalid user type was passed to create new user api'), 400
 
+    user_data = {
+        'user_type': user_type,
+        'name': name,
+        'email_address': email_address,
+        'password': password,
+        'framework': framework
+    }
+
     if user_type == "seller":
-        if shared_application_id is None:
-            try:
-                application = create_application(email_address=email_address, name=name)
-                json_payload['application_id'] = application.id
+        try:
+            application = create_application(email_address=email_address, name=name)
+            user_data['application_id'] = application.id
 
-            except InvalidRequestError:
-                return jsonify(message="An application with this email address already exists"), 409
-
-            except IntegrityError:
-                return jsonify(message="An application with this email address already exists"), 409
-
-        else:
-            application = Application.query.filter(
-                Application.id == shared_application_id).first()
-
-            if not application:
-                return jsonify(message='An invalid application id was passed to create new user api'), 400
-            else:
-                # TODO: associate new user with existing application
-                pass
+        except (InvalidRequestError, IntegrityError):
+            return jsonify(message="An application with this email address already exists"), 409
 
     try:
-        user = add_user(data=json_payload)
+        user = add_user(data=user_data)
 
         send_new_user_onboarding_email(
             name=user.name,

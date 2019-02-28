@@ -292,6 +292,7 @@ def create_user():
         db.session.add(audit)
         db.session.commit()
 
+        user = db.session.query(User).options(noload('*')).filter(User.id == user.id).one_or_none()
         publish_tasks.user.delay(user.serialize(), 'created')
 
         if user.role == 'buyer':

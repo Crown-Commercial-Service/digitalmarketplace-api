@@ -25,6 +25,9 @@ class Publish(object):
     def user(self, user, event_type, **kwargs):
         return self.__generic('user', event_type, user=user, **kwargs)
 
+    def user_claim(self, user_claim, event_type, **kwargs):
+        return self.__generic('user_claim', event_type, user_claim=user_claim, **kwargs)
+
     def __generic(self, object_type, event_type, **kwargs):
         from . import key_values_service
         key_values = (

@@ -4,13 +4,12 @@ from __future__ import unicode_literals
 import six
 
 from flask import current_app, session, jsonify
+from urllib import quote_plus
 from app.models import Supplier, Application, User
-from dmutils.email import (
-    generate_token, EmailError, hash_email
-)
+from dmutils.email import EmailError, hash_email
 import rollbar
 
-from .util import render_email_template, send_or_handle_error, escape_token_markdown
+from .util import render_email_template, send_or_handle_error
 from urllib import quote
 
 
@@ -78,29 +77,12 @@ def send_existing_application_notification(email_address, application_id):
     )
 
 
-def generate_user_creation_token(name, email_address, user_type, framework, **unused):
-    data = {
-        'name': name,
-        'email_address': email_address,
-        'user_type': user_type,
-        'framework': framework
-    }
-
-    token = generate_token(
-        data,
-        current_app.config['SECRET_KEY'],
-        current_app.config['SIGNUP_INVITATION_TOKEN_SALT']
-    )
-    return token
-
-
-def send_account_activation_email(name, email_address, user_type, framework):
-    token = generate_user_creation_token(name=name, email_address=email_address,
-                                         user_type=user_type, framework=framework)
-    url = '{}{}/create-user/{}'.format(
+def send_account_activation_email(token, email_address, framework):
+    url = '{}{}/create-user/{}?e={}'.format(
         current_app.config['FRONTEND_ADDRESS'],
         get_root_url(framework),
-        escape_token_markdown(quote(token))
+        token,
+        quote_plus(email_address)
     )
 
     email_body = render_email_template('create_user_email.md', url=url)
@@ -154,8 +136,10 @@ def send_user_existing_password_reset_email(name, email_address):
                 'email_hash': hash_email(email_address)})
 
 
-def send_account_activation_manager_email(manager_name, manager_email, applicant_name, applicant_email, framework):
+def send_account_activation_manager_email(token, manager_name, manager_email, applicant_name, applicant_email,
+                                          framework):
     _send_account_activation_admin_email(
+        token=token,
         manager_name=manager_name,
         manager_email=manager_email,
         applicant_name=applicant_name,
@@ -189,12 +173,13 @@ def send_account_activation_manager_email(manager_name, manager_email, applicant
                 'email_hash': hash_email(manager_email)})
 
 
-def _send_account_activation_admin_email(manager_name, manager_email, applicant_name, applicant_email, framework):
-    token = generate_user_creation_token(name=applicant_name, email_address=applicant_email,
-                                         user_type="buyer", framework=framework)
-    url = '{}/buyers/signup/send-invite/{}'.format(
+def _send_account_activation_admin_email(token, manager_name, manager_email, applicant_name, applicant_email,
+                                         framework):
+    url = '{}{}/send-invite/{}?e={}'.format(
         current_app.config['FRONTEND_ADDRESS'],
-        escape_token_markdown(quote(token))
+        get_root_url(framework),
+        token,
+        quote_plus(applicant_email)
     )
 
     email_body = render_email_template(
@@ -257,7 +242,13 @@ def send_new_user_onboarding_email(name, email_address, user_type, framework):
         return jsonify(message='Failed to send buyer onboarding email.'), 503
 
 
-def send_reset_password_confirm_email(email_address, url, locked, framework):
+def send_reset_password_confirm_email(token, email_address, locked, framework):
+    url = '{}{}/reset-password/{}?e={}'.format(
+        current_app.config['FRONTEND_ADDRESS'],
+        get_root_url(framework),
+        token,
+        quote_plus(email_address)
+    )
     subject = current_app.config['RESET_PASSWORD_EMAIL_SUBJECT']
     name = current_app.config['RESET_PASSWORD_EMAIL_NAME']
     if locked:

@@ -3,21 +3,21 @@ from urllib import quote
 
 from flask import current_app, jsonify, request
 from flask_login import current_user, login_required, login_user, logout_user
+from urllib import unquote_plus
 
 from app import db, encryption
 from app.api import api
-from app.api.helpers import (decode_creation_token,
-                             decode_reset_password_token,
-                             generate_reset_password_token, get_email_domain,
-                             get_root_url, user_info)
+from app.api.helpers import get_email_domain, get_root_url, user_info, role_required
 from app.api.user import create_user, is_duplicate_user, update_user_details
 from app.emails.users import (send_account_activation_email,
                               send_account_activation_manager_email,
                               send_reset_password_confirm_email,
                               send_user_existing_password_reset_email)
+from app.api.services import user_claims_service, key_values_service
 from app.models import User, has_whitelisted_email_domain
 from app.swagger import swag
 from app.utils import get_json_from_request
+from app.tasks import publish_tasks
 from dmutils.email import EmailError, InvalidToken
 
 
@@ -213,9 +213,22 @@ def signup():
             message="A buyer account must have a valid government entity email domain"
         ), 403
 
+    user_data = {
+        'name': name,
+        'user_type': user_type,
+        'framework': framework,
+        'employment_status': employment_status
+    }
+    claim = user_claims_service.make_claim(type='signup', email_address=email_address, data=user_data)
+    if not claim:
+        return jsonify(message="There was an issue completing the signup process."), 500
+
+    publish_tasks.user_claim.delay(claim.serialize(), 'created')
+
     if employment_status == 'contractor':
         try:
             send_account_activation_manager_email(
+                token=claim.token,
                 manager_name=line_manager_name,
                 manager_email=line_manager_email,
                 applicant_name=name,
@@ -233,9 +246,8 @@ def signup():
     if employment_status == 'employee' or user_type == 'seller':
         try:
             send_account_activation_email(
-                name=name,
+                token=claim.token,
                 email_address=email_address,
-                user_type=user_type,
                 framework=framework
             )
             return jsonify(
@@ -257,6 +269,7 @@ def signup():
 
 
 @api.route('/send-invite/<string:token>', methods=['POST'])
+@role_required('admin')
 def send_invite(token):
     """Send invite
     ---
@@ -265,6 +278,11 @@ def send_invite(token):
     consumes:
       - application/json
     parameters:
+      - name: e
+        in: query
+        type: string
+        required: true
+        description: URL encoded email address
       - name: token
         in: path
         type: string
@@ -280,50 +298,48 @@ def send_invite(token):
           name:
             type: string
     """
-    try:
-        data = decode_creation_token(token.encode())
-        email_address = data.get('email_address', None)
-        name = data.get('name', None)
-        framework = data.get('framework', 'digital-marketplace')
-        user_type = data.get('user_type', None)
-        send_account_activation_email(name, email_address, user_type, framework)
-        return jsonify(email_address=email_address, name=name), 200
-    except InvalidToken:
-        return jsonify(message='An error occured when trying to send an email'), 400
+    email_address_encoded = request.args.get('e') or ''
+    if not email_address_encoded:
+        return jsonify(message='You must provide an email address when validating a new account'), 400
+    email_address = unquote_plus(email_address_encoded)
+    claim = user_claims_service.find(type='signup', token=token, email_address=email_address,
+                                     claimed=False).one_or_none()
+    if not claim:
+        return jsonify(message='Invalid token'), 400
+    name = claim.data.get('name', None)
+    framework = claim.data.get('framework', 'digital-marketplace')
+    user_type = claim.data.get('user_type', None)
+    send_account_activation_email(token, email_address, framework)
+    return jsonify(email_address=email_address, name=name), 200
 
 
-@api.route('/users', methods=['POST'], endpoint='create_user')
-@swag.validate('AddUser')
-def add():
-    """Add user
+@api.route('/create-user/<string:token>', methods=['POST'], endpoint='create_user')
+def add(token):
+    """Creates a new user based on the token claim and email address provided.
     ---
     tags:
       - users
     consumes:
       - application/json
     parameters:
+      - name: e
+        in: query
+        type: string
+        required: true
+        description: URL encoded email address
+      - name: token
+        in: path
+        type: string
+        required: true
+        description: the validation token
       - name: body
         in: body
         required: true
         schema:
-          id: AddUser
           required:
-            - name
-            - email_address
-            - user_type
             - password
           properties:
-            name:
-              type: string
-            email_address:
-              type: string
             password:
-              type: string
-            user_type:
-              type: string
-            framework:
-              type: string
-            shared_application_id:
               type: string
     responses:
       200:
@@ -341,20 +357,42 @@ def add():
           application_id:
             type: string
     """
-    return create_user()
+    email_address_encoded = request.args.get('e') or ''
+    if not email_address_encoded:
+        return jsonify(message='You must provide an email address when validating a new account'), 400
+    email_address = unquote_plus(email_address_encoded)
+    json_payload = request.get_json()
+    password = json_payload.get('password', None)
+    if not password:
+        return jsonify(message='You must provide a password for your new user account'), 400
+    claim = user_claims_service.find(type='signup', token=token, email_address=email_address,
+                                     claimed=False).one_or_none()
+    if not claim:
+        return jsonify(message='Invalid token'), 400
+    user = create_user(
+        user_type=claim.data['user_type'],
+        name=claim.data['name'],
+        email_address=email_address,
+        password=password,
+        framework=claim.data['framework']
+    )
+    try:
+        claim = user_claims_service.validate_and_update_claim(type='signup', token=token, email_address=email_address)
+        if not claim:
+            return jsonify(message='Invalid token'), 400
+    except Exception as error:
+        return jsonify(message='Invalid token'), 400
+
+    publish_tasks.user_claim.delay(claim.serialize(), 'updated')
+
+    return user
 
 
-# deprecated
-@api.route('/create-user', methods=['POST'])
-@swag.validate('AddUser')
-def add_deprecated():
-    return create_user()
-
-
-@api.route('/reset-password/framework/<string:framework_slug>', methods=['POST'])
-def send_reset_password_email(framework_slug):
+@api.route('/reset-password', methods=['POST'])
+def send_reset_password_email():
     json_payload = get_json_from_request()
     email_address = json_payload.get('email_address', None)
+    framework_slug = json_payload.get('framework', None)
     if email_address is None:
         return jsonify(message='One or more required args were missing from the request'), 400
     user = User.query.filter(
@@ -366,20 +404,18 @@ def send_reset_password_email(framework_slug):
     app_root_url = get_root_url(framework_slug)
 
     try:
-        reset_password_token = generate_reset_password_token(
-            email_address,
-            user.id
-        )
+        user_data = {
+            'user_id': user.id
+        }
+        claim = user_claims_service.make_claim(type='password_reset', email_address=email_address, data=user_data)
+        if not claim:
+            return jsonify(message="There was an issue completing the password reset process."), 500
 
-        reset_password_url = '{}{}/reset-password/{}'.format(
-            current_app.config['FRONTEND_ADDRESS'],
-            app_root_url,
-            quote(reset_password_token)
-        )
+        publish_tasks.user_claim.delay(claim.serialize(), 'created')
 
         send_reset_password_confirm_email(
+            token=claim.token,
             email_address=email_address,
-            url=reset_password_url,
             locked=user.locked,
             framework=framework_slug
         )
@@ -389,30 +425,20 @@ def send_reset_password_email(framework_slug):
 
     return jsonify(
         email_address=email_address,
-        token=reset_password_token
-    ), 200
-
-
-@api.route('/reset-password/<string:token>', methods=['GET'])
-def get_reset_user(token):
-    try:
-        data = decode_reset_password_token(token.encode())
-
-    except InvalidToken as error:
-        return jsonify(message=error.message), 400
-
-    return jsonify(
-        token=token,
-        email_address=data.get('email_address', None),
-        user_id=data.get('user_id', None)
+        token=claim.token
     ), 200
 
 
 @api.route('/reset-password/<string:token>', methods=['POST'])
 def reset_password(token):
+    email_address_encoded = request.args.get('e') or ''
+    if not email_address_encoded:
+        return jsonify(message='You must provide an email address when resetting a password'), 400
+    email_address = unquote_plus(email_address_encoded)
+
     json_payload = get_json_from_request()
 
-    required_keys = ['password', 'confirmPassword', 'email_address', 'user_id']
+    required_keys = ['password', 'confirmPassword']
 
     if not set(required_keys).issubset(json_payload):
         return jsonify(message='One or more required args were missing from the request'), 400
@@ -420,20 +446,30 @@ def reset_password(token):
     if json_payload['password'] != json_payload['confirmPassword']:
         return jsonify(message="Passwords do not match"), 400
 
-    data = decode_reset_password_token(token.encode())
-
-    if data.get('error', None) is not None:
-        return jsonify(message="An error occured decoding the reset password token"), 400
+    try:
+        token_age_limit = key_values_service.get_by_key('password_reset_token_age_limit')
+        claim = user_claims_service.validate_and_update_claim(
+            type='password_reset',
+            token=token,
+            email_address=email_address,
+            age=token_age_limit['data']['age']
+        )
+        if not claim:
+            return jsonify(message='Invalid token'), 400
+    except Exception as error:
+        return jsonify(message='Invalid token'), 400
 
     try:
+        publish_tasks.user_claim.delay(claim.serialize(), 'updated')
+
         update_user_details(
             password=json_payload['password'],
-            user_id=json_payload['user_id']
+            user_id=claim.data.get('user_id', None)
         )
 
         return jsonify(
-            message="User with email {}, successfully updated their password".format(json_payload['email_address']),
-            email_address=json_payload['email_address']
+            message="User with email {}, successfully updated their password".format(email_address),
+            email_address=email_address
         ), 200
 
     except Exception as error:

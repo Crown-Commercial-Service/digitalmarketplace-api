@@ -1282,6 +1282,43 @@ class User(db.Model):
             return str(self.id)  # python 3
 
 
+class UserClaim(db.Model):
+    __tablename__ = 'user_claim'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email_address = db.Column(db.String, index=True, unique=False, nullable=False)
+    token = db.Column(db.String, index=True, nullable=False)
+    data = db.Column(MutableDict.as_mutable(JSON), default=dict)
+    claimed = db.Column(db.Boolean, index=False, unique=False, nullable=False, default=False)
+    created_at = db.Column(DateTime, index=False, unique=False, nullable=False, default=utcnow)
+    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
+    type = db.Column(
+        db.Enum(
+            *[
+                'signup',
+                'password_reset'
+            ],
+            name='user_claim_type_enum'
+        ),
+        index=True,
+        unique=False,
+        nullable=False
+    )
+
+    def serialize(self):
+        serialized = {
+            'id': self.id,
+            'email_address': self.email_address,
+            'token': self.token,
+            'data': self.data,
+            'claimed': self.claimed,
+            'type': self.type,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at
+        }
+        return serialized
+
+
 class SupplierUserInviteLog(db.Model):
     __tablename__ = 'supplier_user_invite_log'
 

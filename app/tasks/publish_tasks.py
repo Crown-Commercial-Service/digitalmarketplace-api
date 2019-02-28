@@ -37,3 +37,8 @@ def supplier_domain(supplier_domain, event_type, **kwargs):
 @celery.task
 def user(user, event_type, **kwargs):
     publish.user(user, event_type, **kwargs)
+
+
+@celery.task
+def user_claim(user_claim, event_type, **kwargs):
+    publish.user_claim(user_claim, event_type, **kwargs)

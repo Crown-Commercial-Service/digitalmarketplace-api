@@ -1,7 +1,9 @@
 import json
 import pytest
+import mock
 
 from app.models import db, Agency
+from app.api.services import user_claims_service
 from nose.tools import assert_equal
 
 test_seller = {
@@ -70,7 +72,8 @@ def agencies(app, request):
         yield Agency.query.all()
 
 
-def test_send_seller_type_signup_invite_email(client, mocker):
+@mock.patch('app.tasks.publish_tasks.user_claim')
+def test_send_seller_type_signup_invite_email(user_claim, client, mocker):
     send_email = mocker.patch('app.api.views.users.send_account_activation_email')
     response = client.post(
         '/2/signup',
@@ -78,15 +81,11 @@ def test_send_seller_type_signup_invite_email(client, mocker):
         content_type='application/json')
     assert response.status_code == 200
 
-    send_email.assert_called_once_with(
-        email_address=test_seller['email_address'],
-        name=test_seller['name'],
-        user_type='seller',
-        framework='digital-marketplace'
-    )
+    send_email.assert_called()
 
 
-def test_send_buyer_type_signup_invite_email(client, mocker):
+@mock.patch('app.tasks.publish_tasks.user_claim')
+def test_send_buyer_type_signup_invite_email(user_claim, client, mocker):
     send_email = mocker.patch('app.api.views.users.send_account_activation_email')
     response = client.post(
         '/2/signup',
@@ -102,15 +101,11 @@ def test_send_buyer_type_signup_invite_email(client, mocker):
     data = json.loads(response.data)
     assert data['message'] == 'Email invite sent successfully'
 
-    send_email.assert_called_once_with(
-        email_address='m@digital.gov.au',
-        name='Jeff Labowski',
-        user_type='buyer',
-        framework='digital-marketplace'
-    )
+    send_email.assert_called()
 
 
-def test_send_contractor_buyer_type_signup_invite_email(client, mocker):
+@mock.patch('app.tasks.publish_tasks.user_claim')
+def test_send_contractor_buyer_type_signup_invite_email(user_claim, client, mocker):
     send_email = mocker.patch('app.api.views.users.send_account_activation_manager_email')
     response = client.post(
         '/2/signup',
@@ -127,16 +122,11 @@ def test_send_contractor_buyer_type_signup_invite_email(client, mocker):
     data = json.loads(response.data)
     assert data['message'] == 'Email invite sent successfully'
 
-    send_email.assert_called_once_with(
-        manager_email='m@danger.gov.au',
-        manager_name='Jeff Labowski',
-        applicant_email='rtenenabaum@mouse.gov.au',
-        applicant_name='Royal',
-        framework='digital-marketplace'
-    )
+    send_email.assert_called()
 
 
-def test_invalid_employment_status(client, mocker):
+@mock.patch('app.tasks.publish_tasks.user_claim')
+def test_invalid_employment_status(user_claim, client, mocker):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -151,7 +141,8 @@ def test_invalid_employment_status(client, mocker):
     assert response.status_code == 400
 
 
-def test_missing_name(client, mocker):
+@mock.patch('app.tasks.publish_tasks.user_claim')
+def test_missing_name(user_claim, client, mocker):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -162,7 +153,8 @@ def test_missing_name(client, mocker):
     assert response.status_code == 400
 
 
-def test_signup_fails_without_required_fields(client, supplier_user):
+@mock.patch('app.tasks.publish_tasks.user_claim')
+def test_signup_fails_without_required_fields(user_claim, client, supplier_user):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -175,7 +167,8 @@ def test_signup_fails_without_required_fields(client, supplier_user):
     assert_equal(data['message'], "'user_type' is a required property")
 
 
-def test_duplicate_supplier_with_same_domain(client, supplier_user):
+@mock.patch('app.tasks.publish_tasks.user_claim')
+def test_duplicate_supplier_with_same_domain(user_claim, client, supplier_user):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -190,7 +183,8 @@ def test_duplicate_supplier_with_same_domain(client, supplier_user):
     assert_equal(data['message'], 'An account with this email domain already exists')
 
 
-def test_duplicate_application_with_same_domain(client, application_user):
+@mock.patch('app.tasks.publish_tasks.user_claim')
+def test_duplicate_application_with_same_domain(user_claim, client, application_user):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -204,7 +198,8 @@ def test_duplicate_application_with_same_domain(client, application_user):
     assert_equal(data['message'], 'An account with this email domain already exists')
 
 
-def test_generic_domain(client):
+@mock.patch('app.tasks.publish_tasks.user_claim')
+def test_generic_domain(user_claim, client):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -220,8 +215,9 @@ def test_generic_domain(client):
     assert_equal(data['message'], 'Email invite sent successfully')
 
 
+@mock.patch('app.tasks.publish_tasks.user_claim')
 @pytest.mark.parametrize('user', [gov_au_buyer, whitelisted_non_gov_au_buyer])
-def test_buyer_can_signup_with_whitelisted_email(client, mocker, agencies, user):
+def test_buyer_can_signup_with_whitelisted_email(user_claim, client, mocker, agencies, user):
     send_email = mocker.patch('app.api.views.users.send_account_activation_email')
 
     response = client.post(
@@ -238,16 +234,12 @@ def test_buyer_can_signup_with_whitelisted_email(client, mocker, agencies, user)
     data = json.loads(response.data)
     assert data['message'] == 'Email invite sent successfully'
 
-    send_email.assert_called_once_with(
-        email_address=user['email_address'],
-        name=user['name'],
-        user_type='buyer',
-        framework='digital-marketplace'
-    )
+    send_email.assert_called()
 
 
+@mock.patch('app.tasks.publish_tasks.user_claim')
 @pytest.mark.parametrize('user', [non_whitelisted_buyer_in_agency, non_whitelisted_buyer])
-def test_buyer_can_not_signup_with_non_whitelisted_email(client, mocker, agencies, user):
+def test_buyer_can_not_signup_with_non_whitelisted_email(user_claim, client, mocker, agencies, user):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -261,3 +253,21 @@ def test_buyer_can_not_signup_with_non_whitelisted_email(client, mocker, agencie
     assert response.status_code == 403
     data = json.loads(response.data)
     assert data['message'] == 'A buyer account must have a valid government entity email domain'
+
+
+@mock.patch('app.tasks.publish_tasks.user_claim')
+def test_signup_creates_signup_claim_token(user_claim, app, client):
+    response = client.post(
+        '/2/signup',
+        data=json.dumps({
+            'email_address': 'm@digital.gov.au',
+            'name': 'Jeff Labowski',
+            'user_type': 'buyer',
+            'employment_status': 'employee'
+        }),
+        content_type='application/json')
+    assert response.status_code == 200
+
+    with app.app_context():
+        claim = user_claims_service.find(email_address='m@digital.gov.au', type='signup', claimed=False).one_or_none()
+        assert claim.email_address == 'm@digital.gov.au'
