@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
@@ -641,6 +641,35 @@
       "oneOf": [
         {
           "properties": {
+            "documentation": {
+              "enum": [
+                false
+              ]
+            },
+            "documentationAccessibility": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "documentation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "documentation",
+            "documentationAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "documentationFormats": {
               "items": {
                 "enum": [
@@ -672,6 +701,37 @@
           "required": [
             "documentationFormats",
             "documentationFormatsOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "documentationAccessibility": {
+              "enum": [
+                "wcag_a",
+                "wcag_aa",
+                "wcag_aaa"
+              ]
+            },
+            "documentationAccessibilityDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "documentationAccessibility": {
+              "enum": [
+                "none_or_not_sure"
+              ]
+            }
+          },
+          "required": [
+            "documentationAccessibility",
+            "documentationAccessibilityDescription"
           ]
         }
       ]
@@ -2006,6 +2066,35 @@
       "oneOf": [
         {
           "properties": {
+            "energyEfficientDatacentres": {
+              "enum": [
+                false
+              ]
+            },
+            "energyEfficientDatacentresDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "energyEfficientDatacentres": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "energyEfficientDatacentres",
+            "energyEfficientDatacentresDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
             "freeVersionDescription": {
               "type": "null"
             },
@@ -2377,6 +2466,20 @@
     "documentation": {
       "type": "boolean"
     },
+    "documentationAccessibility": {
+      "enum": [
+        "wcag_aaa",
+        "wcag_aa",
+        "wcag_a",
+        "none_or_not_sure"
+      ]
+    },
+    "documentationAccessibilityDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
     "documentationFormats": {
       "items": {
         "enum": [
@@ -2442,6 +2545,12 @@
     },
     "energyEfficientDatacentres": {
       "type": "boolean"
+    },
+    "energyEfficientDatacentresDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
     },
     "equipmentDisposalApproach": {
       "enum": [

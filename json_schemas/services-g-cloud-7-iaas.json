@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
     "analyticsAvailable": {
@@ -933,8 +933,7 @@
           ]
         },
         "value": {
-          "exclusiveMaximum": true,
-          "maximum": 100,
+          "exclusiveMaximum": 100,
           "minimum": 0,
           "type": "number"
         }

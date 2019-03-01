@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
     "additionalTerms": {
@@ -28,7 +28,6 @@
       "type": "array"
     },
     "culturalWeighting": {
-      "exclusiveMaximum": false,
       "maximum": 20,
       "minimum": 5,
       "type": "integer"
@@ -95,7 +94,6 @@
       "type": "array"
     },
     "numberOfSuppliers": {
-      "exclusiveMaximum": false,
       "maximum": 15,
       "minimum": 3,
       "type": "integer"
@@ -106,7 +104,6 @@
       "type": "string"
     },
     "priceWeighting": {
-      "exclusiveMaximum": false,
       "maximum": 85,
       "minimum": 20,
       "type": "integer"
@@ -164,7 +161,6 @@
       "type": "string"
     },
     "technicalWeighting": {
-      "exclusiveMaximum": false,
       "maximum": 75,
       "minimum": 10,
       "type": "integer"

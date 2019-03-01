@@ -295,12 +295,12 @@ def _translate_json_schema_error(key, validator, validator_value, message):
         'minLength': 'answer_required',
         'minItems': 'answer_required',
         'minimum': 'not_a_number',
+        'exclusiveMaximum': 'not_a_number',
         'maximum': 'not_a_number',
         'maxItems': 'max_items_limit',
         'maxLength': 'under_character_limit',
         'format': 'invalid_format',
     }
-
     if validator in validator_type_to_error:
         return validator_type_to_error[validator]
 
