@@ -27,11 +27,10 @@ def create_application(email_address=None, name=None):
     db.session.commit()
 
     publish_tasks.application.delay(
-        application.serialize(),
+        publish_tasks.compress_application(application),
         'created',
         name=name,
-        email_address=email_address,
-        application_type=application.type
+        email_address=email_address
     )
 
     notify_team_new_applicant(

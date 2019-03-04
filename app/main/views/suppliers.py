@@ -933,12 +933,10 @@ def create_application_from_supplier(code, application_type=None):
     db.session.commit()
 
     publish_tasks.application.delay(
-        application.serialize(),
+        publish_tasks.compress_application(application),
         'created',
-        supplier_code=code,
         name=current_user['name'],
-        email_address=current_user['email_address'],
-        application_type=application_type
+        email_address=current_user['email_address']
     )
     return jsonify(application=application)
 

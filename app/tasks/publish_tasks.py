@@ -9,6 +9,16 @@ def application(application, event_type, **kwargs):
     publish.application(application, event_type, **kwargs)
 
 
+def compress_application(application):
+    return {
+        'id': application.id,
+        'name': application.data.get('name'),
+        'status': application.status,
+        'type': application.type,
+        'supplier_code': application.supplier_code
+    }
+
+
 @celery.task
 def assessment(assessment, event_type, **kwargs):
     publish.assessment(assessment, event_type, **kwargs)
