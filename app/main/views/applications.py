@@ -44,21 +44,25 @@ def save_application(application):
 @main.route('/applications', methods=['POST'])
 def create_application():
     application_json = get_application_json()
-
+    json_payload = get_json_from_request()
     application = Application()
     application.update_from_json(application_json)
 
     save_application(application)
+    name = json_payload.get('name')
+    updated_by = json_payload.get('updated_by')
     db.session.add(AuditEvent(
         audit_type=AuditTypes.create_application,
-        user='',
+        user=updated_by,
         data={},
         db_object=application
     ))
     db.session.commit()
     publish_tasks.application.delay(
         publish_tasks.compress_application(application),
-        'created'
+        'created',
+        name=name,
+        email_address=updated_by
     )
 
     return jsonify(application=application.serializable), 201
