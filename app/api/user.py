@@ -169,12 +169,17 @@ def update_user_details(**kwargs):
 
     check_supplier_role(user.role, user.supplier_code)
 
+    update_data = {
+        "user_id": user_id,
+        "email_address": kwargs.get('email_address', None)
+    }
+
     audit = AuditEvent(
         audit_type=AuditTypes.update_user,
         user=kwargs.get('updated_by', 'no user data'),
         data={
             'user': user.email_address,
-            'update': kwargs
+            'update': update_data
         },
         db_object=user
     )
