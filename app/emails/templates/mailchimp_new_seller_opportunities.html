@@ -432,7 +432,7 @@
 					
 					<td valign="top" class="mcnTextContent" style="padding: 0px 18px 9px;color: #999999;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;word-break: break-word;font-family: Helvetica;font-size: 12px;line-height: 150%;text-align: left;">
 					
-						View newly listed opportunities on The Marketplace
+						View new opportunities on the Marketplace
 					</td>
 				</tr>
 			</tbody></table>
@@ -481,17 +481,21 @@
 			<table align="left" border="0" cellpadding="0" cellspacing="0" style="max-width: 100%;min-width: 100%;border-collapse: collapse;mso-table-lspace: 0pt;mso-table-rspace: 0pt;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;" width="100%" class="mcnTextContentContainer">
 				<tbody><tr>
 					
-					<td valign="top" class="mcnTextContent" style="padding: 0px 18px 9px;color: #4F4F4F;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;word-break: break-word;font-family: Helvetica;font-size: 18px;line-height: 150%;text-align: left;">
-					
+					<td valign="top" class="mcnTextContent" style="padding: 0px 18px 9px;color: #4F4F4F;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;word-break: break-word;font-family: Helvetica;font-size: 18px;line-height: 150%;text-align: left;">					
 						Hello,<br>
-<br>
-{% if briefs|length > 1 %}
-New opportunities have been published on the <a data-saferedirecturl="https://www.google.com/url?hl=en&q=https://marketplace.service.gov.au/&source=gmail&ust=1477364593733000&usg=AFQjCNGIplvPH3OglG_gjKU4EqTUaoxoEw" href="https://marketplace.service.gov.au/" target="_blank" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #00a1bb;font-weight: bold;text-decoration: underline;">Digital Marketplace</a>.<br>
-{% else %}
-A new opportunity has been published on the <a data-saferedirecturl="https://www.google.com/url?hl=en&q=https://marketplace.service.gov.au/&source=gmail&ust=1477364593733000&usg=AFQjCNGIplvPH3OglG_gjKU4EqTUaoxoEw" href="https://marketplace.service.gov.au/" target="_blank" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #00a1bb;font-weight: bold;text-decoration: underline;">Digital Marketplace</a>.<br>
-{% endif %}
-<br>
-For more information about the brief click on the headline, or simply <a data-saferedirecturl="https://www.google.com/url?hl=en&q=https://marketplace.service.gov.au/2/opportunities&source=gmail&ust=1477364593733000&usg=AFQjCNEm-rYOViD111Dkq6VboRXD8372lw" href="https://marketplace.service.gov.au/2/opportunities" target="_blank" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #00a1bb;font-weight: bold;text-decoration: underline;">visit the latest opportunities page</a> on the Marketplace.
+						<br>
+						{% if briefs|length > 1 %}
+						New opportunities are open for responses on the <a data-saferedirecturl="https://www.google.com/url?hl=en&q=https://marketplace.service.gov.au/&source=gmail&ust=1477364593733000&usg=AFQjCNGIplvPH3OglG_gjKU4EqTUaoxoEw" href="https://marketplace.service.gov.au/" target="_blank" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #00a1bb;font-weight: bold;text-decoration: underline;">Digital Marketplace</a>.<br>
+						{% else %}
+						A new opportunity is open for responses on the <a data-saferedirecturl="https://www.google.com/url?hl=en&q=https://marketplace.service.gov.au/&source=gmail&ust=1477364593733000&usg=AFQjCNGIplvPH3OglG_gjKU4EqTUaoxoEw" href="https://marketplace.service.gov.au/" target="_blank" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #00a1bb;font-weight: bold;text-decoration: underline;">Digital Marketplace</a>.<br>
+						{% endif %}
+						<br>
+						To submit a response:
+						<ol>
+							<li>Click on the opportunity title below.</li>
+							<li>If you're not logged in, click 'Login' and enter your login details.</li>
+							<li>Click 'Apply for opportunity'. If you're not approved for the category, you must click 'Request assessment'.</li>
+						</ol>
 					</td>
 				</tr>
 			</tbody></table>
@@ -525,8 +529,14 @@ For more information about the brief click on the headline, or simply <a data-sa
 	</tr>
 </tbody>
 </table>
-
-{% for brief in briefs %}
+{% if briefs_atm %}
+<h2 style="display: block;margin: 0;padding: 0px 18px 9px;color: #202020;font-family: Helvetica;font-size: 24px;font-style: normal;font-weight: bold;line-height: 125%;letter-spacing: normal;text-align: left;">
+	Ask the market opportunities
+</h2>
+<p style="display: block;margin: 0;padding: 0px 18px 9px;color: #202020;font-family: Helvetica;font-size: 18px;font-style: normal;font-weight: normal;line-height: 125%;letter-spacing: normal;text-align: left;">
+	These opportunities are framed by buyers as Expressions of Interest (EOI) or Requests for Information (RFI) to learn about your innovative solutions to complex digital problems in government services.
+</p>
+{% for brief in briefs_atm %}
 <table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnTextBlock" style="min-width: 100%;border-collapse: collapse;mso-table-lspace: 0pt;mso-table-rspace: 0pt;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;">
 <tbody class="mcnTextBlockOuter">
 	<tr>
@@ -544,18 +554,15 @@ For more information about the brief click on the headline, or simply <a data-sa
 					<tr>
 						<td valign="top" class="mcnTextContent" style="padding: 0px 18px 9px;color: #4F4F4F;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;word-break: break-word;font-family: Helvetica;font-size: 18px;line-height: 150%;text-align: left;">
 							<article>
-								<h2 style="display: block;margin: 0;padding: 0;color: #202020;font-family: Helvetica;font-size: 22px;font-style: normal;font-weight: bold;line-height: 125%;letter-spacing: normal;text-align: left;"><a href="https://marketplace.service.gov.au/digital-marketplace/opportunities/{{ brief.id }}" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #00a1bb;font-weight: bold;text-decoration: underline;">{{ brief.data['title'] }}</a></h2>
+								<h3 style="display: block;margin: 0;padding: 0;color: #202020;font-family: Helvetica;font-size: 22px;font-style: normal;font-weight: bold;line-height: 125%;letter-spacing: normal;text-align: left;"><a href="https://marketplace.service.gov.au/digital-marketplace/opportunities/{{ brief.id }}" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #00a1bb;font-weight: bold;text-decoration: underline;">{{ brief.data['title'] }}</a></h3>
 								{% if brief.data['organisation'] %}
 								{{ brief.data['organisation'] }}<br>
 								{% endif %}
 								{% if brief.data['location'] %}
 								{{ brief.data['location']|join(', ') }}<br>
 								{% endif %}
-								{% if brief.lot['name'] %}
-								{{ brief.lot['name'] }}<br>
-								{% endif %}
 								{% if brief.data['areaOfExpertise'] %}
-								<strong>Area of expertise:</strong> {{ brief.data['areaOfExpertise'] }}<br>
+								<strong>Service category:</strong> {{ brief.data['areaOfExpertise'] }}<br>
 								{% endif %}
 								{% if brief.published_at %}
 								<strong>Published:</strong> {{ brief.published_at.strftime('%A %d %B %Y') }}<br>
@@ -599,6 +606,160 @@ For more information about the brief click on the headline, or simply <a data-sa
 	</tbody>
 </table>
 {% endfor %}
+{% endif %}
+{% if briefs_professionals %}
+<h2 style="display: block;margin: 0;padding: 0px 18px 9px;color: #202020;font-family: Helvetica;font-size: 24px;font-style: normal;font-weight: bold;line-height: 125%;letter-spacing: normal;text-align: left;">
+	Digital specialists
+</h2>
+<p style="display: block;margin: 0;padding: 0px 18px 9px;color: #202020;font-family: Helvetica;font-size: 18px;font-style: normal;font-weight: normal;line-height: 125%;letter-spacing: normal;text-align: left;">
+	Buyers seeking digital specialists invite sellers to put forward suitable candidates for temporary/contractor roles. Successful sellers are engaged under a work order to provide the specialist for delivery of services over a specified term.
+</p>
+{% for brief in briefs_professionals %}
+<table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnTextBlock" style="min-width: 100%;border-collapse: collapse;mso-table-lspace: 0pt;mso-table-rspace: 0pt;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;">
+<tbody class="mcnTextBlockOuter">
+	<tr>
+		<td valign="top" class="mcnTextBlockInner" style="padding-top: 9px;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;">
+			<!--[if mso]>
+			<table align="left" border="0" cellspacing="0" cellpadding="0" width="100%" style="width:100%;">
+			<tr>
+			<![endif]-->
+			
+			<!--[if mso]>
+			<td valign="top" width="600" style="width:600px;">
+			<![endif]-->
+			<table align="left" border="0" cellpadding="0" cellspacing="0" style="max-width: 100%;min-width: 100%;border-collapse: collapse;mso-table-lspace: 0pt;mso-table-rspace: 0pt;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;" width="100%" class="mcnTextContentContainer">
+				<tbody>
+					<tr>
+						<td valign="top" class="mcnTextContent" style="padding: 0px 18px 9px;color: #4F4F4F;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;word-break: break-word;font-family: Helvetica;font-size: 18px;line-height: 150%;text-align: left;">
+							<article>
+								<h3 style="display: block;margin: 0;padding: 0;color: #202020;font-family: Helvetica;font-size: 22px;font-style: normal;font-weight: bold;line-height: 125%;letter-spacing: normal;text-align: left;"><a href="https://marketplace.service.gov.au/digital-marketplace/opportunities/{{ brief.id }}" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #00a1bb;font-weight: bold;text-decoration: underline;">{{ brief.data['title'] }}</a></h3>
+								{% if brief.data['organisation'] %}
+								{{ brief.data['organisation'] }}<br>
+								{% endif %}
+								{% if brief.data['location'] %}
+								{{ brief.data['location']|join(', ') }}<br>
+								{% endif %}
+								{% if brief.data['areaOfExpertise'] %}
+								<strong>Service category:</strong> {{ brief.data['areaOfExpertise'] }}<br>
+								{% endif %}
+								{% if brief.published_at %}
+								<strong>Published:</strong> {{ brief.published_at.strftime('%A %d %B %Y') }}<br>
+								{% endif %}
+								{% if brief.closed_at %}
+								<strong>Closing:</strong> {{ brief.closed_at.strftime('%A %d %B %Y') }}
+								{% endif %}
+								{% if brief.data['summary'] %}
+								<p style="color: #4F4F4F;margin: 10px 0;padding: 0;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;font-family: Helvetica;font-size: 18px;line-height: 150%;text-align: left;">{{ brief.data['summary'] }}</p>
+								{% endif %}
+							</article>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<!--[if mso]>
+			</td>
+			<![endif]-->
+			
+			<!--[if mso]>
+			</tr>
+			</table>
+			<![endif]-->
+		</td>
+	</tr>
+</tbody>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnDividerBlock" style="min-width: 100%;border-collapse: collapse;mso-table-lspace: 0pt;mso-table-rspace: 0pt;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;table-layout: fixed !important;">
+	<tbody class="mcnDividerBlockOuter">
+		<tr>
+			<td class="mcnDividerBlockInner" style="min-width: 100%;padding: 18px;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;">
+				<table class="mcnDividerContent" border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%;border-top: 2px solid #E0E3E5;border-collapse: collapse;mso-table-lspace: 0pt;mso-table-rspace: 0pt;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;">
+					<tbody><tr>
+						<td style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;">
+							<span></span>
+						</td>
+					</tr>
+				</tbody></table>
+			</td>
+		</tr>
+	</tbody>
+</table>
+{% endfor %}
+{% endif %}
+{% if briefs_training %}
+<h2 style="display: block;margin: 0;padding: 0px 18px 9px;color: #202020;font-family: Helvetica;font-size: 24px;font-style: normal;font-weight: bold;line-height: 125%;letter-spacing: normal;text-align: left;">
+	Training opportunities
+</h2>
+<p style="display: block;margin: 0;padding: 0px 18px 9px;color: #202020;font-family: Helvetica;font-size: 18px;font-style: normal;font-weight: normal;line-height: 125%;letter-spacing: normal;text-align: left;">
+	You are invited to submit responses to opportunities for government buyers who require training expertise and delivery. You must be assessed and approved to offer services for <a style="color:#00a1bb;" href="https://marketplace1.zendesk.com/hc/en-gb/articles/333757011655-Assessment-criteria#tld">training, learning and development</a> before you can submit a response.
+</p>
+{% for brief in briefs_training %}
+<table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnTextBlock" style="min-width: 100%;border-collapse: collapse;mso-table-lspace: 0pt;mso-table-rspace: 0pt;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;">
+<tbody class="mcnTextBlockOuter">
+	<tr>
+		<td valign="top" class="mcnTextBlockInner" style="padding-top: 9px;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;">
+			<!--[if mso]>
+			<table align="left" border="0" cellspacing="0" cellpadding="0" width="100%" style="width:100%;">
+			<tr>
+			<![endif]-->
+			
+			<!--[if mso]>
+			<td valign="top" width="600" style="width:600px;">
+			<![endif]-->
+			<table align="left" border="0" cellpadding="0" cellspacing="0" style="max-width: 100%;min-width: 100%;border-collapse: collapse;mso-table-lspace: 0pt;mso-table-rspace: 0pt;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;" width="100%" class="mcnTextContentContainer">
+				<tbody>
+					<tr>
+						<td valign="top" class="mcnTextContent" style="padding: 0px 18px 9px;color: #4F4F4F;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;word-break: break-word;font-family: Helvetica;font-size: 18px;line-height: 150%;text-align: left;">
+							<article>
+								<h3 style="display: block;margin: 0;padding: 0;color: #202020;font-family: Helvetica;font-size: 22px;font-style: normal;font-weight: bold;line-height: 125%;letter-spacing: normal;text-align: left;"><a href="https://marketplace.service.gov.au/digital-marketplace/opportunities/{{ brief.id }}" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #00a1bb;font-weight: bold;text-decoration: underline;">{{ brief.data['title'] }}</a></h3>
+								{% if brief.data['organisation'] %}
+								{{ brief.data['organisation'] }}<br>
+								{% endif %}
+								{% if brief.data['location'] %}
+								{{ brief.data['location']|join(', ') }}<br>
+								{% endif %}
+								{% if brief.published_at %}
+								<strong>Published:</strong> {{ brief.published_at.strftime('%A %d %B %Y') }}<br>
+								{% endif %}
+								{% if brief.closed_at %}
+								<strong>Closing:</strong> {{ brief.closed_at.strftime('%A %d %B %Y') }}
+								{% endif %}
+								{% if brief.data['summary'] %}
+								<p style="color: #4F4F4F;margin: 10px 0;padding: 0;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;font-family: Helvetica;font-size: 18px;line-height: 150%;text-align: left;">{{ brief.data['summary'] }}</p>
+								{% endif %}
+							</article>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<!--[if mso]>
+			</td>
+			<![endif]-->
+			
+			<!--[if mso]>
+			</tr>
+			</table>
+			<![endif]-->
+		</td>
+	</tr>
+</tbody>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnDividerBlock" style="min-width: 100%;border-collapse: collapse;mso-table-lspace: 0pt;mso-table-rspace: 0pt;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;table-layout: fixed !important;">
+	<tbody class="mcnDividerBlockOuter">
+		<tr>
+			<td class="mcnDividerBlockInner" style="min-width: 100%;padding: 18px;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;">
+				<table class="mcnDividerContent" border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%;border-top: 2px solid #E0E3E5;border-collapse: collapse;mso-table-lspace: 0pt;mso-table-rspace: 0pt;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;">
+					<tbody><tr>
+						<td style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;">
+							<span></span>
+						</td>
+					</tr>
+				</tbody></table>
+			</td>
+		</tr>
+	</tbody>
+</table>
+{% endfor %}
+{% endif %}
 </td>
 						</tr>
 						<tr>
@@ -621,9 +782,9 @@ For more information about the brief click on the headline, or simply <a data-sa
 						<table border="0" cellspacing="0" class="mcnTextContentContainer" width="100%" style="min-width: 100% !important;background-color: #404040;border-collapse: collapse;mso-table-lspace: 0pt;mso-table-rspace: 0pt;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;">
 							<tbody><tr>
 								<td valign="top" class="mcnTextContent" style="padding: 18px;color: #F2F2F2;font-family: Helvetica;font-size: 14px;font-weight: normal;text-align: center;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;word-break: break-word;line-height: 150%;">
-									To apply for an opportunity you need to be approved to offer the relevant area of expertise.<br>
+									To apply for an opportunity you must be approved to offer services for the relevant category.<br>
 <br>
-If not yet approved, you can request an assessment by selecting the <strong>Apply for Assessment</strong> option at the bottom of the opportunity.
+If not yet approved, you can request an assessment by clicking on 'Request assessment' on the opportunity page.
 								</td>
 							</tr>
 						</tbody></table>

@@ -173,6 +173,30 @@ class BriefsService(Service):
 
         return [r._asdict() for r in results]
 
+    def get_open_briefs_published_since(self, since=None):
+        if not since:
+            since = pendulum.now().subtract(hours=24)
+        query = (
+            db.session.query(Brief)
+            .join(Framework)
+            .filter(Framework.slug == 'digital-marketplace')
+            .filter(
+                or_(
+                    Brief.data['sellerSelector'].astext == 'allSellers',
+                    and_(
+                        Brief.data['sellerSelector'].astext == 'someSellers',
+                        Brief.data['openTo'].astext == 'category'
+                    )
+                )
+            )
+            .filter(Brief.published_at >= since)
+            .filter(Brief.withdrawn_at.is_(None))
+        )
+
+        results = query.all()
+
+        return results
+
     def get_metrics(self):
         brief_query = (
             db

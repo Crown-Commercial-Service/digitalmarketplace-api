@@ -98,7 +98,12 @@ def test_sync_mailchimp_seller_list_fails_with_empty_list_id(app, mocker):
             assert str(e) == 'Failed to get MAILCHIMP_SELLER_LIST_ID from the environment variables.'
 
 
-@pytest.mark.parametrize('briefs', [{'data': briefs_data_all_sellers}], indirect=True)
+@pytest.mark.parametrize('briefs', [
+    {
+        'data': briefs_data_all_sellers,
+        'framework_slug': 'digital-marketplace'
+    }
+], indirect=True)
 def test_send_new_briefs_email_success(app, briefs, mocker):
     mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
     client = MagicMock()
@@ -181,7 +186,12 @@ def test_send_new_briefs_email_fails_with_empty_list_id(app, mocker):
             assert str(e) == 'Failed to get MAILCHIMP_SELLER_EMAIL_LIST_ID from the environment variables.'
 
 
-@pytest.mark.parametrize('briefs', [{'data': briefs_data_all_sellers}], indirect=True)
+@pytest.mark.parametrize('briefs', [
+    {
+        'data': briefs_data_all_sellers,
+        'framework_slug': 'digital-marketplace'
+    }
+], indirect=True)
 def test_send_new_briefs_email_fails_mailchimp_api_call_with_requests_error(app, briefs, mocker):
     mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
     requestEx = mocker.patch('app.tasks.mailchimp.RequestException')

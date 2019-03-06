@@ -13,7 +13,7 @@ from sqlalchemy import true
 
 from app import db
 from app.api.services import AuditTypes as audit_types
-from app.api.services import audit_service, audit_types, suppliers
+from app.api.services import audit_service, audit_types, suppliers, briefs
 from app.models import (AuditEvent, Brief, Framework, Supplier, SupplierDomain,
                         SupplierFramework, User)
 from dmapiclient.audit import AuditTypes
@@ -234,18 +234,12 @@ def send_new_briefs_email():
         last_run_time = pendulum.now().subtract(hours=24)
 
     # gather the briefs
-    briefs = (
-        db.session.query(Brief)
-        .filter(
-            Framework.slug == 'digital-marketplace',
-            Brief.data['sellerSelector'].astext == 'allSellers',
-            Brief.published_at >= last_run_time,
-            Brief.withdrawn_at.is_(None)
-        )
-        .all()
-    )
+    open_briefs = briefs.get_open_briefs_published_since(since=last_run_time)
+    briefs_atm = [x for x in open_briefs if x.lot.slug == 'atm']
+    briefs_professionals = [x for x in open_briefs if x.lot.slug == 'digital-professionals']
+    briefs_training = [x for x in open_briefs if x.lot.slug == 'training']
 
-    if len(briefs) < 1:
+    if len(open_briefs) < 1:
         current_app.logger.info('No briefs found for daily seller email - the campaign was not sent')
         return
 
@@ -255,14 +249,19 @@ def send_new_briefs_email():
         'list_id': list_id
     }
     campaign = create_campaign(client, recipients, {
-        'subject_line': 'New opportunities in the Digital Marketplace' if len(briefs) > 1
+        'subject_line': 'New opportunities in the Digital Marketplace' if len(open_briefs) > 1
                         else 'A new opportunity in the Digital Marketplace',
         'title': 'New opportunities - DMP sellers %s-%s-%s' % (today.year, today.month, today.day)
     })
 
     # add content to the campaign
     template = template_env.get_template('mailchimp_new_seller_opportunities.html')
-    email_body = template.render(briefs=briefs, current_year=pendulum.today().year)
+    email_body = template.render(
+        briefs_atm=briefs_atm,
+        briefs_professionals=briefs_professionals,
+        briefs_training=briefs_training,
+        current_year=pendulum.today().year
+    )
     update_campaign_content(client, campaign['id'], email_body)
 
     # schedule the campaign to send at least an hour from runtime, rounded up to the nearest 15 minute mark
@@ -278,16 +277,20 @@ def send_new_briefs_email():
     schedule_campaign(client, campaign['id'], schedule_time)
 
     # record the audit event
-    audit = AuditEvent(
-        audit_type=AuditTypes.send_seller_opportunities_campaign,
-        user=None,
-        data={
-            'briefs_sent': len(briefs)
-        },
-        db_object=None
-    )
-    db.session.add(audit)
-    db.session.commit()
+    try:
+        audit = AuditEvent(
+            audit_type=AuditTypes.send_seller_opportunities_campaign,
+            user=None,
+            data={
+                'briefs_sent': len(open_briefs),
+                'email_body': email_body
+            },
+            db_object=None
+        )
+        db.session.add(audit)
+        db.session.commit()
+    except Exception:
+        rollbar.report_exc_info()
 
 
 @celery.task
