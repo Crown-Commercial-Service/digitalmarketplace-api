@@ -936,7 +936,8 @@ def create_application_from_supplier(code, application_type=None):
         publish_tasks.compress_application(application),
         'created',
         name=current_user['name'],
-        email_address=current_user['email_address']
+        email_address=current_user['email_address'],
+        from_expired=False
     )
     return jsonify(application=application)
 
@@ -956,13 +957,15 @@ def assess_supplier_for_domain(supplier_id, domain_id, status):
     if status == 'assessed':
         send_assessment_approval_notification(supplier_id, domain_id)
 
-    publish_tasks.supplier_domain.delay(
-        supplier.serializable,
-        'domain_assessed',
-        status=status,
-        domain_id=domain_id,
-        supplier_code=supplier.code
-    )
+    supplier_domain = SupplierDomain.query.filter_by(supplier_id=supplier.id, domain_id=domain_id).one_or_none()
+    if supplier_domain:
+        publish_tasks.supplier_domain.delay(
+            publish_tasks.compress_supplier_domain(supplier_domain),
+            'domain_assessed',
+            status=status,
+            domain_id=domain_id,
+            supplier_code=supplier.code
+        )
 
     db.session.refresh(supplier)
     return jsonify(supplier=supplier.serializable), 200
@@ -1016,7 +1019,11 @@ def update_supplier_domain(supplier_code, supplier_domain_id):
         ))
         db.session.commit()
 
-        publish_tasks.supplier_domain.delay(supplier_domain.serialize(), 'updated', supplier_code=supplier_code)
+        publish_tasks.supplier_domain.delay(
+            publish_tasks.compress_supplier_domain(supplier_domain),
+            'updated',
+            supplier_code=supplier_code
+        )
 
     supplier = (
         db

@@ -62,7 +62,8 @@ def create_application():
         publish_tasks.compress_application(application),
         'created',
         name=name,
-        email_address=updated_by
+        email_address=updated_by,
+        from_expired=True
     )
 
     return jsonify(application=application.serializable), 201

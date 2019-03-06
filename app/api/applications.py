@@ -30,7 +30,8 @@ def create_application(email_address=None, name=None):
         publish_tasks.compress_application(application),
         'created',
         name=name,
-        email_address=email_address
+        email_address=email_address,
+        from_expired=False
     )
 
     notify_team_new_applicant(

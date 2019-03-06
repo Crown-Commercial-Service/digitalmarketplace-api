@@ -44,6 +44,16 @@ def supplier_domain(supplier_domain, event_type, **kwargs):
     publish.supplier_domain(supplier_domain, event_type, **kwargs)
 
 
+def compress_supplier_domain(supplier_domain):
+    return {
+        'id': supplier_domain.id,
+        'domain_id': supplier_domain.domain_id,
+        'status': supplier_domain.status,
+        'supplier_id': supplier_domain.supplier_id,
+        'price_status': supplier_domain.price_status
+    }
+
+
 @celery.task
 def user(user, event_type, **kwargs):
     publish.user(user, event_type, **kwargs)
