@@ -257,6 +257,7 @@ def send_new_briefs_email():
     # add content to the campaign
     template = template_env.get_template('mailchimp_new_seller_opportunities.html')
     email_body = template.render(
+        brief_count=len(open_briefs),
         briefs_atm=briefs_atm,
         briefs_professionals=briefs_professionals,
         briefs_training=briefs_training,
