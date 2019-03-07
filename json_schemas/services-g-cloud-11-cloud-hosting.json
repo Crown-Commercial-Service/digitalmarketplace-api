@@ -1584,7 +1584,6 @@
                   "dedicated_link",
                   "government_network",
                   "identity_federation",
-                  "other",
                   "public_key",
                   "two_factor",
                   "username_or_password"
@@ -1605,7 +1604,6 @@
                     "dedicated_link",
                     "government_network",
                     "identity_federation",
-                    "other",
                     "public_key",
                     "two_factor",
                     "username_or_password"
