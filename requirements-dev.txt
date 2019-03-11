@@ -5,7 +5,7 @@ coverage==4.5.3
 coveralls==1.6.0
 flake8==3.7.7
 freezegun==0.3.11
-hypothesis==3.82.1
+hypothesis==4.9.0
 mock==2.0.0
 pytest==4.2.1
 pytest-cov==2.6.1
