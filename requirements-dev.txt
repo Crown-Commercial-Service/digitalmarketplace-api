@@ -1,7 +1,7 @@
 -r requirements.txt
 
 # For tests
-coverage==4.5.2
+coverage==4.5.3
 coveralls==1.5.1
 flake8==3.7.5
 freezegun==0.3.11
