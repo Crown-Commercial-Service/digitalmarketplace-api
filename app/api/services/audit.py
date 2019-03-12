@@ -54,4 +54,5 @@ class AuditTypes(Enum):
     seller_invited_to_rfx_opportunity = 'seller_invited_to_rfx_opportunity'
     seller_invited_to_atm_opportunity = 'seller_invited_to_atm_opportunity'
     seller_to_review_pricing_case_study_email_part_2 = 'seller_to_review_pricing_case_study_email_part_2'
+    seller_to_review_pricing_case_study_email_part_3 = 'seller_to_review_pricing_case_study_email_part_3'
     sent_expiring_documents_email = 'sent_expiring_documents_email'

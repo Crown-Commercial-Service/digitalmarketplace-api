@@ -11,7 +11,7 @@ from app.tasks.mailchimp import (send_document_expiry_reminder,
                                  send_new_briefs_email,
                                  sync_mailchimp_seller_list)
 from app.tasks.supplier_tasks import update_supplier_metrics
-from app.tasks.dreamail import send_dreamail
+from app.tasks.dreamail import send_dreamail, send_dreamail_part_3
 
 
 @api.route('/tasks/process-closed-briefs', methods=['POST'])
@@ -214,3 +214,26 @@ def run_send_dreamail():
         return jsonify(res.id)
     else:
         return jsonify(send_dreamail(simulate, skip_audit_check)), 200
+
+
+@api.route('/tasks/send_dreamail_part_3', methods=['POST'])
+@role_required('admin')
+def run_send_dreamail_part_3():
+    """Send email to suppliers notifying them of price and case study
+       rejection
+    ---
+    tags:
+      - tasks
+    responses:
+      200:
+        type: string
+        description: string
+    """
+    simulate = False if request.args.get('simulate') == 'False' else True
+    skip_audit_check = True if request.args.get('skip_audit_check') == 'True' else False
+
+    if simulate is False:
+        res = send_dreamail_part_3.delay(simulate, skip_audit_check)
+        return jsonify(res.id)
+    else:
+        return jsonify(send_dreamail_part_3(simulate, skip_audit_check)), 200

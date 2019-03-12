@@ -110,3 +110,76 @@ def send_dreamail(simulate, skip_audit_check):
 
     if simulate:
         return simulation_result
+
+
+def send_dreamail_part_3(simulate, skip_audit_check):
+    from app.api.services import (
+        audit_service,
+        audit_types,
+        suppliers
+    )
+    simulation_result = []
+
+    result = suppliers.get_suppliers_with_unassessed_domains_and_all_case_studies_rejected()
+
+    for item in result:
+        supplier_code = item['code']
+        supplier = suppliers.find(code=item['code']).one_or_none()
+
+        if skip_audit_check is False:
+            sent = audit_service.find(
+                object_id=supplier.id,
+                object_type='Supplier',
+                type='seller_to_review_pricing_case_study_email_part_3'
+            ).one_or_none()
+
+            if sent:
+                continue
+
+        aoe = ''
+        for d in item.get('domains', []):
+            aoe += '* {}\n'.format(d)
+
+        email_body = render_email_template(
+            'dreamail_part_3.md',
+            frontend_url=current_app.config['FRONTEND_ADDRESS'],
+            supplier_name=supplier.name,
+            aoe=aoe
+        )
+        subject = 'Please review your pricing and/or case studies on the Marketplace'
+
+        to_addresses = [
+            e['email_address']
+            for e in suppliers.get_supplier_contacts(supplier_code)
+        ]
+
+        if simulate:
+            simulation_result.append({
+                'to_addresses': to_addresses,
+                'email_body': email_body,
+                'subject': subject,
+                'supplier_code': supplier_code
+            })
+        else:
+            send_or_handle_error(
+                to_addresses,
+                email_body,
+                subject,
+                current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+                current_app.config['DM_GENERIC_SUPPORT_NAME'],
+                event_description_for_errors=audit_types.seller_to_review_pricing_case_study_email_part_3
+            )
+
+            if skip_audit_check is False:
+                audit_service.log_audit_event(
+                    audit_type=audit_types.seller_to_review_pricing_case_study_email_part_3,
+                    user='',
+                    data={
+                        "to_addresses": ', '.join(to_addresses),
+                        "email_body": email_body,
+                        "subject": subject
+                    },
+                    db_object=supplier)
+
+    if simulate:
+        return simulation_result

@@ -11,3 +11,8 @@ from . import celery
 @celery.task
 def send_dreamail(simulate, skip_audit_check):
     return dreamail.send_dreamail(simulate, skip_audit_check)
+
+
+@celery.task
+def send_dreamail_part_3(simulate, skip_audit_check):
+    return dreamail.send_dreamail_part_3(simulate, skip_audit_check)
