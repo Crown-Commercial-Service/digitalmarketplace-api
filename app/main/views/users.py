@@ -68,9 +68,9 @@ def auth_user():
 
         audit_data = {
             'email_address': json_payload['emailAddress'].lower(),
-            'client_ip': request.environ.get('HTTP_X_REAL_IP', request.remote_addr),  # HTTP_X_REAL_IP added by nginx
             'failed_login_count': user.failed_login_count,
             'request_id': request.trace_id,
+            'span_id': request.span_id,
         }
 
         audit = AuditEvent(
