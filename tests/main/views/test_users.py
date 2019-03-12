@@ -73,9 +73,9 @@ class TestUsersAuth(BaseUserTest):
         assert failed_login_audit[0].user == email_address
         assert failed_login_audit[0].data == {
             'email_address': email_address,
-            'client_ip': client_ip,
             'failed_login_count': failed_login_count,
             'request_id': mock.ANY,
+            'span_id': mock.ANY,
         }
 
     def test_should_validate_credentials(self):
