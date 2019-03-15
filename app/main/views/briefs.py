@@ -507,7 +507,7 @@ def update_brief_status_by_action(brief_id, action):
             name = user.get('name')
 
         publish_tasks.brief.delay(
-            brief.serialize(),
+            publish_tasks.compress_brief(brief),
             'published' if action == 'publish' else 'withdrawn',
             previous_status=previous_status,
             updated_by=updater_json['updated_by'],

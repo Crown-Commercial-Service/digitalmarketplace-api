@@ -125,7 +125,10 @@ def delete_supplier(code):
     supplier.status = 'deleted'
     try:
         db.session.commit()
-        publish_tasks.supplier.delay(supplier.serializable, 'deleted')
+        publish_tasks.supplier.delay(
+            publish_tasks.compress_supplier(supplier),
+            'deleted'
+        )
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message="Database Error: {0}".format(e)), 400
@@ -622,7 +625,11 @@ def set_a_declaration(code, framework_slug):
     try:
         db.session.commit()
         if supplier:
-            publish_tasks.supplier.delay(supplier.serialize(), 'set_declaration')
+            publish_tasks.supplier.delay(
+                publish_tasks.compress_supplier(supplier),
+                'set_declaration',
+                updated_by=updater_json['updated_by']
+            )
     except IntegrityError as e:
         db.session.rollback()
         abort(400, "Database Error: {}".format(e))

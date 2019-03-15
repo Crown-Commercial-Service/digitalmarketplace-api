@@ -293,7 +293,10 @@ def create_user():
         db.session.commit()
 
         user = db.session.query(User).options(noload('*')).filter(User.id == user.id).one_or_none()
-        publish_tasks.user.delay(user.serialize(), 'created')
+        publish_tasks.user.delay(
+            publish_tasks.compress_user(user),
+            'created'
+        )
 
         if user.role == 'buyer':
             notification_message = 'Domain: {}'.format(
@@ -331,7 +334,7 @@ def update_user(user_id):
     user_update = json_payload["users"]
 
     json_has_matching_id(user_update, user_id)
-    existing_user = user.serialize()
+    existing_user = publish_tasks.compress_user(user)
 
     if 'password' in user_update:
         user.password = encryption.hashpw(user_update['password'])
@@ -372,7 +375,11 @@ def update_user(user_id):
     db.session.add(user)
     db.session.add(audit)
 
-    publish_tasks.user.delay(user.serialize(), 'updated', old_user=existing_user)
+    publish_tasks.user.delay(
+        publish_tasks.compress_user(user),
+        'updated',
+        old_user=existing_user
+    )
 
     try:
         db.session.commit()

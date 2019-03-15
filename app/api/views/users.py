@@ -223,7 +223,10 @@ def signup():
     if not claim:
         return jsonify(message="There was an issue completing the signup process."), 500
 
-    publish_tasks.user_claim.delay(claim.serialize(), 'created')
+    publish_tasks.user_claim.delay(
+        publish_tasks.compress_user_claim(claim),
+        'created'
+    )
 
     if employment_status == 'contractor':
         try:
@@ -383,7 +386,10 @@ def add(token):
     except Exception as error:
         return jsonify(message='Invalid token'), 400
 
-    publish_tasks.user_claim.delay(claim.serialize(), 'updated')
+    publish_tasks.user_claim.delay(
+        publish_tasks.compress_user_claim(claim),
+        'updated'
+    )
 
     return user
 
@@ -411,7 +417,10 @@ def send_reset_password_email():
         if not claim:
             return jsonify(message="There was an issue completing the password reset process."), 500
 
-        publish_tasks.user_claim.delay(claim.serialize(), 'created')
+        publish_tasks.user_claim.delay(
+            publish_tasks.compress_user_claim(claim),
+            'created'
+        )
 
         send_reset_password_confirm_email(
             token=claim.token,
@@ -460,7 +469,10 @@ def reset_password(token):
         return jsonify(message='Invalid token'), 400
 
     try:
-        publish_tasks.user_claim.delay(claim.serialize(), 'updated')
+        publish_tasks.user_claim.delay(
+            publish_tasks.compress_user_claim(claim),
+            'updated'
+        )
 
         update_user_details(
             password=json_payload['password'],

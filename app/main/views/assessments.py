@@ -33,7 +33,12 @@ def create_assessment():
 
     if existing_assessment:
         send_assessment_requested_notification(existing_assessment, updated_by)
-        publish_tasks.assessment.delay(existing_assessment.serializable, 'existing', updated_by=updated_by)
+        publish_tasks.assessment.delay(
+            publish_tasks.compress_assessment(existing_assessment),
+            'existing',
+            updated_by=updated_by
+        )
+
         return jsonify(assessment=existing_assessment.serializable), 201
 
     assessment = Assessment()
@@ -64,7 +69,11 @@ def create_assessment():
 
     send_assessment_requested_notification(assessment, updater_json['updated_by'])
 
-    publish_tasks.assessment.delay(assessment.serializable, 'created')
+    publish_tasks.assessment.delay(
+        publish_tasks.compress_assessment(assessment),
+        'created',
+        updated_by=updated_by
+    )
 
     return jsonify(assessment=assessment.serializable), 201
 

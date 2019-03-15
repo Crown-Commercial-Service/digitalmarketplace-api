@@ -85,7 +85,10 @@ def add_user(data):
     db.session.commit()
 
     user = db.session.query(User).options(noload('*')).filter(User.id == user.id).one_or_none()
-    publish_tasks.user.delay(user.serialize(), 'created')
+    publish_tasks.user.delay(
+        publish_tasks.compress_user(user),
+        'created'
+    )
 
     return user
 

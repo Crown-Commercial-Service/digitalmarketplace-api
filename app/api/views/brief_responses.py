@@ -61,7 +61,11 @@ def withdraw_brief_response(brief_response_id):
                 extra_data = {'audit_type': audit_types.update_brief_response, 'briefResponseId': brief_response.id}
                 rollbar.report_exc_info(extra_data=extra_data)
 
-            publish_tasks.brief_response.delay(brief_response.serialize(), 'withdrawn', user=current_user.email_address)
+            publish_tasks.brief_response.delay(
+                publish_tasks.compress_brief_response(brief_response),
+                'withdrawn',
+                user=current_user.email_address
+            )
         else:
             abort('Brief response with brief_response_id "{}" is already withdrawn'.format(brief_response_id))
     else:

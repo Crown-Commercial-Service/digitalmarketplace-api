@@ -607,7 +607,7 @@ def update_brief(brief_id):
             brief_id
         )
         publish_tasks.brief.delay(
-            brief.serialize(),
+            publish_tasks.compress_brief(brief),
             'published',
             previous_status=previous_status,
             name=current_user.name,
@@ -685,10 +685,14 @@ def delete_brief(brief_id):
     )
 
     try:
-        deleted_brief = brief.serialize()
+        deleted_brief = publish_tasks.compress_brief(brief)
         audit_service.save(audit)
         briefs.delete(brief)
-        publish_tasks.brief.delay(deleted_brief, 'deleted', user=current_user.email_address)
+        publish_tasks.brief.delay(
+            deleted_brief,
+            'deleted',
+            user=current_user.email_address
+        )
     except Exception as e:
         extra_data = {'audit_type': AuditTypes.delete_brief, 'briefId': brief.id, 'exception': e.message}
         rollbar.report_exc_info(extra_data=extra_data)
@@ -1053,7 +1057,11 @@ def post_brief_response(brief_id):
         },
         db_object=brief_response)
 
-    publish_tasks.brief_response.delay(brief_response.serialize(), 'submitted', user=current_user.email_address)
+    publish_tasks.brief_response.delay(
+        publish_tasks.compress_brief_response(brief_response),
+        'submitted',
+        user=current_user.email_address
+    )
     return jsonify(briefResponses=brief_response.serialize()), 201
 
 
