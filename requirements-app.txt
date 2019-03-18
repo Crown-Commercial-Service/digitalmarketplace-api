@@ -12,7 +12,7 @@ SQLAlchemy==1.2.18 # pyup: ignore
 SQLAlchemy-Utils==0.33.11
 sqlalchemy-json==0.2.3
 
-git+https://github.com/alphagov/digitalmarketplace-utils.git@46.1.2#egg=digitalmarketplace-utils==46.1.2
+git+https://github.com/alphagov/digitalmarketplace-utils.git@46.3.1#egg=digitalmarketplace-utils==46.3.1
 git+https://github.com/alphagov/digitalmarketplace-apiclient.git@19.14.0#egg=digitalmarketplace-apiclient==19.14.0
 
 # For schema validation
