@@ -8,7 +8,7 @@ import pendulum
 from pendulum.parsing.exceptions import ParserError
 
 from app.api.services import (
-    AuditTypes
+    AuditTypes, briefs, suppliers, users
 )
 from app.tasks import publish_tasks
 from .. import main
@@ -122,14 +122,12 @@ def update_brief(brief_id):
 @main.route('/briefs/<int:brief_id>/users/<string:user>', methods=['PUT'])
 def update_brief_add_user(brief_id, user):
     updater_json = validate_and_return_updater_request()
-    brief = Brief.query.filter(
-        Brief.id == brief_id
-    ).first_or_404()
+    brief = briefs.get(brief_id)
 
     if user.isdigit():
-        u = [db.session.query(User).get(int(user))]
+        u = [users.get(int(user))]
     else:
-        u = User.query.filter(User.email_address == user).all()
+        u = [users.get_by_email(user)]
     if len(u) < 1:
         raise ValidationError("No user found: " + user)
     else:
@@ -151,17 +149,44 @@ def update_brief_add_user(brief_id, user):
     return jsonify(briefs=brief.serialize(with_users=True)), 200
 
 
+@main.route('/briefs/<int:brief_id>/suppliers/<int:supplier_code>', methods=['PUT'])
+def update_brief_add_rfx_seller(brief_id, supplier_code):
+    updater_json = validate_and_return_updater_request()
+    # Using the helper.py methods to get the matching brief.
+    brief = briefs.get(brief_id)
+    supplier = suppliers.get_supplier_by_code(supplier_code)
+
+    if not supplier:
+        raise ValidationError("No supplier found: " + supplier_code)
+    sellers = brief.data['sellers']
+    sellers[str(supplier_code)] = {'name': supplier.name}
+    brief.data['sellers'] = sellers
+    audit = AuditEvent(
+        audit_type=AuditTypes.seller_added_to_rfx_opportunity_admin,
+        user=updater_json['updated_by'],
+        data={
+            'briefId': brief.id,
+            'supplier_code': supplier_code,
+        },
+        db_object=brief,
+    )
+
+    db.session.add(brief)
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify(briefs=brief.serialize(with_users=True)), 200
+
+
 @main.route('/briefs/<int:brief_id>/users/<string:user>', methods=['DELETE'])
 def update_brief_remove_user(brief_id, user):
     updater_json = validate_and_return_updater_request()
-    brief = Brief.query.filter(
-        Brief.id == brief_id
-    ).first_or_404()
+    brief = briefs.get(brief_id)
 
     if user.isdigit():
-        u = [db.session.query(User).get(int(user))]
+        u = [users.get(int(user))]
     else:
-        u = User.query.filter(User.email_address == user).all()
+        u = [users.get_by_email(user)]
     if len(u) < 1:
         raise ValidationError("No user found: " + user)
     else:
@@ -175,6 +200,37 @@ def update_brief_remove_user(brief_id, user):
             },
             db_object=brief,
         )
+
+    db.session.add(brief)
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify(briefs=brief.serialize(with_users=True)), 200
+
+
+@main.route('/briefs/<int:brief_id>/suppliers/<int:supplier_code>', methods=['DELETE'])
+def update_brief_remove_rfx_seller(brief_id, supplier_code):
+    updater_json = validate_and_return_updater_request()
+    brief = briefs.get(brief_id)
+    sellers = brief.data['sellers']
+
+    for key in sellers.keys():
+        try:
+            if key == str(supplier_code):
+                del sellers[key]
+        except KeyError:
+            raise ValidationError("No supplier found: " + supplier_code)
+
+    brief.data['sellers'] = sellers
+    audit = AuditEvent(
+        audit_type=AuditTypes.seller_removed_from_rfx_opportunity_admin,
+        user=updater_json['updated_by'],
+        data={
+            'briefId': brief.id,
+            'supplier_code': supplier_code,
+        },
+        db_object=brief,
+    )
 
     db.session.add(brief)
     db.session.add(audit)
