@@ -34,20 +34,4 @@ def create_application(email_address=None, name=None):
         from_expired=False
     )
 
-    notify_team_new_applicant(
-        application_id=application.id,
-        name=name,
-        email_address=email_address
-    )
-
     return application
-
-
-def notify_team_new_applicant(application_id, name, email_address):
-    notification_message = 'Application Id:{}\nBy: {} ({})'.format(
-        application_id,
-        name,
-        email_address
-    )
-
-    notify_team('A new seller has started an application', notification_message)
