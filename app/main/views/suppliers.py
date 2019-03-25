@@ -401,7 +401,9 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
 
     tsquery = None
     if search_term:
-        if ' ' in search_term:
+        if any(c in search_term for c in ['#', '-', '_', '/', '\\']):
+            tsquery = func.phraseto_tsquery(search_term)
+        elif ' ' in search_term:
             tsquery = func.plainto_tsquery(search_term)
         else:
             tsquery = func.to_tsquery(search_term + ":*")
