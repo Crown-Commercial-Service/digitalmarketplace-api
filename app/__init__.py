@@ -1,13 +1,14 @@
-from functools import wraps
+import json
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-import json
+from functools import wraps
 from sqlalchemy import MetaData
 
 import dmapiclient
 from dmutils.flask_init import init_app, api_error_handlers
 
 from config import configs
+
 
 db = SQLAlchemy(metadata=MetaData(naming_convention={
     "ix": 'ix_%(column_0_label)s',
@@ -38,13 +39,17 @@ def create_app(config_name):
         cf_services = json.loads(application.config['VCAP_SERVICES'])
         application.config['SQLALCHEMY_DATABASE_URI'] = cf_services['postgres'][0]['credentials']['uri']
 
+    from .metrics import metrics as metrics_blueprint, gds_metrics
     from .main import main as main_blueprint
     from .status import status as status_blueprint
     from .callbacks import callbacks as callbacks_blueprint
 
+    application.register_blueprint(metrics_blueprint)
     application.register_blueprint(main_blueprint)
     application.register_blueprint(callbacks_blueprint, url_prefix='/callbacks')
     application.register_blueprint(status_blueprint)
+
+    gds_metrics.init_app(application)
 
     return application
 

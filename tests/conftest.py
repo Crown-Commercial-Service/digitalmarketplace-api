@@ -22,6 +22,8 @@ from app.main.views.frameworks import FRAMEWORK_UPDATE_WHITELISTED_ATTRIBUTES_MA
 @pytest.fixture(autouse=True, scope='session')
 def db_migration(request):
     print("Doing db setup")
+    app_env_var_mock = mock.patch.dict('gds_metrics.os.environ', {'PROMETHEUS_METRICS_PATH': '/_metrics'})
+    app_env_var_mock.start()
     app = create_app('test')
     Migrate(app, db)
     Manager(db, MigrateCommand)
@@ -45,6 +47,7 @@ def db_migration(request):
             for enum in insp.get_enums():
                 db.Enum(name=enum['name']).drop(db.engine)
             db.get_engine(app).dispose()
+            app_env_var_mock.stop()
     request.addfinalizer(teardown)
 
 
