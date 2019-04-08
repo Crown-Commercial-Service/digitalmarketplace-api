@@ -131,6 +131,10 @@ def _can_do_brief_response(brief_id):
 
     lot = lots_service.first(slug='digital-professionals')
     if brief.lot_id == lot.id:
+        # Check the supplier can respond to the category
+        brief_category = brief.data.get('areaOfExpertise', None)
+        if brief_category and brief_category not in supplier.assessed_domains:
+            abort("Supplier needs to be assessed in '{}'".format(brief_category))
         # Check if there are more than 3 brief response already from this supplier when professional aka specialists
         brief_response_count = brief_responses_service.find(supplier_code=supplier.code,
                                                             brief_id=brief.id,
