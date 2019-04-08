@@ -70,3 +70,10 @@ def send_or_handle_error(*args, **kwargs):
 def escape_token_markdown(token):
     token = re.sub(r'([_-])', r'\\\1', token)
     return token
+
+
+def escape_markdown(val):
+    val = re.sub(r'([_\-#\[\]\(\)`=>*\\])', r'\\\1', val)
+    val = re.sub(r'\s', r' ', val)
+    val = re.sub(r'[ ]+', r' ', val)
+    return val

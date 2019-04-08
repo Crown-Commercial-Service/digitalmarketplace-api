@@ -9,7 +9,7 @@ from app.models import Supplier, Application, User
 from dmutils.email import EmailError, hash_email
 import rollbar
 
-from .util import render_email_template, send_or_handle_error
+from .util import render_email_template, send_or_handle_error, escape_markdown
 from urllib import quote
 
 
@@ -149,8 +149,8 @@ def send_account_activation_manager_email(token, manager_name, manager_email, ap
 
     email_body = render_email_template(
         'buyer_account_invite_manager_confirmation.md',
-        manager_name=manager_name,
-        applicant_name=applicant_name,
+        manager_name=escape_markdown(manager_name),
+        applicant_name=escape_markdown(applicant_name),
     )
 
     try:
@@ -184,10 +184,10 @@ def _send_account_activation_admin_email(token, manager_name, manager_email, app
 
     email_body = render_email_template(
         'buyer_account_invite_request_email.md',
-        manager_name=manager_name,
-        manager_email=manager_email,
-        applicant_name=applicant_name,
-        applicant_email=applicant_email,
+        manager_name=escape_markdown(manager_name),
+        manager_email=escape_markdown(manager_email),
+        applicant_name=escape_markdown(applicant_name),
+        applicant_email=escape_markdown(applicant_email),
         invite_url=url
     )
 
