@@ -15,9 +15,14 @@ from os import getenv
 
 
 @celery.task
-def send_email(to_email_addresses, email_body, subject, from_email, from_name, reply_to=None):
+def send_email(to_email_addresses, email_body, subject, from_email, from_name, reply_to=None,
+               bcc_addresses=None):
     if isinstance(to_email_addresses, string_types):
         to_email_addresses = [to_email_addresses]
+    if not bcc_addresses:
+        bcc_addresses = []
+    if isinstance(bcc_addresses, string_types):
+        bcc_addresses = [bcc_addresses]
 
     if current_app.config.get('DM_SEND_EMAIL_TO_STDERR', False):
         email_body = to_text(email_body)
@@ -28,6 +33,7 @@ def send_email(to_email_addresses, email_body, subject, from_email, from_name, r
         print ("""
 ------------------------
 To: {to}
+Bcc: {bcc}
 Subject: {subject}
 From: {from_line}
 Reply-To: {reply_to}
@@ -36,6 +42,7 @@ Reply-To: {reply_to}
 ------------------------
         """.format(
             to=', '.join(to_email_addresses),
+            bcc=', '.join(bcc_addresses),
             subject=subject,
             from_line='{} <{}>'.format(from_name, from_email),
             reply_to=reply_to,
@@ -58,7 +65,9 @@ Reply-To: {reply_to}
             'ToAddresses': to_email_addresses,
         }
         if 'DM_EMAIL_BCC_ADDRESS' in current_app.config:
-            destination_addresses['BccAddresses'] = [current_app.config['DM_EMAIL_BCC_ADDRESS']]
+            bcc_addresses.append(current_app.config['DM_EMAIL_BCC_ADDRESS'])
+        if bcc_addresses:
+            destination_addresses['BccAddresses'] = bcc_addresses
 
         return_address = current_app.config.get('DM_EMAIL_RETURN_ADDRESS')
 

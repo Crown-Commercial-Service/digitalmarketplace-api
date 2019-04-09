@@ -217,7 +217,6 @@ def send_assessment_rejected_notification(supplier_id, assessment_id, domain_nam
     assessment = Assessment.query.get(assessment_id)
 
     email_addresses = [u.email_address for u in users]
-    email_addresses.append(current_app.config['GENERIC_CONTACT_EMAIL'])
 
     subject = "Outcome of assessment for %s" % (domain_name)
 
@@ -236,7 +235,8 @@ def send_assessment_rejected_notification(supplier_id, assessment_id, domain_nam
         subject,
         current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
         current_app.config['DM_GENERIC_SUPPORT_NAME'],
-        event_description_for_errors='assessment rejected'
+        event_description_for_errors='assessment rejected',
+        bcc_addresses=[current_app.config['GENERIC_CONTACT_EMAIL']]
     )
 
 
