@@ -7,6 +7,7 @@ import re
 import io
 import yaml
 import six
+import os
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery
@@ -2278,9 +2279,8 @@ class BriefResponse(db.Model):
         if self.brief.lot.slug not in ['digital-outcome', 'atm'] or atm_must_upload_doc():
             attachedDocumentURL = self.data.get('attachedDocumentURL', [])
             if attachedDocumentURL:
-                p = re.compile('.+\.(pdf|odt|doc|docx)$', re.IGNORECASE)
                 for ad in attachedDocumentURL:
-                    if not p.match(ad):
+                    if not os.path.splitext(ad)[1][1:].lower() in current_app.config.get('ALLOWED_EXTENSIONS'):
                         errs['attachedDocumentURL'] = 'file_incorrect_format'
             else:
                 errs['attachedDocumentURL'] = 'answer_required'
