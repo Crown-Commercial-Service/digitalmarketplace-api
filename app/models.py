@@ -2224,6 +2224,13 @@ class BriefResponse(db.Model):
                 must_upload = True
             return must_upload
 
+        def strip_quotes_from_criteria_keys(criteria):
+            new = {}
+            for k, v in criteria.iteritems():
+                stripped = k.strip("'")
+                new[stripped] = v
+            return new
+
         try:
             clean_non_strings()
         except TypeError:
@@ -2259,11 +2266,12 @@ class BriefResponse(db.Model):
         if self.brief.lot.slug == 'atm':
             evaluationCriteria = self.brief.data['evaluationCriteria']
             if evaluationCriteria:
-                missing = [x for x in evaluationCriteria if x['criteria'] not in self.data['criteria'].keys()]
+                clean_criteria = strip_quotes_from_criteria_keys(self.data['criteria'])
+                missing = [x for x in evaluationCriteria if x['criteria'] not in clean_criteria.keys()]
                 if missing:
                     errs['criteria'] = 'answer_required'
                 else:
-                    empty = [x for x in evaluationCriteria if not self.data['criteria'][x['criteria']]]
+                    empty = [x for x in evaluationCriteria if not clean_criteria[x['criteria']]]
                     if empty:
                         errs['criteria'] = 'answer_required'
 
