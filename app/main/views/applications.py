@@ -404,6 +404,10 @@ def submit_application(application_id):
     if application.status == 'submitted':
         abort(400, 'Application is already submitted')
 
+    errors = ApplicationValidator(application).validate_all()
+    if errors:
+        abort(400, 'Application has errors')
+
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['user_id'])
     user_id = json_payload['user_id']

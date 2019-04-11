@@ -3,11 +3,104 @@ from itertools import tee
 
 import mock
 import six
+import pendulum
 
 from app.models import (Agreement, Application, AuditEvent, Domain, Framework,
                         Product, User, db, utcnow)
 from six.moves import zip as izip
 from tests.app.helpers import BaseApplicationTest
+
+application_data = {
+    'number_of_employees': 'Sole trader',
+    'status': 'saved',
+    'contact_email': 'test@testseller.com',
+    'contact_phone': '04044444040',
+    'disclosures': {
+        'conflicts_of_interest': 'no',
+        'conflicts_of_interest_details': '',
+        'insurance_claims': 'no',
+        'insurance_claims_details': '',
+        'investigations': 'no',
+        'investigations_details': '',
+        'legal_proceedings': 'no',
+        'legal_proceedings_details': '',
+        'other_circumstances': 'no',
+        'other_circumstances_details': '',
+        'structual_changes': 'no',
+        'structual_changes_details': ''
+    },
+    'methodologies': 'abc',
+    'tools': 'abc',
+    'recruiter': 'no',
+    'documents': {
+        'financial': {
+            'application_id': 1,
+            'filename': '1.pdf'
+        },
+        'liability': {
+            'application_id': 1,
+            'expiry': pendulum.today().add(years=1).format('%Y-%m-%d'),
+            'filename': '2.pdf'
+        },
+        'workers': {
+            'application_id': 1,
+            'expiry': pendulum.today().add(years=1).format('%Y-%m-%d'),
+            'filename': '3.pdf'
+        }
+    },
+    'services': {
+        'Content and Publishing': True,
+        'User research and Design': True
+    },
+    'pricing': {
+        'Content and Publishing': {
+            'maxPrice': '555'
+        },
+        'User research and Design': {
+            'maxPrice': '555'
+        }
+    },
+    'case_studies': {
+        '0': {
+            'approach': 'abc',
+            'client': 'abc',
+            'opportunity': 'abc',
+            'outcome': [
+                'abc'
+            ],
+            'project_links': [],
+            'referee_contact': True,
+            'referee_email': '234324234234',
+            'referee_name': 'abc',
+            'referee_position': 'abc',
+            'roles': 'abc',
+            'service': 'Content and Publishing',
+            'status': 'unassessed',
+            'supplier_code': 1,
+            'timeframe': 'abc',
+            'title': 'abc'
+        },
+        '1': {
+            'approach': 'abc',
+            'client': 'abc',
+            'opportunity': 'abc',
+            'outcome': [
+                'abc'
+            ],
+            'project_links': [],
+            'referee_contact': True,
+            'referee_email': '234324234234',
+            'referee_name': 'abc',
+            'referee_position': 'abc',
+            'roles': 'abc',
+            'service': 'User research and Design',
+            'status': 'unassessed',
+            'supplier_code': 1,
+            'timeframe': 'abc',
+            'title': 'abc'
+        }
+    }
+}
 
 
 def test_approval(sample_submitted_application):
@@ -489,7 +582,7 @@ class TestSubmitApplication(BaseApplicationsTest):
 
     @mock.patch('app.tasks.publish_tasks.application')
     def test_application_unauthorized_user(self, application):
-        self.patch_application(self.application_id, data={'status': 'saved'})
+        self.patch_application(self.application_id, data=application_data)
         application_id = self.setup_dummy_application(data=self.application_data)
         user_id = self.setup_dummy_applicant(2, application_id)
         self.setup_agreement()
@@ -505,7 +598,7 @@ class TestSubmitApplication(BaseApplicationsTest):
 
     @mock.patch('app.tasks.publish_tasks.application')
     def test_no_current_agreeement(self, application):
-        self.patch_application(self.application_id, data={'status': 'saved'})
+        self.patch_application(self.application_id, data=application_data)
         user_id = self.setup_dummy_applicant(2, self.application_id)
 
         response = self.client.post(
@@ -519,7 +612,7 @@ class TestSubmitApplication(BaseApplicationsTest):
     @mock.patch('app.jiraapi.JIRA')
     @mock.patch('app.tasks.publish_tasks.application')
     def test_application_submitted(self, application, jira):
-        self.patch_application(self.application_id, data={'status': 'saved'})
+        self.patch_application(self.application_id, data=application_data)
         user_id = self.setup_dummy_applicant(2, self.application_id)
         self.setup_agreement()
 
