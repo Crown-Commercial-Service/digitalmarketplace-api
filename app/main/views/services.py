@@ -144,8 +144,13 @@ def update_service(service_id):
     update_details = validate_and_return_updater_request()
     update = validate_and_return_service_request(service_id)
 
-    updated_service = update_and_validate_service(service, update)
+    # Check for an update to the copied_to_following_framework flag on the service object
+    if 'copiedToFollowingFramework' in update:
+        if not isinstance(update['copiedToFollowingFramework'], bool):
+            abort(400, "Invalid value for 'copiedToFollowingFramework' supplied")
+        service.copied_to_following_framework = update['copiedToFollowingFramework']
 
+    updated_service = update_and_validate_service(service, update)
     audit_type = (
         AuditTypes.update_service_admin if request.args.get('user-role') == 'admin' else AuditTypes.update_service
     )
