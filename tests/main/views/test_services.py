@@ -799,8 +799,11 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     @mock.patch('app.main.views.services.index_service', autospec=True)
     def test_dont_set_copied_to_following_framework_flag_if_not_boolean(self, index_service, copy_flag):
         response = self._post_service_update({'copiedToFollowingFramework': copy_flag})
-        assert response.status_code == 200
-        assert index_service.called is True  # There may be other service data updates to index
+        assert response.status_code == 400
+        assert "Invalid value for 'copiedToFollowingFramework' supplied" in "{}".format(
+            json.loads(response.get_data())['error']
+        )
+        assert index_service.called is False
 
         response = self.client.get('/services/{}'.format(self.service_id))
         data = json.loads(response.get_data())
