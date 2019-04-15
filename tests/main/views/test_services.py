@@ -783,6 +783,30 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
         assert data['services']['status'] == 'published'
 
+    @pytest.mark.parametrize('copy_flag', [True, False])
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_should_set_copied_to_following_framework_flag_if_boolean_provided(self, index_service, copy_flag):
+        response = self._post_service_update({'copiedToFollowingFramework': copy_flag})
+        assert response.status_code == 200
+        assert index_service.called is True
+
+        response = self.client.get('/services/{}'.format(self.service_id))
+        data = json.loads(response.get_data())
+
+        assert data['services']['copiedToFollowingFramework'] == copy_flag
+
+    @pytest.mark.parametrize('copy_flag', ['Nope', 1, None, 'true', 'True'])
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_dont_set_copied_to_following_framework_flag_if_not_boolean(self, index_service, copy_flag):
+        response = self._post_service_update({'copiedToFollowingFramework': copy_flag})
+        assert response.status_code == 200
+        assert index_service.called is True  # There may be other service data updates to index
+
+        response = self.client.get('/services/{}'.format(self.service_id))
+        data = json.loads(response.get_data())
+
+        assert data['services']['copiedToFollowingFramework'] is False
+
     @mock.patch('app.main.views.services.index_service', autospec=True)
     def test_json_postgres_field_should_not_include_column_fields(self, index_service):
         non_json_fields = [
