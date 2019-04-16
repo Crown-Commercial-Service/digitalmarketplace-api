@@ -6,7 +6,7 @@ from app.api.services.reports import suppliers_service
 from itertools import groupby
 
 
-@api.route('/reports/suppliers/unassessed', methods=['GET'])
+@api.route('/reports/supplier/unassessed', methods=['GET'])
 @login_required
 @role_required('admin')
 def get_unassessed():
@@ -59,3 +59,43 @@ def get_unassessed():
         result.append(i)
 
     return jsonify(result)
+
+
+@api.route('/reports/supplier/all', methods=['GET'])
+@login_required
+@role_required('admin')
+def get_all_suppliers():
+    """All Suppliers
+    ---
+    tags:
+      - reports
+    definitions:
+      Suppliers:
+        type: object
+        properties:
+          code:
+            type: number
+          name:
+            type: string
+          abn:
+            type: string
+          status:
+            type: string
+          creation_time:
+            type: string
+          sme:
+            type: boolean
+          categories:
+            type: array
+    responses:
+      200:
+        description: All Suppliers
+        schema:
+          $ref: '#/definitions/Suppliers'
+
+    """
+    result = suppliers_service.get_suppliers()
+    return jsonify({
+        'items': result,
+        'total': len(result)
+    })

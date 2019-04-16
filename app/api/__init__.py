@@ -81,7 +81,11 @@ from app.api.views import (briefs,  # noqa
                            opportunities,
                            key_values)
 
-from app.api.views.reports import (suppliers)  # noqa
+from app.api.views.reports import (  # noqa
+    brief,
+    brief_response,
+    suppliers
+)
 
 from app.api.business.validators import (  # noqa
     application_validator,

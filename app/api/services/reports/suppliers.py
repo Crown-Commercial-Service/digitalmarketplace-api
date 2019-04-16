@@ -1,5 +1,6 @@
 from app.api.helpers import Service
-from app.models import Supplier
+from app.models import Supplier, SupplierDomain, Domain
+from sqlalchemy import func
 from sqlalchemy.sql import text
 from app import db
 
@@ -37,3 +38,34 @@ class SuppliersService(Service):
         )
         result = db.session.execute(s)
         return [dict(r) for r in result]
+
+    def get_suppliers(self):
+        subquery = (
+            db
+            .session
+            .query(
+                SupplierDomain.supplier_id,
+                func.array_agg(Domain.name).label('categories')
+            )
+            .join(Domain)
+            .group_by(SupplierDomain.supplier_id)
+            .subquery()
+        )
+        result = (
+            db
+            .session
+            .query(
+                Supplier.code,
+                Supplier.name,
+                Supplier.abn,
+                Supplier.status,
+                Supplier.creation_time,
+                Supplier.data['seller_type']['sme'].astext.label('sme'),
+                subquery.columns.categories
+            )
+            .join(subquery, Supplier.id == subquery.columns.supplier_id)
+            .order_by(Supplier.code)
+            .all()
+        )
+
+        return [r._asdict() for r in result]
