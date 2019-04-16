@@ -45,7 +45,13 @@ class SuppliersService(Service):
             .session
             .query(
                 SupplierDomain.supplier_id,
-                func.array_agg(Domain.name).label('categories')
+                func.json_agg(
+                    func.json_build_object(
+                        'category', Domain.name,
+                        'status', SupplierDomain.status,
+                        'price_status', SupplierDomain.price_status
+                    )
+                ).label('categories')
             )
             .join(Domain)
             .group_by(SupplierDomain.supplier_id)
