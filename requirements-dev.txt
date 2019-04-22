@@ -7,7 +7,7 @@ flake8==3.7.7
 freezegun==0.3.11
 hypothesis==4.17.2
 mock==2.0.0
-pytest==4.4.0
+pytest==4.4.1
 pytest-cov==2.6.1
 requests-mock==1.5.2
 testfixtures==6.7.0
