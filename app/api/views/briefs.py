@@ -401,7 +401,7 @@ def get_brief(brief_id):
             brief.data['contactNumber'] = ''
 
     domains = []
-    for domain in domain_service.all():
+    for domain in domain_service.get_active_domains():
         domains.append({
             'id': str(domain.id),
             'name': domain.name
