@@ -96,7 +96,10 @@ def suppliers(app, request):
                 code=(i),
                 name='Test Supplier{}'.format(i),
                 contacts=[Contact(name='auth rep', email='auth@rep.com')],
-                data={'contact_email': 'test{}@supplier.com'.format(i)}
+                data={
+                    'contact_email': 'test{}@supplier.com'.format(i),
+                    'contact_phone': '123'
+                }
             ))
 
             db.session.flush()

@@ -935,7 +935,7 @@ def download_brief_responses(brief_id):
             not_found("Brief documents not found for brief id '{}'".format(brief_id))
 
         response = Response(file, mimetype='application/zip')
-        response.headers['Content-Disposition'] = 'attachment; filename="brief-{}-responses.zip"'.format(brief_id)
+        response.headers['Content-Disposition'] = 'attachment; filename="opportunity-{}-responses.zip"'.format(brief_id)
     elif brief.lot.slug == 'digital-outcome':
         responses = BriefResponse.query.filter(
             BriefResponse.brief_id == brief_id,

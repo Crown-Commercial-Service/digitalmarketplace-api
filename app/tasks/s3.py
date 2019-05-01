@@ -1,23 +1,32 @@
-from __future__ import \
-    unicode_literals, \
-    absolute_import
+from __future__ import absolute_import, unicode_literals
 
-from . import celery
-from app import db
-from flask import current_app
+import zipfile
 from io import BytesIO
 from os import getenv
-from app.api.services import brief_responses_service
-from app.api.csv import generate_brief_responses_csv
-from app.models import Brief, BriefResponse
-from werkzeug.utils import secure_filename
+
 import boto3
 import botocore
-import zipfile
+from flask import current_app, render_template
+from jinja2 import Environment, PackageLoader, select_autoescape
+from werkzeug.utils import secure_filename
+
+from app import db
+from app.api.csv import generate_brief_responses_csv
+from app.api.services import brief_responses_service
+from app.models import Brief, BriefResponse
+from app.api.helpers import prepare_specialist_responses
+
+from . import celery
 
 
 class CreateResponsesZipException(Exception):
     """Raised when the resume zip fails to create."""
+
+
+template_env = Environment(
+    loader=PackageLoader('app.tasks', 'templates'),
+    autoescape=select_autoescape(['html', 'xml'])
+)
 
 
 @celery.task
@@ -60,7 +69,7 @@ def create_responses_zip(brief_id):
             zip_file_name = attachment['file_name']
         files.append({
             'key': key,
-            'zip_name': 'brief-{}-documents/{}/{}'.format(
+            'zip_name': 'opportunity-{}-documents/{}/{}'.format(
                 brief_id,
                 secure_filename(attachment['supplier_name']),
                 zip_file_name
@@ -79,7 +88,34 @@ def create_responses_zip(brief_id):
                         raise CreateResponsesZipException('The file "{}" failed to download'.format(s3file))
 
             csvdata = generate_brief_responses_csv(brief, responses)
-            zf.writestr('responses-to-requirements-{}.csv'.format(brief_id), csvdata.encode('utf-8'))
+            csv_file_name = ('opportunity-{}-raw.csv'.format(brief_id)
+                             if brief.lot.slug == 'digital-professionals'
+                             else 'responses-to-requirements-{}.csv'.format(brief_id))
+            zf.writestr(csv_file_name, csvdata.encode('utf-8'))
+
+            if brief.lot.slug == 'digital-professionals':
+                sorted_responses = sorted(
+                    responses,
+                    key=lambda response: (response.supplier.name, response.data.get('specialistName', 'Unknown'))
+                )
+
+                compliance_check_template = template_env.get_template('compliance-check.html')
+                compliance_check_html = render_template(
+                    compliance_check_template,
+                    brief=brief,
+                    responses=sorted_responses
+                )
+                zf.writestr('compliance-check-{}.html'.format(brief_id), compliance_check_html.encode('utf-8'))
+
+                candidates = prepare_specialist_responses(brief, sorted_responses)
+
+                response_criteria_template = template_env.get_template('response-criteria.html')
+                response_criteria_html = render_template(
+                    response_criteria_template,
+                    brief=brief,
+                    candidates=candidates
+                )
+                zf.writestr('responses-{}.html'.format(brief_id), response_criteria_html.encode('utf-8'))
 
         archive.seek(0)
 

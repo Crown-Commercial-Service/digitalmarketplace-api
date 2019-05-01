@@ -35,6 +35,7 @@ def generate_brief_responses_csv(brief, responses):
             answers.update({'Specialist Name': r.data.get('specialistName', 'UNKNOWN')})
             answers.update({'Availability Date': r.data.get('availability', 'UNKNOWN')})
             answers.update({'Day rate': r.data.get('dayRate', '')})
+            answers.update({'Contact number': r.supplier.data.get('contact_phone', 'UNKNOWN')})
         elif brief.lot.slug == 'digital-outcome':
             answers.update({'Availability Date': r.data.get('availability', 'UNKNOWN')})
             answers.update({'Day rate': r.data.get('dayRate', '')})
@@ -44,6 +45,7 @@ def generate_brief_responses_csv(brief, responses):
         elif brief.lot.slug == 'rfx':
             answers.update({'Phone number': r.data.get('respondToPhone', '')})
         elif brief.lot.slug == 'atm':
+            answers.update({'Availability Date': r.data.get('availability', 'UNKNOWN')})
             answers.update({'Phone number': r.data.get('respondToPhone', '')})
 
         answers.update({'ABN': r.supplier.abn})

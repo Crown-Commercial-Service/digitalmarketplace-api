@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Compliance check</title>
+
+    <style>
+        body {
+            font-family: "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            font-size: 1rem;
+            margin: 2.5rem;
+        }
+
+        .container {
+            width: -moz-max-content;
+            width: -webkit-max-content;
+            width: max-content;
+        }
+
+        /* Callout */
+
+        .au-callout {
+            background-color: #daf3fe;
+            border-left: .75rem solid #00698F;
+            color: #313131;
+            padding: 0.25rem 0.75rem;
+            word-wrap: break-word;
+        }
+
+        .au-callout__heading {
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .au-callout__heading.au-callout__heading--sronly {
+            border: 0;
+            clip: rect(0, 0, 0, 0);
+            height: 1px;
+            margin: -1px;
+            overflow: hidden;
+            padding: 0;
+            position: absolute;
+            width: 1px;
+        }
+
+        /* Titles */
+
+        .titles {
+            margin-top: 2rem;
+        }
+
+        .opportunity-title {
+            color: #717171;
+            font-size: 0.875rem;
+            margin-bottom: 0;
+        }
+
+        .document-title {
+            font-size: 2rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Table */
+
+        .au-table, .au-body table {
+            border-collapse: collapse;
+            -ms-overflow-x: scroll;
+            overflow-x: scroll;
+        }
+
+        .au-table.au-table--responsive {
+            margin-top: 2rem;
+            overflow: auto;
+        }
+
+        .au-table.au-table--small {
+            line-height: 1.42857;
+        }
+
+        .au-table__header {
+            border-bottom: solid 3px #142d3c;
+        }
+
+        .au-table.au-table--small th, .au-table.au-table--small td {
+            padding: 1rem .5rem;
+        }
+
+        .au-table th {
+            text-align: left;
+        }
+
+        .au-table td, .au-body table td {
+            border-bottom: solid 1px #e0e0e0;
+            white-space: nowrap;
+        }
+
+        .au-table.au-table--striped .au-table__body:nth-of-type(2n) {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="au-callout">
+            <h2 class="au-callout__heading au-callout__heading--sronly">File access</h2>
+            <p>This file is not publicly visible. Only you and those who open this file can view this information.</p>
+        </div>
+        <div class="titles">
+            <p class="opportunity-title">{{ brief.data.title }} (ID: {{ brief.id }})</p>
+            <h2 class="document-title">Compliance check</h2>
+        </div>
+        <div class="au-table au-body au-table--small au-table--responsive au-table--striped">
+            <table>
+                <thead>
+                    <tr class="au-table__header">
+                        <th scope="col">Seller</th>
+                        <th scope="col">ABN</th>
+                        <th scope="col">Contact number</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Candidate</th>
+                        <th scope="col">Availability</th>
+                        <th scope="col">Day rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for response in responses %}
+                    <tr class="au-table__body">
+                        <td>{{ response.supplier.name }}</td>
+                        <td>{{ response.supplier.abn }}</td>
+                        <td>{{ response.supplier.data.get('contact_phone', 'Unknown') }}</td>
+                        <td>{{ response.data.get('respondToEmailAddress', 'Unknown') }}</td>
+                        <td>{{ response.data.get('specialistName', 'Unknown') }}</td>
+                        <td>{{ response.data.get('availability', 'Unknown') }}</td>
+                        <td>${{ response.data.get('dayRate', 'Unknown') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>

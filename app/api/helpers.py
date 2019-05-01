@@ -216,6 +216,30 @@ def get_email_domain(email_address):
     return email_address.split('@')[-1]
 
 
+def prepare_specialist_responses(brief, responses):
+    candidates = []
+
+    for response in responses:
+        essential_responses = zip(
+            brief.data.get('essentialRequirements', []),
+            response.data.get('essentialRequirements', [])
+        )
+
+        nice_to_have_responses = zip(
+            brief.data.get('niceToHaveRequirements', []),
+            response.data.get('niceToHaveRequirements', [])
+        )
+
+        candidates.append({
+            'essential_responses': essential_responses,
+            'name': response.data.get('specialistName', 'Unknown'),
+            'nice_to_have_responses': nice_to_have_responses,
+            'seller': response.supplier.name
+        })
+
+    return candidates
+
+
 class ServiceException(Exception):
     def __init__(self, msg):
         self.msg = msg

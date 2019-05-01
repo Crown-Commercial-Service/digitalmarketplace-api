@@ -11,6 +11,11 @@ brief_response_data_1 = {
     "essentialRequirements": [True, True],
     "niceToHaveRequirements": [True, False, False],
     "respondToEmailAddress": "test1@email.com",
+    "supplier": {
+        "data": {
+            "contact_phone": "123"
+        }
+    }
 }
 
 brief_response_data_2 = {
@@ -21,6 +26,11 @@ brief_response_data_2 = {
     "essentialRequirements": [True, True],
     "niceToHaveRequirements": [False, True, False],
     "respondToEmailAddress": "te,st2@email.com",
+    "supplier": {
+        "data": {
+            "contact_phone": "123"
+        }
+    }
 }
 
 brief_response_data_3 = {
@@ -31,6 +41,11 @@ brief_response_data_3 = {
     "essentialRequirements": [True, True],
     "niceToHaveRequirements": [False, False, True],
     "respondToEmailAddress": "+SUM(1+1)*cmd|' /C calc'!A0",
+    "supplier": {
+        "data": {
+            "contact_phone": "123"
+        }
+    }
 }
 
 brief_response_data_4 = {
@@ -58,6 +73,7 @@ def test_csv_handles_tricky_characters_1(app, briefs, brief_responses):
         u'Specialist Name,"Bu,tties K,ev\u2019s """',
         u'Availability Date,\u275dNext \u2014 Tuesday\u275e',
         u'Day rate,1.49',
+        u'Contact number,123',
         u'ABN,1',
         u'MS Paint,True',
         u'GIMP,True',
@@ -75,6 +91,7 @@ def test_csv_handles_tricky_characters_2(app, briefs, brief_responses):
         u"Specialist Name,'Pies Kev's",
         u'Availability Date,&quot;A week Friday&rdquot;',
         u'Day rate,3.50',
+        u'Contact number,123',
         u'ABN,1',
         u'MS Paint,True',
         u'GIMP,True',
@@ -92,6 +109,7 @@ def test_csv_handles_tricky_characters_3(app, briefs, brief_responses):
         u"Specialist Name,SUM(1+1)*cmd|' /C calc'!A0",
         u"Availability Date,cmd| '/c calc'!A0",
         u'Day rate,"2+2,"',
+        u'Contact number,123',
         u'ABN,1',
         u'MS Paint,True',
         u'GIMP,True',
