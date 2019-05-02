@@ -788,9 +788,11 @@ def test_rfx_publish_success_2_days_correct_dates(brief, client, supplier_domain
 
     response = json.loads(res.data)
     assert response['closedAt'] == pendulum.today().add(days=2).format('%Y-%m-%d')
-    question_closing_date = pendulum.instance(workday(pendulum.today(), 1)).format('%Y-%m-%d')
+    question_closing_date = pendulum.instance(workday(pendulum.today().add(days=2), -1)).format('%Y-%m-%d')
     if question_closing_date > response['closedAt']:
         question_closing_date = pendulum.today().format('%Y-%m-%d')
+    if pendulum.today() > question_closing_date:
+        question_closing_date = pendulum.today()
     assert response['dates']['questions_closing_date'] == question_closing_date
 
 
@@ -818,11 +820,11 @@ def get_day_count(request):
 @mock.patch('app.tasks.publish_tasks.brief')
 @pytest.mark.parametrize(
     'get_day_count',
-    [{'day_count': 3}, {'day_count': 4}, {'day_count': 5}, {'day_count': 6}, {'day_count': 7}], indirect=True
+    [{'day_count': 2}, {'day_count': 3}], indirect=True
 )
-def test_rfx_publish_success_under_one_week_correct_dates(brief, client, buyer_user,
-                                                          supplier_domains, suppliers, rfx_brief,
-                                                          get_day_count, rfx_data):
+def test_rfx_publish_success_3_days_and_under_correct_dates(brief, client, buyer_user,
+                                                            supplier_domains, suppliers, rfx_brief,
+                                                            get_day_count, rfx_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -838,20 +840,22 @@ def test_rfx_publish_success_under_one_week_correct_dates(brief, client, buyer_u
 
     response = json.loads(res.data)
     assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
-    question_closing_date = pendulum.instance(workday(pendulum.today(), 2)).format('%Y-%m-%d')
+    question_closing_date = pendulum.instance(workday(pendulum.today().add(days=get_day_count), -1)).format('%Y-%m-%d')
     if question_closing_date > response['closedAt']:
         question_closing_date = response['closedAt']
+    if pendulum.today() > question_closing_date:
+        question_closing_date = pendulum.today()
     assert response['dates']['questions_closing_date'] == question_closing_date
 
 
 @mock.patch('app.tasks.publish_tasks.brief')
 @pytest.mark.parametrize(
     'get_day_count',
-    [{'day_count': 9}, {'day_count': 10}, {'day_count': 22}], indirect=True
+    [{'day_count': 4}, {'day_count': 5}, {'day_count': 10}, {'day_count': 22}, {'day_count': 36}], indirect=True
 )
-def test_rfx_publish_success_over_one_week_correct_dates(brief, client, buyer_user,
-                                                         supplier_domains, suppliers, rfx_brief,
-                                                         get_day_count, rfx_data):
+def test_rfx_publish_success_over_3_days_correct_dates(brief, client, buyer_user,
+                                                       supplier_domains, suppliers, rfx_brief,
+                                                       get_day_count, rfx_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -868,7 +872,7 @@ def test_rfx_publish_success_over_one_week_correct_dates(brief, client, buyer_us
     response = json.loads(res.data)
     assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
     assert response['dates']['questions_closing_date'] == (
-        pendulum.instance(workday(pendulum.today(), 5)).format('%Y-%m-%d')
+        pendulum.instance(workday(pendulum.today().add(days=get_day_count), -2)).format('%Y-%m-%d')
     )
 
 
@@ -1352,9 +1356,11 @@ def test_atm_publish_success_2_days_correct_dates(brief, client, supplier_domain
     assert res.status_code == 200
     response = json.loads(res.data)
     assert response['closedAt'] == pendulum.today().add(days=2).format('%Y-%m-%d')
-    question_closing_date = pendulum.instance(workday(pendulum.today(), 1)).format('%Y-%m-%d')
+    question_closing_date = pendulum.instance(workday(pendulum.today().add(days=2), -1)).format('%Y-%m-%d')
     if question_closing_date > response['closedAt']:
         question_closing_date = pendulum.today().format('%Y-%m-%d')
+    if pendulum.today() > question_closing_date:
+        question_closing_date = pendulum.today()
     assert response['dates']['questions_closing_date'] == question_closing_date
 
 
@@ -1382,11 +1388,11 @@ def get_day_count(request):
 
 @pytest.mark.parametrize(
     'get_day_count',
-    [{'day_count': 3}, {'day_count': 4}, {'day_count': 5}, {'day_count': 6}, {'day_count': 7}], indirect=True
+    [{'day_count': 2}, {'day_count': 3}], indirect=True
 )
 @mock.patch('app.tasks.publish_tasks.brief')
-def test_atm_publish_success_under_one_week_correct_dates(brief, client, buyer_user, supplier_domains, suppliers,
-                                                          atm_brief, get_day_count, atm_data):
+def test_atm_publish_success_3_days_and_under_correct_dates(brief, client, buyer_user, supplier_domains, suppliers,
+                                                            atm_brief, get_day_count, atm_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -1400,19 +1406,21 @@ def test_atm_publish_success_under_one_week_correct_dates(brief, client, buyer_u
     assert res.status_code == 200
     response = json.loads(res.data)
     assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
-    question_closing_date = pendulum.instance(workday(pendulum.today(), 2)).format('%Y-%m-%d')
+    question_closing_date = pendulum.instance(workday(pendulum.today().add(days=get_day_count), -1)).format('%Y-%m-%d')
     if question_closing_date > response['closedAt']:
         question_closing_date = response['closedAt']
+    if pendulum.today() > question_closing_date:
+        question_closing_date = pendulum.today()
     assert response['dates']['questions_closing_date'] == question_closing_date
 
 
 @pytest.mark.parametrize(
     'get_day_count',
-    [{'day_count': 8}, {'day_count': 9}, {'day_count': 10}, {'day_count': 22}], indirect=True
+    [{'day_count': 4}, {'day_count': 5}, {'day_count': 10}, {'day_count': 22}, {'day_count': 36}], indirect=True
 )
 @mock.patch('app.tasks.publish_tasks.brief')
-def test_atm_publish_success_over_one_week_correct_dates(brief, client, buyer_user, supplier_domains, suppliers,
-                                                         atm_brief, get_day_count, atm_data):
+def test_atm_publish_success_over_3_days_correct_dates(brief, client, buyer_user, supplier_domains, suppliers,
+                                                       atm_brief, get_day_count, atm_data):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'me@digital.gov.au', 'password': 'test'
     }), content_type='application/json')
@@ -1427,7 +1435,7 @@ def test_atm_publish_success_over_one_week_correct_dates(brief, client, buyer_us
     response = json.loads(res.data)
     assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
     assert response['dates']['questions_closing_date'] == (
-        pendulum.instance(workday(pendulum.today(), 5)).format('%Y-%m-%d')
+        pendulum.instance(workday(pendulum.today().add(days=get_day_count), -2)).format('%Y-%m-%d')
     )
 
 

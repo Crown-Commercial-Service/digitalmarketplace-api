@@ -1765,22 +1765,24 @@ class Brief(db.Model):
             closed_at_parsed = combine_date_and_time(
                 pendulum.parse(closed_at),
                 t, DEADLINES_TZ_NAME).in_tz('UTC')
-            if closed_at_parsed <= pendulum.now('UTC').add(days=3):
+            now_plus_three_days = combine_date_and_time(
+                pendulum.now().add(days=3),
+                t, DEADLINES_TZ_NAME).in_tz('UTC')
+            if closed_at_parsed <= now_plus_three_days:
                 questions_closed_at = workday(closed_at_parsed, -1)
                 if (self.published_day > questions_closed_at):
                     questions_closed_at = self.published_day
-            elif closed_at_parsed < pendulum.now('UTC').add(days=8):
-                questions_closed_at = workday(self.published_day, 2)
             else:
-                questions_closed_at = workday(self.published_day, 5)
+                questions_closed_at = workday(closed_at_parsed, -2)
 
             if questions_closed_at > closed_at_parsed:
                 questions_closed_at = closed_at_parsed
 
+            self.questions_closed_at = None
+            self.closed_at = closed_at_parsed
             self.questions_closed_at = combine_date_and_time(
                 questions_closed_at,
                 t, DEADLINES_TZ_NAME).in_tz('UTC')
-            self.closed_at = closed_at_parsed
         else:
             self.closed_at = combine_date_and_time(
                 self.published_day + parse_interval(self.requirements_length),
