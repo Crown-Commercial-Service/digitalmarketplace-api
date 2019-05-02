@@ -13,6 +13,7 @@ in (with args; {
     shortName = "dm-api";
     buildInputs = [
       pythonPackages.python
+      pkgs.glibcLocales
       pkgs.libffi
       pkgs.libyaml
       # pip requires git to fetch some of its dependencies
