@@ -5,12 +5,12 @@ coverage==4.5.3
 coveralls==1.7.0
 flake8==3.7.7
 freezegun==0.3.11
-hypothesis==4.18.0
-mock==2.0.0
+hypothesis==4.21.0
+mock==3.0.4
 pytest==4.4.1
-pytest-cov==2.6.1
+pytest-cov==2.7.1
 requests-mock==1.6.0
-testfixtures==6.7.0
+testfixtures==6.8.2
 
 git+https://github.com/alphagov/digitalmarketplace-test-utils.git@2.3.0#egg=digitalmarketplace-test-utils==2.3.0
 
