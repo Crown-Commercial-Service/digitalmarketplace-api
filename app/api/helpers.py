@@ -117,6 +117,11 @@ def user_info(user):
         supplier_code = None
 
     try:
+        notification_count = current_user.notification_count
+    except AttributeError:
+        notification_count = None
+
+    try:
         framework = current_user.frameworks[0].framework.slug if current_user.frameworks else 'digital-marketplace'
     except AttributeError:
         framework = None
@@ -132,7 +137,8 @@ def user_info(user):
         "supplierCode": supplier_code,
         "emailAddress": email_address,
         "csrfToken": get_csrf_token(),
-        "framework": framework
+        "framework": framework,
+        "notificationCount": notification_count
     }
 
 

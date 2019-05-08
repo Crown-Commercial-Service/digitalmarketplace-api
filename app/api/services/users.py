@@ -1,8 +1,8 @@
-from sqlalchemy import func, desc
-from sqlalchemy.sql.functions import concat
+from sqlalchemy import func, desc, literal, and_
+from sqlalchemy.sql.expression import select, case
 from app.api.helpers import Service
 from app import db
-from app.models import User
+from app.models import User, Supplier
 
 
 class UsersService(Service):
@@ -25,14 +25,51 @@ class UsersService(Service):
         return name
 
     def get_team_members(self, current_user_id, email_domain):
-        """Returns a list of the user's team members."""
-        team_ids = db.session.query(User.id).filter(User.id != current_user_id,
-                                                    User.email_address.endswith(concat('@', email_domain)))
+        user = (
+            db
+            .session
+            .query(
+                User.id,
+                User.supplier_code,
+                User.role
+            )
+            .filter(User.id == current_user_id)
+            .one_or_none()
+        )
 
-        results = (db.session.query(User.name, User.email_address.label('email'))
-                   .filter(User.id != current_user_id, User.id.in_(team_ids), User.active.is_(True))
-                   .order_by(func.lower(User.name)))
+        user_type = (
+            case(
+                whens=[(Supplier.data['email'].isnot(None), literal('ar'))]
+            ).label('type')
+        )
+        results = (
+            db
+            .session
+            .query(
+                User.name,
+                User.email_address.label('email'),
+                User.id,
+                user_type
+            )
+            .outerjoin(
+                Supplier,
+                and_(
+                    Supplier.data['email'].astext == User.email_address,
+                    Supplier.code == User.supplier_code
+                )
+            )
+            .filter(
+                User.id != user.id,
+                User.active.is_(True),
+                User.email_address.like('%@{}'.format(email_domain))
+            )
+        )
+        results = results.filter(
+            User.supplier_code == user.supplier_code,
+            User.role == user.role
+        )
 
+        results = results.order_by(user_type, func.lower(User.name))
         return [r._asdict() for r in results]
 
     def get_supplier_last_login(self, application_id):

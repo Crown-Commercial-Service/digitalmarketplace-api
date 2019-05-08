@@ -97,10 +97,18 @@ class SuppliersService(Service):
         }
 
     def get_supplier_contacts_union(self):
-        authorised_representative = select([Supplier.code, Supplier.data['email'].astext.label('email_address')])
-        business_contact = select([Supplier.code, Supplier.data['contact_email'].astext.label('email_address')])
-        user_email_addresses = (select([User.supplier_code.label('code'), User.email_address])
-                                .where(User.active))
+        authorised_representative = select([
+            Supplier.code,
+            Supplier.data['email'].astext.label('email_address')
+        ])
+        business_contact = select([
+            Supplier.code,
+            Supplier.data['contact_email'].astext.label('email_address')
+        ])
+        user_email_addresses = (select([
+            User.supplier_code.label('code'),
+            User.email_address
+        ]).where(User.active))
 
         return union(authorised_representative, business_contact, user_email_addresses).alias('email_addresses')
 

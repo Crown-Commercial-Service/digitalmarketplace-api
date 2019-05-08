@@ -102,10 +102,16 @@ def get_user_by_id(user_id):
     result = user._asdict()
     login_attempt_limit = current_app.config['DM_FAILED_LOGIN_LIMIT']
     result['locked'] = user.failed_login_count >= login_attempt_limit
+    notification_count = 0
+    if user.role == 'supplier':
+        messages = supplier_business.get_supplier_messages(user.supplier_code, False)
+        notification_count = len(messages.errors + messages.warnings)
+
     result.update({
         'supplier': {
             'name': user.supplier_name,
-            'supplierCode': user.supplier_code
+            'supplierCode': user.supplier_code,
+            'notificationCount': notification_count
         }
     })
     result.update({

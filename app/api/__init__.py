@@ -5,6 +5,7 @@ from sqlalchemy.orm import noload
 from flask import Blueprint, request, current_app
 from flask_login import LoginManager
 from app.models import User
+from app.api.business import supplier_business
 from base64 import b64decode
 from app import encryption
 from app.api.helpers import abort
@@ -25,10 +26,21 @@ def load_user(userid):
     ).get(int(userid))
 
     if user is not None:
+        notification_count = get_notification_count(user)
         user = LoginUser(user.id, user.email_address, user.supplier_code, None, user.locked,
                          user.active, user.name, user.role, user.terms_accepted_at, user.application_id,
-                         user.frameworks)
+                         user.frameworks, notification_count)
+
     return user
+
+
+def get_notification_count(user):
+    notification_count = None
+    if user.role == 'supplier':
+        errors_warnings = supplier_business.get_supplier_messages(user.supplier_code, False)
+        notification_count = len(errors_warnings.errors + errors_warnings.warnings)
+
+    return notification_count
 
 
 @api.before_request
@@ -64,9 +76,10 @@ def load_user_from_request(request):
 
     if user is not None:
         if encryption.authenticate_user(password, user):
+            notification_count = get_notification_count(user)
             user = LoginUser(user.id, user.email_address, user.supplier_code, None, user.locked,
                              user.active, user.name, user.role, user.terms_accepted_at, user.application_id,
-                             user.frameworks)
+                             user.frameworks, notification_count)
             return user
 
 
@@ -76,6 +89,7 @@ from app.api.views import (briefs,  # noqa
                            feedback,
                            messages,
                            suppliers,
+                           seller_dashboard,
                            tasks,
                            dashboards,
                            opportunities,

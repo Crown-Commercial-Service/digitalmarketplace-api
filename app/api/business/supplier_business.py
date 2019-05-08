@@ -9,21 +9,22 @@ def get_supplier_messages(code, skip_application_check):
         type='edit'
     ).all()
 
-    if any([a for a in applications if a.status == 'saved']):
-        validation_result = collections.namedtuple('Notification', ['warnings', 'errors'])
-        return validation_result(warnings=[{
-            'message': 'You have changes saved in your seller profile. '
-                       'Please ensure you go to "Preview and update" and then "Submit updates" '
-                       'in your seller profile to finalise your changes, or you can '
-                       '"Discard all updates".',
-            'severity': 'warning',
-            'step': 'start'
-        }], errors=[])
-
     supplier = suppliers.get_supplier_by_code(code)
     validation_result = SupplierValidator(supplier).validate_all()
+
+    if any([a for a in applications if a.status == 'saved']):
+        validation_result.warnings.append({
+            'message': 'You have saved updates on your profile. '
+                       'You must submit these changes to the Marketplace for review. '
+                       'If you did not make any changes, select \'Discard all updates\'.',
+            'severity': 'warning',
+            'step': 'update',
+            'id': 'S000'
+        })
+
     if skip_application_check is False:
         if any([a for a in applications if a.status == 'submitted']):
-            return None
+            validation_result = collections.namedtuple('Notification', ['warnings', 'errors'])
+            return validation_result(warnings=[], errors=[])
 
     return validation_result

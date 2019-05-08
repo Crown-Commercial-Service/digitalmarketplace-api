@@ -1,5 +1,4 @@
 import pendulum
-from pendulum.parsing.exceptions import ParserError
 
 
 class ApplicationValidator(object):
@@ -140,7 +139,7 @@ class ApplicationValidator(object):
                 'step': 'documents'
             }]
 
-        now = pendulum.now('Australia/Sydney').date()
+        now = pendulum.now('Australia/Canberra').date()
         return (self.__validate_document(documents, 'liability', now) +
                 self.__validate_document(documents, 'workers', now) +
                 self.__validate_document(documents, 'financial', now, False))
@@ -194,7 +193,7 @@ class ApplicationValidator(object):
                             'severity': 'error',
                             'step': 'documents'
                         })
-                except ParserError:
+                except ValueError:
                     errors.append({
                         'message': '"{}" is an invalid date format'.format(expiry),
                         'severity': 'error',

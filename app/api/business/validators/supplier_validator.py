@@ -1,6 +1,5 @@
 import collections
 import pendulum
-from pendulum.parsing.exceptions import ParserError
 from flask import current_app
 
 
@@ -25,9 +24,10 @@ class SupplierValidator(object):
         errors = []
         if not self.supplier.name:
             errors.append({
-                'message': 'Your seller profile is missing the name of your business.',
+                'message': 'You must include your business name in your profile.',
                 'severity': 'error',
-                'step': 'business-details'
+                'step': 'business-details',
+                'id': 'S001'
             })
 
         return errors
@@ -37,36 +37,43 @@ class SupplierValidator(object):
         pricing = self.supplier.data.get('pricing', {})
         recruiter = self.supplier.data.get('recruiter')
         supplier_domains = self.supplier.domains
+        frontend_url = current_app.config['FRONTEND_ADDRESS']
 
         if recruiter == 'no' or recruiter == 'both':
             for supplier_domain in supplier_domains:
                 if supplier_domain.domain.name not in pricing:
                     errors.append({
-                        'message': 'You have not supplied the maximum daily rate in your seller profile '
-                                   'for "{domain}".'
-                        .format(
-                            domain=supplier_domain.domain.name
-                        ),
-                        'severity': 'error',
-                        'step': 'pricing'
-                    })
-                elif supplier_domain.price_status == 'rejected':
-                    errors.append({
-                        'message': 'The price you supplied for area of expertise "{domain}" '
-                                   'has not been accepted as value for money. To rectify this, '
-                                   'you will need to either lower your maximum daily price to '
-                                   'within the suggested level or update your supporting case studies '
-                                   'so that they exceed the minimum number of '
-                                   'required {{assessment criteria}}.'
+                        'message': 'You must provide your maximum daily rate (including GST) for {domain} using '
+                                   '{{Skills Framework for the Information Age (SFIA) Level 5}} '
+                                   'as a guide.'
                         .format(
                             domain=supplier_domain.domain.name
                         ),
                         'links': {
-                            'assessment criteria': 'https://marketplace1.zendesk.com/hc/en-gb/'
+                            'Skills Framework for the Information Age (SFIA) Level 5': 'https://www.sfia-online.org/en/'
+                                                                                       'framework/sfia-7/busskills/'
+                                                                                       'level-5'
+                        },
+                        'severity': 'error',
+                        'step': 'pricing',
+                        'id': 'S002-{}'.format(supplier_domain.domain.id)
+                    })
+                elif supplier_domain.price_status == 'rejected':
+                    errors.append({
+                        'message': 'Your daily rate for {domain} exceeds the maximum '
+                                   'threshold that applies to this category. '
+                                   'Update your case study to meet {{additional criteria}} '
+                                   'then submit for assessment.'
+                        .format(
+                            domain=supplier_domain.domain.name
+                        ),
+                        'links': {
+                            'additional criteria': 'https://marketplace1.zendesk.com/hc/en-gb/'
                                                    'articles/333757011655-Assessment-criteria'
                         },
-                        'severity': 'warning',
-                        'step': 'pricing'
+                        'severity': 'info',  # TODO: this message needs some work. switch back when ready
+                        'step': 'pricing',
+                        'id': 'S003-{}'.format(supplier_domain.domain.id)
                     })
 
         return errors
@@ -93,12 +100,17 @@ class SupplierValidator(object):
 
                 if len(domain_case_studies) == 0:
                     errors.append({
-                        'message': 'Your seller profile is missing a case study for '
-                                   '{}. From January 2019, you will no longer '
-                                   'be able to apply for opportunities without a '
-                                   'supporting case study.'.format(supplier_domain.domain.name),
-                        'severity': 'warning',
-                        'step': 'case-study'
+                        'message': 'To apply for opportunities under {}, '
+                                   'you must submit a case study then '
+                                   '{{request an assessment}} from the '
+                                   'opportunity page.'.format(supplier_domain.domain.name),
+                        'links': {
+                            'request an assessment': 'https://marketplace1.zendesk.com/hc/en-gb'
+                                                     '/articles/115011292847-Request-an-assessment'
+                                   },
+                        'severity': 'error',
+                        'step': 'case-study',
+                        'id': 'S004-{}'.format(supplier_domain.domain.id)
                     })
                 else:
                     for domain_case_study in domain_case_studies:
@@ -111,22 +123,19 @@ class SupplierValidator(object):
         frontend_url = current_app.config['FRONTEND_ADDRESS']
         if case_study.status == 'rejected':
             errors.append({
-                'message': 'Case study "{{{title}}}" has not passed assessment for the area of expertise "{domain}". '
-                           'Please review the '
-                           '{{assessment criteria}} '
-                           'and update your case study to ensure the required number of criteria are met.'
+                'message': 'You must update {{{title}}} to demonstrate the {{minimum number of criteria}} for {domain}.'
                 .format(
                     title=case_study.data.get('title', '').encode('utf-8'),
-                    domain=case_study.data.get('service'),
-                    cs_link=''
+                    domain=case_study.data.get('service')
                 ),
                 'links': {
-                    'assessment criteria': 'https://marketplace1.zendesk.com/hc/'
-                                           'en-gb/articles/333757011655-Assessment-criteria',
+                    'minimum number of criteria': 'https://marketplace1.zendesk.com/hc/'
+                                                  'en-gb/articles/333757011655-Assessment-criteria',
                     case_study.data.get('title'): '{}/case-study/{}'.format(frontend_url, case_study.id)
                 },
                 'severity': 'warning',
-                'step': 'case-study'
+                'step': 'case-study',
+                'id': 'S005-{}'.format(case_study.id)
             })
 
         return errors
@@ -135,12 +144,14 @@ class SupplierValidator(object):
         documents = self.supplier.data.get('documents')
         if not documents:
             return [{
-                'message': 'Your seller profile is missing required insurance and financial documents.',
-                'severity': 'warning',
-                'step': 'documents'
+                'message': 'Your seller profile is missing required insurance and financial documents.'
+                           'If you have multiple files for a document, please scan and merge as one upload.',
+                'severity': 'error',
+                'step': 'documents',
+                'id': 'S006'
             }]
 
-        now = pendulum.now().date()
+        now = pendulum.now('Australia/Canberra')
         return (self.__validate_document(documents, 'liability', now) +
                 self.__validate_document(documents, 'workers', now) +
                 self.__validate_document(documents, 'financial', now, False))
@@ -170,72 +181,86 @@ class SupplierValidator(object):
 
         if not document:
             errors.append({
-                'message': 'Your seller profile is missing the following document: '
-                           '{document_name}.'
+                'message': 'Your seller profile is missing your {document_name} document.'
                 .format(
                     document_name=document_name
                 ),
-                'severity': 'warning',
-                'step': 'documents'
+                'severity': 'error',
+                'step': 'documents',
+                'id': 'S007-{}'.format(name)
             })
             return errors
 
         filename = document.get('filename', '')
         if not filename and document_required:
             errors.append({
-                'message': 'Your seller profile has no filename for the '
-                           '{document_name} document you uploaded.'
+                'message': 'You must set a filename for your {document_name} document.'
                 .format(
                     document_name=document_name
                 ),
-                'severity': 'warning',
-                'step': 'documents'
+                'severity': 'error',
+                'step': 'documents',
+                'id': 'S008-{}'.format(name)
             })
 
         if has_expiry:
             expiry = document.get('expiry')
             if not expiry and document_required:
                 errors.append({
-                    'message': 'Your seller profile has no expiry date for the '
-                               '{document_name} document you uploaded.'
+                    'message': 'You must set an expiry date for your {document_name} document.'
                     .format(
                         document_name=document_name
                     ),
-                    'severity': 'warning',
-                    'step': 'documents'
+                    'severity': 'error',
+                    'step': 'documents',
+                    'id': 'S009-{}'.format(name)
                 })
             elif document_required:
                 try:
                     expiry_date = pendulum.parse(expiry)
-                    if now > expiry_date.date():
+                    if now.date() > expiry_date.date():
+                        e = pendulum.instance(expiry_date)
+                        delta = now.diff(e).in_days()
+                        message = 'Your {document_name} document has expired. Please upload an updated version.'
+                        severity = 'warning'
+                        if delta > 28:
+                            message = (
+                                'Your {document_name} document has expired.  Please upload an updated version. '
+                                'Failure to provide this documentation may result in the '
+                                'suspension of your seller profile.'
+                            )
+                            severity = 'error'
                         errors.append({
-                            'message': 'The {document_name} document you uploaded as part of your '
-                                       'seller profile has expired.'
+                            'message': message
                             .format(
                                 document_name=document_name
                             ),
-                            'severity': 'warning',
-                            'step': 'documents'
+                            'severity': severity,
+                            'step': 'documents',
+                            'id': 'S010-{}'.format(name)
                         })
-                    elif now.add(months=1) > expiry_date.date():
+                    elif now.add(days=28).date() > expiry_date.date():
                         errors.append({
-                            'message': 'The {document_name} document you uploaded as part of your '
-                                       'seller profile is about to expire.'
+                            'message': 'Your {document_name} document will expire on {expiry_date}. '
+                                       'Please upload an updated version before the expiry date.'
                             .format(
-                                document_name=document_name
+                                document_name=document_name,
+                                expiry_date=expiry_date.date()
                             ),
                             'severity': 'warning',
-                            'step': 'documents'
+                            'step': 'documents',
+                            'id': 'S011-{}'.format(name)
                         })
-                except ParserError:
+                except ValueError:
                     errors.append({
-                        'message': 'The {document_name} document you uploaded as part of your seller profile '
-                                   'has an expiration date that is incorrectly formatted.'
+                        'message': 'Please fix the format of the expiry date for your '
+                                   '{document_name} document, eg 21/09/2019'
                         .format(
                             document_name=document_name
                         ),
-                        'severity': 'warning',
-                        'step': 'documents'
+                        'severity': 'error',
+                        'step': 'documents',
+                        'id': 'S012-{}'.format(name)
                     })
 
         return errors
