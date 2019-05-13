@@ -334,7 +334,6 @@ def update_service_status(service_id, status):
                                            'new_status': status})
 
     if prior_status != status:
-
         # If it's being unpublished, delete it from the search api.
         if prior_status == 'published':
             delete_service_from_index(service)
