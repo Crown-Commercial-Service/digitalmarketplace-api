@@ -312,6 +312,23 @@ def delete_draft_service(draft_id):
         DraftService.id == draft_id
     ).first_or_404()
 
+    source_service, source_service_audit = None, None
+    if 'copiedFromServiceId' in draft.data:
+        source_service_id = draft.data['copiedFromServiceId']
+        source_service = Service.query.filter(Service.service_id == source_service_id).first()
+        if source_service:
+            source_service.copied_to_following_framework = False
+            source_service_audit = AuditEvent(
+                audit_type=AuditTypes.update_service,
+                user=updater_json['updated_by'],
+                data={
+                    "serviceId": draft.service_id,
+                    "supplierId": draft.supplier_id,
+                    "copiedToFollowingFramework": False
+                },
+                db_object=None
+            )
+
     audit = AuditEvent(
         audit_type=AuditTypes.delete_draft_service,
         user=updater_json['updated_by'],
@@ -325,6 +342,9 @@ def delete_draft_service(draft_id):
 
     db.session.delete(draft)
     db.session.add(audit)
+    if source_service:
+        db.session.add(source_service)
+        db.session.add(source_service_audit)
     try:
         db.session.commit()
     except IntegrityError as e:
