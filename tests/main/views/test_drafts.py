@@ -1150,6 +1150,14 @@ class TestDraftServices(DraftsHelpersMixin):
         assert fetch.status_code == 200
         assert json.loads(fetch.get_data())['services']['copiedFromServiceId'] == self.service_id
 
+        # Check that the flag has been set on the source service
+        source_service = self.client.get('/services/{}'.format(self.service_id))
+        assert json.loads(source_service.get_data())['services']['copiedToFollowingFramework'] is True
+
+        # Reset audit events - we're only interested in the post-delete audits
+        AuditEvent.query.delete()
+        db.session.commit()
+
         # Delete the draft
         delete = self.client.delete(
             '/draft-services/{}'.format(draft_id),
@@ -1162,11 +1170,10 @@ class TestDraftServices(DraftsHelpersMixin):
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
 
-        assert len(data['auditEvents']) == 3
-        assert data['auditEvents'][0]['type'] == 'create_draft_service'
-        assert data['auditEvents'][1]['type'] == 'delete_draft_service'
-        assert data['auditEvents'][2]['type'] == 'update_service'
-        assert data['auditEvents'][2]['data']['copiedToFollowingFramework'] is False
+        assert len(data['auditEvents']) == 2
+        assert data['auditEvents'][0]['type'] == 'delete_draft_service'
+        assert data['auditEvents'][1]['type'] == 'update_service'
+        assert data['auditEvents'][1]['data']['copiedToFollowingFramework'] is False
 
         # Check the draft has gone
         fetch_again = self.client.get('/draft-services/{}'.format(draft_id))
