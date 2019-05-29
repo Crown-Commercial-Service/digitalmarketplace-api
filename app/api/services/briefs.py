@@ -106,6 +106,7 @@ class BriefsService(Service):
                    .outerjoin(Lot)
                    .group_by(Brief.id, Lot.id))
 
+        lots = db.session.query(Lot).all()
         if status_filters:
             cond = or_(*[Brief.status == x for x in status_filters])
             query = query.filter(cond)
@@ -116,7 +117,11 @@ class BriefsService(Service):
                 'selected': 'someSellers',
                 'one': 'oneSeller'
             }
-            cond = or_(*[Brief.data['sellerSelector'].astext == switcher.get(x) for x in open_to_filters])
+            atm_lot = next(iter([x for x in lots if x.slug == 'atm']))
+            cond = or_(
+                and_(Brief._lot_id == atm_lot.id, Brief.data['sellerSelector'].astext == 'someSellers'),
+                *[Brief.data['sellerSelector'].astext == switcher.get(x) for x in open_to_filters]
+            )
             query = query.filter(cond)
 
         if location_filters:
@@ -135,7 +140,6 @@ class BriefsService(Service):
             query = query.filter(cond)
 
         if brief_type_filters:
-            lots = db.session.query(Lot).all()
             switcher = {
                 'atm': [x.id for x in lots if x.slug == 'atm'],
                 'outcomes': [x.id for x in lots if x.slug in ['digital-outcome', 'rfx']],
