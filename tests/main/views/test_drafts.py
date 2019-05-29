@@ -211,6 +211,7 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
         data = json.loads(res.get_data())
         assert res.status_code == 201
         assert data['services']['frameworkSlug'] == 'g-cloud-7'
+        assert data['services']['copiedFromServiceId'] == self.service_id
         assert 'serviceId' not in data['services']
 
     def test_should_404_if_target_framework_does_not_exist(self):
@@ -271,7 +272,11 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             DraftService.framework_id == 4,
         ).first()
 
-        assert {'serviceBenefits', 'termsAndConditionsDocumentURL'} == set(draft.data.keys())
+        assert set(draft.data.keys()) == {
+            'serviceBenefits',
+            'termsAndConditionsDocumentURL',
+            'copiedFromServiceId'
+        }
 
     def test_source_service_is_marked_as_copied_after_copy_to_new_framework(self):
         pre_copy_source_service = Service.query.first()
@@ -286,6 +291,8 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             }),
             content_type='application/json')
         assert res.status_code == 201
+        # Source Service ID present in newly created draft
+        assert json.loads(res.get_data())['services']['copiedFromServiceId'] == self.service_id
 
         post_copy_source_service = Service.query.first()
         assert post_copy_source_service.copied_to_following_framework is True
@@ -301,6 +308,8 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             }),
             content_type='application/json')
         assert res.status_code == 201
+        # Source Service ID not present in newly created draft
+        assert json.loads(res.get_data())['services'].get('copiedFromServiceId') is None
 
         post_copy_source_service = Service.query.first()
         assert post_copy_source_service.copied_to_following_framework is False

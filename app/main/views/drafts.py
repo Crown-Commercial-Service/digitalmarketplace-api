@@ -78,6 +78,7 @@ def copy_draft_service_from_existing_service(service_id):
 
     if target_framework_id != service.framework.id:
         service.copied_to_following_framework = True
+        draft.data['copiedFromServiceId'] = service_id
 
     db.session.add(draft, service)
     db.session.flush()
