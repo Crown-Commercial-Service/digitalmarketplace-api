@@ -43,8 +43,10 @@ def create_responses_zip(brief_id):
     if not responses:
         raise CreateResponsesZipException('There were no respones for brief id {}'.format(brief_id))
 
-    if brief.lot.slug not in ['digital-professionals', 'training', 'rfx', 'atm']:
+    if brief.lot.slug not in ['digital-professionals', 'training', 'rfx', 'atm', 'specialist']:
         raise CreateResponsesZipException('Brief id {} is not a compatible lot'.format(brief_id))
+
+    print 'Generating zip for brief id: {}'.format(brief_id)
 
     BUCKET_NAME = getenv('S3_BUCKET_NAME')
     s3 = boto3.resource(
@@ -115,7 +117,41 @@ def create_responses_zip(brief_id):
                     brief=brief,
                     candidates=candidates
                 )
-                zf.writestr('responses-{}.html'.format(brief_id), response_criteria_html.encode('utf-8'))
+            elif brief.lot.slug == 'specialist':
+                sorted_responses = sorted(
+                    responses,
+                    key=lambda response: (response.supplier.name, response.data.get('specialistGivenNames', 'Unknown'))
+                )
+
+                compliance_check_template = template_env.get_template('compliance-check-specialist.html')
+                compliance_check_html = render_template(
+                    compliance_check_template,
+                    brief=brief,
+                    responses=sorted_responses
+                )
+                zf.writestr('Compliance check ({}).html'.format(brief_id), compliance_check_html.encode('utf-8'))
+
+                response_criteria_template = template_env.get_template('response-criteria-specialist.html')
+
+                candidates = []
+                for response in sorted_responses:
+                    data = response.data
+                    candidates.append({
+                        'essential_requirement_responses': data.get('essentialRequirements', {}),
+                        'nice_to_have_requirement_responses': data.get('niceToHaveRequirements', {}),
+                        'name': '{} {}'.format(data.get('specialistGivenNames', ''), data.get('specialistSurname', '')),
+                        'seller': response.supplier.name
+                    })
+
+                response_criteria_html = render_template(
+                    response_criteria_template,
+                    brief=brief,
+                    candidates=candidates,
+                    essential_requirements=brief.data.get('essentialRequirements', {}),
+                    nice_to_have_requirements=brief.data.get('niceToHaveRequirements', {})
+                )
+
+                zf.writestr('Responses ({}).html'.format(brief_id), response_criteria_html.encode('utf-8'))
 
         archive.seek(0)
 

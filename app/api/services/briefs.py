@@ -144,7 +144,7 @@ class BriefsService(Service):
                 'atm': [x.id for x in lots if x.slug == 'atm'],
                 'outcomes': [x.id for x in lots if x.slug in ['digital-outcome', 'rfx']],
                 'training': [x.id for x in lots if x.slug == 'training'],
-                'specialists': [x.id for x in lots if x.slug == 'digital-professionals']
+                'specialists': [x.id for x in lots if x.slug in ['digital-professionals', 'specialist']]
             }
             lot_cond = or_(*[Brief._lot_id.in_(switcher.get(x)) for x in brief_type_filters])
 

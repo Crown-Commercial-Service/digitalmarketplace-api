@@ -6,7 +6,10 @@ from app.api.services import (
     briefs,
     key_values_service
 )
-from app.emails.briefs import send_brief_closed_email
+from app.emails.briefs import (
+    send_brief_closed_email,
+    send_specialist_brief_closed_email
+)
 from app.models import Brief, Framework, Lot
 from . import celery
 
@@ -30,6 +33,7 @@ def process_closed_briefs():
 
     for closed_brief in closed_briefs:
         send_brief_closed_email(closed_brief)
+        send_specialist_brief_closed_email(closed_brief)
 
 
 @celery.task
@@ -50,7 +54,8 @@ def create_responses_zip_for_closed_briefs():
                     Lot.slug == 'digital-professionals',
                     Lot.slug == 'training',
                     Lot.slug == 'rfx',
-                    Lot.slug == 'atm'
+                    Lot.slug == 'atm',
+                    Lot.slug == 'specialist'
                 )
             ),
             Framework.slug == 'digital-marketplace')

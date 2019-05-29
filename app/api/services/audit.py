@@ -58,3 +58,7 @@ class AuditTypes(Enum):
     seller_to_review_pricing_case_study_email_part_2 = 'seller_to_review_pricing_case_study_email_part_2'
     seller_to_review_pricing_case_study_email_part_3 = 'seller_to_review_pricing_case_study_email_part_3'
     sent_expiring_documents_email = 'sent_expiring_documents_email'
+    specialist_brief_published = 'specialist_brief_published'
+    specialist_brief_closed_email = 'specialist_brief_closed_email'
+    seller_invited_to_specialist_opportunity = 'seller_invited_to_specialist_opportunity'
+    specialist_brief_response_received_email = 'specialist_brief_response_received_email'

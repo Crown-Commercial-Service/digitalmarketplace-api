@@ -2198,23 +2198,24 @@ class BriefResponse(db.Model):
                             result.append('')
                     return result
 
-            try:
-                self.data['essentialRequirements'] = \
-                    clean(self.data['essentialRequirements'])
-            except KeyError:
-                pass
+            if self.brief.lot.slug not in ['specialist']:
+                try:
+                    self.data['essentialRequirements'] = \
+                        clean(self.data['essentialRequirements'])
+                except KeyError:
+                    pass
 
-            try:
-                self.data['niceToHaveRequirements'] = \
-                    clean(self.data['niceToHaveRequirements'])
-            except KeyError:
-                pass
+                try:
+                    self.data['niceToHaveRequirements'] = \
+                        clean(self.data['niceToHaveRequirements'])
+                except KeyError:
+                    pass
 
-            try:
-                self.data['attachedDocumentURL'] = \
-                    filter(None, clean(self.data['attachedDocumentURL']))
-            except KeyError:
-                pass
+                try:
+                    self.data['attachedDocumentURL'] = \
+                        filter(None, clean(self.data['attachedDocumentURL']))
+                except KeyError:
+                    pass
 
         def atm_must_upload_doc():
             must_upload = False
@@ -2278,7 +2279,7 @@ class BriefResponse(db.Model):
                         errs['criteria'] = 'answer_required'
 
         # only perform schema validation on non RFX or ATM responses
-        if self.brief.lot.slug != 'rfx' and self.brief.lot.slug != 'atm':
+        if (self.brief.lot.slug not in ['rfx', 'atm', 'specialist']):
             errs = get_validation_errors(
                 'brief-responses-{}-{}'.format(self.brief.framework.slug, self.brief.lot.slug),
                 self.data,
@@ -2296,14 +2297,39 @@ class BriefResponse(db.Model):
                 errs['attachedDocumentURL'] = 'answer_required'
 
         if (
-            self.brief.lot.slug != 'training' and
-            self.brief.lot.slug != 'rfx' and
-            self.brief.lot.slug != 'atm' and
+            self.brief.lot.slug not in ['training', 'rfx', 'atm'] and
             'essentialRequirements' not in errs and
             len(filter(None, self.data.get('essentialRequirements', []))) !=
             len(self.brief.data['essentialRequirements'])
         ):
             errs['essentialRequirements'] = 'answer_required'
+
+        if self.brief.lot.slug in ['specialist']:
+            if not self.data.get('specialistGivenNames'):
+                errs['specialistGivenNames'] = 'answer_required'
+            if not self.data.get('specialistSurname'):
+                errs['specialistSurname'] = 'answer_required'
+
+            if self.brief.data.get('preferredFormatForRates') == 'dailyRate':
+                if not self.data.get('dayRateExcludingGST'):
+                    errs['dayRateExcludingGST'] = 'answer_required'
+                if not self.data.get('dayRate'):
+                    errs['dayRate'] = 'answer_required'
+            elif self.brief.data.get('preferredFormatForRates') == 'hourlyRate':
+                if not self.data.get('hourRateExcludingGST'):
+                    errs['hourRateExcludingGST'] = 'answer_required'
+                if not self.data.get('hourRate'):
+                    errs['hourRate'] = 'answer_required'
+
+            if not self.data.get('visaStatus'):
+                errs['visaStatus'] = 'answer_required'
+
+            if self.brief.data.get('securityClearance') == 'mustHave':
+                if not self.data.get('securityClearance'):
+                    errs['securityClearance'] = 'answer_required'
+
+            if not self.data.get('previouslyWorked'):
+                errs['previouslyWorked'] = 'answer_required'
 
         if max_day_rate and 'dayRate' not in errs:
             if float(self.data['dayRate']) > float(max_day_rate):

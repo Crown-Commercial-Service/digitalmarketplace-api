@@ -69,12 +69,12 @@ def test_csv_handles_tricky_characters_1(app, briefs, brief_responses):
     csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
     lines = [
         u'Seller name,Test Supplier1',
+        u'ABN,1',
         u'Email,test1@email.com',
-        u'Specialist Name,"Bu,tties K,ev\u2019s """',
-        u'Availability Date,\u275dNext \u2014 Tuesday\u275e',
+        u'Specialist name,"Bu,tties K,ev\u2019s """',
+        u'Availability date,\u275dNext \u2014 Tuesday\u275e',
         u'Day rate,1.49',
         u'Contact number,123',
-        u'ABN,1',
         u'MS Paint,True',
         u'GIMP,True',
         u'LISP,True'
@@ -87,12 +87,12 @@ def test_csv_handles_tricky_characters_2(app, briefs, brief_responses):
     csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
     lines = [
         u'Seller name,Test Supplier1',
+        u'ABN,1',
         u'Email,"te,st2@email.com"',
-        u"Specialist Name,'Pies Kev's",
-        u'Availability Date,&quot;A week Friday&rdquot;',
+        u"Specialist name,'Pies Kev's",
+        u'Availability date,&quot;A week Friday&rdquot;',
         u'Day rate,3.50',
         u'Contact number,123',
-        u'ABN,1',
         u'MS Paint,True',
         u'GIMP,True',
         u'LISP,False'
@@ -105,12 +105,12 @@ def test_csv_handles_tricky_characters_3(app, briefs, brief_responses):
     csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
     lines = [
         u'Seller name,Test Supplier1',
+        u'ABN,1',
         u"Email,SUM(1+1)*cmd|' /C calc'!A0",
-        u"Specialist Name,SUM(1+1)*cmd|' /C calc'!A0",
-        u"Availability Date,cmd| '/c calc'!A0",
+        u"Specialist name,SUM(1+1)*cmd|' /C calc'!A0",
+        u"Availability date,cmd| '/c calc'!A0",
         u'Day rate,"2+2,"',
         u'Contact number,123',
-        u'ABN,1',
         u'MS Paint,True',
         u'GIMP,True',
         u'LISP,False'
@@ -124,10 +124,10 @@ def test_csv_training(app, briefs, brief_responses):
     csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
     lines = [
         u'Seller name,Test Supplier1',
-        u'Email,test1@email.com',
-        u'Availability Date,\u275dNext \u2014 Tuesday\u275e',
-        u'Phone number,1234',
         u'ABN,1',
+        u'Email,test1@email.com',
+        u'Availability date,\u275dNext \u2014 Tuesday\u275e',
+        u'Phone number,1234',
         u'MS Paint,True',
         u'GIMP,True',
         u'LISP,True'
@@ -141,8 +141,112 @@ def test_csv_rfx(app, briefs, brief_responses):
     csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
     lines = [
         u'Seller name,Test Supplier1',
+        u'ABN,1',
         u'Email,test1@email.com',
-        u'Phone number,1234',
-        u'ABN,1'
+        u'Phone number,1234'
+    ]
+    assert csvdata.splitlines() == lines
+
+
+@pytest.mark.parametrize('brief_responses', [{'data': {
+    'specialistGivenNames': 'foo',
+    'specialistSurname': 'bar',
+    'availability': 'in the future',
+    'dayRateExcludingGST': '10',
+    'dayRate': '11',
+    'securityClearance': 'Yes',
+    'visaStatus': 'AustralianCitizen',
+    'previouslyWorked': 'Yes',
+    'respondToEmailAddress': 'test1@email.com',
+    'essentialRequirements': {
+        'ess critiera 1': 'ess criteria 1 answer',
+        'ess critiera 2': 'ess criteria 2 answer'
+    }
+}}], indirect=True)
+@pytest.mark.parametrize('briefs', [{
+    'lot_slug': 'specialist',
+    'framework_slug': 'digital-marketplace',
+    'data': {
+        'preferredFormatForRates': 'dailyRate',
+        'securityClearance': 'mustHave',
+        'securityClearanceCurrent': 'nv1',
+        'includeWeightingsEssential': False,
+        'essentialRequirements': [{
+            'criteria': 'ess critiera 1',
+        }, {
+            'criteria': 'ess critiera 2'
+        }],
+        'niceToHaveRequirements': []
+    }
+}], indirect=True)
+def test_csv_specialist_daily_rate(app, briefs, brief_responses):
+    csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
+    lines = [
+        u'Seller name,Test Supplier1',
+        u'ABN,1', u'Email,test1@email.com',
+        u'Specialist given name(s),foo',
+        u'Specialist surname,bar',
+        u'Availability date,in the future',
+        u'Day rate (including GST),11',
+        u'Day rate (excluding GST),10',
+        u'Eligibility to work,Australian citizen',
+        u'Previous agency experience,Yes',
+        u'Holds a negative vetting level 1 security clearance,Yes',
+        u'Contact number,123',
+        u'ess critiera 1,ess criteria 1 answer',
+        u'ess critiera 2,ess criteria 2 answer'
+    ]
+    assert csvdata.splitlines() == lines
+
+
+@pytest.mark.parametrize('brief_responses', [{'data': {
+    'specialistGivenNames': 'foo',
+    'specialistSurname': 'bar',
+    'availability': 'in the future',
+    'hourRateExcludingGST': '10',
+    'hourRate': '11',
+    'securityClearance': 'Yes',
+    'visaStatus': 'AustralianCitizen',
+    'previouslyWorked': 'Yes',
+    'respondToEmailAddress': 'test1@email.com',
+    'essentialRequirements': {
+        'ess critiera 1': 'ess criteria 1 answer',
+        'ess critiera 2': 'ess criteria 2 answer'
+    }
+}}], indirect=True)
+@pytest.mark.parametrize('briefs', [{
+    'lot_slug': 'specialist',
+    'framework_slug': 'digital-marketplace',
+    'data': {
+        'preferredFormatForRates': 'hourlyRate',
+        'securityClearance': 'ability',
+        'securityClearanceObtain': 'nv1',
+        'includeWeightingsEssential': False,
+        'essentialRequirements': [{
+            'criteria': 'ess critiera 1',
+        }, {
+            'criteria': 'ess critiera 2'
+        }],
+        'niceToHaveRequirements': [{
+            'criteria': 'nth critiera 1',
+        }]
+    }
+}], indirect=True)
+def test_csv_specialist_hourly_rate(app, briefs, brief_responses):
+    csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
+    lines = [
+        u'Seller name,Test Supplier1',
+        u'ABN,1', u'Email,test1@email.com',
+        u'Specialist given name(s),foo',
+        u'Specialist surname,bar',
+        u'Availability date,in the future',
+        u'Hourly rate (including GST),11',
+        u'Hourly rate (excluding GST),10',
+        u'Eligibility to work,Australian citizen',
+        u'Previous agency experience,Yes',
+        u'Contact number,123',
+        u'ess critiera 1,ess criteria 1 answer',
+        u'ess critiera 2,ess criteria 2 answer',
+        u'nth critiera 1,'
     ]
     assert csvdata.splitlines() == lines

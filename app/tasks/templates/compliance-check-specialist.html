@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Compliance check</title>
+
+    <style>
+        body {
+            font-family: "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            font-size: 1rem;
+            margin: 2.5rem;
+        }
+
+        .container {
+            width: -moz-max-content;
+            width: -webkit-max-content;
+            width: max-content;
+        }
+
+        /* Callout */
+
+        .au-callout {
+            background-color: #daf3fe;
+            border-left: .75rem solid #00698F;
+            color: #313131;
+            padding: 0.25rem 0.75rem;
+            word-wrap: break-word;
+        }
+
+        .au-callout__heading {
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .au-callout__heading.au-callout__heading--sronly {
+            border: 0;
+            clip: rect(0, 0, 0, 0);
+            height: 1px;
+            margin: -1px;
+            overflow: hidden;
+            padding: 0;
+            position: absolute;
+            width: 1px;
+        }
+
+        /* Titles */
+
+        .titles {
+            margin-top: 2rem;
+        }
+
+        .opportunity-title {
+            color: #717171;
+            font-size: 0.875rem;
+            margin-bottom: 0;
+        }
+
+        .document-title {
+            font-size: 2rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Table */
+
+        .au-table, .au-body table {
+            border-collapse: collapse;
+            -ms-overflow-x: scroll;
+            overflow-x: scroll;
+        }
+
+        .au-table.au-table--responsive {
+            margin-top: 2rem;
+            overflow: auto;
+        }
+
+        .au-table.au-table--small {
+            line-height: 1.42857;
+        }
+
+        .au-table__header {
+            border-bottom: solid 3px #142d3c;
+        }
+
+        .au-table.au-table--small th, .au-table.au-table--small td {
+            padding: 1rem .5rem;
+        }
+
+        .au-table th {
+            text-align: left;
+        }
+
+        .au-table td, .au-body table td {
+            border-bottom: solid 1px #e0e0e0;
+            white-space: nowrap;
+        }
+
+        .au-table.au-table--striped .au-table__body:nth-of-type(2n) {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="au-callout">
+            <h2 class="au-callout__heading au-callout__heading--sronly">File access</h2>
+            <p>This file is not publicly visible. Only you and those who open this file can view this information.</p>
+        </div>
+        <div class="titles">
+            <p class="opportunity-title">
+                {{ brief.data.title }} (ID: {{ brief.id }}{% if brief.data.internalReference %}, {{brief.data.internalReference}}{% endif %})
+            </p>
+            <h2 class="document-title">Compliance check</h2>
+        </div>
+        <div class="au-table au-body au-table--small au-table--responsive au-table--striped">
+            <table>
+                <thead>
+                    <tr class="au-table__header">
+                        <th scope="col">Seller</th>
+                        <th scope="col">Candidate</th>
+                        <th scope="col">Availability</th>
+                        {% if brief.data.preferredFormatForRates == 'dailyRate'%}
+                            <th scope="col">Day rate</th>
+                        {% endif %}
+                        {% if brief.data.preferredFormatForRates == 'hourlyRate'%}
+                            <th scope="col">Houly rate</th>
+                        {% endif %}
+                        <th scope="col">Previously employed</th>
+                        <th scope="col">Citizenship status</th>
+                        {% if brief.data.securityClearance == 'mustHave'%}
+                            <th scope="col">
+                                {% if brief.data.securityClearanceCurrent == 'baseline' %}
+                                    Baseline
+                                {% elif brief.data.securityClearanceCurrent == 'nv1' %} 
+                                    Negative vetting level 1
+                                {% elif brief.data.securityClearanceCurrent == 'nv2' %} 
+                                    Negative vetting level 2
+                                {% elif brief.data.securityClearanceCurrent == 'pv' %}
+                                    Positive vetting
+                                {% endif %}
+                            </th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for response in responses %}
+                    <tr class="au-table__body">
+                        <td>
+                            <b>{{ response.supplier.name }}</b><br />
+                            {{ response.data.get('respondToEmailAddress', 'Unknown') }}<br />
+                            {{ response.supplier.data.get('contact_phone', 'Unknown') }}
+                        </td>
+                        <td>
+                            {{ response.data.get('specialistGivenNames', 'Unknown') }}
+                            {{ ' ' }}
+                            {{ response.data.get('specialistSurname', 'Unknown') }}
+                        </td>
+                        <td>{{ response.data.get('availability', 'Unknown') }}</td>
+                        {% if brief.data.preferredFormatForRates == 'dailyRate'%}
+                            <td>
+                                ${{ response.data.get('dayRateExcludingGST', 'Unknown') }} (excluding GST)<br />
+                                ${{ response.data.get('dayRate', 'Unknown') }} (including GST)
+                            </td>
+                        {% endif %}
+                        {% if brief.data.preferredFormatForRates == 'hourlyRate'%}
+                            <td>
+                                ${{ response.data.get('hourRateExcludingGST', 'Unknown') }} (excluding GST)<br />
+                                ${{ response.data.get('hourRate', 'Unknown') }} (including GST)
+                            </td>
+                        {% endif %}
+                        <td>{{ response.data.get('previouslyWorked', 'Unknown') }}</td>
+                        <td>
+                        {% if response.data.visaStatus == 'AustralianCitizen' %}
+                            Australian citizen
+                        {% elif response.data.visaStatus == 'PermanentResident' %}
+                            Permanent resident
+                        {% elif response.data.visaStatus == 'ForeignNationalWithAValidVisa' %}
+                            Foreign national with a valid visa
+                        {% endif %}
+                        </td>
+                        {% if brief.data.securityClearance == 'mustHave'%}
+                            <td>{{ response.data.get('securityClearance', 'Unknown') }}</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>

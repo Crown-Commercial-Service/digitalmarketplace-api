@@ -151,13 +151,19 @@ def get_suppliers():
     """
     keyword = request.args.get('keyword') or ''
     category = request.args.get('category') or ''
+    all_suppliers = request.args.get('all') or ''
     if keyword:
         results = suppliers.get_suppliers_by_name_keyword(keyword,
                                                           framework_slug='digital-marketplace',
                                                           category=category)
         supplier_results = []
         for result in results:
-            if len(result.assessed_domains) > 0:
+            if all_suppliers:
+                supplier = {}
+                supplier['name'] = result.name
+                supplier['code'] = result.code
+                supplier_results.append(supplier)
+            elif len(result.assessed_domains) > 0:
                 if category:
                     domain = domain_service.get_by_name_or_id(int(category))
                     if not domain or domain.name not in result.assessed_domains:

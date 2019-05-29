@@ -28,6 +28,7 @@ from ...brief_utils import (
 from ...datetime_utils import parse_time_of_day, combine_date_and_time
 from app.emails.briefs import (
     send_brief_closed_email,
+    send_specialist_brief_closed_email,
     send_seller_requested_feedback_from_buyer_email
 )
 
@@ -335,6 +336,7 @@ def update_brief_admin(brief_id):
     if applications_closed_at:
         if (brief.closed_at <= pendulum.today()):
             send_brief_closed_email(brief)
+            send_specialist_brief_closed_email(brief)
 
     return jsonify(briefs=brief.serialize(with_users=True)), 200
 

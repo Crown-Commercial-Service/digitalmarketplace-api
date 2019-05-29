@@ -94,6 +94,7 @@
 
         .au-table.au-table--small th, .au-table.au-table--small td {
             padding: 1rem;
+            white-space: pre-line;
         }
 
         .au-table th {
@@ -104,7 +105,7 @@
             border-bottom: solid 1px #e0e0e0;
         }
 
-        .au-table__body td.criterion {
+        .au-table__body td.criterion td.weighting {
             padding-right: 1.5rem;
             vertical-align: top;
         }
@@ -120,6 +121,10 @@
 
         .criteria-column {
             width: 30%;
+        }
+
+        .weighting-column {
+            width: 100px;
         }
 
         .desirable-table {
@@ -145,42 +150,52 @@
                     <table>
                         <thead>
                             <tr class="au-table__header">
+                                {% if brief.data.includeWeightingsEssential %}
+                                    <th class="weighting-column" scope="col">Weighting</th>
+                                {% endif %}
                                 <th class="criteria-column" scope="col">Essential selection criteria</th>
                                 <th scope="col">Response</th>
                             </tr>
                         </thead>
                         <tbody>
-                        {% for essential_response in candidate.essential_responses %}
-                            {% set criterion, response = essential_response %}
+                        {% for essential_requirement in essential_requirements %}
                             <tr class="au-table__body">
-                                <td class="criterion">{{ criterion }}</td>
-                                <td class="response">{{ response }}</td>
+                                {% if brief.data.includeWeightingsEssential %}
+                                    <td class="weighting">{{ essential_requirement.weighting }}%</td>
+                                {% endif %}
+                                <td class="criterion">{{ essential_requirement.criteria }}</td>
+                                <td class="response">{{ candidate.essential_requirement_responses[essential_requirement.criteria] }}</td>
                             </tr>
                         {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                <div class="au-table au-body au-table--small au-table--responsive au-table--striped desirable-table">
-                    <table>
-                        <thead>
-                            <tr class="au-table__header">
-                                <th class="criteria-column" scope="col">Desirable selection criteria</th>
-                                <th scope="col">Response</th>
-                            </tr>
-                        </thead>
-                        <tbody>    
-                        {% for nice_to_have_response in candidate.nice_to_have_responses %}
-                            {% set criterion, response = nice_to_have_response %}
-                            {% if response %}
-                                <tr class="au-table__body">
-                                    <td class="criterion">{{ criterion }}</td>
-                                    <td class="response">{{ response }}</td>
+                {% if nice_to_have_requirements %}
+                    <div class="au-table au-body au-table--small au-table--responsive au-table--striped desirable-table">
+                        <table>
+                            <thead>
+                                <tr class="au-table__header">
+                                    {% if brief.data.includeWeightingsNiceToHave %}
+                                        <th class="weighting-column" scope="col">Weighting</th>
+                                    {% endif %}
+                                    <th class="criteria-column" scope="col">Desirable selection criteria</th>
+                                    <th scope="col">Response</th>
                                 </tr>
-                            {% endif %}
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>    
+                            {% for nice_to_have_requirement in nice_to_have_requirements %}
+                                <tr class="au-table__body">
+                                    {% if brief.data.includeWeightingsNiceToHave %}
+                                        <td class="weighting">{{ nice_to_have_requirement.weighting }}%</td>
+                                    {% endif %}
+                                    <td class="criterion">{{ nice_to_have_requirement.criteria }}</td>
+                                    <td class="response">{{ candidate.nice_to_have_requirement_responses[nice_to_have_requirement.criteria] }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
             {% endfor %}
         </div>
     </div>

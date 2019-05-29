@@ -1,4 +1,12 @@
-from app.api.services import application_service, assessments, domain_service, suppliers, brief_responses_service
+from app.api.services import (
+    application_service,
+    assessments,
+    domain_service,
+    suppliers,
+    lots_service,
+    brief_responses_service
+)
+from app.api.business.validators import SupplierValidator
 
 
 class BriefUserStatus(object):
@@ -62,7 +70,10 @@ class BriefUserStatus(object):
         return False
 
     def is_awaiting_application_assessment(self):
-        if application_service.get_submitted_application_ids(supplier_code=self.supplier_code):
+        if (
+            self.supplier_code and
+            application_service.get_submitted_application_ids(supplier_code=self.supplier_code)
+        ):
             return True
 
         if self.user_role == 'applicant':
@@ -72,24 +83,72 @@ class BriefUserStatus(object):
 
         return False
 
+    def is_invited(self):
+        if (
+            self.user_role == 'supplier' and (
+                self.brief.data.get('openTo', '') == 'all' or
+                str(self.supplier_code) in self.invited_sellers.keys() or (
+                    self.brief.data.get('openTo', '') == 'category' and (
+                        self.has_chosen_brief_category() or
+                        self.is_assessed_for_category()
+                    )
+                )
+            )
+        ):
+            return True
+        return False
+
     def has_been_assessed_for_brief(self):
         if self.supplier and assessments.supplier_has_assessment_for_brief(self.supplier_code, self.brief.id):
             return True
         return False
 
     def can_respond(self):
-        if (self.user_role == 'supplier' and
-            ((self.brief.data.get('openTo', '') == 'all' and self.is_assessed_in_any_category()) or
-             (self.brief.data.get('openTo', '') == 'category' and self.is_assessed_for_category()) or
-             str(self.supplier_code) in self.invited_sellers.keys())):
+        if (
+            self.user_role == 'supplier' and (
+                (
+                    self.brief.lot.slug == 'specialist' and
+                    self.brief.data.get('openTo', '') == 'all' and
+                    self.is_assessed_for_category()
+                ) or (
+                    self.brief.lot.slug != 'specialist' and
+                    (
+                        self.brief.data.get('openTo', '') == 'all' and
+                        self.is_assessed_in_any_category()
+                    ) or (
+                        self.brief.data.get('openTo', '') == 'category' and
+                        self.is_assessed_for_category()
+                    )
+                ) or (
+                    str(self.supplier_code) in self.invited_sellers.keys() and
+                    self.is_assessed_for_category()
+                )
+            )
+        ):
             return True
         return False
 
     def has_responded(self):
-        if (self.user_role == 'supplier' and
-            brief_responses_service.find(
+        if self.user_role == 'supplier':
+            brief_response_count = brief_responses_service.find(
                 supplier_code=self.supplier_code,
                 brief_id=self.brief.id,
-                withdrawn_at=None).count() > 0):
+                withdrawn_at=None
+            ).count()
+            lot = lots_service.find(
+                slug='specialist'
+            ).one_or_none()
+            if self.brief.lot_id == lot.id:
+                return brief_response_count >= int(self.brief.data.get('numberOfSuppliers', 0))
+            elif brief_response_count > 0:
+                return True
+        return False
+
+    def has_supplier_errors(self):
+        if self.user_role != 'supplier':
+            return False
+        supplier_validator = SupplierValidator(self.supplier)
+        messages = supplier_validator.validate_all()
+        if len(messages.errors) > 0:
             return True
         return False

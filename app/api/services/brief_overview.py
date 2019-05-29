@@ -65,10 +65,11 @@ class BriefOverviewService():
                         path,
                         section['name']))
 
-        # Review and publish is complete if the buyer has completed all sections and published
-        publish_completed = all([link['complete'] for link in links]) and not draft_brief
-        publish_path = self.get_path_for_brief_link(brief, '{path}/publish') if draft_brief else None
-        links.append(self.build_brief_link(publish_completed, publish_path, 'Review and publish your requirements'))
+        if brief.lot.slug == 'training':
+            # Review and publish is complete if the buyer has completed all sections and published
+            publish_completed = all([link['complete'] for link in links]) and not draft_brief
+            publish_path = self.get_path_for_brief_link(brief, '{path}/publish') if draft_brief else None
+            links.append(self.build_brief_link(publish_completed, publish_path, 'Review and publish your requirements'))
 
         return links
 
