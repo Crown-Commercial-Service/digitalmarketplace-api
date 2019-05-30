@@ -77,6 +77,8 @@ def copy_draft_service_from_existing_service(service_id):
     )
 
     if target_framework_id != service.framework.id:
+        # TODO: convert data['copiedFromServiceId'] to a foreign key field on the model, linking the new draft with the
+        # source service. That way if the draft is deleted, the relationship to the source service will also be removed.
         service.copied_to_following_framework = True
         draft.data['copiedFromServiceId'] = service_id
 
@@ -316,6 +318,7 @@ def delete_draft_service(draft_id):
     # a service is copied, it's removed from the list of available services to copy from.
     # Resetting the .copied_to_following_framework flag on the source when the copy is deleted allows
     # the user to try again with a fresh copy.
+    # TODO: remove this when draft.data['copiedFromServiceId'] is converted to a foreign key field
     source_service, source_service_audit = None, None
     if 'copiedFromServiceId' in draft.data:
         source_service_id = draft.data['copiedFromServiceId']
