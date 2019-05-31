@@ -57,6 +57,10 @@ def generate_brief_responses_csv(brief, responses):
                 answers.update({
                     'Holds a {} security clearance'.format(securityClearance): r.data.get('securityClearance', '')
                 })
+            else:
+                answers.update({
+                    'Security clearance': 'N/A'
+                })
 
             answers.update({'Contact number': r.supplier.data.get('contact_phone', 'UNKNOWN')})
         elif brief.lot.slug == 'digital-outcome':

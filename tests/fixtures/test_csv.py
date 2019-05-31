@@ -244,6 +244,7 @@ def test_csv_specialist_hourly_rate(app, briefs, brief_responses):
         u'Hourly rate (excluding GST),10',
         u'Eligibility to work,Australian citizen',
         u'Previous agency experience,Yes',
+        u'Security clearance,N/A',
         u'Contact number,123',
         u'ess critiera 1,ess criteria 1 answer',
         u'ess critiera 2,ess criteria 2 answer',
