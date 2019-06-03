@@ -332,11 +332,11 @@ def delete_draft_service(draft_id):
                 audit_type=AuditTypes.update_service,
                 user=updater_json['updated_by'],
                 data={
-                    "serviceId": draft.service_id,
-                    "supplierId": draft.supplier_id,
+                    "serviceId": source_service.service_id,
+                    "supplierId": source_service.supplier_id,
                     "copiedToFollowingFramework": False
                 },
-                db_object=None
+                db_object=source_service
             )
 
     audit = AuditEvent(
