@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 from flask import current_app
 
-from .util import render_email_template, send_or_handle_error
+from .util import render_email_template, send_or_handle_error, escape_markdown
 
 import rollbar
 
@@ -79,7 +79,7 @@ def send_specialist_brief_response_received_email(supplier, brief, brief_respons
             ess += "**{}. {}**\n\n{}\n\n".format(
                 i + 1,
                 req['criteria'],
-                brief_response.data['essentialRequirements'][req['criteria']]
+                escape_markdown(brief_response.data['essentialRequirements'][req['criteria']])
             )
             i += 1
 
@@ -90,7 +90,7 @@ def send_specialist_brief_response_received_email(supplier, brief, brief_respons
             nth += "**{}. {}**\n\n{}\n\n".format(
                 i + 1,
                 req['criteria'],
-                brief_response.data.get('niceToHaveRequirements', [])[req['criteria']]
+                escape_markdown(brief_response.data.get('niceToHaveRequirements', [])[req['criteria']])
                 if i < len(brief_response.data.get('niceToHaveRequirements', [])) else ''
             )
             i += 1
@@ -107,7 +107,7 @@ def send_specialist_brief_response_received_email(supplier, brief, brief_respons
             ):
                 criteriaResponses += "####• {}\n\n{}\n\n".format(
                     evaluationCriteria['criteria'],
-                    evaluationCriteriaResponses[evaluationCriteria['criteria']]
+                    escape_markdown(evaluationCriteriaResponses[evaluationCriteria['criteria']])
                 )
 
     attachments = ''
@@ -140,24 +140,24 @@ def send_specialist_brief_response_received_email(supplier, brief, brief_respons
 
         response_security_clearance = '\n**Holds a {} security clearance:** {}  '.format(
             must_have_clearance,
-            brief_response.data.get('securityClearance')
+            escape_markdown(brief_response.data.get('securityClearance'))
         )
 
     response_rates = ''
     response_rates_excluding_gst = ''
     if brief.data.get('preferredFormatForRates') == 'hourlyRate':
         response_rates = '**Hourly rate, including GST:** ${}'.format(
-            brief_response.data.get('hourRate')
+            escape_markdown(brief_response.data.get('hourRate'))
         )
         response_rates_excluding_gst = '**Hourly rate, excluding GST:** ${}'.format(
-            brief_response.data.get('hourRateExcludingGST')
+            escape_markdown(brief_response.data.get('hourRateExcludingGST'))
         )
     elif brief.data.get('preferredFormatForRates') == 'dailyRate':
         response_rates = '**Daily rate, including GST:** ${}'.format(
-            brief_response.data.get('dayRate')
+            escape_markdown(brief_response.data.get('dayRate'))
         )
         response_rates_excluding_gst = '**Daily rate, excluding GST:** ${}'.format(
-            brief_response.data.get('dayRateExcludingGST')
+            escape_markdown(brief_response.data.get('dayRateExcludingGST'))
         )
 
     response_visa_status = ''
@@ -180,12 +180,12 @@ def send_specialist_brief_response_received_email(supplier, brief, brief_respons
         resume=resume,
         attachments=attachments,
         closing_at=brief.closed_at.to_formatted_date_string(),
-        specialist_name=specialist_name,
+        specialist_name=escape_markdown(specialist_name),
         response_rates=response_rates,
         response_rates_excluding_gst=response_rates_excluding_gst,
-        response_previously_worked=brief_response.data.get('previouslyWorked'),
+        response_previously_worked=escape_markdown(brief_response.data.get('previouslyWorked')),
         response_security_clearance=response_security_clearance,
-        response_start_date=brief_response.data.get('availability'),
+        response_start_date=escape_markdown(brief_response.data.get('availability')),
         response_visa_status=response_visa_status
     )
 

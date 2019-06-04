@@ -1,4 +1,4 @@
-You submitted {{specialist_name}} successfully for [{{brief_name}} at {{brief_organisation}}]({{frontend_url}}/2/digital-marketplace/opportunities/{brief_id}).  
+You submitted {{specialist_name}} successfully for [{{brief_name}} at {{brief_organisation}}]({{brief_url}}).  
   
 ###Summary of responses:  
 **Earliest date {{specialist_name}} can start:** {{response_start_date}}  
