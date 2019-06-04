@@ -10,22 +10,7 @@ import rollbar
 
 
 def send_brief_response_received_email(supplier, brief, brief_response):
-    if brief.lot.slug in ['specialist']:
-        return
-
-    if brief.lot.slug == 'digital-outcome':
-        TEMPLATE_FILENAME = 'brief_response_submitted_outcome.md'
-    elif brief.lot.slug == 'training':
-        TEMPLATE_FILENAME = 'brief_response_submitted_training.md'
-    elif brief.lot.slug == 'rfx':
-        TEMPLATE_FILENAME = 'brief_response_submitted_rfx.md'
-    elif brief.lot.slug == 'atm':
-        TEMPLATE_FILENAME = 'brief_response_submitted_atm.md'
-    else:
-        TEMPLATE_FILENAME = 'brief_response_submitted.md'
-
     to_address = brief_response.data['respondToEmailAddress']
-    specialist_name = brief_response.data.get('specialistName', None)
 
     if brief.lot.slug == 'rfx' or brief.lot.slug == 'atm':
         brief_url = current_app.config['FRONTEND_ADDRESS'] + '/2/' + brief.framework.slug + '/opportunities/' \
@@ -33,62 +18,24 @@ def send_brief_response_received_email(supplier, brief, brief_response):
     else:
         brief_url = current_app.config['FRONTEND_ADDRESS'] + '/' + brief.framework.slug + '/opportunities/' \
             + str(brief.id)
-    attachment_url = current_app.config['FRONTEND_ADDRESS'] +\
-        '/api/2/brief/' + str(brief.id) + '/respond/documents/' + str(supplier.code) + '/'
+    ask_question_url = '{}/login?next=%2Fsellers%2Fopportunities%2F{}%2Fask-a-question'.format(
+        current_app.config['FRONTEND_ADDRESS'], brief.id
+    )
 
-    ess = ""
-    if brief_response.data.get('essentialRequirements', None):
-        i = 0
-        for req in brief.data['essentialRequirements']:
-            ess += "####• {}\n{}\n\n".format(req, brief_response.data['essentialRequirements'][i])
-            i += 1
-    nth = ""
-    if brief_response.data.get('niceToHaveRequirements', None):
-        i = 0
-        for req in brief.data['niceToHaveRequirements']:
-            nth += "####• {}\n{}\n\n".format(
-                req,
-                brief_response.data.get('niceToHaveRequirements', [])[i]
-                if i < len(brief_response.data.get('niceToHaveRequirements', [])) else ''
-            )
-            i += 1
-    criteriaResponses = ""
-    evaluationCriteriaResponses = brief_response.data.get('criteria', {})
-    if evaluationCriteriaResponses:
-        for evaluationCriteria in brief.data['evaluationCriteria']:
-            if 'criteria' in evaluationCriteria and\
-               evaluationCriteria['criteria'] in evaluationCriteriaResponses.keys():
-                criteriaResponses += "####• {}\n{}\n\n".format(
-                    evaluationCriteria['criteria'],
-                    evaluationCriteriaResponses[evaluationCriteria['criteria']]
-                )
-
-    attachments = ""
-    for attch in brief_response.data.get('attachedDocumentURL', []):
-        attachments += "####• [{}]({}{})\n\n".format(attch, attachment_url, attch)
-
-    subject = "We've received your application"
-    response_title = "How you responded"
-    if specialist_name:
-        subject = "{}'s application for opportunity ID {} has been received".format(specialist_name, brief.id)
-        response_title = "{}'s responses".format(specialist_name)
+    subject = "You've applied for {} successfully!"
+    brief_title = brief.data['title']
+    if len(brief_title) > 30:
+        brief_title = '{}...'.format(brief_title[:30])
+    subject = subject.format(brief_title)
 
     # prepare copy
     email_body = render_email_template(
-        TEMPLATE_FILENAME,
+        'brief_response_submitted.md',
         brief_url=brief_url,
-        brief_name=brief.data['title'],
-        essential_requirements=ess,
-        nice_to_have_requirements=nth,
-        criteria_responses=criteriaResponses,
-        attachments=attachments,
-        closing_at=brief.closed_at.to_formatted_date_string(),
-        specialist_name=specialist_name,
-        response_title=response_title,
-        brief_response=brief_response.data,
-        header='<div style="font-size: 1.8rem">'
-               '<span style="color: #007554;padding-right: 1rem;">✔</span>'
-               '<span>{}</span></div>'.format(subject)
+        ask_question_url=ask_question_url,
+        brief_title=brief_title,
+        supplier_name=supplier.name,
+        organisation=brief.data['organisation']
     )
 
     send_or_handle_error(

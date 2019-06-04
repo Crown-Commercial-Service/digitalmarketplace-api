@@ -1,4 +1,4 @@
-from jinja2 import Environment, PackageLoader, select_autoescape
+from jinja2 import Environment, PackageLoader, BaseLoader, sandbox, select_autoescape
 from .markdown_styler import markdown_with_inline_styles
 from flask import current_app, url_for, abort
 from dmutils.email import EmailError
@@ -43,6 +43,18 @@ def render_email_template(filename, **kwargs):
     rendered = markdown_with_inline_styles(md, styles)
     template = template_env.get_template('master.html')
     rendered = template.render(header=header, body=rendered)
+    return rendered
+
+
+def render_email_from_string(template, **kwargs):
+    header = kwargs.pop('header', '')
+    styles = kwargs.pop('styles', DEFAULT_STYLES)
+
+    sub = sandbox.SandboxedEnvironment(loader=BaseLoader).from_string(template)
+    md = sub.render(**kwargs)
+    rendered = markdown_with_inline_styles(md, styles)
+    master = template_env.get_template('master.html')
+    rendered = master.render(header=header, body=rendered)
     return rendered
 
 

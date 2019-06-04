@@ -1,17 +1,20 @@
-Congratulations! 
+Congratulations!
 
-{{business_name}} is now approved to offer {{domain_name}} in the Digital Marketplace. 
+We have completed an assessment you requested for {{domain_name}}.
 
-And this has now been updated on your [seller profile]({{url_seller_page}}).
+**Assessment result: APPROVED**
 
-You can now apply for [any open opportunities]({{url_latest_opportunities}}) that require {{domain_name}}. 
+This means you are now able to respond to relevant opportunities under {{domain_name}}.
 
-Thanks for being part of the Marketplace
+If you submitted case studies under other categories, we will notify you of the outcome after completing the assessment.
 
-The Digital Marketplace team
+[View your updated seller profile]({{url_seller_page}})
 
-[View the latest opportunities]({{url_latest_opportunities}})
+Best of luck on your search for new contracts!
 
-**Your feedback shapes the Marketplace**
+If you have any questions or need guidance, please [contact the Marketplace](https://marketplace.service.gov.au/contact-us).
 
-The Digital Marketplace is an agile development. This means it evolves over time in response to user needs. If you have any questions, feedback or would like to take part in user research, please email [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).
+Regards,  
+The Digital Marketplace team  
+Digital Transformation Agency  
+[marketplace.service.gov.au](https://marketplace.service.gov.au) | [dta.gov.au](https://dta.gov.au)

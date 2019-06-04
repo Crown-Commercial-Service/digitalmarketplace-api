@@ -1,30 +1,23 @@
-## Thanks for your request.
+Hi,
 
-### You have not yet applied for [{{brief_name}}]({{brief_url}}) as you need to be assessed in {{domain_name}} first.
+We received your request to assess your case study for {{domain_name}}.
 
-### What happens next:
+We will assess and review your case study against the [assessment criteria]({{assessment_criteria_url}}).
 
-- We’ve prioritised your request and the Marketplace assessors will review your case study as soon as possible.
-{% if brief_lot != 'atm' %}
-- Meanwhile, you can prepare your response using the [opportunity response template ({{brief_template_file_details}})]({{brief_template_url}}).
-{% endif %}
-- Requests received less than 2 business days before the opportunity deadline ({{brief_deadline}}) may not be completed in time.
+**If you are successful:**
 
-### If you are successful:
+  1. We will notify you of the outcome of the assessment by email once completed.
+  1. You can then log in to your account and open the opportunity page.
+  1. Select 'Apply for opportunity' to submit your response.
 
-- We will email you as soon as the assessment is done.
-- Click the apply button at the bottom of the opportunity to submit your response.
+**If you are not successful:**
 
-### If you are not successful:
+  * We will notify you the outcome of the assessment and include feedback by email.
+  * You can update your case study and resubmit for assessment.
 
-- We will email you as soon as the assessment is done and include feedback.
-- You can update your case study and resubmit.
+If you have any questions or need guidance, please [contact the Marketplace](https://marketplace.service.gov.au/contact-us).
 
-### Need help?
-
-Read the [support guides and FAQs](https://marketplace1.zendesk.com/hc/en-gb/categories/115001540368-Seller-guide-and-FAQs) or [contact us](https://marketplace1.zendesk.com/hc/en-gb/requests/new)
-
-Thanks,
-The Digital Marketplace team.
-
-[Terms of Use](https://marketplace.service.gov.au/terms-of-use) | [Privacy](https://marketplace.service.gov.au/privacy-policy) | [Copyright](https://marketplace.service.gov.au/copyright)
+Regards,  
+The Digital Marketplace team  
+Digital Transformation Agency  
+[marketplace.service.gov.au](https://marketplace.service.gov.au) | [dta.gov.au](https://dta.gov.au)
