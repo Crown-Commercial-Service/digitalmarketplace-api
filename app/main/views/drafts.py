@@ -77,7 +77,10 @@ def copy_draft_service_from_existing_service(service_id):
     )
 
     if target_framework_id != service.framework.id:
+        # TODO: convert data['copiedFromServiceId'] to a foreign key field on the model, linking the new draft with the
+        # source service. That way if the draft is deleted, the relationship to the source service will also be removed.
         service.copied_to_following_framework = True
+        draft.data['copiedFromServiceId'] = service_id
 
     db.session.add(draft, service)
     db.session.flush()
@@ -300,7 +303,7 @@ def fetch_draft_service(draft_id):
 @main.route('/draft-services/<int:draft_id>', methods=['DELETE'])
 def delete_draft_service(draft_id):
     """
-    Delete a draft service
+    Delete a draft service and (if applicable) reset the service it was copied from
     :param draft_id:
     :return:
     """
@@ -310,6 +313,31 @@ def delete_draft_service(draft_id):
     draft = DraftService.query.filter(
         DraftService.id == draft_id
     ).first_or_404()
+
+    # Reset the source service - there should be a maximum of 1 copy per source service, as once
+    # a service is copied, it's removed from the list of available services to copy from.
+    # Resetting the .copied_to_following_framework flag on the source when the copy is deleted allows
+    # the user to try again with a fresh copy.
+    # TODO: remove this when draft.data['copiedFromServiceId'] is converted to a foreign key field
+    source_service, source_service_audit = None, None
+    if 'copiedFromServiceId' in draft.data:
+        source_service_id = draft.data['copiedFromServiceId']
+        source_service = Service.query.filter(
+            Service.service_id == source_service_id,
+            Service.copied_to_following_framework == True  # noqa
+        ).first()
+        if source_service:
+            source_service.copied_to_following_framework = False
+            source_service_audit = AuditEvent(
+                audit_type=AuditTypes.update_service,
+                user=updater_json['updated_by'],
+                data={
+                    "serviceId": source_service.service_id,
+                    "supplierId": source_service.supplier_id,
+                    "copiedToFollowingFramework": False
+                },
+                db_object=source_service
+            )
 
     audit = AuditEvent(
         audit_type=AuditTypes.delete_draft_service,
@@ -324,6 +352,9 @@ def delete_draft_service(draft_id):
 
     db.session.delete(draft)
     db.session.add(audit)
+    if source_service:
+        db.session.add(source_service)
+        db.session.add(source_service_audit)
     try:
         db.session.commit()
     except IntegrityError as e:

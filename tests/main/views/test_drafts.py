@@ -211,6 +211,7 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
         data = json.loads(res.get_data())
         assert res.status_code == 201
         assert data['services']['frameworkSlug'] == 'g-cloud-7'
+        assert data['services']['copiedFromServiceId'] == self.service_id
         assert 'serviceId' not in data['services']
 
     def test_should_404_if_target_framework_does_not_exist(self):
@@ -271,7 +272,11 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             DraftService.framework_id == 4,
         ).first()
 
-        assert {'serviceBenefits', 'termsAndConditionsDocumentURL'} == set(draft.data.keys())
+        assert set(draft.data.keys()) == {
+            'serviceBenefits',
+            'termsAndConditionsDocumentURL',
+            'copiedFromServiceId'
+        }
 
     def test_source_service_is_marked_as_copied_after_copy_to_new_framework(self):
         pre_copy_source_service = Service.query.first()
@@ -286,6 +291,8 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             }),
             content_type='application/json')
         assert res.status_code == 201
+        # Source Service ID present in newly created draft
+        assert json.loads(res.get_data())['services']['copiedFromServiceId'] == self.service_id
 
         post_copy_source_service = Service.query.first()
         assert post_copy_source_service.copied_to_following_framework is True
@@ -301,6 +308,8 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             }),
             content_type='application/json')
         assert res.status_code == 201
+        # Source Service ID not present in newly created draft
+        assert json.loads(res.get_data())['services'].get('copiedFromServiceId') is None
 
         post_copy_source_service = Service.query.first()
         assert post_copy_source_service.copied_to_following_framework is False
@@ -1090,7 +1099,8 @@ class TestDraftServices(DraftsHelpersMixin):
             content_type='application/json')
         assert res.status_code == 404
 
-    def test_should_delete_a_draft(self):
+    def test_should_delete_a_draft_copied_from_same_framework(self):
+        # Create a new draft by copying from the same framework
         res = self.client.put(
             '/draft-services/copy-from/{}'.format(self.service_id),
             data=json.dumps(self.updater_json),
@@ -1099,12 +1109,15 @@ class TestDraftServices(DraftsHelpersMixin):
         draft_id = json.loads(res.get_data())['services']['id']
         fetch = self.client.get('/draft-services/{}'.format(draft_id))
         assert fetch.status_code == 200
+
+        # Delete the draft
         delete = self.client.delete(
             '/draft-services/{}'.format(draft_id),
             data=json.dumps(self.updater_json),
             content_type='application/json')
         assert delete.status_code == 200
 
+        # Check the audit events
         audit_response = self.client.get('/audit-events')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
@@ -1115,8 +1128,60 @@ class TestDraftServices(DraftsHelpersMixin):
         assert data['auditEvents'][1]['type'] == 'delete_draft_service'
         assert data['auditEvents'][1]['data']['serviceId'] == self.service_id
 
+        # Check the draft has gone
         fetch_again = self.client.get('/draft-services/{}'.format(draft_id))
         assert fetch_again.status_code == 404
+
+    def test_should_delete_a_draft_copied_from_a_different_framework(self):
+        # Create a new draft by copying from the same framework
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps({
+                **self.updater_json,
+                **self.basic_questions_json,
+                'targetFramework': 'g-cloud-7'
+            }),
+            content_type='application/json')
+        assert res.status_code == 201
+        draft_id = json.loads(res.get_data())['services']['id']
+
+        # Check that the source service ID is there
+        fetch = self.client.get('/draft-services/{}'.format(draft_id))
+        assert fetch.status_code == 200
+        assert json.loads(fetch.get_data())['services']['copiedFromServiceId'] == self.service_id
+
+        # Check that the flag has been set on the source service
+        source_service = self.client.get('/services/{}'.format(self.service_id))
+        assert json.loads(source_service.get_data())['services']['copiedToFollowingFramework'] is True
+
+        # Reset audit events - we're only interested in the post-delete audits
+        AuditEvent.query.delete()
+        db.session.commit()
+
+        # Delete the draft
+        delete = self.client.delete(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(self.updater_json),
+            content_type='application/json')
+        assert delete.status_code == 200
+
+        # Check the audit events
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data())
+
+        assert len(data['auditEvents']) == 2
+        assert data['auditEvents'][0]['type'] == 'delete_draft_service'
+        assert data['auditEvents'][1]['type'] == 'update_service'
+        assert data['auditEvents'][1]['data']['copiedToFollowingFramework'] is False
+
+        # Check the draft has gone
+        fetch_again = self.client.get('/draft-services/{}'.format(draft_id))
+        assert fetch_again.status_code == 404
+
+        # Check that the source service's flag has been reset
+        source_service = self.client.get('/services/{}'.format(self.service_id))
+        assert json.loads(source_service.get_data())['services']['copiedToFollowingFramework'] is False
 
     def test_delete_catches_db_integrity_error(self):
         res = self.client.put(
