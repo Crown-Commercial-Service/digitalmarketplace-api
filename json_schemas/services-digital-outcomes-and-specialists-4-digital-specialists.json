@@ -1,0 +1,1086 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "anyOf": [
+    {
+      "required": [
+        "agileCoachLocations",
+        "agileCoachPriceMax",
+        "agileCoachPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "businessAnalystLocations",
+        "businessAnalystPriceMax",
+        "businessAnalystPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "communicationsManagerLocations",
+        "communicationsManagerPriceMax",
+        "communicationsManagerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "accessibleApplicationsSpecialists",
+        "contentDesignerLocations",
+        "contentDesignerPriceMax",
+        "contentDesignerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "dataArchitectLocations",
+        "dataArchitectPriceMax",
+        "dataArchitectPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "dataEngineerLocations",
+        "dataEngineerPriceMax",
+        "dataEngineerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "dataScientistLocations",
+        "dataScientistPriceMax",
+        "dataScientistPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "deliveryManagerLocations",
+        "deliveryManagerPriceMax",
+        "deliveryManagerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "accessibleApplicationsSpecialists",
+        "designerLocations",
+        "designerPriceMax",
+        "designerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "accessibleApplicationsSpecialists",
+        "developerLocations",
+        "developerPriceMax",
+        "developerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "performanceAnalystLocations",
+        "performanceAnalystPriceMax",
+        "performanceAnalystPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "portfolioManagerLocations",
+        "portfolioManagerPriceMax",
+        "portfolioManagerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "productManagerLocations",
+        "productManagerPriceMax",
+        "productManagerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "programmeManagerLocations",
+        "programmeManagerPriceMax",
+        "programmeManagerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "accessibleApplicationsSpecialists",
+        "qualityAssuranceLocations",
+        "qualityAssurancePriceMax",
+        "qualityAssurancePriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "securityConsultantLocations",
+        "securityConsultantPriceMax",
+        "securityConsultantPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "accessibleApplicationsSpecialists",
+        "serviceManagerLocations",
+        "serviceManagerPriceMax",
+        "serviceManagerPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "accessibleApplicationsSpecialists",
+        "technicalArchitectLocations",
+        "technicalArchitectPriceMax",
+        "technicalArchitectPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "userResearcherLocations",
+        "userResearcherPriceMax",
+        "userResearcherPriceMin"
+      ],
+      "title": "specialist"
+    },
+    {
+      "required": [
+        "accessibleApplicationsSpecialists",
+        "webOperationsLocations",
+        "webOperationsPriceMax",
+        "webOperationsPriceMin"
+      ],
+      "title": "specialist"
+    }
+  ],
+  "dependencies": {
+    "accessibleApplicationsSpecialists": [
+      "webOperationsLocations",
+      "webOperationsPriceMax",
+      "webOperationsPriceMin"
+    ],
+    "agileCoachLocations": [
+      "agileCoachPriceMax",
+      "agileCoachPriceMin"
+    ],
+    "agileCoachPriceMax": [
+      "agileCoachLocations",
+      "agileCoachPriceMin"
+    ],
+    "agileCoachPriceMin": [
+      "agileCoachLocations",
+      "agileCoachPriceMax"
+    ],
+    "businessAnalystLocations": [
+      "businessAnalystPriceMax",
+      "businessAnalystPriceMin"
+    ],
+    "businessAnalystPriceMax": [
+      "businessAnalystLocations",
+      "businessAnalystPriceMin"
+    ],
+    "businessAnalystPriceMin": [
+      "businessAnalystLocations",
+      "businessAnalystPriceMax"
+    ],
+    "communicationsManagerLocations": [
+      "communicationsManagerPriceMax",
+      "communicationsManagerPriceMin"
+    ],
+    "communicationsManagerPriceMax": [
+      "communicationsManagerLocations",
+      "communicationsManagerPriceMin"
+    ],
+    "communicationsManagerPriceMin": [
+      "communicationsManagerLocations",
+      "communicationsManagerPriceMax"
+    ],
+    "contentDesignerLocations": [
+      "accessibleApplicationsSpecialists",
+      "contentDesignerPriceMax",
+      "contentDesignerPriceMin"
+    ],
+    "contentDesignerPriceMax": [
+      "accessibleApplicationsSpecialists",
+      "contentDesignerLocations",
+      "contentDesignerPriceMin"
+    ],
+    "contentDesignerPriceMin": [
+      "accessibleApplicationsSpecialists",
+      "contentDesignerLocations",
+      "contentDesignerPriceMax"
+    ],
+    "dataArchitectLocations": [
+      "dataArchitectPriceMax",
+      "dataArchitectPriceMin"
+    ],
+    "dataArchitectPriceMax": [
+      "dataArchitectLocations",
+      "dataArchitectPriceMin"
+    ],
+    "dataArchitectPriceMin": [
+      "dataArchitectLocations",
+      "dataArchitectPriceMax"
+    ],
+    "dataEngineerLocations": [
+      "dataEngineerPriceMax",
+      "dataEngineerPriceMin"
+    ],
+    "dataEngineerPriceMax": [
+      "dataEngineerLocations",
+      "dataEngineerPriceMin"
+    ],
+    "dataEngineerPriceMin": [
+      "dataEngineerLocations",
+      "dataEngineerPriceMax"
+    ],
+    "dataScientistLocations": [
+      "dataScientistPriceMax",
+      "dataScientistPriceMin"
+    ],
+    "dataScientistPriceMax": [
+      "dataScientistLocations",
+      "dataScientistPriceMin"
+    ],
+    "dataScientistPriceMin": [
+      "dataScientistLocations",
+      "dataScientistPriceMax"
+    ],
+    "deliveryManagerLocations": [
+      "deliveryManagerPriceMax",
+      "deliveryManagerPriceMin"
+    ],
+    "deliveryManagerPriceMax": [
+      "deliveryManagerLocations",
+      "deliveryManagerPriceMin"
+    ],
+    "deliveryManagerPriceMin": [
+      "deliveryManagerLocations",
+      "deliveryManagerPriceMax"
+    ],
+    "designerLocations": [
+      "accessibleApplicationsSpecialists",
+      "designerPriceMax",
+      "designerPriceMin"
+    ],
+    "designerPriceMax": [
+      "accessibleApplicationsSpecialists",
+      "designerLocations",
+      "designerPriceMin"
+    ],
+    "designerPriceMin": [
+      "accessibleApplicationsSpecialists",
+      "designerLocations",
+      "designerPriceMax"
+    ],
+    "developerLocations": [
+      "accessibleApplicationsSpecialists",
+      "developerPriceMax",
+      "developerPriceMin"
+    ],
+    "developerPriceMax": [
+      "accessibleApplicationsSpecialists",
+      "developerLocations",
+      "developerPriceMin"
+    ],
+    "developerPriceMin": [
+      "accessibleApplicationsSpecialists",
+      "developerLocations",
+      "developerPriceMax"
+    ],
+    "performanceAnalystLocations": [
+      "performanceAnalystPriceMax",
+      "performanceAnalystPriceMin"
+    ],
+    "performanceAnalystPriceMax": [
+      "performanceAnalystLocations",
+      "performanceAnalystPriceMin"
+    ],
+    "performanceAnalystPriceMin": [
+      "performanceAnalystLocations",
+      "performanceAnalystPriceMax"
+    ],
+    "portfolioManagerLocations": [
+      "portfolioManagerPriceMax",
+      "portfolioManagerPriceMin"
+    ],
+    "portfolioManagerPriceMax": [
+      "portfolioManagerLocations",
+      "portfolioManagerPriceMin"
+    ],
+    "portfolioManagerPriceMin": [
+      "portfolioManagerLocations",
+      "portfolioManagerPriceMax"
+    ],
+    "productManagerLocations": [
+      "productManagerPriceMax",
+      "productManagerPriceMin"
+    ],
+    "productManagerPriceMax": [
+      "productManagerLocations",
+      "productManagerPriceMin"
+    ],
+    "productManagerPriceMin": [
+      "productManagerLocations",
+      "productManagerPriceMax"
+    ],
+    "programmeManagerLocations": [
+      "programmeManagerPriceMax",
+      "programmeManagerPriceMin"
+    ],
+    "programmeManagerPriceMax": [
+      "programmeManagerLocations",
+      "programmeManagerPriceMin"
+    ],
+    "programmeManagerPriceMin": [
+      "programmeManagerLocations",
+      "programmeManagerPriceMax"
+    ],
+    "qualityAssuranceLocations": [
+      "accessibleApplicationsSpecialists",
+      "qualityAssurancePriceMax",
+      "qualityAssurancePriceMin"
+    ],
+    "qualityAssurancePriceMax": [
+      "accessibleApplicationsSpecialists",
+      "qualityAssuranceLocations",
+      "qualityAssurancePriceMin"
+    ],
+    "qualityAssurancePriceMin": [
+      "accessibleApplicationsSpecialists",
+      "qualityAssuranceLocations",
+      "qualityAssurancePriceMax"
+    ],
+    "securityConsultantLocations": [
+      "securityConsultantPriceMax",
+      "securityConsultantPriceMin"
+    ],
+    "securityConsultantPriceMax": [
+      "securityConsultantLocations",
+      "securityConsultantPriceMin"
+    ],
+    "securityConsultantPriceMin": [
+      "securityConsultantLocations",
+      "securityConsultantPriceMax"
+    ],
+    "serviceManagerLocations": [
+      "accessibleApplicationsSpecialists",
+      "serviceManagerPriceMax",
+      "serviceManagerPriceMin"
+    ],
+    "serviceManagerPriceMax": [
+      "accessibleApplicationsSpecialists",
+      "serviceManagerLocations",
+      "serviceManagerPriceMin"
+    ],
+    "serviceManagerPriceMin": [
+      "accessibleApplicationsSpecialists",
+      "serviceManagerLocations",
+      "serviceManagerPriceMax"
+    ],
+    "technicalArchitectLocations": [
+      "accessibleApplicationsSpecialists",
+      "technicalArchitectPriceMax",
+      "technicalArchitectPriceMin"
+    ],
+    "technicalArchitectPriceMax": [
+      "accessibleApplicationsSpecialists",
+      "technicalArchitectLocations",
+      "technicalArchitectPriceMin"
+    ],
+    "technicalArchitectPriceMin": [
+      "accessibleApplicationsSpecialists",
+      "technicalArchitectLocations",
+      "technicalArchitectPriceMax"
+    ],
+    "userResearcherLocations": [
+      "userResearcherPriceMax",
+      "userResearcherPriceMin"
+    ],
+    "userResearcherPriceMax": [
+      "userResearcherLocations",
+      "userResearcherPriceMin"
+    ],
+    "userResearcherPriceMin": [
+      "userResearcherLocations",
+      "userResearcherPriceMax"
+    ],
+    "webOperationsLocations": [
+      "accessibleApplicationsSpecialists",
+      "webOperationsPriceMax",
+      "webOperationsPriceMin"
+    ],
+    "webOperationsPriceMax": [
+      "accessibleApplicationsSpecialists",
+      "webOperationsLocations",
+      "webOperationsPriceMin"
+    ],
+    "webOperationsPriceMin": [
+      "accessibleApplicationsSpecialists",
+      "webOperationsLocations",
+      "webOperationsPriceMax"
+    ]
+  },
+  "properties": {
+    "accessibleApplicationsSpecialists": {
+      "type": "boolean"
+    },
+    "agileCoachLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "agileCoachPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "agileCoachPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "bespokeSystemInformation": {
+      "type": "boolean"
+    },
+    "businessAnalystLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "businessAnalystPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "businessAnalystPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "communicationsManagerLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "communicationsManagerPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "communicationsManagerPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "contentDesignerLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "contentDesignerPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "contentDesignerPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "dataArchitectLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataArchitectPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "dataArchitectPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "dataEngineerLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataEngineerPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "dataEngineerPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "dataProtocols": {
+      "type": "boolean"
+    },
+    "dataScientistLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataScientistPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "dataScientistPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "deliveryManagerLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "deliveryManagerPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "deliveryManagerPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "designerLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "designerPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "designerPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "developerLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "developerPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "developerPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "helpGovernmentImproveServices": {
+      "type": "boolean"
+    },
+    "openStandardsPrinciples": {
+      "type": "boolean"
+    },
+    "performanceAnalystLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "performanceAnalystPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "performanceAnalystPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "portfolioManagerLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "portfolioManagerPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "portfolioManagerPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "productManagerLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "productManagerPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "productManagerPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "programmeManagerLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "programmeManagerPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "programmeManagerPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "qualityAssuranceLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "qualityAssurancePriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "qualityAssurancePriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "securityConsultantLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "securityConsultantPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "securityConsultantPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "serviceManagerLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "serviceManagerPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "serviceManagerPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "technicalArchitectLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "technicalArchitectPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "technicalArchitectPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "userResearcherLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "userResearcherPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "userResearcherPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "webOperationsLocations": {
+      "items": {
+        "enum": [
+          "Offsite",
+          "Scotland",
+          "North East England",
+          "North West England",
+          "Yorkshire and the Humber",
+          "East Midlands",
+          "West Midlands",
+          "East of England",
+          "Wales",
+          "London",
+          "South East England",
+          "South West England",
+          "Northern Ireland"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "webOperationsPriceMax": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "webOperationsPriceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "bespokeSystemInformation",
+    "dataProtocols",
+    "helpGovernmentImproveServices",
+    "openStandardsPrinciples"
+  ],
+  "title": "Digital Outcomes and Specialists 4 Digital specialists Service Schema",
+  "type": "object"
+}
