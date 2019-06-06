@@ -440,7 +440,9 @@
   },
   "properties": {
     "accessibleApplicationsSpecialists": {
-      "type": "boolean"
+      "enum": [
+        true
+      ]
     },
     "agileCoachLocations": {
       "items": {
@@ -474,7 +476,9 @@
       "type": "string"
     },
     "bespokeSystemInformation": {
-      "type": "boolean"
+      "enum": [
+        true
+      ]
     },
     "businessAnalystLocations": {
       "items": {
@@ -632,7 +636,9 @@
       "type": "string"
     },
     "dataProtocols": {
-      "type": "boolean"
+      "enum": [
+        true
+      ]
     },
     "dataScientistLocations": {
       "items": {
@@ -759,10 +765,14 @@
       "type": "string"
     },
     "helpGovernmentImproveServices": {
-      "type": "boolean"
+      "enum": [
+        true
+      ]
     },
     "openStandardsPrinciples": {
-      "type": "boolean"
+      "enum": [
+        true
+      ]
     },
     "performanceAnalystLocations": {
       "items": {

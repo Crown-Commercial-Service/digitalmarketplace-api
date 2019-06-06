@@ -53,13 +53,19 @@
   ],
   "properties": {
     "accessibleApplicationsOutcomes": {
-      "type": "boolean"
+      "enum": [
+        true
+      ]
     },
     "bespokeSystemInformation": {
-      "type": "boolean"
+      "enum": [
+        true
+      ]
     },
     "dataProtocols": {
-      "type": "boolean"
+      "enum": [
+        true
+      ]
     },
     "deliveryTypes": {
       "items": {
@@ -80,7 +86,9 @@
       "uniqueItems": true
     },
     "helpGovernmentImproveServices": {
-      "type": "boolean"
+      "enum": [
+        true
+      ]
     },
     "locations": {
       "items": {
@@ -106,7 +114,9 @@
       "uniqueItems": true
     },
     "openStandardsPrinciples": {
-      "type": "boolean"
+      "enum": [
+        true
+      ]
     },
     "performanceAnalysisTypes": {
       "items": {
