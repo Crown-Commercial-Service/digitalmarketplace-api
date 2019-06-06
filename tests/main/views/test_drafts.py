@@ -983,6 +983,25 @@ class TestDraftServices(DraftsHelpersMixin):
         assert 'serviceName' not in updated_draft
         assert 'serviceBenefits' not in updated_draft
 
+    def test_update_draft_should_ignore_copiedfromserviceid_field(self):
+        draft_id = self.create_draft_service()['id']
+
+        res = self.client.get('/draft-services/{}'.format(draft_id))
+        submitted_draft = json.loads(res.get_data())['services']
+        submitted_draft['copiedFromServiceId'] = "123456789"
+
+        draft_update_json = self.updater_json.copy()
+        draft_update_json['services'] = submitted_draft
+
+        res2 = self.client.post(
+            '/draft-services/{}'.format(draft_id),
+            data=json.dumps(draft_update_json),
+            content_type='application/json')
+        updated_draft = json.loads(res2.get_data())['services']
+
+        assert res2.status_code == 200
+        assert 'copiedFromServiceId' in updated_draft
+
     def test_update_draft_catches_db_integrity_error(self):
         draft_id = self.create_draft_service()['id']
         draft_update_json = self.updater_json.copy()
