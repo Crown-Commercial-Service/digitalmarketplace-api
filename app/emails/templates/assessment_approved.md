@@ -6,7 +6,7 @@ We have completed an assessment you requested for {{domain_name}}.
 
 This means you are now able to respond to relevant opportunities under {{domain_name}}.
 
-If you submitted case studies under other categories, we will notify you of the outcome after completing the assessment.
+If you submitted case studies under other categories, we will notify you of the outcome after completing a separate assessment.
 
 [View your updated seller profile]({{url_seller_page}})
 
