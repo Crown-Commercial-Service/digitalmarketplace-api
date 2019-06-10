@@ -82,8 +82,14 @@ def validate_service_data(service, enforce_required=True, required_fields=None):
 
 
 def get_service_validation_errors(service, enforce_required=True, required_fields=None):
+    # TODO: remove this when draft.data['copiedFromServiceId'] is converted to a foreign key field
+    data_to_validate = service.data.copy()
+    if 'copiedFromServiceId' in data_to_validate:
+        data_to_validate.pop('copiedFromServiceId')
+
     return get_validation_errors(
-        _get_validator_name(service), service.data,
+        _get_validator_name(service),
+        data_to_validate,
         enforce_required=enforce_required,
         required_fields=required_fields
     )
