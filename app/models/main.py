@@ -22,6 +22,7 @@ from sqlalchemy.sql.expression import (
     case as sql_case,
     cast as sql_cast,
     select as sql_select,
+    true as sql_true,
     false as sql_false,
     null as sql_null,
     and_ as sql_and,
@@ -519,6 +520,11 @@ class SupplierFramework(db.Model):
         db.ForeignKey('frameworks.id'),
         nullable=True,
     )
+
+    # whether to allow *this* declaration to be reused by *other* SupplierFrameworks
+    # this flag allows us to disable reuse of specific declarations if e.g. they were only
+    # pragmatically allowed on the framework by the framework owner.
+    allow_declaration_reuse = db.Column(db.Boolean, nullable=False, default=True, server_default=sql_true())
 
     # Suppliers must confirm that their details are accurate for every framework application they make.
     # The flag `company_details_confirmed` is set on the Supplier object the first time a supplier confirms their
