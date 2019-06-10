@@ -161,6 +161,9 @@ class DirectAwardSearchResultEntry(db.Model):
         db.UniqueConstraint(
             archived_service_id,
             search_id,
-            name="uq_direct_award_search_result_entries_archived_service_id_search_id",
+            # full desired name uq_direct_award_search_result_entries_archived_service_id_search_id but if
+            # we truncate it ourselves we save ourselves from getting spurious automatic migrations due to
+            # alembic not fully understanding postgres' name limitations.
+            name="uq_direct_award_search_result_entries_archived_service_id_searc",
         ),
     )
