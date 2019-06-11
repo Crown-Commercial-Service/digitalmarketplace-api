@@ -645,6 +645,7 @@ class SupplierFramework(db.Model):
                 self.prefill_declaration_from_framework and self.prefill_declaration_from_framework.slug
             ),
             "applicationCompanyDetailsConfirmed": self.application_company_details_confirmed,
+            "allowDeclarationReuse": self.allow_declaration_reuse,
         }
         if with_declaration:
             supplier_framework.update({

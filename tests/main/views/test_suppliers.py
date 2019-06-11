@@ -1755,73 +1755,71 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
         response = self.client.get('/suppliers/1/frameworks')
         data = json.loads(response.get_data())
         assert response.status_code == 200
-        assert (
-            data ==
-            {
-                'frameworkInterest': [
-                    {
-                        'agreedVariations': {},
-                        'agreementDetails': None,
-                        'agreementId': None,
-                        'agreementPath': None,
-                        'agreementReturned': False,
-                        'agreementReturnedAt': None,
-                        'agreementStatus': None,
-                        'applicationCompanyDetailsConfirmed': False,
-                        'complete_drafts_count': 1,
-                        'countersigned': False,
-                        'countersignedAt': None,
-                        'countersignedDetails': None,
-                        'countersignedPath': None,
-                        'declaration': {},
-                        'drafts_count': 1,
-                        'frameworkFamily': 'g-cloud',
-                        'frameworkFramework': 'g-cloud',
-                        'frameworkSlug': 'g-cloud-6',
-                        'onFramework': False,
-                        'prefillDeclarationFromFrameworkSlug': None,
-                        'services_count': 0,
-                        'supplierId': 1,
-                        'supplierName': 'Supplier 1',
-                    }
-                ]
-            })
+        assert data == {
+            'frameworkInterest': [
+                {
+                    'agreedVariations': {},
+                    'agreementDetails': None,
+                    'agreementId': None,
+                    'agreementPath': None,
+                    'agreementReturned': False,
+                    'agreementReturnedAt': None,
+                    'agreementStatus': None,
+                    'allowDeclarationReuse': True,
+                    'applicationCompanyDetailsConfirmed': False,
+                    'complete_drafts_count': 1,
+                    'countersigned': False,
+                    'countersignedAt': None,
+                    'countersignedDetails': None,
+                    'countersignedPath': None,
+                    'declaration': {},
+                    'drafts_count': 1,
+                    'frameworkFamily': 'g-cloud',
+                    'frameworkFramework': 'g-cloud',
+                    'frameworkSlug': 'g-cloud-6',
+                    'onFramework': False,
+                    'prefillDeclarationFromFrameworkSlug': None,
+                    'services_count': 0,
+                    'supplierId': 1,
+                    'supplierName': 'Supplier 1',
+                }
+            ]
+        }
 
     def test_supplier_with_service(self):
         response = self.client.get('/suppliers/2/frameworks')
         data = json.loads(response.get_data())
         assert response.status_code == 200
-        assert (
-            data ==
-            {
-                'frameworkInterest': [
-                    {
-                        'agreedVariations': {},
-                        'agreementDetails': None,
-                        'agreementId': None,
-                        'agreementPath': None,
-                        'agreementReturned': False,
-                        'agreementReturnedAt': None,
-                        'agreementStatus': None,
-                        'applicationCompanyDetailsConfirmed': False,
-                        'complete_drafts_count': 0,
-                        'countersigned': False,
-                        'countersignedAt': None,
-                        'countersignedDetails': None,
-                        'countersignedPath': None,
-                        'declaration': {},
-                        'drafts_count': 0,
-                        'frameworkFamily': 'g-cloud',
-                        'frameworkFramework': 'g-cloud',
-                        'frameworkSlug': 'g-cloud-6',
-                        'onFramework': False,
-                        'prefillDeclarationFromFrameworkSlug': None,
-                        'services_count': 1,
-                        'supplierId': 2,
-                        'supplierName': 'Supplier 2',
-                    }
-                ]
-            })
+        assert data == {
+            'frameworkInterest': [
+                {
+                    'agreedVariations': {},
+                    'agreementDetails': None,
+                    'agreementId': None,
+                    'agreementPath': None,
+                    'agreementReturned': False,
+                    'agreementReturnedAt': None,
+                    'agreementStatus': None,
+                    'allowDeclarationReuse': True,
+                    'applicationCompanyDetailsConfirmed': False,
+                    'complete_drafts_count': 0,
+                    'countersigned': False,
+                    'countersignedAt': None,
+                    'countersignedDetails': None,
+                    'countersignedPath': None,
+                    'declaration': {},
+                    'drafts_count': 0,
+                    'frameworkFamily': 'g-cloud',
+                    'frameworkFramework': 'g-cloud',
+                    'frameworkSlug': 'g-cloud-6',
+                    'onFramework': False,
+                    'prefillDeclarationFromFrameworkSlug': None,
+                    'services_count': 1,
+                    'supplierId': 2,
+                    'supplierName': 'Supplier 2',
+                }
+            ]
+        }
 
     def test_supplier_with_no_drafts_or_services(self):
         response = self.client.get('/suppliers/3/frameworks')
@@ -1992,6 +1990,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             'agreementReturned': False,
             'agreementReturnedAt': None,
             'agreementStatus': None,
+            'allowDeclarationReuse': True,
             'applicationCompanyDetailsConfirmed': False,
             'countersigned': False,
             'countersignedAt': None,
@@ -2048,6 +2047,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             'agreementReturned': True,
             'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
             'agreementStatus': 'signed',
+            'allowDeclarationReuse': True,
             'applicationCompanyDetailsConfirmed': False,
             'countersigned': False,
             'countersignedAt': None,
@@ -2109,6 +2109,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             'agreementReturned': True,
             'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
             'agreementStatus': 'countersigned',
+            'allowDeclarationReuse': True,
             'applicationCompanyDetailsConfirmed': False,
             'countersigned': True,
             'countersignedAt': '2017-02-01T01:01:01.000000Z',
