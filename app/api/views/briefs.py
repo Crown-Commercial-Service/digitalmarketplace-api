@@ -690,11 +690,13 @@ def update_brief(brief_id):
                 data['sellerCategory'] = ''
         elif data['openTo'] in ['category', 'selected']:
             data['sellerSelector'] = 'someSellers'
-            brief_domain = (
-                domain_service.get_by_name_or_id(int(data['sellerCategory'])) if data['sellerCategory'] else None
-            )
+
+        if data['sellerCategory']:
+            brief_domain = domain_service.get_by_name_or_id(int(data['sellerCategory']))
             if brief_domain:
                 data['areaOfExpertise'] = brief_domain.name
+        else:
+            data['areaOfExpertise'] = ''
 
     previous_status = brief.status
     if publish:

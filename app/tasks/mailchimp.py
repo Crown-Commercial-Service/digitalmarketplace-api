@@ -236,7 +236,7 @@ def send_new_briefs_email():
     # gather the briefs
     open_briefs = briefs.get_open_briefs_published_since(since=last_run_time)
     briefs_atm = [x for x in open_briefs if x.lot.slug == 'atm']
-    briefs_professionals = [x for x in open_briefs if x.lot.slug == 'digital-professionals']
+    briefs_professionals = [x for x in open_briefs if x.lot.slug == 'specialist']
     briefs_training = [x for x in open_briefs if x.lot.slug == 'training']
 
     if len(open_briefs) < 1:
