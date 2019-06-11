@@ -672,8 +672,12 @@ def update_supplier_framework(supplier_id, framework_slug):
     updater_json = validate_and_return_updater_request()
     json_has_required_keys(json_payload, ["frameworkInterest"])
     update_json = json_payload["frameworkInterest"]
-    json_has_keys(update_json, optional_keys=("onFramework", "prefillDeclarationFromFrameworkSlug",
-                                              "applicationCompanyDetailsConfirmed"))
+    json_has_keys(update_json, optional_keys=(
+        "allowDeclarationReuse",
+        "applicationCompanyDetailsConfirmed",
+        "onFramework",
+        "prefillDeclarationFromFrameworkSlug",
+    ))
 
     # fetch and lock SupplierFramework row
     interest_record = SupplierFramework.query.filter(
@@ -688,6 +692,9 @@ def update_supplier_framework(supplier_id, framework_slug):
 
     if "onFramework" in update_json:
         interest_record.on_framework = update_json["onFramework"]
+
+    if "allowDeclarationReuse" in update_json:
+        interest_record.allow_declaration_reuse = update_json["allowDeclarationReuse"]
 
     if "prefillDeclarationFromFrameworkSlug" in update_json:
         if update_json["prefillDeclarationFromFrameworkSlug"] is not None:

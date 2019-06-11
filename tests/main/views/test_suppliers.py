@@ -2313,6 +2313,21 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
         assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
 
+    def test_setting_allow_declaration_reuse(self, supplier_framework):
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={'allowDeclarationReuse': False},
+        )
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
+        assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
+        assert data['frameworkInterest']['allowDeclarationReuse'] is False
+
+        assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+        audit = self._assert_and_return_audit_event(supplier_framework)
+        assert audit.data['update']['allowDeclarationReuse'] is False
+
     def test_multiple_simultaneous_property_updates(
         self,
         open_g8_framework_live_dos_framework_suppliers_on_framework,
