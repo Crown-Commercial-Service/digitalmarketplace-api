@@ -700,10 +700,11 @@ def update_supplier_framework(supplier_id, framework_slug):
     if "prefillDeclarationFromFrameworkSlug" in update_json:
         if update_json["prefillDeclarationFromFrameworkSlug"] is not None:
             try:
-                prefill_declaration_from_framework_id, prefill_declaration_allowed = db.session.query(
+                prefill_declaration_from_framework_id, sf_reuse_allowed, fw_reuse_allowed = db.session.query(
                     SupplierFramework.framework_id,
                     SupplierFramework.allow_declaration_reuse,
-                ).filter(
+                    Framework.allow_declaration_reuse,
+                ).join(SupplierFramework.framework).filter(
                     SupplierFramework.framework.has(
                         Framework.slug == update_json["prefillDeclarationFromFrameworkSlug"]
                     ),
@@ -714,9 +715,15 @@ def update_supplier_framework(supplier_id, framework_slug):
                     update_json["prefillDeclarationFromFrameworkSlug"]
                 ))
 
-            if not prefill_declaration_allowed:
+            if not sf_reuse_allowed:
                 # if we want a stronger guarantee about this remaining correct, we should consider a db constraint
                 abort(400, "Supplier's declaration for '{}' not marked as allowDeclarationReuse".format(
+                    update_json["prefillDeclarationFromFrameworkSlug"]
+                ))
+
+            if not fw_reuse_allowed:
+                # if we want a stronger guarantee about this remaining correct, we should consider a db constraint
+                abort(400, "Framework with slug '{}' not marked as allowDeclarationReuse".format(
                     update_json["prefillDeclarationFromFrameworkSlug"]
                 ))
         else:

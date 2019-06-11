@@ -2387,7 +2387,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
         assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
 
-    def test_setting_prefill_declaration_from_framework_not_allowed(
+    def test_setting_prefill_declaration_from_framework_not_allowed_by_sf(
         self,
         open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
     ):
@@ -2400,6 +2400,31 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists"),
             SupplierFramework.supplier_id == supplier_framework["supplierId"],
         ).update({SupplierFramework.allow_declaration_reuse: False}, synchronize_session=False)
+        db.session.commit()
+
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={'prefillDeclarationFromFrameworkSlug': "digital-outcomes-and-specialists"}
+        )
+        assert response.status_code == 400
+
+        # check nothing has changed on db
+        assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
+        assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
+
+    def test_setting_prefill_declaration_from_framework_not_allowed_by_framework(
+        self,
+        open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
+    ):
+        supplier_framework = SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
+        ).order_by(Supplier.id.asc()).first().serialize()
+
+        # disallow declaration reuse of the framework we'll be attempting to reuse a declaration from
+        Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").update(
+            {Framework.allow_declaration_reuse: False},
+            synchronize_session=False,
+        )
         db.session.commit()
 
         response = self.supplier_framework_interest(
