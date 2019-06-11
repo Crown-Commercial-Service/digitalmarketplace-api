@@ -2387,6 +2387,31 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
         assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
 
+    def test_setting_prefill_declaration_from_framework_not_allowed(
+        self,
+        open_g8_framework_live_dos_framework_suppliers_on_framework,
+    ):
+        supplier_framework = SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+        ).order_by(Supplier.id.asc()).first().serialize()
+
+        # disallow declaration reuse of the declaration we'll be attempting to reuse
+        SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8"),
+            SupplierFramework.supplier_id == supplier_framework["supplierId"],
+        ).update({SupplierFramework.allow_declaration_reuse: False}, synchronize_session=False)
+        db.session.commit()
+
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={'prefillDeclarationFromFrameworkSlug': "g-cloud-8"}
+        )
+        assert response.status_code == 400
+
+        # check nothing has changed on db
+        assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
+        assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
+
     def test_set_application_company_details_confirmed_updates_declaration(
         self,
         open_g8_framework_live_dos_framework_suppliers_on_framework,

@@ -6,6 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.sql.expression import or_ as sql_or
 from sqlalchemy.orm import lazyload
+from sqlalchemy.orm.exc import NoResultFound
 from dmapiclient.audit import AuditTypes
 from dmutils.formats import DATETIME_FORMAT
 
@@ -698,12 +699,24 @@ def update_supplier_framework(supplier_id, framework_slug):
 
     if "prefillDeclarationFromFrameworkSlug" in update_json:
         if update_json["prefillDeclarationFromFrameworkSlug"] is not None:
-            prefill_declaration_from_framework_id = db.session.query(SupplierFramework.framework_id).filter(
-                SupplierFramework.framework.has(Framework.slug == update_json["prefillDeclarationFromFrameworkSlug"]),
-                SupplierFramework.supplier_id == supplier.supplier_id,
-            ).scalar()
-            if prefill_declaration_from_framework_id is None:
+            try:
+                prefill_declaration_from_framework_id, prefill_declaration_allowed = db.session.query(
+                    SupplierFramework.framework_id,
+                    SupplierFramework.allow_declaration_reuse,
+                ).filter(
+                    SupplierFramework.framework.has(
+                        Framework.slug == update_json["prefillDeclarationFromFrameworkSlug"]
+                    ),
+                    SupplierFramework.supplier_id == supplier.supplier_id,
+                ).one()
+            except NoResultFound:
                 abort(400, "Supplier hasn't registered interest in a framework with slug '{}'".format(
+                    update_json["prefillDeclarationFromFrameworkSlug"]
+                ))
+
+            if not prefill_declaration_allowed:
+                # if we want a stronger guarantee about this remaining correct, we should consider a db constraint
+                abort(400, "Supplier's declaration for '{}' not marked as allowDeclarationReuse".format(
                     update_json["prefillDeclarationFromFrameworkSlug"]
                 ))
         else:
