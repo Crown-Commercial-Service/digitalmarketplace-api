@@ -117,6 +117,7 @@ def create_responses_zip(brief_id):
                     brief=brief,
                     candidates=candidates
                 )
+                zf.writestr('responses-{}.html'.format(brief_id), response_criteria_html.encode('utf-8'))
             elif brief.lot.slug == 'specialist':
                 sorted_responses = sorted(
                     responses,
