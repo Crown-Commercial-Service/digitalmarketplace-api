@@ -2261,25 +2261,25 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
 
     def test_setting_unsetting_prefill_declaration_from_framework_happy_path(
         self,
-        open_g8_framework_live_dos_framework_suppliers_on_framework,
+        open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
     ):
         supplier_framework = SupplierFramework.query.filter(
-            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
         ).order_by(Supplier.id.asc()).first().serialize()
 
         response = self.supplier_framework_interest(
             supplier_framework,
-            update={'prefillDeclarationFromFrameworkSlug': "g-cloud-8"}
+            update={'prefillDeclarationFromFrameworkSlug': "digital-outcomes-and-specialists"}
         )
         assert response.status_code == 200
         data = json.loads(response.get_data())
         assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
         assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
-        assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+        assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] == "digital-outcomes-and-specialists"
 
         assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
         audit = self._assert_and_return_audit_event(supplier_framework)
-        assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+        assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "digital-outcomes-and-specialists"
 
         response = self.supplier_framework_interest(
             supplier_framework,
@@ -2297,10 +2297,10 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
 
     def test_setting_prefill_declaration_from_framework_invalid_framework_slug(
         self,
-        open_g8_framework_live_dos_framework_suppliers_on_framework,
+        open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
     ):
         supplier_framework = SupplierFramework.query.filter(
-            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
         ).order_by(Supplier.id.asc()).first().serialize()
 
         response = self.supplier_framework_interest(
@@ -2330,16 +2330,16 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
 
     def test_multiple_simultaneous_property_updates(
         self,
-        open_g8_framework_live_dos_framework_suppliers_on_framework,
+        open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
     ):
         supplier_framework = SupplierFramework.query.filter(
-            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
         ).order_by(Supplier.id.asc()).first().serialize()
 
         response = self.supplier_framework_interest(
             supplier_framework,
             update={
-                "prefillDeclarationFromFrameworkSlug": "g-cloud-8",
+                "prefillDeclarationFromFrameworkSlug": "digital-outcomes-and-specialists",
                 "onFramework": False,
             },
         )
@@ -2347,13 +2347,13 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
         assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
-        assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+        assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] == "digital-outcomes-and-specialists"
 
         supplier_framework2 = self._refetch_serialized_sf(data['frameworkInterest'])
         assert data['frameworkInterest'] == supplier_framework2
         audit = self._assert_and_return_audit_event(supplier_framework)
         audit_id = audit.id
-        assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+        assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "digital-outcomes-and-specialists"
 
         # now we make sure that a single property update failure prevents any db changes
         response2 = self.supplier_framework_interest(
@@ -2371,15 +2371,15 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
 
     def test_setting_prefill_declaration_from_framework_supplier_not_on_other_framework(
         self,
-        open_g8_framework_live_dos_framework_suppliers_dos_sf,
+        open_g8_framework_live_reusable_dos_framework_suppliers_g8_sf,
     ):
         supplier_framework = SupplierFramework.query.filter(
-            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
         ).order_by(Supplier.id.asc()).first().serialize()
 
         response = self.supplier_framework_interest(
             supplier_framework,
-            update={'prefillDeclarationFromFrameworkSlug': "g-cloud-8"}
+            update={'prefillDeclarationFromFrameworkSlug': "digital-outcomes-and-specialists"}
         )
         assert response.status_code == 400
 
@@ -2389,22 +2389,22 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
 
     def test_setting_prefill_declaration_from_framework_not_allowed(
         self,
-        open_g8_framework_live_dos_framework_suppliers_on_framework,
+        open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
     ):
         supplier_framework = SupplierFramework.query.filter(
-            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
         ).order_by(Supplier.id.asc()).first().serialize()
 
         # disallow declaration reuse of the declaration we'll be attempting to reuse
         SupplierFramework.query.filter(
-            SupplierFramework.framework.has(Framework.slug == "g-cloud-8"),
+            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists"),
             SupplierFramework.supplier_id == supplier_framework["supplierId"],
         ).update({SupplierFramework.allow_declaration_reuse: False}, synchronize_session=False)
         db.session.commit()
 
         response = self.supplier_framework_interest(
             supplier_framework,
-            update={'prefillDeclarationFromFrameworkSlug': "g-cloud-8"}
+            update={'prefillDeclarationFromFrameworkSlug': "digital-outcomes-and-specialists"}
         )
         assert response.status_code == 400
 
@@ -2414,7 +2414,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
 
     def test_set_application_company_details_confirmed_updates_declaration(
         self,
-        open_g8_framework_live_dos_framework_suppliers_on_framework,
+        open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
     ):
         # -------------------------------------------------
         # SETUP
