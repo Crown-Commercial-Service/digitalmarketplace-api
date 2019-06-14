@@ -7,12 +7,24 @@ let
     forDev = true;
     localOverridesPath = ./local.nix;
   } // argsOuter;
+  sitePrioNonNix = args.pkgs.writeTextFile {
+    name = "site-prio-non-nix";
+    destination = "/${args.pythonPackages.python.sitePackages}/sitecustomize.py";
+    text = ''
+      import sys
+      first_nix_i = next((i for i, p in enumerate(sys.path) if p.startswith("/nix/")), 1)
+      # after the first nix-provided path in sys.path (presumably the python stdlib itself), re-sort all non-nix
+      # paths to be before the nix paths. this is helped by python's sort being a stable-sort
+      sys.path[first_nix_i+1:] = sorted(sys.path[first_nix_i+1:], key=lambda p: p.startswith("/nix/"))
+    '';
+  };
 in (with args; {
   digitalMarketplaceApiEnv = (pkgs.stdenv.mkDerivation rec {
     name = "digitalmarketplace-api-env";
     shortName = "dm-api";
     buildInputs = [
       pythonPackages.python
+      sitePrioNonNix
       pkgs.glibcLocales
       pkgs.libffi
       pkgs.libyaml
