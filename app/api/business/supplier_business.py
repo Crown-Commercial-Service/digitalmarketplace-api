@@ -49,12 +49,17 @@ def get_supplier_messages(code, skip_application_check):
             message = message + (
                 'before you can apply for opportunities.'
             )
-            validation_result.errors.append({
+
+            agreement_error = {
                 'message': message,
                 'severity': 'warning' if start_date > now else 'error',
                 'step': 'representative',
                 'id': 'SB002'
-            })
+            }
+            if start_date > now:
+                validation_result.warnings.append(agreement_error)
+            else:
+                validation_result.errors.append(agreement_error)
 
     if skip_application_check is False:
         if any([a for a in applications if a.status == 'submitted']):
