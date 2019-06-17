@@ -464,6 +464,17 @@ def live_dos_framework(request, app):
 
 
 @pytest.fixture()
+def live_reusable_dos_framework(request, app):
+    fw = _framework_fixture_inner(request, app, **dict(
+        _dos_framework_defaults,
+        status="live",
+        allow_declaration_reuse=True,
+    ))
+    _add_lots_for_framework(request, app, _dos_framework_defaults["slug"], _dos_framework_lots)
+    return fw
+
+
+@pytest.fixture()
 def expired_dos_framework(request, app):
     fw = _framework_fixture_inner(request, app, **dict(_dos_framework_defaults, status="expired"))
     _add_lots_for_framework(request, app, _dos_framework_defaults["slug"], _dos_framework_lots)
@@ -555,24 +566,26 @@ def live_g8_framework_suppliers_on_framework(
 
 
 @pytest.fixture()
-def open_g8_framework_live_dos_framework_suppliers_on_framework(
+def open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework(
         request,
         app,
         open_g8_framework,
-        live_dos_framework,
+        live_reusable_dos_framework,
         user_role_supplier,
 ):
-    _supplierframework_fixture_inner(request, app, sf_kwargs={"on_framework": True})
+    _supplierframework_fixture_inner(request, app, sf_kwargs=lambda supplier, framework: {
+        "on_framework": framework.status == "live",
+    })
 
 
 @pytest.fixture()
-def open_g8_framework_live_dos_framework_suppliers_dos_sf(
+def open_g8_framework_live_reusable_dos_framework_suppliers_g8_sf(
         request,
         app,
         open_g8_framework,
-        live_dos_framework,
+        live_reusable_dos_framework,
         user_role_supplier,
 ):
     _supplierframework_fixture_inner(request, app, sf_kwargs=(
-        lambda supplier, framework: None if framework.slug == "g-cloud-8" else {}
+        lambda supplier, framework: None if framework.slug == "digital-outcomes-and-specialists" else {}
     ))

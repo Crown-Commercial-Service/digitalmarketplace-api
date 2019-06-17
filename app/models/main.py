@@ -22,6 +22,7 @@ from sqlalchemy.sql.expression import (
     case as sql_case,
     cast as sql_cast,
     select as sql_select,
+    true as sql_true,
     false as sql_false,
     null as sql_null,
     and_ as sql_and,
@@ -520,6 +521,11 @@ class SupplierFramework(db.Model):
         nullable=True,
     )
 
+    # whether to allow *this* declaration to be reused by *other* SupplierFrameworks
+    # this flag allows us to disable reuse of specific declarations if e.g. they were only
+    # pragmatically allowed on the framework by the framework owner.
+    allow_declaration_reuse = db.Column(db.Boolean, nullable=False, default=True, server_default=sql_true())
+
     # Suppliers must confirm that their details are accurate for every framework application they make.
     # The flag `company_details_confirmed` is set on the Supplier object the first time a supplier confirms their
     # details (company name+number, vat number, duns number). The below SupplierFramework flag is set when a
@@ -639,6 +645,7 @@ class SupplierFramework(db.Model):
                 self.prefill_declaration_from_framework and self.prefill_declaration_from_framework.slug
             ),
             "applicationCompanyDetailsConfirmed": self.application_company_details_confirmed,
+            "allowDeclarationReuse": self.allow_declaration_reuse,
         }
         if with_declaration:
             supplier_framework.update({

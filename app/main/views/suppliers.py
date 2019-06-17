@@ -6,6 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.sql.expression import or_ as sql_or
 from sqlalchemy.orm import lazyload
+from sqlalchemy.orm.exc import NoResultFound
 from dmapiclient.audit import AuditTypes
 from dmutils.formats import DATETIME_FORMAT
 
@@ -672,8 +673,12 @@ def update_supplier_framework(supplier_id, framework_slug):
     updater_json = validate_and_return_updater_request()
     json_has_required_keys(json_payload, ["frameworkInterest"])
     update_json = json_payload["frameworkInterest"]
-    json_has_keys(update_json, optional_keys=("onFramework", "prefillDeclarationFromFrameworkSlug",
-                                              "applicationCompanyDetailsConfirmed"))
+    json_has_keys(update_json, optional_keys=(
+        "allowDeclarationReuse",
+        "applicationCompanyDetailsConfirmed",
+        "onFramework",
+        "prefillDeclarationFromFrameworkSlug",
+    ))
 
     # fetch and lock SupplierFramework row
     interest_record = SupplierFramework.query.filter(
@@ -689,14 +694,36 @@ def update_supplier_framework(supplier_id, framework_slug):
     if "onFramework" in update_json:
         interest_record.on_framework = update_json["onFramework"]
 
+    if "allowDeclarationReuse" in update_json:
+        interest_record.allow_declaration_reuse = update_json["allowDeclarationReuse"]
+
     if "prefillDeclarationFromFrameworkSlug" in update_json:
         if update_json["prefillDeclarationFromFrameworkSlug"] is not None:
-            prefill_declaration_from_framework_id = db.session.query(SupplierFramework.framework_id).filter(
-                SupplierFramework.framework.has(Framework.slug == update_json["prefillDeclarationFromFrameworkSlug"]),
-                SupplierFramework.supplier_id == supplier.supplier_id,
-            ).scalar()
-            if prefill_declaration_from_framework_id is None:
+            try:
+                prefill_declaration_from_framework_id, sf_reuse_allowed, fw_reuse_allowed = db.session.query(
+                    SupplierFramework.framework_id,
+                    SupplierFramework.allow_declaration_reuse,
+                    Framework.allow_declaration_reuse,
+                ).join(SupplierFramework.framework).filter(
+                    SupplierFramework.framework.has(
+                        Framework.slug == update_json["prefillDeclarationFromFrameworkSlug"]
+                    ),
+                    SupplierFramework.supplier_id == supplier.supplier_id,
+                ).one()
+            except NoResultFound:
                 abort(400, "Supplier hasn't registered interest in a framework with slug '{}'".format(
+                    update_json["prefillDeclarationFromFrameworkSlug"]
+                ))
+
+            if not sf_reuse_allowed:
+                # if we want a stronger guarantee about this remaining correct, we should consider a db constraint
+                abort(400, "Supplier's declaration for '{}' not marked as allowDeclarationReuse".format(
+                    update_json["prefillDeclarationFromFrameworkSlug"]
+                ))
+
+            if not fw_reuse_allowed:
+                # if we want a stronger guarantee about this remaining correct, we should consider a db constraint
+                abort(400, "Framework with slug '{}' not marked as allowDeclarationReuse".format(
                     update_json["prefillDeclarationFromFrameworkSlug"]
                 ))
         else:

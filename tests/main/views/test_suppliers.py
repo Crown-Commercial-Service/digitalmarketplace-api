@@ -1755,73 +1755,71 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
         response = self.client.get('/suppliers/1/frameworks')
         data = json.loads(response.get_data())
         assert response.status_code == 200
-        assert (
-            data ==
-            {
-                'frameworkInterest': [
-                    {
-                        'agreedVariations': {},
-                        'agreementDetails': None,
-                        'agreementId': None,
-                        'agreementPath': None,
-                        'agreementReturned': False,
-                        'agreementReturnedAt': None,
-                        'agreementStatus': None,
-                        'applicationCompanyDetailsConfirmed': False,
-                        'complete_drafts_count': 1,
-                        'countersigned': False,
-                        'countersignedAt': None,
-                        'countersignedDetails': None,
-                        'countersignedPath': None,
-                        'declaration': {},
-                        'drafts_count': 1,
-                        'frameworkFamily': 'g-cloud',
-                        'frameworkFramework': 'g-cloud',
-                        'frameworkSlug': 'g-cloud-6',
-                        'onFramework': False,
-                        'prefillDeclarationFromFrameworkSlug': None,
-                        'services_count': 0,
-                        'supplierId': 1,
-                        'supplierName': 'Supplier 1',
-                    }
-                ]
-            })
+        assert data == {
+            'frameworkInterest': [
+                {
+                    'agreedVariations': {},
+                    'agreementDetails': None,
+                    'agreementId': None,
+                    'agreementPath': None,
+                    'agreementReturned': False,
+                    'agreementReturnedAt': None,
+                    'agreementStatus': None,
+                    'allowDeclarationReuse': True,
+                    'applicationCompanyDetailsConfirmed': False,
+                    'complete_drafts_count': 1,
+                    'countersigned': False,
+                    'countersignedAt': None,
+                    'countersignedDetails': None,
+                    'countersignedPath': None,
+                    'declaration': {},
+                    'drafts_count': 1,
+                    'frameworkFamily': 'g-cloud',
+                    'frameworkFramework': 'g-cloud',
+                    'frameworkSlug': 'g-cloud-6',
+                    'onFramework': False,
+                    'prefillDeclarationFromFrameworkSlug': None,
+                    'services_count': 0,
+                    'supplierId': 1,
+                    'supplierName': 'Supplier 1',
+                }
+            ]
+        }
 
     def test_supplier_with_service(self):
         response = self.client.get('/suppliers/2/frameworks')
         data = json.loads(response.get_data())
         assert response.status_code == 200
-        assert (
-            data ==
-            {
-                'frameworkInterest': [
-                    {
-                        'agreedVariations': {},
-                        'agreementDetails': None,
-                        'agreementId': None,
-                        'agreementPath': None,
-                        'agreementReturned': False,
-                        'agreementReturnedAt': None,
-                        'agreementStatus': None,
-                        'applicationCompanyDetailsConfirmed': False,
-                        'complete_drafts_count': 0,
-                        'countersigned': False,
-                        'countersignedAt': None,
-                        'countersignedDetails': None,
-                        'countersignedPath': None,
-                        'declaration': {},
-                        'drafts_count': 0,
-                        'frameworkFamily': 'g-cloud',
-                        'frameworkFramework': 'g-cloud',
-                        'frameworkSlug': 'g-cloud-6',
-                        'onFramework': False,
-                        'prefillDeclarationFromFrameworkSlug': None,
-                        'services_count': 1,
-                        'supplierId': 2,
-                        'supplierName': 'Supplier 2',
-                    }
-                ]
-            })
+        assert data == {
+            'frameworkInterest': [
+                {
+                    'agreedVariations': {},
+                    'agreementDetails': None,
+                    'agreementId': None,
+                    'agreementPath': None,
+                    'agreementReturned': False,
+                    'agreementReturnedAt': None,
+                    'agreementStatus': None,
+                    'allowDeclarationReuse': True,
+                    'applicationCompanyDetailsConfirmed': False,
+                    'complete_drafts_count': 0,
+                    'countersigned': False,
+                    'countersignedAt': None,
+                    'countersignedDetails': None,
+                    'countersignedPath': None,
+                    'declaration': {},
+                    'drafts_count': 0,
+                    'frameworkFamily': 'g-cloud',
+                    'frameworkFramework': 'g-cloud',
+                    'frameworkSlug': 'g-cloud-6',
+                    'onFramework': False,
+                    'prefillDeclarationFromFrameworkSlug': None,
+                    'services_count': 1,
+                    'supplierId': 2,
+                    'supplierName': 'Supplier 2',
+                }
+            ]
+        }
 
     def test_supplier_with_no_drafts_or_services(self):
         response = self.client.get('/suppliers/3/frameworks')
@@ -1992,6 +1990,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             'agreementReturned': False,
             'agreementReturnedAt': None,
             'agreementStatus': None,
+            'allowDeclarationReuse': True,
             'applicationCompanyDetailsConfirmed': False,
             'countersigned': False,
             'countersignedAt': None,
@@ -2048,6 +2047,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             'agreementReturned': True,
             'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
             'agreementStatus': 'signed',
+            'allowDeclarationReuse': True,
             'applicationCompanyDetailsConfirmed': False,
             'countersigned': False,
             'countersignedAt': None,
@@ -2109,6 +2109,7 @@ class TestSupplierFrameworkResponse(BaseApplicationTest):
             'agreementReturned': True,
             'agreementReturnedAt': '2017-01-01T01:01:01.000000Z',
             'agreementStatus': 'countersigned',
+            'allowDeclarationReuse': True,
             'applicationCompanyDetailsConfirmed': False,
             'countersigned': True,
             'countersignedAt': '2017-02-01T01:01:01.000000Z',
@@ -2260,25 +2261,25 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
 
     def test_setting_unsetting_prefill_declaration_from_framework_happy_path(
         self,
-        open_g8_framework_live_dos_framework_suppliers_on_framework,
+        open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
     ):
         supplier_framework = SupplierFramework.query.filter(
-            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
         ).order_by(Supplier.id.asc()).first().serialize()
 
         response = self.supplier_framework_interest(
             supplier_framework,
-            update={'prefillDeclarationFromFrameworkSlug': "g-cloud-8"}
+            update={'prefillDeclarationFromFrameworkSlug': "digital-outcomes-and-specialists"}
         )
         assert response.status_code == 200
         data = json.loads(response.get_data())
         assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
         assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
-        assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+        assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] == "digital-outcomes-and-specialists"
 
         assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
         audit = self._assert_and_return_audit_event(supplier_framework)
-        assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+        assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "digital-outcomes-and-specialists"
 
         response = self.supplier_framework_interest(
             supplier_framework,
@@ -2296,10 +2297,10 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
 
     def test_setting_prefill_declaration_from_framework_invalid_framework_slug(
         self,
-        open_g8_framework_live_dos_framework_suppliers_on_framework,
+        open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
     ):
         supplier_framework = SupplierFramework.query.filter(
-            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
         ).order_by(Supplier.id.asc()).first().serialize()
 
         response = self.supplier_framework_interest(
@@ -2312,18 +2313,33 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
         assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
 
+    def test_setting_allow_declaration_reuse(self, supplier_framework):
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={'allowDeclarationReuse': False},
+        )
+        assert response.status_code == 200
+        data = json.loads(response.get_data())
+        assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
+        assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
+        assert data['frameworkInterest']['allowDeclarationReuse'] is False
+
+        assert data['frameworkInterest'] == self._refetch_serialized_sf(data['frameworkInterest'])
+        audit = self._assert_and_return_audit_event(supplier_framework)
+        assert audit.data['update']['allowDeclarationReuse'] is False
+
     def test_multiple_simultaneous_property_updates(
         self,
-        open_g8_framework_live_dos_framework_suppliers_on_framework,
+        open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
     ):
         supplier_framework = SupplierFramework.query.filter(
-            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
         ).order_by(Supplier.id.asc()).first().serialize()
 
         response = self.supplier_framework_interest(
             supplier_framework,
             update={
-                "prefillDeclarationFromFrameworkSlug": "g-cloud-8",
+                "prefillDeclarationFromFrameworkSlug": "digital-outcomes-and-specialists",
                 "onFramework": False,
             },
         )
@@ -2331,13 +2347,13 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert data['frameworkInterest']['supplierId'] == supplier_framework['supplierId']
         assert data['frameworkInterest']['frameworkSlug'] == supplier_framework['frameworkSlug']
-        assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+        assert data['frameworkInterest']['prefillDeclarationFromFrameworkSlug'] == "digital-outcomes-and-specialists"
 
         supplier_framework2 = self._refetch_serialized_sf(data['frameworkInterest'])
         assert data['frameworkInterest'] == supplier_framework2
         audit = self._assert_and_return_audit_event(supplier_framework)
         audit_id = audit.id
-        assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "g-cloud-8"
+        assert audit.data['update']['prefillDeclarationFromFrameworkSlug'] == "digital-outcomes-and-specialists"
 
         # now we make sure that a single property update failure prevents any db changes
         response2 = self.supplier_framework_interest(
@@ -2355,15 +2371,65 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
 
     def test_setting_prefill_declaration_from_framework_supplier_not_on_other_framework(
         self,
-        open_g8_framework_live_dos_framework_suppliers_dos_sf,
+        open_g8_framework_live_reusable_dos_framework_suppliers_g8_sf,
     ):
         supplier_framework = SupplierFramework.query.filter(
-            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists")
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
         ).order_by(Supplier.id.asc()).first().serialize()
 
         response = self.supplier_framework_interest(
             supplier_framework,
-            update={'prefillDeclarationFromFrameworkSlug': "g-cloud-8"}
+            update={'prefillDeclarationFromFrameworkSlug': "digital-outcomes-and-specialists"}
+        )
+        assert response.status_code == 400
+
+        # check nothing has changed on db
+        assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
+        assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
+
+    def test_setting_prefill_declaration_from_framework_not_allowed_by_sf(
+        self,
+        open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
+    ):
+        supplier_framework = SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
+        ).order_by(Supplier.id.asc()).first().serialize()
+
+        # disallow declaration reuse of the declaration we'll be attempting to reuse
+        SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == "digital-outcomes-and-specialists"),
+            SupplierFramework.supplier_id == supplier_framework["supplierId"],
+        ).update({SupplierFramework.allow_declaration_reuse: False}, synchronize_session=False)
+        db.session.commit()
+
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={'prefillDeclarationFromFrameworkSlug': "digital-outcomes-and-specialists"}
+        )
+        assert response.status_code == 400
+
+        # check nothing has changed on db
+        assert supplier_framework == self._refetch_serialized_sf(supplier_framework)
+        assert self._latest_supplier_update_audit_event(supplier_framework["supplierId"]) is None
+
+    def test_setting_prefill_declaration_from_framework_not_allowed_by_framework(
+        self,
+        open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
+    ):
+        supplier_framework = SupplierFramework.query.filter(
+            SupplierFramework.framework.has(Framework.slug == "g-cloud-8")
+        ).order_by(Supplier.id.asc()).first().serialize()
+
+        # disallow declaration reuse of the framework we'll be attempting to reuse a declaration from
+        Framework.query.filter(Framework.slug == "digital-outcomes-and-specialists").update(
+            {Framework.allow_declaration_reuse: False},
+            synchronize_session=False,
+        )
+        db.session.commit()
+
+        response = self.supplier_framework_interest(
+            supplier_framework,
+            update={'prefillDeclarationFromFrameworkSlug': "digital-outcomes-and-specialists"}
         )
         assert response.status_code == 400
 
@@ -2373,7 +2439,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
 
     def test_set_application_company_details_confirmed_updates_declaration(
         self,
-        open_g8_framework_live_dos_framework_suppliers_on_framework,
+        open_g8_framework_live_reusable_dos_framework_suppliers_on_live_framework,
     ):
         # -------------------------------------------------
         # SETUP
