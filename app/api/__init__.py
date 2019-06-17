@@ -90,6 +90,7 @@ from app.api.views import (briefs,  # noqa
                            messages,
                            suppliers,
                            seller_dashboard,
+                           seller_edit,
                            tasks,
                            dashboards,
                            opportunities,

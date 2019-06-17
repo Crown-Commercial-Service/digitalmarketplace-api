@@ -14,7 +14,9 @@ from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, noload
 # from dmapiclient.audit import AuditTypes
 from app.api.services import (
-    AuditTypes
+    AuditTypes,
+    key_values_service,
+    agreement_service
 )
 from app.tasks import publish_tasks
 from app.emails import send_approval_notification, send_rejection_notification, \
@@ -94,10 +96,12 @@ def update_application(application_id):
     application.update_from_json(application_json)
     save_application(application)
     errors = ApplicationValidator(application).validate_all()
+    agreement = __get_current_agreement()
 
     return (
         jsonify(
             application=application.serializable,
+            agreement=agreement,
             application_errors=errors),
         200)
 
@@ -263,6 +267,8 @@ def get_application_by_id(application_id):
     if application.status == 'deleted':
         abort(404)
 
+    agreement = __get_current_agreement()
+
     # Maximum prices are used on the pricing page to encourage value for money
     result = Domain.query.all()
     domains = {'prices': {'maximum': {}}}
@@ -273,6 +279,7 @@ def get_application_by_id(application_id):
     return jsonify(
         application=application.serializable,
         domains=domains,
+        agreement=agreement,
         application_errors=errors)
 
 
@@ -421,9 +428,15 @@ def submit_application(application_id):
         if user.supplier_code != application.supplier_code:
             abort(400, 'User supplier code does not match application supplier code')
 
-    current_agreement = Agreement.query.filter(
-        Agreement.is_current == true()
-    ).first_or_404()
+    agreement = __get_current_agreement()
+    if agreement:
+        current_agreement = Agreement.query.filter(
+            Agreement.id == agreement.get('agreementId')
+        ).first_or_404()
+    else:
+        current_agreement = Agreement.query.filter(
+            Agreement.is_current == true()
+        ).first_or_404()
 
     db.session.add(AuditEvent(
         audit_type=AuditTypes.submit_application,
@@ -505,3 +518,25 @@ def list_task_status():
     jira = get_marketplace_jira()
     tasks_by_id = jira.assessment_tasks_by_application_id()
     return jsonify(tasks=tasks_by_id)
+
+
+def __get_current_agreement():
+    key_value = key_values_service.get_by_key('current_master_agreement')
+
+    agreement = None
+    if key_value:
+        now = pendulum.now('Australia/Canberra').date()
+        data = key_value.get('data', {})
+        for k in sorted(data.keys()):
+            v = data[k]
+            start_date = pendulum.parse(v.get('startDate'), tz='Australia/Canberra').date()
+            end_date = pendulum.parse(v.get('endDate'), tz='Australia/Canberra').date()
+
+            if start_date <= now and end_date >= now:
+                agreement = v
+                agreement['agreementId'] = k
+                a = agreement_service.find(id=k).one_or_none()
+                agreement['pdfUrl'] = a.url
+                break
+
+    return agreement

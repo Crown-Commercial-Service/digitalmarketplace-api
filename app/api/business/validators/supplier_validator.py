@@ -1,5 +1,6 @@
 import collections
 import pendulum
+import re
 from flask import current_app
 
 
@@ -13,7 +14,8 @@ class SupplierValidator(object):
             self.validate_basics() +
             self.validate_documents() +
             self.validate_case_studies() +
-            self.validate_pricing()
+            self.validate_pricing() +
+            self.validate_representative()
         )
         warnings = [n for n in result if n.get('severity', 'error') == 'warning']
         errors = [n for n in result if n.get('severity', 'error') == 'error']
@@ -262,5 +264,58 @@ class SupplierValidator(object):
                         'step': 'documents',
                         'id': 'S012-{}'.format(name)
                     })
+
+        return errors
+
+    def validate_representative(self, step=None):
+        errors = []
+        if not step:
+            step = 'your-info'
+
+        representative = self.supplier.data.get('representative', '').replace(' ', '')
+        if not representative:
+            errors.append({
+                'message': 'Authorised representative name is required',
+                'severity': 'error',
+                'step': step,
+                'id': 'S013-representative'
+            })
+
+        phone = self.supplier.data.get('phone', '').replace(' ', '')
+        match = re.search(r'[ 0-9()+]+', phone)
+        if not phone:
+            errors.append({
+                'message': 'Authorised representative phone is required',
+                'severity': 'error',
+                'step': step,
+                'id': 'S013-phone'
+            })
+        elif (
+            len(phone) < 10 or
+            not match or
+            (match and phone[match.span()[0]:match.span()[1]] != phone)
+        ):
+            errors.append({
+                'message': 'Authorised representative phone is not valid',
+                'severity': 'error',
+                'step': step,
+                'id': 'S013-phone'
+            })
+
+        email = self.supplier.data.get('email', '').replace(' ', '')
+        if not email:
+            errors.append({
+                'message': 'Authorised representative email is required',
+                'severity': 'error',
+                'step': step,
+                'id': 'S013-email'
+            })
+        elif '@' not in email or email.count('@') > 1:
+            errors.append({
+                'message': 'Authorised representative email is not valid',
+                'severity': 'error',
+                'step': step,
+                'id': 'S013-email'
+            })
 
         return errors

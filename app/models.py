@@ -2604,6 +2604,10 @@ class Application(db.Model):
                     if self.is_case_study_different(case_study, current_case_study.data):
                         case_study['status'] = 'unassessed'
 
+                # remove auth rep data from edit
+                self.data.pop('representative', None)
+                self.data.pop('phone', None)
+                self.data.pop('email', None)
             else:
                 supplier = Supplier()
             supplier.update_from_json(self.data)

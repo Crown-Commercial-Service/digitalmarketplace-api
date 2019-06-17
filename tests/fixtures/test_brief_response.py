@@ -21,6 +21,9 @@ def suppliers(app, request):
                 name='Test Supplier{}'.format(i),
                 contacts=[Contact(name='auth rep', email='auth@rep.com')],
                 data={
+                    'representative': 'auth rep',
+                    'phone': '0123456789',
+                    'email': 'auth@rep.com',
                     'documents': {
                         "liability": {
                             "filename": "1.pdf",

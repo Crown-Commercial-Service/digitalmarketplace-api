@@ -420,6 +420,8 @@ def get_brief(brief_id):
                         type: boolean
                     has_supplier_errors:
                         type: boolean
+                    has_signed_current_agreement:
+                        type: boolean
                     domains:
                         type: array
                         items:
@@ -478,6 +480,7 @@ def get_brief(brief_id):
     can_respond = user_status.can_respond()
     has_responded = user_status.has_responded()
     has_supplier_errors = user_status.has_supplier_errors()
+    has_signed_current_agreement = user_status.has_signed_current_agreement()
 
     # remove private data for non brief owners
     brief.data['contactEmail'] = ''
@@ -535,6 +538,7 @@ def get_brief(brief_id):
                    is_invited=is_invited,
                    has_responded=has_responded,
                    has_supplier_errors=has_supplier_errors,
+                   has_signed_current_agreement=has_signed_current_agreement,
                    domains=domains)
 
 

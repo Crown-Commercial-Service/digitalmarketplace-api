@@ -48,6 +48,7 @@ def add_user(data):
 
     if "supplier_code" in data:
         user.supplier_code = data['supplier_code']
+        user.role = 'supplier'
         audit_data['supplier_code'] = user.supplier_code
 
     if user.role == 'supplier' and user.supplier_code is None:
@@ -202,7 +203,7 @@ def check_supplier_role(role, supplier_code):
         raise("'supplier_code' is only valid for users with 'supplier' role, not '{}'".format(role))
 
 
-def create_user(user_type=None, name=None, email_address=None, password=None, framework=None):
+def create_user(user_type=None, name=None, email_address=None, password=None, framework=None, supplier_code=None):
     if not user_type or not name or not email_address or not password or not framework:
         return jsonify(
             application_id=user.application_id,
@@ -226,16 +227,20 @@ def create_user(user_type=None, name=None, email_address=None, password=None, fr
         'name': name,
         'email_address': email_address,
         'password': password,
-        'framework': framework
+        'framework': framework,
+        'supplier_code': supplier_code
     }
 
     if user_type == "seller":
-        try:
-            application = create_application(email_address=email_address, name=name)
-            user_data['application_id'] = application.id
+        if supplier_code:
+            user_data['role'] = 'supplier'
+        else:
+            try:
+                application = create_application(email_address=email_address, name=name)
+                user_data['application_id'] = application.id
 
-        except (InvalidRequestError, IntegrityError):
-            return jsonify(message="An application with this email address already exists"), 409
+            except (InvalidRequestError, IntegrityError):
+                return jsonify(message="An application with this email address already exists"), 409
 
     try:
         user = add_user(data=user_data)

@@ -1,4 +1,6 @@
 from .agency import AgencyService
+from .agreement import AgreementService
+from .signed_agreement import SignedAgreementService
 from .application import ApplicationService
 from .audit import AuditService, AuditTypes
 from .assessments import AssessmentsService
@@ -16,6 +18,8 @@ from .frameworks import FrameworksService
 from .user_claims import UserClaimService
 
 agency_service = AgencyService()
+agreement_service = AgreementService()
+signed_agreement_service = SignedAgreementService()
 application_service = ApplicationService()
 audit_service = AuditService()
 audit_types = AuditTypes

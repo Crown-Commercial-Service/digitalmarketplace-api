@@ -377,7 +377,8 @@ def add(token):
         name=claim.data['name'],
         email_address=email_address,
         password=password,
-        framework=claim.data['framework']
+        framework=claim.data['framework'],
+        supplier_code=claim.data.get('supplier_code', None)
     )
     try:
         claim = user_claims_service.validate_and_update_claim(type='signup', token=token, email_address=email_address)

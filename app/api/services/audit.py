@@ -62,3 +62,8 @@ class AuditTypes(Enum):
     specialist_brief_closed_email = 'specialist_brief_closed_email'
     seller_invited_to_specialist_opportunity = 'seller_invited_to_specialist_opportunity'
     specialist_brief_response_received_email = 'specialist_brief_response_received_email'
+    update_supplier = 'update_supplier'
+    notify_auth_rep_accept_master_agreement = 'notify_auth_rep_accept_master_agreement'
+    declined_master_agreement = 'declined_master_agreement'
+    accepted_master_agreement = 'accepted_master_agreement'
+    declined_master_agreement_email = 'declined_master_agreement_email'

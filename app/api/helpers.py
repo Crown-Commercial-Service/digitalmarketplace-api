@@ -265,7 +265,7 @@ class Service(object):
 
     def save(self, model):
         self._isinstance(model)
-        db.session.add(model)
+        self.add_to_session(model)
         self.commit_changes()
         return model
 
@@ -304,6 +304,10 @@ class Service(object):
         self._isinstance(model)
         db.session.delete(model)
         self.commit_changes()
+
+    def add_to_session(self, model):
+        self._isinstance(model)
+        db.session.add(model)
 
     def commit_changes(self):
         db.session.commit()
