@@ -11,9 +11,9 @@ Flask-Migrate==2.0.3 # pyup: ignore
 Flask-SQLAlchemy==2.1 # pyup: ignore
 itsdangerous==0.24 # pyup: ignore
 --no-binary=psycopg2
-psycopg2==2.8.2
+psycopg2==2.8.3
 SQLAlchemy==1.2.18 # pyup: ignore
-SQLAlchemy-Utils==0.33.11
+SQLAlchemy-Utils==0.34.0
 sqlalchemy-json==0.2.3
 
 # For schema validation
@@ -27,9 +27,9 @@ asn1crypto==0.24.0
 attrs==19.1.0
 bcrypt==3.1.6
 blinker==1.4
-boto3==1.9.151
-botocore==1.12.151
-certifi==2019.3.9
+boto3==1.9.169
+botocore==1.12.169
+certifi==2019.6.16
 cffi==1.12.3
 chardet==3.0.4
 Click==7.0
@@ -44,12 +44,12 @@ Flask-WTF==0.14.2
 fleep==1.0.1
 future==0.17.1
 gds-metrics==0.2.0
-govuk-country-register==0.3.0
+govuk-country-register==0.4.0
 idna==2.8
 Jinja2==2.10.1
 jmespath==0.9.4
 mailchimp3==3.0.6
-Mako==1.0.10
+Mako==1.0.12
 MarkupSafe==1.1.1
 monotonic==1.5
 notifications-python-client==5.3.0
@@ -63,10 +63,10 @@ python-editor==1.0.4
 python-json-logger==0.1.11
 pytz==2019.1
 requests==2.22.0
-s3transfer==0.2.0
+s3transfer==0.2.1
 six==1.12.0
 unicodecsv==0.14.1
-urllib3==1.25.2
+urllib3==1.25.3
 Werkzeug==0.14.1
 workdays==1.4
 WTForms==2.2.1

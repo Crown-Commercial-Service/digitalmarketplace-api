@@ -10,9 +10,9 @@ Flask-Migrate==2.0.3 # pyup: ignore
 Flask-SQLAlchemy==2.1 # pyup: ignore
 itsdangerous==0.24 # pyup: ignore
 --no-binary=psycopg2
-psycopg2==2.8.2
+psycopg2==2.8.3
 SQLAlchemy==1.2.18 # pyup: ignore
-SQLAlchemy-Utils==0.33.11
+SQLAlchemy-Utils==0.34.0
 sqlalchemy-json==0.2.3
 
 # For schema validation
