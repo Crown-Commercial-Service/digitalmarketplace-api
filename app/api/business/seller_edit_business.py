@@ -179,6 +179,10 @@ def update_supplier(data, user_info):
         if wf not in data.get('data'):
             raise ValidationError('{} is not recognised'.format(wf))
 
+    if 'email' in data.get('data'):
+        email = data['data']['email']
+        data['data']['email'] = email.encode('utf-8').lower()
+
     supplier.update_from_json(data.get('data'))
 
     messages = SupplierValidator(supplier).validate_representative('representative')
@@ -206,7 +210,7 @@ def update_supplier(data, user_info):
 
 
 def process_auth_rep_email(supplier, data, user_info):
-    email_address = supplier.data.get('email')
+    email_address = supplier.data.get('email', '').encode('utf-8')
     user = users.find(email_address=email_address).one_or_none()
     if not user:
         framework = data.get('framework', 'digital-marketplace')

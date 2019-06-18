@@ -2,7 +2,7 @@ from flask import jsonify, Response
 from flask_login import login_required, current_user
 from app.api import api
 from app.api.business import seller_edit_business
-from app.api.helpers import role_required, abort
+from app.api.helpers import role_required, abort, forbidden
 from ...utils import get_json_from_request
 from app.api.business.errors import (
     DeletedError,

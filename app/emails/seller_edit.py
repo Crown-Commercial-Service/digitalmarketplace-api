@@ -21,7 +21,7 @@ def send_notify_auth_rep_email(supplier_code):
     )
 
     supplier = suppliers.get_supplier_by_code(supplier_code)
-    to_address = supplier.data.get('email', '')
+    to_address = supplier.data.get('email', '').encode('utf-8')
 
     key_value = key_values_service.get_by_key('current_master_agreement')
     start_date = pendulum.now('Australia/Canberra').date()

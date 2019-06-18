@@ -46,7 +46,7 @@ def add_user(data):
 
     audit_data = {}
 
-    if "supplier_code" in data:
+    if "supplier_code" in data and data['supplier_code']:
         user.supplier_code = data['supplier_code']
         user.role = 'supplier'
         audit_data['supplier_code'] = user.supplier_code
