@@ -23,6 +23,9 @@ from app.emails import send_approval_notification, send_rejection_notification, 
     send_submitted_existing_seller_notification, send_submitted_new_seller_notification, \
     send_revert_notification
 from app.api.business.validators import ApplicationValidator
+from app.api.business.agreement_business import (
+    get_current_agreement
+)
 
 
 def get_application_json():
@@ -96,7 +99,7 @@ def update_application(application_id):
     application.update_from_json(application_json)
     save_application(application)
     errors = ApplicationValidator(application).validate_all()
-    agreement = __get_current_agreement()
+    agreement = get_current_agreement()
 
     return (
         jsonify(
@@ -267,7 +270,7 @@ def get_application_by_id(application_id):
     if application.status == 'deleted':
         abort(404)
 
-    agreement = __get_current_agreement()
+    agreement = get_current_agreement()
 
     # Maximum prices are used on the pricing page to encourage value for money
     result = Domain.query.all()
@@ -428,7 +431,7 @@ def submit_application(application_id):
         if user.supplier_code != application.supplier_code:
             abort(400, 'User supplier code does not match application supplier code')
 
-    agreement = __get_current_agreement()
+    agreement = get_current_agreement()
     if agreement:
         current_agreement = Agreement.query.filter(
             Agreement.id == agreement.get('agreementId')
@@ -518,25 +521,3 @@ def list_task_status():
     jira = get_marketplace_jira()
     tasks_by_id = jira.assessment_tasks_by_application_id()
     return jsonify(tasks=tasks_by_id)
-
-
-def __get_current_agreement():
-    key_value = key_values_service.get_by_key('current_master_agreement')
-
-    agreement = None
-    if key_value:
-        now = pendulum.now('Australia/Canberra').date()
-        data = key_value.get('data', {})
-        for k in sorted(data.keys()):
-            v = data[k]
-            start_date = pendulum.parse(v.get('startDate'), tz='Australia/Canberra').date()
-            end_date = pendulum.parse(v.get('endDate'), tz='Australia/Canberra').date()
-
-            if start_date <= now and end_date >= now:
-                agreement = v
-                agreement['agreementId'] = k
-                a = agreement_service.find(id=k).one_or_none()
-                agreement['pdfUrl'] = a.url
-                break
-
-    return agreement

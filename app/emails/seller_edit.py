@@ -9,6 +9,9 @@ from app.api.helpers import get_root_url
 from .util import render_email_template, send_or_handle_error, escape_markdown
 from dmutils.email import EmailError, hash_email
 import rollbar
+from app.api.business.agreement_business import (
+    get_current_agreement
+)
 
 
 def send_notify_auth_rep_email(supplier_code):
@@ -23,14 +26,12 @@ def send_notify_auth_rep_email(supplier_code):
     supplier = suppliers.get_supplier_by_code(supplier_code)
     to_address = supplier.data.get('email', '').encode('utf-8')
 
-    key_value = key_values_service.get_by_key('current_master_agreement')
+    agreement = get_current_agreement()
     start_date = pendulum.now('Australia/Canberra').date()
-    if key_value:
-        agreement = agreement_service.find(is_current=True).one_or_none()
-        agreement_sup = key_value.get('data').get('{}'.format(agreement.id))
+    if agreement:
         start_date = (
             pendulum.parse(
-                agreement_sup.get('startDate'),
+                agreement.get('startDate'),
                 tz='Australia/Canberra'
             ).date()
         )

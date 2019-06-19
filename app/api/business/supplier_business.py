@@ -7,6 +7,11 @@ from app.api.services import (
     agreement_service,
     key_values_service
 )
+from app.api.business.agreement_business import (
+    get_new_agreement,
+    has_signed_current_agreement,
+    get_current_agreement
+)
 
 
 def get_supplier_messages(code, skip_application_check):
@@ -27,39 +32,37 @@ def get_supplier_messages(code, skip_application_check):
             'step': 'update',
             'id': 'SB001'
         })
-    signed_agreement = next(iter([sa for sa in supplier.signed_agreements if sa.agreement.is_current is True]), None)
-    if not signed_agreement:
-        key_value = key_values_service.get_by_key('current_master_agreement')
-        if key_value:
-            agreement = agreement_service.find(is_current=True).one_or_none()
-            agreement_sup = key_value.get('data').get('{}'.format(agreement.id))
-            now = pendulum.now('Australia/Canberra').date()
-            start_date = (
-                pendulum.parse(
-                    agreement_sup.get('startDate'),
-                    tz='Australia/Canberra'
-                ).date()
-            )
-            message = (
-                'From {}, your authorised representative must '
-                'accept the new Master Agreement '.format(start_date.strftime('%-d %B %Y'))
-                if start_date > now else
-                'Your authorised representative must accept the new Master Agreement '
-            )
-            message = message + (
-                'before you can apply for opportunities.'
-            )
 
-            agreement_error = {
-                'message': message,
-                'severity': 'warning' if start_date > now else 'error',
-                'step': 'representative',
-                'id': 'SB002'
-            }
-            if start_date > now:
-                validation_result.warnings.append(agreement_error)
-            else:
-                validation_result.errors.append(agreement_error)
+    new_master_agreement = get_new_agreement()
+    if new_master_agreement:
+        start_date = pendulum.parse(new_master_agreement['startDate'], tz='Australia/Canberra').date()
+        message = (
+            'From {}, your authorised representative must '.format(start_date.strftime('%-d %B %Y')),
+            'accept the new Master Agreement ',
+            'before you can apply for opportunities.'
+        )
+
+        validation_result.warnings.append({
+            'message': message,
+            'severity': 'warning',
+            'step': 'representative',
+            'id': 'SB002'
+        })
+    else:
+        if not has_signed_current_agreement(supplier):
+            current_agreement = get_current_agreement()
+            if current_agreement:
+                start_date = pendulum.parse(current_agreement['startDate'], tz='Australia/Canberra').date()
+                message = (
+                    'Your authorised representative must accept the new Master Agreement ',
+                    'before you can apply for opportunities.'
+                )
+                validation_result.errors.append({
+                    'message': message,
+                    'severity': 'error',
+                    'step': 'representative',
+                    'id': 'SB002'
+                })
 
     if skip_application_check is False:
         if any([a for a in applications if a.status == 'submitted']):

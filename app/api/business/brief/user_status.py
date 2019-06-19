@@ -6,11 +6,13 @@ from app.api.services import (
     suppliers,
     lots_service,
     brief_responses_service,
-    agreement_service,
-    signed_agreement_service,
-    key_values_service
+    signed_agreement_service
 )
 from app.api.business.validators import SupplierValidator
+from app.api.business.agreement_business import (
+    get_current_agreement,
+    has_signed_current_agreement
+)
 
 
 class BriefUserStatus(object):
@@ -161,24 +163,4 @@ class BriefUserStatus(object):
         if self.user_role != 'supplier':
             return True
 
-        key_value = key_values_service.get_by_key('current_master_agreement')
-        if key_value:
-            agreement = agreement_service.find(is_current=True).one_or_none()
-            agreement_sup = key_value.get('data').get('{}'.format(agreement.id))
-            signed_agreement = signed_agreement_service.find(
-                agreement_id=agreement.id,
-                supplier_code=self.supplier.code
-            ).one_or_none()
-
-            now = pendulum.now('Australia/Canberra').date()
-            start_date = (
-                pendulum.parse(
-                    agreement_sup.get('startDate'),
-                    tz='Australia/Canberra'
-                ).date()
-            )
-
-            if signed_agreement or start_date > now:
-                return True
-            return False
-        return True
+        return has_signed_current_agreement(self.supplier)

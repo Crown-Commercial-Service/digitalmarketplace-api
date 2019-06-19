@@ -24,6 +24,11 @@ from app.api.business.errors import (
     UnauthorisedError,
     ValidationError
 )
+from app.api.business.agreement_business import (
+    get_current_agreement,
+    get_new_agreement,
+    has_signed_current_agreement
+)
 
 
 def accept_agreement(user_info):
@@ -37,13 +42,13 @@ def accept_agreement(user_info):
     if email_address != supplier.data.get('email'):
         raise UnauthorisedError('Unauthorised to accept agreement')
 
-    agreement = agreement_service.find(is_current=True).one_or_none()
-    already_signed = signed_agreement_service.first(agreement_id=agreement.id, supplier_code=supplier_code)
+    agreement = get_current_agreement()
+    already_signed = signed_agreement_service.first(agreement_id=agreement['agreementId'], supplier_code=supplier_code)
     if already_signed:
         raise ValidationError('Already signed agreement')
 
     signed_agreement = SignedAgreement(
-        agreement_id=agreement.id,
+        agreement_id=agreement['agreementId'],
         user_id=user_id,
         signed_at=pendulum.now('Australia/Canberra'),
         supplier_code=supplier_code
@@ -131,39 +136,40 @@ def get_agreement_status(supplier, user_info):
     show_agreement = False
     can_sign_agreement = False
     signed_agreement = False
+    can_user_sign_agreement = False
+    new_agreement = None
     start_date = pendulum.now('Australia/Canberra').date()
 
-    agreement = agreement_service.find(is_current=True).one_or_none()
-    signed_current_agreement = next(
-        iter([sa for sa in supplier.signed_agreements if sa.agreement_id == agreement.id]),
-        None
-    )
+    agreement = get_current_agreement()
+    new_agreement = get_new_agreement()
+    signed = has_signed_current_agreement(supplier)
 
-    key_value = key_values_service.get_by_key('current_master_agreement')
-    if key_value:
+    if agreement:
         now = pendulum.now('Australia/Canberra').date()
-        agreement_sup = key_value.get('data').get('{}'.format(agreement.id))
         start_date = (
             pendulum.parse(
-                agreement_sup.get('startDate'),
+                agreement.get('startDate'),
                 tz='Australia/Canberra'
             ).date()
         )
         show_agreement = True
-        can_sign_agreement = False if start_date > now else True
-        signed_agreement = True if signed_current_agreement else False
-        can_user_sign_agreement = (
-            True
-            if supplier.data.get('email') == email_address
-            else False
-        )
+        can_sign_agreement = True
+        signed_agreement = True if signed else False
+
+    can_user_sign_agreement = (
+        True
+        if supplier.data.get('email') == email_address
+        else False
+    )
 
     return {
         'show': show_agreement,
         'canSign': can_sign_agreement,
         'canUserSign': can_user_sign_agreement,
         'signed': signed_agreement,
-        'startDate': start_date.strftime('%Y-%m-%d')
+        'startDate': start_date.strftime('%Y-%m-%d'),
+        'currentAgreement': agreement,
+        'newAgreement': new_agreement
     }
 
 
