@@ -10,7 +10,8 @@ from .util import render_email_template, send_or_handle_error, escape_markdown
 from dmutils.email import EmailError, hash_email
 import rollbar
 from app.api.business.agreement_business import (
-    get_current_agreement
+    get_current_agreement,
+    get_new_agreement
 )
 
 
@@ -26,7 +27,10 @@ def send_notify_auth_rep_email(supplier_code):
     supplier = suppliers.get_supplier_by_code(supplier_code)
     to_address = supplier.data.get('email', '').encode('utf-8')
 
-    agreement = get_current_agreement()
+    agreement = get_new_agreement()
+    if not agreement:
+        agreement = get_current_agreement()
+
     start_date = pendulum.now('Australia/Canberra').date()
     if agreement:
         start_date = (
