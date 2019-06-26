@@ -1770,6 +1770,7 @@ class TestSuppliers(BaseApplicationTest, FixtureMixin):
                 'organisationSize': 'small',
                 'dunsNumber': '100000000',
                 'registeredName': 'Registered Supplier Name 0',
+                'companiesHouseNumber': '12345670',
                 'otherCompanyRegistrationNumber': '555-222-111',
                 'registrationCountry': 'country:GB'
             }
