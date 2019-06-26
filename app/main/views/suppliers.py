@@ -200,6 +200,7 @@ def export_suppliers_for_framework(framework_slug):
             "duns_number": supplier.duns_number,
             "registered_name": supplier.registered_name,
             "companies_house_number": supplier.companies_house_number,
+            "other_company_registration_number": supplier.other_company_registration_number,
             'application_result': application_result,
             'application_status': application_status,
             'declaration_status': declaration_status,

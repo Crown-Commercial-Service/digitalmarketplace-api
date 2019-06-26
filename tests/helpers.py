@@ -170,6 +170,7 @@ class FixtureMixin(object):
                     organisation_size='small',
                     duns_number='{}'.format(100000000 + i),
                     registration_country='country:GB',
+                    other_company_registration_number='555-222-111'
                 )
             )
             db.session.add(

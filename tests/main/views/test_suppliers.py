@@ -2902,6 +2902,7 @@ class TestSuppliersExport(BaseApplicationTest, FixtureMixin, PutDeclarationAndDe
                 'duns_number': "100000001",
                 'registered_name': 'Registered Supplier Name 1',
                 'companies_house_number': None,
+                'other_company_registration_number': '555-222-111',
                 "published_services_count": {
                     "digital-outcomes": 0,
                     "digital-specialists": 0,
