@@ -21,7 +21,7 @@ def upgrade():
     # We want this column to be NOT NULLABLE, so we need to set any NULL
     # values. NULLs are active suppliers (i.e. they have not been made
     # inactive).
-    op.execute("UPDATE suppliers SET active = true WHERE active = NULL")
+    op.execute("UPDATE suppliers SET active = true WHERE active is NULL")
     op.alter_column('suppliers', 'active', nullable=False)
 
 
