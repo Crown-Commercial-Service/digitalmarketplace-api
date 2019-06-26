@@ -409,6 +409,9 @@ class Supplier(db.Model):
     # SupplierFramework.application_company_details_confirmed
     company_details_confirmed = db.Column(db.Boolean, index=False, default=False, nullable=False)
 
+    # This flag indicates if a supplier is no longer providing any services.
+    active = db.Column(db.Boolean, default=True, server_default=sql_true(), nullable=False)
+
     @validates('trading_status')
     def validates_trading_status(self, key, value):
         if value not in self.TRADING_STATUSES:
