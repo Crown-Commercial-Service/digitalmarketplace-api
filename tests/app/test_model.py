@@ -1332,12 +1332,15 @@ class TestApplication(BaseApplicationTest):
             db.session.add(signed_agreement)
             db.session.flush()
 
-            assert app.serializable['signed_agreements'][0] == \
-                {'email_address': 'email@digital.gov.au',
-                 'name': 'name',
-                 'signed_at': now,
-                 'url': 'http://url',
-                 'version': 'Marketplace Agreement 2.0'}
+            assert app.serializable['signed_agreements'][0] == {
+                'agreement': {
+                    'email_address': 'email@digital.gov.au',
+                    'name': 'name',
+                    'signed_at': now,
+                    'url': 'http://url',
+                    'version': 'Marketplace Agreement 2.0'
+                }
+            }
 
 
 class TestSuppliers(BaseApplicationTest):

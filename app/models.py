@@ -665,7 +665,7 @@ class Supplier(db.Model):
                                  default=localnow)
 
     domains = relationship("SupplierDomain", back_populates="supplier")
-    signed_agreements = db.relationship('SignedAgreement', single_parent=True)
+    signed_agreements = db.relationship('SignedAgreement', single_parent=True, order_by="SignedAgreement.agreement_id")
     frameworks = relationship("SupplierFramework")
     text_vector = column_property(func.setweight(func.to_tsvector(func.coalesce(name, '')), 'A').op('||')(
         func.setweight(func.to_tsvector(func.coalesce(summary, '')), 'B')).op('||')(
@@ -2665,10 +2665,12 @@ class Application(db.Model):
         ).join(
             SignedAgreement, User
         ).filter(
-            SignedAgreement.application_id == self.id
+            SignedAgreement.supplier_code == self.supplier_code
+        ).order_by(
+            SignedAgreement.agreement_id
         ).all()
 
-        return [a._asdict() for a in agreements]
+        return [{'agreement': a._asdict()} for a in agreements]
 
 
 def check_for_uuid(data):
