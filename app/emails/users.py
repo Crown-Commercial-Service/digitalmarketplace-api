@@ -219,7 +219,8 @@ def send_new_user_onboarding_email(name, email_address, user_type, framework):
 
     email_body = render_email_template(
         'buyer_onboarding.md',
-        name=name
+        name=name,
+        frontend_url=current_app.config['FRONTEND_ADDRESS'],
     )
 
     try:

@@ -3,9 +3,11 @@ from flask_login import current_user, login_required
 from app.api import api
 from app.api.helpers import abort, not_found
 from app.api.services import (
+    briefs,
     brief_responses_service,
     audit_service,
-    audit_types
+    audit_types,
+    work_order_service
 )
 from app.tasks import publish_tasks
 from ...models import AuditEvent
@@ -122,3 +124,55 @@ def get_brief_response(brief_response_id):
                   .format(brief_response_id, current_user.supplier_code))
 
     return jsonify(brief_response.serialize())
+
+
+@api.route('/brief-response/<int:brief_id>/suppliers', methods=['GET'])
+@login_required
+@role_required('buyer')
+def get_suppliers_responded(brief_id):
+    """Get suppliers responded (role=buyer)
+    ---
+    tags:
+      - "Brief Response"
+    security:
+      - basicAuth: []
+    parameters:
+      - name: brief_response_id
+        in: path
+        type: number
+        required: true
+    definitions:
+      BriefResponse:
+        type: object
+        properties:
+          id:
+            type: number
+          data:
+            type: object
+          brief_id:
+            type: number
+          supplier_code:
+            type: number
+    responses:
+      200:
+        description: Suppliers that have responded to brief_id
+        schema:
+          id: BriefResponse
+      404:
+        description: brief_response_id not found
+    """
+    brief = briefs.get(brief_id)
+    if not brief:
+        not_found('brief {} not found'.format(brief_id))
+
+    brief_user_ids = [user.id for user in brief.users]
+    if not (
+        hasattr(current_user, 'role') and
+        (current_user.role == 'buyer' and current_user.id in brief_user_ids)
+    ):
+        forbidden('Unauthorised to award brief to seller')
+
+    suppliers = brief_responses_service.get_suppliers_responded(brief_id)
+    work_order = work_order_service.find(brief_id=brief_id).one_or_none()
+
+    return jsonify(suppliers=suppliers, workOrderCreated=True if work_order else False)

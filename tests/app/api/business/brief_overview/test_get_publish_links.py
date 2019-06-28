@@ -1,6 +1,6 @@
 import pytest
 
-from app.api.services import brief_overview_service
+from app.api.business import brief_overview_business
 
 
 @pytest.fixture()
@@ -19,7 +19,7 @@ def publish_links():
 
 
 def test_publish_section_has_all_links_for_draft_specialist_brief(specialist_brief, publish_links):
-    links = brief_overview_service.get_publish_links(specialist_brief)
+    links = brief_overview_business.get_publish_links(specialist_brief)
 
     for link in links:
         assert link['path']
@@ -29,7 +29,7 @@ def test_publish_section_has_all_links_for_draft_specialist_brief(specialist_bri
 def test_publish_section_links_are_disabled_when_specialist_brief_has_been_published(app, specialist_brief):
     with app.app_context():
         specialist_brief.status = 'live'
-        links = brief_overview_service.get_publish_links(specialist_brief)
+        links = brief_overview_business.get_publish_links(specialist_brief)
 
         for link in links:
             assert all(not link['path'] for link in links)

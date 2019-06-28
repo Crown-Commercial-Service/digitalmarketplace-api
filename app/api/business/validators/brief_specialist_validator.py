@@ -366,7 +366,8 @@ class SpecialistDataValidator(object):
                 {'name': 'contractExtensions', 'type': basestring},
                 {'name': 'areaOfExpertise', 'type': basestring},
                 {'name': 'closedAt', 'type': basestring},
-                {'name': 'publish', 'type': bool}
+                {'name': 'publish', 'type': bool},
+                {'name': 'comprehensiveTerms', 'type': bool}
             ]
 
             request_keys = self.data.keys()

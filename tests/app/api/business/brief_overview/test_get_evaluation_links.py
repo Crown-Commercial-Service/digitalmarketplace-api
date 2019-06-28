@@ -1,6 +1,6 @@
 import pytest
 
-from app.api.services import brief_overview_service
+from app.api.business import brief_overview_business
 
 
 @pytest.fixture()
@@ -9,7 +9,7 @@ def evaluation_link_texts():
 
 
 def test_evaluation_section_has_all_links_for_specialist_brief(specialist_brief, evaluation_link_texts):
-    links = brief_overview_service.get_evaluation_links(specialist_brief)
+    links = brief_overview_business.get_evaluation_links(specialist_brief)
 
     for link in links:
         assert link['path']

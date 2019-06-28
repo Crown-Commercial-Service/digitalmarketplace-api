@@ -224,7 +224,8 @@ class RFXDataValidator(object):
                 {'name': 'workingArrangements', 'type': basestring},
                 {'name': 'securityClearance', 'type': basestring},
                 {'name': 'publish', 'type': bool},
-                {'name': 'sellerSelector', 'type': basestring}
+                {'name': 'sellerSelector', 'type': basestring},
+                {'name': 'comprehensiveTerms', 'type': bool}
             ]
 
             request_keys = self.data.keys()

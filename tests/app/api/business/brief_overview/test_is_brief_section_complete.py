@@ -1,4 +1,4 @@
-from app.api.services import brief_overview_service
+from app.api.business import brief_overview_business
 
 
 def test_section_is_complete_when_brief_contains_all_required_fields(specialist_brief):
@@ -9,7 +9,7 @@ def test_section_is_complete_when_brief_contains_all_required_fields(specialist_
     }
 
     specialist_brief.data = {'title': 'Python Developer'}
-    complete = brief_overview_service.is_brief_section_complete(specialist_brief, section)
+    complete = brief_overview_business.is_brief_section_complete(specialist_brief, section)
 
     assert complete
 
@@ -22,7 +22,7 @@ def test_section_is_not_complete_when_brief_is_missing_a_required_field(speciali
     }
 
     specialist_brief.data = {}
-    complete = brief_overview_service.is_brief_section_complete(specialist_brief, section)
+    complete = brief_overview_business.is_brief_section_complete(specialist_brief, section)
 
     assert not complete
 
@@ -35,7 +35,7 @@ def test_section_is_complete_when_brief_contains_an_optional_field(specialist_br
     }
 
     specialist_brief.data = {'questionAndAnswerSessionDetails': 'Next Monday 3pm'}
-    complete = brief_overview_service.is_brief_section_complete(specialist_brief, section)
+    complete = brief_overview_business.is_brief_section_complete(specialist_brief, section)
 
     assert complete
 
@@ -48,6 +48,6 @@ def test_section_is_not_complete_when_brief_is_missing_all_optional_fields(speci
     }
 
     specialist_brief.data = {}
-    complete = brief_overview_service.is_brief_section_complete(specialist_brief, section)
+    complete = brief_overview_business.is_brief_section_complete(specialist_brief, section)
 
     assert not complete

@@ -76,3 +76,20 @@ def get_new_agreement():
                 break
 
     return agreement
+
+
+def use_old_work_order_creator(published_at):
+    if not published_at:
+        return False
+    key_value = key_values_service.get_by_key('old_agreements')
+    agreement = get_current_agreement()
+    old_work_order_creator = True
+    if agreement and key_value:
+        old_agreements = key_value.get('data').get('oldAgreements', [])
+        if (
+            agreement['agreementId'] not in old_agreements and
+            published_at >= pendulum.parse(agreement.get('startDate'), tz='Australia/Canberra').date()
+        ):
+            old_work_order_creator = False
+
+    return old_work_order_creator

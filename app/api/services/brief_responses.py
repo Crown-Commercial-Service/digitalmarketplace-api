@@ -29,6 +29,21 @@ class BriefResponsesService(Service):
 
         return [r._asdict() for r in query.all()]
 
+    def get_suppliers_responded(self, brief_id):
+        query = (
+            db.session.query(
+                BriefResponse.supplier_code,
+                Supplier.name.label('supplier_name'))
+            .distinct(BriefResponse.supplier_code, Supplier.name.label('supplier_name'))
+            .join(Supplier)
+            .filter(
+                BriefResponse.brief_id == brief_id,
+                BriefResponse.withdrawn_at.is_(None)
+            )
+        )
+
+        return [r._asdict() for r in query.all()]
+
     def get_all_attachments(self, brief_id):
         query = (
             db.session.query(BriefResponse.data['attachedDocumentURL'].label('attachments'),

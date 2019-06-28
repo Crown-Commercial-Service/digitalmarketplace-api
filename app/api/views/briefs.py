@@ -18,18 +18,21 @@ from app.api.business.validators import (
     SpecialistDataValidator
 )
 from app.api.business.brief import BriefUserStatus
-from app.api.business import supplier_business
+from app.api.business import supplier_business, brief_overview_business
+from app.api.business.agreement_business import use_old_work_order_creator
 from app.api.helpers import abort, forbidden, not_found, role_required, is_current_user_in_brief
 from app.api.services import (agency_service,
                               audit_service,
-                              brief_overview_service,
+                              audit_types,
                               brief_responses_service,
                               briefs,
                               domain_service,
                               frameworks_service,
+                              key_values_service,
                               lots_service,
                               suppliers,
-                              users)
+                              users,
+                              work_order_service)
 from app.emails import (
     send_brief_response_received_email,
     render_email_template,
@@ -44,7 +47,7 @@ from dmapiclient.audit import AuditTypes
 from dmutils.file import s3_download_file, s3_upload_file_from_request
 
 from ...models import (AuditEvent, Brief, BriefResponse, Framework, Supplier,
-                       ValidationError, Lot, User, Domain, db)
+                       ValidationError, Lot, User, Domain, db, WorkOrder)
 from ...utils import get_json_from_request
 
 
@@ -901,7 +904,7 @@ def get_brief_overview(brief_id):
             brief.lot.slug == 'training'):
         abort('Lot {} is not supported'.format(brief.lot.slug))
 
-    sections = brief_overview_service.get_sections(brief)
+    sections = brief_overview_business.get_sections(brief)
 
     return jsonify(
         sections=sections,
@@ -981,8 +984,11 @@ def get_brief_responses(brief_id):
     else:
         brief_responses = brief_responses_service.get_brief_responses(brief_id, supplier_code)
 
+    old_work_order_creator = use_old_work_order_creator(brief.published_at)
+
     return jsonify(brief=brief.serialize(with_users=False, with_author=False),
-                   briefResponses=brief_responses)
+                   briefResponses=brief_responses,
+                   oldWorkOrderCreator=old_work_order_creator)
 
 
 @api.route('/brief/<int:brief_id>/respond/documents/<string:supplier_code>/<slug>', methods=['POST'])
@@ -1302,3 +1308,68 @@ def get_notification_template(brief_id, template):
         )
 
     return not_found('brief not found')
+
+
+@api.route('/brief/<int:brief_id>/award-seller', methods=['POST'])
+@login_required
+@role_required('buyer')
+def award_brief_to_seller(brief_id):
+    """Award a brief to a seller (role=buyer)
+    ---
+    tags:
+        - brief
+    definitions:
+        BriefAwarded:
+            type: object
+            properties:
+                awardedSupplier:
+                    type: string
+    responses:
+        200:
+            description: Brief awarded successfully.
+            schema:
+                $ref: '#/definitions/BriefAwarded'
+        400:
+            description: Bad request.
+        403:
+            description: Unauthorised to award brief to seller.
+        500:
+            description: Unexpected error.
+    """
+    brief = briefs.get(brief_id)
+    if not brief:
+        not_found('brief {} not found'.format(brief_id))
+
+    brief_user_ids = [user.id for user in brief.users]
+    if not (
+        hasattr(current_user, 'role') and
+        (current_user.role == 'buyer' and current_user.id in brief_user_ids)
+    ):
+        forbidden('Unauthorised to award brief to seller')
+
+    data = get_json_from_request()
+    supplier_code = data.get('awardedSupplierCode')
+    if not supplier_code:
+        abort('Supplier is required.')
+
+    work_order = work_order_service.find(brief_id=brief_id).one_or_none()
+    if work_order:
+        abort('Work order is already created.')
+
+    work_order_service.save(WorkOrder(
+        brief_id=brief_id,
+        supplier_code=supplier_code,
+        data={
+            "created_by": current_user.email_address
+        }
+    ))
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.create_work_order,
+        user=current_user.email_address,
+        data={
+            'briefId': brief.id
+        },
+        db_object=brief)
+
+    return jsonify(work_order=work_order), 200

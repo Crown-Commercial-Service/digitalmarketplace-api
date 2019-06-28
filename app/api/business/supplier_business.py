@@ -33,14 +33,19 @@ def get_supplier_messages(code, skip_application_check):
             'id': 'SB001'
         })
 
+    if not skip_application_check:
+        if any([a for a in applications if a.status == 'submitted']):
+            del validation_result.warnings[:]
+            del validation_result.errors[:]
+
     new_master_agreement = get_new_agreement()
     if new_master_agreement:
         start_date = pendulum.parse(new_master_agreement['startDate'], tz='Australia/Canberra').date()
         message = (
-            'From {}, your authorised representative must '.format(start_date.strftime('%-d %B %Y')),
-            'accept the new Master Agreement ',
+            'From {}, your authorised representative must '
+            'accept the new Master Agreement '
             'before you can apply for opportunities.'
-        )
+        ).format(start_date.strftime('%-d %B %Y'))
 
         validation_result.warnings.append({
             'message': message,
@@ -54,19 +59,17 @@ def get_supplier_messages(code, skip_application_check):
             if current_agreement:
                 start_date = pendulum.parse(current_agreement['startDate'], tz='Australia/Canberra').date()
                 message = (
-                    'Your authorised representative must accept the new Master Agreement ',
+                    'Your authorised representative {must accept the new Master Agreement} '
                     'before you can apply for opportunities.'
                 )
                 validation_result.errors.append({
                     'message': message,
                     'severity': 'error',
                     'step': 'representative',
-                    'id': 'SB002'
+                    'id': 'SB002',
+                    'links': {
+                        'must accept the new Master Agreement': '/2/seller-edit/{}/representative'.format(code)
+                    }
                 })
-
-    if skip_application_check is False:
-        if any([a for a in applications if a.status == 'submitted']):
-            validation_result = collections.namedtuple('Notification', ['warnings', 'errors'])
-            return validation_result(warnings=[], errors=[])
 
     return validation_result

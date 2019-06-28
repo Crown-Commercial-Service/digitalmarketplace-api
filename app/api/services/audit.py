@@ -67,3 +67,4 @@ class AuditTypes(Enum):
     declined_master_agreement = 'declined_master_agreement'
     accepted_master_agreement = 'accepted_master_agreement'
     declined_master_agreement_email = 'declined_master_agreement_email'
+    create_work_order = 'create_work_order'
