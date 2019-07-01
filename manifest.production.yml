@@ -2,7 +2,7 @@ command: ./scripts/cf_run_app.sh
 buildpack: python_buildpack
 health-check-type: port
 instances: 8
-memory: 512M
+memory: 1G
 disk_quota: 512M
 services:
 - pgdb-96-prod
