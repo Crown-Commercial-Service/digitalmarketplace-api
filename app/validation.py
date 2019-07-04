@@ -318,7 +318,8 @@ def _translate_json_schema_error(key, validator, validator_value, message):
 
         return 'under_{}_words'.format(_get_word_count(validator_value))
 
-    elif validator == 'enum' and key == 'essentialRequirementsMet':
+    elif validator == 'enum' and validator_value == [True]:
+        # Boolean questions where 'yes' is a mandatory answer, e.g. essentialRequirementsMet
         return 'not_required_value'
 
     elif validator == 'enum' and key == 'priceUnit':

@@ -28,7 +28,7 @@
     },
     {
       "required": [
-        "accessibleApplicationsSpecialists",
+        "contentDesignerAccessibleApplications",
         "contentDesignerLocations",
         "contentDesignerPriceMax",
         "contentDesignerPriceMin"
@@ -69,7 +69,7 @@
     },
     {
       "required": [
-        "accessibleApplicationsSpecialists",
+        "designerAccessibleApplications",
         "designerLocations",
         "designerPriceMax",
         "designerPriceMin"
@@ -78,7 +78,7 @@
     },
     {
       "required": [
-        "accessibleApplicationsSpecialists",
+        "developerAccessibleApplications",
         "developerLocations",
         "developerPriceMax",
         "developerPriceMin"
@@ -119,7 +119,7 @@
     },
     {
       "required": [
-        "accessibleApplicationsSpecialists",
+        "qualityAssuranceAccessibleApplications",
         "qualityAssuranceLocations",
         "qualityAssurancePriceMax",
         "qualityAssurancePriceMin"
@@ -136,7 +136,7 @@
     },
     {
       "required": [
-        "accessibleApplicationsSpecialists",
+        "serviceManagerAccessibleApplications",
         "serviceManagerLocations",
         "serviceManagerPriceMax",
         "serviceManagerPriceMin"
@@ -145,7 +145,7 @@
     },
     {
       "required": [
-        "accessibleApplicationsSpecialists",
+        "technicalArchitectAccessibleApplications",
         "technicalArchitectLocations",
         "technicalArchitectPriceMax",
         "technicalArchitectPriceMin"
@@ -162,7 +162,7 @@
     },
     {
       "required": [
-        "accessibleApplicationsSpecialists",
+        "webOperationsAccessibleApplications",
         "webOperationsLocations",
         "webOperationsPriceMax",
         "webOperationsPriceMin"
@@ -171,11 +171,6 @@
     }
   ],
   "dependencies": {
-    "accessibleApplicationsSpecialists": [
-      "webOperationsLocations",
-      "webOperationsPriceMax",
-      "webOperationsPriceMin"
-    ],
     "agileCoachLocations": [
       "agileCoachPriceMax",
       "agileCoachPriceMin"
@@ -212,18 +207,23 @@
       "communicationsManagerLocations",
       "communicationsManagerPriceMax"
     ],
+    "contentDesignerAccessibleApplications": [
+      "contentDesignerLocations",
+      "contentDesignerPriceMax",
+      "contentDesignerPriceMin"
+    ],
     "contentDesignerLocations": [
-      "accessibleApplicationsSpecialists",
+      "contentDesignerAccessibleApplications",
       "contentDesignerPriceMax",
       "contentDesignerPriceMin"
     ],
     "contentDesignerPriceMax": [
-      "accessibleApplicationsSpecialists",
+      "contentDesignerAccessibleApplications",
       "contentDesignerLocations",
       "contentDesignerPriceMin"
     ],
     "contentDesignerPriceMin": [
-      "accessibleApplicationsSpecialists",
+      "contentDesignerAccessibleApplications",
       "contentDesignerLocations",
       "contentDesignerPriceMax"
     ],
@@ -275,33 +275,43 @@
       "deliveryManagerLocations",
       "deliveryManagerPriceMax"
     ],
+    "designerAccessibleApplications": [
+      "designerLocations",
+      "designerPriceMax",
+      "designerPriceMin"
+    ],
     "designerLocations": [
-      "accessibleApplicationsSpecialists",
+      "designerAccessibleApplications",
       "designerPriceMax",
       "designerPriceMin"
     ],
     "designerPriceMax": [
-      "accessibleApplicationsSpecialists",
+      "designerAccessibleApplications",
       "designerLocations",
       "designerPriceMin"
     ],
     "designerPriceMin": [
-      "accessibleApplicationsSpecialists",
+      "designerAccessibleApplications",
       "designerLocations",
       "designerPriceMax"
     ],
+    "developerAccessibleApplications": [
+      "developerLocations",
+      "developerPriceMax",
+      "developerPriceMin"
+    ],
     "developerLocations": [
-      "accessibleApplicationsSpecialists",
+      "developerAccessibleApplications",
       "developerPriceMax",
       "developerPriceMin"
     ],
     "developerPriceMax": [
-      "accessibleApplicationsSpecialists",
+      "developerAccessibleApplications",
       "developerLocations",
       "developerPriceMin"
     ],
     "developerPriceMin": [
-      "accessibleApplicationsSpecialists",
+      "developerAccessibleApplications",
       "developerLocations",
       "developerPriceMax"
     ],
@@ -353,18 +363,23 @@
       "programmeManagerLocations",
       "programmeManagerPriceMax"
     ],
+    "qualityAssuranceAccessibleApplications": [
+      "qualityAssuranceLocations",
+      "qualityAssurancePriceMax",
+      "qualityAssurancePriceMin"
+    ],
     "qualityAssuranceLocations": [
-      "accessibleApplicationsSpecialists",
+      "qualityAssuranceAccessibleApplications",
       "qualityAssurancePriceMax",
       "qualityAssurancePriceMin"
     ],
     "qualityAssurancePriceMax": [
-      "accessibleApplicationsSpecialists",
+      "qualityAssuranceAccessibleApplications",
       "qualityAssuranceLocations",
       "qualityAssurancePriceMin"
     ],
     "qualityAssurancePriceMin": [
-      "accessibleApplicationsSpecialists",
+      "qualityAssuranceAccessibleApplications",
       "qualityAssuranceLocations",
       "qualityAssurancePriceMax"
     ],
@@ -380,33 +395,43 @@
       "securityConsultantLocations",
       "securityConsultantPriceMax"
     ],
+    "serviceManagerAccessibleApplications": [
+      "serviceManagerLocations",
+      "serviceManagerPriceMax",
+      "serviceManagerPriceMin"
+    ],
     "serviceManagerLocations": [
-      "accessibleApplicationsSpecialists",
+      "serviceManagerAccessibleApplications",
       "serviceManagerPriceMax",
       "serviceManagerPriceMin"
     ],
     "serviceManagerPriceMax": [
-      "accessibleApplicationsSpecialists",
+      "serviceManagerAccessibleApplications",
       "serviceManagerLocations",
       "serviceManagerPriceMin"
     ],
     "serviceManagerPriceMin": [
-      "accessibleApplicationsSpecialists",
+      "serviceManagerAccessibleApplications",
       "serviceManagerLocations",
       "serviceManagerPriceMax"
     ],
+    "technicalArchitectAccessibleApplications": [
+      "technicalArchitectLocations",
+      "technicalArchitectPriceMax",
+      "technicalArchitectPriceMin"
+    ],
     "technicalArchitectLocations": [
-      "accessibleApplicationsSpecialists",
+      "technicalArchitectAccessibleApplications",
       "technicalArchitectPriceMax",
       "technicalArchitectPriceMin"
     ],
     "technicalArchitectPriceMax": [
-      "accessibleApplicationsSpecialists",
+      "technicalArchitectAccessibleApplications",
       "technicalArchitectLocations",
       "technicalArchitectPriceMin"
     ],
     "technicalArchitectPriceMin": [
-      "accessibleApplicationsSpecialists",
+      "technicalArchitectAccessibleApplications",
       "technicalArchitectLocations",
       "technicalArchitectPriceMax"
     ],
@@ -422,28 +447,28 @@
       "userResearcherLocations",
       "userResearcherPriceMax"
     ],
+    "webOperationsAccessibleApplications": [
+      "webOperationsLocations",
+      "webOperationsPriceMax",
+      "webOperationsPriceMin"
+    ],
     "webOperationsLocations": [
-      "accessibleApplicationsSpecialists",
+      "webOperationsAccessibleApplications",
       "webOperationsPriceMax",
       "webOperationsPriceMin"
     ],
     "webOperationsPriceMax": [
-      "accessibleApplicationsSpecialists",
+      "webOperationsAccessibleApplications",
       "webOperationsLocations",
       "webOperationsPriceMin"
     ],
     "webOperationsPriceMin": [
-      "accessibleApplicationsSpecialists",
+      "webOperationsAccessibleApplications",
       "webOperationsLocations",
       "webOperationsPriceMax"
     ]
   },
   "properties": {
-    "accessibleApplicationsSpecialists": {
-      "enum": [
-        true
-      ]
-    },
     "agileCoachLocations": {
       "items": {
         "enum": [
@@ -541,6 +566,11 @@
     "communicationsManagerPriceMin": {
       "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
+    },
+    "contentDesignerAccessibleApplications": {
+      "enum": [
+        true
+      ]
     },
     "contentDesignerLocations": {
       "items": {
@@ -702,6 +732,11 @@
       "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
+    "designerAccessibleApplications": {
+      "enum": [
+        true
+      ]
+    },
     "designerLocations": {
       "items": {
         "enum": [
@@ -732,6 +767,11 @@
     "designerPriceMin": {
       "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
+    },
+    "developerAccessibleApplications": {
+      "enum": [
+        true
+      ]
     },
     "developerLocations": {
       "items": {
@@ -898,6 +938,11 @@
       "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
+    "qualityAssuranceAccessibleApplications": {
+      "enum": [
+        true
+      ]
+    },
     "qualityAssuranceLocations": {
       "items": {
         "enum": [
@@ -960,6 +1005,11 @@
       "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
     },
+    "serviceManagerAccessibleApplications": {
+      "enum": [
+        true
+      ]
+    },
     "serviceManagerLocations": {
       "items": {
         "enum": [
@@ -990,6 +1040,11 @@
     "serviceManagerPriceMin": {
       "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
+    },
+    "technicalArchitectAccessibleApplications": {
+      "enum": [
+        true
+      ]
     },
     "technicalArchitectLocations": {
       "items": {
@@ -1052,6 +1107,11 @@
     "userResearcherPriceMin": {
       "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
       "type": "string"
+    },
+    "webOperationsAccessibleApplications": {
+      "enum": [
+        true
+      ]
     },
     "webOperationsLocations": {
       "items": {
