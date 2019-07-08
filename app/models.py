@@ -2660,15 +2660,19 @@ class Application(db.Model):
             mj.create_application_approval_task(self, domains, closing_date)
 
     def signed_agreements(self):
-        agreements = db.session.query(
+        query = db.session.query(
             Agreement.version, Agreement.url, User.name, User.email_address, SignedAgreement.signed_at
         ).join(
             SignedAgreement, User
-        ).filter(
-            SignedAgreement.supplier_code == self.supplier_code
         ).order_by(
             SignedAgreement.agreement_id
-        ).all()
+        )
+        if self.supplier_code:
+            query = query.filter(SignedAgreement.supplier_code == self.supplier_code)
+        else:
+            query = query.filter(SignedAgreement.application_id == self.id)
+
+        agreements = query.all()
 
         return [{'agreement': a._asdict()} for a in agreements]
 
