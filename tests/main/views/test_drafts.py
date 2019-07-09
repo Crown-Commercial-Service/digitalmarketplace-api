@@ -1192,7 +1192,9 @@ class TestDraftServices(DraftsHelpersMixin):
         assert len(data['auditEvents']) == 2
         assert data['auditEvents'][0]['type'] == 'delete_draft_service'
         assert data['auditEvents'][1]['type'] == 'update_service'
+        assert data['auditEvents'][1]['acknowledged'] is True
         assert data['auditEvents'][1]['data']['copiedToFollowingFramework'] is False
+        assert data['auditEvents'][1]['data']['supplierName'] == 'Supplier 1'
 
         # Check the draft has gone
         fetch_again = self.client.get('/draft-services/{}'.format(draft_id))
