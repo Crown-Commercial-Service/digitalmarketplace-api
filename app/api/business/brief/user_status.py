@@ -6,6 +6,7 @@ from app.api.services import (
     suppliers,
     lots_service,
     brief_responses_service,
+    evidence_service,
     signed_agreement_service
 )
 from app.api.business.validators import SupplierValidator
@@ -56,20 +57,65 @@ class BriefUserStatus(object):
             return True
         return False
 
+    def has_evidence_in_draft_for_category(self):
+        if self.supplier and self.brief_category:
+            evidence = evidence_service.get_latest_evidence_for_supplier_and_domain(
+                int(self.brief_category),
+                self.supplier_code
+            )
+            if evidence and evidence.status == 'draft':
+                return True
+        return False
+
+    def has_latest_evidence_rejected_for_category(self):
+        if self.supplier and self.brief_category:
+            evidence = evidence_service.get_latest_evidence_for_supplier_and_domain(
+                int(self.brief_category),
+                self.supplier_code
+            )
+            if evidence and evidence.status == 'rejected':
+                return True
+        return False
+
+    def evidence_id_in_draft(self):
+        if self.has_evidence_in_draft_for_category():
+            evidence = evidence_service.get_latest_evidence_for_supplier_and_domain(
+                int(self.brief_category),
+                self.supplier_code
+            )
+            return evidence.id
+        return None
+
+    def evidence_id_rejected(self):
+        if self.has_latest_evidence_rejected_for_category():
+            evidence = evidence_service.get_latest_evidence_for_supplier_and_domain(
+                int(self.brief_category),
+                self.supplier_code
+            )
+            if evidence and evidence.status == 'rejected':
+                return evidence.id
+        return None
+
     def is_assessed_for_category(self):
         if self.supplier and self.brief_domain and self.brief_domain.name in self.supplier.assessed_domains:
             return True
         return False
 
     def is_awaiting_domain_assessment(self):
-        if self.supplier and self.brief_category and assessments.get_open_assessments(
-            domain_id=int(self.brief_category),
-            supplier_code=self.supplier_code
-        ):
-            return True
+        if self.supplier and self.brief_category:
+            evidence = evidence_service.get_latest_evidence_for_supplier_and_domain(
+                int(self.brief_category),
+                self.supplier_code
+            )
+            if evidence and evidence.status == 'submitted':
+                return True
 
-        if self.supplier and self.brief.data.get('openTo', '') == 'all' and assessments.get_open_assessments(
-            supplier_code=self.supplier_code
+        if (
+            self.supplier and self.brief_category and self.brief.data.get('openTo', '') == 'all' and
+            assessments.get_open_assessments(
+                domain_id=int(self.brief_category),
+                supplier_code=self.supplier_code
+            )
         ):
             return True
 
@@ -95,7 +141,6 @@ class BriefUserStatus(object):
                 self.brief.data.get('openTo', '') == 'all' or
                 str(self.supplier_code) in self.invited_sellers.keys() or (
                     self.brief.data.get('openTo', '') == 'category' and (
-                        self.has_chosen_brief_category() or
                         self.is_assessed_for_category()
                     )
                 )
@@ -105,6 +150,11 @@ class BriefUserStatus(object):
         return False
 
     def has_been_assessed_for_brief(self):
+        if self.supplier and evidence_service.supplier_has_assessment_for_brief(
+            self.supplier_code,
+            self.brief.id
+        ):
+            return True
         if self.supplier and assessments.supplier_has_assessment_for_brief(self.supplier_code, self.brief.id):
             return True
         return False

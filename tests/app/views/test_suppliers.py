@@ -624,7 +624,7 @@ class TestSupplierSearch(BaseApplicationTest):
                 "filtered": {
                     "filter": {
                         "terms": {
-                            "domains.assessed": ['Data science', 'Content and Publishing']
+                            "domains.assessed": ['Data science']
                         }
                     }
                 }
@@ -748,7 +748,10 @@ class TestDomains(BaseApplicationTest):
             'Support and Operations',
             'Data science',
             'Digital products',
-            'Emerging technology'
+            'Emerging technology',
+            'ICT risk management and audit activities',
+            'ICT managed services',
+            'Digital sourcing and ICT procurement'
         ]
 
     @mock.patch('app.tasks.publish_tasks.supplier_domain')

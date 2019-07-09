@@ -15,8 +15,6 @@ class ApplicationValidator(object):
                 self.validate_methods() +
                 self.validate_recruiter() +
                 self.validate_services() +
-                self.validate_pricing() +
-                self.validate_case_studies() +
                 self.validate_candidates() +
                 self.validate_products())
 
@@ -224,13 +222,15 @@ class ApplicationValidator(object):
 
     def validate_services(self):
         errors = []
-        services = self.application.data.get('services', {})
-        if not services:
-            errors.append({
-                'message': 'Services is required',
-                'severity': 'error',
-                'step': 'domains'
-            })
+        recruiter = self.application.data.get('recruiter')
+        if recruiter == 'yes' or recruiter == 'both':
+            services = self.application.data.get('services', {})
+            if not services:
+                errors.append({
+                    'message': 'Services is required',
+                    'severity': 'error',
+                    'step': 'domains'
+                })
 
         return errors
 
@@ -250,32 +250,6 @@ class ApplicationValidator(object):
                         'severity': 'error',
                         'step': 'pricing'
                     })
-
-        return errors
-
-    def validate_case_studies(self):
-        errors = []
-        case_studies = self.application.data.get('case_studies', [])
-        recruiter = self.application.data.get('recruiter')
-        services = self.application.data.get('services')
-
-        if recruiter == 'no' or recruiter == 'both':
-            for service in services.iterkeys():
-                service_case_studies = []
-                if isinstance(case_studies, list):
-                    service_case_studies = [cs for cs in case_studies if cs.get('service') == service]
-                else:
-                    service_case_studies = [cs for i, cs in case_studies.iteritems() if cs.get('service') == service]
-
-                if len(service_case_studies) == 0:
-                    errors.append({
-                        'message': 'At least one case study is required for {}'.format(service),
-                        'severity': 'error',
-                        'step': 'case-study'
-                    })
-                else:
-                    for service_case_study in service_case_studies:
-                        errors = errors + self.__validate_case_study(service_case_study)
 
         return errors
 

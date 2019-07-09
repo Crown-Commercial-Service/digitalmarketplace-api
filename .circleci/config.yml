@@ -135,6 +135,24 @@ jobs:
             cf run-and-wait dm-rc-api "python ./db_tasks.py do_migration $CIRCLE_BUILD_NUM"
             cf zero-downtime-push dm-rc-celery -f manifest.celery.rc.yml --show-app-log
 
+  deploy_to_alpha:
+    <<: *deploy_docker
+    steps:
+      - attach_workspace:
+          at: .
+      - *cf_install
+      - *update_libs
+      - *postgres_install
+      - run:
+          name: Deploy to Alpha
+          command: |
+            source venv/bin/activate
+            cf login -a https://api.system.y.cld.gov.au -o dta -s marketplace -u $CF_USER_STAGING -p $CF_PASSWORD_STAGING
+            python ./db_tasks.py v2_test_migration $CIRCLE_BUILD_NUM api.system.y.cld.gov.au $CF_USER_STAGING $CF_PASSWORD_STAGING marketplace-dm-alpha-shared
+            cf zero-downtime-push dm-alpha-api -f manifest.alpha.yml --show-app-log
+            cf run-and-wait dm-alpha-api "python ./db_tasks.py do_migration $CIRCLE_BUILD_NUM"
+            cf zero-downtime-push dm-alpha-celery -f manifest.celery.alpha.yml --show-app-log
+
   deploy_to_production_clone:
     <<: *deploy_docker
     steps:
@@ -224,6 +242,13 @@ workflows:
               ignore: /.*/
             branches:
               only: rc
+      - deploy_to_alpha:
+          <<: *required_for_deploy
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: alpha
       - deploy_to_staging:
           <<: *required_for_deploy
           filters:

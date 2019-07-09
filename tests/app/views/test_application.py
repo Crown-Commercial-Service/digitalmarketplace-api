@@ -415,7 +415,9 @@ class TestGetApplication(BaseApplicationsTest):
         self.application_id = self.setup_dummy_application()
 
         with self.app.app_context():
-            db.session.add(Domain(name='test domain', ordering=1, price_minimum=123, price_maximum=1234))
+            db.session.add(
+                Domain(name='test domain', ordering=1, price_minimum=123, price_maximum=1234, criteria_needed=1)
+            )
             db.session.commit()
 
     def teardown(self):

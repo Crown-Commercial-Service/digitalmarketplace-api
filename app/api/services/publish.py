@@ -16,6 +16,9 @@ class Publish(object):
     def brief_response(self, brief_response, event_type, **kwargs):
         return self.__generic('brief_response', event_type, brief_response=brief_response, **kwargs)
 
+    def evidence(self, evidence, event_type, **kwargs):
+        return self.__generic('evidence', event_type, evidence=evidence, **kwargs)
+
     def supplier(self, supplier, event_type, **kwargs):
         return self.__generic('supplier', event_type, supplier=supplier, **kwargs)
 

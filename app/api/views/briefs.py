@@ -32,6 +32,7 @@ from app.api.services import (agency_service,
                               lots_service,
                               suppliers,
                               users,
+                              evidence_service,
                               work_order_service)
 from app.emails import (
     send_brief_response_received_email,
@@ -399,7 +400,7 @@ def get_brief(brief_id):
                         type: boolean
                     has_responded:
                         type: boolean
-                    has_chosen_brief_category:
+                    has_evidence_in_draft_for_category:
                         type: boolean
                     is_assessed_for_category:
                         type: boolean
@@ -472,6 +473,8 @@ def get_brief(brief_id):
     # gather facts about the user's status against this brief
     user_status = BriefUserStatus(brief, current_user)
     has_chosen_brief_category = user_status.has_chosen_brief_category()
+    has_evidence_in_draft_for_category = user_status.has_evidence_in_draft_for_category()
+    has_latest_evidence_rejected_for_category = user_status.has_latest_evidence_rejected_for_category()
     is_assessed_for_category = user_status.is_assessed_for_category()
     is_assessed_in_any_category = user_status.is_assessed_in_any_category()
     is_awaiting_application_assessment = user_status.is_awaiting_application_assessment()
@@ -482,6 +485,8 @@ def get_brief(brief_id):
     is_invited = user_status.is_invited()
     can_respond = user_status.can_respond()
     has_responded = user_status.has_responded()
+    evidence_id = user_status.evidence_id_in_draft()
+    evidence_id_rejected = user_status.evidence_id_rejected()
     has_supplier_errors = user_status.has_supplier_errors()
     has_signed_current_agreement = user_status.has_signed_current_agreement()
 
@@ -523,9 +528,13 @@ def get_brief(brief_id):
     return jsonify(brief=brief.serialize(with_users=False, with_author=is_brief_owner),
                    brief_response_count=brief_response_count,
                    invited_seller_count=invited_seller_count,
+                   has_chosen_brief_category=has_chosen_brief_category,
+                   evidence_id=evidence_id,
+                   evidence_id_rejected=evidence_id_rejected,
                    supplier_brief_response_count=supplier_brief_response_count,
                    can_respond=can_respond,
-                   has_chosen_brief_category=has_chosen_brief_category,
+                   has_evidence_in_draft_for_category=has_evidence_in_draft_for_category,
+                   has_latest_evidence_rejected_for_category=has_latest_evidence_rejected_for_category,
                    is_assessed_for_category=is_assessed_for_category,
                    is_assessed_in_any_category=is_assessed_in_any_category,
                    is_approved_seller=is_approved_seller,

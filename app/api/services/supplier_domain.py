@@ -29,3 +29,21 @@ class SupplierDomainService(Service):
         )
 
         return [r._asdict() for r in result]
+
+    def set_supplier_domain_status(self, supplier_id, domain_id, status, price_status, do_commit=True):
+        existing = self.filter(
+            SupplierDomain.domain_id == domain_id,
+            SupplierDomain.supplier_id == supplier_id
+        ).one_or_none()
+        if existing:
+            existing.status = status
+            existing.price_status = price_status
+            return self.save(existing, do_commit)
+        else:
+            supplier_domain = SupplierDomain(
+                domain_id=domain_id,
+                supplier_id=supplier_id,
+                status=status,
+                price_status=price_status
+            )
+            return self.save(supplier_domain, do_commit)

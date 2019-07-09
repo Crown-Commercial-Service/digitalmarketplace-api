@@ -74,6 +74,24 @@ def compress_supplier(supplier):
 
 
 @celery.task
+def evidence(evidence, event_type, **kwargs):
+    publish.evidence(evidence, event_type, **kwargs)
+
+
+def compress_evidence(evidence):
+    return {
+        'id': evidence.id,
+        'domainId': evidence.domain_id,
+        'briefId': evidence.brief_id,
+        'status': evidence.status,
+        'supplierCode': evidence.supplier_code,
+        'created_at': evidence.created_at,
+        'updated_at': evidence.updated_at,
+        'submitted_at': evidence.submitted_at
+    }
+
+
+@celery.task
 def supplier_domain(supplier_domain, event_type, **kwargs):
     publish.supplier_domain(supplier_domain, event_type, **kwargs)
 

@@ -72,6 +72,20 @@ class SuppliersService(Service):
             .query(SupplierDomain.status)
             .filter(SupplierDomain.domain_id == category)
             .filter(SupplierDomain.supplier_id == supplier_id)
+            .order_by(SupplierDomain.id.desc())
+            .limit(1)
+            .scalar()
+        )
+
+    def get_supplier_max_price_for_domain(self, supplier_code, domain_name):
+        return (
+            db
+            .session
+            .query(Supplier.data['pricing'][domain_name]['maxPrice'].astext.label('maxPrice'))
+            .filter(
+                Supplier.code == supplier_code,
+                Supplier.data['pricing'][domain_name]['maxPrice'].isnot(None)
+            )
             .scalar()
         )
 
@@ -246,3 +260,6 @@ class SuppliersService(Service):
         )
 
         return [r._asdict() for r in results]
+
+    def save_supplier(self, supplier, do_commit=True):
+        return self.save(supplier, do_commit)

@@ -686,6 +686,18 @@ class Supplier(db.Model):
         ))
         db.session.flush()
 
+    def add_assessed_domain(self, name_or_id):
+        d = Domain.get_by_name_or_id(name_or_id)
+        sd = SupplierDomain(supplier=self, domain=d, status='assessed', price_status='approved')
+        db.session.add(sd)
+        db.session.add(AuditEvent(
+            audit_type=AuditTypes.assessed_domain,
+            user='',
+            data={},
+            db_object=sd
+        ))
+        db.session.flush()
+
     def remove_domain(self, name):
         sd = db.session.query(SupplierDomain)\
             .join(Domain, Supplier)\
@@ -715,6 +727,8 @@ class Supplier(db.Model):
                 data=audit_data if audit_data else {},
                 db_object=sd
             ))
+        elif status == 'unassessed':
+            sd.price_status = 'unassessed'
         db.session.flush()
 
     @property
@@ -855,6 +869,10 @@ class Supplier(db.Model):
         if 'recruiter' in data:
             self.is_recruiter = data['recruiter'].lower() in ('both', 'yes', 'true', 't')
             data['is_recruiter'] = self.is_recruiter
+            # un-assess domains when going from a recruiter to a consultancy
+            if self.data.get('recruiter', '') == 'yes' and data.get('recruiter', '') in ['both', 'no']:
+                for domain in self.all_domains:
+                    self.update_domain_assessment_status(domain, 'unassessed')
 
         if 'representative' in data:
             self.contacts = [
@@ -889,6 +907,9 @@ class Supplier(db.Model):
         if 'regions' in data:
             del data['regions']
 
+        if 'pricing' in data:
+            del data['pricing']
+
         overridden = [
             'longName',
             'extraLinks',
@@ -904,12 +925,18 @@ class Supplier(db.Model):
         self.last_update_time = utcnow()
 
         if 'services' in self.data:
-            for name, checked in self.data['services'].items():
-                if name not in self.all_domains and checked:
-                    self.add_unassessed_domain(name)
-            for domain in self.all_domains:
-                if not any(domain in service for service in self.data['services']):
-                    self.remove_domain(domain)
+            if self.data.get('recruiter', '') in ['yes', 'both']:
+                for name, checked in self.data['services'].items():
+                    if name not in self.all_domains and checked:
+                        if self.data.get('recruiter', '') == 'yes':
+                            self.add_assessed_domain(name)
+                        else:
+                            self.add_unassessed_domain(name)
+                    if name in self.all_domains and checked and self.data.get('recruiter', '') == 'yes':
+                        self.update_domain_assessment_status(name, 'assessed')
+                for domain in self.all_domains:
+                    if not any(domain in service for service in self.data['services']):
+                        self.remove_domain(domain)
 
             del self.data['services']
 
@@ -953,8 +980,10 @@ class Domain(db.Model):
     ordering = db.Column(db.Integer, nullable=False)
     price_minimum = db.Column(db.Numeric, nullable=False)
     price_maximum = db.Column(db.Numeric, nullable=False)
+    criteria_needed = db.Column(db.Numeric, nullable=False)
 
     suppliers = relationship("SupplierDomain", back_populates="domain", lazy='joined')
+    criteria = relationship("DomainCriteria", back_populates="domain")
     assoc_suppliers = association_proxy('suppliers', 'supplier')
 
     @staticmethod
@@ -971,6 +1000,139 @@ class Domain(db.Model):
         if not d:
             raise ValidationError('cannot find domain: {}'.format(name_or_id))
         return d
+
+    def serialize(self):
+        serialized = {
+            "id": self.id,
+            "name": self.name,
+            "price_minimum": self.price_minimum,
+            "price_maximum": self.price_maximum,
+            "criteria": [criteria.serialize() for criteria in self.criteria],
+            "criteria_needed": self.criteria_needed
+        }
+        return serialized
+
+
+class DomainCriteria(db.Model):
+    __tablename__ = 'domain_criteria'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    domain_id = db.Column(db.Integer,
+                          db.ForeignKey('domain.id'),
+                          nullable=False)
+    domain = relationship("Domain", back_populates="criteria")
+
+    def serialize(self):
+        serialized = {
+            "id": self.id,
+            "name": self.name
+        }
+        return serialized
+
+
+class Evidence(db.Model):
+    __tablename__ = 'evidence'
+    id = db.Column(db.Integer, primary_key=True)
+    domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), nullable=False)
+    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
+    data = db.Column(MutableDict.as_mutable(JSON))
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+    updated_at = db.Column(DateTime, index=True, nullable=False, default=utcnow, onupdate=utcnow)
+    submitted_at = db.Column(DateTime, index=True, nullable=True)
+    approved_at = db.Column(DateTime, index=True, nullable=True)
+    rejected_at = db.Column(DateTime, index=True, nullable=True)
+
+    domain = db.relationship('Domain', lazy='joined', innerjoin=True)
+    supplier = db.relationship('Supplier', lazy='joined', innerjoin=True)
+    user = db.relationship('User', lazy='joined', innerjoin=True)
+    brief = db.relationship('Brief')
+
+    def serialize(self, with_domain=False):
+        data = self.data.copy()
+        data.update({
+            "id": self.id,
+            "domainId": self.domain_id,
+            "briefId": self.brief_id,
+            "status": self.status,
+            "supplierCode": self.supplier_code,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "submitted_at": self.submitted_at
+        })
+        if with_domain:
+            data.update({
+                "domain": self.domain.serialize()
+            })
+        return data
+
+    def submit(self):
+        if not self.submitted_at:
+            self.submitted_at = pendulum.now('UTC')
+            self.rejected_at = None
+            self.approved_at = None
+
+    def approve(self):
+        if not self.approved_at:
+            self.rejected_at = None
+            self.approved_at = pendulum.now('UTC')
+
+    def reject(self):
+        if not self.rejected_at:
+            self.approved_at = None
+            self.rejected_at = pendulum.now('UTC')
+
+    def get_criteria_responses(self):
+        responses = {}
+        if 'evidence' in self.data and len(self.data['evidence'].keys()) > 0:
+            for criteria_id in self.data['evidence']:
+                if 'response' in self.data['evidence'][criteria_id]:
+                    responses[criteria_id] = self.data['evidence'][criteria_id]['response']
+        return responses
+
+    @hybrid_property
+    def status(self):
+        if not self.submitted_at:
+            return 'draft'
+        if self.rejected_at:
+            return 'rejected'
+        if self.approved_at:
+            return 'assessed'
+        return 'submitted'
+
+
+class EvidenceAssessment(db.Model):
+    __tablename__ = 'evidence_assessment'
+    id = db.Column(db.Integer, primary_key=True)
+    evidence_id = db.Column(db.Integer, db.ForeignKey('evidence.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+    status = db.Column(
+        db.Enum(
+            *[
+                'approved',
+                'rejected'
+            ],
+            name='evidence_assessment_status_enum'
+        ),
+        default='rejected',
+        index=False,
+        unique=False,
+        nullable=False
+    )
+    data = db.Column(MutableDict.as_mutable(JSON))
+
+    def serialize(self):
+        data = self.data.copy()
+        data.update({
+            "id": self.id,
+            "evidenceId": self.evidence_id,
+            "userId": self.user_id,
+            "status": self.status,
+            "created_at": self.created_at
+        })
+        return data
 
 
 class RecruiterInfo(db.Model):

@@ -432,6 +432,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
         if new_domains:
             if EXCLUDE_LEGACY_ROLES:
                 d_agg = postgres.array_agg(cast(Domain.name, TEXT))
+                q = q.filter(SupplierDomain.status == 'assessed')
                 q = q.having(d_agg.contains(array(roles_list)))
         else:
             sr_agg = postgres.array_agg(cast(func.substring(ServiceRole.name, 8), TEXT))

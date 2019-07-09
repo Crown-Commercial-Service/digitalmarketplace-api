@@ -263,10 +263,11 @@ class Service(object):
     def _preprocess_params(self, kwargs):
         return kwargs
 
-    def save(self, model):
+    def save(self, model, do_commit=True):
         self._isinstance(model)
         self.add_to_session(model)
-        self.commit_changes()
+        if do_commit:
+            self.commit_changes()
         return model
 
     def all(self):

@@ -100,6 +100,69 @@ class MarketplaceJIRA(object):
     def make_link(self, key):
         return self.server_url + '/browse/' + key
 
+    def create_evidence_approval_task(self, evidence):
+        supplier = evidence.supplier
+        domain = evidence.domain
+        brief = None
+        if evidence.brief_id:
+            brief = evidence.brief
+
+        summary = 'Domain Assessment: {}(#{})'.format(supplier.name, supplier.code)
+
+        description_values = {
+            "supplier_name": supplier.name,
+            "supplier_url": current_app.config['ADMIN_ADDRESS'] + "/admin/assessments/supplier/" + str(supplier.code),
+            "evidence_url": current_app.config['ADMIN_ADDRESS'] + "/admin/evidence-assessments/" + str(evidence.id),
+            "evidence_summary_url": (
+                current_app.config['ADMIN_ADDRESS'] + "/admin/evidence-assessments/" + str(evidence.id) + "/previous"
+            ),
+            "domain": domain.name,
+        }
+        if brief:
+            description_values["brief_name"] = brief.data.get('title')
+            description_values["brief_close_date"] = brief.applications_closed_at.format('%A %-d %B %Y')
+
+        description = ('[{supplier_name}|{supplier_url}] has applied for assessment '
+                       'under the "*{domain}*" domain'
+                       ).format(**description_values)
+        if brief:
+            description += (' in order to apply for the "*{brief_name}*" brief '
+                            'which closes for applications on *{brief_close_date}* at 6PM.'
+                            ).format(**description_values)
+        else:
+            description += '.'
+        description += ('\n\n'
+                        'Please assess their suitability to be approved for '
+                        'this domain based on the '
+                        '[assessment criteria|https://marketplace.service.gov.au/assessment-criteria] and '
+                        'clearly indicate an approve/reject recommendation in your comments.\n\n'
+                        '\n\n'
+                        '[Start assessment in admin portal|{evidence_url}]'
+                        '\n\n'
+                        'Once assessed, [view the summary of the assessor\'s findings|{evidence_summary_url}].'
+                        '\n\n'
+                        ).format(**description_values)
+
+        details = dict(
+            project=self.jira_field_codes['MARKETPLACE_PROJECT_CODE'],
+            summary=summary,
+            description=description,
+            issuetype_name='Domain Assessment',
+            labels=[domain.name.title().replace(" ", "_")]
+        )
+        if brief:
+            details['duedate'] = str(brief.applications_closing_date)
+        existing_issues = self.get_supplier_tasks(str(supplier.code))
+        new_issue = self.generic_jira.create_issue(**details)
+        for issue in existing_issues:
+            self.generic_jira.jira.create_issue_link('Relates', new_issue, issue)
+
+        new_issue_update_data = {
+            self.jira_field_codes['SUPPLIER_FIELD_CODE']: str(supplier.code)
+        }
+
+        new_issue.update(new_issue_update_data)
+
     def create_domain_approval_task(self, assessment, application=None):
         supplier = assessment.supplier_domain.supplier
         brief = assessment.briefs[0]

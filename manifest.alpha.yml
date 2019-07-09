@@ -1,0 +1,17 @@
+applications:
+- name: dm-alpha-api
+  command: ./scripts/cf_run_app.sh
+  buildpack: python_buildpack
+  health-check-type: port
+  health-check-timeout: 180
+  instances: 1
+  memory: 512M
+  disk_quota: 512M
+  services:
+  - ups-secret-service
+  - marketplace-dm-alpha-shared
+  - ups-dm-alpha-common
+  - ups-dm-alpha-api
+  routes:
+  - route: dm-alpha.apps.y.cld.gov.au/api
+  - route: dm-alpha-api.apps.y.cld.gov.au

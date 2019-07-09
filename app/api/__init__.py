@@ -95,6 +95,8 @@ from app.api.views import (briefs,  # noqa
                            dashboards,
                            opportunities,
                            key_values,
+                           domains,
+                           evidence,
                            redirects)
 
 from app.api.views.reports import (  # noqa

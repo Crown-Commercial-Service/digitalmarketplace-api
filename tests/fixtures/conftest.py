@@ -9,7 +9,7 @@ from app import create_app, encryption
 from app.models import (Agency, Application, Assessment, Brief, BriefResponse,
                         BriefUser, Contact, Domain, Framework, FrameworkLot,
                         Lot, Supplier, SupplierDomain, SupplierFramework, User,
-                        UserFramework, CaseStudy, db, utcnow)
+                        UserFramework, CaseStudy, Evidence, db, utcnow)
 from migrations import load_from_app_model, load_test_fixtures
 from tests.app.helpers import (COMPLETE_DIGITAL_SPECIALISTS_BRIEF,
                                WSGIApplicationWithEnvironment)
@@ -112,12 +112,17 @@ def suppliers(app, request):
 
 @pytest.fixture()
 def supplier_domains(app, request, suppliers):
+    params = request.param if hasattr(request, 'param') else {}
+    status = params['status'] if 'status' in params else 'unassessed'
+    price_status = params['price_status'] if 'price_status' in params else 'unassessed'
     with app.app_context():
         for s in suppliers:
             for i in range(1, 6):
                 db.session.add(SupplierDomain(
                     supplier_id=s.id,
-                    domain_id=i
+                    domain_id=i,
+                    status=status,
+                    price_status=price_status
                 ))
 
                 db.session.flush()
@@ -362,6 +367,24 @@ def assessments(app, request, supplier_domains, briefs):
 
         db.session.commit()
         yield Assessment.query.all()
+
+
+@pytest.fixture()
+def evidence(app, request, domains, suppliers, buyer_user):
+    params = request.param if hasattr(request, 'param') else {}
+    data = params['data'] if 'data' in params else {}
+    with app.app_context():
+        for domain in domains:
+            db.session.add(Evidence(
+                supplier_code=suppliers[0].code,
+                domain_id=domain.id,
+                user_id=buyer_user.id,
+                submitted_at=pendulum.now(),
+                data=data
+            ))
+            db.session.flush()
+        db.session.commit()
+        yield Evidence.query.all()
 
 
 @pytest.fixture()

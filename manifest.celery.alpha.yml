@@ -1,0 +1,14 @@
+command: ./scripts/cf_run_celery_app.sh
+buildpack: python_buildpack
+health-check-type: process
+instances: 1
+memory: 1G
+disk_quota: 512M
+services:
+  - ups-secret-service
+  - marketplace-dm-alpha-shared
+  - ups-dm-alpha-common
+  - ups-dm-alpha-api
+no-route: true
+applications:
+- name: dm-alpha-celery

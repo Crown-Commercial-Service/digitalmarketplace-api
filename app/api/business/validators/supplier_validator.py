@@ -2,6 +2,7 @@ import collections
 import pendulum
 import re
 from flask import current_app
+from app.api.services import evidence_service
 
 
 class SupplierValidator(object):
@@ -13,8 +14,6 @@ class SupplierValidator(object):
         result = (
             self.validate_basics() +
             self.validate_documents() +
-            self.validate_case_studies() +
-            self.validate_pricing() +
             self.validate_representative()
         )
         warnings = [n for n in result if n.get('severity', 'error') == 'warning']
@@ -43,7 +42,10 @@ class SupplierValidator(object):
 
         if recruiter == 'no' or recruiter == 'both':
             for supplier_domain in supplier_domains:
-                if supplier_domain.domain.name not in pricing:
+                if (
+                    supplier_domain.domain.name in self.supplier.assessed_domains and
+                    supplier_domain.domain.name not in pricing
+                ):
                     errors.append({
                         'message': 'You must provide your maximum daily rate (including GST) for {domain} using '
                                    '{{Skills Framework for the Information Age (SFIA) Level 5}} '
@@ -77,46 +79,6 @@ class SupplierValidator(object):
                         'step': 'pricing',
                         'id': 'S003-{}'.format(supplier_domain.domain.id)
                     })
-
-        return errors
-
-    def validate_case_studies(self):
-        errors = []
-        case_studies = self.supplier.case_studies
-        recruiter = self.supplier.data.get('recruiter')
-        supplier_domains = self.supplier.domains
-
-        if recruiter == 'no' or recruiter == 'both':
-            for supplier_domain in supplier_domains:
-                domain_case_studies = []
-                if isinstance(case_studies, list):
-                    domain_case_studies = [
-                        cs for cs in case_studies
-                        if cs.data.get('service') == supplier_domain.domain.name
-                    ]
-                else:
-                    domain_case_studies = [
-                        cs for i, cs in case_studies.iteritems()
-                        if cs.data.get('service') == supplier_domain.domain.name
-                    ]
-
-                if len(domain_case_studies) == 0:
-                    errors.append({
-                        'message': 'To apply for opportunities under {}, '
-                                   'you must submit a case study then '
-                                   '{{request an assessment}} from the '
-                                   'opportunity page.'.format(supplier_domain.domain.name),
-                        'links': {
-                            'request an assessment': 'https://marketplace1.zendesk.com/hc/en-gb'
-                                                     '/articles/115011292847-Request-an-assessment'
-                                   },
-                        'severity': 'error',
-                        'step': 'case-study',
-                        'id': 'S004-{}'.format(supplier_domain.domain.id)
-                    })
-                else:
-                    for domain_case_study in domain_case_studies:
-                        errors = errors + self.__validate_case_study(domain_case_study)
 
         return errors
 

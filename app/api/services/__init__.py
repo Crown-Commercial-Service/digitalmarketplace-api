@@ -15,6 +15,8 @@ from .key_value import KeyValueService
 from .publish import Publish
 from .frameworks import FrameworksService
 from .user_claims import UserClaimService
+from .evidence import EvidenceService
+from .evidence_assessment import EvidenceAssessmentService
 from .work_order import WorkOrderService
 
 agency_service = AgencyService()
@@ -35,4 +37,6 @@ key_values_service = KeyValueService()
 publish = Publish()
 frameworks_service = FrameworksService()
 user_claims_service = UserClaimService()
+evidence_service = EvidenceService()
+evidence_assessment_service = EvidenceAssessmentService()
 work_order_service = WorkOrderService()
