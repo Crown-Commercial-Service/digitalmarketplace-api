@@ -394,7 +394,7 @@ class Supplier(db.Model):
                                           lazy='joined',
                                           innerjoin=False,
                                           order_by=lambda: ContactInformation.id)
-    duns_number = db.Column(db.String, index=True, unique=True, nullable=True)
+    duns_number = db.Column(db.String, unique=True, nullable=True)
     companies_house_number = db.Column(db.String, index=False, unique=False, nullable=True)
     registered_name = db.Column(db.String, index=False, unique=False, nullable=True)
     registration_country = db.Column(db.String, index=False, unique=False, nullable=True)
@@ -861,7 +861,7 @@ class User(db.Model, RemovePersonalDataModelMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, index=False, unique=False,
                      nullable=False)
-    email_address = db.Column(db.String, index=True, unique=True,
+    email_address = db.Column(db.String, unique=True,
                               nullable=False)
     phone_number = db.Column(db.String, index=False, unique=False,
                              nullable=True)
@@ -1003,7 +1003,7 @@ class ServiceTableMixin(object):
     # used as externally-visible "pk" for Services and allows services identity to be tracked
     # across a service's lifetime. assigned randomly (see random_positive_external_id) at DraftService ->
     # Service publishing time.
-    service_id = db.Column(db.String, index=True, unique=True, nullable=False)
+    service_id = db.Column(db.String, unique=True, nullable=False)
 
     data = db.Column(JSON, nullable=False)
     status = db.Column(db.String, index=False, unique=False, nullable=False)
