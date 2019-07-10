@@ -43,7 +43,7 @@ def test_supplier_fails_with_bad_companies_house_number():
 @pytest.mark.parametrize(
     'duns', ['12345678', '1234567890']
 )
-def test_supplier_fails_with_bad_duns(duns):
+def test_new_supplier_fails_with_bad_duns(duns):
     data = load_example_listing("new-supplier")
     data["dunsNumber"] = duns
     errs = get_validation_errors("new-supplier", data)
