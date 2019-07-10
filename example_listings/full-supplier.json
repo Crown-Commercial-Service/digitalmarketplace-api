@@ -1,0 +1,28 @@
+{
+  "id": 123456,
+  "name": "Example Company Limited",
+  "description": "Example Company Limited is an innovation station sensation; we deliver software so bleeding edge you literally won't be able to run any of it on your systems.",
+  "contactInformation": [
+    {
+      "contactName": "John Example",
+      "email": "j@examplecompany.biz",
+      "phoneNumber": "07309404738",
+      "address1": "123 Fake Street",
+      "city": "London",
+      "personalDataRemoved": false,
+      "postcode": "F4 K1E"
+    },
+    {
+      "id": 1,
+      "contactName": "Don",
+      "email": "don@don.com",
+      "phoneNumber": "020 7918 9200",
+      "address1": "4 Don Hill",
+      "city": "London",
+      "personalDataRemoved": false,
+      "postcode": "EC1A D0N"
+    }
+  ],
+  "dunsNumber": "333333333",
+  "companiesHouseNumber": "SC000111"
+}
