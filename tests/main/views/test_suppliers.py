@@ -563,7 +563,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin, PutDeclaratio
             "name": "New Name",
             "description": "New Description",
             "companiesHouseNumber": "AA123456",
-            "dunsNumber": "010101",
+            "dunsNumber": "010101010",
             "otherCompanyRegistrationNumber": "A11",
             "registeredName": "New Name Inc.",
             "registrationCountry": "country:GT",
@@ -581,7 +581,7 @@ class TestUpdateSupplier(BaseApplicationTest, JSONUpdateTestMixin, PutDeclaratio
 
         assert supplier.name == 'New Name'
         assert supplier.description == "New Description"
-        assert supplier.duns_number == "010101"
+        assert supplier.duns_number == "010101010"
         assert supplier.companies_house_number == "AA123456"
         assert supplier.other_company_registration_number == "A11"
         assert supplier.registered_name == "New Name Inc."
