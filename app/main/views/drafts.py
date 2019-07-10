@@ -4,6 +4,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import lazyload
 from sqlalchemy import asc, desc
 
+from datetime import datetime
+
 from .. import main
 from ... import db
 from ...validation import is_valid_service_id_or_400
@@ -333,11 +335,15 @@ def delete_draft_service(draft_id):
                 user=updater_json['updated_by'],
                 data={
                     "serviceId": source_service.service_id,
+                    "supplierName": source_service.supplier.name,
                     "supplierId": source_service.supplier_id,
                     "copiedToFollowingFramework": False
                 },
                 db_object=source_service
             )
+            source_service_audit.acknowledged = True
+            source_service_audit.acknowledged_by = "api_reset_service_copy"
+            source_service_audit.acknowledged_at = datetime.utcnow()
 
     audit = AuditEvent(
         audit_type=AuditTypes.delete_draft_service,
