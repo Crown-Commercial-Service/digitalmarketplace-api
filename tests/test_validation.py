@@ -40,6 +40,16 @@ def test_supplier_fails_with_bad_companies_house_number():
     assert len(errs) == 1
 
 
+@pytest.mark.parametrize(
+    'duns', ['12345678', '1234567890']
+)
+def test_new_supplier_fails_with_bad_duns(duns):
+    data = load_example_listing("new-supplier")
+    data["dunsNumber"] = duns
+    errs = get_validation_errors("new-supplier", data)
+    assert len(errs) == 1
+
+
 def test_for_valid_date():
     cases = [
         ("2010-01-01", True),

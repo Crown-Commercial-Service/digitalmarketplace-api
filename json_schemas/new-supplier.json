@@ -19,7 +19,9 @@
     },
     "dunsNumber": {
       "pattern": "^[0-9]+$",
-      "type": "string"
+      "type": "string",
+      "maxLength": 9,
+      "minLength": 9
     },
     "name": {
       "type": "string"
