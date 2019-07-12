@@ -1687,7 +1687,7 @@ class TestPostSupplier(BaseApplicationTest, JSONTestMixin):
         response = self.post_supplier(payload2)
         assert response.status_code == 400
         data = json.loads(response.get_data())
-        assert 'duplicate key value violates unique constraint "ix_suppliers_duns_number"' in data['error']
+        assert 'duplicate key value violates unique constraint' in data['error']
 
     def test_supplier_contact_information_returned_in_consistent_order(self):
         payload1 = load_example_listing("new-supplier")
