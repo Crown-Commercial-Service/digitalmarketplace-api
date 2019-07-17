@@ -162,7 +162,7 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             content_type='application/json')
         assert res.status_code == 201
 
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
 
         data = json.loads(audit_response.get_data())
@@ -767,7 +767,7 @@ class TestDraftServices(DraftsHelpersMixin):
         data = json.loads(res.get_data())
         draft_id = data['services']['id']
 
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
         assert len(data['auditEvents']) == 1
@@ -891,7 +891,7 @@ class TestDraftServices(DraftsHelpersMixin):
             content_type='application/json')
         assert res2.status_code == 200
 
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
         assert len(data['auditEvents']) == 2
@@ -1137,7 +1137,7 @@ class TestDraftServices(DraftsHelpersMixin):
         assert delete.status_code == 200
 
         # Check the audit events
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
 
@@ -1185,7 +1185,7 @@ class TestDraftServices(DraftsHelpersMixin):
         assert delete.status_code == 200
 
         # Check the audit events
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
 
@@ -1296,7 +1296,7 @@ class TestDraftServices(DraftsHelpersMixin):
             content_type='application/json')
         assert update.status_code == 200
 
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
 
@@ -1371,7 +1371,7 @@ class TestDraftServices(DraftsHelpersMixin):
             content_type='application/json')
         assert res.status_code == 200
 
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
 
@@ -1436,7 +1436,7 @@ class TestDraftServices(DraftsHelpersMixin):
         created_service_data = json.loads(res.get_data())
         new_service_id = created_service_data['services']['id']
 
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
         assert len(data['auditEvents']) == 4
@@ -1649,7 +1649,7 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
         data = json.loads(res.get_data())
         draft_id = data['services']['id']
 
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
         assert len(data['auditEvents']) == 2
@@ -1755,7 +1755,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert res.status_code == 200
 
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
         assert len(data['auditEvents']) == 2
@@ -1915,7 +1915,7 @@ class TestDOSServices(BaseApplicationTest, FixtureMixin):
         data = json.loads(res.get_data())
         draft_id = data['services']['id']
 
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
         assert len(data['auditEvents']) == 1
@@ -1943,7 +1943,7 @@ class TestDOSServices(BaseApplicationTest, FixtureMixin):
             content_type='application/json')
         assert delete.status_code == 200
 
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
 
@@ -2127,7 +2127,7 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert res.status_code == 200
 
-        audit_response = self.client.get('/audit-events')
+        audit_response = self.client.get('/audit-events?object-type=draft-services')
         assert audit_response.status_code == 200
         data = json.loads(audit_response.get_data())
         assert len(data['auditEvents']) == 2

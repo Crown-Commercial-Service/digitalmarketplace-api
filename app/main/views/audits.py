@@ -24,23 +24,25 @@ from ...utils import (
 RESOURCE_NAME = "auditEvents"
 
 AUDIT_OBJECT_TYPES = {
-    "suppliers": models.Supplier,
-    "services": models.Service,
-    "frameworks": models.Framework,
-    "users": models.User,
-    "briefs": models.Brief,
-    "outcomes": models.Outcome,
     "brief-responses": models.BriefResponse,
+    "briefs": models.Brief,
+    "draft-services": models.DraftService,
+    "frameworks": models.Framework,
+    "outcomes": models.Outcome,
+    "services": models.Service,
+    "suppliers": models.Supplier,
+    "users": models.User,
 }
 
 AUDIT_OBJECT_ID_FIELDS = {
-    "suppliers": models.Supplier.supplier_id,
-    "services": models.Service.service_id,
-    "frameworks": models.Framework.slug,
-    "users": models.User.id,
-    "briefs": models.Brief.id,
-    "outcomes": models.Outcome.external_id,
     "brief-responses": models.BriefResponse.id,
+    "briefs": models.Brief.id,
+    "draft-services": models.DraftService.id,
+    "frameworks": models.Framework.slug,
+    "outcomes": models.Outcome.external_id,
+    "services": models.Service.service_id,
+    "suppliers": models.Supplier.supplier_id,
+    "users": models.User.id,
 }
 
 
