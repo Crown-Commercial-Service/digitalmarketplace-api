@@ -161,15 +161,22 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             data=json.dumps(self.updater_json),
             content_type='application/json')
         assert res.status_code == 201
+        draft_id = res.json["services"]["id"]
 
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
+        res = self.client.get("/audit-events")
+        assert res.status_code == 200
 
-        data = json.loads(audit_response.get_data())
-        assert len(data['auditEvents']) == 1
-        assert data['auditEvents'][0]['user'] == 'joeblogs'
-        assert data['auditEvents'][0]['type'] == 'create_draft_service'
-        assert data['auditEvents'][0]['data']['serviceId'] == self.service_id
+        all_audit_events = res.json["auditEvents"]
+        assert len(all_audit_events) == 1
+        assert all_audit_events[0]["user"] == "joeblogs"
+        assert all_audit_events[0]["type"] == "create_draft_service"
+        assert all_audit_events[0]["data"]["serviceId"] == self.service_id
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert all_audit_events == draft_service_audit_events
 
     def test_should_not_create_two_drafts_from_existing_service(self):
         self.client.put(
@@ -762,19 +769,24 @@ class TestDraftServices(DraftsHelpersMixin):
             '/draft-services',
             data=json.dumps(self.create_draft_json),
             content_type='application/json')
-
         assert res.status_code == 201
-        data = json.loads(res.get_data())
-        draft_id = data['services']['id']
+        draft_id = res.json['services']['id']
 
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
-        assert len(data['auditEvents']) == 1
-        assert data['auditEvents'][0]['user'] == 'joeblogs'
-        assert data['auditEvents'][0]['type'] == 'create_draft_service'
-        assert data['auditEvents'][0]['data']['draftId'] == draft_id
-        assert data['auditEvents'][0]['data']['draftJson'] == self.create_draft_json['services']
+        res = self.client.get('/audit-events')
+        assert res.status_code == 200
+
+        all_audit_events = res.json["auditEvents"]
+        assert len(all_audit_events) == 1
+        assert all_audit_events[0]['user'] == 'joeblogs'
+        assert all_audit_events[0]['type'] == 'create_draft_service'
+        assert all_audit_events[0]['data']['draftId'] == draft_id
+        assert all_audit_events[0]['data']['draftJson'] == self.create_draft_json['services']
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert all_audit_events == draft_service_audit_events
 
     @mock.patch('app.db.session.commit')
     def test_create_draft_catches_db_integrity_error(self, db_commit):
@@ -876,31 +888,39 @@ class TestDraftServices(DraftsHelpersMixin):
         res = self.client.post(
             '/draft-services',
             data=json.dumps(self.create_draft_json),
-            content_type='application/json')
-        data = json.loads(res.get_data())
-        draft_id = data['services']['id']
+            content_type='application/json',
+        )
+        draft_id = res.json['services']['id']
         draft_update_json = self.updater_json.copy()
         draft_update_json['services'] = {
             'serviceTypes': ['Implementation'],
             'serviceBenefits': ['Tests pass']
         }
 
-        res2 = self.client.post(
+        res = self.client.post(
             '/draft-services/{}'.format(draft_id),
             data=json.dumps(draft_update_json),
-            content_type='application/json')
-        assert res2.status_code == 200
+            content_type='application/json'
+        )
+        assert res.status_code == 200
 
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
-        assert len(data['auditEvents']) == 2
-        assert data['auditEvents'][0]['user'] == 'joeblogs'
-        assert data['auditEvents'][0]['type'] == 'create_draft_service'
-        assert data['auditEvents'][0]['data']['draftId'] == draft_id
-        assert data['auditEvents'][1]['user'] == 'joeblogs'
-        assert data['auditEvents'][1]['type'] == 'update_draft_service'
-        assert data['auditEvents'][1]['data']['draftId'] == draft_id
+        res = self.client.get('/audit-events')
+        assert res.status_code == 200
+
+        all_audit_events = res.json["auditEvents"]
+        assert len(all_audit_events) == 2
+        assert all_audit_events[0]['user'] == 'joeblogs'
+        assert all_audit_events[0]['type'] == 'create_draft_service'
+        assert all_audit_events[0]['data']['draftId'] == draft_id
+        assert all_audit_events[1]['user'] == 'joeblogs'
+        assert all_audit_events[1]['type'] == 'update_draft_service'
+        assert all_audit_events[1]['data']['draftId'] == draft_id
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert all_audit_events == draft_service_audit_events
 
     def test_update_draft_should_purge_keys_with_null_values(self):
         res = self.client.post(
@@ -1137,15 +1157,21 @@ class TestDraftServices(DraftsHelpersMixin):
         assert delete.status_code == 200
 
         # Check the audit events
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
+        res = self.client.get('/audit-events')
+        assert res.status_code == 200
 
-        assert len(data['auditEvents']) == 2
-        assert data['auditEvents'][0]['type'] == 'create_draft_service'
-        assert data['auditEvents'][1]['user'] == 'joeblogs'
-        assert data['auditEvents'][1]['type'] == 'delete_draft_service'
-        assert data['auditEvents'][1]['data']['serviceId'] == self.service_id
+        all_audit_events = res.json['auditEvents']
+        assert len(all_audit_events) == 2
+        assert all_audit_events[0]['type'] == 'create_draft_service'
+        assert all_audit_events[1]['user'] == 'joeblogs'
+        assert all_audit_events[1]['type'] == 'delete_draft_service'
+        assert all_audit_events[1]['data']['serviceId'] == self.service_id
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert all_audit_events == draft_service_audit_events
 
         # Check the draft has gone
         fetch_again = self.client.get('/draft-services/{}'.format(draft_id))
@@ -1185,16 +1211,22 @@ class TestDraftServices(DraftsHelpersMixin):
         assert delete.status_code == 200
 
         # Check the audit events
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
+        res = self.client.get('/audit-events')
+        assert res.status_code == 200
 
-        assert len(data['auditEvents']) == 2
-        assert data['auditEvents'][0]['type'] == 'delete_draft_service'
-        assert data['auditEvents'][1]['type'] == 'update_service'
-        assert data['auditEvents'][1]['acknowledged'] is True
-        assert data['auditEvents'][1]['data']['copiedToFollowingFramework'] is False
-        assert data['auditEvents'][1]['data']['supplierName'] == 'Supplier 1'
+        all_audit_events = res.json['auditEvents']
+        assert len(all_audit_events) == 2
+        assert all_audit_events[0]['type'] == 'delete_draft_service'
+        assert all_audit_events[1]['type'] == 'update_service'
+        assert all_audit_events[1]['acknowledged'] is True
+        assert all_audit_events[1]['data']['copiedToFollowingFramework'] is False
+        assert all_audit_events[1]['data']['supplierName'] == 'Supplier 1'
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert draft_service_audit_events == all_audit_events[0:1]
 
         # Check the draft has gone
         fetch_again = self.client.get('/draft-services/{}'.format(draft_id))
@@ -1284,7 +1316,7 @@ class TestDraftServices(DraftsHelpersMixin):
             '/draft-services/copy-from/{}'.format(self.service_id),
             data=json.dumps(self.updater_json),
             content_type='application/json')
-        draft_id = json.loads(res.get_data())['services']['id']
+        draft_id = res.json['services']['id']
         update = self.client.post(
             '/draft-services/{}'.format(draft_id),
             data=json.dumps({
@@ -1296,15 +1328,21 @@ class TestDraftServices(DraftsHelpersMixin):
             content_type='application/json')
         assert update.status_code == 200
 
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
+        res = self.client.get('/audit-events')
+        assert res.status_code == 200
 
-        assert len(data['auditEvents']) == 2
-        assert data['auditEvents'][1]['user'] == 'joeblogs'
-        assert data['auditEvents'][1]['type'] == 'update_draft_service'
-        assert data['auditEvents'][1]['data']['serviceId'] == self.service_id
-        assert data['auditEvents'][1]['data']['updateJson']['serviceName'] == 'new service name'
+        all_audit_events = res.json['auditEvents']
+        assert len(all_audit_events) == 2
+        assert all_audit_events[1]['user'] == 'joeblogs'
+        assert all_audit_events[1]['type'] == 'update_draft_service'
+        assert all_audit_events[1]['data']['serviceId'] == self.service_id
+        assert all_audit_events[1]['data']['updateJson']['serviceName'] == 'new service name'
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert all_audit_events == draft_service_audit_events
 
     def test_should_be_a_400_if_no_service_block_in_update(self):
         self.client.put(
@@ -1371,14 +1409,20 @@ class TestDraftServices(DraftsHelpersMixin):
             content_type='application/json')
         assert res.status_code == 200
 
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
+        res = self.client.get('/audit-events')
+        assert res.status_code == 200
 
-        assert len(data['auditEvents']) == 3
-        assert data['auditEvents'][0]['type'] == 'create_draft_service'
-        assert data['auditEvents'][1]['type'] == 'update_draft_service'
-        assert data['auditEvents'][2]['type'] == 'publish_draft_service'
+        all_audit_events = res.json['auditEvents']
+        assert len(all_audit_events) == 3
+        assert all_audit_events[0]['type'] == 'create_draft_service'
+        assert all_audit_events[1]['type'] == 'update_draft_service'
+        assert all_audit_events[2]['type'] == 'publish_draft_service'
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert all_audit_events == draft_service_audit_events
 
         # draft should no longer exist
         fetch = self.client.get('/draft-services/{}'.format(self.service_id))
@@ -1436,14 +1480,21 @@ class TestDraftServices(DraftsHelpersMixin):
         created_service_data = json.loads(res.get_data())
         new_service_id = created_service_data['services']['id']
 
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
-        assert len(data['auditEvents']) == 4
-        assert data['auditEvents'][0]['type'] == 'create_draft_service'
-        assert data['auditEvents'][1]['type'] == 'update_draft_service'
-        assert data['auditEvents'][2]['type'] == 'complete_draft_service'
-        assert data['auditEvents'][3]['type'] == 'publish_draft_service'
+        res = self.client.get('/audit-events')
+        assert res.status_code == 200
+
+        all_audit_events = res.json['auditEvents']
+        assert len(all_audit_events) == 4
+        assert all_audit_events[0]['type'] == 'create_draft_service'
+        assert all_audit_events[1]['type'] == 'update_draft_service'
+        assert all_audit_events[2]['type'] == 'complete_draft_service'
+        assert all_audit_events[3]['type'] == 'publish_draft_service'
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert all_audit_events == draft_service_audit_events
 
         # draft should still exist
         fetch = self.client.get('/draft-services/{}'.format(draft_id))
@@ -1649,17 +1700,24 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
         data = json.loads(res.get_data())
         draft_id = data['services']['id']
 
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
-        assert len(data['auditEvents']) == 2
-        assert data['auditEvents'][1]['user'] == 'joeblogs'
-        assert data['auditEvents'][1]['type'] == 'create_draft_service'
-        assert data['auditEvents'][1]['data'] == {
+        res = self.client.get('/audit-events')
+        assert res.status_code == 200
+
+        all_audit_events = res.json["auditEvents"]
+        assert len(all_audit_events) == 2
+        assert all_audit_events[1]['user'] == 'joeblogs'
+        assert all_audit_events[1]['type'] == 'create_draft_service'
+        assert all_audit_events[1]['data'] == {
             'draftId': draft_id,
             'originalDraftId': self.draft_id,
             'supplierId': 1,
         }
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert all_audit_events[1:2] == draft_service_audit_events
 
     def test_should_not_create_draft_with_invalid_data(self):
         res = self.client.post(
@@ -1751,20 +1809,28 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
         res = self.client.post(
             '/draft-services/{}/complete'.format(self.draft_id),
             data=json.dumps({'updated_by': 'joeblogs'}),
-            content_type='application/json')
+            content_type='application/json',
+        )
+        assert res.status_code == 200
+        draft_id = res.json["services"]["id"]
 
+        res = self.client.get('/audit-events')
         assert res.status_code == 200
 
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
-        assert len(data['auditEvents']) == 2
-        assert data['auditEvents'][1]['user'] == 'joeblogs'
-        assert data['auditEvents'][1]['type'] == 'complete_draft_service'
-        assert data['auditEvents'][1]['data'] == {
+        all_audit_events = res.json['auditEvents']
+        assert len(all_audit_events) == 2
+        assert all_audit_events[1]['user'] == 'joeblogs'
+        assert all_audit_events[1]['type'] == 'complete_draft_service'
+        assert all_audit_events[1]['data'] == {
             'draftId': self.draft_id,
             'supplierId': 1,
         }
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert all_audit_events == draft_service_audit_events
 
     def test_should_not_complete_draft_without_updated_by(self):
         res = self.client.post(
@@ -1915,13 +1981,20 @@ class TestDOSServices(BaseApplicationTest, FixtureMixin):
         data = json.loads(res.get_data())
         draft_id = data['services']['id']
 
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
-        assert len(data['auditEvents']) == 1
-        assert data['auditEvents'][0]['user'] == 'joeblogs'
-        assert data['auditEvents'][0]['type'] == 'create_draft_service'
-        assert data['auditEvents'][0]['data']['draftId'] == draft_id
+        res = self.client.get('/audit-events')
+        assert res.status_code == 200
+
+        all_audit_events = res.json['auditEvents']
+        assert len(all_audit_events) == 1
+        assert all_audit_events[0]['user'] == 'joeblogs'
+        assert all_audit_events[0]['type'] == 'create_draft_service'
+        assert all_audit_events[0]['data']['draftId'] == draft_id
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert all_audit_events == draft_service_audit_events
 
     def test_should_fetch_a_dos_draft(self):
         res = self._post_dos_draft()
@@ -1943,15 +2016,21 @@ class TestDOSServices(BaseApplicationTest, FixtureMixin):
             content_type='application/json')
         assert delete.status_code == 200
 
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
+        res = self.client.get('/audit-events')
+        assert res.status_code == 200
 
-        assert len(data['auditEvents']) == 2
-        assert data['auditEvents'][0]['type'] == 'create_draft_service'
-        assert data['auditEvents'][1]['user'] == 'joeblogs'
-        assert data['auditEvents'][1]['type'] == 'delete_draft_service'
-        assert data['auditEvents'][1]['data']['draftId'] == draft_id
+        all_audit_events = res.json['auditEvents']
+        assert len(all_audit_events) == 2
+        assert all_audit_events[0]['type'] == 'create_draft_service'
+        assert all_audit_events[1]['user'] == 'joeblogs'
+        assert all_audit_events[1]['type'] == 'delete_draft_service'
+        assert all_audit_events[1]['data']['draftId'] == draft_id
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert all_audit_events == draft_service_audit_events
 
         fetch_again = self.client.get(
             '/draft-services/{}'.format(draft_id),
@@ -2127,17 +2206,24 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
 
         assert res.status_code == 200
 
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
-        assert len(data['auditEvents']) == 2
-        assert data['auditEvents'][1]['user'] == 'joeblogs'
-        assert data['auditEvents'][1]['type'] == 'update_draft_service_status'
-        assert data['auditEvents'][1]['data'] == {
+        res = self.client.get('/audit-events')
+        assert res.status_code == 200
+
+        all_audit_events = res.json['auditEvents']
+        assert len(all_audit_events) == 2
+        assert all_audit_events[1]['user'] == 'joeblogs'
+        assert all_audit_events[1]['type'] == 'update_draft_service_status'
+        assert all_audit_events[1]['data'] == {
             'draftId': self.draft_id,
             'status': 'failed',
             'supplierId': 1,
         }
+
+        res = self.client.get(f"/audit-events?data-draft-service-id={self.draft_id}")
+        assert res.status_code == 200
+
+        draft_service_audit_events = res.json["auditEvents"]
+        assert all_audit_events == draft_service_audit_events
 
     def test_should_not_update_draft_status_to_invalid_status(self):
         res = self.client.post(

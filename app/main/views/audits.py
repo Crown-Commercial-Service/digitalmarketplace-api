@@ -97,6 +97,12 @@ def list_audits():
             ) == data_supplier_id
         )
 
+    data_draft_service_id = request.args.get('data-draft-service-id')
+    if data_draft_service_id:
+        audits = audits.filter(
+            AuditEvent.data['draftId'].astext == data_draft_service_id
+        )
+
     acknowledged = request.args.get('acknowledged', None)
     if acknowledged and acknowledged != 'all':
         if is_valid_acknowledged_state(acknowledged):
