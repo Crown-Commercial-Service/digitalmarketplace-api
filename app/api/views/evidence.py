@@ -203,7 +203,10 @@ def update_evidence(evidence_id):
         publish = True
 
     if 'maxDailyRate' in data:
-        data['maxDailyRate'] = int(data['maxDailyRate'])
+        try:
+            data['maxDailyRate'] = int(data['maxDailyRate'])
+        except ValueError as e:
+            data['maxDailyRate'] = 0
 
     # Validate the evidence request data
     errors = EvidenceDataValidator(data, evidence=evidence).validate(publish=publish)
