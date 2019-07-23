@@ -10,10 +10,10 @@ class DomainApproval(object):
     def __init__(self, evidence_id=None, actioned_by=None):
         if not actioned_by or not str(actioned_by).isdigit():
             raise DomainApprovalException('An admin user id must be supplied')
-        self.user = users.find(id=int(actioned_by)).one_or_none()
+        self.user = users.get_by_id(int(actioned_by))
         if not self.user or self.user.role != 'admin':
             raise DomainApprovalException('Invalid user id in actioned_by')
-        self.evidence = evidence_service.find(id=evidence_id).one_or_none()
+        self.evidence = evidence_service.get_evidence_by_id(evidence_id)
         if not self.evidence or not self.evidence.status == 'submitted':
             raise DomainApprovalException('Evidence id is invalid or is not submitted')
         self.actioned_by = actioned_by

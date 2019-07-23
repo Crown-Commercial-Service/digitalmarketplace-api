@@ -5,6 +5,7 @@ from .application import ApplicationService
 from .audit import AuditService, AuditTypes
 from .assessments import AssessmentsService
 from .domain import DomainService
+from .domain_criteria import DomainCriteriaService
 from .briefs import BriefsService
 from .suppliers import SuppliersService
 from .supplier_domain import SupplierDomainService
@@ -27,6 +28,7 @@ audit_service = AuditService()
 audit_types = AuditTypes
 assessments = AssessmentsService()
 domain_service = DomainService()
+domain_criteria_service = DomainCriteriaService()
 briefs = BriefsService()
 suppliers = SuppliersService()
 supplier_domain_service = SupplierDomainService()

@@ -1,4 +1,5 @@
 from sqlalchemy import or_, and_
+from sqlalchemy.orm import joinedload, raiseload
 from app.models import Evidence, Supplier, Brief, Domain
 from app.api.helpers import Service
 from app import db
@@ -17,21 +18,65 @@ class EvidenceService(Service):
         )
         return [domain_id[0] for domain_id in query.distinct()]
 
+    def get_evidence_by_id(self, evidence_id):
+        query = (
+            db.session.query(Evidence)
+            .filter(
+                Evidence.id == evidence_id
+            )
+            .options(
+                joinedload(Evidence.supplier).joinedload(Supplier.signed_agreements),
+                joinedload(Evidence.supplier).joinedload(Supplier.domains),
+                joinedload(Evidence.user),
+                joinedload(Evidence.brief),
+                joinedload(Evidence.domain),
+                raiseload('*')
+            )
+        )
+        evidence = query.one_or_none()
+        return evidence
+
     def get_latest_evidence_for_supplier_and_domain(self, domain_id, supplier_code):
-        evidence = self.filter(
-            Evidence.supplier_code == supplier_code,
-            Evidence.domain_id == domain_id
-        ).order_by(Evidence.id.desc()).first()
+        query = (
+            db.session.query(Evidence)
+            .filter(
+                Evidence.supplier_code == supplier_code,
+                Evidence.domain_id == domain_id
+            )
+            .options(
+                joinedload(Evidence.supplier).joinedload(Supplier.signed_agreements),
+                joinedload(Evidence.supplier).joinedload(Supplier.domains),
+                joinedload(Evidence.user),
+                joinedload(Evidence.brief),
+                joinedload(Evidence.domain),
+                raiseload('*')
+            )
+            .order_by(Evidence.id.desc())
+        )
+        evidence = query.first()
         return evidence
 
     def get_previous_submitted_evidence_for_supplier_and_domain(self, evidence_id, domain_id, supplier_code):
-        evidence = self.filter(
-            Evidence.supplier_code == supplier_code,
-            Evidence.domain_id == domain_id,
-            Evidence.submitted_at.isnot(None),
-            or_(Evidence.approved_at.isnot(None), Evidence.rejected_at.isnot(None)),
-            Evidence.id != evidence_id
-        ).order_by(Evidence.id.desc()).first()
+        query = (
+            db.session.query(Evidence)
+            .filter(
+                Evidence.supplier_code == supplier_code,
+                Evidence.domain_id == domain_id,
+                Evidence.submitted_at.isnot(None),
+                or_(Evidence.approved_at.isnot(None), Evidence.rejected_at.isnot(None)),
+                Evidence.id != evidence_id
+            )
+            .options(
+                joinedload(Evidence.supplier).joinedload(Supplier.signed_agreements),
+                joinedload(Evidence.supplier).joinedload(Supplier.domains),
+                joinedload(Evidence.user),
+                joinedload(Evidence.brief),
+                joinedload(Evidence.domain),
+                raiseload('*')
+            )
+            .order_by(Evidence.id.desc())
+        )
+        evidence = query.first()
         return evidence
 
     def get_all_submitted_evidence(self):

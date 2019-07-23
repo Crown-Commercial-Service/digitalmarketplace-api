@@ -1,5 +1,6 @@
 from sqlalchemy import func, desc, literal, and_
 from sqlalchemy.sql.expression import select, case
+from sqlalchemy.orm import joinedload, raiseload
 from app.api.helpers import Service
 from app import db
 from app.models import User, Supplier
@@ -92,3 +93,12 @@ class UsersService(Service):
 
     def get_by_email(self, email):
         return self.find(email_address=email).one_or_none()
+
+    def get_by_id(self, user_id):
+        query = (
+            self.find(id=user_id)
+            .options(
+                raiseload('*')
+            )
+        )
+        return query.one_or_none()

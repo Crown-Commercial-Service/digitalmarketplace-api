@@ -1,4 +1,4 @@
-from app.api.services import domain_service, evidence_service
+from app.api.services import domain_service, evidence_service, domain_criteria_service
 from app.api.business.domain_criteria import DomainCriteria
 
 
@@ -7,7 +7,8 @@ class EvidenceDataValidator(object):
         self.data = data
         self.evidence = evidence
         if self.evidence:
-            self.domain = domain_service.find(id=evidence.domain.id).one_or_none()
+            self.domain = domain_service.get_by_name_or_id(evidence.domain.id)
+            self.domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
 
     def get_criteria_needed(self):
         criteria_needed = self.domain.criteria_needed
@@ -36,7 +37,7 @@ class EvidenceDataValidator(object):
             return False
         if len(self.data['criteria']) < self.get_criteria_needed():
             return False
-        valid_criteria_ids = [x.id for x in self.domain.criteria]
+        valid_criteria_ids = [x.id for x in self.domain_criteria]
         for criteria_id in self.data['criteria']:
             if criteria_id not in valid_criteria_ids:
                 return False
@@ -82,7 +83,7 @@ class EvidenceDataValidator(object):
     def validate_evidence_responses(self):
         if 'evidence' not in self.data:
             return False
-        valid_criteria_ids = [x.id for x in self.domain.criteria]
+        valid_criteria_ids = [x.id for x in self.domain_criteria]
         used_criteria_ids = self.data['evidence'].keys()
         for criteria_id in used_criteria_ids:
             if int(criteria_id) not in valid_criteria_ids:

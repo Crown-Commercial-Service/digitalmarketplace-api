@@ -4,7 +4,7 @@ from app.utils import get_json_from_request
 from app.api.business.domain_approval import DomainApproval
 from app.api.business.domain_criteria import DomainCriteria
 from app.api.business.errors import DomainCriteriaInvalidRateException, DomainApprovalException
-from app.api.services import evidence_service, evidence_assessment_service, domain_service, users, suppliers
+from app.api.services import evidence_service, evidence_assessment_service, domain_criteria_service, users, suppliers
 from app.emails.evidence_assessments import (
     send_evidence_assessment_approval_notification,
     send_evidence_assessment_rejection_notification
@@ -37,8 +37,8 @@ def get_evidence(evidence_id):
     if evidence:
         evidence_data = evidence._asdict()
         if evidence_data:
-            domain = domain_service.find(id=evidence_data['domain_id']).one_or_none()
-            evidence_data['domain_criteria'] = [x.serialize() for x in domain.criteria]
+            domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence_data['domain_id'])
+            evidence_data['domain_criteria'] = [x.serialize() for x in domain_criteria]
             previous_evidence = evidence_service.get_previous_submitted_evidence_for_supplier_and_domain(
                 evidence_id,
                 evidence.domain_id,
@@ -62,22 +62,22 @@ def get_evidence(evidence_id):
 
 @main.route('/evidence/<int:evidence_id>/previous', methods=['GET'])
 def get_previous_evidence_and_feedback(evidence_id):
-    evidence = evidence_service.find(id=evidence_id).one_or_none()
+    evidence = evidence_service.get_evidence_by_id(evidence_id)
     if not evidence:
         abort(404)
     if evidence.status not in ['assessed', 'rejected']:
         abort(404)
     evidence_data = evidence.serialize()
     if evidence_data:
-        domain = domain_service.find(id=evidence_data['domainId']).one_or_none()
-        evidence_data['domain_criteria'] = [x.serialize() for x in domain.criteria]
+        domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence_data['domainId'])
+        evidence_data['domain_criteria'] = [x.serialize() for x in domain_criteria]
         evidence_data['domain_price_maximum'] = evidence.domain.price_maximum
         feedback = evidence_assessment_service.find(evidence_id=evidence.id).one_or_none()
         if feedback:
             evidence_data['feedback'] = feedback.serialize()
             assessor = users.find(id=int(feedback.user_id)).one_or_none()
             evidence_data['assessor'] = assessor.name if assessor else ''
-        evidence_data['domainName'] = domain.name
+        evidence_data['domainName'] = evidence.domain.name
         supplier = suppliers.get_supplier_by_code(evidence.supplier_code)
         evidence_data['supplierName'] = supplier.name if supplier else ''
         try:
@@ -106,7 +106,7 @@ def evidence_approve(evidence_id):
         abort(400, str(e))
 
     try:
-        evidence = evidence_service.find(id=evidence_id).one_or_none()
+        evidence = evidence_service.get_evidence_by_id(evidence_id)
         if evidence:
             send_evidence_assessment_approval_notification(evidence)
     except Exception as e:
@@ -132,7 +132,7 @@ def evidence_reject(evidence_id):
         abort(400, str(e))
 
     try:
-        evidence = evidence_service.find(id=evidence_id).one_or_none()
+        evidence = evidence_service.get_evidence_by_id(evidence_id)
         if evidence:
             send_evidence_assessment_rejection_notification(evidence)
     except Exception as e:

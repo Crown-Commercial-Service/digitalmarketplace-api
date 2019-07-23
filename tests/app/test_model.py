@@ -1254,8 +1254,6 @@ class TestApplication(BaseApplicationTest):
             supp = self.supplier
             db.session.add(supp)
 
-            assert supp.legacy_domains == []
-
             supp.update_from_json(
                 {"prices": [{
                     "serviceRole": {"category": "Business Analysis", "role": "Junior Business Analyst"},
@@ -1265,21 +1263,17 @@ class TestApplication(BaseApplicationTest):
 
             db.session.commit()
 
-            assert supp.legacy_domains == ['Agile delivery and Governance']
-            assert supp.assessed_domains == ['Agile delivery and Governance']
+            assert supp.assessed_domains == []
             assert supp.unassessed_domains == []
 
             supp.add_unassessed_domain('Change, Training and Transformation')
 
-            assert supp.legacy_domains == ['Agile delivery and Governance']
-            assert supp.assessed_domains == ['Agile delivery and Governance']
+            assert supp.assessed_domains == []
             assert supp.unassessed_domains == ['Change, Training and Transformation']
 
             supp.update_domain_assessment_status('Change, Training and Transformation', 'assessed')
 
-            assert supp.legacy_domains == ['Agile delivery and Governance']
             assert supp.assessed_domains == [
-                'Agile delivery and Governance',
                 'Change, Training and Transformation'
             ]
 

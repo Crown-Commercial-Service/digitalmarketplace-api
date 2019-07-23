@@ -11,7 +11,7 @@ from . import celery
 
 @celery.task
 def create_evidence_assessment_in_jira(evidence_id):
-    evidence = evidence_service.find(id=evidence_id).one_or_none()
+    evidence = evidence_service.get_evidence_by_id(evidence_id)
     if not evidence:
         return False
 

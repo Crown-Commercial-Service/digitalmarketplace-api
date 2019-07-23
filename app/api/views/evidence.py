@@ -3,7 +3,8 @@ from flask import request, jsonify, current_app
 from flask_login import current_user, login_required
 from app.api.helpers import not_found, role_required, abort
 from app.api.services import (
-    evidence_service, evidence_assessment_service, domain_service, suppliers, briefs, assessments
+    evidence_service, evidence_assessment_service, domain_service, suppliers, briefs, assessments,
+    domain_criteria_service
 )
 from app.api.business.validators import EvidenceDataValidator
 from app.api.business.domain_criteria import DomainCriteria
@@ -111,7 +112,7 @@ def create_evidence(domain_id, brief_id=None):
 @login_required
 @role_required('supplier')
 def get_evidence(evidence_id):
-    evidence = evidence_service.find(id=evidence_id).one_or_none()
+    evidence = evidence_service.get_evidence_by_id(evidence_id)
     if not evidence or current_user.supplier_code != evidence.supplier_code:
         not_found("No evidence for id '%s' found" % (evidence_id))
 
@@ -136,7 +137,7 @@ def get_evidence(evidence_id):
 @login_required
 @role_required('supplier')
 def get_evidence_feedback(evidence_id):
-    evidence = evidence_service.find(id=evidence_id).one_or_none()
+    evidence = evidence_service.get_evidence_by_id(evidence_id)
     if not evidence or current_user.supplier_code != evidence.supplier_code:
         not_found("No evidence for id '%s' found" % (evidence_id))
     if not evidence.status == 'rejected':
@@ -152,7 +153,8 @@ def get_evidence_feedback(evidence_id):
         abort(str(e))
 
     criteria_from_domain = {}
-    for criteria in evidence.domain.criteria:
+    domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
+    for criteria in domain_criteria:
         criteria_from_domain[str(criteria.id)] = criteria.name
 
     criteria = {}
@@ -188,7 +190,7 @@ def get_evidence_feedback(evidence_id):
 @login_required
 @role_required('supplier')
 def update_evidence(evidence_id):
-    evidence = evidence_service.find(id=evidence_id).one_or_none()
+    evidence = evidence_service.get_evidence_by_id(evidence_id)
     if not evidence or current_user.supplier_code != evidence.supplier_code:
         not_found("No evidence for id '%s' found" % (evidence_id))
 

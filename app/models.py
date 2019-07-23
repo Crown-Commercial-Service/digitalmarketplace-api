@@ -734,13 +734,13 @@ class Supplier(db.Model):
     @property
     def all_domains(self):
         new_domains = [sd.domain.name for sd in self.domains]
-        result = new_domains + self.legacy_domains
+        result = new_domains
         return sorted_uniques(result)
 
     @property
     def assessed_domains(self):
         approved_new_domains = [sd.domain.name for sd in self.domains if sd.status == 'assessed']
-        result = approved_new_domains + self.legacy_domains
+        result = approved_new_domains
         return sorted_uniques(result)
 
     @property
@@ -819,8 +819,7 @@ class Supplier(db.Model):
         j['domains'] = {
             'all': sorted([self.serialize_supplier_domain(d) for d in self.domains], key=itemgetter('domain_name')),
             'assessed': self.assessed_domains,
-            'unassessed': self.unassessed_domains,
-            'legacy': self.legacy_domains
+            'unassessed': self.unassessed_domains
         }
 
         j['services'] = {
@@ -1033,10 +1032,10 @@ class DomainCriteria(db.Model):
 class Evidence(db.Model):
     __tablename__ = 'evidence'
     id = db.Column(db.Integer, primary_key=True)
-    domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), nullable=False)
-    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
+    domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), index=True, nullable=False)
+    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True, nullable=False)
+    supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), index=True, nullable=False)
     data = db.Column(MutableDict.as_mutable(JSON))
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
     updated_at = db.Column(DateTime, index=True, nullable=False, default=utcnow, onupdate=utcnow)
@@ -1105,7 +1104,7 @@ class Evidence(db.Model):
 class EvidenceAssessment(db.Model):
     __tablename__ = 'evidence_assessment'
     id = db.Column(db.Integer, primary_key=True)
-    evidence_id = db.Column(db.Integer, db.ForeignKey('evidence.id'), nullable=False)
+    evidence_id = db.Column(db.Integer, db.ForeignKey('evidence.id'), index=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
     status = db.Column(
