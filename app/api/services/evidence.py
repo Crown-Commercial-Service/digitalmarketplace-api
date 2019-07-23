@@ -28,7 +28,7 @@ class EvidenceService(Service):
                 joinedload(Evidence.supplier).joinedload(Supplier.signed_agreements),
                 joinedload(Evidence.supplier).joinedload(Supplier.domains),
                 joinedload(Evidence.user),
-                joinedload(Evidence.brief),
+                joinedload(Evidence.brief).joinedload(Brief.clarification_questions),
                 joinedload(Evidence.domain),
                 raiseload('*')
             )
@@ -47,7 +47,7 @@ class EvidenceService(Service):
                 joinedload(Evidence.supplier).joinedload(Supplier.signed_agreements),
                 joinedload(Evidence.supplier).joinedload(Supplier.domains),
                 joinedload(Evidence.user),
-                joinedload(Evidence.brief),
+                joinedload(Evidence.brief).joinedload(Brief.clarification_questions),
                 joinedload(Evidence.domain),
                 raiseload('*')
             )
@@ -70,7 +70,7 @@ class EvidenceService(Service):
                 joinedload(Evidence.supplier).joinedload(Supplier.signed_agreements),
                 joinedload(Evidence.supplier).joinedload(Supplier.domains),
                 joinedload(Evidence.user),
-                joinedload(Evidence.brief),
+                joinedload(Evidence.brief).joinedload(Brief.clarification_questions),
                 joinedload(Evidence.domain),
                 raiseload('*')
             )
