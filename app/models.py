@@ -819,7 +819,8 @@ class Supplier(db.Model):
         j['domains'] = {
             'all': sorted([self.serialize_supplier_domain(d) for d in self.domains], key=itemgetter('domain_name')),
             'assessed': self.assessed_domains,
-            'unassessed': self.unassessed_domains
+            'unassessed': self.unassessed_domains,
+            'legacy': []
         }
 
         j['services'] = {
