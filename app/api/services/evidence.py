@@ -29,6 +29,7 @@ class EvidenceService(Service):
                 joinedload(Evidence.supplier).joinedload(Supplier.domains),
                 joinedload(Evidence.user),
                 joinedload(Evidence.brief).joinedload(Brief.clarification_questions),
+                joinedload(Evidence.brief).joinedload(Brief.work_order),
                 joinedload(Evidence.domain),
                 raiseload('*')
             )
@@ -48,6 +49,7 @@ class EvidenceService(Service):
                 joinedload(Evidence.supplier).joinedload(Supplier.domains),
                 joinedload(Evidence.user),
                 joinedload(Evidence.brief).joinedload(Brief.clarification_questions),
+                joinedload(Evidence.brief).joinedload(Brief.work_order),
                 joinedload(Evidence.domain),
                 raiseload('*')
             )
@@ -71,6 +73,7 @@ class EvidenceService(Service):
                 joinedload(Evidence.supplier).joinedload(Supplier.domains),
                 joinedload(Evidence.user),
                 joinedload(Evidence.brief).joinedload(Brief.clarification_questions),
+                joinedload(Evidence.brief).joinedload(Brief.work_order),
                 joinedload(Evidence.domain),
                 raiseload('*')
             )
