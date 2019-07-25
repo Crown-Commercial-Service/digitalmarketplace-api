@@ -222,18 +222,17 @@ def send_assessment_rejected_notification(supplier_id, assessment_id, domain_nam
 
 
 def send_revert_notification(application_id, message):
-    TEMPLATE_FILENAME = 'application_reverted.md'
-
     users = User.query.filter(User.application_id == application_id, User.active).all()
     email_addresses = [u.email_address for u in users]
     email_addresses.append(current_app.config['GENERIC_CONTACT_EMAIL'])
+    frontend_url = current_app.config['FRONTEND_ADDRESS']
 
-    email_body = render_email_template(
-        TEMPLATE_FILENAME,
-        reversion_message=message
+    email_body = render_email_from_string(
+        message,
+        frontend_url=frontend_url
     )
 
-    subject = "Feedback on your application to join Digital Marketplace"
+    subject = "Important information on your recent submission"
 
     send_or_handle_error(
         email_addresses,
