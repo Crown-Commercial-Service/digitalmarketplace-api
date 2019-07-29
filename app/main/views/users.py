@@ -240,7 +240,7 @@ def reset_password():
     email_address = json_payload.get('email_address', None)
     if not email_address:
         abort(400, "Must supply the email address of the account to reset")
-    user = user_service.get_by_email(email_address)
+    user = user_service.get_by_email(email_address.lower())
     if not user:
         abort(404, "User not found")
     user_data = {

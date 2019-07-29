@@ -175,7 +175,7 @@ def users(app, request):
         for i in range(1, 6):
             new_user = User(
                 id=i,
-                email_address='{}{}@{}'.format(fake.first_name(), i, email_domain),
+                email_address='{}{}@{}'.format(fake.first_name(), i, email_domain).lower(),
                 name=fake.name(),
                 password=fake.password(),
                 active=True,

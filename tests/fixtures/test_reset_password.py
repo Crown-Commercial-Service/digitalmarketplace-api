@@ -2,6 +2,7 @@ import json
 import mock
 from app import encryption
 from app.models import User
+from app.api.services import user_claims_service
 from dmutils.email import InvalidToken
 
 
@@ -17,13 +18,8 @@ def _create_token(client, email_address, framework='digital-marketplace'):
     return token_response
 
 
-@mock.patch('app.tasks.publish_tasks.user_claim')
-def test_marketplace_reset_password_token_creation(user_claim, client, app, users):
-    with app.app_context():
-        user = users[0]
-        token_response = _create_token(client, user.email_address, 'digital-marketplace')
-        assert token_response.status_code == 200
-        assert json.loads(token_response.data)['token'] is not None
+def _get_token(email_address):
+    return user_claims_service.find(type='password_reset').first()
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
@@ -33,7 +29,7 @@ def test_reset_password(key_values_service, user_claim, client, app, users, mock
         user = users[1]
         token_response = _create_token(client, user.email_address)
         assert token_response.status_code == 200
-        token = json.loads(token_response.data)['token']
+        claim = _get_token(user.email_address)
 
         old_password = user.password
         new_password = 'pa$$werd1'
@@ -43,7 +39,7 @@ def test_reset_password(key_values_service, user_claim, client, app, users, mock
         key_values_service.get_by_key.return_value = {'data': {'age': 3600}}
 
         response = client.post(
-            '/2/reset-password/{}?e={}'.format(token, user.email_address),
+            '/2/reset-password/{}?e={}'.format(claim.token, user.email_address),
             data=json.dumps({
                 'email_address': user.email_address,
                 'user_id': user.id,
@@ -85,9 +81,9 @@ def test_reset_password_passwords_dont_match(user_claim, client, app, users):
     with app.app_context():
         user = users[2]
         token_response = _create_token(client, user.email_address, 'digital-marketplace')
-        token = json.loads(token_response.data)['token']
+        claim = _get_token(user.email_address)
         response = client.post(
-            '/2/reset-password/{}?e={}'.format(token, user.email_address),
+            '/2/reset-password/{}?e={}'.format(claim.token, user.email_address),
             data=json.dumps({
                 'email_address': user.email_address,
                 'user_id': user.id,
@@ -106,10 +102,10 @@ def test_reset_password_requires_all_of_the_args(user_claim, client, app, users)
     with app.app_context():
         user = users[2]
         token_response = _create_token(client, user.email_address)
-        token = json.loads(token_response.data)['token']
+        claim = _get_token(user.email_address)
 
         response = client.post(
-            '/2/reset-password/{}?e={}'.format(token, user.email_address),
+            '/2/reset-password/{}?e={}'.format(claim.token, user.email_address),
             data=json.dumps({
                 'email_address': user.email_address,
                 'user_id': user.id
@@ -128,11 +124,11 @@ def test_send_marketplace_reset_password_email(user_claim, client, app, mocker, 
         framework = 'digital-marketplace'
         send_email = mocker.patch('app.api.views.users.send_reset_password_confirm_email')
         response = _create_token(client, user.email_address)
-        token = json.loads(response.data)['token']
+        claim = _get_token(user.email_address)
         assert response.status_code == 200
 
         send_email.assert_called_once_with(
-            token=token,
+            token=claim.token,
             email_address=user.email_address,
             locked=user.locked,
             framework=framework

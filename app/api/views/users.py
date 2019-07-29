@@ -403,7 +403,7 @@ def send_reset_password_email():
     if email_address is None:
         return jsonify(message='One or more required args were missing from the request'), 400
     user = User.query.filter(
-        User.email_address == email_address).first()
+        User.email_address == email_address.lower()).first()
 
     if user is None:
         return jsonify(email_address=email_address), 200
@@ -434,8 +434,7 @@ def send_reset_password_email():
         return jsonify(message=error.message), 400
 
     return jsonify(
-        email_address=email_address,
-        token=claim.token
+        email_address=email_address
     ), 200
 
 
