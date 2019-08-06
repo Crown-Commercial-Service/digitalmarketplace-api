@@ -87,20 +87,25 @@ def list_audits():
             AuditEvent.user == user
         )
 
-    data_supplier_id = request.args.get('data-supplier-id')
+    # note in the following that even though the supplier and draft ids *are* integers, we're doing the searches as
+    # strings because of the postgres static type system's awkwardness with json types. we first let args.get normalize
+    # them into actual integers though
+
+    data_supplier_id = request.args.get('data-supplier-id', type=int)
     if data_supplier_id:
-        #  This filter relies on index `idx_audit_events_data_supplier_id`. See `app..models.main` for its definition.
+        # This filter relies on index `idx_audit_events_data_supplier_id`. See `app..models.main` for its definition.
         audits = audits.filter(
             func.coalesce(
-                AuditEvent.__table__.c.data['supplierId'].astext,
-                AuditEvent.__table__.c.data['supplier_id'].astext,
-            ) == data_supplier_id
+                AuditEvent.data['supplierId'].astext,
+                AuditEvent.data['supplier_id'].astext,
+            ) == str(data_supplier_id)
         )
 
-    data_draft_service_id = request.args.get('data-draft-service-id')
+    data_draft_service_id = request.args.get('data-draft-service-id', type=int)
     if data_draft_service_id:
+        # This filter relies on index `idx_audit_events_data_draft_id`. See `app..models.main` for its definition.
         audits = audits.filter(
-            AuditEvent.data['draftId'].astext == data_draft_service_id
+            AuditEvent.data['draftId'].astext == str(data_draft_service_id)
         )
 
     acknowledged = request.args.get('acknowledged', None)
