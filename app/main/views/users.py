@@ -135,6 +135,10 @@ def list_users():
     if personal_data_removed is not None:
         user_query = user_query.filter(User.personal_data_removed == convert_to_boolean(personal_data_removed))
 
+    user_research_opted_in = request.args.get('user_research_opted_in')
+    if user_research_opted_in is not None:
+        user_query = user_query.filter(User.user_research_opted_in == convert_to_boolean(user_research_opted_in))
+
     return paginated_result_response(
         result_name=RESOURCE_NAME,
         results_query=user_query,
