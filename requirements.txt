@@ -3,7 +3,7 @@
 # with package version changes made in requirements-app.txt
 
 git+https://github.com/alphagov/digitalmarketplace-utils.git@48.4.0#egg=digitalmarketplace-utils==48.4.0
-git+https://github.com/alphagov/digitalmarketplace-apiclient.git@20.2.0#egg=digitalmarketplace-apiclient==20.2.0
+git+https://github.com/alphagov/digitalmarketplace-apiclient.git@21.0.0#egg=digitalmarketplace-apiclient==21.0.0
 
 Flask==1.0.3
 Flask-Bcrypt==0.7.1
@@ -27,8 +27,8 @@ asn1crypto==0.24.0
 attrs==19.1.0
 bcrypt==3.1.7
 blinker==1.4
-boto3==1.9.198
-botocore==1.12.198
+boto3==1.9.202
+botocore==1.12.202
 certifi==2019.6.16
 cffi==1.12.3
 chardet==3.0.4
@@ -49,7 +49,7 @@ idna==2.8
 Jinja2==2.10.1
 jmespath==0.9.4
 mailchimp3==3.0.6
-Mako==1.0.14
+Mako==1.1.0
 MarkupSafe==1.1.1
 monotonic==1.5
 notifications-python-client==5.3.0
@@ -61,7 +61,7 @@ pyrsistent==0.15.4
 python-dateutil==2.8.0
 python-editor==1.0.4
 python-json-logger==0.1.11
-pytz==2019.1
+pytz==2019.2
 requests==2.22.0
 s3transfer==0.2.1
 six==1.12.0
