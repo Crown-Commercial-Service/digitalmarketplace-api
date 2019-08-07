@@ -163,14 +163,10 @@ def get_suppliers_responded(brief_id):
     """
     brief = briefs.get(brief_id)
     if not brief:
-        not_found('brief {} not found'.format(brief_id))
+        return not_found('brief {} not found'.format(brief_id))
 
-    brief_user_ids = [user.id for user in brief.users]
-    if not (
-        hasattr(current_user, 'role') and
-        (current_user.role == 'buyer' and current_user.id in brief_user_ids)
-    ):
-        forbidden('Unauthorised to award brief to seller')
+    if not briefs.has_permission_to_brief(current_user.id, brief.id):
+        return forbidden('Unauthorised to get suppliers responded')
 
     suppliers = brief_responses_service.get_suppliers_responded(brief_id)
     work_order = work_order_service.find(brief_id=brief_id).one_or_none()

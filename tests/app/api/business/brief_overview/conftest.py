@@ -1,5 +1,7 @@
 import pytest
+import mock
 
+from flask_login import current_user
 from app.models import Brief, Framework, Lot, WorkOrder
 
 

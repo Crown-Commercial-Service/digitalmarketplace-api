@@ -438,6 +438,7 @@ class TestBriefs(BaseApplicationTest):
                         }
                     ],
                     "clarificationQuestions": [],
+                    "teamBriefs": [],
                     "dates": {
                         'answers_close': None,
                         'application_open_weeks': u'2 weeks',
@@ -1067,116 +1068,6 @@ class TestBriefs(BaseApplicationTest):
         )
         assert res.status_code == 404
 
-    def test_add_clarification_question(self):
-        self.setup_dummy_briefs(1, title="The Title", status="live")
-
-        res = self.client.post(
-            "/briefs/1/clarification-questions",
-            data=json.dumps({
-                "clarificationQuestion": {
-                    "question": "What?",
-                    "answer": "That",
-                },
-                "update_details": {"updated_by": "example"},
-            }),
-            content_type="application/json")
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 200
-        assert data["briefs"]["clarificationQuestions"] == [{
-            "question": "What?",
-            "answer": "That",
-            "publishedAt": mock.ANY,
-        }]
-
-    def test_clarification_question_strip_whitespace(self):
-        self.setup_dummy_briefs(1, title="The Title", status="live")
-
-        res = self.client.post(
-            "/briefs/1/clarification-questions",
-            data=json.dumps({
-                "clarificationQuestion": {
-                    "question": "What? ",
-                    "answer": "That ",
-                },
-                "update_details": {"updated_by": "example"},
-            }),
-            content_type="application/json")
-        data = json.loads(res.get_data(as_text=True))
-
-        assert res.status_code == 200
-        assert data["briefs"]["clarificationQuestions"] == [{
-            "question": "What?",
-            "answer": "That",
-            "publishedAt": mock.ANY,
-        }]
-
-    def test_add_clarification_question_fails_if_no_question(self):
-        self.setup_dummy_briefs(1, title="The Title", status="live")
-
-        res = self.client.post(
-            "/briefs/1/clarification-questions",
-            data=json.dumps({
-                "clarificationQuestion": {
-                    "answer": "That",
-                },
-                "updated_by": "example",
-            }),
-            content_type="application/json")
-
-        assert res.status_code == 400
-
-    def test_add_clarification_question_fails_if_no_answer(self):
-        self.setup_dummy_briefs(1, title="The Title", status="live")
-
-        res = self.client.post(
-            "/briefs/1/clarification-questions",
-            data=json.dumps({
-                "clarificationQuestion": {
-                    "question": "What?",
-                },
-                "update_details": {"updated_by": "example"},
-            }),
-            content_type="application/json")
-
-        assert res.status_code == 400
-
-    def test_cannot_get_clarification_questions_directly(self):
-        self.setup_dummy_briefs(1, title="The Title", status="live")
-
-        res = self.client.get("/briefs/1/clarification-questions")
-
-        assert res.status_code == 405
-
-    def test_adding_a_clarification_question_makes_an_audit_event(self):
-        self.setup_dummy_briefs(1, title="The Title", status="live")
-
-        self.client.post(
-            "/briefs/1/clarification-questions",
-            data=json.dumps({
-                "clarificationQuestion": {
-                    "question": "What?",
-                    "answer": "That",
-                },
-                "updated_by": "example",
-            }),
-            content_type="application/json")
-
-        audit_response = self.client.get("/audit-events")
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data(as_text=True))
-
-        audits = [
-            event for event in data["auditEvents"]
-            if event["type"] == AuditTypes.add_brief_clarification_question.value
-        ]
-
-        assert len(audits) == 1
-        assert audits[0]['data'] == {
-            "question": "What?",
-            "answer": "That",
-        }
-
     def test_cannot_make_a_draft_copy_of_a_brief_if_the_framework_is_closed(self):
         self.setup_dummy_briefs(1, title="The Title", status="withdrawn")
 
@@ -1200,7 +1091,6 @@ class TestBriefs(BaseApplicationTest):
         self.setup_dummy_briefs(1, title="The Title", status="live")
         with self.app.app_context():
             brief = Brief.query.get(1)
-            brief.add_clarification_question('question', 'answer')
             db.session.add(brief)
             db.session.commit()
 

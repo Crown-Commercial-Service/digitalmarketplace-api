@@ -139,10 +139,17 @@ class BriefUserStatus(object):
         if (
             self.user_role == 'supplier' and (
                 self.brief.data.get('openTo', '') == 'all' or
+                self.brief.data.get('sellerSelector', '') == 'allSellers' or
                 str(self.supplier_code) in self.invited_sellers.keys() or (
                     self.brief.data.get('openTo', '') == 'category' and (
                         self.is_assessed_for_category()
                     )
+                ) or (
+                    self.brief.data.get('sellerSelector', '') == 'someSellers' and
+                    self.current_user.email_address in self.brief.data.get('sellerEmailList', [])
+                ) or (
+                    self.brief.data.get('sellerSelector', '') == 'oneSeller' and
+                    self.brief.data.get('sellerEmail', '') == self.current_user.email_address
                 )
             )
         ):

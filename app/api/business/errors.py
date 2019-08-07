@@ -14,6 +14,10 @@ class ValidationError(Exception):
     pass
 
 
+class TeamError(Exception):
+    pass
+
+
 class DomainCriteriaInvalidDomainException(Exception):
     """Raised when an invalid domain id is passed to DomainCriteria"""
     pass

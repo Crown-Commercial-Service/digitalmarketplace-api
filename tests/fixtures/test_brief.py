@@ -1707,3 +1707,120 @@ def test_atm_validate_closed_at():
     }
     valid = ATMDataValidator(data).validate_closed_at()
     assert not valid
+
+
+@pytest.mark.parametrize('opportunity_type', ['atm', 'rfx', 'specialist'])
+def test_buyer_can_not_create_draft_opportunity_without_permission(client, buyer_user, opportunity_type,
+                                                                   teams, team_members):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+
+    res = client.post('/2/brief/{}'.format(opportunity_type), content_type='application/json')
+    assert res.status_code == 403
+
+
+@pytest.mark.parametrize('opportunity_type', ['atm', 'rfx', 'specialist'])
+def test_buyer_can_create_draft_opportunity_with_permission(client, buyer_user, opportunity_type, teams, team_members,
+                                                            create_drafts_permission):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+
+    res = client.post('/2/brief/{}'.format(opportunity_type), content_type='application/json')
+    assert res.status_code == 200
+
+
+def test_buyer_can_not_publish_atm_opportunity_without_permission(client, buyer_user, atm_brief, atm_data,
+                                                                  teams, team_members):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+
+    data = atm_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+
+    assert res.status_code == 403
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_buyer_can_publish_atm_opportunity_with_permission(brief, client, buyer_user, atm_brief, atm_data, teams,
+                                                           team_members, publish_opportunities_permission):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+
+    data = atm_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+
+    assert res.status_code == 200
+
+
+def test_buyer_can_not_publish_rfx_opportunity_without_permission(client, buyer_user, rfx_brief, rfx_data,
+                                                                  teams, team_members):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+
+    data = rfx_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+
+    assert res.status_code == 403
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_buyer_can_publish_rfx_opportunity_with_permission(brief, client, buyer_user, rfx_brief, rfx_data,
+                                                           supplier_domains, suppliers, teams, team_members,
+                                                           publish_opportunities_permission):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+
+    data = rfx_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+
+    assert res.status_code == 200
+
+
+def test_buyer_can_not_publish_specialist_opportunity_without_permission(client, buyer_user, specialist_brief,
+                                                                         specialist_data, teams, team_members):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+
+    data = specialist_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+
+    assert res.status_code == 403
+
+
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_buyer_can_publish_specialist_opportunity_with_permission(brief, client, buyer_user, specialist_brief,
+                                                                  specialist_data, teams, team_members,
+                                                                  publish_opportunities_permission):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+
+    data = specialist_data
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+
+    assert res.status_code == 200

@@ -1,4 +1,4 @@
-from sqlalchemy import and_, case, func, or_, desc
+from sqlalchemy import and_, case, func, or_, desc, union
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.functions import concat
 from sqlalchemy.types import Numeric
@@ -6,7 +6,22 @@ from sqlalchemy.orm import joinedload, noload
 import pendulum
 from app.api.helpers import Service
 from app import db
-from app.models import Brief, BriefResponse, BriefUser, AuditEvent, Framework, Lot, User, WorkOrder, BriefAssessor
+from app.models import (
+    Brief,
+    BriefResponse,
+    BriefUser,
+    BriefQuestion,
+    BriefClarificationQuestion,
+    AuditEvent,
+    Framework,
+    Lot,
+    User,
+    WorkOrder,
+    BriefAssessor,
+    TeamBrief,
+    TeamMember,
+    Team
+)
 from dmutils.filters import timesince
 
 
@@ -35,6 +50,115 @@ class BriefsService(Service):
             .all()
 
         return [r._asdict() for r in responses]
+
+    def get_brief_counts(self, user_id):
+        accessible_briefs_subquery = self.accessible_briefs(user_id)
+        result = [r._asdict() for r in (
+            db
+            .session
+            .query(
+                Brief.status
+            )
+            .join(
+                accessible_briefs_subquery,
+                accessible_briefs_subquery.columns.brief_id == Brief.id
+            )
+            .all()
+        )]
+        return {
+            'withdrawn': result.count({'status': 'withdrawn'}),
+            'draft': result.count({'status': 'draft'}),
+            'live': result.count({'status': 'live'}),
+            'closed': result.count({'status': 'closed'})
+        }
+
+    def get_buyer_dashboard_briefs(self, user_id, status):
+        brief_response_subquery = (
+            db
+            .session
+            .query(
+                BriefResponse.brief_id,
+                func.count(BriefResponse.id).label('responses'),
+            )
+            .group_by(BriefResponse.brief_id)
+            .subquery()
+        )
+        brief_question_subquery = (
+            db
+            .session
+            .query(
+                BriefQuestion.brief_id,
+                func.count(BriefQuestion.id).label('questionsAsked'),
+            )
+            .group_by(BriefQuestion.brief_id)
+            .subquery()
+        )
+        brief_clarification_question_subquery = (
+            db
+            .session
+            .query(
+                BriefClarificationQuestion._brief_id,
+                func.count(BriefClarificationQuestion.id).label('questionsAnswered')
+            )
+            .group_by(BriefClarificationQuestion._brief_id)
+            .subquery()
+        )
+        accessible_briefs_subquery = self.accessible_briefs(user_id)
+        accessible_briefs_subquery = (
+            db
+            .session
+            .query(
+                accessible_briefs_subquery.columns.brief_id,
+                func.array_agg(User.name).label('creators'),
+            )
+            .join(User, accessible_briefs_subquery.columns.user_id == User.id)
+            .group_by(accessible_briefs_subquery.columns.brief_id)
+            .subquery()
+        )
+        query = (
+            db
+            .session
+            .query(
+                Brief.id,
+                Brief.data['title'].astext.label('name'),
+                Brief.data['internalReference'].astext.label('internalReference'),
+                Brief.data['sellers'].label('sellers'),
+                Brief.data['sellerSelector'].label('sellerSelector'),
+                Brief.closed_at,
+                Brief.questions_closed_at,
+                Brief.status,
+                accessible_briefs_subquery.columns.creators,
+                brief_response_subquery.columns.responses,
+                brief_question_subquery.columns.questionsAsked,
+                brief_clarification_question_subquery.columns.questionsAnswered,
+                Lot.slug.label('lot')
+            )
+            .join(Lot)
+            .join(
+                accessible_briefs_subquery,
+                accessible_briefs_subquery.columns.brief_id == Brief.id
+            )
+        )
+        if status:
+            query = query.filter(Brief.status == status)
+        results = (
+            query
+            .outerjoin(brief_response_subquery, brief_response_subquery.columns.brief_id == Brief.id)
+            .outerjoin(brief_question_subquery, brief_question_subquery.columns.brief_id == Brief.id)
+            .outerjoin(
+                brief_clarification_question_subquery,
+                brief_clarification_question_subquery.columns.brief_id == Brief.id
+            )
+            .order_by(sql_case([
+                (Brief.status == 'draft', 1),
+                (Brief.status == 'live', 2),
+                (Brief.status == 'closed', 3)]),
+                Brief.closed_at.desc().nullslast(),
+                Brief.id.desc())
+            .all()
+        )
+
+        return [r._asdict() for r in results]
 
     def get_user_briefs(self, current_user_id):
         """Returns summary of a user's briefs with the total number of sellers that applied."""
@@ -234,15 +358,30 @@ class BriefsService(Service):
             'recent_brief_time_since': (timesince(most_recent_brief.published_at)) if most_recent_brief else ''
         }
 
-    def create_brief(self, user, framework, lot, data=None):
+    def create_brief(self, user, team, framework, lot, data=None):
         if not data:
             data = {}
-        brief = Brief(
-            users=[user],
-            framework=framework,
-            lot=lot,
-            data=data
-        )
+
+        brief = None
+        if team:
+            team_brief = TeamBrief(
+                team_id=team.get('id'),
+                user_id=user.id
+            )
+            brief = Brief(
+                team_briefs=[team_brief],
+                framework=framework,
+                lot=lot,
+                data=data
+            )
+        else:
+            brief = Brief(
+                users=[user],
+                framework=framework,
+                lot=lot,
+                data=data
+            )
+
         db.session.add(brief)
         db.session.commit()
         return brief
@@ -251,3 +390,162 @@ class BriefsService(Service):
         db.session.add(brief)
         db.session.commit()
         return brief
+
+    def accessible_briefs(self, user_id):
+        team_member_subquery = (
+            db
+            .session
+            .query(
+                TeamMember.team_id
+            )
+            .join(Team)
+            .filter(TeamMember.user_id == user_id)
+            .filter(Team.status == 'completed')
+            .subquery()
+        )
+        team_member_result = (
+            db
+            .session
+            .query(
+                TeamMember.team_id,
+                TeamMember.user_id
+            )
+            .join(team_member_subquery, team_member_subquery.columns.team_id == TeamMember.team_id)
+            .all()
+        )
+        team_ids = [tm.team_id for tm in team_member_result]
+        user_ids = [tm.user_id for tm in team_member_result]
+
+        if team_ids:
+            team_brief_query = (
+                db
+                .session
+                .query(
+                    TeamBrief.brief_id.label('brief_id'),
+                    TeamBrief.user_id.label('user_id')
+                )
+                .join(Team)
+                .filter(TeamBrief.team_id.in_(team_ids))
+                .filter(Team.status == 'completed')
+            )
+
+            brief_user_query = (
+                db
+                .session
+                .query(
+                    BriefUser.brief_id.label('brief_id'),
+                    BriefUser.user_id.label('user_id')
+                )
+                .filter(BriefUser.user_id.in_(user_ids))
+            )
+            query = union(team_brief_query, brief_user_query).alias('result')
+            return (
+                db
+                .session
+                .query(
+                    query.c.brief_id.label('brief_id'),
+                    query.c.user_id.label('user_id')
+                )
+                .subquery()
+            )
+
+        else:
+            query = (
+                db
+                .session
+                .query(
+                    BriefUser.brief_id.label('brief_id')
+                )
+                .filter(BriefUser.user_id == user_id)
+                .subquery()
+            )
+            return (
+                db
+                .session
+                .query(
+                    BriefUser.brief_id.label('brief_id'),
+                    BriefUser.user_id.label('user_id')
+                )
+                .filter(BriefUser.brief_id.in_(query))
+                .subquery()
+            )
+
+    def has_permission_to_brief(self, user_id, brief_id):
+        query = self.accessible_briefs(user_id)
+        result = (
+            db
+            .session
+            .query(query)
+            .filter(query.c.brief_id == brief_id)
+            .all()
+        )
+
+        return True if len(result) > 0 else False
+
+    def get_contact_for_team_brief(self, brief_id):
+        team_brief = (db.session
+                        .query(TeamBrief)
+                        .filter(TeamBrief.brief_id == brief_id)
+                        .one_or_none())
+
+        if team_brief:
+            team = (db.session
+                      .query(Team)
+                      .filter(Team.id == team_brief.team_id)
+                      .one_or_none())
+
+            if team and team.email_address:
+                return team.email_address
+            else:
+                user = (db.session
+                          .query(User)
+                          .filter(
+                              User.id == team_brief.user_id,
+                              User.active.is_(True))
+                          .one_or_none())
+
+                return user.email_address
+
+        return None
+
+    def get_contacts_for_brief_users(self, brief_id):
+        brief_users = (db.session
+                         .query(BriefUser)
+                         .filter(BriefUser.brief_id == brief_id)
+                         .all())
+
+        if brief_users:
+            brief_user_ids = [brief_user.user_id for brief_user in brief_users]
+
+            team_email_addresses = (db.session
+                                      .query(Team.email_address)
+                                      .join(TeamMember)
+                                      .filter(
+                                          Team.status == 'completed',
+                                          TeamMember.user_id.in_(brief_user_ids))
+                                      .all())
+
+            if team_email_addresses:
+                return team_email_addresses
+
+            email_addresses = (db.session
+                                 .query(User.email_address)
+                                 .filter(
+                                     User.id.in_(brief_user_ids),
+                                     User.active.is_(True))
+                                 .all())
+
+            return email_addresses
+
+        return None
+
+    def get_brief_contact_details(self, brief_id):
+        contact = self.get_contact_for_team_brief(brief_id)
+        if contact is not None:
+            return contact
+
+        contacts = self.get_contacts_for_brief_users(brief_id)
+        if contacts is not None:
+            return contacts
+
+        return None

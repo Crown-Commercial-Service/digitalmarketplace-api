@@ -1898,6 +1898,7 @@ class Brief(db.Model):
                       {})
 
     users = db.relationship('User', secondary='brief_user')
+    team_briefs = db.relationship('TeamBrief', cascade="save-update, merge, delete")
     framework = db.relationship('Framework', lazy='joined')
     lot = db.relationship('Lot', lazy='joined')
     clarification_questions = db.relationship(
@@ -2187,18 +2188,6 @@ class Brief(db.Model):
         def has_statuses(self, *statuses):
             return self.filter(Brief.status.in_(statuses))
 
-    def add_clarification_question(self, question, answer):
-        clarification_question = BriefClarificationQuestion(
-            brief=self,
-            question=question,
-            answer=answer,
-        )
-        clarification_question.validate()
-
-        Session.object_session(self).add(clarification_question)
-
-        return clarification_question
-
     def update_from_json(self, data):
         current_data = dict(self.data.items())
         current_data.update(data)
@@ -2283,6 +2272,15 @@ class Brief(db.Model):
                 filter_fields(user.serialize(), ('id', 'emailAddress', 'phoneNumber', 'name', 'role', 'active'))
                 for user in self.users
             ]
+            team_briefs = []
+            for tb in self.team_briefs:
+                for tm in tb.team.team_members:
+                    team_briefs.append({
+                        'userId': tm.user_id,
+                        'teamId': tm.team_id
+                    })
+
+            data['teamBriefs'] = team_briefs
 
         data['dates'] = self.dates_for_serialization
         return data
@@ -2297,6 +2295,16 @@ class BriefUser(db.Model):
 
     brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+
+
+class BriefResponseDownload(db.Model):
+    __tablename__ = 'brief_response_download'
+
+    id = db.Column(db.Integer, primary_key=True)
+    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+    brief = db.relationship('Brief')
 
 
 class BriefResponse(db.Model):
@@ -2518,6 +2526,21 @@ class BriefResponse(db.Model):
         return data
 
 
+class BriefQuestion(db.Model):
+    __tablename__ = 'brief_question'
+
+    id = db.Column(db.Integer, primary_key=True)
+    brief_id = db.Column("brief_id", db.Integer, db.ForeignKey("brief.id"), nullable=False)
+    supplier_code = db.Column(db.BigInteger, db.ForeignKey('supplier.code'), nullable=False)
+
+    data = db.Column(JSON, nullable=False)
+    answered = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+
+    brief = db.relationship("Brief")
+    supplier = db.relationship('Supplier', lazy='joined')
+
+
 class BriefClarificationQuestion(db.Model):
     __tablename__ = 'brief_clarification_question'
 
@@ -2526,9 +2549,8 @@ class BriefClarificationQuestion(db.Model):
 
     question = db.Column(db.String, nullable=False)
     answer = db.Column(db.String, nullable=False)
-
-    published_at = db.Column(DateTime, index=True, nullable=False,
-                             default=utcnow)
+    published_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     brief = db.relationship("Brief")
 
@@ -3023,6 +3045,79 @@ class BriefAssessor(db.Model):
     brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     email_address = db.Column(db.String)
+
+
+class Team(db.Model):
+    __tablename__ = 'team'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    email_address = db.Column(db.String)
+    status = db.Column(
+        db.Enum(
+            *[
+                'created',
+                'completed',
+                'deleted'
+            ],
+            name='team_status_enum'
+        ),
+        nullable=False
+    )
+
+    created_at = db.Column(DateTime, index=False, nullable=False, default=utcnow)
+    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
+
+    team_members = relationship('TeamMember', cascade="all, delete-orphan")
+
+
+class TeamBrief(db.Model):
+    __tablename__ = 'team_brief'
+
+    id = db.Column(db.Integer, primary_key=True)
+    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    user = relationship('User')
+    team = relationship('Team')
+
+
+class TeamMember(db.Model):
+    __tablename__ = 'team_member'
+
+    id = db.Column(db.Integer, primary_key=True)
+    is_team_lead = db.Column(db.Boolean, default=False, nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    updated_at = db.Column(DateTime, index=False, nullable=False, default=utcnow, onupdate=utcnow)
+
+    permissions = relationship('TeamMemberPermission', cascade="all, delete-orphan")
+    user = relationship('User')
+
+
+permission_types = [
+    'create_drafts',
+    'publish_opportunities',
+    'answer_seller_questions',
+    'download_responses',
+    'create_work_orders'
+]
+
+
+class TeamMemberPermission(db.Model):
+    __tablename__ = 'team_member_permission'
+
+    id = db.Column(db.Integer, primary_key=True)
+    team_member_id = db.Column(db.Integer, db.ForeignKey('team_member.id'), nullable=False)
+    permission = db.Column(
+        db.Enum(
+            *permission_types,
+            name='permission_type_enum'
+        ),
+        index=True,
+        nullable=False
+    )
 
 
 # Index for .last_for_object queries. Without a composite index the

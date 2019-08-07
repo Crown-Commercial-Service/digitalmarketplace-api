@@ -21,7 +21,8 @@ from app.emails.users import (
     send_existing_seller_notification, send_existing_application_notification,
 )
 from app.api.business import (
-    supplier_business
+    supplier_business,
+    team_business
 )
 from app.api.services import user_claims_service, users as user_service
 from app.tasks import publish_tasks
@@ -104,10 +105,16 @@ def get_user_by_id(user_id):
     login_attempt_limit = current_app.config['DM_FAILED_LOGIN_LIMIT']
     result['locked'] = user.failed_login_count >= login_attempt_limit
     notification_count = 0
+    teams = []
     if user.role == 'supplier':
         messages = supplier_business.get_supplier_messages(user.supplier_code, False)
         notification_count = len(messages.errors + messages.warnings)
+    elif user.role == 'buyer':
+        teams = team_business.get_user_teams(user.id)
 
+    result.update({
+        'teams': teams
+    })
     result.update({
         'supplier': {
             'name': user.supplier_name,

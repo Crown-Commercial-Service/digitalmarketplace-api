@@ -8,12 +8,25 @@ import pendulum
 from pendulum.parsing.exceptions import ParserError
 
 from app.api.services import (
-    AuditTypes, briefs, suppliers, users
+    AuditTypes,
+    briefs,
+    suppliers,
+    users,
+    team_service
 )
 from app.tasks import publish_tasks
 from .. import main
 from ... import db
-from ...models import User, Brief, AuditEvent, Framework, Lot, Supplier, Service
+from ...models import (
+    User,
+    Brief,
+    AuditEvent,
+    Framework,
+    Lot,
+    Supplier,
+    Service,
+    TeamBrief
+)
 from ...utils import (
     get_json_from_request, get_int_or_400, json_has_required_keys, pagination_links,
     get_valid_page_or_1, get_request_page_questions, validate_and_return_updater_request,
@@ -55,7 +68,18 @@ def create_brief():
     if user is None:
         abort(400, "User ID does not exist")
 
-    brief = Brief(data=brief_json, users=[user], framework=framework, lot=lot)
+    teams = team_service.get_teams_for_user(user.id)
+    team = None
+    if len(teams) > 0:
+        team = teams[0]
+        team_brief = TeamBrief(
+            team_id=team.id,
+            user_id=user.id
+        )
+    if team:
+        brief = Brief(data=brief_json, team_briefs=[team_brief], framework=framework, lot=lot)
+    else:
+        brief = Brief(data=brief_json, users=[user], framework=framework, lot=lot)
     validate_brief_data(brief, enforce_required=False, required_fields=page_questions)
 
     db.session.add(brief)
@@ -363,6 +387,8 @@ def get_brief(brief_id):
         )
         .options(
             joinedload('users.frameworks'),
+            joinedload('team_briefs'),
+            joinedload('team_briefs.team.team_members'),
             noload('framework.lots')
         )
         .first_or_404()
@@ -645,42 +671,6 @@ def delete_draft_brief(brief_id):
         abort(400, "Database Error: {0}".format(e))
 
     return jsonify(message="done"), 200
-
-
-@main.route("/briefs/<int:brief_id>/clarification-questions", methods=["POST"])
-def add_clarification_question(brief_id):
-    updater_json = validate_and_return_updater_request()
-
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ['clarificationQuestion'])
-    question_json = json_payload['clarificationQuestion']
-    json_has_required_keys(question_json, ['question', 'answer'])
-
-    brief = Brief.query.filter(
-        Brief.id == brief_id
-    ).first_or_404()
-
-    question = brief.add_clarification_question(
-        question_json.get('question'),
-        question_json.get('answer'))
-
-    try:
-        db.session.flush()
-    except IntegrityError as e:
-        db.session.rollback()
-        abort(400, e.orig)
-
-    audit = AuditEvent(
-        audit_type=AuditTypes.add_brief_clarification_question,
-        user=updater_json["updated_by"],
-        data=question_json,
-        db_object=question,
-    )
-
-    db.session.add(audit)
-    db.session.commit()
-
-    return jsonify(briefs=brief.serialize()), 200
 
 
 @main.route("/briefs/<brief_id>/services", methods=["GET"])

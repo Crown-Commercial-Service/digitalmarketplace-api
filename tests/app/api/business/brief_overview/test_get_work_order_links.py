@@ -1,8 +1,10 @@
+from mock import patch
 from app.api.business import brief_overview_business
 from app.models import utcnow
 
 
-def test_work_order_section_has_start_work_order_link_for_specialist_brief(app, specialist_brief):
+@patch('app.api.business.brief_overview_business.current_user')
+def test_work_order_section_has_start_work_order_link_for_specialist_brief(current_user, app, specialist_brief):
     with app.app_context():
         specialist_brief.published_at = utcnow().subtract(weeks=1)
         specialist_brief.questions_closed_at = utcnow().subtract(days=2)
@@ -15,7 +17,13 @@ def test_work_order_section_has_start_work_order_link_for_specialist_brief(app, 
         assert start_work_order_link['text'] == 'Start a work order'
 
 
-def test_work_order_section_has_edit_work_order_link_for_specialist_brief(app, specialist_brief, work_order):
+@patch('app.api.business.brief_overview_business.current_user')
+def test_work_order_section_has_edit_work_order_link_for_specialist_brief(
+    current_user,
+    app,
+    specialist_brief,
+    work_order
+):
     with app.app_context():
         specialist_brief.published_at = utcnow().subtract(weeks=1)
         specialist_brief.questions_closed_at = utcnow().subtract(days=2)

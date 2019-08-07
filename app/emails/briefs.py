@@ -222,7 +222,7 @@ def send_brief_closed_email(brief):
     if (brief_email_sent_audit_event > 0):
         return
 
-    to_addresses = [user.email_address for user in brief.users if user.active]
+    to_addresses = get_brief_emails(brief)
 
     # prepare copy
     email_body = render_email_template(
@@ -257,7 +257,7 @@ def send_brief_closed_email(brief):
 def send_seller_requested_feedback_from_buyer_email(brief):
     from app.api.services import audit_service, audit_types  # to circumvent circular dependency
 
-    to_addresses = [user.email_address for user in brief.users if user.active]
+    to_addresses = get_brief_emails(brief)
 
     # prepare copy
     email_body = render_email_template(
@@ -350,7 +350,7 @@ def send_specialist_brief_published_email(brief):
     if (brief_email_sent_audit_event > 0):
         return
 
-    to_addresses = [user.email_address for user in brief.users if user.active]
+    to_addresses = get_brief_emails(brief)
 
     invited_sellers = ''
     sellers_text = ''
@@ -467,7 +467,7 @@ def send_specialist_brief_closed_email(brief):
         return
 
     responses = brief_responses_service.find(brief_id=brief.id).all()
-    to_addresses = [user.email_address for user in brief.users if user.active]
+    to_addresses = get_brief_emails(brief)
 
     # prepare copy
     email_body = render_email_template(
@@ -499,3 +499,99 @@ def send_specialist_brief_closed_email(brief):
             "subject": subject
         },
         db_object=brief)
+
+
+def send_brief_clarification_to_buyer(brief, brief_question, supplier):
+    from app.api.services import (
+        audit_service,
+        audit_types
+    )  # to circumvent circular dependency
+
+    to_addresses = get_brief_emails(brief)
+
+    # prepare copy
+    email_body = render_email_template(
+        'brief_question_to_buyer.md',
+        frontend_url=current_app.config['FRONTEND_ADDRESS'],
+        brief_id=brief.id,
+        brief_name=escape_markdown(brief.data.get('title')),
+        publish_by_date=brief.closed_at.strftime('%d/%m/%Y'),
+        message=escape_markdown(brief_question.data.get('question')),
+        supplier_name=escape_markdown(supplier.name)
+    )
+
+    subject = "You received a new question for ‘{}’".format(brief.data.get('title'))
+
+    send_or_handle_error(
+        to_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='brief question email sent to buyer'
+    )
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.sent_brief_question_to_buyer,
+        user='',
+        data={
+            "to_addresses": ', '.join(to_addresses),
+            "email_body": email_body,
+            "subject": subject
+        },
+        db_object=brief)
+
+
+def send_brief_clarification_to_seller(brief, brief_question, to_address):
+    from app.api.services import (
+        audit_service,
+        audit_types
+    )  # to circumvent circular dependency
+
+    # prepare copy
+    email_body = render_email_template(
+        'brief_question_to_seller.md',
+        frontend_url=current_app.config['FRONTEND_ADDRESS'],
+        brief_id=brief.id,
+        brief_name=escape_markdown(brief.data.get('title')),
+        brief_organisation=brief.data.get('organisation'),
+        publish_by_date=brief.questions_closed_at.strftime('%d/%m/%Y'),
+        message=escape_markdown(brief_question.data.get('question'))
+    )
+
+    subject = u"You submitted a question for {} ({}) successfully".format(brief.data.get('title'), brief.id)
+
+    send_or_handle_error(
+        to_address,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='brief question email sent to seller'
+    )
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.sent_brief_question_to_seller,
+        user='',
+        data={
+            "to_addresses": to_address,
+            "email_body": email_body,
+            "subject": subject
+        },
+        db_object=brief)
+
+
+def get_brief_emails(brief):
+    to_addresses = [user.email_address for user in brief.users if user.active]
+    to_addresses = to_addresses + [
+        tb.user.email_address
+        for tb in brief.team_briefs
+        if tb.user.active and tb.team.status == 'completed']
+
+    to_addresses = to_addresses + [
+        tb.team.email_address
+        for tb in brief.team_briefs
+        if tb.team.status == 'completed' and tb.team.email_address
+    ]
+
+    return to_addresses

@@ -9,6 +9,7 @@ from app import db, encryption
 from app.api import api
 from app.api.helpers import get_email_domain, get_root_url, user_info, role_required
 from app.api.user import create_user, is_duplicate_user, update_user_details
+from app.api.business import team_business
 from app.emails.users import (send_account_activation_email,
                               send_account_activation_manager_email,
                               send_reset_password_confirm_email,

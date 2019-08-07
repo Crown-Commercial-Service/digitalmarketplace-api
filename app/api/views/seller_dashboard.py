@@ -102,7 +102,7 @@ def get_messages():
 @api.route('/supplier/dashboard/team', methods=['GET'])
 @login_required
 @role_required('supplier')
-def get_team():
+def get_team_members():
     """Supplier dashboard (Team) (role=supplier)
     ---
     tags:

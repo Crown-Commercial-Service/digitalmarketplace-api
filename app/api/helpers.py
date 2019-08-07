@@ -8,11 +8,26 @@ from binascii import hexlify
 from flask import abort as flask_abort
 from flask import current_app, jsonify, make_response, render_template_string
 from flask_login import current_user
+from werkzeug.exceptions import HTTPException
 
 from app.models import Agency, BriefUser, User, db
 from app.tasks.email import send_email
 from dmutils.csrf import get_csrf_token
 from dmutils.email import ONE_DAY_IN_SECONDS, EmailError, parse_fernet_timestamp
+
+
+def exception_logger(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except HTTPException as e:
+            return e.get_response()
+        except Exception as e:
+            rollbar.report_exc_info()
+            print '\033[1;31;40m ERROR: {}\033[0;37;40m'.format(e)
+            return flask_abort(500)
+    return decorated_view
 
 
 def role_required(*roles):
@@ -26,6 +41,19 @@ def role_required(*roles):
         return decorated_view
 
     return role_decorator
+
+
+def permissions_required(*permissions):
+    def permissions_decorator(func):
+        @wraps(func)
+        def decorated_view(*args, **kwargs):
+            if not any(current_user.has_permission(p) for p in permissions):
+                return jsonify(message="One of [{}] permissions required".format(", ".join(permissions))), 403
+            return func(*args, **kwargs)
+
+        return decorated_view
+
+    return permissions_decorator
 
 
 def is_current_supplier(func):
@@ -131,6 +159,21 @@ def user_info(user):
     except AttributeError:
         is_authenticated = False
 
+    try:
+        teams = current_user.teams
+    except AttributeError:
+        teams = []
+
+    try:
+        is_part_of_team = current_user.is_part_of_team()
+    except AttributeError:
+        is_part_of_team = False
+
+    try:
+        is_team_lead = current_user.is_team_lead()
+    except AttributeError:
+        is_team_lead = False
+
     return {
         "isAuthenticated": is_authenticated,
         "userType": user_type,
@@ -138,7 +181,10 @@ def user_info(user):
         "emailAddress": email_address,
         "csrfToken": get_csrf_token(),
         "framework": framework,
-        "notificationCount": notification_count
+        "notificationCount": notification_count,
+        "teams": teams,
+        "isPartOfTeam": is_part_of_team,
+        "isTeamLead": is_team_lead
     }
 
 
@@ -199,7 +245,8 @@ def get_root_url(framework_slug):
 
 
 def abort(message):
-    current_app.logger.error(message)
+    if isinstance(message, basestring):
+        current_app.logger.error(message)
     return flask_abort(make_response(jsonify(message=message), 400))
 
 

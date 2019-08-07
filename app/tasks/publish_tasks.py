@@ -60,6 +60,21 @@ def compress_brief_response(brief_response):
 
 
 @celery.task
+def brief_question(brief_question, event_type, **kwargs):
+    publish.brief_question(brief_question, event_type, **kwargs)
+
+
+def compress_brief_question(brief_question):
+    return {
+        'id': brief_question.id,
+        'question': brief_question.data.get('question'),
+        'created_by': brief_question.data.get('created_by'),
+        'brief_id': brief_question.brief_id,
+        'supplier_code': brief_question.supplier_code,
+    }
+
+
+@celery.task
 def supplier(supplier, event_type, **kwargs):
     publish.supplier(supplier, event_type, **kwargs)
 
@@ -103,6 +118,20 @@ def compress_supplier_domain(supplier_domain):
         'status': supplier_domain.status,
         'supplier_id': supplier_domain.supplier_id,
         'price_status': supplier_domain.price_status
+    }
+
+
+@celery.task
+def team(team, event_type, **kwargs):
+    publish.team(team, event_type, **kwargs)
+
+
+def compress_team(team):
+    return {
+        'id': team.id,
+        'name': team.name,
+        'email_address': team.email_address,
+        'status': team.status
     }
 
 

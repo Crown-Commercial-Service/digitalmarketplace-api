@@ -1,9 +1,9 @@
-from sqlalchemy import func, desc, literal, and_
-from sqlalchemy.sql.expression import select, case
+from sqlalchemy import and_, desc, func, literal
+from sqlalchemy.sql.expression import case, select
 from sqlalchemy.orm import joinedload, raiseload
-from app.api.helpers import Service
 from app import db
-from app.models import User, Supplier
+from app.api.helpers import Service, abort
+from app.models import Supplier, Team, TeamMember, User
 
 
 class UsersService(Service):
@@ -25,7 +25,8 @@ class UsersService(Service):
 
         return name
 
-    def get_team_members(self, current_user_id, email_domain):
+    def get_team_members(self, current_user_id, email_domain, keywords=None, exclude=None):
+        exclude = exclude if exclude else []
         user = (
             db
             .session
@@ -64,7 +65,12 @@ class UsersService(Service):
                 User.active.is_(True),
                 User.email_address.like('%@{}'.format(email_domain))
             )
+            .filter(User.id.notin_(exclude))
         )
+
+        if keywords:
+            results = results.filter(User.name.ilike('%{}%'.format(keywords.encode('utf-8'))))
+
         results = results.filter(
             User.supplier_code == user.supplier_code,
             User.role == user.role
@@ -93,6 +99,27 @@ class UsersService(Service):
 
     def get_by_email(self, email):
         return self.find(email_address=email).one_or_none()
+
+    def get_buyer_team_members(self, email_domain):
+        completed_teams = (db.session
+                             .query(TeamMember.user_id, Team.name)
+                             .join(Team)
+                             .filter(Team.status == 'completed')
+                             .subquery('completed_teams'))
+
+        results = (db.session
+                     .query(User.id,
+                            User.name,
+                            User.email_address.label('emailAddress'),
+                            completed_teams.columns.name.label('teamName'))
+                     .join(completed_teams, completed_teams.columns.user_id == User.id, isouter=True)
+                     .filter(User.active.is_(True),
+                             User.email_address.like('%@{}'.format(email_domain)),
+                             User.role == 'buyer')
+                     .order_by(func.lower(User.name))
+                     .all())
+
+        return [r._asdict() for r in results]
 
     def get_by_id(self, user_id):
         query = (
