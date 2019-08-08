@@ -15,6 +15,9 @@ def send_removed_team_member_notification_emails(team_id, user_ids):
         user = users.get(user_id)
         to_addresses.append(user.email_address)
 
+    if len(to_addresses) == 0:
+        return
+
     email_body = render_email_template(
         'team_member_removed.md',
         frontend_url=current_app.config['FRONTEND_ADDRESS'],
@@ -60,6 +63,9 @@ def send_team_lead_notification_emails(team_id, user_ids=None):
         user = users.get(team_lead.user_id)
         to_addresses.append(user.email_address)
 
+    if len(to_addresses) == 0:
+        return
+
     email_body = render_email_template(
         'team_lead_added.md',
         frontend_url=current_app.config['FRONTEND_ADDRESS'],
@@ -101,6 +107,9 @@ def send_team_member_notification_emails(team_id, user_ids=None):
     for member in members:
         user = users.get(member.user_id)
         to_addresses.append(user.email_address)
+
+    if len(to_addresses) == 0:
+        return
 
     email_body = render_email_template(
         'team_member_added.md',
@@ -146,6 +155,9 @@ def send_request_access_email(permission):
         return
 
     to_addresses = [tm.user.email_address for tm in team.team_members if tm.is_team_lead]
+
+    if len(to_addresses) == 0:
+        return
 
     email_body = render_email_template(
         'request_access.md',
