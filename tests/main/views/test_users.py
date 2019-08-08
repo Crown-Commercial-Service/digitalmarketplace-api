@@ -1294,12 +1294,15 @@ class TestUsersGet(BaseUserTest, FixtureMixin):
         assert "Invalid user role: incorrect" in data
 
 
-class TestUsersGetFilterByRemovePersonalData(BaseUserTest):
+class TestUsersBooleanFilters(BaseUserTest):
 
     def setup(self):
-        super(TestUsersGetFilterByRemovePersonalData, self).setup()
+        super(TestUsersBooleanFilters, self).setup()
         now = datetime.utcnow()
-        for personal_data_removed in [True, True, False, False, False]:
+        for personal_data_removed, user_research_opted_in in zip(
+            (True, True, False, False, False,),
+            (False, True, False, False, True,),
+        ):
             from uuid import uuid4
             user = User(
                 email_address=f'{uuid4()}@digital.cabinet-office.gov.uk',
@@ -1312,6 +1315,7 @@ class TestUsersGetFilterByRemovePersonalData(BaseUserTest):
                 created_at=now,
                 updated_at=now,
                 password_changed_at=now,
+                user_research_opted_in=user_research_opted_in,
             )
             if personal_data_removed:
                 user.remove_personal_data()
@@ -1323,18 +1327,34 @@ class TestUsersGetFilterByRemovePersonalData(BaseUserTest):
         assert response.status_code == 200
         data = json.loads(response.get_data())["users"]
         assert len(data) == 2
+        assert all(user["personalDataRemoved"] is True for user in data)
 
     def test_can_list_users_by_personal_data_removed_false(self):
         response = self.client.get('/users?personal_data_removed=false')
         assert response.status_code == 200
         data = json.loads(response.get_data())["users"]
         assert len(data) == 3
+        assert all(user["personalDataRemoved"] is False for user in data)
 
-    def test_default_list_users_by_personal_data_removed_unaffected(self):
+    def test_default_list_users_unfiltered(self):
         response = self.client.get('/users')
         assert response.status_code == 200
         data = json.loads(response.get_data())["users"]
         assert len(data) == 5
+
+    def test_can_list_users_by_user_research_opted_in_true(self):
+        response = self.client.get('/users?user_research_opted_in=true')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())["users"]
+        assert len(data) == 1  # because remove_personal_data() *also* sets this flag to false
+        assert all(user["userResearchOptedIn"] is True for user in data)
+
+    def test_can_list_users_by_user_research_opted_in_false(self):
+        response = self.client.get('/users?user_research_opted_in=false')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())["users"]
+        assert len(data) == 4  # because remove_personal_data() *also* sets this flag to false
+        assert all(user["userResearchOptedIn"] is False for user in data)
 
 
 class TestUsersRemovePersonalData(BaseUserTest):
