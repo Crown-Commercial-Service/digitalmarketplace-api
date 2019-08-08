@@ -889,11 +889,25 @@ class TestAuditEvents(BaseTestAuditEvents):
         response = self.client.get('/audit-events?per_page=foo')
         assert response.status_code == 400
 
-    def test_should_get_audit_events_by_supplier_id_field_in_data(self):
-        for id, info in [(0, 'miss'), (3, 'hit'), (2, 'miss'), (7, 'miss'), (3, 'hit'), (1, 'miss')]:
-            self.add_audit_event(data={'supplierId': id, 'info': info})
+    @pytest.mark.parametrize("search_term", ("3", "03",))  # test search term is normalized as integer
+    def test_should_get_audit_events_by_draft_id_field_in_data(self, search_term):
+        for id_, info in [(0, 'miss'), (3, 'hit'), (2, 'miss'), (7, 'miss'), (3, 'hit'), (1, 'miss')]:
+            self.add_audit_event(data={'draftId': id_, 'info': info})
 
-        response = self.client.get('/audit-events?data-supplier-id=3')
+        response = self.client.get(f'/audit-events?data-draft-service-id={search_term}')
+        audit_events = json.loads(response.get_data())['auditEvents']
+
+        assert response.status_code == 200
+        assert len(audit_events) == 2
+        assert all(audit_event['data']['draftId'] == 3 for audit_event in audit_events)
+        assert all(audit_event['data']['info'] == 'hit' for audit_event in audit_events)
+
+    @pytest.mark.parametrize("search_term", ("3", "03",))  # test search term is normalized as integer
+    def test_should_get_audit_events_by_supplier_id_field_in_data(self, search_term):
+        for id_, info in [(0, 'miss'), (3, 'hit'), (2, 'miss'), (7, 'miss'), (3, 'hit'), (1, 'miss')]:
+            self.add_audit_event(data={'supplierId': id_, 'info': info})
+
+        response = self.client.get(f'/audit-events?data-supplier-id={search_term}')
         audit_events = json.loads(response.get_data())['auditEvents']
 
         assert response.status_code == 200
@@ -901,11 +915,12 @@ class TestAuditEvents(BaseTestAuditEvents):
         assert all(audit_event['data']['supplierId'] == 3 for audit_event in audit_events)
         assert all(audit_event['data']['info'] == 'hit' for audit_event in audit_events)
 
-    def test_should_not_care_if_supplier_id_field_is_int_or_string(self):
-        for id, info in [(0, 'miss'), ('3', 'hit'), (2, 'miss'), (7, 'miss'), (3, 'hit'), (1, 'miss')]:
-            self.add_audit_event(data={'supplierId': id, 'info': info})
+    @pytest.mark.parametrize("search_term", ("3", "03",))  # test search term is normalized as integer
+    def test_should_not_care_if_supplier_id_field_is_int_or_string(self, search_term):
+        for id_, info in [(0, 'miss'), ('3', 'hit'), (2, 'miss'), (7, 'miss'), (3, 'hit'), (1, 'miss')]:
+            self.add_audit_event(data={'supplierId': id_, 'info': info})
 
-        response = self.client.get('/audit-events?data-supplier-id=3')
+        response = self.client.get(f'/audit-events?data-supplier-id={search_term}')
         audit_events = json.loads(response.get_data())['auditEvents']
 
         assert response.status_code == 200
@@ -914,8 +929,8 @@ class TestAuditEvents(BaseTestAuditEvents):
         assert all(audit_event['data']['info'] == 'hit' for audit_event in audit_events)
 
     def test_should_not_choke_if_supplier_id_field_in_data_does_not_exist(self):
-        for id, info in [(0, 'miss'), (3, 'hit'), (2, 'miss'), (7, 'miss'), (3, 'hit'), (1, 'miss')]:
-            self.add_audit_event(data={'supplierId': id, 'info': info})
+        for id_, info in [(0, 'miss'), (3, 'hit'), (2, 'miss'), (7, 'miss'), (3, 'hit'), (1, 'miss')]:
+            self.add_audit_event(data={'supplierId': id_, 'info': info})
         self.add_audit_event(data={'something': 'completely different'})
 
         response = self.client.get('/audit-events?data-supplier-id=3')
@@ -927,8 +942,8 @@ class TestAuditEvents(BaseTestAuditEvents):
         assert all(audit_event['data']['info'] == 'hit' for audit_event in audit_events)
 
     def test_should_search_for_deprecated_supplier_id_field_key(self):
-        for id, info in [(0, 'miss'), (3, 'hit'), (2, 'miss'), (7, 'miss'), (4, 'hit'), (1, 'miss')]:
-            self.add_audit_event(data={'supplierId': id, 'info': info})
+        for id_, info in [(0, 'miss'), (3, 'hit'), (2, 'miss'), (7, 'miss'), (4, 'hit'), (1, 'miss')]:
+            self.add_audit_event(data={'supplierId': id_, 'info': info})
         self.add_audit_event(data={'supplier_id': 3, 'info': 'hit'})
 
         response = self.client.get('/audit-events?data-supplier-id=3')
