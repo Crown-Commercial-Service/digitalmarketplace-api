@@ -142,12 +142,12 @@ def update_team(team_id, data):
         if len([e for e in validation_result.errors]) > 0:
             raise ValidationError([e for e in validation_result.errors])
 
-        send_team_lead_notification_emails(team_id)
-        send_team_member_notification_emails(team_id)
-
         team.status = 'completed'
         team_service.save(team)
         saved = True
+
+        send_team_lead_notification_emails(team_id)
+        send_team_member_notification_emails(team_id)
     elif team.status == 'completed':
         validation_result = TeamValidator(team, current_user).validate_all()
         if len([e for e in validation_result.errors]) > 0:
