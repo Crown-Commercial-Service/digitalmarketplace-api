@@ -934,9 +934,10 @@ class Supplier(db.Model):
                             self.add_unassessed_domain(name)
                     if name in self.all_domains and checked and self.data.get('recruiter', '') == 'yes':
                         self.update_domain_assessment_status(name, 'assessed')
-                for domain in self.all_domains:
-                    if not any(domain in service for service in self.data['services']):
-                        self.remove_domain(domain)
+                if self.data.get('recruiter', '') == 'yes':
+                    for domain in self.all_domains:
+                        if not any(domain in service for service in self.data['services']):
+                            self.remove_domain(domain)
 
             del self.data['services']
 
