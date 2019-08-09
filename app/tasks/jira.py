@@ -42,27 +42,3 @@ def sync_application_approvals_with_jira():
             application.set_approval(approved=True)
             application_service.commit_changes()
             send_approval_notification(application_id)
-
-
-@celery.task
-def sync_domain_assessment_approvals_with_jira():
-    open_assessments = assessments.get_open_assessments()
-
-    marketplace_jira = get_marketplace_jira()
-    response = marketplace_jira.find_approved_assessment_issues(open_assessments)
-
-    supplier_code_field = current_app.config['JIRA_FIELD_CODES'].get('SUPPLIER_FIELD_CODE')
-
-    for issue in response['issues']:
-        supplier = suppliers.get_supplier_by_code(issue['fields'][supplier_code_field])
-        domain_name = issue['fields']['labels'][0].replace('_', ' ')
-        if supplier and domain_name:
-            supplier.update_domain_assessment_status(
-                audit_data={'jira_issue_key': issue['key']},
-                name_or_id=domain_name,
-                status='assessed',
-                user='Sync assessment approvals with Jira task'
-            )
-            application_service.commit_changes()
-            domain = domain_service.get_by_name_or_id(domain_name)
-            send_assessment_approval_notification(supplier.id, domain.id)

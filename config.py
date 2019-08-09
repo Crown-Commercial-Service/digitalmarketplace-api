@@ -39,10 +39,6 @@ CELERYBEAT_SCHEDULE = {
     'sync_application_approvals_with_jira': {
         'task': 'app.tasks.jira.sync_application_approvals_with_jira',
         'schedule': crontab(day_of_week='mon-fri', hour='8-18/1', minute=45)
-    },
-    'sync_domain_assessment_approvals_with_jira': {
-        'task': 'app.tasks.jira.sync_domain_assessment_approvals_with_jira',
-        'schedule': crontab(day_of_week='mon-fri', hour='8-18/1', minute=46)
     }
 }
 
