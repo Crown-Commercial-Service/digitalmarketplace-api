@@ -22,7 +22,6 @@ def create_team():
     created_teams = team_service.get_teams_for_user(user.id, 'created')
     completed_teams = team_service.get_teams_for_user(user.id)
 
-    new_team = None
     if len(completed_teams) == 0:
         if len(created_teams) == 0:
             team = team_service.save(
@@ -40,6 +39,7 @@ def create_team():
 
             audit_service.log_audit_event(
                 audit_type=audit_types.create_team,
+                data={},
                 db_object=team,
                 user=current_user.email_address
             )
