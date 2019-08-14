@@ -9,6 +9,18 @@ class EvidenceAssessmentService(Service):
     def __init__(self, *args, **kwargs):
         super(EvidenceAssessmentService, self).__init__(*args, **kwargs)
 
+    def get_assessment_for_evidence(self, evidence_id):
+        if not evidence_id:
+            return False
+        feedback = (
+            db.session.query(EvidenceAssessment)
+            .filter(
+                EvidenceAssessment.evidence_id == evidence_id
+            )
+            .order_by(EvidenceAssessment.created_at.desc()).first()
+        )
+        return feedback
+
     def get_assessment_for_rejected_evidence(self, evidence_id):
         if not evidence_id:
             return False

@@ -1102,6 +1102,14 @@ class Evidence(db.Model):
             return 'assessed'
         return 'submitted'
 
+    @status.expression
+    def status(cls):
+        return sql_case([
+            (cls.submitted_at.is_(None), 'draft'),
+            (cls.rejected_at.isnot(None), 'rejected'),
+            (cls.approved_at.isnot(None), 'assessed')
+        ], else_='submitted')
+
 
 class EvidenceAssessment(db.Model):
     __tablename__ = 'evidence_assessment'

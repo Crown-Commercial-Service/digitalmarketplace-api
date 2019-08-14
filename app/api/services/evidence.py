@@ -82,6 +82,32 @@ class EvidenceService(Service):
         evidence = query.first()
         return evidence
 
+    def get_all_evidence(self, supplier_code=None):
+        query = (
+            db.session.query(
+                Evidence.id.label('id'),
+                Evidence.status,
+                Evidence.created_at,
+                Evidence.submitted_at,
+                Evidence.approved_at,
+                Evidence.rejected_at,
+                Evidence.data.label('data'),
+                Evidence.data['maxDailyRate'].astext.label('maxDailyRate'),
+                Supplier.name.label('supplier_name'), Supplier.code.label('supplier_code'),
+                Brief.id.label('brief_id'), Brief.closed_at.label('brief_closed_at'),
+                Brief.data['title'].astext.label('brief_title'),
+                Domain.name.label('domain_name'), Domain.id.label('domain_id'),
+                Domain.price_maximum.label('domain_price_maximum')
+            )
+            .join(Domain, Evidence.domain_id == Domain.id)
+            .join(Supplier, Evidence.supplier_code == Supplier.code)
+            .outerjoin(Brief, Evidence.brief_id == Brief.id)
+            .order_by(Evidence.submitted_at.desc(), Evidence.created_at.desc())
+        )
+        if supplier_code:
+            query = query.filter(Evidence.supplier_code == supplier_code)
+        return [e._asdict() for e in query.all()]
+
     def get_all_submitted_evidence(self):
         query = (
             db.session.query(

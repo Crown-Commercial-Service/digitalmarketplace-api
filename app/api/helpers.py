@@ -348,10 +348,11 @@ class Service(object):
         self.save(model)
         return model
 
-    def delete(self, model):
+    def delete(self, model, do_commit=True):
         self._isinstance(model)
         db.session.delete(model)
-        self.commit_changes()
+        if do_commit:
+            self.commit_changes()
 
     def add_to_session(self, model):
         self._isinstance(model)
