@@ -206,6 +206,7 @@ class RFXDataValidator(object):
                 {'name': 'location', 'type': list},
                 {'name': 'summary', 'type': basestring},
                 {'name': 'industryBriefing', 'type': basestring},
+                {'name': 'internalReference', 'type': basestring},
                 {'name': 'sellerCategory', 'type': basestring},
                 {'name': 'sellers', 'type': dict},
                 {'name': 'attachments', 'type': list},

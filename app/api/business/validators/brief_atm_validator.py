@@ -190,6 +190,7 @@ class ATMDataValidator(object):
                 {'name': 'endUsers', 'type': basestring},
                 {'name': 'workAlreadyDone', 'type': basestring},
                 {'name': 'industryBriefing', 'type': basestring},
+                {'name': 'internalReference', 'type': basestring},
                 {'name': 'sellerCategory', 'type': basestring},
                 {'name': 'requestMoreInfo', 'type': basestring},
                 {'name': 'attachments', 'type': list},
