@@ -5,7 +5,7 @@
 git+https://github.com/alphagov/digitalmarketplace-utils.git@48.4.0#egg=digitalmarketplace-utils==48.4.0
 git+https://github.com/alphagov/digitalmarketplace-apiclient.git@21.0.0#egg=digitalmarketplace-apiclient==21.0.0
 
-Flask==1.0.3
+Flask==1.0.3 # pyup: >=1.0.0,<1.1.0
 Flask-Bcrypt==0.7.1
 Flask-Migrate==2.0.3 # pyup: ignore
 Flask-SQLAlchemy==2.1 # pyup: ignore
@@ -27,8 +27,8 @@ asn1crypto==0.24.0
 attrs==19.1.0
 bcrypt==3.1.7
 blinker==1.4
-boto3==1.9.202
-botocore==1.12.202
+boto3==1.9.210
+botocore==1.12.210
 certifi==2019.6.16
 cffi==1.12.3
 chardet==3.0.4
@@ -37,14 +37,14 @@ contextlib2==0.5.5
 cryptography==2.3.1
 defusedxml==0.6.0
 docopt==0.6.2
-docutils==0.14
+docutils==0.15.2
 Flask-Login==0.4.1
 Flask-Script==2.0.6
 Flask-WTF==0.14.2
 fleep==1.0.1
 future==0.17.1
 gds-metrics==0.2.0
-govuk-country-register==0.4.0
+govuk-country-register==0.5.0
 idna==2.8
 Jinja2==2.10.1
 jmespath==0.9.4
