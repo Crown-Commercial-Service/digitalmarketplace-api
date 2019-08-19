@@ -4,7 +4,7 @@
 git+https://github.com/alphagov/digitalmarketplace-utils.git@48.4.0#egg=digitalmarketplace-utils==48.4.0
 git+https://github.com/alphagov/digitalmarketplace-apiclient.git@21.0.0#egg=digitalmarketplace-apiclient==21.0.0
 
-Flask==1.0.3
+Flask==1.0.3 # pyup: >=1.0.0,<1.1.0
 Flask-Bcrypt==0.7.1
 Flask-Migrate==2.0.3 # pyup: ignore
 Flask-SQLAlchemy==2.1 # pyup: ignore
