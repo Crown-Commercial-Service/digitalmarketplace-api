@@ -131,9 +131,10 @@ class BriefsService(Service):
                 brief_response_subquery.columns.responses,
                 brief_question_subquery.columns.questionsAsked,
                 brief_clarification_question_subquery.columns.questionsAnswered,
-                Lot.slug.label('lot')
+                Lot.slug.label('lot'),
+                Framework.slug.label('framework')
             )
-            .join(Lot)
+            .join(Lot, Framework)
             .join(
                 accessible_briefs_subquery,
                 accessible_briefs_subquery.columns.brief_id == Brief.id
