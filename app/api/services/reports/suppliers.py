@@ -1,8 +1,8 @@
+from app import db
 from app.api.helpers import Service
-from app.models import Supplier, SupplierDomain, Domain
 from sqlalchemy import func
 from sqlalchemy.sql import text
-from app import db
+from app.models import Address, Product, RecruiterInfo, Supplier, SupplierDomain, Domain
 
 
 class SuppliersService(Service):
@@ -49,14 +49,31 @@ class SuppliersService(Service):
                     func.json_build_object(
                         'category', Domain.name,
                         'status', SupplierDomain.status,
-                        'price_status', SupplierDomain.price_status
+                        'recruiterInfo', func.json_build_object(
+                            'id', RecruiterInfo.id,
+                            'activeCandidates', RecruiterInfo.active_candidates,
+                            'databaseSize', RecruiterInfo.database_size,
+                            'placedCandidates', RecruiterInfo.placed_candidates,
+                            'margin', RecruiterInfo.margin,
+                            'markup', RecruiterInfo.markup,
+                        ).label('recruiters'),
+                        'pricing', func.json_build_object(
+                            'supplierPrice', Supplier.data['pricing'][Domain.name]['maxPrice'].astext.label('maxPrice'),
+                            'priceStatus', SupplierDomain.price_status,
+                            'priceMinimum', Domain.price_minimum,
+                            'priceMaximum', Domain.price_maximum,
+                            'criteriaNeeded', Domain.criteria_needed
+                        )
                     )
                 ).label('categories')
             )
             .join(Domain)
+            .join(Supplier)
+            .outerjoin(RecruiterInfo)
             .group_by(SupplierDomain.supplier_id)
             .subquery()
         )
+
         result = (
             db
             .session
@@ -65,11 +82,37 @@ class SuppliersService(Service):
                 Supplier.name,
                 Supplier.abn,
                 Supplier.status,
-                Supplier.creation_time,
+                Supplier.creation_time.label('creationTime'),
                 Supplier.data['seller_type']['sme'].astext.label('sme'),
-                subquery.columns.categories
+                Supplier.website,
+                Supplier.linkedin,
+                Address.address_line.label('addressLine'),
+                Address.suburb,
+                Address.state,
+                Address.postal_code.label('postalCode'),
+                Supplier.data['number_of_employees'].label('numberOfEmployees'),
+                Supplier.data['seller_type']['start_up'].astext.label('startUp'),
+                Supplier.data['seller_type']['nfp_social_enterprise'].astext.label('notForProfit'),
+                Supplier.data['regional'],
+                Supplier.data['travel'],
+                Supplier.data['seller_type']['disability'].astext.label('disability'),
+                Supplier.data['seller_type']['female_owned'].astext.label('femaleOwned'),
+                Supplier.data['seller_type']['indigenous'].astext.label('indigenous'),
+                Supplier.data['representative'],
+                Supplier.data['email'],
+                Supplier.data['phone'],
+                Supplier.data['contact_name'].label('contactName'),
+                Supplier.data['contact_email'].label('contactEmail'),
+                Supplier.data['contact_phone'].label('contactPhone'),
+                Product.name.label('productName'),
+                Product.summary.label('productSummary'),
+                Product.website.label('productWebsite'),
+                Product.pricing.label('productPricingLink'),
+                subquery.columns.categories,
             )
-            .join(subquery, Supplier.id == subquery.columns.supplier_id)
+            .outerjoin(subquery, Supplier.id == subquery.columns.supplier_id)
+            .join(Address, Address.supplier_code == Supplier.code)
+            .join(Product, Product.supplier_code == Supplier.code)
             .order_by(Supplier.code)
             .all()
         )
