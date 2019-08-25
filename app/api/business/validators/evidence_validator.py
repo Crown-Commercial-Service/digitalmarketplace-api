@@ -6,6 +6,7 @@ class EvidenceDataValidator(object):
     def __init__(self, data, evidence=None):
         self.data = data
         self.evidence = evidence
+        self.max_criteria = 2
         if self.evidence:
             self.domain = domain_service.get_by_name_or_id(evidence.domain.id)
             self.domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
@@ -36,6 +37,8 @@ class EvidenceDataValidator(object):
         if not len(self.data['criteria']) > 0:
             return False
         if len(self.data['criteria']) < self.get_criteria_needed():
+            return False
+        if len(self.data['criteria']) > self.get_criteria_needed() + self.max_criteria:
             return False
         valid_criteria_ids = [x.id for x in self.domain_criteria]
         for criteria_id in self.data['criteria']:
@@ -93,6 +96,8 @@ class EvidenceDataValidator(object):
             if not self.data['evidence'][criteria_id]['response'].replace(' ', ''):
                 return False
         if len(self.data['evidence'].keys()) < self.get_criteria_needed():
+            return False
+        if len(self.data['evidence'].keys()) > self.get_criteria_needed() + self.max_criteria:
             return False
         return True
 
