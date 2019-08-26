@@ -55,10 +55,19 @@ def get_evidence(evidence_id):
                 evidence.domain_id,
                 evidence.supplier_code
             )
-            evidence_data['previous_rejected'] = (
-                True if previous_evidence and previous_evidence.status == 'rejected' else False
-            )
-            evidence_data['previous_id'] = previous_evidence.id if previous_evidence else False
+
+            approved_criteria = []
+            evidence_data['previous_id'] = False
+
+            if previous_evidence:
+                approved_criteria = evidence_service.get_approved_domain_criteria(evidence_id, previous_evidence.id)
+                evidence_data['previous_id'] = previous_evidence.id
+                evidence_data['previous_rejected'] = (
+                    True if previous_evidence.status == 'rejected' else False
+                )
+
+            evidence_data['approvedCriteria'] = approved_criteria
+
             try:
                 evidence_data['criteriaNeeded'] = int(
                     DomainCriteria(

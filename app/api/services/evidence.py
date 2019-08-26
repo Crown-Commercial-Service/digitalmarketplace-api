@@ -1,8 +1,9 @@
-from sqlalchemy import or_, and_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import joinedload, raiseload
-from app.models import Evidence, Supplier, Brief, Domain
-from app.api.helpers import Service
+
 from app import db
+from app.api.helpers import Service
+from app.models import Brief, Domain, Evidence, EvidenceAssessment, Supplier
 
 
 class EvidenceService(Service):
@@ -131,6 +132,39 @@ class EvidenceService(Service):
             .order_by(Evidence.submitted_at.asc())
         )
         return query.all()
+
+    def get_approved_domain_criteria(self, evidence_id, previous_evidence_id):
+        previous_rejected_criteria = (
+            db.session
+              .query(func.json_object_keys(EvidenceAssessment.data['failed_criteria']))
+              .filter(EvidenceAssessment.evidence_id == previous_evidence_id)
+              .subquery()
+        )
+
+        previous_submitted_criteria = (
+            db.session
+              .query(func.json_array_elements_text(Evidence.data['criteria']).label('id'))
+              .filter(Evidence.id == previous_evidence_id)
+              .subquery()
+        )
+
+        submitted_criteria = (
+            db.session
+              .query(func.json_array_elements_text(Evidence.data['criteria']).label('id'))
+              .filter(Evidence.id == evidence_id)
+              .subquery()
+        )
+
+        approved_criteria = (
+            db.session
+              .query(submitted_criteria.columns.id)
+              .filter(
+                  submitted_criteria.columns.id.notin_(previous_rejected_criteria),
+                  submitted_criteria.columns.id.in_(previous_submitted_criteria))
+              .all()
+        )
+
+        return [criteria.id for criteria in approved_criteria]
 
     def get_submitted_evidence(self, evidence_id):
         query = (
