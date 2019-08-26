@@ -140,7 +140,9 @@
             <p>This file is not publicly visible. Only you and those who open this file can view this information.</p>
         </div>
         <div class="titles">
-            <p class="opportunity-title">{{ brief.data.title }} (ID: {{ brief.id }})</p>
+            <p class="opportunity-title">
+                {{ brief.data.title }} (ID: {{ brief.id }}{% if brief.data.internalReference %}, {{brief.data.internalReference}}{% endif %})
+            </p>
             <h2 class="document-title">Responses to the criteria</h2>
         </div>
         <div class="candidates">
