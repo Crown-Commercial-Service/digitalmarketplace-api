@@ -1,6 +1,7 @@
-from sqlalchemy import func, desc
-from app.api.helpers import Service
+from sqlalchemy import desc, func
+
 from app import db
+from app.api.helpers import Service
 from app.models import BriefResponse, Supplier
 
 
@@ -28,6 +29,22 @@ class BriefResponsesService(Service):
             query = query.filter(BriefResponse.supplier_code == supplier_code)
 
         return [r._asdict() for r in query.all()]
+
+    def get_responses_to_zip(self, brief_id, slug):
+        query = (
+            db.session.query(BriefResponse)
+                      .join(Supplier)
+                      .filter(BriefResponse.brief_id == brief_id,
+                              BriefResponse.withdrawn_at.is_(None))
+                      .order_by(func.lower(Supplier.name))
+        )
+
+        if slug == 'digital-professionals':
+            query = query.order_by(func.lower(BriefResponse.data['specialistName'].astext))
+        elif slug == 'specialist':
+            query = query.order_by(func.lower(BriefResponse.data['specialistGivenNames'].astext))
+
+        return query.all()
 
     def get_suppliers_responded(self, brief_id):
         query = (

@@ -12,9 +12,9 @@ from werkzeug.utils import secure_filename
 
 from app import db
 from app.api.csv import generate_brief_responses_csv
-from app.api.services import brief_responses_service
-from app.models import Brief, BriefResponse
 from app.api.helpers import prepare_specialist_responses
+from app.api.services import brief_responses_service, briefs
+from app.models import Brief, BriefResponse
 
 from . import celery
 
@@ -31,14 +31,12 @@ template_env = Environment(
 
 @celery.task
 def create_responses_zip(brief_id):
-    brief = Brief.query.filter(Brief.id == brief_id).first_or_404()
-    responses = BriefResponse.query.filter(
-        BriefResponse.brief_id == brief_id,
-        BriefResponse.withdrawn_at.is_(None)
-    ).all()
+    brief = briefs.find(id=brief_id).one_or_none()
 
     if not brief:
         raise CreateResponsesZipException('Failed to load brief for id {}'.format(brief_id))
+
+    responses = brief_responses_service.get_responses_to_zip(brief_id, brief.lot.slug)
 
     if not responses:
         raise CreateResponsesZipException('There were no respones for brief id {}'.format(brief_id))
@@ -96,20 +94,15 @@ def create_responses_zip(brief_id):
             zf.writestr(csv_file_name, csvdata.encode('utf-8'))
 
             if brief.lot.slug == 'digital-professionals':
-                sorted_responses = sorted(
-                    responses,
-                    key=lambda response: (response.supplier.name, response.data.get('specialistName', 'Unknown'))
-                )
-
                 compliance_check_template = template_env.get_template('compliance-check.html')
                 compliance_check_html = render_template(
                     compliance_check_template,
                     brief=brief,
-                    responses=sorted_responses
+                    responses=responses
                 )
                 zf.writestr('compliance-check-{}.html'.format(brief_id), compliance_check_html.encode('utf-8'))
 
-                candidates = prepare_specialist_responses(brief, sorted_responses)
+                candidates = prepare_specialist_responses(brief, responses)
 
                 response_criteria_template = template_env.get_template('response-criteria.html')
                 response_criteria_html = render_template(
@@ -119,23 +112,18 @@ def create_responses_zip(brief_id):
                 )
                 zf.writestr('responses-{}.html'.format(brief_id), response_criteria_html.encode('utf-8'))
             elif brief.lot.slug == 'specialist':
-                sorted_responses = sorted(
-                    responses,
-                    key=lambda response: (response.supplier.name, response.data.get('specialistGivenNames', 'Unknown'))
-                )
-
                 compliance_check_template = template_env.get_template('compliance-check-specialist.html')
                 compliance_check_html = render_template(
                     compliance_check_template,
                     brief=brief,
-                    responses=sorted_responses
+                    responses=responses
                 )
                 zf.writestr('Compliance check ({}).html'.format(brief_id), compliance_check_html.encode('utf-8'))
 
                 response_criteria_template = template_env.get_template('response-criteria-specialist.html')
 
                 candidates = []
-                for response in sorted_responses:
+                for response in responses:
                     data = response.data
                     candidates.append({
                         'essential_requirement_responses': data.get('essentialRequirements', {}),
