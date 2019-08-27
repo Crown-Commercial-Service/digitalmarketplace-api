@@ -1,8 +1,9 @@
+import pendulum
 from app.api import api
 from flask import request, jsonify
 from flask_login import login_required
 from app.api.helpers import not_found
-from app.api.services import domain_service
+from app.api.services import domain_service, key_values_service
 
 
 @api.route('/domains', methods=['GET'])
@@ -20,4 +21,14 @@ def get_domain(domain_id):
     domain = domain_service.get_by_name_or_id(domain_id, show_legacy=False)
     if not domain:
         return not_found('Domain does not exist')
-    return jsonify(domain.serialize())
+
+    data = domain.serialize()
+
+    data['criteriaEnforcementCutoffDate'] = None
+    key_value = key_values_service.get_by_key('criteria_enforcement_cutoff_date')
+    if key_value:
+        data['criteriaEnforcementCutoffDate'] = (
+            pendulum.parse(key_value['data']['value'], tz='Australia/Canberra').isoformat()
+        )
+
+    return jsonify(data)

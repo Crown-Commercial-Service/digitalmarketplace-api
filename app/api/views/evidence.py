@@ -199,6 +199,9 @@ def update_evidence(evidence_id):
 
     data = get_json_from_request()
 
+    if 'created_at' in data:
+        del data['created_at']
+
     publish = False
     if 'publish' in data and data['publish']:
         del data['publish']
