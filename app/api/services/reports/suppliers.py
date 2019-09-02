@@ -74,6 +74,42 @@ class SuppliersService(Service):
             .subquery()
         )
 
+        product_subquery = (
+            db
+            .session
+            .query(
+                Product.supplier_code,
+                func.json_agg(
+                    func.json_build_object(
+                        'productName', Product.name,
+                        'productSummary', Product.summary,
+                        'productWebsite', Product.website,
+                        'productPricingLink', Product.pricing
+                    )
+                ).label('products')
+            )
+            .group_by(Product.supplier_code)
+            .subquery()
+        )
+
+        address_subquery = (
+            db
+            .session
+            .query(
+                Address.supplier_code,
+                func.json_agg(
+                    func.json_build_object(
+                        'addressLine', Address.address_line,
+                        'suburb', Address.suburb,
+                        'state', Address.state,
+                        'postalCode', Address.postal_code,
+                    )
+                ).label('addresses')
+            )
+            .group_by(Address.supplier_code)
+            .subquery()
+        )
+
         result = (
             db
             .session
@@ -86,10 +122,6 @@ class SuppliersService(Service):
                 Supplier.data['seller_type']['sme'].astext.label('sme'),
                 Supplier.website,
                 Supplier.linkedin,
-                Address.address_line.label('addressLine'),
-                Address.suburb,
-                Address.state,
-                Address.postal_code.label('postalCode'),
                 Supplier.data['number_of_employees'].label('numberOfEmployees'),
                 Supplier.data['seller_type']['start_up'].astext.label('startUp'),
                 Supplier.data['seller_type']['nfp_social_enterprise'].astext.label('notForProfit'),
@@ -104,15 +136,13 @@ class SuppliersService(Service):
                 Supplier.data['contact_name'].label('contactName'),
                 Supplier.data['contact_email'].label('contactEmail'),
                 Supplier.data['contact_phone'].label('contactPhone'),
-                Product.name.label('productName'),
-                Product.summary.label('productSummary'),
-                Product.website.label('productWebsite'),
-                Product.pricing.label('productPricingLink'),
                 subquery.columns.categories,
+                product_subquery.columns.products,
+                address_subquery.columns.addresses,
             )
             .outerjoin(subquery, Supplier.id == subquery.columns.supplier_id)
-            .join(Address, Address.supplier_code == Supplier.code)
-            .join(Product, Product.supplier_code == Supplier.code)
+            .outerjoin(product_subquery, Supplier.code == product_subquery.columns.supplier_code)
+            .outerjoin(address_subquery, Supplier.code == address_subquery.columns.supplier_code)
             .order_by(Supplier.code)
             .all()
         )
