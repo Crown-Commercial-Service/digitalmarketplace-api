@@ -136,7 +136,7 @@ def commit_and_archive_service(updated_service, update_details,
         abort(400, format(e))
 
 
-def index_service(service):
+def index_service(service, wait_for_response=True):
     if (
         service.framework.status == 'live' and
         service.framework.framework == 'g-cloud' and
@@ -148,6 +148,7 @@ def index_service(service):
             doc_type='services',
             object_id=service.service_id,
             serialized_object=service.serialize(),
+            wait_for_response=wait_for_response,
         )
 
 

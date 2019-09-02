@@ -75,18 +75,22 @@ class TestKeyFilterJSON(object):
 
 @mock.patch('app.utils.search_api_client', autospec=True)
 class TestIndexObject(BaseApplicationTest):
-    def test_calls_the_search_api_index_method_correctly(self, search_api_client):
+    @pytest.mark.parametrize("wait_for_response", (False, True,))
+    def test_calls_the_search_api_index_method_correctly(self, search_api_client, wait_for_response):
         for framework, doc_type_to_index_mapping in current_app.config['DM_FRAMEWORK_TO_ES_INDEX'].items():
             for doc_type, index_name in doc_type_to_index_mapping.items():
 
-                index_object(framework, doc_type, 123, {'serialized': 'object'})
+                index_object(framework, doc_type, 123, {'serialized': 'object'}, wait_for_response=wait_for_response)
 
-                search_api_client.index.assert_called_once_with(
-                    index_name=index_name,
-                    object_id=123,
-                    serialized_object={'serialized': 'object'},
-                    doc_type=doc_type,
-                )
+                assert search_api_client.index.mock_calls == [
+                    mock.call(
+                        index_name=index_name,
+                        object_id=123,
+                        serialized_object={'serialized': 'object'},
+                        doc_type=doc_type,
+                        client_wait_for_response=wait_for_response,
+                    )
+                ]
                 search_api_client.reset_mock()
 
     @mock.patch('app.utils.current_app')

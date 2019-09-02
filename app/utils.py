@@ -210,7 +210,7 @@ def get_request_page_questions():
     return json_payload.get('page_questions', [])
 
 
-def index_object(framework, doc_type, object_id, serialized_object):
+def index_object(framework, doc_type, object_id, serialized_object, wait_for_response=True):
     try:
         index_name = current_app.config['DM_FRAMEWORK_TO_ES_INDEX'][framework][doc_type]
 
@@ -220,6 +220,7 @@ def index_object(framework, doc_type, object_id, serialized_object):
                 object_id=object_id,
                 serialized_object=serialized_object,
                 doc_type=doc_type,
+                client_wait_for_response=wait_for_response,
             )
         except dmapiclient.HTTPError as e:
             current_app.logger.warning(
