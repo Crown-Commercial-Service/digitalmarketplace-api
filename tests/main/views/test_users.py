@@ -1,9 +1,10 @@
 from datetime import datetime
-
-from flask import json
-from freezegun import freeze_time
+from logging import Logger
 import mock
 import pytest
+
+from freezegun import freeze_time
+from flask import json
 from sqlalchemy.exc import DataError, IntegrityError
 
 from app import db, encryption
@@ -1164,6 +1165,83 @@ class TestUsersUpdate(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert response.status_code == 200
         data = json.loads(response.get_data())['users']
         assert data['phoneNumber'] == '0800666666'
+
+
+class TestAdminManagerUpdate(BaseApplicationTest):
+    """
+    Test the log output for the admin-manager password reset.
+    The message should only be output when and admin manager changes their password
+    """
+    admin_manager_warning_log_message = mock.call(
+        "{code}: Password reset requested for {user_role} user '{email_hash}'",
+        extra={
+            'code': 'update_user.password.role_warning',
+            'email_hash': 'W-jA20fzplHyOKk82Io1EyjW_l4X25Min3NRyU0hgiY=',
+            'user_role': 'admin-manager'
+        }
+    )
+
+    def setup(self):
+        with mock.patch('flask.app.create_logger', return_value=mock.Mock(spec=Logger('flask.app'), handlers=[])):
+            super(TestAdminManagerUpdate, self).setup()
+
+    @staticmethod
+    def _create_admin_user(role):
+        now = datetime.utcnow()
+        admin_user = User(
+            id=123,
+            email_address="admin@digital.cabinet-office.gov.uk",
+            name="my admin name",
+            password=encryption.hashpw("my long password"),
+            active=True,
+            role=role,
+            created_at=now,
+            updated_at=now,
+            password_changed_at=now
+        )
+        db.session.add(admin_user)
+        db.session.commit()
+        return admin_user
+
+    def test_admin_manager_role_password_update_logs_warning(self):
+        """Ensude that the correct message is output when an admin manager changes their password."""
+        admin_user = self._create_admin_user('admin-manager')
+        update_data = {"updated_by": "a.user", 'users': {'password': 'new_password'}}
+
+        with self.app.test_request_context('/'):
+            self.client.post(f'/users/{admin_user.id}', data=json.dumps(update_data), content_type='application/json')
+
+        assert self.admin_manager_warning_log_message in self.app.logger.warning.mock_calls
+
+    @pytest.mark.parametrize('role', [i for i in User.ROLES if i != 'admin-manager'])
+    def test_non_admin_manager_role_update_password_does_not_log_warning(self, role):
+        """Ensure the log message is not output when changing password for other users."""
+        admin_user = self._create_admin_user('admin')
+        update_data = {"updated_by": "a.user", 'users': {'password': 'new_password', 'name': 'test'}}
+
+        with self.app.test_request_context('/'):
+            self.client.post(f'/users/{admin_user.id}', data=json.dumps(update_data), content_type='application/json')
+
+        assert self.admin_manager_warning_log_message not in self.app.logger.warning.mock_calls
+
+    @pytest.mark.parametrize(
+        ('attribute', 'value'),
+        [
+            ('active', False),
+            ('name', 'test'),
+            ('userResearchOptedIn', True),
+            ('phoneNumber', '345676543456')
+        ]
+    )
+    def test_admin_manager_role_update_without_password_does_not_log_warning(self, attribute, value):
+        """Ensure the log message is not output when other attributes of admin-manager are changed."""
+        admin_user = self._create_admin_user('admin-manager')
+        update_data = {"updated_by": "a.user", 'users': {attribute: value}}
+
+        with self.app.test_request_context('/'):
+            self.client.post(f'/users/{admin_user.id}', data=json.dumps(update_data), content_type='application/json')
+
+        assert self.admin_manager_warning_log_message not in self.app.logger.warning.mock_calls
 
 
 class TestUsersGet(BaseUserTest, FixtureMixin):
